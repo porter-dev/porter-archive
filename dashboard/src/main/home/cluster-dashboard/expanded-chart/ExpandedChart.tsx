@@ -440,15 +440,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "events":
-        return (
-          <LogsSection
-            currentChart={chart}
-            isFullscreen={isFullscreen}
-            setIsFullscreen={setIsFullscreen}
-            initData={logData}
-            setInitData={setLogData}
-          />
-        );
         if (DisabledNamespacesForIncidents.includes(currentChart.namespace)) {
           return null;
         }

@@ -33,6 +33,7 @@ type Props = {
   setIsFullscreen: (x: boolean) => void;
   initData?: InitLogData;
   setInitData: (initData: InitLogData) => void;
+  overridingPodName?: string;
 };
 
 const escapeRegExp = (str: string) => {
@@ -99,12 +100,19 @@ const LogsSection: React.FC<Props> = ({
   setIsFullscreen,
   initData = {},
   setInitData,
+  overridingPodName,
 }) => {
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
-  const [podFilter, setPodFilter] = useState(initData.podName);
+  const [podFilter, setPodFilter] = useState(
+    initData.podName || overridingPodName
+  );
   const [podFilterOpts, setPodFilterOpts] = useState<string[]>(
-    _.compact([initData.podName])
+    initData?.podName
+      ? _.compact([initData.podName])
+      : overridingPodName
+      ? _.compact([overridingPodName])
+      : []
   );
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [searchText, setSearchText] = useState("");
@@ -122,6 +130,10 @@ const LogsSection: React.FC<Props> = ({
   );
 
   useEffect(() => {
+    if (overridingPodName) {
+      return;
+    }
+
     api
       .getLogPodValues(
         "<TOKEN>",

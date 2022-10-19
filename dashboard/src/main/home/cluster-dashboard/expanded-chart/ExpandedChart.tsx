@@ -753,7 +753,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         })
         .catch(console.log);
 
-        return;
+      return;
     }
 
     setCurrentChart(props.currentChart);
@@ -842,6 +842,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
               isFullscreen={true}
               setIsFullscreen={setIsFullscreen}
               currentChart={currentChart}
+              setInitData={() => {}}
             />
           ) : (
             <StyledExpandedChart>
@@ -970,14 +971,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
                               },
                             }}
                             overrideCurrentTab={overrideCurrentTab}
-                            onTabChange={
-                              (newTab) => {
-                                if (newTab !== "logs") {
-                                  setOverrideCurrentTab("");
-                                  setLogData({});
-                                }
+                            onTabChange={(newTab) => {
+                              if (newTab !== "logs") {
+                                setOverrideCurrentTab("");
+                                setLogData({});
                               }
-                            }
+                            }}
                           />
                         </BodyWrapper>
                       )}

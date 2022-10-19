@@ -14,6 +14,9 @@ import DeploymentType from "../DeploymentType";
 import JobMetricsSection from "../metrics/JobMetricsSection";
 import Logs from "../status/Logs";
 import { useRouting } from "shared/routing";
+import Banner from "components/Banner";
+import LogsSection from "../logs-section/LogsSection";
+import EventsTab from "../events/EventsTab";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -54,36 +57,7 @@ const renderStatus = (job: any, pods: any[], time: string) => {
   }
 
   if (job.status?.failed >= 1) {
-    const appPod = getLatestPod(pods);
-
-    if (appPod) {
-      const appContainerStatus = appPod?.status?.containerStatuses?.find(
-        (container: any) =>
-          container?.state?.terminated?.reason !== "Completed" &&
-          !container?.state?.running
-      );
-
-      if (appContainerStatus) {
-        const reason = appContainerStatus.state.terminated.reason;
-        const exitCode = appContainerStatus.state.terminated.exitCode;
-        const finishTime = appContainerStatus.state.terminated.finishedAt;
-
-        return (
-          <Status color="#cc3d42">
-            Failed at {time ? time : readableDate(finishTime)} - Reason:{" "}
-            {reason} - Exit Code: {exitCode}
-          </Status>
-        );
-      }
-    }
-
-    return (
-      <Status color="#cc3d42">
-        Failed {time}
-        {job.status.conditions.length > 0 &&
-          `: ${job.status.conditions[0].reason}`}
-      </Status>
-    );
+    return <Status color="#cc3d42">Failed</Status>;
   }
 
   return <Status color="#ffffff11">Running</Status>;
@@ -102,11 +76,12 @@ const ExpandedJobRun = ({
     Context
   );
   const [currentTab, setCurrentTab] = useState<
-    "logs" | "metrics" | "config" | string
-  >("logs");
+    "events" | "logs" | "metrics" | "config" | string
+  >("events");
   const [pods, setPods] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { pushQueryParams } = useRouting();
+  const [useDeprecatedLogs, setUseDeprecatedLogs] = useState(false);
 
   let chart = currentChart;
   let run = jobRun;
@@ -191,6 +166,52 @@ const ExpandedJobRun = ({
     );
   };
 
+  const renderEventsSection = () => {
+    return (
+      <EventsTab
+        currentChart={currentChart}
+        overridingJobName={jobRun.metadata?.name}
+      />
+    );
+  };
+
+  const renderLogsSection = () => {
+    if (useDeprecatedLogs) {
+      return (
+        <JobLogsWrapper>
+          <Logs
+            selectedPod={pods[0]}
+            podError={!pods[0] ? "Pod no longer exists." : ""}
+            rawText={true}
+          />
+        </JobLogsWrapper>
+      );
+    }
+
+    return (
+      <JobLogsWrapper>
+        <DeprecatedWarning>
+          Not seeing your logs? Switch back to{" "}
+          <DeprecatedSelect
+            onClick={() => {
+              setUseDeprecatedLogs(true);
+            }}
+          >
+            {" "}
+            deprecated logging.
+          </DeprecatedSelect>
+        </DeprecatedWarning>
+        <LogsSection
+          isFullscreen={false}
+          setIsFullscreen={() => {}}
+          overridingPodName={pods[0].metadata.name}
+          setInitData={() => {}}
+          currentChart={currentChart}
+        />
+      </JobLogsWrapper>
+    );
+  };
+
   if (isLoading) {
     return <Loading />;
   }
@@ -207,7 +228,6 @@ const ExpandedJobRun = ({
         <TitleSection icon={currentChart.chart.metadata.icon} iconWidth="33px">
           {chart.name} <Gray>at {readableDate(run.status.startTime)}</Gray>
         </TitleSection>
-
         <InfoWrapper>
           <LastDeployed>
             {renderStatus(
@@ -230,6 +250,10 @@ const ExpandedJobRun = ({
           setCurrentTab={(x: string) => setCurrentTab(x)}
           options={[
             {
+              label: "Events",
+              value: "events",
+            },
+            {
               label: "Logs",
               value: "logs",
             },
@@ -243,15 +267,8 @@ const ExpandedJobRun = ({
             },
           ]}
         >
-          {currentTab === "logs" && (
-            <JobLogsWrapper>
-              <Logs
-                selectedPod={pods[0]}
-                podError={!pods[0] ? "Pod no longer exists." : ""}
-                rawText={true}
-              />
-            </JobLogsWrapper>
-          )}
+          {currentTab === "events" && renderEventsSection()}
+          {currentTab === "logs" && renderLogsSection()}
           {currentTab === "config" && <>{renderConfigSection(run)}</>}
           {currentTab === "metrics" && (
             <JobMetricsSection jobChart={currentChart} jobRun={run} />
@@ -323,10 +340,9 @@ const ConfigSection = styled.div`
 
 const JobLogsWrapper = styled.div`
   min-height: 450px;
-  height: 55vh;
+  height: 65vh;
   width: 100%;
   border-radius: 8px;
-  background-color: black;
   overflow-y: auto;
 `;
 
@@ -467,4 +483,17 @@ const StyledExpandedChart = styled.div`
       opacity: 1;
     }
   }
+`;
+
+const DeprecatedWarning = styled.div`
+  font-size: 12px;
+  color: #ccc;
+  text-align: right;
+  width: 100%;
+  margin-bottom: 20px;
+`;
+
+const DeprecatedSelect = styled.span`
+  cursor: pointer;
+  color: #949effff;
 `;

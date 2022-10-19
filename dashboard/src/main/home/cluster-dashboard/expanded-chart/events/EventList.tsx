@@ -30,15 +30,27 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .listPorterEvents("<token>", filters, {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-      })
-      .then((res) => {
-        setEvents(res.data.events);
-        setIsLoading(false);
-      });
+    if (filters.job_name) {
+      api
+        .listPorterJobEvents("<token>", filters, {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        })
+        .then((res) => {
+          setEvents(res.data.events);
+          setIsLoading(false);
+        });
+    } else {
+      api
+        .listPorterEvents("<token>", filters, {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        })
+        .then((res) => {
+          setEvents(res.data.events);
+          setIsLoading(false);
+        });
+    }
   }, []);
 
   useEffect(() => {
@@ -49,11 +61,12 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
     api
       .getIncidentEvents(
         "<token>",
-        {},
+        {
+          incident_id: expandedEvent.id,
+        },
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
-          incident_id: expandedEvent.id,
         }
       )
       .then((res) => {
@@ -65,11 +78,12 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
     api
       .getIncidentEvents(
         "<token>",
-        {},
+        {
+          incident_id: incident.id,
+        },
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
-          incident_id: incident.id,
         }
       )
       .then((res) => {
@@ -121,6 +135,24 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
     );
   };
 
+  const renderJobStartedCell = (timestamp: any) => {
+    return (
+      <NameWrapper>
+        <AlertIcon src={time} />
+        The job started at {readableDate(timestamp)}
+      </NameWrapper>
+    );
+  };
+
+  const renderJobFinishedCell = (timestamp: any) => {
+    return (
+      <NameWrapper>
+        <AlertIcon src={time} />
+        The job finished at {readableDate(timestamp)}
+      </NameWrapper>
+    );
+  };
+
   const columns = React.useMemo(
     () => [
       {
@@ -135,6 +167,10 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
                 return renderIncidentSummaryCell(row.original.data);
               } else if (row.original.type == "deployment_finished") {
                 return renderDeploymentFinishedCell(row.original.data);
+              } else if (row.original.type == "job_started") {
+                return renderJobStartedCell(row.original.timestamp);
+              } else if (row.original.type == "job_finished") {
+                return renderJobFinishedCell(row.original.timestamp);
               }
 
               return null;

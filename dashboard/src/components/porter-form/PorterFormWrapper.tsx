@@ -78,7 +78,7 @@ const PorterFormWrapper: React.FC<PropsType> = ({
   };
 
   // Lifted into PorterFormWrapper to allow tab to be remembered on re-render (e.g., on revision select)
-  const [currentTab, setCurrentTab] = useState(getInitialTab);
+  const [currentTab, setCurrentTab] = useState(getInitialTab());
 
   useEffect(() => {
     if (overrideCurrentTab) {

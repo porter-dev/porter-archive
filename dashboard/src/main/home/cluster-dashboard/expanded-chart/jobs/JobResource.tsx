@@ -560,7 +560,7 @@ const Subtitle = styled.div`
 `;
 
 const JobLogsWrapper = styled.div`
-  height: 250px;
+  max-height: 500px;
   width: 100%;
   background-color: black;
   overflow-y: auto;

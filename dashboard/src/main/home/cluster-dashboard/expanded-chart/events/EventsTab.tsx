@@ -1,109 +1,43 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useContext, useState } from "react";
+import api from "shared/api";
 import styled from "styled-components";
-import EventCard from "components/events/EventCard";
+import EventList from "./EventList";
 import Loading from "components/Loading";
 import InfiniteScroll from "react-infinite-scroll-component";
+import { Context } from "shared/Context";
 import Dropdown from "components/Dropdown";
-import { useKubeEvents } from "components/events/useEvents";
-import { ChartType } from "shared/types";
-import _, { isEmpty, isObject } from "lodash";
-import SubEventsList from "components/events/SubEventsList";
 
-const availableResourceTypes = [
-  { label: "Pods", value: "pod" },
-  { label: "HPA", value: "hpa" },
-];
-
-const EventsTab: React.FC<{
-  controllers: Record<string, Record<string, any>>;
-}> = (props) => {
-  const { controllers } = props;
-  const [resourceType, setResourceType] = useState(availableResourceTypes[0]);
-  const [currentEvent, setCurrentEvent] = useState(null);
-
-  const [selectedControllerKey, setSelectedControllerKey] = useState(null);
-
-  const [hasControllers, setHasControllers] = useState(null);
-
-  const controllerOptions = useMemo(() => {
-    if (typeof controllers !== "object") {
-      return [];
-    }
-
-    return Object.entries(controllers).map(([key, value]) => ({
-      label: value?.metadata?.name,
-      value: key,
-    }));
-  }, [controllers]);
-
-  const currentControllerOption = useMemo(() => {
-    return (
-      controllerOptions?.find((c) => c.value === selectedControllerKey) ||
-      controllerOptions[0]
-    );
-  }, [selectedControllerKey, controllerOptions]);
-
-  const selectedController = controllers[currentControllerOption?.value];
-
-  const {
-    isLoading,
-    hasPorterAgent,
-    triggerInstall,
-    kubeEvents,
-    loadMoreEvents,
-    hasMore,
-  } = useKubeEvents({
-    resourceType: resourceType.value as any,
-    ownerName: selectedController?.metadata?.name,
-    ownerType: selectedController?.kind,
-    ownerNamespace: selectedController?.metadata?.namespace,
-    shouldWaitForOwner: true,
-  });
+const EventsTab: React.FC = () => {
+  const [hasPorterAgent, setHasPorterAgent] = useState(true);
+  const { currentProject, currentCluster } = useContext(Context);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout = null;
+    setIsLoading(false);
+  }, []);
 
-    const checkControllers = (counter = 0) => {
-      if (timer !== null) {
-        clearTimeout(timer);
-      }
+  const installAgent = async () => {
+    const project_id = currentProject?.id;
+    const cluster_id = currentCluster?.id;
 
-      if (isEmpty(controllers) && counter === 5) {
-        clearTimeout(timer);
-        setHasControllers(false);
-      } else {
-        if (isEmpty(controllers)) {
-          timer = setTimeout(() => {
-            checkControllers(counter + 1);
-          }, 2000);
-        } else {
-          setHasControllers(true);
-        }
-      }
-    };
+    api
+      .installPorterAgent("<token>", {}, { project_id, cluster_id })
+      .then(() => {
+        setHasPorterAgent(true);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
 
-    checkControllers();
+  const triggerInstall = () => {
+    installAgent();
+  };
 
-    return () => {
-      if (timer !== null) {
-        clearTimeout(timer);
-      }
-    };
-  }, [controllers]);
-
-  if (isLoading && hasControllers === null) {
+  if (isLoading) {
     return (
       <Placeholder>
         <Loading />
-      </Placeholder>
-    );
-  }
-
-  if (!hasControllers) {
-    return (
-      <Placeholder>
-        <i className="material-icons">search</i>
-        We coulnd't find any controllers for this application.
       </Placeholder>
     );
   }
@@ -113,8 +47,7 @@ const EventsTab: React.FC<{
       <Placeholder>
         <div>
           <Header>We couldn't detect the Porter agent on your cluster</Header>
-          In order to use the events tab, you need to install the Porter agent
-          on your cluster.
+          In order to use the events tab, you need to install the Porter agent.
           <InstallPorterAgentButton onClick={() => triggerInstall()}>
             <i className="material-icons">add</i> Install Porter agent
           </InstallPorterAgentButton>
@@ -123,64 +56,9 @@ const EventsTab: React.FC<{
     );
   }
 
-  if (currentEvent) {
-    return (
-      <SubEventsList
-        event={currentEvent}
-        clearSelectedEvent={() => setCurrentEvent(null)}
-      />
-    );
-  }
-
   return (
     <EventsPageWrapper>
-      {kubeEvents.length > 0 ? (
-        <>
-          <ControlRow>
-            {/*
-              <Dropdown
-                selectedOption={resourceType}
-                options={availableResourceTypes}
-                onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
-              />
-              */}
-            <Label>Controller -</Label>
-            <Dropdown
-              selectedOption={currentControllerOption}
-              options={controllerOptions}
-              onSelect={(o) => setSelectedControllerKey(o?.value)}
-            />
-          </ControlRow>
-
-          <InfiniteScroll
-            dataLength={kubeEvents.length}
-            next={loadMoreEvents}
-            hasMore={hasMore}
-            loader={<h4>Loading...</h4>}
-            scrollableTarget="HomeViewWrapper"
-          >
-            <EventsGrid>
-              {kubeEvents.map((event, i) => {
-                return (
-                  <React.Fragment key={i}>
-                    <EventCard
-                      event={event as any}
-                      selectEvent={() => {
-                        setCurrentEvent(event);
-                      }}
-                    />
-                  </React.Fragment>
-                );
-              })}
-            </EventsGrid>
-          </InfiniteScroll>
-        </>
-      ) : (
-        <Placeholder>
-          <i className="material-icons">search</i>
-          No matching events were found.
-        </Placeholder>
-      )}
+      <EventList />
     </EventsPageWrapper>
   );
 };

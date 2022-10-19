@@ -815,15 +815,15 @@ func isPodExited(pod *v1.Pod) bool {
 
 func handlePodAttachError(err error, config *PorterRunSharedConfig, namespace, podName, container string) error {
 	if verbose {
-		color.New(color.FgYellow).Printf("Error: %s\n", err)
+		color.New(color.FgYellow).Fprintf(os.Stderr, "Error: %s\n", err)
 	}
-	color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:")
+	color.New(color.FgYellow).Fprintln(os.Stderr, "Could not open a shell to this container. Container logs:")
 
 	var writtenBytes int64
 	writtenBytes, _ = pipePodLogsToStdout(config, namespace, podName, container, false)
 
 	if verbose || writtenBytes == 0 {
-		color.New(color.FgYellow).Println("Could not get logs. Pod events:")
+		color.New(color.FgYellow).Fprintln(os.Stderr, "Could not get logs. Pod events:")
 		pipeEventsToStdout(config, namespace, podName, container, false)
 	}
 	return err
@@ -892,7 +892,7 @@ func deletePod(config *PorterRunSharedConfig, name, namespace string) error {
 	)
 
 	if err != nil {
-		color.New(color.FgRed).Printf("Could not delete ephemeral pod: %s\n", err.Error())
+		color.New(color.FgRed).Fprintf(os.Stderr, "Could not delete ephemeral pod: %s\n", err.Error())
 		return err
 	}
 

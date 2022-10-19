@@ -14,6 +14,7 @@ import RevisionSection from "./RevisionSection";
 import ValuesYaml from "./ValuesYaml";
 import GraphSection from "./GraphSection";
 import MetricsSection from "./metrics/MetricsSection";
+import LogsSection from "./logs-section/LogsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
@@ -22,10 +23,11 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import DeploymentType from "./DeploymentType";
-import IncidentsTab from "./incidents/IncidentsTab";
+import EventsTab from "./events/EventsTab";
 import BuildSettingsTab from "./build-settings/BuildSettingsTab";
 import { DisabledNamespacesForIncidents } from "./incidents/DisabledNamespaces";
 import { useStackEnvGroups } from "./useStackEnvGroups";
+import DeployStatusSection from "./deploy-status-section/DeployStatusSection";
 
 type Props = {
   namespace: string;
@@ -74,6 +76,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [isAuthorized] = useAuth();
   const [fullScreenLogs, setFullScreenLogs] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   const {
     isStack,
@@ -131,6 +134,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const getControllers = async (chart: ChartType) => {
+    
     // don't retrieve controllers for chart that failed to even deploy.
     if (chart.info.status == "failed") return;
 
@@ -412,16 +416,23 @@ const ExpandedChart: React.FC<Props> = (props) => {
     let { setSidebar } = props;
     let chart = currentChart;
     switch (currentTab) {
+      case "logs":
+        return (
+          <LogsSection 
+            currentChart={chart}
+            isFullscreen={isFullscreen}
+            setIsFullscreen={setIsFullscreen}
+          />
+        );
       case "metrics":
         return <MetricsSection currentChart={chart} />;
-      case "incidents":
+      case "events":
         if (DisabledNamespacesForIncidents.includes(currentChart.namespace)) {
           return null;
         }
         return (
-          <IncidentsTab
-            releaseName={chart?.name}
-            namespace={chart?.namespace}
+          <EventsTab
+            controllers={controllers}
           />
         );
       case "status":
@@ -525,13 +536,18 @@ const ExpandedChart: React.FC<Props> = (props) => {
     // Collate non-form tabs
     let rightTabOptions = [] as any[];
     let leftTabOptions = [] as any[];
-    leftTabOptions.push({ label: "Status", value: "status" });
-
-    /* Temporarily disable incident detection
-    if (!DisabledNamespacesForIncidents.includes(currentChart.namespace)) {
-      leftTabOptions.push({ label: "Incidents", value: "incidents" });
+    if (
+      currentChart.chart.metadata.home === "https://getporter.dev/" &&
+      (
+        currentChart.chart.metadata.name === "web" || 
+        currentChart.chart.metadata.name === "worker" ||
+        currentChart.chart.metadata.name === "job"
+      )
+    ) {
+      leftTabOptions.push({ label: "Events", value: "events" });
+      leftTabOptions.push({ label: "Logs", value: "logs" });
     }
-    */
+    leftTabOptions.push({ label: "Status", value: "status" });
 
     if (props.isMetricsInstalled) {
       leftTabOptions.push({ label: "Metrics", value: "metrics" });
@@ -586,9 +602,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const renderUrl = () => {
     if (url) {
       return (
-        <Url href={url} target="_blank">
+        <Url>
           <i className="material-icons">link</i>
-          {url}
+          <a href={url} target="_blank">{url}</a>
         </Url>
       );
     }
@@ -756,134 +772,147 @@ const ExpandedChart: React.FC<Props> = (props) => {
           setFullScreenLogs={() => setFullScreenLogs(false)}
         />
       ) : (
-        <StyledExpandedChart>
-          <BreadcrumbRow>
-            <Breadcrumb onClick={props.closeChart}>
-              <ArrowIcon src={leftArrow} />
-              <Wrap>Back</Wrap>
-            </Breadcrumb>
-          </BreadcrumbRow>
-          <HeaderWrapper>
-            <TitleSection
-              icon={currentChart.chart.metadata.icon}
-              iconWidth="33px"
-            >
-              {currentChart.name}
-              <DeploymentType currentChart={currentChart} />
-              <TagWrapper>
-                Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
-              </TagWrapper>
-            </TitleSection>
-
-            {currentChart.chart.metadata.name != "worker" &&
-              currentChart.chart.metadata.name != "job" &&
-              renderUrl()}
-            <InfoWrapper>
-              <StatusIndicator
-                controllers={controllers}
-                status={currentChart.info.status}
-                margin_left={"0px"}
-              />
-              <LastDeployed>
-                <Dot>•</Dot>Last deployed
-                {" " + getReadableDate(currentChart.info.last_deployed)}
-              </LastDeployed>
-            </InfoWrapper>
-          </HeaderWrapper>
-          {deleting ? (
-            <>
-              <LineBreak />
-              <Placeholder>
-                <TextWrap>
-                  <Header>
-                    <Spinner src={loadingSrc} /> Deleting "{currentChart.name}"
-                  </Header>
-                  You will be automatically redirected after deletion is
-                  complete.
-                </TextWrap>
-              </Placeholder>
-            </>
+        <>
+          {isFullscreen ? (
+            <LogsSection 
+              isFullscreen={true}
+              setIsFullscreen={setIsFullscreen}
+              currentChart={currentChart} 
+            />
           ) : (
-            <>
-              <RevisionSection
-                showRevisions={showRevisions}
-                toggleShowRevisions={() => {
-                  setShowRevisions(!showRevisions);
-                }}
-                chart={currentChart}
-                refreshChart={() => getChartData(currentChart)}
-                setRevision={setRevision}
-                forceRefreshRevisions={forceRefreshRevisions}
-                refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-                shouldUpdate={
-                  currentChart.latest_version &&
-                  currentChart.latest_version !==
-                    currentChart.chart.metadata.version
-                }
-                latestVersion={currentChart.latest_version}
-                upgradeVersion={handleUpgradeVersion}
-              />
-              {isStack && isLoadingStackEnvGroups ? (
+            <StyledExpandedChart>
+              <BreadcrumbRow>
+                <Breadcrumb onClick={props.closeChart}>
+                  <ArrowIcon src={leftArrow} />
+                  <Wrap>Back</Wrap>
+                </Breadcrumb>
+              </BreadcrumbRow>
+              <HeaderWrapper>
+                <TitleSection
+                  icon={currentChart.chart.metadata.icon}
+                  iconWidth="33px"
+                >
+                  {currentChart.name}
+                  <DeploymentType currentChart={currentChart} />
+                  <TagWrapper>
+                    Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
+                  </TagWrapper>
+                </TitleSection>
+
+                {currentChart.chart.metadata.name != "worker" &&
+                  currentChart.chart.metadata.name != "job" &&
+                  renderUrl()}
+                <InfoWrapper>
+                  {/*
+                  <StatusIndicator
+                    controllers={controllers}
+                    status={currentChart.info.status}
+                    margin_left={"0px"}
+                  />
+                  */}
+                  <DeployStatusSection chart={currentChart} />
+                  <LastDeployed>
+                    <Dot>•</Dot>Last deployed
+                    {" " + getReadableDate(currentChart.info.last_deployed)}
+                  </LastDeployed>
+                </InfoWrapper>
+              </HeaderWrapper>
+              {deleting ? (
                 <>
                   <LineBreak />
                   <Placeholder>
                     <TextWrap>
                       <Header>
-                        <Spinner src={loadingSrc} />
+                        <Spinner src={loadingSrc} /> Deleting "{currentChart.name}"
                       </Header>
+                      You will be automatically redirected after deletion is
+                      complete.
                     </TextWrap>
                   </Placeholder>
                 </>
               ) : (
                 <>
-                  {(isPreview || leftTabOptions.length > 0) && (
-                    <BodyWrapper>
-                      <PorterFormWrapper
-                        formData={cloneDeep(currentChart.form)}
-                        valuesToOverride={{
-                          namespace: props.namespace,
-                          clusterId: currentCluster.id,
-                        }}
-                        renderTabContents={renderTabContents}
-                        isReadOnly={
-                          isPreview ||
-                          imageIsPlaceholder ||
-                          !isAuthorized("application", "", ["get", "update"])
-                        }
-                        onSubmit={onSubmit}
-                        includeMetadata
-                        rightTabOptions={rightTabOptions}
-                        leftTabOptions={leftTabOptions}
-                        color={isPreview ? "#f5cb42" : null}
-                        addendum={
-                          <TabButton
-                            onClick={toggleDevOpsMode}
-                            devOpsMode={devOpsMode}
-                          >
-                            <i className="material-icons">offline_bolt</i>{" "}
-                            DevOps Mode
-                          </TabButton>
-                        }
-                        saveValuesStatus={saveValuesStatus}
-                        injectedProps={{
-                          "key-value-array": {
-                            availableSyncEnvGroups:
-                              isStack && !isPreview
-                                ? stackEnvGroups
-                                : undefined,
-                          },
-                          "url-link": {
-                            chart: currentChart,
-                          },
-                        }}
-                      />
-                    </BodyWrapper>
+                  <RevisionSection
+                    showRevisions={showRevisions}
+                    toggleShowRevisions={() => {
+                      setShowRevisions(!showRevisions);
+                    }}
+                    chart={currentChart}
+                    refreshChart={() => getChartData(currentChart)}
+                    setRevision={setRevision}
+                    forceRefreshRevisions={forceRefreshRevisions}
+                    refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+                    shouldUpdate={
+                      currentChart.latest_version &&
+                      currentChart.latest_version !==
+                        currentChart.chart.metadata.version
+                    }
+                    latestVersion={currentChart.latest_version}
+                    upgradeVersion={handleUpgradeVersion}
+                  />
+                  {isStack && isLoadingStackEnvGroups ? (
+                    <>
+                      <LineBreak />
+                      <Placeholder>
+                        <TextWrap>
+                          <Header>
+                            <Spinner src={loadingSrc} />
+                          </Header>
+                        </TextWrap>
+                      </Placeholder>
+                    </>
+                  ) : (
+                    <>
+                      {(isPreview || leftTabOptions.length > 0) && (
+                        <BodyWrapper>
+                          <PorterFormWrapper
+                            formData={cloneDeep(currentChart.form)}
+                            valuesToOverride={{
+                              namespace: props.namespace,
+                              clusterId: currentCluster.id,
+                            }}
+                            renderTabContents={renderTabContents}
+                            isReadOnly={
+                              isPreview ||
+                              imageIsPlaceholder ||
+                              !isAuthorized("application", "", ["get", "update"])
+                            }
+                            onSubmit={onSubmit}
+                            includeMetadata
+                            rightTabOptions={rightTabOptions}
+                            leftTabOptions={leftTabOptions}
+                            color={isPreview ? "#f5cb42" : null}
+                            addendum={
+                              <TabButton
+                                onClick={toggleDevOpsMode}
+                                devOpsMode={devOpsMode}
+                              >
+                                <i className="material-icons">offline_bolt</i>{" "}
+                                DevOps Mode
+                              </TabButton>
+                            }
+                            saveValuesStatus={saveValuesStatus}
+                            injectedProps={{
+                              "key-value-array": {
+                                availableSyncEnvGroups:
+                                  isStack && !isPreview
+                                    ? stackEnvGroups
+                                    : undefined,
+                              },
+                              "url-link": {
+                                chart: currentChart,
+                              },
+                            }}
+                          />
+                        </BodyWrapper>
+                      )}
+                    </>
                   )}
                 </>
               )}
-            </>
+            </StyledExpandedChart>
           )}
-        </StyledExpandedChart>
+        </>
       )}
     </>
   );
@@ -936,7 +965,8 @@ const LineBreak = styled.div`
 
 const BodyWrapper = styled.div`
   position: relative;
-  margin-bottom: 50px;
+  padding-bottom: 0;
+  margin-bottom: 0;
 `;
 
 const Header = styled.div`
@@ -975,15 +1005,16 @@ const Bolded = styled.div`
   margin-right: 6px;
 `;
 
-const Url = styled.a`
+const Url = styled.div`
   display: block;
-  margin-left: 2px;
+  margin-left: 5px;
   font-size: 13px;
   margin-top: 16px;
   user-select: all;
   margin-bottom: -5px;
   user-select: text;
   display: flex;
+  color: #949eff;
   align-items: center;
 
   > i {
@@ -1026,7 +1057,7 @@ const HeaderWrapper = styled.div`
 `;
 
 const Dot = styled.div`
-  margin-right: 9px;
+  margin-right: 16px;
 `;
 
 const InfoWrapper = styled.div`
@@ -1038,7 +1069,7 @@ const InfoWrapper = styled.div`
 
 const LastDeployed = styled.div`
   font-size: 13px;
-  margin-left: 10px;
+  margin-left: 8px;
   margin-top: -1px;
   display: flex;
   align-items: center;

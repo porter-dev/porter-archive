@@ -88,7 +88,13 @@ module.exports = () => {
           test: /\.(png|svg|jpg|gif|mp3)$/,
           use: ["file-loader"],
         },
-        { test: /\.css$/, use: ["css-loader"] },
+        {
+          test: /\.css$/i,
+          loader: "css-loader",
+          options: {
+            import: true,
+          },
+        },
         {
           test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
           use: [

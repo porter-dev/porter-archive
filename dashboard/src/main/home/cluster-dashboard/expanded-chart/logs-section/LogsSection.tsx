@@ -32,7 +32,7 @@ type Props = {
   isFullscreen: boolean;
   setIsFullscreen: (x: boolean) => void;
   initData?: InitLogData;
-  setInitData: (initData: InitLogData) => void;
+  setInitData?: (initData: InitLogData) => void;
 };
 
 const escapeRegExp = (str: string) => {
@@ -58,21 +58,7 @@ const QueryModeSelectionToggle = (props: QueryModeSelectionToggleProps) => {
           onClick={() => props.setSelectedDate(undefined)}
           selected={!props.selectedDate}
         >
-          <span
-            style={{
-              display: "inline-black",
-              width: "0.5rem",
-              height: "0.5rem",
-              marginRight: "5px",
-              borderRadius: "20px",
-              backgroundColor: "#ed5f85",
-              border: "0px",
-              outline: "none",
-              boxShadow: props.selectedDate
-                ? "none"
-                : "0px 0px 5px 1px #ed5f85",
-            }}
-          ></span>
+          <Dot selected={!props.selectedDate} />
           Live
         </ToggleOption>
         <ToggleOption
@@ -80,18 +66,33 @@ const QueryModeSelectionToggle = (props: QueryModeSelectionToggleProps) => {
           onClick={() => props.setSelectedDate(dayjs().toDate())}
           selected={!!props.selectedDate}
         >
-          <TimeIcon src={time} />
+          <TimeIcon 
+            src={time} 
+            selected={!!props.selectedDate}
+          />
+          {props.selectedDate && (
+            <DateTimePicker
+              startDate={props.selectedDate}
+              setStartDate={props.setSelectedDate}
+            />
+          )}
         </ToggleOption>
       </ToggleButton>
-      {props.selectedDate && (
-        <DateTimePicker
-          startDate={props.selectedDate}
-          setStartDate={props.setSelectedDate}
-        />
-      )}
     </div>
   );
 };
+
+const Dot = styled.div<{ selected?: boolean }>`
+  display: inline-black;
+  width: 8px;
+  height: 8px;
+  margin-right: 9px;
+  border-radius: 20px;
+  background: ${props => props.selected ? "#ed5f85" : "#ffffff22"};
+  border: 0px;
+  outline: none;
+  box-shadow: ${props => props.selected ? "0px 0px 5px 1px #ed5f85" : ""};
+`;
 
 const LogsSection: React.FC<Props> = ({
   currentChart,
@@ -134,7 +135,7 @@ const LogsSection: React.FC<Props> = ({
           cluster_id: currentCluster.id,
         }
       )
-      .then((res) => {
+      .then((res: any) => {
         setPodFilterOpts(_.uniq(res.data ?? []));
 
         // only set pod filter if the current pod is not found in the resulting data
@@ -606,8 +607,9 @@ const ToggleButton = styled.div`
   cursor: pointer;
 `;
 
-const TimeIcon = styled.img`
+const TimeIcon = styled.img<{ selected?: boolean }>`
   width: 16px;
   height: 16px;
   z-index: 999;
+  opacity: ${props => props.selected ? "" : "50%"}
 `;

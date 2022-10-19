@@ -96,10 +96,11 @@ const overwriteAWSIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/integrations/aws/overwrite`;
 });
 
-const updateClusterName = baseApi<
+const updateCluster = baseApi<
   {
-    name: string;
+    name?: string;
     aws_cluster_id?: string;
+    agent_integration_enabled?: boolean;
   },
   {
     project_id: number;
@@ -2252,7 +2253,7 @@ export default {
   getGitlabIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
-  updateClusterName,
+  updateCluster,
   createAzureIntegration,
   createGitlabIntegration,
   createEmailVerification,

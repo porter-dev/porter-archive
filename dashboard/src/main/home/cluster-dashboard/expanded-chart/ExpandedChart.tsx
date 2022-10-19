@@ -551,7 +551,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
       currentChart.chart.metadata.home === "https://getporter.dev/" &&
       (currentChart.chart.metadata.name === "web" ||
         currentChart.chart.metadata.name === "worker" ||
-        currentChart.chart.metadata.name === "job")
+        currentChart.chart.metadata.name === "job") &&
+      currentCluster.agent_integration_enabled
     ) {
       leftTabOptions.push({ label: "Events", value: "events" });
 

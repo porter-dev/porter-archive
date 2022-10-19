@@ -1,12 +1,11 @@
 package preview
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/porter-dev/switchboard/pkg/types"
-	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 func commonValidator(resource *types.Resource) (*Source, *Target, error) {
@@ -30,31 +29,84 @@ func commonValidator(resource *types.Resource) (*Source, *Target, error) {
 }
 
 func deployDriverValidator(resource *types.Resource) error {
-	deployDriverSchema, err := schemas.ReadFile("embed/deploy_driver.schema.json")
+	source, _, err := commonValidator(resource)
 
 	if err != nil {
-		return fmt.Errorf("for resource '%s': error reading deploy driver schema: %w", resource.Name, err)
+		return err
 	}
 
-	deployDriverSchemaCompiler, err := jsonschema.CompileString("deploy_driver.schema.json", string(deployDriverSchema))
-
-	if err != nil {
-		return fmt.Errorf("for resource '%s': error compiling deploy driver schema: %w", resource.Name, err)
+	if source.Name == "" {
+		return fmt.Errorf("for resource '%s': source name cannot be empty", resource.Name)
 	}
 
-	jsonBytes, err := json.Marshal(resource)
-
-	if err != nil {
-		return fmt.Errorf("for resource '%s': error marshalling to JSON: %w", resource.Name, err)
+	if source.Repo == "" {
+		source.Repo = "https://charts.getporter.dev"
 	}
 
-	var v interface{}
+	if source.Repo == "https://charts.getporter.dev" {
+		appConfig := &ApplicationConfig{}
 
-	if err := json.Unmarshal(jsonBytes, &v); err != nil {
-		return fmt.Errorf("for resource '%s': error unmarshalling to interface: %w", resource.Name, err)
+		err = mapstructure.Decode(resource.Config, appConfig)
+
+		if err != nil {
+			return fmt.Errorf("for resource '%s': error parsing config: %w", resource.Name, err)
+		}
+
+		if appConfig.Build.Method == "" {
+			return fmt.Errorf("for resource '%s': build method cannot be empty", resource.Name)
+		} else if appConfig.Build.Method != "docker" &&
+			appConfig.Build.Method != "pack" &&
+			appConfig.Build.Method != "registry" {
+			return fmt.Errorf("for resource '%s': build method must be one of 'docker', 'pack', or 'registry'", resource.Name)
+		}
+
+		if appConfig.Build.Method == "docker" && appConfig.Build.Dockerfile == "" {
+			return fmt.Errorf("for resource '%s': dockerfile cannot be empty when using the 'docker' build method",
+				resource.Name)
+		} else if appConfig.Build.Method == "registry" && appConfig.Build.Image == "" {
+			return fmt.Errorf("for resource '%s': image cannot be empty when using the 'registry' build method",
+				resource.Name)
+		}
+
+		for _, eg := range appConfig.EnvGroups {
+			if errStrs := validation.IsDNS1123Label(eg.Name); len(errStrs) > 0 {
+				str := fmt.Sprintf("for resource '%s': invalid characters found in env group '%s' name:",
+					resource.Name, eg.Name)
+				for _, errStr := range errStrs {
+					str += fmt.Sprintf("\n  * %s", errStr)
+				}
+
+				return fmt.Errorf("%s", str)
+			}
+		}
+
+		if len(appConfig.Values) > 0 {
+			if source.Name == "web" {
+				err := validateWebChartValues(appConfig.Values)
+
+				if err != nil {
+					return fmt.Errorf("for resource '%s': error validating values for web deployment: %w",
+						resource.Name, err)
+				}
+			} else if source.Name == "worker" {
+				err := validateWorkerChartValues(appConfig.Values)
+
+				if err != nil {
+					return fmt.Errorf("for resource '%s': error validating values for worker deployment: %w",
+						resource.Name, err)
+				}
+			} else if source.Name == "job" {
+				err := validateJobChartValues(appConfig.Values)
+
+				if err != nil {
+					return fmt.Errorf("for resource '%s': error validating values for job deployment: %w",
+						resource.Name, err)
+				}
+			}
+		}
 	}
 
-	return deployDriverSchemaCompiler.Validate(v)
+	return nil
 }
 
 func buildImageDriverValidator(resource *types.Resource) error {

@@ -63,6 +63,11 @@
         }
       }
     },
+    "config": {
+      "type": "object",
+      "description": "resource configuration",
+      "additionalProperties": true
+    },
     "if": {
       "properties": {
         "source": {
@@ -73,8 +78,6 @@
     "then": {
       "properties": {
         "config": {
-          "type": "object",
-          "description": "resource configuration",
           "properties": {
             "waitForJob": {
               "type": "boolean",
@@ -187,10 +190,12 @@
               "description": "Helm values to use for the deployment",
               "additionalProperties": true
             }
-          }
+          },
+          "required": ["build"]
         }
-      }
+      },
+      "required": ["config"]
     }
   },
-  "required": ["name"]
+  "required": ["name", "source"]
 }

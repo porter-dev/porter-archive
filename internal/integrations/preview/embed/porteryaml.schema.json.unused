@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "porter.yaml version",
+      "pattern": "^v[1-9][0-9]*$"
+    },
+    "resources": {
+      "type": "array",
+      "description": "list of resources",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "resource name",
+            "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+            "maxLength": 50
+          },
+          "driver": {
+            "type": "string",
+            "description": "resource driver"
+          },
+          "depends_on": {
+            "type": "array",
+            "description": "list of resource names this resource depends on",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "description": "dependency resource name",
+              "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+              "maxLength": 50
+            }
+          },
+          "source": {
+            "type": "object",
+            "description": "resource source",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "source Helm chart name"
+              },
+              "version": {
+                "type": "string",
+                "description": "source Helm chart version"
+              },
+              "repo": {
+                "type": "string",
+                "description": "source Helm chart repo URL"
+              }
+            }
+          },
+          "target": {
+            "type": "object",
+            "description": "resource target",
+            "properties": {
+              "project": {
+                "type": "integer",
+                "description": "target Porter project ID"
+              },
+              "cluster": {
+                "type": "integer",
+                "description": "target Porter cluster ID"
+              },
+              "namespace": {
+                "type": "string",
+                "description": "target namespace"
+              },
+              "app_name": {
+                "type": "string",
+                "description": "target app name",
+                "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+                "maxLength": 50
+              }
+            }
+          },
+          "config": {
+            "type": "object",
+            "description": "resource config"
+          }
+        },
+        "required": ["name"]
+      }
+    }
+  },
+  "required": ["version", "resources"]
+}

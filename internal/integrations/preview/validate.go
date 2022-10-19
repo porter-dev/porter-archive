@@ -1,12 +1,17 @@
 package preview
 
 import (
+	"embed"
 	"errors"
 	"fmt"
 
 	"github.com/porter-dev/switchboard/pkg/parser"
 	"github.com/porter-dev/switchboard/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
+
+//go:embed embed/*.schema.json
+var schemas embed.FS
 
 var (
 	ErrNoPorterYAMLFile    = errors.New("porter.yaml does not exist in the root of this repository")
@@ -50,6 +55,15 @@ func Validate(contents string) []error {
 	}
 
 	for _, res := range resGroup.Resources {
+		if errStrs := validation.IsDNS1123Label(res.Name); len(errStrs) > 0 {
+			str := fmt.Sprintf("for resource '%s': invalid characters found in name:", res.Name)
+			for _, errStr := range errStrs {
+				str += fmt.Sprintf("\n  * %s", errStr)
+			}
+
+			errors = append(errors, fmt.Errorf("%s", str))
+		}
+
 		if validator, ok := driverValidators[res.Driver]; ok {
 			if err := validator(res); err != nil {
 				errors = append(errors, err)

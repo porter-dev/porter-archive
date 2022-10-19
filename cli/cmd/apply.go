@@ -72,16 +72,41 @@ applying a configuration:
 	},
 }
 
+// applyValidateCmd represents the "porter apply validate" command when called
+// with a porter.yaml file as an argument
+var applyValidateCmd = &cobra.Command{
+	Use:   "validate",
+	Short: "Validates a porter.yaml",
+	Run: func(*cobra.Command, []string) {
+		err := applyValidate()
+
+		if err != nil {
+			color.New(color.FgRed).Printf("Error: %s\n", err.Error())
+			os.Exit(1)
+		} else {
+			color.New(color.FgGreen).Printf("The porter.yaml file is valid!\n")
+		}
+	},
+}
+
 var porterYAML string
 
 func init() {
 	rootCmd.AddCommand(applyCmd)
 
-	applyCmd.Flags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
+	applyCmd.AddCommand(applyValidateCmd)
+
+	applyCmd.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
 	applyCmd.MarkFlagRequired("file")
 }
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+	err := applyValidate()
+
+	if err != nil {
+		return err
+	}
+
 	fileBytes, err := ioutil.ReadFile(porterYAML)
 
 	if err != nil {
@@ -133,6 +158,28 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
 		BasePath: basePath,
 	})
+}
+
+func applyValidate() error {
+	fileBytes, err := ioutil.ReadFile(porterYAML)
+
+	if err != nil {
+		return fmt.Errorf("error reading porter.yaml: %w", err)
+	}
+
+	validationErrors := previewInt.Validate(string(fileBytes))
+
+	if len(validationErrors) > 0 {
+		errString := "the following error(s) were found while validating the porter.yaml file:"
+
+		for _, err := range validationErrors {
+			errString += "\n- " + strings.ReplaceAll(err.Error(), "\n\n*", "\n  *")
+		}
+
+		return fmt.Errorf(errString)
+	}
+
+	return nil
 }
 
 func hasDeploymentHookEnvVars() bool {

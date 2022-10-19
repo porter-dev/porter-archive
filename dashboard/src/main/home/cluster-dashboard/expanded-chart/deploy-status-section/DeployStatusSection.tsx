@@ -2,15 +2,18 @@ import React, { useState, useRef, useEffect } from "react";
 import PodDropdown from "./PodDropdown";
 
 import styled from "styled-components";
+import { getPodStatus } from "./util";
 
 type Props = {
   chart?: any;
 };
 
+type DeployStatus = "Deploying" | "Deployed" | "Failed";
+
 const DeployStatusSection: React.FC<Props> = (props) => {
-  const [someState, setSomeState] = useState("");
+  const [status, setStatus] = useState<DeployStatus>("Deployed");
+  const [percentage, setPercentage] = useState("0%");
   const [isExpanded, setIsExpanded] = useState(false);
-  const [percentage, setPercentage] = useState<string>("10%");
 
   const wrapperRef = useRef<HTMLInputElement>(null);
   const parentRef = useRef<HTMLInputElement>(null);
@@ -33,30 +36,67 @@ const DeployStatusSection: React.FC<Props> = (props) => {
       setIsExpanded(false);
     }
   };
-  
-  const renderDropdown = () => {
-    if (isExpanded) {
-      return (
-        <DropdownWrapper>
-          <Dropdown ref={wrapperRef}>
-            <PodDropdown currentChart={props.chart} />
-          </Dropdown>
-        </DropdownWrapper>
-      );
+
+  const onUpdate = (props: any) => {
+    const { available, total, replicaSetArray } = props;
+    let pods = props.pods;
+
+    if (total) {
+      const remaining = (total - available) / props.total;
+      setPercentage(Math.floor(remaining * 100) + "%");
     }
-  }
+
+    if (replicaSetArray.length) {
+      pods = replicaSetArray[0];
+    }
+
+    const podStatuses = pods.map((pod: any) => getPodStatus(pod.status));
+
+    if (
+      podStatuses.every((status: string) =>
+        ["running", "Ready", "completed", "Completed"].includes(status)
+      )
+    ) {
+      setStatus("Deployed");
+      return;
+    }
+
+    if (
+      podStatuses.some((status: string) =>
+        ["failed", "failedValidation"].includes(status)
+      )
+    ) {
+      setStatus("Failed");
+      return;
+    }
+
+    setStatus("Deploying");
+  };
 
   return (
     <>
-      <StyledDeployStatusSection 
+      <StyledDeployStatusSection
         onClick={() => setIsExpanded(!isExpanded)}
         ref={parentRef}
         isExpanded={isExpanded}
       >
-        <StatusCircle percentage={percentage} />
-        Deploying
+        {status === "Deploying" ? (
+          <>
+            <StatusCircle percentage={percentage} />
+            {status}
+          </>
+        ) : (
+          <StatusWrapper>
+            <StatusColor status={status} />
+            {status}
+          </StatusWrapper>
+        )}
       </StyledDeployStatusSection>
-      {renderDropdown()}
+      <DropdownWrapper expanded={isExpanded}>
+        <Dropdown ref={wrapperRef}>
+          <PodDropdown currentChart={props.chart} onUpdate={onUpdate} />
+        </Dropdown>
+      </DropdownWrapper>
     </>
   );
 };
@@ -68,12 +108,18 @@ const StatusCircle = styled.div<{ percentage?: any }>`
   height: 16px;
   border-radius: 50%;
   margin-right: 10px;
-  background: 
-    conic-gradient(from 0deg, 
-      #ffffff33 ${props => props.percentage}, #ffffffaa 0% ${props => props.percentage});
+  background: conic-gradient(
+    from 0deg,
+    #ffffff33 ${(props) => props.percentage},
+    #ffffffaa 0% ${(props) => props.percentage}
+  );
 `;
 
-const DropdownWrapper = styled.div<{ dropdownAlignRight?: boolean }>`
+const DropdownWrapper = styled.div<{
+  dropdownAlignRight?: boolean;
+  expanded?: boolean;
+}>`
+  display: ${(props) => (props.expanded ? "block" : "none")};
   position: absolute;
   left: ${(props) => (props.dropdownAlignRight ? "" : "0")};
   right: ${(props) => (props.dropdownAlignRight ? "0" : "")};
@@ -105,11 +151,6 @@ const Dropdown = styled.div`
   border: 1px solid #aaaabb33;
 `;
 
-const DropdownIcon = styled.img`
-  width: 8px;
-  margin-left: 12px;
-`;
-
 const StyledDeployStatusSection = styled.div<{ isExpanded?: boolean }>`
   font-size: 13px;
   height: 30px;
@@ -119,7 +160,9 @@ const StyledDeployStatusSection = styled.div<{ isExpanded?: boolean }>`
   display: flex;
   margin-left: -1px;
   align-items: center;
-  ${props => props.isExpanded && `
+  ${(props) =>
+    props.isExpanded &&
+    `
   background: #26292e;
   border: 1px solid #494b4f;
   border: 1px solid #7a7b80;
@@ -135,4 +178,24 @@ const StyledDeployStatusSection = styled.div<{ isExpanded?: boolean }>`
     margin-left: -2px;
     margin-right: -1px;
   }
+`;
+
+const StatusWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+`;
+
+const StatusColor = styled.div`
+  width: 8px;
+  min-width: 8px;
+  height: 8px;
+  background: ${(props: { status: DeployStatus }) =>
+    props.status === "Deployed"
+      ? "#4797ff"
+      : props.status === "Failed"
+      ? "#ed5f85"
+      : "#f5cb42"};
+  border-radius: 20px;
 `;

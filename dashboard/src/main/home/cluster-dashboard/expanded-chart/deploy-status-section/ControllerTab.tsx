@@ -7,6 +7,8 @@ import ConfirmOverlay from "components/ConfirmOverlay";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import PodRow from "./PodRow";
 import { timeFormat } from "d3-time-format";
+import { getAvailability, getPodStatus } from "./util";
+import _ from "lodash";
 
 type Props = {
   controller: any;
@@ -16,6 +18,7 @@ type Props = {
   isLast?: boolean;
   isFirst?: boolean;
   setPodError: (x: string) => void;
+  onUpdate: (update: any) => void;
 };
 
 // Controller tab in log section that displays list of pods on click.
@@ -41,6 +44,7 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
   selectors,
   setPodError,
   selectedPod,
+  onUpdate,
 }) => {
   const [pods, setPods] = useState<ControllerTabPodType[]>([]);
   const [rawPodList, setRawPodList] = useState<any[]>([]);
@@ -197,37 +201,6 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
     return status;
   }, [controller, available, total, pods]);
 
-  const getPodStatus = (status: any) => {
-    if (
-      status?.phase === "Pending" &&
-      status?.containerStatuses !== undefined
-    ) {
-      return status.containerStatuses[0].state?.waiting?.reason || "Pending";
-    } else if (status?.phase === "Pending") {
-      return "Pending";
-    }
-
-    if (status?.phase === "Failed") {
-      return "failed";
-    }
-
-    if (status?.phase === "Running") {
-      let collatedStatus = "running";
-
-      status?.containerStatuses?.forEach((s: any) => {
-        if (s.state?.waiting) {
-          collatedStatus =
-            s.state?.waiting?.reason === "CrashLoopBackOff"
-              ? "failed"
-              : "waiting";
-        } else if (s.state?.terminated) {
-          collatedStatus = "failed";
-        }
-      });
-      return collatedStatus;
-    }
-  };
-
   const handleDeletePod = (pod: any) => {
     api
       .deletePod(
@@ -251,7 +224,7 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
   };
 
   const replicaSetArray = useMemo(() => {
-    const podsDividedByReplicaSet = pods.reduce<
+    const podsDividedByReplicaSet = _.sortBy(pods, ["revisionNumber"]).reverse().reduce<
       Array<Array<ControllerTabPodType>>
     >(function (prev, currentPod, i) {
       if (
@@ -264,34 +237,8 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       return prev;
     }, []);
 
-    if (podsDividedByReplicaSet.length === 1) {
-      return [];
-    } else {
-      return podsDividedByReplicaSet;
-    }
+    return podsDividedByReplicaSet.length === 1 ? [] : podsDividedByReplicaSet;
   }, [pods]);
-
-  const getAvailability = (kind: string, c: any) => {
-    switch (kind?.toLowerCase()) {
-      case "deployment":
-      case "replicaset":
-        return [
-          c.status?.availableReplicas ||
-            c.status?.replicas - c.status?.unavailableReplicas ||
-            0,
-          c.status?.replicas || 0,
-        ];
-      case "statefulset":
-        return [c.status?.readyReplicas || 0, c.status?.replicas || 0];
-      case "daemonset":
-        return [
-          c.status?.numberAvailable || 0,
-          c.status?.desiredNumberScheduled || 0,
-        ];
-      case "job":
-        return [1, 1];
-    }
-  };
 
   const setupWebsocket = (kind: string, controllerUid: string) => {
     let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status?`;
@@ -364,6 +311,10 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       );
     });
   };
+
+  useEffect(() => {
+    onUpdate({ pods, available, total, replicaSetArray });
+  }, [pods, replicaSetArray, available, total]);
 
   return (
     <ResourceTab

@@ -96,10 +96,11 @@ const overwriteAWSIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/integrations/aws/overwrite`;
 });
 
-const updateClusterName = baseApi<
+const updateCluster = baseApi<
   {
-    name: string;
+    name?: string;
     aws_cluster_id?: string;
+    agent_integration_enabled?: boolean;
   },
   {
     project_id: number;
@@ -2004,6 +2005,23 @@ const listPorterEvents = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/events`
 );
 
+const listPorterJobEvents = baseApi<
+  {
+    release_name?: number;
+    release_namespace?: string;
+    type?: string;
+    job_name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/events/job`
+);
+
 const listIncidents = baseApi<
   {
     release_name?: number;
@@ -2034,16 +2052,18 @@ const getIncident = baseApi<
 );
 
 const getIncidentEvents = baseApi<
-  {},
+  {
+    incident_id?: string;
+    pod_prefix?: string;
+  },
   {
     project_id: number;
     cluster_id: number;
-    incident_id: string;
   }
 >(
   "GET",
-  ({ project_id, cluster_id, incident_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/incidents/${incident_id}/events`
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents/events`
 );
 
 // STACKS
@@ -2233,7 +2253,7 @@ export default {
   getGitlabIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
-  updateClusterName,
+  updateCluster,
   createAzureIntegration,
   createGitlabIntegration,
   createEmailVerification,
@@ -2407,6 +2427,7 @@ export default {
   getLogPodValues,
   getLogs,
   listPorterEvents,
+  listPorterJobEvents,
   listIncidents,
   getIncident,
   getIncidentEvents,

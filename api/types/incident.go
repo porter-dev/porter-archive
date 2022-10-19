@@ -86,9 +86,11 @@ type IncidentEvent struct {
 
 type ListIncidentEventsRequest struct {
 	*PaginationRequest
+	IncidentID   *string `schema:"incident_id"`
 	PodName      *string `schema:"pod_name"`
 	PodNamespace *string `schema:"pod_namespace"`
 	Summary      *string `schema:"summary"`
+	PodPrefix    *string `schema:"pod_prefix"`
 }
 
 type ListIncidentEventsResponse struct {
@@ -179,4 +181,12 @@ type ListEventsRequest struct {
 type ListEventsResponse struct {
 	Events     []*Event            `json:"events" form:"required"`
 	Pagination *PaginationResponse `json:"pagination"`
+}
+
+type ListJobEventsRequest struct {
+	*PaginationRequest
+	ReleaseName      *string `schema:"release_name"`
+	ReleaseNamespace *string `schema:"release_namespace"`
+	Type             *string `schema:"type"`
+	JobName          string  `schema:"job_name" form:"required"`
 }

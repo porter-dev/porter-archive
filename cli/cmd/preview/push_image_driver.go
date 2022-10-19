@@ -34,10 +34,6 @@ func NewPushDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (d
 		return nil, err
 	}
 
-	if target.AppName == "" {
-		return nil, fmt.Errorf("target app_name is missing")
-	}
-
 	driver.target = target
 
 	return driver, nil

@@ -55,7 +55,9 @@ func Validate(contents string) []error {
 	}
 
 	for _, res := range resGroup.Resources {
-		if errStrs := validation.IsDNS1123Label(res.Name); len(errStrs) > 0 {
+		if len(res.Name) == 0 {
+			errors = append(errors, fmt.Errorf("resource has no name"))
+		} else if errStrs := validation.IsDNS1123Label(res.Name); len(errStrs) > 0 {
 			str := fmt.Sprintf("for resource '%s': invalid characters found in name:", res.Name)
 			for _, errStr := range errStrs {
 				str += fmt.Sprintf("\n  * %s", errStr)

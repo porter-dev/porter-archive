@@ -258,11 +258,6 @@ func (d *DeployDriver) ShouldApply(_ *models.Resource) bool {
 
 func (d *DeployDriver) Apply(resource *models.Resource) (*models.Resource, error) {
 	client := config.GetAPIClient()
-	name := resource.Name
-
-	if name == "" {
-		return nil, fmt.Errorf("empty resource name")
-	}
 
 	_, err := client.GetRelease(
 		context.Background(),
@@ -356,13 +351,6 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 		return nil, err
 	}
 
-	method := appConfig.Build.Method
-
-	if method != "pack" && method != "docker" && method != "registry" {
-		return nil, fmt.Errorf("for resource %s, config.build.method should either be \"docker\", \"pack\" or \"registry\"",
-			resourceName)
-	}
-
 	fullPath, err := filepath.Abs(appConfig.Build.Context)
 
 	if err != nil {
@@ -407,7 +395,7 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 		LocalPath:       fullPath,
 		LocalDockerfile: appConfig.Build.Dockerfile,
 		OverrideTag:     tag,
-		Method:          deploy.DeployBuildType(method),
+		Method:          deploy.DeployBuildType(appConfig.Build.Method),
 		EnvGroups:       appConfig.EnvGroups,
 		UseCache:        appConfig.Build.UseCache,
 	}

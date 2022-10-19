@@ -46,10 +46,6 @@ func NewUpdateConfigDriver(resource *models.Resource, opts *drivers.SharedDriver
 		return nil, err
 	}
 
-	if target.AppName == "" {
-		return nil, fmt.Errorf("target app_name is missing")
-	}
-
 	driver.target = target
 
 	return driver, nil

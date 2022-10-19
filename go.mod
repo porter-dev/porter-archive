@@ -39,7 +39,7 @@ require (
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
 	github.com/opencontainers/image-spec v1.0.3-0.20220114050600-8b9d41f48198
 	github.com/pkg/errors v0.9.1
-	github.com/porter-dev/switchboard v0.0.0-20220628112428-7665a0121e4f
+	github.com/porter-dev/switchboard v0.0.0-20221019155755-67ff2bf04935
 	github.com/rs/zerolog v1.26.0
 	github.com/sendgrid/sendgrid-go v3.8.0+incompatible
 	github.com/spf13/cobra v1.5.0
@@ -119,7 +119,10 @@ require (
 	github.com/open-policy-agent/opa v0.44.0 // indirect
 	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/santhosh-tekuri/jsonschema v1.2.4 // indirect
+	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.1 // indirect
+	github.com/tfkhsr/jsonschema v0.0.0-20180218143334-273afdd5a88c // indirect
 	github.com/xanzy/go-gitlab v0.68.0 // indirect
 	github.com/yashtewari/glob-intersection v0.1.0 // indirect
 	go.uber.org/goleak v1.1.12 // indirect

@@ -843,6 +843,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
               isFullscreen={true}
               setIsFullscreen={setIsFullscreen}
               currentChart={currentChart}
+              setInitData={() => {}}
             />
           ) : (
             <StyledExpandedChart>

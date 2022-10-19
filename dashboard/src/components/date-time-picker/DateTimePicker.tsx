@@ -13,7 +13,6 @@ type Props = {
 const DateTimePicker: React.FC<Props> = ({ startDate, setStartDate }) => {
   return (
     <DateTimePickerWrapper>
-      <TimeIcon src={time} />
       <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.14.1/react-datepicker.min.css"
@@ -53,13 +52,7 @@ const DateTimePickerWrapper = styled.div`
   align-items: center;
   justify-content: center;
   padding-right: 42px;
-  margin-right: 10px;
-  padding-left: 8px;
-  height: 30px;
-  border-radius: 5px;
-  border: 1px solid #494b4f;
-  height: 30px;
-  background: #26292e;
+  margin-left: 2px;
 `;
 
 const StyledDatePicker = styled(DatePicker)`
@@ -67,7 +60,6 @@ const StyledDatePicker = styled(DatePicker)`
   width: calc(100% + 42px);
   position: relative;
   border: none;
-  margin-bottom: 3px;
   outline-width: 0;
   background: transparent;
   text-align: center;

@@ -1,10 +1,12 @@
 package preview
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/porter-dev/switchboard/pkg/types"
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 )
 
 func commonValidator(resource *types.Resource) (*Source, *Target, error) {
@@ -28,31 +30,31 @@ func commonValidator(resource *types.Resource) (*Source, *Target, error) {
 }
 
 func deployDriverValidator(resource *types.Resource) error {
-	source, _, err := commonValidator(resource)
+	deployDriverSchema, err := schemas.ReadFile("embed/deploy_driver.schema.json")
 
 	if err != nil {
-		return err
+		return fmt.Errorf("for resource '%s': error reading deploy driver schema: %w", resource.Name, err)
 	}
 
-	if source.Name == "" {
-		return fmt.Errorf("for resource '%s': source name is empty", resource.Name)
+	deployDriverSchemaCompiler, err := jsonschema.CompileString("deploy_driver.schema.json", string(deployDriverSchema))
+
+	if err != nil {
+		return fmt.Errorf("for resource '%s': error compiling deploy driver schema: %w", resource.Name, err)
 	}
 
-	if source.Repo == "" {
-		source.Repo = "https://charts.getporter.dev"
+	jsonBytes, err := json.Marshal(resource)
+
+	if err != nil {
+		return fmt.Errorf("for resource '%s': error marshalling to JSON: %w", resource.Name, err)
 	}
 
-	if source.Repo == "https://charts.getporter.dev" {
-		appConfig := &ApplicationConfig{}
+	var v interface{}
 
-		err = mapstructure.Decode(resource.Config, appConfig)
-
-		if err != nil {
-			return fmt.Errorf("for resource '%s': error parsing config: %w", resource.Name, err)
-		}
+	if err := json.Unmarshal(jsonBytes, &v); err != nil {
+		return fmt.Errorf("for resource '%s': error unmarshalling to interface: %w", resource.Name, err)
 	}
 
-	return nil
+	return deployDriverSchemaCompiler.Validate(v)
 }
 
 func buildImageDriverValidator(resource *types.Resource) error {

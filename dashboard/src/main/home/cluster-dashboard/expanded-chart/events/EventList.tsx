@@ -16,6 +16,7 @@ import Modal from "main/home/modals/Modal";
 import time from "assets/time.svg";
 import { Context } from "shared/Context";
 import { InitLogData } from "../logs-section/LogsSection";
+import { setServers } from "dns";
 
 type Props = {
   filters: any;
@@ -28,8 +29,13 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
   const [expandedEvent, setExpandedEvent] = useState(null);
   const [expandedIncidentEvents, setExpandedIncidentEvents] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [refresh, setRefresh] = useState(true);
 
   useEffect(() => {
+    if (!refresh) {
+      return;
+    }
+
     if (filters.job_name) {
       api
         .listPorterJobEvents("<token>", filters, {
@@ -39,6 +45,7 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
         .then((res) => {
           setEvents(res.data.events);
           setIsLoading(false);
+          setRefresh(false);
         });
     } else {
       api
@@ -49,9 +56,10 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
         .then((res) => {
           setEvents(res.data.events);
           setIsLoading(false);
+          setRefresh(false);
         });
     }
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
     if (!expandedEvent) {
@@ -266,20 +274,22 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
           <Loading />
         </LoadWrapper>
       ) : (
-        <>
-          {events?.length > 0 ? (
-            <TableWrapper>
-              <EventTable columns={columns} data={events} />
-            </TableWrapper>
-          ) : (
-            <Placeholder>
-              <NoResultsFoundWrapper>
-                <Title>No results found</Title>
-                There were no results found for this filter.
-              </NoResultsFoundWrapper>
-            </Placeholder>
-          )}
-        </>
+        <TableWrapper>
+          <EventTable columns={columns} data={events} />
+          <FlexRow>
+            <Flex>
+              <Button
+                onClick={() => {
+                  setIsLoading(true);
+                  setRefresh(true);
+                }}
+              >
+                <i className="material-icons">autorenew</i>
+                Refresh
+              </Button>
+            </Flex>
+          </FlexRow>
+        </TableWrapper>
       )}
     </>
   );
@@ -446,4 +456,32 @@ const StyledMonitorList = styled.div`
 const NoResultsFoundWrapper = styled(Flex)`
   flex-direction: column;
   justify-contents: center;
+`;
+
+const Button = styled.div`
+  background: #26292e;
+  border-radius: 5px;
+  height: 30px;
+  font-size: 13px;
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  padding: 10px;
+  padding-left: 8px;
+  > i {
+    font-size: 16px;
+    margin-right: 5px;
+  }
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
+  }
+`;
+
+const FlexRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 20px;
 `;

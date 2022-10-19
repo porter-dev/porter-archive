@@ -16,6 +16,7 @@ import Modal from "main/home/modals/Modal";
 import time from "assets/time.svg";
 import { Context } from "shared/Context";
 import { InitLogData } from "../logs-section/LogsSection";
+import { setServers } from "dns";
 
 type Props = {
   filters: any;
@@ -28,18 +29,37 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
   const [expandedEvent, setExpandedEvent] = useState(null);
   const [expandedIncidentEvents, setExpandedIncidentEvents] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [refresh, setRefresh] = useState(true);
 
   useEffect(() => {
-    api
-      .listPorterEvents("<token>", filters, {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-      })
-      .then((res) => {
-        setEvents(res.data.events);
-        setIsLoading(false);
-      });
-  }, []);
+    if (!refresh) {
+      return;
+    }
+
+    if (filters.job_name) {
+      api
+        .listPorterJobEvents("<token>", filters, {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        })
+        .then((res) => {
+          setEvents(res.data.events);
+          setIsLoading(false);
+          setRefresh(false);
+        });
+    } else {
+      api
+        .listPorterEvents("<token>", filters, {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        })
+        .then((res) => {
+          setEvents(res.data.events);
+          setIsLoading(false);
+          setRefresh(false);
+        });
+    }
+  }, [refresh]);
 
   useEffect(() => {
     if (!expandedEvent) {
@@ -49,11 +69,12 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
     api
       .getIncidentEvents(
         "<token>",
-        {},
+        {
+          incident_id: expandedEvent.id,
+        },
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
-          incident_id: expandedEvent.id,
         }
       )
       .then((res) => {
@@ -65,11 +86,12 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
     api
       .getIncidentEvents(
         "<token>",
-        {},
+        {
+          incident_id: incident.id,
+        },
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
-          incident_id: incident.id,
         }
       )
       .then((res) => {
@@ -121,6 +143,24 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
     );
   };
 
+  const renderJobStartedCell = (timestamp: any) => {
+    return (
+      <NameWrapper>
+        <AlertIcon src={time} />
+        The job started at {readableDate(timestamp)}
+      </NameWrapper>
+    );
+  };
+
+  const renderJobFinishedCell = (timestamp: any) => {
+    return (
+      <NameWrapper>
+        <AlertIcon src={time} />
+        The job finished at {readableDate(timestamp)}
+      </NameWrapper>
+    );
+  };
+
   const columns = React.useMemo(
     () => [
       {
@@ -135,6 +175,10 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
                 return renderIncidentSummaryCell(row.original.data);
               } else if (row.original.type == "deployment_finished") {
                 return renderDeploymentFinishedCell(row.original.data);
+              } else if (row.original.type == "job_started") {
+                return renderJobStartedCell(row.original.timestamp);
+              } else if (row.original.type == "job_finished") {
+                return renderJobFinishedCell(row.original.timestamp);
               }
 
               return null;
@@ -230,20 +274,22 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
           <Loading />
         </LoadWrapper>
       ) : (
-        <>
-          {events?.length > 0 ? (
-            <TableWrapper>
-              <EventTable columns={columns} data={events} />
-            </TableWrapper>
-          ) : (
-            <Placeholder>
-              <NoResultsFoundWrapper>
-                <Title>No results found</Title>
-                There were no results found for this filter.
-              </NoResultsFoundWrapper>
-            </Placeholder>
-          )}
-        </>
+        <TableWrapper>
+          <EventTable columns={columns} data={events} />
+          <FlexRow>
+            <Flex>
+              <Button
+                onClick={() => {
+                  setIsLoading(true);
+                  setRefresh(true);
+                }}
+              >
+                <i className="material-icons">autorenew</i>
+                Refresh
+              </Button>
+            </Flex>
+          </FlexRow>
+        </TableWrapper>
       )}
     </>
   );
@@ -410,4 +456,32 @@ const StyledMonitorList = styled.div`
 const NoResultsFoundWrapper = styled(Flex)`
   flex-direction: column;
   justify-contents: center;
+`;
+
+const Button = styled.div`
+  background: #26292e;
+  border-radius: 5px;
+  height: 30px;
+  font-size: 13px;
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  padding: 10px;
+  padding-left: 8px;
+  > i {
+    font-size: 16px;
+    margin-right: 5px;
+  }
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
+  }
+`;
+
+const FlexRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 20px;
 `;

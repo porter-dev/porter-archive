@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 
@@ -28,6 +28,7 @@ import CronParser from "cron-parser";
 import CronPrettifier from "cronstrue";
 import BuildSettingsTab from "./build-settings/BuildSettingsTab";
 import { useStackEnvGroups } from "./useStackEnvGroups";
+import api from "shared/api";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -46,7 +47,7 @@ export const ExpandedJobChartFC: React.FC<{
   closeChart: () => void;
   setSidebar: (x: boolean) => void;
 }> = ({ currentChart: oldChart, closeChart, currentCluster }) => {
-  const { setCurrentOverlay } = useContext(Context);
+  const { currentProject, setCurrentOverlay } = useContext(Context);
   const [isAuthorized] = useAuth();
   const {
     chart,

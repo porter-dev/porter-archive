@@ -3,6 +3,7 @@ package cluster
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -93,16 +94,28 @@ func (c *NotifyResolvedIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http
 	)
 
 	if !cluster.NotificationsDisabled {
-		err := multi.NotifyResolved(
-			request, fmt.Sprintf(
-				"%s/applications/%s/%s/%s?project_id=%d",
+		url := fmt.Sprintf(
+			"%s/applications/%s/%s/%s?project_id=%d",
+			c.Config().ServerConf.ServerURL,
+			cluster.Name,
+			request.ReleaseNamespace,
+			request.ReleaseName,
+			cluster.ProjectID,
+		)
+
+		if strings.ToLower(string(request.InvolvedObjectKind)) == "job" {
+			url = fmt.Sprintf(
+				"%s/jobs/%s/%s/%s?project_id=%d&job=%s",
 				c.Config().ServerConf.ServerURL,
 				cluster.Name,
 				request.ReleaseNamespace,
 				request.ReleaseName,
 				cluster.ProjectID,
-			),
-		)
+				request.InvolvedObjectName,
+			)
+		}
+
+		err := multi.NotifyResolved(request, url)
 
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

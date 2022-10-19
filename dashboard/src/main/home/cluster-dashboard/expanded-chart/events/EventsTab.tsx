@@ -11,9 +11,14 @@ import { InitLogData } from "../logs-section/LogsSection";
 type Props = {
   currentChart: any;
   setLogData?: (logData: InitLogData) => void;
+  overridingJobName?: string;
 };
 
-const EventsTab: React.FC<Props> = ({ currentChart, setLogData }) => {
+const EventsTab: React.FC<Props> = ({
+  currentChart,
+  setLogData,
+  overridingJobName,
+}) => {
   const [hasPorterAgent, setHasPorterAgent] = useState(true);
   const { currentProject, currentCluster } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,6 +60,21 @@ const EventsTab: React.FC<Props> = ({ currentChart, setLogData }) => {
     installAgent();
   };
 
+  const getFilters = () => {
+    if (overridingJobName) {
+      return {
+        release_name: currentChart.name,
+        release_namespace: currentChart.namespace,
+        job_name: overridingJobName,
+      };
+    }
+
+    return {
+      release_name: currentChart.name,
+      release_namespace: currentChart.namespace,
+    };
+  };
+
   if (isLoading) {
     return (
       <Placeholder>
@@ -79,13 +99,7 @@ const EventsTab: React.FC<Props> = ({ currentChart, setLogData }) => {
 
   return (
     <EventsPageWrapper>
-      <EventList
-        setLogData={setLogData}
-        filters={{
-          release_name: currentChart.name,
-          release_namespace: currentChart.namespace,
-        }}
-      />
+      <EventList setLogData={setLogData} filters={getFilters()} />
     </EventsPageWrapper>
   );
 };

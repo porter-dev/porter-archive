@@ -560,7 +560,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
       currentChart.chart.metadata.home === "https://getporter.dev/" &&
       (currentChart.chart.metadata.name === "web" ||
         currentChart.chart.metadata.name === "worker" ||
-        currentChart.chart.metadata.name === "job")
+        currentChart.chart.metadata.name === "job") &&
+      currentCluster.agent_integration_enabled
     ) {
       leftTabOptions.push({ label: "Events", value: "events" });
 
@@ -762,7 +763,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         })
         .catch(console.log);
 
-        return;
+      return;
     }
 
     setCurrentChart(props.currentChart);
@@ -851,6 +852,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
               isFullscreen={true}
               setIsFullscreen={setIsFullscreen}
               currentChart={currentChart}
+              setInitData={() => {}}
             />
           ) : (
             <StyledExpandedChart>
@@ -979,14 +981,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
                               },
                             }}
                             overrideCurrentTab={overrideCurrentTab}
-                            onTabChange={
-                              (newTab) => {
-                                if (newTab !== "logs") {
-                                  setOverrideCurrentTab("");
-                                  setLogData({});
-                                }
+                            onTabChange={(newTab) => {
+                              if (newTab !== "logs") {
+                                setOverrideCurrentTab("");
+                                setLogData({});
                               }
-                            }
+                            }}
                           />
                         </BodyWrapper>
                       )}

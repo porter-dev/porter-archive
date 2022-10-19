@@ -1,3 +1,4 @@
+import Placeholder from "components/Placeholder";
 import React from "react";
 import {
   Column,
@@ -25,6 +26,10 @@ const EventTable: React.FC<TableProps> = ({
   data,
   onRowClick,
 }) => {
+  if (data.length == 0) {
+    return <Placeholder>No events found.</Placeholder>;
+  }
+
   const {
     rows,
     getTableProps,

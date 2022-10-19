@@ -5,6 +5,7 @@ export interface ClusterType {
   name: string;
   server: string;
   service_account_id: number;
+  agent_integration_enabled: boolean;
   infra_id?: number;
   service?: string;
   aws_integration_id?: number;

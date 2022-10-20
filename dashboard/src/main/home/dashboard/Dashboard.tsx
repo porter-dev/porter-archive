@@ -129,6 +129,7 @@ class Dashboard extends Component<PropsType, StateType> {
           <Banner type={helperType} noMargin>
             {helperText}
           </Banner>
+          <Br />
           <ProvisionerSettings infras={this.state.infras} provisioner={true} />
         </>
       );

@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/nodes"
 	"github.com/porter-dev/porter/internal/models"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -96,6 +97,25 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	lokiValues := make(map[string]interface{})
+
+	// case on whether a node with porter.run/workload-kind=monitoring exists. If it does, we place loki in that node group.
+	if nodes, err := nodes.ListNodesByLabels(k8sAgent.Clientset, "porter.run/workload-kind=monitoring"); err == nil && len(nodes) >= 1 {
+		lokiValues = map[string]interface{}{
+			"nodeSelector": map[string]interface{}{
+				"porter.run/workload-kind": "monitoring",
+			},
+			"tolerations": []map[string]interface{}{
+				{
+					"key":      "porter.run/workload-kind",
+					"operator": "Equal",
+					"value":    "monitoring",
+					"effect":   "NoSchedule",
+				},
+			},
+		}
+	}
+
 	porterAgentValues := map[string]interface{}{
 		"agent": map[string]interface{}{
 			"image":       "public.ecr.aws/o1j4x7p4/porter-agent:latest",
@@ -108,19 +128,7 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			"clusterID": fmt.Sprintf("%d", cluster.ID),
 			"projectID": fmt.Sprintf("%d", proj.ID),
 		},
-		"loki": map[string]interface{}{
-			"nodeSelector": map[string]interface{}{
-				"porter.run/workload-kind": "monitoring",
-			},
-			"tolerations": []map[string]interface{}{
-				{
-					"key":      "porter.run/workload-kind",
-					"operator": "Equal",
-					"value":    "monitoring",
-					"effect":   "NoSchedule",
-				},
-			},
-		},
+		"loki": lokiValues,
 	}
 
 	conf := &helm.InstallChartConfig{

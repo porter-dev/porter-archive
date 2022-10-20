@@ -22,6 +22,8 @@ const HARD_CODED_ENVS: Environment[] = [
     last_deployment_status: "failed",
     deployment_count: 12,
     mode: "manual",
+    git_repo_branches: [],
+    disable_new_comments: true,
   },
   {
     id: 13,
@@ -34,6 +36,8 @@ const HARD_CODED_ENVS: Environment[] = [
     last_deployment_status: "failed",
     deployment_count: 12,
     mode: "manual",
+    git_repo_branches: [],
+    disable_new_comments: true,
   },
 ];
 

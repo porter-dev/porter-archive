@@ -2,40 +2,74 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import styled from "styled-components";
-import Selector from "components/Selector";
-
 import Loading from "components/Loading";
-
 import _ from "lodash";
 import DeploymentCard from "./DeploymentCard";
-import { Environment, PRDeployment, PullRequest } from "../types";
+import { PRDeployment, PullRequest } from "../types";
 import { useRouting } from "shared/routing";
 import { useHistory, useLocation, useParams } from "react-router";
 import { deployments, pull_requests } from "../mocks";
-import PullRequestCard from "./PullRequestCard";
 import DynamicLink from "components/DynamicLink";
-import { PreviewEnvironmentsHeader } from "../components/PreviewEnvironmentsHeader";
-import SearchBar from "components/SearchBar";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import DocsHelper from "components/DocsHelper";
-import pullRequestIcon from "assets/pull_request_icon.svg";
 import DashboardHeader from "../../DashboardHeader";
+import RadioFilter from "components/RadioFilter";
 
-const AvailableStatusFilters = [
-  "all",
-  "created",
-  "failed",
-  "active",
-  "inactive",
-  "not_deployed",
-];
+import pullRequestIcon from "assets/pull_request_icon.svg";
+import filterOutline from "assets/filter-outline.svg";
+import sort from "assets/sort.svg";
+import { search } from "shared/search";
+
+const AvailableStatusFilters = ["all", "created", "failed", "not_deployed"];
 
 type AvailableStatusFiltersType = typeof AvailableStatusFilters[number];
 
+const HARD_CODED_DEPLOYMENTS: PRDeployment[] = [
+  {
+    id: 1,
+    created_at: "2021-03-01T00:00:00.000Z",
+    updated_at: "2021-03-01T00:00:00.000Z",
+    subdomain: "subdomain",
+    status: "created",
+    environment_id: 1,
+    pull_request_id: 1,
+    namespace: "namespace",
+    last_workflow_run_url: "",
+    gh_installation_id: 1,
+    gh_deployment_id: 1,
+    gh_pr_name: "gh_pr_name",
+    gh_repo_owner: "meehawk",
+    gh_repo_name: "meehawk",
+    gh_commit_sha: "3659ef050a687da4d04bb870b27058bd9d1957be",
+    gh_pr_branch_from: "gh_pr_branch_from",
+    gh_pr_branch_into: "gh_pr_branch_into",
+  },
+  {
+    id: 2,
+    created_at: "2021-03-01T00:00:00.000Z",
+    updated_at: "2021-03-01T00:00:00.000Z",
+    subdomain: "subdomain",
+    status: "created",
+    environment_id: 1,
+    pull_request_id: 1,
+    namespace: "namespace",
+    last_workflow_run_url: "",
+    gh_installation_id: 1,
+    gh_deployment_id: 1,
+    gh_pr_name: "some_awesome_pr",
+    gh_repo_owner: "godzilla",
+    gh_repo_name: "kong",
+    gh_commit_sha: "3659ef050a687da4d04bb870b27058bd9d1957be",
+    gh_pr_branch_from: "gh_pr_branch_from",
+    gh_pr_branch_into: "gh_pr_branch_into",
+  },
+];
+
 const DeploymentList = () => {
+  const [sortOrder, setSortOrder] = useState("Newest");
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
+  const [deploymentList, setDeploymentList] = useState<PRDeployment[]>(
+    HARD_CODED_DEPLOYMENTS
+  );
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [searchValue, setSearchValue] = useState("");
   const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
@@ -43,7 +77,7 @@ const DeploymentList = () => {
   const [
     statusSelectorVal,
     setStatusSelectorVal,
-  ] = useState<AvailableStatusFiltersType>("active");
+  ] = useState<AvailableStatusFiltersType>("all");
 
   const { currentProject, currentCluster } = useContext(Context);
   const { getQueryParam, pushQueryParams } = useRouting();
@@ -104,8 +138,8 @@ const DeploymentList = () => {
     let isSubscribed = true;
     setIsLoading(true);
 
-    Promise.allSettled([getPRDeploymentList(), getEnvironment()]).then(
-      ([getDeploymentsResponse, getEnvironmentResponse]) => {
+    Promise.allSettled([getPRDeploymentList(), getEnvironment()])
+      .then(([getDeploymentsResponse, getEnvironmentResponse]) => {
         const deploymentList =
           getDeploymentsResponse.status === "fulfilled"
             ? getDeploymentsResponse.value.data
@@ -119,14 +153,16 @@ const DeploymentList = () => {
           return;
         }
 
-        setDeploymentList(deploymentList.deployments || []);
+        setDeploymentList(deploymentList.deployments || HARD_CODED_DEPLOYMENTS);
         setPullRequests(deploymentList.pull_requests || []);
 
         setNewCommentsDisabled(environmentList.new_comments_disabled || false);
 
         setIsLoading(false);
-      }
-    );
+      })
+      .catch(() => {
+        setDeploymentList(HARD_CODED_DEPLOYMENTS);
+      });
 
     return () => {
       isSubscribed = false;
@@ -173,28 +209,14 @@ const DeploymentList = () => {
   };
 
   const filteredDeployments = useMemo(() => {
-    // Only filter out inactive when status filter is "active"
-    if (statusSelectorVal === "active") {
-      return deploymentList
-        .filter((d) => {
-          return d.status !== "inactive";
-        })
-        .filter((d) => {
-          return Object.values(d).find(searchFilter) !== undefined;
-        });
-    }
+    const filteredDeploymentList = deploymentList.filter(
+      (d) => !["deleted", "inactive"].includes(d.status)
+    );
 
-    if (statusSelectorVal === "inactive") {
-      return deploymentList
-        .filter((d) => {
-          return d.status === "inactive";
-        })
-        .filter((d) => {
-          return Object.values(d).find(searchFilter) !== undefined;
-        });
-    }
-
-    return deploymentList;
+    return search<PRDeployment>(filteredDeploymentList, searchValue, {
+      isCaseSensitive: false,
+      keys: ["gh_pr_name", "gh_repo_name", "gh_repo_owner"],
+    });
   }, [statusSelectorVal, deploymentList, searchValue]);
 
   const filteredPullRequests = useMemo(() => {
@@ -216,7 +238,7 @@ const DeploymentList = () => {
       );
     }
 
-    if (!deploymentList.length && !pullRequests.length) {
+    if (!deploymentList.length) {
       return (
         <Placeholder>
           No preview apps have been found. Open a PR to create a new preview
@@ -225,7 +247,7 @@ const DeploymentList = () => {
       );
     }
 
-    if (!filteredDeployments.length && !filteredPullRequests.length) {
+    if (!filteredDeployments.length) {
       return (
         <Placeholder>
           No preview apps have been found with the given filter.
@@ -235,7 +257,8 @@ const DeploymentList = () => {
 
     return (
       <>
-        {filteredPullRequests.map((pr) => {
+        {/* Deprecated -> New Preview Env button */}
+        {/* {filteredPullRequests.map((pr) => {
           return (
             <PullRequestCard
               key={pr.pr_title}
@@ -243,7 +266,7 @@ const DeploymentList = () => {
               onCreation={handlePreviewEnvironmentManualCreation}
             />
           );
-        })}
+        })} */}
         {filteredDeployments.map((d) => {
           return (
             <DeploymentCard
@@ -257,11 +280,6 @@ const DeploymentList = () => {
         })}
       </>
     );
-  };
-
-  const handleStatusFilterChange = (value: string) => {
-    pushQueryParams({ status_filter: value });
-    setStatusSelectorVal(value);
   };
 
   const handleToggleCommentStatus = (currentlyDisabled: boolean) => {
@@ -282,6 +300,10 @@ const DeploymentList = () => {
       });
   };
 
+  useEffect(() => {
+    pushQueryParams({ status_filter: statusSelectorVal });
+  }, [statusSelectorVal]);
+
   return (
     <>
       <BreadcrumbRow>
@@ -294,7 +316,7 @@ const DeploymentList = () => {
         image="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
         title={
           <Flex>
-            <StyledLink 
+            <StyledLink
               to={`https://github.com/${selectedRepo}`}
               target="_blank"
             >
@@ -303,11 +325,7 @@ const DeploymentList = () => {
             <DynamicLink
               to={`/preview-environments/deployments/${environment_id}/${repo_owner}/${repo_name}/settings`}
             >
-              <I
-                className="material-icons"
-              >
-                more_vert
-              </I>
+              <I className="material-icons">more_vert</I>
             </DynamicLink>
           </Flex>
         }
@@ -315,7 +333,7 @@ const DeploymentList = () => {
         disableLineBreak
         capitalize={false}
       />
-      <Flex>
+      {/* <Flex>
         <ActionsWrapper>
           <StyledStatusSelector>
             <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
@@ -351,7 +369,55 @@ const DeploymentList = () => {
             />
           </StyledStatusSelector>
         </ActionsWrapper>
-      </Flex>
+      </Flex> */}
+      <FlexRow>
+        <Flex>
+          <SearchRowWrapper>
+            <SearchBarWrapper>
+              <i className="material-icons">search</i>
+              <SearchInput
+                value={searchValue}
+                onChange={(e: any) => {
+                  setSearchValue(e.target.value);
+                }}
+                placeholder="Search"
+              />
+            </SearchBarWrapper>
+          </SearchRowWrapper>
+          <RadioFilter
+            icon={filterOutline}
+            selected={statusSelectorVal}
+            setSelected={setStatusSelectorVal}
+            options={AvailableStatusFilters.map((filter) => ({
+              value: filter,
+              label: _.startCase(filter),
+            }))}
+            name="Status"
+          />
+        </Flex>
+        <Flex>
+          <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
+            <i className="material-icons">refresh</i>
+          </RefreshButton>
+          <RadioFilter
+            icon={sort}
+            selected={sortOrder}
+            setSelected={setSortOrder}
+            options={[
+              { label: "Newest", value: "Newest" },
+              { label: "Oldest", value: "Oldest" },
+              { label: "Alphabetical", value: "Alphabetical" },
+            ]}
+            name="Sort"
+          />
+          <CreatePreviewEnvironmentButton
+            // TODO Justin: Implement Preview Environment
+            onClick={_.noop}
+          >
+            <i className="material-icons">add</i> New preview env
+          </CreatePreviewEnvironmentButton>
+        </Flex>
+      </FlexRow>
       <Container>
         <EventsGrid>{renderDeploymentList()}</EventsGrid>
       </Container>
@@ -387,7 +453,7 @@ const I = styled.i`
   justify-content: center;
   :hover {
     background: #26292e;
-    border: 1px solid #494b4f; 
+    border: 1px solid #494b4f;
   }
 `;
 
@@ -471,11 +537,6 @@ const Title = styled.div`
   color: #ffffff;
 `;
 
-const ActionsWrapper = styled.div`
-  display: flex;
-  margin-left: auto;
-`;
-
 const RefreshButton = styled.button`
   display: flex;
   align-items: center;
@@ -545,30 +606,83 @@ const SearchInput = styled.input`
   background: none;
   width: 100%;
   color: white;
-  padding: 0;
-  height: 20px;
+  height: 100%;
 `;
 
 const SearchRow = styled.div`
   display: flex;
-  width: 100%;
-  font-size: 13px;
-  color: #ffffff55;
-  border-radius: 4px;
-  user-select: none;
   align-items: center;
-  padding: 10px 0px;
-  min-width: 300px;
-  max-width: min-content;
-  max-height: 35px;
-  background: #ffffff11;
-  margin-right: 15px;
+  height: 30px;
+  margin-right: 10px;
+  background: #26292e;
+  border-radius: 5px;
+  border: 1px solid #aaaabb33;
+`;
 
-  i {
+const SearchRowWrapper = styled(SearchRow)`
+  border-radius: 5px;
+  width: 250px;
+`;
+
+const SearchBarWrapper = styled.div`
+  display: flex;
+  flex: 1;
+
+  > i {
+    color: #aaaabb;
+    padding-top: 1px;
+    margin-left: 8px;
+    font-size: 16px;
+    margin-right: 8px;
+  }
+`;
+
+const FlexRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+`;
+
+const CreatePreviewEnvironmentButton = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-left: 10px;
+  justify-content: space-between;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: "Work Sans", sans-serif;
+  border-radius: 5px;
+  font-weight: 500;
+  color: white;
+  height: 30px;
+  padding: 0 8px;
+  min-width: 155px;
+  padding-right: 13px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#616FEEcc"};
+  :hover {
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#505edddd"};
+  }
+
+  > i {
+    color: white;
     width: 18px;
     height: 18px;
-    margin-left: 12px;
-    margin-right: 12px;
-    font-size: 20px;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+    justify-content: center;
   }
 `;

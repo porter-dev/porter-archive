@@ -104,6 +104,10 @@ type ServerConf struct {
 
 	// Enable gitlab integration
 	EnableGitlab bool `env:"ENABLE_GITLAB,default=false"`
+
+	// DisableRegistrySecretsInjection is used to denote if Porter should not inject
+	// imagePullSecrets into a kubernetes deployment (Porter application)
+	DisablePullSecretsInjection bool `env:"DISABLE_PULL_SECRETS_INJECTION,default=false"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

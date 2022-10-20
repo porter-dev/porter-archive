@@ -10,12 +10,41 @@ import { Environment } from "../types";
 import EnvironmentCard from "./EnvironmentCard";
 import Placeholder from "components/Placeholder";
 
+const HARD_CODED_ENVS: Environment[] = [
+  {
+    id: 12,
+    project_id: 1234,
+    cluster_id: 4321,
+    git_installation_id: 55,
+    name: "asdf",
+    git_repo_owner: "owned",
+    git_repo_name: "this-is-a-repo",
+    last_deployment_status: "failed",
+    deployment_count: 12,
+    mode: "manual",
+  },
+  {
+    id: 13,
+    project_id: 1234,
+    cluster_id: 4321,
+    git_installation_id: 55,
+    name: "asdf",
+    git_repo_owner: "owned",
+    git_repo_name: "this-is-a-repo",
+    last_deployment_status: "failed",
+    deployment_count: 12,
+    mode: "manual",
+  },
+];
+
 const EnvironmentsList = () => {
   const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [buttonIsReady, setButtonIsReady] = useState(false);
 
-  const [environments, setEnvironments] = useState<Environment[]>([]);
+  const [environments, setEnvironments] = useState<Environment[]>(
+    HARD_CODED_ENVS
+  );
 
   const removeEnvironmentFromList = (deletedEnv: Environment) => {
     setEnvironments((prev) => {
@@ -56,34 +85,12 @@ const EnvironmentsList = () => {
       }
 
       setEnvironments(envs);
+
+      //
+      setEnvironments(HARD_CODED_ENVS);
     } catch (error) {
       // ret2: remove placeholder (set to empty array)
-      setEnvironments([
-        {
-          id: 12,
-          project_id: 1234,
-          cluster_id: 4321,
-          git_installation_id: 55,
-          name: "asdf",
-          git_repo_owner: "owned",
-          git_repo_name: "this-is-a-repo",
-          last_deployment_status: "failed",
-          deployment_count: 12,
-          mode: "manual",
-        },
-        {
-          id: 13,
-          project_id: 1234,
-          cluster_id: 4321,
-          git_installation_id: 55,
-          name: "asdf",
-          git_repo_owner: "owned",
-          git_repo_name: "this-is-a-repo",
-          last_deployment_status: "failed",
-          deployment_count: 12,
-          mode: "manual",
-        },
-      ]);
+      setEnvironments(HARD_CODED_ENVS);
     }
   };
 
@@ -111,11 +118,16 @@ const EnvironmentsList = () => {
           <ButtonEnablePREnvironments setIsReady={setButtonIsReady} />
         </ControlRow>
         {isLoading ? (
-          <LoadingWrapper><Loading /></LoadingWrapper>
+          <LoadingWrapper>
+            <Loading />
+          </LoadingWrapper>
         ) : (
           <>
             {environments.length === 0 ? (
-              <Placeholder title="No repositories found" height="calc(100vh - 400px)">
+              <Placeholder
+                title="No repositories found"
+                height="calc(100vh - 400px)"
+              >
                 No repositories were found with Preview Environments enabled.
               </Placeholder>
             ) : (

@@ -101,7 +101,9 @@ const DeploymentCard: React.FC<{
   };
 
   return (
-    <DeploymentCardWrapper>
+    <DeploymentCardWrapper
+      to={`/preview-environments/details/${deployment.namespace}?environment_id=${deployment.environment_id}`}
+    >
       <DataContainer>
         <PRName>
           <PRIcon src={pr_icon} alt="pull request icon" />
@@ -176,55 +178,31 @@ const DeploymentCard: React.FC<{
               </>
             ) : null}
 
-            {deployment.status !== DeploymentStatus.Creating &&
-              deployment.status !== DeploymentStatus.Inactive && (
-                <>
-                  <RowButton
-                    to={`/preview-environments/details/${deployment.namespace}?environment_id=${deployment.environment_id}`}
-                    key={deployment.id}
-                  >
-                    <i className="material-icons-outlined">info</i>
-                    Details
-                  </RowButton>
-                  <RowButton
-                    to={deployment.subdomain}
-                    key={deployment.subdomain}
-                    target="_blank"
-                  >
-                    <i className="material-icons">open_in_new</i>
-                    View Live
-                  </RowButton>
-                </>
-              )}
-            {deployment.status === DeploymentStatus.Inactive ? (
-              <ActionButton
-                onClick={reEnablePreviewEnvironment}
-                disabled={isLoading}
-                hasError={hasErrorOnReEnabling}
-              >
-                {isLoading ? (
-                  <Loading width="198px" height="14px" />
-                ) : (
-                  <>
-                    <i className="material-icons">play_arrow</i>
-                    Activate Preview Environment
-                  </>
-                )}
-              </ActionButton>
-            ) : (
-              <Button
-                onClick={() => {
-                  setCurrentOverlay({
-                    message: `Are you sure you want to delete this deployment?`,
-                    onYes: deleteDeployment,
-                    onNo: () => setCurrentOverlay(null),
-                  });
-                }}
-              >
-                <i className="material-icons">delete</i>
-                Delete
-              </Button>
+            {deployment.status !== DeploymentStatus.Creating && (
+              <>
+                <RowButton
+                  to={deployment.subdomain}
+                  key={deployment.subdomain}
+                  target="_blank"
+                >
+                  <i className="material-icons">open_in_new</i>
+                  View Live
+                </RowButton>
+                <I className="material-icons">more_vert</I>
+              </>
             )}
+            {/* <Button
+              onClick={() => {
+                setCurrentOverlay({
+                  message: `Are you sure you want to delete this deployment?`,
+                  onYes: deleteDeployment,
+                  onNo: () => setCurrentOverlay(null),
+                });
+              }}
+            >
+              <i className="material-icons">delete</i>
+              Delete
+            </Button> */}
           </>
         ) : (
           <DeleteMessage>
@@ -308,7 +286,7 @@ const PRName = styled.div`
   margin-bottom: 10px;
 `;
 
-const DeploymentCardWrapper = styled.div`
+const DeploymentCardWrapper = styled(DynamicLink)`
   display: flex;
   justify-content: space-between;
   font-size: 13px;
@@ -514,5 +492,23 @@ const MergeInfo = styled.div`
   > i {
     font-size: 16px;
     margin: 0 2px;
+  }
+`;
+
+const I = styled.i`
+  user-select: none;
+  margin-left: 15px;
+  color: #aaaabb;
+  cursor: pointer;
+  border-radius: 40px;
+  font-size: 18px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  &:hover {
+    background: #26292e;
+    border: 1px solid #494b4f;
   }
 `;

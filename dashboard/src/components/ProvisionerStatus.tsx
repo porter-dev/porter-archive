@@ -464,11 +464,11 @@ export const OperationDetails: React.FunctionComponent<OperationDetailsProps> = 
 
     const wsConfig = {
       onopen: () => {
-        console.log(`connected to websocket:`, websocketID);
+        // console.log(`connected to websocket:`, websocketID);
       },
       onmessage: parseOperationWebsocketEvent,
       onclose: () => {
-        console.log(`closing websocket:`, websocketID);
+        // console.log(`closing websocket:`, websocketID);
       },
       onerror: (err: ErrorEvent) => {
         console.log(err);

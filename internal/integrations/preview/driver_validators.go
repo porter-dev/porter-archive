@@ -2,7 +2,9 @@ package preview
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/docker/distribution/reference"
 	"github.com/mitchellh/mapstructure"
 	"github.com/porter-dev/switchboard/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -67,9 +69,22 @@ func deployDriverValidator(resource *types.Resource) error {
 		if appConfig.Build.Method == "docker" && appConfig.Build.Dockerfile == "" {
 			return fmt.Errorf("for resource '%s': dockerfile cannot be empty when using the 'docker' build method",
 				resource.Name)
-		} else if appConfig.Build.Method == "registry" && appConfig.Build.Image == "" {
-			return fmt.Errorf("for resource '%s': image cannot be empty when using the 'registry' build method",
-				resource.Name)
+		} else if appConfig.Build.Method == "registry" {
+			if appConfig.Build.Image == "" {
+				return fmt.Errorf("for resource '%s': image cannot be empty when using the 'registry' build method",
+					resource.Name)
+			} else if !strings.Contains(appConfig.Build.Image, "{") {
+				if len(strings.Split(appConfig.Build.Image, ":")) != 2 {
+					return fmt.Errorf("for resource '%s': image must be in the format 'image:tag'", resource.Name)
+				}
+
+				// check for valid image
+				_, err := reference.ParseNamed(appConfig.Build.Image)
+
+				if err != nil {
+					return fmt.Errorf("for resource '%s': error parsing image: %w", resource.Name, err)
+				}
+			}
 		}
 
 		for _, eg := range appConfig.EnvGroups {
@@ -154,9 +169,22 @@ func buildImageDriverValidator(resource *types.Resource) error {
 	if driverConfig.Build.Method == "docker" && driverConfig.Build.Dockerfile == "" {
 		return fmt.Errorf("for resource '%s': dockerfile cannot be empty when using the 'docker' build method",
 			resource.Name)
-	} else if driverConfig.Build.Method == "registry" && driverConfig.Build.Image == "" {
-		return fmt.Errorf("for resource '%s': image cannot be empty when using the 'registry' build method",
-			resource.Name)
+	} else if driverConfig.Build.Method == "registry" {
+		if driverConfig.Build.Image == "" {
+			return fmt.Errorf("for resource '%s': image cannot be empty when using the 'registry' build method",
+				resource.Name)
+		} else if !strings.Contains(driverConfig.Build.Image, "{") {
+			if len(strings.Split(driverConfig.Build.Image, ":")) != 2 {
+				return fmt.Errorf("for resource '%s': image must be in the format 'image:tag'", resource.Name)
+			}
+
+			// check for valid image
+			_, err := reference.ParseNamed(driverConfig.Build.Image)
+
+			if err != nil {
+				return fmt.Errorf("for resource '%s': error parsing image: %w", resource.Name, err)
+			}
+		}
 	}
 
 	for _, eg := range driverConfig.EnvGroups {
@@ -206,6 +234,17 @@ func pushImageDriverValidator(resource *types.Resource) error {
 
 	if driverConfig.Push.Image == "" {
 		return fmt.Errorf("for resource '%s': image cannot be empty", resource.Name)
+	} else if !strings.Contains(driverConfig.Push.Image, "{") {
+		if len(strings.Split(driverConfig.Push.Image, ":")) != 2 {
+			return fmt.Errorf("for resource '%s': image must be in the format 'image:tag'", resource.Name)
+		}
+
+		// check for valid image
+		_, err := reference.ParseNamed(driverConfig.Push.Image)
+
+		if err != nil {
+			return fmt.Errorf("for resource '%s': error parsing image: %w", resource.Name, err)
+		}
 	}
 
 	return nil

@@ -179,14 +179,14 @@ const DeploymentList = () => {
               : {};
           const porterYAMLErrors =
             validatePorterYAMLResponse.status === "fulfilled"
-              ? validatePorterYAMLResponse.value.data
+              ? validatePorterYAMLResponse.value.data.errors
               : [];
 
           if (!isSubscribed) {
             return;
           }
 
-          setPorterYAMLErrors(porterYAMLErrors.errors);
+          setPorterYAMLErrors(porterYAMLErrors);
           setDeploymentList(
             deploymentList.deployments || HARD_CODED_DEPLOYMENTS
           );

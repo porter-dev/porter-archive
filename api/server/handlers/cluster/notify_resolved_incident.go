@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/notifier/sendgrid"
 	"github.com/porter-dev/porter/internal/notifier/slack"
+	"gorm.io/gorm"
 )
 
 type NotifyResolvedIncidentHandler struct {
@@ -46,7 +48,7 @@ func (c *NotifyResolvedIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	rel, err := c.Repo().Release().ReadRelease(cluster.ID, request.ReleaseName, request.ReleaseNamespace)
 
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

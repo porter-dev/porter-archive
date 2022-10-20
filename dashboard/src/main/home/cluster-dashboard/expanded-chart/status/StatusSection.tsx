@@ -32,7 +32,6 @@ const StatusSectionFC: React.FunctionComponent<Props> = ({
   );
 
   useEffect(() => {
-    console.log(currentChart);
     let isSubscribed = true;
     api
       .getChartControllers(

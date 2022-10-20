@@ -41,8 +41,8 @@
           "default": true
         },
         "annotations": {
-          "type": "array",
-          "items": {
+          "type": "object",
+          "additionalProperties": {
             "type": "string"
           }
         },

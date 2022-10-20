@@ -89,7 +89,7 @@ const DeploymentDetail = () => {
           return;
         }
 
-        setPorterYAMLErrors(data.errors);
+        setPorterYAMLErrors(data.errors ?? []);
       })
       .catch((err) => {
         console.error(err);
@@ -183,12 +183,9 @@ const DeploymentDetail = () => {
             Your porter.yaml file has errors. Please fix them before deploying.
             <LinkButton
               onClick={() => {
-                let yamlErrors = "";
-
-                porterYAMLErrors.forEach((err) => {
-                  yamlErrors += "- " + err + "\n";
-                });
-
+                const yamlErrors = porterYAMLErrors
+                  .map((err) => `- ${err}`)
+                  .join("\n");
                 setExpandedPorterYAMLErrors(yamlErrors);
               }}
             >

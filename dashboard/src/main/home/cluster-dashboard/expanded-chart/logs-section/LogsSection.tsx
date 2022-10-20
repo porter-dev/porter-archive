@@ -67,10 +67,7 @@ const QueryModeSelectionToggle = (props: QueryModeSelectionToggleProps) => {
           onClick={() => props.setSelectedDate(dayjs().toDate())}
           selected={!!props.selectedDate}
         >
-          <TimeIcon 
-            src={time} 
-            selected={!!props.selectedDate}
-          />
+          <TimeIcon src={time} selected={!!props.selectedDate} />
           {props.selectedDate && (
             <DateTimePicker
               startDate={props.selectedDate}
@@ -89,10 +86,10 @@ const Dot = styled.div<{ selected?: boolean }>`
   height: 8px;
   margin-right: 9px;
   border-radius: 20px;
-  background: ${props => props.selected ? "#ed5f85" : "#ffffff22"};
+  background: ${(props) => (props.selected ? "#ed5f85" : "#ffffff22")};
   border: 0px;
   outline: none;
-  box-shadow: ${props => props.selected ? "0px 0px 5px 1px #ed5f85" : ""};
+  box-shadow: ${(props) => (props.selected ? "0px 0px 5px 1px #ed5f85" : "")};
 `;
 
 const LogsSection: React.FC<Props> = ({
@@ -623,5 +620,5 @@ const TimeIcon = styled.img<{ selected?: boolean }>`
   width: 16px;
   height: 16px;
   z-index: 999;
-  opacity: ${props => props.selected ? "" : "50%"}
+  opacity: ${(props) => (props.selected ? "" : "50%")};
 `;

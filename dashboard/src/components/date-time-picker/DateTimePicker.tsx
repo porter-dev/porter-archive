@@ -4,6 +4,7 @@ import DatePicker from "react-datepicker";
 import time from "assets/time.svg";
 
 import styled from "styled-components";
+import "./react-datepicker.css";
 
 type Props = {
   startDate: any;
@@ -12,11 +13,12 @@ type Props = {
 
 const DateTimePicker: React.FC<Props> = ({ startDate, setStartDate }) => {
   return (
-    <DateTimePickerWrapper>
-      <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.14.1/react-datepicker.min.css"
-      />
+    <DateTimePickerWrapper
+      onClick={(e) => {
+        e.stopPropagation();
+        e.nativeEvent.stopImmediatePropagation();
+      }}
+    >
       <Bar />
       <StyledDatePicker
         selected={startDate}

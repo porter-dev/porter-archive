@@ -6,7 +6,7 @@ import { Context } from "shared/Context";
 import TitleSection from "components/TitleSection";
 
 type PropsType = {
-  image: any;
+  image?: any;
   title: any;
   description?: string;
   materialIconClass?: string;

@@ -51,7 +51,7 @@ const getLatestPod = (pods: any[]) => {
     .shift();
 };
 
-const renderStatus = (job: any, pods: any[], time: string) => {
+const renderStatus = (job: any, time: string) => {
   if (job.status?.succeeded >= 1) {
     return <Status color="#38a88a">Succeeded {time}</Status>;
   }
@@ -204,7 +204,7 @@ const ExpandedJobRun = ({
         <LogsSection
           isFullscreen={false}
           setIsFullscreen={() => {}}
-          overridingPodName={pods[0].metadata.name}
+          overridingPodName={pods[0]?.metadata?.name || jobRun.metadata?.name}
           setInitData={() => {}}
           currentChart={currentChart}
         />
@@ -256,7 +256,6 @@ const ExpandedJobRun = ({
           <LastDeployed>
             {renderStatus(
               run,
-              pods,
               run.status.completionTime
                 ? readableDate(run.status.completionTime)
                 : ""

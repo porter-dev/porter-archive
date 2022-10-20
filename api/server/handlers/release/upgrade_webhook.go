@@ -173,7 +173,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		),
 	}
 
-	rel, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf)
+	rel, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 
 	if err != nil {
 		notifyOpts.Status = slack.StatusHelmFailed

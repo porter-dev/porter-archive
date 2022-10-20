@@ -13,7 +13,10 @@ import DynamicLink from "components/DynamicLink";
 import DashboardHeader from "../../DashboardHeader";
 import RadioFilter from "components/RadioFilter";
 import Placeholder from "components/Placeholder";
+import Banner from "components/Banner";
+import Modal from "main/home/modals/Modal";
 
+import document from "assets/document.svg";
 import pullRequestIcon from "assets/pull_request_icon.svg";
 import filterOutline from "assets/filter-outline.svg";
 import sort from "assets/sort.svg";
@@ -74,6 +77,10 @@ const DeploymentList = () => {
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [searchValue, setSearchValue] = useState("");
   const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
+  const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
+  const [expandedPorterYAMLErrors, setExpandedPorterYAMLErrors] = useState(
+    null
+  );
 
   const [
     statusSelectorVal,
@@ -118,6 +125,18 @@ const DeploymentList = () => {
     );
   };
 
+  const validatePorterYAML = () => {
+    return api.validatePorterYAML(
+      "<token>",
+      {},
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+        environment_id: Number(environment_id),
+      }
+    );
+  };
+
   useEffect(() => {
     const status_filter = getQueryParam("status_filter");
 
@@ -139,28 +158,47 @@ const DeploymentList = () => {
     let isSubscribed = true;
     setIsLoading(true);
 
-    Promise.allSettled([getPRDeploymentList(), getEnvironment()])
-      .then(([getDeploymentsResponse, getEnvironmentResponse]) => {
-        const deploymentList =
-          getDeploymentsResponse.status === "fulfilled"
-            ? getDeploymentsResponse.value.data
-            : {};
-        const environmentList =
-          getEnvironmentResponse.status === "fulfilled"
-            ? getEnvironmentResponse.value.data
-            : {};
+    Promise.allSettled([
+      validatePorterYAML(),
+      getPRDeploymentList(),
+      getEnvironment(),
+    ])
+      .then(
+        ([
+          validatePorterYAMLResponse,
+          getDeploymentsResponse,
+          getEnvironmentResponse,
+        ]) => {
+          const deploymentList =
+            getDeploymentsResponse.status === "fulfilled"
+              ? getDeploymentsResponse.value.data
+              : {};
+          const environmentList =
+            getEnvironmentResponse.status === "fulfilled"
+              ? getEnvironmentResponse.value.data
+              : {};
+          const porterYAMLErrors =
+            validatePorterYAMLResponse.status === "fulfilled"
+              ? validatePorterYAMLResponse.value.data
+              : [];
 
-        if (!isSubscribed) {
-          return;
+          if (!isSubscribed) {
+            return;
+          }
+
+          setPorterYAMLErrors(porterYAMLErrors.errors);
+          setDeploymentList(
+            deploymentList.deployments || HARD_CODED_DEPLOYMENTS
+          );
+          setPullRequests(deploymentList.pull_requests || []);
+
+          setNewCommentsDisabled(
+            environmentList.new_comments_disabled || false
+          );
+
+          setIsLoading(false);
         }
-
-        setDeploymentList(deploymentList.deployments || HARD_CODED_DEPLOYMENTS);
-        setPullRequests(deploymentList.pull_requests || []);
-
-        setNewCommentsDisabled(environmentList.new_comments_disabled || false);
-
-        setIsLoading(false);
-      })
+      )
       .catch(() => {
         setDeploymentList(HARD_CODED_DEPLOYMENTS);
       });
@@ -307,6 +345,17 @@ const DeploymentList = () => {
 
   return (
     <>
+      {expandedPorterYAMLErrors && (
+        <Modal
+          onRequestClose={() => setExpandedPorterYAMLErrors(null)}
+          height="auto"
+        >
+          <Message>
+            <img src={document} />
+            {expandedPorterYAMLErrors}
+          </Message>
+        </Modal>
+      )}
       <BreadcrumbRow>
         <Breadcrumb to="/preview-environments">
           <ArrowIcon src={pullRequestIcon} />
@@ -334,6 +383,24 @@ const DeploymentList = () => {
         disableLineBreak
         capitalize={false}
       />
+      {porterYAMLErrors.length > 0 ? (
+        <Banner type="error">
+          Your porter.yaml file has errors. Please fix them before deploying.
+          <LinkButton
+            onClick={() => {
+              let yamlErrors = "";
+
+              porterYAMLErrors.forEach((err) => {
+                yamlErrors += "- " + err + "\n";
+              });
+
+              setExpandedPorterYAMLErrors(yamlErrors);
+            }}
+          >
+            View details
+          </LinkButton>
+        </Banner>
+      ) : null}
       {/* <Flex>
         <ActionsWrapper>
           <StyledStatusSelector>
@@ -466,6 +533,27 @@ const StyledLink = styled(DynamicLink)`
   color: white;
   :hover {
     text-decoration: underline;
+  }
+`;
+
+const LinkButton = styled.a`
+  text-decoration: underline;
+  margin-left: 7px;
+  cursor: pointer;
+`;
+
+const Message = styled.div`
+  padding: 20px;
+  background: #26292e;
+  border-radius: 5px;
+  line-height: 1.5em;
+  border: 1px solid #aaaabb33;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  > img {
+    width: 13px;
+    margin-right: 20px;
   }
 `;
 

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"os"
 	"strings"
 
 	"github.com/fatih/color"
@@ -32,7 +33,7 @@ func checkLoginAndRun(args []string, runner func(user *types.GetAuthenticatedUse
 			return ErrCannotConnect
 		}
 
-		red.Printf("Error: %v\n", err.Error())
+		red.Fprintf(os.Stderr, "Error: %v\n", err.Error())
 		return err
 	}
 
@@ -51,7 +52,7 @@ func checkLoginAndRun(args []string, runner func(user *types.GetAuthenticatedUse
 			return nil
 		}
 
-		red.Printf("Error: %v\n", err.Error())
+		red.Fprintf(os.Stderr, "Error: %v\n", err.Error())
 		return err
 	}
 

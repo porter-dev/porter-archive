@@ -81,7 +81,7 @@ var applyValidateCmd = &cobra.Command{
 		err := applyValidate()
 
 		if err != nil {
-			color.New(color.FgRed).Printf("Error: %s\n", err.Error())
+			color.New(color.FgRed).Fprintf(os.Stderr, "Error: %s\n", err.Error())
 			os.Exit(1)
 		} else {
 			color.New(color.FgGreen).Printf("The porter.yaml file is valid!\n")

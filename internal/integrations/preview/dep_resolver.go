@@ -34,10 +34,12 @@ func (r *dependencyResolver) Resolve() error {
 			r.graph[resource.Name] = append(r.graph[resource.Name], resource.DependsOn...)
 		}
 
-		err := r.depResolve(r.resources[0].Name)
+		for _, resource := range r.resources {
+			err := r.depResolve(resource.Name)
 
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -49,7 +51,7 @@ func (r *dependencyResolver) depResolve(name string) error {
 
 	for _, dep := range r.graph[name] {
 		if _, ok := r.graph[dep]; !ok {
-			return fmt.Errorf("no such resource as: '%s'", dep)
+			return fmt.Errorf("for resource '%s': invalid dependency '%s'", name, dep)
 		}
 
 		if _, ok := r.resolved[dep]; !ok {

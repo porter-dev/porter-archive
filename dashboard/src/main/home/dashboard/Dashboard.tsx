@@ -116,23 +116,18 @@ class Dashboard extends Component<PropsType, StateType> {
       );
     } else if (this.currentTab() === "create-cluster") {
       let helperText = "Create a cluster to link to this project";
-      let helperIcon = "info";
-      let helperColor = "white";
+      let helperType = "info";
       if (
-        this.context.hasBillingEnabled &&
-        this.context.usage.current.clusters !== 0 &&
-        this.context.usage.current.clusters >= this.context.usage.limit.clusters
+        true
       ) {
         helperText =
           "You need to update your billing to provision or connect a new cluster";
-        helperIcon = "warning";
-        helperColor = "#f5cb42";
+        helperType = "warning";
       }
       return (
         <>
-          <Banner type="warning">
-            <i className="material-icons">warning</i>
-            Project is in trouble
+          <Banner type={helperType} noMargin>
+            {helperText}
           </Banner>
           <ProvisionerSettings infras={this.state.infras} provisioner={true} />
         </>
@@ -199,9 +194,6 @@ class Dashboard extends Component<PropsType, StateType> {
                       <i className="material-icons">info</i> Info
                     </InfoLabel>
                   </TopRow>
-                  <Banner type="error">
-                    GitHub has an ongoing incident: https://www.githubstatus.com/incidents/w0q17vf0dzjr
-                  </Banner>
                   <Description>
                     Project overview for {currentProject && currentProject.name}
                     .

@@ -710,6 +710,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   // Check if porter agent is installed. If not installed hide the `Logs` component
   useEffect(() => {
+    if (!currentCluster.agent_integration_enabled) {
+      return;
+    }
+
     api
       .detectPorterAgent(
         "<token>",

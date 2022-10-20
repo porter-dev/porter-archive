@@ -3,36 +3,108 @@ import Loading from "components/Loading";
 import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
-import { Context } from "shared/Context";
 import { useParams } from "react-router";
-import { PRDeployment } from "../types";
 import DashboardHeader from "../../DashboardHeader";
 import PullRequestIcon from "assets/pull_request_icon.svg";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import CheckboxRow from "components/form-components/CheckboxRow";
+import { Environment, EnvironmentDeploymentMode } from "../types";
+import SaveButton from "components/SaveButton";
+import _ from "lodash";
+import { Context } from "shared/Context";
+import PageNotFound from "components/PageNotFound";
 
+/**
+ * 
+ * TODO Soham:
+ * 
+ * - Handle errors when fetching environments
+ * - Handle errors when the environment is not found
+ * - Handle errors on saving and deleting the environment
+ */
 const EnvironmentSettings: React.FC = () => {
-  const { environment_id, repo_name, repo_owner } = useParams<{
+  const [error, setError] = useState("");
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
+  const [environment, setEnvironment] = useState<Environment>();
+  const [saveStatus, setSaveStatus] = useState("");
+  const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
+  const [
+    deploymentMode,
+    setDeploymentMode,
+  ] = useState<EnvironmentDeploymentMode>("manual");
+  const {
+    environment_id: environmentId,
+    repo_name: repoName,
+    repo_owner: repoOwner,
+  } = useParams<{
     environment_id: string;
     repo_name: string;
     repo_owner: string;
   }>();
 
-  const selectedRepo = `${repo_owner}/${repo_name}`;
- 
+  const selectedRepo = `${repoOwner}/${repoName}`;
+
+  useEffect(() => {
+    const getPreviewEnvironmentSettings = async () => {
+      const { data: environment } = await api.getEnvironment<Environment>(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          environment_id: parseInt(environmentId),
+        }
+      );
+
+      setEnvironment(environment);
+      setNewCommentsDisabled(environment.disable_new_comments);
+      setDeploymentMode(environment.mode);
+    };
+
+    try {
+      getPreviewEnvironmentSettings();
+    } catch (err) {
+      setCurrentError(err);
+    }
+  }, []);
+
+  const handleSave = async () => {
+    setSaveStatus("loading");
+
+    try {
+      await api.updateEnvironment(
+        "<token>",
+        {
+          mode: deploymentMode,
+          disable_new_comments: newCommentsDisabled,
+          git_repo_branches: [],
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          environment_id: Number(environmentId),
+        }
+      );
+    } catch (err) {
+      setCurrentError(err);
+    }
+
+    setSaveStatus("");
+  };
+
   return (
     <>
       <BreadcrumbRow>
-        <Breadcrumb
-          to={`/preview-environments/deployments/settings`}
-        >
+        <Breadcrumb to={`/preview-environments/deployments/settings`}>
           <ArrowIcon src={PullRequestIcon} />
           <Wrap>Preview environments</Wrap>
         </Breadcrumb>
         <Slash>/</Slash>
         <Breadcrumb
-          to={`/preview-environments/deployments/${environment_id}/${selectedRepo}`}
+          to={`/preview-environments/deployments/${environmentId}/${selectedRepo}`}
         >
           <Icon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
           <Wrap>{selectedRepo}</Wrap>
@@ -48,29 +120,45 @@ const EnvironmentSettings: React.FC = () => {
       <StyledPlaceholder>
         <Heading isAtTop>Pull request comment settings</Heading>
         <Helper>
-          Update the most recent PR comment on every deploy. If disabled, a new PR comment is made per deploy.
+          Update the most recent PR comment on every deploy. If disabled, a new
+          PR comment is made per deploy.
         </Helper>
         <CheckboxRow
           label="Update the most recent PR comment"
-          checked={true}
-          toggle={() => console.log("implement")}
+          checked={!newCommentsDisabled}
+          toggle={() => setNewCommentsDisabled(!newCommentsDisabled)}
         />
-        <Br/>
+        <Br />
         <Heading>Automatic preview deployments</Heading>
         <Helper>
-          When enabled, preview deployments are automatically created for all new pull requests.
+          When enabled, preview deployments are automatically created for all
+          new pull requests.
         </Helper>
         <CheckboxRow
           label="Automatically create preview deployments"
-          checked={true}
-          toggle={() => console.log("implement")}
+          checked={deploymentMode === "auto"}
+          toggle={() =>
+            setDeploymentMode((deploymentMode) =>
+              deploymentMode === "auto" ? "manual" : "auto"
+            )
+          }
         />
-        <Br/>
+        <SavePreviewEnvironmentSettings
+          text={"Save"}
+          status={saveStatus}
+          clearPosition={true}
+          statusPosition={"right"}
+          onClick={handleSave}
+        />
+        <Br />
         <Heading>Delete preview environment</Heading>
         <Helper>
-          Delete the Porter preview environment integration for this repo. All preview deployments will also be destroyed.
+          Delete the Porter preview environment integration for this repo. All
+          preview deployments will also be destroyed.
         </Helper>
-        <DeleteButton>Delete preview environment</DeleteButton>
+        <DeleteButton disabled={saveStatus === "loading"} onClick={_.noop}>
+          Delete preview environment
+        </DeleteButton>
       </StyledPlaceholder>
     </>
   );
@@ -78,7 +166,11 @@ const EnvironmentSettings: React.FC = () => {
 
 export default EnvironmentSettings;
 
-const DeleteButton = styled.div`
+const SavePreviewEnvironmentSettings = styled(SaveButton)`
+  margin-top: 30px;
+`;
+
+const DeleteButton = styled.button`
   height: 30px;
   font-size: 13px;
   font-weight: 500;

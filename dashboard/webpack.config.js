@@ -88,12 +88,19 @@ module.exports = () => {
           test: /\.(png|svg|jpg|gif|mp3)$/,
           use: ["file-loader"],
         },
+        // {
+        //   test: /\.css$/i,
+        //   loader: "css-loader",
+        //   options: {
+        //     import: true,
+        //   },
+        // },
         {
           test: /\.css$/i,
-          loader: "css-loader",
-          options: {
-            import: true,
-          },
+          use: [
+            { loader: "style-loader", options: { injectType: "linkTag" } },
+            { loader: "file-loader" },
+          ],
         },
         {
           test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,

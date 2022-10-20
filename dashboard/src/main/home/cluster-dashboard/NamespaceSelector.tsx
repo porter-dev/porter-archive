@@ -30,11 +30,12 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
       value: string;
     }[]
   >([]);
-  const [defaultNamespace, setDefaultNamespace] = useState<string>(
-    localStorage.getItem(
+  const getDefaultNamespace = () => {
+    return localStorage.getItem(
       `${context.currentProject.id}-${context.currentCluster.id}-namespace`
-    )
-  );
+    ) || "default";
+  }
+  const [defaultNamespace, setDefaultNamespace] = useState<string>(getDefaultNamespace());
 
   const updateOptions = () => {
     let { currentCluster, currentProject } = context;
@@ -70,11 +71,10 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
               `${context.currentProject.id}-${context.currentCluster.id}-namespace`
             )
           ) {
-            setDefaultNamespace(
-              localStorage.getItem(
-                `${context.currentProject.id}-${context.currentCluster.id}-namespace`
-              )
-            );
+            console.log("aye there was laddy", localStorage.getItem(
+              `${context.currentProject.id}-${context.currentCluster.id}-namespace`
+            ))
+            setDefaultNamespace(getDefaultNamespace());
           } else {
             setDefaultNamespace("default");
           }
@@ -85,6 +85,7 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
             });
             if (x.name === urlNamespace) {
               setDefaultNamespace(urlNamespace);
+              console.log("hit this mofo")
             }
           });
           setNamespaceOptions(namespaceOptions);

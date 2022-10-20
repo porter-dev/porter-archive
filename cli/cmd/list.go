@@ -27,7 +27,7 @@ var listCmd = &cobra.Command{
 				os.Exit(1)
 			}
 		} else {
-			color.New(color.FgRed).Printf("invalid command: %s\n", args[0])
+			color.New(color.FgRed).Fprintf(os.Stderr, "invalid command: %s\n", args[0])
 		}
 	},
 }

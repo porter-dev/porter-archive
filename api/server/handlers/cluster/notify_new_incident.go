@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/internal/notifier/sendgrid"
 	"github.com/porter-dev/porter/internal/notifier/slack"
 	"github.com/porter-dev/porter/internal/repository"
+	"gorm.io/gorm"
 )
 
 type NotifyNewIncidentHandler struct {
@@ -47,7 +49,7 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	rel, err := c.Repo().Release().ReadRelease(cluster.ID, request.ReleaseName, request.ReleaseNamespace)
 
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -115,6 +117,8 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 				request.InvolvedObjectName,
 			)
 		}
+
+		fmt.Println("NOTIFYING NEW:", request.ReleaseName, request.InvolvedObjectKind, request.InvolvedObjectName)
 
 		err := multi.NotifyNew(request, url)
 

@@ -26,7 +26,7 @@ const EventTable: React.FC<TableProps> = ({
   data,
   onRowClick,
 }) => {
-  if (data.length == 0) {
+  if (!data || data.length == 0) {
     return <Placeholder>No events found.</Placeholder>;
   }
 

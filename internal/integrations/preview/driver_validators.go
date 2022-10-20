@@ -40,7 +40,11 @@ func deployDriverValidator(resource *types.Resource) error {
 	}
 
 	if source.Repo == "" {
-		source.Repo = "https://charts.getporter.dev"
+		if source.Name == "web" || source.Name == "worker" || source.Name == "job" {
+			source.Repo = "https://charts.getporter.dev"
+		} else {
+			source.Repo = "https://chart-addons.getporter.dev"
+		}
 	}
 
 	if source.Repo == "https://charts.getporter.dev" {
@@ -208,7 +212,7 @@ func pushImageDriverValidator(resource *types.Resource) error {
 }
 
 func updateConfigDriverValidator(resource *types.Resource) error {
-	_, target, err := commonValidator(resource)
+	source, target, err := commonValidator(resource)
 
 	if err != nil {
 		return err
@@ -226,6 +230,14 @@ func updateConfigDriverValidator(resource *types.Resource) error {
 			}
 
 			return fmt.Errorf("%s", str)
+		}
+	}
+
+	if source.Repo == "" {
+		if source.Name == "web" || source.Name == "worker" || source.Name == "job" {
+			source.Repo = "https://charts.getporter.dev"
+		} else {
+			source.Repo = "https://chart-addons.getporter.dev"
 		}
 	}
 
@@ -250,6 +262,31 @@ func updateConfigDriverValidator(resource *types.Resource) error {
 			}
 
 			return fmt.Errorf("%s", str)
+		}
+	}
+
+	if len(driverConfig.Values) > 0 && source.Repo == "https://charts.getporter.dev" {
+		if source.Name == "web" {
+			err := validateWebChartValues(driverConfig.Values)
+
+			if err != nil {
+				return fmt.Errorf("for resource '%s': error validating values for web deployment: %w",
+					resource.Name, err)
+			}
+		} else if source.Name == "worker" {
+			err := validateWorkerChartValues(driverConfig.Values)
+
+			if err != nil {
+				return fmt.Errorf("for resource '%s': error validating values for worker deployment: %w",
+					resource.Name, err)
+			}
+		} else if source.Name == "job" {
+			err := validateJobChartValues(driverConfig.Values)
+
+			if err != nil {
+				return fmt.Errorf("for resource '%s': error validating values for job deployment: %w",
+					resource.Name, err)
+			}
 		}
 	}
 

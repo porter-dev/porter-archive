@@ -37,7 +37,7 @@ func NewPorterPostrenderer(
 	var dockerSecretsPostrenderer *DockerSecretsPostRenderer
 	var err error
 
-	if cluster != nil && agent != nil && regs != nil && len(regs) > 0 && !disablePullSecretsInjection {
+	if !disablePullSecretsInjection && cluster != nil && agent != nil && regs != nil && len(regs) > 0 {
 		dockerSecretsPostrenderer, err = NewDockerSecretsPostRenderer(cluster, repo, agent, namespace, regs, doAuth)
 
 		if err != nil {

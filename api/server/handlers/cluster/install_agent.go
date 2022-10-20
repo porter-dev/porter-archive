@@ -118,15 +118,11 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	porterAgentValues := map[string]interface{}{
 		"agent": map[string]interface{}{
-			"image":       "public.ecr.aws/o1j4x7p4/porter-agent:latest",
 			"porterHost":  c.Config().ServerConf.ServerURL,
 			"porterPort":  "443",
 			"porterToken": encoded,
-			"privateRegistry": map[string]interface{}{
-				"enabled": false,
-			},
-			"clusterID": fmt.Sprintf("%d", cluster.ID),
-			"projectID": fmt.Sprintf("%d", proj.ID),
+			"clusterID":   fmt.Sprintf("%d", cluster.ID),
+			"projectID":   fmt.Sprintf("%d", proj.ID),
 		},
 		"loki": lokiValues,
 	}

@@ -159,7 +159,8 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	newHelmRelease, upgradeErr := helmAgent.UpgradeRelease(conf, request.Values, c.Config().DOConf)
+	newHelmRelease, upgradeErr := helmAgent.UpgradeRelease(conf, request.Values, c.Config().DOConf,
+		c.Config().ServerConf.DisablePullSecretsInjection)
 
 	if upgradeErr == nil && newHelmRelease != nil {
 		helmRelease = newHelmRelease

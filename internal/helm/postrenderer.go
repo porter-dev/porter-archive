@@ -32,11 +32,12 @@ func NewPorterPostrenderer(
 	namespace string,
 	regs []*models.Registry,
 	doAuth *oauth2.Config,
+	disablePullSecretsInjection bool,
 ) (postrender.PostRenderer, error) {
 	var dockerSecretsPostrenderer *DockerSecretsPostRenderer
 	var err error
 
-	if cluster != nil && agent != nil && regs != nil && len(regs) > 0 {
+	if cluster != nil && agent != nil && regs != nil && len(regs) > 0 && !disablePullSecretsInjection {
 		dockerSecretsPostrenderer, err = NewDockerSecretsPostRenderer(cluster, repo, agent, namespace, regs, doAuth)
 
 		if err != nil {

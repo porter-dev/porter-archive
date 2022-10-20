@@ -108,7 +108,7 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 					Values:     rel.Config,
 				}
 
-				_, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf)
+				_, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 
 				if err != nil {
 					// if this is a release not found error, just return - the release has likely been deleted from the underlying

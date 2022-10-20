@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { DeploymentStatus, PRDeployment } from "../types";
 import pr_icon from "assets/pull_request_icon.svg";
@@ -11,6 +11,75 @@ import Loading from "components/Loading";
 import { ActionButton } from "../components/ActionButton";
 import { EllipsisTextWrapper, RepoLink } from "../components/styled";
 import MaterialTooltip from "@material-ui/core/Tooltip";
+import _ from "lodash";
+
+interface DeploymentCardAction {
+  label: string;
+  action: (...args: any) => void;
+}
+
+interface DeploymentCardActionsDropdownProps {
+  options: DeploymentCardAction[];
+}
+
+const DeploymentCardActionsDropdown = ({
+  options,
+}: DeploymentCardActionsDropdownProps) => {
+  const wrapperRef = useRef<HTMLDivElement>();
+  const [expanded, setExpanded] = useState(false);
+
+  const handleOutsideClick = (event: any) => {
+    if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+      setExpanded(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleOutsideClick.bind(this));
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick.bind(this));
+    };
+  }, []);
+
+  return (
+    <div
+      style={{
+        position: "relative",
+      }}
+    >
+      <I
+        className="material-icons"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setExpanded((expanded) => !expanded);
+        }}
+      >
+        more_vert
+      </I>
+      <ActionsDropdownWrapper expanded={expanded}>
+        <ActionsDropdown ref={wrapperRef}>
+          {options.length ? (
+            <ActionsScrollableWrapper>
+              {options.map(({ label, action }, idx) => {
+                return (
+                  <ActionsRow
+                    isLast={idx === options.length - 1}
+                    onClick={action}
+                    key={label}
+                  >
+                    <ActionsRowText>{label}</ActionsRowText>
+                  </ActionsRow>
+                );
+              })}
+            </ActionsScrollableWrapper>
+          ) : null}
+        </ActionsDropdown>
+      </ActionsDropdownWrapper>
+    </div>
+  );
+};
 
 const DeploymentCard: React.FC<{
   deployment: PRDeployment;
@@ -100,6 +169,25 @@ const DeploymentCard: React.FC<{
     }
   };
 
+  const DeploymentCardActions = [
+    {
+      label: "View last workflow",
+      action: (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.open(deployment.last_workflow_run_url, "_blank");
+      },
+    },
+    {
+      label: "Delete",
+      action: (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteDeployment();
+      },
+    },
+  ];
+
   return (
     <DeploymentCardWrapper
       to={`/preview-environments/details/${deployment.namespace}?environment_id=${deployment.environment_id}`}
@@ -181,14 +269,20 @@ const DeploymentCard: React.FC<{
             {deployment.status !== DeploymentStatus.Creating && (
               <>
                 <RowButton
-                  to={deployment.subdomain}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    window.open(deployment.subdomain, "_blank");
+                  }}
                   key={deployment.subdomain}
-                  target="_blank"
                 >
                   <i className="material-icons">open_in_new</i>
                   View Live
                 </RowButton>
-                <I className="material-icons">more_vert</I>
+                <DeploymentCardActionsDropdown
+                  options={DeploymentCardActions}
+                />
               </>
             )}
             {/* <Button
@@ -329,7 +423,7 @@ const PRIcon = styled.img`
   opacity: 50%;
 `;
 
-const RowButton = styled(DynamicLink)`
+const RowButton = styled.button`
   white-space: nowrap;
   font-size: 12px;
   padding: 8px 10px;
@@ -511,4 +605,52 @@ const I = styled.i`
     background: #26292e;
     border: 1px solid #494b4f;
   }
+`;
+
+const ActionsDropdown = styled.div`
+  width: 150px;
+  border-radius: 3px;
+  z-index: 999;
+  overflow-y: auto;
+  background: #2f3135;
+  padding: 0;
+  border-radius: 5px;
+  border: 1px solid #aaaabb33;
+`;
+
+const ActionsDropdownWrapper = styled.div<{ expanded: boolean }>`
+  display: ${(props) => (props.expanded ? "block" : "none")};
+  position: absolute;
+  right: calc(-100%);
+  z-index: 1;
+  top: calc(100% + 5px);
+`;
+
+const ActionsScrollableWrapper = styled.div`
+  overflow-y: auto;
+  max-height: 350px;
+`;
+
+const ActionsRow = styled.div<{ isLast: boolean; selected?: boolean }>`
+  width: 100%;
+  height: 35px;
+  padding-left: 10px;
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  font-size: 13px;
+  background: ${(props) => (props.selected ? "#ffffff11" : "")};
+
+  :hover {
+    background: #ffffff18;
+  }
+`;
+
+const ActionsRowText = styled.div`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  word-break: anywhere;
+  margin-right: 10px;
+  color: white;
 `;

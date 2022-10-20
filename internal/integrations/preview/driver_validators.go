@@ -123,6 +123,17 @@ func deployDriverValidator(resource *types.Resource) error {
 				}
 			}
 		}
+	} else if source.Repo == "https://chart-addons.getporter.dev" {
+		if len(resource.Config) > 0 {
+			if source.Name == "postgresql" {
+				err := validatePostgresChartValues(resource.Config)
+
+				if err != nil {
+					return fmt.Errorf("for resource '%s': error validating values for postgresql deployment: %w",
+						resource.Name, err)
+				}
+			}
+		}
 	}
 
 	return nil

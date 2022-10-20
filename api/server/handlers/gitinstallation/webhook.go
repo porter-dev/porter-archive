@@ -1,12 +1,7 @@
 package gitinstallation
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
-	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -35,18 +30,10 @@ func NewGithubAppWebhookHandler(
 }
 
 func (c *GithubAppWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	payload, err := ioutil.ReadAll(r.Body)
+	payload, err := github.ValidatePayload(r, []byte(c.Config().GithubAppConf.WebhookSecret))
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	// verify webhook secret
-	signature := r.Header.Get("X-Hub-Signature-256")
-
-	if !verifySignature([]byte(c.Config().GithubAppConf.WebhookSecret), signature, payload) {
-		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
 	}
 
@@ -88,28 +75,4 @@ func (c *GithubAppWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			}
 		}
 	}
-}
-
-// verifySignature verifies a signature based on hmac protocal
-// https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks
-func verifySignature(secret []byte, signature string, body []byte) bool {
-	if len(signature) != 71 || !strings.HasPrefix(signature, "sha256=") {
-		return false
-	}
-
-	actual := make([]byte, 32)
-	_, err := hex.Decode(actual, []byte(signature[7:]))
-
-	if err != nil {
-		return false
-	}
-
-	computed := hmac.New(sha256.New, secret)
-	_, err = computed.Write(body)
-
-	if err != nil {
-		return false
-	}
-
-	return hmac.Equal(computed.Sum(nil), actual)
 }

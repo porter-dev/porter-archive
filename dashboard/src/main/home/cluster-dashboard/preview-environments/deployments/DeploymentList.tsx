@@ -218,13 +218,6 @@ const DeploymentList = () => {
       setHasError(true);
       console.error(error);
     }
-    try {
-      const { data } = await getEnvironment();
-      setNewCommentsDisabled(data.new_comments_disabled || false);
-    } catch (error) {
-      setHasError(true);
-      console.error(error);
-    }
     setIsLoading(false);
   };
 
@@ -435,6 +428,7 @@ const DeploymentList = () => {
               dropdownWidth="230px"
               closeOverlay={true}
             />
+            <EnvironmentSettings environmentId={environment_id} />
           </StyledStatusSelector>
         </ActionsWrapper>
       </Flex> */}

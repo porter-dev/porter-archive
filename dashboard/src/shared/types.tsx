@@ -310,6 +310,10 @@ export type ActionConfigType = {
     }
 );
 
+export type GithubActionConfigType = ActionConfigType & {
+  kind: "github";
+};
+
 export type FullActionConfigType = ActionConfigType & {
   dockerfile_path: string;
   folder_path: string;

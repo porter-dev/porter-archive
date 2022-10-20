@@ -37,6 +37,8 @@ export type Environment = {
   name: string;
   git_repo_owner: string;
   git_repo_name: string;
+  git_repo_branches: string[];
+  disable_new_comments: boolean;
   last_deployment_status: DeploymentStatusUnion;
   deployment_count: number;
   mode: "manual" | "auto";

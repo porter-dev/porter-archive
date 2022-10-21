@@ -161,7 +161,13 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
    * @param rawList A rawList of pods in case we don't want to use the state one. Useful to
    * avoid problems with reactivity
    */
-  const handleSelectPod = (pod: ControllerTabPodType, rawList?: any[], userSelected?: boolean) => {
+  const handleSelectPod = (
+    pod: ControllerTabPodType,
+    rawList?: any[],
+    userSelected?: boolean
+  ) => {
+    console.log(rawPodList, rawList, !!userSelected);
+
     const rawPod = [...rawPodList, ...(rawList || [])].find(
       (rawPod) => rawPod?.metadata?.name === pod?.name
     );
@@ -308,7 +314,7 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
             status === "failed" &&
               pod.status?.message &&
               setPodError(pod.status?.message);
-            handleSelectPod(pod, true);
+            handleSelectPod(pod, [], true);
             setUserSelectedPod(true);
           }}
           onDeleteClick={(e: MouseEvent) => {

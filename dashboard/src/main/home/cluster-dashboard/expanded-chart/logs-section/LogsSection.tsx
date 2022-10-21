@@ -343,7 +343,7 @@ export default LogsSection;
 const BackButton = styled.div`
   display: flex;
   width: 30px;
-  z-index: 999;
+  z-index: 2;
   cursor: pointer;
   height: 30px;
   align-items: center;
@@ -627,7 +627,7 @@ const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`
     props.nudgeLeft ? "0 5px 5px 0" : "5px 0 0 5px"};
   :hover {
     border: 1px solid #7a7b80;
-    z-index: 999;
+    z-index: 2;
   }
 `;
 
@@ -644,7 +644,7 @@ const ToggleButton = styled.div`
 const TimeIcon = styled.img<{ selected?: boolean }>`
   width: 16px;
   height: 16px;
-  z-index: 999;
+  z-index: 2;
   opacity: ${(props) => (props.selected ? "" : "50%")};
 `;
 

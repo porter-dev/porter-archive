@@ -58,6 +58,7 @@ export const useLogs = (
   currentPod: string,
   namespace: string,
   searchParam: string,
+  notify: (message: string) => void,
   currentChart: ChartType,
   // if setDate is set, results are not live
   setDate?: Date
@@ -336,8 +337,16 @@ export const useLogs = (
         Direction.forward
       );
 
+      const logsToUpdate = paginationInfo.nextCursor
+        ? newLogs.slice(1)
+        : newLogs;
+
       // If previously we had next cursor set, it is likely that the log might have a duplicate entry so we ignore the first line
-      updateLogs(paginationInfo.nextCursor ? newLogs.slice(1) : newLogs);
+      updateLogs(logsToUpdate);
+
+      if (!logsToUpdate.length) {
+        notify("You are already at the latest logs");
+      }
 
       setPaginationInfo((paginationInfo) => ({
         ...paginationInfo,

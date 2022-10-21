@@ -101,6 +101,12 @@ const DeployStatusSection: React.FC<Props> = (props) => {
             onUpdate={onUpdate}
             // Allow users to navigate to pod logs upon clicking the pod
             onSelectPod={(pod: any) => {
+              console.log(
+                "SET LOG DATA",
+                pod?.metadata?.name,
+                pod?.metadata?.annotations?.["helm.sh/revision"]
+              );
+
               props.setLogData({
                 podName: pod?.metadata?.name,
                 revision: pod?.metadata?.annotations?.["helm.sh/revision"],
@@ -135,7 +141,7 @@ const DropdownWrapper = styled.div<{
   position: absolute;
   left: ${(props) => (props.dropdownAlignRight ? "" : "0")};
   right: ${(props) => (props.dropdownAlignRight ? "0" : "")};
-  z-index: 1;
+  z-index: 5;
   top: calc(100% + 7px);
   width: 35%;
   min-width: 400px;
@@ -196,7 +202,7 @@ const StatusWrapper = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 5px;
+  gap: 10px;
 `;
 
 const StatusColor = styled.div`

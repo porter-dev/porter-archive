@@ -7,9 +7,14 @@ import warning from "assets/warning.png";
 interface Props {
   type?: string;
   children: React.ReactNode;
+  noMargin?: boolean;
 }
 
-const Banner: React.FC<Props> = ({ type, children }) => {
+const Banner: React.FC<Props> = ({ 
+  type, 
+  children,
+  noMargin,
+}) => {
   const renderIcon = () => {
     if (type === "error" || type === "warning") {
       return <i className="material-icons-round">warning</i>;
@@ -20,6 +25,7 @@ const Banner: React.FC<Props> = ({ type, children }) => {
   return (
     <StyledBanner
       color={type === "error" ? "#ff385d" : type === "warning" && "#f5cb42"}
+      noMargin={noMargin}
     >
       {renderIcon()}
       {children}
@@ -29,10 +35,13 @@ const Banner: React.FC<Props> = ({ type, children }) => {
 
 export default Banner;
 
-const StyledBanner = styled.div<{ color?: string }>`
+const StyledBanner = styled.div<{ 
+  color?: string;
+  noMargin?: boolean;
+}>`
   height: 40px;
   width: 100%;
-  margin: 5px 0 10px;
+  margin: ${props => props.noMargin ? "5px 0 10px" : ""};
   font-size: 13px;
   font-family: "Work Sans", sans-serif;
   display: flex;

@@ -26,7 +26,7 @@ var configCmd = &cobra.Command{
 	Short: "Commands that control local configuration settings",
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := printConfig(); err != nil {
-			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 			os.Exit(1)
 		}
 	},
@@ -47,14 +47,14 @@ var configSetProjectCmd = &cobra.Command{
 			projID, err := strconv.ParseUint(args[0], 10, 64)
 
 			if err != nil {
-				color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 				os.Exit(1)
 			}
 
 			err = cliConf.SetProject(uint(projID))
 
 			if err != nil {
-				color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 				os.Exit(1)
 			}
 		}
@@ -76,14 +76,14 @@ var configSetClusterCmd = &cobra.Command{
 			clusterID, err := strconv.ParseUint(args[0], 10, 64)
 
 			if err != nil {
-				color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 				os.Exit(1)
 			}
 
 			err = cliConf.SetCluster(uint(clusterID))
 
 			if err != nil {
-				color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 				os.Exit(1)
 			}
 		}
@@ -105,14 +105,14 @@ var configSetRegistryCmd = &cobra.Command{
 			registryID, err := strconv.ParseUint(args[0], 10, 64)
 
 			if err != nil {
-				color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 				os.Exit(1)
 			}
 
 			err = cliConf.SetRegistry(uint(registryID))
 
 			if err != nil {
-				color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 				os.Exit(1)
 			}
 		}
@@ -127,14 +127,14 @@ var configSetHelmRepoCmd = &cobra.Command{
 		hrID, err := strconv.ParseUint(args[0], 10, 64)
 
 		if err != nil {
-			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 			os.Exit(1)
 		}
 
 		err = cliConf.SetHelmRepo(uint(hrID))
 
 		if err != nil {
-			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 			os.Exit(1)
 		}
 	},
@@ -148,7 +148,7 @@ var configSetHostCmd = &cobra.Command{
 		err := cliConf.SetHost(args[0])
 
 		if err != nil {
-			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 			os.Exit(1)
 		}
 	},
@@ -162,7 +162,7 @@ var configSetKubeconfigCmd = &cobra.Command{
 		err := cliConf.SetKubeconfig(args[0])
 
 		if err != nil {
-			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 			os.Exit(1)
 		}
 	},

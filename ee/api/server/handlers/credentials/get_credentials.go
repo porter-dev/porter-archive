@@ -1,3 +1,4 @@
+//go:build ee
 // +build ee
 
 package credentials
@@ -120,6 +121,7 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			AWSClusterID:       awsInt.AWSClusterID,
 			AWSSecretAccessKey: awsInt.AWSSecretAccessKey,
 			AWSSessionToken:    awsInt.AWSSessionToken,
+			AWSAssumeRoleArn:   []byte(awsInt.AWSAssumeRoleArn),
 		}
 	}
 

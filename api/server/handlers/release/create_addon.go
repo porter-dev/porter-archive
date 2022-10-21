@@ -94,7 +94,7 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Registries: registries,
 	}
 
-	helmRelease, err := helmAgent.InstallChart(conf, c.Config().DOConf)
+	helmRelease, err := helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(

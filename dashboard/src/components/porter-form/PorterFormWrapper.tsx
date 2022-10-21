@@ -109,8 +109,8 @@ const PorterFormWrapper: React.FC<PropsType> = ({
           saveValuesStatus={saveValuesStatus}
           currentTab={currentTab}
           setCurrentTab={(newTab) => {
-            setCurrentTab(newTab);
             onTabChange(newTab);
+            setCurrentTab(newTab);
           }}
           isLaunch={isLaunch}
           hideSpacer={hideBottomSpacer}

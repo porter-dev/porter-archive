@@ -54,7 +54,7 @@ func applyAppResource(opts *applyAppResourceOpts) (*release.Release, error) {
 		"revision": opts.stackRevision,
 	}
 
-	return opts.helmAgent.InstallChart(conf, opts.config.DOConf)
+	return opts.helmAgent.InstallChart(conf, opts.config.DOConf, opts.config.ServerConf.DisablePullSecretsInjection)
 }
 
 type rollbackAppResourceOpts struct {
@@ -106,7 +106,8 @@ func updateAppResourceTag(opts *updateAppResourceTagOpts) error {
 		StackRevision: opts.stackRevision,
 	}
 
-	_, err = opts.helmAgent.UpgradeReleaseByValues(conf, opts.config.DOConf)
+	_, err = opts.helmAgent.UpgradeReleaseByValues(conf, opts.config.DOConf,
+		opts.config.ServerConf.DisablePullSecretsInjection)
 
 	return err
 }

@@ -111,10 +111,31 @@ func init() {
 }
 
 func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	color.New(color.FgGreen).Println("Running", strings.Join(args[1:], " "), "for release", args[0])
+	execArgs := args[1:]
+
+	color.New(color.FgGreen).Println("Running", strings.Join(execArgs, " "), "for release", args[0])
 
 	if nonInteractive {
 		color.New(color.FgBlue).Println("Using non-interactive mode. The first available pod will be used to run the command.")
+	}
+
+	if len(execArgs) > 0 {
+		release, err := client.GetRelease(
+			context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0],
+		)
+
+		if err != nil {
+			return fmt.Errorf("error fetching release %s: %w", args[0], err)
+		}
+
+		if release.BuildConfig != nil &&
+			(strings.Contains(release.BuildConfig.Builder, "heroku") ||
+				strings.Contains(release.BuildConfig.Builder, "paketo")) &&
+			execArgs[0] != "/cnb/lifecycle/launcher" &&
+			execArgs[0] != "launcher" {
+			// this is a buildpacks release using a heroku builder, prepend the launcher
+			execArgs = append([]string{"/cnb/lifecycle/launcher"}, execArgs...)
+		}
 	}
 
 	podsSimple, err := getPods(client, namespace, args[0])
@@ -202,10 +223,10 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 	}
 
 	if existingPod {
-		return executeRun(config, namespace, selectedPod.Name, selectedContainerName, args[1:])
+		return executeRun(config, namespace, selectedPod.Name, selectedContainerName, execArgs)
 	}
 
-	return executeRunEphemeral(config, namespace, selectedPod.Name, selectedContainerName, args[1:])
+	return executeRunEphemeral(config, namespace, selectedPod.Name, selectedContainerName, execArgs)
 }
 
 func cleanup(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {

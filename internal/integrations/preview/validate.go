@@ -1,7 +1,6 @@
 package preview
 
 import (
-	"embed"
 	"errors"
 	"fmt"
 
@@ -9,9 +8,6 @@ import (
 	"github.com/porter-dev/switchboard/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
-
-//go:embed embed/*.schema.json
-var schemas embed.FS
 
 var (
 	ErrNoPorterYAMLFile    = errors.New("porter.yaml does not exist in the root of this repository")

@@ -20,6 +20,7 @@ import dayjs from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
 import { ChartType } from "shared/types";
+import Banner from "components/Banner";
 
 export type InitLogData = Partial<{
   podName: string;
@@ -118,11 +119,21 @@ const LogsSection: React.FC<Props> = ({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     initData.timestamp ? dayjs(initData.timestamp).toDate() : undefined
   );
+  const [notification, setNotification] = useState<string>();
+
+  const notify = (message: string) => {
+    setNotification(message);
+
+    setTimeout(() => {
+      setNotification(undefined);
+    }, 3000);
+  };
 
   const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter,
     currentChart.namespace,
     enteredSearchText,
+    notify,
     currentChart,
     selectedDate
   );
@@ -300,6 +311,9 @@ const LogsSection: React.FC<Props> = ({
             </>
           )}
           <div ref={scrollToBottomRef} />
+          <NotificationWrapper active={!!notification}>
+            <Banner>{notification}</Banner>
+          </NotificationWrapper>
         </StyledLogsSection>
       </>
     );
@@ -533,6 +547,7 @@ const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`
   animation-fill-mode: forwards;
   overflow-y: auto;
   overflow-wrap: break-word;
+  position: relative;
   @keyframes floatIn {
     from {
       opacity: 0;
@@ -631,4 +646,29 @@ const TimeIcon = styled.img<{ selected?: boolean }>`
   height: 16px;
   z-index: 999;
   opacity: ${(props) => (props.selected ? "" : "50%")};
+`;
+
+const NotificationWrapper = styled.div<{ active?: boolean }>`
+  position: absolute;
+  bottom: 10px;
+  display: ${(props) => (props.active ? "flex" : "none")};
+  justify-content: center;
+  align-items: center;
+  left: 50%;
+  transform: translateX(-50%);
+  width: fit-content;
+  padding-inline: 10px;
+  background: #101420;
+  animation: bounceIn 0.3s ease-out;
+
+  @keyframes bounceIn {
+    0% {
+      transform: translateZ(-1400px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateZ(0);
+      opacity: 1;
+    }
+  }
 `;

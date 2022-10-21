@@ -7,7 +7,7 @@ import { pushFiltered } from "shared/routing";
 
 import { Column } from "react-table";
 import styled from "styled-components";
-import Table from "components/Table";
+import Table from "components/OldTable";
 
 import Loading from "components/Loading";
 

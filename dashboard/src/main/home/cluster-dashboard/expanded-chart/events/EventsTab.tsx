@@ -6,14 +6,40 @@ import Loading from "components/Loading";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { Context } from "shared/Context";
 import Dropdown from "components/Dropdown";
+import { InitLogData } from "../logs-section/LogsSection";
 
-const EventsTab: React.FC = () => {
+type Props = {
+  currentChart: any;
+  setLogData?: (logData: InitLogData) => void;
+  overridingJobName?: string;
+};
+
+const EventsTab: React.FC<Props> = ({
+  currentChart,
+  setLogData,
+  overridingJobName,
+}) => {
   const [hasPorterAgent, setHasPorterAgent] = useState(true);
   const { currentProject, currentCluster } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(false);
+    const project_id = currentProject?.id;
+    const cluster_id = currentCluster?.id;
+
+    // determine if the agent is installed properly - if not, render upgrade screen
+    api
+      .detectPorterAgent("<token>", {}, { project_id, cluster_id })
+      .then((res) => {
+        console.log(res.data);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        if (err.response?.status === 404) {
+          setHasPorterAgent(false);
+          setIsLoading(false);
+        }
+      });
   }, []);
 
   const installAgent = async () => {
@@ -32,6 +58,21 @@ const EventsTab: React.FC = () => {
 
   const triggerInstall = () => {
     installAgent();
+  };
+
+  const getFilters = () => {
+    if (overridingJobName) {
+      return {
+        release_name: currentChart.name,
+        release_namespace: currentChart.namespace,
+        job_name: overridingJobName,
+      };
+    }
+
+    return {
+      release_name: currentChart.name,
+      release_namespace: currentChart.namespace,
+    };
   };
 
   if (isLoading) {
@@ -58,7 +99,7 @@ const EventsTab: React.FC = () => {
 
   return (
     <EventsPageWrapper>
-      <EventList />
+      <EventList setLogData={setLogData} filters={getFilters()} />
     </EventsPageWrapper>
   );
 };

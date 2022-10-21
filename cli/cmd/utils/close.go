@@ -20,7 +20,7 @@ func closeHandler(closer func() error) {
 			os.Exit(0)
 		}
 
-		color.New(color.FgRed).Printf("shutdown unsuccessful: %s\n", err.Error())
+		color.New(color.FgRed).Fprintf(os.Stderr, "shutdown unsuccessful: %s\n", err.Error())
 		os.Exit(1)
 	}()
 }

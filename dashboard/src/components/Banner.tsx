@@ -8,9 +8,10 @@ interface Props {
   type?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
+  noMargin?: boolean;
 }
 
-const Banner: React.FC<Props> = ({ type, children, icon }) => {
+const Banner: React.FC<Props> = ({ type, icon, children, noMargin }) => {
   const renderIcon = () => {
     if (icon) {
       return icon;
@@ -25,6 +26,7 @@ const Banner: React.FC<Props> = ({ type, children, icon }) => {
   return (
     <StyledBanner
       color={type === "error" ? "#ff385d" : type === "warning" && "#f5cb42"}
+      noMargin={noMargin}
     >
       {renderIcon()}
       {children}
@@ -34,10 +36,13 @@ const Banner: React.FC<Props> = ({ type, children, icon }) => {
 
 export default Banner;
 
-const StyledBanner = styled.div<{ color?: string }>`
+const StyledBanner = styled.div<{
+  color?: string;
+  noMargin?: boolean;
+}>`
   height: 40px;
   width: 100%;
-  margin: 5px 0 10px;
+  margin: ${(props) => (props.noMargin ? "5px 0 10px" : "")};
   font-size: 13px;
   font-family: "Work Sans", sans-serif;
   display: flex;

@@ -299,7 +299,7 @@ const DeploymentList = () => {
             />
           );
         })} */}
-        {filteredDeployments.map((d) => {
+        {filteredDeployments.map((d: any) => {
           return (
             <DeploymentCard
               key={d.id}
@@ -473,10 +473,9 @@ const DeploymentList = () => {
             name="Sort"
           />
           <CreatePreviewEnvironmentButton
-            // TODO Justin: Implement Preview Environment
-            onClick={_.noop}
+            to={`/preview-environments/deployments/${environment_id}/${repo_owner}/${repo_name}/create`}
           >
-            <i className="material-icons">add</i> New preview env
+            <i className="material-icons">add</i> New preview deployment
           </CreatePreviewEnvironmentButton>
         </Flex>
       </FlexRow>
@@ -711,7 +710,7 @@ const FlexRow = styled.div`
   flex-wrap: wrap;
 `;
 
-const CreatePreviewEnvironmentButton = styled.div`
+const CreatePreviewEnvironmentButton = styled(DynamicLink)`
   display: flex;
   flex-direction: row;
   align-items: center;

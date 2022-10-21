@@ -323,7 +323,7 @@ export default class JobResource extends Component<PropsType, StateType> {
     return (
       <>
         <StyledJob>
-          <MainRow onClick={this.expandJob}>
+          <MainRow onClick={() => this.props.expandJob(this.props.job)}>
             <Flex>
               <Icon src={icon && icon} />
               <Description>
@@ -360,12 +360,12 @@ export default class JobResource extends Component<PropsType, StateType> {
                     delete
                   </i>
                 )}
-                <i
+                {/* <i
                   className="material-icons"
                   onClick={() => this.props.expandJob(this.props.job)}
                 >
                   open_in_new
-                </i>
+                </i> */}
               </MaterialIconTray>
             </EndWrapper>
           </MainRow>

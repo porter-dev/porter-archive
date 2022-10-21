@@ -49,4 +49,5 @@ const StyledPlaceholder = styled.div<{
   border-radius: 5px;
   background: #26292e;
   border: 1px solid #494b4f;
+  padding-bottom: 60px;
 `;

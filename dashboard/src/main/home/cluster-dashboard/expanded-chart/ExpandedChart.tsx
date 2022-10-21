@@ -604,6 +604,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
+    // if we've set the revision, we also override the revision in log data
+    let newLogData = logData;
+
+    newLogData.revision = `${chart.version}`;
+
+    setLogData(newLogData);
+
     setIsPreview(!isCurrent);
     getChartData(chart);
   };
@@ -739,7 +746,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   useEffect(() => {
     if (logData.revision) {
       api
-        .getRevisions(
+        .getChart(
           "<token>",
           {},
           {
@@ -747,15 +754,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
             namespace: props.currentChart.namespace,
             cluster_id: currentCluster.id,
             name: props.currentChart.name,
+            revision: parseInt(logData.revision),
           }
         )
         .then((res) => {
-          const chart = res.data?.find(
-            (revision: ChartType) =>
-              revision.version.toString() === logData.revision
-          );
-
-          setCurrentChart(chart ?? props.currentChart);
+          setCurrentChart(res.data || props.currentChart);
         })
         .catch(console.log);
 
@@ -983,7 +986,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
                             onTabChange={(newTab) => {
                               if (newTab !== "logs") {
                                 setOverrideCurrentTab("");
-                                setLogData({});
+                                setLogData({
+                                  revision: `${currentChart.version}`,
+                                });
                               }
                             }}
                           />

@@ -148,7 +148,7 @@ const ConnectNewRepo: React.FC = () => {
 
       <ActionContainer>
         <SaveButton
-          text="Add Repository"
+          text="Add repository"
           disabled={actionConfig.git_repo_id ? false : true}
           onClick={addRepo}
           makeFlush={true}

@@ -146,7 +146,6 @@ const Label = styled.div`
   display: flex;
   align-items: center;
   margin-right: 12px;
-
   > i {
     margin-right: 8px;
     font-size: 18px;

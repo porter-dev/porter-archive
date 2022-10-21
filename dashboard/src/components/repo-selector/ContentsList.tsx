@@ -689,7 +689,6 @@ const UseButton = styled.div`
   font-weight: 500;
   padding: 10px 15px;
   border-radius: 100px;
-  box-shadow: 0 2px 5px 0 #00000030;
   cursor: pointer;
   :hover {
     filter: brightness(120%);

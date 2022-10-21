@@ -66,10 +66,7 @@ func deployDriverValidator(resource *types.Resource) error {
 			return fmt.Errorf("for resource '%s': build method must be one of 'docker', 'pack', or 'registry'", resource.Name)
 		}
 
-		if appConfig.Build.Method == "docker" && appConfig.Build.Dockerfile == "" {
-			return fmt.Errorf("for resource '%s': dockerfile cannot be empty when using the 'docker' build method",
-				resource.Name)
-		} else if appConfig.Build.Method == "registry" {
+		if appConfig.Build.Method == "registry" {
 			if appConfig.Build.Image == "" {
 				return fmt.Errorf("for resource '%s': image cannot be empty when using the 'registry' build method",
 					resource.Name)
@@ -177,10 +174,7 @@ func buildImageDriverValidator(resource *types.Resource) error {
 		return fmt.Errorf("for resource '%s': build method must be one of 'docker', 'pack', or 'registry'", resource.Name)
 	}
 
-	if driverConfig.Build.Method == "docker" && driverConfig.Build.Dockerfile == "" {
-		return fmt.Errorf("for resource '%s': dockerfile cannot be empty when using the 'docker' build method",
-			resource.Name)
-	} else if driverConfig.Build.Method == "registry" {
+	if driverConfig.Build.Method == "registry" {
 		if driverConfig.Build.Image == "" {
 			return fmt.Errorf("for resource '%s': image cannot be empty when using the 'registry' build method",
 				resource.Name)

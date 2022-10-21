@@ -882,7 +882,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     margin_left={"0px"}
                   />
                   */}
-                  <DeployStatusSection chart={currentChart} />
+                  <DeployStatusSection chart={currentChart} setLogData={renderLogsAtTimestamp} />
                   <LastDeployed>
                     <Dot>•</Dot>Last deployed
                     {" " + getReadableDate(currentChart.info.last_deployed)}

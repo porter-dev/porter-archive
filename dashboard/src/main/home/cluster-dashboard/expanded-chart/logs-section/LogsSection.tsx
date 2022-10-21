@@ -152,7 +152,7 @@ const LogsSection: React.FC<Props> = ({
           setPodFilter(res.data[0]);
         }
       });
-  }, []);
+  }, [initData]);
 
   useEffect(() => {
     if (!loading && scrollToBottomRef.current && scrollToBottomEnabled) {
@@ -162,6 +162,16 @@ const LogsSection: React.FC<Props> = ({
       });
     }
   }, [loading, logs, scrollToBottomRef, scrollToBottomEnabled]);
+
+  useEffect(() => {
+    if (initData.podName) {
+      setPodFilter(initData.podName);
+    }
+
+    if (initData.timestamp) {
+      setSelectedDate(dayjs(initData.timestamp).toDate());
+    }
+  }, [initData]);
 
   const renderLogs = () => {
     return logs?.map((log, i) => {

@@ -3,9 +3,11 @@ import PodDropdown from "./PodDropdown";
 
 import styled from "styled-components";
 import { getPodStatus } from "./util";
+import { InitLogData } from "../logs-section/LogsSection";
 
 type Props = {
   chart?: any;
+  setLogData: (initLogData: InitLogData) => void;
 };
 
 type DeployStatus = "Deploying" | "Deployed" | "Failed";
@@ -94,7 +96,17 @@ const DeployStatusSection: React.FC<Props> = (props) => {
       </StyledDeployStatusSection>
       <DropdownWrapper expanded={isExpanded}>
         <Dropdown ref={wrapperRef}>
-          <PodDropdown currentChart={props.chart} onUpdate={onUpdate} />
+          <PodDropdown
+            currentChart={props.chart}
+            onUpdate={onUpdate}
+            // Allow users to navigate to pod logs upon clicking the pod
+            onSelectPod={(pod: any) => {
+              props.setLogData({
+                podName: pod?.metadata?.name,
+                revision: pod?.metadata?.annotations?.["helm.sh/revision"],
+              });
+            }}
+          />
         </Dropdown>
       </DropdownWrapper>
     </>

@@ -12,12 +12,14 @@ type Props = {
   selectors?: string[];
   currentChart: ChartType;
   onUpdate: (props: any) => void;
+  onSelectPod: (pod: any) => void;
 };
 
 const PodDropdown: React.FunctionComponent<Props> = ({
   currentChart,
   selectors,
   onUpdate,
+  onSelectPod,
 }) => {
   const [selectedPod, setSelectedPod] = useState<any>({});
   const [controllers, setControllers] = useState<any[]>([]);
@@ -73,7 +75,13 @@ const PodDropdown: React.FunctionComponent<Props> = ({
           // handle CronJob case
           key={c.metadata?.uid || c.uid}
           selectedPod={selectedPod}
-          selectPod={setSelectedPod}
+          selectPod={(pod: any, userSelected) => {
+            setSelectedPod(pod);
+
+            if (userSelected) {
+              onSelectPod(pod);
+            }
+          }}
           selectors={selectors ? [selectors[i]] : null}
           controller={c}
           isLast={i === controllers?.length - 1}
@@ -94,9 +102,7 @@ const PodDropdown: React.FunctionComponent<Props> = ({
       );
     }
     if (controllers?.length > 0) {
-      return (
-        <TabWrapper>{renderTabs()}</TabWrapper>
-      );
+      return <TabWrapper>{renderTabs()}</TabWrapper>;
     }
 
     return (
@@ -108,17 +114,13 @@ const PodDropdown: React.FunctionComponent<Props> = ({
     );
   };
 
-  return (
-    <StyledStatusSection>
-      {renderStatusSection()}
-    </StyledStatusSection>
-  );
+  return <StyledStatusSection>{renderStatusSection()}</StyledStatusSection>;
 };
 
 export default PodDropdown;
 
 const TabWrapper = styled.div`
-  width: 100%; 
+  width: 100%;
   min-height: 50px;
 `;
 

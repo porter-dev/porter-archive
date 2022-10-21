@@ -22,7 +22,7 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
   const [showTooltip, setShowTooltip] = useState(false);
 
   return (
-    <Tab key={pod?.name}>
+    <Tab key={pod?.name} onClick={onTabClick}>
       <Gutter>
         <Rail />
         <Circle />
@@ -30,7 +30,7 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
       </Gutter>
       <Name
         onMouseOver={() => {
-          // setShowTooltip(true);
+          setShowTooltip(true);
         }}
         onMouseOut={() => {
           setShowTooltip(false);
@@ -145,6 +145,7 @@ const Tab = styled.div`
   padding: 20px 18px 20px 42px;
   text-shadow: 0px 0px 8px none;
   overflow: visible;
+  cursor: pointer;
 `;
 
 const Rail = styled.div`

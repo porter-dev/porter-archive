@@ -97,24 +97,8 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	lokiValues := make(map[string]interface{})
-
-	// case on whether a node with porter.run/workload-kind=monitoring exists. If it does, we place loki in that node group.
-	if nodes, err := nodes.ListNodesByLabels(k8sAgent.Clientset, "porter.run/workload-kind=monitoring"); err == nil && len(nodes) >= 1 {
-		lokiValues = map[string]interface{}{
-			"nodeSelector": map[string]interface{}{
-				"porter.run/workload-kind": "monitoring",
-			},
-			"tolerations": []map[string]interface{}{
-				{
-					"key":      "porter.run/workload-kind",
-					"operator": "Equal",
-					"value":    "monitoring",
-					"effect":   "NoSchedule",
-				},
-			},
-		}
-	}
+	nodes, err := nodes.ListNodesByLabels(k8sAgent.Clientset, "porter.run/workload-kind=monitoring")
+	hasMonitoringNodes := err == nil && len(nodes) >= 1
 
 	porterAgentValues := map[string]interface{}{
 		"agent": map[string]interface{}{
@@ -124,7 +108,31 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			"clusterID":   fmt.Sprintf("%d", cluster.ID),
 			"projectID":   fmt.Sprintf("%d", proj.ID),
 		},
-		"loki": lokiValues,
+		"loki": map[string]interface{}{},
+	}
+
+	// case on whether a node with porter.run/workload-kind=monitoring exists. If it does, we place loki in that node group.
+	if hasMonitoringNodes {
+		sharedNS := map[string]interface{}{
+			"porter.run/workload-kind": "monitoring",
+		}
+
+		sharedTolerations := []map[string]interface{}{
+			{
+				"key":      "porter.run/workload-kind",
+				"operator": "Equal",
+				"value":    "monitoring",
+				"effect":   "NoSchedule",
+			},
+		}
+
+		porterAgentValues["loki"] = map[string]interface{}{
+			"nodeSelector": sharedNS,
+			"tolerations":  sharedTolerations,
+		}
+
+		porterAgentValues["nodeSelector"] = sharedNS
+		porterAgentValues["tolerations"] = sharedTolerations
 	}
 
 	conf := &helm.InstallChartConfig{

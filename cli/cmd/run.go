@@ -129,6 +129,8 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 		}
 
 		if release.BuildConfig != nil &&
+			(strings.Contains(release.BuildConfig.Builder, "heroku") ||
+				strings.Contains(release.BuildConfig.Builder, "paketo")) &&
 			execArgs[0] != "/cnb/lifecycle/launcher" &&
 			execArgs[0] != "launcher" {
 			// this is a buildpacks release using a heroku builder, prepend the launcher

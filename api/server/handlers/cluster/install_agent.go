@@ -96,7 +96,7 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Values:    porterAgentValues,
 	}
 
-	_, err = helmAgent.InstallChart(conf, c.Config().DOConf)
+	_, err = helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(

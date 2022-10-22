@@ -14,7 +14,8 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/helm"
-	"github.com/porter-dev/porter/internal/integrations/slack"
+	"github.com/porter-dev/porter/internal/notifier"
+	"github.com/porter-dev/porter/internal/notifier/slack"
 	"gorm.io/gorm"
 )
 
@@ -155,9 +156,9 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		notifConf = conf.ToNotificationConfigType()
 	}
 
-	notifier := slack.NewSlackNotifier(notifConf, slackInts...)
+	deplNotifier := slack.NewDeploymentNotifier(notifConf, slackInts...)
 
-	notifyOpts := &slack.NotifyOpts{
+	notifyOpts := &notifier.NotifyOpts{
 		ProjectID:   release.ProjectID,
 		ClusterID:   cluster.ID,
 		ClusterName: cluster.Name,
@@ -176,11 +177,11 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rel, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 
 	if err != nil {
-		notifyOpts.Status = slack.StatusHelmFailed
+		notifyOpts.Status = notifier.StatusHelmFailed
 		notifyOpts.Info = err.Error()
 
 		if !cluster.NotificationsDisabled {
-			notifier.Notify(notifyOpts)
+			deplNotifier.Notify(notifyOpts)
 		}
 
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
@@ -192,11 +193,11 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if rel.Chart != nil && rel.Chart.Metadata.Name != "job" {
-		notifyOpts.Status = slack.StatusHelmDeployed
+		notifyOpts.Status = notifier.StatusHelmDeployed
 		notifyOpts.Version = rel.Version
 
 		if !cluster.NotificationsDisabled {
-			notifier.Notify(notifyOpts)
+			deplNotifier.Notify(notifyOpts)
 		}
 	}
 

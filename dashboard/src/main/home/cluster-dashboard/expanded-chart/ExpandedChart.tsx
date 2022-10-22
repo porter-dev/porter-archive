@@ -14,6 +14,7 @@ import RevisionSection from "./RevisionSection";
 import ValuesYaml from "./ValuesYaml";
 import GraphSection from "./GraphSection";
 import MetricsSection from "./metrics/MetricsSection";
+import LogsSection, { InitLogData } from "./logs-section/LogsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
@@ -22,10 +23,11 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import DeploymentType from "./DeploymentType";
-import IncidentsTab from "./incidents/IncidentsTab";
+import EventsTab from "./events/EventsTab";
 import BuildSettingsTab from "./build-settings/BuildSettingsTab";
 import { DisabledNamespacesForIncidents } from "./incidents/DisabledNamespaces";
 import { useStackEnvGroups } from "./useStackEnvGroups";
+import DeployStatusSection from "./deploy-status-section/DeployStatusSection";
 
 type Props = {
   namespace: string;
@@ -37,9 +39,9 @@ type Props = {
 };
 
 const getReadableDate = (s: string) => {
-  let ts = new Date(s);
-  let date = ts.toLocaleDateString();
-  let time = ts.toLocaleTimeString([], {
+  const ts = new Date(s);
+  const date = ts.toLocaleDateString();
+  const time = ts.toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",
   });
@@ -71,9 +73,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
   const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(true);
-  const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [isAuthorized] = useAuth();
   const [fullScreenLogs, setFullScreenLogs] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [logData, setLogData] = useState<InitLogData>({});
+  const [overrideCurrentTab, setOverrideCurrentTab] = useState("");
+  const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
 
   const {
     isStack,
@@ -94,6 +99,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
     setCurrentError,
     setCurrentOverlay,
   } = useContext(Context);
+
+  const renderLogsAtTimestamp = (initLogData: InitLogData) => {
+    setLogData(initLogData);
+    setOverrideCurrentTab("logs");
+  };
 
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
@@ -131,6 +141,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const getControllers = async (chart: ChartType) => {
+    
     // don't retrieve controllers for chart that failed to even deploy.
     if (chart.info.status == "failed") return;
 
@@ -171,7 +182,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const wsConfig = {
       onmessage(evt: MessageEvent) {
         const event = JSON.parse(evt.data);
-        let object = event.Object;
+        const object = event.Object;
         object.metadata.kind = event.Kind;
 
         if (event.event_type != "UPDATE") {
@@ -238,11 +249,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
       values = currentChart.config;
     }
 
-    for (let key in rawValues) {
+    for (const key in rawValues) {
       _.set(values, key, rawValues[key]);
     }
 
-    let valuesYaml = yaml.dump({
+    const valuesYaml = yaml.dump({
       ...values,
     });
 
@@ -355,9 +366,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const handleUpgradeVersion = useCallback(
     async (version: string, cb: () => void) => {
       // convert current values to yaml
-      let values = currentChart.config;
+      const values = currentChart.config;
 
-      let valuesYaml = yaml.dump({
+      const valuesYaml = yaml.dump({
         ...values,
       });
 
@@ -389,7 +400,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
         cb && cb();
       } catch (err) {
-        let parsedErr = err?.response?.data?.error;
+        const parsedErr = err?.response?.data?.error;
 
         if (parsedErr) {
           err = parsedErr;
@@ -409,20 +420,32 @@ const ExpandedChart: React.FC<Props> = (props) => {
   );
 
   const renderTabContents = (currentTab: string) => {
-    let { setSidebar } = props;
-    let chart = currentChart;
+    const { setSidebar } = props;
+    const chart = currentChart; // // Reset the logData when navigating to a different tab
+
     switch (currentTab) {
+      case "logs":
+        if (!isAgentInstalled) {
+          return null;
+        }
+
+        return (
+          <LogsSection
+            currentChart={chart}
+            isFullscreen={isFullscreen}
+            setIsFullscreen={setIsFullscreen}
+            initData={logData}
+            setInitData={setLogData}
+          />
+        );
       case "metrics":
         return <MetricsSection currentChart={chart} />;
-      case "incidents":
+      case "events":
         if (DisabledNamespacesForIncidents.includes(currentChart.namespace)) {
           return null;
         }
         return (
-          <IncidentsTab
-            releaseName={chart?.name}
-            namespace={chart?.namespace}
-          />
+          <EventsTab currentChart={chart} setLogData={renderLogsAtTimestamp} />
         );
       case "status":
         if (isLoadingChartData) {
@@ -525,13 +548,20 @@ const ExpandedChart: React.FC<Props> = (props) => {
     // Collate non-form tabs
     let rightTabOptions = [] as any[];
     let leftTabOptions = [] as any[];
-    leftTabOptions.push({ label: "Status", value: "status" });
+    if (
+      currentChart.chart.metadata.home === "https://getporter.dev/" &&
+      (currentChart.chart.metadata.name === "web" ||
+        currentChart.chart.metadata.name === "worker" ||
+        currentChart.chart.metadata.name === "job") &&
+      currentCluster.agent_integration_enabled
+    ) {
+      leftTabOptions.push({ label: "Events", value: "events" });
 
-    /* Temporarily disable incident detection
-    if (!DisabledNamespacesForIncidents.includes(currentChart.namespace)) {
-      leftTabOptions.push({ label: "Incidents", value: "incidents" });
+      if (isAgentInstalled) {
+        leftTabOptions.push({ label: "Logs", value: "logs" });
+      }
     }
-    */
+    leftTabOptions.push({ label: "Status", value: "status" });
 
     if (props.isMetricsInstalled) {
       leftTabOptions.push({ label: "Metrics", value: "metrics" });
@@ -560,7 +590,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     // Filter tabs if previewing an old revision or updating the chart version
     if (isPreview) {
-      let liveTabs = ["status", "events", "settings", "deploy", "metrics"];
+      const liveTabs = ["status", "events", "settings", "deploy", "metrics"];
       rightTabOptions = rightTabOptions.filter(
         (tab: any) => !liveTabs.includes(tab.value)
       );
@@ -574,6 +604,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
+    // if we've set the revision, we also override the revision in log data
+    let newLogData = logData;
+
+    newLogData.revision = `${chart.version}`;
+
+    setLogData(newLogData);
+
     setIsPreview(!isCurrent);
     getChartData(chart);
   };
@@ -586,9 +623,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const renderUrl = () => {
     if (url) {
       return (
-        <Url href={url} target="_blank">
+        <Url>
           <i className="material-icons">link</i>
-          {url}
+          <a href={url} target="_blank">{url}</a>
         </Url>
       );
     }
@@ -679,6 +716,58 @@ const ExpandedChart: React.FC<Props> = (props) => {
     }
   };
 
+  // Check if porter agent is installed. If not installed hide the `Logs` component
+  useEffect(() => {
+    if (!currentCluster.agent_integration_enabled) {
+      return;
+    }
+
+    api
+      .detectPorterAgent(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then(() => setIsAgentInstalled(true))
+      .catch((err) => {
+        setIsAgentInstalled(false);
+
+        if (err.status !== 404) {
+          setCurrentError(
+            "We could not detect the Porter agent installation status, please try again."
+          );
+        }
+      });
+  }, []);
+
+  useEffect(() => {
+    if (logData.revision) {
+      api
+        .getChart(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            namespace: props.currentChart.namespace,
+            cluster_id: currentCluster.id,
+            name: props.currentChart.name,
+            revision: parseInt(logData.revision),
+          }
+        )
+        .then((res) => {
+          setCurrentChart(res.data || props.currentChart);
+        })
+        .catch(console.log);
+
+      return;
+    }
+
+    setCurrentChart(props.currentChart);
+  }, [logData, props.currentChart]);
+
   useEffect(() => {
     window.analytics?.track("Opened Chart", {
       chart: currentChart.name,
@@ -705,7 +794,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   useEffect(() => {
     updateTabs();
     localStorage.setItem("devOpsMode", devOpsMode.toString());
-  }, [devOpsMode, currentChart?.form, isPreview]);
+  }, [devOpsMode, currentChart?.form, isPreview, isAgentInstalled]);
 
   useEffect((): any => {
     let isSubscribed = true;
@@ -756,134 +845,162 @@ const ExpandedChart: React.FC<Props> = (props) => {
           setFullScreenLogs={() => setFullScreenLogs(false)}
         />
       ) : (
-        <StyledExpandedChart>
-          <BreadcrumbRow>
-            <Breadcrumb onClick={props.closeChart}>
-              <ArrowIcon src={leftArrow} />
-              <Wrap>Back</Wrap>
-            </Breadcrumb>
-          </BreadcrumbRow>
-          <HeaderWrapper>
-            <TitleSection
-              icon={currentChart.chart.metadata.icon}
-              iconWidth="33px"
-            >
-              {currentChart.name}
-              <DeploymentType currentChart={currentChart} />
-              <TagWrapper>
-                Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
-              </TagWrapper>
-            </TitleSection>
-
-            {currentChart.chart.metadata.name != "worker" &&
-              currentChart.chart.metadata.name != "job" &&
-              renderUrl()}
-            <InfoWrapper>
-              <StatusIndicator
-                controllers={controllers}
-                status={currentChart.info.status}
-                margin_left={"0px"}
-              />
-              <LastDeployed>
-                <Dot>•</Dot>Last deployed
-                {" " + getReadableDate(currentChart.info.last_deployed)}
-              </LastDeployed>
-            </InfoWrapper>
-          </HeaderWrapper>
-          {deleting ? (
-            <>
-              <LineBreak />
-              <Placeholder>
-                <TextWrap>
-                  <Header>
-                    <Spinner src={loadingSrc} /> Deleting "{currentChart.name}"
-                  </Header>
-                  You will be automatically redirected after deletion is
-                  complete.
-                </TextWrap>
-              </Placeholder>
-            </>
+        <>
+          {isFullscreen ? (
+            <LogsSection
+              isFullscreen={true}
+              setIsFullscreen={setIsFullscreen}
+              currentChart={currentChart}
+              setInitData={() => {}}
+            />
           ) : (
-            <>
-              <RevisionSection
-                showRevisions={showRevisions}
-                toggleShowRevisions={() => {
-                  setShowRevisions(!showRevisions);
-                }}
-                chart={currentChart}
-                refreshChart={() => getChartData(currentChart)}
-                setRevision={setRevision}
-                forceRefreshRevisions={forceRefreshRevisions}
-                refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-                shouldUpdate={
-                  currentChart.latest_version &&
-                  currentChart.latest_version !==
-                    currentChart.chart.metadata.version
-                }
-                latestVersion={currentChart.latest_version}
-                upgradeVersion={handleUpgradeVersion}
-              />
-              {isStack && isLoadingStackEnvGroups ? (
+            <StyledExpandedChart>
+              <BreadcrumbRow>
+                <Breadcrumb onClick={props.closeChart}>
+                  <ArrowIcon src={leftArrow} />
+                  <Wrap>Back</Wrap>
+                </Breadcrumb>
+              </BreadcrumbRow>
+              <HeaderWrapper>
+                <TitleSection
+                  icon={currentChart.chart.metadata.icon}
+                  iconWidth="33px"
+                >
+                  {currentChart.name}
+                  <DeploymentType currentChart={currentChart} />
+                  <TagWrapper>
+                    Namespace{" "}
+                    <NamespaceTag>{currentChart.namespace}</NamespaceTag>
+                  </TagWrapper>
+                </TitleSection>
+
+                {currentChart.chart.metadata.name != "worker" &&
+                  currentChart.chart.metadata.name != "job" &&
+                  renderUrl()}
+                <InfoWrapper>
+                  {/*
+                  <StatusIndicator
+                    controllers={controllers}
+                    status={currentChart.info.status}
+                    margin_left={"0px"}
+                  />
+                  */}
+                  <DeployStatusSection chart={currentChart} setLogData={renderLogsAtTimestamp} />
+                  <LastDeployed>
+                    <Dot>•</Dot>Last deployed
+                    {" " + getReadableDate(currentChart.info.last_deployed)}
+                  </LastDeployed>
+                </InfoWrapper>
+              </HeaderWrapper>
+              {deleting ? (
                 <>
                   <LineBreak />
                   <Placeholder>
                     <TextWrap>
                       <Header>
-                        <Spinner src={loadingSrc} />
+                        <Spinner src={loadingSrc} /> Deleting "
+                        {currentChart.name}"
                       </Header>
+                      You will be automatically redirected after deletion is
+                      complete.
                     </TextWrap>
                   </Placeholder>
                 </>
               ) : (
                 <>
-                  {(isPreview || leftTabOptions.length > 0) && (
-                    <BodyWrapper>
-                      <PorterFormWrapper
-                        formData={cloneDeep(currentChart.form)}
-                        valuesToOverride={{
-                          namespace: props.namespace,
-                          clusterId: currentCluster.id,
-                        }}
-                        renderTabContents={renderTabContents}
-                        isReadOnly={
-                          isPreview ||
-                          imageIsPlaceholder ||
-                          !isAuthorized("application", "", ["get", "update"])
-                        }
-                        onSubmit={onSubmit}
-                        includeMetadata
-                        rightTabOptions={rightTabOptions}
-                        leftTabOptions={leftTabOptions}
-                        color={isPreview ? "#f5cb42" : null}
-                        addendum={
-                          <TabButton
-                            onClick={toggleDevOpsMode}
-                            devOpsMode={devOpsMode}
-                          >
-                            <i className="material-icons">offline_bolt</i>{" "}
-                            DevOps Mode
-                          </TabButton>
-                        }
-                        saveValuesStatus={saveValuesStatus}
-                        injectedProps={{
-                          "key-value-array": {
-                            availableSyncEnvGroups:
-                              isStack && !isPreview
-                                ? stackEnvGroups
-                                : undefined,
-                          },
-                          "url-link": {
-                            chart: currentChart,
-                          },
-                        }}
-                      />
-                    </BodyWrapper>
+                  <RevisionSection
+                    showRevisions={showRevisions}
+                    toggleShowRevisions={() => {
+                      setShowRevisions(!showRevisions);
+                    }}
+                    chart={currentChart}
+                    refreshChart={() => getChartData(currentChart)}
+                    setRevision={setRevision}
+                    forceRefreshRevisions={forceRefreshRevisions}
+                    refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+                    shouldUpdate={
+                      currentChart.latest_version &&
+                      currentChart.latest_version !==
+                        currentChart.chart.metadata.version
+                    }
+                    latestVersion={currentChart.latest_version}
+                    upgradeVersion={handleUpgradeVersion}
+                  />
+                  {isStack && isLoadingStackEnvGroups ? (
+                    <>
+                      <LineBreak />
+                      <Placeholder>
+                        <TextWrap>
+                          <Header>
+                            <Spinner src={loadingSrc} />
+                          </Header>
+                        </TextWrap>
+                      </Placeholder>
+                    </>
+                  ) : (
+                    <>
+                      {(isPreview || leftTabOptions.length > 0) && (
+                        <BodyWrapper>
+                          <PorterFormWrapper
+                            formData={cloneDeep(currentChart.form)}
+                            valuesToOverride={{
+                              namespace: props.namespace,
+                              clusterId: currentCluster.id,
+                            }}
+                            renderTabContents={renderTabContents}
+                            isReadOnly={
+                              isPreview ||
+                              imageIsPlaceholder ||
+                              !isAuthorized("application", "", [
+                                "get",
+                                "update",
+                              ])
+                            }
+                            onSubmit={onSubmit}
+                            includeMetadata
+                            rightTabOptions={rightTabOptions}
+                            leftTabOptions={leftTabOptions}
+                            color={isPreview ? "#f5cb42" : null}
+                            addendum={
+                              <TabButton
+                                onClick={toggleDevOpsMode}
+                                devOpsMode={devOpsMode}
+                              >
+                                <i className="material-icons">offline_bolt</i>{" "}
+                                DevOps Mode
+                              </TabButton>
+                            }
+                            saveValuesStatus={saveValuesStatus}
+                            injectedProps={{
+                              "key-value-array": {
+                                availableSyncEnvGroups:
+                                  isStack && !isPreview
+                                    ? stackEnvGroups
+                                    : undefined,
+                              },
+                              "url-link": {
+                                chart: currentChart,
+                              },
+                            }}
+                            overrideCurrentTab={overrideCurrentTab}
+                            onTabChange={(newTab) => {
+                              if (newTab !== "logs") {
+                                setOverrideCurrentTab("");
+                                setLogData({
+                                  revision: `${currentChart.version}`,
+                                });
+                              }
+                            }}
+                          />
+                        </BodyWrapper>
+                      )}
+                    </>
                   )}
                 </>
               )}
-            </>
+            </StyledExpandedChart>
           )}
-        </StyledExpandedChart>
+        </>
       )}
     </>
   );
@@ -936,7 +1053,8 @@ const LineBreak = styled.div`
 
 const BodyWrapper = styled.div`
   position: relative;
-  margin-bottom: 50px;
+  padding-bottom: 0;
+  margin-bottom: 0;
 `;
 
 const Header = styled.div`
@@ -975,15 +1093,16 @@ const Bolded = styled.div`
   margin-right: 6px;
 `;
 
-const Url = styled.a`
+const Url = styled.div`
   display: block;
-  margin-left: 2px;
+  margin-left: 5px;
   font-size: 13px;
   margin-top: 16px;
   user-select: all;
   margin-bottom: -5px;
   user-select: text;
   display: flex;
+  color: #949eff;
   align-items: center;
 
   > i {
@@ -1026,7 +1145,7 @@ const HeaderWrapper = styled.div`
 `;
 
 const Dot = styled.div`
-  margin-right: 9px;
+  margin-right: 16px;
 `;
 
 const InfoWrapper = styled.div`
@@ -1038,7 +1157,7 @@ const InfoWrapper = styled.div`
 
 const LastDeployed = styled.div`
   font-size: 13px;
-  margin-left: 10px;
+  margin-left: 8px;
   margin-top: -1px;
   display: flex;
   align-items: center;

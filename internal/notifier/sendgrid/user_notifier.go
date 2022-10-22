@@ -7,24 +7,23 @@ import (
 )
 
 type UserNotifier struct {
-	client *Client
+	opts *UserNotifierOpts
 }
 
-type Client struct {
-	APIKey                  string
+type UserNotifierOpts struct {
+	*SharedOpts
 	PWResetTemplateID       string
 	PWGHTemplateID          string
 	VerifyEmailTemplateID   string
 	ProjectInviteTemplateID string
-	SenderEmail             string
 }
 
-func NewUserNotifier(client *Client) notifier.UserNotifier {
-	return &UserNotifier{client}
+func NewUserNotifier(opts *UserNotifierOpts) notifier.UserNotifier {
+	return &UserNotifier{opts}
 }
 
 func (s *UserNotifier) SendPasswordResetEmail(opts *notifier.SendPasswordResetEmailOpts) error {
-	request := sendgrid.GetRequest(s.client.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
+	request := sendgrid.GetRequest(s.opts.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
 	request.Method = "POST"
 
 	sgMail := &mail.SGMailV3{
@@ -42,10 +41,10 @@ func (s *UserNotifier) SendPasswordResetEmail(opts *notifier.SendPasswordResetEm
 			},
 		},
 		From: &mail.Email{
-			Address: s.client.SenderEmail,
+			Address: s.opts.SenderEmail,
 			Name:    "Porter",
 		},
-		TemplateID: s.client.PWResetTemplateID,
+		TemplateID: s.opts.PWResetTemplateID,
 	}
 
 	request.Body = mail.GetRequestBody(sgMail)
@@ -56,7 +55,7 @@ func (s *UserNotifier) SendPasswordResetEmail(opts *notifier.SendPasswordResetEm
 }
 
 func (s *UserNotifier) SendGithubRelinkEmail(opts *notifier.SendGithubRelinkEmailOpts) error {
-	request := sendgrid.GetRequest(s.client.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
+	request := sendgrid.GetRequest(s.opts.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
 	request.Method = "POST"
 
 	sgMail := &mail.SGMailV3{
@@ -74,10 +73,10 @@ func (s *UserNotifier) SendGithubRelinkEmail(opts *notifier.SendGithubRelinkEmai
 			},
 		},
 		From: &mail.Email{
-			Address: s.client.SenderEmail,
+			Address: s.opts.SenderEmail,
 			Name:    "Porter",
 		},
-		TemplateID: s.client.PWGHTemplateID,
+		TemplateID: s.opts.PWGHTemplateID,
 	}
 
 	request.Body = mail.GetRequestBody(sgMail)
@@ -88,7 +87,7 @@ func (s *UserNotifier) SendGithubRelinkEmail(opts *notifier.SendGithubRelinkEmai
 }
 
 func (s *UserNotifier) SendEmailVerification(opts *notifier.SendEmailVerificationOpts) error {
-	request := sendgrid.GetRequest(s.client.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
+	request := sendgrid.GetRequest(s.opts.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
 	request.Method = "POST"
 
 	sgMail := &mail.SGMailV3{
@@ -106,10 +105,10 @@ func (s *UserNotifier) SendEmailVerification(opts *notifier.SendEmailVerificatio
 			},
 		},
 		From: &mail.Email{
-			Address: s.client.SenderEmail,
+			Address: s.opts.SenderEmail,
 			Name:    "Porter",
 		},
-		TemplateID: s.client.VerifyEmailTemplateID,
+		TemplateID: s.opts.VerifyEmailTemplateID,
 	}
 
 	request.Body = mail.GetRequestBody(sgMail)
@@ -120,7 +119,7 @@ func (s *UserNotifier) SendEmailVerification(opts *notifier.SendEmailVerificatio
 }
 
 func (s *UserNotifier) SendProjectInviteEmail(opts *notifier.SendProjectInviteEmailOpts) error {
-	request := sendgrid.GetRequest(s.client.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
+	request := sendgrid.GetRequest(s.opts.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
 	request.Method = "POST"
 
 	sgMail := &mail.SGMailV3{
@@ -139,10 +138,10 @@ func (s *UserNotifier) SendProjectInviteEmail(opts *notifier.SendProjectInviteEm
 			},
 		},
 		From: &mail.Email{
-			Address: s.client.SenderEmail,
+			Address: s.opts.SenderEmail,
 			Name:    "Porter",
 		},
-		TemplateID: s.client.ProjectInviteTemplateID,
+		TemplateID: s.opts.ProjectInviteTemplateID,
 	}
 
 	request.Body = mail.GetRequestBody(sgMail)

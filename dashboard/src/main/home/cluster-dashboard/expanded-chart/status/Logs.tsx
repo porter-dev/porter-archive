@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Anser from "anser";
 import CommandLineIcon from "assets/command-line-icon";
-import ConnectToLogsInstructionModal from "./ConnectToLogsInstructionModal";
 import { SelectedPodType } from "./types";
 import { useLogs } from "./useLogs";
 
@@ -180,7 +179,7 @@ const LogsFC: React.FC<{
             checked={isScrollToBottomEnabled}
             onChange={() => {}}
           />
-          Scroll to Bottom
+          Scroll to bottom
         </Scroll>
         {Array.isArray(previousLogs) && previousLogs.length > 0 && (
           <Scroll
@@ -193,7 +192,7 @@ const LogsFC: React.FC<{
               checked={showPreviousLogs}
               onChange={() => {}}
             />
-            Show previous Logs
+            Show previous logs
           </Scroll>
         )}
         <Refresh onClick={() => refresh()}>
@@ -288,7 +287,7 @@ const Refresh = styled.div`
 const LogTabs = styled.div`
   width: 100%;
   height: 25px;
-  background: #121318;
+  margin-top: -25px;
   display: flex;
   flex-direction: row;
   align-items: center;

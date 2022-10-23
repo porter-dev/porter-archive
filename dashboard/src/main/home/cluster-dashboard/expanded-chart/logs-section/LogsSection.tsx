@@ -193,7 +193,7 @@ const LogsSection: React.FC<Props> = ({
           <span className="line-timestamp">
             {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
           </span>
-          <LogOuter>
+          <LogOuter key={[log.lineNumber, i].join(".")}>
             {log.line?.map((ansi, j) => {
               if (ansi.clearLine) {
                 return null;

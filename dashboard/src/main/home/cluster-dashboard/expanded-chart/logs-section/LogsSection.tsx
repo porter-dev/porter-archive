@@ -193,17 +193,22 @@ const LogsSection: React.FC<Props> = ({
           <span className="line-timestamp">
             {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
           </span>
-          {log.line?.map((ansi, j) => {
-            if (ansi.clearLine) {
-              return null;
-            }
+          <LogOuter key={[log.lineNumber, i].join(".")}>
+            {log.line?.map((ansi, j) => {
+              if (ansi.clearLine) {
+                return null;
+              }
 
-            return (
-              <LogSpan key={[log.lineNumber, i, j].join(".")} ansi={ansi}>
-                {ansi.content.replace(/ /g, "\u00a0")}
-              </LogSpan>
-            );
-          })}
+              return (
+                <LogInnerSpan
+                  key={[log.lineNumber, i, j].join(".")}
+                  ansi={ansi}
+                >
+                  {ansi.content.replace(/ /g, "\u00a0")}
+                </LogInnerSpan>
+              );
+            })}
+          </LogOuter>
         </Log>
       );
     });
@@ -591,10 +596,15 @@ const Log = styled.div`
   }
 `;
 
-const LogSpan = styled.span`
+const LogOuter = styled.div`
   display: inline-block;
   word-wrap: anywhere;
   flex-grow: 1;
+  font-family: monospace, sans-serif;
+  font-size: 12px;
+`;
+
+const LogInnerSpan = styled.span`
   font-family: monospace, sans-serif;
   font-size: 12px;
   font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>

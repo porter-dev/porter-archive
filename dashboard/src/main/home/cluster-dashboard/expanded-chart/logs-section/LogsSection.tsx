@@ -147,6 +147,7 @@ const LogsSection: React.FC<Props> = ({
       .getLogPodValues(
         "<TOKEN>",
         {
+          namespace: currentChart?.namespace,
           revision: initData.revision ?? currentChart.version.toString(),
           match_prefix: currentChart.name,
         },

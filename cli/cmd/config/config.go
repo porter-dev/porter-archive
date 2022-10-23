@@ -67,7 +67,7 @@ func initAndLoadConfig(_config *CLIConfig) {
 	if _, err := os.Stat(porterDir); os.IsNotExist(err) {
 		os.Mkdir(porterDir, 0700)
 	} else if err != nil {
-		color.New(color.FgRed).Printf("%v\n", err)
+		color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
@@ -96,12 +96,12 @@ func initAndLoadConfig(_config *CLIConfig) {
 			err := ioutil.WriteFile(filepath.Join(home, ".porter", "porter.yaml"), []byte{}, 0644)
 
 			if err != nil {
-				color.New(color.FgRed).Printf("%v\n", err)
+				color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err)
 				os.Exit(1)
 			}
 		} else {
 			// Config file was found but another error was produced
-			color.New(color.FgRed).Printf("%v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)
 		}
 	}

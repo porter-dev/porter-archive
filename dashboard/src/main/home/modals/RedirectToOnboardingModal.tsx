@@ -46,7 +46,6 @@ const ContinueButton = styled.a`
   width: 160px;
   border-radius: 5px;
   background: #616feecc;
-  box-shadow: 0 2px 5px 0 #00000030;
   cursor: pointer;
   user-select: none;
   :focus {

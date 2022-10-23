@@ -871,8 +871,6 @@ const Button = styled.button`
   border: 0;
   border-radius: 5px;
   background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
-  box-shadow: ${(props) =>
-    !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
   cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
   user-select: none;
   :focus {

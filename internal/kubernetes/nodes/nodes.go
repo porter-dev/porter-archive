@@ -131,3 +131,14 @@ func DescribeNode(clientset kubernetes.Interface, nodeName string) *NodeDetails 
 		AllocatableMemory: node.Status.Allocatable.Memory().String(),
 	}
 }
+
+func ListNodesByLabels(clientset kubernetes.Interface, labelSelector string) ([]v1.Node, error) {
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
+		LabelSelector: labelSelector,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return nodes.Items, nil
+}

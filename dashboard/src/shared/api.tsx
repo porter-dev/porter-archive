@@ -1954,6 +1954,7 @@ const getGitlabFolderContent = baseApi<
 
 const getLogPodValues = baseApi<
   {
+    namespace?: string;
     revision?: string;
     match_prefix?: string;
     start_range?: string;

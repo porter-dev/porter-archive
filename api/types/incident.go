@@ -112,6 +112,7 @@ type GetLogRequest struct {
 type GetPodValuesRequest struct {
 	StartRange  *time.Time `schema:"start_range"`
 	EndRange    *time.Time `schema:"end_range"`
+	Namespace   string     `schema:"namespace"`
 	MatchPrefix string     `schema:"match_prefix"`
 	Revision    string     `schema:"revision"`
 }

@@ -254,7 +254,7 @@ const StyledPorterForm = styled.div<{ showSave?: boolean }>`
   height: ${(props) => (props.showSave ? "calc(100% - 50px)" : "100%")};
   background: #ffffff11;
   color: #ffffff;
-  padding: 0px 35px 25px;
+  padding: 0px 35px 20px;
   position: relative;
   border-radius: 8px;
   font-size: 13px;

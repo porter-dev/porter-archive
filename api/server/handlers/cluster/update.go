@@ -61,7 +61,13 @@ func (c *ClusterUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		cluster.AWSClusterID = request.AWSClusterID
 	}
 
-	cluster.Name = request.Name
+	if request.AgentIntegrationEnabled != nil {
+		cluster.AgentIntegrationEnabled = *request.AgentIntegrationEnabled
+	}
+
+	if request.Name != "" && cluster.Name != request.Name {
+		cluster.Name = request.Name
+	}
 
 	cluster, err := c.Repo().Cluster().UpdateCluster(cluster)
 

@@ -107,13 +107,15 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	res.UserNotifier = &notifier.EmptyUserNotifier{}
 
 	if res.Metadata.Email {
-		res.UserNotifier = sendgrid.NewUserNotifier(&sendgrid.Client{
-			APIKey:                  envConf.ServerConf.SendgridAPIKey,
+		res.UserNotifier = sendgrid.NewUserNotifier(&sendgrid.UserNotifierOpts{
+			SharedOpts: &sendgrid.SharedOpts{
+				APIKey:      envConf.ServerConf.SendgridAPIKey,
+				SenderEmail: envConf.ServerConf.SendgridSenderEmail,
+			},
 			PWResetTemplateID:       envConf.ServerConf.SendgridPWResetTemplateID,
 			PWGHTemplateID:          envConf.ServerConf.SendgridPWGHTemplateID,
 			VerifyEmailTemplateID:   envConf.ServerConf.SendgridVerifyEmailTemplateID,
 			ProjectInviteTemplateID: envConf.ServerConf.SendgridProjectInviteTemplateID,
-			SenderEmail:             envConf.ServerConf.SendgridSenderEmail,
 		})
 	}
 

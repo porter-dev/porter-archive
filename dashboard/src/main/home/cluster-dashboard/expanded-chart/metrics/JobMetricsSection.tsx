@@ -38,8 +38,6 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
   jobChart: currentChart,
   jobRun,
 }) => {
-  const [pods, setPods] = useState([]);
-  const [selectedPod, setSelectedPod] = useState("");
   const [controllerOptions, setControllerOptions] = useState([]);
   const [selectedController, setSelectedController] = useState(null);
   const [ingressOptions, setIngressOptions] = useState([]);
@@ -99,48 +97,6 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
       });
   }, [currentChart, currentCluster, currentProject]);
 
-  useEffect(() => {
-    getPods();
-  }, [selectedController]);
-
-  const getPods = () => {
-    const jobName = jobRun?.metadata?.name;
-    const selector = `job-name=${jobName}`;
-
-    setIsLoading((prev) => prev + 1);
-
-    api
-      .getMatchingPods(
-        "<token>",
-        {
-          namespace: selectedController?.metadata?.namespace,
-          selectors: [selector],
-        },
-        {
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      )
-      .then((res) => {
-        const pods = res?.data?.map((pod: any) => {
-          let name = pod?.metadata?.name;
-          return { value: name, label: name };
-        });
-
-        setPods(pods);
-        setSelectedPod(pods[0].value);
-
-        getMetrics();
-      })
-      .catch((err) => {
-        setCurrentError(JSON.stringify(err));
-        return;
-      })
-      .finally(() => {
-        setIsLoading((prev) => prev - 1);
-      });
-  };
-
   const getAutoscalingThreshold = async (
     metricType: "cpu_hpa_threshold" | "memory_hpa_threshold",
     shouldsum: boolean,
@@ -184,9 +140,6 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
   };
 
   const getMetrics = async () => {
-    if (pods?.length == 0) {
-      return;
-    }
     try {
       let namespace = currentChart.namespace;
 
@@ -202,8 +155,6 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
         end = Math.round(new Date().getTime() / 1000);
       }
 
-      let podNames = [selectedPod] as string[];
-
       setIsLoading((prev) => prev + 1);
       setData([]);
 
@@ -211,14 +162,14 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
         "<token>",
         {
           metric: selectedMetric,
-          shouldsum: false,
-          kind: selectedController?.kind,
-          name: selectedController?.metadata.name,
+          shouldsum: true,
+          kind: "job",
+          name: jobRun?.metadata?.name,
           namespace: namespace,
           startrange: start,
           endrange: end,
           resolution: resolutions[selectedRange],
-          pods: podNames,
+          // pods: podNames,
         },
         {
           id: currentProject.id,
@@ -226,13 +177,15 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
         }
       );
 
-      const metrics = new MetricNormalizer(
-        res.data,
-        selectedMetric as AvailableMetrics
-      );
+      if (res.data.length > 0) {
+        const metrics = new MetricNormalizer(
+          res.data,
+          selectedMetric as AvailableMetrics
+        );
 
-      // transform the metrics to expected form
-      setData(metrics.getParsedData());
+        // transform the metrics to expected form
+        setData(metrics.getParsedData());
+      }
     } catch (error) {
       setCurrentError(JSON.stringify(error));
     } finally {
@@ -241,16 +194,10 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
   };
 
   useEffect(() => {
-    if (selectedMetric && selectedRange && selectedPod && selectedController) {
+    if (selectedMetric && selectedRange && selectedController) {
       getMetrics();
     }
-  }, [
-    selectedMetric,
-    selectedRange,
-    selectedPod,
-    selectedController,
-    selectedIngress,
-  ]);
+  }, [selectedMetric, selectedRange, selectedController, selectedIngress]);
 
   const renderMetricsSettings = () => {
     if (showMetricsSettings && true) {
@@ -282,13 +229,6 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
               value={selectedController}
               setActiveValue={(x: any) => setSelectedController(x)}
               options={controllerOptions}
-              width="100%"
-            />
-            <SelectRow
-              label="Target Pod"
-              value={selectedPod}
-              setActiveValue={(x: any) => setSelectedPod(x)}
-              options={pods}
               width="100%"
             />
           </DropdownAlt>

@@ -240,15 +240,29 @@ const DeploymentList = () => {
   };
 
   const filteredDeployments = useMemo(() => {
-    const filteredDeploymentList = deploymentList.filter(
+    const filteredByStatus = deploymentList.filter(
       (d) => !["deleted", "inactive"].includes(d.status)
     );
 
-    return search<PRDeployment>(filteredDeploymentList, searchValue, {
-      isCaseSensitive: false,
-      keys: ["gh_pr_name", "gh_repo_name", "gh_repo_owner"],
-    });
-  }, [statusSelectorVal, deploymentList, searchValue]);
+    const filteredBySearch = search<PRDeployment>(
+      filteredByStatus,
+      searchValue,
+      {
+        isCaseSensitive: false,
+        keys: ["gh_pr_name", "gh_repo_name", "gh_repo_owner"],
+      }
+    );
+
+    switch (sortOrder) {
+      case "Newest":
+        return _.sortBy(filteredBySearch, "updated_at").reverse();
+      case "Oldest":
+        return _.sortBy(filteredBySearch, "updated_at");
+      case "Alphabetical":
+      default:
+        return _.sortBy(filteredBySearch, "gh_pr_name");
+    }
+  }, [statusSelectorVal, deploymentList, searchValue, sortOrder]);
 
   const filteredPullRequests = useMemo(() => {
     if (statusSelectorVal !== "inactive") {
@@ -344,7 +358,12 @@ const DeploymentList = () => {
         >
           <Message>
             {expandedPorterYAMLErrors.map((el) => {
-              return <div>{"- "}{el}</div>
+              return (
+                <div>
+                  {"- "}
+                  {el}
+                </div>
+              );
             })}
           </Message>
         </Modal>
@@ -697,6 +716,7 @@ const FlexRow = styled.div`
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
+  gap: 10px;
 `;
 
 const CreatePreviewEnvironmentButton = styled(DynamicLink)`

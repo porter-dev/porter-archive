@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -155,9 +156,9 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 
 		if i != int(retryCount)-1 {
 			if httpErr != nil {
-				fmt.Printf("Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
+				fmt.Fprintf(os.Stderr, "Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
 			} else {
-				fmt.Printf("Error: %v, retrying request...\n", err)
+				fmt.Fprintf(os.Stderr, "Error: %v, retrying request...\n", err)
 			}
 		}
 	}

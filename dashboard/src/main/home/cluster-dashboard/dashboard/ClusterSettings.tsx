@@ -1,18 +1,26 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import { Context } from "shared/Context";
 import api from "shared/api";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import Loading from "components/Loading";
 
 const ClusterSettings: React.FC = () => {
-  const context = useContext(Context);
+  const {
+    currentProject,
+    currentCluster,
+    setCurrentCluster,
+    setCurrentModal,
+    capabilities,
+  } = useContext(Context);
   const [newClusterName, setNewClusterName] = useState<string>(
-    context.currentCluster.name
+    currentCluster.name
   );
   const [newAWSClusterID, setNewAWSClusterID] = useState<string>(
-    context.currentCluster.aws_cluster_id
+    currentCluster.aws_cluster_id
   );
   const [successfulRename, setSuccessfulRename] = useState<boolean>(false);
 
@@ -20,19 +28,23 @@ const ClusterSettings: React.FC = () => {
   const [secretKey, setSecretKey] = useState<string>("");
   const [startRotateCreds, setStartRotateCreds] = useState<boolean>(false);
   const [successfulRotate, setSuccessfulRotate] = useState<boolean>(false);
+  const [enableAgent, setEnableAgent] = useState(
+    currentCluster.agent_integration_enabled
+  );
+  const [agentLoading, setAgentLoading] = useState(false);
 
   let rotateCredentials = () => {
     api
       .overwriteAWSIntegration(
         "<token>",
         {
-          aws_integration_id: context.currentCluster.aws_integration_id,
+          aws_integration_id: currentCluster.aws_integration_id,
           aws_access_key_id: accessKeyId,
           aws_secret_access_key: secretKey,
-          cluster_id: context.currentCluster.id,
+          cluster_id: currentCluster.id,
         },
         {
-          project_id: context.currentProject.id,
+          project_id: currentProject.id,
         }
       )
       .then(({ data }) => {
@@ -45,15 +57,15 @@ const ClusterSettings: React.FC = () => {
 
   let updateClusterName = () => {
     api
-      .updateClusterName(
+      .updateCluster(
         "<token>",
         {
           name: newClusterName,
           aws_cluster_id: newAWSClusterID,
         },
         {
-          project_id: context.currentProject.id,
-          cluster_id: context.currentCluster.id,
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
       )
       .then(({ data }) => {
@@ -61,6 +73,29 @@ const ClusterSettings: React.FC = () => {
       })
       .catch(() => {
         setSuccessfulRename(false);
+      });
+  };
+
+  let updateAgentIntegrationEnabled = () => {
+    setAgentLoading(true);
+
+    api
+      .updateCluster(
+        "<token>",
+        {
+          agent_integration_enabled: enableAgent,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then(({ data }) => {
+        setCurrentCluster(data);
+        setAgentLoading(false);
+      })
+      .catch(() => {
+        setAgentLoading(false);
       });
   };
 
@@ -80,7 +115,7 @@ const ClusterSettings: React.FC = () => {
     </Helper>
   );
 
-  if (!context.currentCluster?.infra_id || !context.currentCluster?.service) {
+  if (!currentCluster?.infra_id || !currentCluster?.service) {
     helperText = (
       <Helper>
         Remove this cluster from Porter. Since this cluster was not provisioned
@@ -94,8 +129,8 @@ const ClusterSettings: React.FC = () => {
   let keyRotationSection = null;
 
   if (
-    context.currentCluster?.aws_integration_id &&
-    context.currentCluster?.aws_integration_id != 0
+    currentCluster?.aws_integration_id &&
+    currentCluster?.aws_integration_id != 0
   ) {
     if (successfulRotate) {
       keyRotationSection = (
@@ -148,8 +183,8 @@ const ClusterSettings: React.FC = () => {
   }
 
   let overrideAWSClusterNameSection =
-    context.currentCluster?.aws_integration_id &&
-    context.currentCluster?.aws_integration_id != 0 ? (
+    currentCluster?.aws_integration_id &&
+    currentCluster?.aws_integration_id != 0 ? (
       <InputRow
         type="text"
         value={newAWSClusterID}
@@ -180,6 +215,28 @@ const ClusterSettings: React.FC = () => {
     </div>
   );
 
+  let enableAgentIntegration = (
+    <div>
+      <Heading>Enable Agent</Heading>
+      <CheckboxRow
+        label={"Allow the Porter agent to be installed on the cluster"}
+        toggle={() => setEnableAgent(!enableAgent)}
+        checked={enableAgent}
+      />
+      <Button color="#616FEEcc" onClick={updateAgentIntegrationEnabled}>
+        Save
+      </Button>
+    </div>
+  );
+
+  if (agentLoading) {
+    enableAgentIntegration = <Loading />;
+  }
+
+  if (capabilities.version == "production") {
+    enableAgentIntegration = null;
+  }
+
   if (successfulRename) {
     renameClusterSection = (
       <div>
@@ -192,6 +249,8 @@ const ClusterSettings: React.FC = () => {
   return (
     <div>
       <StyledSettingsSection>
+        {enableAgentIntegration}
+        <DarkMatter />
         {keyRotationSection}
         <DarkMatter />
         {renameClusterSection}
@@ -200,7 +259,7 @@ const ClusterSettings: React.FC = () => {
         {helperText}
         <Button
           color="#b91133"
-          onClick={() => context.setCurrentModal("UpdateClusterModal")}
+          onClick={() => setCurrentModal("UpdateClusterModal")}
         >
           Delete Cluster
         </Button>

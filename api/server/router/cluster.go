@@ -7,7 +7,6 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/handlers/database"
 	"github.com/porter-dev/porter/api/server/handlers/environment"
-	"github.com/porter-dev/porter/api/server/handlers/kube_events"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
@@ -801,6 +800,31 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/agent/status -> cluster.NewGetAgentStatusHandler
+	getAgentStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/agent/status",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getAgentStatusHandler := cluster.NewGetAgentStatusHandler(config, factory.GetResultWriter())
+
+	routes = append(routes, &router.Route{
+		Endpoint: getAgentStatusEndpoint,
+		Handler:  getAgentStatusHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/agent/upgrade -> cluster.NewInstallAgentHandler
 	upgradeAgentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -827,151 +851,6 @@ func getClusterRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: upgradeAgentEndpoint,
 		Handler:  upgradeAgentHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/kube_events -> kube_events.NewGetKubeEventHandler
-	listKubeEventsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/kube_events",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	listKubeEventsHandler := kube_events.NewListKubeEventsHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: listKubeEventsEndpoint,
-		Handler:  listKubeEventsHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/kube_events -> kube_events.NewGetKubeEventHandler
-	getKubeEventEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/kube_events/{%s}", relPath, types.URLParamKubeEventID),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	getKubeEventHandler := kube_events.NewGetKubeEventHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: getKubeEventEndpoint,
-		Handler:  getKubeEventHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/kube_events/{kube_event_id}/logs -> kube_events.NewGetKubeEventLogsHandler
-	getKubeEventLogsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/kube_events/{%s}/logs", relPath, types.URLParamKubeEventID),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	getKubeEventLogsHandler := kube_events.NewGetKubeEventLogsHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: getKubeEventLogsEndpoint,
-		Handler:  getKubeEventLogsHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/kube_events/{kube_event_id}/log_buckets -> kube_events.NewGetKubeEventLogBucketsHandler
-	getKubeEventLogBucketsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/kube_events/{%s}/log_buckets", relPath, types.URLParamKubeEventID),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	getKubeEventLogBucketsHandler := kube_events.NewGetKubeEventLogBucketsHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: getKubeEventLogBucketsEndpoint,
-		Handler:  getKubeEventLogBucketsHandler,
-		Router:   r,
-	})
-
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/kube_events -> kube_events.NewCreateKubeEventHandler
-	createKubeEventsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/kube_events",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	createKubeEventsHandler := kube_events.NewCreateKubeEventHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: createKubeEventsEndpoint,
-		Handler:  createKubeEventsHandler,
 		Router:   r,
 	})
 
@@ -1125,8 +1004,8 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents -> cluster.NewGetIncidentsHandler
-	getIncidentsEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents -> cluster.NewListIncidentsHandler
+	listIncidentsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
@@ -1142,26 +1021,26 @@ func getClusterRoutes(
 		},
 	)
 
-	getIncidentsHandler := cluster.NewGetIncidentsHandler(
+	listIncidentsHandler := cluster.NewListIncidentsHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: getIncidentsEndpoint,
-		Handler:  getIncidentsHandler,
+		Endpoint: listIncidentsEndpoint,
+		Handler:  listIncidentsHandler,
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents/logs -> cluster.NewGetIncidentsHandler
-	getIncidentEventLogsEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents/{incident_id} -> cluster.NewGetIncidentHandler
+	getIncidentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/incidents/logs",
+				RelativePath: fmt.Sprintf("%s/incidents/{%s}", relPath, types.URLParamIncidentID),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -1171,15 +1050,218 @@ func getClusterRoutes(
 		},
 	)
 
-	getIncidentEventLogsHandler := cluster.NewGetIncidentEventLogsHandler(
+	getIncidentHandler := cluster.NewGetIncidentHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: getIncidentEventLogsEndpoint,
-		Handler:  getIncidentEventLogsHandler,
+		Endpoint: getIncidentEndpoint,
+		Handler:  getIncidentHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents/events -> cluster.NewListIncidentEventsHandler
+	listIncidentEventsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/incidents/events", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	listIncidentEventsHandler := cluster.NewListIncidentEventsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listIncidentEventsEndpoint,
+		Handler:  listIncidentEventsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/logs -> cluster.NewGetLogsHandler
+	getLogsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/logs", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getLogsHandler := cluster.NewGetLogsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getLogsEndpoint,
+		Handler:  getLogsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/logs/pod_values -> cluster.NewGetLogPodValuesHandler
+	getLogPodValuesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/logs/pod_values", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getLogPodValuesHandler := cluster.NewGetLogPodValuesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getLogPodValuesEndpoint,
+		Handler:  getLogPodValuesHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/logs/revision_values -> cluster.NewGetLogPodValuesHandler
+	getLogRevisionValuesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/logs/revision_values", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getLogRevisionValuesHandler := cluster.NewGetLogRevisionValuesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getLogRevisionValuesEndpoint,
+		Handler:  getLogRevisionValuesHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/events -> cluster.NewGetEventsHandler
+	getPorterEventsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/events", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getPorterEventsHandler := cluster.NewGetPorterEventsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getPorterEventsEndpoint,
+		Handler:  getPorterEventsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/events/job -> cluster.NewGetPorterJobEventsHandler
+	getPorterJobEventsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/events/job", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getPorterJobEventsHandler := cluster.NewGetPorterJobEventsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getPorterJobEventsEndpoint,
+		Handler:  getPorterJobEventsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/k8s_events -> cluster.NewGetEventsHandler
+	getK8sEventsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/k8s_events", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getK8sEventsHandler := cluster.NewGetKubernetesEventsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getK8sEventsEndpoint,
+		Handler:  getK8sEventsHandler,
 		Router:   r,
 	})
 

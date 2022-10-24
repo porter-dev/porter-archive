@@ -13,26 +13,26 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type GetIncidentEventLogsHandler struct {
+type GetLogRevisionValuesHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewGetIncidentEventLogsHandler(
+func NewGetLogRevisionValuesHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetIncidentEventLogsHandler {
-	return &GetIncidentEventLogsHandler{
+) *GetLogRevisionValuesHandler {
+	return &GetLogRevisionValuesHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *GetIncidentEventLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *GetLogRevisionValuesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.GetIncidentEventLogsRequest{}
+	request := &types.GetRevisionValuesRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
@@ -53,12 +53,12 @@ func (c *GetIncidentEventLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	logs, err := porter_agent.GetLogs(agent.Clientset, agentSvc, request.LogID)
+	revisions, err := porter_agent.GetRevisionValues(agent.Clientset, agentSvc, request)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	c.WriteResult(w, r, logs)
+	c.WriteResult(w, r, revisions)
 }

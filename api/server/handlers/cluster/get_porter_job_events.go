@@ -1,4 +1,4 @@
-package kube_events
+package cluster
 
 import (
 	"net/http"
@@ -8,39 +8,58 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+
+	porter_agent "github.com/porter-dev/porter/internal/kubernetes/porter_agent/v2"
 )
 
-type GetKubeEventHandler struct {
+type GetPorterJobEventsHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewGetKubeEventHandler(
+func NewGetPorterJobEventsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetKubeEventHandler {
-	return &GetKubeEventHandler{
+) *GetPorterJobEventsHandler {
+	return &GetPorterJobEventsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *GetKubeEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+func (c *GetPorterJobEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	kubeEventID, _ := requestutils.GetURLParamUint(r, types.URLParamKubeEventID)
 
-	// handle write to the database
-	kubeEvent, err := c.Repo().KubeEvent().ReadEvent(kubeEventID, proj.ID, cluster.ID)
+	request := &types.ListJobEventsRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		return
+	}
+
+	agent, err := c.GetAgent(r, cluster, "")
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	c.WriteResult(w, r, kubeEvent.ToKubeEventType())
+	// get agent service
+	agentSvc, err := porter_agent.GetAgentService(agent.Clientset)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	events, err := porter_agent.ListPorterJobEvents(agent.Clientset, agentSvc, request)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	c.WriteResult(w, r, events)
 }

@@ -90,7 +90,7 @@ const RadioFilter: React.FC<Props> = (props) => {
         noMargin={props.noMargin}
       >
         {props.icon && <FilterIcon src={props.icon} />}
-        {props.name}
+        <TextAlt>{props.name}</TextAlt>
         <Bar />
         <Selected>
           {props.selected
@@ -113,6 +113,7 @@ const Bar = styled.div`
   height: calc(18px);
   background: #494b4f;
   margin: 0 8px;
+  margin-left: 0;
 `;
 
 const Selected = styled.div`
@@ -131,6 +132,13 @@ const Text = styled.div`
   margin-right: 10px;
 `;
 
+const TextAlt = styled(Text)`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  word-break: anywhere;
+`;
+
 const OptionRow = styled.div<{ isLast: boolean; selected?: boolean }>`
   width: 100%;
   height: 35px;
@@ -146,21 +154,6 @@ const OptionRow = styled.div<{ isLast: boolean; selected?: boolean }>`
   }
 `;
 
-const FilterCount = styled.div`
-  padding: 5px;
-  color: #ffffff;
-  background: #ffffff11;
-  margin-left: 7px;
-  font-size: 12px;
-  border-radius: 50px;
-  margin-right: -5px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-`;
-
 const Placeholder = styled.div`
   color: #aaaabb88;
   font-size: 12px;
@@ -174,35 +167,6 @@ const Placeholder = styled.div`
 const ScrollableWrapper = styled.div`
   overflow-y: auto;
   max-height: 350px;
-`;
-
-const Label = styled.div`
-  height: 37px;
-  display: flex;
-  align-items: center;
-  margin-left: 10px;
-  font-size: 13px;
-`;
-
-const Option: any = styled.div`
-  width: 100%;
-  border-top: 1px solid #00000000;
-  height: 37px;
-  font-size: 13px;
-  align-items: center;
-  display: flex;
-  align-items: center;
-  padding-left: 15px;
-  cursor: pointer;
-  padding-right: 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  background: ${(props: any) => (props.selected ? "#ffffff11" : "")};
-
-  :hover {
-    background: #ffffff22;
-  }
 `;
 
 const Relative = styled.div`

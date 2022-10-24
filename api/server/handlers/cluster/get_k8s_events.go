@@ -13,34 +13,30 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type GetIncidentsHandler struct {
+type GetKubernetesEventsHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewGetIncidentsHandler(
+func NewGetKubernetesEventsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetIncidentsHandler {
-	return &GetIncidentsHandler{
+) *GetKubernetesEventsHandler {
+	return &GetKubernetesEventsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *GetIncidentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *GetKubernetesEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.GetIncidentsRequest{}
+	request := &types.GetKubernetesEventRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
-
-	incidentID := request.IncidentID
-	releaseName := request.ReleaseName
-	namespace := request.Namespace
 
 	agent, err := c.GetAgent(r, cluster, "")
 
@@ -57,38 +53,12 @@ func (c *GetIncidentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if incidentID != "" {
-		events, err := porter_agent.GetIncidentEventsByID(agent.Clientset, agentSvc, incidentID)
-
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		c.WriteResult(w, r, events)
-		return
-	} else if releaseName != "" {
-		if namespace == "" {
-			namespace = "default"
-		}
-
-		incidents, err := porter_agent.GetIncidentsByReleaseNamespace(agent.Clientset, agentSvc, releaseName, namespace)
-
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		c.WriteResult(w, r, incidents)
-		return
-	}
-
-	incidents, err := porter_agent.GetAllIncidents(agent.Clientset, agentSvc)
+	logs, err := porter_agent.GetHistoricalKubernetesEvents(agent.Clientset, agentSvc, request)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	c.WriteResult(w, r, incidents)
+	c.WriteResult(w, r, logs)
 }

@@ -101,10 +101,12 @@ func init() {
 }
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
-	err := applyValidate()
+	if _, ok := os.LookupEnv("PORTER_VALIDATE_YAML"); ok {
+		err := applyValidate()
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	fileBytes, err := ioutil.ReadFile(porterYAML)

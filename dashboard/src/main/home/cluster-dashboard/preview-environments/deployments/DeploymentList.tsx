@@ -345,7 +345,9 @@ const DeploymentList = () => {
         >
           <Message>
             <img src={document} />
-            {expandedPorterYAMLErrors}
+            {expandedPorterYAMLErrors.map((el) => {
+              return <div>{"- "}{el}</div>
+            })}
           </Message>
         </Modal>
       )}
@@ -381,13 +383,7 @@ const DeploymentList = () => {
           Your porter.yaml file has errors. Please fix them before deploying.
           <LinkButton
             onClick={() => {
-              let yamlErrors = "";
-
-              porterYAMLErrors.forEach((err) => {
-                yamlErrors += "- " + err + "\n";
-              });
-
-              setExpandedPorterYAMLErrors(yamlErrors);
+              setExpandedPorterYAMLErrors(porterYAMLErrors);
             }}
           >
             View details
@@ -542,8 +538,6 @@ const Message = styled.div`
   line-height: 1.5em;
   border: 1px solid #aaaabb33;
   font-size: 13px;
-  display: flex;
-  align-items: center;
   > img {
     width: 13px;
     margin-right: 20px;

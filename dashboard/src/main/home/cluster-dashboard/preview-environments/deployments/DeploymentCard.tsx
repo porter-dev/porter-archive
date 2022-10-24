@@ -14,6 +14,7 @@ import MaterialTooltip from "@material-ui/core/Tooltip";
 import _ from "lodash";
 
 interface DeploymentCardAction {
+  active: boolean;
   label: string;
   action: (...args: any) => void;
 }
@@ -62,17 +63,19 @@ const DeploymentCardActionsDropdown = ({
         <ActionsDropdown ref={wrapperRef}>
           {options.length ? (
             <ActionsScrollableWrapper>
-              {options.map(({ label, action }, idx) => {
-                return (
-                  <ActionsRow
-                    isLast={idx === options.length - 1}
-                    onClick={action}
-                    key={label}
-                  >
-                    <ActionsRowText>{label}</ActionsRowText>
-                  </ActionsRow>
-                );
-              })}
+              {options
+                .filter((option) => option.active)
+                .map(({ label, action }, idx) => {
+                  return (
+                    <ActionsRow
+                      isLast={idx === options.length - 1}
+                      onClick={action}
+                      key={label}
+                    >
+                      <ActionsRowText>{label}</ActionsRowText>
+                    </ActionsRow>
+                  );
+                })}
             </ActionsScrollableWrapper>
           ) : null}
         </ActionsDropdown>
@@ -171,6 +174,7 @@ const DeploymentCard: React.FC<{
 
   const DeploymentCardActions = [
     {
+      active: deployment.last_workflow_run_url,
       label: "View last workflow",
       action: (e: React.MouseEvent) => {
         e.preventDefault();
@@ -179,6 +183,7 @@ const DeploymentCard: React.FC<{
       },
     },
     {
+      active: true,
       label: "Delete",
       action: (e: React.MouseEvent) => {
         e.preventDefault();
@@ -196,7 +201,12 @@ const DeploymentCard: React.FC<{
         <PRName>
           <PRIcon src={pr_icon} alt="pull request icon" />
           <EllipsisTextWrapper tooltipText={deployment.gh_pr_name}>
-            {deployment.gh_pr_name}
+            <StyledLink
+              to={`https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`}
+              target="_blank"
+            >
+              {deployment.gh_pr_name}
+            </StyledLink>
           </EllipsisTextWrapper>
           {deployment.gh_pr_branch_from && deployment.gh_pr_branch_into ? (
             <MergeInfoWrapper>
@@ -216,13 +226,6 @@ const DeploymentCard: React.FC<{
               )}
             </MergeInfoWrapper>
           ) : null}
-          <RepoLink
-            to={`https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`}
-            target="_blank"
-          >
-            <i className="material-icons">open_in_new</i>
-            View PR
-          </RepoLink>
           {deployment.last_workflow_run_url ? (
             <RepoLink to={deployment.last_workflow_run_url} target="_blank">
               <i className="material-icons">open_in_new</i>
@@ -653,4 +656,11 @@ const ActionsRowText = styled.div`
   word-break: anywhere;
   margin-right: 10px;
   color: white;
+`;
+
+const StyledLink = styled(DynamicLink)`
+  color: white;
+  :hover {
+    text-decoration: underline;
+  }
 `;

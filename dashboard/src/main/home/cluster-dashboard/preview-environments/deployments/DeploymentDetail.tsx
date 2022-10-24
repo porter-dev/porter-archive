@@ -15,7 +15,6 @@ import { capitalize } from "shared/string_utils";
 import leftArrow from "assets/left-arrow.svg";
 import Banner from "components/Banner";
 import Modal from "main/home/modals/Modal";
-import document from "assets/document.svg";
 
 const DeploymentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();
@@ -109,7 +108,6 @@ const DeploymentDetail = () => {
           height="auto"
         >
           <Message>
-            <img src={document} />
             {expandedPorterYAMLErrors.map((el) => {
               return <div>{"- "}{el}</div>
             })}
@@ -228,10 +226,7 @@ const Message = styled.div`
   line-height: 1.5em;
   border: 1px solid #aaaabb33;
   font-size: 13px;
-  > img {
-    width: 13px;
-    margin-right: 20px;
-  }
+  margin-top: 40px;
 `;
 
 const BreadcrumbRow = styled.div`

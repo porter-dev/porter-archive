@@ -16,7 +16,6 @@ import Placeholder from "components/Placeholder";
 import Banner from "components/Banner";
 import Modal from "main/home/modals/Modal";
 
-import document from "assets/document.svg";
 import pullRequestIcon from "assets/pull_request_icon.svg";
 import filterOutline from "assets/filter-outline.svg";
 import sort from "assets/sort.svg";
@@ -344,7 +343,6 @@ const DeploymentList = () => {
           height="auto"
         >
           <Message>
-            <img src={document} />
             {expandedPorterYAMLErrors.map((el) => {
               return <div>{"- "}{el}</div>
             })}
@@ -538,10 +536,7 @@ const Message = styled.div`
   line-height: 1.5em;
   border: 1px solid #aaaabb33;
   font-size: 13px;
-  > img {
-    width: 13px;
-    margin-right: 20px;
-  }
+  margin-top: 40px;
 `;
 
 const BreadcrumbRow = styled.div`

@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import PorterForm from "./PorterForm";
 import { InjectedProps, PorterFormData } from "./types";
 import { PorterFormContextProvider } from "./PorterFormContextProvider";
+import _ from "lodash";
 
 type PropsType = {
   formData: any;
@@ -24,6 +25,8 @@ type PropsType = {
   redirectTabAfterSave?: string;
   includeMetadata?: boolean;
   injectedProps?: InjectedProps;
+  overrideCurrentTab?: string;
+  onTabChange?: (newTab: string) => void;
 };
 
 const PorterFormWrapper: React.FC<PropsType> = ({
@@ -46,6 +49,8 @@ const PorterFormWrapper: React.FC<PropsType> = ({
   redirectTabAfterSave,
   includeMetadata,
   injectedProps,
+  overrideCurrentTab,
+  onTabChange = _.noop,
 }) => {
   const hashCode = (s: string) => {
     return s?.split("").reduce(function (a, b) {
@@ -75,6 +80,12 @@ const PorterFormWrapper: React.FC<PropsType> = ({
   // Lifted into PorterFormWrapper to allow tab to be remembered on re-render (e.g., on revision select)
   const [currentTab, setCurrentTab] = useState(getInitialTab());
 
+  useEffect(() => {
+    if (overrideCurrentTab) {
+      setCurrentTab(overrideCurrentTab);
+    }
+  }, [overrideCurrentTab]);
+
   return (
     <React.Fragment key={hashCode(JSON.stringify(formData))}>
       <PorterFormContextProvider
@@ -97,7 +108,10 @@ const PorterFormWrapper: React.FC<PropsType> = ({
           color={color}
           saveValuesStatus={saveValuesStatus}
           currentTab={currentTab}
-          setCurrentTab={setCurrentTab}
+          setCurrentTab={(newTab) => {
+            onTabChange(newTab);
+            setCurrentTab(newTab);
+          }}
           isLaunch={isLaunch}
           hideSpacer={hideBottomSpacer}
           redirectTabAfterSave={redirectTabAfterSave}

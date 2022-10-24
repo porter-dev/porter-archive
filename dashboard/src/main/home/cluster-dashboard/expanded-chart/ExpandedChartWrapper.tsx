@@ -9,7 +9,7 @@ import {
   StorageType,
 } from "shared/types";
 import api from "shared/api";
-import { getQueryParam, pushFiltered } from "shared/routing";
+import { pushFiltered } from "shared/routing";
 import { ExpandedJobChartFC } from "./ExpandedJobChart";
 import ExpandedChart from "./ExpandedChart";
 import Loading from "components/Loading";

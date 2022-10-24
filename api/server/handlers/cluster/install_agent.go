@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -13,7 +14,15 @@ import (
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/nodes"
 	"github.com/porter-dev/porter/internal/models"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	monitoringNodeLabel = "porter.run/workload-kind=monitoring"
+	olderAgentLabel     = "control-plane=controller-manager"
 )
 
 type InstallAgentHandler struct {
@@ -36,6 +45,21 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+
+	k8sAgent, err := c.GetAgent(r, cluster, "porter-agent-system")
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	err = checkAndDeleteOlderAgent(k8sAgent)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	helmAgent, err := c.GetHelmAgent(r, cluster, "porter-agent-system")
 
 	if err != nil {
@@ -73,18 +97,42 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	nodes, err := nodes.ListNodesByLabels(k8sAgent.Clientset, "porter.run/workload-kind=monitoring")
+	hasMonitoringNodes := err == nil && len(nodes) >= 1
+
 	porterAgentValues := map[string]interface{}{
 		"agent": map[string]interface{}{
-			"image":       "public.ecr.aws/o1j4x7p4/porter-agent:latest",
 			"porterHost":  c.Config().ServerConf.ServerURL,
 			"porterPort":  "443",
 			"porterToken": encoded,
-			"privateRegistry": map[string]interface{}{
-				"enabled": false,
-			},
-			"clusterID": fmt.Sprintf("%d", cluster.ID),
-			"projectID": fmt.Sprintf("%d", proj.ID),
+			"clusterID":   fmt.Sprintf("%d", cluster.ID),
+			"projectID":   fmt.Sprintf("%d", proj.ID),
 		},
+		"loki": map[string]interface{}{},
+	}
+
+	// case on whether a node with porter.run/workload-kind=monitoring exists. If it does, we place loki in that node group.
+	if hasMonitoringNodes {
+		sharedNS := map[string]interface{}{
+			"porter.run/workload-kind": "monitoring",
+		}
+
+		sharedTolerations := []map[string]interface{}{
+			{
+				"key":      "porter.run/workload-kind",
+				"operator": "Equal",
+				"value":    "monitoring",
+				"effect":   "NoSchedule",
+			},
+		}
+
+		porterAgentValues["loki"] = map[string]interface{}{
+			"nodeSelector": sharedNS,
+			"tolerations":  sharedTolerations,
+		}
+
+		porterAgentValues["nodeSelector"] = sharedNS
+		porterAgentValues["tolerations"] = sharedTolerations
 	}
 
 	conf := &helm.InstallChartConfig{
@@ -100,12 +148,53 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error installing a new chart: %s", err.Error()),
-			http.StatusBadRequest,
+			fmt.Errorf("error installing porter-agent: %w", err), http.StatusBadRequest,
 		))
 
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func checkAndDeleteOlderAgent(k8sAgent *kubernetes.Agent) error {
+	namespaceList, err := k8sAgent.Clientset.CoreV1().Namespaces().List(context.Background(), v1.ListOptions{})
+
+	if err != nil {
+		return fmt.Errorf("error listing namespaces: %w", err)
+	}
+
+	nsExists := false
+
+	for _, namespace := range namespaceList.Items {
+		if namespace.Name == "porter-agent-system" {
+			nsExists = true
+			break
+		}
+	}
+
+	if !nsExists {
+		return nil
+	}
+
+	podList, err := k8sAgent.Clientset.CoreV1().Pods("porter-agent-system").List(context.Background(), v1.ListOptions{
+		LabelSelector: olderAgentLabel,
+	})
+
+	if err != nil {
+		return fmt.Errorf("error listing pods for older porter-agent: %w", err)
+	}
+
+	if len(podList.Items) > 0 {
+		// older porter-agent exists, delete the entire namespace
+		err := k8sAgent.Clientset.CoreV1().Namespaces().Delete(
+			context.Background(), "porter-agent-system", v1.DeleteOptions{},
+		)
+
+		if err != nil {
+			return fmt.Errorf("error deleting older porter-agent's namespace: %w", err)
+		}
+	}
+
+	return nil
 }

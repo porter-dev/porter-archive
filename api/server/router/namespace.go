@@ -420,6 +420,40 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/logs/loki -> namespace.NewStreamPodLogsLokiHandler
+	streamPodLogsLokiEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/logs/loki",
+					relPath,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+			IsWebsocket: true,
+		},
+	)
+
+	streamPodLogsLokiHandler := namespace.NewStreamPodLogsLokiHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: streamPodLogsLokiEndpoint,
+		Handler:  streamPodLogsLokiHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/jobs/stream -> namespace.NewStreamJobRunsHandler
 	streamJobRunsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

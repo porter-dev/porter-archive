@@ -5,27 +5,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/porter-dev/porter/api/types"
-	porter_agent "github.com/porter-dev/porter/internal/kubernetes/porter_agent/v2"
 	"github.com/porter-dev/porter/internal/models/integrations"
 )
 
-type IncidentsNotifier struct {
+type IncidentNotifier struct {
 	slackInts []*integrations.SlackIntegration
-	Config    *types.NotificationConfig
 }
 
-func NewIncidentsNotifier(conf *types.NotificationConfig, slackInts ...*integrations.SlackIntegration) *IncidentsNotifier {
-	return &IncidentsNotifier{
+func NewIncidentNotifier(slackInts ...*integrations.SlackIntegration) *IncidentNotifier {
+	return &IncidentNotifier{
 		slackInts: slackInts,
-		Config:    conf,
 	}
 }
 
-func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url string) error {
+func (s *IncidentNotifier) NotifyNew(incident *types.Incident, url string) error {
 	res := []*SlackBlock{}
 
 	topSectionMarkdwn := fmt.Sprintf(
@@ -34,21 +30,20 @@ func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url strin
 		url,
 	)
 
-	namespace := strings.Split(incident.ID, ":")[2]
-	createdAt := time.Unix(incident.CreatedAt, 0).UTC()
+	createdAt := incident.CreatedAt
 
 	res = append(
 		res,
 		getMarkdownBlock(topSectionMarkdwn),
 		getDividerBlock(),
-		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+namespace+"`")),
+		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+incident.ReleaseNamespace+"`")),
 		getMarkdownBlock(fmt.Sprintf("*Name:* %s", "`"+incident.ReleaseName+"`")),
 		getMarkdownBlock(fmt.Sprintf(
 			"*Created at:* <!date^%d^ {date_num} {time_secs}| %s>",
 			createdAt.Unix(),
 			createdAt.Format("2006-01-02 15:04:05 UTC"),
 		)),
-		getMarkdownBlock(fmt.Sprintf("```\n%s\n```", incident.LatestMessage)),
+		getMarkdownBlock(fmt.Sprintf("```\n%s\n```", incident.Summary)),
 	)
 
 	slackPayload := &SlackPayload{
@@ -77,12 +72,11 @@ func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url strin
 	return nil
 }
 
-func (s *IncidentsNotifier) NotifyResolved(incident *porter_agent.Incident, url string) error {
+func (s *IncidentNotifier) NotifyResolved(incident *types.Incident, url string) error {
 	res := []*SlackBlock{}
 
-	namespace := strings.Split(incident.ID, ":")[2]
-	createdAt := time.Unix(incident.CreatedAt, 0).UTC()
-	resolvedAt := time.Unix(incident.UpdatedAt, 0).UTC()
+	createdAt := incident.CreatedAt
+	resolvedAt := incident.UpdatedAt
 
 	topSectionMarkdwn := fmt.Sprintf(
 		":white_check_mark: The incident for application %s has been resolved. <%s|View the incident.>",
@@ -94,7 +88,7 @@ func (s *IncidentsNotifier) NotifyResolved(incident *porter_agent.Incident, url 
 		res,
 		getMarkdownBlock(topSectionMarkdwn),
 		getDividerBlock(),
-		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+namespace+"`")),
+		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+incident.ReleaseNamespace+"`")),
 		getMarkdownBlock(fmt.Sprintf("*Name:* %s", "`"+incident.ReleaseName+"`")),
 		getMarkdownBlock(fmt.Sprintf(
 			"*Created at:* <!date^%d^ {date_num} {time_secs}| %s>",
@@ -106,6 +100,8 @@ func (s *IncidentsNotifier) NotifyResolved(incident *porter_agent.Incident, url 
 			resolvedAt.Unix(),
 			resolvedAt.Format("2006-01-02 15:04:05 UTC"),
 		)),
+		getMarkdownBlock(fmt.Sprintf("*Incident Summary:*")),
+		getMarkdownBlock(fmt.Sprintf("```\n%s\n```", incident.Summary)),
 	)
 
 	slackPayload := &SlackPayload{

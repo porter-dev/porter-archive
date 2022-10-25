@@ -166,8 +166,6 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
     rawList?: any[],
     userSelected?: boolean
   ) => {
-    console.log(rawPodList, rawList, !!userSelected);
-
     const rawPod = [...rawPodList, ...(rawList || [])].find(
       (rawPod) => rawPod?.metadata?.name === pod?.name
     );

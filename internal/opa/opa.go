@@ -98,35 +98,42 @@ func (runner *KubernetesOPARunner) GetRecommendations(categories []string) ([]*O
 
 	res := make([]*OPARecommenderQueryResult, 0)
 
-	for _, name := range collectionNames {
-		// look up to determine if the name is registered
-		queryCollection, exists := runner.Policies[name]
+	// ping the cluster with a version check to make sure it's reachable - if not, return an error
+	_, err := runner.k8sAgent.Clientset.Discovery().ServerVersion()
 
-		if !exists {
-			return nil, fmt.Errorf("No policies for %s found", name)
+	if err != nil {
+		fmt.Printf("discovery check failed: %v\n", err.Error())
+	} else {
+		for _, name := range collectionNames {
+			// look up to determine if the name is registered
+			queryCollection, exists := runner.Policies[name]
+
+			if !exists {
+				return nil, fmt.Errorf("No policies for %s found", name)
+			}
+
+			var currResults []*OPARecommenderQueryResult
+			var err error
+
+			switch queryCollection.Kind {
+			case HelmRelease:
+				currResults, err = runner.runHelmReleaseQueries(name, queryCollection)
+			case Pod:
+				currResults, err = runner.runPodQueries(name, queryCollection)
+			case CRDList:
+				currResults, err = runner.runCRDListQueries(name, queryCollection)
+			default:
+				fmt.Printf("%s is not a supported query kind", queryCollection.Kind)
+				continue
+			}
+
+			if err != nil {
+				fmt.Printf("%s", err.Error())
+				continue
+			}
+
+			res = append(res, currResults...)
 		}
-
-		var currResults []*OPARecommenderQueryResult
-		var err error
-
-		switch queryCollection.Kind {
-		case HelmRelease:
-			currResults, err = runner.runHelmReleaseQueries(name, queryCollection)
-		case Pod:
-			currResults, err = runner.runPodQueries(name, queryCollection)
-		case CRDList:
-			currResults, err = runner.runCRDListQueries(name, queryCollection)
-		default:
-			fmt.Printf("%s is not a supported query kind", queryCollection.Kind)
-			continue
-		}
-
-		if err != nil {
-			fmt.Printf("%s", err.Error())
-			continue
-		}
-
-		res = append(res, currResults...)
 	}
 
 	return res, nil

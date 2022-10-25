@@ -20,6 +20,7 @@ import pullRequestIcon from "assets/pull_request_icon.svg";
 import filterOutline from "assets/filter-outline.svg";
 import sort from "assets/sort.svg";
 import { search } from "shared/search";
+import { getPRDeploymentList, validatePorterYAML } from "../utils";
 
 const AvailableStatusFilters = ["all", "created", "failed", "not_deployed"];
 
@@ -77,9 +78,9 @@ const DeploymentList = () => {
   const [searchValue, setSearchValue] = useState("");
   const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
-  const [expandedPorterYAMLErrors, setExpandedPorterYAMLErrors] = useState(
-    null
-  );
+  const [expandedPorterYAMLErrors, setExpandedPorterYAMLErrors] = useState<
+    string[]
+  >([]);
 
   const [
     statusSelectorVal,
@@ -98,34 +99,8 @@ const DeploymentList = () => {
 
   const selectedRepo = `${repo_owner}/${repo_name}`;
 
-  const getPRDeploymentList = () => {
-    return api.getPRDeploymentList(
-      "<token>",
-      {
-        environment_id: Number(environment_id),
-      },
-      {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-      }
-    );
-    // return mockRequest();
-  };
-
   const getEnvironment = () => {
     return api.getEnvironment(
-      "<token>",
-      {},
-      {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-        environment_id: Number(environment_id),
-      }
-    );
-  };
-
-  const validatePorterYAML = () => {
-    return api.validatePorterYAML(
       "<token>",
       {},
       {
@@ -158,8 +133,16 @@ const DeploymentList = () => {
     setIsLoading(true);
 
     Promise.allSettled([
-      validatePorterYAML(),
-      getPRDeploymentList(),
+      validatePorterYAML({
+        projectID: currentProject.id,
+        clusterID: currentCluster.id,
+        environmentID: Number(environment_id),
+      }),
+      getPRDeploymentList({
+        projectID: currentProject.id,
+        clusterID: currentCluster.id,
+        environmentID: Number(environment_id),
+      }),
       getEnvironment(),
     ])
       .then(
@@ -205,12 +188,16 @@ const DeploymentList = () => {
     return () => {
       isSubscribed = false;
     };
-  }, [currentCluster, currentProject]);
+  }, [currentCluster, currentProject, environment_id]);
 
   const handleRefresh = async () => {
     setIsLoading(true);
     try {
-      const { data } = await getPRDeploymentList();
+      const { data } = await getPRDeploymentList({
+        projectID: currentProject.id,
+        clusterID: currentCluster.id,
+        environmentID: Number(environment_id),
+      });
       setDeploymentList(data.deployments || []);
       setPullRequests(data.pull_requests || []);
     } catch (error) {
@@ -351,9 +338,9 @@ const DeploymentList = () => {
 
   return (
     <>
-      {expandedPorterYAMLErrors && (
+      {expandedPorterYAMLErrors.length && (
         <Modal
-          onRequestClose={() => setExpandedPorterYAMLErrors(null)}
+          onRequestClose={() => setExpandedPorterYAMLErrors([])}
           height="auto"
         >
           <Message>

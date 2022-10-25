@@ -15,6 +15,7 @@ import { capitalize } from "shared/string_utils";
 import leftArrow from "assets/left-arrow.svg";
 import Banner from "components/Banner";
 import Modal from "main/home/modals/Modal";
+import { validatePorterYAML } from "../utils";
 
 const DeploymentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();
@@ -23,9 +24,9 @@ const DeploymentDetail = () => {
   const [environmentId, setEnvironmentId] = useState("");
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
-  const [expandedPorterYAMLErrors, setExpandedPorterYAMLErrors] = useState<string[]>(
-    []
-  );
+  const [expandedPorterYAMLErrors, setExpandedPorterYAMLErrors] = useState<
+    string[]
+  >([]);
 
   const { currentProject, currentCluster } = useContext(Context);
 
@@ -68,21 +69,15 @@ const DeploymentDetail = () => {
   }
 
   useEffect(() => {
-    let isSubscribed = true;
-    let environment_id = parseInt(searchParams.get("environment_id"));
+    const isSubscribed = true;
+    const environment_id = parseInt(searchParams.get("environment_id"));
 
-    api
-      .validatePorterYAML(
-        "<token>",
-        {
-          branch: prDeployment.gh_pr_branch_from,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          environment_id: environment_id,
-        }
-      )
+    validatePorterYAML({
+      projectID: currentProject.id,
+      clusterID: currentCluster.id,
+      environmentID: environment_id,
+      branch: prDeployment.gh_pr_branch_from,
+    })
       .then(({ data }) => {
         if (!isSubscribed) {
           return;
@@ -109,7 +104,12 @@ const DeploymentDetail = () => {
         >
           <Message>
             {expandedPorterYAMLErrors.map((el) => {
-              return <div>{"- "}{el}</div>
+              return (
+                <div>
+                  {"- "}
+                  {el}
+                </div>
+              );
             })}
           </Message>
         </Modal>

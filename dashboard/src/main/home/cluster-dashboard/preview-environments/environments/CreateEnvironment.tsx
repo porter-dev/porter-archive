@@ -15,18 +15,18 @@ import pr_icon from "assets/pull_request_icon.svg";
 import { EllipsisTextWrapper, RepoLink } from "../components/styled";
 
 const dummyData: any = [
- {
-  name: "this is a name",
-  branches: "asdf"
- },
- {
-  name: "this is a name",
-  branches: "asdf"
- },
- {
-  name: "this is a name",
-  branches: "asdf"
- },
+  {
+    name: "this is a name",
+    branches: "asdf",
+  },
+  {
+    name: "this is a name",
+    branches: "asdf",
+  },
+  {
+    name: "this is a name",
+    branches: "asdf",
+  },
 ];
 
 const CreateEnvironment: React.FC = () => {
@@ -49,7 +49,9 @@ const CreateEnvironment: React.FC = () => {
             width: 140,
             Cell: ({ row }: CellProps<any>) => {
               return (
-                <>
+                <div style={{
+                  cursor: 'pointer',
+                }} onClick={() => alert("Hello world")}>
                   <PRName>
                     <PRIcon src={pr_icon} alt="pull request icon" />
                     <EllipsisTextWrapper tooltipText="test">
@@ -65,22 +67,19 @@ const CreateEnvironment: React.FC = () => {
                   <Flex>
                     <DeploymentImageContainer>
                       <InfoWrapper>
-                        <LastDeployed>
-                          Last updated xyz
-                        </LastDeployed>
+                        <LastDeployed>Last updated xyz</LastDeployed>
                       </InfoWrapper>
                       <SepDot>•</SepDot>
                       <MergeInfoWrapper>
-                      <MergeInfo
-                      >
-                        from-this-branch
-                        <i className="material-icons">arrow_forward</i>
-                        to-this-branch
-                      </MergeInfo>
-                    </MergeInfoWrapper>
+                        <MergeInfo>
+                          from-this-branch
+                          <i className="material-icons">arrow_forward</i>
+                          to-this-branch
+                        </MergeInfo>
+                      </MergeInfoWrapper>
                     </DeploymentImageContainer>
                   </Flex>
-                </>
+                </div>
               );
             },
           },
@@ -89,13 +88,11 @@ const CreateEnvironment: React.FC = () => {
     ],
     []
   );
- 
+
   return (
     <>
       <BreadcrumbRow>
-        <Breadcrumb
-          to={`/preview-environments/deployments/settings`}
-        >
+        <Breadcrumb to={`/preview-environments/deployments/settings`}>
           <ArrowIcon src={PullRequestIcon} />
           <Wrap>Preview environments</Wrap>
         </Breadcrumb>
@@ -113,11 +110,14 @@ const CreateEnvironment: React.FC = () => {
         capitalize={false}
       />
       <DarkMatter />
-      <Helper>Select an open pull request to preview. Pull requests must contain a <Code>porter.yaml</Code> file.</Helper>
+      <Helper>
+        Select an open pull request to preview. Pull requests must contain a{" "}
+        <Code>porter.yaml</Code> file.
+      </Helper>
       <Br height="10px" />
-      <Table 
-        columns={columns} 
-        data={dummyData} 
+      <Table
+        columns={columns}
+        data={dummyData}
         placeholder="No open pull requests found."
       />
       <SubmitButton>Create preview deployment</SubmitButton>
@@ -128,8 +128,8 @@ const CreateEnvironment: React.FC = () => {
 export default CreateEnvironment;
 
 const Code = styled.span`
-  font-family: monospace;
-;`
+  font-family: monospace; ;
+`;
 
 const Spacer = styled.div`
   width: 5px;
@@ -295,7 +295,7 @@ const DeleteButton = styled.div`
 
 const Br = styled.div<{ height: string }>`
   width: 100%;
-  height: ${props => props.height || "2px"};
+  height: ${(props) => props.height || "2px"};
 `;
 
 const StyledPlaceholder = styled.div`

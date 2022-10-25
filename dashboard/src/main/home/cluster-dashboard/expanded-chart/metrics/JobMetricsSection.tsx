@@ -97,6 +97,23 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
       });
   }, [currentChart, currentCluster, currentProject]);
 
+  // prometheus has a limit of 11,000 data points to return per metric. we thus ensure that
+  // the resolution will not exceed 11,000 data points.
+  //
+  // This breaks down if the job runs for over 6 years.
+  const getJobResolution = (start: number, end: number) => {
+    let duration = end - start;
+    if (duration <= 3600) {
+      return "1s";
+    } else if (duration <= 54000) {
+      return "15s";
+    } else if (duration <= 216000) {
+      return "60s";
+    }
+
+    return "5h";
+  };
+
   const getAutoscalingThreshold = async (
     metricType: "cpu_hpa_threshold" | "memory_hpa_threshold",
     shouldsum: boolean,
@@ -117,7 +134,7 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
           namespace: namespace,
           startrange: start,
           endrange: end,
-          resolution: resolutions[selectedRange],
+          resolution: getJobResolution(start, end),
           pods: [],
         },
         {
@@ -168,7 +185,7 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
           namespace: namespace,
           startrange: start,
           endrange: end,
-          resolution: resolutions[selectedRange],
+          resolution: getJobResolution(start, end),
           // pods: podNames,
         },
         {

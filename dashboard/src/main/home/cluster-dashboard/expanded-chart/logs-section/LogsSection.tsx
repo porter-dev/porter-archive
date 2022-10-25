@@ -126,7 +126,7 @@ const LogsSection: React.FC<Props> = ({
 
     setTimeout(() => {
       setNotification(undefined);
-    }, 3000);
+    }, 5000);
   };
 
   const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
@@ -670,7 +670,7 @@ const NotificationWrapper = styled.div<{ active?: boolean }>`
   width: fit-content;
   padding-inline: 10px;
   background: #101420;
-  animation: bounceIn 0.3s ease-out;
+  zIndex: 9999;
 
   @keyframes bounceIn {
     0% {

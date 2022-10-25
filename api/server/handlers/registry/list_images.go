@@ -1,7 +1,9 @@
 package registry
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -37,7 +39,10 @@ func (c *RegistryListImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	imgs, err := regAPI.ListImages(repoName, c.Repo(), c.Config().DOConf)
 
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), "RepositoryNotFoundException") {
+		c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such repository: %s", repoName)))
+		return
+	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

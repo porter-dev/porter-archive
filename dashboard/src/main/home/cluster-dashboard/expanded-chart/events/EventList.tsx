@@ -266,6 +266,12 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
               <Capitalize>{expandedEvent.severity}</Capitalize>
             </InfoTab>
           </InfoRow>
+          {expandedEvent?.porter_doc_link && (
+            <DocsLink target="_blank" href={expandedEvent?.porter_doc_link}>
+              View troubleshooting steps{" "}
+              <i className="material-icons">open_in_new</i>{" "}
+            </DocsLink>
+          )}
           {renderExpandedEventMessage()}
         </Modal>
       )}
@@ -339,7 +345,7 @@ const InfoRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  margin-bottom: 25px;
+  margin-bottom: 12px;
 `;
 
 const Text = styled.div`
@@ -484,4 +490,18 @@ const FlexRow = styled.div`
   justify-content: flex-end;
   flex-wrap: wrap;
   margin-top: 20px;
+`;
+
+const DocsLink = styled.a`
+  display: inline-block;
+  color: #8590ff;
+  border-bottom: 1px solid #8590ff;
+  cursor: pointer;
+  user-select: none;
+  padding: 3px 0;
+  margin-bottom: 18px;
+
+  > i {
+    font-size: 12px;
+  }
 `;

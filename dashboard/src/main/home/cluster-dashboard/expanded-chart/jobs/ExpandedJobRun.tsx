@@ -14,7 +14,6 @@ import DeploymentType from "../DeploymentType";
 import JobMetricsSection from "../metrics/JobMetricsSection";
 import Logs from "../status/Logs";
 import { useRouting } from "shared/routing";
-import Banner from "components/Banner";
 import LogsSection from "../logs-section/LogsSection";
 import EventsTab from "../events/EventsTab";
 
@@ -63,6 +62,8 @@ const renderStatus = (job: any, time: string) => {
   return <Status color="#ffffff11">Running</Status>;
 };
 
+type ExpandedJobRunTabs = "events" | "logs" | "metrics" | "config" | string;
+
 const ExpandedJobRun = ({
   currentChart,
   jobRun,
@@ -75,9 +76,9 @@ const ExpandedJobRun = ({
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
-  const [currentTab, setCurrentTab] = useState<
-    "events" | "logs" | "metrics" | "config" | string
-  >(currentCluster.agent_integration_enabled ? "events" : "logs");
+  const [currentTab, setCurrentTab] = useState<ExpandedJobRunTabs>(
+    currentCluster.agent_integration_enabled ? "events" : "logs"
+  );
   const [pods, setPods] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { pushQueryParams } = useRouting();
@@ -171,6 +172,7 @@ const ExpandedJobRun = ({
       <EventsTab
         currentChart={currentChart}
         overridingJobName={jobRun.metadata?.name}
+        setLogData={() => setCurrentTab("logs")}
       />
     );
   };
@@ -205,7 +207,6 @@ const ExpandedJobRun = ({
           isFullscreen={false}
           setIsFullscreen={() => {}}
           overridingPodName={pods[0]?.metadata?.name || jobRun.metadata?.name}
-          setInitData={() => {}}
           currentChart={currentChart}
         />
       </JobLogsWrapper>
@@ -270,7 +271,9 @@ const ExpandedJobRun = ({
       <BodyWrapper>
         <TabRegion
           currentTab={currentTab}
-          setCurrentTab={(x: string) => setCurrentTab(x)}
+          setCurrentTab={(newTab: string) => {
+            setCurrentTab(newTab);
+          }}
           options={options}
         >
           {currentTab === "events" && renderEventsSection()}

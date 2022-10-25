@@ -17,6 +17,7 @@ type EnvOpts struct {
 	PorterToken                             string
 	GitRepoOwner, GitRepoName               string
 	EnvironmentName                         string
+	InstanceName                            string
 	ProjectID, ClusterID, GitInstallationID uint
 }
 
@@ -44,7 +45,7 @@ func SetupEnv(opts *EnvOpts) error {
 	// create porter token secret
 	err = createGithubSecret(
 		opts.Client,
-		getPorterTokenSecretName(opts.ProjectID),
+		getPreviewEnvSecretName(opts.ProjectID, opts.ClusterID, opts.InstanceName),
 		opts.PorterToken,
 		opts.GitRepoOwner,
 		opts.GitRepoName,
@@ -211,18 +212,26 @@ func DeleteEnv(opts *EnvOpts) error {
 	)
 }
 
+func getPreviewEnvSecretName(projectID, clusterID uint, instanceName string) string {
+	if instanceName != "" {
+		return fmt.Sprintf("PORTER_PREVIEW_%s_%d_%d", strings.ToUpper(instanceName), projectID, clusterID)
+	}
+
+	return fmt.Sprintf("PORTER_PREVIEW_%d_%d", projectID, clusterID)
+}
+
 func getPreviewApplyActionYAML(opts *EnvOpts) ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
 		getCreatePreviewEnvStep(
 			opts.ServerURL,
-			getPorterTokenSecretName(opts.ProjectID),
+			getPreviewEnvSecretName(opts.ProjectID, opts.ClusterID, opts.InstanceName),
 			opts.ProjectID,
 			opts.ClusterID,
 			opts.GitInstallationID,
 			opts.GitRepoOwner,
 			opts.GitRepoName,
-			"v0.2.0",
+			"v0.2.1",
 		),
 	}
 

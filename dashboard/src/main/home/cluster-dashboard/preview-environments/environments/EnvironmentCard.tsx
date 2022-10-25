@@ -2,11 +2,8 @@ import React, { useContext, useState } from "react";
 import { capitalize } from "shared/string_utils";
 import styled from "styled-components";
 import { Environment } from "../types";
-import Options from "components/OptionsDropdown";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import Modal from "main/home/modals/Modal";
-import InputRow from "components/form-components/InputRow";
 import DynamicLink from "components/DynamicLink";
 import { RepoLink } from "../components/styled";
 

@@ -8,13 +8,47 @@ import ButtonEnablePREnvironments from "../components/ButtonEnablePREnvironments
 import { PreviewEnvironmentsHeader } from "../components/PreviewEnvironmentsHeader";
 import { Environment } from "../types";
 import EnvironmentCard from "./EnvironmentCard";
+import Placeholder from "components/Placeholder";
+
+const HARD_CODED_ENVS: Environment[] = [
+  {
+    id: 12,
+    project_id: 1234,
+    cluster_id: 4321,
+    git_installation_id: 55,
+    name: "asdf",
+    git_repo_owner: "owned",
+    git_repo_name: "this-is-a-repo",
+    last_deployment_status: "failed",
+    deployment_count: 12,
+    mode: "manual",
+    git_repo_branches: [],
+    disable_new_comments: true,
+  },
+  {
+    id: 13,
+    project_id: 1234,
+    cluster_id: 4321,
+    git_installation_id: 55,
+    name: "asdf",
+    git_repo_owner: "owned",
+    git_repo_name: "this-is-a-repo",
+    last_deployment_status: "failed",
+    deployment_count: 12,
+    mode: "manual",
+    git_repo_branches: [],
+    disable_new_comments: true,
+  },
+];
 
 const EnvironmentsList = () => {
   const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [buttonIsReady, setButtonIsReady] = useState(false);
 
-  const [environments, setEnvironments] = useState<Environment[]>([]);
+  const [environments, setEnvironments] = useState<Environment[]>(
+    HARD_CODED_ENVS
+  );
 
   const removeEnvironmentFromList = (deletedEnv: Environment) => {
     setEnvironments((prev) => {
@@ -55,8 +89,12 @@ const EnvironmentsList = () => {
       }
 
       setEnvironments(envs);
+
+      //
+      setEnvironments(HARD_CODED_ENVS);
     } catch (error) {
-      setEnvironments([]);
+      // ret2: remove placeholder (set to empty array)
+      setEnvironments(HARD_CODED_ENVS);
     }
   };
 
@@ -80,29 +118,34 @@ const EnvironmentsList = () => {
     <>
       <PreviewEnvironmentsHeader />
       <Relative>
-        {isLoading || !buttonIsReady ? (
-          <FloatingPlaceholder>
-            <Loading />
-          </FloatingPlaceholder>
-        ) : null}
         <ControlRow>
           <ButtonEnablePREnvironments setIsReady={setButtonIsReady} />
         </ControlRow>
-
-        {environments.length === 0 ? (
-          <Placeholder>
-            No repositories found with Preview Environments enabled.
-          </Placeholder>
+        {isLoading ? (
+          <LoadingWrapper>
+            <Loading />
+          </LoadingWrapper>
         ) : (
-          <EnvironmentsGrid>
-            {environments.map((env) => (
-              <EnvironmentCard
-                key={env.id}
-                environment={env}
-                onDelete={removeEnvironmentFromList}
-              />
-            ))}
-          </EnvironmentsGrid>
+          <>
+            {environments.length === 0 ? (
+              <Placeholder
+                title="No repositories found"
+                height="calc(100vh - 400px)"
+              >
+                No repositories were found with Preview Environments enabled.
+              </Placeholder>
+            ) : (
+              <EnvironmentsGrid>
+                {environments.map((env) => (
+                  <EnvironmentCard
+                    key={env.id}
+                    environment={env}
+                    onDelete={removeEnvironmentFromList}
+                  />
+                ))}
+              </EnvironmentsGrid>
+            )}
+          </>
         )}
       </Relative>
     </>
@@ -111,45 +154,18 @@ const EnvironmentsList = () => {
 
 export default EnvironmentsList;
 
+const LoadingWrapper = styled.div`
+  padding-top: 100px;
+`;
+
 const Relative = styled.div`
   position: relative;
 `;
 
-const Placeholder = styled.div`
-  padding: 30px;
-  margin-top: 35px;
-  padding-bottom: 40px;
-  font-size: 13px;
-  color: #ffffff44;
-  min-height: 400px;
-  height: 50vh;
-  background: #ffffff11;
-  border-radius: 8px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-
-  > i {
-    font-size: 18px;
-    margin-right: 8px;
-  }
-`;
-
-const FloatingPlaceholder = styled(Placeholder)`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  margin-top: 0px;
-  z-index: 999;
-`;
-
 const EnvironmentsGrid = styled.div`
-  margin-top: 32px;
   padding-bottom: 150px;
   display: grid;
-  grid-row-gap: 25px;
+  grid-row-gap: 15px;
 `;
 
 const ControlRow = styled.div`
@@ -157,7 +173,7 @@ const ControlRow = styled.div`
   margin-left: auto;
   justify-content: space-between;
   align-items: center;
-  margin: 35px 0;
+  margin: 35px 0 30px;
   padding-left: 0px;
 `;
 

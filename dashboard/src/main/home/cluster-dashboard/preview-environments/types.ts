@@ -29,6 +29,8 @@ export type PRDeployment = {
   gh_pr_branch_into?: string;
 };
 
+export type EnvironmentDeploymentMode = "manual" | "auto";
+
 export type Environment = {
   id: number;
   project_id: number;
@@ -41,7 +43,7 @@ export type Environment = {
   disable_new_comments: boolean;
   last_deployment_status: DeploymentStatusUnion;
   deployment_count: number;
-  mode: "manual" | "auto";
+  mode: EnvironmentDeploymentMode;
 };
 
 export type PullRequest = {

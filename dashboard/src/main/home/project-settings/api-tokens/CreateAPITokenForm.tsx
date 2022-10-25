@@ -12,7 +12,7 @@ import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import CopyToClipboard from "components/CopyToClipboard";
 import { Column } from "react-table";
-import Table from "components/Table";
+import Table from "components/OldTable";
 import RadioSelector from "components/RadioSelector";
 import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";

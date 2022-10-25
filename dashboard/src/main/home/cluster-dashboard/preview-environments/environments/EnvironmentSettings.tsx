@@ -1,241 +1,319 @@
-import DocsHelper from "components/DocsHelper";
-import CheckboxRow from "components/form-components/CheckboxRow";
+import DynamicLink from "components/DynamicLink";
+import Loading from "components/Loading";
+import React, { useContext, useEffect, useState } from "react";
+import api from "shared/api";
+import styled from "styled-components";
+import { useParams } from "react-router";
+import DashboardHeader from "../../DashboardHeader";
+import PullRequestIcon from "assets/pull_request_icon.svg";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
-import Loading from "components/Loading";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import { Environment, EnvironmentDeploymentMode } from "../types";
 import SaveButton from "components/SaveButton";
-import Modal from "main/home/modals/Modal";
-import React, { useContext, useReducer, useState } from "react";
-import api from "shared/api";
+import _ from "lodash";
 import { Context } from "shared/Context";
-import styled, { css, keyframes } from "styled-components";
-import BranchFilterSelector from "../components/BranchFilterSelector";
-import { Environment } from "../types";
+import PageNotFound from "components/PageNotFound";
 
-const EnvironmentSettings = ({ environmentId }: { environmentId: string }) => {
-  const { currentCluster, currentProject, setCurrentError } = useContext(
+/**
+ * 
+ * TODO Soham:
+ * 
+ * - Handle errors when fetching environments
+ * - Handle errors when the environment is not found
+ * - Handle errors on saving and deleting the environment
+ */
+const EnvironmentSettings: React.FC = () => {
+  const [error, setError] = useState("");
+  const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
-
-  const [show, toggle] = useReducer((prev) => !prev, false);
-
   const [environment, setEnvironment] = useState<Environment>();
-
-  const [isNewCommentsDisabled, setIsNewCommentsDisabled] = useState(false);
-
-  const [deploymentMode, setDeploymentMode] = useState<Environment["mode"]>(
-    "auto"
-  );
-  const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
-  const [availableBranches, setAvailableBranches] = useState<string[]>([]);
-
   const [saveStatus, setSaveStatus] = useState("");
+  const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
+  const [
+    deploymentMode,
+    setDeploymentMode,
+  ] = useState<EnvironmentDeploymentMode>("manual");
+  const {
+    environment_id: environmentId,
+    repo_name: repoName,
+    repo_owner: repoOwner,
+  } = useParams<{
+    environment_id: string;
+    repo_name: string;
+    repo_owner: string;
+  }>();
 
-  const [isLoading, setIsLoading] = useState(false);
+  const selectedRepo = `${repoOwner}/${repoName}`;
 
-  const getEnvironment = async () => {
-    return api.getEnvironment<Environment>(
-      "<token>",
-      {},
-      {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-        environment_id: Number(environmentId),
-      }
-    );
-  };
-
-  const getBranches = async (env: Environment) => {
-    return api.getBranches<string[]>(
-      "<token>",
-      {},
-      {
-        project_id: env.project_id,
-        git_repo_id: env.git_installation_id,
-        kind: "github",
-        owner: env.git_repo_owner,
-        name: env.git_repo_name,
-      }
-    );
-  };
-
-  const handleToggleCommentStatus = async (currentlyDisabled: boolean) => {
-    setIsNewCommentsDisabled(!currentlyDisabled);
-  };
-
-  const handleOpen = async () => {
-    setIsLoading(true);
-
-    try {
-      const environment = await getEnvironment().then((res) => res.data);
-      const branches = await getBranches(environment).then((res) => res.data);
+  useEffect(() => {
+    const getPreviewEnvironmentSettings = async () => {
+      const { data: environment } = await api.getEnvironment<Environment>(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          environment_id: parseInt(environmentId),
+        }
+      );
 
       setEnvironment(environment);
-      setIsNewCommentsDisabled(environment.disable_new_comments);
+      setNewCommentsDisabled(environment.disable_new_comments);
       setDeploymentMode(environment.mode);
-      setSelectedBranches(environment.git_repo_branches.filter(Boolean));
+    };
 
-      setAvailableBranches(branches);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-      toggle();
+    try {
+      getPreviewEnvironmentSettings();
+    } catch (err) {
+      setCurrentError(err);
     }
-  };
+  }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaveStatus("loading");
 
-    api
-      .updateEnvironment(
+    try {
+      await api.updateEnvironment(
         "<token>",
         {
           mode: deploymentMode,
-          disable_new_comments: isNewCommentsDisabled,
-          git_repo_branches: selectedBranches,
+          disable_new_comments: newCommentsDisabled,
+          git_repo_branches: [],
         },
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
           environment_id: Number(environmentId),
         }
-      )
-      .then(() => {
-        setSaveStatus("successful");
-        setTimeout(() => {
-          setSaveStatus(""), toggle();
-        }, 2000);
-        toggle();
-      })
-      .catch((error) => {
-        setCurrentError(error);
-        setSaveStatus("Couldn't update the environment, please try again.");
-      })
-      .finally(() => {
-        setSaveStatus("");
-      });
+      );
+    } catch (err) {
+      setCurrentError(err);
+    }
+
+    setSaveStatus("");
   };
 
   return (
     <>
-      <SettingsButton type="button" onClick={handleOpen} isLoading={isLoading}>
-        <i className="material-icons">settings</i>
-      </SettingsButton>
-      {show && (
-        <Modal
-          height="fit-content"
-          onRequestClose={toggle}
-          title={`Settings for ${environment.git_repo_owner}/${environment.git_repo_name}`}
+      <BreadcrumbRow>
+        <Breadcrumb to={`/preview-environments/deployments/settings`}>
+          <ArrowIcon src={PullRequestIcon} />
+          <Wrap>Preview environments</Wrap>
+        </Breadcrumb>
+        <Slash>/</Slash>
+        <Breadcrumb
+          to={`/preview-environments/deployments/${environmentId}/${selectedRepo}`}
         >
-          <>
-            {/* Add branch selector (probably will have to create a new component that lets the user pick multiple) */}
-            <Heading>Allowed Branches</Heading>
-            <Helper>
-              If the pull request has a base branch included in this list, it
-              will be allowed to be deployed.
-              <br />
-              (Leave empty to allow all branches)
-            </Helper>
-            <BranchFilterSelector
-              value={selectedBranches}
-              onChange={setSelectedBranches}
-              options={availableBranches}
-            />
-
-            <Heading>Automatic pull request deployments</Heading>
-            <Helper>
-              If you enable this option, the new pull requests will be
-              automatically deployed.
-            </Helper>
-            {/* Add checkbox to change deployment mode (auto | manaul) */}
-            <CheckboxWrapper>
-              <CheckboxRow
-                label="Enable automatic deploys"
-                checked={deploymentMode === "auto"}
-                toggle={() =>
-                  setDeploymentMode((prev) =>
-                    prev === "auto" ? "manual" : "auto"
-                  )
-                }
-                wrapperStyles={{
-                  disableMargin: true,
-                }}
-              />
-              <DocsHelper
-                disableMargin
-                tooltipText="Automatically create a Preview Environment for each new pull request in the repository. By default, preview environments must be manually created per-PR."
-              />
-            </CheckboxWrapper>
-
-            <Heading>Disable new comments for new deployments</Heading>
-            <Helper>
-              When enabled new comments will not be created for new deployments.
-              Instead the last comment will be updated.
-            </Helper>
-            <CheckboxWrapper>
-              <CheckboxRow
-                label="Disable new comments for deployments"
-                checked={isNewCommentsDisabled}
-                toggle={() => handleToggleCommentStatus(isNewCommentsDisabled)}
-                wrapperStyles={{
-                  disableMargin: true,
-                }}
-              />
-              <DocsHelper
-                disableMargin
-                tooltipText="When checked, comments for every new deployment are disabled. Instead, the most recent comment is updated each time."
-                placement="top-end"
-              />
-            </CheckboxWrapper>
-            <SubmitButton
-              onClick={handleSave}
-              clearPosition
-              text="Save"
-              statusPosition="right"
-              status={saveStatus}
-            />
-          </>
-        </Modal>
-      )}
+          <Icon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
+          <Wrap>{selectedRepo}</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
+      <DashboardHeader
+        image={PullRequestIcon}
+        title="Preview environment settings"
+        description={`Preview environment settings for the ${selectedRepo} repository.`}
+        disableLineBreak
+        capitalize={false}
+      />
+      <StyledPlaceholder>
+        <Heading isAtTop>Pull request comment settings</Heading>
+        <Helper>
+          Update the most recent PR comment on every deploy. If disabled, a new
+          PR comment is made per deploy.
+        </Helper>
+        <CheckboxRow
+          label="Update the most recent PR comment"
+          checked={!newCommentsDisabled}
+          toggle={() => setNewCommentsDisabled(!newCommentsDisabled)}
+        />
+        <Br />
+        <Heading>Automatic preview deployments</Heading>
+        <Helper>
+          When enabled, preview deployments are automatically created for all
+          new pull requests.
+        </Helper>
+        <CheckboxRow
+          label="Automatically create preview deployments"
+          checked={deploymentMode === "auto"}
+          toggle={() =>
+            setDeploymentMode((deploymentMode) =>
+              deploymentMode === "auto" ? "manual" : "auto"
+            )
+          }
+        />
+        <SavePreviewEnvironmentSettings
+          text={"Save"}
+          status={saveStatus}
+          clearPosition={true}
+          statusPosition={"right"}
+          onClick={handleSave}
+        />
+        <Br />
+        <Heading>Delete preview environment</Heading>
+        <Helper>
+          Delete the Porter preview environment integration for this repo. All
+          preview deployments will also be destroyed.
+        </Helper>
+        <DeleteButton disabled={saveStatus === "loading"} onClick={_.noop}>
+          Delete preview environment
+        </DeleteButton>
+      </StyledPlaceholder>
     </>
   );
 };
 
 export default EnvironmentSettings;
 
-const rotatingAnimation = keyframes`
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+const SavePreviewEnvironmentSettings = styled(SaveButton)`
+  margin-top: 30px;
 `;
 
-const iconAnimation = css`
-  animation: ${rotatingAnimation} 1s linear infinite;
-`;
-
-const SettingsButton = styled.button<{ isLoading: boolean }>`
-  background: none;
+const DeleteButton = styled.button`
+  height: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Work Sans", sans-serif;
   color: white;
-  border: none;
-  margin-left: 10px;
+  display: flex;
+  width: 210px;
+  align-items: center;
+  padding: 0 15px;
+  margin-top: 20px;
+  text-align: left;
+  border-radius: 5px;
   cursor: pointer;
-  > i {
-    font-size: 20px;
-    ${({ isLoading }) => (isLoading ? iconAnimation : "")}
+  user-select: none;
+  :focus {
+    outline: 0;
+  }
+  :hover {
+    filter: brightness(120%);
+  }
+  background: #b91133;
+  border: none;
+  :hover {
+    filter: brightness(120%);
   }
 `;
 
-const CheckboxWrapper = styled.div`
+const Br = styled.div`
+  width: 100%;
+  height: 2px;
+`;
+
+const StyledPlaceholder = styled.div`
+  width: 100%;
+  padding: 30px;
+  font-size: 13px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+`;
+
+const Slash = styled.div`
+  margin: 0 4px;
+  color: #aaaabb88;
+`;
+
+const Wrap = styled.div`
+  z-index: 999;
+`;
+
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const Icon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+`;
+
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 15px;
+  margin-top: -10px;
+  align-items: center;
+`;
+
+const Breadcrumb = styled(DynamicLink)`
+  color: #aaaabb88;
+  font-size: 13px;
   display: flex;
   align-items: center;
-  margin-top: 20px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+  }
 `;
 
-const SubmitButton = styled(SaveButton)`
-  margin-top: 20px;
-  align-items: flex-end;
+const Relative = styled.div`
+  position: relative;
+`;
+
+const EnvironmentsGrid = styled.div`
+  padding-bottom: 150px;
+  display: grid;
+  grid-row-gap: 15px;
+`;
+
+const ControlRow = styled.div`
+  display: flex;
+  margin-left: auto;
+  justify-content: space-between;
+  align-items: center;
+  margin: 35px 0 30px;
+  padding-left: 0px;
+`;
+
+const Button = styled(DynamicLink)`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: "Work Sans", sans-serif;
+  border-radius: 20px;
+  color: white;
+  height: 35px;
+  padding: 0px 8px;
+  padding-bottom: 1px;
+  margin-right: 10px;
+  font-weight: 500;
+  padding-right: 15px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#616FEEcc"};
+  :hover {
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#505edddd"};
+  }
+
+  > i {
+    color: white;
+    width: 18px;
+    height: 18px;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+    justify-content: center;
+  }
 `;

@@ -5,7 +5,7 @@ import { Card } from "../../launch/components/styles";
 import { Stack } from "../../types";
 import sliders from "assets/sliders.svg";
 import DynamicLink from "components/DynamicLink";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import Loading from "components/Loading";
 import { useRouteMatch } from "react-router";
 

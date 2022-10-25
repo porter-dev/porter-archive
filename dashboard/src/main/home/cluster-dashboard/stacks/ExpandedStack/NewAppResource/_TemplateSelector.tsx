@@ -3,7 +3,7 @@ import api from "shared/api";
 import { PorterTemplate } from "shared/types";
 import semver from "semver";
 import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import { BackButton, Card } from "../../launch/components/styles";
 import DynamicLink from "components/DynamicLink";
 import { VersionSelector } from "../../launch/components/VersionSelector";

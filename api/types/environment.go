@@ -133,16 +133,16 @@ type ToggleNewCommentRequest struct {
 
 type ListEnvironmentsResponse []*Environment
 
-type UpdateEnvironmentSettingsRequest struct {
-	Mode               string   `json:"mode" form:"oneof=auto manual"`
-	DisableNewComments bool     `json:"disable_new_comments"`
-	GitRepoBranches    []string `json:"git_repo_branches"`
-}
-
 type ValidatePorterYAMLRequest struct {
 	Branch string `schema:"branch"`
 }
 
 type ValidatePorterYAMLResponse struct {
 	Errors []string `json:"errors"`
+}
+
+type UpdateEnvironmentSettingsRequest struct {
+	Mode               string   `json:"mode" form:"oneof=auto manual"`
+	DisableNewComments bool     `json:"disable_new_comments"`
+	GitRepoBranches    []string `json:"git_repo_branches"`
 }

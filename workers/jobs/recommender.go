@@ -204,6 +204,7 @@ func (n *recommender) Run() error {
 			Repo:                      n.repo,
 			DigitalOceanOAuth:         n.doConf,
 			AllowInClusterConnections: false,
+			Timeout:                   5 * time.Second,
 		})
 
 		if err != nil {

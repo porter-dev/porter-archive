@@ -284,22 +284,23 @@ const LogsSection: React.FC<Props> = ({
             )}
           </Flex>
         </FlexRow>
-        <StyledLogsSection isFullscreen={isFullscreen}>
-          {loading || !logs.length ? (
-            <Loading message="Waiting for logs..." />
-          ) : (
-            <>
-              <LoadMoreButton
-                active={
-                  logs.length !== 0 && paginationInfo.previousCursor !== null
-                }
-                role="button"
-                onClick={onLoadPrevious}
-              >
-                Load Previous
-              </LoadMoreButton>
-              {renderLogs()}
-              {/* <Message>
+        <LogsSectionWrapper>
+          <StyledLogsSection isFullscreen={isFullscreen}>
+            {loading || !logs.length ? (
+              <Loading message="Waiting for logs..." />
+            ) : (
+              <>
+                <LoadMoreButton
+                  active={
+                    logs.length !== 0 && paginationInfo.previousCursor !== null
+                  }
+                  role="button"
+                  onClick={onLoadPrevious}
+                >
+                  Load Previous
+                </LoadMoreButton>
+                {renderLogs()}
+                {/* <Message>
             
             No matching logs found.
             <Highlight onClick={() => {}}>
@@ -307,20 +308,24 @@ const LogsSection: React.FC<Props> = ({
               Refresh
             </Highlight>
           </Message> */}
-              <LoadMoreButton
-                active={selectedDate && logs.length !== 0}
-                role="button"
-                onClick={() => moveCursor(Direction.forward)}
-              >
-                Load more
-              </LoadMoreButton>
-            </>
-          )}
-          <div ref={scrollToBottomRef} />
-          <NotificationWrapper active={!!notification}>
+                <LoadMoreButton
+                  active={selectedDate && logs.length !== 0}
+                  role="button"
+                  onClick={() => moveCursor(Direction.forward)}
+                >
+                  Load more
+                </LoadMoreButton>
+              </>
+            )}
+            <div ref={scrollToBottomRef} />
+          </StyledLogsSection>
+          <NotificationWrapper
+            key={JSON.stringify(logs)}
+            active={!!notification}
+          >
             <Banner>{notification}</Banner>
           </NotificationWrapper>
-        </StyledLogsSection>
+        </LogsSectionWrapper>
       </>
     );
   };
@@ -668,9 +673,8 @@ const NotificationWrapper = styled.div<{ active?: boolean }>`
   left: 50%;
   transform: translateX(-50%);
   width: fit-content;
-  padding-inline: 10px;
   background: #101420;
-  zIndex: 9999;
+  z-index: 9999;
 
   @keyframes bounceIn {
     0% {
@@ -682,4 +686,8 @@ const NotificationWrapper = styled.div<{ active?: boolean }>`
       opacity: 1;
     }
   }
+`;
+
+const LogsSectionWrapper = styled.div`
+  position: relative;
 `;

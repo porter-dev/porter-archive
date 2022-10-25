@@ -288,6 +288,12 @@ export const useLogs = (
 
     updateLogs(initialLogs);
 
+    if (!isLive && !initialLogs.length) {
+      notify(
+        "You have no logs for this time period. Try with a different time range."
+      );
+    }
+
     closeWebsocket(websocketKey);
 
     setLoading(false);
@@ -312,10 +318,15 @@ export const useLogs = (
         Direction.backward
       );
 
-      updateLogs(
-        paginationInfo.previousCursor ? newLogs.slice(0, -1) : newLogs,
-        direction
-      );
+      const logsToUpdate = paginationInfo.previousCursor
+        ? newLogs.slice(0, -1)
+        : newLogs;
+
+      updateLogs(logsToUpdate, direction);
+
+      if (!logsToUpdate.length) {
+        notify("You have reached the beginning of the logs");
+      }
 
       setPaginationInfo((paginationInfo) => ({
         ...paginationInfo,

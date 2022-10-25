@@ -14,31 +14,15 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/docker"
+	"github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
 )
 
-type BuildDriverConfig struct {
-	Build struct {
-		UsePackCache bool `mapstructure:"use_pack_cache"`
-		Method       string
-		Context      string
-		Dockerfile   string
-		Builder      string
-		Buildpacks   []string
-		Image        string
-		Env          map[string]string
-	}
-
-	EnvGroups []types.EnvGroupMeta `mapstructure:"env_groups"`
-
-	Values map[string]interface{}
-}
-
 type BuildDriver struct {
-	source      *Source
-	target      *Target
-	config      *BuildDriverConfig
+	source      *preview.Source
+	target      *preview.Target
+	config      *preview.BuildDriverConfig
 	lookupTable *map[string]drivers.Driver
 	output      map[string]interface{}
 }
@@ -59,10 +43,6 @@ func NewBuildDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (
 	target, err := GetTarget(resource.Name, resource.Target)
 	if err != nil {
 		return nil, err
-	}
-
-	if target.AppName == "" {
-		return nil, fmt.Errorf("target app_name is missing")
 	}
 
 	driver.target = target
@@ -335,7 +315,7 @@ func (d *BuildDriver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func (d *BuildDriver) getConfig(resource *models.Resource) (*BuildDriverConfig, error) {
+func (d *BuildDriver) getConfig(resource *models.Resource) (*preview.BuildDriverConfig, error) {
 	populatedConf, err := drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
 		LookupTable:  *d.lookupTable,
@@ -346,7 +326,7 @@ func (d *BuildDriver) getConfig(resource *models.Resource) (*BuildDriverConfig, 
 		return nil, err
 	}
 
-	config := &BuildDriverConfig{}
+	config := &preview.BuildDriverConfig{}
 
 	err = mapstructure.Decode(populatedConf, config)
 

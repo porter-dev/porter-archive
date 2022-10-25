@@ -66,7 +66,7 @@ func (c *UpgradeAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Cluster:    cluster,
 		Repo:       c.Repo(),
 		Registries: []*models.Registry{},
-	}, c.Config().DOConf)
+	}, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(

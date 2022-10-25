@@ -46,6 +46,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/kubectl/pkg/scheme"
 
 	rspb "helm.sh/helm/v3/pkg/release"
 )
@@ -1744,6 +1745,146 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 		for err = range errorchan {
 			once.Do(func() {
 				close(stopper)
+				rw.Close()
+			})
+		}
+
+		return err
+	}
+
+	return a.RunWebsocketTask(run)
+}
+
+func (a *Agent) StreamPorterAgentLokiLog(
+	labels []string,
+	startTime string,
+	searchParam string,
+	limit uint32,
+	rw *websocket.WebsocketSafeReadWriter,
+) error {
+	run := func() error {
+		errorchan := make(chan error)
+
+		var wg sync.WaitGroup
+		var once sync.Once
+		var err error
+
+		wg.Add(2)
+
+		go func() {
+			wg.Wait()
+			close(errorchan)
+		}()
+
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// TODO: add method to alert on panic
+					return
+				}
+			}()
+
+			defer wg.Done()
+
+			// listens for websocket closing handshake
+			for {
+				if _, _, err := rw.ReadMessage(); err != nil {
+					errorchan <- nil
+					return
+				}
+			}
+		}()
+
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// TODO: add method to alert on panic
+					return
+				}
+			}()
+
+			defer wg.Done()
+
+			podList, err := a.Clientset.CoreV1().Pods("porter-agent-system").List(context.Background(), metav1.ListOptions{
+				LabelSelector: "control-plane=controller-manager",
+			})
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+
+			if len(podList.Items) == 0 {
+				errorchan <- fmt.Errorf("no porter agent pods found")
+				return
+			}
+
+			pod := podList.Items[0]
+
+			restConf, err := a.RESTClientGetter.ToRESTConfig()
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+
+			req := a.Clientset.CoreV1().RESTClient().
+				Post().
+				Resource("pods").
+				Name(pod.Name).
+				Namespace(pod.Namespace).
+				SubResource("exec")
+
+			cmd := []string{
+				"/porter/agent-cli",
+				"--start",
+				startTime,
+			}
+
+			for _, label := range labels {
+				cmd = append(cmd, "--label", label)
+			}
+
+			if searchParam != "" {
+				cmd = append(cmd, "--search", searchParam)
+			}
+
+			if limit > 0 {
+				cmd = append(cmd, "--limit", fmt.Sprintf("%d", limit))
+			}
+
+			opts := &v1.PodExecOptions{
+				Command: cmd,
+				Stdout:  true,
+				Stderr:  true,
+			}
+
+			req.VersionedParams(
+				opts,
+				scheme.ParameterCodec,
+			)
+
+			exec, err := remotecommand.NewSPDYExecutor(restConf, "POST", req.URL())
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+
+			err = exec.Stream(remotecommand.StreamOptions{
+				Stdin:  nil,
+				Stdout: rw,
+				Stderr: rw,
+			})
+
+			if err != nil {
+				errorchan <- err
+				return
+			}
+		}()
+
+		for err = range errorchan {
+			once.Do(func() {
 				rw.Close()
 			})
 		}

@@ -14,7 +14,6 @@ import useAuth from "shared/auth/useAuth";
 import Metrics from "./Metrics";
 import { useLocation } from "react-router";
 import { getQueryParam } from "shared/routing";
-import IncidentsTab from "./incidents/IncidentsTab";
 
 import CopyToClipboard from "components/CopyToClipboard";
 import Loading from "components/Loading";
@@ -47,8 +46,6 @@ export const Dashboard: React.FunctionComponent = () => {
   const context = useContext(Context);
   const renderTab = () => {
     switch (currentTab) {
-      case "incidents":
-        return <IncidentsTab />;
       case "settings":
         return <ClusterSettings />;
       case "metrics":

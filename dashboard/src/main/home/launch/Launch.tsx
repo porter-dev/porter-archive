@@ -28,7 +28,7 @@ type TabOption = {
   value: string;
 };
 
-const HIDDEN_CHARTS = ["porter-agent"];
+const HIDDEN_CHARTS = ["porter-agent", "loki"];
 
 type PropsType = RouteComponentProps & {};
 

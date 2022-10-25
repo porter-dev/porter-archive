@@ -214,10 +214,10 @@ func DeleteEnv(opts *EnvOpts) error {
 
 func getPreviewEnvSecretName(projectID, clusterID uint, instanceName string) string {
 	if instanceName != "" {
-		return fmt.Sprintf("PORTER_TOKEN_%s_%d_%d", strings.ToUpper(instanceName), projectID, clusterID)
+		return fmt.Sprintf("PORTER_PREVIEW_%s_%d_%d", strings.ToUpper(instanceName), projectID, clusterID)
 	}
 
-	return fmt.Sprintf("PORTER_TOKEN_%d_%d", projectID, clusterID)
+	return fmt.Sprintf("PORTER_PREVIEW_%d_%d", projectID, clusterID)
 }
 
 func getPreviewApplyActionYAML(opts *EnvOpts) ([]byte, error) {
@@ -231,7 +231,7 @@ func getPreviewApplyActionYAML(opts *EnvOpts) ([]byte, error) {
 			opts.GitInstallationID,
 			opts.GitRepoOwner,
 			opts.GitRepoName,
-			"v0.2.0",
+			"v0.2.1",
 		),
 	}
 

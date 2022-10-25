@@ -149,16 +149,16 @@ class Dashboard extends Component<PropsType, StateType> {
     let { currentProject, capabilities } = this.context;
     let { onShowProjectSettings } = this;
 
-    let tabOptions = [{ label: "Connected clusters", value: "overview" }];
+    let tabOptions = [{ label: "Project Overview", value: "overview" }];
 
     if (this.props.isAuthorized("cluster", "", ["get", "create"])) {
-      tabOptions.push({ label: "Create a cluster", value: "create-cluster" });
+      tabOptions.push({ label: "Create a Cluster", value: "create-cluster" });
     }
 
-    tabOptions.push({ label: "Provisioner status", value: "provisioner" });
+    tabOptions.push({ label: "Provisioner Status", value: "provisioner" });
 
     if (!capabilities?.provisioner) {
-      tabOptions = [{ label: "Project overview", value: "overview" }];
+      tabOptions = [{ label: "Project Overview", value: "overview" }];
     }
 
     return (
@@ -179,9 +179,7 @@ class Dashboard extends Component<PropsType, StateType> {
                     </Overlay>
                   </DashboardIcon>
                   {currentProject && currentProject.name}
-                  {this.context.currentProject?.roles?.filter((obj: any) => {
-                    return obj.user_id === this.context.user.userId;
-                  })[0].kind === "admin" || (
+                  {this.props.isAuthorized("settings", "", ["get", "list"]) && (
                     <i
                       className="material-icons"
                       onClick={onShowProjectSettings}
@@ -255,7 +253,7 @@ const TopRow = styled.div`
 `;
 
 const Description = styled.div`
-  color: #8b949f;
+  color: #aaaabb;
   margin-top: 13px;
   margin-left: 2px;
   font-size: 13px;
@@ -266,7 +264,7 @@ const InfoLabel = styled.div`
   height: 20px;
   display: flex;
   align-items: center;
-  color: #8b949f;
+  color: #7a838f;
   font-size: 13px;
   > i {
     color: #8b949f;
@@ -284,8 +282,8 @@ const InfoSection = styled.div`
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
-  height: 1px;
-  background: #494b4f;
+  height: 2px;
+  background: #ffffff20;
   margin: 10px 0px 20px;
 `;
 
@@ -293,29 +291,31 @@ const Overlay = styled.div`
   height: 100%;
   width: 100%;
   position: absolute;
+  background: #00000028;
   top: 0;
   left: 0;
   border-radius: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 21px;
+  font-size: 24px;
   font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: white;
 `;
 
 const DashboardImage = styled.img`
-  height: 35px;
-  width: 35px;
+  height: 45px;
+  width: 45px;
   border-radius: 5px;
+  box-shadow: 0 2px 5px 4px #00000011;
 `;
 
 const DashboardIcon = styled.div`
   position: relative;
-  height: 35px;
+  height: 45px;
   margin-right: 17px;
-  width: 35px;
+  width: 45px;
   border-radius: 5px;
   display: flex;
   align-items: center;

@@ -23,8 +23,8 @@ const DeploymentDetail = () => {
   const [environmentId, setEnvironmentId] = useState("");
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
-  const [expandedPorterYAMLErrors, setExpandedPorterYAMLErrors] = useState(
-    null
+  const [expandedPorterYAMLErrors, setExpandedPorterYAMLErrors] = useState<string[]>(
+    []
   );
 
   const { currentProject, currentCluster } = useContext(Context);
@@ -96,15 +96,15 @@ const DeploymentDetail = () => {
           setPorterYAMLErrors([]);
         }
       });
-  });
+  }, []);
 
   let repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
 
   return (
     <>
-      {expandedPorterYAMLErrors && (
+      {expandedPorterYAMLErrors.length && (
         <Modal
-          onRequestClose={() => setExpandedPorterYAMLErrors(null)}
+          onRequestClose={() => setExpandedPorterYAMLErrors([])}
           height="auto"
         >
           <Message>

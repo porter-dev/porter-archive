@@ -271,7 +271,7 @@ const validatePorterYAML = baseApi<
     environment_id: number;
   }
 >("GET", (pathParams) => {
-  let { project_id, cluster_id, environment_id } = pathParams;
+  const { project_id, cluster_id, environment_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/validate_porter_yaml`;
 });
 

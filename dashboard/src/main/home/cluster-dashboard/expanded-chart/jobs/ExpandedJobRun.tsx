@@ -272,9 +272,7 @@ const ExpandedJobRun = ({
         <TabRegion
           currentTab={currentTab}
           setCurrentTab={(newTab: string) => {
-            if (newTab !== "logs") {
-              setCurrentTab(newTab);
-            }
+            setCurrentTab(newTab);
           }}
           options={options}
         >

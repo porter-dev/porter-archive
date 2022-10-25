@@ -11,7 +11,7 @@ import (
 func validateWebChartValues(values map[string]interface{}) error {
 	compiler := jsonschema.NewCompiler()
 
-	scm, err := compiler.Compile("https://raw.githubusercontent.com/porter-dev/porter-charts/master/applications/web/values.schema.json")
+	scm, err := compiler.Compile("https://raw.githubusercontent.com/porter-dev/porter-charts/master/applications/web/validate.json")
 
 	if err != nil {
 		return fmt.Errorf("error compiling job chart values schema: %w", err)
@@ -35,7 +35,7 @@ func validateWebChartValues(values map[string]interface{}) error {
 func validateWorkerChartValues(values map[string]interface{}) error {
 	compiler := jsonschema.NewCompiler()
 
-	scm, err := compiler.Compile("https://raw.githubusercontent.com/porter-dev/porter-charts/master/applications/worker/values.schema.json")
+	scm, err := compiler.Compile("https://raw.githubusercontent.com/porter-dev/porter-charts/master/applications/worker/validate.json")
 
 	if err != nil {
 		return fmt.Errorf("error compiling job chart values schema: %w", err)
@@ -59,7 +59,7 @@ func validateWorkerChartValues(values map[string]interface{}) error {
 func validateJobChartValues(values map[string]interface{}) error {
 	compiler := jsonschema.NewCompiler()
 
-	scm, err := compiler.Compile("https://raw.githubusercontent.com/porter-dev/porter-charts/master/applications/job/values.schema.json")
+	scm, err := compiler.Compile("https://raw.githubusercontent.com/porter-dev/porter-charts/master/applications/job/validate.json")
 
 	if err != nil {
 		return fmt.Errorf("error compiling job chart values schema: %w", err)

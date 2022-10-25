@@ -13,6 +13,9 @@ import github from "assets/github-white.png";
 import { integrationList } from "shared/common";
 import { capitalize } from "shared/string_utils";
 import leftArrow from "assets/left-arrow.svg";
+import Banner from "components/Banner";
+import Modal from "main/home/modals/Modal";
+import { validatePorterYAML } from "../utils";
 
 const DeploymentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();
@@ -20,6 +23,10 @@ const DeploymentDetail = () => {
   const [prDeployment, setPRDeployment] = useState<PRDeployment>(null);
   const [environmentId, setEnvironmentId] = useState("");
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
+  const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
+  const [expandedPorterYAMLErrors, setExpandedPorterYAMLErrors] = useState<
+    string[]
+  >([]);
 
   const { currentProject, currentCluster } = useContext(Context);
 
@@ -61,84 +68,140 @@ const DeploymentDetail = () => {
     return <Loading />;
   }
 
+  useEffect(() => {
+    const isSubscribed = true;
+    const environment_id = parseInt(searchParams.get("environment_id"));
+
+    validatePorterYAML({
+      projectID: currentProject.id,
+      clusterID: currentCluster.id,
+      environmentID: environment_id,
+      branch: prDeployment.gh_pr_branch_from,
+    })
+      .then(({ data }) => {
+        if (!isSubscribed) {
+          return;
+        }
+
+        setPorterYAMLErrors(data.errors ?? []);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (isSubscribed) {
+          setPorterYAMLErrors([]);
+        }
+      });
+  }, []);
+
   let repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
 
   return (
-    <StyledExpandedChart>
-      <BreadcrumbRow>
-        <Breadcrumb
-          to={`/preview-environments/deployments/${environmentId}/${repository}`}
+    <>
+      {expandedPorterYAMLErrors.length && (
+        <Modal
+          onRequestClose={() => setExpandedPorterYAMLErrors([])}
+          height="auto"
         >
-          <ArrowIcon src={leftArrow} />
-          <Wrap>Back</Wrap>
-        </Breadcrumb>
-      </BreadcrumbRow>
-      <HeaderWrapper>
-        <Title icon={pr_icon} iconWidth="25px">
-          {prDeployment.gh_pr_name}
-        </Title>
-        <InfoWrapper>
-          {prDeployment.subdomain && (
-            <PRLink to={prDeployment.subdomain} target="_blank">
-              <i className="material-icons">link</i>
-              {prDeployment.subdomain}
-            </PRLink>
-          )}
-          <TagWrapper>
-            Namespace <NamespaceTag>{params.namespace}</NamespaceTag>
-          </TagWrapper>
-        </InfoWrapper>
-        <Flex>
-          <Status>
-            <StatusDot status={prDeployment.status} />
-            {capitalize(prDeployment.status)}
-          </Status>
-          <Dot>•</Dot>
-          <DeploymentImageContainer>
-            <DeploymentTypeIcon src={integrationList.repo.icon} />
-            <RepositoryName
-              onMouseOver={() => {
-                setShowRepoTooltip(true);
-              }}
-              onMouseOut={() => {
-                setShowRepoTooltip(false);
-              }}
-            >
-              {repository}
-            </RepositoryName>
-            {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
-          </DeploymentImageContainer>
-          <Dot>•</Dot>
-          <GHALink
-            to={`https://github.com/${repository}/pull/${prDeployment.pull_request_id}`}
-            target="_blank"
+          <Message>
+            {expandedPorterYAMLErrors.map((el) => {
+              return (
+                <div>
+                  {"- "}
+                  {el}
+                </div>
+              );
+            })}
+          </Message>
+        </Modal>
+      )}
+      <StyledExpandedChart>
+        <BreadcrumbRow>
+          <Breadcrumb
+            to={`/preview-environments/deployments/${environmentId}/${repository}`}
           >
-            <img src={github} /> GitHub PR
-            <i className="material-icons">open_in_new</i>
-          </GHALink>
-          {prDeployment.last_workflow_run_url ? (
-            <GHALink to={prDeployment.last_workflow_run_url} target="_blank">
-              <span className="material-icons-outlined">
-                play_circle_outline
-              </span>
-              Last workflow run
+            <ArrowIcon src={leftArrow} />
+            <Wrap>Back</Wrap>
+          </Breadcrumb>
+        </BreadcrumbRow>
+        <HeaderWrapper>
+          <Title icon={pr_icon} iconWidth="25px">
+            {prDeployment.gh_pr_name}
+          </Title>
+          <InfoWrapper>
+            {prDeployment.subdomain && (
+              <PRLink to={prDeployment.subdomain} target="_blank">
+                <i className="material-icons">link</i>
+                {prDeployment.subdomain}
+              </PRLink>
+            )}
+            <TagWrapper>
+              Namespace <NamespaceTag>{params.namespace}</NamespaceTag>
+            </TagWrapper>
+          </InfoWrapper>
+          <Flex>
+            <Status>
+              <StatusDot status={prDeployment.status} />
+              {capitalize(prDeployment.status)}
+            </Status>
+            <Dot>•</Dot>
+            <DeploymentImageContainer>
+              <DeploymentTypeIcon src={integrationList.repo.icon} />
+              <RepositoryName
+                onMouseOver={() => {
+                  setShowRepoTooltip(true);
+                }}
+                onMouseOut={() => {
+                  setShowRepoTooltip(false);
+                }}
+              >
+                {repository}
+              </RepositoryName>
+              {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
+            </DeploymentImageContainer>
+            <Dot>•</Dot>
+            <GHALink
+              to={`https://github.com/${repository}/pull/${prDeployment.pull_request_id}`}
+              target="_blank"
+            >
+              <img src={github} /> GitHub PR
               <i className="material-icons">open_in_new</i>
             </GHALink>
-          ) : null}
-        </Flex>
-        <LinkToActionsWrapper></LinkToActionsWrapper>
-      </HeaderWrapper>
-      <ChartListWrapper>
-        <ChartList
-          currentCluster={context.currentCluster}
-          currentView="cluster-dashboard"
-          sortType="Newest"
-          namespace={params.namespace}
-          disableBottomPadding
-          closeChartRedirectUrl={`${window.location.pathname}${window.location.search}`}
-        />
-      </ChartListWrapper>
-    </StyledExpandedChart>
+            {prDeployment.last_workflow_run_url ? (
+              <GHALink to={prDeployment.last_workflow_run_url} target="_blank">
+                <span className="material-icons-outlined">
+                  play_circle_outline
+                </span>
+                Last workflow run
+                <i className="material-icons">open_in_new</i>
+              </GHALink>
+            ) : null}
+          </Flex>
+          <LinkToActionsWrapper></LinkToActionsWrapper>
+        </HeaderWrapper>
+        {porterYAMLErrors.length > 0 ? (
+          <Banner type="error">
+            Your porter.yaml file has errors. Please fix them before deploying.
+            <LinkButton
+              onClick={() => {
+                setExpandedPorterYAMLErrors(porterYAMLErrors);
+              }}
+            >
+              View details
+            </LinkButton>
+          </Banner>
+        ) : null}
+        <ChartListWrapper>
+          <ChartList
+            currentCluster={context.currentCluster}
+            currentView="cluster-dashboard"
+            sortType="Newest"
+            namespace={params.namespace}
+            disableBottomPadding
+            closeChartRedirectUrl={`${window.location.pathname}${window.location.search}`}
+          />
+        </ChartListWrapper>
+      </StyledExpandedChart>
+    </>
   );
 };
 
@@ -148,6 +211,22 @@ const ArrowIcon = styled.img`
   width: 15px;
   margin-right: 8px;
   opacity: 50%;
+`;
+
+const LinkButton = styled.a`
+  text-decoration: underline;
+  margin-left: 7px;
+  cursor: pointer;
+`;
+
+const Message = styled.div`
+  padding: 20px;
+  background: #26292e;
+  border-radius: 5px;
+  line-height: 1.5em;
+  border: 1px solid #aaaabb33;
+  font-size: 13px;
+  margin-top: 40px;
 `;
 
 const BreadcrumbRow = styled.div`

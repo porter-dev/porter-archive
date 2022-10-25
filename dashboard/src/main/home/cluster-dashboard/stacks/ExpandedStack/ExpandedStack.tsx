@@ -1,5 +1,5 @@
 import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import TabSelector from "components/TabSelector";
 import TitleSection from "components/TitleSection";
 import React, { useContext, useState } from "react";

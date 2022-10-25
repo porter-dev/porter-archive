@@ -3,11 +3,9 @@ import PodDropdown from "./PodDropdown";
 
 import styled from "styled-components";
 import { getPodStatus } from "./util";
-import { InitLogData } from "../logs-section/LogsSection";
 
 type Props = {
   chart?: any;
-  setLogData: (initLogData: InitLogData) => void;
 };
 
 type DeployStatus = "Deploying" | "Deployed" | "Failed";
@@ -96,23 +94,7 @@ const DeployStatusSection: React.FC<Props> = (props) => {
       </StyledDeployStatusSection>
       <DropdownWrapper expanded={isExpanded}>
         <Dropdown ref={wrapperRef}>
-          <PodDropdown
-            currentChart={props.chart}
-            onUpdate={onUpdate}
-            // Allow users to navigate to pod logs upon clicking the pod
-            onSelectPod={(pod: any) => {
-              console.log(
-                "SET LOG DATA",
-                pod?.metadata?.name,
-                pod?.metadata?.annotations?.["helm.sh/revision"]
-              );
-
-              props.setLogData({
-                podName: pod?.metadata?.name,
-                revision: pod?.metadata?.annotations?.["helm.sh/revision"],
-              });
-            }}
-          />
+          <PodDropdown currentChart={props.chart} onUpdate={onUpdate} />
         </Dropdown>
       </DropdownWrapper>
     </>
@@ -141,7 +123,7 @@ const DropdownWrapper = styled.div<{
   position: absolute;
   left: ${(props) => (props.dropdownAlignRight ? "" : "0")};
   right: ${(props) => (props.dropdownAlignRight ? "0" : "")};
-  z-index: 5;
+  z-index: 1000;
   top: calc(100% + 7px);
   width: 35%;
   min-width: 400px;
@@ -202,7 +184,7 @@ const StatusWrapper = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
 `;
 
 const StatusColor = styled.div`

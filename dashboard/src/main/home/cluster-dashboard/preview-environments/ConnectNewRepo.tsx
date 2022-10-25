@@ -142,7 +142,8 @@ const ConnectNewRepo: React.FC = () => {
     <>
       <DashboardHeader
         image={PullRequestIcon}
-        title="Preview Environments"
+        title="Preview environments"
+        capitalize={false}
         description="Create full-stack preview environments for your pull requests."
       />
 
@@ -234,12 +235,8 @@ const ConnectNewRepo: React.FC = () => {
 
       <ActionContainer>
         <SaveButton
-          text="Add Repository"
-          disabled={
-            (actionConfig.git_repo_id ? false : true) ||
-            isLoadingBranches ||
-            status === "loading"
-          }
+          text="Add repository"
+          disabled={actionConfig.git_repo_id ? false : true}
           onClick={addRepo}
           makeFlush={true}
           clearPosition={true}

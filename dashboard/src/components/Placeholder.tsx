@@ -5,17 +5,33 @@ interface Props {
   height?: string;
   minHeight?: string;
   children: React.ReactNode;
+  title?: string;
 }
 
-const Placeholder: React.FC<Props> = ({ height, minHeight, children }) => {
+const Placeholder: React.FC<Props> = ({ 
+  height, 
+  minHeight, 
+  children,
+  title,
+}) => {
   return (
     <StyledPlaceholder height={height} minHeight={minHeight}>
-      {children}
+      <div>
+        <Title>{title}</Title>
+        {children}
+      </div>
     </StyledPlaceholder>
   );
 };
 
 export default Placeholder;
+
+const Title = styled.div`
+  font-size: 16px;
+  color: white;
+  margin-bottom: 10px;
+  font-weight: 500;
+`;
 
 const StyledPlaceholder = styled.div<{
   height: string;
@@ -23,12 +39,15 @@ const StyledPlaceholder = styled.div<{
 }>`
   width: 100%;
   height: ${(props) => props.height || "100px"};
-  minheight: ${(props) => props.minHeight || ""};
+  min-height: ${(props) => props.minHeight || ""};
   display: flex;
   align-items: center;
+  color: #8D949E;
+  padding: 50px;
   justify-content: center;
   font-size: 13px;
-  color: #ffffff44;
   border-radius: 5px;
-  background: #ffffff11;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  padding-bottom: 60px;
 `;

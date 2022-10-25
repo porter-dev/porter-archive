@@ -10,7 +10,7 @@ import DeployList from "./components/DeployList";
 import InfraResourceList from "./components/InfraResourceList";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import { readableDate } from "shared/string_utils";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import Header from "components/expanded-object/Header";
 import { Infrastructure, KindMap, Operation } from "shared/types";
 import InfraSettings from "./components/InfraSettings";

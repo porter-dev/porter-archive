@@ -6,11 +6,12 @@ import { Context } from "shared/Context";
 import TitleSection from "components/TitleSection";
 
 type PropsType = {
-  image: any;
-  title: string;
+  image?: any;
+  title: any;
   description?: string;
   materialIconClass?: string;
   disableLineBreak?: boolean;
+  capitalize?: boolean;
 };
 
 type StateType = {};
@@ -20,7 +21,7 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
     return (
       <>
         <TitleSection
-          capitalize={true}
+          capitalize={this.props.capitalize === undefined || this.props.capitalize}
           icon={this.props.image}
           materialIconClass={this.props.materialIconClass}
         >
@@ -88,7 +89,7 @@ const InfoLabel = styled.div`
 `;
 
 const InfoSection = styled.div`
-  margin-top: 20px;
+  margin-top: 15px;
   font-family: "Work Sans", sans-serif;
   margin-left: 0px;
   margin-bottom: 35px;

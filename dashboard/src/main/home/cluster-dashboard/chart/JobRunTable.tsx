@@ -1,6 +1,6 @@
 import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
-import Table from "components/Table";
+import Table from "components/OldTable";
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CellProps, Column, Row } from "react-table";
 import api from "shared/api";

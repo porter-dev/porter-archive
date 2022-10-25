@@ -6,7 +6,7 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import styled from "styled-components";
 import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 
 type Props = {
   setCreatedCredential: (aws_integration_id: number) => void;

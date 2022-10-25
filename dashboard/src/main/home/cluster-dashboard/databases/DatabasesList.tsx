@@ -1,5 +1,5 @@
 import CopyToClipboard from "components/CopyToClipboard";
-import Table from "components/Table";
+import Table from "components/OldTable";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useRouteMatch } from "react-router";
 import { Link } from "react-router-dom";

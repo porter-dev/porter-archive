@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "properties": {
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    },
+    "container": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "default": 80
+        },
+        "command": {
+          "type": "string"
+        },
+        "env": {
+          "type": "object",
+          "properties": {
+            "normal": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "schedule": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "value": {
+          "type": "string",
+          "default": "*/5 * * * *"
+        },
+        "successfulHistory": {
+          "type": "integer",
+          "default": 20
+        },
+        "failedHistory": {
+          "type": "integer",
+          "default": 20
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "pattern": "^\\d+(m){0,1}$"
+            },
+            "memory": {
+              "type": "string",
+              "pattern": "^\\d+(Ki|Mi|Gi)$"
+            }
+          }
+        }
+      }
+    }
+  }
+}

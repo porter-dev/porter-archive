@@ -267,6 +267,20 @@ const toggleNewCommentForEnvironment = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/toggle_new_comment`;
 });
 
+const validatePorterYAML = baseApi<
+  {
+    branch?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    environment_id: number;
+  }
+>("GET", (pathParams) => {
+  const { project_id, cluster_id, environment_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/validate_porter_yaml`;
+});
+
 const createGCPIntegration = baseApi<
   {
     gcp_key_data: string;
@@ -2380,6 +2394,7 @@ export default {
   listEnvironments,
   getEnvironment,
   toggleNewCommentForEnvironment,
+  validatePorterYAML,
   createGCPIntegration,
   createInvite,
   createNamespace,

@@ -129,6 +129,7 @@ func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		ClusterID:         cluster.ID,
 		GitInstallationID: uint(ga.InstallationID),
 		EnvironmentName:   env.Name,
+		InstanceName:      c.Config().ServerConf.InstanceName,
 	})
 
 	if err != nil {

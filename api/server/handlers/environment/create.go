@@ -178,6 +178,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		ClusterID:         cluster.ID,
 		GitInstallationID: uint(ga.InstallationID),
 		EnvironmentName:   request.Name,
+		InstanceName:      c.Config().ServerConf.InstanceName,
 	})
 
 	if err != nil {

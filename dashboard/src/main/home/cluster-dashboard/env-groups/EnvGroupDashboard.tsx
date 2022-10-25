@@ -58,15 +58,6 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
       return (
         <>
           <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
-            {isAuthorizedToAdd && (
-              <Button
-                onClick={() =>
-                  this.setState({ createEnvMode: !this.state.createEnvMode })
-                }
-              >
-                <i className="material-icons">add</i> Create Env Group
-              </Button>
-            )}
             <SortFilterWrapper>
               <NamespaceSelector
                 setNamespace={(namespace) =>
@@ -78,12 +69,23 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
                 }
                 namespace={this.state.namespace}
               />
+            </SortFilterWrapper>
+            <Flex>
               <SortSelector
                 currentView="env-groups"
                 setSortType={(sortType) => this.setState({ sortType })}
                 sortType={this.state.sortType}
               />
-            </SortFilterWrapper>
+              {isAuthorizedToAdd && (
+                <Button
+                  onClick={() =>
+                    this.setState({ createEnvMode: !this.state.createEnvMode })
+                  }
+                >
+                  <i className="material-icons">add</i> Create env group
+                </Button>
+              )}
+            </Flex>
           </ControlRow>
 
           <EnvGroupList
@@ -129,6 +131,7 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
             image={sliders}
             title="Environment Groups"
             description="Groups of environment variables for storing secrets and configuration."
+            disableLineBreak
           />
           {this.renderBody()}
         </>
@@ -145,11 +148,17 @@ EnvGroupDashboard.contextType = Context;
 
 export default withRouter(withAuth(EnvGroupDashboard));
 
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+  border-bottom: 30px solid transparent;
+`;
+
 const SortFilterWrapper = styled.div`
   display: flex;
   justify-content: space-between;
+  border-bottom: 30px solid transparent;
   > div:not(:first-child) {
-    margin-left: 30px;
   }
 `;
 
@@ -162,30 +171,27 @@ const ControlRow = styled.div`
     return "flex-end";
   }};
   align-items: center;
-  margin-bottom: 35px;
-  padding-left: 0px;
+  flex-wrap: wrap;
 `;
 
 const Button = styled.div`
   display: flex;
+  margin-left: 10px;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   font-size: 13px;
   cursor: pointer;
   font-family: "Work Sans", sans-serif;
-  border-radius: 20px;
+  border-radius: 5px;
   color: white;
-  height: 35px;
-  padding: 0px 8px;
-  padding-bottom: 1px;
-  margin-right: 10px;
-  font-weight: 500;
-  padding-right: 15px;
+  height: 30px;
+  padding: 0 8px;
+  min-width: 155px;
+  padding-right: 13px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  box-shadow: 0 5px 8px 0px #00000010;
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 

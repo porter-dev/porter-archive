@@ -1,10 +1,12 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
+import folder from "assets/folder-outline.svg";
+
 import { Context } from "shared/Context";
 import api from "shared/api";
 
-import Selector from "components/Selector";
+import RadioFilter from "components/RadioFilter";
 
 type Props = {
   setNamespace: (x: string) => void;
@@ -28,7 +30,11 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
       value: string;
     }[]
   >([]);
-  const [defaultNamespace, setDefaultNamespace] = useState<string>("default");
+  const [defaultNamespace, setDefaultNamespace] = useState<string>(
+    localStorage.getItem(
+      `${context.currentProject.id}-${context.currentCluster.id}-namespace`
+    )
+  );
 
   const updateOptions = () => {
     let { currentCluster, currentProject } = context;
@@ -59,7 +65,19 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
           const availableNamespaces = res.data.filter((namespace: any) => {
             return namespace.status !== "Terminating";
           });
-          setDefaultNamespace("default");
+          if (
+            localStorage.getItem(
+              `${context.currentProject.id}-${context.currentCluster.id}-namespace`
+            )
+          ) {
+            setDefaultNamespace(
+              localStorage.getItem(
+                `${context.currentProject.id}-${context.currentCluster.id}-namespace`
+              )
+            );
+          } else {
+            setDefaultNamespace("default");
+          }
           availableNamespaces.forEach((x: { name: string }, i: number) => {
             namespaceOptions.push({
               label: x.name,
@@ -97,25 +115,30 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
     updateOptions();
   }, [namespace, context.currentCluster]);
 
+  useEffect(() => {
+    setNamespace(
+      localStorage.getItem(
+        `${context.currentProject.id}-${context.currentCluster.id}-namespace`
+      )
+    );
+  }, [context.currentCluster]);
+
   const handleSetActive = (namespace: any) => {
+    localStorage.setItem(
+      `${context.currentProject.id}-${context.currentCluster.id}-namespace`,
+      namespace
+    );
     setNamespace(namespace);
   };
 
   return (
-    <StyledNamespaceSelector>
-      <Label>
-        <i className="material-icons">filter_alt</i> Namespace
-      </Label>
-      <Selector
-        activeValue={namespace}
-        setActiveValue={handleSetActive}
-        options={namespaceOptions}
-        dropdownLabel="Namespace"
-        width="150px"
-        dropdownWidth="230px"
-        closeOverlay={true}
-      />
-    </StyledNamespaceSelector>
+    <RadioFilter
+      icon={folder}
+      selected={namespace}
+      setSelected={handleSetActive}
+      options={namespaceOptions}
+      name="Namespace"
+    />
   );
 };
 
@@ -123,7 +146,6 @@ const Label = styled.div`
   display: flex;
   align-items: center;
   margin-right: 12px;
-
   > i {
     margin-right: 8px;
     font-size: 18px;

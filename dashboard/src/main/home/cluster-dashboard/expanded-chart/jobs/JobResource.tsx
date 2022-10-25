@@ -172,7 +172,7 @@ export default class JobResource extends Component<PropsType, StateType> {
           onClick={() => this.setState({ configIsExpanded: true })}
         >
           <img src={plus} />
-          Show Job Config
+          Show job config
         </ExpandConfigBar>
       );
     } else {
@@ -201,7 +201,7 @@ export default class JobResource extends Component<PropsType, StateType> {
                 <KeyValueArray
                   envLoader={true}
                   values={envObject}
-                  label="Environment Variables:"
+                  label="Environment variables:"
                   disabled={true}
                 />
                 <DarkMatter />
@@ -323,7 +323,7 @@ export default class JobResource extends Component<PropsType, StateType> {
     return (
       <>
         <StyledJob>
-          <MainRow onClick={this.expandJob}>
+          <MainRow onClick={() => this.props.expandJob(this.props.job)}>
             <Flex>
               <Icon src={icon && icon} />
               <Description>
@@ -360,12 +360,12 @@ export default class JobResource extends Component<PropsType, StateType> {
                     delete
                   </i>
                 )}
-                <i
+                {/* <i
                   className="material-icons"
                   onClick={() => this.props.expandJob(this.props.job)}
                 >
                   open_in_new
-                </i>
+                </i> */}
               </MaterialIconTray>
             </EndWrapper>
           </MainRow>
@@ -494,14 +494,13 @@ const StartedText = styled.div`
 const StyledJob = styled.div`
   display: flex;
   flex-direction: column;
-  background: #2b2e3699;
   margin-bottom: 20px;
-  border-radius: 5px;
   overflow: hidden;
-  border: 1px solid #ffffff0a;
-
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
   :hover {
-    border: 1px solid #ffffff3c;
+    border: 1px solid #7a7b80;
   }
 `;
 
@@ -561,7 +560,7 @@ const Subtitle = styled.div`
 `;
 
 const JobLogsWrapper = styled.div`
-  height: 250px;
+  max-height: 500px;
   width: 100%;
   background-color: black;
   overflow-y: auto;

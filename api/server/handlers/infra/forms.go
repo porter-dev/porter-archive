@@ -408,6 +408,16 @@ tabs:
           value: c6i.xlarge
         - label: c6i.2xlarge
           value: c6i.2xlarge
+        - label: c6i.4xlarge
+          value: c6i.4xlarge
+        - label: m6i.large
+          value: m6i.large
+        - label: m6i.xlarge
+          value: m6i.xlarge
+        - label: m6i.2xlarge
+          value: m6i.2xlarge
+        - label: m6i.4xlarge
+          value: m6i.4xlarge
         - label: r5.large
           value: r5.large
         - value: r5.xlarge
@@ -500,8 +510,22 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c6i.large
+          value: c6i.large
+        - label: c6i.xlarge
+          value: c6i.xlarge
         - label: c6i.2xlarge
           value: c6i.2xlarge
+        - label: c6i.4xlarge
+          value: c6i.4xlarge
+        - label: m6i.large
+          value: m6i.large
+        - label: m6i.xlarge
+          value: m6i.xlarge
+        - label: m6i.2xlarge
+          value: m6i.2xlarge
+        - label: m6i.4xlarge
+          value: m6i.4xlarge
     - type: number-input
       label: Minimum number of EC2 instances to create in the application autoscaling group.
       variable: additional_nodegroup_min_instances
@@ -621,6 +645,19 @@ tabs:
       variable: additional_private_subnets_multiplicity
       settings:
         default: 3
+  - name: net_settings_azs_toggle
+    contents:
+    - type: checkbox
+      label: "Specify the AZs to provision this cluster in."
+      variable: specify_azs
+      settings:
+        default: false
+  - name: net_settings_azs
+    show_if: specify_azs
+    contents:
+    - type: array-input
+      variable: azs
+      label: Availability Zones
   - name: nginx_settings
     contents:
     - type: heading

@@ -5,6 +5,7 @@ export interface ClusterType {
   name: string;
   server: string;
   service_account_id: number;
+  agent_integration_enabled: boolean;
   infra_id?: number;
   service?: string;
   aws_integration_id?: number;
@@ -320,6 +321,9 @@ export type FullActionConfigType = ActionConfigType & {
 export interface CapabilityType {
   github: boolean;
   provisioner: boolean;
+  version?: string;
+  default_app_helm_repo_url?: string;
+  default_addon_helm_repo_url?: string;
 }
 
 export interface ContextProps {

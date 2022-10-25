@@ -1,8 +1,8 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 
-import backArrow from "assets/back_arrow.png";
+import leftArrow from "assets/left-arrow.svg";
 import { cloneDeep, set } from "lodash";
 import loading from "assets/loading.gif";
 
@@ -28,6 +28,7 @@ import CronParser from "cron-parser";
 import CronPrettifier from "cronstrue";
 import BuildSettingsTab from "./build-settings/BuildSettingsTab";
 import { useStackEnvGroups } from "./useStackEnvGroups";
+import api from "shared/api";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -46,7 +47,7 @@ export const ExpandedJobChartFC: React.FC<{
   closeChart: () => void;
   setSidebar: (x: boolean) => void;
 }> = ({ currentChart: oldChart, closeChart, currentCluster }) => {
-  const { setCurrentOverlay } = useContext(Context);
+  const { currentProject, setCurrentOverlay } = useContext(Context);
   const [isAuthorized] = useAuth();
   const {
     chart,
@@ -426,53 +427,91 @@ const ExpandedJobHeader: React.FC<{
   setDisableForm,
   disableRevisions,
 }) => (
-  <HeaderWrapper>
-    <BackButton onClick={closeChart}>
-      <BackButtonImg src={backArrow} />
-    </BackButton>
-    <TitleSection icon={chart?.chart.metadata.icon} iconWidth="33px">
-      {chart?.name}
-      <DeploymentType currentChart={chart} />
-      <TagWrapper>
-        Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
-      </TagWrapper>
-    </TitleSection>
-    {chart?.config?.description ? (
-      <Description>{chart?.config?.description}</Description>
-    ) : null}
+  <>
+    <BreadcrumbRow>
+      <Breadcrumb onClick={closeChart}>
+        <ArrowIcon src={leftArrow} />
+        <Wrap>Back</Wrap>
+      </Breadcrumb>
+    </BreadcrumbRow>
+    <HeaderWrapper>
+      <TitleSection icon={chart?.chart.metadata.icon} iconWidth="33px">
+        {chart?.name}
+        <DeploymentType currentChart={chart} />
+        <TagWrapper>
+          Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
+        </TagWrapper>
+      </TitleSection>
+      {chart?.config?.description ? (
+        <Description>{chart?.config?.description}</Description>
+      ) : null}
 
-    <InfoWrapper>
-      <LastDeployed>
-        Run {jobs?.length} times <Dot>•</Dot>Last template update at
-        {" " + readableDate(chart.info.last_deployed)}
-      </LastDeployed>
-    </InfoWrapper>
-    {!disableRevisions ? (
-      <RevisionSection
-        chart={chart}
-        refreshChart={() => refreshChart()}
-        setRevision={(chart, isCurrent) => {
-          loadChartWithSpecificRevision(chart?.version);
-          setDisableForm(!isCurrent);
-        }}
-        forceRefreshRevisions={false}
-        refreshRevisionsOff={() => {}}
-        shouldUpdate={
-          chart?.latest_version &&
-          chart?.latest_version !== chart?.chart.metadata.version
-        }
-        latestVersion={chart?.latest_version}
-        upgradeVersion={(_version, cb) => {
-          upgradeChart().then(() => {
-            if (typeof cb === "function") {
-              cb();
-            }
-          });
-        }}
-      />
-    ) : null}
-  </HeaderWrapper>
+      <InfoWrapper>
+        <LastDeployed>
+          Run {jobs?.length} times <Dot>•</Dot>Last template update at
+          {" " + readableDate(chart.info.last_deployed)}
+        </LastDeployed>
+      </InfoWrapper>
+      {!disableRevisions ? (
+        <RevisionSection
+          chart={chart}
+          refreshChart={() => refreshChart()}
+          setRevision={(chart, isCurrent) => {
+            loadChartWithSpecificRevision(chart?.version);
+            setDisableForm(!isCurrent);
+          }}
+          forceRefreshRevisions={false}
+          refreshRevisionsOff={() => {}}
+          shouldUpdate={
+            chart?.latest_version &&
+            chart?.latest_version !== chart?.chart.metadata.version
+          }
+          latestVersion={chart?.latest_version}
+          upgradeVersion={(_version, cb) => {
+            upgradeChart().then(() => {
+              if (typeof cb === "function") {
+                cb();
+              }
+            });
+          }}
+        />
+      ) : null}
+    </HeaderWrapper>
+  </>
 );
+
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const Breadcrumb = styled.div`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+  }
+`;
+
+const Wrap = styled.div`
+  z-index: 999;
+`;
 
 const RunsDescription = styled.div`
   color: #ffffff;
@@ -546,8 +585,8 @@ const CLIModalIcon = styled(CommandLineIcon)`
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
+  height: 1px;
+  background: #494b4f;
   margin: 15px 0px 55px;
 `;
 

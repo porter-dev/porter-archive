@@ -3,22 +3,21 @@ import styled from "styled-components";
 
 export const Card = {
   Grid: styled.div`
-    margin-top: 32px;
     margin-bottom: 32px;
     display: grid;
-    grid-row-gap: 25px;
+    grid-row-gap: 15px;
   `,
   Wrapper: styled.div<{ variant?: "clickable" | "unclickable" }>`
     display: flex;
     color: #ffffff;
-    background: #2b2e3699;
     justify-content: space-between;
-    border-radius: 5px;
     height: 75px;
     padding: 12px;
     padding-left: 14px;
-    border: 1px solid #ffffff0f;
     align-items: center;
+    border-radius: 5px;
+    background: #26292e;
+    border: 1px solid #494b4f;
 
     ${(props) => {
       if (props.variant === "unclickable") {
@@ -33,7 +32,7 @@ export const Card = {
       return `
         cursor: pointer;
         :hover {
-          border: 1px solid #ffffff3c;
+          border: 1px solid #7A7B80;
         }
       `;
     }}

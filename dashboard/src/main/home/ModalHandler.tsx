@@ -143,7 +143,7 @@ const ModalHandler: React.FC<{
             onRequestClose={() => setCurrentModal(null, null)}
             width="600px"
             height="220px"
-            title="Add Namespace"
+            title="Add namespace"
           >
             <NamespaceModal />
           </Modal>

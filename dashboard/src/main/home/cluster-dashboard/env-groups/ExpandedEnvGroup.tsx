@@ -9,6 +9,7 @@ import styled, { keyframes } from "styled-components";
 import backArrow from "assets/back_arrow.png";
 import key from "assets/key.svg";
 import loading from "assets/loading.gif";
+import leftArrow from "assets/left-arrow.svg";
 
 import { ClusterType } from "shared/types";
 import { Context } from "shared/Context";
@@ -90,7 +91,7 @@ export const ExpandedEnvGroupFC = ({
 
   const tabOptions = useMemo(() => {
     if (!isAuthorized("env_group", "", ["get", "delete"])) {
-      return [{ value: "variables-editor", label: "Environment Variables" }];
+      return [{ value: "variables-editor", label: "Environment variables" }];
     }
 
     if (
@@ -98,21 +99,21 @@ export const ExpandedEnvGroupFC = ({
       currentEnvGroup?.applications?.length
     ) {
       return [
-        { value: "variables-editor", label: "Environment Variables" },
-        { value: "applications", label: "Linked Applications" },
+        { value: "variables-editor", label: "Environment variables" },
+        { value: "applications", label: "Linked applications" },
       ];
     }
 
     if (currentEnvGroup?.applications?.length) {
       return [
-        { value: "variables-editor", label: "Environment Variables" },
-        { value: "applications", label: "Linked Applications" },
+        { value: "variables-editor", label: "Environment variables" },
+        { value: "applications", label: "Linked applications" },
         { value: "settings", label: "Settings" },
       ];
     }
 
     return [
-      { value: "variables-editor", label: "Environment Variables" },
+      { value: "variables-editor", label: "Environment variables" },
       { value: "settings", label: "Settings" },
     ];
   }, [currentEnvGroup]);
@@ -401,6 +402,7 @@ export const ExpandedEnvGroupFC = ({
       default:
         return (
           <EnvGroupSettings
+            namespace={namespace}
             envGroup={currentEnvGroup}
             handleDeleteEnvGroup={handleDeleteEnvGroup}
           />
@@ -418,10 +420,13 @@ export const ExpandedEnvGroupFC = ({
 
   return (
     <StyledExpandedChart>
+      <BreadcrumbRow>
+        <Breadcrumb onClick={closeExpanded}>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
       <HeaderWrapper>
-        <BackButton onClick={closeExpanded}>
-          <BackButtonImg src={backArrow} />
-        </BackButton>
         <TitleSection icon={key} iconWidth="33px">
           {envGroup.name}
           <TagWrapper>
@@ -474,7 +479,7 @@ const EnvGroupVariablesEditor = ({
   return (
     <TabWrapper>
       <InnerWrapper>
-        <Heading>Environment Variables</Heading>
+        <Heading>Environment variables</Heading>
         <Helper>
           Set environment variables for your secrets and environment-specific
           configuration.
@@ -511,12 +516,22 @@ const EnvGroupVariablesEditor = ({
 const EnvGroupSettings = ({
   envGroup,
   handleDeleteEnvGroup,
+  namespace,
 }: {
   envGroup: EditableEnvGroup;
   handleDeleteEnvGroup: () => void;
+  namespace?: string;
 }) => {
-  const { setCurrentOverlay } = useContext(Context);
+  const {
+    setCurrentOverlay,
+    currentProject,
+    currentCluster,
+    setCurrentError,
+  } = useContext(Context);
   const [isAuthorized] = useAuth();
+  const [name, setName] = useState(null);
+  const [cloneNamespace, setCloneNamespace] = useState(null);
+  const [cloneSuccess, setCloneSuccess] = useState(false);
 
   const canDelete = useMemo(() => {
     // add a case for when applications is null - in this case this is a deprecated env group version
@@ -526,6 +541,30 @@ const EnvGroupSettings = ({
 
     return envGroup?.applications?.length === 0;
   }, [envGroup]);
+
+  const cloneEnvGroup = async () => {
+    setCloneSuccess(false);
+    try {
+      await api.cloneEnvGroup(
+        "<token>",
+        {
+          name: envGroup.name,
+          namespace: cloneNamespace,
+          clone_name: name,
+          version: envGroup.version,
+        },
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: namespace,
+        }
+      );
+      setCloneSuccess(true);
+    } catch (error) {
+      console.log(error);
+      setCurrentError(error);
+    }
+  };
 
   return (
     <TabWrapper>
@@ -557,7 +596,7 @@ const EnvGroupSettings = ({
 
                 <DarkMatter /> */}
 
-          <Heading>Manage Environment Group</Heading>
+          <Heading>Manage environment group</Heading>
           <Helper>
             Permanently delete this set of environment variables. This action
             cannot be undone.
@@ -569,7 +608,6 @@ const EnvGroupSettings = ({
               applications to delete.
             </Helper>
           )}
-
           <Button
             color="#b91133"
             onClick={() => {
@@ -583,6 +621,34 @@ const EnvGroupSettings = ({
           >
             Delete {envGroup.name}
           </Button>
+          <DarkMatter />
+          <Heading>Clone environment group</Heading>
+          <Helper>
+            Clone this set of environment variables into a new env group.
+          </Helper>
+          <InputRow
+            type="string"
+            value={name}
+            setValue={(x: string) => setName(x)}
+            label="New env group name"
+            placeholder="ex: my-cloned-env-group"
+          />
+          <InputRow
+            type="string"
+            value={cloneNamespace}
+            setValue={(x: string) => setCloneNamespace(x)}
+            label="New env group namespace"
+            placeholder="ex: default"
+          />
+          <FlexAlt>
+            <Button onClick={cloneEnvGroup}>Clone {envGroup.name}</Button>
+            {cloneSuccess && (
+              <StatusWrapper position="right" successful={true}>
+                <i className="material-icons">done</i>
+                <StatusTextWrapper>Successfully cloned</StatusTextWrapper>
+              </StatusWrapper>
+            )}
+          </FlexAlt>
         </InnerWrapper>
       )}
     </TabWrapper>
@@ -628,6 +694,98 @@ const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
   );
 };
 
+const FlexAlt = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+`;
+
+const StatusTextWrapper = styled.p`
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 19px;
+  margin: 0;
+`;
+
+const StatusWrapper = styled.div<{
+  successful: boolean;
+  position: "right" | "left";
+}>`
+  display: flex;
+  align-items: center;
+  max-width: 170px;
+  font-family: "Work Sans", sans-serif;
+  font-size: 13px;
+  color: #ffffff55;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 5px;
+  margin-bottom: 30px;
+  height: 35px;
+  margin-left: 15px;
+
+  > i {
+    font-size: 18px;
+    margin-right: 10px;
+    float: left;
+    color: ${(props) => (props.successful ? "#4797ff" : "#fcba03")};
+  }
+
+  animation-fill-mode: forwards;
+
+  @keyframes statusFloatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;
+
+const DarkMatter = styled.div`
+  width: 100%;
+  height: 1px;
+  margin-top: -20px;
+`;
+
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const Breadcrumb = styled.div`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+  }
+`;
+
+const Wrap = styled.div`
+  z-index: 999;
+`;
+
 const HeadingWrapper = styled.div`
   display: flex;
   margin-bottom: 15px;
@@ -664,8 +822,8 @@ const TextWrap = styled.div``;
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
+  height: 1px;
+  background: #494b4f;
   margin: 15px 0px 55px;
 `;
 
@@ -713,8 +871,6 @@ const Button = styled.button`
   border: 0;
   border-radius: 5px;
   background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
-  box-shadow: ${(props) =>
-    !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
   cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
   user-select: none;
   :focus {

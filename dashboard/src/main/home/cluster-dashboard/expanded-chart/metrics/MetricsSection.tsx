@@ -650,7 +650,7 @@ const DropdownAlt = styled(Dropdown)`
 const RangeWrapper = styled.div`
   float: right;
   font-weight: bold;
-  width: 156px;
+  width: 158px;
   margin-top: -8px;
 `;
 
@@ -686,7 +686,7 @@ const MetricsLabel = styled.div`
 const StyledMetricsSection = styled.div`
   width: 100%;
   min-height: 400px;
-  height: 50vh;
+  height: calc(100vh - 400px);
   display: flex;
   flex-direction: column;
   position: relative;

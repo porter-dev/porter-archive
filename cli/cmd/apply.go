@@ -20,6 +20,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	"github.com/porter-dev/porter/cli/cmd/preview"
+	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
@@ -71,16 +72,43 @@ applying a configuration:
 	},
 }
 
+// applyValidateCmd represents the "porter apply validate" command when called
+// with a porter.yaml file as an argument
+var applyValidateCmd = &cobra.Command{
+	Use:   "validate",
+	Short: "Validates a porter.yaml",
+	Run: func(*cobra.Command, []string) {
+		err := applyValidate()
+
+		if err != nil {
+			color.New(color.FgRed).Fprintf(os.Stderr, "Error: %s\n", err.Error())
+			os.Exit(1)
+		} else {
+			color.New(color.FgGreen).Printf("The porter.yaml file is valid!\n")
+		}
+	},
+}
+
 var porterYAML string
 
 func init() {
 	rootCmd.AddCommand(applyCmd)
 
-	applyCmd.Flags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
+	applyCmd.AddCommand(applyValidateCmd)
+
+	applyCmd.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
 	applyCmd.MarkFlagRequired("file")
 }
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+	if _, ok := os.LookupEnv("PORTER_VALIDATE_YAML"); ok {
+		err := applyValidate()
+
+		if err != nil {
+			return err
+		}
+	}
+
 	fileBytes, err := ioutil.ReadFile(porterYAML)
 
 	if err != nil {
@@ -134,6 +162,28 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	})
 }
 
+func applyValidate() error {
+	fileBytes, err := ioutil.ReadFile(porterYAML)
+
+	if err != nil {
+		return fmt.Errorf("error reading porter.yaml: %w", err)
+	}
+
+	validationErrors := previewInt.Validate(string(fileBytes))
+
+	if len(validationErrors) > 0 {
+		errString := "the following error(s) were found while validating the porter.yaml file:"
+
+		for _, err := range validationErrors {
+			errString += "\n- " + strings.ReplaceAll(err.Error(), "\n\n*", "\n  *")
+		}
+
+		return fmt.Errorf(errString)
+	}
+
+	return nil
+}
+
 func hasDeploymentHookEnvVars() bool {
 	if ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID"); ghIDStr == "" {
 		return false
@@ -170,32 +220,9 @@ func hasDeploymentHookEnvVars() bool {
 	return true
 }
 
-type ApplicationConfig struct {
-	WaitForJob bool
-
-	// If set to true, this does not run an update, it only creates the initial application and job,
-	// skipping subsequent updates
-	OnlyCreate bool
-
-	Build struct {
-		UseCache   bool `mapstructure:"use_cache"`
-		Method     string
-		Context    string
-		Dockerfile string
-		Image      string
-		Builder    string
-		Buildpacks []string
-		Env        map[string]string
-	}
-
-	EnvGroups []types.EnvGroupMeta `mapstructure:"env_groups"`
-
-	Values map[string]interface{}
-}
-
 type DeployDriver struct {
-	source      *preview.Source
-	target      *preview.Target
+	source      *previewInt.Source
+	target      *previewInt.Target
 	output      map[string]interface{}
 	lookupTable *map[string]drivers.Driver
 	logger      *zerolog.Logger
@@ -233,11 +260,6 @@ func (d *DeployDriver) ShouldApply(_ *models.Resource) bool {
 
 func (d *DeployDriver) Apply(resource *models.Resource) (*models.Resource, error) {
 	client := config.GetAPIClient()
-	name := resource.Name
-
-	if name == "" {
-		return nil, fmt.Errorf("empty resource name")
-	}
 
 	_, err := client.GetRelease(
 		context.Background(),
@@ -323,23 +345,18 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 		return nil, fmt.Errorf("nil resource")
 	}
 
+	resourceName := resource.Name
+
 	appConfig, err := d.getApplicationConfig(resource)
 
 	if err != nil {
 		return nil, err
 	}
 
-	method := appConfig.Build.Method
-
-	if method != "pack" && method != "docker" && method != "registry" {
-		return nil, fmt.Errorf("for resource %s, config.build.method should either be \"docker\", \"pack\" or \"registry\"",
-			resource.Name)
-	}
-
 	fullPath, err := filepath.Abs(appConfig.Build.Context)
 
 	if err != nil {
-		return nil, fmt.Errorf("for resource %s, error getting absolute path for config.build.context: %w", resource.Name,
+		return nil, fmt.Errorf("for resource %s, error getting absolute path for config.build.context: %w", resourceName,
 			err)
 	}
 
@@ -347,17 +364,17 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 
 	if tag == "" {
 		color.New(color.FgYellow).Printf("for resource %s, since PORTER_TAG is not set, the Docker image tag will default to"+
-			" the git repo SHA", resource.Name)
+			" the git repo SHA", resourceName)
 
 		commit, err := git.LastCommit()
 
 		if err != nil {
-			return nil, fmt.Errorf("for resource %s, error getting last git commit: %w", resource.Name, err)
+			return nil, fmt.Errorf("for resource %s, error getting last git commit: %w", resourceName, err)
 		}
 
 		tag = commit.Sha[:7]
 
-		color.New(color.FgYellow).Printf("for resource %s, using tag %s\n", resource.Name, tag)
+		color.New(color.FgYellow).Printf("for resource %s, using tag %s\n", resourceName, tag)
 	}
 
 	// if the method is registry and a tag is defined, we use the provided tag
@@ -380,7 +397,7 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 		LocalPath:       fullPath,
 		LocalDockerfile: appConfig.Build.Dockerfile,
 		OverrideTag:     tag,
-		Method:          deploy.DeployBuildType(method),
+		Method:          deploy.DeployBuildType(appConfig.Build.Method),
 		EnvGroups:       appConfig.EnvGroups,
 		UseCache:        appConfig.Build.UseCache,
 	}
@@ -398,16 +415,16 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 		resource, err = d.createApplication(resource, client, sharedOpts, appConfig)
 
 		if err != nil {
-			return nil, fmt.Errorf("error creating app from resource %s: %w", resource.Name, err)
+			return nil, fmt.Errorf("error creating app from resource %s: %w", resourceName, err)
 		}
 	} else if !appConfig.OnlyCreate {
 		resource, err = d.updateApplication(resource, client, sharedOpts, appConfig)
 
 		if err != nil {
-			return nil, fmt.Errorf("error updating application from resource %s: %w", resource.Name, err)
+			return nil, fmt.Errorf("error updating application from resource %s: %w", resourceName, err)
 		}
 	} else {
-		color.New(color.FgYellow).Printf("Skipping creation for resource %s as onlyCreate is set to true\n", resource.Name)
+		color.New(color.FgYellow).Printf("Skipping creation for resource %s as onlyCreate is set to true\n", resourceName)
 	}
 
 	if err = d.assignOutput(resource, client); err != nil {
@@ -415,13 +432,13 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 	}
 
 	if d.source.Name == "job" && appConfig.WaitForJob && (shouldCreate || !appConfig.OnlyCreate) {
-		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resource.Name)
+		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resourceName)
 
 		err = wait.WaitForJob(client, &wait.WaitOpts{
 			ProjectID: d.target.Project,
 			ClusterID: d.target.Cluster,
 			Namespace: d.target.Namespace,
-			Name:      resource.Name,
+			Name:      resourceName,
 		})
 
 		if err != nil && appConfig.OnlyCreate {
@@ -430,22 +447,22 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 				d.target.Project,
 				d.target.Cluster,
 				d.target.Namespace,
-				resource.Name,
+				resourceName,
 			)
 
 			if deleteJobErr != nil {
 				return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
-					resource.Name, deleteJobErr)
+					resourceName, deleteJobErr)
 			}
 		} else if err != nil {
-			return nil, fmt.Errorf("error waiting for job %s: %w", resource.Name, err)
+			return nil, fmt.Errorf("error waiting for job %s: %w", resourceName, err)
 		}
 	}
 
 	return resource, err
 }
 
-func (d *DeployDriver) createApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
+func (d *DeployDriver) createApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*models.Resource, error) {
 	// create new release
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", d.source.Name, resource.Name)
 
@@ -531,7 +548,7 @@ func (d *DeployDriver) createApplication(resource *models.Resource, client *api.
 	return resource, handleSubdomainCreate(subdomain, err)
 }
 
-func (d *DeployDriver) updateApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
+func (d *DeployDriver) updateApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*models.Resource, error) {
 	color.New(color.FgGreen).Println("Updating existing release:", resource.Name)
 
 	if len(appConf.Build.Env) > 0 {
@@ -619,7 +636,7 @@ func (d *DeployDriver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func (d *DeployDriver) getApplicationConfig(resource *models.Resource) (*ApplicationConfig, error) {
+func (d *DeployDriver) getApplicationConfig(resource *models.Resource) (*previewInt.ApplicationConfig, error) {
 	populatedConf, err := drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
 		LookupTable:  *d.lookupTable,
@@ -630,7 +647,7 @@ func (d *DeployDriver) getApplicationConfig(resource *models.Resource) (*Applica
 		return nil, err
 	}
 
-	appConf := &ApplicationConfig{}
+	appConf := &previewInt.ApplicationConfig{}
 
 	err = mapstructure.Decode(populatedConf, appConf)
 
@@ -745,7 +762,9 @@ func (t *DeploymentHook) PreApply() error {
 	envs := *envList
 
 	for _, env := range envs {
-		if env.GitRepoOwner == t.repoOwner && env.GitRepoName == t.repoName && env.GitInstallationID == t.gitInstallationID {
+		if strings.EqualFold(env.GitRepoOwner, t.repoOwner) &&
+			strings.EqualFold(env.GitRepoName, t.repoName) &&
+			env.GitInstallationID == t.gitInstallationID {
 			t.envID = env.ID
 			break
 		}
@@ -991,7 +1010,7 @@ func (t *CloneEnvGroupHook) PreApply() error {
 			continue
 		}
 
-		appConf := &ApplicationConfig{}
+		appConf := &previewInt.ApplicationConfig{}
 
 		err := mapstructure.Decode(res.Config, &appConf)
 		if err != nil {

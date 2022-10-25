@@ -15,10 +15,12 @@ import Helper from "components/form-components/Helper";
 import AWSFormSection from "./AWSFormSection";
 import GCPFormSection from "./GCPFormSection";
 import DOFormSection from "./DOFormSection";
+import AzureFormSection from "./AzureFormSection";
 import SaveButton from "components/SaveButton";
 import ExistingClusterSection from "./ExistingClusterSection";
 import { useHistory, useLocation } from "react-router";
 import { pushFiltered } from "shared/routing";
+import azure from "assets/azure.png";
 
 type Props = {
   isInNewProject?: boolean;
@@ -163,6 +165,21 @@ const ProvisionerSettings: React.FC<Props> = ({
       );
     }
 
+    if (selectedProvider === "azure") {
+      return (
+        <AzureFormSection
+          handleError={handleError}
+          projectName={projectName}
+          infras={infras}
+          highlightCosts={highlightCosts}
+          setSelectedProvisioner={(x: string | null) => {
+            handleSelectProvider(x);
+          }}
+          trackOnSave={() => trackOnSave(selectedProvider)}
+        />
+      );
+    }
+
     if (selectedProvider === "do") {
       return (
         <DOFormSection
@@ -267,10 +284,28 @@ const ProvisionerSettings: React.FC<Props> = ({
                   <InfoTooltip text={""} />
                   */}
                 </CostSection>
-                <BlockDescription>Hosted in your own cloud.</BlockDescription>
+                <BlockDescription>Hosted in your own cloud</BlockDescription>
               </Block>
             );
           })}
+          {
+            window.location.href.includes("dashboard.staging.getporter.dev") && (
+              <Block
+                key={3}
+                disabled={isUsageExceeded}
+                onClick={() => {
+                  if (!isUsageExceeded) {
+                    handleSelectProvider("azure");
+                    setHighlightCosts(false);
+                  }
+                }}
+              >
+                <Icon src={azure} />
+                <BlockTitle>Azure</BlockTitle>
+                <BlockDescription>Hosted in your own cloud</BlockDescription>
+              </Block>
+            )
+          }
         </BlockList>
       ) : (
         <>{renderSelectedProvider()}</>
@@ -352,7 +387,6 @@ const BlockTitle = styled.div`
 const Block = styled.div<{ disabled?: boolean }>`
   align-items: center;
   user-select: none;
-  border-radius: 5px;
   display: flex;
   font-size: 13px;
   overflow: hidden;
@@ -362,15 +396,16 @@ const Block = styled.div<{ disabled?: boolean }>`
   align-items: center;
   justify-content: space-between;
   height: 170px;
+  filter: ${({ disabled }) => (disabled ? "grayscale(1)" : "")};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   color: #ffffff;
   position: relative;
-  background: #26282f;
-  box-shadow: 0 3px 5px 0px #00000022;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
   :hover {
-    background: ${(props) => (props.disabled ? "" : "#ffffff11")};
+    border: ${(props) => (props.disabled ? "" : "1px solid #7a7b80")};
   }
-  filter: ${({ disabled }) => (disabled ? "grayscale(1)" : "")};
 
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {

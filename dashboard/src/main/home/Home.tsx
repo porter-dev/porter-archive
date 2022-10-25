@@ -14,7 +14,7 @@ import ClusterDashboard from "./cluster-dashboard/ClusterDashboard";
 import Dashboard from "./dashboard/Dashboard";
 import WelcomeForm from "./WelcomeForm";
 import Integrations from "./integrations/Integrations";
-import Templates from "./launch/Launch";
+import LaunchWrapper from "./launch/LaunchWrapper";
 
 import Navbar from "./navbar/Navbar";
 import ProjectSettings from "./project-settings/ProjectSettings";
@@ -400,7 +400,7 @@ class Home extends Component<PropsType, StateType> {
               Join Our Discord
             </DiscordButton>
             {/* This should only be shown on the first render of the app */}
-            {this.state.showWelcomeForm &&
+            {/* this.state.showWelcomeForm &&
               localStorage.getItem("welcomed") != "true" &&
               projects?.length === 0 && (
                 <>
@@ -412,7 +412,7 @@ class Home extends Component<PropsType, StateType> {
                     currentView={this.props.currentRoute} // For form feedback
                   />
                 </>
-              )}
+              ) */}
           </>
         )}
 
@@ -503,7 +503,7 @@ class Home extends Component<PropsType, StateType> {
               path={"/project-settings"}
               render={() => <GuardedProjectSettings />}
             />
-            <Route path={"*"} render={() => <Templates />} />
+            <Route path={"*"} render={() => <LaunchWrapper />} />
           </Switch>
         </ViewWrapper>
 
@@ -529,7 +529,7 @@ export default withRouter(withAuth(Home));
 const ViewWrapper = styled.div`
   height: 100%;
   width: 100vw;
-  padding-top: 10vh;
+  padding: 45px;
   overflow-y: auto;
   display: flex;
   flex: 1;
@@ -539,7 +539,7 @@ const ViewWrapper = styled.div`
 `;
 
 const DashboardWrapper = styled.div`
-  width: calc(85%);
+  width: 100%;
   min-width: 300px;
   height: fit-content;
 `;

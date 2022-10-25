@@ -27,6 +27,8 @@ type PropsType = RouteComponentProps & {
   imageTag: string;
   setImageTag: (x: string) => void;
 
+  hasSource?: string;
+
   actionConfig: ActionConfigType;
   setActionConfig: (
     x: ActionConfigType | ((prevState: ActionConfigType) => ActionConfigType)
@@ -55,32 +57,36 @@ const defaultActionConfig: ActionConfigType = {
   image_repo_uri: "",
   git_branch: "",
   git_repo_id: 0,
+  kind: "github",
 };
 
 class SourcePage extends Component<PropsType, StateType> {
   renderSourceSelector = () => {
     let { capabilities, setCurrentModal } = this.context;
-    let { sourceType, setSourceType } = this.props;
+    let { sourceType, setSourceType, hasSource } = this.props;
 
     if (sourceType === "") {
       return (
         <BlockList>
-          {capabilities.github || capabilities.gitlab ? (
-            <Block onClick={() => setSourceType("repo")}>
-              <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
-              <BlockTitle>Git Repository</BlockTitle>
+          {(capabilities.github || capabilities.gitlab) &&
+            hasSource !== "registry-only" && (
+              <Block onClick={() => setSourceType("repo")}>
+                <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
+                <BlockTitle>Git repository</BlockTitle>
+                <BlockDescription>
+                  Deploy using source from a Git repo.
+                </BlockDescription>
+              </Block>
+            )}
+          {hasSource !== "repo-only" && (
+            <Block onClick={() => setSourceType("registry")}>
+              <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
+              <BlockTitle>Docker registry</BlockTitle>
               <BlockDescription>
-                Deploy using source from a Git repo.
+                Deploy a container from an image registry.
               </BlockDescription>
             </Block>
-          ) : null}
-          <Block onClick={() => setSourceType("registry")}>
-            <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
-            <BlockTitle>Docker Registry</BlockTitle>
-            <BlockDescription>
-              Deploy a container from an image registry.
-            </BlockDescription>
-          </Block>
+          )}
         </BlockList>
       );
     }
@@ -397,7 +403,6 @@ const BlockTitle = styled.div`
 const Block = styled.div<{ disabled?: boolean }>`
   align-items: center;
   user-select: none;
-  border-radius: 5px;
   display: flex;
   font-size: 13px;
   overflow: hidden;
@@ -410,10 +415,14 @@ const Block = styled.div<{ disabled?: boolean }>`
   cursor: ${(props) => (props.disabled ? "" : "pointer")};
   color: #ffffff;
   position: relative;
-  background: #26282f;
-  box-shadow: 0 3px 5px 0px #00000022;
+
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
   :hover {
-    background: ${(props) => (props.disabled ? "" : "#ffffff11")};
+  }
+  :hover {
+    border: ${(props) => (props.disabled ? "" : "1px solid #7a7b80")};
   }
 
   animation: fadeIn 0.3s 0s;

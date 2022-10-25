@@ -17,7 +17,10 @@ type applyAppResourceOpts struct {
 	helmAgent  *helm.Agent
 	request    *types.CreateStackAppResourceRequest
 	registries []*models.Registry
-	stack      *models.Stack
+
+	// stack related info
+	stackName     string
+	stackRevision uint
 }
 
 func applyAppResource(opts *applyAppResourceOpts) (*release.Release, error) {
@@ -47,11 +50,11 @@ func applyAppResource(opts *applyAppResourceOpts) (*release.Release, error) {
 
 	conf.Values["stack"] = map[string]interface{}{
 		"enabled":  true,
-		"name":     opts.stack.Name,
-		"revision": opts.stack.Revisions[0].RevisionNumber,
+		"name":     opts.stackName,
+		"revision": opts.stackRevision,
 	}
 
-	return opts.helmAgent.InstallChart(conf, opts.config.DOConf)
+	return opts.helmAgent.InstallChart(conf, opts.config.DOConf, opts.config.ServerConf.DisablePullSecretsInjection)
 }
 
 type rollbackAppResourceOpts struct {
@@ -72,6 +75,10 @@ type updateAppResourceTagOpts struct {
 	namespace  string
 	cluster    *models.Cluster
 	registries []*models.Registry
+
+	// stack related info
+	stackName     string
+	stackRevision uint
 }
 
 func updateAppResourceTag(opts *updateAppResourceTagOpts) error {
@@ -93,9 +100,14 @@ func updateAppResourceTag(opts *updateAppResourceTagOpts) error {
 		Repo:       opts.config.Repo,
 		Registries: opts.registries,
 		Values:     rel.Config,
+
+		// stack related info
+		StackName:     opts.stackName,
+		StackRevision: opts.stackRevision,
 	}
 
-	_, err = opts.helmAgent.UpgradeReleaseByValues(conf, opts.config.DOConf)
+	_, err = opts.helmAgent.UpgradeReleaseByValues(conf, opts.config.DOConf,
+		opts.config.ServerConf.DisablePullSecretsInjection)
 
 	return err
 }

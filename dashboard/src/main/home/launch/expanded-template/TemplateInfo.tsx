@@ -216,8 +216,8 @@ const Banner = styled.div`
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
+  height: 1px;
+  background: #494b4f;
   margin: 30px 0px 13px;
 `;
 
@@ -283,7 +283,6 @@ const Button = styled.div`
   border-radius: 3px;
   cursor: ${(props: { isDisabled: boolean }) =>
     !props.isDisabled ? "pointer" : "default"};
-  box-shadow: 0 5px 8px 0px #00000010;
   display: flex;
   flex-direction: row;
   align-items: center;

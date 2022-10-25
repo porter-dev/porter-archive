@@ -42,7 +42,7 @@ func (w *TemplateWriter) Create(
 		Values:    vals,
 	}
 
-	_, err := w.Agent.InstallChart(conf, nil)
+	_, err := w.Agent.InstallChart(conf, nil, false)
 
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (w *TemplateWriter) Update(
 		Values: vals,
 	}
 
-	_, err := w.Agent.UpgradeReleaseByValues(conf, nil)
+	_, err := w.Agent.UpgradeReleaseByValues(conf, nil, false)
 
 	if err != nil {
 		return nil, err

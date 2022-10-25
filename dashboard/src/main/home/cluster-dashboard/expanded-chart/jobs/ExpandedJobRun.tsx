@@ -2,10 +2,10 @@ import React, { useContext, useEffect, useState } from "react";
 import { get, isEmpty } from "lodash";
 import styled from "styled-components";
 
-import backArrow from "assets/back_arrow.png";
+import leftArrow from "assets/left-arrow.svg";
 import KeyValueArray from "components/form-components/KeyValueArray";
 import Loading from "components/Loading";
-import TabRegion from "components/TabRegion";
+import TabRegion, { TabOption } from "components/TabRegion";
 import TitleSection from "components/TitleSection";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -14,6 +14,8 @@ import DeploymentType from "../DeploymentType";
 import JobMetricsSection from "../metrics/JobMetricsSection";
 import Logs from "../status/Logs";
 import { useRouting } from "shared/routing";
+import LogsSection from "../logs-section/LogsSection";
+import EventsTab from "../events/EventsTab";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -48,46 +50,19 @@ const getLatestPod = (pods: any[]) => {
     .shift();
 };
 
-const renderStatus = (job: any, pods: any[], time: string) => {
+const renderStatus = (job: any, time: string) => {
   if (job.status?.succeeded >= 1) {
     return <Status color="#38a88a">Succeeded {time}</Status>;
   }
 
   if (job.status?.failed >= 1) {
-    const appPod = getLatestPod(pods);
-
-    if (appPod) {
-      const appContainerStatus = appPod?.status?.containerStatuses?.find(
-        (container: any) =>
-          container?.state?.terminated?.reason !== "Completed" &&
-          !container?.state?.running
-      );
-
-      if (appContainerStatus) {
-        const reason = appContainerStatus.state.terminated.reason;
-        const exitCode = appContainerStatus.state.terminated.exitCode;
-        const finishTime = appContainerStatus.state.terminated.finishedAt;
-
-        return (
-          <Status color="#cc3d42">
-            Failed at {time ? time : readableDate(finishTime)} - Reason:{" "}
-            {reason} - Exit Code: {exitCode}
-          </Status>
-        );
-      }
-    }
-
-    return (
-      <Status color="#cc3d42">
-        Failed {time}
-        {job.status.conditions.length > 0 &&
-          `: ${job.status.conditions[0].reason}`}
-      </Status>
-    );
+    return <Status color="#cc3d42">Failed</Status>;
   }
 
   return <Status color="#ffffff11">Running</Status>;
 };
+
+type ExpandedJobRunTabs = "events" | "logs" | "metrics" | "config" | string;
 
 const ExpandedJobRun = ({
   currentChart,
@@ -101,12 +76,13 @@ const ExpandedJobRun = ({
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
-  const [currentTab, setCurrentTab] = useState<
-    "logs" | "metrics" | "config" | string
-  >("logs");
+  const [currentTab, setCurrentTab] = useState<ExpandedJobRunTabs>(
+    currentCluster.agent_integration_enabled ? "events" : "logs"
+  );
   const [pods, setPods] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { pushQueryParams } = useRouting();
+  const [useDeprecatedLogs, setUseDeprecatedLogs] = useState(false);
 
   let chart = currentChart;
   let run = jobRun;
@@ -181,7 +157,7 @@ const ExpandedJobRun = ({
             <KeyValueArray
               envLoader={true}
               values={envObject}
-              label="Environment Variables:"
+              label="Environment variables:"
               disabled={true}
             />
             <DarkMatter />
@@ -191,25 +167,96 @@ const ExpandedJobRun = ({
     );
   };
 
+  const renderEventsSection = () => {
+    return (
+      <EventsTab
+        currentChart={currentChart}
+        overridingJobName={jobRun.metadata?.name}
+        setLogData={() => setCurrentTab("logs")}
+      />
+    );
+  };
+
+  const renderLogsSection = () => {
+    if (useDeprecatedLogs || !currentCluster.agent_integration_enabled) {
+      return (
+        <JobLogsWrapper>
+          <Logs
+            selectedPod={pods[0]}
+            podError={!pods[0] ? "Pod no longer exists." : ""}
+            rawText={true}
+          />
+        </JobLogsWrapper>
+      );
+    }
+
+    return (
+      <JobLogsWrapper>
+        <DeprecatedWarning>
+          Not seeing your logs? Switch back to{" "}
+          <DeprecatedSelect
+            onClick={() => {
+              setUseDeprecatedLogs(true);
+            }}
+          >
+            {" "}
+            deprecated logging.
+          </DeprecatedSelect>
+        </DeprecatedWarning>
+        <LogsSection
+          isFullscreen={false}
+          setIsFullscreen={() => {}}
+          overridingPodName={pods[0]?.metadata?.name || jobRun.metadata?.name}
+          currentChart={currentChart}
+        />
+      </JobLogsWrapper>
+    );
+  };
+
   if (isLoading) {
     return <Loading />;
   }
 
+  let options: TabOption[] = [];
+
+  if (currentCluster.agent_integration_enabled) {
+    options.push({
+      label: "Events",
+      value: "events",
+    });
+  }
+
+  options.push(
+    {
+      label: "Logs",
+      value: "logs",
+    },
+    {
+      label: "Metrics",
+      value: "metrics",
+    },
+    {
+      label: "Config",
+      value: "config",
+    }
+  );
+
   return (
     <StyledExpandedChart>
+      <BreadcrumbRow>
+        <Breadcrumb onClick={onClose}>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
       <HeaderWrapper>
-        <BackButton onClick={() => onClose()}>
-          <BackButtonImg src={backArrow} />
-        </BackButton>
         <TitleSection icon={currentChart.chart.metadata.icon} iconWidth="33px">
           {chart.name} <Gray>at {readableDate(run.status.startTime)}</Gray>
         </TitleSection>
-
         <InfoWrapper>
           <LastDeployed>
             {renderStatus(
               run,
-              pods,
               run.status.completionTime
                 ? readableDate(run.status.completionTime)
                 : ""
@@ -224,31 +271,13 @@ const ExpandedJobRun = ({
       <BodyWrapper>
         <TabRegion
           currentTab={currentTab}
-          setCurrentTab={(x: string) => setCurrentTab(x)}
-          options={[
-            {
-              label: "Logs",
-              value: "logs",
-            },
-            {
-              label: "Metrics",
-              value: "metrics",
-            },
-            {
-              label: "Config",
-              value: "config",
-            },
-          ]}
+          setCurrentTab={(newTab: string) => {
+            setCurrentTab(newTab);
+          }}
+          options={options}
         >
-          {currentTab === "logs" && (
-            <JobLogsWrapper>
-              <Logs
-                selectedPod={pods[0]}
-                podError={!pods[0] ? "Pod no longer exists." : ""}
-                rawText={true}
-              />
-            </JobLogsWrapper>
-          )}
+          {currentTab === "events" && renderEventsSection()}
+          {currentTab === "logs" && renderLogsSection()}
           {currentTab === "config" && <>{renderConfigSection(run)}</>}
           {currentTab === "metrics" && (
             <JobMetricsSection jobChart={currentChart} jobRun={run} />
@@ -260,6 +289,39 @@ const ExpandedJobRun = ({
 };
 
 export default ExpandedJobRun;
+
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const Breadcrumb = styled.div`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+  }
+`;
+
+const Wrap = styled.div`
+  z-index: 999;
+`;
 
 const Row = styled.div`
   margin-top: 20px;
@@ -287,10 +349,9 @@ const ConfigSection = styled.div`
 
 const JobLogsWrapper = styled.div`
   min-height: 450px;
-  height: 55vh;
+  height: 65vh;
   width: 100%;
   border-radius: 8px;
-  background-color: black;
   overflow-y: auto;
 `;
 
@@ -431,4 +492,17 @@ const StyledExpandedChart = styled.div`
       opacity: 1;
     }
   }
+`;
+
+const DeprecatedWarning = styled.div`
+  font-size: 12px;
+  color: #ccc;
+  text-align: right;
+  width: 100%;
+  margin-bottom: 20px;
+`;
+
+const DeprecatedSelect = styled.span`
+  cursor: pointer;
+  color: #949effff;
 `;

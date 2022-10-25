@@ -19,8 +19,8 @@ import TemplateList from "./TemplateList";
 import { capitalize } from "lodash";
 
 const initialTabOptions = [
-  { label: "New Application", value: "porter" },
-  { label: "Community Add-ons", value: "community" },
+  { label: "New application", value: "porter" },
+  { label: "Community add-ons", value: "community" },
 ];
 
 type TabOption = {
@@ -28,7 +28,7 @@ type TabOption = {
   value: string;
 };
 
-const HIDDEN_CHARTS = ["porter-agent"];
+const HIDDEN_CHARTS = ["porter-agent", "loki"];
 
 type PropsType = RouteComponentProps & {};
 
@@ -59,11 +59,15 @@ class Templates extends Component<PropsType, StateType> {
   };
 
   async componentDidMount() {
+    let default_addon_helm_repo_url = this.context?.capabilities
+      ?.default_addon_helm_repo_url;
+    let default_app_helm_repo_url = this.context?.capabilities
+      ?.default_app_helm_repo_url;
     try {
       const res = await api.getTemplates(
         "<token>",
         {
-          repo_url: process.env.ADDON_CHART_REPO_URL,
+          repo_url: default_addon_helm_repo_url,
         },
         {}
       );
@@ -90,7 +94,7 @@ class Templates extends Component<PropsType, StateType> {
       const res = await api.getTemplates(
         "<token>",
         {
-          repo_url: process.env.APPLICATION_CHART_REPO_URL,
+          repo_url: default_app_helm_repo_url,
         },
         {}
       );
@@ -117,8 +121,6 @@ class Templates extends Component<PropsType, StateType> {
         currentTemplate = sortedVersionData.find(
           (v: any) => v.name === template_name
         );
-
-        // console.log(currentTemplate);
         if (currentTemplate.versions.find((v: any) => v === version)) {
           currentTemplate.currentVersion = version;
         }
@@ -426,7 +428,7 @@ const Polymer = styled.div`
 `;
 
 const TemplatesWrapper = styled.div`
-  width: calc(85%);
+  width: 100%;
   overflow: visible;
   min-width: 300px;
 `;

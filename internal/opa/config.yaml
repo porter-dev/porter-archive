@@ -97,15 +97,13 @@ porter_agent_pod:
   policies:
   - path: "./policies/pod/running.rego"
     name: "pod.running"
-porter_agent_redis_pod:
+porter_agent_loki_pod:
   kind: "pod"
   match:
     namespace: porter-agent-system
     labels:
-      app.kubernetes.io/component: "master"
-      app.kubernetes.io/instance: "porter-agent"
-      app.kubernetes.io/managed-by: "Helm"
-      app.kubernetes.io/name: "redis"
+      app: "loki"
+      name: "porter-agent-loki"
   policies:
   - path: "./policies/pod/running.rego"
     name: "pod.running"

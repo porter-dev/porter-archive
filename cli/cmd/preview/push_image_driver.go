@@ -11,20 +11,14 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/docker"
+	"github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
 )
 
-type PushDriverConfig struct {
-	Push struct {
-		UsePackCache bool `mapstructure:"use_pack_cache"`
-		Image        string
-	}
-}
-
 type PushDriver struct {
-	target      *Target
-	config      *PushDriverConfig
+	target      *preview.Target
+	config      *preview.PushDriverConfig
 	lookupTable *map[string]drivers.Driver
 	output      map[string]interface{}
 }
@@ -38,10 +32,6 @@ func NewPushDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (d
 	target, err := GetTarget(resource.Name, resource.Target)
 	if err != nil {
 		return nil, err
-	}
-
-	if target.AppName == "" {
-		return nil, fmt.Errorf("target app_name is missing")
 	}
 
 	driver.target = target
@@ -157,7 +147,7 @@ func (d *PushDriver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func (d *PushDriver) getConfig(resource *models.Resource) (*PushDriverConfig, error) {
+func (d *PushDriver) getConfig(resource *models.Resource) (*preview.PushDriverConfig, error) {
 	populatedConf, err := drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
 		LookupTable:  *d.lookupTable,
@@ -168,7 +158,7 @@ func (d *PushDriver) getConfig(resource *models.Resource) (*PushDriverConfig, er
 		return nil, err
 	}
 
-	config := &PushDriverConfig{}
+	config := &preview.PushDriverConfig{}
 
 	err = mapstructure.Decode(populatedConf, config)
 

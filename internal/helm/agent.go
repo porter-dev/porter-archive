@@ -166,10 +166,13 @@ type UpgradeReleaseConfig struct {
 	Cluster    *models.Cluster
 	Repo       repository.Repository
 	Registries []*models.Registry
-	Stack      *models.Stack
 
 	// Optional, if chart should be overriden
 	Chart *chart.Chart
+
+	// Optional, if chart is part of a Porter Stack
+	StackName     string
+	StackRevision uint
 }
 
 // UpgradeRelease upgrades a specific release with new values.yaml
@@ -177,6 +180,7 @@ func (a *Agent) UpgradeRelease(
 	conf *UpgradeReleaseConfig,
 	values string,
 	doAuth *oauth2.Config,
+	disablePullSecretsInjection bool,
 ) (*release.Release, error) {
 	valuesYaml, err := chartutil.ReadValues([]byte(values))
 
@@ -186,13 +190,14 @@ func (a *Agent) UpgradeRelease(
 
 	conf.Values = valuesYaml
 
-	return a.UpgradeReleaseByValues(conf, doAuth)
+	return a.UpgradeReleaseByValues(conf, doAuth, disablePullSecretsInjection)
 }
 
 // UpgradeReleaseByValues upgrades a release by unmarshaled yaml values
 func (a *Agent) UpgradeReleaseByValues(
 	conf *UpgradeReleaseConfig,
 	doAuth *oauth2.Config,
+	disablePullSecretsInjection bool,
 ) (*release.Release, error) {
 	// grab the latest release
 	rel, err := a.GetRelease(conf.Name, 0, true)
@@ -217,17 +222,18 @@ func (a *Agent) UpgradeReleaseByValues(
 		rel.Namespace,
 		conf.Registries,
 		doAuth,
+		disablePullSecretsInjection,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if conf.Stack != nil {
+	if conf.StackName != "" && conf.StackRevision > 0 {
 		conf.Values["stack"] = map[string]interface{}{
 			"enabled":  true,
-			"name":     conf.Stack.Name,
-			"revision": conf.Stack.Revisions[0].RevisionNumber,
+			"name":     conf.StackName,
+			"revision": conf.StackRevision,
 		}
 	}
 
@@ -380,6 +386,7 @@ func (a *Agent) InstallChartFromValuesBytes(
 	conf *InstallChartConfig,
 	values []byte,
 	doAuth *oauth2.Config,
+	disablePullSecretsInjection bool,
 ) (*release.Release, error) {
 	valuesYaml, err := chartutil.ReadValues(values)
 
@@ -389,13 +396,14 @@ func (a *Agent) InstallChartFromValuesBytes(
 
 	conf.Values = valuesYaml
 
-	return a.InstallChart(conf, doAuth)
+	return a.InstallChart(conf, doAuth, disablePullSecretsInjection)
 }
 
 // InstallChart installs a new chart
 func (a *Agent) InstallChart(
 	conf *InstallChartConfig,
 	doAuth *oauth2.Config,
+	disablePullSecretsInjection bool,
 ) (*release.Release, error) {
 	cmd := action.NewInstall(a.ActionConfig)
 
@@ -420,6 +428,7 @@ func (a *Agent) InstallChart(
 		conf.Namespace,
 		conf.Registries,
 		doAuth,
+		disablePullSecretsInjection,
 	)
 
 	if err != nil {

@@ -363,11 +363,11 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
 
   const renderCurrentPage = () => {
     let { form, currentTab } = props;
-
     if (currentPage === "source" && form?.hasSource) {
       return (
         <SourcePage
           sourceType={sourceType}
+          hasSource={form.hasSource}
           setSourceType={setSourceType}
           templateName={templateName}
           setPage={setCurrentPage}
@@ -498,8 +498,8 @@ const Polymer = styled.div`
 `;
 
 const StyledLaunchFlow = styled.div`
-  width: calc(90% - 130px);
+  width: calc(100% - 150px);
   min-width: 300px;
   margin-top: ${(props: { disableMarginTop: boolean }) =>
-    props.disableMarginTop ? "inherit" : "calc(40vh - 310px)"};
+    props.disableMarginTop ? "inherit" : "calc(40vh - 270px)"};
 `;

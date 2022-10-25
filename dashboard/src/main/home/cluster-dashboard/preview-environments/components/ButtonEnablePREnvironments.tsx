@@ -106,7 +106,7 @@ const ButtonEnablePREnvironments = ({ setIsReady }: Props) => {
     <>
       <Container>
         <Button {...getButtonProps()}>
-          <i className="material-icons">add</i> Add Repository
+          <i className="material-icons">add</i> Add repository
         </Button>
       </Container>
     </>
@@ -123,9 +123,9 @@ const Button = styled(DynamicLink)`
   font-size: 13px;
   cursor: pointer;
   font-family: "Work Sans", sans-serif;
-  border-radius: 20px;
+  border-radius: 5px;
   color: white;
-  height: 35px;
+  height: 30px;
   padding: 0px 8px;
   padding-bottom: 1px;
   margin-right: 10px;
@@ -134,7 +134,6 @@ const Button = styled(DynamicLink)`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  box-shadow: 0 5px 8px 0px #00000010;
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 

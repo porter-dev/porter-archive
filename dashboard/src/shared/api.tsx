@@ -76,6 +76,7 @@ const createAWSIntegration = baseApi<
     aws_cluster_id?: string;
     aws_access_key_id: string;
     aws_secret_access_key: string;
+    aws_assume_role_arn?: string;
   },
   { id: number }
 >("POST", (pathParams) => {
@@ -96,10 +97,11 @@ const overwriteAWSIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/integrations/aws/overwrite`;
 });
 
-const updateClusterName = baseApi<
+const updateCluster = baseApi<
   {
-    name: string;
+    name?: string;
     aws_cluster_id?: string;
+    agent_integration_enabled?: boolean;
   },
   {
     project_id: number;
@@ -1304,6 +1306,7 @@ const upgradeChartValues = baseApi<
   {
     values: string;
     version?: string;
+    latest_revision?: number;
   },
   {
     id: number;
@@ -1381,6 +1384,22 @@ const createEnvGroup = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup/create`;
+});
+
+const cloneEnvGroup = baseApi<
+  {
+    name: string;
+    namespace: string;
+    clone_name: string;
+    version: number;
+  },
+  {
+    id: number;
+    namespace: string;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup/clone`;
 });
 
 const updateEnvGroup = baseApi<
@@ -1770,61 +1789,6 @@ const getPreviousLogsForContainer = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/pod/${name}/previous_logs`
 );
 
-const getIncidents = baseApi<
-  {},
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->(
-  "GET",
-  ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
-);
-
-const getIncidentsByReleaseName = baseApi<
-  {
-    namespace: string;
-    release_name: string;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->(
-  "GET",
-  ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
-);
-
-const getIncidentById = baseApi<
-  {
-    incident_id: string;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->(
-  "GET",
-  ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
-);
-
-const getIncidentLogsByLogId = baseApi<
-  {
-    log_id: string;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->(
-  "GET",
-  ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/incidents/logs`
-);
-
 const upgradePorterAgent = baseApi<
   {},
   { project_id: number; cluster_id: number }
@@ -1986,6 +1950,122 @@ const getGitlabFolderContent = baseApi<
   "GET",
   ({ project_id, integration_id, repo_owner, repo_name, branch }) =>
     `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/${branch}/contents`
+);
+
+const getLogPodValues = baseApi<
+  {
+    namespace?: string;
+    revision?: string;
+    match_prefix?: string;
+    start_range?: string;
+    end_range?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/logs/pod_values`
+);
+
+const getLogs = baseApi<
+  {
+    limit?: number;
+    start_range?: string;
+    end_range?: string;
+    revision?: string;
+    pod_selector: string;
+    namespace: string;
+    search_param?: string;
+    direction?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/logs`
+);
+
+const listPorterEvents = baseApi<
+  {
+    release_name?: number;
+    release_namespace?: string;
+    type?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/events`
+);
+
+const listPorterJobEvents = baseApi<
+  {
+    release_name?: number;
+    release_namespace?: string;
+    type?: string;
+    job_name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/events/job`
+);
+
+const listIncidents = baseApi<
+  {
+    release_name?: number;
+    release_namespace?: string;
+    status?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
+);
+
+const getIncident = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    incident_id: string;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id, incident_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents/${incident_id}`
+);
+
+const getIncidentEvents = baseApi<
+  {
+    incident_id?: string;
+    pod_prefix?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents/events`
 );
 
 // STACKS
@@ -2175,7 +2255,7 @@ export default {
   getGitlabIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
-  updateClusterName,
+  updateCluster,
   createAzureIntegration,
   createGitlabIntegration,
   createEmailVerification,
@@ -2323,6 +2403,7 @@ export default {
   getLogBucketLogs,
   getCanCreateProject,
   createEnvGroup,
+  cloneEnvGroup,
   updateEnvGroup,
   listEnvGroups,
   getEnvGroup,
@@ -2332,10 +2413,6 @@ export default {
   provisionDatabase,
   getDatabases,
   getPreviousLogsForContainer,
-  getIncidents,
-  getIncidentsByReleaseName,
-  getIncidentById,
-  getIncidentLogsByLogId,
   upgradePorterAgent,
   deletePRDeployment,
   updateBuildConfig,
@@ -2349,7 +2426,13 @@ export default {
   getGitlabRepos,
   getGitlabBranches,
   getGitlabFolderContent,
-
+  getLogPodValues,
+  getLogs,
+  listPorterEvents,
+  listPorterJobEvents,
+  listIncidents,
+  getIncident,
+  getIncidentEvents,
   // STACKS
   listStacks,
   getStack,

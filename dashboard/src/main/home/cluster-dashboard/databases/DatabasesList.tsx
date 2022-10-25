@@ -253,12 +253,11 @@ const DatabasesListWrapper = styled.div`
 `;
 
 const StyledTableWrapper = styled.div`
-  background: #26282f;
   padding: 14px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px 0px #00000055;
   position: relative;
-  border: 2px solid #9eb4ff00;
+  border-radius: 8px;
+  background: #26292e;
+  border: 1px solid #494b4f;
   width: 100%;
   height: 100%;
   :not(:last-child) {
@@ -317,7 +316,6 @@ const Button = styled(Link)`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  box-shadow: 0 5px 8px 0px #00000010;
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 
@@ -355,7 +353,6 @@ const ConnectButton = styled.button<{}>`
   border: 0;
   border-radius: 5px;
   background: #5561c0;
-  box-shadow: 0 2px 5px 0 #00000030;
   cursor: pointer;
   user-select: none;
   :focus {

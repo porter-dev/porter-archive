@@ -80,6 +80,7 @@ type CreateAWSRequest struct {
 	AWSClusterID       string `json:"aws_cluster_id"`
 	AWSAccessKeyID     string `json:"aws_access_key_id"`
 	AWSSecretAccessKey string `json:"aws_secret_access_key"`
+	AWSAssumeRoleArn   string `json:"aws_assume_role_arn"`
 }
 
 type CreateAWSResponse struct {

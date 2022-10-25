@@ -3,9 +3,8 @@ import styled from "styled-components";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { ChartType, StorageType } from "shared/types";
+import { ChartType } from "shared/types";
 import Loading from "components/Loading";
-import backArrow from "assets/back_arrow.png";
 
 import Logs from "./Logs";
 import ControllerTab from "./ControllerTab";
@@ -211,11 +210,6 @@ const BackButton = styled.div`
   }
 `;
 
-const BackButtonImg = styled.img`
-  width: 12px;
-  opacity: 0.75;
-`;
-
 const AbsoluteTitle = styled.div`
   position: absolute;
   top: 0px;
@@ -243,7 +237,7 @@ const StyledStatusSection = styled.div`
   overflow: hidden;
   width: 100%;
   min-height: 400px;
-  height: 50vh;
+  height: calc(100vh - 400px);
   font-size: 13px;
   overflow: hidden;
   border-radius: 8px;

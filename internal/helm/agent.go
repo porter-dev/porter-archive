@@ -290,7 +290,7 @@ func (a *Agent) UpgradeReleaseByValues(
 					return nil, fmt.Errorf("another operation (install/upgrade/rollback) is in progress. If this error persists, please wait for 60 seconds to force an upgrade")
 				}
 			}
-		} else if strings.Contains(err.Error(), "current release manifest contains removed kubernetes api(s)") {
+		} else if strings.Contains(err.Error(), "current release manifest contains removed kubernetes api(s)") || strings.Contains(err.Error(), "resource mapping not found for name") {
 			// ref: https://helm.sh/docs/topics/kubernetes_apis/#updating-api-versions-of-a-release-manifest
 			// in this case, we manually update the secret containing the new manifests
 			secretList, err := a.K8sAgent.Clientset.CoreV1().Secrets(rel.Namespace).List(

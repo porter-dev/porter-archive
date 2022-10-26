@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/porter-dev/porter/api/types"
@@ -24,8 +25,15 @@ func NewIncidentNotifier(slackInts ...*integrations.SlackIntegration) *IncidentN
 func (s *IncidentNotifier) NotifyNew(incident *types.Incident, url string) error {
 	res := []*SlackBlock{}
 
+	resourceKind := "application"
+
+	if strings.ToLower(string(incident.InvolvedObjectKind)) == "job" {
+		resourceKind = "job"
+	}
+
 	topSectionMarkdwn := fmt.Sprintf(
-		":warning: Your application %s crashed on Porter. <%s|View the incident.>",
+		":warning: Your %s %s crashed on Porter. <%s|View the incident.>",
+		resourceKind,
 		"`"+incident.ReleaseName+"`",
 		url,
 	)

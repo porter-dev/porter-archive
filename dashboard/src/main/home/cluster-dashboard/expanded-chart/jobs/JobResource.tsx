@@ -12,6 +12,8 @@ import DynamicLink from "components/DynamicLink";
 import { readableDate } from "shared/string_utils";
 import CommandLineIcon from "assets/command-line-icon";
 import ConnectToJobInstructionsModal from "./ConnectToJobInstructionsModal";
+import { getPodStatus } from "../deploy-status-section/util";
+import { isRunning, renderStatus } from "./ExpandedJobRun";
 
 type PropsType = {
   job: any;
@@ -39,6 +41,18 @@ export default class JobResource extends Component<PropsType, StateType> {
     pods: [] as any[],
     showConnectionModal: false,
   };
+
+  componentDidMount() {
+    if (this.props.job?.status.active >= 1) {
+      this.getPods(() => {});
+    }
+  }
+
+  componentDidUpdate(prevProps: PropsType, prevState: StateType) {
+    if (this.state.pods.length == 0 && this.props.job?.status.active >= 1) {
+      this.getPods(() => {});
+    }
+  }
 
   expandJob = (event: MouseEvent) => {
     if (event) {
@@ -244,37 +258,20 @@ export default class JobResource extends Component<PropsType, StateType> {
     return "Running";
   };
 
-  renderStatus = () => {
-    if (this.props.deleting) {
-      return <Status color="#cc3d42">Deleting</Status>;
-    }
-
-    if (this.props.job.status?.succeeded >= 1) {
-      return <Status color="#38a88a">Succeeded</Status>;
-    }
-
-    if (this.props.job.status?.failed >= 1) {
-      return <Status color="#cc3d42">Failed</Status>;
-    }
-
-    return <Status color="#ffffff11">Running</Status>;
-  };
-
   renderStopButton = () => {
     if (this.props.readOnly) {
       return null;
     }
 
-    if (!this.props.job.status?.succeeded && !this.props.job.status?.failed) {
-      // look for a sidecar container
-      if (this.props.job?.spec?.template?.spec?.containers.length == 2) {
-        return (
-          <i className="material-icons" onClick={this.stopJob}>
-            stop
-          </i>
-        );
-      }
+    if (isRunning(this.props.deleting, this.props.job, this.state.pods[0])) {
+      return (
+        <i className="material-icons" onClick={this.stopJob}>
+          stop
+        </i>
+      );
     }
+
+    return null;
   };
 
   getImageTag = () => {
@@ -346,7 +343,11 @@ export default class JobResource extends Component<PropsType, StateType> {
                 <CommandString>{commandString}</CommandString>
               </Flex>
 
-              {this.renderStatus()}
+              {renderStatus(
+                this.props.deleting,
+                this.props.job,
+                this.state.pods[0]
+              )}
               <MaterialIconTray disabled={false}>
                 {this.renderStopButton()}
                 {!this.props.readOnly && (

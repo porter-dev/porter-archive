@@ -16,6 +16,8 @@ import Logs from "../status/Logs";
 import { useRouting } from "shared/routing";
 import LogsSection from "../logs-section/LogsSection";
 import EventsTab from "../events/EventsTab";
+import { getPodStatus } from "../deploy-status-section/util";
+import { capitalize } from "shared/string_utils";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -50,13 +52,68 @@ const getLatestPod = (pods: any[]) => {
     .shift();
 };
 
-const renderStatus = (job: any, time: string) => {
+export const isRunning = (deleting: boolean, job: any, pod: any) => {
+  if (deleting) {
+    return false;
+  }
+
   if (job.status?.succeeded >= 1) {
-    return <Status color="#38a88a">Succeeded {time}</Status>;
+    return false;
+  }
+
+  if (job.status?.conditions) {
+    if (job.status?.conditions[0]?.reason == "DeadlineExceeded") {
+      return false;
+    }
+  }
+
+  if (job.status?.failed >= 1) {
+    return false;
+  }
+
+  if (job.status?.active >= 1) {
+    // determine the status from the pod
+    return pod ? pod.status.startTime : false;
+  }
+
+  return true;
+};
+
+export const renderStatus = (
+  deleting: boolean,
+  job: any,
+  pod: any,
+  time?: string
+) => {
+  if (deleting) {
+    return <Status color="#cc3d42">Deleting</Status>;
+  }
+
+  if (job.status?.succeeded >= 1) {
+    if (time) {
+      return <Status color="#38a88a">Succeeded at {readableDate(time)}</Status>;
+    }
+
+    return <Status color="#38a88a">Succeeded</Status>;
+  }
+
+  if (job.status?.conditions) {
+    if (job.status?.conditions[0]?.reason == "DeadlineExceeded") {
+      return <Status color="#cc3d42">Timed Out</Status>;
+    }
   }
 
   if (job.status?.failed >= 1) {
     return <Status color="#cc3d42">Failed</Status>;
+  }
+
+  if (job.status?.active >= 1) {
+    // determine the status from the pod
+    return pod ? (
+      <Status color="#ffffff11">{capitalize(getPodStatus(pod?.status))}</Status>
+    ) : (
+      <Status color="#ffffff11">Running</Status>
+    );
   }
 
   return <Status color="#ffffff11">Running</Status>;
@@ -256,7 +313,9 @@ const ExpandedJobRun = ({
         <InfoWrapper>
           <LastDeployed>
             {renderStatus(
+              false,
               run,
+              pods[0],
               run.status.completionTime
                 ? readableDate(run.status.completionTime)
                 : ""

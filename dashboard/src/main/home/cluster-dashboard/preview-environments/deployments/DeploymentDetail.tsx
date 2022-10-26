@@ -5,6 +5,7 @@ import pr_icon from "assets/pull_request_icon.svg";
 import { useRouteMatch, useLocation } from "react-router";
 import DynamicLink from "components/DynamicLink";
 import { PRDeployment } from "../types";
+import PullRequestIcon from "assets/pull_request_icon.svg";
 import Loading from "components/Loading";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -17,10 +18,32 @@ import Banner from "components/Banner";
 import Modal from "main/home/modals/Modal";
 import { validatePorterYAML } from "../utils";
 
+// ret2
+const HARD_CODED_DEPLOYMENT: PRDeployment = {
+  id: 2,
+  created_at: "2021-03-01T00:00:00.000Z",
+  updated_at: "2021-03-01T00:00:00.000Z",
+  subdomain: "subdomain",
+  status: "created",
+  environment_id: 1,
+  pull_request_id: 1,
+  namespace: "namespace",
+  last_workflow_run_url: "",
+  gh_installation_id: 1,
+  gh_deployment_id: 1,
+  gh_pr_name: "some_awesome_pr",
+  gh_repo_owner: "godzilla",
+  gh_repo_name: "kong",
+  gh_commit_sha: "3659ef050a687da4d04bb870b27058bd9d1957be",
+  gh_pr_branch_from: "gh_pr_branch_from",
+  gh_pr_branch_into: "gh_pr_branch_into",
+}
+
 const DeploymentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();
   const context = useContext(Context);
-  const [prDeployment, setPRDeployment] = useState<PRDeployment>(null);
+  // ret2 back to null
+  const [prDeployment, setPRDeployment] = useState<PRDeployment>(HARD_CODED_DEPLOYMENT);
   const [environmentId, setEnvironmentId] = useState("");
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
@@ -53,13 +76,14 @@ const DeploymentDetail = () => {
         if (!isSubscribed) {
           return;
         }
-
-        setPRDeployment(data);
+        // ret2
+        //setPRDeployment(data);
       })
       .catch((err) => {
         console.error(err);
         if (isSubscribed) {
-          setPRDeployment(null);
+          // ret2
+          //setPRDeployment(null);
         }
       });
   }, [params]);
@@ -97,7 +121,7 @@ const DeploymentDetail = () => {
 
   return (
     <>
-      {expandedPorterYAMLErrors.length && (
+      {expandedPorterYAMLErrors.length > 0 && (
         <Modal
           onRequestClose={() => setExpandedPorterYAMLErrors([])}
           height="auto"
@@ -114,17 +138,26 @@ const DeploymentDetail = () => {
           </Message>
         </Modal>
       )}
+      <BreadcrumbRow>
+        <Breadcrumb to={`/preview-environments/deployments/settings`}>
+          <ArrowIcon src={PullRequestIcon} />
+          <Wrap>Preview environments</Wrap>
+        </Breadcrumb>
+        <Slash>/</Slash>
+        <Breadcrumb
+          to={`/preview-environments/deployments/${environmentId}/${repository}`}
+        >
+          <GitIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
+          <Wrap>{repository}</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
       <StyledExpandedChart>
-        <BreadcrumbRow>
-          <Breadcrumb
-            to={`/preview-environments/deployments/${environmentId}/${repository}`}
-          >
-            <ArrowIcon src={leftArrow} />
-            <Wrap>Back</Wrap>
-          </Breadcrumb>
-        </BreadcrumbRow>
         <HeaderWrapper>
-          <Title icon={pr_icon} iconWidth="25px">
+          <Title 
+            icon={pr_icon} 
+            iconWidth="25px"
+            onClick={() => window.open(`https://github.com/${repository}/pull/${prDeployment.pull_request_id}`, '_blank')}
+          >
             {prDeployment.gh_pr_name}
           </Title>
           <InfoWrapper>
@@ -163,7 +196,7 @@ const DeploymentDetail = () => {
               to={`https://github.com/${repository}/pull/${prDeployment.pull_request_id}`}
               target="_blank"
             >
-              <img src={github} /> GitHub PR
+              <img src={github} /> View last workflow run
               <i className="material-icons">open_in_new</i>
             </GHALink>
             {prDeployment.last_workflow_run_url ? (
@@ -207,6 +240,11 @@ const DeploymentDetail = () => {
 
 export default DeploymentDetail;
 
+const Slash = styled.div`
+  margin: 0 4px;
+  color: #aaaabb88;
+`;
+
 const ArrowIcon = styled.img`
   width: 15px;
   margin-right: 8px;
@@ -232,16 +270,17 @@ const Message = styled.div`
 const BreadcrumbRow = styled.div`
   width: 100%;
   display: flex;
+  margin-top: -5px;
   justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 15px;
 `;
 
 const Breadcrumb = styled(DynamicLink)`
   color: #aaaabb88;
   font-size: 13px;
-  margin-bottom: 15px;
   display: flex;
   align-items: center;
-  margin-top: -10px;
   z-index: 999;
   padding: 5px;
   padding-right: 7px;
@@ -271,7 +310,6 @@ const GHALink = styled(DynamicLink)`
   align-items: center;
 
   :hover {
-    text-decoration: underline;
     color: white;
   }
 
@@ -280,10 +318,7 @@ const GHALink = styled(DynamicLink)`
     margin-right: 9px;
     margin-left: 5px;
 
-    text-decoration: none;
-
     :hover {
-      text-decoration: underline;
       color: white;
     }
   }
@@ -388,6 +423,11 @@ const Icon = styled.img`
   width: 100%;
 `;
 
+const GitIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+`;
+
 const StyledExpandedChart = styled.div`
   width: 100%;
   z-index: 0;
@@ -452,7 +492,6 @@ const PRLink = styled(DynamicLink)`
 const ChartListWrapper = styled.div`
   width: 100%;
   margin: auto;
-  margin-top: 20px;
   padding-bottom: 125px;
 `;
 

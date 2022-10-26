@@ -237,7 +237,7 @@ const BreadcrumbRow = styled.div`
   display: flex;
   justify-content: flex-start;
   margin-bottom: 15px;
-  margin-top: -10px;
+  margin-top: -5px;
   align-items: center;
 `;
 

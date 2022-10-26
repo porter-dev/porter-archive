@@ -202,6 +202,14 @@ const DeploymentCard: React.FC<{
           <PRIcon src={pr_icon} alt="pull request icon" />
           <EllipsisTextWrapper tooltipText={deployment.gh_pr_name}>
             <StyledLink
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(
+                  `https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`,
+                  "_blank"
+                );
+              }}
               to={`https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`}
               target="_blank"
             >

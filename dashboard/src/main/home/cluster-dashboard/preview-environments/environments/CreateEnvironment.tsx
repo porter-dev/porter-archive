@@ -6,37 +6,100 @@ import styled from "styled-components";
 import { CellProps } from "react-table";
 import { Context } from "shared/Context";
 import { useParams } from "react-router";
-import { PRDeployment } from "../types";
+import { PRDeployment, PullRequest } from "../types";
 import DashboardHeader from "../../DashboardHeader";
 import PullRequestIcon from "assets/pull_request_icon.svg";
 import Helper from "components/form-components/Helper";
 import Table from "components/Table";
 import pr_icon from "assets/pull_request_icon.svg";
 import { EllipsisTextWrapper, RepoLink } from "../components/styled";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getPRDeploymentList, validatePorterYAML } from "../utils";
+import Banner from "components/Banner";
+import Modal from "main/home/modals/Modal";
 
 const dummyData: any = [
   {
-    name: "this is a name",
-    branches: "asdf",
+    pr_title: "pr_title1",
+    pr_number: 1,
+    repo_owner: "repo_owner",
+    repo_name: "repo_name",
+    branch_from: "test1",
+    branch_into: "test",
   },
   {
-    name: "this is a name",
-    branches: "asdf",
+    pr_title: "pr_title2",
+    pr_number: 2,
+    repo_owner: "repo_owner",
+    repo_name: "repo_name",
+    branch_from: "test2",
+    branch_into: "test",
   },
   {
-    name: "this is a name",
-    branches: "asdf",
+    pr_title: "pr_title3",
+    pr_number: 3,
+    repo_owner: "repo_owner",
+    repo_name: "repo_name",
+    branch_from: "test3",
+    branch_into: "test",
   },
 ];
 
 const CreateEnvironment: React.FC = () => {
+  // TODO Soham: Replace any
+  const queryClient = useQueryClient();
+  const [modalContent, setModalContent] = useState<React.ReactNode>();
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
   const { environment_id, repo_name, repo_owner } = useParams<{
     environment_id: string;
     repo_name: string;
     repo_owner: string;
   }>();
 
+  const { isLoading: getPullRequestsLoading, data: pullRequests } = useQuery<
+    PullRequest[]
+  >(
+    ["pullRequests", currentProject.id, currentCluster.id, environment_id],
+    async () => {
+      try {
+        const res = await getPRDeploymentList({
+          projectID: currentProject.id,
+          clusterID: currentCluster.id,
+          environmentID: Number(environment_id),
+        });
+
+        return res.data.pull_requests || [];
+      } catch (err) {
+        setCurrentError(err);
+      }
+
+      // TODO Soham: Replace with actual data
+      return dummyData; // [];
+    }
+  );
+  
+  const [selectedPR, setSelectedPR] = useState<PullRequest>();
+  const [loading, setLoading] = useState(false);
+  const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
+
   const selectedRepo = `${repo_owner}/${repo_name}`;
+
+  const handlePRRowItemClick = async (pullRequest: PullRequest) => {
+    setSelectedPR(pullRequest);
+    setLoading(true);
+
+    const res = await validatePorterYAML({
+      projectID: currentProject.id,
+      clusterID: currentCluster.id,
+      environmentID: Number(environment_id),
+    });
+
+    setPorterYAMLErrors(res.data.errors ?? []);
+
+    setLoading(false);
+  };
 
   const columns = React.useMemo(
     () => [
@@ -47,15 +110,22 @@ const CreateEnvironment: React.FC = () => {
             Header: "Open pull requests",
             accessor: "name",
             width: 140,
-            Cell: ({ row }: CellProps<any>) => {
+            Cell: ({
+              row: { original: pullRequest },
+            }: CellProps<PullRequest>) => {
               return (
-                <div style={{
-                  cursor: 'pointer',
-                }} onClick={() => alert("Hello world")}>
+                <div
+                  style={{
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    handlePRRowItemClick(pullRequest);
+                  }}
+                >
                   <PRName>
                     <PRIcon src={pr_icon} alt="pull request icon" />
-                    <EllipsisTextWrapper tooltipText="test">
-                      "test"
+                    <EllipsisTextWrapper tooltipText={pullRequest.pr_title}>
+                      {pullRequest.pr_title}
                     </EllipsisTextWrapper>
                     <Spacer />
                     <RepoLink to="" target="_blank">
@@ -72,9 +142,9 @@ const CreateEnvironment: React.FC = () => {
                       <SepDot>•</SepDot>
                       <MergeInfoWrapper>
                         <MergeInfo>
-                          from-this-branch
+                          {pullRequest.branch_from}
                           <i className="material-icons">arrow_forward</i>
-                          to-this-branch
+                          {pullRequest.branch_into}
                         </MergeInfo>
                       </MergeInfoWrapper>
                     </DeploymentImageContainer>
@@ -86,7 +156,7 @@ const CreateEnvironment: React.FC = () => {
         ],
       },
     ],
-    []
+    [pullRequests]
   );
 
   return (
@@ -117,10 +187,45 @@ const CreateEnvironment: React.FC = () => {
       <Br height="10px" />
       <Table
         columns={columns}
-        data={dummyData}
+        data={pullRequests}
         placeholder="No open pull requests found."
       />
-      <SubmitButton>Create preview deployment</SubmitButton>
+      {modalContent ? (
+        <Modal onRequestClose={() => setModalContent(null)} height="auto">
+          {modalContent}
+        </Modal>
+      ) : null}
+      {selectedPR && porterYAMLErrors.length ? (
+        <ValidationErrorBannerWrapper>
+          <Banner type="warning">
+            We found some errors in the porter.yaml file on your default branch.
+            &nbsp;
+            <LearnMoreButton
+              onClick={() =>
+                setModalContent(
+                  <Message>
+                    {porterYAMLErrors.map((el) => {
+                      return (
+                        <div>
+                          {"- "}
+                          {el}
+                        </div>
+                      );
+                    })}
+                  </Message>
+                )
+              }
+            >
+              Learn more
+            </LearnMoreButton>
+          </Banner>
+        </ValidationErrorBannerWrapper>
+      ) : null}
+      <SubmitButton
+        disabled={loading || !selectedPR || porterYAMLErrors.length > 0}
+      >
+        Create preview deployment
+      </SubmitButton>
     </>
   );
 };
@@ -411,4 +516,26 @@ const Button = styled(DynamicLink)`
     margin-right: 5px;
     justify-content: center;
   }
+`;
+
+const ValidationErrorBannerWrapper = styled.div`
+  margin-block: 20px;
+`;
+
+const LearnMoreButton = styled.div`
+  fontweight: bold;
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const Message = styled.div`
+  padding: 20px;
+  background: #26292e;
+  border-radius: 5px;
+  line-height: 1.5em;
+  border: 1px solid #aaaabb33;
+  font-size: 13px;
+  margin-top: 40px;
 `;

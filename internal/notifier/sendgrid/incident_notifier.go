@@ -2,6 +2,7 @@ package sendgrid
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -31,10 +32,16 @@ func (s *IncidentNotifier) NotifyNew(incident *types.Incident, url string) error
 
 	personalizations := make([]*mail.Personalization, 0)
 
+	resourceKind := "application"
+
+	if strings.ToLower(string(incident.InvolvedObjectKind)) == "job" {
+		resourceKind = "job"
+	}
+
 	templData := map[string]interface{}{
 		"incident_text": incident.Summary,
 		"app_url":       url,
-		"subject":       fmt.Sprintf("Your application %s crashed on Porter", incident.ReleaseName),
+		"subject":       fmt.Sprintf("Your %s %s crashed on Porter", resourceKind, incident.ReleaseName),
 		"preheader":     incident.Summary,
 		"created_at":    fmt.Sprintf("%s", incident.CreatedAt.Format("Jan 2, 2006 at 3:04pm (MST)")),
 	}

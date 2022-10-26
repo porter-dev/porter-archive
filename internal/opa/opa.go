@@ -36,6 +36,7 @@ const (
 	HelmRelease KubernetesBuiltInKind = "helm_release"
 	Pod         KubernetesBuiltInKind = "pod"
 	CRDList     KubernetesBuiltInKind = "crd_list"
+	Daemonset   KubernetesBuiltInKind = "daemonset"
 )
 
 type KubernetesOPAQueryCollection struct {
@@ -122,6 +123,8 @@ func (runner *KubernetesOPARunner) GetRecommendations(categories []string) ([]*O
 				currResults, err = runner.runPodQueries(name, queryCollection)
 			case CRDList:
 				currResults, err = runner.runCRDListQueries(name, queryCollection)
+			case Daemonset:
+				currResults, err = runner.runDaemonsetQueries(name, queryCollection)
 			default:
 				fmt.Printf("%s is not a supported query kind", queryCollection.Kind)
 				continue
@@ -305,6 +308,64 @@ func (runner *KubernetesOPARunner) runPodQueries(name string, collection Kuberne
 				res = append(res, rawQueryResToRecommenderQueryResult(
 					rawQueryRes,
 					fmt.Sprintf("pod/%s/%s", pod.Namespace, pod.Name),
+					name,
+					collection,
+				))
+			}
+		}
+	}
+
+	return res, nil
+}
+
+func (runner *KubernetesOPARunner) runDaemonsetQueries(name string, collection KubernetesOPAQueryCollection) ([]*OPARecommenderQueryResult, error) {
+	res := make([]*OPARecommenderQueryResult, 0)
+
+	lselArr := make([]string, 0)
+
+	for k, v := range collection.Match.Labels {
+		lselArr = append(lselArr, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	lsel := strings.Join(lselArr, ",")
+
+	daemonsets, err := runner.k8sAgent.Clientset.AppsV1().DaemonSets(collection.Match.Namespace).List(context.Background(), v1.ListOptions{
+		LabelSelector: lsel,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ds := range daemonsets.Items {
+		unstructuredDS, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&ds)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, query := range collection.Queries {
+			results, err := query.Eval(
+				context.Background(),
+				rego.EvalInput(unstructuredDS),
+			)
+
+			if err != nil {
+				return nil, err
+			}
+
+			if len(results) == 1 {
+				rawQueryRes := &rawQueryResult{}
+
+				err = mapstructure.Decode(results[0].Expressions[0].Value, rawQueryRes)
+
+				if err != nil {
+					return nil, err
+				}
+
+				res = append(res, rawQueryResToRecommenderQueryResult(
+					rawQueryRes,
+					fmt.Sprintf("daemonset/%s/%s", ds.Namespace, ds.Name),
 					name,
 					collection,
 				))

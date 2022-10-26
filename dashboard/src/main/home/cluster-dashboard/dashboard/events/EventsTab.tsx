@@ -33,6 +33,7 @@ const EventsTab = () => {
     );
   }
 
+  /* TODO: remove
   if (!hasPorterAgent) {
     return (
       <Placeholder>
@@ -46,7 +47,8 @@ const EventsTab = () => {
       </Placeholder>
     );
   }
-
+  */
+ 
   if (currentEvent) {
     return (
       <SubEventsList

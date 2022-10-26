@@ -338,7 +338,7 @@ const DeploymentList = () => {
 
   return (
     <>
-      {expandedPorterYAMLErrors.length && (
+      {expandedPorterYAMLErrors.length > 0 && (
         <Modal
           onRequestClose={() => setExpandedPorterYAMLErrors([])}
           height="auto"
@@ -547,6 +547,7 @@ const Message = styled.div`
 
 const BreadcrumbRow = styled.div`
   width: 100%;
+  margin-top: 5px;
   display: flex;
   justify-content: flex-start;
 `;

@@ -17,6 +17,7 @@ import Chart from "./Chart";
 import Loading from "components/Loading";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import CronParser from "cron-parser";
+import Placeholder from "components/Placeholder";
 
 type Props = {
   currentCluster: ClusterType;
@@ -445,13 +446,13 @@ const ChartList: React.FunctionComponent<Props> = ({
       );
     } else if (isError) {
       return (
-        <Placeholder>
+        <Placeholder height="370px">
           <i className="material-icons">error</i> Error connecting to cluster.
         </Placeholder>
       );
     } else if (filteredCharts?.length === 0) {
       return (
-        <Placeholder>
+        <Placeholder height="370px">
           <i className="material-icons">category</i> No
           {currentView === "jobs" ? ` jobs` : ` charts`} found with the given
           filters.
@@ -485,27 +486,6 @@ const ChartList: React.FunctionComponent<Props> = ({
 };
 
 export default ChartList;
-
-const Placeholder = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #ffffff44;
-  background: #26282f;
-  border-radius: 5px;
-  height: 370px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff44;
-  font-size: 13px;
-
-  > i {
-    font-size: 16px;
-    margin-right: 12px;
-  }
-`;
 
 const LoadingWrapper = styled.div`
   padding-top: 100px;

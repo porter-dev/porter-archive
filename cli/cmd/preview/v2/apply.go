@@ -54,6 +54,14 @@ func NewApplier(client *api.Client, raw []byte, namespace string) (*PreviewAppli
 }
 
 func (a *PreviewApplier) Apply() error {
+	color.New(color.FgBlue).Printf("[porter.yaml v2] Applying preview environments with the following attributes:\n"+
+		"\tHost: %s\n\tProject ID: %d\n\tCluster ID: %d\n\tNamespace: %s\n",
+		config.GetCLIConfig().Host,
+		config.GetCLIConfig().Project,
+		config.GetCLIConfig().Cluster,
+		a.namespace,
+	) // FIXME: use a scoped logger
+
 	err := a.readOSEnv()
 
 	if err != nil {
@@ -66,27 +74,34 @@ func (a *PreviewApplier) Apply() error {
 		return err
 	}
 
-	err = a.processEnvGroups()
+	// err = a.processEnvGroups()
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
 
 func (a *PreviewApplier) readOSEnv() error {
-	color.New(color.FgBlue).Println("[porter.yaml] Reading OS environment variables") // FIXME: use a scoped logger
+	color.New(color.FgBlue).Println("[porter.yaml v2] Reading OS environment variables") // FIXME: use a scoped logger
 
 	env := os.Environ()
 	osEnv := make(map[string]string)
 
 	for _, e := range env {
 		k, v, _ := strings.Cut(e, "=")
+		kCopy := k
 
-		if k != "" && v != "" {
+		if k != "" && v != "" && strings.HasPrefix(k, "PORTER_APPLY_") {
 			// we only read in env variables that start with PORTER_APPLY_
-			k = strings.ReplaceAll(k, "PORTER_APPLY_", "")
+			for strings.HasPrefix(k, "PORTER_APPLY_") {
+				k = strings.TrimPrefix(k, "PORTER_APPLY_")
+			}
+
+			if k == "" {
+				color.New(color.FgYellow).Printf("[porter.yaml v2] ignoring invalid OS environment variable '%s'\n", kCopy) // FIXME: use a scoped logger
+			}
 
 			osEnv[k] = v
 		}
@@ -98,6 +113,8 @@ func (a *PreviewApplier) readOSEnv() error {
 }
 
 func (a *PreviewApplier) processEnvGroups() error {
+	color.New(color.FgBlue).Println("[porter.yaml v2] Processing env groups") // FIXME: use a scoped logger
+
 	for _, eg := range a.parsed.PorterYAML.EnvGroups.GetValue() {
 		envGroup, err := a.apiClient.GetEnvGroup(
 			context.Background(),
@@ -154,7 +171,7 @@ func (a *PreviewApplier) processEnvGroups() error {
 }
 
 func (a *PreviewApplier) processVariables() error {
-	color.New(color.FgBlue).Println("[porter.yaml] Processing variables") // FIXME: use a scoped logger
+	color.New(color.FgBlue).Println("[porter.yaml v2] Processing variables") // FIXME: use a scoped logger
 
 	constantsMap := make(map[string]string)
 	variablesMap := make(map[string]string)
@@ -239,6 +256,10 @@ func (a *PreviewApplier) constantExistsInEnvGroup(name string) (*bool, error) {
 	)
 
 	if err != nil {
+		if strings.Contains(err.Error(), "env group not found") {
+			return boolean(false), nil
+		}
+
 		return nil, err
 	}
 

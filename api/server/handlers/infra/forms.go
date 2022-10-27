@@ -612,14 +612,6 @@ tabs:
           value: c6i.2xlarge
         - label: c6i.4xlarge
           value: c6i.4xlarge
-        - label: m6i.large
-          value: m6i.large
-        - label: m6i.xlarge
-          value: m6i.xlarge
-        - label: m6i.2xlarge
-          value: m6i.2xlarge
-        - label: m6i.4xlarge
-          value: m6i.4xlarge
   - name: spot_instance_should_enable
     contents:
     - type: heading

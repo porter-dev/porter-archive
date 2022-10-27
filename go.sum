@@ -1731,6 +1731,10 @@ github.com/porter-dev/switchboard v0.0.0-20220628112428-7665a0121e4f h1:REYJSDm2
 github.com/porter-dev/switchboard v0.0.0-20220628112428-7665a0121e4f/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
 github.com/porter-dev/switchboard v0.0.0-20221019155755-67ff2bf04935 h1:hfb3nt3AJXIBbevu6ARTg9SdOkMP6WLbKBiG5hT5rcc=
 github.com/porter-dev/switchboard v0.0.0-20221019155755-67ff2bf04935/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
+github.com/porter-dev/switchboard/v2 v2.0.0-20221027143410-a81838caabbe h1:VuU+EUPFi1gyKQa9nhv75GhcbWkyOxJh5JkByQ2GcyE=
+github.com/porter-dev/switchboard/v2 v2.0.0-20221027143410-a81838caabbe/go.mod h1:I/oKy2BmfIVtirJXM28W76Yqih0lR8EiaZ4lE5E5lY0=
+github.com/porter-dev/switchboard/v2 v2.0.0 h1:mg4c6mMHFNFBgprcac7ZcPxTPJeqZtfmH1O6pPt1h3U=
+github.com/porter-dev/switchboard/v2 v2.0.0/go.mod h1:I/oKy2BmfIVtirJXM28W76Yqih0lR8EiaZ4lE5E5lY0=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=
 github.com/posener/complete v1.2.3/go.mod h1:WZIdtGGp+qx0sLrYKtIRAruyNpv6hFCicSgv7Sy7s/s=
 github.com/poy/onpar v0.0.0-20190519213022-ee068f8ea4d1/go.mod h1:nSbFQvMj97ZyhFRSJYtut+msi4sOY6zJDGCdSc+/rZU=
@@ -1850,6 +1854,8 @@ github.com/santhosh-tekuri/jsonschema v1.2.4 h1:hNhW8e7t+H1vgY+1QeEQpveR6D4+OwKP
 github.com/santhosh-tekuri/jsonschema v1.2.4/go.mod h1:TEAUOeZSmIxTTuHatJzrvARHiuO9LYd+cIxzgEHCQI4=
 github.com/santhosh-tekuri/jsonschema/v5 v5.0.1 h1:HNLA3HtUIROrQwG1cuu5EYuqk3UEoJ61Dr/9xkd6sok=
 github.com/santhosh-tekuri/jsonschema/v5 v5.0.1/go.mod h1:FKdcjfQW6rpZSnxxUvEA5H/cDPdvJ/SZJQLWWXWGrZ0=
+github.com/santhosh-tekuri/jsonschema/v5 v5.0.2 h1:zOYFITq/5SO7YOv39/Taw8s1skb0Py39K5V2XvCEP48=
+github.com/santhosh-tekuri/jsonschema/v5 v5.0.2/go.mod h1:FKdcjfQW6rpZSnxxUvEA5H/cDPdvJ/SZJQLWWXWGrZ0=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
 github.com/schollz/closestmatch v2.1.0+incompatible/go.mod h1:RtP1ddjLong6gTkbtmuhtR2uUrrJOpYzYRvbcPAid+g=
 github.com/sclevine/agouti v3.0.0+incompatible/go.mod h1:b4WX9W9L1sfQKXeJf1mUTLZKJ48R1S7H23Ji7oFO5Bw=

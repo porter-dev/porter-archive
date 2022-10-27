@@ -20,6 +20,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	"github.com/porter-dev/porter/cli/cmd/preview"
+	previewV2 "github.com/porter-dev/porter/cli/cmd/preview/v2"
 	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -29,6 +30,7 @@ import (
 	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 // applyCmd represents the "porter apply" base command when called
@@ -105,18 +107,37 @@ func init() {
 }
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+	// read the porter.yaml file
+	fileBytes, err := ioutil.ReadFile(porterYAML)
+
+	if err != nil {
+		return fmt.Errorf("error reading porter.yaml: %w", err)
+	}
+
+	var porterYAMLVersion struct{ Version string }
+
+	err = yaml.Unmarshal(fileBytes, &porterYAMLVersion)
+
+	if err != nil {
+		return fmt.Errorf("error reading porter.yaml version: %w", err)
+	}
+
+	if porterYAMLVersion.Version == "v2" {
+		applier, err := previewV2.NewApplier(client, fileBytes, namespace)
+
+		if err != nil {
+			return err
+		}
+
+		return applier.Apply()
+	}
+
 	if _, ok := os.LookupEnv("PORTER_VALIDATE_YAML"); ok {
 		err := applyValidate()
 
 		if err != nil {
 			return err
 		}
-	}
-
-	fileBytes, err := ioutil.ReadFile(porterYAML)
-
-	if err != nil {
-		return fmt.Errorf("error reading porter.yaml: %w", err)
 	}
 
 	resGroup, err := parser.ParseRawBytes(fileBytes)

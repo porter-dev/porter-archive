@@ -52,12 +52,14 @@ type ServerConf struct {
 	GoogleClientSecret     string `env:"GOOGLE_CLIENT_SECRET"`
 	GoogleRestrictedDomain string `env:"GOOGLE_RESTRICTED_DOMAIN"`
 
-	SendgridAPIKey                  string `env:"SENDGRID_API_KEY"`
-	SendgridPWResetTemplateID       string `env:"SENDGRID_PW_RESET_TEMPLATE_ID"`
-	SendgridPWGHTemplateID          string `env:"SENDGRID_PW_GH_TEMPLATE_ID"`
-	SendgridVerifyEmailTemplateID   string `env:"SENDGRID_VERIFY_EMAIL_TEMPLATE_ID"`
-	SendgridProjectInviteTemplateID string `env:"SENDGRID_INVITE_TEMPLATE_ID"`
-	SendgridSenderEmail             string `env:"SENDGRID_SENDER_EMAIL"`
+	SendgridAPIKey                     string `env:"SENDGRID_API_KEY"`
+	SendgridPWResetTemplateID          string `env:"SENDGRID_PW_RESET_TEMPLATE_ID"`
+	SendgridPWGHTemplateID             string `env:"SENDGRID_PW_GH_TEMPLATE_ID"`
+	SendgridVerifyEmailTemplateID      string `env:"SENDGRID_VERIFY_EMAIL_TEMPLATE_ID"`
+	SendgridProjectInviteTemplateID    string `env:"SENDGRID_INVITE_TEMPLATE_ID"`
+	SendgridIncidentAlertTemplateID    string `env:"SENDGRID_INCIDENT_ALERT_TEMPLATE_ID"`
+	SendgridIncidentResolvedTemplateID string `env:"SENDGRID_INCIDENT_RESOLVED_TEMPLATE_ID"`
+	SendgridSenderEmail                string `env:"SENDGRID_SENDER_EMAIL"`
 
 	SlackClientID     string `env:"SLACK_CLIENT_ID"`
 	SlackClientSecret string `env:"SLACK_CLIENT_SECRET"`

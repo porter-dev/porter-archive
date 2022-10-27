@@ -129,3 +129,11 @@ type ToggleNewCommentRequest struct {
 }
 
 type ListEnvironmentsResponse []*Environment
+
+type ValidatePorterYAMLRequest struct {
+	Branch string `schema:"branch"`
+}
+
+type ValidatePorterYAMLResponse struct {
+	Errors []string `json:"errors"`
+}

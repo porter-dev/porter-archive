@@ -36,6 +36,9 @@ type Cluster struct {
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
 
+	// Whether or not the Porter agent integration is enabled on the cluster
+	AgentIntegrationEnabled bool
+
 	// Name of the cluster
 	Name string `json:"name"`
 
@@ -95,14 +98,15 @@ func (c *Cluster) ToClusterType() *types.Cluster {
 	}
 
 	return &types.Cluster{
-		ID:               c.ID,
-		ProjectID:        c.ProjectID,
-		Name:             c.Name,
-		Server:           c.Server,
-		Service:          serv,
-		InfraID:          c.InfraID,
-		AWSIntegrationID: c.AWSIntegrationID,
-		AWSClusterID:     c.AWSClusterID,
+		ID:                      c.ID,
+		ProjectID:               c.ProjectID,
+		Name:                    c.Name,
+		Server:                  c.Server,
+		Service:                 serv,
+		AgentIntegrationEnabled: c.AgentIntegrationEnabled,
+		InfraID:                 c.InfraID,
+		AWSIntegrationID:        c.AWSIntegrationID,
+		AWSClusterID:            c.AWSClusterID,
 	}
 }
 

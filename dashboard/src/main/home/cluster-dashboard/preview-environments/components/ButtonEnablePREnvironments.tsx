@@ -84,7 +84,10 @@ const ButtonEnablePREnvironments = ({ setIsReady }: Props) => {
   if (isLoading) {
     return (
       <Container>
-        <Loading />
+        <Button disabled={true} to="">
+          <img src={pr_icon} alt="Pull request icon" />
+          Loading . . .
+        </Button>
       </Container>
     );
   }

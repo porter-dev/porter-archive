@@ -436,7 +436,7 @@ tabs:
       label: EKS control plane version
       variable: cluster_version
       settings:
-        default: "1.20"
+        default: "1.22"
         options:
         - label: "1.20"
           value: "1.20"

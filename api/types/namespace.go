@@ -134,10 +134,10 @@ type GetEnvGroupRequest struct {
 }
 
 type CloneEnvGroupRequest struct {
-	Namespace string `json:"namespace" form:"required"`
-	Name      string `json:"name" form:"required,dns1123"`
-	CloneName string `json:"clone_name,dns1123"`
-	Version   uint   `json:"version"`
+	TargetNamespace string `json:"namespace" form:"required"`
+	SourceName      string `json:"name" form:"required,dns1123"`
+	TargetName      string `json:"clone_name" form:"dns1123"`
+	SourceVersion   uint   `json:"version"`
 }
 
 type GetEnvGroupAllRequest struct {

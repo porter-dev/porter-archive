@@ -3,6 +3,8 @@ package v2
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
@@ -24,6 +26,10 @@ type PreviewApplier struct {
 	rawBytes  []byte
 	namespace string
 	parsed    *types.ParsedPorterYAML
+
+	variablesMap map[string]string
+	osEnv        map[string]string
+	envGroups    map[string]*apiTypes.EnvGroup
 }
 
 func NewApplier(client *api.Client, raw []byte, namespace string) (*PreviewApplier, error) {
@@ -48,10 +54,100 @@ func NewApplier(client *api.Client, raw []byte, namespace string) (*PreviewAppli
 }
 
 func (a *PreviewApplier) Apply() error {
-	err := a.processVariables()
+	err := a.readOSEnv()
 
 	if err != nil {
 		return err
+	}
+
+	err = a.processVariables()
+
+	if err != nil {
+		return err
+	}
+
+	err = a.processEnvGroups()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *PreviewApplier) readOSEnv() error {
+	color.New(color.FgBlue).Println("[porter.yaml] Reading OS environment variables") // FIXME: use a scoped logger
+
+	env := os.Environ()
+	osEnv := make(map[string]string)
+
+	for _, e := range env {
+		k, v, _ := strings.Cut(e, "=")
+
+		if k != "" && v != "" {
+			// we only read in env variables that start with PORTER_APPLY_
+			k = strings.ReplaceAll(k, "PORTER_APPLY_", "")
+
+			osEnv[k] = v
+		}
+	}
+
+	a.osEnv = osEnv
+
+	return nil
+}
+
+func (a *PreviewApplier) processEnvGroups() error {
+	for _, eg := range a.parsed.PorterYAML.EnvGroups.GetValue() {
+		envGroup, err := a.apiClient.GetEnvGroup(
+			context.Background(),
+			config.GetCLIConfig().Project,
+			config.GetCLIConfig().Cluster,
+			a.namespace,
+			&apiTypes.GetEnvGroupRequest{
+				Name: eg.Name.GetValue(),
+			},
+		)
+
+		if err != nil && strings.Contains(err.Error(), "env group not found") {
+			cloneFrom := strings.Split(eg.CloneFrom.GetValue(), "/")
+
+			if len(cloneFrom) != 2 {
+				// this should not happen
+				return fmt.Errorf("internal error: please let the Porter team know about this and quote the following "+
+					"error:\n-----\nERROR: invalid env group clone_from format: %s", eg.CloneFrom.GetValue())
+			}
+
+			// clone the env group
+			envGroup, err := a.apiClient.CloneEnvGroup(
+				context.Background(),
+				config.GetCLIConfig().Project,
+				config.GetCLIConfig().Cluster,
+				cloneFrom[0],
+				&apiTypes.CloneEnvGroupRequest{
+					SourceName:      cloneFrom[1],
+					TargetNamespace: a.namespace,
+					TargetName:      eg.Name.GetValue(),
+				},
+			)
+
+			if err != nil {
+				return fmt.Errorf("error cloning env group '%s' from '%s': %w", eg.Name.GetValue(),
+					eg.CloneFrom.GetValue(), err)
+			}
+
+			a.envGroups[eg.Name.GetValue()] = &apiTypes.EnvGroup{
+				Name:      envGroup.Name,
+				Variables: envGroup.Variables,
+			}
+		} else if err != nil {
+			return fmt.Errorf("error checking for env group '%s': %w", eg.Name.GetValue(), err)
+		} else {
+			a.envGroups[eg.Name.GetValue()] = &apiTypes.EnvGroup{
+				Name:      envGroup.Name,
+				Variables: envGroup.Variables,
+			}
+		}
 	}
 
 	return nil
@@ -124,6 +220,8 @@ func (a *PreviewApplier) processVariables() error {
 			variablesMap[k] = v
 		}
 	}
+
+	a.variablesMap = variablesMap
 
 	return nil
 }

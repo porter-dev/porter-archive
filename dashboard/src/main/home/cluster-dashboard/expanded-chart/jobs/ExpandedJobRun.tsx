@@ -18,6 +18,7 @@ import LogsSection from "../logs-section/LogsSection";
 import EventsTab from "../events/EventsTab";
 import { getPodStatus } from "../deploy-status-section/util";
 import { capitalize } from "shared/string_utils";
+import { usePods } from "shared/hooks/usePods";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -91,7 +92,7 @@ export const renderStatus = (
 
   if (job.status?.succeeded >= 1) {
     if (time) {
-      return <Status color="#38a88a">Succeeded at {readableDate(time)}</Status>;
+      return <Status color="#38a88a">Succeeded at {time}</Status>;
     }
 
     return <Status color="#38a88a">Succeeded</Status>;
@@ -136,40 +137,21 @@ const ExpandedJobRun = ({
   const [currentTab, setCurrentTab] = useState<ExpandedJobRunTabs>(
     currentCluster.agent_integration_enabled ? "events" : "logs"
   );
-  const [pods, setPods] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const { pushQueryParams } = useRouting();
   const [useDeprecatedLogs, setUseDeprecatedLogs] = useState(false);
 
+  const [pods, isLoading] = usePods({
+    project_id: currentProject.id,
+    cluster_id: currentCluster.id,
+    namespace: jobRun.metadata?.namespace,
+    selectors: [`job-name=${jobRun.metadata?.name}`],
+    controller_kind: "job",
+    controller_name: jobRun.metadata?.name,
+    subscribed: true,
+  });
+
   let chart = currentChart;
   let run = jobRun;
-
-  useEffect(() => {
-    let isSubscribed = true;
-    setIsLoading(true);
-    api
-      .getJobPods(
-        "<token>",
-        {},
-        {
-          id: currentProject.id,
-          name: jobRun.metadata?.name,
-          cluster_id: currentCluster.id,
-          namespace: jobRun.metadata?.namespace,
-        }
-      )
-      .then((res) => {
-        if (isSubscribed) {
-          setPods(res.data);
-          setIsLoading(false);
-        }
-      })
-      .catch((err) => setCurrentError(JSON.stringify(err)));
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [jobRun]);
 
   useEffect(() => {
     return () => {

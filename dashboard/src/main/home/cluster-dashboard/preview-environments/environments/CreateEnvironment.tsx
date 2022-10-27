@@ -114,42 +114,7 @@ const CreateEnvironment: React.FC = () => {
               row: { original: pullRequest },
             }: CellProps<PullRequest>) => {
               return (
-                <div
-                  style={{
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    handlePRRowItemClick(pullRequest);
-                  }}
-                >
-                  <PRName>
-                    <PRIcon src={pr_icon} alt="pull request icon" />
-                    <EllipsisTextWrapper tooltipText={pullRequest.pr_title}>
-                      {pullRequest.pr_title}
-                    </EllipsisTextWrapper>
-                    <Spacer />
-                    <RepoLink to="" target="_blank">
-                      <i className="material-icons">open_in_new</i>
-                      View last workflow
-                    </RepoLink>
-                  </PRName>
-
-                  <Flex>
-                    <DeploymentImageContainer>
-                      <InfoWrapper>
-                        <LastDeployed>Last updated xyz</LastDeployed>
-                      </InfoWrapper>
-                      <SepDot>•</SepDot>
-                      <MergeInfoWrapper>
-                        <MergeInfo>
-                          {pullRequest.branch_from}
-                          <i className="material-icons">arrow_forward</i>
-                          {pullRequest.branch_into}
-                        </MergeInfo>
-                      </MergeInfoWrapper>
-                    </DeploymentImageContainer>
-                  </Flex>
-                </div>
+                <h1>asdf</h1>
               );
             },
           },
@@ -185,11 +150,44 @@ const CreateEnvironment: React.FC = () => {
         <Code>porter.yaml</Code> file.
       </Helper>
       <Br height="10px" />
-      <Table
-        columns={columns}
-        data={pullRequests}
-        placeholder="No open pull requests found."
-      />
+      <PullRequestList>
+        {
+          pullRequests.map((pullRequest: any, i: number) => {
+            return (
+              <PullRequestRow
+                onClick={() => {
+                  handlePRRowItemClick(pullRequest);
+                }}
+                isLast={i === dummyData.length - 1}
+                isSelected={pullRequest === selectedPR}
+              >
+                <PRName>
+                  <PRIcon src={pr_icon} alt="pull request icon" />
+                  <EllipsisTextWrapper tooltipText={pullRequest.pr_title}>
+                    {pullRequest.pr_title}
+                  </EllipsisTextWrapper>
+                </PRName>
+
+                <Flex>
+                  <DeploymentImageContainer>
+                    <InfoWrapper>
+                      <LastDeployed>#{pullRequest.pr_number} last updated xyz</LastDeployed>
+                    </InfoWrapper>
+                    <SepDot>•</SepDot>
+                    <MergeInfoWrapper>
+                      <MergeInfo>
+                        {pullRequest.branch_from}
+                        <i className="material-icons">arrow_forward</i>
+                        {pullRequest.branch_into}
+                      </MergeInfo>
+                    </MergeInfoWrapper>
+                  </DeploymentImageContainer>
+                </Flex>
+              </PullRequestRow>
+            )
+          })
+        }
+      </PullRequestList>
       {modalContent ? (
         <Modal onRequestClose={() => setModalContent(null)} height="auto">
           {modalContent}
@@ -231,6 +229,29 @@ const CreateEnvironment: React.FC = () => {
 };
 
 export default CreateEnvironment;
+
+const PRNumber = styled.div`
+  color: #aaaabb;
+  font-weight: 400;
+  margin-left: 7px;
+`;
+
+const PullRequestList = styled.div`
+  border: 1px solid #494b4f;
+  border-radius: 5px;
+  overflow: hidden;
+`;
+
+const PullRequestRow = styled.div<{ isLast?: boolean, isSelected?: boolean }>`
+  width: 100%;
+  padding: 15px;
+  cursor: pointer;
+  background: ${props => props.isSelected ? "#ffffff11" : "#26292e"};
+  border-bottom: ${props => props.isLast ? "" : "1px solid #494b4f"};
+  :hover {
+    background: #ffffff11;
+  }
+`;
 
 const Code = styled.span`
   font-family: monospace; ;
@@ -307,7 +328,7 @@ const MergeInfo = styled.div`
 
 const PRIcon = styled.img`
   font-size: 20px;
-  height: 17px;
+  height: 16px;
   margin-right: 10px;
   color: #aaaabb;
   opacity: 50%;

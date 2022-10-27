@@ -18,32 +18,10 @@ import Banner from "components/Banner";
 import Modal from "main/home/modals/Modal";
 import { validatePorterYAML } from "../utils";
 
-// ret2
-const HARD_CODED_DEPLOYMENT: PRDeployment = {
-  id: 2,
-  created_at: "2021-03-01T00:00:00.000Z",
-  updated_at: "2021-03-01T00:00:00.000Z",
-  subdomain: "subdomain",
-  status: "created",
-  environment_id: 1,
-  pull_request_id: 1,
-  namespace: "namespace",
-  last_workflow_run_url: "",
-  gh_installation_id: 1,
-  gh_deployment_id: 1,
-  gh_pr_name: "some_awesome_pr",
-  gh_repo_owner: "godzilla",
-  gh_repo_name: "kong",
-  gh_commit_sha: "3659ef050a687da4d04bb870b27058bd9d1957be",
-  gh_pr_branch_from: "gh_pr_branch_from",
-  gh_pr_branch_into: "gh_pr_branch_into",
-}
-
 const DeploymentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();
   const context = useContext(Context);
-  // ret2 back to null
-  const [prDeployment, setPRDeployment] = useState<PRDeployment>(HARD_CODED_DEPLOYMENT);
+  const [prDeployment, setPRDeployment] = useState<PRDeployment>(null);
   const [environmentId, setEnvironmentId] = useState("");
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
@@ -76,14 +54,12 @@ const DeploymentDetail = () => {
         if (!isSubscribed) {
           return;
         }
-        // ret2
-        //setPRDeployment(data);
+        setPRDeployment(data);
       })
       .catch((err) => {
         console.error(err);
         if (isSubscribed) {
-          // ret2
-          //setPRDeployment(null);
+          setPRDeployment(null);
         }
       });
   }, [params]);

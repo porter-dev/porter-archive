@@ -89,12 +89,8 @@ const EnvironmentsList = () => {
       }
 
       setEnvironments(envs);
-
-      //
-      setEnvironments(HARD_CODED_ENVS);
     } catch (error) {
-      // ret2: remove placeholder (set to empty array)
-      setEnvironments(HARD_CODED_ENVS);
+      setEnvironments([]);
     }
   };
 

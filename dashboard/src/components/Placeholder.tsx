@@ -18,7 +18,7 @@ const Placeholder: React.FC<Props> = ({
     <StyledPlaceholder height={height} minHeight={minHeight}>
       <Wrapper>
         <Title>{title}</Title>
-        {children}
+        <Flex>{children}</Flex>
       </Wrapper>
     </StyledPlaceholder>
   );
@@ -26,10 +26,14 @@ const Placeholder: React.FC<Props> = ({
 
 export default Placeholder;
 
+const Flex = styled.div`
+  display: flex;
+  margin-top: 10px;
+  align-items: center;
+`;
+
 const Wrapper = styled.div`
   margin-bottom: 10px;
-  display: flex;
-  align-items: center;
 `;
 
 const Title = styled.div`

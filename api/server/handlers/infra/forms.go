@@ -604,8 +604,14 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c6i.large
+          value: c6i.large
+        - label: c6i.xlarge
+          value: c6i.xlarge
         - label: c6i.2xlarge
           value: c6i.2xlarge
+        - label: c6i.4xlarge
+          value: c6i.4xlarge
   - name: spot_instance_should_enable
     contents:
     - type: heading

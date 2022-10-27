@@ -436,7 +436,7 @@ tabs:
       label: EKS control plane version
       variable: cluster_version
       settings:
-        default: "1.20"
+        default: "1.22"
         options:
         - label: "1.20"
           value: "1.20"
@@ -604,8 +604,14 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c6i.large
+          value: c6i.large
+        - label: c6i.xlarge
+          value: c6i.xlarge
         - label: c6i.2xlarge
           value: c6i.2xlarge
+        - label: c6i.4xlarge
+          value: c6i.4xlarge
   - name: spot_instance_should_enable
     contents:
     - type: heading

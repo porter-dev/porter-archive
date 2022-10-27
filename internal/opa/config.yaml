@@ -107,6 +107,16 @@ porter_agent_loki_pod:
   policies:
   - path: "./policies/pod/running.rego"
     name: "pod.running"
+porter_agent_promtail_daemonset:
+  kind: "daemonset"
+  match:
+    namespace: porter-agent-system
+    labels:
+      app.kubernetes.io/instance: "porter-agent"
+      app.kubernetes.io/name: "promtail"
+  policies:
+  - path: "./policies/daemonset/running.rego"
+    name: "daemonset.running"
 certificates:
   kind: "crd_list"
   match:

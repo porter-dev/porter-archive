@@ -13,10 +13,11 @@ import (
 	parser "github.com/porter-dev/switchboard/v2/pkg/parser"
 	types "github.com/porter-dev/switchboard/v2/pkg/types"
 	validator "github.com/porter-dev/switchboard/v2/pkg/validator"
+	"github.com/porter-dev/switchboard/v2/pkg/worker"
 )
 
 const (
-	contantsEnvGroup = "preview-env-constants"
+	constantsEnvGroup = "preview-env-constants"
 
 	defaultCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789~`!@#$%^&*()_+-={}[]"
 )
@@ -74,13 +75,17 @@ func (a *PreviewApplier) Apply() error {
 		return err
 	}
 
-	// err = a.processEnvGroups()
+	err = a.processEnvGroups()
 
-	// if err != nil {
-	// 	return err
-	// }
+	if err != nil {
+		return err
+	}
 
-	return nil
+	w := worker.NewWorker()
+	w.RegisterDriver("default", NewDefaultDriver())
+	w.SetDefaultDriver("default")
+
+	return w.Apply(a.parsed.PorterYAML)
 }
 
 func (a *PreviewApplier) readOSEnv() error {
@@ -100,7 +105,7 @@ func (a *PreviewApplier) readOSEnv() error {
 			}
 
 			if k == "" {
-				color.New(color.FgYellow).Printf("[porter.yaml v2] ignoring invalid OS environment variable '%s'\n", kCopy) // FIXME: use a scoped logger
+				color.New(color.FgYellow).Printf("[porter.yaml v2] Ignoring invalid OS environment variable '%s'\n", kCopy) // FIXME: use a scoped logger
 			}
 
 			osEnv[k] = v
@@ -224,7 +229,7 @@ func (a *PreviewApplier) processVariables() error {
 			config.GetCLIConfig().Cluster,
 			a.namespace,
 			&apiTypes.CreateEnvGroupRequest{
-				Name:      contantsEnvGroup,
+				Name:      constantsEnvGroup,
 				Variables: constantsMap,
 			},
 		)
@@ -250,7 +255,7 @@ func (a *PreviewApplier) constantExistsInEnvGroup(name string) (*bool, error) {
 		config.GetCLIConfig().Cluster,
 		a.namespace,
 		&apiTypes.GetEnvGroupRequest{
-			Name: contantsEnvGroup,
+			Name: constantsEnvGroup,
 			// we do not care about the version because it always needs to be the latest
 		},
 	)

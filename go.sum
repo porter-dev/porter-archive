@@ -1733,6 +1733,10 @@ github.com/porter-dev/switchboard v0.0.0-20221019155755-67ff2bf04935 h1:hfb3nt3A
 github.com/porter-dev/switchboard v0.0.0-20221019155755-67ff2bf04935/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
 github.com/porter-dev/switchboard/v2 v2.0.0-20221027143410-a81838caabbe h1:VuU+EUPFi1gyKQa9nhv75GhcbWkyOxJh5JkByQ2GcyE=
 github.com/porter-dev/switchboard/v2 v2.0.0-20221027143410-a81838caabbe/go.mod h1:I/oKy2BmfIVtirJXM28W76Yqih0lR8EiaZ4lE5E5lY0=
+github.com/porter-dev/switchboard/v2 v2.0.0-20221027201656-c94bb98e5398 h1:OIi1hpVHica0VV01q9c8gpK/XLzI4EsVcTENODTBAR8=
+github.com/porter-dev/switchboard/v2 v2.0.0-20221027201656-c94bb98e5398/go.mod h1:I/oKy2BmfIVtirJXM28W76Yqih0lR8EiaZ4lE5E5lY0=
+github.com/porter-dev/switchboard/v2 v2.0.0-20221028153033-aaeedd2d3fd6 h1:lHCsfpQcrXqjHDXtQA5TXHwlarI8z1keDDrJtYef30Q=
+github.com/porter-dev/switchboard/v2 v2.0.0-20221028153033-aaeedd2d3fd6/go.mod h1:I/oKy2BmfIVtirJXM28W76Yqih0lR8EiaZ4lE5E5lY0=
 github.com/porter-dev/switchboard/v2 v2.0.0 h1:mg4c6mMHFNFBgprcac7ZcPxTPJeqZtfmH1O6pPt1h3U=
 github.com/porter-dev/switchboard/v2 v2.0.0/go.mod h1:I/oKy2BmfIVtirJXM28W76Yqih0lR8EiaZ4lE5E5lY0=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=

@@ -50,12 +50,19 @@ const EventsTab: React.FC<Props> = ({
           setHasPorterAgent(false);
         } else {
           // next, check whether events can be queried - if they can, we're good to go
-          api
-            .listPorterEvents("<token>", getFilters(), {
-              project_id: currentProject.id,
-              cluster_id: currentCluster.id,
-            })
-            .then(() => {
+          let filters: any = getFilters();
+
+          let apiQuery = api.listPorterEvents;
+
+          if (filters.job_name) {
+            apiQuery = api.listPorterJobEvents;
+          }
+
+          apiQuery("<token>", filters, {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+          })
+            .then((res) => {
               setHasPorterAgent(true);
               setIsPorterAgentInstalling(false);
             })

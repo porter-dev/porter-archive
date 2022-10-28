@@ -91,7 +91,9 @@ export const timeFrom = (
 };
 
 export const capitalize = (s: string) => {
-  if (s.length == 0) {
+  if (!s) {
+    return "";
+  } else if (s.length == 0) {
     return s;
   } else if (s.length == 1) {
     return s.charAt(0).toUpperCase();

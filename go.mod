@@ -118,7 +118,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/open-policy-agent/opa v0.44.0 // indirect
 	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 // indirect
-	github.com/porter-dev/switchboard/v2 v2.0.0-20221028153033-aaeedd2d3fd6 // indirect
+	github.com/porter-dev/switchboard/v2 v2.0.0-20221028173223-eb997250587e // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/santhosh-tekuri/jsonschema v1.2.4 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.2 // indirect

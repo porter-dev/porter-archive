@@ -55,6 +55,36 @@ func NewApplier(client *api.Client, raw []byte, namespace string) (*PreviewAppli
 }
 
 func (a *PreviewApplier) Apply() error {
+	// check if the namespace exists in the current project-cluster pair
+	//
+	// this is a sanity check to ensure that the user does not see any internal
+	// errors that are caused by the namespace not existing
+	nsList, err := a.apiClient.GetK8sNamespaces(
+		context.Background(),
+		config.GetCLIConfig().Project,
+		config.GetCLIConfig().Cluster,
+	)
+
+	if err != nil {
+		return fmt.Errorf("error listing namespaces for project '%d', cluster '%d': %w",
+			config.GetCLIConfig().Project, config.GetCLIConfig().Cluster, err)
+	}
+
+	namespaces := *nsList
+	nsFound := false
+
+	for _, ns := range namespaces {
+		if ns.Name == a.namespace {
+			nsFound = true
+			break
+		}
+	}
+
+	if !nsFound {
+		return fmt.Errorf("namespace '%s' does not exist in project '%d', cluster '%d'",
+			a.namespace, config.GetCLIConfig().Project, config.GetCLIConfig().Cluster)
+	}
+
 	color.New(color.FgBlue).Printf("[porter.yaml v2] Applying preview environments with the following attributes:\n"+
 		"\tHost: %s\n\tProject ID: %d\n\tCluster ID: %d\n\tNamespace: %s\n",
 		config.GetCLIConfig().Host,
@@ -63,26 +93,31 @@ func (a *PreviewApplier) Apply() error {
 		a.namespace,
 	) // FIXME: use a scoped logger
 
-	err := a.readOSEnv()
+	// err := a.readOSEnv()
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	err = a.processVariables()
+	// err = a.processVariables()
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	err = a.processEnvGroups()
+	// err = a.processEnvGroups()
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
 	w := worker.NewWorker()
-	w.RegisterDriver("default", NewDefaultDriver())
+	w.RegisterDriver("default", &DefaultDriver{
+		Vars:      a.variablesMap,
+		Env:       a.osEnv,
+		APIClient: a.apiClient,
+		Namespace: a.namespace,
+	})
 	w.SetDefaultDriver("default")
 
 	return w.Apply(a.parsed.PorterYAML)

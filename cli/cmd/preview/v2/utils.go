@@ -16,3 +16,16 @@ func randomString(length uint, charset string) string {
 	}
 	return string(b)
 }
+
+func oneOf[T string](elem T, vals ...T) bool {
+	found := false
+
+	for _, v := range vals {
+		if v == elem {
+			found = true
+			break
+		}
+	}
+
+	return found
+}

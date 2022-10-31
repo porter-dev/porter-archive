@@ -121,11 +121,11 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
               namespace,
               revision: events[0]?.revision,
               start_range: dayjs(events[0]?.last_seen)
-                .subtract(14, "day")
                 .toISOString(),
-              end_range: dayjs(events[0]?.last_seen).toISOString(),
+              end_range: dayjs(events[0]?.last_seen).add(14, 'day').toISOString(),
               limit: 100,
-              direction: Direction.backward,
+              direction: Direction.forward,
+              search_param: '',
             },
             {
               cluster_id: currentCluster.id,
@@ -135,7 +135,7 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
           .then((res) => {
             const logs = parseLogs(
               res.data.logs?.filter(Boolean).map((logLine: any) => logLine.line)
-            ).reverse();
+            );
             setLogs(logs);
           });
 

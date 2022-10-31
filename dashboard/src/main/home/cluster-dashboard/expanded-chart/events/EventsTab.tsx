@@ -20,18 +20,57 @@ const EventsTab: React.FC<Props> = ({
   overridingJobName,
 }) => {
   const [hasPorterAgent, setHasPorterAgent] = useState(true);
+  const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
   const { currentProject, currentCluster } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // determine if the agent is installed properly - if not, start by render upgrade screen
+    checkForAgent();
+  }, []);
+
+  useEffect(() => {
+    if (!isPorterAgentInstalling) {
+      return;
+    }
+
+    const checkForAgentInterval = setInterval(checkForAgent, 3000);
+
+    return () => clearInterval(checkForAgentInterval);
+  }, [isPorterAgentInstalling]);
+
+  const checkForAgent = () => {
     const project_id = currentProject?.id;
     const cluster_id = currentCluster?.id;
 
-    // determine if the agent is installed properly - if not, render upgrade screen
     api
       .detectPorterAgent("<token>", {}, { project_id, cluster_id })
       .then((res) => {
-        console.log(res.data);
+        if (res.data?.version != "v3") {
+          setHasPorterAgent(false);
+        } else {
+          // next, check whether events can be queried - if they can, we're good to go
+          let filters: any = getFilters();
+
+          let apiQuery = api.listPorterEvents;
+
+          if (filters.job_name) {
+            apiQuery = api.listPorterJobEvents;
+          }
+
+          apiQuery("<token>", filters, {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+          })
+            .then((res) => {
+              setHasPorterAgent(true);
+              setIsPorterAgentInstalling(false);
+            })
+            .catch((err) => {
+              // do nothing - this is expected while installing
+            });
+        }
+
         setIsLoading(false);
       })
       .catch((err) => {
@@ -40,18 +79,19 @@ const EventsTab: React.FC<Props> = ({
           setIsLoading(false);
         }
       });
-  }, []);
+  };
 
   const installAgent = async () => {
     const project_id = currentProject?.id;
     const cluster_id = currentCluster?.id;
 
+    setIsPorterAgentInstalling(true);
+
     api
       .installPorterAgent("<token>", {}, { project_id, cluster_id })
-      .then(() => {
-        setHasPorterAgent(true);
-      })
+      .then()
       .catch((err) => {
+        setIsPorterAgentInstalling(false);
         console.log(err);
       });
   };
@@ -74,6 +114,14 @@ const EventsTab: React.FC<Props> = ({
       release_namespace: currentChart.namespace,
     };
   };
+
+  if (isPorterAgentInstalling) {
+    return (
+      <Placeholder>
+        <Header>Installing agent...</Header>
+      </Placeholder>
+    );
+  }
 
   if (isLoading) {
     return (

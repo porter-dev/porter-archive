@@ -120,11 +120,11 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
               pod_selector: events[0]?.pod_name,
               namespace,
               revision: events[0]?.revision,
-              start_range: dayjs(events[0]?.last_seen)
+              start_range: dayjs(events[0]?.updated_at).subtract(14, 'day')
                 .toISOString(),
-              end_range: dayjs(events[0]?.last_seen).add(14, 'day').toISOString(),
+              end_range: dayjs(events[0]?.updated_at).toISOString(),
               limit: 100,
-              direction: Direction.forward,
+              direction: Direction.backward,
               search_param: '',
             },
             {
@@ -134,7 +134,7 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
           )
           .then((res) => {
             const logs = parseLogs(
-              res.data.logs?.filter(Boolean).map((logLine: any) => logLine.line)
+              res.data.logs?.filter(Boolean).map((logLine: any) => logLine.line).reverse()
             );
             setLogs(logs);
           });

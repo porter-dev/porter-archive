@@ -53,14 +53,14 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = checkAndDeleteOlderAgent(k8sAgent)
+	helmAgent, err := c.GetHelmAgent(r, cluster, "porter-agent-system")
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, "porter-agent-system")
+	err = checkAndDeleteOlderAgent(k8sAgent, helmAgent)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -157,7 +157,7 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
-func checkAndDeleteOlderAgent(k8sAgent *kubernetes.Agent) error {
+func checkAndDeleteOlderAgent(k8sAgent *kubernetes.Agent, helmAgent *helm.Agent) error {
 	namespaceList, err := k8sAgent.Clientset.CoreV1().Namespaces().List(context.Background(), v1.ListOptions{})
 
 	if err != nil {
@@ -177,23 +177,17 @@ func checkAndDeleteOlderAgent(k8sAgent *kubernetes.Agent) error {
 		return nil
 	}
 
-	podList, err := k8sAgent.Clientset.CoreV1().Pods("porter-agent-system").List(context.Background(), v1.ListOptions{
-		LabelSelector: olderAgentLabel,
-	})
+	// detect if the `porter-agent` release is installed
+	helmRelease, err := helmAgent.GetRelease("porter-agent", 0, false)
 
-	if err != nil {
-		return fmt.Errorf("error listing pods for older porter-agent: %w", err)
+	if err != nil || helmRelease == nil {
+		return nil
 	}
 
-	if len(podList.Items) > 0 {
-		// older porter-agent exists, delete the entire namespace
-		err := k8sAgent.Clientset.CoreV1().Namespaces().Delete(
-			context.Background(), "porter-agent-system", v1.DeleteOptions{},
-		)
+	_, err = helmAgent.UninstallChart("porter-agent")
 
-		if err != nil {
-			return fmt.Errorf("error deleting older porter-agent's namespace: %w", err)
-		}
+	if err != nil {
+		return err
 	}
 
 	return nil

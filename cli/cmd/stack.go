@@ -26,7 +26,7 @@ var stackEnvGroupCmd = &cobra.Command{
 	Aliases: []string{"eg", "envgroup", "env-groups", "envgroups"},
 	Short:   "Commands to add or remove an env group in a stack",
 	Run: func(cmd *cobra.Command, args []string) {
-		color.New(color.FgRed).Println("need to specify an operation to continue")
+		color.New(color.FgRed).Fprintln(os.Stderr, "need to specify an operation to continue")
 	},
 }
 

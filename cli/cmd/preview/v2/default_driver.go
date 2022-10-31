@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cli/cli/git"
+	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
 	api "github.com/porter-dev/porter/api/client"
 	apiTypes "github.com/porter-dev/porter/api/types"
@@ -41,7 +43,7 @@ func (d *DefaultDriver) PostApply(resource *types.YAMLNode[*types.Resource]) err
 	return nil
 }
 
-func (d *DefaultDriver) OnError(resource *types.YAMLNode[*types.Resource], err error) {
+func (d *DefaultDriver) OnError(resource *types.YAMLNode[*types.Resource], errs []error) {
 
 }
 
@@ -156,17 +158,22 @@ func (d *DefaultDriver) applyJob(
 		})
 	}
 
+	tag := getImageTag()
+
 	sharedOpts := &deploy.SharedOpts{
 		ProjectID:       config.GetCLIConfig().Project,
 		ClusterID:       config.GetCLIConfig().Cluster,
 		Namespace:       d.Namespace,
 		LocalPath:       buildConfig.Context.GetValue(),
 		LocalDockerfile: buildConfig.Dockerfile.GetValue(),
-		// OverrideTag
-		Method:        deploy.DeployBuildType(buildConfig.Method.GetValue()),
-		AdditionalEnv: flattenedBuildEnv,
-		EnvGroups:     flattenedBuildEnvGroup,
-		// UseCache
+		OverrideTag:     tag,
+		Method:          deploy.DeployBuildType(buildConfig.Method.GetValue()),
+		AdditionalEnv:   flattenedBuildEnv,
+		EnvGroups:       flattenedBuildEnvGroup,
+	}
+
+	if buildConfig.Method.GetValue() == "pack" && buildConfig.UseCache != nil {
+		sharedOpts.UseCache = buildConfig.UseCache.GetValue()
 	}
 
 	if exists {
@@ -248,14 +255,36 @@ func (d *DefaultDriver) applyJob(
 			}
 		}
 
+		var registryURL string
+
+		if buildConfig.ImageRepoURI != nil {
+			registryURL = buildConfig.ImageRepoURI.GetValue()
+		}
+
+		if registryURL == "" {
+			regList, err := d.APIClient.ListRegistries(context.Background(), config.GetCLIConfig().Project)
+
+			if err != nil {
+				return fmt.Errorf("error fetching list of registries while trying to choose registry to deploy new"+
+					" image for app '%s': %w", resource.GetValue().Name.GetValue(), err)
+			}
+
+			if len(*regList) == 0 {
+				return fmt.Errorf("no registries linked with project, needed to deploy new image for app '%s'",
+					resource.GetValue().Name.GetValue())
+			} else {
+				registryURL = (*regList)[0].URL
+			}
+		}
+
 		createAgent := &deploy.CreateAgent{
 			Client: d.APIClient,
 			CreateOpts: &deploy.CreateOpts{
 				SharedOpts:  sharedOpts,
 				Kind:        resource.GetValue().Type.GetValue(),
 				ReleaseName: resource.GetValue().Name.GetValue(),
-				// RegistryURL: registryURL, // FIXME: best way to get this ??
-				RepoSuffix: repoSuffix,
+				RegistryURL: registryURL,
+				RepoSuffix:  repoSuffix,
 			},
 		}
 
@@ -313,4 +342,34 @@ func (d *DefaultDriver) applyJob(
 	}
 
 	return nil
+}
+
+// fetching the image tag works in 3 steps
+//   - read PORTER_TAG env var
+//   - read the git SHA from the current directory
+//   - default to 'latest' tag
+func getImageTag() string {
+	tag := os.Getenv("PORTER_TAG")
+
+	if tag == "" {
+		commit, err := git.LastCommit()
+
+		if err == nil {
+			tag = commit.Sha[:7]
+
+			color.New(color.FgBlue).Printf("[porter.yaml v2] PORTER_TAG not defined, falling back to image tag '%s'"+
+				" from git SHA\n", tag)
+		}
+	} else {
+		color.New(color.FgBlue).Printf("[porter.yaml v2] Using image tag '%s' from PORTER_TAG environment variable\n", tag)
+	}
+
+	if tag == "" {
+		color.New(color.FgBlue).Println("[porter.yaml v2] PORTER_TAG not defined, not a git repository, falling back" +
+			" to image tag 'latest'")
+
+		tag = "latest"
+	}
+
+	return tag
 }

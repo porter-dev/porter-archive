@@ -1739,6 +1739,8 @@ github.com/porter-dev/switchboard/v2 v2.0.0-20221028153033-aaeedd2d3fd6 h1:lHCsf
 github.com/porter-dev/switchboard/v2 v2.0.0-20221028153033-aaeedd2d3fd6/go.mod h1:I/oKy2BmfIVtirJXM28W76Yqih0lR8EiaZ4lE5E5lY0=
 github.com/porter-dev/switchboard/v2 v2.0.0-20221028173223-eb997250587e h1:LAaLwk/lMhTxJ55Xc5Pw/dMDyRTPhliWAI8K6SvgBWI=
 github.com/porter-dev/switchboard/v2 v2.0.0-20221028173223-eb997250587e/go.mod h1:I/oKy2BmfIVtirJXM28W76Yqih0lR8EiaZ4lE5E5lY0=
+github.com/porter-dev/switchboard/v2 v2.0.0-20221031143408-859328434249 h1:om6giTswo2FCsL9FuMVxvMp+Kum/kWYIIM1gvbinZbg=
+github.com/porter-dev/switchboard/v2 v2.0.0-20221031143408-859328434249/go.mod h1:I/oKy2BmfIVtirJXM28W76Yqih0lR8EiaZ4lE5E5lY0=
 github.com/porter-dev/switchboard/v2 v2.0.0 h1:mg4c6mMHFNFBgprcac7ZcPxTPJeqZtfmH1O6pPt1h3U=
 github.com/porter-dev/switchboard/v2 v2.0.0/go.mod h1:I/oKy2BmfIVtirJXM28W76Yqih0lR8EiaZ4lE5E5lY0=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=

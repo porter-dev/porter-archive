@@ -120,12 +120,13 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
               pod_selector: events[0]?.pod_name,
               namespace,
               revision: events[0]?.revision,
-              start_range: dayjs(events[0]?.updated_at).subtract(14, 'day')
+              start_range: dayjs(events[0]?.updated_at)
+                .subtract(14, "day")
                 .toISOString(),
               end_range: dayjs(events[0]?.updated_at).toISOString(),
               limit: 100,
               direction: Direction.backward,
-              search_param: '',
+              search_param: "",
             },
             {
               cluster_id: currentCluster.id,
@@ -134,7 +135,10 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
           )
           .then((res) => {
             const logs = parseLogs(
-              res.data.logs?.filter(Boolean).map((logLine: any) => logLine.line).reverse()
+              res.data.logs
+                ?.filter(Boolean)
+                .map((logLine: any) => logLine.line)
+                .reverse()
             );
             setLogs(logs);
           });
@@ -156,6 +160,18 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
         </Message>
         {logs.length ? (
           <LogsSectionWrapper>
+            <ViewLogsWrapper>
+              <DocsLink
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  redirectToLogs(expandedEvent);
+                }}
+              >
+                View logs
+                <i className="material-icons">open_in_new</i>{" "}
+              </DocsLink>
+            </ViewLogsWrapper>
             <StyledLogsSection>
               {logs?.map((log, i) => {
                 return (
@@ -641,4 +657,11 @@ const LogInnerSpan = styled.span`
     props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
   background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
     props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
+`;
+
+export const ViewLogsWrapper = styled.div`
+  top: 10px;
+  right: 10px;
+  position: absolute;
+  z-index: 999;
 `;

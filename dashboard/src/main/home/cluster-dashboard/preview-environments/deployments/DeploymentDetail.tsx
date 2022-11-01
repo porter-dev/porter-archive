@@ -13,7 +13,6 @@ import ChartList from "../../chart/ChartList";
 import github from "assets/github-white.png";
 import { integrationList } from "shared/common";
 import { capitalize } from "shared/string_utils";
-import leftArrow from "assets/left-arrow.svg";
 import Banner from "components/Banner";
 import Modal from "main/home/modals/Modal";
 import { validatePorterYAML } from "../utils";
@@ -129,10 +128,15 @@ const DeploymentDetail = () => {
       </BreadcrumbRow>
       <StyledExpandedChart>
         <HeaderWrapper>
-          <Title 
-            icon={pr_icon} 
+          <Title
+            icon={pr_icon}
             iconWidth="25px"
-            onClick={() => window.open(`https://github.com/${repository}/pull/${prDeployment.pull_request_id}`, '_blank')}
+            onClick={() =>
+              window.open(
+                `https://github.com/${repository}/pull/${prDeployment.pull_request_id}`,
+                "_blank"
+              )
+            }
           >
             {prDeployment.gh_pr_name}
           </Title>
@@ -168,19 +172,9 @@ const DeploymentDetail = () => {
               {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
             </DeploymentImageContainer>
             <Dot>•</Dot>
-            <GHALink
-              to={`https://github.com/${repository}/pull/${prDeployment.pull_request_id}`}
-              target="_blank"
-            >
-              <img src={github} /> View last workflow run
-              <i className="material-icons">open_in_new</i>
-            </GHALink>
             {prDeployment.last_workflow_run_url ? (
               <GHALink to={prDeployment.last_workflow_run_url} target="_blank">
-                <span className="material-icons-outlined">
-                  play_circle_outline
-                </span>
-                Last workflow run
+                <img src={github} /> View last workflow run
                 <i className="material-icons">open_in_new</i>
               </GHALink>
             ) : null}

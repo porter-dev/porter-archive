@@ -38,7 +38,7 @@ const StyledBanner = styled.div<{ color?: string }>`
   display: flex;
   border: 1px solid ${(props) => props.color || "#ffffff00"};
   border-radius: 8px;
-  padding-left: 14px;
+  padding-inline: 14px;
   color: ${(props) => props.color || "#ffffff"};
   align-items: center;
   background: #ffffff11;

@@ -91,6 +91,9 @@ export const useRouting = () => {
   const history = useHistory();
 
   return {
+    push(path: string, state?: any) {
+      history.push(path, state);
+    },
     pushQueryParams: (
       params: { [key: string]: unknown },
       removedParams?: string[]

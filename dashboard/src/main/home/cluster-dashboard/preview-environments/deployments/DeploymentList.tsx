@@ -26,6 +26,7 @@ const AvailableStatusFilters = ["all", "created", "failed", "not_deployed"];
 
 type AvailableStatusFiltersType = typeof AvailableStatusFilters[number];
 
+
 const HARD_CODED_DEPLOYMENTS: PRDeployment[] = [
   {
     id: 1,
@@ -71,9 +72,9 @@ const DeploymentList = () => {
   const [sortOrder, setSortOrder] = useState("Newest");
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [deploymentList, setDeploymentList] = useState<PRDeployment[]>(
-    HARD_CODED_DEPLOYMENTS
-  );
+  const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([
+    ...HARD_CODED_DEPLOYMENTS
+  ]);
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [searchValue, setSearchValue] = useState("");
   const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
@@ -87,7 +88,9 @@ const DeploymentList = () => {
     setStatusSelectorVal,
   ] = useState<AvailableStatusFiltersType>("all");
 
-  const { currentProject, currentCluster } = useContext(Context);
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
   const { getQueryParam, pushQueryParams } = useRouting();
   const location = useLocation();
   const history = useHistory();
@@ -169,9 +172,7 @@ const DeploymentList = () => {
           }
 
           setPorterYAMLErrors(porterYAMLErrors);
-          setDeploymentList(
-            deploymentList.deployments || HARD_CODED_DEPLOYMENTS
-          );
+          setDeploymentList(deploymentList.deployments ?? HARD_CODED_DEPLOYMENTS);
           setPullRequests(deploymentList.pull_requests || []);
 
           setNewCommentsDisabled(
@@ -181,8 +182,9 @@ const DeploymentList = () => {
           setIsLoading(false);
         }
       )
-      .catch(() => {
-        setDeploymentList(HARD_CODED_DEPLOYMENTS);
+      .catch((err) => {
+        setDeploymentList([]);
+        setCurrentError(err);
       });
 
     return () => {
@@ -205,19 +207,6 @@ const DeploymentList = () => {
       console.error(error);
     }
     setIsLoading(false);
-  };
-
-  const handlePreviewEnvironmentManualCreation = (pullRequest: PullRequest) => {
-    setPullRequests((prev) => {
-      return prev.filter((pr) => {
-        return (
-          pr.pr_title === pullRequest.pr_title &&
-          `${pr.repo_owner}/${pr.repo_name}` ===
-            `${pullRequest.repo_owner}/${pullRequest.repo_name}`
-        );
-      });
-    });
-    handleRefresh();
   };
 
   const searchFilter = (value: string | number) => {
@@ -289,16 +278,6 @@ const DeploymentList = () => {
 
     return (
       <>
-        {/* Deprecated -> New Preview Env button */}
-        {/* {filteredPullRequests.map((pr) => {
-          return (
-            <PullRequestCard
-              key={pr.pr_title}
-              pullRequest={pr}
-              onCreation={handlePreviewEnvironmentManualCreation}
-            />
-          );
-        })} */}
         {filteredDeployments.map((d: any) => {
           return (
             <DeploymentCard
@@ -394,44 +373,6 @@ const DeploymentList = () => {
           </LinkButton>
         </Banner>
       ) : null}
-      {/* <Flex>
-        <ActionsWrapper>
-          <StyledStatusSelector>
-            <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
-              <i className="material-icons">refresh</i>
-            </RefreshButton>
-            <SearchRow>
-              <i className="material-icons">search</i>
-              <SearchInput
-                value={searchValue}
-                onChange={(e: any) => {
-                  setSearchValue(e.target.value);
-                }}
-                placeholder="Search"
-              />
-            </SearchRow>
-            <Selector
-              activeValue={statusSelectorVal}
-              setActiveValue={handleStatusFilterChange}
-              options={[
-                {
-                  value: "active",
-                  label: "Active",
-                },
-                {
-                  value: "inactive",
-                  label: "Inactive",
-                },
-              ]}
-              dropdownLabel="Status"
-              width="150px"
-              dropdownWidth="230px"
-              closeOverlay={true}
-            />
-            <EnvironmentSettings environmentId={environment_id} />
-          </StyledStatusSelector>
-        </ActionsWrapper>
-      </Flex> */}
       <FlexRow>
         <Flex>
           <SearchRowWrapper>
@@ -584,41 +525,6 @@ const Flex = styled.div`
   align-items: center;
 `;
 
-const Div = styled.div`
-  margin-bottom: -7px;
-`;
-
-const FlexWrap = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const BackButton = styled(DynamicLink)`
-  cursor: pointer;
-  font-size: 24px;
-  color: #969fbbaa;
-  padding: 3px;
-  border-radius: 100px;
-  :hover {
-    background: #ffffff11;
-  }
-`;
-
-const Icon = styled.img`
-  width: 25px;
-  height: 25px;
-  margin-right: 6px;
-`;
-
-const Title = styled.div`
-  font-size: 20px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  margin-left: 10px;
-  border-radius: 2px;
-  color: #ffffff;
-`;
-
 const RefreshButton = styled.button`
   display: flex;
   align-items: center;
@@ -650,15 +556,6 @@ const EventsGrid = styled.div`
   display: grid;
   grid-row-gap: 20px;
   grid-template-columns: 1;
-`;
-
-const StyledStatusSelector = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  :not(:first-child) {
-    margin-left: 15px;
-  }
 `;
 
 const SearchInput = styled.input`

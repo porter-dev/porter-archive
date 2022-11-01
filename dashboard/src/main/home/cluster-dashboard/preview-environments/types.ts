@@ -40,7 +40,7 @@ export type Environment = {
   git_repo_owner: string;
   git_repo_name: string;
   git_repo_branches: string[];
-  disable_new_comments: boolean;
+  new_comments_disabled: boolean;
   last_deployment_status: DeploymentStatusUnion;
   deployment_count: number;
   mode: EnvironmentDeploymentMode;

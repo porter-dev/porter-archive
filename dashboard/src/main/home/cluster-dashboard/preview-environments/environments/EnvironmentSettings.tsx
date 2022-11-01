@@ -1,6 +1,6 @@
 import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useParams } from "react-router";
@@ -14,17 +14,15 @@ import SaveButton from "components/SaveButton";
 import _ from "lodash";
 import { Context } from "shared/Context";
 import PageNotFound from "components/PageNotFound";
+import Banner from "components/Banner";
+import InputRow from "components/form-components/InputRow";
+import Modal from "main/home/modals/Modal";
+import { useRouting } from "shared/routing";
 
-/**
- * 
- * TODO Soham:
- * 
- * - Handle errors when fetching environments
- * - Handle errors when the environment is not found
- * - Handle errors on saving and deleting the environment
- */
-const EnvironmentSettings: React.FC = () => {
-  const [error, setError] = useState("");
+const EnvironmentSettings = () => {
+  const router = useRouting();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmationPrompt, setDeleteConfirmationPrompt] = useState("");
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
@@ -60,7 +58,7 @@ const EnvironmentSettings: React.FC = () => {
       );
 
       setEnvironment(environment);
-      setNewCommentsDisabled(environment.disable_new_comments);
+      setNewCommentsDisabled(environment.new_comments_disabled);
       setDeploymentMode(environment.mode);
     };
 
@@ -95,8 +93,56 @@ const EnvironmentSettings: React.FC = () => {
     setSaveStatus("");
   };
 
+  const closeDeleteConfirmationModal = () => {
+    setShowDeleteModal(false);
+    setDeleteConfirmationPrompt("");
+  };
+
+  const canDelete = useMemo(() => {
+    return deleteConfirmationPrompt === `${repoOwner}/${repoName}`;
+  }, [deleteConfirmationPrompt]);
+
+  const handleDelete = async () => {
+    if (!canDelete) {
+      return;
+    }
+
+    try {
+      await api.deleteEnvironment(
+        "<token>",
+        {
+          name: environment?.name,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          git_installation_id: environment?.git_installation_id,
+          git_repo_owner: repoOwner,
+          git_repo_name: repoName,
+        }
+      );
+
+      closeDeleteConfirmationModal();
+      router.push(`/preview-environments`);
+    } catch (err) {
+      setCurrentError(JSON.stringify(err));
+      closeDeleteConfirmationModal();
+    }
+  };
+
   return (
     <>
+      {showDeleteModal ? (
+        <DeletePreviewEnvironmentModal
+          repoOwner={repoOwner}
+          repoName={repoName}
+          onClose={closeDeleteConfirmationModal}
+          prompt={deleteConfirmationPrompt}
+          setPrompt={setDeleteConfirmationPrompt}
+          onDelete={handleDelete}
+          disabled={!canDelete}
+        />
+      ) : null}
       <BreadcrumbRow>
         <Breadcrumb to={`/preview-environments/deployments/settings`}>
           <ArrowIcon src={PullRequestIcon} />
@@ -156,7 +202,12 @@ const EnvironmentSettings: React.FC = () => {
           Delete the Porter preview environment integration for this repo. All
           preview deployments will also be destroyed.
         </Helper>
-        <DeleteButton disabled={saveStatus === "loading"} onClick={_.noop}>
+        <DeleteButton
+          disabled={saveStatus === "loading"}
+          onClick={() => {
+            setShowDeleteModal(true);
+          }}
+        >
           Delete preview environment
         </DeleteButton>
       </StyledPlaceholder>
@@ -164,37 +215,92 @@ const EnvironmentSettings: React.FC = () => {
   );
 };
 
+interface DeletePreviewEnvironmentModalProps {
+  repoName: string;
+  repoOwner: string;
+  prompt: string;
+  setPrompt: (prompt: string) => void;
+  onDelete: () => void;
+  onClose: () => void;
+  disabled: boolean;
+}
+
+const DeletePreviewEnvironmentModal = (
+  props: DeletePreviewEnvironmentModalProps
+) => {
+  return (
+    <Modal
+      height="fit-content"
+      title={`Remove Preview Envs for ${props.repoOwner}/${props.repoName}`}
+      onRequestClose={props.onClose}
+    >
+      <DeletePreviewEnvironmentModalContentsWrapper>
+        <Banner type="warning">
+          All Preview Environment deployments associated with this repo will be
+          deleted.
+        </Banner>
+        <InputRow
+          type="text"
+          label={`Enter ${props.repoOwner}/${props.repoName} to delete Preview Environments:`}
+          value={props.prompt}
+          placeholder={`${props.repoOwner}/${props.repoName}`}
+          setValue={(x: string) => props.setPrompt(x)}
+          width={"500px"}
+        />
+        <Flex justifyContent="center" alignItems="center">
+          <DeleteButton
+            onClick={() => props.onDelete()}
+            disabled={props.disabled}
+          >
+            Delete
+          </DeleteButton>
+        </Flex>
+      </DeletePreviewEnvironmentModalContentsWrapper>
+    </Modal>
+  );
+};
+
 export default EnvironmentSettings;
+
+const DeletePreviewEnvironmentModalContentsWrapper = styled.div`
+  margin-block-start: 25px;
+`;
 
 const SavePreviewEnvironmentSettings = styled(SaveButton)`
   margin-top: 30px;
 `;
 
-const DeleteButton = styled.button`
-  height: 30px;
+const Flex = styled.div<{
+  justifyContent?: string;
+  alignItems?: string;
+}>`
+  display: flex;
+  align-items: ${({ alignItems }) => alignItems || "flex-start"};
+  justify-content: ${({ justifyContent }) => justifyContent || "flex-start"};
+`;
+
+const DeleteButton = styled.button<{ disabled?: boolean }>`
   font-size: 13px;
   font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: white;
   display: flex;
-  width: 210px;
   align-items: center;
-  padding: 0 15px;
+  padding: 10px 15px;
   margin-top: 20px;
   text-align: left;
   border-radius: 5px;
-  cursor: pointer;
   user-select: none;
-  :focus {
-    outline: 0;
-  }
-  :hover {
-    filter: brightness(120%);
-  }
   background: #b91133;
   border: none;
-  :hover {
-    filter: brightness(120%);
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+  filter: ${({ disabled }) => (disabled ? "brightness(0.8)" : "none")};
+
+  &:focus {
+    outline: 0;
+  }
+  &:hover {
+    filter: ${({ disabled }) => (disabled ? "brightness(0.8)" : "none")};
   }
 `;
 
@@ -253,67 +359,5 @@ const Breadcrumb = styled(DynamicLink)`
   cursor: pointer;
   :hover {
     background: #ffffff11;
-  }
-`;
-
-const Relative = styled.div`
-  position: relative;
-`;
-
-const EnvironmentsGrid = styled.div`
-  padding-bottom: 150px;
-  display: grid;
-  grid-row-gap: 15px;
-`;
-
-const ControlRow = styled.div`
-  display: flex;
-  margin-left: auto;
-  justify-content: space-between;
-  align-items: center;
-  margin: 35px 0 30px;
-  padding-left: 0px;
-`;
-
-const Button = styled(DynamicLink)`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  cursor: pointer;
-  font-family: "Work Sans", sans-serif;
-  border-radius: 20px;
-  color: white;
-  height: 35px;
-  padding: 0px 8px;
-  padding-bottom: 1px;
-  margin-right: 10px;
-  font-weight: 500;
-  padding-right: 15px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  cursor: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "not-allowed" : "pointer"};
-
-  background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "#aaaabbee" : "#616FEEcc"};
-  :hover {
-    background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
-  }
-
-  > i {
-    color: white;
-    width: 18px;
-    height: 18px;
-    font-weight: 600;
-    font-size: 12px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    margin-right: 5px;
-    justify-content: center;
   }
 `;

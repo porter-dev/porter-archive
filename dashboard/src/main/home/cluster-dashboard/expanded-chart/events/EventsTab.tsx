@@ -147,7 +147,11 @@ const EventsTab: React.FC<Props> = ({
 
   return (
     <EventsPageWrapper>
-      <EventList setLogData={setLogData} filters={getFilters()} />
+      <EventList
+        namespace={currentChart.namespace}
+        setLogData={setLogData}
+        filters={getFilters()}
+      />
     </EventsPageWrapper>
   );
 };

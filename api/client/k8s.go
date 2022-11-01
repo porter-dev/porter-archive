@@ -64,7 +64,7 @@ func (c *Client) GetKubeconfig(
 	resp := &types.GetTemporaryKubeconfigResponse{}
 
 	if localKubeconfigPath != "" {
-		color.New(color.FgBlue).Printf("using local kubeconfig: %s\n", localKubeconfigPath)
+		color.New(color.FgBlue).Fprintf(os.Stderr, "using local kubeconfig: %s\n", localKubeconfigPath)
 
 		if _, err := os.Stat(localKubeconfigPath); !os.IsNotExist(err) {
 			file, err := os.Open(localKubeconfigPath)
@@ -85,7 +85,7 @@ func (c *Client) GetKubeconfig(
 		}
 	}
 
-	color.New(color.FgBlue).Println("using remote kubeconfig")
+	color.New(color.FgBlue).Fprintln(os.Stderr, "using remote kubeconfig")
 
 	err := c.getRequest(
 		fmt.Sprintf(

@@ -56,7 +56,7 @@ prometheus:
     name: "prometheus.version"
 nginx_pod:
   kind: "pod"
-  overrideSeverity: "critical"
+  override_severity: "critical"
   match:
     namespace: ingress-nginx
     labels:
@@ -68,6 +68,7 @@ nginx_pod:
     name: "pod.running"
 prometheus_server_pod:
   kind: "pod"
+  override_severity: "critical"
   match:
     namespace: monitoring
     labels:
@@ -146,6 +147,7 @@ node:
 descheduler:
   kind: "helm_release"
   match:
+    kubernetes_service: eks
     name: descheduler
     namespace: kube-system
   mustExist: true
@@ -153,7 +155,38 @@ descheduler:
 vpa:
   kind: "helm_release"
   match:
+    kubernetes_service: eks
     name: vpa
     namespace: kube-system
   mustExist: true
   policies: []
+coredns:
+  kind: "pod"
+  match:
+    kubernetes_service: eks
+    namespace: kube-system
+    labels:
+      eks.amazonaws.com/component: "coredns"
+  policies:
+  - path: "./policies/pod/running.rego"
+    name: "pod.running"
+cluster_autoscaler:
+  kind: "pod"
+  match:
+    kubernetes_service: eks
+    namespace: kube-system
+    labels:
+      app.kubernetes.io/name: "aws-cluster-autoscaler"
+  policies:
+  - path: "./policies/pod/running.rego"
+    name: "pod.running"
+load_balancer_controller:
+  kind: "pod"
+  match:
+    kubernetes_service: eks
+    namespace: kube-system
+    labels:
+      app.kubernetes.io/name: "aws-load-balancer-controller"
+  policies:
+  - path: "./policies/pod/running.rego"
+    name: "pod.running"

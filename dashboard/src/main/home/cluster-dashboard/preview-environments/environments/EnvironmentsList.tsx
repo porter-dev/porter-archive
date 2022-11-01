@@ -10,45 +10,12 @@ import { Environment } from "../types";
 import EnvironmentCard from "./EnvironmentCard";
 import Placeholder from "components/Placeholder";
 
-const HARD_CODED_ENVS: Environment[] = [
-  {
-    id: 12,
-    project_id: 1234,
-    cluster_id: 4321,
-    git_installation_id: 55,
-    name: "asdf",
-    git_repo_owner: "owned",
-    git_repo_name: "this-is-a-repo",
-    last_deployment_status: "failed",
-    deployment_count: 12,
-    mode: "manual",
-    git_repo_branches: [],
-    disable_new_comments: true,
-  },
-  {
-    id: 13,
-    project_id: 1234,
-    cluster_id: 4321,
-    git_installation_id: 55,
-    name: "asdf",
-    git_repo_owner: "owned",
-    git_repo_name: "this-is-a-repo",
-    last_deployment_status: "failed",
-    deployment_count: 12,
-    mode: "manual",
-    git_repo_branches: [],
-    disable_new_comments: true,
-  },
-];
-
 const EnvironmentsList = () => {
   const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [buttonIsReady, setButtonIsReady] = useState(false);
 
-  const [environments, setEnvironments] = useState<Environment[]>(
-    HARD_CODED_ENVS
-  );
+  const [environments, setEnvironments] = useState<Environment[]>([]);
 
   const removeEnvironmentFromList = (deletedEnv: Environment) => {
     setEnvironments((prev) => {

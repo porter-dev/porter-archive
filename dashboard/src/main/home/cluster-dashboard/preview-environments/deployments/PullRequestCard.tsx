@@ -2,12 +2,10 @@ import React, { useState, useContext } from "react";
 import styled from "styled-components";
 import pr_icon from "assets/pull_request_icon.svg";
 import { PullRequest } from "../types";
-import { integrationList } from "shared/common";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { ActionButton } from "../components/ActionButton";
 import Loading from "components/Loading";
-import DynamicLink from "components/DynamicLink";
 import RecreateWorkflowFilesModal from "../components/RecreateWorkflowFilesModal";
 import { EllipsisTextWrapper, RepoLink } from "../components/styled";
 
@@ -191,37 +189,6 @@ const StatusDot = styled.div`
   background: #ffffff88;
   border-radius: 20px;
   margin-left: 3px;
-`;
-
-const DeploymentImageContainer = styled.div`
-  height: 20px;
-  font-size: 13px;
-  position: relative;
-  display: flex;
-  margin-left: 15px;
-  align-items: center;
-  font-weight: 400;
-  justify-content: center;
-  color: #ffffff66;
-  padding-left: 5px;
-`;
-
-const Icon = styled.img`
-  width: 100%;
-`;
-
-const DeploymentTypeIcon = styled(Icon)`
-  width: 20px;
-  margin-right: 10px;
-`;
-
-const RepositoryName = styled.div`
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 390px;
-  position: relative;
-  margin-right: 3px;
 `;
 
 const Tooltip = styled.div`

@@ -224,7 +224,7 @@ func (n *recommender) Run() error {
 			continue
 		}
 
-		runner := opa.NewRunner(n.policies, k8sAgent, dynamicClient)
+		runner := opa.NewRunner(n.policies, cluster, k8sAgent, dynamicClient)
 
 		queryResults, err := runner.GetRecommendations(n.categories)
 

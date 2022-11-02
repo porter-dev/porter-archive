@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/pkg/logger"
 	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,6 +27,7 @@ type KubernetesPolicies struct {
 type KubernetesOPARunner struct {
 	*KubernetesPolicies
 
+	cluster       *models.Cluster
 	k8sAgent      *kubernetes.Agent
 	dynamicClient dynamic.Interface
 }
@@ -48,11 +50,17 @@ type KubernetesOPAQueryCollection struct {
 }
 
 type MatchParameters struct {
+	// global cluster match parameters
+
+	// KubernetesService is a matching service kind, like `eks`
+	KubernetesService string `json:"kubernetes_service"`
+
+	// parameters for Helm releases
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
-
 	ChartName string `json:"chart_name"`
 
+	// generic labels parameter
 	Labels map[string]string `json:"labels"`
 
 	// parameters for CRDs
@@ -84,8 +92,8 @@ type rawQueryResult struct {
 	FailureMessage []string `mapstructure:"FAILURE_MESSAGE"`
 }
 
-func NewRunner(policies *KubernetesPolicies, k8sAgent *kubernetes.Agent, dynamicClient dynamic.Interface) *KubernetesOPARunner {
-	return &KubernetesOPARunner{policies, k8sAgent, dynamicClient}
+func NewRunner(policies *KubernetesPolicies, cluster *models.Cluster, k8sAgent *kubernetes.Agent, dynamicClient dynamic.Interface) *KubernetesOPARunner {
+	return &KubernetesOPARunner{policies, cluster, k8sAgent, dynamicClient}
 }
 
 func (runner *KubernetesOPARunner) GetRecommendations(categories []string) ([]*OPARecommenderQueryResult, error) {
@@ -115,6 +123,12 @@ func (runner *KubernetesOPARunner) GetRecommendations(categories []string) ([]*O
 
 			var currResults []*OPARecommenderQueryResult
 			var err error
+
+			// look at global match parameters
+			if s := queryCollection.Match.KubernetesService; s != "" && strings.ToLower(string(runner.cluster.ToClusterType().Service)) != s {
+				fmt.Printf("skipping %s as it does not match the cluster service", name)
+				continue
+			}
 
 			switch queryCollection.Kind {
 			case HelmRelease:

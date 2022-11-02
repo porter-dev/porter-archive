@@ -408,6 +408,16 @@ tabs:
           value: c6i.xlarge
         - label: c6i.2xlarge
           value: c6i.2xlarge
+        - label: c6i.4xlarge
+          value: c6i.4xlarge
+        - label: m6i.large
+          value: m6i.large
+        - label: m6i.xlarge
+          value: m6i.xlarge
+        - label: m6i.2xlarge
+          value: m6i.2xlarge
+        - label: m6i.4xlarge
+          value: m6i.4xlarge
         - label: r5.large
           value: r5.large
         - value: r5.xlarge
@@ -426,7 +436,7 @@ tabs:
       label: EKS control plane version
       variable: cluster_version
       settings:
-        default: "1.20"
+        default: "1.22"
         options:
         - label: "1.20"
           value: "1.20"
@@ -506,6 +516,16 @@ tabs:
           value: c6i.xlarge
         - label: c6i.2xlarge
           value: c6i.2xlarge
+        - label: c6i.4xlarge
+          value: c6i.4xlarge
+        - label: m6i.large
+          value: m6i.large
+        - label: m6i.xlarge
+          value: m6i.xlarge
+        - label: m6i.2xlarge
+          value: m6i.2xlarge
+        - label: m6i.4xlarge
+          value: m6i.4xlarge
     - type: number-input
       label: Minimum number of EC2 instances to create in the application autoscaling group.
       variable: additional_nodegroup_min_instances
@@ -584,8 +604,14 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c6i.large
+          value: c6i.large
+        - label: c6i.xlarge
+          value: c6i.xlarge
         - label: c6i.2xlarge
           value: c6i.2xlarge
+        - label: c6i.4xlarge
+          value: c6i.4xlarge
   - name: spot_instance_should_enable
     contents:
     - type: heading

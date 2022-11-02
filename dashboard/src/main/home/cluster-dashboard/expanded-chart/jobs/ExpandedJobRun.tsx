@@ -14,9 +14,11 @@ import DeploymentType from "../DeploymentType";
 import JobMetricsSection from "../metrics/JobMetricsSection";
 import Logs from "../status/Logs";
 import { useRouting } from "shared/routing";
-import Banner from "components/Banner";
 import LogsSection from "../logs-section/LogsSection";
 import EventsTab from "../events/EventsTab";
+import { getPodStatus } from "../deploy-status-section/util";
+import { capitalize } from "shared/string_utils";
+import { usePods } from "shared/hooks/usePods";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -51,17 +53,74 @@ const getLatestPod = (pods: any[]) => {
     .shift();
 };
 
-const renderStatus = (job: any, time: string) => {
+export const isRunning = (deleting: boolean, job: any, pod: any) => {
+  if (deleting) {
+    return false;
+  }
+
   if (job.status?.succeeded >= 1) {
-    return <Status color="#38a88a">Succeeded {time}</Status>;
+    return false;
+  }
+
+  if (job.status?.conditions) {
+    if (job.status?.conditions[0]?.reason == "DeadlineExceeded") {
+      return false;
+    }
+  }
+
+  if (job.status?.failed >= 1) {
+    return false;
+  }
+
+  if (job.status?.active >= 1) {
+    // determine the status from the pod
+    return pod ? pod.status.startTime : false;
+  }
+
+  return true;
+};
+
+export const renderStatus = (
+  deleting: boolean,
+  job: any,
+  pod: any,
+  time?: string
+) => {
+  if (deleting) {
+    return <Status color="#cc3d42">Deleting</Status>;
+  }
+
+  if (job.status?.succeeded >= 1) {
+    if (time) {
+      return <Status color="#38a88a">Succeeded at {time}</Status>;
+    }
+
+    return <Status color="#38a88a">Succeeded</Status>;
+  }
+
+  if (job.status?.conditions) {
+    if (job.status?.conditions[0]?.reason == "DeadlineExceeded") {
+      return <Status color="#cc3d42">Timed Out</Status>;
+    }
   }
 
   if (job.status?.failed >= 1) {
     return <Status color="#cc3d42">Failed</Status>;
   }
 
+  if (job.status?.active >= 1) {
+    // determine the status from the pod
+    return pod ? (
+      <Status color="#ffffff11">{capitalize(getPodStatus(pod?.status))}</Status>
+    ) : (
+      <Status color="#ffffff11">Running</Status>
+    );
+  }
+
   return <Status color="#ffffff11">Running</Status>;
 };
+
+type ExpandedJobRunTabs = "events" | "logs" | "metrics" | "config" | string;
 
 const ExpandedJobRun = ({
   currentChart,
@@ -75,43 +134,24 @@ const ExpandedJobRun = ({
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
-  const [currentTab, setCurrentTab] = useState<
-    "events" | "logs" | "metrics" | "config" | string
-  >(currentCluster.agent_integration_enabled ? "events" : "logs");
-  const [pods, setPods] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [currentTab, setCurrentTab] = useState<ExpandedJobRunTabs>(
+    currentCluster.agent_integration_enabled ? "events" : "logs"
+  );
   const { pushQueryParams } = useRouting();
   const [useDeprecatedLogs, setUseDeprecatedLogs] = useState(false);
 
+  const [pods, isLoading] = usePods({
+    project_id: currentProject.id,
+    cluster_id: currentCluster.id,
+    namespace: jobRun.metadata?.namespace,
+    selectors: [`job-name=${jobRun.metadata?.name}`],
+    controller_kind: "job",
+    controller_name: jobRun.metadata?.name,
+    subscribed: true,
+  });
+
   let chart = currentChart;
   let run = jobRun;
-
-  useEffect(() => {
-    let isSubscribed = true;
-    setIsLoading(true);
-    api
-      .getJobPods(
-        "<token>",
-        {},
-        {
-          id: currentProject.id,
-          name: jobRun.metadata?.name,
-          cluster_id: currentCluster.id,
-          namespace: jobRun.metadata?.namespace,
-        }
-      )
-      .then((res) => {
-        if (isSubscribed) {
-          setPods(res.data);
-          setIsLoading(false);
-        }
-      })
-      .catch((err) => setCurrentError(JSON.stringify(err)));
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [jobRun]);
 
   useEffect(() => {
     return () => {
@@ -171,6 +211,7 @@ const ExpandedJobRun = ({
       <EventsTab
         currentChart={currentChart}
         overridingJobName={jobRun.metadata?.name}
+        setLogData={() => setCurrentTab("logs")}
       />
     );
   };
@@ -205,7 +246,6 @@ const ExpandedJobRun = ({
           isFullscreen={false}
           setIsFullscreen={() => {}}
           overridingPodName={pods[0]?.metadata?.name || jobRun.metadata?.name}
-          setInitData={() => {}}
           currentChart={currentChart}
         />
       </JobLogsWrapper>
@@ -255,7 +295,9 @@ const ExpandedJobRun = ({
         <InfoWrapper>
           <LastDeployed>
             {renderStatus(
+              false,
               run,
+              pods[0],
               run.status.completionTime
                 ? readableDate(run.status.completionTime)
                 : ""
@@ -270,7 +312,9 @@ const ExpandedJobRun = ({
       <BodyWrapper>
         <TabRegion
           currentTab={currentTab}
-          setCurrentTab={(x: string) => setCurrentTab(x)}
+          setCurrentTab={(newTab: string) => {
+            setCurrentTab(newTab);
+          }}
           options={options}
         >
           {currentTab === "events" && renderEventsSection()}

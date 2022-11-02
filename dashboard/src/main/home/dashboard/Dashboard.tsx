@@ -115,24 +115,20 @@ class Dashboard extends Component<PropsType, StateType> {
       );
     } else if (this.currentTab() === "create-cluster") {
       let helperText = "Create a cluster to link to this project";
-      let helperIcon = "info";
-      let helperColor = "white";
+      let helperType = "info";
       if (
-        this.context.hasBillingEnabled &&
-        this.context.usage.current.clusters !== 0 &&
-        this.context.usage.current.clusters >= this.context.usage.limit.clusters
+        true
       ) {
         helperText =
           "You need to update your billing to provision or connect a new cluster";
-        helperIcon = "warning";
-        helperColor = "#f5cb42";
+        helperType = "warning";
       }
       return (
         <>
-          <Banner color={helperColor}>
-            <i className="material-icons">{helperIcon}</i>
+          <Banner type={helperType} noMargin>
             {helperText}
           </Banner>
+          <Br />
           <ProvisionerSettings infras={this.state.infras} provisioner={true} />
         </>
       );

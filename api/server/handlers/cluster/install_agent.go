@@ -53,14 +53,14 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = checkAndDeleteOlderAgent(k8sAgent)
+	helmAgent, err := c.GetHelmAgent(r, cluster, "porter-agent-system")
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, "porter-agent-system")
+	err = checkAndDeleteOlderAgent(k8sAgent, helmAgent)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -97,24 +97,8 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	lokiValues := make(map[string]interface{})
-
-	// case on whether a node with porter.run/workload-kind=monitoring exists. If it does, we place loki in that node group.
-	if nodes, err := nodes.ListNodesByLabels(k8sAgent.Clientset, "porter.run/workload-kind=monitoring"); err == nil && len(nodes) >= 1 {
-		lokiValues = map[string]interface{}{
-			"nodeSelector": map[string]interface{}{
-				"porter.run/workload-kind": "monitoring",
-			},
-			"tolerations": []map[string]interface{}{
-				{
-					"key":      "porter.run/workload-kind",
-					"operator": "Equal",
-					"value":    "monitoring",
-					"effect":   "NoSchedule",
-				},
-			},
-		}
-	}
+	nodes, err := nodes.ListNodesByLabels(k8sAgent.Clientset, "porter.run/workload-kind=monitoring")
+	hasMonitoringNodes := err == nil && len(nodes) >= 1
 
 	porterAgentValues := map[string]interface{}{
 		"agent": map[string]interface{}{
@@ -124,7 +108,31 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			"clusterID":   fmt.Sprintf("%d", cluster.ID),
 			"projectID":   fmt.Sprintf("%d", proj.ID),
 		},
-		"loki": lokiValues,
+		"loki": map[string]interface{}{},
+	}
+
+	// case on whether a node with porter.run/workload-kind=monitoring exists. If it does, we place loki in that node group.
+	if hasMonitoringNodes {
+		sharedNS := map[string]interface{}{
+			"porter.run/workload-kind": "monitoring",
+		}
+
+		sharedTolerations := []map[string]interface{}{
+			{
+				"key":      "porter.run/workload-kind",
+				"operator": "Equal",
+				"value":    "monitoring",
+				"effect":   "NoSchedule",
+			},
+		}
+
+		porterAgentValues["loki"] = map[string]interface{}{
+			"nodeSelector": sharedNS,
+			"tolerations":  sharedTolerations,
+		}
+
+		porterAgentValues["nodeSelector"] = sharedNS
+		porterAgentValues["tolerations"] = sharedTolerations
 	}
 
 	conf := &helm.InstallChartConfig{
@@ -136,7 +144,7 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Values:    porterAgentValues,
 	}
 
-	_, err = helmAgent.InstallChart(conf, c.Config().DOConf)
+	_, err = helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
@@ -149,7 +157,7 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
-func checkAndDeleteOlderAgent(k8sAgent *kubernetes.Agent) error {
+func checkAndDeleteOlderAgent(k8sAgent *kubernetes.Agent, helmAgent *helm.Agent) error {
 	namespaceList, err := k8sAgent.Clientset.CoreV1().Namespaces().List(context.Background(), v1.ListOptions{})
 
 	if err != nil {
@@ -169,23 +177,17 @@ func checkAndDeleteOlderAgent(k8sAgent *kubernetes.Agent) error {
 		return nil
 	}
 
-	podList, err := k8sAgent.Clientset.CoreV1().Pods("porter-agent-system").List(context.Background(), v1.ListOptions{
-		LabelSelector: olderAgentLabel,
-	})
+	// detect if the `porter-agent` release is installed
+	helmRelease, err := helmAgent.GetRelease("porter-agent", 0, false)
 
-	if err != nil {
-		return fmt.Errorf("error listing pods for older porter-agent: %w", err)
+	if err != nil || helmRelease == nil {
+		return nil
 	}
 
-	if len(podList.Items) > 0 {
-		// older porter-agent exists, delete the entire namespace
-		err := k8sAgent.Clientset.CoreV1().Namespaces().Delete(
-			context.Background(), "porter-agent-system", v1.DeleteOptions{},
-		)
+	_, err = helmAgent.UninstallChart("porter-agent")
 
-		if err != nil {
-			return fmt.Errorf("error deleting older porter-agent's namespace: %w", err)
-		}
+	if err != nil {
+		return err
 	}
 
 	return nil

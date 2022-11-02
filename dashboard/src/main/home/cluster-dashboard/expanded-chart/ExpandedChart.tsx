@@ -141,7 +141,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const getControllers = async (chart: ChartType) => {
-    
     // don't retrieve controllers for chart that failed to even deploy.
     if (chart.info.status == "failed") return;
 
@@ -604,6 +603,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
+    // if we've set the revision, we also override the revision in log data
+    let newLogData = logData;
+
+    newLogData.revision = `${chart.version}`;
+
+    setLogData(newLogData);
+
     setIsPreview(!isCurrent);
     getChartData(chart);
   };
@@ -618,7 +624,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
       return (
         <Url>
           <i className="material-icons">link</i>
-          <a href={url} target="_blank">{url}</a>
+          <a href={url} target="_blank">
+            {url}
+          </a>
         </Url>
       );
     }
@@ -724,7 +732,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
           cluster_id: currentCluster.id,
         }
       )
-      .then(() => setIsAgentInstalled(true))
+      .then((res) => {
+        if (res.data?.version == "v3") {
+          setIsAgentInstalled(true);
+        } else {
+          setIsAgentInstalled(false);
+        }
+      })
       .catch((err) => {
         setIsAgentInstalled(false);
 
@@ -739,7 +753,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   useEffect(() => {
     if (logData.revision) {
       api
-        .getRevisions(
+        .getChart(
           "<token>",
           {},
           {
@@ -747,15 +761,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
             namespace: props.currentChart.namespace,
             cluster_id: currentCluster.id,
             name: props.currentChart.name,
+            revision: parseInt(logData.revision),
           }
         )
         .then((res) => {
-          const chart = res.data?.find(
-            (revision: ChartType) =>
-              revision.version.toString() === logData.revision
-          );
-
-          setCurrentChart(chart ?? props.currentChart);
+          setCurrentChart(res.data || props.currentChart);
         })
         .catch(console.log);
 
@@ -882,7 +892,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     margin_left={"0px"}
                   />
                   */}
-                  <DeployStatusSection chart={currentChart} />
+                  <DeployStatusSection
+                    chart={currentChart}
+                    setLogData={renderLogsAtTimestamp}
+                  />
                   <LastDeployed>
                     <Dot>•</Dot>Last deployed
                     {" " + getReadableDate(currentChart.info.last_deployed)}
@@ -983,7 +996,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
                             onTabChange={(newTab) => {
                               if (newTab !== "logs") {
                                 setOverrideCurrentTab("");
-                                setLogData({});
+                                setLogData({
+                                  revision: `${currentChart.version}`,
+                                });
                               }
                             }}
                           />

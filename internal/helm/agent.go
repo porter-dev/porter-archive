@@ -180,6 +180,7 @@ func (a *Agent) UpgradeRelease(
 	conf *UpgradeReleaseConfig,
 	values string,
 	doAuth *oauth2.Config,
+	disablePullSecretsInjection bool,
 ) (*release.Release, error) {
 	valuesYaml, err := chartutil.ReadValues([]byte(values))
 
@@ -189,13 +190,14 @@ func (a *Agent) UpgradeRelease(
 
 	conf.Values = valuesYaml
 
-	return a.UpgradeReleaseByValues(conf, doAuth)
+	return a.UpgradeReleaseByValues(conf, doAuth, disablePullSecretsInjection)
 }
 
 // UpgradeReleaseByValues upgrades a release by unmarshaled yaml values
 func (a *Agent) UpgradeReleaseByValues(
 	conf *UpgradeReleaseConfig,
 	doAuth *oauth2.Config,
+	disablePullSecretsInjection bool,
 ) (*release.Release, error) {
 	// grab the latest release
 	rel, err := a.GetRelease(conf.Name, 0, true)
@@ -220,6 +222,7 @@ func (a *Agent) UpgradeReleaseByValues(
 		rel.Namespace,
 		conf.Registries,
 		doAuth,
+		disablePullSecretsInjection,
 	)
 
 	if err != nil {
@@ -287,7 +290,7 @@ func (a *Agent) UpgradeReleaseByValues(
 					return nil, fmt.Errorf("another operation (install/upgrade/rollback) is in progress. If this error persists, please wait for 60 seconds to force an upgrade")
 				}
 			}
-		} else if strings.Contains(err.Error(), "current release manifest contains removed kubernetes api(s)") {
+		} else if strings.Contains(err.Error(), "current release manifest contains removed kubernetes api(s)") || strings.Contains(err.Error(), "resource mapping not found for name") {
 			// ref: https://helm.sh/docs/topics/kubernetes_apis/#updating-api-versions-of-a-release-manifest
 			// in this case, we manually update the secret containing the new manifests
 			secretList, err := a.K8sAgent.Clientset.CoreV1().Secrets(rel.Namespace).List(
@@ -383,6 +386,7 @@ func (a *Agent) InstallChartFromValuesBytes(
 	conf *InstallChartConfig,
 	values []byte,
 	doAuth *oauth2.Config,
+	disablePullSecretsInjection bool,
 ) (*release.Release, error) {
 	valuesYaml, err := chartutil.ReadValues(values)
 
@@ -392,13 +396,14 @@ func (a *Agent) InstallChartFromValuesBytes(
 
 	conf.Values = valuesYaml
 
-	return a.InstallChart(conf, doAuth)
+	return a.InstallChart(conf, doAuth, disablePullSecretsInjection)
 }
 
 // InstallChart installs a new chart
 func (a *Agent) InstallChart(
 	conf *InstallChartConfig,
 	doAuth *oauth2.Config,
+	disablePullSecretsInjection bool,
 ) (*release.Release, error) {
 	cmd := action.NewInstall(a.ActionConfig)
 
@@ -423,6 +428,7 @@ func (a *Agent) InstallChart(
 		conf.Namespace,
 		conf.Registries,
 		doAuth,
+		disablePullSecretsInjection,
 	)
 
 	if err != nil {

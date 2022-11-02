@@ -2,7 +2,9 @@ package preview
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/docker/distribution/reference"
 	"github.com/mitchellh/mapstructure"
 	"github.com/porter-dev/switchboard/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -40,7 +42,11 @@ func deployDriverValidator(resource *types.Resource) error {
 	}
 
 	if source.Repo == "" {
-		source.Repo = "https://charts.getporter.dev"
+		if source.Name == "web" || source.Name == "worker" || source.Name == "job" {
+			source.Repo = "https://charts.getporter.dev"
+		} else {
+			source.Repo = "https://chart-addons.getporter.dev"
+		}
 	}
 
 	if source.Repo == "https://charts.getporter.dev" {
@@ -60,12 +66,22 @@ func deployDriverValidator(resource *types.Resource) error {
 			return fmt.Errorf("for resource '%s': build method must be one of 'docker', 'pack', or 'registry'", resource.Name)
 		}
 
-		if appConfig.Build.Method == "docker" && appConfig.Build.Dockerfile == "" {
-			return fmt.Errorf("for resource '%s': dockerfile cannot be empty when using the 'docker' build method",
-				resource.Name)
-		} else if appConfig.Build.Method == "registry" && appConfig.Build.Image == "" {
-			return fmt.Errorf("for resource '%s': image cannot be empty when using the 'registry' build method",
-				resource.Name)
+		if appConfig.Build.Method == "registry" {
+			if appConfig.Build.Image == "" {
+				return fmt.Errorf("for resource '%s': image cannot be empty when using the 'registry' build method",
+					resource.Name)
+			} else if !strings.Contains(appConfig.Build.Image, "{") {
+				if len(strings.Split(appConfig.Build.Image, ":")) != 2 {
+					return fmt.Errorf("for resource '%s': image must be in the format 'image:tag'", resource.Name)
+				}
+
+				// check for valid image
+				_, err := reference.ParseNamed(appConfig.Build.Image)
+
+				if err != nil {
+					return fmt.Errorf("for resource '%s': error parsing image: %w", resource.Name, err)
+				}
+			}
 		}
 
 		for _, eg := range appConfig.EnvGroups {
@@ -100,6 +116,17 @@ func deployDriverValidator(resource *types.Resource) error {
 
 				if err != nil {
 					return fmt.Errorf("for resource '%s': error validating values for job deployment: %w",
+						resource.Name, err)
+				}
+			}
+		}
+	} else if source.Repo == "https://chart-addons.getporter.dev" {
+		if len(resource.Config) > 0 {
+			if source.Name == "postgresql" {
+				err := validatePostgresChartValues(resource.Config)
+
+				if err != nil {
+					return fmt.Errorf("for resource '%s': error validating values for postgresql deployment: %w",
 						resource.Name, err)
 				}
 			}
@@ -147,12 +174,22 @@ func buildImageDriverValidator(resource *types.Resource) error {
 		return fmt.Errorf("for resource '%s': build method must be one of 'docker', 'pack', or 'registry'", resource.Name)
 	}
 
-	if driverConfig.Build.Method == "docker" && driverConfig.Build.Dockerfile == "" {
-		return fmt.Errorf("for resource '%s': dockerfile cannot be empty when using the 'docker' build method",
-			resource.Name)
-	} else if driverConfig.Build.Method == "registry" && driverConfig.Build.Image == "" {
-		return fmt.Errorf("for resource '%s': image cannot be empty when using the 'registry' build method",
-			resource.Name)
+	if driverConfig.Build.Method == "registry" {
+		if driverConfig.Build.Image == "" {
+			return fmt.Errorf("for resource '%s': image cannot be empty when using the 'registry' build method",
+				resource.Name)
+		} else if !strings.Contains(driverConfig.Build.Image, "{") {
+			if len(strings.Split(driverConfig.Build.Image, ":")) != 2 {
+				return fmt.Errorf("for resource '%s': image must be in the format 'image:tag'", resource.Name)
+			}
+
+			// check for valid image
+			_, err := reference.ParseNamed(driverConfig.Build.Image)
+
+			if err != nil {
+				return fmt.Errorf("for resource '%s': error parsing image: %w", resource.Name, err)
+			}
+		}
 	}
 
 	for _, eg := range driverConfig.EnvGroups {
@@ -202,13 +239,24 @@ func pushImageDriverValidator(resource *types.Resource) error {
 
 	if driverConfig.Push.Image == "" {
 		return fmt.Errorf("for resource '%s': image cannot be empty", resource.Name)
+	} else if !strings.Contains(driverConfig.Push.Image, "{") {
+		if len(strings.Split(driverConfig.Push.Image, ":")) != 2 {
+			return fmt.Errorf("for resource '%s': image must be in the format 'image:tag'", resource.Name)
+		}
+
+		// check for valid image
+		_, err := reference.ParseNamed(driverConfig.Push.Image)
+
+		if err != nil {
+			return fmt.Errorf("for resource '%s': error parsing image: %w", resource.Name, err)
+		}
 	}
 
 	return nil
 }
 
 func updateConfigDriverValidator(resource *types.Resource) error {
-	_, target, err := commonValidator(resource)
+	source, target, err := commonValidator(resource)
 
 	if err != nil {
 		return err
@@ -226,6 +274,14 @@ func updateConfigDriverValidator(resource *types.Resource) error {
 			}
 
 			return fmt.Errorf("%s", str)
+		}
+	}
+
+	if source.Repo == "" {
+		if source.Name == "web" || source.Name == "worker" || source.Name == "job" {
+			source.Repo = "https://charts.getporter.dev"
+		} else {
+			source.Repo = "https://chart-addons.getporter.dev"
 		}
 	}
 
@@ -250,6 +306,31 @@ func updateConfigDriverValidator(resource *types.Resource) error {
 			}
 
 			return fmt.Errorf("%s", str)
+		}
+	}
+
+	if len(driverConfig.Values) > 0 && source.Repo == "https://charts.getporter.dev" {
+		if source.Name == "web" {
+			err := validateWebChartValues(driverConfig.Values)
+
+			if err != nil {
+				return fmt.Errorf("for resource '%s': error validating values for web deployment: %w",
+					resource.Name, err)
+			}
+		} else if source.Name == "worker" {
+			err := validateWorkerChartValues(driverConfig.Values)
+
+			if err != nil {
+				return fmt.Errorf("for resource '%s': error validating values for worker deployment: %w",
+					resource.Name, err)
+			}
+		} else if source.Name == "job" {
+			err := validateJobChartValues(driverConfig.Values)
+
+			if err != nil {
+				return fmt.Errorf("for resource '%s': error validating values for job deployment: %w",
+					resource.Name, err)
+			}
 		}
 	}
 

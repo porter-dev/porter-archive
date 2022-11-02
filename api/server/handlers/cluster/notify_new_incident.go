@@ -118,8 +118,6 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			)
 		}
 
-		fmt.Println("NOTIFYING NEW:", request.ReleaseName, request.InvolvedObjectKind, request.InvolvedObjectName)
-
 		err := multi.NotifyNew(request, url)
 
 		if err != nil {

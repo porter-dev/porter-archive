@@ -81,7 +81,7 @@ var applyValidateCmd = &cobra.Command{
 		err := applyValidate()
 
 		if err != nil {
-			color.New(color.FgRed).Printf("Error: %s\n", err.Error())
+			color.New(color.FgRed).Fprintf(os.Stderr, "Error: %s\n", err.Error())
 			os.Exit(1)
 		} else {
 			color.New(color.FgGreen).Printf("The porter.yaml file is valid!\n")
@@ -101,10 +101,12 @@ func init() {
 }
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
-	err := applyValidate()
+	if _, ok := os.LookupEnv("PORTER_VALIDATE_YAML"); ok {
+		err := applyValidate()
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	fileBytes, err := ioutil.ReadFile(porterYAML)
@@ -760,7 +762,9 @@ func (t *DeploymentHook) PreApply() error {
 	envs := *envList
 
 	for _, env := range envs {
-		if env.GitRepoOwner == t.repoOwner && env.GitRepoName == t.repoName && env.GitInstallationID == t.gitInstallationID {
+		if strings.EqualFold(env.GitRepoOwner, t.repoOwner) &&
+			strings.EqualFold(env.GitRepoName, t.repoName) &&
+			env.GitInstallationID == t.gitInstallationID {
 			t.envID = env.ID
 			break
 		}

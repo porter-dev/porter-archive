@@ -11,7 +11,7 @@ type Source struct {
 }
 
 type Target struct {
-	AppName   string
+	AppName   string `mapstructure:"app_name"`
 	Project   uint
 	Cluster   uint
 	Namespace string

@@ -17,7 +17,7 @@ export enum Direction {
   backward = "backward",
 }
 
-interface Log {
+export interface Log {
   line: AnserJsonEntry[];
   lineNumber: number;
   timestamp: string;
@@ -29,7 +29,7 @@ interface LogLine {
   time: string;
 }
 
-const parseLogs = (logs: string[] = []): Log[] => {
+export const parseLogs = (logs: string[] = []): Log[] => {
   return logs
     .filter(Boolean)
     .filter(isJSON)
@@ -58,6 +58,7 @@ export const useLogs = (
   currentPod: string,
   namespace: string,
   searchParam: string,
+  notify: (message: string) => void,
   currentChart: ChartType,
   // if setDate is set, results are not live
   setDate?: Date
@@ -287,6 +288,12 @@ export const useLogs = (
 
     updateLogs(initialLogs);
 
+    if (!isLive && !initialLogs.length) {
+      notify(
+        "You have no logs for this time period. Try with a different time range."
+      );
+    }
+
     closeWebsocket(websocketKey);
 
     setLoading(false);
@@ -311,10 +318,15 @@ export const useLogs = (
         Direction.backward
       );
 
-      updateLogs(
-        paginationInfo.previousCursor ? newLogs.slice(0, -1) : newLogs,
-        direction
-      );
+      const logsToUpdate = paginationInfo.previousCursor
+        ? newLogs.slice(0, -1)
+        : newLogs;
+
+      updateLogs(logsToUpdate, direction);
+
+      if (!logsToUpdate.length) {
+        notify("You have reached the beginning of the logs");
+      }
 
       setPaginationInfo((paginationInfo) => ({
         ...paginationInfo,
@@ -336,8 +348,16 @@ export const useLogs = (
         Direction.forward
       );
 
+      const logsToUpdate = paginationInfo.nextCursor
+        ? newLogs.slice(1)
+        : newLogs;
+
       // If previously we had next cursor set, it is likely that the log might have a duplicate entry so we ignore the first line
-      updateLogs(paginationInfo.nextCursor ? newLogs.slice(1) : newLogs);
+      updateLogs(logsToUpdate);
+
+      if (!logsToUpdate.length) {
+        notify("You are already at the latest logs");
+      }
 
       setPaginationInfo((paginationInfo) => ({
         ...paginationInfo,

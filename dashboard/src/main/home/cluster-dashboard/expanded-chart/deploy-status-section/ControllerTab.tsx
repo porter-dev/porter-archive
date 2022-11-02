@@ -13,7 +13,7 @@ import _ from "lodash";
 type Props = {
   controller: any;
   selectedPod: any;
-  selectPod: (newPod: any) => unknown;
+  selectPod: (newPod: any, userSelected: boolean) => unknown;
   selectors: any;
   isLast?: boolean;
   isFirst?: boolean;
@@ -161,11 +161,15 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
    * @param rawList A rawList of pods in case we don't want to use the state one. Useful to
    * avoid problems with reactivity
    */
-  const handleSelectPod = (pod: ControllerTabPodType, rawList?: any[]) => {
+  const handleSelectPod = (
+    pod: ControllerTabPodType,
+    rawList?: any[],
+    userSelected?: boolean
+  ) => {
     const rawPod = [...rawPodList, ...(rawList || [])].find(
       (rawPod) => rawPod?.metadata?.name === pod?.name
     );
-    selectPod(rawPod);
+    selectPod(rawPod, !!userSelected);
   };
 
   const currentSelectedPod = useMemo(() => {
@@ -224,18 +228,23 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
   };
 
   const replicaSetArray = useMemo(() => {
-    const podsDividedByReplicaSet = _.sortBy(pods, ["revisionNumber"]).reverse().reduce<
-      Array<Array<ControllerTabPodType>>
-    >(function (prev, currentPod, i) {
-      if (
-        !i ||
-        prev[prev.length - 1][0].replicaSetName !== currentPod.replicaSetName
+    const podsDividedByReplicaSet = _.sortBy(pods, ["revisionNumber"])
+      .reverse()
+      .reduce<Array<Array<ControllerTabPodType>>>(function (
+        prev,
+        currentPod,
+        i
       ) {
-        return prev.concat([[currentPod]]);
-      }
-      prev[prev.length - 1].push(currentPod);
-      return prev;
-    }, []);
+        if (
+          !i ||
+          prev[prev.length - 1][0].replicaSetName !== currentPod.replicaSetName
+        ) {
+          return prev.concat([[currentPod]]);
+        }
+        prev[prev.length - 1].push(currentPod);
+        return prev;
+      },
+      []);
 
     return podsDividedByReplicaSet.length === 1 ? [] : podsDividedByReplicaSet;
   }, [pods]);
@@ -303,10 +312,14 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
             status === "failed" &&
               pod.status?.message &&
               setPodError(pod.status?.message);
-            handleSelectPod(pod);
+            handleSelectPod(pod, [], true);
             setUserSelectedPod(true);
           }}
-          onDeleteClick={() => setPodPendingDelete(pod)}
+          onDeleteClick={(e: MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setPodPendingDelete(pod);
+          }}
         />
       );
     });

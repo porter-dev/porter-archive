@@ -351,14 +351,14 @@ Would you like to proceed? %s `,
 		agent, err := gcpLocal.NewDefaultAgent()
 
 		if err != nil {
-			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
 		}
 
 		projID, err := agent.GetProjectIDForGKECluster(endpoint)
 
 		if err != nil {
-			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
 		}
 
@@ -370,14 +370,14 @@ Would you like to proceed? %s `,
 		resp, err := agent.CreateServiceAccount(name)
 
 		if err != nil {
-			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
 		}
 
 		err = agent.SetServiceAccountIAMPolicy(resp)
 
 		if err != nil {
-			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
 		}
 
@@ -385,7 +385,7 @@ Would you like to proceed? %s `,
 		bytes, err := agent.CreateServiceAccountKey(resp)
 
 		if err != nil {
-			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
 		}
 
@@ -454,14 +454,14 @@ Would you like to proceed? %s `,
 		agent, err := awsLocal.NewDefaultKubernetesAgent(kubeconfigPath, contextName)
 
 		if err != nil {
-			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess, resolver)
 		}
 
 		creds, err := agent.CreateIAMKubernetesMapping(awsClusterIDGuess)
 
 		if err != nil {
-			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess, resolver)
 		}
 

@@ -20,6 +20,7 @@ import dayjs from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
 import { ChartType } from "shared/types";
+import Banner from "components/Banner";
 
 export type InitLogData = Partial<{
   podName: string;
@@ -118,11 +119,21 @@ const LogsSection: React.FC<Props> = ({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     initData.timestamp ? dayjs(initData.timestamp).toDate() : undefined
   );
+  const [notification, setNotification] = useState<string>();
+
+  const notify = (message: string) => {
+    setNotification(message);
+
+    setTimeout(() => {
+      setNotification(undefined);
+    }, 5000);
+  };
 
   const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter,
     currentChart.namespace,
     enteredSearchText,
+    notify,
     currentChart,
     selectedDate
   );
@@ -136,6 +147,7 @@ const LogsSection: React.FC<Props> = ({
       .getLogPodValues(
         "<TOKEN>",
         {
+          namespace: currentChart?.namespace,
           revision: initData.revision ?? currentChart.version.toString(),
           match_prefix: currentChart.name,
         },
@@ -152,7 +164,7 @@ const LogsSection: React.FC<Props> = ({
           setPodFilter(res.data[0]);
         }
       });
-  }, []);
+  }, [initData]);
 
   useEffect(() => {
     if (!loading && scrollToBottomRef.current && scrollToBottomEnabled) {
@@ -163,6 +175,16 @@ const LogsSection: React.FC<Props> = ({
     }
   }, [loading, logs, scrollToBottomRef, scrollToBottomEnabled]);
 
+  useEffect(() => {
+    if (initData.podName) {
+      setPodFilter(initData.podName);
+    }
+
+    if (initData.timestamp) {
+      setSelectedDate(dayjs(initData.timestamp).toDate());
+    }
+  }, [initData]);
+
   const renderLogs = () => {
     return logs?.map((log, i) => {
       return (
@@ -171,17 +193,22 @@ const LogsSection: React.FC<Props> = ({
           <span className="line-timestamp">
             {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
           </span>
-          {log.line?.map((ansi, j) => {
-            if (ansi.clearLine) {
-              return null;
-            }
+          <LogOuter key={[log.lineNumber, i].join(".")}>
+            {log.line?.map((ansi, j) => {
+              if (ansi.clearLine) {
+                return null;
+              }
 
-            return (
-              <LogSpan key={[log.lineNumber, i, j].join(".")} ansi={ansi}>
-                {ansi.content.replace(/ /g, "\u00a0")}
-              </LogSpan>
-            );
-          })}
+              return (
+                <LogInnerSpan
+                  key={[log.lineNumber, i, j].join(".")}
+                  ansi={ansi}
+                >
+                  {ansi.content.replace(/ /g, "\u00a0")}
+                </LogInnerSpan>
+              );
+            })}
+          </LogOuter>
         </Log>
       );
     });
@@ -257,22 +284,23 @@ const LogsSection: React.FC<Props> = ({
             )}
           </Flex>
         </FlexRow>
-        <StyledLogsSection isFullscreen={isFullscreen}>
-          {loading || !logs.length ? (
-            <Loading message="Waiting for logs..." />
-          ) : (
-            <>
-              <LoadMoreButton
-                active={
-                  logs.length !== 0 && paginationInfo.previousCursor !== null
-                }
-                role="button"
-                onClick={onLoadPrevious}
-              >
-                Load Previous
-              </LoadMoreButton>
-              {renderLogs()}
-              {/* <Message>
+        <LogsSectionWrapper>
+          <StyledLogsSection isFullscreen={isFullscreen}>
+            {loading || !logs.length ? (
+              <Loading message="Waiting for logs..." />
+            ) : (
+              <>
+                <LoadMoreButton
+                  active={
+                    logs.length !== 0 && paginationInfo.previousCursor !== null
+                  }
+                  role="button"
+                  onClick={onLoadPrevious}
+                >
+                  Load Previous
+                </LoadMoreButton>
+                {renderLogs()}
+                {/* <Message>
             
             No matching logs found.
             <Highlight onClick={() => {}}>
@@ -280,17 +308,24 @@ const LogsSection: React.FC<Props> = ({
               Refresh
             </Highlight>
           </Message> */}
-              <LoadMoreButton
-                active={selectedDate && logs.length !== 0}
-                role="button"
-                onClick={() => moveCursor(Direction.forward)}
-              >
-                Load more
-              </LoadMoreButton>
-            </>
-          )}
-          <div ref={scrollToBottomRef} />
-        </StyledLogsSection>
+                <LoadMoreButton
+                  active={selectedDate && logs.length !== 0}
+                  role="button"
+                  onClick={() => moveCursor(Direction.forward)}
+                >
+                  Load more
+                </LoadMoreButton>
+              </>
+            )}
+            <div ref={scrollToBottomRef} />
+          </StyledLogsSection>
+          <NotificationWrapper
+            key={JSON.stringify(logs)}
+            active={!!notification}
+          >
+            <Banner>{notification}</Banner>
+          </NotificationWrapper>
+        </LogsSectionWrapper>
       </>
     );
   };
@@ -319,7 +354,7 @@ export default LogsSection;
 const BackButton = styled.div`
   display: flex;
   width: 30px;
-  z-index: 999;
+  z-index: 2;
   cursor: pointer;
   height: 30px;
   align-items: center;
@@ -523,6 +558,7 @@ const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`
   animation-fill-mode: forwards;
   overflow-y: auto;
   overflow-wrap: break-word;
+  position: relative;
   @keyframes floatIn {
     from {
       opacity: 0;
@@ -565,10 +601,15 @@ const Log = styled.div`
   }
 `;
 
-const LogSpan = styled.span`
+const LogOuter = styled.div`
   display: inline-block;
   word-wrap: anywhere;
   flex-grow: 1;
+  font-family: monospace, sans-serif;
+  font-size: 12px;
+`;
+
+const LogInnerSpan = styled.span`
   font-family: monospace, sans-serif;
   font-size: 12px;
   font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>
@@ -602,7 +643,7 @@ const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`
     props.nudgeLeft ? "0 5px 5px 0" : "5px 0 0 5px"};
   :hover {
     border: 1px solid #7a7b80;
-    z-index: 999;
+    z-index: 2;
   }
 `;
 
@@ -619,6 +660,34 @@ const ToggleButton = styled.div`
 const TimeIcon = styled.img<{ selected?: boolean }>`
   width: 16px;
   height: 16px;
-  z-index: 999;
+  z-index: 2;
   opacity: ${(props) => (props.selected ? "" : "50%")};
+`;
+
+const NotificationWrapper = styled.div<{ active?: boolean }>`
+  position: absolute;
+  bottom: 10px;
+  display: ${(props) => (props.active ? "flex" : "none")};
+  justify-content: center;
+  align-items: center;
+  left: 50%;
+  transform: translateX(-50%);
+  width: fit-content;
+  background: #101420;
+  z-index: 9999;
+
+  @keyframes bounceIn {
+    0% {
+      transform: translateZ(-1400px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateZ(0);
+      opacity: 1;
+    }
+  }
+`;
+
+const LogsSectionWrapper = styled.div`
+  position: relative;
 `;

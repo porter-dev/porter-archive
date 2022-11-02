@@ -22,19 +22,19 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
   const [showTooltip, setShowTooltip] = useState(false);
 
   return (
-    <Tab key={pod?.name}>
+    <Tab key={pod?.name} onClick={onTabClick}>
       <Gutter>
         <Rail />
         <Circle />
         <Rail lastTab={isLastItem} />
       </Gutter>
       <Name
-        onMouseOver={() => {
-          // setShowTooltip(true);
-        }}
-        onMouseOut={() => {
-          setShowTooltip(false);
-        }}
+      // onMouseOver={() => {
+      //   setShowTooltip(true);
+      // }}
+      // onMouseOut={() => {
+      //   setShowTooltip(false);
+      // }}
       >
         {pod?.name}
       </Name>
@@ -57,14 +57,14 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
       <Status>
         {podStatus}
         <StatusColor status={podStatus} />
-        {podStatus === "failed" && (
+        {/* {podStatus === "failed" && (
           <CloseIcon
             className="material-icons-outlined"
             onClick={onDeleteClick}
           >
             close
           </CloseIcon>
-        )}
+        )} */}
       </Status>
     </Tab>
   );
@@ -145,6 +145,7 @@ const Tab = styled.div`
   padding: 20px 18px 20px 42px;
   text-shadow: 0px 0px 8px none;
   overflow: visible;
+  cursor: pointer;
 `;
 
 const Rail = styled.div`

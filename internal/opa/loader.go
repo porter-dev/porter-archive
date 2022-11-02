@@ -16,7 +16,7 @@ type ConfigFilePolicyCollection struct {
 	Kind             string             `json:"kind"`
 	Match            MatchParameters    `json:"match"`
 	MustExist        bool               `json:"mustExist"`
-	OverrideSeverity string             `json:"overrideSeverity"`
+	OverrideSeverity string             `json:"override_severity"`
 	Policies         []ConfigFilePolicy `json:"policies"`
 }
 

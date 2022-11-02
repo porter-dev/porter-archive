@@ -28,13 +28,13 @@ export default class UpgradeChartModal extends Component<PropsType, StateType> {
 
   componentDidMount() {
     // get the chart update notes from the api
-    let repoURL = process.env.ADDON_CHART_REPO_URL;
+    let repoURL = this.context.capabilities.default_addon_helm_repo_url;
     let chartName = this.props.currentChart.chart.metadata.name
       .toLowerCase()
       .trim();
 
     if (chartName == "web" || chartName == "worker" || chartName === "job") {
-      repoURL = process.env.APPLICATION_CHART_REPO_URL;
+      repoURL = this.context.capabilities?.default_app_helm_repo_url;
     }
 
     api

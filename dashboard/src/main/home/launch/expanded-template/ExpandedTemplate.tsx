@@ -75,8 +75,10 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
     } else {
       let params =
         this.props.currentTab == "porter"
-          ? { repo_url: process.env.APPLICATION_CHART_REPO_URL }
-          : { repo_url: process.env.ADDON_CHART_REPO_URL };
+          ? { repo_url: this.context.capabilities?.default_app_helm_repo_url }
+          : {
+              repo_url: this.context.capabilities?.default_addon_helm_repo_url,
+            };
 
       api
         .getTemplateInfo("<token>", params, {

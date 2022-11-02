@@ -160,18 +160,6 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
         </Message>
         {logs.length ? (
           <LogsSectionWrapper>
-            <ViewLogsWrapper>
-              <DocsLink
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  redirectToLogs(expandedEvent);
-                }}
-              >
-                View logs
-                <i className="material-icons">open_in_new</i>{" "}
-              </DocsLink>
-            </ViewLogsWrapper>
             <StyledLogsSection>
               {logs?.map((log, i) => {
                 return (
@@ -200,8 +188,24 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
                 );
               })}
             </StyledLogsSection>
+            <ViewLogsWrapper>
+              <DocsLink
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  redirectToLogs(expandedEvent);
+                }}
+              >
+                View complete log history
+                <i className="material-icons">open_in_new</i>{" "}
+              </DocsLink>
+            </ViewLogsWrapper>
           </LogsSectionWrapper>
-        ) : null}
+        ) : (
+          <LogsLoadWrapper>
+            <Loading />
+          </LogsLoadWrapper>
+        )}
       </>
     );
   };
@@ -271,7 +275,7 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
             },
           },
           {
-            Header: "Last Seen",
+            Header: "Last seen",
             accessor: "timestamp",
             width: 140,
             Cell: ({ row }: CellProps<any>) => {
@@ -334,7 +338,7 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
           </InfoRow>
           {expandedEvent?.porter_doc_link && (
             <DocsLink target="_blank" href={expandedEvent?.porter_doc_link}>
-              View troubleshooting steps{" "}
+              View troubleshooting steps
               <i className="material-icons">open_in_new</i>{" "}
             </DocsLink>
           )}
@@ -372,6 +376,10 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
 };
 
 export default EventList;
+
+const LogsLoadWrapper = styled.div`
+  height: 50px;
+`;
 
 const Message = styled.div`
   padding: 20px;
@@ -439,6 +447,7 @@ const TableButton = styled.div<{ width?: string }>`
   justify-content: center;
   background: #ffffff11;
   border: 1px solid #aaaabb33;
+  margin-right: -17px;
   cursor: pointer;
   :hover {
     border: 1px solid #7a7b80;
@@ -573,6 +582,7 @@ const DocsLink = styled.a`
 
   > i {
     font-size: 12px;
+    margin-left: 5px;
   }
 `;
 
@@ -583,11 +593,11 @@ const LogsSectionWrapper = styled.div`
 const StyledLogsSection = styled.div`
   margin-top: 20px;
   width: 100%;
-  height: 200px;
   display: flex;
   flex-direction: column;
   position: relative;
   font-size: 13px;
+  max-height: 400px;
   border-radius: 8px;
   border: 1px solid #ffffff33;
   border-top: none;
@@ -660,8 +670,6 @@ const LogInnerSpan = styled.span`
 `;
 
 export const ViewLogsWrapper = styled.div`
-  top: 10px;
-  right: 10px;
-  position: absolute;
-  z-index: 999;
+  margin-bottom: -15px;
+  margin-top: 15px;
 `;

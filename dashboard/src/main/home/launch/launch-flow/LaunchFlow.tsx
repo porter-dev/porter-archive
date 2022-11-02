@@ -130,7 +130,8 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           cluster_id: currentCluster.id,
           namespace: selectedNamespace,
           repo_url:
-            props.currentTemplate?.repo_url || process.env.ADDON_CHART_REPO_URL,
+            props.currentTemplate?.repo_url ||
+            context.capabilities.default_addon_helm_repo_url,
         }
       )
       .then((_) => {
@@ -337,7 +338,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           id: currentProject.id,
           cluster_id: currentCluster.id,
           namespace: selectedNamespace,
-          repo_url: process.env.APPLICATION_CHART_REPO_URL,
+          repo_url: context.capabilities?.default_app_helm_repo_url,
         }
       );
       // props.setCurrentView('cluster-dashboard');

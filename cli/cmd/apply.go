@@ -23,7 +23,7 @@ import (
 	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
-	"github.com/porter-dev/switchboard/pkg/models"
+	switchboardModels "github.com/porter-dev/switchboard/pkg/models"
 	"github.com/porter-dev/switchboard/pkg/parser"
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
@@ -232,7 +232,7 @@ type DeployDriver struct {
 	logger      *zerolog.Logger
 }
 
-func NewDeployDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+func NewDeployDriver(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
 	driver := &DeployDriver{
 		lookupTable: opts.DriverLookupTable,
 		logger:      opts.Logger,
@@ -258,11 +258,11 @@ func NewDeployDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 	return driver, nil
 }
 
-func (d *DeployDriver) ShouldApply(_ *models.Resource) bool {
+func (d *DeployDriver) ShouldApply(_ *switchboardModels.Resource) bool {
 	return true
 }
 
-func (d *DeployDriver) Apply(resource *models.Resource) (*models.Resource, error) {
+func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboardModels.Resource, error) {
 	client := config.GetAPIClient()
 
 	_, err := client.GetRelease(
@@ -287,7 +287,7 @@ func (d *DeployDriver) Apply(resource *models.Resource) (*models.Resource, error
 }
 
 // Simple apply for addons
-func (d *DeployDriver) applyAddon(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
+func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
 	addonConfig, err := d.getAddonConfig(resource)
 
 	if err != nil {
@@ -344,7 +344,7 @@ func (d *DeployDriver) applyAddon(resource *models.Resource, client *api.Client,
 	return resource, nil
 }
 
-func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
+func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
 	if resource == nil {
 		return nil, fmt.Errorf("nil resource")
 	}
@@ -466,7 +466,7 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 	return resource, err
 }
 
-func (d *DeployDriver) createApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*models.Resource, error) {
+func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*switchboardModels.Resource, error) {
 	// create new release
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", d.source.Name, resource.Name)
 
@@ -552,7 +552,7 @@ func (d *DeployDriver) createApplication(resource *models.Resource, client *api.
 	return resource, handleSubdomainCreate(subdomain, err)
 }
 
-func (d *DeployDriver) updateApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*models.Resource, error) {
+func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*switchboardModels.Resource, error) {
 	color.New(color.FgGreen).Println("Updating existing release:", resource.Name)
 
 	if len(appConf.Build.Env) > 0 {
@@ -618,7 +618,7 @@ func (d *DeployDriver) updateApplication(resource *models.Resource, client *api.
 	return resource, nil
 }
 
-func (d *DeployDriver) assignOutput(resource *models.Resource, client *api.Client) error {
+func (d *DeployDriver) assignOutput(resource *switchboardModels.Resource, client *api.Client) error {
 	release, err := client.GetRelease(
 		context.Background(),
 		d.target.Project,
@@ -640,7 +640,7 @@ func (d *DeployDriver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func (d *DeployDriver) getApplicationConfig(resource *models.Resource) (*previewInt.ApplicationConfig, error) {
+func (d *DeployDriver) getApplicationConfig(resource *switchboardModels.Resource) (*previewInt.ApplicationConfig, error) {
 	populatedConf, err := drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
 		LookupTable:  *d.lookupTable,
@@ -667,7 +667,7 @@ func (d *DeployDriver) getApplicationConfig(resource *models.Resource) (*preview
 	return appConf, nil
 }
 
-func (d *DeployDriver) getAddonConfig(resource *models.Resource) (map[string]interface{}, error) {
+func (d *DeployDriver) getAddonConfig(resource *switchboardModels.Resource) (map[string]interface{}, error) {
 	return drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
 		LookupTable:  *d.lookupTable,
@@ -768,12 +768,14 @@ func (t *DeploymentHook) PreApply() error {
 	}
 
 	envs := *envList
+	var deplEnv *types.Environment
 
 	for _, env := range envs {
 		if strings.EqualFold(env.GitRepoOwner, t.repoOwner) &&
 			strings.EqualFold(env.GitRepoName, t.repoName) &&
 			env.GitInstallationID == t.gitInstallationID {
 			t.envID = env.ID
+			deplEnv = env
 			break
 		}
 	}
@@ -801,14 +803,20 @@ func (t *DeploymentHook) PreApply() error {
 
 	if !found {
 		if isSystemNamespace(t.namespace) {
-			return fmt.Errorf("attempting to deploy to system namespace '%s' which does not exist, please create it to continue",
-				t.namespace)
+			return fmt.Errorf("attempting to deploy to system namespace '%s' which does not exist, please create it "+
+				"to continue", t.namespace)
+		}
+
+		createNS := &types.CreateNamespaceRequest{
+			Name: t.namespace,
+		}
+
+		if len(deplEnv.NamespaceAnnotations) > 0 {
+			createNS.Annotations = deplEnv.NamespaceAnnotations
 		}
 
 		// create the new namespace
-		_, err := t.client.CreateNewK8sNamespace(
-			context.Background(), t.projectID, t.clusterID, t.namespace,
-		)
+		_, err := t.client.CreateNewK8sNamespace(context.Background(), t.projectID, t.clusterID, createNS)
 
 		if err != nil && !strings.Contains(err.Error(), "namespace already exists") {
 			// ignore the error if the namespace already exists

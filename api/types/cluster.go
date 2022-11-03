@@ -35,6 +35,9 @@ type Cluster struct {
 
 	// (optional) The aws cluster id, if available
 	AWSClusterID string `json:"aws_cluster_id,omitempty"`
+
+	// Whether preview environments is enabled on this cluster
+	PreviewEnvsEnabled bool `json:"preview_envs_enabled"`
 }
 
 type ClusterCandidate struct {
@@ -273,6 +276,8 @@ type UpdateClusterRequest struct {
 	AWSClusterID string `json:"aws_cluster_id"`
 
 	AgentIntegrationEnabled *bool `json:"agent_integration_enabled"`
+
+	PreviewEnvsEnabled *bool `json:"preview_envs_enabled"`
 }
 
 type ListClusterResponse []*Cluster

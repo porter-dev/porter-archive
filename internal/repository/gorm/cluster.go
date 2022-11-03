@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"fmt"
+
 	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -130,6 +132,11 @@ func (repo *ClusterRepository) CreateCluster(
 		return nil, err
 	}
 
+	if cluster.PreviewEnvsEnabled && !project.PreviewEnvsEnabled {
+		// this should only work if the corresponding project has preview environments enabled
+		cluster.PreviewEnvsEnabled = false
+	}
+
 	assoc := repo.db.Model(&project).Association("Clusters")
 
 	if assoc.Error != nil {
@@ -248,6 +255,19 @@ func (repo *ClusterRepository) UpdateCluster(
 
 	if err != nil {
 		return nil, err
+	}
+
+	if cluster.PreviewEnvsEnabled {
+		// this should only work if the corresponding project has preview environments enabled
+		project := &models.Project{}
+
+		if err := repo.db.Where("id = ?", cluster.ProjectID).First(project).Error; err != nil {
+			return nil, fmt.Errorf("error fetching details about cluster's project: %w", err)
+		}
+
+		if !project.PreviewEnvsEnabled {
+			cluster.PreviewEnvsEnabled = false
+		}
 	}
 
 	if err := repo.db.Save(cluster).Error; err != nil {

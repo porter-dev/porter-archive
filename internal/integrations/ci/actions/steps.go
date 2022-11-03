@@ -44,8 +44,9 @@ func getCreatePreviewEnvStep(
 	serverURL, porterTokenSecretName string,
 	projectID, clusterID, gitInstallationID uint,
 	repoOwner, repoName, actionVersion string,
+	customNamespace bool,
 ) GithubActionYAMLStep {
-	return GithubActionYAMLStep{
+	step := GithubActionYAMLStep{
 		Name: "Create Porter preview env",
 		Uses: fmt.Sprintf("%s@%s", createPreviewActionName, actionVersion),
 		With: map[string]string{
@@ -66,4 +67,10 @@ func getCreatePreviewEnvStep(
 		},
 		Timeout: 30,
 	}
+
+	if customNamespace {
+		step.With["namespace"] = "SET_CUSTOM_NAMESPACE_HERE"
+	}
+
+	return step
 }

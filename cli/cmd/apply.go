@@ -67,6 +67,10 @@ applying a configuration:
 		err := checkLoginAndRun(args, apply)
 
 		if err != nil {
+			if strings.Contains(err.Error(), "Forbidden") {
+				color.New(color.FgRed).Fprintf(os.Stderr, "You may have to update your GitHub secret token")
+			}
+
 			os.Exit(1)
 		}
 	},
@@ -751,6 +755,10 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 }
 
 func (t *DeploymentHook) PreApply() error {
+	if isSystemNamespace(t.namespace) {
+		color.New(color.FgYellow).Printf("attempting to deploy to system namespace '%s'\n", t.namespace)
+	}
+
 	envList, err := t.client.ListEnvironments(
 		context.Background(), t.projectID, t.clusterID,
 	)
@@ -772,6 +780,42 @@ func (t *DeploymentHook) PreApply() error {
 
 	if t.envID == 0 {
 		return fmt.Errorf("could not find environment for deployment")
+	}
+
+	nsList, err := t.client.GetK8sNamespaces(
+		context.Background(), t.projectID, t.clusterID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("error fetching namespaces: %w", err)
+	}
+
+	found := false
+
+	for _, ns := range *nsList {
+		if ns.Name == t.namespace {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		if isSystemNamespace(t.namespace) {
+			return fmt.Errorf("attempting to deploy to system namespace '%s' which does not exist, please create it to continue",
+				t.namespace)
+		}
+
+		// create the new namespace
+		_, err := t.client.CreateNewK8sNamespace(
+			context.Background(), t.projectID, t.clusterID, t.namespace,
+		)
+
+		if err != nil && !strings.Contains(err.Error(), "namespace already exists") {
+			// ignore the error if the namespace already exists
+			//
+			// this might happen if someone creates the namespace in between this operation
+			return fmt.Errorf("error creating namespace: %w", err)
+		}
 	}
 
 	// attempt to read the deployment -- if it doesn't exist, create it
@@ -1106,4 +1150,12 @@ func getReleaseType(res *switchboardTypes.Resource) string {
 	}
 
 	return ""
+}
+
+func isSystemNamespace(namespace string) bool {
+	return namespace == "cert-manager" || namespace == "ingress-nginx" ||
+		namespace == "kube-node-lease" || namespace == "kube-public" ||
+		namespace == "kube-system" || namespace == "monitoring" ||
+		namespace == "porter-agent-system" || namespace == "default" ||
+		namespace == "ingress-nginx-private"
 }

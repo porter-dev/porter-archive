@@ -132,6 +132,11 @@ func (repo *ClusterRepository) CreateCluster(
 		return nil, err
 	}
 
+	if cluster.PreviewEnvsEnabled && !project.PreviewEnvsEnabled {
+		// this should only work if the corresponding project has preview environments enabled
+		cluster.PreviewEnvsEnabled = false
+	}
+
 	assoc := repo.db.Model(&project).Association("Clusters")
 
 	if assoc.Error != nil {

@@ -19,7 +19,9 @@ type Environment struct {
 	Name string
 	Mode string
 
-	NewCommentsDisabled bool
+	NewCommentsDisabled  bool
+	CustomNamespace      bool
+	NamespaceAnnotations []byte
 
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
 	// aren't present

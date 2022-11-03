@@ -5,10 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
-	ghinstallation "github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -60,7 +58,8 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	webhookUID, err := encryption.GenerateRandomBytes(32)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error generating webhook UID for new preview "+
+			"environment: %w", err)))
 		return
 	}
 
@@ -118,7 +117,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating environment: %w", err)))
 		return
 	}
 
@@ -137,11 +136,12 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		_, deleteErr = c.Repo().Environment().DeleteEnvironment(env)
 
 		if deleteErr != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(deleteErr))
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting created preview environment: %w",
+				deleteErr)))
 			return
 		}
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting token for API: %w", err)))
 		return
 	}
 
@@ -159,11 +159,12 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		_, deleteErr = c.Repo().Environment().DeleteEnvironment(env)
 
 		if deleteErr != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(deleteErr))
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting created preview environment: %w",
+				deleteErr)))
 			return
 		}
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error encoding API token: %w", err)))
 		return
 	}
 
@@ -190,35 +191,13 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed))
 			}
 		} else {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error setting up preview environment in the github "+
+				"repo: %w", err)))
 			return
 		}
 	}
 
 	c.WriteResult(w, r, env.ToEnvironmentType())
-}
-
-func getGithubClientFromEnvironment(config *config.Config, env *models.Environment) (*github.Client, error) {
-	// get the github app client
-	ghAppId, err := strconv.Atoi(config.ServerConf.GithubAppID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// authenticate as github app installation
-	itr, err := ghinstallation.New(
-		http.DefaultTransport,
-		int64(ghAppId),
-		int64(env.GitInstallationID),
-		config.ServerConf.GithubAppSecret,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return github.NewClient(&http.Client{Transport: itr}), nil
 }
 
 func getGithubWebhookURLFromUID(serverURL, webhookUID string) string {

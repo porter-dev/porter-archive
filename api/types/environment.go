@@ -10,16 +10,19 @@ type Environment struct {
 	GitRepoOwner      string `json:"git_repo_owner"`
 	GitRepoName       string `json:"git_repo_name"`
 
-	Name                 string `json:"name"`
-	Mode                 string `json:"mode"`
-	DeploymentCount      uint   `json:"deployment_count"`
-	LastDeploymentStatus string `json:"last_deployment_status"`
-	NewCommentsDisabled  bool   `json:"new_comments_disabled"`
+	Name                 string            `json:"name"`
+	Mode                 string            `json:"mode"`
+	DeploymentCount      uint              `json:"deployment_count"`
+	LastDeploymentStatus string            `json:"last_deployment_status"`
+	NewCommentsDisabled  bool              `json:"new_comments_disabled"`
+	CustomNamespace      bool              `json:"custom_namespace"`
+	NamespaceAnnotations map[string]string `json:"namespace_annotations,omitempty"`
 }
 
 type CreateEnvironmentRequest struct {
 	Name string `json:"name" form:"required"`
 	Mode string `json:"mode" form:"oneof=auto manual" default:"manual"`
+	
 }
 
 type GitHubMetadata struct {

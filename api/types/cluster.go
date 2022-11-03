@@ -224,6 +224,9 @@ type CreateNamespaceRequest struct {
 	// the name of the namespace to create
 	// example: sampleNS
 	Name string `json:"name" form:"required"`
+
+	// annotations for the kubernetes namespace, if any
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 type GetTemporaryKubeconfigResponse struct {

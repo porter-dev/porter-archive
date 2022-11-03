@@ -73,6 +73,17 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		Mode:                request.Mode,
 		WebhookID:           string(webhookUID),
 		NewCommentsDisabled: false,
+		CustomNamespace:     request.CustomNamespace,
+	}
+
+	if len(request.NamespaceAnnotations) > 0 {
+		var annotations []string
+
+		for k, v := range request.NamespaceAnnotations {
+			annotations = append(annotations, fmt.Sprintf("%s=%s", k, v))
+		}
+
+		env.NamespaceAnnotations = []byte(strings.Join(annotations, ","))
 	}
 
 	// write Github actions files to the repo
@@ -179,6 +190,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		GitInstallationID: uint(ga.InstallationID),
 		EnvironmentName:   request.Name,
 		InstanceName:      c.Config().ServerConf.InstanceName,
+		CustomNamespace:   env.CustomNamespace,
 	})
 
 	if err != nil {

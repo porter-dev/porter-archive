@@ -1,7 +1,8 @@
 package models
 
 import (
-	"github.com/mitchellh/mapstructure"
+	"strings"
+
 	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
@@ -48,8 +49,18 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		Mode: e.Mode,
 	}
 
-	// FIXME: should not ignore the error here
-	mapstructure.Decode(e.NamespaceAnnotations, &env.NamespaceAnnotations)
+	if len(e.NamespaceAnnotations) > 0 {
+		env.NamespaceAnnotations = make(map[string]string)
+		annotations := string(e.NamespaceAnnotations)
+
+		for _, a := range strings.Split(annotations, ",") {
+			k, v, found := strings.Cut(a, "=")
+
+			if found {
+				env.NamespaceAnnotations[k] = v
+			}
+		}
+	}
 
 	return env
 }

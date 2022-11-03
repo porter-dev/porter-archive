@@ -58,6 +58,8 @@ type Cluster struct {
 
 	NotificationsDisabled bool `json:"notifications_disabled"`
 
+	PreviewEnvsEnabled bool
+
 	AWSClusterID string
 
 	// ------------------------------------------------------------------
@@ -107,6 +109,7 @@ func (c *Cluster) ToClusterType() *types.Cluster {
 		InfraID:                 c.InfraID,
 		AWSIntegrationID:        c.AWSIntegrationID,
 		AWSClusterID:            c.AWSClusterID,
+		PreviewEnvsEnabled:      c.PreviewEnvsEnabled,
 	}
 }
 

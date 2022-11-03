@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
@@ -31,7 +32,7 @@ type Environment struct {
 }
 
 func (e *Environment) ToEnvironmentType() *types.Environment {
-	return &types.Environment{
+	env := &types.Environment{
 		ID:                e.Model.ID,
 		ProjectID:         e.ProjectID,
 		ClusterID:         e.ClusterID,
@@ -39,11 +40,18 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
 
-		NewCommentsDisabled: e.NewCommentsDisabled,
+		NewCommentsDisabled:  e.NewCommentsDisabled,
+		CustomNamespace:      e.CustomNamespace,
+		NamespaceAnnotations: make(map[string]string),
 
 		Name: e.Name,
 		Mode: e.Mode,
 	}
+
+	// FIXME: should not ignore the error here
+	mapstructure.Decode(e.NamespaceAnnotations, &env.NamespaceAnnotations)
+
+	return env
 }
 
 type Deployment struct {

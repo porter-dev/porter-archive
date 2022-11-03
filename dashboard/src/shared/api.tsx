@@ -102,6 +102,7 @@ const updateCluster = baseApi<
     name?: string;
     aws_cluster_id?: string;
     agent_integration_enabled?: boolean;
+    preview_envs_enabled?: boolean;
   },
   {
     project_id: number;

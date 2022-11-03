@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";
 import { PorterTemplate } from "shared/types";
 import semver from "semver";
@@ -8,8 +8,11 @@ import { BackButton, Card } from "../../launch/components/styles";
 import DynamicLink from "components/DynamicLink";
 import { VersionSelector } from "../../launch/components/VersionSelector";
 import TitleSection from "components/TitleSection";
+import { Context } from "shared/Context";
 
 const TemplateSelector = () => {
+  const { capabilities } = useContext(Context);
+
   const [templates, setTemplates] = useState<PorterTemplate[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<{
     [template_name: string]: string;
@@ -23,7 +26,7 @@ const TemplateSelector = () => {
       const res = await api.getTemplates<PorterTemplate[]>(
         "<token>",
         {
-          repo_url: process.env.APPLICATION_CHART_REPO_URL,
+          repo_url: capabilities?.default_app_helm_repo_url,
         },
         {}
       );

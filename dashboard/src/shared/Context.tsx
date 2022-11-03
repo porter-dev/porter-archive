@@ -97,6 +97,7 @@ class ContextProvider extends Component<PropsType, StateType> {
       service_account_id: -1,
       infra_id: -1,
       service: "",
+      agent_integration_enabled: false,
     },
     setCurrentCluster: (currentCluster: ClusterType, callback?: any) => {
       localStorage.setItem(

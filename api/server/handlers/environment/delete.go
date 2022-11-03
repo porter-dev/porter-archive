@@ -52,7 +52,7 @@ func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("environment not found in cluster and project")))
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(errEnvironmentNotFound))
 			return
 		}
 
@@ -76,7 +76,9 @@ func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	for _, depl := range depls {
-		agent.DeleteNamespace(depl.Namespace)
+		if !isSystemNamespace(depl.Namespace) {
+			agent.DeleteNamespace(depl.Namespace)
+		}
 	}
 
 	ghWebhookID := env.GithubWebhookID

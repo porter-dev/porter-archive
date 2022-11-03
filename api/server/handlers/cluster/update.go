@@ -65,6 +65,10 @@ func (c *ClusterUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		cluster.AgentIntegrationEnabled = *request.AgentIntegrationEnabled
 	}
 
+	if request.PreviewEnvsEnabled != nil {
+		cluster.PreviewEnvsEnabled = *request.PreviewEnvsEnabled
+	}
+
 	if request.Name != "" && cluster.Name != request.Name {
 		cluster.Name = request.Name
 	}

@@ -757,6 +757,11 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 func (t *DeploymentHook) PreApply() error {
 	if isSystemNamespace(t.namespace) {
 		color.New(color.FgYellow).Printf("attempting to deploy to system namespace '%s'\n", t.namespace)
+	} else if t.namespace == "SET_CUSTOM_NAMESPACE_HERE" {
+		// user wanted to use custom namespaces but forgot to update the workflow file
+		return fmt.Errorf("you need to replace 'SET_CUSTOM_NAMESPACE_HERE' with a custom namespace of your choice in "+
+			"the workflow file: https://github.com/%s/%s/blob/%s/.github/workflows/porter_preview_env.yml",
+			t.repoOwner, t.repoName, t.branchFrom)
 	}
 
 	envList, err := t.client.ListEnvironments(

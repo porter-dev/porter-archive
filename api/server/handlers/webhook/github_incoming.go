@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
@@ -98,28 +97,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 	}
 
 	if env.Mode == "auto" && event.GetAction() == "opened" {
-		depl := &models.Deployment{
-			EnvironmentID: env.ID,
-			Namespace: fmt.Sprintf("pr-%d-%s", event.GetPullRequest().GetNumber(),
-				strings.ToLower(strings.ReplaceAll(repo, "_", "-"))),
-			Status:        types.DeploymentStatusCreating,
-			PullRequestID: uint(event.GetPullRequest().GetNumber()),
-			PRName:        event.GetPullRequest().GetTitle(),
-			RepoName:      repo,
-			RepoOwner:     owner,
-			CommitSHA:     event.GetPullRequest().GetHead().GetSHA()[:7],
-			PRBranchFrom:  event.GetPullRequest().GetHead().GetRef(),
-			PRBranchInto:  event.GetPullRequest().GetBase().GetRef(),
-		}
-
-		_, err = c.Repo().Environment().CreateDeployment(depl)
-
-		if err != nil {
-			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
-				"error creating new deployment: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
-		}
-
-		_, err = client.Actions.CreateWorkflowDispatchEventByFileName(
+		_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
 			r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
 			github.CreateWorkflowDispatchEventRequest{
 				Ref: event.GetPullRequest().GetHead().GetRef(),

@@ -189,7 +189,6 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		GitInstallationID: uint(ga.InstallationID),
 		EnvironmentName:   request.Name,
 		InstanceName:      c.Config().ServerConf.InstanceName,
-		CustomNamespace:   request.CustomNamespace,
 	})
 
 	if err != nil {

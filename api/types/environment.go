@@ -21,7 +21,6 @@ type Environment struct {
 type CreateEnvironmentRequest struct {
 	Name                 string            `json:"name" form:"required"`
 	Mode                 string            `json:"mode" form:"oneof=auto manual" default:"manual"`
-	CustomNamespace      bool              `json:"custom_namespaces"`
 	NamespaceAnnotations map[string]string `json:"namespace_annotations"`
 }
 

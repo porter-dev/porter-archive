@@ -49,9 +49,6 @@ const ConnectNewRepo: React.FC = () => {
   // Disable new comments data
   const [isNewCommentsDisabled, setIsNewCommentsDisabled] = useState(false);
 
-  // Use custom namespaces
-  const [useCustomNamespaces, setUseCustomNamespaces] = useState(false);
-
   // Namespace annotations
   const [namespaceAnnotations, setNamespaceAnnotations] = useState<
     KeyValueType[]
@@ -154,7 +151,6 @@ const ConnectNewRepo: React.FC = () => {
           mode: enableAutomaticDeployments ? "auto" : "manual",
           disable_new_comments: isNewCommentsDisabled,
           git_repo_branches: selectedBranches,
-          custom_namespaces: useCustomNamespaces,
           namespace_annotations: annotations,
         },
         {
@@ -270,23 +266,6 @@ const ConnectNewRepo: React.FC = () => {
         value={selectedBranches}
         showLoading={isLoadingBranches}
       />
-
-      <Heading>Custom namespaces</Heading>
-      <Helper>
-        By default, Porter chooses a templated namespace for every new GitHub
-        PR. When this is enabled, you can choose a custom namespace of your
-        choice in the GitHub action workflow file that we create for you.
-      </Helper>
-      <CheckboxWrapper>
-        <CheckboxRow
-          label="Use custom namespaces"
-          checked={useCustomNamespaces}
-          toggle={() => setUseCustomNamespaces(!useCustomNamespaces)}
-          wrapperStyles={{
-            disableMargin: true,
-          }}
-        />
-      </CheckboxWrapper>
 
       <Heading>Namespace annotations</Heading>
       <Helper>

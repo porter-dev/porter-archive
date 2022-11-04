@@ -79,6 +79,7 @@ const EnvironmentSettings = () => {
           mode: deploymentMode,
           disable_new_comments: newCommentsDisabled,
           git_repo_branches: [],
+          namespace_annotations: {},
         },
         {
           project_id: currentProject.id,

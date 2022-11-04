@@ -146,7 +146,8 @@ type ValidatePorterYAMLResponse struct {
 }
 
 type UpdateEnvironmentSettingsRequest struct {
-	Mode               string   `json:"mode" form:"oneof=auto manual"`
-	DisableNewComments bool     `json:"disable_new_comments"`
-	GitRepoBranches    []string `json:"git_repo_branches"`
+	Mode                 string            `json:"mode" form:"oneof=auto manual"`
+	DisableNewComments   bool              `json:"disable_new_comments"`
+	GitRepoBranches      []string          `json:"git_repo_branches"`
+	NamespaceAnnotations map[string]string `json:"namespace_annotations"`
 }

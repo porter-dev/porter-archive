@@ -37,6 +37,14 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
+	if !project.PreviewEnvsEnabled {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errPreviewProjectDisabled, http.StatusForbidden))
+		return
+	} else if !cluster.PreviewEnvsEnabled {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errPreviewClusterDisabled, http.StatusForbidden))
+		return
+	}
+
 	deplID, reqErr := requestutils.GetURLParamUint(r, "deployment_id")
 
 	if reqErr != nil {

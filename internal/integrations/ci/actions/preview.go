@@ -19,7 +19,6 @@ type EnvOpts struct {
 	EnvironmentName                         string
 	InstanceName                            string
 	ProjectID, ClusterID, GitInstallationID uint
-	CustomNamespace                         bool
 }
 
 func SetupEnv(opts *EnvOpts) error {
@@ -233,7 +232,6 @@ func getPreviewApplyActionYAML(opts *EnvOpts) ([]byte, error) {
 			opts.GitRepoOwner,
 			opts.GitRepoName,
 			"v0.2.1",
-			opts.CustomNamespace,
 		),
 	}
 

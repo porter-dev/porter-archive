@@ -24,7 +24,6 @@ type CreateEnvironmentRequest struct {
 	Mode                 string            `json:"mode" form:"oneof=auto manual" default:"manual"`
 	DisableNewComments   bool              `json:"disable_new_comments"`
 	GitRepoBranches      []string          `json:"git_repo_branches"`
-	CustomNamespace      bool              `json:"custom_namespaces"`
 	NamespaceAnnotations map[string]string `json:"namespace_annotations"`
 }
 

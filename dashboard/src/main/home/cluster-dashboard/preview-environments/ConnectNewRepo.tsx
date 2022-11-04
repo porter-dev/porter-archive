@@ -15,6 +15,9 @@ import PullRequestIcon from "assets/pull_request_icon.svg";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import BranchFilterSelector from "./components/BranchFilterSelector";
 import Helper from "components/form-components/Helper";
+import NamespaceAnnotations, {
+  KeyValueType,
+} from "./components/NamespaceAnnotations";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -48,6 +51,11 @@ const ConnectNewRepo: React.FC = () => {
 
   // Use custom namespaces
   const [useCustomNamespaces, setUseCustomNamespaces] = useState(false);
+
+  // Namespace annotations
+  const [namespaceAnnotations, setNamespaceAnnotations] = useState<
+    KeyValueType[]
+  >([]);
 
   useEffect(() => {
     api
@@ -112,7 +120,32 @@ const ConnectNewRepo: React.FC = () => {
 
   const addRepo = () => {
     let [owner, repoName] = repo.split("/");
+    let annotations: Record<string, string> = {};
+
     setStatus("loading");
+
+    namespaceAnnotations
+      .filter((elem: KeyValueType, index: number, self: KeyValueType[]) => {
+        // remove any collisions that are duplicates
+        let numCollisions = self.reduce((n, _elem: KeyValueType) => {
+          return n + (_elem.key === elem.key ? 1 : 0);
+        }, 0);
+
+        if (numCollisions == 1) {
+          return true;
+        } else {
+          return (
+            index ===
+            self.findIndex((_elem: KeyValueType) => _elem.key === elem.key)
+          );
+        }
+      })
+      .forEach((elem: KeyValueType) => {
+        if (elem.key !== "" && elem.value !== "") {
+          annotations[elem.key] = elem.value;
+        }
+      });
+
     api
       .createEnvironment(
         "<token>",
@@ -122,7 +155,7 @@ const ConnectNewRepo: React.FC = () => {
           disable_new_comments: isNewCommentsDisabled,
           git_repo_branches: selectedBranches,
           custom_namespaces: useCustomNamespaces,
-          namespace_annotations: {},
+          namespace_annotations: annotations,
         },
         {
           project_id: currentProject.id,
@@ -240,9 +273,9 @@ const ConnectNewRepo: React.FC = () => {
 
       <Heading>Custom namespaces</Heading>
       <Helper>
-        By default, Porter chooses a templated namespace for every new GitHub PR.
-        When this is enabled, you can choose a custom namespace of your choice in
-        the GitHub action workflow file that we create for you.
+        By default, Porter chooses a templated namespace for every new GitHub
+        PR. When this is enabled, you can choose a custom namespace of your
+        choice in the GitHub action workflow file that we create for you.
       </Helper>
       <CheckboxWrapper>
         <CheckboxRow
@@ -253,12 +286,23 @@ const ConnectNewRepo: React.FC = () => {
             disableMargin: true,
           }}
         />
-        <DocsHelper
-          disableMargin
-          tooltipText="When checked, it is up to you to choose a namespace for every new deployment."
-          placement="top-end"
-        />
       </CheckboxWrapper>
+
+      <Heading>Namespace annotations</Heading>
+      <Helper>
+        Custom annotations to be injected into the Kubernetes namespace created
+        for each deployment.
+      </Helper>
+      <NamespaceAnnotations
+        values={namespaceAnnotations}
+        setValues={(x: KeyValueType[]) => {
+          let annotations: KeyValueType[] = [];
+          x.forEach((entry) => {
+            annotations.push({ key: entry.key, value: entry.value });
+          });
+          setNamespaceAnnotations(annotations);
+        }}
+      />
 
       <ActionContainer>
         <SaveButton

@@ -18,6 +18,9 @@ import Banner from "components/Banner";
 import InputRow from "components/form-components/InputRow";
 import Modal from "main/home/modals/Modal";
 import { useRouting } from "shared/routing";
+import NamespaceAnnotations, {
+  KeyValueType,
+} from "../components/NamespaceAnnotations";
 
 const EnvironmentSettings = () => {
   const router = useRouting();
@@ -33,6 +36,9 @@ const EnvironmentSettings = () => {
     deploymentMode,
     setDeploymentMode,
   ] = useState<EnvironmentDeploymentMode>("manual");
+  const [namespaceAnnotations, setNamespaceAnnotations] = useState<
+    KeyValueType[]
+  >([]);
   const {
     environment_id: environmentId,
     repo_name: repoName,
@@ -60,6 +66,19 @@ const EnvironmentSettings = () => {
       setEnvironment(environment);
       setNewCommentsDisabled(environment.new_comments_disabled);
       setDeploymentMode(environment.mode);
+
+      if (environment.namespace_annotations) {
+        const annotations: KeyValueType[] = [];
+
+        Object.keys(environment.namespace_annotations).forEach((k) => {
+          annotations.push({
+            key: k,
+            value: environment.namespace_annotations[k],
+          });
+        });
+
+        setNamespaceAnnotations(annotations);
+      }
     };
 
     try {
@@ -70,7 +89,31 @@ const EnvironmentSettings = () => {
   }, []);
 
   const handleSave = async () => {
+    let annotations: Record<string, string> = {};
+
     setSaveStatus("loading");
+
+    namespaceAnnotations
+      .filter((elem: KeyValueType, index: number, self: KeyValueType[]) => {
+        // remove any collisions that are duplicates
+        let numCollisions = self.reduce((n, _elem: KeyValueType) => {
+          return n + (_elem.key === elem.key ? 1 : 0);
+        }, 0);
+
+        if (numCollisions == 1) {
+          return true;
+        } else {
+          return (
+            index ===
+            self.findIndex((_elem: KeyValueType) => _elem.key === elem.key)
+          );
+        }
+      })
+      .forEach((elem: KeyValueType) => {
+        if (elem.key !== "" && elem.value !== "") {
+          annotations[elem.key] = elem.value;
+        }
+      });
 
     try {
       await api.updateEnvironment(
@@ -79,7 +122,7 @@ const EnvironmentSettings = () => {
           mode: deploymentMode,
           disable_new_comments: newCommentsDisabled,
           git_repo_branches: [],
-          namespace_annotations: {},
+          namespace_annotations: annotations,
         },
         {
           project_id: currentProject.id,
@@ -172,7 +215,7 @@ const EnvironmentSettings = () => {
         </Helper>
         <CheckboxRow
           label="Update the most recent PR comment"
-          checked={!newCommentsDisabled}
+          checked={newCommentsDisabled}
           toggle={() => setNewCommentsDisabled(!newCommentsDisabled)}
         />
         <Br />
@@ -189,6 +232,23 @@ const EnvironmentSettings = () => {
               deploymentMode === "auto" ? "manual" : "auto"
             )
           }
+        />
+        <Br />
+        <Heading>Namespace annotations</Heading>
+        <Helper>
+          Custom annotations to be injected into the Kubernetes namespace
+          created for each deployment. Note that this will not affect existing
+          deployments in this preview environment.
+        </Helper>
+        <NamespaceAnnotations
+          values={namespaceAnnotations}
+          setValues={(x: KeyValueType[]) => {
+            let annotations: KeyValueType[] = [];
+            x.forEach((entry) => {
+              annotations.push({ key: entry.key, value: entry.value });
+            });
+            setNamespaceAnnotations(annotations);
+          }}
         />
         <SavePreviewEnvironmentSettings
           text={"Save"}

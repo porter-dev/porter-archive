@@ -89,20 +89,20 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 		changed = true
 	}
 
-	changed = reflect.DeepEqual(env.ToEnvironmentType().NamespaceAnnotations, request.NamespaceAnnotations)
+	if len(request.NamespaceAnnotations) > 0 {
+		var annotations []string
 
-	if changed {
-		if len(request.NamespaceAnnotations) > 0 {
-			var annotations []string
-
-			for k, v := range request.NamespaceAnnotations {
-				annotations = append(annotations, fmt.Sprintf("%s=%s", k, v))
-			}
-
-			env.NamespaceAnnotations = []byte(strings.Join(annotations, ","))
-		} else {
-			env.NamespaceAnnotations = []byte{}
+		for k, v := range request.NamespaceAnnotations {
+			annotations = append(annotations, fmt.Sprintf("%s=%s", k, v))
 		}
+
+		env.NamespaceAnnotations = []byte(strings.Join(annotations, ","))
+
+		changed = true
+	} else {
+		env.NamespaceAnnotations = []byte{}
+
+		changed = true
 	}
 
 	if changed {

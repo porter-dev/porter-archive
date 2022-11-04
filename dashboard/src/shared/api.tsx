@@ -145,7 +145,6 @@ const createEnvironment = baseApi<
     mode: "auto" | "manual";
     disable_new_comments: boolean;
     git_repo_branches: string[];
-    custom_namespaces: boolean;
     namespace_annotations: Record<string, string>;
   },
   {

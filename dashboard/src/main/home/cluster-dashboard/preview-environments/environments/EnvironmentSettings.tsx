@@ -237,9 +237,12 @@ const EnvironmentSettings = () => {
         <Heading>Namespace annotations</Heading>
         <Helper>
           Custom annotations to be injected into the Kubernetes namespace
-          created for each deployment. Note that this will not affect existing
-          deployments in this preview environment.
+          created for each deployment.
         </Helper>
+        <Banner type="warning">
+          Changes made here will not affect existing deployments in this preview
+          environment.
+        </Banner>
         <NamespaceAnnotations
           values={namespaceAnnotations}
           setValues={(x: KeyValueType[]) => {

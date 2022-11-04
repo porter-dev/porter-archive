@@ -171,6 +171,7 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
       )
       .then((res) => {
         if (!expandedEvent.should_view_logs) {
+          setExpandedIncidentEvents(res.data.events);
           return null;
         }
 

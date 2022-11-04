@@ -23,7 +23,6 @@ type Environment struct {
 	Mode string
 
 	NewCommentsDisabled  bool
-	CustomNamespace      bool
 	NamespaceAnnotations []byte
 
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
@@ -61,7 +60,6 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitRepoName:       e.GitRepoName,
 
 		NewCommentsDisabled:  e.NewCommentsDisabled,
-		CustomNamespace:      e.CustomNamespace,
 		NamespaceAnnotations: make(map[string]string),
 
 		Name: e.Name,

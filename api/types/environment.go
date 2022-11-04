@@ -16,7 +16,6 @@ type Environment struct {
 	DeploymentCount      uint              `json:"deployment_count"`
 	LastDeploymentStatus string            `json:"last_deployment_status"`
 	NewCommentsDisabled  bool              `json:"new_comments_disabled"`
-	CustomNamespace      bool              `json:"custom_namespace"`
 	NamespaceAnnotations map[string]string `json:"namespace_annotations,omitempty"`
 }
 

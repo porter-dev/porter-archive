@@ -44,6 +44,7 @@ export type Environment = {
   last_deployment_status: DeploymentStatusUnion;
   deployment_count: number;
   mode: EnvironmentDeploymentMode;
+  namespace_annotations: Record<string, string>;
 };
 
 export type PullRequest = {

@@ -73,7 +73,6 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		Mode:                request.Mode,
 		WebhookID:           string(webhookUID),
 		NewCommentsDisabled: false,
-		CustomNamespace:     request.CustomNamespace,
 	}
 
 	if len(request.NamespaceAnnotations) > 0 {
@@ -190,7 +189,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		GitInstallationID: uint(ga.InstallationID),
 		EnvironmentName:   request.Name,
 		InstanceName:      c.Config().ServerConf.InstanceName,
-		CustomNamespace:   env.CustomNamespace,
+		CustomNamespace:   request.CustomNamespace,
 	})
 
 	if err != nil {

@@ -616,7 +616,7 @@ func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 }
 
 // CreateNamespace creates a namespace with the given name.
-func (a *Agent) CreateNamespace(name string) (*v1.Namespace, error) {
+func (a *Agent) CreateNamespace(name string, annotations map[string]string) (*v1.Namespace, error) {
 	// check if namespace exists
 	checkNS, err := a.Clientset.CoreV1().Namespaces().Get(
 		context.TODO(),
@@ -660,15 +660,19 @@ func (a *Agent) CreateNamespace(name string) (*v1.Namespace, error) {
 		}
 	}
 
-	namespace := v1.Namespace{
+	namespace := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 	}
 
+	if len(annotations) > 0 {
+		namespace.SetAnnotations(annotations)
+	}
+
 	return a.Clientset.CoreV1().Namespaces().Create(
 		context.TODO(),
-		&namespace,
+		namespace,
 		metav1.CreateOptions{},
 	)
 }

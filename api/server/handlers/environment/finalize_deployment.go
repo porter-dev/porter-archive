@@ -253,19 +253,3 @@ func updateGithubComment(
 
 	return err
 }
-
-func isGithubPRClosed(
-	client *github.Client,
-	owner, name string,
-	prNumber int,
-) (bool, error) {
-	ghPR, _, err := client.PullRequests.Get(
-		context.Background(), owner, name, prNumber,
-	)
-
-	if err != nil {
-		return false, fmt.Errorf("%v: %w", errGithubAPI, err)
-	}
-
-	return ghPR.GetState() == "closed", nil
-}

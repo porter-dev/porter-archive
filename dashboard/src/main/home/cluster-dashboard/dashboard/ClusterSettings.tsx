@@ -32,6 +32,10 @@ const ClusterSettings: React.FC = () => {
     currentCluster.agent_integration_enabled
   );
   const [agentLoading, setAgentLoading] = useState(false);
+  const [enablePreviewEnvs, setEnablePreviewEnvs] = useState(
+    currentCluster.preview_envs_enabled
+  );
+  const [previewEnvsLoading, setPreviewEnvsLoading] = useState(false);
 
   let rotateCredentials = () => {
     api
@@ -96,6 +100,29 @@ const ClusterSettings: React.FC = () => {
       })
       .catch(() => {
         setAgentLoading(false);
+      });
+  };
+
+  let updatePreviewEnvironmentsEnabled = () => {
+    setPreviewEnvsLoading(true);
+
+    api
+      .updateCluster(
+        "<token>",
+        {
+          preview_envs_enabled: enablePreviewEnvs,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then(({ data }) => {
+        setCurrentCluster(data);
+        setPreviewEnvsLoading(false);
+      })
+      .catch(() => {
+        setPreviewEnvsLoading(false);
       });
   };
 
@@ -233,6 +260,28 @@ const ClusterSettings: React.FC = () => {
     enableAgentIntegration = <Loading />;
   }
 
+  let enablePreviewEnvironments = null;
+
+  if (currentProject.preview_envs_enabled) {
+    if (previewEnvsLoading) {
+      enablePreviewEnvironments = <Loading />;
+    } else {
+      enablePreviewEnvironments = (
+        <div>
+          <Heading>Enable Preview Environments</Heading>
+          <CheckboxRow
+            label={"Create preview environments on this cluster"}
+            toggle={() => setEnablePreviewEnvs(!enablePreviewEnvs)}
+            checked={enablePreviewEnvs}
+          />
+          <Button color="#616FEEcc" onClick={updatePreviewEnvironmentsEnabled}>
+            Save
+          </Button>
+        </div>
+      );
+    }
+  }
+
   if (capabilities.version == "production") {
     enableAgentIntegration = null;
   }
@@ -250,6 +299,8 @@ const ClusterSettings: React.FC = () => {
     <div>
       <StyledSettingsSection>
         {enableAgentIntegration}
+        <DarkMatter />
+        {enablePreviewEnvironments}
         <DarkMatter />
         {keyRotationSection}
         <DarkMatter />

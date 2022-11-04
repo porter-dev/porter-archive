@@ -22,7 +22,8 @@ type Environment struct {
 	Name string
 	Mode string
 
-	NewCommentsDisabled bool
+	NewCommentsDisabled  bool
+	NamespaceAnnotations []byte
 
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
 	// aren't present
@@ -50,7 +51,7 @@ func getGitRepoBranches(branches string) []string {
 }
 
 func (e *Environment) ToEnvironmentType() *types.Environment {
-	envType := &types.Environment{
+	env := &types.Environment{
 		ID:                e.Model.ID,
 		ProjectID:         e.ProjectID,
 		ClusterID:         e.ClusterID,
@@ -58,7 +59,8 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
 
-		NewCommentsDisabled: e.NewCommentsDisabled,
+		NewCommentsDisabled:  e.NewCommentsDisabled,
+		NamespaceAnnotations: make(map[string]string),
 
 		Name: e.Name,
 		Mode: e.Mode,
@@ -67,12 +69,25 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 	branches := getGitRepoBranches(e.GitRepoBranches)
 
 	if len(branches) > 0 {
-		envType.GitRepoBranches = branches
+		env.GitRepoBranches = branches
 	} else {
-		envType.GitRepoBranches = []string{}
+		env.GitRepoBranches = []string{}
 	}
 
-	return envType
+	if len(e.NamespaceAnnotations) > 0 {
+		env.NamespaceAnnotations = make(map[string]string)
+		annotations := string(e.NamespaceAnnotations)
+
+		for _, a := range strings.Split(annotations, ",") {
+			k, v, found := strings.Cut(a, "=")
+
+			if found {
+				env.NamespaceAnnotations[k] = v
+			}
+		}
+	}
+
+	return env
 }
 
 type Deployment struct {

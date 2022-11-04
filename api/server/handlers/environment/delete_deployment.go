@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -67,12 +66,13 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// make sure we don't delete default or kube-system by checking for prefix, for now
-	if strings.Contains(depl.Namespace, "pr-") {
+	// make sure we do not delete any kubernetes "system" namespaces
+	if !isSystemNamespace(depl.Namespace) {
 		err = agent.DeleteNamespace(depl.Namespace)
 
 		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting preview deployment namespace: %w",
+				err)))
 			return
 		}
 	}
@@ -96,6 +96,11 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	depl, err = c.Repo().Environment().UpdateDeployment(depl)
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

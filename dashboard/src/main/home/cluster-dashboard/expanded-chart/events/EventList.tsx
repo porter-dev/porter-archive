@@ -26,6 +26,69 @@ type Props = {
   setLogData?: (logData: InitLogData) => void;
 };
 
+interface ExpandedIncidentLogsProps {
+  logs: Log[];
+  onViewMore: () => void;
+}
+
+const ExpandedIncidentLogs = ({
+  logs,
+  onViewMore,
+}: ExpandedIncidentLogsProps) => {
+  if (!logs.length) {
+    return (
+      <LogsLoadWrapper>
+        <Loading />
+      </LogsLoadWrapper>
+    );
+  }
+
+  return (
+    <LogsSectionWrapper>
+      <StyledLogsSection>
+        {logs?.map((log, i) => {
+          return (
+            <LogSpan key={[log.lineNumber, i].join(".")}>
+              <span className="line-number">{log.lineNumber}.</span>
+              <span className="line-timestamp">
+                {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
+              </span>
+              <LogOuter key={[log.lineNumber, i].join(".")}>
+                {log.line?.map((ansi, j) => {
+                  if (ansi.clearLine) {
+                    return null;
+                  }
+
+                  return (
+                    <LogInnerSpan
+                      key={[log.lineNumber, i, j].join(".")}
+                      ansi={ansi}
+                    >
+                      {ansi.content.replace(/ /g, "\u00a0")}
+                    </LogInnerSpan>
+                  );
+                })}
+              </LogOuter>
+            </LogSpan>
+          );
+        })}
+      </StyledLogsSection>
+      <ViewLogsWrapper>
+        <DocsLink
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onViewMore();
+          }}
+        >
+          View complete log history
+          <i className="material-icons">open_in_new</i>{" "}
+        </DocsLink>
+      </ViewLogsWrapper>
+    </LogsSectionWrapper>
+  );
+};
+
 const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [events, setEvents] = useState([]);
@@ -108,6 +171,7 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
       )
       .then((res) => {
         if (!expandedEvent.should_view_logs) {
+          setExpandedIncidentEvents(res.data.events);
           return null;
         }
 
@@ -158,54 +222,12 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
           <img src={document} />
           {expandedIncidentEvents[0].detail}
         </Message>
-        {logs.length ? (
-          <LogsSectionWrapper>
-            <StyledLogsSection>
-              {logs?.map((log, i) => {
-                return (
-                  <LogSpan key={[log.lineNumber, i].join(".")}>
-                    <span className="line-number">{log.lineNumber}.</span>
-                    <span className="line-timestamp">
-                      {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
-                    </span>
-                    <LogOuter key={[log.lineNumber, i].join(".")}>
-                      {log.line?.map((ansi, j) => {
-                        if (ansi.clearLine) {
-                          return null;
-                        }
-
-                        return (
-                          <LogInnerSpan
-                            key={[log.lineNumber, i, j].join(".")}
-                            ansi={ansi}
-                          >
-                            {ansi.content.replace(/ /g, "\u00a0")}
-                          </LogInnerSpan>
-                        );
-                      })}
-                    </LogOuter>
-                  </LogSpan>
-                );
-              })}
-            </StyledLogsSection>
-            <ViewLogsWrapper>
-              <DocsLink
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  redirectToLogs(expandedEvent);
-                }}
-              >
-                View complete log history
-                <i className="material-icons">open_in_new</i>{" "}
-              </DocsLink>
-            </ViewLogsWrapper>
-          </LogsSectionWrapper>
-        ) : (
-          <LogsLoadWrapper>
-            <Loading />
-          </LogsLoadWrapper>
-        )}
+        {expandedEvent.should_view_logs ? (
+          <ExpandedIncidentLogs
+            logs={logs}
+            onViewMore={() => redirectToLogs(expandedEvent)}
+          />
+        ) : null}
       </>
     );
   };

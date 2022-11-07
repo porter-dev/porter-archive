@@ -5,20 +5,21 @@ import "time"
 type PermissionScope string
 
 const (
-	UserScope              PermissionScope = "user"
-	ProjectScope           PermissionScope = "project"
-	ClusterScope           PermissionScope = "cluster"
-	RegistryScope          PermissionScope = "registry"
-	InviteScope            PermissionScope = "invite"
-	HelmRepoScope          PermissionScope = "helm_repo"
-	InfraScope             PermissionScope = "infra"
-	OperationScope         PermissionScope = "operation"
-	GitInstallationScope   PermissionScope = "git_installation"
-	NamespaceScope         PermissionScope = "namespace"
-	SettingsScope          PermissionScope = "settings"
-	ReleaseScope           PermissionScope = "release"
-	StackScope             PermissionScope = "stack"
-	GitlabIntegrationScope PermissionScope = "gitlab_integration"
+	UserScope               PermissionScope = "user"
+	ProjectScope            PermissionScope = "project"
+	ClusterScope            PermissionScope = "cluster"
+	RegistryScope           PermissionScope = "registry"
+	InviteScope             PermissionScope = "invite"
+	HelmRepoScope           PermissionScope = "helm_repo"
+	InfraScope              PermissionScope = "infra"
+	OperationScope          PermissionScope = "operation"
+	GitInstallationScope    PermissionScope = "git_installation"
+	NamespaceScope          PermissionScope = "namespace"
+	SettingsScope           PermissionScope = "settings"
+	ReleaseScope            PermissionScope = "release"
+	StackScope              PermissionScope = "stack"
+	GitlabIntegrationScope  PermissionScope = "gitlab_integration"
+	PreviewEnvironmentScope PermissionScope = "preview_environment"
 )
 
 type NameOrUInt struct {
@@ -35,7 +36,9 @@ type PolicyDocument struct {
 
 type ScopeTree map[PermissionScope]ScopeTree
 
-/* ScopeHeirarchy describes the tree of scopes, i.e. Cluster, Registry, and Settings
+/*
+	ScopeHeirarchy describes the tree of scopes, i.e. Cluster, Registry, and Settings
+
 are children of Project, Namespace is a child of Cluster, etc.
 */
 var ScopeHeirarchy = ScopeTree{
@@ -45,6 +48,7 @@ var ScopeHeirarchy = ScopeTree{
 				StackScope:   {},
 				ReleaseScope: {},
 			},
+			PreviewEnvironmentScope: {},
 		},
 		RegistryScope:        {},
 		HelmRepoScope:        {},

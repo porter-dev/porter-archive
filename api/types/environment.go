@@ -81,15 +81,17 @@ type SuccessfullyDeployedResource struct {
 }
 
 type FinalizeDeploymentRequest struct {
-	Namespace           string                          `json:"namespace" form:"required"`
+	Namespace           string                          `json:"namespace"`
 	SuccessfulResources []*SuccessfullyDeployedResource `json:"successful_resources"`
 	Subdomain           string                          `json:"subdomain"`
+	PRNumber            uint                            `json:"pr_number"`
 }
 
 type FinalizeDeploymentWithErrorsRequest struct {
-	Namespace           string                          `json:"namespace" form:"required"`
+	Namespace           string                          `json:"namespace"`
 	SuccessfulResources []*SuccessfullyDeployedResource `json:"successful_resources"`
 	Errors              map[string]string               `json:"errors" form:"required"`
+	PRNumber            uint                            `json:"pr_number"`
 }
 
 type UpdateDeploymentRequest struct {
@@ -97,7 +99,8 @@ type UpdateDeploymentRequest struct {
 
 	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
 	CommitSHA    string `json:"commit_sha" form:"required"`
-	Namespace    string `json:"namespace" form:"required"`
+	Namespace    string `json:"namespace"`
+	PRNumber     uint   `json:"pr_number"`
 }
 
 type ListDeploymentRequest struct {
@@ -109,7 +112,8 @@ type UpdateDeploymentStatusRequest struct {
 
 	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
 	Status       string `json:"status" form:"required,oneof=created creating inactive failed"`
-	Namespace    string `json:"namespace" form:"required"`
+	Namespace    string `json:"namespace"`
+	PRNumber     uint   `json:"pr_number"`
 }
 
 type DeleteDeploymentRequest struct {
@@ -117,7 +121,8 @@ type DeleteDeploymentRequest struct {
 }
 
 type GetDeploymentRequest struct {
-	Namespace string `schema:"namespace" form:"required"`
+	Namespace string `schema:"namespace"`
+	PRNumber  uint   `schema:"pr_number"`
 }
 
 type PullRequest struct {

@@ -174,7 +174,7 @@ const DeploymentCard: React.FC<{
 
   const DeploymentCardActions = [
     {
-      active: deployment.last_workflow_run_url,
+      active: !!deployment.last_workflow_run_url,
       label: "View last workflow",
       action: (e: React.MouseEvent) => {
         e.preventDefault();
@@ -195,7 +195,7 @@ const DeploymentCard: React.FC<{
 
   return (
     <DeploymentCardWrapper
-      to={`/preview-environments/details/${deployment.namespace}?environment_id=${deployment.environment_id}`}
+      to={`/preview-environments/details/${deployment.id}?environment_id=${deployment.environment_id}`}
     >
       <DataContainer>
         <PRName>

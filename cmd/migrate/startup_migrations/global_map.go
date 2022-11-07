@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// this should be incremented with every new startup migration script
 const LatestMigrationVersion uint = 1
 
 type migrationFunc func(db *gorm.DB, logger *lr.Logger) error

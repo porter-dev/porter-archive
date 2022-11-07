@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
-	"github.com/porter-dev/porter/cmd/migrate/enable_cluster_preview_envs"
 	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
 	"github.com/porter-dev/porter/cmd/migrate/populate_source_config_display_name"
 	"github.com/porter-dev/porter/cmd/migrate/startup_migrations"
@@ -108,14 +107,6 @@ func main() {
 		}
 	}
 
-	if shouldEnableClusterPreviewEnvs() {
-		err := enable_cluster_preview_envs.EnableClusterPreviewEnvs(db, logger)
-
-		if err != nil {
-			logger.Fatal().Err(err).Msg("failed to enable cluster preview envs")
-		}
-	}
-
 	if err := InstanceMigrate(db, envConf.DBConf); err != nil {
 		logger.Fatal().Err(err).Msg("vault migration failed")
 	}
@@ -156,23 +147,4 @@ func shouldPopulateSourceConfigDisplayName() bool {
 	}
 
 	return c.PopulateSourceConfigDisplayName
-}
-
-type EnableClusterPreviewEnvsConf struct {
-	// we add a dummy field to avoid empty struct issue with envdecode
-	DummyField string `env:"ASDF,default=asdf"`
-
-	// if true, will mark all clusters to have preview envs enabled whose parent project has it enabled
-	EnableClusterPreviewEnvs bool `env:"ENABLE_CLUSTER_PREVIEW_ENVS"`
-}
-
-func shouldEnableClusterPreviewEnvs() bool {
-	var c EnableClusterPreviewEnvsConf
-
-	if err := envdecode.StrictDecode(&c); err != nil {
-		log.Fatalf("Failed to decode migration conf: %s", err)
-		return false
-	}
-
-	return c.EnableClusterPreviewEnvs
 }

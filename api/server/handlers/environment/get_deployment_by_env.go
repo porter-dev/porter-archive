@@ -33,14 +33,6 @@ func (c *GetDeploymentByEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	if !project.PreviewEnvsEnabled {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errPreviewProjectDisabled, http.StatusForbidden))
-		return
-	} else if !cluster.PreviewEnvsEnabled {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errPreviewClusterDisabled, http.StatusForbidden))
-		return
-	}
-
 	envID, reqErr := requestutils.GetURLParamUint(r, "environment_id")
 
 	if reqErr != nil {
@@ -54,11 +46,20 @@ func (c *GetDeploymentByEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *
 		return
 	}
 
-	_, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, envID)
+	if request.Namespace == "" && request.PRNumber == 0 {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("either namespace or pr_number must be present in request body"), http.StatusBadRequest,
+		))
+		return
+	}
+
+	var err error
+
+	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, envID)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("environment with id %d not found", envID)))
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(errEnvironmentNotFound))
 			return
 		}
 
@@ -66,15 +67,38 @@ func (c *GetDeploymentByEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *
 		return
 	}
 
-	depl, err := c.Repo().Environment().ReadDeployment(envID, request.Namespace)
+	var depl *models.Deployment
 
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("deployment not found for namespace: %s", request.Namespace)))
+	// read the deployment
+	if request.PRNumber != 0 {
+		depl, err = c.Repo().Environment().ReadDeploymentByGitDetails(env.ID, env.GitRepoOwner, env.GitRepoName,
+			request.PRNumber)
+
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
+				return
+			}
+
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
+	} else if request.Namespace != "" {
+		depl, err = c.Repo().Environment().ReadDeployment(env.ID, request.Namespace)
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
+				return
+			}
+
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
+
+	if depl == nil {
+		c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
 		return
 	}
 

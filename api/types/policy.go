@@ -20,7 +20,6 @@ const (
 	StackScope              PermissionScope = "stack"
 	GitlabIntegrationScope  PermissionScope = "gitlab_integration"
 	PreviewEnvironmentScope PermissionScope = "preview_environment"
-	EnvironmentScope        PermissionScope = "environment"
 )
 
 type NameOrUInt struct {
@@ -37,7 +36,9 @@ type PolicyDocument struct {
 
 type ScopeTree map[PermissionScope]ScopeTree
 
-/* ScopeHeirarchy describes the tree of scopes, i.e. Cluster, Registry, and Settings
+/*
+	ScopeHeirarchy describes the tree of scopes, i.e. Cluster, Registry, and Settings
+
 are children of Project, Namespace is a child of Cluster, etc.
 */
 var ScopeHeirarchy = ScopeTree{
@@ -47,6 +48,7 @@ var ScopeHeirarchy = ScopeTree{
 				StackScope:   {},
 				ReleaseScope: {},
 			},
+			PreviewEnvironmentScope: {},
 		},
 		RegistryScope:        {},
 		HelmRepoScope:        {},
@@ -56,9 +58,6 @@ var ScopeHeirarchy = ScopeTree{
 		},
 		SettingsScope: {
 			InviteScope: {},
-		},
-		PreviewEnvironmentScope: {
-			EnvironmentScope: {},
 		},
 		GitlabIntegrationScope: {},
 	},

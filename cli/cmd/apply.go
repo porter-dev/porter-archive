@@ -831,7 +831,7 @@ func (t *DeploymentHook) PreApply() error {
 		context.Background(),
 		t.projectID, t.clusterID, t.envID,
 		&types.GetDeploymentRequest{
-			Namespace: t.namespace,
+			PRNumber: t.prID,
 		},
 	)
 
@@ -864,6 +864,7 @@ func (t *DeploymentHook) PreApply() error {
 			t.repoOwner, t.repoName,
 			&types.UpdateDeploymentRequest{
 				Namespace: t.namespace,
+				PRNumber:  t.prID,
 				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
 					ActionID: t.actionID,
 				},
@@ -952,7 +953,7 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 	}
 
 	req := &types.FinalizeDeploymentRequest{
-		Namespace: t.namespace,
+		PRNumber:  t.prID,
 		Subdomain: strings.Join(subdomains, ", "),
 	}
 
@@ -978,23 +979,24 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 	return err
 }
 
-func (t *DeploymentHook) OnError(err error) {
+func (t *DeploymentHook) OnError(error) {
 	// if the deployment exists, throw an error for that deployment
-	_, getDeplErr := t.client.GetDeployment(
+	_, err := t.client.GetDeployment(
 		context.Background(),
 		t.projectID, t.clusterID, t.envID,
 		&types.GetDeploymentRequest{
-			Namespace: t.namespace,
+			PRNumber: t.prID,
 		},
 	)
 
-	if getDeplErr == nil {
-		_, err = t.client.UpdateDeploymentStatus(
+	if err == nil {
+		// FIXME: try to use the error with a custom logger
+		t.client.UpdateDeploymentStatus(
 			context.Background(),
 			t.projectID, t.gitInstallationID, t.clusterID,
 			t.repoOwner, t.repoName,
 			&types.UpdateDeploymentStatusRequest{
-				Namespace: t.namespace,
+				PRNumber: t.prID,
 				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
 					ActionID: t.actionID,
 				},
@@ -1011,14 +1013,14 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 		context.Background(),
 		t.projectID, t.clusterID, t.envID,
 		&types.GetDeploymentRequest{
-			Namespace: t.namespace,
+			PRNumber: t.prID,
 		},
 	)
 
 	if getDeplErr == nil {
 		req := &types.FinalizeDeploymentWithErrorsRequest{
-			Namespace: t.namespace,
-			Errors:    make(map[string]string),
+			PRNumber: t.prID,
+			Errors:   make(map[string]string),
 		}
 
 		for _, res := range t.resourceGroup.Resources {

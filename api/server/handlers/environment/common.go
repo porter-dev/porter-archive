@@ -14,9 +14,6 @@ import (
 )
 
 var (
-	errPreviewProjectDisabled = errors.New("preview environments are not enabled for this project")
-	errPreviewClusterDisabled = errors.New("preview environments are not enabled for this cluster")
-
 	errDeploymentNotFound  = errors.New("no such deployment exists")
 	errEnvironmentNotFound = errors.New("no such environment exists")
 	errGithubAPI           = errors.New("error communicating with the github API")

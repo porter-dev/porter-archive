@@ -303,6 +303,7 @@ func getClusterRoutes(
 					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -331,6 +332,7 @@ func getClusterRoutes(
 					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -359,6 +361,7 @@ func getClusterRoutes(
 					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -388,6 +391,7 @@ func getClusterRoutes(
 					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -417,6 +421,7 @@ func getClusterRoutes(
 					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -446,6 +451,7 @@ func getClusterRoutes(
 					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -475,6 +481,7 @@ func getClusterRoutes(
 					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -504,6 +511,7 @@ func getClusterRoutes(
 					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -533,6 +541,7 @@ func getClusterRoutes(
 					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -563,6 +572,7 @@ func getClusterRoutes(
 					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)

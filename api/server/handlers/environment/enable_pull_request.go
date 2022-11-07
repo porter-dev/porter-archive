@@ -37,14 +37,6 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	if !project.PreviewEnvsEnabled {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errPreviewProjectDisabled, http.StatusForbidden))
-		return
-	} else if !cluster.PreviewEnvsEnabled {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errPreviewClusterDisabled, http.StatusForbidden))
-		return
-	}
-
 	request := &types.PullRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -122,4 +114,24 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	// create the deployment
+	depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
+		EnvironmentID: env.ID,
+		Namespace:     "namespace-creating",
+		Status:        types.DeploymentStatusCreating,
+		PullRequestID: request.Number,
+		RepoOwner:     request.RepoOwner,
+		RepoName:      request.RepoName,
+		PRName:        request.Title,
+		PRBranchFrom:  request.BranchFrom,
+		PRBranchInto:  request.BranchInto,
+	})
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	c.WriteResult(w, r, depl.ToDeploymentType())
 }

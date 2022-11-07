@@ -22,7 +22,7 @@ export const Routes = () => {
         <Route path={`${path}/connect-repo`}>
           <ConnectNewRepo />
         </Route>
-        <Route path={`${path}/details/:namespace?`}>
+        <Route path={`${path}/details/:id`}>
           <DeploymentDetail />
         </Route>
         <Route

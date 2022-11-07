@@ -26,55 +26,11 @@ const AvailableStatusFilters = ["all", "created", "failed", "not_deployed"];
 
 type AvailableStatusFiltersType = typeof AvailableStatusFilters[number];
 
-
-const HARD_CODED_DEPLOYMENTS: PRDeployment[] = [
-  {
-    id: 1,
-    created_at: "2021-03-01T00:00:00.000Z",
-    updated_at: "2021-03-01T00:00:00.000Z",
-    subdomain: "subdomain",
-    status: "created",
-    environment_id: 1,
-    pull_request_id: 1,
-    namespace: "namespace",
-    last_workflow_run_url: "",
-    gh_installation_id: 1,
-    gh_deployment_id: 1,
-    gh_pr_name: "gh_pr_name",
-    gh_repo_owner: "meehawk",
-    gh_repo_name: "meehawk",
-    gh_commit_sha: "3659ef050a687da4d04bb870b27058bd9d1957be",
-    gh_pr_branch_from: "gh_pr_branch_from",
-    gh_pr_branch_into: "gh_pr_branch_into",
-  },
-  {
-    id: 2,
-    created_at: "2021-03-01T00:00:00.000Z",
-    updated_at: "2021-03-01T00:00:00.000Z",
-    subdomain: "subdomain",
-    status: "created",
-    environment_id: 1,
-    pull_request_id: 1,
-    namespace: "namespace",
-    last_workflow_run_url: "",
-    gh_installation_id: 1,
-    gh_deployment_id: 1,
-    gh_pr_name: "some_awesome_pr",
-    gh_repo_owner: "godzilla",
-    gh_repo_name: "kong",
-    gh_commit_sha: "3659ef050a687da4d04bb870b27058bd9d1957be",
-    gh_pr_branch_from: "gh_pr_branch_from",
-    gh_pr_branch_into: "gh_pr_branch_into",
-  },
-];
-
 const DeploymentList = () => {
   const [sortOrder, setSortOrder] = useState("Newest");
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([
-    ...HARD_CODED_DEPLOYMENTS
-  ]);
+  const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [searchValue, setSearchValue] = useState("");
   const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
@@ -172,7 +128,7 @@ const DeploymentList = () => {
           }
 
           setPorterYAMLErrors(porterYAMLErrors);
-          setDeploymentList(deploymentList.deployments ?? HARD_CODED_DEPLOYMENTS);
+          setDeploymentList(deploymentList.deployments ?? []);
           setPullRequests(deploymentList.pull_requests || []);
 
           setNewCommentsDisabled(

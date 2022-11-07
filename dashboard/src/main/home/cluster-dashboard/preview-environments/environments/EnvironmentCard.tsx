@@ -113,6 +113,16 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
             <RepoLink
               to={`https://github.com/${git_repo_owner}/${git_repo_name}`}
               target="_blank"
+              // TODO (soham): FIXME
+              // onClick={(e) => {
+              //   e.preventDefault();
+              //   e.stopPropagation();
+
+              //   window.open(
+              //     `https://github.com/${git_repo_owner}/${git_repo_name}`,
+              //     "_blank"
+              //   );
+              // }}
             >
               <i className="material-icons">open_in_new</i>
               View Repo

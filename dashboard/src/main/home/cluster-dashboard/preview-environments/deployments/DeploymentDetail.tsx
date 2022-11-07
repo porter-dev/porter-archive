@@ -18,7 +18,7 @@ import Modal from "main/home/modals/Modal";
 import { validatePorterYAML } from "../utils";
 
 const DeploymentDetail = () => {
-  const { params } = useRouteMatch<{ namespace: string }>();
+  const { params } = useRouteMatch<{ id: string }>();
   const context = useContext(Context);
   const [prDeployment, setPRDeployment] = useState<PRDeployment>(null);
   const [environmentId, setEnvironmentId] = useState("");
@@ -38,10 +38,10 @@ const DeploymentDetail = () => {
     let environment_id = parseInt(searchParams.get("environment_id"));
     setEnvironmentId(searchParams.get("environment_id"));
     api
-      .getPRDeploymentByEnvironment(
+      .getPRDeploymentByID(
         "<token>",
         {
-          namespace: params.namespace,
+          id: parseInt(params.id),
         },
         {
           project_id: currentProject.id,
@@ -63,11 +63,11 @@ const DeploymentDetail = () => {
       });
   }, [params]);
 
-  if (!prDeployment) {
-    return <Loading />;
-  }
-
   useEffect(() => {
+    if (!prDeployment) {
+      return;
+    }
+
     const isSubscribed = true;
     const environment_id = parseInt(searchParams.get("environment_id"));
 
@@ -90,9 +90,91 @@ const DeploymentDetail = () => {
           setPorterYAMLErrors([]);
         }
       });
-  }, []);
+  }, [prDeployment]);
 
-  let repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
+  if (!prDeployment) {
+    return <Loading />;
+  }
+
+  const repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
+
+  // TODO (soham): Add a view linking to the current workflow
+  if (!prDeployment.namespace) {
+    return (
+      <>
+        <BreadcrumbRow>
+          <Breadcrumb to={`/preview-environments/deployments/settings`}>
+            <ArrowIcon src={PullRequestIcon} />
+            <Wrap>Preview environments</Wrap>
+          </Breadcrumb>
+          <Slash>/</Slash>
+          <Breadcrumb
+            to={`/preview-environments/deployments/${environmentId}/${repository}`}
+          >
+            <GitIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
+            <Wrap>{repository}</Wrap>
+          </Breadcrumb>
+        </BreadcrumbRow>
+        <StyledExpandedChart>
+          <HeaderWrapper>
+            <Title
+              icon={pr_icon}
+              iconWidth="25px"
+              onClick={() =>
+                window.open(
+                  `https://github.com/${repository}/pull/${prDeployment.pull_request_id}`,
+                  "_blank"
+                )
+              }
+            >
+              {prDeployment.gh_pr_name}
+            </Title>
+            <InfoWrapper>
+              {prDeployment.subdomain && (
+                <PRLink to={prDeployment.subdomain} target="_blank">
+                  <i className="material-icons">link</i>
+                  {prDeployment.subdomain}
+                </PRLink>
+              )}
+            </InfoWrapper>
+            <Flex>
+              <Status>
+                <StatusDot status={prDeployment.status} />
+                {capitalize(prDeployment.status)}
+              </Status>
+              <Dot>•</Dot>
+              <DeploymentImageContainer>
+                <DeploymentTypeIcon src={integrationList.repo.icon} />
+                <RepositoryName
+                  onMouseOver={() => {
+                    setShowRepoTooltip(true);
+                  }}
+                  onMouseOut={() => {
+                    setShowRepoTooltip(false);
+                  }}
+                >
+                  {repository}
+                </RepositoryName>
+                {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
+              </DeploymentImageContainer>
+              <Dot>•</Dot>
+              {prDeployment.last_workflow_run_url ? (
+                <GHALink
+                  to={prDeployment.last_workflow_run_url}
+                  target="_blank"
+                >
+                  <img src={github} /> View last workflow run
+                  <i className="material-icons">open_in_new</i>
+                </GHALink>
+              ) : null}
+            </Flex>
+            <LinkToActionsWrapper></LinkToActionsWrapper>
+          </HeaderWrapper>
+          <ChartListWrapper></ChartListWrapper>
+        </StyledExpandedChart>
+      </>
+    );
+  }
 
   return (
     <>
@@ -148,7 +230,7 @@ const DeploymentDetail = () => {
               </PRLink>
             )}
             <TagWrapper>
-              Namespace <NamespaceTag>{params.namespace}</NamespaceTag>
+              Namespace <NamespaceTag>{prDeployment.namespace}</NamespaceTag>
             </TagWrapper>
           </InfoWrapper>
           <Flex>
@@ -198,7 +280,7 @@ const DeploymentDetail = () => {
             currentCluster={context.currentCluster}
             currentView="cluster-dashboard"
             sortType="Newest"
-            namespace={params.namespace}
+            namespace={prDeployment.namespace}
             disableBottomPadding
             closeChartRedirectUrl={`${window.location.pathname}${window.location.search}`}
           />

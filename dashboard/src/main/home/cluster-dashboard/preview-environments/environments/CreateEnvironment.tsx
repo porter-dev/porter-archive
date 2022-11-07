@@ -16,11 +16,12 @@ import { getPRDeploymentList, validatePorterYAML } from "../utils";
 import Banner from "components/Banner";
 import Modal from "main/home/modals/Modal";
 import { useRouting } from "shared/routing";
+import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
 
 const CreateEnvironment: React.FC = () => {
   const router = useRouting();
   const queryClient = useQueryClient();
-  const [modalContent, setModalContent] = useState<React.ReactNode>();
+  const [showErrorsModal, setShowErrorsModal] = useState<boolean>(false);
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
@@ -130,12 +131,12 @@ const CreateEnvironment: React.FC = () => {
 
               <Flex>
                 <DeploymentImageContainer>
-                  <InfoWrapper>
+                  {/* <InfoWrapper>
                     <LastDeployed>
                       #{pullRequest.pr_number} last updated xyz
                     </LastDeployed>
                   </InfoWrapper>
-                  <SepDot>•</SepDot>
+                  <SepDot>•</SepDot> */}
                   <MergeInfoWrapper>
                     <MergeInfo>
                       {pullRequest.branch_from}
@@ -149,43 +150,52 @@ const CreateEnvironment: React.FC = () => {
           );
         })}
       </PullRequestList>
-      {modalContent ? (
-        <Modal onRequestClose={() => setModalContent(null)} height="auto">
-          {modalContent}
-        </Modal>
+      {showErrorsModal ? (
+        <PorterYAMLErrorsModal
+          errors={porterYAMLErrors}
+          onClose={() => setShowErrorsModal(false)}
+          repo={selectedPR.repo_owner + "/" + selectedPR.repo_name}
+          branch={selectedPR.branch_from}
+        />
       ) : null}
-      {selectedPR && porterYAMLErrors.length ? (
+      {selectedPR ? (
         <ValidationErrorBannerWrapper>
           <Banner type="warning">
             We found some errors in the porter.yaml file on your default branch.
             &nbsp;
-            <LearnMoreButton
-              onClick={() =>
-                setModalContent(
-                  <Message>
-                    {porterYAMLErrors.map((el) => {
-                      return (
-                        <div>
-                          {"- "}
-                          {el}
-                        </div>
-                      );
-                    })}
-                  </Message>
-                )
-              }
-            >
+            <LearnMoreButton onClick={() => setShowErrorsModal(true)}>
               Learn more
             </LearnMoreButton>
           </Banner>
         </ValidationErrorBannerWrapper>
       ) : null}
-      <SubmitButton
-        onClick={handleCreatePreviewDeployment}
-        disabled={loading || !selectedPR || porterYAMLErrors.length > 0}
-      >
-        Create preview deployment
-      </SubmitButton>
+      <CreatePreviewDeploymentWrapper>
+        <SubmitButton
+          onClick={handleCreatePreviewDeployment}
+          disabled={loading || !selectedPR || porterYAMLErrors.length > 0}
+        >
+          Create preview deployment
+        </SubmitButton>
+        {selectedPR ? (
+          <RevalidatePorterYAMLSpanWrapper>
+            Please fix your porter.yaml file to continue.{" "}
+            <RevalidateSpan
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (!selectedPR) {
+                  return;
+                }
+
+                handlePRRowItemClick(selectedPR);
+              }}
+            >
+              Refresh
+            </RevalidateSpan>
+          </RevalidatePorterYAMLSpanWrapper>
+        ) : null}
+      </CreatePreviewDeploymentWrapper>
     </>
   );
 };
@@ -310,7 +320,6 @@ const SubmitButton = styled.div`
   height: 30px;
   padding: 0 8px;
   width: 200px;
-  margin-top: 30px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -397,11 +406,9 @@ const ValidationErrorBannerWrapper = styled.div`
 `;
 
 const LearnMoreButton = styled.div`
+  text-decoration: underline;
   fontweight: bold;
   cursor: pointer;
-  &:hover {
-    text-decoration: underline;
-  }
 `;
 
 const Message = styled.div`
@@ -412,4 +419,23 @@ const Message = styled.div`
   border: 1px solid #aaaabb33;
   font-size: 13px;
   margin-top: 40px;
+`;
+
+const CreatePreviewDeploymentWrapper = styled.div`
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
+const RevalidatePorterYAMLSpanWrapper = styled.div`
+  font-size: 13px;
+  color: #aaaabb;
+`;
+
+const RevalidateSpan = styled.span`
+  color: #aaaabb;
+  text-decoration: underline;
+  cursor: pointer;
 `;

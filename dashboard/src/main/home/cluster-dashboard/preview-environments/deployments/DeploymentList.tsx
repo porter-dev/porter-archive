@@ -5,7 +5,7 @@ import styled from "styled-components";
 import Loading from "components/Loading";
 import _ from "lodash";
 import DeploymentCard from "./DeploymentCard";
-import { PRDeployment, PullRequest } from "../types";
+import { Environment, PRDeployment, PullRequest } from "../types";
 import { useRouting } from "shared/routing";
 import { useHistory, useLocation, useParams } from "react-router";
 import { deployments, pull_requests } from "../mocks";
@@ -14,13 +14,14 @@ import DashboardHeader from "../../DashboardHeader";
 import RadioFilter from "components/RadioFilter";
 import Placeholder from "components/Placeholder";
 import Banner from "components/Banner";
-import Modal from "main/home/modals/Modal";
 
 import pullRequestIcon from "assets/pull_request_icon.svg";
 import filterOutline from "assets/filter-outline.svg";
 import sort from "assets/sort.svg";
 import { search } from "shared/search";
 import { getPRDeploymentList, validatePorterYAML } from "../utils";
+import { PorterYAMLErrors } from "../errors";
+import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
 
 const AvailableStatusFilters = ["all", "created", "failed", "not_deployed"];
 
@@ -249,47 +250,19 @@ const DeploymentList = () => {
     );
   };
 
-  const handleToggleCommentStatus = (currentlyDisabled: boolean) => {
-    api
-      .toggleNewCommentForEnvironment(
-        "<token>",
-        {
-          disable: !currentlyDisabled,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          environment_id: Number(environment_id),
-        }
-      )
-      .then(() => {
-        setNewCommentsDisabled(!currentlyDisabled);
-      });
-  };
-
   useEffect(() => {
     pushQueryParams({ status_filter: statusSelectorVal });
   }, [statusSelectorVal]);
 
   return (
     <>
-      {expandedPorterYAMLErrors.length > 0 && (
-        <Modal
-          onRequestClose={() => setExpandedPorterYAMLErrors([])}
-          height="auto"
-        >
-          <Message>
-            {expandedPorterYAMLErrors.map((el) => {
-              return (
-                <div>
-                  {"- "}
-                  {el}
-                </div>
-              );
-            })}
-          </Message>
-        </Modal>
-      )}
+      <PorterYAMLErrorsModal
+        errors={expandedPorterYAMLErrors}
+        onClose={() => setExpandedPorterYAMLErrors([])}
+        repo={selectedRepo}
+        branch=""
+      />
+
       <BreadcrumbRow>
         <Breadcrumb to="/preview-environments">
           <ArrowIcon src={pullRequestIcon} />
@@ -370,6 +343,9 @@ const DeploymentList = () => {
             name="Sort"
           />
           <CreatePreviewEnvironmentButton
+            disabled={porterYAMLErrors.some(
+              (err) => err === PorterYAMLErrors.FileNotFound
+            )}
             to={`/preview-environments/deployments/${environment_id}/${repo_owner}/${repo_name}/create`}
           >
             <i className="material-icons">add</i> New preview deployment

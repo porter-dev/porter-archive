@@ -21,14 +21,18 @@ import { useRouting } from "shared/routing";
 import NamespaceAnnotations, {
   KeyValueType,
 } from "../components/NamespaceAnnotations";
+import BranchFilterSelector from "../components/BranchFilterSelector";
 
 const EnvironmentSettings = () => {
   const router = useRouting();
+  const [isLoadingBranches, setIsLoadingBranches] = useState<boolean>(false);
+  const [availableBranches, setAvailableBranches] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmationPrompt, setDeleteConfirmationPrompt] = useState("");
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
+  const [selectedBranches, setSelectedBranches] = useState([]);
   const [environment, setEnvironment] = useState<Environment>();
   const [saveStatus, setSaveStatus] = useState("");
   const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
@@ -64,6 +68,7 @@ const EnvironmentSettings = () => {
       );
 
       setEnvironment(environment);
+      setSelectedBranches(environment.git_repo_branches);
       setNewCommentsDisabled(environment.new_comments_disabled);
       setDeploymentMode(environment.mode);
 
@@ -87,6 +92,38 @@ const EnvironmentSettings = () => {
       setCurrentError(err);
     }
   }, []);
+
+  useEffect(() => {
+    if (!environment) {
+      return;
+    }
+
+    const repoName = environment.git_repo_name;
+    const repoOwner = environment.git_repo_owner;
+    setIsLoadingBranches(true);
+    api
+      .getBranches<string[]>(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          kind: "github",
+          name: repoName,
+          owner: repoOwner,
+          git_repo_id: environment.git_installation_id,
+        }
+      )
+      .then(({ data }) => {
+        setIsLoadingBranches(false);
+        setAvailableBranches(data);
+      })
+      .catch(() => {
+        setIsLoadingBranches(false);
+        setCurrentError(
+          "Couldn't load branches for this repository, using all branches by default."
+        );
+      });
+  }, [environment]);
 
   const handleSave = async () => {
     let annotations: Record<string, string> = {};
@@ -121,7 +158,7 @@ const EnvironmentSettings = () => {
         {
           mode: deploymentMode,
           disable_new_comments: newCommentsDisabled,
-          git_repo_branches: [],
+          git_repo_branches: selectedBranches,
           namespace_annotations: annotations,
         },
         {
@@ -208,6 +245,12 @@ const EnvironmentSettings = () => {
         capitalize={false}
       />
       <StyledPlaceholder>
+        <WarningBannerWrapper>
+          <Banner type="warning">
+            Changes made here will not affect existing deployments in this
+            preview environment.
+          </Banner>
+        </WarningBannerWrapper>
         <Heading isAtTop>Pull request comment settings</Heading>
         <Helper>
           Update the most recent PR comment on every deploy. If disabled, a new
@@ -234,15 +277,25 @@ const EnvironmentSettings = () => {
           }
         />
         <Br />
+        <Heading>Select allowed branches</Heading>
+        <Helper>
+          If the pull request has a base branch included in this list, it will
+          be allowed to be deployed.
+          <br />
+          (Leave empty to allow all branches)
+        </Helper>
+        <BranchFilterSelector
+          onChange={setSelectedBranches}
+          options={availableBranches}
+          value={selectedBranches}
+          showLoading={isLoadingBranches}
+        />
+        <Br />
         <Heading>Namespace annotations</Heading>
         <Helper>
           Custom annotations to be injected into the Kubernetes namespace
           created for each deployment.
         </Helper>
-        <Banner type="warning">
-          Changes made here will not affect existing deployments in this preview
-          environment.
-        </Banner>
         <NamespaceAnnotations
           values={namespaceAnnotations}
           setValues={(x: KeyValueType[]) => {
@@ -424,4 +477,8 @@ const Breadcrumb = styled(DynamicLink)`
   :hover {
     background: #ffffff11;
   }
+`;
+
+const WarningBannerWrapper = styled.div`
+  margin-block: 20px;
 `;

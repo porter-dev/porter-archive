@@ -16,6 +16,8 @@ import { capitalize } from "shared/string_utils";
 import Banner from "components/Banner";
 import Modal from "main/home/modals/Modal";
 import { validatePorterYAML } from "../utils";
+import Placeholder from "components/Placeholder";
+import GithubIcon from "assets/GithubIcon";
 
 const DeploymentDetail = () => {
   const { params } = useRouteMatch<{ id: string }>();
@@ -98,8 +100,7 @@ const DeploymentDetail = () => {
 
   const repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
 
-  // TODO (soham): Add a view linking to the current workflow
-  if (!prDeployment.namespace) {
+  if (!prDeployment.namespace && prDeployment.status === "creating") {
     return (
       <>
         <BreadcrumbRow>
@@ -158,19 +159,28 @@ const DeploymentDetail = () => {
                 {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
               </DeploymentImageContainer>
               <Dot>•</Dot>
-              {prDeployment.last_workflow_run_url ? (
-                <GHALink
-                  to={prDeployment.last_workflow_run_url}
-                  target="_blank"
-                >
-                  <img src={github} /> View last workflow run
-                  <i className="material-icons">open_in_new</i>
-                </GHALink>
-              ) : null}
+              <GHALink
+                to={`https://github.com/${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}/pulls/${prDeployment.pull_request_id}`}
+                target="_blank"
+              >
+                <GithubIcon />
+                View PR
+                <i className="material-icons">open_in_new</i>
+              </GHALink>
             </Flex>
             <LinkToActionsWrapper></LinkToActionsWrapper>
           </HeaderWrapper>
-          <ChartListWrapper></ChartListWrapper>
+          <ChartListWrapper>
+            <Placeholder height="370px">
+              This preview deployment has not been created yet.{" "}
+              <ViewLastWorkflowLink
+                to={`https://github.com/${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}/actions`}
+                target="_blank"
+              >
+                View last workflow
+              </ViewLastWorkflowLink>
+            </Placeholder>
+          </ChartListWrapper>
         </StyledExpandedChart>
       </>
     );
@@ -264,16 +274,19 @@ const DeploymentDetail = () => {
           <LinkToActionsWrapper></LinkToActionsWrapper>
         </HeaderWrapper>
         {porterYAMLErrors.length > 0 ? (
-          <Banner type="error">
-            Your porter.yaml file has errors. Please fix them before deploying.
-            <LinkButton
-              onClick={() => {
-                setExpandedPorterYAMLErrors(porterYAMLErrors);
-              }}
-            >
-              View details
-            </LinkButton>
-          </Banner>
+          <ErrorBannerWrapper>
+            <Banner type="error">
+              Your porter.yaml file has errors. Please fix them before
+              deploying.
+              <LinkButton
+                onClick={() => {
+                  setExpandedPorterYAMLErrors(porterYAMLErrors);
+                }}
+              >
+                View details
+              </LinkButton>
+            </Banner>
+          </ErrorBannerWrapper>
         ) : null}
         <ChartListWrapper>
           <ChartList
@@ -291,6 +304,10 @@ const DeploymentDetail = () => {
 };
 
 export default DeploymentDetail;
+
+const ErrorBannerWrapper = styled.div`
+  margin-block: 20px;
+`;
 
 const Slash = styled.div`
   margin: 0 4px;
@@ -385,6 +402,18 @@ const GHALink = styled(DynamicLink)`
   > i {
     margin-left: 7px;
     font-size: 17px;
+  }
+`;
+
+const ViewLastWorkflowLink = styled(DynamicLink)`
+  display: flex;
+  align-items: center;
+  text-decoration: underline;
+  margin-left: 7px;
+  color: currentcolor;
+
+  :hover {
+    color: white;
   }
 `;
 

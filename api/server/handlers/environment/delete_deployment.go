@@ -50,7 +50,7 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("deployment id not found in cluster and project")))
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
 			return
 		}
 
@@ -82,7 +82,7 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("environment id not found in cluster and project")))
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(errEnvironmentNotFound))
 			return
 		}
 
@@ -90,10 +90,7 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	depl.Status = types.DeploymentStatusInactive
-
-	// update the deployment to mark it inactive
-	depl, err = c.Repo().Environment().UpdateDeployment(depl)
+	_, err = c.Repo().Environment().DeleteDeployment(depl)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

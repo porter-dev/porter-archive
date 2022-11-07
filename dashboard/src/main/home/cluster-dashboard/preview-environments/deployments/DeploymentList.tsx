@@ -157,7 +157,7 @@ const DeploymentList = () => {
         clusterID: currentCluster.id,
         environmentID: Number(environment_id),
       });
-      setDeploymentList(data.deployments || []);
+      setDeploymentList(data.deployments ?? []);
       setPullRequests(data.pull_requests || []);
     } catch (error) {
       setHasError(true);
@@ -173,9 +173,21 @@ const DeploymentList = () => {
   };
 
   const filteredDeployments = useMemo(() => {
-    const filteredByStatus = deploymentList.filter(
-      (d) => !["deleted", "inactive"].includes(d.status)
-    );
+    const filteredByStatus = deploymentList.filter((d) => {
+      if (["deleted", "inactive"].includes(d.status)) {
+        return false;
+      }
+
+      if (statusSelectorVal === "all") {
+        return true;
+      }
+
+      if (d.status === statusSelectorVal) {
+        return true;
+      }
+
+      return false;
+    });
 
     const filteredBySearch = search<PRDeployment>(
       filteredByStatus,

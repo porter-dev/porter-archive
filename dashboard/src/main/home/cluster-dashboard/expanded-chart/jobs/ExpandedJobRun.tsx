@@ -14,7 +14,7 @@ import DeploymentType from "../DeploymentType";
 import JobMetricsSection from "../metrics/JobMetricsSection";
 import Logs from "../status/Logs";
 import { useRouting } from "shared/routing";
-import LogsSection from "../logs-section/LogsSection";
+import LogsSection, { InitLogData } from "../logs-section/LogsSection";
 import EventsTab from "../events/EventsTab";
 import { getPodStatus } from "../deploy-status-section/util";
 import { capitalize } from "shared/string_utils";
@@ -229,6 +229,12 @@ const ExpandedJobRun = ({
       );
     }
 
+    let initData: InitLogData = {};
+
+    if (run.status.completionTime) {
+      initData.timestamp = run.status.completionTime;
+    }
+
     return (
       <JobLogsWrapper>
         <DeprecatedWarning>
@@ -247,6 +253,7 @@ const ExpandedJobRun = ({
           setIsFullscreen={() => {}}
           overridingPodName={pods[0]?.metadata?.name || jobRun.metadata?.name}
           currentChart={currentChart}
+          initData={initData}
         />
       </JobLogsWrapper>
     );

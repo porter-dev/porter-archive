@@ -139,7 +139,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	// create the deployment
 	depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
 		EnvironmentID: env.ID,
-		Namespace:     "namespace-creating",
+		Namespace:     "",
 		Status:        types.DeploymentStatusCreating,
 		PullRequestID: request.Number,
 		RepoOwner:     request.RepoOwner,

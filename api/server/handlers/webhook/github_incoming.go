@@ -116,7 +116,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 	if env.Mode == "auto" && event.GetAction() == "opened" {
 		depl := &models.Deployment{
 			EnvironmentID: env.ID,
-			Namespace:     "namespace-creating",
+			Namespace:     "",
 			Status:        types.DeploymentStatusCreating,
 			PullRequestID: uint(event.GetPullRequest().GetNumber()),
 			PRName:        event.GetPullRequest().GetTitle(),

@@ -1,18 +1,22 @@
 package main
 
 import (
+	"errors"
 	"log"
 
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/cmd/migrate/enable_cluster_preview_envs"
 	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
 	"github.com/porter-dev/porter/cmd/migrate/populate_source_config_display_name"
+	"github.com/porter-dev/porter/cmd/migrate/startup_migrations"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 	lr "github.com/porter-dev/porter/pkg/logger"
 
 	"github.com/joeshaw/envdecode"
+	pgorm "gorm.io/gorm"
 )
 
 func main() {
@@ -47,6 +51,39 @@ func main() {
 	if err := db.Raw("ALTER TABLE cluster_token_caches DROP CONSTRAINT IF EXISTS fk_clusters_token_cache").Error; err != nil {
 		logger.Fatal().Err(err).Msg("failed to drop clusters token cache constraint")
 		return
+	}
+
+	dbMigration := &models.DbMigration{}
+
+	if err := db.Model(&models.DbMigration{}).First(dbMigration).Error; err != nil {
+		if errors.Is(err, pgorm.ErrRecordNotFound) {
+			dbMigration.Version = 0
+		} else {
+			logger.Fatal().Err(err).Msg("failed to check for db migration version")
+			return
+		}
+	}
+
+	latestMigrationVersion := startup_migrations.LatestMigrationVersion
+
+	if dbMigration.Version < latestMigrationVersion {
+		for ver, fn := range startup_migrations.StartupMigrations {
+			if ver > dbMigration.Version {
+				err := fn(db, logger)
+
+				if err != nil {
+					logger.Fatal().Err(err).Msg("failed to run startup migration script")
+					return
+				}
+			}
+		}
+
+		dbMigration.Version = latestMigrationVersion
+
+		if err := db.Save(dbMigration).Error; err != nil {
+			logger.Fatal().Err(err).Msg("failed to update migration version to latest")
+			return
+		}
 	}
 
 	if shouldRotate, oldKeyStr, newKeyStr := shouldKeyRotate(); shouldRotate {

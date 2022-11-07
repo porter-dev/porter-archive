@@ -55,6 +55,27 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	envType := env.ToEnvironmentType()
+
+	if len(envType.GitRepoBranches) > 0 {
+		found := false
+
+		for _, branch := range env.ToEnvironmentType().GitRepoBranches {
+			if branch == request.BranchInto {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("base branch '%s' is not enabled for this preview environment, please enable it in the settings page",
+					request.BranchInto), http.StatusBadRequest,
+			))
+			return
+		}
+	}
+
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
 	if err != nil {

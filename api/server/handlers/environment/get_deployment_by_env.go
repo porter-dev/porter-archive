@@ -2,7 +2,6 @@ package environment
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -46,15 +45,6 @@ func (c *GetDeploymentByEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *
 		return
 	}
 
-	if request.Namespace == "" && request.PRNumber == 0 {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("either namespace or pr_number must be present in request body"), http.StatusBadRequest,
-		))
-		return
-	}
-
-	var err error
-
 	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, envID)
 
 	if err != nil {
@@ -67,38 +57,12 @@ func (c *GetDeploymentByEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *
 		return
 	}
 
-	var depl *models.Deployment
+	depl, apiErr := validateGetDeploymentRequest(
+		project.ID, cluster.ID, env.ID, env.GitRepoOwner, env.GitRepoName, request, c.Repo(),
+	)
 
-	// read the deployment
-	if request.PRNumber != 0 {
-		depl, err = c.Repo().Environment().ReadDeploymentByGitDetails(env.ID, env.GitRepoOwner, env.GitRepoName,
-			request.PRNumber)
-
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
-				return
-			}
-
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-	} else if request.Namespace != "" {
-		depl, err = c.Repo().Environment().ReadDeployment(env.ID, request.Namespace)
-
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
-				return
-			}
-
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-	}
-
-	if depl == nil {
-		c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
+	if apiErr != nil {
+		c.HandleAPIError(w, r, apiErr)
 		return
 	}
 

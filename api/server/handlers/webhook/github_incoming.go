@@ -293,10 +293,7 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 		&deploymentStatusRequest,
 	)
 
-	depl.Status = types.DeploymentStatusInactive
-
-	// update the deployment to mark it inactive
-	_, err = c.Repo().Environment().UpdateDeployment(depl)
+	_, err = c.Repo().Environment().DeleteDeployment(depl)
 
 	if err != nil {
 		return fmt.Errorf("[owner: %s, repo: %s, environmentID: %d, deploymentID: %d] error updating deployment: %w",

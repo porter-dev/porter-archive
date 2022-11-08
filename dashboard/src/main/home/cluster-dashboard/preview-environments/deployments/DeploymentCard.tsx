@@ -271,9 +271,10 @@ const DeploymentCard: React.FC<{
               </>
             ) : null}
 
-            {deployment.status === DeploymentStatus.Created &&
-              !deployment.subdomain && (
-                <>
+            {deployment.status !== DeploymentStatus.Creating && (
+              <>
+                {deployment.subdomain &&
+                deployment.status === DeploymentStatus.Created ? (
                   <RowButton
                     onClick={(e) => {
                       e.preventDefault();
@@ -286,11 +287,12 @@ const DeploymentCard: React.FC<{
                     <i className="material-icons">open_in_new</i>
                     View Live
                   </RowButton>
-                  <DeploymentCardActionsDropdown
-                    options={DeploymentCardActions}
-                  />
-                </>
-              )}
+                ) : null}
+                <DeploymentCardActionsDropdown
+                  options={DeploymentCardActions}
+                />
+              </>
+            )}
             {/* <Button
               onClick={() => {
                 setCurrentOverlay({

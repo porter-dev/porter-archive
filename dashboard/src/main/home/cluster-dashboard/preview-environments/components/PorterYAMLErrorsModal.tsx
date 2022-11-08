@@ -32,10 +32,12 @@ const PorterYAMLErrorsModal = ({
           <img src={info} /> <Bold>Repo:</Bold>
           {repo}
         </InfoTab>
-        <InfoTab>
-          <img src={info} /> <Bold>Branch:</Bold>
-          {branch ?? "base"}
-        </InfoTab>
+        {branch ? (
+          <InfoTab>
+            <img src={info} /> <Bold>Branch:</Bold>
+            {branch}
+          </InfoTab>
+        ) : null}
       </InfoRow>
       <Message>
         {errors.map((el) => {

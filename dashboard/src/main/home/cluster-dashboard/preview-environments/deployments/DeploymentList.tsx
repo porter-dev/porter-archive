@@ -23,7 +23,14 @@ import { getPRDeploymentList, validatePorterYAML } from "../utils";
 import { PorterYAMLErrors } from "../errors";
 import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
 
-const AvailableStatusFilters = ["all", "created", "failed", "not_deployed"];
+const AvailableStatusFilters = [
+  "all",
+  "creating",
+  "created",
+  "failed",
+  "timed_out",
+  "updating",
+];
 
 type AvailableStatusFiltersType = typeof AvailableStatusFilters[number];
 

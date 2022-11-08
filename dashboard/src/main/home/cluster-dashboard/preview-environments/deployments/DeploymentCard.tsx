@@ -271,25 +271,26 @@ const DeploymentCard: React.FC<{
               </>
             ) : null}
 
-            {deployment.status !== DeploymentStatus.Creating && (
-              <>
-                <RowButton
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+            {deployment.status === DeploymentStatus.Created &&
+              !deployment.subdomain && (
+                <>
+                  <RowButton
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
 
-                    window.open(deployment.subdomain, "_blank");
-                  }}
-                  key={deployment.subdomain}
-                >
-                  <i className="material-icons">open_in_new</i>
-                  View Live
-                </RowButton>
-                <DeploymentCardActionsDropdown
-                  options={DeploymentCardActions}
-                />
-              </>
-            )}
+                      window.open(deployment.subdomain, "_blank");
+                    }}
+                    key={deployment.subdomain}
+                  >
+                    <i className="material-icons">open_in_new</i>
+                    View Live
+                  </RowButton>
+                  <DeploymentCardActionsDropdown
+                    options={DeploymentCardActions}
+                  />
+                </>
+              )}
             {/* <Button
               onClick={() => {
                 setCurrentOverlay({

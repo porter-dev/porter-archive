@@ -244,13 +244,13 @@ const EnvironmentSettings = () => {
         disableLineBreak
         capitalize={false}
       />
+      <WarningBannerWrapper>
+        <Banner type="warning">
+          Changes made here will not affect existing deployments in this preview
+          environment.
+        </Banner>
+      </WarningBannerWrapper>
       <StyledPlaceholder>
-        <WarningBannerWrapper>
-          <Banner type="warning">
-            Changes made here will not affect existing deployments in this
-            preview environment.
-          </Banner>
-        </WarningBannerWrapper>
         <Heading isAtTop>Pull request comment settings</Heading>
         <Helper>
           Update the most recent PR comment on every deploy. If disabled, a new

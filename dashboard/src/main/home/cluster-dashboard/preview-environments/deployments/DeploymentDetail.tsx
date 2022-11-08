@@ -100,7 +100,7 @@ const DeploymentDetail = () => {
 
   const repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
 
-  if (!prDeployment.namespace && prDeployment.status === "creating") {
+  if (!prDeployment.namespace) {
     return (
       <>
         <BreadcrumbRow>
@@ -172,13 +172,22 @@ const DeploymentDetail = () => {
           </HeaderWrapper>
           <ChartListWrapper>
             <Placeholder height="370px">
-              This preview deployment has not been created yet.{" "}
-              <ViewLastWorkflowLink
-                to={`https://github.com/${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}/actions`}
-                target="_blank"
-              >
-                View last workflow
-              </ViewLastWorkflowLink>
+              {prDeployment.status === "creating" ? (
+                <>
+                  This preview deployment has not been created yet.{" "}
+                  <ViewLastWorkflowLink
+                    to={`https://github.com/${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}/actions`}
+                    target="_blank"
+                  >
+                    View last workflow
+                  </ViewLastWorkflowLink>
+                </>
+              ) : (
+                <>
+                  Error connecting to cluster&nbsp;
+                  <i className="material-icons">info</i>
+                </>
+              )}
             </Placeholder>
           </ChartListWrapper>
         </StyledExpandedChart>

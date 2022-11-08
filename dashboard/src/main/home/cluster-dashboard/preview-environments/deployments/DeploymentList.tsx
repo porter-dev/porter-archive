@@ -231,8 +231,8 @@ const DeploymentList = () => {
     if (!deploymentList.length) {
       return (
         <Placeholder height="calc(100vh - 400px)">
-          No preview apps have been found. Open a PR to create a new preview
-          app.
+          No preview developments have been found. Open a PR to create a new
+          preview app.
         </Placeholder>
       );
     }
@@ -240,7 +240,7 @@ const DeploymentList = () => {
     if (!filteredDeployments.length) {
       return (
         <Placeholder height="calc(100vh - 400px)">
-          No preview apps have been found with the given filter.
+          No preview developments have been found with the given filter.
         </Placeholder>
       );
     }
@@ -272,7 +272,6 @@ const DeploymentList = () => {
         errors={expandedPorterYAMLErrors}
         onClose={() => setExpandedPorterYAMLErrors([])}
         repo={selectedRepo}
-        branch=""
       />
 
       <BreadcrumbRow>

@@ -186,7 +186,21 @@ const ConnectNewRepo: React.FC = () => {
           <i className="material-icons">keyboard_backspace</i>
           Back
         </Button>
-        <Title>Enable Preview Environments on a Repository</Title>
+        <Title>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            Enable Preview Environments on a Repository
+            <DocsHelper
+              tooltipText="Learn more about preview environments"
+              link="https://docs.porter.run/preview-environments/overview/"
+              placement="top-end"
+            />
+          </div>
+        </Title>
       </HeaderSection>
 
       <Heading>Select a Repository</Heading>
@@ -226,10 +240,6 @@ const ConnectNewRepo: React.FC = () => {
             disableMargin: true,
           }}
         />
-        <DocsHelper
-          disableMargin
-          tooltipText="Automatically create a Preview Environment for each new pull request in the repository. By default, preview environments must be manually created per-PR."
-        />
       </CheckboxWrapper>
 
       <Heading>Disable new comments for new deployments</Heading>
@@ -245,11 +255,6 @@ const ConnectNewRepo: React.FC = () => {
           wrapperStyles={{
             disableMargin: true,
           }}
-        />
-        <DocsHelper
-          disableMargin
-          tooltipText="When checked, comments for every new deployment are disabled. Instead, the most recent comment is updated each time."
-          placement="top-end"
         />
       </CheckboxWrapper>
 

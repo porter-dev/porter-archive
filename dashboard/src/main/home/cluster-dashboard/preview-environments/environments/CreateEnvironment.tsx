@@ -64,6 +64,7 @@ const CreateEnvironment: React.FC = () => {
       projectID: currentProject.id,
       clusterID: currentCluster.id,
       environmentID: Number(environment_id),
+      branch: pullRequest.branch_from,
     });
 
     setPorterYAMLErrors(res.data.errors ?? []);
@@ -161,7 +162,8 @@ const CreateEnvironment: React.FC = () => {
       {selectedPR && porterYAMLErrors.length ? (
         <ValidationErrorBannerWrapper>
           <Banner type="warning">
-            We found some errors in the porter.yaml file on your branch. &nbsp;
+            We found some errors in the porter.yaml file in the&nbsp;
+            {selectedPR.branch_from}&nbsp;branch. &nbsp;
             <LearnMoreButton onClick={() => setShowErrorsModal(true)}>
               Learn more
             </LearnMoreButton>

@@ -302,16 +302,18 @@ const DeploymentList = () => {
         capitalize={false}
       />
       {porterYAMLErrors.length > 0 ? (
-        <Banner type="error">
-          Your porter.yaml file has errors. Please fix them before deploying.
-          <LinkButton
-            onClick={() => {
-              setExpandedPorterYAMLErrors(porterYAMLErrors);
-            }}
-          >
-            View details
-          </LinkButton>
-        </Banner>
+        <PorterYAMLBannerWrapper>
+          <Banner type="warning">
+            We found some errors in the porter.yaml file in the default branch.
+            <LinkButton
+              onClick={() => {
+                setExpandedPorterYAMLErrors(porterYAMLErrors);
+              }}
+            >
+              Learn more
+            </LinkButton>
+          </Banner>
+        </PorterYAMLBannerWrapper>
       ) : null}
       <FlexRow>
         <Flex>
@@ -588,4 +590,8 @@ const CreatePreviewEnvironmentButton = styled(DynamicLink)`
     margin-right: 5px;
     justify-content: center;
   }
+`;
+
+const PorterYAMLBannerWrapper = styled.div`
+  margin-block: 15px;
 `;

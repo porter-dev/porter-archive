@@ -5,6 +5,7 @@ import pr_icon from "assets/pull_request_icon.svg";
 import { useRouteMatch, useLocation } from "react-router";
 import DynamicLink from "components/DynamicLink";
 import { PRDeployment } from "../types";
+import PullRequestIcon from "assets/pull_request_icon.svg";
 import Loading from "components/Loading";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -12,13 +13,14 @@ import ChartList from "../../chart/ChartList";
 import github from "assets/github-white.png";
 import { integrationList } from "shared/common";
 import { capitalize } from "shared/string_utils";
-import leftArrow from "assets/left-arrow.svg";
 import Banner from "components/Banner";
 import Modal from "main/home/modals/Modal";
 import { validatePorterYAML } from "../utils";
+import Placeholder from "components/Placeholder";
+import GithubIcon from "assets/GithubIcon";
 
 const DeploymentDetail = () => {
-  const { params } = useRouteMatch<{ namespace: string }>();
+  const { params } = useRouteMatch<{ id: string }>();
   const context = useContext(Context);
   const [prDeployment, setPRDeployment] = useState<PRDeployment>(null);
   const [environmentId, setEnvironmentId] = useState("");
@@ -38,10 +40,10 @@ const DeploymentDetail = () => {
     let environment_id = parseInt(searchParams.get("environment_id"));
     setEnvironmentId(searchParams.get("environment_id"));
     api
-      .getPRDeploymentByEnvironment(
+      .getPRDeploymentByID(
         "<token>",
         {
-          namespace: params.namespace,
+          id: parseInt(params.id),
         },
         {
           project_id: currentProject.id,
@@ -53,7 +55,6 @@ const DeploymentDetail = () => {
         if (!isSubscribed) {
           return;
         }
-
         setPRDeployment(data);
       })
       .catch((err) => {
@@ -64,11 +65,11 @@ const DeploymentDetail = () => {
       });
   }, [params]);
 
-  if (!prDeployment) {
-    return <Loading />;
-  }
-
   useEffect(() => {
+    if (!prDeployment) {
+      return;
+    }
+
     const isSubscribed = true;
     const environment_id = parseInt(searchParams.get("environment_id"));
 
@@ -91,13 +92,103 @@ const DeploymentDetail = () => {
           setPorterYAMLErrors([]);
         }
       });
-  }, []);
+  }, [prDeployment]);
 
-  let repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
+  if (!prDeployment) {
+    return <Loading />;
+  }
+
+  const repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
+
+  if (!prDeployment.namespace && prDeployment.status === "creating") {
+    return (
+      <>
+        <BreadcrumbRow>
+          <Breadcrumb to={`/preview-environments/deployments/settings`}>
+            <ArrowIcon src={PullRequestIcon} />
+            <Wrap>Preview environments</Wrap>
+          </Breadcrumb>
+          <Slash>/</Slash>
+          <Breadcrumb
+            to={`/preview-environments/deployments/${environmentId}/${repository}`}
+          >
+            <GitIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
+            <Wrap>{repository}</Wrap>
+          </Breadcrumb>
+        </BreadcrumbRow>
+        <StyledExpandedChart>
+          <HeaderWrapper>
+            <Title
+              icon={pr_icon}
+              iconWidth="25px"
+              onClick={() =>
+                window.open(
+                  `https://github.com/${repository}/pull/${prDeployment.pull_request_id}`,
+                  "_blank"
+                )
+              }
+            >
+              {prDeployment.gh_pr_name}
+            </Title>
+            <InfoWrapper>
+              {prDeployment.subdomain && (
+                <PRLink to={prDeployment.subdomain} target="_blank">
+                  <i className="material-icons">link</i>
+                  {prDeployment.subdomain}
+                </PRLink>
+              )}
+            </InfoWrapper>
+            <Flex>
+              <Status>
+                <StatusDot status={prDeployment.status} />
+                {capitalize(prDeployment.status)}
+              </Status>
+              <Dot>•</Dot>
+              <DeploymentImageContainer>
+                <DeploymentTypeIcon src={integrationList.repo.icon} />
+                <RepositoryName
+                  onMouseOver={() => {
+                    setShowRepoTooltip(true);
+                  }}
+                  onMouseOut={() => {
+                    setShowRepoTooltip(false);
+                  }}
+                >
+                  {repository}
+                </RepositoryName>
+                {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
+              </DeploymentImageContainer>
+              <Dot>•</Dot>
+              <GHALink
+                to={`https://github.com/${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}/pulls/${prDeployment.pull_request_id}`}
+                target="_blank"
+              >
+                <GithubIcon />
+                View PR
+                <i className="material-icons">open_in_new</i>
+              </GHALink>
+            </Flex>
+            <LinkToActionsWrapper></LinkToActionsWrapper>
+          </HeaderWrapper>
+          <ChartListWrapper>
+            <Placeholder height="370px">
+              This preview deployment has not been created yet.{" "}
+              <ViewLastWorkflowLink
+                to={`https://github.com/${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}/actions`}
+                target="_blank"
+              >
+                View last workflow
+              </ViewLastWorkflowLink>
+            </Placeholder>
+          </ChartListWrapper>
+        </StyledExpandedChart>
+      </>
+    );
+  }
 
   return (
     <>
-      {expandedPorterYAMLErrors.length && (
+      {expandedPorterYAMLErrors.length > 0 && (
         <Modal
           onRequestClose={() => setExpandedPorterYAMLErrors([])}
           height="auto"
@@ -114,17 +205,31 @@ const DeploymentDetail = () => {
           </Message>
         </Modal>
       )}
+      <BreadcrumbRow>
+        <Breadcrumb to={`/preview-environments/deployments/settings`}>
+          <ArrowIcon src={PullRequestIcon} />
+          <Wrap>Preview environments</Wrap>
+        </Breadcrumb>
+        <Slash>/</Slash>
+        <Breadcrumb
+          to={`/preview-environments/deployments/${environmentId}/${repository}`}
+        >
+          <GitIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
+          <Wrap>{repository}</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
       <StyledExpandedChart>
-        <BreadcrumbRow>
-          <Breadcrumb
-            to={`/preview-environments/deployments/${environmentId}/${repository}`}
-          >
-            <ArrowIcon src={leftArrow} />
-            <Wrap>Back</Wrap>
-          </Breadcrumb>
-        </BreadcrumbRow>
         <HeaderWrapper>
-          <Title icon={pr_icon} iconWidth="25px">
+          <Title
+            icon={pr_icon}
+            iconWidth="25px"
+            onClick={() =>
+              window.open(
+                `https://github.com/${repository}/pull/${prDeployment.pull_request_id}`,
+                "_blank"
+              )
+            }
+          >
             {prDeployment.gh_pr_name}
           </Title>
           <InfoWrapper>
@@ -135,7 +240,7 @@ const DeploymentDetail = () => {
               </PRLink>
             )}
             <TagWrapper>
-              Namespace <NamespaceTag>{params.namespace}</NamespaceTag>
+              Namespace <NamespaceTag>{prDeployment.namespace}</NamespaceTag>
             </TagWrapper>
           </InfoWrapper>
           <Flex>
@@ -159,19 +264,9 @@ const DeploymentDetail = () => {
               {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
             </DeploymentImageContainer>
             <Dot>•</Dot>
-            <GHALink
-              to={`https://github.com/${repository}/pull/${prDeployment.pull_request_id}`}
-              target="_blank"
-            >
-              <img src={github} /> GitHub PR
-              <i className="material-icons">open_in_new</i>
-            </GHALink>
             {prDeployment.last_workflow_run_url ? (
               <GHALink to={prDeployment.last_workflow_run_url} target="_blank">
-                <span className="material-icons-outlined">
-                  play_circle_outline
-                </span>
-                Last workflow run
+                <img src={github} /> View last workflow run
                 <i className="material-icons">open_in_new</i>
               </GHALink>
             ) : null}
@@ -179,23 +274,26 @@ const DeploymentDetail = () => {
           <LinkToActionsWrapper></LinkToActionsWrapper>
         </HeaderWrapper>
         {porterYAMLErrors.length > 0 ? (
-          <Banner type="error">
-            Your porter.yaml file has errors. Please fix them before deploying.
-            <LinkButton
-              onClick={() => {
-                setExpandedPorterYAMLErrors(porterYAMLErrors);
-              }}
-            >
-              View details
-            </LinkButton>
-          </Banner>
+          <ErrorBannerWrapper>
+            <Banner type="error">
+              Your porter.yaml file has errors. Please fix them before
+              deploying.
+              <LinkButton
+                onClick={() => {
+                  setExpandedPorterYAMLErrors(porterYAMLErrors);
+                }}
+              >
+                View details
+              </LinkButton>
+            </Banner>
+          </ErrorBannerWrapper>
         ) : null}
         <ChartListWrapper>
           <ChartList
             currentCluster={context.currentCluster}
             currentView="cluster-dashboard"
             sortType="Newest"
-            namespace={params.namespace}
+            namespace={prDeployment.namespace}
             disableBottomPadding
             closeChartRedirectUrl={`${window.location.pathname}${window.location.search}`}
           />
@@ -206,6 +304,15 @@ const DeploymentDetail = () => {
 };
 
 export default DeploymentDetail;
+
+const ErrorBannerWrapper = styled.div`
+  margin-block: 20px;
+`;
+
+const Slash = styled.div`
+  margin: 0 4px;
+  color: #aaaabb88;
+`;
 
 const ArrowIcon = styled.img`
   width: 15px;
@@ -232,16 +339,17 @@ const Message = styled.div`
 const BreadcrumbRow = styled.div`
   width: 100%;
   display: flex;
+  margin-top: -5px;
   justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 15px;
 `;
 
 const Breadcrumb = styled(DynamicLink)`
   color: #aaaabb88;
   font-size: 13px;
-  margin-bottom: 15px;
   display: flex;
   align-items: center;
-  margin-top: -10px;
   z-index: 999;
   padding: 5px;
   padding-right: 7px;
@@ -271,7 +379,6 @@ const GHALink = styled(DynamicLink)`
   align-items: center;
 
   :hover {
-    text-decoration: underline;
     color: white;
   }
 
@@ -280,10 +387,7 @@ const GHALink = styled(DynamicLink)`
     margin-right: 9px;
     margin-left: 5px;
 
-    text-decoration: none;
-
     :hover {
-      text-decoration: underline;
       color: white;
     }
   }
@@ -298,6 +402,18 @@ const GHALink = styled(DynamicLink)`
   > i {
     margin-left: 7px;
     font-size: 17px;
+  }
+`;
+
+const ViewLastWorkflowLink = styled(DynamicLink)`
+  display: flex;
+  align-items: center;
+  text-decoration: underline;
+  margin-left: 7px;
+  color: currentcolor;
+
+  :hover {
+    color: white;
   }
 `;
 
@@ -388,6 +504,11 @@ const Icon = styled.img`
   width: 100%;
 `;
 
+const GitIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+`;
+
 const StyledExpandedChart = styled.div`
   width: 100%;
   z-index: 0;
@@ -452,7 +573,6 @@ const PRLink = styled(DynamicLink)`
 const ChartListWrapper = styled.div`
   width: 100%;
   margin: auto;
-  margin-top: 20px;
   padding-bottom: 125px;
 `;
 

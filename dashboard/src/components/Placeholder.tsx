@@ -16,20 +16,29 @@ const Placeholder: React.FC<Props> = ({
 }) => {
   return (
     <StyledPlaceholder height={height} minHeight={minHeight}>
-      <div>
+      <Wrapper>
         <Title>{title}</Title>
-        {children}
-      </div>
+        <Flex>{children}</Flex>
+      </Wrapper>
     </StyledPlaceholder>
   );
 };
 
 export default Placeholder;
 
+const Flex = styled.div`
+  display: flex;
+  margin-top: 10px;
+  align-items: center;
+`;
+
+const Wrapper = styled.div`
+  margin-bottom: 10px;
+`;
+
 const Title = styled.div`
   font-size: 16px;
   color: white;
-  margin-bottom: 10px;
   font-weight: 500;
 `;
 
@@ -50,4 +59,11 @@ const StyledPlaceholder = styled.div<{
   background: #26292e;
   border: 1px solid #494b4f;
   padding-bottom: 60px;
+
+  > div {
+    > i {
+      font-size: 16px;
+      margin-right: 12px;
+    }
+  }
 `;

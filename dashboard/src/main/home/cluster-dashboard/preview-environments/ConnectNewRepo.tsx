@@ -15,6 +15,9 @@ import PullRequestIcon from "assets/pull_request_icon.svg";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import BranchFilterSelector from "./components/BranchFilterSelector";
 import Helper from "components/form-components/Helper";
+import NamespaceAnnotations, {
+  KeyValueType,
+} from "./components/NamespaceAnnotations";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -45,6 +48,11 @@ const ConnectNewRepo: React.FC = () => {
 
   // Disable new comments data
   const [isNewCommentsDisabled, setIsNewCommentsDisabled] = useState(false);
+
+  // Namespace annotations
+  const [namespaceAnnotations, setNamespaceAnnotations] = useState<
+    KeyValueType[]
+  >([]);
 
   useEffect(() => {
     api
@@ -109,7 +117,32 @@ const ConnectNewRepo: React.FC = () => {
 
   const addRepo = () => {
     let [owner, repoName] = repo.split("/");
+    let annotations: Record<string, string> = {};
+
     setStatus("loading");
+
+    namespaceAnnotations
+      .filter((elem: KeyValueType, index: number, self: KeyValueType[]) => {
+        // remove any collisions that are duplicates
+        let numCollisions = self.reduce((n, _elem: KeyValueType) => {
+          return n + (_elem.key === elem.key ? 1 : 0);
+        }, 0);
+
+        if (numCollisions == 1) {
+          return true;
+        } else {
+          return (
+            index ===
+            self.findIndex((_elem: KeyValueType) => _elem.key === elem.key)
+          );
+        }
+      })
+      .forEach((elem: KeyValueType) => {
+        if (elem.key !== "" && elem.value !== "") {
+          annotations[elem.key] = elem.value;
+        }
+      });
+
     api
       .createEnvironment(
         "<token>",
@@ -118,6 +151,7 @@ const ConnectNewRepo: React.FC = () => {
           mode: enableAutomaticDeployments ? "auto" : "manual",
           disable_new_comments: isNewCommentsDisabled,
           git_repo_branches: selectedBranches,
+          namespace_annotations: annotations,
         },
         {
           project_id: currentProject.id,
@@ -152,7 +186,21 @@ const ConnectNewRepo: React.FC = () => {
           <i className="material-icons">keyboard_backspace</i>
           Back
         </Button>
-        <Title>Enable Preview Environments on a Repository</Title>
+        <Title>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            Enable Preview Environments on a Repository
+            <DocsHelper
+              tooltipText="Learn more about preview environments"
+              link="https://docs.porter.run/preview-environments/overview/"
+              placement="top-end"
+            />
+          </div>
+        </Title>
       </HeaderSection>
 
       <Heading>Select a Repository</Heading>
@@ -192,10 +240,6 @@ const ConnectNewRepo: React.FC = () => {
             disableMargin: true,
           }}
         />
-        <DocsHelper
-          disableMargin
-          tooltipText="Automatically create a Preview Environment for each new pull request in the repository. By default, preview environments must be manually created per-PR."
-        />
       </CheckboxWrapper>
 
       <Heading>Disable new comments for new deployments</Heading>
@@ -212,11 +256,6 @@ const ConnectNewRepo: React.FC = () => {
             disableMargin: true,
           }}
         />
-        <DocsHelper
-          disableMargin
-          tooltipText="When checked, comments for every new deployment are disabled. Instead, the most recent comment is updated each time."
-          placement="top-end"
-        />
       </CheckboxWrapper>
 
       <Heading>Select allowed branches</Heading>
@@ -231,6 +270,22 @@ const ConnectNewRepo: React.FC = () => {
         options={availableBranches}
         value={selectedBranches}
         showLoading={isLoadingBranches}
+      />
+
+      <Heading>Namespace annotations</Heading>
+      <Helper>
+        Custom annotations to be injected into the Kubernetes namespace created
+        for each deployment.
+      </Helper>
+      <NamespaceAnnotations
+        values={namespaceAnnotations}
+        setValues={(x: KeyValueType[]) => {
+          let annotations: KeyValueType[] = [];
+          x.forEach((entry) => {
+            annotations.push({ key: entry.key, value: entry.value });
+          });
+          setNamespaceAnnotations(annotations);
+        }}
       />
 
       <ActionContainer>

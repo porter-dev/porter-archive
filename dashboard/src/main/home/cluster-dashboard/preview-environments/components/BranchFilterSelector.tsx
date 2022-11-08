@@ -53,16 +53,38 @@ const BranchFilterSelector = ({
         showLoading={showLoading}
       />
       {/* List selected branches  */}
-      <ul>
-        {value.map((branch) => (
-          <li key={branch}>
-            {branch}
-            <button onClick={() => handleDeleteBranch(branch)}>Remove</button>
-          </li>
-        ))}
-      </ul>
+
+      <BranchRowList>
+      {value.map((branch) => (
+        <BranchRow key={branch}>
+          <div>{branch}</div>
+          <RemoveBranchButton onClick={() => handleDeleteBranch(branch)}>
+            x
+          </RemoveBranchButton>
+        </BranchRow>
+      ))}
+      </BranchRowList>
     </>
   );
 };
 
 export default BranchFilterSelector;
+
+const BranchRowList = styled.div`
+  margin-block: 15px;
+  max-height: 200px;
+  overflow-y: auto;
+`;
+
+const BranchRow = styled.div`
+  padding-inline: 8px;
+  gap: 10px;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+`;
+
+const RemoveBranchButton = styled.div`
+  cursor: pointer;
+`;

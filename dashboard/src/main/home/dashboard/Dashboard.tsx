@@ -17,6 +17,7 @@ import TitleSection from "components/TitleSection";
 import { pushFiltered, pushQueryParams } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { StatusPage } from "../onboarding/steps/ProvisionResources/forms/StatusPage";
+import Banner from "components/Banner";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -115,24 +116,18 @@ class Dashboard extends Component<PropsType, StateType> {
       );
     } else if (this.currentTab() === "create-cluster") {
       let helperText = "Create a cluster to link to this project";
-      let helperIcon = "info";
-      let helperColor = "white";
-      if (
-        this.context.hasBillingEnabled &&
-        this.context.usage.current.clusters !== 0 &&
-        this.context.usage.current.clusters >= this.context.usage.limit.clusters
-      ) {
+      let helperType = "info";
+      if (true) {
         helperText =
           "You need to update your billing to provision or connect a new cluster";
-        helperIcon = "warning";
-        helperColor = "#f5cb42";
+        helperType = "warning";
       }
       return (
         <>
-          <Banner color={helperColor}>
-            <i className="material-icons">{helperIcon}</i>
+          <Banner type={helperType} noMargin>
             {helperText}
           </Banner>
+          <Br />
           <ProvisionerSettings infras={this.state.infras} provisioner={true} />
         </>
       );
@@ -230,22 +225,22 @@ const DashboardWrapper = styled.div`
   padding-bottom: 100px;
 `;
 
-const Banner = styled.div<{ color: string }>`
-  height: 40px;
-  width: 100%;
-  margin: 5px 0 30px;
-  font-size: 13px;
-  display: flex;
-  border-radius: 5px;
-  padding-left: 15px;
-  align-items: center;
-  background: #ffffff11;
-  color: ${(props) => props.color};
-  > i {
-    margin-right: 10px;
-    font-size: 18px;
-  }
-`;
+// const Banner = styled.div<{ color: string }>`
+//   height: 40px;
+//   width: 100%;
+//   margin: 5px 0 30px;
+//   font-size: 13px;
+//   display: flex;
+//   border-radius: 5px;
+//   padding-left: 15px;
+//   align-items: center;
+//   background: #ffffff11;
+//   color: ${(props) => props.color};
+//   > i {
+//     margin-right: 10px;
+//     font-size: 18px;
+//   }
+// `;
 
 const TopRow = styled.div`
   display: flex;

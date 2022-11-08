@@ -151,6 +151,7 @@ const createEnvironment = baseApi<
     mode: "auto" | "manual";
     disable_new_comments: boolean;
     git_repo_branches: string[];
+    namespace_annotations: Record<string, string>;
   },
   {
     project_id: number;
@@ -175,6 +176,7 @@ const updateEnvironment = baseApi<
     mode: "auto" | "manual";
     disable_new_comments: boolean;
     git_repo_branches: string[]; // Array with branch names
+    namespace_annotations: Record<string, string>;
   },
   {
     project_id: number;
@@ -445,9 +447,9 @@ const getPRDeploymentList = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/deployments`;
 });
 
-const getPRDeploymentByEnvironment = baseApi<
+const getPRDeploymentByID = baseApi<
   {
-    namespace: string;
+    id: number;
   },
   {
     cluster_id: number;
@@ -460,27 +462,28 @@ const getPRDeploymentByEnvironment = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/deployment`;
 });
 
-const getPRDeployment = baseApi<
-  {
-    namespace: string;
-  },
-  {
-    cluster_id: number;
-    project_id: number;
-    git_installation_id: number;
-    git_repo_owner: string;
-    git_repo_name: string;
-  }
->("GET", (pathParams) => {
-  const {
-    cluster_id,
-    project_id,
-    git_installation_id,
-    git_repo_owner,
-    git_repo_name,
-  } = pathParams;
-  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
-});
+// TODO (soham): Check if we are really using this?
+// const getPRDeployment = baseApi<
+//   {
+//     namespace: string;
+//   },
+//   {
+//     cluster_id: number;
+//     project_id: number;
+//     git_installation_id: number;
+//     git_repo_owner: string;
+//     git_repo_name: string;
+//   }
+// >("GET", (pathParams) => {
+//   const {
+//     cluster_id,
+//     project_id,
+//     git_installation_id,
+//     git_repo_owner,
+//     git_repo_name,
+//   } = pathParams;
+//   return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
+// });
 
 const deletePRDeployment = baseApi<
   {},
@@ -2436,8 +2439,8 @@ export default {
   getClusterNode,
   getConfigMap,
   getPRDeploymentList,
-  getPRDeploymentByEnvironment,
-  getPRDeployment,
+  getPRDeploymentByID,
+  // getPRDeployment,
   getGHAWorkflowTemplate,
   getGitRepoList,
   getGitRepoPermission,

@@ -1,6 +1,6 @@
 import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useParams } from "react-router";
@@ -14,20 +14,25 @@ import SaveButton from "components/SaveButton";
 import _ from "lodash";
 import { Context } from "shared/Context";
 import PageNotFound from "components/PageNotFound";
+import Banner from "components/Banner";
+import InputRow from "components/form-components/InputRow";
+import Modal from "main/home/modals/Modal";
+import { useRouting } from "shared/routing";
+import NamespaceAnnotations, {
+  KeyValueType,
+} from "../components/NamespaceAnnotations";
+import BranchFilterSelector from "../components/BranchFilterSelector";
 
-/**
- * 
- * TODO Soham:
- * 
- * - Handle errors when fetching environments
- * - Handle errors when the environment is not found
- * - Handle errors on saving and deleting the environment
- */
-const EnvironmentSettings: React.FC = () => {
-  const [error, setError] = useState("");
+const EnvironmentSettings = () => {
+  const router = useRouting();
+  const [isLoadingBranches, setIsLoadingBranches] = useState<boolean>(false);
+  const [availableBranches, setAvailableBranches] = useState<string[]>([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmationPrompt, setDeleteConfirmationPrompt] = useState("");
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
+  const [selectedBranches, setSelectedBranches] = useState([]);
   const [environment, setEnvironment] = useState<Environment>();
   const [saveStatus, setSaveStatus] = useState("");
   const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
@@ -35,6 +40,9 @@ const EnvironmentSettings: React.FC = () => {
     deploymentMode,
     setDeploymentMode,
   ] = useState<EnvironmentDeploymentMode>("manual");
+  const [namespaceAnnotations, setNamespaceAnnotations] = useState<
+    KeyValueType[]
+  >([]);
   const {
     environment_id: environmentId,
     repo_name: repoName,
@@ -60,8 +68,22 @@ const EnvironmentSettings: React.FC = () => {
       );
 
       setEnvironment(environment);
-      setNewCommentsDisabled(environment.disable_new_comments);
+      setSelectedBranches(environment.git_repo_branches);
+      setNewCommentsDisabled(environment.new_comments_disabled);
       setDeploymentMode(environment.mode);
+
+      if (environment.namespace_annotations) {
+        const annotations: KeyValueType[] = [];
+
+        Object.keys(environment.namespace_annotations).forEach((k) => {
+          annotations.push({
+            key: k,
+            value: environment.namespace_annotations[k],
+          });
+        });
+
+        setNamespaceAnnotations(annotations);
+      }
     };
 
     try {
@@ -71,8 +93,64 @@ const EnvironmentSettings: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (!environment) {
+      return;
+    }
+
+    const repoName = environment.git_repo_name;
+    const repoOwner = environment.git_repo_owner;
+    setIsLoadingBranches(true);
+    api
+      .getBranches<string[]>(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          kind: "github",
+          name: repoName,
+          owner: repoOwner,
+          git_repo_id: environment.git_installation_id,
+        }
+      )
+      .then(({ data }) => {
+        setIsLoadingBranches(false);
+        setAvailableBranches(data);
+      })
+      .catch(() => {
+        setIsLoadingBranches(false);
+        setCurrentError(
+          "Couldn't load branches for this repository, using all branches by default."
+        );
+      });
+  }, [environment]);
+
   const handleSave = async () => {
+    let annotations: Record<string, string> = {};
+
     setSaveStatus("loading");
+
+    namespaceAnnotations
+      .filter((elem: KeyValueType, index: number, self: KeyValueType[]) => {
+        // remove any collisions that are duplicates
+        let numCollisions = self.reduce((n, _elem: KeyValueType) => {
+          return n + (_elem.key === elem.key ? 1 : 0);
+        }, 0);
+
+        if (numCollisions == 1) {
+          return true;
+        } else {
+          return (
+            index ===
+            self.findIndex((_elem: KeyValueType) => _elem.key === elem.key)
+          );
+        }
+      })
+      .forEach((elem: KeyValueType) => {
+        if (elem.key !== "" && elem.value !== "") {
+          annotations[elem.key] = elem.value;
+        }
+      });
 
     try {
       await api.updateEnvironment(
@@ -80,7 +158,8 @@ const EnvironmentSettings: React.FC = () => {
         {
           mode: deploymentMode,
           disable_new_comments: newCommentsDisabled,
-          git_repo_branches: [],
+          git_repo_branches: selectedBranches,
+          namespace_annotations: annotations,
         },
         {
           project_id: currentProject.id,
@@ -95,8 +174,56 @@ const EnvironmentSettings: React.FC = () => {
     setSaveStatus("");
   };
 
+  const closeDeleteConfirmationModal = () => {
+    setShowDeleteModal(false);
+    setDeleteConfirmationPrompt("");
+  };
+
+  const canDelete = useMemo(() => {
+    return deleteConfirmationPrompt === `${repoOwner}/${repoName}`;
+  }, [deleteConfirmationPrompt]);
+
+  const handleDelete = async () => {
+    if (!canDelete) {
+      return;
+    }
+
+    try {
+      await api.deleteEnvironment(
+        "<token>",
+        {
+          name: environment?.name,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          git_installation_id: environment?.git_installation_id,
+          git_repo_owner: repoOwner,
+          git_repo_name: repoName,
+        }
+      );
+
+      closeDeleteConfirmationModal();
+      router.push(`/preview-environments`);
+    } catch (err) {
+      setCurrentError(JSON.stringify(err));
+      closeDeleteConfirmationModal();
+    }
+  };
+
   return (
     <>
+      {showDeleteModal ? (
+        <DeletePreviewEnvironmentModal
+          repoOwner={repoOwner}
+          repoName={repoName}
+          onClose={closeDeleteConfirmationModal}
+          prompt={deleteConfirmationPrompt}
+          setPrompt={setDeleteConfirmationPrompt}
+          onDelete={handleDelete}
+          disabled={!canDelete}
+        />
+      ) : null}
       <BreadcrumbRow>
         <Breadcrumb to={`/preview-environments/deployments/settings`}>
           <ArrowIcon src={PullRequestIcon} />
@@ -117,6 +244,12 @@ const EnvironmentSettings: React.FC = () => {
         disableLineBreak
         capitalize={false}
       />
+      <WarningBannerWrapper>
+        <Banner type="warning">
+          Changes made here will not affect existing deployments in this preview
+          environment.
+        </Banner>
+      </WarningBannerWrapper>
       <StyledPlaceholder>
         <Heading isAtTop>Pull request comment settings</Heading>
         <Helper>
@@ -125,7 +258,7 @@ const EnvironmentSettings: React.FC = () => {
         </Helper>
         <CheckboxRow
           label="Update the most recent PR comment"
-          checked={!newCommentsDisabled}
+          checked={newCommentsDisabled}
           toggle={() => setNewCommentsDisabled(!newCommentsDisabled)}
         />
         <Br />
@@ -143,6 +276,36 @@ const EnvironmentSettings: React.FC = () => {
             )
           }
         />
+        <Br />
+        <Heading>Select allowed branches</Heading>
+        <Helper>
+          If the pull request has a base branch included in this list, it will
+          be allowed to be deployed.
+          <br />
+          (Leave empty to allow all branches)
+        </Helper>
+        <BranchFilterSelector
+          onChange={setSelectedBranches}
+          options={availableBranches}
+          value={selectedBranches}
+          showLoading={isLoadingBranches}
+        />
+        <Br />
+        <Heading>Namespace annotations</Heading>
+        <Helper>
+          Custom annotations to be injected into the Kubernetes namespace
+          created for each deployment.
+        </Helper>
+        <NamespaceAnnotations
+          values={namespaceAnnotations}
+          setValues={(x: KeyValueType[]) => {
+            let annotations: KeyValueType[] = [];
+            x.forEach((entry) => {
+              annotations.push({ key: entry.key, value: entry.value });
+            });
+            setNamespaceAnnotations(annotations);
+          }}
+        />
         <SavePreviewEnvironmentSettings
           text={"Save"}
           status={saveStatus}
@@ -156,7 +319,12 @@ const EnvironmentSettings: React.FC = () => {
           Delete the Porter preview environment integration for this repo. All
           preview deployments will also be destroyed.
         </Helper>
-        <DeleteButton disabled={saveStatus === "loading"} onClick={_.noop}>
+        <DeleteButton
+          disabled={saveStatus === "loading"}
+          onClick={() => {
+            setShowDeleteModal(true);
+          }}
+        >
           Delete preview environment
         </DeleteButton>
       </StyledPlaceholder>
@@ -164,37 +332,92 @@ const EnvironmentSettings: React.FC = () => {
   );
 };
 
+interface DeletePreviewEnvironmentModalProps {
+  repoName: string;
+  repoOwner: string;
+  prompt: string;
+  setPrompt: (prompt: string) => void;
+  onDelete: () => void;
+  onClose: () => void;
+  disabled: boolean;
+}
+
+const DeletePreviewEnvironmentModal = (
+  props: DeletePreviewEnvironmentModalProps
+) => {
+  return (
+    <Modal
+      height="fit-content"
+      title={`Remove Preview Envs for ${props.repoOwner}/${props.repoName}`}
+      onRequestClose={props.onClose}
+    >
+      <DeletePreviewEnvironmentModalContentsWrapper>
+        <Banner type="warning">
+          All Preview Environment deployments associated with this repo will be
+          deleted.
+        </Banner>
+        <InputRow
+          type="text"
+          label={`Enter ${props.repoOwner}/${props.repoName} to delete Preview Environments:`}
+          value={props.prompt}
+          placeholder={`${props.repoOwner}/${props.repoName}`}
+          setValue={(x: string) => props.setPrompt(x)}
+          width={"500px"}
+        />
+        <Flex justifyContent="center" alignItems="center">
+          <DeleteButton
+            onClick={() => props.onDelete()}
+            disabled={props.disabled}
+          >
+            Delete
+          </DeleteButton>
+        </Flex>
+      </DeletePreviewEnvironmentModalContentsWrapper>
+    </Modal>
+  );
+};
+
 export default EnvironmentSettings;
+
+const DeletePreviewEnvironmentModalContentsWrapper = styled.div`
+  margin-block-start: 25px;
+`;
 
 const SavePreviewEnvironmentSettings = styled(SaveButton)`
   margin-top: 30px;
 `;
 
-const DeleteButton = styled.button`
-  height: 30px;
+const Flex = styled.div<{
+  justifyContent?: string;
+  alignItems?: string;
+}>`
+  display: flex;
+  align-items: ${({ alignItems }) => alignItems || "flex-start"};
+  justify-content: ${({ justifyContent }) => justifyContent || "flex-start"};
+`;
+
+const DeleteButton = styled.button<{ disabled?: boolean }>`
   font-size: 13px;
   font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: white;
   display: flex;
-  width: 210px;
   align-items: center;
-  padding: 0 15px;
+  padding: 10px 15px;
   margin-top: 20px;
   text-align: left;
   border-radius: 5px;
-  cursor: pointer;
   user-select: none;
-  :focus {
-    outline: 0;
-  }
-  :hover {
-    filter: brightness(120%);
-  }
   background: #b91133;
   border: none;
-  :hover {
-    filter: brightness(120%);
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+  filter: ${({ disabled }) => (disabled ? "brightness(0.8)" : "none")};
+
+  &:focus {
+    outline: 0;
+  }
+  &:hover {
+    filter: ${({ disabled }) => (disabled ? "brightness(0.8)" : "none")};
   }
 `;
 
@@ -237,7 +460,7 @@ const BreadcrumbRow = styled.div`
   display: flex;
   justify-content: flex-start;
   margin-bottom: 15px;
-  margin-top: -10px;
+  margin-top: -5px;
   align-items: center;
 `;
 
@@ -256,64 +479,6 @@ const Breadcrumb = styled(DynamicLink)`
   }
 `;
 
-const Relative = styled.div`
-  position: relative;
-`;
-
-const EnvironmentsGrid = styled.div`
-  padding-bottom: 150px;
-  display: grid;
-  grid-row-gap: 15px;
-`;
-
-const ControlRow = styled.div`
-  display: flex;
-  margin-left: auto;
-  justify-content: space-between;
-  align-items: center;
-  margin: 35px 0 30px;
-  padding-left: 0px;
-`;
-
-const Button = styled(DynamicLink)`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  cursor: pointer;
-  font-family: "Work Sans", sans-serif;
-  border-radius: 20px;
-  color: white;
-  height: 35px;
-  padding: 0px 8px;
-  padding-bottom: 1px;
-  margin-right: 10px;
-  font-weight: 500;
-  padding-right: 15px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  cursor: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "not-allowed" : "pointer"};
-
-  background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "#aaaabbee" : "#616FEEcc"};
-  :hover {
-    background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
-  }
-
-  > i {
-    color: white;
-    width: 18px;
-    height: 18px;
-    font-weight: 600;
-    font-size: 12px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    margin-right: 5px;
-    justify-content: center;
-  }
+const WarningBannerWrapper = styled.div`
+  margin-block: 20px;
 `;

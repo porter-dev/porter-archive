@@ -1,54 +1,27 @@
 import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
 import React, { useContext, useEffect, useState } from "react";
-import api from "shared/api";
 import styled from "styled-components";
-import { CellProps } from "react-table";
 import { Context } from "shared/Context";
 import { useParams } from "react-router";
-import { PRDeployment, PullRequest } from "../types";
+import { PullRequest } from "../types";
 import DashboardHeader from "../../DashboardHeader";
 import PullRequestIcon from "assets/pull_request_icon.svg";
 import Helper from "components/form-components/Helper";
-import Table from "components/Table";
 import pr_icon from "assets/pull_request_icon.svg";
+import api from "shared/api";
 import { EllipsisTextWrapper, RepoLink } from "../components/styled";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPRDeploymentList, validatePorterYAML } from "../utils";
 import Banner from "components/Banner";
 import Modal from "main/home/modals/Modal";
-
-const dummyData: any = [
-  {
-    pr_title: "pr_title1",
-    pr_number: 1,
-    repo_owner: "repo_owner",
-    repo_name: "repo_name",
-    branch_from: "test1",
-    branch_into: "test",
-  },
-  {
-    pr_title: "pr_title2",
-    pr_number: 2,
-    repo_owner: "repo_owner",
-    repo_name: "repo_name",
-    branch_from: "test2",
-    branch_into: "test",
-  },
-  {
-    pr_title: "pr_title3",
-    pr_number: 3,
-    repo_owner: "repo_owner",
-    repo_name: "repo_name",
-    branch_from: "test3",
-    branch_into: "test",
-  },
-];
+import { useRouting } from "shared/routing";
+import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
 
 const CreateEnvironment: React.FC = () => {
-  // TODO Soham: Replace any
+  const router = useRouting();
   const queryClient = useQueryClient();
-  const [modalContent, setModalContent] = useState<React.ReactNode>();
+  const [showErrorsModal, setShowErrorsModal] = useState<boolean>(false);
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
@@ -74,12 +47,9 @@ const CreateEnvironment: React.FC = () => {
       } catch (err) {
         setCurrentError(err);
       }
-
-      // TODO Soham: Replace with actual data
-      return dummyData; // [];
     }
   );
-  
+
   const [selectedPR, setSelectedPR] = useState<PullRequest>();
   const [loading, setLoading] = useState(false);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
@@ -94,6 +64,7 @@ const CreateEnvironment: React.FC = () => {
       projectID: currentProject.id,
       clusterID: currentCluster.id,
       environmentID: Number(environment_id),
+      branch: pullRequest.branch_from,
     });
 
     setPorterYAMLErrors(res.data.errors ?? []);
@@ -101,63 +72,20 @@ const CreateEnvironment: React.FC = () => {
     setLoading(false);
   };
 
-  const columns = React.useMemo(
-    () => [
-      {
-        Header: "Monitors",
-        columns: [
-          {
-            Header: "Open pull requests",
-            accessor: "name",
-            width: 140,
-            Cell: ({
-              row: { original: pullRequest },
-            }: CellProps<PullRequest>) => {
-              return (
-                <div
-                  style={{
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    handlePRRowItemClick(pullRequest);
-                  }}
-                >
-                  <PRName>
-                    <PRIcon src={pr_icon} alt="pull request icon" />
-                    <EllipsisTextWrapper tooltipText={pullRequest.pr_title}>
-                      {pullRequest.pr_title}
-                    </EllipsisTextWrapper>
-                    <Spacer />
-                    <RepoLink to="" target="_blank">
-                      <i className="material-icons">open_in_new</i>
-                      View last workflow
-                    </RepoLink>
-                  </PRName>
+  const handleCreatePreviewDeployment = async () => {
+    try {
+      await api.createPreviewEnvironmentDeployment("<token>", selectedPR, {
+        cluster_id: currentCluster?.id,
+        project_id: currentProject?.id,
+      });
 
-                  <Flex>
-                    <DeploymentImageContainer>
-                      <InfoWrapper>
-                        <LastDeployed>Last updated xyz</LastDeployed>
-                      </InfoWrapper>
-                      <SepDot>•</SepDot>
-                      <MergeInfoWrapper>
-                        <MergeInfo>
-                          {pullRequest.branch_from}
-                          <i className="material-icons">arrow_forward</i>
-                          {pullRequest.branch_into}
-                        </MergeInfo>
-                      </MergeInfoWrapper>
-                    </DeploymentImageContainer>
-                  </Flex>
-                </div>
-              );
-            },
-          },
-        ],
-      },
-    ],
-    [pullRequests]
-  );
+      router.push(
+        `/preview-environments/deployments/${environment_id}/${selectedPR.repo_owner}/${selectedPR.repo_name}?status_filter=all`
+      );
+    } catch (err) {
+      setCurrentError(err);
+    }
+  };
 
   return (
     <>
@@ -185,59 +113,115 @@ const CreateEnvironment: React.FC = () => {
         <Code>porter.yaml</Code> file.
       </Helper>
       <Br height="10px" />
-      <Table
-        columns={columns}
-        data={pullRequests}
-        placeholder="No open pull requests found."
-      />
-      {modalContent ? (
-        <Modal onRequestClose={() => setModalContent(null)} height="auto">
-          {modalContent}
-        </Modal>
+      <PullRequestList>
+        {(pullRequests ?? []).map((pullRequest: PullRequest, i: number) => {
+          return (
+            <PullRequestRow
+              onClick={() => {
+                handlePRRowItemClick(pullRequest);
+              }}
+              isLast={i === pullRequests.length - 1}
+              isSelected={pullRequest === selectedPR}
+            >
+              <PRName>
+                <PRIcon src={pr_icon} alt="pull request icon" />
+                <EllipsisTextWrapper tooltipText={pullRequest.pr_title}>
+                  {pullRequest.pr_title}
+                </EllipsisTextWrapper>
+              </PRName>
+
+              <Flex>
+                <DeploymentImageContainer>
+                  {/* <InfoWrapper>
+                    <LastDeployed>
+                      #{pullRequest.pr_number} last updated xyz
+                    </LastDeployed>
+                  </InfoWrapper>
+                  <SepDot>•</SepDot> */}
+                  <MergeInfoWrapper>
+                    <MergeInfo>
+                      {pullRequest.branch_from}
+                      <i className="material-icons">arrow_forward</i>
+                      {pullRequest.branch_into}
+                    </MergeInfo>
+                  </MergeInfoWrapper>
+                </DeploymentImageContainer>
+              </Flex>
+            </PullRequestRow>
+          );
+        })}
+      </PullRequestList>
+      {showErrorsModal && selectedPR ? (
+        <PorterYAMLErrorsModal
+          errors={porterYAMLErrors}
+          onClose={() => setShowErrorsModal(false)}
+          repo={selectedPR.repo_owner + "/" + selectedPR.repo_name}
+          branch={selectedPR.branch_from}
+        />
       ) : null}
       {selectedPR && porterYAMLErrors.length ? (
         <ValidationErrorBannerWrapper>
           <Banner type="warning">
-            We found some errors in the porter.yaml file on your default branch.
-            &nbsp;
-            <LearnMoreButton
-              onClick={() =>
-                setModalContent(
-                  <Message>
-                    {porterYAMLErrors.map((el) => {
-                      return (
-                        <div>
-                          {"- "}
-                          {el}
-                        </div>
-                      );
-                    })}
-                  </Message>
-                )
-              }
-            >
+            We found some errors in the porter.yaml file in the&nbsp;
+            {selectedPR.branch_from}&nbsp;branch. &nbsp;
+            <LearnMoreButton onClick={() => setShowErrorsModal(true)}>
               Learn more
             </LearnMoreButton>
           </Banner>
         </ValidationErrorBannerWrapper>
       ) : null}
-      <SubmitButton
-        disabled={loading || !selectedPR || porterYAMLErrors.length > 0}
-      >
-        Create preview deployment
-      </SubmitButton>
+      <CreatePreviewDeploymentWrapper>
+        <SubmitButton
+          onClick={handleCreatePreviewDeployment}
+          disabled={loading || !selectedPR || porterYAMLErrors.length > 0}
+        >
+          Create preview deployment
+        </SubmitButton>
+        {selectedPR && porterYAMLErrors.length ? (
+          <RevalidatePorterYAMLSpanWrapper>
+            Please fix your porter.yaml file to continue.{" "}
+            <RevalidateSpan
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (!selectedPR) {
+                  return;
+                }
+
+                handlePRRowItemClick(selectedPR);
+              }}
+            >
+              Refresh
+            </RevalidateSpan>
+          </RevalidatePorterYAMLSpanWrapper>
+        ) : null}
+      </CreatePreviewDeploymentWrapper>
     </>
   );
 };
 
 export default CreateEnvironment;
 
-const Code = styled.span`
-  font-family: monospace; ;
+const PullRequestList = styled.div`
+  border: 1px solid #494b4f;
+  border-radius: 5px;
+  overflow: hidden;
 `;
 
-const Spacer = styled.div`
-  width: 5px;
+const PullRequestRow = styled.div<{ isLast?: boolean; isSelected?: boolean }>`
+  width: 100%;
+  padding: 15px;
+  cursor: pointer;
+  background: ${(props) => (props.isSelected ? "#ffffff11" : "#26292e")};
+  border-bottom: ${(props) => (props.isLast ? "" : "1px solid #494b4f")};
+  :hover {
+    background: #ffffff11;
+  }
+`;
+
+const Code = styled.span`
+  font-family: monospace; ;
 `;
 
 const SepDot = styled.div`
@@ -307,7 +291,7 @@ const MergeInfo = styled.div`
 
 const PRIcon = styled.img`
   font-size: 20px;
-  height: 17px;
+  height: 16px;
   margin-right: 10px;
   color: #aaaabb;
   opacity: 50%;
@@ -337,7 +321,6 @@ const SubmitButton = styled.div`
   height: 30px;
   padding: 0 8px;
   width: 200px;
-  margin-top: 30px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -370,46 +353,9 @@ const DarkMatter = styled.div`
   margin-top: -15px;
 `;
 
-const DeleteButton = styled.div`
-  height: 30px;
-  font-size: 13px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  color: white;
-  display: flex;
-  width: 210px;
-  align-items: center;
-  padding: 0 15px;
-  margin-top: 20px;
-  text-align: left;
-  border-radius: 5px;
-  cursor: pointer;
-  user-select: none;
-  :focus {
-    outline: 0;
-  }
-  :hover {
-    filter: brightness(120%);
-  }
-  background: #b91133;
-  border: none;
-  :hover {
-    filter: brightness(120%);
-  }
-`;
-
 const Br = styled.div<{ height: string }>`
   width: 100%;
   height: ${(props) => props.height || "2px"};
-`;
-
-const StyledPlaceholder = styled.div`
-  width: 100%;
-  padding: 30px;
-  font-size: 13px;
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
 `;
 
 const Slash = styled.div`
@@ -456,78 +402,14 @@ const Breadcrumb = styled(DynamicLink)`
   }
 `;
 
-const Relative = styled.div`
-  position: relative;
-`;
-
-const EnvironmentsGrid = styled.div`
-  padding-bottom: 150px;
-  display: grid;
-  grid-row-gap: 15px;
-`;
-
-const ControlRow = styled.div`
-  display: flex;
-  margin-left: auto;
-  justify-content: space-between;
-  align-items: center;
-  margin: 35px 0 30px;
-  padding-left: 0px;
-`;
-
-const Button = styled(DynamicLink)`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  cursor: pointer;
-  font-family: "Work Sans", sans-serif;
-  border-radius: 20px;
-  color: white;
-  height: 35px;
-  padding: 0px 8px;
-  padding-bottom: 1px;
-  margin-right: 10px;
-  font-weight: 500;
-  padding-right: 15px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  cursor: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "not-allowed" : "pointer"};
-
-  background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "#aaaabbee" : "#616FEEcc"};
-  :hover {
-    background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
-  }
-
-  > i {
-    color: white;
-    width: 18px;
-    height: 18px;
-    font-weight: 600;
-    font-size: 12px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    margin-right: 5px;
-    justify-content: center;
-  }
-`;
-
 const ValidationErrorBannerWrapper = styled.div`
   margin-block: 20px;
 `;
 
 const LearnMoreButton = styled.div`
+  text-decoration: underline;
   fontweight: bold;
   cursor: pointer;
-  &:hover {
-    text-decoration: underline;
-  }
 `;
 
 const Message = styled.div`
@@ -538,4 +420,23 @@ const Message = styled.div`
   border: 1px solid #aaaabb33;
   font-size: 13px;
   margin-top: 40px;
+`;
+
+const CreatePreviewDeploymentWrapper = styled.div`
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
+const RevalidatePorterYAMLSpanWrapper = styled.div`
+  font-size: 13px;
+  color: #aaaabb;
+`;
+
+const RevalidateSpan = styled.span`
+  color: #aaaabb;
+  text-decoration: underline;
+  cursor: pointer;
 `;

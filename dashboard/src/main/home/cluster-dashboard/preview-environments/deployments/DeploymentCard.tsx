@@ -174,7 +174,7 @@ const DeploymentCard: React.FC<{
 
   const DeploymentCardActions = [
     {
-      active: deployment.last_workflow_run_url,
+      active: !!deployment.last_workflow_run_url,
       label: "View last workflow",
       action: (e: React.MouseEvent) => {
         e.preventDefault();
@@ -195,7 +195,7 @@ const DeploymentCard: React.FC<{
 
   return (
     <DeploymentCardWrapper
-      to={`/preview-environments/details/${deployment.namespace}?environment_id=${deployment.environment_id}`}
+      to={`/preview-environments/details/${deployment.id}?environment_id=${deployment.environment_id}`}
     >
       <DataContainer>
         <PRName>
@@ -233,12 +233,6 @@ const DeploymentCard: React.FC<{
                 </Tooltip>
               )}
             </MergeInfoWrapper>
-          ) : null}
-          {deployment.last_workflow_run_url ? (
-            <RepoLink to={deployment.last_workflow_run_url} target="_blank">
-              <i className="material-icons">open_in_new</i>
-              View last workflow
-            </RepoLink>
           ) : null}
         </PRName>
 
@@ -279,18 +273,21 @@ const DeploymentCard: React.FC<{
 
             {deployment.status !== DeploymentStatus.Creating && (
               <>
-                <RowButton
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+                {deployment.subdomain &&
+                deployment.status === DeploymentStatus.Created ? (
+                  <RowButton
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
 
-                    window.open(deployment.subdomain, "_blank");
-                  }}
-                  key={deployment.subdomain}
-                >
-                  <i className="material-icons">open_in_new</i>
-                  View Live
-                </RowButton>
+                      window.open(deployment.subdomain, "_blank");
+                    }}
+                    key={deployment.subdomain}
+                  >
+                    <i className="material-icons">open_in_new</i>
+                    View Live
+                  </RowButton>
+                ) : null}
                 <DeploymentCardActionsDropdown
                   options={DeploymentCardActions}
                 />

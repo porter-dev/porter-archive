@@ -5,7 +5,7 @@ import styled from "styled-components";
 import Loading from "components/Loading";
 import _ from "lodash";
 import DeploymentCard from "./DeploymentCard";
-import { PRDeployment, PullRequest } from "../types";
+import { Environment, PRDeployment, PullRequest } from "../types";
 import { useRouting } from "shared/routing";
 import { useHistory, useLocation, useParams } from "react-router";
 import { deployments, pull_requests } from "../mocks";
@@ -14,66 +14,31 @@ import DashboardHeader from "../../DashboardHeader";
 import RadioFilter from "components/RadioFilter";
 import Placeholder from "components/Placeholder";
 import Banner from "components/Banner";
-import Modal from "main/home/modals/Modal";
 
 import pullRequestIcon from "assets/pull_request_icon.svg";
 import filterOutline from "assets/filter-outline.svg";
 import sort from "assets/sort.svg";
 import { search } from "shared/search";
 import { getPRDeploymentList, validatePorterYAML } from "../utils";
+import { PorterYAMLErrors } from "../errors";
+import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
 
-const AvailableStatusFilters = ["all", "created", "failed", "not_deployed"];
+const AvailableStatusFilters = [
+  "all",
+  "creating",
+  "created",
+  "failed",
+  "timed_out",
+  "updating",
+];
 
 type AvailableStatusFiltersType = typeof AvailableStatusFilters[number];
-
-const HARD_CODED_DEPLOYMENTS: PRDeployment[] = [
-  {
-    id: 1,
-    created_at: "2021-03-01T00:00:00.000Z",
-    updated_at: "2021-03-01T00:00:00.000Z",
-    subdomain: "subdomain",
-    status: "created",
-    environment_id: 1,
-    pull_request_id: 1,
-    namespace: "namespace",
-    last_workflow_run_url: "",
-    gh_installation_id: 1,
-    gh_deployment_id: 1,
-    gh_pr_name: "gh_pr_name",
-    gh_repo_owner: "meehawk",
-    gh_repo_name: "meehawk",
-    gh_commit_sha: "3659ef050a687da4d04bb870b27058bd9d1957be",
-    gh_pr_branch_from: "gh_pr_branch_from",
-    gh_pr_branch_into: "gh_pr_branch_into",
-  },
-  {
-    id: 2,
-    created_at: "2021-03-01T00:00:00.000Z",
-    updated_at: "2021-03-01T00:00:00.000Z",
-    subdomain: "subdomain",
-    status: "created",
-    environment_id: 1,
-    pull_request_id: 1,
-    namespace: "namespace",
-    last_workflow_run_url: "",
-    gh_installation_id: 1,
-    gh_deployment_id: 1,
-    gh_pr_name: "some_awesome_pr",
-    gh_repo_owner: "godzilla",
-    gh_repo_name: "kong",
-    gh_commit_sha: "3659ef050a687da4d04bb870b27058bd9d1957be",
-    gh_pr_branch_from: "gh_pr_branch_from",
-    gh_pr_branch_into: "gh_pr_branch_into",
-  },
-];
 
 const DeploymentList = () => {
   const [sortOrder, setSortOrder] = useState("Newest");
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [deploymentList, setDeploymentList] = useState<PRDeployment[]>(
-    HARD_CODED_DEPLOYMENTS
-  );
+  const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [searchValue, setSearchValue] = useState("");
   const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
@@ -87,7 +52,9 @@ const DeploymentList = () => {
     setStatusSelectorVal,
   ] = useState<AvailableStatusFiltersType>("all");
 
-  const { currentProject, currentCluster } = useContext(Context);
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
   const { getQueryParam, pushQueryParams } = useRouting();
   const location = useLocation();
   const history = useHistory();
@@ -169,9 +136,7 @@ const DeploymentList = () => {
           }
 
           setPorterYAMLErrors(porterYAMLErrors);
-          setDeploymentList(
-            deploymentList.deployments || HARD_CODED_DEPLOYMENTS
-          );
+          setDeploymentList(deploymentList.deployments ?? []);
           setPullRequests(deploymentList.pull_requests || []);
 
           setNewCommentsDisabled(
@@ -181,8 +146,9 @@ const DeploymentList = () => {
           setIsLoading(false);
         }
       )
-      .catch(() => {
-        setDeploymentList(HARD_CODED_DEPLOYMENTS);
+      .catch((err) => {
+        setDeploymentList([]);
+        setCurrentError(err);
       });
 
     return () => {
@@ -198,26 +164,13 @@ const DeploymentList = () => {
         clusterID: currentCluster.id,
         environmentID: Number(environment_id),
       });
-      setDeploymentList(data.deployments || []);
+      setDeploymentList(data.deployments ?? []);
       setPullRequests(data.pull_requests || []);
     } catch (error) {
       setHasError(true);
       console.error(error);
     }
     setIsLoading(false);
-  };
-
-  const handlePreviewEnvironmentManualCreation = (pullRequest: PullRequest) => {
-    setPullRequests((prev) => {
-      return prev.filter((pr) => {
-        return (
-          pr.pr_title === pullRequest.pr_title &&
-          `${pr.repo_owner}/${pr.repo_name}` ===
-            `${pullRequest.repo_owner}/${pullRequest.repo_name}`
-        );
-      });
-    });
-    handleRefresh();
   };
 
   const searchFilter = (value: string | number) => {
@@ -227,9 +180,21 @@ const DeploymentList = () => {
   };
 
   const filteredDeployments = useMemo(() => {
-    const filteredByStatus = deploymentList.filter(
-      (d) => !["deleted", "inactive"].includes(d.status)
-    );
+    const filteredByStatus = deploymentList.filter((d) => {
+      if (["deleted", "inactive"].includes(d.status)) {
+        return false;
+      }
+
+      if (statusSelectorVal === "all") {
+        return true;
+      }
+
+      if (d.status === statusSelectorVal) {
+        return true;
+      }
+
+      return false;
+    });
 
     const filteredBySearch = search<PRDeployment>(
       filteredByStatus,
@@ -273,8 +238,8 @@ const DeploymentList = () => {
     if (!deploymentList.length) {
       return (
         <Placeholder height="calc(100vh - 400px)">
-          No preview apps have been found. Open a PR to create a new preview
-          app.
+          No preview developments have been found. Open a PR to create a new
+          preview app.
         </Placeholder>
       );
     }
@@ -282,23 +247,13 @@ const DeploymentList = () => {
     if (!filteredDeployments.length) {
       return (
         <Placeholder height="calc(100vh - 400px)">
-          No preview apps have been found with the given filter.
+          No preview developments have been found with the given filter.
         </Placeholder>
       );
     }
 
     return (
       <>
-        {/* Deprecated -> New Preview Env button */}
-        {/* {filteredPullRequests.map((pr) => {
-          return (
-            <PullRequestCard
-              key={pr.pr_title}
-              pullRequest={pr}
-              onCreation={handlePreviewEnvironmentManualCreation}
-            />
-          );
-        })} */}
         {filteredDeployments.map((d: any) => {
           return (
             <DeploymentCard
@@ -314,47 +269,18 @@ const DeploymentList = () => {
     );
   };
 
-  const handleToggleCommentStatus = (currentlyDisabled: boolean) => {
-    api
-      .toggleNewCommentForEnvironment(
-        "<token>",
-        {
-          disable: !currentlyDisabled,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          environment_id: Number(environment_id),
-        }
-      )
-      .then(() => {
-        setNewCommentsDisabled(!currentlyDisabled);
-      });
-  };
-
   useEffect(() => {
     pushQueryParams({ status_filter: statusSelectorVal });
   }, [statusSelectorVal]);
 
   return (
     <>
-      {expandedPorterYAMLErrors.length && (
-        <Modal
-          onRequestClose={() => setExpandedPorterYAMLErrors([])}
-          height="auto"
-        >
-          <Message>
-            {expandedPorterYAMLErrors.map((el) => {
-              return (
-                <div>
-                  {"- "}
-                  {el}
-                </div>
-              );
-            })}
-          </Message>
-        </Modal>
-      )}
+      <PorterYAMLErrorsModal
+        errors={expandedPorterYAMLErrors}
+        onClose={() => setExpandedPorterYAMLErrors([])}
+        repo={selectedRepo}
+      />
+
       <BreadcrumbRow>
         <Breadcrumb to="/preview-environments">
           <ArrowIcon src={pullRequestIcon} />
@@ -383,55 +309,19 @@ const DeploymentList = () => {
         capitalize={false}
       />
       {porterYAMLErrors.length > 0 ? (
-        <Banner type="error">
-          Your porter.yaml file has errors. Please fix them before deploying.
-          <LinkButton
-            onClick={() => {
-              setExpandedPorterYAMLErrors(porterYAMLErrors);
-            }}
-          >
-            View details
-          </LinkButton>
-        </Banner>
+        <PorterYAMLBannerWrapper>
+          <Banner type="warning">
+            We found some errors in the porter.yaml file in the default branch.
+            <LinkButton
+              onClick={() => {
+                setExpandedPorterYAMLErrors(porterYAMLErrors);
+              }}
+            >
+              Learn more
+            </LinkButton>
+          </Banner>
+        </PorterYAMLBannerWrapper>
       ) : null}
-      {/* <Flex>
-        <ActionsWrapper>
-          <StyledStatusSelector>
-            <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
-              <i className="material-icons">refresh</i>
-            </RefreshButton>
-            <SearchRow>
-              <i className="material-icons">search</i>
-              <SearchInput
-                value={searchValue}
-                onChange={(e: any) => {
-                  setSearchValue(e.target.value);
-                }}
-                placeholder="Search"
-              />
-            </SearchRow>
-            <Selector
-              activeValue={statusSelectorVal}
-              setActiveValue={handleStatusFilterChange}
-              options={[
-                {
-                  value: "active",
-                  label: "Active",
-                },
-                {
-                  value: "inactive",
-                  label: "Inactive",
-                },
-              ]}
-              dropdownLabel="Status"
-              width="150px"
-              dropdownWidth="230px"
-              closeOverlay={true}
-            />
-            <EnvironmentSettings environmentId={environment_id} />
-          </StyledStatusSelector>
-        </ActionsWrapper>
-      </Flex> */}
       <FlexRow>
         <Flex>
           <SearchRowWrapper>
@@ -473,6 +363,9 @@ const DeploymentList = () => {
             name="Sort"
           />
           <CreatePreviewEnvironmentButton
+            disabled={porterYAMLErrors.some(
+              (err) => err === PorterYAMLErrors.FileNotFound
+            )}
             to={`/preview-environments/deployments/${environment_id}/${repo_owner}/${repo_name}/create`}
           >
             <i className="material-icons">add</i> New preview deployment
@@ -547,6 +440,7 @@ const Message = styled.div`
 
 const BreadcrumbRow = styled.div`
   width: 100%;
+  margin-top: 5px;
   display: flex;
   justify-content: flex-start;
 `;
@@ -583,41 +477,6 @@ const Flex = styled.div`
   align-items: center;
 `;
 
-const Div = styled.div`
-  margin-bottom: -7px;
-`;
-
-const FlexWrap = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const BackButton = styled(DynamicLink)`
-  cursor: pointer;
-  font-size: 24px;
-  color: #969fbbaa;
-  padding: 3px;
-  border-radius: 100px;
-  :hover {
-    background: #ffffff11;
-  }
-`;
-
-const Icon = styled.img`
-  width: 25px;
-  height: 25px;
-  margin-right: 6px;
-`;
-
-const Title = styled.div`
-  font-size: 20px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  margin-left: 10px;
-  border-radius: 2px;
-  color: #ffffff;
-`;
-
 const RefreshButton = styled.button`
   display: flex;
   align-items: center;
@@ -649,15 +508,6 @@ const EventsGrid = styled.div`
   display: grid;
   grid-row-gap: 20px;
   grid-template-columns: 1;
-`;
-
-const StyledStatusSelector = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  :not(:first-child) {
-    margin-left: 15px;
-  }
 `;
 
 const SearchInput = styled.input`
@@ -747,4 +597,8 @@ const CreatePreviewEnvironmentButton = styled(DynamicLink)`
     margin-right: 5px;
     justify-content: center;
   }
+`;
+
+const PorterYAMLBannerWrapper = styled.div`
+  margin-block: 15px;
 `;

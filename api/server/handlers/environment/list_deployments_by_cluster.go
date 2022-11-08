@@ -276,7 +276,7 @@ func fetchOpenPullRequests(
 
 	for _, pr := range openPRs {
 		if len(branchesMap) > 0 {
-			if _, ok := branchesMap[pr.GetHead().GetRef()]; !ok {
+			if _, ok := branchesMap[pr.GetBase().GetRef()]; !ok {
 				continue
 			}
 		}

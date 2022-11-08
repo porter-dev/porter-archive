@@ -116,7 +116,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 	if env.Mode == "auto" && event.GetAction() == "opened" {
 		depl := &models.Deployment{
 			EnvironmentID: env.ID,
-			Namespace:     "namespace-creating",
+			Namespace:     "",
 			Status:        types.DeploymentStatusCreating,
 			PullRequestID: uint(event.GetPullRequest().GetNumber()),
 			PRName:        event.GetPullRequest().GetTitle(),
@@ -310,10 +310,7 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 		&deploymentStatusRequest,
 	)
 
-	depl.Status = types.DeploymentStatusInactive
-
-	// update the deployment to mark it inactive
-	_, err = c.Repo().Environment().UpdateDeployment(depl)
+	_, err = c.Repo().Environment().DeleteDeployment(depl)
 
 	if err != nil {
 		return fmt.Errorf("[owner: %s, repo: %s, environmentID: %d, deploymentID: %d] error updating deployment: %w",

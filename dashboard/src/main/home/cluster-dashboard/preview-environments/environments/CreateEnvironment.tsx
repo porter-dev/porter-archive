@@ -150,7 +150,7 @@ const CreateEnvironment: React.FC = () => {
           );
         })}
       </PullRequestList>
-      {showErrorsModal ? (
+      {showErrorsModal && selectedPR ? (
         <PorterYAMLErrorsModal
           errors={porterYAMLErrors}
           onClose={() => setShowErrorsModal(false)}
@@ -158,11 +158,10 @@ const CreateEnvironment: React.FC = () => {
           branch={selectedPR.branch_from}
         />
       ) : null}
-      {selectedPR ? (
+      {selectedPR && porterYAMLErrors.length ? (
         <ValidationErrorBannerWrapper>
           <Banner type="warning">
-            We found some errors in the porter.yaml file on your default branch.
-            &nbsp;
+            We found some errors in the porter.yaml file on your branch. &nbsp;
             <LearnMoreButton onClick={() => setShowErrorsModal(true)}>
               Learn more
             </LearnMoreButton>
@@ -176,7 +175,7 @@ const CreateEnvironment: React.FC = () => {
         >
           Create preview deployment
         </SubmitButton>
-        {selectedPR ? (
+        {selectedPR && porterYAMLErrors.length ? (
           <RevalidatePorterYAMLSpanWrapper>
             Please fix your porter.yaml file to continue.{" "}
             <RevalidateSpan

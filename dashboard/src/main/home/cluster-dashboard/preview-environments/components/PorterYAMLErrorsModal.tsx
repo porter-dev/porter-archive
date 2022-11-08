@@ -34,7 +34,7 @@ const PorterYAMLErrorsModal = ({
         </InfoTab>
         <InfoTab>
           <img src={info} /> <Bold>Branch:</Bold>
-          {branch ?? "default"}
+          {branch ?? "base"}
         </InfoTab>
       </InfoRow>
       <Message>

@@ -234,12 +234,6 @@ const DeploymentCard: React.FC<{
               )}
             </MergeInfoWrapper>
           ) : null}
-          {deployment.last_workflow_run_url ? (
-            <RepoLink to={deployment.last_workflow_run_url} target="_blank">
-              <i className="material-icons">open_in_new</i>
-              View last workflow
-            </RepoLink>
-          ) : null}
         </PRName>
 
         <Flex>

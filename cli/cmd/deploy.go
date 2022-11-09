@@ -1184,7 +1184,7 @@ func checkDeploymentStatus(client *api.Client) error {
 			return fmt.Errorf("error fetching new replicaset: %w", err)
 		}
 
-		if minUnavailable <= rs.Status.ReadyReplicas {
+		if minAvailable <= rs.Status.ReadyReplicas {
 			success = true
 		}
 

@@ -23,7 +23,7 @@ import (
 	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
-	"github.com/porter-dev/switchboard/pkg/models"
+	switchboardModels "github.com/porter-dev/switchboard/pkg/models"
 	"github.com/porter-dev/switchboard/pkg/parser"
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
@@ -67,6 +67,10 @@ applying a configuration:
 		err := checkLoginAndRun(args, apply)
 
 		if err != nil {
+			if strings.Contains(err.Error(), "Forbidden") {
+				color.New(color.FgRed).Fprintf(os.Stderr, "You may have to update your GitHub secret token")
+			}
+
 			os.Exit(1)
 		}
 	},
@@ -228,7 +232,7 @@ type DeployDriver struct {
 	logger      *zerolog.Logger
 }
 
-func NewDeployDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+func NewDeployDriver(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
 	driver := &DeployDriver{
 		lookupTable: opts.DriverLookupTable,
 		logger:      opts.Logger,
@@ -254,11 +258,11 @@ func NewDeployDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 	return driver, nil
 }
 
-func (d *DeployDriver) ShouldApply(_ *models.Resource) bool {
+func (d *DeployDriver) ShouldApply(_ *switchboardModels.Resource) bool {
 	return true
 }
 
-func (d *DeployDriver) Apply(resource *models.Resource) (*models.Resource, error) {
+func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboardModels.Resource, error) {
 	client := config.GetAPIClient()
 
 	_, err := client.GetRelease(
@@ -283,7 +287,7 @@ func (d *DeployDriver) Apply(resource *models.Resource) (*models.Resource, error
 }
 
 // Simple apply for addons
-func (d *DeployDriver) applyAddon(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
+func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
 	addonConfig, err := d.getAddonConfig(resource)
 
 	if err != nil {
@@ -340,7 +344,7 @@ func (d *DeployDriver) applyAddon(resource *models.Resource, client *api.Client,
 	return resource, nil
 }
 
-func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
+func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
 	if resource == nil {
 		return nil, fmt.Errorf("nil resource")
 	}
@@ -462,7 +466,7 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 	return resource, err
 }
 
-func (d *DeployDriver) createApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*models.Resource, error) {
+func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*switchboardModels.Resource, error) {
 	// create new release
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", d.source.Name, resource.Name)
 
@@ -548,7 +552,7 @@ func (d *DeployDriver) createApplication(resource *models.Resource, client *api.
 	return resource, handleSubdomainCreate(subdomain, err)
 }
 
-func (d *DeployDriver) updateApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*models.Resource, error) {
+func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*switchboardModels.Resource, error) {
 	color.New(color.FgGreen).Println("Updating existing release:", resource.Name)
 
 	if len(appConf.Build.Env) > 0 {
@@ -614,7 +618,7 @@ func (d *DeployDriver) updateApplication(resource *models.Resource, client *api.
 	return resource, nil
 }
 
-func (d *DeployDriver) assignOutput(resource *models.Resource, client *api.Client) error {
+func (d *DeployDriver) assignOutput(resource *switchboardModels.Resource, client *api.Client) error {
 	release, err := client.GetRelease(
 		context.Background(),
 		d.target.Project,
@@ -636,7 +640,7 @@ func (d *DeployDriver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func (d *DeployDriver) getApplicationConfig(resource *models.Resource) (*previewInt.ApplicationConfig, error) {
+func (d *DeployDriver) getApplicationConfig(resource *switchboardModels.Resource) (*previewInt.ApplicationConfig, error) {
 	populatedConf, err := drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
 		LookupTable:  *d.lookupTable,
@@ -663,7 +667,7 @@ func (d *DeployDriver) getApplicationConfig(resource *models.Resource) (*preview
 	return appConf, nil
 }
 
-func (d *DeployDriver) getAddonConfig(resource *models.Resource) (map[string]interface{}, error) {
+func (d *DeployDriver) getAddonConfig(resource *switchboardModels.Resource) (map[string]interface{}, error) {
 	return drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
 		LookupTable:  *d.lookupTable,
@@ -751,6 +755,10 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 }
 
 func (t *DeploymentHook) PreApply() error {
+	if isSystemNamespace(t.namespace) {
+		color.New(color.FgYellow).Printf("attempting to deploy to system namespace '%s'\n", t.namespace)
+	}
+
 	envList, err := t.client.ListEnvironments(
 		context.Background(), t.projectID, t.clusterID,
 	)
@@ -760,12 +768,14 @@ func (t *DeploymentHook) PreApply() error {
 	}
 
 	envs := *envList
+	var deplEnv *types.Environment
 
 	for _, env := range envs {
 		if strings.EqualFold(env.GitRepoOwner, t.repoOwner) &&
 			strings.EqualFold(env.GitRepoName, t.repoName) &&
 			env.GitInstallationID == t.gitInstallationID {
 			t.envID = env.ID
+			deplEnv = env
 			break
 		}
 	}
@@ -774,12 +784,54 @@ func (t *DeploymentHook) PreApply() error {
 		return fmt.Errorf("could not find environment for deployment")
 	}
 
+	nsList, err := t.client.GetK8sNamespaces(
+		context.Background(), t.projectID, t.clusterID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("error fetching namespaces: %w", err)
+	}
+
+	found := false
+
+	for _, ns := range *nsList {
+		if ns.Name == t.namespace {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		if isSystemNamespace(t.namespace) {
+			return fmt.Errorf("attempting to deploy to system namespace '%s' which does not exist, please create it "+
+				"to continue", t.namespace)
+		}
+
+		createNS := &types.CreateNamespaceRequest{
+			Name: t.namespace,
+		}
+
+		if len(deplEnv.NamespaceAnnotations) > 0 {
+			createNS.Annotations = deplEnv.NamespaceAnnotations
+		}
+
+		// create the new namespace
+		_, err := t.client.CreateNewK8sNamespace(context.Background(), t.projectID, t.clusterID, createNS)
+
+		if err != nil && !strings.Contains(err.Error(), "namespace already exists") {
+			// ignore the error if the namespace already exists
+			//
+			// this might happen if someone creates the namespace in between this operation
+			return fmt.Errorf("error creating namespace: %w", err)
+		}
+	}
+
 	// attempt to read the deployment -- if it doesn't exist, create it
 	_, err = t.client.GetDeployment(
 		context.Background(),
 		t.projectID, t.clusterID, t.envID,
 		&types.GetDeploymentRequest{
-			Namespace: t.namespace,
+			PRNumber: t.prID,
 		},
 	)
 
@@ -812,6 +864,7 @@ func (t *DeploymentHook) PreApply() error {
 			t.repoOwner, t.repoName,
 			&types.UpdateDeploymentRequest{
 				Namespace: t.namespace,
+				PRNumber:  t.prID,
 				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
 					ActionID: t.actionID,
 				},
@@ -900,7 +953,7 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 	}
 
 	req := &types.FinalizeDeploymentRequest{
-		Namespace: t.namespace,
+		PRNumber:  t.prID,
 		Subdomain: strings.Join(subdomains, ", "),
 	}
 
@@ -926,23 +979,24 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 	return err
 }
 
-func (t *DeploymentHook) OnError(err error) {
+func (t *DeploymentHook) OnError(error) {
 	// if the deployment exists, throw an error for that deployment
-	_, getDeplErr := t.client.GetDeployment(
+	_, err := t.client.GetDeployment(
 		context.Background(),
 		t.projectID, t.clusterID, t.envID,
 		&types.GetDeploymentRequest{
-			Namespace: t.namespace,
+			PRNumber: t.prID,
 		},
 	)
 
-	if getDeplErr == nil {
-		_, err = t.client.UpdateDeploymentStatus(
+	if err == nil {
+		// FIXME: try to use the error with a custom logger
+		t.client.UpdateDeploymentStatus(
 			context.Background(),
 			t.projectID, t.gitInstallationID, t.clusterID,
 			t.repoOwner, t.repoName,
 			&types.UpdateDeploymentStatusRequest{
-				Namespace: t.namespace,
+				PRNumber: t.prID,
 				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
 					ActionID: t.actionID,
 				},
@@ -959,14 +1013,14 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 		context.Background(),
 		t.projectID, t.clusterID, t.envID,
 		&types.GetDeploymentRequest{
-			Namespace: t.namespace,
+			PRNumber: t.prID,
 		},
 	)
 
 	if getDeplErr == nil {
 		req := &types.FinalizeDeploymentWithErrorsRequest{
-			Namespace: t.namespace,
-			Errors:    make(map[string]string),
+			PRNumber: t.prID,
+			Errors:   make(map[string]string),
 		}
 
 		for _, res := range t.resourceGroup.Resources {
@@ -1106,4 +1160,12 @@ func getReleaseType(res *switchboardTypes.Resource) string {
 	}
 
 	return ""
+}
+
+func isSystemNamespace(namespace string) bool {
+	return namespace == "cert-manager" || namespace == "ingress-nginx" ||
+		namespace == "kube-node-lease" || namespace == "kube-public" ||
+		namespace == "kube-system" || namespace == "monitoring" ||
+		namespace == "porter-agent-system" || namespace == "default" ||
+		namespace == "ingress-nginx-private"
 }

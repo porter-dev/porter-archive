@@ -1075,8 +1075,8 @@ func checkDeploymentStatus(client *api.Client) error {
 		return fmt.Errorf("could not retrieve kubernetes credentials: %w", err)
 	}
 
-	timeWait := time.Now().Add(30 * time.Minute)
 	prevRefresh := time.Now()
+	timeWait := prevRefresh.Add(30 * time.Minute)
 	success := false
 
 	for time.Now().Before(timeWait) {
@@ -1122,6 +1122,8 @@ func checkDeploymentStatus(client *api.Client) error {
 		if success {
 			break
 		}
+
+		time.Sleep(2 * time.Second)
 	}
 
 	if success {

@@ -11,7 +11,7 @@ import TitleSection from "components/TitleSection";
 import { Context } from "shared/Context";
 
 const TemplateSelector = () => {
-  const { capabilities } = useContext(Context);
+  const { capabilities, currentProject } = useContext(Context);
 
   const [templates, setTemplates] = useState<PorterTemplate[]>([]);
   const [selectedVersion, setSelectedVersion] = useState<{
@@ -28,7 +28,9 @@ const TemplateSelector = () => {
         {
           repo_url: capabilities?.default_app_helm_repo_url,
         },
-        {}
+        {
+          project_id: currentProject.id,
+        }
       );
       let sortedVersionData = res.data
         .map((template: PorterTemplate) => {

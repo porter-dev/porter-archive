@@ -138,13 +138,13 @@ const LogsSection: React.FC<Props> = ({
     selectedDate
   );
 
-  useEffect(() => {
+  const refreshPodLogsValues = async () => {
     if (overridingPodName) {
       return;
     }
 
-    var filters = {
-      namespace: currentChart?.namespace,
+    const filters = {
+      namespace: currentChart.namespace,
       revision: initData.revision ?? currentChart.version.toString(),
       match_prefix: currentChart.name,
     };
@@ -161,48 +161,49 @@ const LogsSection: React.FC<Props> = ({
       }
     }
 
-    api
-      .getLogPodValues("<TOKEN>", filters, {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-      })
-      .then((res: any) => {
-        // if we're on the latest revision and no pod values are returned, query for all release pods
-        if (
-          currentChart.info.status == "deployed" &&
-          (!res.data || res.data?.length == 0)
-        ) {
-          api
-            .getAllReleasePods(
-              "<TOKEN>",
-              {},
-              {
-                id: currentProject.id,
-                name: currentChart.name,
-                namespace: currentChart.namespace,
-                cluster_id: currentCluster.id,
-              }
-            )
-            .then((res: any) => {
-              let podList = res.data.map((pod: any) => {
-                return pod.metadata.name;
-              });
+    const logPodValuesResp = await api.getLogPodValues("<TOKEN>", filters, {
+      project_id: currentProject.id,
+      cluster_id: currentCluster.id,
+    });
 
-              setPodFilterOpts(podList);
+    if (logPodValuesResp.data?.length != 0) {
+      setPodFilterOpts(_.uniq(logPodValuesResp.data ?? []));
 
-              if (!podFilter || !podList.includes(podFilter)) {
-                setPodFilter(podList[0]);
-              }
-            });
-        } else {
-          setPodFilterOpts(_.uniq(res.data ?? []));
+      // only set pod filter if the current pod is not found in the resulting data
+      if (!logPodValuesResp.data?.includes(podFilter)) {
+        setPodFilter(logPodValuesResp.data[0]);
+      }
 
-          // only set pod filter if the current pod is not found in the resulting data
-          if (!res.data?.includes(podFilter)) {
-            setPodFilter(res.data[0]);
-          }
+      return;
+    }
+
+    // if we're on the latest revision and no pod values were returned, query for all release pods
+    if (currentChart.info.status == "deployed") {
+      const allReleasePodsResp = await api.getAllReleasePods(
+        "<TOKEN>",
+        {},
+        {
+          id: currentProject.id,
+          name: currentChart.name,
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
         }
+      );
+
+      let podList = allReleasePodsResp.data.map((pod: any) => {
+        return pod.metadata.name;
       });
+
+      setPodFilterOpts(podList);
+
+      if (!podFilter || !podList.includes(podFilter)) {
+        setPodFilter(podList[0]);
+      }
+    }
+  };
+
+  useEffect(() => {
+    refreshPodLogsValues();
   }, [initData]);
 
   useEffect(() => {

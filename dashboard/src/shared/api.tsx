@@ -1230,9 +1230,9 @@ const getTemplateInfo = baseApi<
   {
     repo_url?: string;
   },
-  { name: string; version: string }
+  { project_id: number; name: string; version: string }
 >("GET", (pathParams) => {
-  return `/api/templates/${pathParams.name}/${pathParams.version}`;
+  return `/api/v1/projects/${pathParams.project_id}/templates/${pathParams.name}/${pathParams.version}`;
 });
 
 const getTemplateUpgradeNotes = baseApi<
@@ -1240,17 +1240,21 @@ const getTemplateUpgradeNotes = baseApi<
     repo_url?: string;
     prev_version: string;
   },
-  { name: string; version: string }
+  { project_id: number; name: string; version: string }
 >("GET", (pathParams) => {
-  return `/api/templates/${pathParams.name}/${pathParams.version}/upgrade_notes`;
+  return `/api/v1/projects/${pathParams.project_id}/templates/${pathParams.name}/${pathParams.version}/upgrade_notes`;
 });
 
 const getTemplates = baseApi<
   {
     repo_url?: string;
   },
-  {}
->("GET", "/api/templates");
+  {
+    project_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/v1/projects/${pathParams.project_id}/templates`;
+});
 
 const getHelmRepos = baseApi<
   {},

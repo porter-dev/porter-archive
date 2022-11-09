@@ -1232,7 +1232,7 @@ const getTemplateInfo = baseApi<
   },
   { project_id: number; name: string; version: string }
 >("GET", (pathParams) => {
-  return `/api/v1/projects/${pathParams.project_id}/templates/${pathParams.name}/${pathParams.version}`;
+  return `/api/v1/projects/${pathParams.project_id}/templates/${pathParams.name}/versions/${pathParams.version}`;
 });
 
 const getTemplateUpgradeNotes = baseApi<
@@ -1242,7 +1242,7 @@ const getTemplateUpgradeNotes = baseApi<
   },
   { project_id: number; name: string; version: string }
 >("GET", (pathParams) => {
-  return `/api/v1/projects/${pathParams.project_id}/templates/${pathParams.name}/${pathParams.version}/upgrade_notes`;
+  return `/api/v1/projects/${pathParams.project_id}/templates/${pathParams.name}/versions/${pathParams.version}/upgrade_notes`;
 });
 
 const getTemplates = baseApi<

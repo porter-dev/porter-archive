@@ -35,6 +35,9 @@ type Cluster struct {
 
 	// (optional) The aws cluster id, if available
 	AWSClusterID string `json:"aws_cluster_id,omitempty"`
+
+	// Whether preview environments is enabled on this cluster
+	PreviewEnvsEnabled bool `json:"preview_envs_enabled"`
 }
 
 type ClusterCandidate struct {
@@ -224,6 +227,9 @@ type CreateNamespaceRequest struct {
 	// the name of the namespace to create
 	// example: sampleNS
 	Name string `json:"name" form:"required"`
+
+	// annotations for the kubernetes namespace, if any
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 type GetTemporaryKubeconfigResponse struct {
@@ -270,6 +276,8 @@ type UpdateClusterRequest struct {
 	AWSClusterID string `json:"aws_cluster_id"`
 
 	AgentIntegrationEnabled *bool `json:"agent_integration_enabled"`
+
+	PreviewEnvsEnabled *bool `json:"preview_envs_enabled"`
 }
 
 type ListClusterResponse []*Cluster

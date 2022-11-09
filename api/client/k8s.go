@@ -37,8 +37,12 @@ func (c *Client) CreateNewK8sNamespace(
 	ctx context.Context,
 	projectID uint,
 	clusterID uint,
-	name string,
+	req *types.CreateNamespaceRequest,
 ) (*types.NamespaceResponse, error) {
+	if req == nil {
+		return nil, fmt.Errorf("invalid request body for creating namespace")
+	}
+
 	resp := &types.NamespaceResponse{}
 
 	err := c.postRequest(
@@ -46,9 +50,7 @@ func (c *Client) CreateNewK8sNamespace(
 			"/projects/%d/clusters/%d/namespaces/create",
 			projectID, clusterID,
 		),
-		&types.CreateNamespaceRequest{
-			Name: name,
-		},
+		req,
 		resp,
 	)
 

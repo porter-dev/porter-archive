@@ -2,6 +2,7 @@ package environment
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
+	"gorm.io/gorm"
 )
 
 type FinalizeDeploymentHandler struct {
@@ -49,19 +51,59 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	if request.Namespace == "" && request.PRNumber == 0 {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("either namespace or pr_number must be present in request body"), http.StatusBadRequest,
+		))
+		return
+	}
+
+	var err error
+
 	// read the environment to get the environment id
 	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID), owner, name)
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(errEnvironmentNotFound))
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	// read the deployment
-	depl, err := c.Repo().Environment().ReadDeployment(env.ID, request.Namespace)
+	var depl *models.Deployment
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	// read the deployment
+	if request.PRNumber != 0 {
+		depl, err = c.Repo().Environment().ReadDeploymentByGitDetails(env.ID, owner, name, request.PRNumber)
+
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
+				return
+			}
+
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	} else if request.Namespace != "" {
+		depl, err = c.Repo().Environment().ReadDeployment(env.ID, request.Namespace)
+
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
+				return
+			}
+
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
+
+	if depl == nil {
+		c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
 		return
 	}
 
@@ -252,20 +294,4 @@ func updateGithubComment(
 	)
 
 	return err
-}
-
-func isGithubPRClosed(
-	client *github.Client,
-	owner, name string,
-	prNumber int,
-) (bool, error) {
-	ghPR, _, err := client.PullRequests.Get(
-		context.Background(), owner, name, prNumber,
-	)
-
-	if err != nil {
-		return false, fmt.Errorf("%v: %w", errGithubAPI, err)
-	}
-
-	return ghPR.GetState() == "closed", nil
 }

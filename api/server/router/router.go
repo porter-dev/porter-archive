@@ -232,6 +232,9 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 	// gitlab integration middleware to handle gitlab integrations for a specific project
 	gitlabIntFactory := authz.NewGitlabIntegrationScopedFactory(config)
 
+	// preview environment middleware to handle previw environments for a specific project-cluster pair
+	previewEnvFactory := authz.NewPreviewEnvironmentScopedFactory(config)
+
 	for _, route := range routes {
 		atomicGroup := route.Router.Group(nil)
 
@@ -271,6 +274,8 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 				atomicGroup.Use(stackFactory.Middleware)
 			case types.GitlabIntegrationScope:
 				atomicGroup.Use(gitlabIntFactory.Middleware)
+			case types.PreviewEnvironmentScope:
+				atomicGroup.Use(previewEnvFactory.Middleware)
 			}
 		}
 

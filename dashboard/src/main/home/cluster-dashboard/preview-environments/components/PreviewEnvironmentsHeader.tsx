@@ -3,6 +3,7 @@ import styled from "styled-components";
 import DashboardHeader from "../../DashboardHeader";
 import PullRequestIcon from "assets/pull_request_icon.svg";
 import api from "shared/api";
+import Banner from "components/Banner";
 
 export const PreviewEnvironmentsHeader = () => {
   const [githubStatus, setGithubStatus] = useState<string>(
@@ -24,27 +25,27 @@ export const PreviewEnvironmentsHeader = () => {
     <>
       <DashboardHeader
         image={PullRequestIcon}
-        title="Preview Environments"
+        title="Preview environments"
         description="Create full-stack preview environments for your pull requests."
         disableLineBreak
+        capitalize={false}
       />
       {githubStatus != "no active incidents" ? (
-        <AlertCard>
-          <AlertCardIcon className="material-icons">error</AlertCardIcon>
-          <AlertCardContent className="content">
-            <AlertCardTitle className="title">
-              Github has an ongoing incident
-            </AlertCardTitle>
-            Active incident:{" "}
-            <a href={`${githubStatus}`} target="_blank">
-              {githubStatus}
-            </a>
-          </AlertCardContent>
-        </AlertCard>
+        <Banner type="error">
+          GitHub has an ongoing incident.
+          <StyledLink href={`${githubStatus}`} target="_blank">
+            View details
+          </StyledLink>
+        </Banner>
       ) : null}
     </>
   );
 };
+
+const StyledLink = styled.a`
+  text-decoration: underline;
+  margin-left: 7px;  
+`;
 
 const AlertCard = styled.div`
   transition: box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;

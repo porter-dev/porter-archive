@@ -97,21 +97,6 @@ func (c *ReenableDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// create the backing namespace
-	agent, err := c.GetAgent(r, cluster, "")
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	_, err = agent.CreateNamespace(depl.Namespace)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
 	ghResp, err := client.Actions.CreateWorkflowDispatchEventByFileName(
 		r.Context(), env.GitRepoOwner, env.GitRepoName, fmt.Sprintf("porter_%s_env.yml", env.Name),
 		github.CreateWorkflowDispatchEventRequest{

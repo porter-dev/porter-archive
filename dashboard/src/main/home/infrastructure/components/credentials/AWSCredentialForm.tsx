@@ -9,7 +9,7 @@ import styled from "styled-components";
 import Loading from "components/Loading";
 import { Operation, OperationStatus, OperationType } from "shared/types";
 import { readableDate } from "shared/string_utils";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 
 type Props = {
   setCreatedCredential: (aws_integration_id: number) => void;

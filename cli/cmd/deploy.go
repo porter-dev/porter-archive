@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	templaterUtils "github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -224,7 +226,7 @@ var updateEnvGroupCmd = &cobra.Command{
 	Aliases: []string{"eg", "envgroup", "env-groups", "envgroups"},
 	Short:   "Updates an environment group's variables, specified by the --name flag.",
 	Run: func(cmd *cobra.Command, args []string) {
-		color.New(color.FgRed).Println("need to specify an operation to continue")
+		color.New(color.FgRed).Fprintln(os.Stderr, "need to specify an operation to continue")
 	},
 }
 
@@ -268,6 +270,7 @@ var version uint
 var varType string
 var normalEnvGroupVars []string
 var secretEnvGroupVars []string
+var waitForSuccessfulDeploy bool
 
 func init() {
 	buildFlagsEnv = []string{}
@@ -371,6 +374,13 @@ func init() {
 	updateCmd.PersistentFlags().MarkDeprecated("force-build", "--force-build is now deprecated")
 
 	updateCmd.PersistentFlags().MarkDeprecated("force-push", "--force-push is now deprecated")
+
+	updateCmd.PersistentFlags().BoolVar(
+		&waitForSuccessfulDeploy,
+		"wait",
+		false,
+		"set this to wait and be notified when a deployment is successful, otherwise time out",
+	)
 
 	updateCmd.AddCommand(updateGetEnvCmd)
 
@@ -478,6 +488,14 @@ func updateFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 	if err != nil {
 		return err
+	}
+
+	if waitForSuccessfulDeploy {
+		err := checkDeploymentStatus(client)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -588,7 +606,21 @@ func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client *api.Client, ar
 		return err
 	}
 
-	return updateUpgradeWithAgent(updateAgent)
+	err = updateUpgradeWithAgent(updateAgent)
+
+	if err != nil {
+		return err
+	}
+
+	if waitForSuccessfulDeploy {
+		err := checkDeploymentStatus(client)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
@@ -1026,6 +1058,148 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 	}
 
 	color.New(color.FgGreen).Println("Successfully updated", app)
+
+	return nil
+}
+
+func checkDeploymentStatus(client *api.Client) error {
+	color.New(color.FgBlue).Println("waiting for deployment to be ready, this may take a few minutes and will time out if it takes longer than 30 minutes")
+
+	sharedConf := &PorterRunSharedConfig{
+		Client: client,
+	}
+
+	err := sharedConf.setSharedConfig()
+
+	if err != nil {
+		return fmt.Errorf("could not retrieve kubernetes credentials: %w", err)
+	}
+
+	prevRefresh := time.Now()
+	timeWait := prevRefresh.Add(30 * time.Minute)
+	success := false
+
+	depls, err := sharedConf.Clientset.AppsV1().Deployments(namespace).List(
+		context.Background(),
+		metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("app.kubernetes.io/instance=%s", app),
+		},
+	)
+
+	if err != nil {
+		return fmt.Errorf("could not get deployments for app %s: %w", app, err)
+	}
+
+	if len(depls.Items) == 0 {
+		return fmt.Errorf("could not find any deployments for app %s", app)
+	}
+
+	sort.Slice(depls.Items, func(i, j int) bool {
+		return depls.Items[i].CreationTimestamp.After(depls.Items[j].CreationTimestamp.Time)
+	})
+
+	depl := depls.Items[0]
+
+	// determine if the deployment has an appropriate number of ready replicas
+	minAvailable := *(depl.Spec.Replicas) - getMaxUnavailable(depl)
+
+	var revision string
+
+	for k, v := range depl.Spec.Template.ObjectMeta.Annotations {
+		if k == "helm.sh/revision" {
+			revision = v
+			break
+		}
+	}
+
+	if revision == "" {
+		return fmt.Errorf("could not find revision for deployment")
+	}
+
+	pods, err := sharedConf.Clientset.CoreV1().Pods(namespace).List(
+		context.Background(), metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("app.kubernetes.io/instance=%s", app),
+		},
+	)
+
+	if err != nil {
+		return fmt.Errorf("error fetching pods for app %s: %w", app, err)
+	}
+
+	if len(pods.Items) == 0 {
+		return fmt.Errorf("could not find any pods for app %s", app)
+	}
+
+	var rsName string
+
+	for _, pod := range pods.Items {
+		if pod.ObjectMeta.Annotations["helm.sh/revision"] == revision {
+			for _, ref := range pod.OwnerReferences {
+				if ref.Kind == "ReplicaSet" {
+					rs, err := sharedConf.Clientset.AppsV1().ReplicaSets(namespace).Get(
+						context.Background(),
+						ref.Name,
+						metav1.GetOptions{},
+					)
+
+					if err != nil {
+						return fmt.Errorf("error fetching new replicaset: %w", err)
+					}
+
+					rsName = rs.Name
+
+					break
+				}
+			}
+
+			if rsName != "" {
+				break
+			}
+		}
+	}
+
+	if rsName == "" {
+		return fmt.Errorf("could not find replicaset for app %s", app)
+	}
+
+	for time.Now().Before(timeWait) {
+		// refresh the client every 10 minutes
+		if time.Now().After(prevRefresh.Add(10 * time.Minute)) {
+			err = sharedConf.setSharedConfig()
+
+			if err != nil {
+				return fmt.Errorf("could not retrieve kube credentials: %s", err.Error())
+			}
+
+			prevRefresh = time.Now()
+		}
+
+		rs, err := sharedConf.Clientset.AppsV1().ReplicaSets(namespace).Get(
+			context.Background(),
+			rsName,
+			metav1.GetOptions{},
+		)
+
+		if err != nil {
+			return fmt.Errorf("error fetching new replicaset: %w", err)
+		}
+
+		if minAvailable <= rs.Status.ReadyReplicas {
+			success = true
+		}
+
+		if success {
+			break
+		}
+
+		time.Sleep(2 * time.Second)
+	}
+
+	if success {
+		color.New(color.FgGreen).Printf("%s has been successfully deployed on the cluster\n", app)
+	} else {
+		return fmt.Errorf("timed out waiting for deployment to be ready, please check the Porter dashboard for more information")
+	}
 
 	return nil
 }

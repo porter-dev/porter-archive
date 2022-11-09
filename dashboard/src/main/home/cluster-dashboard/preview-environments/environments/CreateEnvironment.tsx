@@ -17,6 +17,8 @@ import Banner from "components/Banner";
 import Modal from "main/home/modals/Modal";
 import { useRouting } from "shared/routing";
 import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
+import { PlaceHolder } from "brace";
+import Placeholder from "components/Placeholder";
 
 const CreateEnvironment: React.FC = () => {
   const router = useRouting();
@@ -87,6 +89,102 @@ const CreateEnvironment: React.FC = () => {
     }
   };
 
+  const renderPullRequestList = () => {
+    return (
+      <>
+        <Helper>
+          Select an open pull request to preview. Pull requests must contain a{" "}
+          <Code>porter.yaml</Code> file.
+        </Helper>
+        <Br height="10px" />
+        <PullRequestList>
+          {(pullRequests ?? []).map((pullRequest: PullRequest, i: number) => {
+            return (
+              <PullRequestRow
+                onClick={() => {
+                  handlePRRowItemClick(pullRequest);
+                }}
+                isLast={i === pullRequests.length - 1}
+                isSelected={pullRequest === selectedPR}
+              >
+                <PRName>
+                  <PRIcon src={pr_icon} alt="pull request icon" />
+                  <EllipsisTextWrapper tooltipText={pullRequest.pr_title}>
+                    {pullRequest.pr_title}
+                  </EllipsisTextWrapper>
+                </PRName>
+
+                <Flex>
+                  <DeploymentImageContainer>
+                    {/* <InfoWrapper>
+                    <LastDeployed>
+                      #{pullRequest.pr_number} last updated xyz
+                    </LastDeployed>
+                  </InfoWrapper>
+                  <SepDot>•</SepDot> */}
+                    <MergeInfoWrapper>
+                      <MergeInfo>
+                        {pullRequest.branch_from}
+                        <i className="material-icons">arrow_forward</i>
+                        {pullRequest.branch_into}
+                      </MergeInfo>
+                    </MergeInfoWrapper>
+                  </DeploymentImageContainer>
+                </Flex>
+              </PullRequestRow>
+            );
+          })}
+        </PullRequestList>
+        {showErrorsModal && selectedPR ? (
+          <PorterYAMLErrorsModal
+            errors={porterYAMLErrors}
+            onClose={() => setShowErrorsModal(false)}
+            repo={selectedPR.repo_owner + "/" + selectedPR.repo_name}
+            branch={selectedPR.branch_from}
+          />
+        ) : null}
+        {selectedPR && porterYAMLErrors.length ? (
+          <ValidationErrorBannerWrapper>
+            <Banner type="warning">
+              We found some errors in the porter.yaml file in the&nbsp;
+              {selectedPR.branch_from}&nbsp;branch. &nbsp;
+              <LearnMoreButton onClick={() => setShowErrorsModal(true)}>
+                Learn more
+              </LearnMoreButton>
+            </Banner>
+          </ValidationErrorBannerWrapper>
+        ) : null}
+        <CreatePreviewDeploymentWrapper>
+          <SubmitButton
+            onClick={handleCreatePreviewDeployment}
+            disabled={loading || !selectedPR || porterYAMLErrors.length > 0}
+          >
+            Create preview deployment
+          </SubmitButton>
+          {selectedPR && porterYAMLErrors.length ? (
+            <RevalidatePorterYAMLSpanWrapper>
+              Please fix your porter.yaml file to continue.{" "}
+              <RevalidateSpan
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+
+                  if (!selectedPR) {
+                    return;
+                  }
+
+                  handlePRRowItemClick(selectedPR);
+                }}
+              >
+                Refresh
+              </RevalidateSpan>
+            </RevalidatePorterYAMLSpanWrapper>
+          ) : null}
+        </CreatePreviewDeploymentWrapper>
+      </>
+    );
+  };
+
   return (
     <>
       <BreadcrumbRow>
@@ -108,95 +206,16 @@ const CreateEnvironment: React.FC = () => {
         capitalize={false}
       />
       <DarkMatter />
-      <Helper>
-        Select an open pull request to preview. Pull requests must contain a{" "}
-        <Code>porter.yaml</Code> file.
-      </Helper>
-      <Br height="10px" />
-      <PullRequestList>
-        {(pullRequests ?? []).map((pullRequest: PullRequest, i: number) => {
-          return (
-            <PullRequestRow
-              onClick={() => {
-                handlePRRowItemClick(pullRequest);
-              }}
-              isLast={i === pullRequests.length - 1}
-              isSelected={pullRequest === selectedPR}
-            >
-              <PRName>
-                <PRIcon src={pr_icon} alt="pull request icon" />
-                <EllipsisTextWrapper tooltipText={pullRequest.pr_title}>
-                  {pullRequest.pr_title}
-                </EllipsisTextWrapper>
-              </PRName>
-
-              <Flex>
-                <DeploymentImageContainer>
-                  {/* <InfoWrapper>
-                    <LastDeployed>
-                      #{pullRequest.pr_number} last updated xyz
-                    </LastDeployed>
-                  </InfoWrapper>
-                  <SepDot>•</SepDot> */}
-                  <MergeInfoWrapper>
-                    <MergeInfo>
-                      {pullRequest.branch_from}
-                      <i className="material-icons">arrow_forward</i>
-                      {pullRequest.branch_into}
-                    </MergeInfo>
-                  </MergeInfoWrapper>
-                </DeploymentImageContainer>
-              </Flex>
-            </PullRequestRow>
-          );
-        })}
-      </PullRequestList>
-      {showErrorsModal && selectedPR ? (
-        <PorterYAMLErrorsModal
-          errors={porterYAMLErrors}
-          onClose={() => setShowErrorsModal(false)}
-          repo={selectedPR.repo_owner + "/" + selectedPR.repo_name}
-          branch={selectedPR.branch_from}
-        />
-      ) : null}
-      {selectedPR && porterYAMLErrors.length ? (
-        <ValidationErrorBannerWrapper>
-          <Banner type="warning">
-            We found some errors in the porter.yaml file in the&nbsp;
-            {selectedPR.branch_from}&nbsp;branch. &nbsp;
-            <LearnMoreButton onClick={() => setShowErrorsModal(true)}>
-              Learn more
-            </LearnMoreButton>
-          </Banner>
-        </ValidationErrorBannerWrapper>
-      ) : null}
-      <CreatePreviewDeploymentWrapper>
-        <SubmitButton
-          onClick={handleCreatePreviewDeployment}
-          disabled={loading || !selectedPR || porterYAMLErrors.length > 0}
-        >
-          Create preview deployment
-        </SubmitButton>
-        {selectedPR && porterYAMLErrors.length ? (
-          <RevalidatePorterYAMLSpanWrapper>
-            Please fix your porter.yaml file to continue.{" "}
-            <RevalidateSpan
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                if (!selectedPR) {
-                  return;
-                }
-
-                handlePRRowItemClick(selectedPR);
-              }}
-            >
-              Refresh
-            </RevalidateSpan>
-          </RevalidatePorterYAMLSpanWrapper>
-        ) : null}
-      </CreatePreviewDeploymentWrapper>
+      {pullRequests?.length ? (
+        renderPullRequestList()
+      ) : (
+        <>
+          <Br height="30px" />
+          <Placeholder height="370px">
+            You do not have any pull requests.
+          </Placeholder>
+        </>
+      )}
     </>
   );
 };

@@ -4,7 +4,7 @@ import TitleSection from "components/TitleSection";
 import pr_icon from "assets/pull_request_icon.svg";
 import { useRouteMatch, useLocation } from "react-router";
 import DynamicLink from "components/DynamicLink";
-import { PRDeployment } from "../types";
+import { DeploymentStatus, PRDeployment } from "../types";
 import PullRequestIcon from "assets/pull_request_icon.svg";
 import Loading from "components/Loading";
 import { Context } from "shared/Context";
@@ -100,7 +100,10 @@ const DeploymentDetail = () => {
 
   const repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
 
-  if (!prDeployment.namespace && prDeployment.status === "creating") {
+  if (
+    !prDeployment.namespace &&
+    ["creating", "updating"].includes(prDeployment.status)
+  ) {
     return (
       <>
         <BreadcrumbRow>

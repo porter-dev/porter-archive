@@ -1079,6 +1079,89 @@ func checkDeploymentStatus(client *api.Client) error {
 	timeWait := prevRefresh.Add(30 * time.Minute)
 	success := false
 
+	depls, err := sharedConf.Clientset.AppsV1().Deployments(namespace).List(
+		context.Background(),
+		metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("app.kubernetes.io/instance=%s", app),
+		},
+	)
+
+	if err != nil {
+		return fmt.Errorf("could not get deployments for app %s: %w", app, err)
+	}
+
+	if len(depls.Items) == 0 {
+		return fmt.Errorf("could not find any deployments for app %s", app)
+	}
+
+	sort.Slice(depls.Items, func(i, j int) bool {
+		return depls.Items[i].CreationTimestamp.After(depls.Items[j].CreationTimestamp.Time)
+	})
+
+	depl := depls.Items[0]
+
+	// determine if the deployment has an appropriate number of ready replicas
+	minUnavailable := *(depl.Spec.Replicas) - getMaxUnavailable(depl)
+
+	var revision string
+
+	for k, v := range depl.Spec.Template.ObjectMeta.Annotations {
+		if k == "helm.sh/revision" {
+			revision = v
+			break
+		}
+	}
+
+	if revision == "" {
+		return fmt.Errorf("could not find revision for deployment")
+	}
+
+	pods, err := sharedConf.Clientset.CoreV1().Pods(namespace).List(
+		context.Background(), metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("app.kubernetes.io/instance=%s", app),
+		},
+	)
+
+	if err != nil {
+		return fmt.Errorf("error fetching pods for app %s: %w", app, err)
+	}
+
+	if len(pods.Items) == 0 {
+		return fmt.Errorf("could not find any pods for app %s", app)
+	}
+
+	var rsName string
+
+	for _, pod := range pods.Items {
+		if pod.ObjectMeta.Annotations["helm.sh/revision"] == revision {
+			for _, ref := range pod.OwnerReferences {
+				if ref.Kind == "ReplicaSet" {
+					rs, err := sharedConf.Clientset.AppsV1().ReplicaSets(namespace).Get(
+						context.Background(),
+						ref.Name,
+						metav1.GetOptions{},
+					)
+
+					if err != nil {
+						return fmt.Errorf("error fetching new replicaset: %w", err)
+					}
+
+					rsName = rs.Name
+
+					break
+				}
+			}
+
+			if rsName != "" {
+				break
+			}
+		}
+	}
+
+	if rsName == "" {
+		return fmt.Errorf("could not find replicaset for app %s", app)
+	}
+
 	for time.Now().Before(timeWait) {
 		// refresh the client every 10 minutes
 		if time.Now().After(prevRefresh.Add(10 * time.Minute)) {
@@ -1091,31 +1174,17 @@ func checkDeploymentStatus(client *api.Client) error {
 			prevRefresh = time.Now()
 		}
 
-		depls, err := sharedConf.Clientset.AppsV1().Deployments(namespace).List(
+		rs, err := sharedConf.Clientset.AppsV1().ReplicaSets(namespace).Get(
 			context.Background(),
-			metav1.ListOptions{
-				LabelSelector: fmt.Sprintf("app.kubernetes.io/instance=%s", app),
-			},
+			rsName,
+			metav1.GetOptions{},
 		)
 
 		if err != nil {
-			return fmt.Errorf("could not get deployments for app %s: %w", app, err)
+			return fmt.Errorf("error fetching new replicaset: %w", err)
 		}
 
-		if len(depls.Items) == 0 {
-			return fmt.Errorf("could not find any deployments for app %s", app)
-		}
-
-		sort.Slice(depls.Items, func(i, j int) bool {
-			return depls.Items[i].CreationTimestamp.After(depls.Items[j].CreationTimestamp.Time)
-		})
-
-		depl := depls.Items[0]
-
-		// determine if the deployment has an appropriate number of ready replicas
-		minUnavailable := *(depl.Spec.Replicas) - getMaxUnavailable(depl)
-
-		if minUnavailable <= depl.Status.ReadyReplicas {
+		if minUnavailable <= rs.Status.ReadyReplicas {
 			success = true
 		}
 

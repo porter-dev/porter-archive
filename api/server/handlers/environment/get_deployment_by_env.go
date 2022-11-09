@@ -2,7 +2,6 @@ package environment
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -46,11 +45,11 @@ func (c *GetDeploymentByEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *
 		return
 	}
 
-	_, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, envID)
+	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, envID)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("environment with id %d not found", envID)))
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(errEnvironmentNotFound))
 			return
 		}
 
@@ -58,15 +57,12 @@ func (c *GetDeploymentByEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *
 		return
 	}
 
-	depl, err := c.Repo().Environment().ReadDeployment(envID, request.Namespace)
+	depl, apiErr := validateGetDeploymentRequest(
+		project.ID, cluster.ID, env.ID, env.GitRepoOwner, env.GitRepoName, request, c.Repo(),
+	)
 
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("deployment not found for namespace: %s", request.Namespace)))
-			return
-		}
-
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	if apiErr != nil {
+		c.HandleAPIError(w, r, apiErr)
 		return
 	}
 

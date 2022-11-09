@@ -1,22 +1,25 @@
 import _ from "lodash";
 import React, { useMemo, useState } from "react";
 import styled from "styled-components";
+import Loading from "./Loading";
 
-type Props = {
-  options: any[];
-  onSelect: (option: any) => void;
+type Props<T = any> = {
+  options: T[];
+  onSelect: (option: T) => void;
   label?: string;
   dropdownLabel?: string;
-  getOptionLabel?: (option: any) => string;
-  filterBy?: ((option: any) => string) | string;
+  getOptionLabel?: (option: T) => string;
+  filterBy?: ((option: T) => string) | string;
   noOptionsText?: string;
   dropdownMaxHeight?: string;
   renderAddButton?: any;
   className?: string;
-  renderOptionIcon?: (option: any) => React.ReactNode;
+  renderOptionIcon?: (option: T) => React.ReactNode;
+  placeholder?: string;
+  showLoading?: boolean;
 };
 
-const SearchSelector = ({
+function SearchSelector<O = any>({
   options,
   onSelect,
   label,
@@ -28,7 +31,9 @@ const SearchSelector = ({
   renderAddButton,
   className,
   renderOptionIcon,
-}: Props) => {
+  placeholder = "Find or add a tag...", // legacy value to not break existing code
+  showLoading = false,
+}: Props<O>) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [filter, setFilter] = useState("");
 
@@ -57,8 +62,21 @@ const SearchSelector = ({
       );
     }
 
-    return options.filter((option) => option.includes(filter));
+    return options.filter((option) =>
+      typeof option === "string" ? option.includes(filter) : true
+    );
   }, [filter, options]);
+
+  if (showLoading) {
+    return (
+      <>
+        {label?.length ? <Label>{label}</Label> : null}
+        <InputWrapper className={className}>
+          <Loading />
+        </InputWrapper>
+      </>
+    );
+  }
 
   return (
     <>
@@ -71,7 +89,7 @@ const SearchSelector = ({
       >
         <Input
           value={filter}
-          placeholder="Find or add a tag..."
+          placeholder={placeholder}
           onClick={(e) => {
             setIsExpanded(false);
             e.stopPropagation();
@@ -139,7 +157,7 @@ const SearchSelector = ({
       </InputWrapper>
     </>
   );
-};
+}
 
 export default SearchSelector;
 
@@ -152,6 +170,7 @@ const InputWrapper = styled.div`
   background: #ffffff11;
   position: relative;
   width: 100%;
+  min-height: 37px;
 `;
 
 const Input = styled.input`

@@ -436,7 +436,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
         )}
         {enableSyncedEnvGroups && !!state.synced_env_groups?.length && (
           <>
-            <Heading>Synced Environment Groups</Heading>
+            <Heading>Synced environment groups</Heading>
             <Br />
             {state.synced_env_groups?.map((envGroup: any) => {
               return (

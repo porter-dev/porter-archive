@@ -49,6 +49,13 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 		return
 	}
 
+	if request.Namespace == "" && request.PRNumber == 0 {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("either namespace or pr_number must be present in request body"), http.StatusBadRequest,
+		))
+		return
+	}
+
 	if len(request.Errors) == 0 {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("at least one error is required to report"), http.StatusPreconditionFailed,
@@ -56,12 +63,14 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 		return
 	}
 
+	var err error
+
 	// read the environment to get the environment id
 	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID), owner, name)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("environment not found in cluster and project")))
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(errEnvironmentNotFound))
 			return
 		}
 
@@ -69,16 +78,37 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 		return
 	}
 
-	// read the deployment
-	depl, err := c.Repo().Environment().ReadDeployment(env.ID, request.Namespace)
+	var depl *models.Deployment
 
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no deployment found for environment ID: %d, namespace: %s", env.ID, request.Namespace)))
+	// read the deployment
+	if request.PRNumber != 0 {
+		depl, err = c.Repo().Environment().ReadDeploymentByGitDetails(env.ID, owner, name, request.PRNumber)
+
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
+				return
+			}
+
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
+	} else if request.Namespace != "" {
+		depl, err = c.Repo().Environment().ReadDeployment(env.ID, request.Namespace)
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
+				return
+			}
+
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
+
+	if depl == nil {
+		c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
 		return
 	}
 

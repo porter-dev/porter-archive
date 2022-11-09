@@ -141,7 +141,7 @@ const DropdownWrapper = styled.div<{
   position: absolute;
   left: ${(props) => (props.dropdownAlignRight ? "" : "0")};
   right: ${(props) => (props.dropdownAlignRight ? "0" : "")};
-  z-index: 5;
+  z-index: 1000;
   top: calc(100% + 7px);
   width: 35%;
   min-width: 400px;

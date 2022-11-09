@@ -1,5 +1,5 @@
 import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useParams } from "react-router";
 import api from "shared/api";

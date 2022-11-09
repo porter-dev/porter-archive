@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { CellProps } from "react-table";
 
 import styled from "styled-components";
-import EventTable from "./EventTable";
+import Table from "components/Table";
 import Loading from "components/Loading";
 import danger from "assets/danger.svg";
 import rocket from "assets/rocket.png";
@@ -373,7 +373,11 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
         </LoadWrapper>
       ) : (
         <TableWrapper>
-          <EventTable columns={columns} data={events} />
+          <Table 
+            columns={columns} 
+            data={events} 
+            placeholder="No events found."
+          />
           <FlexRow>
             <Flex>
               <Button

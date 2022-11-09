@@ -2,11 +2,8 @@ import React, { useContext, useState } from "react";
 import { capitalize } from "shared/string_utils";
 import styled from "styled-components";
 import { Environment } from "../types";
-import Options from "components/OptionsDropdown";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import Modal from "main/home/modals/Modal";
-import InputRow from "components/form-components/InputRow";
 import DynamicLink from "components/DynamicLink";
 import { RepoLink } from "../components/styled";
 
@@ -74,7 +71,7 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
 
   return (
     <>
-      {showDeleteModal ? (
+      {/* {showDeleteModal ? (
         <Modal
           title={`Remove Preview Envs for ${git_repo_owner}/${git_repo_name}`}
           width="800px"
@@ -102,7 +99,7 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
             </DeleteButton>
           </ActionWrapper>
         </Modal>
-      ) : null}
+      ) : null} */}
       <EnvironmentCardWrapper
         to={`/preview-environments/deployments/${id}/${git_repo_owner}/${git_repo_name}`}
       >
@@ -116,6 +113,15 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
             <RepoLink
               to={`https://github.com/${git_repo_owner}/${git_repo_name}`}
               target="_blank"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                window.open(
+                  `https://github.com/${git_repo_owner}/${git_repo_name}`,
+                  "_blank"
+                );
+              }}
             >
               <i className="material-icons">open_in_new</i>
               View Repo
@@ -141,13 +147,6 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
             )}
           </Status>
         </DataContainer>
-        <OptionWrapper>
-          <Options.Dropdown expandIcon="more_vert" shrinkIcon="more_vert">
-            <Options.Option onClick={() => setShowDeleteModal(true)}>
-              <i className="material-icons">delete</i> Delete
-            </Options.Option>
-          </Options.Dropdown>
-        </OptionWrapper>
       </EnvironmentCardWrapper>
     </>
   );

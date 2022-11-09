@@ -20,7 +20,7 @@ import { provisionResourcesTracks } from "shared/anayltics";
 import DocsHelper from "components/DocsHelper";
 import Description from "components/Description";
 import api from "shared/api";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import Loading from "components/Loading";
 import MultiSaveButton from "components/MultiSaveButton";
 import buildLogger from "shared/error_handling/logger";

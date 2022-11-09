@@ -75,7 +75,7 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// create namespace if not exists
-	_, err = helmAgent.K8sAgent.CreateNamespace("porter-agent-system")
+	_, err = helmAgent.K8sAgent.CreateNamespace("porter-agent-system", nil)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

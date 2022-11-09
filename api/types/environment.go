@@ -10,16 +10,18 @@ type Environment struct {
 	GitRepoOwner      string `json:"git_repo_owner"`
 	GitRepoName       string `json:"git_repo_name"`
 
-	Name                 string `json:"name"`
-	Mode                 string `json:"mode"`
-	DeploymentCount      uint   `json:"deployment_count"`
-	LastDeploymentStatus string `json:"last_deployment_status"`
-	NewCommentsDisabled  bool   `json:"new_comments_disabled"`
+	Name                 string            `json:"name"`
+	Mode                 string            `json:"mode"`
+	DeploymentCount      uint              `json:"deployment_count"`
+	LastDeploymentStatus string            `json:"last_deployment_status"`
+	NewCommentsDisabled  bool              `json:"new_comments_disabled"`
+	NamespaceAnnotations map[string]string `json:"namespace_annotations,omitempty"`
 }
 
 type CreateEnvironmentRequest struct {
-	Name string `json:"name" form:"required"`
-	Mode string `json:"mode" form:"oneof=auto manual" default:"manual"`
+	Name                 string            `json:"name" form:"required"`
+	Mode                 string            `json:"mode" form:"oneof=auto manual" default:"manual"`
+	NamespaceAnnotations map[string]string `json:"namespace_annotations"`
 }
 
 type GitHubMetadata struct {
@@ -76,15 +78,21 @@ type SuccessfullyDeployedResource struct {
 }
 
 type FinalizeDeploymentRequest struct {
-	Namespace           string                          `json:"namespace" form:"required"`
 	SuccessfulResources []*SuccessfullyDeployedResource `json:"successful_resources"`
 	Subdomain           string                          `json:"subdomain"`
+	PRNumber            uint                            `json:"pr_number"`
+
+	// legacy usage for backwards compatibility
+	Namespace string `json:"namespace"`
 }
 
 type FinalizeDeploymentWithErrorsRequest struct {
-	Namespace           string                          `json:"namespace" form:"required"`
 	SuccessfulResources []*SuccessfullyDeployedResource `json:"successful_resources"`
 	Errors              map[string]string               `json:"errors" form:"required"`
+	PRNumber            uint                            `json:"pr_number"`
+
+	// legacy usage for backwards compatibility
+	Namespace string `json:"namespace"`
 }
 
 type UpdateDeploymentRequest struct {
@@ -92,7 +100,10 @@ type UpdateDeploymentRequest struct {
 
 	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
 	CommitSHA    string `json:"commit_sha" form:"required"`
-	Namespace    string `json:"namespace" form:"required"`
+	PRNumber     uint   `json:"pr_number"`
+
+	// legacy usage for backwards compatibility
+	Namespace string `json:"namespace"`
 }
 
 type ListDeploymentRequest struct {
@@ -104,7 +115,10 @@ type UpdateDeploymentStatusRequest struct {
 
 	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
 	Status       string `json:"status" form:"required,oneof=created creating inactive failed"`
-	Namespace    string `json:"namespace" form:"required"`
+	PRNumber     uint   `json:"pr_number"`
+
+	// legacy usage for backwards compatibility
+	Namespace string `json:"namespace"`
 }
 
 type DeleteDeploymentRequest struct {
@@ -112,7 +126,11 @@ type DeleteDeploymentRequest struct {
 }
 
 type GetDeploymentRequest struct {
-	Namespace string `schema:"namespace" form:"required"`
+	DeploymentID uint `schema:"id"`
+	PRNumber     uint `schema:"pr_number"`
+
+	// legacy usage for backwards compatibility
+	Namespace string `schema:"namespace"`
 }
 
 type PullRequest struct {

@@ -2,7 +2,6 @@ package environment
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -51,26 +50,19 @@ func (c *GetDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID), owner, name)
 
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("environment not found: is the environment enabled for this git installation?"),
-			http.StatusNotFound,
-		))
+		c.HandleAPIError(w, r, apierrors.NewErrNotFound(errEnvironmentNotFound))
 		return
 	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	depl, err := c.Repo().Environment().ReadDeployment(env.ID, request.Namespace)
+	depl, apiErr := validateGetDeploymentRequest(
+		project.ID, cluster.ID, env.ID, env.GitRepoOwner, env.GitRepoName, request, c.Repo(),
+	)
 
-	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("deployment not found"),
-			http.StatusNotFound,
-		))
-		return
-	} else if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	if apiErr != nil {
+		c.HandleAPIError(w, r, apiErr)
 		return
 	}
 

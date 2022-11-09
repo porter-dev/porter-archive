@@ -45,6 +45,8 @@ type StateType = {
   tabOptions: TabOption[];
 };
 class Templates extends Component<PropsType, StateType> {
+  private previousContext: any;
+
   state = {
     currentTemplate: null as PorterTemplate | null,
     form: null as any,
@@ -58,7 +60,28 @@ class Templates extends Component<PropsType, StateType> {
     tabOptions: initialTabOptions,
   };
 
-  async componentDidMount() {
+  componentDidMount() {
+    this.previousContext = this.context;
+    this.setTemplatesAndRepos();
+  }
+
+  componentDidUpdate() {
+    // if project ID has changed, load in a new set of templates
+    if (
+      this.context.currentProject?.id != this.previousContext.currentProject?.id
+    ) {
+      this.setTemplatesAndRepos();
+    }
+
+    this.previousContext = this.context;
+  }
+
+  setTemplatesAndRepos = async () => {
+    // if the project ID is not defined, return
+    if (!this.context.currentProject) {
+      return;
+    }
+
     let default_addon_helm_repo_url = this.context?.capabilities
       ?.default_addon_helm_repo_url;
     let default_app_helm_repo_url = this.context?.capabilities
@@ -69,7 +92,9 @@ class Templates extends Component<PropsType, StateType> {
         {
           repo_url: default_addon_helm_repo_url,
         },
-        {}
+        {
+          project_id: this.context.currentProject.id,
+        }
       );
       let sortedVersionData = res.data.map((template: any) => {
         let versions = template.versions.reverse();
@@ -96,7 +121,9 @@ class Templates extends Component<PropsType, StateType> {
         {
           repo_url: default_app_helm_repo_url,
         },
-        {}
+        {
+          project_id: this.context.currentProject.id,
+        }
       );
       let sortedVersionData = res.data.map((template: any) => {
         let versions = template.versions.reverse();
@@ -191,7 +218,7 @@ class Templates extends Component<PropsType, StateType> {
     } catch (error) {
       this.setState({ loading: false, error: true });
     }
-  }
+  };
 
   isTryingToClone = () => {
     const queryParams = getQueryParams(this.props);

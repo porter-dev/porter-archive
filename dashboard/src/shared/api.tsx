@@ -1032,6 +1032,20 @@ const getMatchingPods = baseApi<
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/pods`;
 });
 
+const getAllReleasePods = baseApi<
+  {},
+  {
+    id: number;
+    name: string;
+    namespace: string;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  let { id, name, cluster_id, namespace } = pathParams;
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/pods/all`;
+});
+
 const getMetrics = baseApi<
   {
     metric: string;
@@ -2337,6 +2351,7 @@ export default {
   getJobPods,
   getPodByName,
   getMatchingPods,
+  getAllReleasePods,
   getMetrics,
   getNamespaces,
   getNGINXIngresses,

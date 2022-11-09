@@ -153,7 +153,12 @@ const LogsSection: React.FC<Props> = ({
     // we set the match prefix to the current chart and the active image tag.
     if (currentChart.config.bluegreen?.enabled) {
       filters.revision = null;
-      filters.match_prefix = `${currentChart.name}-${currentChart.config.bluegreen?.activeImageTag}`;
+
+      if (currentChart?.name.includes("web")) {
+        filters.match_prefix = `${currentChart.name}-${currentChart.config.bluegreen?.activeImageTag}`;
+      } else {
+        filters.match_prefix = `${currentChart.name}-web-${currentChart.config.bluegreen?.activeImageTag}`;
+      }
     }
 
     api
@@ -162,11 +167,40 @@ const LogsSection: React.FC<Props> = ({
         cluster_id: currentCluster.id,
       })
       .then((res: any) => {
-        setPodFilterOpts(_.uniq(res.data ?? []));
+        // if we're on the latest revision and no pod values are returned, query for all release pods
+        if (
+          currentChart.info.status == "deployed" &&
+          (!res.data || res.data?.length == 0)
+        ) {
+          api
+            .getAllReleasePods(
+              "<TOKEN>",
+              {},
+              {
+                id: currentProject.id,
+                name: currentChart.name,
+                namespace: currentChart.namespace,
+                cluster_id: currentCluster.id,
+              }
+            )
+            .then((res: any) => {
+              let podList = res.data.map((pod: any) => {
+                return pod.metadata.name;
+              });
 
-        // only set pod filter if the current pod is not found in the resulting data
-        if (!res.data?.includes(podFilter)) {
-          setPodFilter(res.data[0]);
+              setPodFilterOpts(podList);
+
+              if (!podFilter || !podList.includes(podFilter)) {
+                setPodFilter(podList[0]);
+              }
+            });
+        } else {
+          setPodFilterOpts(_.uniq(res.data ?? []));
+
+          // only set pod filter if the current pod is not found in the resulting data
+          if (!res.data?.includes(podFilter)) {
+            setPodFilter(res.data[0]);
+          }
         }
       });
   }, [initData]);

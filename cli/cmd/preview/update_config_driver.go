@@ -34,19 +34,21 @@ func NewUpdateConfigDriver(resource *models.Resource, opts *drivers.SharedDriver
 		output:      make(map[string]interface{}),
 	}
 
-	source, err := GetSource(resource.Name, resource.Source)
-	if err != nil {
-		return nil, err
-	}
-
-	driver.source = source
-
 	target, err := GetTarget(resource.Name, resource.Target)
+
 	if err != nil {
 		return nil, err
 	}
 
 	driver.target = target
+
+	source, err := GetSource(driver.target.Project, resource.Name, resource.Source)
+
+	if err != nil {
+		return nil, err
+	}
+
+	driver.source = source
 
 	return driver, nil
 }

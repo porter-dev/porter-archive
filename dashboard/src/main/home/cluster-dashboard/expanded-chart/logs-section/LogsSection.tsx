@@ -143,25 +143,64 @@ const LogsSection: React.FC<Props> = ({
       return;
     }
 
-    api
-      .getLogPodValues(
-        "<TOKEN>",
-        {
-          namespace: currentChart?.namespace,
-          revision: initData.revision ?? currentChart.version.toString(),
-          match_prefix: currentChart.name,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      )
-      .then((res: any) => {
-        setPodFilterOpts(_.uniq(res.data ?? []));
+    var filters = {
+      namespace: currentChart?.namespace,
+      revision: initData.revision ?? currentChart.version.toString(),
+      match_prefix: currentChart.name,
+    };
 
-        // only set pod filter if the current pod is not found in the resulting data
-        if (!res.data?.includes(podFilter)) {
-          setPodFilter(res.data[0]);
+    // if the current chart is set to a blue-green deployment, we don't set a revision, but instead
+    // we set the match prefix to the current chart and the active image tag.
+    if (currentChart.config.bluegreen?.enabled) {
+      filters.revision = null;
+
+      if (currentChart?.name.includes("web")) {
+        filters.match_prefix = `${currentChart.name}-${currentChart.config.bluegreen?.activeImageTag}`;
+      } else {
+        filters.match_prefix = `${currentChart.name}-web-${currentChart.config.bluegreen?.activeImageTag}`;
+      }
+    }
+
+    api
+      .getLogPodValues("<TOKEN>", filters, {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+      })
+      .then((res: any) => {
+        // if we're on the latest revision and no pod values are returned, query for all release pods
+        if (
+          currentChart.info.status == "deployed" &&
+          (!res.data || res.data?.length == 0)
+        ) {
+          api
+            .getAllReleasePods(
+              "<TOKEN>",
+              {},
+              {
+                id: currentProject.id,
+                name: currentChart.name,
+                namespace: currentChart.namespace,
+                cluster_id: currentCluster.id,
+              }
+            )
+            .then((res: any) => {
+              let podList = res.data.map((pod: any) => {
+                return pod.metadata.name;
+              });
+
+              setPodFilterOpts(podList);
+
+              if (!podFilter || !podList.includes(podFilter)) {
+                setPodFilter(podList[0]);
+              }
+            });
+        } else {
+          setPodFilterOpts(_.uniq(res.data ?? []));
+
+          // only set pod filter if the current pod is not found in the resulting data
+          if (!res.data?.includes(podFilter)) {
+            setPodFilter(res.data[0]);
+          }
         }
       });
   }, [initData]);

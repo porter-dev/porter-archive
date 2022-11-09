@@ -35,7 +35,7 @@ func (c *Client) GetTemplate(
 
 	err := c.getRequest(
 		fmt.Sprintf(
-			"/v1/projects/%d/templates/%s/%s",
+			"/v1/projects/%d/templates/%s/versions/%s",
 			projectID,
 			name, version,
 		),

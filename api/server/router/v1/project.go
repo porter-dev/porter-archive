@@ -140,8 +140,8 @@ func getV1ProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/v1/projects/{project_id}/templates/{name}/{version} -> v1Template.NewTemplateGetHandler
-	// swagger:operation GET /api/v1/projects/{project_id}/templates/{name}/{version} getTemplate
+	// GET /api/v1/projects/{project_id}/templates/{name}/versions/{version} -> v1Template.NewTemplateGetHandler
+	// swagger:operation GET /api/v1/projects/{project_id}/templates/{name}/versions/{version} getTemplate
 	//
 	// Retrieves a given template by a `name` and a `version`
 	//
@@ -176,7 +176,7 @@ func getV1ProjectRoutes(
 			Path: &types.Path{
 				Parent: basePath,
 				RelativePath: fmt.Sprintf(
-					"%s/templates/{%s}/{%s}",
+					"%s/templates/{%s}/versions/{%s}",
 					relPath,
 					types.URLParamTemplateName,
 					types.URLParamTemplateVersion,
@@ -201,8 +201,8 @@ func getV1ProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/v1/projects/{project_id}/templates/{name}/{version}/upgrade_notes -> v1Template.NewTemplateGetUpgradeNotesHandler
-	// swagger:operation GET /api/v1/projects/{project_id}/templates/{name}/{version}/upgrade_notes getTemplateUpgradeNotes
+	// GET /api/v1/projects/{project_id}/templates/{name}/versions/{version}/upgrade_notes -> v1Template.NewTemplateGetUpgradeNotesHandler
+	// swagger:operation GET /api/v1/projects/{project_id}/templates/{name}/versions/{version}/upgrade_notes getTemplateUpgradeNotes
 	//
 	// Retrieves a given template by a `name` and a `version`
 	//
@@ -242,7 +242,7 @@ func getV1ProjectRoutes(
 			Path: &types.Path{
 				Parent: basePath,
 				RelativePath: fmt.Sprintf(
-					"/templates/{%s}/{%s}/upgrade_notes",
+					"/templates/{%s}/versions/{%s}/upgrade_notes",
 					types.URLParamTemplateName,
 					types.URLParamTemplateVersion,
 				),

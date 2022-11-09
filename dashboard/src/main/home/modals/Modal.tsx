@@ -138,6 +138,7 @@ const StyledModal = styled.div`
   max-width: 80vw;
   height: ${(props: { width?: string; height?: string }) =>
     props.height ? props.height : "425px"};
+  max-height: calc(100vh - 30px);
   overflow: visible;
   padding: 25px 32px;
   z-index: 999;
@@ -145,6 +146,7 @@ const StyledModal = styled.div`
   border-radius: 10px;
   background: #202227;
   border: 1px solid #ffffff55;
+  overflow: auto;
   color: #ffffff;
   animation: floatInModal 0.5s 0s;
   @keyframes floatInModal {

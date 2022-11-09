@@ -63,9 +63,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npx webpack-dev-server",
+    "start": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js",
     "build": "NODE_ENV=\"production\" webpack",
-    "build-and-analyze": "ENABLE_ANALYZER=true NODE_ENV=\"production\" webpack"
+    "build-and-analyze": "ENABLE_ANALYZER=true NODE_ENV=\"production\" ./node_modules/webpack/bin/webpack.js"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",

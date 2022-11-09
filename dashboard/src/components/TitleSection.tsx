@@ -9,6 +9,7 @@ interface Props {
   className?: string;
   materialIconClass?: string;
   handleNavBack?: () => void;
+  onClick?: any;
 }
 
 const TitleSection: React.FC<Props> = ({
@@ -19,6 +20,7 @@ const TitleSection: React.FC<Props> = ({
   handleNavBack,
   className,
   materialIconClass,
+  onClick,
 }) => {
   return (
     <StyledTitleSection className={className}>
@@ -39,7 +41,12 @@ const TitleSection: React.FC<Props> = ({
           <Icon width={iconWidth} src={icon} />
         ))}
 
-      <StyledTitle capitalize={capitalize}>{children}</StyledTitle>
+      <StyledTitle
+        capitalize={capitalize}
+        onClick={onClick}
+      >
+        {children}
+      </StyledTitle>
     </StyledTitleSection>
   );
 };
@@ -78,13 +85,20 @@ const MaterialIcon = styled.span<{ width: string }>`
   margin-right: 16px;
 `;
 
-const StyledTitle = styled.div<{ capitalize: boolean }>`
+const StyledTitle = styled.div<{ 
+  capitalize: boolean;
+  onClick?: any;
+}>`
   font-size: 21px;
   font-weight: 600;
   user-select: text;
   text-transform: ${(props) => (props.capitalize ? "capitalize" : "")};
   display: flex;
   align-items: center;
+  cursor: ${props => props.onClick ? "pointer" : ""};
+  :hover {
+    text-decoration: ${props => props.onClick ? "underline" : ""};
+  }
 
   > i {
     margin-left: 10px;

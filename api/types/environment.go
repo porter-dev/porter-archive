@@ -3,12 +3,13 @@ package types
 import "time"
 
 type Environment struct {
-	ID                uint   `json:"id"`
-	ProjectID         uint   `json:"project_id"`
-	ClusterID         uint   `json:"cluster_id"`
-	GitInstallationID uint   `json:"git_installation_id"`
-	GitRepoOwner      string `json:"git_repo_owner"`
-	GitRepoName       string `json:"git_repo_name"`
+	ID                uint     `json:"id"`
+	ProjectID         uint     `json:"project_id"`
+	ClusterID         uint     `json:"cluster_id"`
+	GitInstallationID uint     `json:"git_installation_id"`
+	GitRepoOwner      string   `json:"git_repo_owner"`
+	GitRepoName       string   `json:"git_repo_name"`
+	GitRepoBranches   []string `json:"git_repo_branches"`
 
 	Name                 string            `json:"name"`
 	Mode                 string            `json:"mode"`
@@ -21,6 +22,8 @@ type Environment struct {
 type CreateEnvironmentRequest struct {
 	Name                 string            `json:"name" form:"required"`
 	Mode                 string            `json:"mode" form:"oneof=auto manual" default:"manual"`
+	DisableNewComments   bool              `json:"disable_new_comments"`
+	GitRepoBranches      []string          `json:"git_repo_branches"`
 	NamespaceAnnotations map[string]string `json:"namespace_annotations"`
 }
 
@@ -154,4 +157,11 @@ type ValidatePorterYAMLRequest struct {
 
 type ValidatePorterYAMLResponse struct {
 	Errors []string `json:"errors"`
+}
+
+type UpdateEnvironmentSettingsRequest struct {
+	Mode                 string            `json:"mode" form:"oneof=auto manual"`
+	DisableNewComments   bool              `json:"disable_new_comments"`
+	GitRepoBranches      []string          `json:"git_repo_branches"`
+	NamespaceAnnotations map[string]string `json:"namespace_annotations"`
 }

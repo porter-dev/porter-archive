@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import Description from "components/Description";
 import { ClusterType } from "shared/types";
 import SelectRow from "components/form-components/SelectRow";

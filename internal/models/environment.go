@@ -17,6 +17,7 @@ type Environment struct {
 	GitInstallationID uint
 	GitRepoOwner      string
 	GitRepoName       string
+	GitRepoBranches   string
 
 	Name string
 	Mode string
@@ -29,6 +30,24 @@ type Environment struct {
 	WebhookID string `gorm:"unique"`
 
 	GithubWebhookID int64
+}
+
+func getGitRepoBranches(branches string) []string {
+	var branchesArr []string
+
+	if branches != "" {
+		supposedBranches := strings.Split(branches, ",")
+
+		for _, br := range supposedBranches {
+			name := strings.TrimSpace(br)
+
+			if len(name) > 0 {
+				branchesArr = append(branchesArr, name)
+			}
+		}
+	}
+
+	return branchesArr
 }
 
 func (e *Environment) ToEnvironmentType() *types.Environment {
@@ -45,6 +64,14 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 
 		Name: e.Name,
 		Mode: e.Mode,
+	}
+
+	branches := getGitRepoBranches(e.GitRepoBranches)
+
+	if len(branches) > 0 {
+		env.GitRepoBranches = branches
+	} else {
+		env.GitRepoBranches = []string{}
 	}
 
 	if len(e.NamespaceAnnotations) > 0 {

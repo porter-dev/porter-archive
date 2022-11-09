@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { DeploymentStatus, PRDeployment } from "../types";
 import pr_icon from "assets/pull_request_icon.svg";
@@ -11,6 +11,78 @@ import Loading from "components/Loading";
 import { ActionButton } from "../components/ActionButton";
 import { EllipsisTextWrapper, RepoLink } from "../components/styled";
 import MaterialTooltip from "@material-ui/core/Tooltip";
+import _ from "lodash";
+
+interface DeploymentCardAction {
+  active: boolean;
+  label: string;
+  action: (...args: any) => void;
+}
+
+interface DeploymentCardActionsDropdownProps {
+  options: DeploymentCardAction[];
+}
+
+const DeploymentCardActionsDropdown = ({
+  options,
+}: DeploymentCardActionsDropdownProps) => {
+  const wrapperRef = useRef<HTMLDivElement>();
+  const [expanded, setExpanded] = useState(false);
+
+  const handleOutsideClick = (event: any) => {
+    if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+      setExpanded(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleOutsideClick.bind(this));
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick.bind(this));
+    };
+  }, []);
+
+  return (
+    <div
+      style={{
+        position: "relative",
+      }}
+    >
+      <I
+        className="material-icons"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setExpanded((expanded) => !expanded);
+        }}
+      >
+        more_vert
+      </I>
+      <ActionsDropdownWrapper expanded={expanded}>
+        <ActionsDropdown ref={wrapperRef}>
+          {options.length ? (
+            <ActionsScrollableWrapper>
+              {options
+                .filter((option) => option.active)
+                .map(({ label, action }, idx) => {
+                  return (
+                    <ActionsRow
+                      isLast={idx === options.length - 1}
+                      onClick={action}
+                      key={label}
+                    >
+                      <ActionsRowText>{label}</ActionsRowText>
+                    </ActionsRow>
+                  );
+                })}
+            </ActionsScrollableWrapper>
+          ) : null}
+        </ActionsDropdown>
+      </ActionsDropdownWrapper>
+    </div>
+  );
+};
 
 const DeploymentCard: React.FC<{
   deployment: PRDeployment;
@@ -100,13 +172,49 @@ const DeploymentCard: React.FC<{
     }
   };
 
+  const DeploymentCardActions = [
+    {
+      active: !!deployment.last_workflow_run_url,
+      label: "View last workflow",
+      action: (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.open(deployment.last_workflow_run_url, "_blank");
+      },
+    },
+    {
+      active: true,
+      label: "Delete",
+      action: (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteDeployment();
+      },
+    },
+  ];
+
   return (
-    <DeploymentCardWrapper>
+    <DeploymentCardWrapper
+      to={`/preview-environments/details/${deployment.id}?environment_id=${deployment.environment_id}`}
+    >
       <DataContainer>
         <PRName>
           <PRIcon src={pr_icon} alt="pull request icon" />
           <EllipsisTextWrapper tooltipText={deployment.gh_pr_name}>
-            {deployment.gh_pr_name}
+            <StyledLink
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(
+                  `https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`,
+                  "_blank"
+                );
+              }}
+              to={`https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`}
+              target="_blank"
+            >
+              {deployment.gh_pr_name}
+            </StyledLink>
           </EllipsisTextWrapper>
           {deployment.gh_pr_branch_from && deployment.gh_pr_branch_into ? (
             <MergeInfoWrapper>
@@ -125,19 +233,6 @@ const DeploymentCard: React.FC<{
                 </Tooltip>
               )}
             </MergeInfoWrapper>
-          ) : null}
-          <RepoLink
-            to={`https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`}
-            target="_blank"
-          >
-            <i className="material-icons">open_in_new</i>
-            View PR
-          </RepoLink>
-          {deployment.last_workflow_run_url ? (
-            <RepoLink to={deployment.last_workflow_run_url} target="_blank">
-              <i className="material-icons">open_in_new</i>
-              View last workflow
-            </RepoLink>
           ) : null}
         </PRName>
 
@@ -176,55 +271,40 @@ const DeploymentCard: React.FC<{
               </>
             ) : null}
 
-            {deployment.status !== DeploymentStatus.Creating &&
-              deployment.status !== DeploymentStatus.Inactive && (
-                <>
+            {deployment.status !== DeploymentStatus.Creating && (
+              <>
+                {deployment.subdomain &&
+                deployment.status === DeploymentStatus.Created ? (
                   <RowButton
-                    to={`/preview-environments/details/${deployment.namespace}?environment_id=${deployment.environment_id}`}
-                    key={deployment.id}
-                  >
-                    <i className="material-icons-outlined">info</i>
-                    Details
-                  </RowButton>
-                  <RowButton
-                    to={deployment.subdomain}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+
+                      window.open(deployment.subdomain, "_blank");
+                    }}
                     key={deployment.subdomain}
-                    target="_blank"
                   >
                     <i className="material-icons">open_in_new</i>
                     View Live
                   </RowButton>
-                </>
-              )}
-            {deployment.status === DeploymentStatus.Inactive ? (
-              <ActionButton
-                onClick={reEnablePreviewEnvironment}
-                disabled={isLoading}
-                hasError={hasErrorOnReEnabling}
-              >
-                {isLoading ? (
-                  <Loading width="198px" height="14px" />
-                ) : (
-                  <>
-                    <i className="material-icons">play_arrow</i>
-                    Activate Preview Environment
-                  </>
-                )}
-              </ActionButton>
-            ) : (
-              <Button
-                onClick={() => {
-                  setCurrentOverlay({
-                    message: `Are you sure you want to delete this deployment?`,
-                    onYes: deleteDeployment,
-                    onNo: () => setCurrentOverlay(null),
-                  });
-                }}
-              >
-                <i className="material-icons">delete</i>
-                Delete
-              </Button>
+                ) : null}
+                <DeploymentCardActionsDropdown
+                  options={DeploymentCardActions}
+                />
+              </>
             )}
+            {/* <Button
+              onClick={() => {
+                setCurrentOverlay({
+                  message: `Are you sure you want to delete this deployment?`,
+                  onYes: deleteDeployment,
+                  onNo: () => setCurrentOverlay(null),
+                });
+              }}
+            >
+              <i className="material-icons">delete</i>
+              Delete
+            </Button> */}
           </>
         ) : (
           <DeleteMessage>
@@ -308,7 +388,7 @@ const PRName = styled.div`
   margin-bottom: 10px;
 `;
 
-const DeploymentCardWrapper = styled.div`
+const DeploymentCardWrapper = styled(DynamicLink)`
   display: flex;
   justify-content: space-between;
   font-size: 13px;
@@ -351,7 +431,7 @@ const PRIcon = styled.img`
   opacity: 50%;
 `;
 
-const RowButton = styled(DynamicLink)`
+const RowButton = styled.button`
   white-space: nowrap;
   font-size: 12px;
   padding: 8px 10px;
@@ -514,5 +594,78 @@ const MergeInfo = styled.div`
   > i {
     font-size: 16px;
     margin: 0 2px;
+  }
+`;
+
+const I = styled.i`
+  user-select: none;
+  margin-left: 15px;
+  color: #aaaabb;
+  cursor: pointer;
+  border-radius: 40px;
+  font-size: 18px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  &:hover {
+    background: #26292e;
+    border: 1px solid #494b4f;
+  }
+`;
+
+const ActionsDropdown = styled.div`
+  width: 150px;
+  border-radius: 3px;
+  z-index: 999;
+  overflow-y: auto;
+  background: #2f3135;
+  padding: 0;
+  border-radius: 5px;
+  border: 1px solid #aaaabb33;
+`;
+
+const ActionsDropdownWrapper = styled.div<{ expanded: boolean }>`
+  display: ${(props) => (props.expanded ? "block" : "none")};
+  position: absolute;
+  right: calc(-100%);
+  z-index: 1;
+  top: calc(100% + 5px);
+`;
+
+const ActionsScrollableWrapper = styled.div`
+  overflow-y: auto;
+  max-height: 350px;
+`;
+
+const ActionsRow = styled.div<{ isLast: boolean; selected?: boolean }>`
+  width: 100%;
+  height: 35px;
+  padding-left: 10px;
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  font-size: 13px;
+  background: ${(props) => (props.selected ? "#ffffff11" : "")};
+
+  :hover {
+    background: #ffffff18;
+  }
+`;
+
+const ActionsRowText = styled.div`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  word-break: anywhere;
+  margin-right: 10px;
+  color: white;
+`;
+
+const StyledLink = styled(DynamicLink)`
+  color: white;
+  :hover {
+    text-decoration: underline;
   }
 `;

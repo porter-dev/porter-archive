@@ -1041,7 +1041,7 @@ const getAllReleasePods = baseApi<
     cluster_id: number;
   }
 >("GET", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams;
+  const { id, name, cluster_id, namespace } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/pods/all`;
 });

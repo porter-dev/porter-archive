@@ -1101,7 +1101,7 @@ func checkDeploymentStatus(client *api.Client) error {
 	depl := depls.Items[0]
 
 	// determine if the deployment has an appropriate number of ready replicas
-	minUnavailable := *(depl.Spec.Replicas) - getMaxUnavailable(depl)
+	minAvailable := *(depl.Spec.Replicas) - getMaxUnavailable(depl)
 
 	var revision string
 

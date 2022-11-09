@@ -235,14 +235,6 @@ func NewDeployDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 		output:      make(map[string]interface{}),
 	}
 
-	source, err := preview.GetSource(resource.Name, resource.Source)
-
-	if err != nil {
-		return nil, err
-	}
-
-	driver.source = source
-
 	target, err := preview.GetTarget(resource.Name, resource.Target)
 
 	if err != nil {
@@ -250,6 +242,14 @@ func NewDeployDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 	}
 
 	driver.target = target
+
+	source, err := preview.GetSource(target.Project, resource.Name, resource.Source)
+
+	if err != nil {
+		return nil, err
+	}
+
+	driver.source = source
 
 	return driver, nil
 }
@@ -905,7 +905,7 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 	}
 
 	for _, res := range t.resourceGroup.Resources {
-		releaseType := getReleaseType(res)
+		releaseType := getReleaseType(t.projectID, res)
 		releaseName := getReleaseName(res)
 
 		if releaseType != "" && releaseName != "" {
@@ -973,7 +973,7 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 			if _, ok := allErrors[res.Name]; !ok {
 				req.SuccessfulResources = append(req.SuccessfulResources, &types.SuccessfullyDeployedResource{
 					ReleaseName: getReleaseName(res),
-					ReleaseType: getReleaseType(res),
+					ReleaseType: getReleaseType(t.projectID, res),
 				})
 			}
 		}
@@ -1096,10 +1096,10 @@ func getReleaseName(res *switchboardTypes.Resource) string {
 	return res.Name
 }
 
-func getReleaseType(res *switchboardTypes.Resource) string {
+func getReleaseType(projectID uint, res *switchboardTypes.Resource) string {
 	// can ignore the error because this method is called once
 	// GetSource has alrealy been called and validated previously
-	source, _ := preview.GetSource(res.Name, res.Source)
+	source, _ := preview.GetSource(projectID, res.Name, res.Source)
 
 	if source != nil && source.Name != "" {
 		return source.Name

@@ -54,16 +54,16 @@ func main() {
 
 	tx := db.Begin()
 
-	switch db.Dialector.Name() {
+	switch tx.Dialector.Name() {
 	case "sqlite":
-		if err := tx.Exec("PRAGMA schema.locking_mode = EXCLUSIVE").Error; err != nil {
+		if err := tx.Raw("PRAGMA schema.locking_mode = EXCLUSIVE").Error; err != nil {
 			tx.Rollback()
 
 			logger.Fatal().Err(err).Msg("error acquiring lock on db_migrations")
 			return
 		}
 	case "postgres":
-		if err := db.Raw("LOCK TABLE db_migrations IN SHARE ROW EXCLUSIVE MODE").Error; err != nil {
+		if err := tx.Raw("LOCK TABLE db_migrations IN SHARE ROW EXCLUSIVE MODE").Error; err != nil {
 			tx.Rollback()
 
 			logger.Fatal().Err(err).Msg("error acquiring lock on db_migrations")

@@ -17,7 +17,7 @@ export enum Direction {
   backward = "backward",
 }
 
-interface Log {
+export interface Log {
   line: AnserJsonEntry[];
   lineNumber: number;
   timestamp: string;
@@ -29,7 +29,7 @@ interface LogLine {
   time: string;
 }
 
-const parseLogs = (logs: string[] = []): Log[] => {
+export const parseLogs = (logs: string[] = []): Log[] => {
   return logs
     .filter(Boolean)
     .filter(isJSON)

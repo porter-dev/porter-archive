@@ -143,19 +143,24 @@ const LogsSection: React.FC<Props> = ({
       return;
     }
 
+    var filters = {
+      namespace: currentChart?.namespace,
+      revision: initData.revision ?? currentChart.version.toString(),
+      match_prefix: currentChart.name,
+    };
+
+    // if the current chart is set to a blue-green deployment, we don't set a revision, but instead
+    // we set the match prefix to the current chart and the active image tag.
+    if (currentChart.config.bluegreen?.enabled) {
+      filters.revision = null;
+      filters.match_prefix = `${currentChart.name}-${currentChart.config.bluegreen?.activeImageTag}`;
+    }
+
     api
-      .getLogPodValues(
-        "<TOKEN>",
-        {
-          namespace: currentChart?.namespace,
-          revision: initData.revision ?? currentChart.version.toString(),
-          match_prefix: currentChart.name,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      )
+      .getLogPodValues("<TOKEN>", filters, {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+      })
       .then((res: any) => {
         setPodFilterOpts(_.uniq(res.data ?? []));
 

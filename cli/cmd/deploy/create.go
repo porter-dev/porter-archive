@@ -451,6 +451,7 @@ func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, err
 func (c *CreateAgent) GetLatestTemplateVersion(templateName string) (string, error) {
 	resp, err := c.Client.ListTemplates(
 		context.Background(),
+		c.CreateOpts.ProjectID,
 		&types.ListTemplatesRequest{},
 	)
 
@@ -478,9 +479,10 @@ func (c *CreateAgent) GetLatestTemplateVersion(templateName string) (string, err
 
 // GetLatestTemplateDefaultValues gets the default config (`values.yaml`) set for a specific
 // template.
-func (c *CreateAgent) GetLatestTemplateDefaultValues(templateName, templateVersion string) (map[string]interface{}, error) {
+func (c *CreateAgent) GetLatestTemplateDefaultValues(projectID uint, templateName, templateVersion string) (map[string]interface{}, error) {
 	chart, err := c.Client.GetTemplate(
 		context.Background(),
+		projectID,
 		templateName,
 		templateVersion,
 		&types.GetTemplateRequest{},
@@ -502,7 +504,7 @@ func (c *CreateAgent) GetMergedValues(overrideValues map[string]interface{}) (st
 	}
 
 	// get the values of the template
-	values, err := c.GetLatestTemplateDefaultValues(c.CreateOpts.Kind, latestVersion)
+	values, err := c.GetLatestTemplateDefaultValues(c.CreateOpts.ProjectID, c.CreateOpts.Kind, latestVersion)
 
 	if err != nil {
 		return "", nil, err

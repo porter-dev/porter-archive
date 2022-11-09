@@ -19,14 +19,24 @@ type ListTemplatesRequest struct {
 }
 
 type PorterTemplateSimple struct {
-	Name        string   `json:"name"`
-	Versions    []string `json:"versions"`
-	Description string   `json:"description"`
-	Icon        string   `json:"icon"`
-	RepoURL     string   `json:"repo_url,omitempty"`
+	// The name of the template
+	Name string `json:"name"`
+
+	// The list of valid versions for the template
+	Versions []string `json:"versions"`
+
+	// A description for the template
+	Description string `json:"description"`
+
+	// An image URI for the icon
+	Icon string `json:"icon"`
+
+	// The repo URL for the template
+	RepoURL string `json:"repo_url,omitempty"`
 }
 
 // ListTemplatesResponse is how a chart gets displayed when listed
+// swagger:model ListTemplatesResponse
 type ListTemplatesResponse []PorterTemplateSimple
 
 type GetTemplateRequest struct {
@@ -34,6 +44,7 @@ type GetTemplateRequest struct {
 }
 
 // GetTemplateResponse is a chart with detailed information and a form for reading
+// swagger:model GetTemplateResponse
 type GetTemplateResponse struct {
 	Markdown string                 `json:"markdown"`
 	Metadata *chart.Metadata        `json:"metadata"`
@@ -47,4 +58,5 @@ type GetTemplateUpgradeNotesRequest struct {
 	PrevVersion string `schema:"prev_version"`
 }
 
+// swagger:model GetTemplateUpgradeNotesResponse
 type GetTemplateUpgradeNotesResponse upgrade.UpgradeFile

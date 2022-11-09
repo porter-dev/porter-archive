@@ -42,6 +42,10 @@ func (t *TemplateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if request.RepoURL == "" {
+		request.RepoURL = t.Config().ServerConf.DefaultApplicationHelmRepoURL
+	}
+
 	hrs, err := t.Repo().HelmRepo().ListHelmReposByProjectID(project.ID)
 
 	if err != nil {
@@ -61,15 +65,21 @@ func (t *TemplateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	name, _ := requestutils.GetURLParamString(r, types.URLParamTemplateName)
+
+	if name == "" {
+		t.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("template name is required"),
+			http.StatusBadRequest,
+		))
+
+		return
+	}
+
 	version, _ := requestutils.GetURLParamString(r, types.URLParamTemplateVersion)
 
 	// if version passed as latest, pass empty string to loader to get latest
 	if version == "latest" {
 		version = ""
-	}
-
-	if request.RepoURL == "" {
-		request.RepoURL = t.Config().ServerConf.DefaultApplicationHelmRepoURL
 	}
 
 	chart, err := loader.LoadChartPublic(request.RepoURL, name, version)
@@ -86,6 +96,7 @@ func (t *TemplateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res := &types.GetTemplateResponse{}
 	res.Metadata = chart.Metadata
 	res.Values = chart.Values
+	res.RepoURL = request.RepoURL
 
 	for _, file := range chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {

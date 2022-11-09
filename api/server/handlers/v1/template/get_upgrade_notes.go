@@ -61,6 +61,16 @@ func (t *TemplateGetUpgradeNotesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	}
 
 	name, _ := requestutils.GetURLParamString(r, types.URLParamTemplateName)
+
+	if name == "" {
+		t.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("template name is required"),
+			http.StatusBadRequest,
+		))
+
+		return
+	}
+
 	version, _ := requestutils.GetURLParamString(r, types.URLParamTemplateVersion)
 
 	// if version passed as latest, pass empty string to loader to get latest

@@ -45,6 +45,7 @@ export default class UpgradeChartModal extends Component<PropsType, StateType> {
           prev_version: this.props.currentChart.chart.metadata.version,
         },
         {
+          project_id: this.context.currentProject.id,
           name: chartName,
           version: this.props.currentChart.latest_version,
         }

@@ -11,7 +11,7 @@ import (
 	"github.com/porter-dev/porter/internal/integrations/preview"
 )
 
-func GetSource(resourceName string, input map[string]interface{}) (*preview.Source, error) {
+func GetSource(projectID uint, resourceName string, input map[string]interface{}) (*preview.Source, error) {
 	output := &preview.Source{}
 
 	// first read from env vars
@@ -64,7 +64,7 @@ func GetSource(resourceName string, input map[string]interface{}) (*preview.Sour
 	if output.Repo == "" {
 		output.Repo = "https://charts.getporter.dev"
 
-		values, err := existsInRepo(output.Name, output.Version, output.Repo)
+		values, err := existsInRepo(projectID, output.Name, output.Version, output.Repo)
 
 		if err == nil {
 			// found in "https://charts.getporter.dev"
@@ -75,7 +75,7 @@ func GetSource(resourceName string, input map[string]interface{}) (*preview.Sour
 
 		output.Repo = "https://chart-addons.getporter.dev"
 
-		values, err = existsInRepo(output.Name, output.Version, output.Repo)
+		values, err = existsInRepo(projectID, output.Name, output.Version, output.Repo)
 
 		if err == nil {
 			// found in https://chart-addons.getporter.dev
@@ -87,7 +87,7 @@ func GetSource(resourceName string, input map[string]interface{}) (*preview.Sour
 			"'https://charts.getporter.dev' or 'https://chart-addons.getporter.dev'", resourceName)
 	} else {
 		// we look in the passed-in repo
-		values, err := existsInRepo(output.Name, output.Version, output.Repo)
+		values, err := existsInRepo(projectID, output.Name, output.Version, output.Repo)
 
 		if err == nil {
 			output.SourceValues = values
@@ -175,9 +175,10 @@ func GetTarget(resourceName string, input map[string]interface{}) (*preview.Targ
 	return output, nil
 }
 
-func existsInRepo(name, version, url string) (map[string]interface{}, error) {
+func existsInRepo(projectID uint, name, version, url string) (map[string]interface{}, error) {
 	chart, err := config.GetAPIClient().GetTemplate(
 		context.Background(),
+		projectID,
 		name, version,
 		&types.GetTemplateRequest{
 			TemplateGetBaseRequest: types.TemplateGetBaseRequest{
@@ -185,6 +186,7 @@ func existsInRepo(name, version, url string) (map[string]interface{}, error) {
 			},
 		},
 	)
+
 	if err != nil {
 		return nil, err
 	}

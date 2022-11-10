@@ -3,7 +3,7 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import styled from "styled-components";
 import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import AzureCredentialForm from "./AzureCredentialForm";
 import CredentialList from "./CredentialList";
 import Description from "components/Description";

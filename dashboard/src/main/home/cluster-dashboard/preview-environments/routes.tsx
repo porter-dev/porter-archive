@@ -5,6 +5,8 @@ import ConnectNewRepo from "./ConnectNewRepo";
 import DeploymentDetail from "./deployments/DeploymentDetail";
 import DeploymentList from "./deployments/DeploymentList";
 import EnvironmentsList from "./environments/EnvironmentsList";
+import EnvironmentSettings from "./environments/EnvironmentSettings";
+import DeployEnvironment from "./environments/CreateEnvironment";
 
 export const Routes = () => {
   const { path } = useRouteMatch();
@@ -20,8 +22,18 @@ export const Routes = () => {
         <Route path={`${path}/connect-repo`}>
           <ConnectNewRepo />
         </Route>
-        <Route path={`${path}/details/:namespace?`}>
+        <Route path={`${path}/details/:id`}>
           <DeploymentDetail />
+        </Route>
+        <Route
+          path={`${path}/deployments/:environment_id/:repo_owner/:repo_name/settings`}
+        >
+          <EnvironmentSettings />
+        </Route>
+        <Route
+          path={`${path}/deployments/:environment_id/:repo_owner/:repo_name/create`}
+        >
+          <DeployEnvironment />
         </Route>
         <Route
           path={`${path}/deployments/:environment_id/:repo_owner/:repo_name`}

@@ -56,6 +56,7 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.StackResource{},
 		&models.StackSourceConfig{},
 		&models.StackEnvGroup{},
+		&models.DbMigration{},
 		&models.MonitorTestResult{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},

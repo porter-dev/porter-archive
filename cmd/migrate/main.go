@@ -1,17 +1,21 @@
 package main
 
 import (
+	"errors"
 	"log"
 
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
 	"github.com/porter-dev/porter/cmd/migrate/populate_source_config_display_name"
+	"github.com/porter-dev/porter/cmd/migrate/startup_migrations"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 	lr "github.com/porter-dev/porter/pkg/logger"
 
 	"github.com/joeshaw/envdecode"
+	pgorm "gorm.io/gorm"
 )
 
 func main() {
@@ -47,6 +51,66 @@ func main() {
 		logger.Fatal().Err(err).Msg("failed to drop clusters token cache constraint")
 		return
 	}
+
+	tx := db.Begin()
+
+	switch tx.Dialector.Name() {
+	case "sqlite":
+		if err := tx.Raw("PRAGMA schema.locking_mode = EXCLUSIVE").Error; err != nil {
+			tx.Rollback()
+
+			logger.Fatal().Err(err).Msg("error acquiring lock on db_migrations")
+			return
+		}
+	case "postgres":
+		if err := tx.Raw("LOCK TABLE db_migrations IN SHARE ROW EXCLUSIVE MODE").Error; err != nil {
+			tx.Rollback()
+
+			logger.Fatal().Err(err).Msg("error acquiring lock on db_migrations")
+			return
+		}
+	}
+
+	dbMigration := &models.DbMigration{}
+
+	if err := tx.Model(&models.DbMigration{}).First(dbMigration).Error; err != nil {
+		if errors.Is(err, pgorm.ErrRecordNotFound) {
+			dbMigration.Version = 0
+		} else {
+			tx.Rollback()
+
+			logger.Fatal().Err(err).Msg("failed to check for db migration version")
+			return
+		}
+	}
+
+	latestMigrationVersion := startup_migrations.LatestMigrationVersion
+
+	if dbMigration.Version < latestMigrationVersion {
+		for ver, fn := range startup_migrations.StartupMigrations {
+			if ver > dbMigration.Version {
+				err := fn(tx, logger)
+
+				if err != nil {
+					tx.Rollback()
+
+					logger.Fatal().Err(err).Msg("failed to run startup migration script")
+					return
+				}
+			}
+		}
+
+		dbMigration.Version = latestMigrationVersion
+
+		if err := tx.Save(dbMigration).Error; err != nil {
+			tx.Rollback()
+
+			logger.Fatal().Err(err).Msg("failed to update migration version to latest")
+			return
+		}
+	}
+
+	tx.Commit()
 
 	if shouldRotate, oldKeyStr, newKeyStr := shouldKeyRotate(); shouldRotate {
 		oldKey := [32]byte{}

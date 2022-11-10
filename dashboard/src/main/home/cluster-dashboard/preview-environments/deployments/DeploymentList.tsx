@@ -2,48 +2,59 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import styled from "styled-components";
-import Selector from "components/Selector";
-
 import Loading from "components/Loading";
-
 import _ from "lodash";
 import DeploymentCard from "./DeploymentCard";
 import { Environment, PRDeployment, PullRequest } from "../types";
 import { useRouting } from "shared/routing";
 import { useHistory, useLocation, useParams } from "react-router";
 import { deployments, pull_requests } from "../mocks";
-import PullRequestCard from "./PullRequestCard";
 import DynamicLink from "components/DynamicLink";
-import { PreviewEnvironmentsHeader } from "../components/PreviewEnvironmentsHeader";
-import SearchBar from "components/SearchBar";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import DocsHelper from "components/DocsHelper";
+import DashboardHeader from "../../DashboardHeader";
+import RadioFilter from "components/RadioFilter";
+import Placeholder from "components/Placeholder";
+import Banner from "components/Banner";
+
+import pullRequestIcon from "assets/pull_request_icon.svg";
+import filterOutline from "assets/filter-outline.svg";
+import sort from "assets/sort.svg";
+import { search } from "shared/search";
+import { getPRDeploymentList, validatePorterYAML } from "../utils";
+import { PorterYAMLErrors } from "../errors";
+import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
 
 const AvailableStatusFilters = [
   "all",
+  "creating",
   "created",
   "failed",
-  "active",
-  "inactive",
-  "not_deployed",
+  "timed_out",
+  "updating",
 ];
 
 type AvailableStatusFiltersType = typeof AvailableStatusFilters[number];
 
 const DeploymentList = () => {
+  const [sortOrder, setSortOrder] = useState("Newest");
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [searchValue, setSearchValue] = useState("");
   const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
+  const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
+  const [expandedPorterYAMLErrors, setExpandedPorterYAMLErrors] = useState<
+    string[]
+  >([]);
 
   const [
     statusSelectorVal,
     setStatusSelectorVal,
-  ] = useState<AvailableStatusFiltersType>("active");
+  ] = useState<AvailableStatusFiltersType>("all");
 
-  const { currentProject, currentCluster } = useContext(Context);
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
   const { getQueryParam, pushQueryParams } = useRouting();
   const location = useLocation();
   const history = useHistory();
@@ -54,20 +65,6 @@ const DeploymentList = () => {
   }>();
 
   const selectedRepo = `${repo_owner}/${repo_name}`;
-
-  const getPRDeploymentList = () => {
-    return api.getPRDeploymentList(
-      "<token>",
-      {
-        environment_id: Number(environment_id),
-      },
-      {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-      }
-    );
-    // return mockRequest();
-  };
 
   const getEnvironment = () => {
     return api.getEnvironment(
@@ -102,66 +99,78 @@ const DeploymentList = () => {
     let isSubscribed = true;
     setIsLoading(true);
 
-    Promise.allSettled([getPRDeploymentList(), getEnvironment()]).then(
-      ([getDeploymentsResponse, getEnvironmentResponse]) => {
-        const deploymentList =
-          getDeploymentsResponse.status === "fulfilled"
-            ? getDeploymentsResponse.value.data
-            : {};
-        const environmentList =
-          getEnvironmentResponse.status === "fulfilled"
-            ? getEnvironmentResponse.value.data
-            : {};
+    Promise.allSettled([
+      validatePorterYAML({
+        projectID: currentProject.id,
+        clusterID: currentCluster.id,
+        environmentID: Number(environment_id),
+      }),
+      getPRDeploymentList({
+        projectID: currentProject.id,
+        clusterID: currentCluster.id,
+        environmentID: Number(environment_id),
+      }),
+      getEnvironment(),
+    ])
+      .then(
+        ([
+          validatePorterYAMLResponse,
+          getDeploymentsResponse,
+          getEnvironmentResponse,
+        ]) => {
+          const deploymentList =
+            getDeploymentsResponse.status === "fulfilled"
+              ? getDeploymentsResponse.value.data
+              : {};
+          const environmentList =
+            getEnvironmentResponse.status === "fulfilled"
+              ? getEnvironmentResponse.value.data
+              : {};
+          const porterYAMLErrors =
+            validatePorterYAMLResponse.status === "fulfilled"
+              ? validatePorterYAMLResponse.value.data.errors
+              : [];
 
-        if (!isSubscribed) {
-          return;
+          if (!isSubscribed) {
+            return;
+          }
+
+          setPorterYAMLErrors(porterYAMLErrors);
+          setDeploymentList(deploymentList.deployments ?? []);
+          setPullRequests(deploymentList.pull_requests || []);
+
+          setNewCommentsDisabled(
+            environmentList.new_comments_disabled || false
+          );
+
+          setIsLoading(false);
         }
-
-        setDeploymentList(deploymentList.deployments || []);
-        setPullRequests(deploymentList.pull_requests || []);
-
-        setNewCommentsDisabled(environmentList.new_comments_disabled || false);
-
-        setIsLoading(false);
-      }
-    );
+      )
+      .catch((err) => {
+        setDeploymentList([]);
+        setCurrentError(err);
+      });
 
     return () => {
       isSubscribed = false;
     };
-  }, [currentCluster, currentProject]);
+  }, [currentCluster, currentProject, environment_id]);
 
   const handleRefresh = async () => {
     setIsLoading(true);
     try {
-      const { data } = await getPRDeploymentList();
-      setDeploymentList(data.deployments || []);
+      const { data } = await getPRDeploymentList({
+        projectID: currentProject.id,
+        clusterID: currentCluster.id,
+        environmentID: Number(environment_id),
+      });
+      setDeploymentList(data.deployments ?? []);
       setPullRequests(data.pull_requests || []);
     } catch (error) {
       setHasError(true);
       console.error(error);
     }
-    try {
-      const { data } = await getEnvironment();
-      setNewCommentsDisabled(data.new_comments_disabled || false);
-    } catch (error) {
-      setHasError(true);
-      console.error(error);
-    }
     setIsLoading(false);
-  };
-
-  const handlePreviewEnvironmentManualCreation = (pullRequest: PullRequest) => {
-    setPullRequests((prev) => {
-      return prev.filter((pr) => {
-        return (
-          pr.pr_title === pullRequest.pr_title &&
-          `${pr.repo_owner}/${pr.repo_name}` ===
-            `${pullRequest.repo_owner}/${pullRequest.repo_name}`
-        );
-      });
-    });
-    handleRefresh();
   };
 
   const searchFilter = (value: string | number) => {
@@ -171,29 +180,41 @@ const DeploymentList = () => {
   };
 
   const filteredDeployments = useMemo(() => {
-    // Only filter out inactive when status filter is "active"
-    if (statusSelectorVal === "active") {
-      return deploymentList
-        .filter((d) => {
-          return d.status !== "inactive";
-        })
-        .filter((d) => {
-          return Object.values(d).find(searchFilter) !== undefined;
-        });
-    }
+    const filteredByStatus = deploymentList.filter((d) => {
+      if (["deleted", "inactive"].includes(d.status)) {
+        return false;
+      }
 
-    if (statusSelectorVal === "inactive") {
-      return deploymentList
-        .filter((d) => {
-          return d.status === "inactive";
-        })
-        .filter((d) => {
-          return Object.values(d).find(searchFilter) !== undefined;
-        });
-    }
+      if (statusSelectorVal === "all") {
+        return true;
+      }
 
-    return deploymentList;
-  }, [statusSelectorVal, deploymentList, searchValue]);
+      if (d.status === statusSelectorVal) {
+        return true;
+      }
+
+      return false;
+    });
+
+    const filteredBySearch = search<PRDeployment>(
+      filteredByStatus,
+      searchValue,
+      {
+        isCaseSensitive: false,
+        keys: ["gh_pr_name", "gh_repo_name", "gh_repo_owner"],
+      }
+    );
+
+    switch (sortOrder) {
+      case "Newest":
+        return _.sortBy(filteredBySearch, "updated_at").reverse();
+      case "Oldest":
+        return _.sortBy(filteredBySearch, "updated_at");
+      case "Alphabetical":
+      default:
+        return _.sortBy(filteredBySearch, "gh_pr_name");
+    }
+  }, [statusSelectorVal, deploymentList, searchValue, sortOrder]);
 
   const filteredPullRequests = useMemo(() => {
     if (statusSelectorVal !== "inactive") {
@@ -208,41 +229,32 @@ const DeploymentList = () => {
   const renderDeploymentList = () => {
     if (isLoading) {
       return (
-        <Placeholder>
+        <LoadingWrapper>
           <Loading />
+        </LoadingWrapper>
+      );
+    }
+
+    if (!deploymentList.length) {
+      return (
+        <Placeholder height="calc(100vh - 400px)">
+          No preview developments have been found. Open a PR to create a new
+          preview app.
         </Placeholder>
       );
     }
 
-    if (!deploymentList.length && !pullRequests.length) {
+    if (!filteredDeployments.length) {
       return (
-        <Placeholder>
-          No preview apps have been found. Open a PR to create a new preview
-          app.
-        </Placeholder>
-      );
-    }
-
-    if (!filteredDeployments.length && !filteredPullRequests.length) {
-      return (
-        <Placeholder>
-          No preview apps have been found with the given filter.
+        <Placeholder height="calc(100vh - 400px)">
+          No preview developments have been found with the given filter.
         </Placeholder>
       );
     }
 
     return (
       <>
-        {filteredPullRequests.map((pr) => {
-          return (
-            <PullRequestCard
-              key={pr.pr_title}
-              pullRequest={pr}
-              onCreation={handlePreviewEnvironmentManualCreation}
-            />
-          );
-        })}
-        {filteredDeployments.map((d) => {
+        {filteredDeployments.map((d: any) => {
           return (
             <DeploymentCard
               key={d.id}
@@ -257,49 +269,63 @@ const DeploymentList = () => {
     );
   };
 
-  const handleStatusFilterChange = (value: string) => {
-    pushQueryParams({ status_filter: value });
-    setStatusSelectorVal(value);
-  };
-
-  const handleToggleCommentStatus = (currentlyDisabled: boolean) => {
-    api
-      .toggleNewCommentForEnvironment(
-        "<token>",
-        {
-          disable: !currentlyDisabled,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          environment_id: Number(environment_id),
-        }
-      )
-      .then(() => {
-        setNewCommentsDisabled(!currentlyDisabled);
-      });
-  };
+  useEffect(() => {
+    pushQueryParams({ status_filter: statusSelectorVal });
+  }, [statusSelectorVal]);
 
   return (
     <>
-      <PreviewEnvironmentsHeader />
-      <Flex>
-        <BackButton to={"/preview-environments"} className="material-icons">
-          keyboard_backspace
-        </BackButton>
+      <PorterYAMLErrorsModal
+        errors={expandedPorterYAMLErrors}
+        onClose={() => setExpandedPorterYAMLErrors([])}
+        repo={selectedRepo}
+      />
 
-        <Icon
-          src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
-          alt="git repository icon"
-        />
-        <Title>{selectedRepo}</Title>
-
-        <ActionsWrapper>
-          <StyledStatusSelector>
-            <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
-              <i className="material-icons">refresh</i>
-            </RefreshButton>
-            <SearchRow>
+      <BreadcrumbRow>
+        <Breadcrumb to="/preview-environments">
+          <ArrowIcon src={pullRequestIcon} />
+          <Wrap>Preview environments</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
+      <DashboardHeader
+        image="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
+        title={
+          <Flex>
+            <StyledLink
+              to={`https://github.com/${selectedRepo}`}
+              target="_blank"
+            >
+              {selectedRepo}
+            </StyledLink>
+            <DynamicLink
+              to={`/preview-environments/deployments/${environment_id}/${repo_owner}/${repo_name}/settings`}
+            >
+              <I className="material-icons">more_vert</I>
+            </DynamicLink>
+          </Flex>
+        }
+        description={`Preview environments for the ${selectedRepo} repository.`}
+        disableLineBreak
+        capitalize={false}
+      />
+      {porterYAMLErrors.length > 0 ? (
+        <PorterYAMLBannerWrapper>
+          <Banner type="warning">
+            We found some errors in the porter.yaml file in the default branch.
+            <LinkButton
+              onClick={() => {
+                setExpandedPorterYAMLErrors(porterYAMLErrors);
+              }}
+            >
+              Learn more
+            </LinkButton>
+          </Banner>
+        </PorterYAMLBannerWrapper>
+      ) : null}
+      <FlexRow>
+        <Flex>
+          <SearchRowWrapper>
+            <SearchBarWrapper>
               <i className="material-icons">search</i>
               <SearchInput
                 value={searchValue}
@@ -308,46 +334,44 @@ const DeploymentList = () => {
                 }}
                 placeholder="Search"
               />
-            </SearchRow>
-            <Selector
-              activeValue={statusSelectorVal}
-              setActiveValue={handleStatusFilterChange}
-              options={[
-                {
-                  value: "active",
-                  label: "Active",
-                },
-                {
-                  value: "inactive",
-                  label: "Inactive",
-                },
-              ]}
-              dropdownLabel="Status"
-              width="150px"
-              dropdownWidth="230px"
-              closeOverlay={true}
-            />
-          </StyledStatusSelector>
-        </ActionsWrapper>
-      </Flex>
-      <Flex>
-        <ActionsWrapper>
-          <FlexWrap>
-            <CheckboxRow
-              label="Disable new comments for deployments"
-              checked={newCommentsDisabled}
-              toggle={() => handleToggleCommentStatus(newCommentsDisabled)}
-            />
-            <Div>
-              <DocsHelper
-                disableMargin
-                tooltipText="When checked, comments for every new deployment are disabled. Instead, the most recent comment is updated each time."
-                placement="top-end"
-              />
-            </Div>
-          </FlexWrap>
-        </ActionsWrapper>
-      </Flex>
+            </SearchBarWrapper>
+          </SearchRowWrapper>
+          <RadioFilter
+            icon={filterOutline}
+            selected={statusSelectorVal}
+            setSelected={setStatusSelectorVal}
+            options={AvailableStatusFilters.map((filter) => ({
+              value: filter,
+              label: _.startCase(filter),
+            }))}
+            name="Status"
+          />
+        </Flex>
+        <Flex>
+          <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
+            <i className="material-icons">refresh</i>
+          </RefreshButton>
+          <RadioFilter
+            icon={sort}
+            selected={sortOrder}
+            setSelected={setSortOrder}
+            options={[
+              { label: "Newest", value: "Newest" },
+              { label: "Oldest", value: "Oldest" },
+              { label: "Alphabetical", value: "Alphabetical" },
+            ]}
+            name="Sort"
+          />
+          <CreatePreviewEnvironmentButton
+            disabled={porterYAMLErrors.some(
+              (err) => err === PorterYAMLErrors.FileNotFound
+            )}
+            to={`/preview-environments/deployments/${environment_id}/${repo_owner}/${repo_name}/create`}
+          >
+            <i className="material-icons">add</i> New preview deployment
+          </CreatePreviewEnvironmentButton>
+        </Flex>
+      </FlexRow>
       <Container>
         <EventsGrid>{renderDeploymentList()}</EventsGrid>
       </Container>
@@ -368,50 +392,89 @@ const mockRequest = () =>
     );
   });
 
-const Flex = styled.div`
-  display: flex;
-  align-items: center;
+const LoadingWrapper = styled.div`
+  padding-top: 100px;
 `;
 
-const Div = styled.div`
-  margin-bottom: -7px;
-`;
-
-const FlexWrap = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const BackButton = styled(DynamicLink)`
+const I = styled.i`
+  font-size: 18px;
+  user-select: none;
+  margin-left: 15px;
+  color: #aaaabb;
+  margin-bottom: -3px;
   cursor: pointer;
-  font-size: 24px;
-  color: #969fbbaa;
-  padding: 3px;
-  border-radius: 100px;
+  width: 30px;
+  border-radius: 40px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  :hover {
+    background: #26292e;
+    border: 1px solid #494b4f;
+  }
+`;
+
+const StyledLink = styled(DynamicLink)`
+  color: white;
+  :hover {
+    text-decoration: underline;
+  }
+`;
+
+const LinkButton = styled.a`
+  text-decoration: underline;
+  margin-left: 7px;
+  cursor: pointer;
+`;
+
+const Message = styled.div`
+  padding: 20px;
+  background: #26292e;
+  border-radius: 5px;
+  line-height: 1.5em;
+  border: 1px solid #aaaabb33;
+  font-size: 13px;
+  margin-top: 40px;
+`;
+
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  margin-top: 5px;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const Wrap = styled.div`
+  z-index: 999;
+`;
+
+const Breadcrumb = styled(DynamicLink)`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
   :hover {
     background: #ffffff11;
   }
 `;
 
-const Icon = styled.img`
-  width: 25px;
-  height: 25px;
-  margin-right: 6px;
-  margin-left: 14px;
-`;
-
-const Title = styled.div`
-  font-size: 20px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  margin-left: 10px;
-  border-radius: 2px;
-  color: #ffffff;
-`;
-
-const ActionsWrapper = styled.div`
+const Flex = styled.div`
   display: flex;
-  margin-left: auto;
+  align-items: center;
 `;
 
 const RefreshButton = styled.button`
@@ -436,26 +499,6 @@ const RefreshButton = styled.button`
   }
 `;
 
-const Placeholder = styled.div`
-  padding: 30px;
-  padding-bottom: 40px;
-  font-size: 13px;
-  color: #ffffff44;
-  min-height: 400px;
-  height: 40vh;
-  border-radius: 8px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-
-  > i {
-    font-size: 18px;
-    margin-right: 8px;
-  }
-`;
-
 const Container = styled.div`
   margin-top: 33px;
   padding-bottom: 120px;
@@ -467,15 +510,6 @@ const EventsGrid = styled.div`
   grid-template-columns: 1;
 `;
 
-const StyledStatusSelector = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  :not(:first-child) {
-    margin-left: 15px;
-  }
-`;
-
 const SearchInput = styled.input`
   outline: none;
   border: none;
@@ -483,30 +517,88 @@ const SearchInput = styled.input`
   background: none;
   width: 100%;
   color: white;
-  padding: 0;
-  height: 20px;
+  height: 100%;
 `;
 
 const SearchRow = styled.div`
   display: flex;
-  width: 100%;
-  font-size: 13px;
-  color: #ffffff55;
-  border-radius: 4px;
-  user-select: none;
   align-items: center;
-  padding: 10px 0px;
-  min-width: 300px;
-  max-width: min-content;
-  max-height: 35px;
-  background: #ffffff11;
-  margin-right: 15px;
+  height: 30px;
+  margin-right: 10px;
+  background: #26292e;
+  border-radius: 5px;
+  border: 1px solid #aaaabb33;
+`;
 
-  i {
+const SearchRowWrapper = styled(SearchRow)`
+  border-radius: 5px;
+  width: 250px;
+`;
+
+const SearchBarWrapper = styled.div`
+  display: flex;
+  flex: 1;
+
+  > i {
+    color: #aaaabb;
+    padding-top: 1px;
+    margin-left: 8px;
+    font-size: 16px;
+    margin-right: 8px;
+  }
+`;
+
+const FlexRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
+const CreatePreviewEnvironmentButton = styled(DynamicLink)`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-left: 10px;
+  justify-content: space-between;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: "Work Sans", sans-serif;
+  border-radius: 5px;
+  font-weight: 500;
+  color: white;
+  height: 30px;
+  padding: 0 8px;
+  min-width: 155px;
+  padding-right: 13px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#616FEEcc"};
+  :hover {
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#505edddd"};
+  }
+
+  > i {
+    color: white;
     width: 18px;
     height: 18px;
-    margin-left: 12px;
-    margin-right: 12px;
-    font-size: 20px;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+    justify-content: center;
   }
+`;
+
+const PorterYAMLBannerWrapper = styled.div`
+  margin-block: 15px;
 `;

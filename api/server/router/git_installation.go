@@ -135,6 +135,7 @@ func getGitInstallationRoutes(
 					types.ProjectScope,
 					types.GitInstallationScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -171,6 +172,7 @@ func getGitInstallationRoutes(
 					types.ProjectScope,
 					types.GitInstallationScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -207,6 +209,7 @@ func getGitInstallationRoutes(
 					types.ProjectScope,
 					types.GitInstallationScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -243,6 +246,7 @@ func getGitInstallationRoutes(
 					types.ProjectScope,
 					types.GitInstallationScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -279,6 +283,7 @@ func getGitInstallationRoutes(
 					types.ProjectScope,
 					types.GitInstallationScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -315,6 +320,7 @@ func getGitInstallationRoutes(
 					types.ProjectScope,
 					types.GitInstallationScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -351,6 +357,7 @@ func getGitInstallationRoutes(
 					types.ProjectScope,
 					types.GitInstallationScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -387,6 +394,7 @@ func getGitInstallationRoutes(
 					types.ProjectScope,
 					types.GitInstallationScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)
@@ -423,6 +431,7 @@ func getGitInstallationRoutes(
 					types.ProjectScope,
 					types.GitInstallationScope,
 					types.ClusterScope,
+					types.PreviewEnvironmentScope,
 				},
 			},
 		)

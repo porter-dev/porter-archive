@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import Table from "components/Table";
+import Table from "components/OldTable";
 import { Column } from "react-table";
 import styled from "styled-components";
 

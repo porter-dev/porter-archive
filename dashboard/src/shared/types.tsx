@@ -10,6 +10,7 @@ export interface ClusterType {
   service?: string;
   aws_integration_id?: number;
   aws_cluster_id?: string;
+  preview_envs_enabled?: boolean;
 }
 
 export interface DetailedClusterType extends ClusterType {
@@ -310,6 +311,10 @@ export type ActionConfigType = {
       git_repo_id: number;
     }
 );
+
+export type GithubActionConfigType = ActionConfigType & {
+  kind: "github";
+};
 
 export type FullActionConfigType = ActionConfigType & {
   dockerfile_path: string;

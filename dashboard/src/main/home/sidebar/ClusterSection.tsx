@@ -106,7 +106,7 @@ export const ClusterSection: React.FC<Props> = ({
               Stacks
             </NavButton>
           ) : null}
-          {currentProject?.preview_envs_enabled && (
+          {currentCluster?.preview_envs_enabled && (
             <NavButton
               path="/preview-environments"
               targetClusterName={cluster?.name}

@@ -102,6 +102,7 @@ const updateCluster = baseApi<
     name?: string;
     aws_cluster_id?: string;
     agent_integration_enabled?: boolean;
+    preview_envs_enabled?: boolean;
   },
   {
     project_id: number;
@@ -142,6 +143,9 @@ const createEnvironment = baseApi<
   {
     name: string;
     mode: "auto" | "manual";
+    disable_new_comments: boolean;
+    git_repo_branches: string[];
+    namespace_annotations: Record<string, string>;
   },
   {
     project_id: number;
@@ -160,6 +164,24 @@ const createEnvironment = baseApi<
   } = pathParams;
   return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/environment`;
 });
+
+const updateEnvironment = baseApi<
+  {
+    mode: "auto" | "manual";
+    disable_new_comments: boolean;
+    git_repo_branches: string[]; // Array with branch names
+    namespace_annotations: Record<string, string>;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    environment_id: number;
+  }
+>(
+  "PATCH",
+  ({ project_id, cluster_id, environment_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/settings`
+);
 
 const deleteEnvironment = baseApi<
   {
@@ -240,6 +262,20 @@ const toggleNewCommentForEnvironment = baseApi<
 >("PATCH", (pathParams) => {
   let { project_id, cluster_id, environment_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/toggle_new_comment`;
+});
+
+const validatePorterYAML = baseApi<
+  {
+    branch?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    environment_id: number;
+  }
+>("GET", (pathParams) => {
+  const { project_id, cluster_id, environment_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/validate_porter_yaml`;
 });
 
 const createGCPIntegration = baseApi<
@@ -403,9 +439,9 @@ const getPRDeploymentList = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/deployments`;
 });
 
-const getPRDeploymentByEnvironment = baseApi<
+const getPRDeploymentByID = baseApi<
   {
-    namespace: string;
+    id: number;
   },
   {
     cluster_id: number;
@@ -418,27 +454,28 @@ const getPRDeploymentByEnvironment = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/deployment`;
 });
 
-const getPRDeployment = baseApi<
-  {
-    namespace: string;
-  },
-  {
-    cluster_id: number;
-    project_id: number;
-    git_installation_id: number;
-    git_repo_owner: string;
-    git_repo_name: string;
-  }
->("GET", (pathParams) => {
-  const {
-    cluster_id,
-    project_id,
-    git_installation_id,
-    git_repo_owner,
-    git_repo_name,
-  } = pathParams;
-  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
-});
+// TODO (soham): Check if we are really using this?
+// const getPRDeployment = baseApi<
+//   {
+//     namespace: string;
+//   },
+//   {
+//     cluster_id: number;
+//     project_id: number;
+//     git_installation_id: number;
+//     git_repo_owner: string;
+//     git_repo_name: string;
+//   }
+// >("GET", (pathParams) => {
+//   const {
+//     cluster_id,
+//     project_id,
+//     git_installation_id,
+//     git_repo_owner,
+//     git_repo_name,
+//   } = pathParams;
+//   return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
+// });
 
 const deletePRDeployment = baseApi<
   {},
@@ -1030,6 +1067,20 @@ const getMatchingPods = baseApi<
   { id: number; cluster_id: number }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/pods`;
+});
+
+const getAllReleasePods = baseApi<
+  {},
+  {
+    id: number;
+    name: string;
+    namespace: string;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  const { id, name, cluster_id, namespace } = pathParams;
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/pods/all`;
 });
 
 const getMetrics = baseApi<
@@ -2260,12 +2311,14 @@ export default {
   createGitlabIntegration,
   createEmailVerification,
   createEnvironment,
+  updateEnvironment,
   deleteEnvironment,
   createPreviewEnvironmentDeployment,
   reenablePreviewEnvironmentDeployment,
   listEnvironments,
   getEnvironment,
   toggleNewCommentForEnvironment,
+  validatePorterYAML,
   createGCPIntegration,
   createInvite,
   createNamespace,
@@ -2306,8 +2359,8 @@ export default {
   getClusterNode,
   getConfigMap,
   getPRDeploymentList,
-  getPRDeploymentByEnvironment,
-  getPRDeployment,
+  getPRDeploymentByID,
+  // getPRDeployment,
   getGHAWorkflowTemplate,
   getGitRepoList,
   getGitRepoPermission,
@@ -2337,6 +2390,7 @@ export default {
   getJobPods,
   getPodByName,
   getMatchingPods,
+  getAllReleasePods,
   getMetrics,
   getNamespaces,
   getNGINXIngresses,

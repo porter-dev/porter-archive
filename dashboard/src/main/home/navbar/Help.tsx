@@ -198,7 +198,7 @@ const FeedbackButton = styled(NavButton)`
   color: ${(props: { selected?: boolean }) =>
     props.selected ? "#ffffff" : "#ffffff88"};
   font-family: "Work Sans", sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   margin-right: 20px;
   :hover {
     color: #ffffff;
@@ -213,8 +213,9 @@ const FeedbackButton = styled(NavButton)`
     > i {
       color: ${(props: { selected?: boolean }) =>
         props.selected ? "#ffffff" : "#ffffff88"};
-      font-size: 22px;
+      font-size: 18px;
       margin-right: 6px;
+      margin-bottom: -1px;
     }
   }
 `;

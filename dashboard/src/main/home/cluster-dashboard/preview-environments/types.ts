@@ -29,6 +29,8 @@ export type PRDeployment = {
   gh_pr_branch_into?: string;
 };
 
+export type EnvironmentDeploymentMode = "manual" | "auto";
+
 export type Environment = {
   id: number;
   project_id: number;
@@ -37,9 +39,12 @@ export type Environment = {
   name: string;
   git_repo_owner: string;
   git_repo_name: string;
+  git_repo_branches: string[];
+  new_comments_disabled: boolean;
   last_deployment_status: DeploymentStatusUnion;
   deployment_count: number;
-  mode: "manual" | "auto";
+  mode: EnvironmentDeploymentMode;
+  namespace_annotations: Record<string, string>;
 };
 
 export type PullRequest = {

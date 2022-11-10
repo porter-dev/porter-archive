@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -37,6 +36,7 @@ func NewEnablePullRequestHandler(
 func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+
 	request := &types.PullRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -53,6 +53,27 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	}
+
+	envType := env.ToEnvironmentType()
+
+	if len(envType.GitRepoBranches) > 0 {
+		found := false
+
+		for _, branch := range env.ToEnvironmentType().GitRepoBranches {
+			if branch == request.BranchInto {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("base branch '%s' is not enabled for this preview environment, please enable it in the settings page",
+					request.BranchInto), http.StatusBadRequest,
+			))
+			return
+		}
 	}
 
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
@@ -115,12 +136,10 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	namespace := fmt.Sprintf("pr-%d-%s", request.Number, strings.ToLower(strings.ReplaceAll(env.GitRepoName, "_", "-")))
-
 	// create the deployment
 	depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
 		EnvironmentID: env.ID,
-		Namespace:     namespace,
+		Namespace:     "",
 		Status:        types.DeploymentStatusCreating,
 		PullRequestID: request.Number,
 		RepoOwner:     request.RepoOwner,
@@ -135,18 +154,5 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// create the backing namespace
-	agent, err := c.GetAgent(r, cluster, "")
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	_, err = agent.CreateNamespace(depl.Namespace)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
+	c.WriteResult(w, r, depl.ToDeploymentType())
 }

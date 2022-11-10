@@ -235,6 +235,12 @@ func fetchOpenPullRequests(
 	env *models.Environment,
 	deplInfoMap map[string]bool,
 ) ([]*types.PullRequest, error) {
+	branchesMap := make(map[string]bool)
+
+	for _, br := range env.ToEnvironmentType().GitRepoBranches {
+		branchesMap[br] = true
+	}
+
 	openPRs, resp, err := client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
 		&github.PullRequestListOptions{
 			ListOptions: github.ListOptions{
@@ -269,6 +275,12 @@ func fetchOpenPullRequests(
 	}
 
 	for _, pr := range openPRs {
+		if len(branchesMap) > 0 {
+			if _, ok := branchesMap[pr.GetBase().GetRef()]; !ok {
+				continue
+			}
+		}
+
 		if _, ok := deplInfoMap[fmt.Sprintf("%s-%s-%d", env.GitRepoOwner, env.GitRepoName, pr.GetNumber())]; !ok {
 			prs = append(prs, &types.PullRequest{
 				Title:      pr.GetTitle(),

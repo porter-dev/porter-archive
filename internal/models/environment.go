@@ -1,6 +1,8 @@
 package models
 
 import (
+	"strings"
+
 	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
@@ -15,11 +17,13 @@ type Environment struct {
 	GitInstallationID uint
 	GitRepoOwner      string
 	GitRepoName       string
+	GitRepoBranches   string
 
 	Name string
 	Mode string
 
-	NewCommentsDisabled bool
+	NewCommentsDisabled  bool
+	NamespaceAnnotations []byte
 
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
 	// aren't present
@@ -28,8 +32,26 @@ type Environment struct {
 	GithubWebhookID int64
 }
 
+func getGitRepoBranches(branches string) []string {
+	var branchesArr []string
+
+	if branches != "" {
+		supposedBranches := strings.Split(branches, ",")
+
+		for _, br := range supposedBranches {
+			name := strings.TrimSpace(br)
+
+			if len(name) > 0 {
+				branchesArr = append(branchesArr, name)
+			}
+		}
+	}
+
+	return branchesArr
+}
+
 func (e *Environment) ToEnvironmentType() *types.Environment {
-	return &types.Environment{
+	env := &types.Environment{
 		ID:                e.Model.ID,
 		ProjectID:         e.ProjectID,
 		ClusterID:         e.ClusterID,
@@ -37,11 +59,35 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
 
-		NewCommentsDisabled: e.NewCommentsDisabled,
+		NewCommentsDisabled:  e.NewCommentsDisabled,
+		NamespaceAnnotations: make(map[string]string),
 
 		Name: e.Name,
 		Mode: e.Mode,
 	}
+
+	branches := getGitRepoBranches(e.GitRepoBranches)
+
+	if len(branches) > 0 {
+		env.GitRepoBranches = branches
+	} else {
+		env.GitRepoBranches = []string{}
+	}
+
+	if len(e.NamespaceAnnotations) > 0 {
+		env.NamespaceAnnotations = make(map[string]string)
+		annotations := string(e.NamespaceAnnotations)
+
+		for _, a := range strings.Split(annotations, ",") {
+			k, v, found := strings.Cut(a, "=")
+
+			if found {
+				env.NamespaceAnnotations[k] = v
+			}
+		}
+	}
+
+	return env
 }
 
 type Deployment struct {

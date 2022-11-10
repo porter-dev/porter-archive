@@ -129,9 +129,10 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
         <>
           <DashboardHeader
             image={sliders}
-            title="Environment Groups"
+            title="Environment groups"
             description="Groups of environment variables for storing secrets and configuration."
             disableLineBreak
+            capitalize={false}
           />
           {this.renderBody()}
         </>

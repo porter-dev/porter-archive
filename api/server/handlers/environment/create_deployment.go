@@ -19,8 +19,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var errGithubAPI = errors.New("error communicating with the github API")
-
 type CreateDeploymentHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
@@ -60,7 +58,7 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(
-				fmt.Errorf("error creating deployment: no environment found")),
+				fmt.Errorf("error creating deployment: %w", errEnvironmentNotFound)),
 			)
 			return
 		}
@@ -87,7 +85,7 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	if prClosed {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("cannot create deployment for closed github PR"), http.StatusConflict,
+			fmt.Errorf("attempting to create deployment for a closed github PR"), http.StatusConflict,
 		))
 		return
 	}
@@ -129,22 +127,7 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	// create the backing namespace
-	agent, err := c.GetAgent(r, cluster, "")
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	_, err = agent.CreateNamespace(depl.Namespace)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating deployment: %w", err)))
 		return
 	}
 

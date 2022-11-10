@@ -39,7 +39,7 @@ const DocsHelper: React.FC<Props> = ({
       >
         <div>
           <HelperButton onClick={handleTooltipToggle}>
-            <i className="material-icons">help_outline</i>
+            <Icon className="material-icons">help_outline</Icon>
           </HelperButton>
           {open && (
             <Tooltip placement={placement}>
@@ -166,4 +166,10 @@ const DocsHelperContainer = styled.div<{ disableMargin: boolean }>`
     return `margin-left: auto;`;
   }}
   position: relative;
+`;
+
+const Icon = styled.i`
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;

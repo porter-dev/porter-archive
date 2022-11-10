@@ -5,7 +5,7 @@ import styled from "styled-components";
 import Loading from "components/Loading";
 import settings from "assets/settings.svg";
 import TabSelector from "components/TabSelector";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import AreaChart from "../expanded-chart/metrics/AreaChart";
 import {

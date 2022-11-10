@@ -1,6 +1,6 @@
 import Description from "components/Description";
 import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import React, { useContext, useEffect, useState } from "react";
 import { Context } from "shared/Context";
 

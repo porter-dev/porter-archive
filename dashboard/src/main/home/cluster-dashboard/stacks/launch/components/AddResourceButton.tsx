@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";
 import { PorterTemplate } from "shared/types";
 import semver from "semver";
@@ -8,8 +8,10 @@ import { VersionSelector } from "./VersionSelector";
 import DynamicLink from "components/DynamicLink";
 
 import styled from "styled-components";
+import { Context } from "shared/Context";
 
 export const AddResourceButton = () => {
+  const { capabilities } = useContext(Context);
   const [templates, setTemplates] = useState<PorterTemplate[]>([]);
   const [currentTemplate, setCurrentTemplate] = useState<PorterTemplate>();
   const [currentVersion, setCurrentVersion] = useState("");
@@ -19,7 +21,7 @@ export const AddResourceButton = () => {
       const res = await api.getTemplates<PorterTemplate[]>(
         "<token>",
         {
-          repo_url: process.env.APPLICATION_CHART_REPO_URL,
+          repo_url: capabilities?.default_app_helm_repo_url,
         },
         {}
       );

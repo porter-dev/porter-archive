@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
@@ -89,6 +88,23 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			webhookID, owner, repo, err)
 	}
 
+	envType := env.ToEnvironmentType()
+
+	if len(envType.GitRepoBranches) > 0 {
+		found := false
+
+		for _, br := range envType.GitRepoBranches {
+			if br == event.GetPullRequest().GetHead().GetRef() {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return nil
+		}
+	}
+
 	// create deployment on GitHub API
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
@@ -100,8 +116,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 	if env.Mode == "auto" && event.GetAction() == "opened" {
 		depl := &models.Deployment{
 			EnvironmentID: env.ID,
-			Namespace: fmt.Sprintf("pr-%d-%s", event.GetPullRequest().GetNumber(),
-				strings.ToLower(strings.ReplaceAll(repo, "_", "-"))),
+			Namespace:     "",
 			Status:        types.DeploymentStatusCreating,
 			PullRequestID: uint(event.GetPullRequest().GetNumber()),
 			PRName:        event.GetPullRequest().GetTitle(),
@@ -119,29 +134,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 				"error creating new deployment: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
 		}
 
-		cluster, err := c.Repo().Cluster().ReadCluster(env.ProjectID, env.ClusterID)
-
-		if err != nil {
-			return fmt.Errorf("[projectID: %d, clusterID: %d] error reading cluster when creating new deployment: %w",
-				env.ProjectID, env.ClusterID, err)
-		}
-
-		// create the backing namespace
-		agent, err := c.GetAgent(r, cluster, "")
-
-		if err != nil {
-			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
-				"error getting k8s agent: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
-		}
-
-		_, err = agent.CreateNamespace(depl.Namespace)
-
-		if err != nil {
-			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
-				"error creating k8s namespace: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
-		}
-
-		_, err = client.Actions.CreateWorkflowDispatchEventByFileName(
+		_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
 			r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
 			github.CreateWorkflowDispatchEventRequest{
 				Ref: event.GetPullRequest().GetHead().GetRef(),
@@ -292,8 +285,8 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 		return err
 	}
 
-	// make sure we don't delete default or kube-system by checking for prefix, for now
-	if strings.Contains(depl.Namespace, "pr-") {
+	// make sure we do not delete any kubernetes "system" namespaces
+	if !isSystemNamespace(depl.Namespace) {
 		err = agent.DeleteNamespace(depl.Namespace)
 
 		if err != nil {
@@ -317,10 +310,7 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 		&deploymentStatusRequest,
 	)
 
-	depl.Status = types.DeploymentStatusInactive
-
-	// update the deployment to mark it inactive
-	_, err = c.Repo().Environment().UpdateDeployment(depl)
+	_, err = c.Repo().Environment().DeleteDeployment(depl)
 
 	if err != nil {
 		return fmt.Errorf("[owner: %s, repo: %s, environmentID: %d, deploymentID: %d] error updating deployment: %w",
@@ -328,6 +318,14 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 	}
 
 	return nil
+}
+
+func isSystemNamespace(namespace string) bool {
+	return namespace == "cert-manager" || namespace == "ingress-nginx" ||
+		namespace == "kube-node-lease" || namespace == "kube-public" ||
+		namespace == "kube-system" || namespace == "monitoring" ||
+		namespace == "porter-agent-system" || namespace == "default" ||
+		namespace == "ingress-nginx-private"
 }
 
 func getGithubClientFromEnvironment(config *config.Config, env *models.Environment) (*github.Client, error) {

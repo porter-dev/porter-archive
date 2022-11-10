@@ -4,7 +4,7 @@ import api from "shared/api";
 import styled from "styled-components";
 import Loading from "components/Loading";
 import { TFState } from "shared/types";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 
 type Props = {
   infra_id: number;

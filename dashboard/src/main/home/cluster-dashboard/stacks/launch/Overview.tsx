@@ -156,7 +156,7 @@ const Overview = () => {
         Env Groups
         {/* <InlineDocsHelper
           disableMargin={true}
-          tooltipText="Environment Groups"
+          tooltipText="Environment groups"
           link="https://docs.porter.run/deploying-applications/environment-groups"
         /> */}
       </Heading>

@@ -8,7 +8,7 @@ import Loading from "components/Loading";
 import TitleSection from "components/TitleSection";
 
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import AWSCredentialsList from "./credentials/AWSCredentialList";
 import Heading from "components/form-components/Heading";
 import GCPCredentialsList from "./credentials/GCPCredentialList";

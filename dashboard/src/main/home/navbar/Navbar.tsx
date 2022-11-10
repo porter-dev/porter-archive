@@ -211,7 +211,7 @@ const Dropdown = styled.div`
 `;
 
 const StyledNavbar = styled.div`
-  height: 60px;
+  height: 50px;
   position: absolute;
   top: 0;
   right: 0;
@@ -229,7 +229,7 @@ const NavButton = styled.a`
   color: #ffffff88;
   cursor: pointer;
   justify-content: center;
-  margin-right: 15px;
+  margin-right: 10px;
   :hover {
     > i {
       color: #ffffff;
@@ -241,6 +241,6 @@ const NavButton = styled.a`
     cursor: pointer;
     color: ${(props: { selected?: boolean }) =>
       props.selected ? "#ffffff" : "#ffffff88"};
-    font-size: 24px;
+    font-size: 20px;
   }
 `;

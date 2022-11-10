@@ -7,7 +7,7 @@ import { pushFiltered } from "shared/routing";
 
 import { Column } from "react-table";
 import styled from "styled-components";
-import Table from "components/Table";
+import Table from "components/OldTable";
 
 import Loading from "components/Loading";
 
@@ -15,7 +15,7 @@ import _ from "lodash";
 import { integrationList } from "shared/common";
 import { Infrastructure, KindMap } from "shared/types";
 import { capitalize, readableDate } from "shared/string_utils";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import SaveButton from "components/SaveButton";
 import { useRouting } from "shared/routing";
 import Description from "components/Description";

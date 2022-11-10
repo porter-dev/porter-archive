@@ -322,7 +322,7 @@ func (d *DefaultDriver) applyJob(
 				return err // FIXME
 			}
 
-			_, err := createAgent.CreateFromRegistry("", nil)
+			_, err := createAgent.CreateFromRegistry("", overrideValues)
 
 			if err != nil {
 				return fmt.Errorf("[porter.yaml v2][app:%s] error creating job: %w", resource.GetValue().Name.GetValue(), err)

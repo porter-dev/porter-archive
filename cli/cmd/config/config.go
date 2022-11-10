@@ -11,14 +11,18 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/utils"
+	"github.com/porter-dev/porter/internal/alerter"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/util/homedir"
 )
 
-var home = homedir.HomeDir()
+var (
+	SentryDSN = ""
+	home      = homedir.HomeDir()
 
-// config is a shared object used by all commands
-var config = &CLIConfig{}
+	// config is a shared object used by all commands
+	config = &CLIConfig{}
+)
 
 // CLIConfig is the set of shared configuration options for the CLI commands.
 // This config is used by viper: calling Set() function for any parameter will
@@ -37,6 +41,8 @@ type CLIConfig struct {
 	Registry   uint   `yaml:"registry"`
 	HelmRepo   uint   `yaml:"helm_repo"`
 	Kubeconfig string `yaml:"kubeconfig"`
+
+	alerter alerter.Alerter
 }
 
 // InitAndLoadConfig populates the config object with the following precedence rules:
@@ -56,6 +62,23 @@ func InitAndLoadNewConfig() *CLIConfig {
 	initAndLoadConfig(newConfig)
 
 	return newConfig
+}
+
+func InitAlerter(config *CLIConfig) alerter.Alerter {
+	var err error
+
+	config.alerter = &alerter.NoOpAlerter{}
+
+	if SentryDSN != "" {
+		config.alerter, err = alerter.NewCLISentryAlerter(SentryDSN, "cli", Version)
+
+		if err != nil {
+			// fallback to noop alerter
+			config.alerter = &alerter.NoOpAlerter{}
+		}
+	}
+
+	return config.alerter
 }
 
 func initAndLoadConfig(_config *CLIConfig) {
@@ -107,7 +130,12 @@ func initAndLoadConfig(_config *CLIConfig) {
 	}
 
 	// unmarshal the config into the shared config struct
-	viper.Unmarshal(_config)
+	err = viper.Unmarshal(_config)
+
+	if err != nil {
+		color.New(color.FgRed).Fprintf(os.Stderr, "error reading config: %v\n", err)
+		os.Exit(1)
+	}
 }
 
 // initFlagSet initializes the shared flags used by multiple commands

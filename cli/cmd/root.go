@@ -31,6 +31,9 @@ var home = homedir.HomeDir()
 func Execute() {
 	Setup()
 
+	alerter := config.InitAlerter(config.GetCLIConfig())
+	defer alerter.Flush()
+
 	rootCmd.PersistentFlags().AddFlagSet(utils.DefaultFlagSet)
 
 	if config.Version != "dev" {

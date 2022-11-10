@@ -8,9 +8,9 @@ import (
 	redis "github.com/go-redis/redis/v8"
 
 	"github.com/joeshaw/envdecode"
-	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/alerter"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	klocal "github.com/porter-dev/porter/internal/kubernetes/local"

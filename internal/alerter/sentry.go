@@ -3,6 +3,7 @@ package alerter
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -32,6 +33,23 @@ func NewSentryAlerter(sentryDSN, sentryEnv string) (*SentryAlerter, error) {
 	}, nil
 }
 
+func NewCLISentryAlerter(dsn, env, cliVersion string) (*SentryAlerter, error) {
+	sentryClient, err := sentry.NewClient(sentry.ClientOptions{
+		Dsn:              dsn,
+		Release:          fmt.Sprintf("cli@%s", cliVersion),
+		AttachStacktrace: true,
+		Environment:      env,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &SentryAlerter{
+		client: sentryClient,
+	}, nil
+}
+
 func (s *SentryAlerter) SendAlert(ctx context.Context, err error, data map[string]interface{}) {
 	scope := sentry.NewScope()
 
@@ -46,4 +64,8 @@ func (s *SentryAlerter) SendAlert(ctx context.Context, err error, data map[strin
 		},
 		scope,
 	)
+}
+
+func (s *SentryAlerter) Flush() {
+	s.client.Flush(2 * time.Second)
 }

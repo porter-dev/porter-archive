@@ -7,12 +7,12 @@ import (
 	"strconv"
 
 	gorillaws "github.com/gorilla/websocket"
-	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/alerter"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
@@ -119,10 +119,15 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		})
 	}
 
-	res.Alerter = alerter.NoOpAlerter{}
+	res.Alerter = &alerter.NoOpAlerter{}
 
 	if envConf.ServerConf.SentryDSN != "" {
 		res.Alerter, err = alerter.NewSentryAlerter(envConf.ServerConf.SentryDSN, envConf.ServerConf.SentryEnv)
+
+		if err != nil {
+			// fallback to noop alerter
+			res.Alerter = &alerter.NoOpAlerter{}
+		}
 	}
 
 	if sc.DOClientID != "" && sc.DOClientSecret != "" {

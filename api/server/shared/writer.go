@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
-	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
+	"github.com/porter-dev/porter/internal/alerter"
 	"github.com/porter-dev/porter/pkg/logger"
 )
 

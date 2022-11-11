@@ -117,9 +117,7 @@ class Dashboard extends Component<PropsType, StateType> {
     } else if (this.currentTab() === "create-cluster") {
       let helperText = "Create a cluster to link to this project";
       let helperType = "info";
-      if (
-        true
-      ) {
+      if (true) {
         helperText =
           "You need to update your billing to provision or connect a new cluster";
         helperType = "warning";

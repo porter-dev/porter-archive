@@ -193,7 +193,7 @@ const ConnectNewRepo: React.FC = () => {
               alignItems: "center",
             }}
           >
-            Enable Preview Environments on a Repository
+            Enable preview environments on a repository
             <DocsHelper
               tooltipText="Learn more about preview environments"
               link="https://docs.porter.run/preview-environments/overview/"
@@ -203,7 +203,7 @@ const ConnectNewRepo: React.FC = () => {
         </Title>
       </HeaderSection>
 
-      <Heading>Select a Repository</Heading>
+      <Heading>Select a repository</Heading>
       <br />
       <RepoList
         actionConfig={actionConfig}
@@ -223,70 +223,6 @@ const ConnectNewRepo: React.FC = () => {
           link="https://docs.porter.run/preview-environments/porter-yaml-reference"
         />
       </HelperContainer>
-
-      <Heading>Automatic pull request deployments</Heading>
-      <Helper>
-        If you enable this option, the new pull requests will be automatically
-        deployed.
-      </Helper>
-      <CheckboxWrapper>
-        <CheckboxRow
-          label="Enable automatic deploys"
-          checked={enableAutomaticDeployments}
-          toggle={() =>
-            setEnableAutomaticDeployments(!enableAutomaticDeployments)
-          }
-          wrapperStyles={{
-            disableMargin: true,
-          }}
-        />
-      </CheckboxWrapper>
-
-      <Heading>Disable new comments for new deployments</Heading>
-      <Helper>
-        When enabled new comments will not be created for new deployments.
-        Instead the last comment will be updated.
-      </Helper>
-      <CheckboxWrapper>
-        <CheckboxRow
-          label="Disable new comments for deployments"
-          checked={isNewCommentsDisabled}
-          toggle={() => setIsNewCommentsDisabled(!isNewCommentsDisabled)}
-          wrapperStyles={{
-            disableMargin: true,
-          }}
-        />
-      </CheckboxWrapper>
-
-      <Heading>Select allowed branches</Heading>
-      <Helper>
-        If the pull request has a base branch included in this list, it will be
-        allowed to be deployed.
-        <br />
-        (Leave empty to allow all branches)
-      </Helper>
-      <BranchFilterSelector
-        onChange={setSelectedBranches}
-        options={availableBranches}
-        value={selectedBranches}
-        showLoading={isLoadingBranches}
-      />
-
-      <Heading>Namespace annotations</Heading>
-      <Helper>
-        Custom annotations to be injected into the Kubernetes namespace created
-        for each deployment.
-      </Helper>
-      <NamespaceAnnotations
-        values={namespaceAnnotations}
-        setValues={(x: KeyValueType[]) => {
-          let annotations: KeyValueType[] = [];
-          x.forEach((entry) => {
-            annotations.push({ key: entry.key, value: entry.value });
-          });
-          setNamespaceAnnotations(annotations);
-        }}
-      />
 
       <ActionContainer>
         <SaveButton

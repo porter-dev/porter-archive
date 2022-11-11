@@ -1,6 +1,7 @@
 import SearchSelector from "components/SearchSelector";
 import React, { useMemo } from "react";
 import styled from "styled-components";
+import branch_icon from "assets/branch.png";
 
 const BranchFilterSelector = ({
   value,
@@ -55,14 +56,15 @@ const BranchFilterSelector = ({
       {/* List selected branches  */}
 
       <BranchRowList>
-      {value.map((branch) => (
-        <BranchRow key={branch}>
-          <div>{branch}</div>
-          <RemoveBranchButton onClick={() => handleDeleteBranch(branch)}>
-            x
-          </RemoveBranchButton>
-        </BranchRow>
-      ))}
+        {value.map((branch, i) => (
+          <BranchRow key={branch} isLast={value.length - 1 === i}>
+            <img src={branch_icon} />
+            <div>{branch}</div>
+            <RemoveBranchButton onClick={() => handleDeleteBranch(branch)}>
+              <i className="material-icons-round">close</i>
+            </RemoveBranchButton>
+          </BranchRow>
+        ))}
       </BranchRowList>
     </>
   );
@@ -71,20 +73,41 @@ const BranchFilterSelector = ({
 export default BranchFilterSelector;
 
 const BranchRowList = styled.div`
-  margin-block: 15px;
+  border: 1px solid #494b4f;
+  border-radius: 5px;
   max-height: 200px;
+  margin-top: 22px;
   overflow-y: auto;
 `;
 
-const BranchRow = styled.div`
-  padding-inline: 8px;
-  gap: 10px;
+const BranchRow = styled.div<{ isLast?: boolean; isSelected?: boolean }>`
   width: 100%;
+  padding: 10px;
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border-bottom: ${(props) => (props.isLast ? "" : "1px solid #494b4f")};
+
+  > img {
+    width: 17px;
+    margin-right: 8px;
+  }
 `;
 
 const RemoveBranchButton = styled.div`
   cursor: pointer;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  border-radius: 20px;
+  justify-content: center;
+  color: #aaaabb;
+  height: 20px;
+  margin-left: 12px;
+  :hover {
+    background: #ffffff11;
+  }
+  > i {
+    font-size: 14px;
+  }
 `;

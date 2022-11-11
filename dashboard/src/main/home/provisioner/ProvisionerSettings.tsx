@@ -288,24 +288,22 @@ const ProvisionerSettings: React.FC<Props> = ({
               </Block>
             );
           })}
-          {
-            window.location.href.includes("dashboard.staging.getporter.dev") && (
-              <Block
-                key={3}
-                disabled={isUsageExceeded}
-                onClick={() => {
-                  if (!isUsageExceeded) {
-                    handleSelectProvider("azure");
-                    setHighlightCosts(false);
-                  }
-                }}
-              >
-                <Icon src={azure} />
-                <BlockTitle>Azure</BlockTitle>
-                <BlockDescription>Hosted in your own cloud</BlockDescription>
-              </Block>
-            )
-          }
+          {window.location.href.includes("dashboard.staging.getporter.dev") && (
+            <Block
+              key={3}
+              disabled={isUsageExceeded}
+              onClick={() => {
+                if (!isUsageExceeded) {
+                  handleSelectProvider("azure");
+                  setHighlightCosts(false);
+                }
+              }}
+            >
+              <Icon src={azure} />
+              <BlockTitle>Azure</BlockTitle>
+              <BlockDescription>Hosted in your own cloud</BlockDescription>
+            </Block>
+          )}
         </BlockList>
       ) : (
         <>{renderSelectedProvider()}</>

@@ -44,7 +44,7 @@ export const PreviewEnvironmentsHeader = () => {
 
 const StyledLink = styled.a`
   text-decoration: underline;
-  margin-left: 7px;  
+  margin-left: 7px;
 `;
 
 const AlertCard = styled.div`

@@ -159,6 +159,6 @@ const Input = styled.input`
 `;
 
 const StyledInputArray = styled.div`
-  margin-bottom: 15px;
+  margin-bottom: 5px;
   margin-top: 22px;
 `;

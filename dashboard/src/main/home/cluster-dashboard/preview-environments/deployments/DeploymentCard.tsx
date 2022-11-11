@@ -259,7 +259,7 @@ const DeploymentCard: React.FC<{
             {deployment.status === DeploymentStatus.Failed ||
             deployment.status === DeploymentStatus.TimedOut ? (
               <>
-                <MaterialTooltip title="Re run last github workflow">
+                <MaterialTooltip title="Re-run last GitHub workflow">
                   <ReRunButton
                     onClick={() => reRunWorkflow()}
                     disabled={isReRunningWorkflow}

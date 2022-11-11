@@ -21,7 +21,9 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
     return (
       <>
         <TitleSection
-          capitalize={this.props.capitalize === undefined || this.props.capitalize}
+          capitalize={
+            this.props.capitalize === undefined || this.props.capitalize
+          }
           icon={this.props.image}
           materialIconClass={this.props.materialIconClass}
         >

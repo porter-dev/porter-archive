@@ -169,5 +169,4 @@ const Button = styled(DynamicLink)`
   }
 `;
 
-const Container = styled.div`
-`;
+const Container = styled.div``;

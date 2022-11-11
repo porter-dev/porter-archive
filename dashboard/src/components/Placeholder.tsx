@@ -8,9 +8,9 @@ interface Props {
   title?: string;
 }
 
-const Placeholder: React.FC<Props> = ({ 
-  height, 
-  minHeight, 
+const Placeholder: React.FC<Props> = ({
+  height,
+  minHeight,
   children,
   title,
 }) => {
@@ -51,7 +51,7 @@ const StyledPlaceholder = styled.div<{
   min-height: ${(props) => props.minHeight || ""};
   display: flex;
   align-items: center;
-  color: #8D949E;
+  color: #8d949e;
   padding: 50px;
   justify-content: center;
   font-size: 13px;

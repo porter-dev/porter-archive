@@ -373,9 +373,9 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
         </LoadWrapper>
       ) : (
         <TableWrapper>
-          <Table 
-            columns={columns} 
-            data={events} 
+          <Table
+            columns={columns}
+            data={events}
             placeholder="No events found."
           />
           <FlexRow>

@@ -783,8 +783,7 @@ func getReleaseRoutes(
 		Router:   r,
 	})
 
-	// PATCH /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version}/update_tags ->
-	// release.NewGetLatestJobRunHandler
+	// PATCH /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version}/update_tags -> release.NewUpdateReleaseTagsHandler
 	updateReleaseTagsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
@@ -812,6 +811,37 @@ func getReleaseRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: updateReleaseTagsEndpoint,
 		Handler:  updateReleaseTagsHandler,
+		Router:   r,
+	})
+
+	// PATCH /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version}/update_canonical_name -> release.NewUpdateCanonicalNameHandler
+	updateCanonicalNameEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPatch,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/update_canonical_name",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.ReleaseScope,
+			},
+		},
+	)
+
+	updateCanonicalNameHandler := release.NewUpdateCanonicalNameHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateCanonicalNameEndpoint,
+		Handler:  updateCanonicalNameHandler,
 		Router:   r,
 	})
 

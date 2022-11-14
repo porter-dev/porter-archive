@@ -873,7 +873,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   icon={currentChart.chart.metadata.icon}
                   iconWidth="33px"
                 >
-                  {currentChart.name}
+                  {currentChart.canonical_name === ""
+                    ? currentChart.canonical_name
+                    : currentChart.name}
                   <DeploymentType currentChart={currentChart} />
                   <TagWrapper>
                     Namespace{" "}

@@ -28,6 +28,9 @@ type Release struct {
 	NotificationConfig uint
 	BuildConfig        uint
 	Tags               []*Tag `json:"tags" gorm:"many2many:release_tags"`
+
+	// A configurable canonical name of a Porter release
+	CanonicalName string
 }
 
 func (r *Release) ToReleaseType() *types.PorterRelease {

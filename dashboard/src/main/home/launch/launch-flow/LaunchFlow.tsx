@@ -78,6 +78,11 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       imageRepoUri = selectedRegistry?.url;
     }
 
+    // Customize image repo URI for GAR
+    if (imageRepoUri.includes("pkg.dev")) {
+      imageRepoUri = `${imageRepoUri}/${templateName}-${selectedNamespace}`;
+    }
+
     if (actionConfig.kind === "github") {
       return {
         kind: "github",

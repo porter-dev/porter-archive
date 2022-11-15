@@ -293,10 +293,12 @@ func (r *Registry) listGARRepositories(
 				return nil, err
 			}
 
-			repoSlice := strings.Split(resp.GetName(), "/")
-			repoName := repoSlice[len(repoSlice)-1]
+			if resp.GetFormat() == artifactregistrypb.Repository_DOCKER { // we only care about
+				repoSlice := strings.Split(resp.GetName(), "/")
+				repoName := repoSlice[len(repoSlice)-1]
 
-			repoNames = append(repoNames, repoName)
+				repoNames = append(repoNames, repoName)
+			}
 		}
 
 		if it.PageInfo().Token == "" {
@@ -315,48 +317,64 @@ func (r *Registry) listGARRepositories(
 		return nil, err
 	}
 
-	resMap := make(map[string]*ptypes.RegistryRepository)
+	nextToken = ""
+
 	dockerSvc := v1artifactregistry.NewProjectsLocationsRepositoriesDockerImagesService(svc)
 
+	var (
+		wg     sync.WaitGroup
+		resMap sync.Map
+	)
+
 	for _, repoName := range repoNames {
-		for {
-			resp, err := dockerSvc.List(fmt.Sprintf("projects/%s/locations/%s/repositories/%s",
-				gcpInt.GCPProjectID, location, repoName)).PageSize(1000).PageToken(nextToken).Do()
+		wg.Add(1)
 
-			if err != nil {
-				return nil, err
-			}
+		go func(repoName string) {
+			defer wg.Done()
 
-			for _, image := range resp.DockerImages {
-				named, err := reference.ParseNamed(image.Uri)
+			for {
+				resp, err := dockerSvc.List(fmt.Sprintf("projects/%s/locations/%s/repositories/%s",
+					gcpInt.GCPProjectID, location, repoName)).PageSize(1000).PageToken(nextToken).Do()
 
 				if err != nil {
-					// let us skip this image becaue it has a malformed URI coming from the GCP API
-					continue
+					// FIXME: we should report this error using a channel
+					return
 				}
 
-				uploadTime, _ := time.Parse(time.RFC3339, image.UploadTime)
+				for _, image := range resp.DockerImages {
+					named, err := reference.ParseNamed(image.Uri)
 
-				resMap[named.Name()] = &ptypes.RegistryRepository{
-					Name:      repoName,
-					URI:       named.Name(),
-					CreatedAt: uploadTime,
+					if err != nil {
+						// let us skip this image becaue it has a malformed URI coming from the GCP API
+						continue
+					}
+
+					uploadTime, _ := time.Parse(time.RFC3339, image.UploadTime)
+
+					resMap.Store(named.Name(), &ptypes.RegistryRepository{
+						Name:      repoName,
+						URI:       named.Name(),
+						CreatedAt: uploadTime,
+					})
 				}
-			}
 
-			if resp.NextPageToken == "" {
-				break
-			}
+				if resp.NextPageToken == "" {
+					break
+				}
 
-			nextToken = resp.NextPageToken
-		}
+				nextToken = resp.NextPageToken
+			}
+		}(repoName)
 	}
+
+	wg.Wait()
 
 	var res []*ptypes.RegistryRepository
 
-	for _, v := range resMap {
-		res = append(res, v)
-	}
+	resMap.Range(func(_, value any) bool {
+		res = append(res, value.(*ptypes.RegistryRepository))
+		return true
+	})
 
 	return res, nil
 }
@@ -1224,13 +1242,11 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 }
 
 func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
-	// FIXME: GAR implemets the repo/image scheme so we should be looking out for that
+	repoImageSlice := strings.Split(repoName, "/")
 
-	// repoImageSlice := strings.Split(repoName, "/")
-
-	// if len(repoImageSlice) != 2 {
-	// 	return nil, fmt.Errorf("invalid GAR repo name: %s", repoName)
-	// }
+	if len(repoImageSlice) != 2 {
+		return nil, fmt.Errorf("invalid GAR repo name: %s. Expected to be in the form of REPOSITORY/IMAGE", repoName)
+	}
 
 	gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(
 		r.ProjectID,
@@ -1264,7 +1280,7 @@ func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([
 
 	for {
 		resp, err := dockerSvc.List(fmt.Sprintf("projects/%s/locations/%s/repositories/%s",
-			gcpInt.GCPProjectID, location, repoName)).PageSize(1000).PageToken(nextToken).Do()
+			gcpInt.GCPProjectID, location, repoImageSlice[0])).PageSize(1000).PageToken(nextToken).Do()
 
 		if err != nil {
 			return nil, err
@@ -1281,7 +1297,7 @@ func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([
 
 			imageName := paths[len(paths)-1]
 
-			if imageName == repoName {
+			if imageName == repoImageSlice[1] {
 				uploadTime, _ := time.Parse(time.RFC3339, image.UploadTime)
 
 				for _, tag := range image.Tags {

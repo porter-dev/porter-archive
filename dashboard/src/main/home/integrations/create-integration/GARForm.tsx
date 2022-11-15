@@ -61,6 +61,10 @@ const GARForm = (props: { closeForm: () => void }) => {
     try {
       let registryURL: string;
 
+      // GCP project IDs can have the ':' character like example.com:my-project
+      // if this is the case then we need to case on this
+      //
+      // see: https://cloud.google.com/artifact-registry/docs/docker/names#domain
       if (integration.gcp_project_id.includes(":")) {
         const domainProjectID = integration.gcp_project_id.split(":");
 

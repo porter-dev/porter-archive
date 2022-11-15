@@ -390,7 +390,7 @@ func getV1RegistryRoutes(
 	//   - name: registry_id
 	//   - name: repository
 	//     in: path
-	//     description: The image repository name
+	//     description: The image repository name. Should be of the form REPOSITORY/IMAGE when using Google Artifact Registry.
 	//     type: string
 	//     required: true
 	//   - name: num

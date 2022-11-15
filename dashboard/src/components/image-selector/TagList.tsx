@@ -46,7 +46,13 @@ export default class TagList extends Component<PropsType, StateType> {
     const { currentProject } = this.context;
 
     let splits = this.props.selectedImageUrl.split("/");
-    let repoName = splits[splits.length - 1];
+    let repoName: string;
+
+    if (this.props.selectedImageUrl.includes("pkg.dev")) {
+      repoName = splits[splits.length - 2] + "/" + splits[splits.length - 1];
+    } else {
+      repoName = splits[splits.length - 1];
+    }
 
     let matches = this.props.selectedImageUrl.match(ecrRepoRegex);
 

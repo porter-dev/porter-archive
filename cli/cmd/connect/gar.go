@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/fatih/color"
 
@@ -68,13 +69,29 @@ Artifact registry region: `)
 			return 0, err
 		}
 
+		// GCP project IDs can have the ':' character like example.com:my-project
+		// if this is the case then we need to case on this
+		//
+		// see: https://cloud.google.com/artifact-registry/docs/docker/names#domain
+		var registryURL string
+
+		if domain, projectID, found := strings.Cut(integration.GCPProjectID, ":"); found {
+			if domain == "" || projectID == "" {
+				return 0, fmt.Errorf("invalid project ID: %s", integration.GCPProjectID)
+			}
+
+			registryURL = fmt.Sprintf("%s-docker.pkg.dev/%s/%s", region, domain, projectID)
+		} else {
+			registryURL = fmt.Sprintf("%s-docker.pkg.dev/%s", region, integration.GCPProjectID)
+		}
+
 		reg, err := client.CreateRegistry(
 			context.Background(),
 			projectID,
 			&types.CreateRegistryRequest{
 				Name:             regName,
 				GCPIntegrationID: integration.ID,
-				URL:              region + "-docker.pkg.dev/" + integration.GCPProjectID,
+				URL:              registryURL,
 			},
 		)
 

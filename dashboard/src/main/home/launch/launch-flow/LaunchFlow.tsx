@@ -280,7 +280,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
 
     const release_name = templateName || generateRandomName();
     // check if template is docker and create external domain if necessary
-    if (props.currentTemplate.name == "web") {
+    if (props.currentTemplate.name == "web" && context.capabilities?.default_app_helm_repo_url.includes("getporter.dev")) {
       if (values?.ingress?.enabled && !values?.ingress?.custom_domain) {
         external_domain = await new Promise((resolve, reject) => {
           api

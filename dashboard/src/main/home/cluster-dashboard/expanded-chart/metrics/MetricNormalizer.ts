@@ -1,3 +1,5 @@
+import * as stats from "simple-statistics";
+import _ from "lodash";
 import {
   GenericMetricResponse,
   MetricsCPUDataResponse,
@@ -50,6 +52,40 @@ export class MetricNormalizer {
       return this.parseHpaReplicaMetrics(this.metric_results);
     }
     return [];
+  }
+
+  getAggregatedData(): Record<string, NormalizedMetricsData[]> {
+    const groupedByDate = _.groupBy(this.getParsedData(), "date");
+
+    const avg = Object.keys(groupedByDate).map((date) => {
+      const values = groupedByDate[date].map((d) => d.value);
+      return {
+        date: Number(date),
+        value: stats.mean(values),
+      };
+    });
+
+    const min = Object.keys(groupedByDate).map((date) => {
+      const values = groupedByDate[date].map((d) => d.value);
+      return {
+        date: Number(date),
+        value: stats.min(values),
+      };
+    });
+
+    const max = Object.keys(groupedByDate).map((date) => {
+      const values = groupedByDate[date].map((d) => d.value);
+      return {
+        date: Number(date),
+        value: stats.max(values),
+      };
+    });
+
+    return {
+      avg,
+      min,
+      max,
+    };
   }
 
   private parseCPUMetrics(arr: MetricsCPUDataResponse["results"]) {

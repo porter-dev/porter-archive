@@ -12,7 +12,11 @@ import Loading from "components/Loading";
 import SelectRow from "components/form-components/SelectRow";
 import AreaChart from "./AreaChart";
 import { MetricNormalizer } from "./MetricNormalizer";
-import { AvailableMetrics, NormalizedMetricsData } from "./types";
+import {
+  AvailableMetrics,
+  GenericMetricResponse,
+  NormalizedMetricsData,
+} from "./types";
 import CheckboxRow from "components/form-components/CheckboxRow";
 
 type PropsType = {
@@ -49,6 +53,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   );
   const [dropdownExpanded, setDropdownExpanded] = useState(false);
   const [data, setData] = useState<NormalizedMetricsData[]>([]);
+  const [aggregatedData, setAggregatedData] = useState<
+    Record<string, NormalizedMetricsData[]>
+  >({});
   const [showMetricsSettings, setShowMetricsSettings] = useState(false);
   const [metricsOptions, setMetricsOptions] = useState([
     { value: "cpu", label: "CPU Utilization (vCPUs)" },
@@ -291,6 +298,36 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
       setIsLoading((prev) => prev + 1);
       setData([]);
+      setAggregatedData({});
+
+      // Get aggregated metrics
+      const allPodsRes = await api.getMetrics(
+        "<token>",
+        {
+          metric: selectedMetric,
+          shouldsum: false,
+          kind: selectedController?.kind,
+          name: selectedController?.metadata.name,
+          namespace: namespace,
+          startrange: start,
+          endrange: end,
+          resolution: resolutions[selectedRange],
+          pods: [],
+        },
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      );
+
+      const allPodsData: GenericMetricResponse[] = allPodsRes.data ?? [];
+      const allPodsMetrics = allPodsData.flatMap((d) => d.results);
+      const allPodsMetricsNormalized = new MetricNormalizer(
+        [{ results: allPodsMetrics }],
+        selectedMetric as AvailableMetrics
+      );
+      setAggregatedData(allPodsMetricsNormalized.getAggregatedData());
+      //
 
       const res = await api.getMetrics(
         "<token>",
@@ -501,6 +538,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
             {({ width, height }) => (
               <AreaChart
                 dataKey={selectedMetricLabel}
+                aggregatedData={aggregatedData}
                 data={data}
                 hpaData={hpaData}
                 hpaEnabled={

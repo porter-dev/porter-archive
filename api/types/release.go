@@ -40,7 +40,7 @@ type PorterRelease struct {
 	StackID string `json:"stack_id"`
 
 	// The canonical name of this release
-	CanonicalName string `json:"canonical_name,omitempty"`
+	CanonicalName string `json:"canonical_name"`
 }
 
 // swagger:model
@@ -216,5 +216,5 @@ type UpdateGitActionConfigRequest struct {
 }
 
 type UpdateCanonicalNameRequest struct {
-	CanonicalName string `json:"canonical_name" form:"required"`
+	CanonicalName string `json:"canonical_name"`
 }

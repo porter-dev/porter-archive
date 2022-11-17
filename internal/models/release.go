@@ -35,9 +35,10 @@ type Release struct {
 
 func (r *Release) ToReleaseType() *types.PorterRelease {
 	res := &types.PorterRelease{
-		ID:           r.ID,
-		WebhookToken: r.WebhookToken,
-		ImageRepoURI: r.ImageRepoURI,
+		ID:            r.ID,
+		WebhookToken:  r.WebhookToken,
+		ImageRepoURI:  r.ImageRepoURI,
+		CanonicalName: r.CanonicalName,
 	}
 
 	if r.GitActionConfig != nil {

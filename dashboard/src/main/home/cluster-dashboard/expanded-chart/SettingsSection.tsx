@@ -245,10 +245,10 @@ const SettingsSection: React.FC<PropsType> = ({
 
         <>
           <Heading>Canonical Name</Heading>
-          <Helper>Set a canonical name for this application</Helper>
+          <Helper>Set a canonical name for this application (lowercase letters, numbers, and "-" only)</Helper>
           <CanonicalName
             release={currentChart}
-            onSave={(val) => refreshChart()}
+            onSave={() => refreshChart()}
           />
 
           <Heading>Redeploy Webhook</Heading>

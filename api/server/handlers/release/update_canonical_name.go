@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 type UpdateCanonicalNameHandler struct {
@@ -56,6 +57,13 @@ func (c *UpdateCanonicalNameHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	if release.CanonicalName != request.CanonicalName {
+		if request.CanonicalName != "" {
+			if errStrs := validation.IsDNS1123Label(request.CanonicalName); len(errStrs) > 0 {
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("invalid canonical name"), http.StatusBadRequest))
+				return
+			}
+		}
+
 		release.CanonicalName = request.CanonicalName
 
 		release, err = c.Repo().Release().UpdateRelease(release)

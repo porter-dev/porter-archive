@@ -1,20 +1,15 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import styled from "styled-components";
-import { Tooltip } from "@material-ui/core";
-import Modal from "main/home/modals/Modal";
-import { TwitterPicker } from "react-color";
 import InputRow from "components/form-components/InputRow";
 import SaveButton from "components/SaveButton";
 import api from "shared/api";
 import Color from "color";
 import { Context } from "shared/Context";
 import { ChartType } from "shared/types";
-import Helper from "components/form-components/Helper";
-import { differenceBy } from "lodash";
-import SearchSelector from "components/SearchSelector";
+import { isAlphanumeric } from "shared/common";
 
 type Props = {
-  onSave: ((values: any[]) => void) | ((values: any[]) => Promise<void>);
+  onSave: (() => void) | (() => Promise<void>);
   release: ChartType;
 };
 
@@ -22,27 +17,18 @@ const CanonicalName = ({ onSave, release }: Props) => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
-  const [values, setValues] = useState([]);
-  const [availableTags, setAvailableTags] = useState([]);
-  const [openModal, setOpenModal] = useState(false);
   const [buttonStatus, setButtonStatus] = useState("");
-
-  const onDelete = (index: number) => {
-    setValues((prev) => {
-      const newValues = [...prev];
-      const removedTag = newValues.splice(index, 1);
-      setAvailableTags((prevAt) => [...prevAt, ...removedTag]);
-      return newValues;
-    });
-  };
+  const [canonicalName, setCanonicalName] = useState<string>(
+    release.canonical_name
+  );
 
   const handleSave = async () => {
     setButtonStatus("loading");
 
     try {
-      await api.updateReleaseTags(
+      await api.updateCanonicalName(
         "<token>",
-        { tags: [...values.map((tag) => tag.name)] },
+        { canonical_name: canonicalName },
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
@@ -50,14 +36,14 @@ const CanonicalName = ({ onSave, release }: Props) => {
           release_name: release.name,
         }
       );
-      await onSave(values);
+      await onSave();
       setButtonStatus("successful");
     } catch (error) {
       console.log(error);
       setCurrentError(
-        "We couldn't link the tag to the release, please try again."
+        "We couldn't change the canonical name. Please try again."
       );
-      setButtonStatus("Couldn't link the tag to the release");
+      setButtonStatus("Canonical name not changed.");
       return;
     } finally {
       setTimeout(() => {
@@ -66,60 +52,43 @@ const CanonicalName = ({ onSave, release }: Props) => {
     }
   };
 
-  const hasUnsavedChanges = useMemo(() => {
-    const hasAddedSomething = !!differenceBy(
-      values,
-      release.tags?.map((tagName: string) => ({ name: tagName })) || [],
-      "name"
-    ).length;
+  const shouldDisableSave = useMemo(() => {
+    if (canonicalName !== release.canonical_name) {
+      if (canonicalName === "") {
+        return false;
+      }
 
-    const hasDeletedSomething = !!differenceBy(
-      release.tags?.map((tagName: string) => ({ name: tagName })) || [],
-      values,
-      "name"
-    ).length;
+      return !isAlphanumeric(canonicalName) || canonicalName.length > 63;
+    }
 
-    return hasAddedSomething || hasDeletedSomething;
-  }, [values, release]);
+    return true;
+  }, [canonicalName]);
+
+  const saveButtonHelper = useMemo(() => {
+    if (canonicalName !== release.canonical_name) {
+      if (canonicalName !== "") {
+        if (!isAlphanumeric(canonicalName)) {
+          return "Invalid characters in the name";
+        } else if (canonicalName.length > 63) {
+          return "Name cannot exceed 63 characters";
+        }
+      }
+
+      return "Unsaved changes";
+    }
+
+    return "";
+  }, [canonicalName]);
 
   return (
     <>
-      <Flex>
-        {values.map((val, index) => {
-          return (
-            <Tag color={val.color} key={index}>
-              <Tooltip title={val.name}>
-                <TagText>{val.name}</TagText>
-              </Tooltip>
-              <i className="material-icons" onClick={() => onDelete(index)}>
-                cancel
-              </i>
-            </Tag>
-          );
-        })}
-      </Flex>
-      <SearchSelector
-        options={availableTags}
-        dropdownLabel="Select a tag"
-        renderAddButton={() => (
-          <AddTagButton
-            onClick={(e) => {
-              setOpenModal((prev) => !prev);
-            }}
-          >
-            + Create a new tag
-          </AddTagButton>
-        )}
-        filterBy="name"
-        onSelect={(value) => {
-          console.log(value);
-          setAvailableTags((prev) =>
-            prev.filter((prevVal) => prevVal.name !== value.name)
-          );
-          setValues((prev) => [...prev, value]);
-        }}
-        getOptionLabel={(option) => option.name}
-        renderOptionIcon={(option) => <TagColorBox color={option.color} />}
+      <InputRow
+        type="text"
+        value={canonicalName}
+        setValue={(x: string) => setCanonicalName(x)}
+        placeholder="ex: my-app"
+        isRequired={true}
+        width={"100%"}
       />
       <Flex
         style={{
@@ -127,31 +96,19 @@ const CanonicalName = ({ onSave, release }: Props) => {
         }}
       >
         <SaveButton
-          helper={hasUnsavedChanges ? "Unsaved changes" : ""}
+          helper={saveButtonHelper}
           clearPosition
+          disabled={shouldDisableSave}
           statusPosition="right"
           text="Save changes"
           onClick={() => handleSave()}
           status={buttonStatus}
-          disabled={!hasUnsavedChanges || buttonStatus === "loading"}
         ></SaveButton>
       </Flex>
       <Br />
     </>
   );
 };
-
-const AddTagButton = styled.div`
-  color: #aaaabb;
-  font-size: 13px;
-  padding: 10px 0;
-  z-index: 999;
-  padding-left: 12px;
-  cursor: pointer;
-  :hover {
-    color: white;
-  }
-`;
 
 const Br = styled.div`
   width: 100%;
@@ -192,27 +149,4 @@ const Tag = styled.div<{ color: string }>`
       cursor: pointer;
     }
   }
-`;
-
-const TagText = styled.span`
-  overflow-x: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-`;
-
-const Label = styled.div`
-  color: #ffffff;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  font-family: "Work Sans", sans-serif;
-`;
-
-const TagColorBox = styled.div`
-  width: 15px;
-  height: 15px;
-  margin-right: 10px;
-  border-radius: 0px;
-  background-color: ${(props: { color: string }) => props.color};
 `;

@@ -31,6 +31,7 @@ import (
 	"github.com/digitalocean/godo"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/config/types"
+	"github.com/docker/distribution/reference"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry"
 
@@ -77,9 +78,9 @@ func (r *Registry) ListRepositories(
 	if r.GCPIntegrationID != 0 {
 		if strings.Contains(r.URL, "pkg.dev") {
 			return r.listGARRepositories(repo)
-		} else {
-			return r.listGCRRepositories(repo)
 		}
+
+		return r.listGCRRepositories(repo)
 	}
 
 	if r.DOIntegrationID != 0 {
@@ -241,6 +242,9 @@ func (source *garTokenSource) Token() (*oauth2.Token, error) {
 	return source.reg.GetGARToken(source.repo)
 }
 
+// GAR has the concept of a "repository" which is a collection of images, unlike ECR or others
+// where a repository is a single image. This function returns the list of fully qualified names
+// of GAR images including their repository names.
 func (r *Registry) listGARRepositories(
 	repo repository.Repository,
 ) ([]*ptypes.RegistryRepository, error) {
@@ -262,7 +266,7 @@ func (r *Registry) listGARRepositories(
 		return nil, err
 	}
 
-	var res []*ptypes.RegistryRepository
+	var repoNames []string
 	nextToken := ""
 
 	parsedURL, err := url.Parse("https://" + r.URL)
@@ -289,14 +293,12 @@ func (r *Registry) listGARRepositories(
 				return nil, err
 			}
 
-			repoSlice := strings.Split(resp.GetName(), "/")
-			repoName := repoSlice[len(repoSlice)-1]
+			if resp.GetFormat() == artifactregistrypb.Repository_DOCKER { // we only care about
+				repoSlice := strings.Split(resp.GetName(), "/")
+				repoName := repoSlice[len(repoSlice)-1]
 
-			res = append(res, &ptypes.RegistryRepository{
-				Name:      resp.GetName(),
-				CreatedAt: resp.GetCreateTime().AsTime(),
-				URI:       parsedURL.Host + "/" + gcpInt.GCPProjectID + "/" + repoName,
-			})
+				repoNames = append(repoNames, repoName)
+			}
 		}
 
 		if it.PageInfo().Token == "" {
@@ -305,6 +307,74 @@ func (r *Registry) listGARRepositories(
 
 		nextToken = it.PageInfo().Token
 	}
+
+	svc, err := v1artifactregistry.NewService(context.Background(), option.WithTokenSource(&garTokenSource{
+		reg:  r,
+		repo: repo,
+	}), option.WithScopes("roles/artifactregistry.reader"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	nextToken = ""
+
+	dockerSvc := v1artifactregistry.NewProjectsLocationsRepositoriesDockerImagesService(svc)
+
+	var (
+		wg     sync.WaitGroup
+		resMap sync.Map
+	)
+
+	for _, repoName := range repoNames {
+		wg.Add(1)
+
+		go func(repoName string) {
+			defer wg.Done()
+
+			for {
+				resp, err := dockerSvc.List(fmt.Sprintf("projects/%s/locations/%s/repositories/%s",
+					gcpInt.GCPProjectID, location, repoName)).PageSize(1000).PageToken(nextToken).Do()
+
+				if err != nil {
+					// FIXME: we should report this error using a channel
+					return
+				}
+
+				for _, image := range resp.DockerImages {
+					named, err := reference.ParseNamed(image.Uri)
+
+					if err != nil {
+						// let us skip this image becaue it has a malformed URI coming from the GCP API
+						continue
+					}
+
+					uploadTime, _ := time.Parse(time.RFC3339, image.UploadTime)
+
+					resMap.Store(named.Name(), &ptypes.RegistryRepository{
+						Name:      repoName,
+						URI:       named.Name(),
+						CreatedAt: uploadTime,
+					})
+				}
+
+				if resp.NextPageToken == "" {
+					break
+				}
+
+				nextToken = resp.NextPageToken
+			}
+		}(repoName)
+	}
+
+	wg.Wait()
+
+	var res []*ptypes.RegistryRepository
+
+	resMap.Range(func(_, value any) bool {
+		res = append(res, value.(*ptypes.RegistryRepository))
+		return true
+	})
 
 	return res, nil
 }
@@ -1172,6 +1242,12 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 }
 
 func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
+	repoImageSlice := strings.Split(repoName, "/")
+
+	if len(repoImageSlice) != 2 {
+		return nil, fmt.Errorf("invalid GAR repo name: %s. Expected to be in the form of REPOSITORY/IMAGE", repoName)
+	}
+
 	gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(
 		r.ProjectID,
 		r.GCPIntegrationID,
@@ -1190,7 +1266,6 @@ func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
-	nextToken := ""
 	var res []*ptypes.Image
 
 	parsedURL, err := url.Parse("https://" + r.URL)
@@ -1200,27 +1275,39 @@ func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([
 	}
 
 	location := strings.TrimSuffix(parsedURL.Host, "-docker.pkg.dev")
-
 	dockerSvc := v1artifactregistry.NewProjectsLocationsRepositoriesDockerImagesService(svc)
+	nextToken := ""
 
 	for {
 		resp, err := dockerSvc.List(fmt.Sprintf("projects/%s/locations/%s/repositories/%s",
-			gcpInt.GCPProjectID, location, repoName)).PageSize(1000).PageToken(nextToken).Do()
+			gcpInt.GCPProjectID, location, repoImageSlice[0])).PageSize(1000).PageToken(nextToken).Do()
 
 		if err != nil {
 			return nil, err
 		}
 
 		for _, image := range resp.DockerImages {
-			uploadTime, _ := time.Parse(time.RFC3339, image.UploadTime)
+			named, err := reference.ParseNamed(image.Uri)
 
-			for _, tag := range image.Tags {
-				res = append(res, &ptypes.Image{
-					RepositoryName: repoName,
-					Tag:            tag,
-					PushedAt:       &uploadTime,
-					Digest:         strings.Split(image.Name, "@")[1],
-				})
+			if err != nil {
+				continue
+			}
+
+			paths := strings.Split(reference.Path(named), "/")
+
+			imageName := paths[len(paths)-1]
+
+			if imageName == repoImageSlice[1] {
+				uploadTime, _ := time.Parse(time.RFC3339, image.UploadTime)
+
+				for _, tag := range image.Tags {
+					res = append(res, &ptypes.Image{
+						RepositoryName: repoName,
+						Tag:            tag,
+						PushedAt:       &uploadTime,
+						Digest:         strings.Split(image.Uri, "@")[1],
+					})
+				}
 			}
 		}
 

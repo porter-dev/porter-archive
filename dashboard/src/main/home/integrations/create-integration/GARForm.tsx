@@ -59,12 +59,37 @@ const GARForm = (props: { closeForm: () => void }) => {
     }
 
     try {
+      let registryURL: string;
+
+      // GCP project IDs can have the ':' character like example.com:my-project
+      // if this is the case then we need to case on this
+      //
+      // see: https://cloud.google.com/artifact-registry/docs/docker/names#domain
+      if (integration.gcp_project_id.includes(":")) {
+        const domainProjectID = integration.gcp_project_id.split(":");
+
+        if (
+          domainProjectID.length !== 2 ||
+          domainProjectID[0].length === 0 ||
+          domainProjectID[1].length === 0
+        ) {
+          setButtonStatus(
+            "Invalid GCP project ID. Please check your credentials."
+          );
+          return;
+        }
+
+        registryURL = `${region}-docker.pkg.dev/${domainProjectID[0]}/${domainProjectID[1]}`;
+      } else {
+        registryURL = `${region}-docker.pkg.dev/${integration.gcp_project_id}`;
+      }
+
       await api.connectGCRRegistry(
         "token",
         {
           gcp_integration_id: integration.id,
           name: credentialsName,
-          url: `${region}-docker.pkg.dev/${integration.gcp_project_id}`,
+          url: registryURL,
         },
         { id: currentProject.id }
       );

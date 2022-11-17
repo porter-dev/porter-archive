@@ -71,11 +71,16 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   };
 
   const getFullActionConfig = (): FullActionConfigType => {
-    let imageRepoUri = `${selectedRegistry?.url}/${templateName}-${selectedNamespace}`;
+    let imageRepoURI = `${selectedRegistry?.url}/${templateName}-${selectedNamespace}`;
 
     // DockerHub registry integration is per repo
     if (selectedRegistry?.service === "dockerhub") {
-      imageRepoUri = selectedRegistry?.url;
+      imageRepoURI = selectedRegistry?.url;
+    }
+
+    // Customize image repo URI for GAR
+    if (imageRepoURI.includes("pkg.dev")) {
+      imageRepoURI = `${imageRepoURI}/${templateName}-${selectedNamespace}`;
     }
 
     if (actionConfig.kind === "github") {
@@ -86,7 +91,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         registry_id: selectedRegistry?.id,
         dockerfile_path: dockerfilePath,
         folder_path: folderPath,
-        image_repo_uri: imageRepoUri,
+        image_repo_uri: imageRepoURI,
         git_repo_id: actionConfig.git_repo_id,
         should_create_workflow: shouldCreateWorkflow,
       };
@@ -98,7 +103,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         registry_id: selectedRegistry?.id,
         dockerfile_path: dockerfilePath,
         folder_path: folderPath,
-        image_repo_uri: imageRepoUri,
+        image_repo_uri: imageRepoURI,
         gitlab_integration_id: actionConfig.gitlab_integration_id,
         should_create_workflow: shouldCreateWorkflow,
       };

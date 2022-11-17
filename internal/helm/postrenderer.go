@@ -815,7 +815,18 @@ func getRegNameFromImageRef(image string) (string, error) {
 	if strings.Contains(domain, "docker.io") {
 		regName = "index.docker.io/" + path
 	} else if strings.Contains(domain, "pkg.dev") {
-		regName = domain + "/" + strings.Split(path, "/")[0]
+		pathSlice := strings.Split(path, "/")
+
+		// a GAR image path can either be PROJECT-ID/REPOSITORY/IMAGE or DOMAIN/PROJECT-ID/REPOSITORY/IMAGE
+		//
+		// see: https://cloud.google.com/artifact-registry/docs/docker/names#domain
+		if len(pathSlice) == 3 {
+			regName = fmt.Sprintf("%s/%s", domain, pathSlice[0])
+		} else if len(pathSlice) == 4 {
+			regName = fmt.Sprintf("%s/%s/%s", domain, pathSlice[0], pathSlice[1])
+		} else {
+			return "", fmt.Errorf("invalid GAR image: %s", image)
+		}
 	} else {
 		regName = domain
 

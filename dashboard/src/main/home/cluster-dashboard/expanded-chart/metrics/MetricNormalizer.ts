@@ -82,8 +82,8 @@ export class MetricNormalizer {
     });
 
     return {
-      avg,
       min,
+      avg,
       max,
     };
   }

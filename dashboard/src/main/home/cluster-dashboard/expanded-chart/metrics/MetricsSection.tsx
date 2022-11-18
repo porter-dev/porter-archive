@@ -18,6 +18,7 @@ import {
   NormalizedMetricsData,
 } from "./types";
 import CheckboxRow from "components/form-components/CheckboxRow";
+import AggregatedDataLegend from "./AggregatedDataLegend";
 
 type PropsType = {
   currentChart: ChartTypeWithExtendedConfig;
@@ -35,6 +36,10 @@ export const secondsBeforeNow: { [range: string]: number } = {
   "6H": 60 * 60 * 6,
   "1D": 60 * 60 * 24,
   "1M": 60 * 60 * 24 * 30,
+};
+
+const isAggregatable = (metric: string) => {
+  return ["cpu", "network", "memory"].includes(metric);
 };
 
 const MetricsSection: React.FunctionComponent<PropsType> = ({
@@ -301,32 +306,34 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       setAggregatedData({});
 
       // Get aggregated metrics
-      const allPodsRes = await api.getMetrics(
-        "<token>",
-        {
-          metric: selectedMetric,
-          shouldsum: false,
-          kind: selectedController?.kind,
-          name: selectedController?.metadata.name,
-          namespace: namespace,
-          startrange: start,
-          endrange: end,
-          resolution: resolutions[selectedRange],
-          pods: [],
-        },
-        {
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
+      if (isAggregatable(selectedMetric)) {
+        const allPodsRes = await api.getMetrics(
+          "<token>",
+          {
+            metric: selectedMetric,
+            shouldsum: false,
+            kind: selectedController?.kind,
+            name: selectedController?.metadata.name,
+            namespace: namespace,
+            startrange: start,
+            endrange: end,
+            resolution: resolutions[selectedRange],
+            pods: [],
+          },
+          {
+            id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        );
 
-      const allPodsData: GenericMetricResponse[] = allPodsRes.data ?? [];
-      const allPodsMetrics = allPodsData.flatMap((d) => d.results);
-      const allPodsMetricsNormalized = new MetricNormalizer(
-        [{ results: allPodsMetrics }],
-        selectedMetric as AvailableMetrics
-      );
-      setAggregatedData(allPodsMetricsNormalized.getAggregatedData());
+        const allPodsData: GenericMetricResponse[] = allPodsRes.data ?? [];
+        const allPodsMetrics = allPodsData.flatMap((d) => d.results);
+        const allPodsMetricsNormalized = new MetricNormalizer(
+          [{ results: allPodsMetrics }],
+          selectedMetric as AvailableMetrics
+        );
+        setAggregatedData(allPodsMetricsNormalized.getAggregatedData());
+      }
       //
 
       const res = await api.getMetrics(
@@ -526,6 +533,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       )}
       {data.length > 0 && isLoading === 0 && (
         <>
+          {isAggregatable(selectedMetric) && (
+            <AggregatedDataLegend data={data} />
+          )}
           {currentChart?.config?.autoscaling?.enabled &&
             ["cpu", "memory"].includes(selectedMetric) && (
               <CheckboxRow

@@ -447,6 +447,12 @@ const ExpandedJobHeader: React.FC<{
       ) : null}
 
       <InfoWrapper>
+        {chart?.canonical_name !== "" ? (
+          <Url>
+            <Bolded>Helm Release Name:</Bolded>
+            {chart?.name}
+          </Url>
+        ) : null}
         <LastDeployed>
           Run {jobs?.length} times <Dot>•</Dot>Last template update at
           {" " + readableDate(chart.info.last_deployed)}
@@ -776,4 +782,22 @@ const A = styled.a`
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;
+`;
+
+const Bolded = styled.div`
+  font-weight: 500;
+  color: #ffffff44;
+  margin-right: 6px;
+`;
+
+const Url = styled.div`
+  display: block;
+  font-size: 13px;
+  user-select: all;
+  user-select: text;
+  margin-top: -5px;
+  margin-bottom: 10px;
+  display: flex;
+  color: #949eff;
+  align-items: center;
 `;

@@ -17,6 +17,7 @@ type Environment struct {
 	LastDeploymentStatus string            `json:"last_deployment_status"`
 	NewCommentsDisabled  bool              `json:"new_comments_disabled"`
 	NamespaceAnnotations map[string]string `json:"namespace_annotations,omitempty"`
+	GitDeployBranches    []string          `json:"git_deploy_branches"`
 }
 
 type CreateEnvironmentRequest struct {
@@ -25,6 +26,7 @@ type CreateEnvironmentRequest struct {
 	DisableNewComments   bool              `json:"disable_new_comments"`
 	GitRepoBranches      []string          `json:"git_repo_branches"`
 	NamespaceAnnotations map[string]string `json:"namespace_annotations"`
+	GitDeployBranches    []string          `json:"git_deploy_branches"`
 }
 
 type GitHubMetadata struct {
@@ -164,4 +166,5 @@ type UpdateEnvironmentSettingsRequest struct {
 	DisableNewComments   bool              `json:"disable_new_comments"`
 	GitRepoBranches      []string          `json:"git_repo_branches"`
 	NamespaceAnnotations map[string]string `json:"namespace_annotations"`
+	GitDeployBranches    []string          `json:"git_deploy_branches"`
 }

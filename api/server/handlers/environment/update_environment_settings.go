@@ -79,6 +79,22 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 		env.GitRepoBranches = strings.Join(request.GitRepoBranches, ",")
 	}
 
+	newBranches = []string{}
+
+	for _, br := range request.GitDeployBranches {
+		name := strings.TrimSpace(br)
+
+		if len(name) > 0 {
+			newBranches = append(newBranches, name)
+		}
+	}
+
+	changed = !reflect.DeepEqual(env.ToEnvironmentType().GitDeployBranches, newBranches)
+
+	if changed {
+		env.GitDeployBranches = strings.Join(request.GitDeployBranches, ",")
+	}
+
 	if request.DisableNewComments != env.NewCommentsDisabled {
 		env.NewCommentsDisabled = request.DisableNewComments
 		changed = true

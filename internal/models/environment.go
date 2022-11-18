@@ -24,6 +24,7 @@ type Environment struct {
 
 	NewCommentsDisabled  bool
 	NamespaceAnnotations []byte
+	GitDeployBranches    string
 
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
 	// aren't present
@@ -72,6 +73,14 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		env.GitRepoBranches = branches
 	} else {
 		env.GitRepoBranches = []string{}
+	}
+
+	branches = getGitRepoBranches(e.GitDeployBranches)
+
+	if len(branches) > 0 {
+		env.GitDeployBranches = branches
+	} else {
+		env.GitDeployBranches = []string{}
 	}
 
 	if len(e.NamespaceAnnotations) > 0 {

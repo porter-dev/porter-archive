@@ -32,7 +32,8 @@ const EnvironmentSettings = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
-  const [selectedBranches, setSelectedBranches] = useState([]);
+  const [baseBranches, setBaseBranches] = useState([]);
+  const [deployBranches, setDeployBranches] = useState([]);
   const [environment, setEnvironment] = useState<Environment>();
   const [saveStatus, setSaveStatus] = useState("");
   const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
@@ -68,7 +69,7 @@ const EnvironmentSettings = () => {
       );
 
       setEnvironment(environment);
-      setSelectedBranches(environment.git_repo_branches);
+      setBaseBranches(environment.git_repo_branches);
       setNewCommentsDisabled(environment.new_comments_disabled);
       setDeploymentMode(environment.mode);
 
@@ -158,8 +159,9 @@ const EnvironmentSettings = () => {
         {
           mode: deploymentMode,
           disable_new_comments: newCommentsDisabled,
-          git_repo_branches: selectedBranches,
+          git_repo_branches: baseBranches,
           namespace_annotations: annotations,
+          git_deploy_branches: deployBranches,
         },
         {
           project_id: currentProject.id,
@@ -277,6 +279,17 @@ const EnvironmentSettings = () => {
           }
         />
         <Br />
+        <Heading>Deploy from branches</Heading>
+        <Helper>
+          Choose the list of branches that you want to deploy changes from.
+        </Helper>
+        <BranchFilterSelector
+          onChange={setDeployBranches}
+          options={availableBranches}
+          value={deployBranches}
+          showLoading={isLoadingBranches}
+        />
+        <Br />
         <Heading>Select allowed branches</Heading>
         <Helper>
           If the pull request has a base branch included in this list, it will
@@ -285,9 +298,9 @@ const EnvironmentSettings = () => {
           (Leave empty to allow all branches)
         </Helper>
         <BranchFilterSelector
-          onChange={setSelectedBranches}
+          onChange={setBaseBranches}
           options={availableBranches}
-          value={selectedBranches}
+          value={baseBranches}
           showLoading={isLoadingBranches}
         />
         <Br />

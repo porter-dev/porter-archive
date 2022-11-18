@@ -74,6 +74,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		Mode:                request.Mode,
 		WebhookID:           string(webhookUID),
 		NewCommentsDisabled: request.DisableNewComments,
+		GitDeployBranches:   strings.Join(request.GitDeployBranches, ","),
 	}
 
 	if len(request.NamespaceAnnotations) > 0 {

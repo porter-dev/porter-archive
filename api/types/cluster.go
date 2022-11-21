@@ -228,8 +228,8 @@ type CreateNamespaceRequest struct {
 	// example: sampleNS
 	Name string `json:"name" form:"required"`
 
-	// annotations for the kubernetes namespace, if any
-	Annotations map[string]string `json:"annotations,omitempty"`
+	// labels for the kubernetes namespace, if any
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 type GetTemporaryKubeconfigResponse struct {

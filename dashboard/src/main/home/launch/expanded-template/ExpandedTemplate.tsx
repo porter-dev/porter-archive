@@ -82,6 +82,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
 
       api
         .getTemplateInfo("<token>", params, {
+          project_id: this.context.currentProject.id,
           name: this.props.currentTemplate.name.toLowerCase().trim(),
           version: this.props.currentTemplate.currentVersion,
         })

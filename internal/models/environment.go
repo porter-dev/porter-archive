@@ -118,7 +118,6 @@ type Deployment struct {
 }
 
 func (d *Deployment) ToDeploymentType() *types.Deployment {
-
 	ghMetadata := &types.GitHubMetadata{
 		DeploymentID: d.GHDeploymentID,
 		PRName:       d.PRName,
@@ -140,4 +139,8 @@ func (d *Deployment) ToDeploymentType() *types.Deployment {
 		PullRequestID:  d.PullRequestID,
 		GitHubMetadata: ghMetadata,
 	}
+}
+
+func (d *Deployment) IsBranchDeploy() bool {
+	return d.PullRequestID == 0 && d.PRBranchFrom != "" && d.PRBranchInto != "" && d.PRBranchFrom == d.PRBranchInto
 }

@@ -655,6 +655,15 @@ const ExpandedChart: React.FC<Props> = (props) => {
     );
   };
 
+  const renderHelmReleaseName = () => {
+    return (
+      <Url>
+        <Bolded>Helm Release Name:</Bolded>
+        {currentChart.name}
+      </Url>
+    );
+  };
+
   const handleUninstallChart = async () => {
     setDeleting(true);
     setCurrentOverlay(null);
@@ -873,7 +882,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   icon={currentChart.chart.metadata.icon}
                   iconWidth="33px"
                 >
-                  {currentChart.name}
+                  {currentChart.canonical_name === ""
+                    ? currentChart.name
+                    : currentChart.canonical_name}
                   <DeploymentType currentChart={currentChart} />
                   <TagWrapper>
                     Namespace{" "}
@@ -884,6 +895,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
                 {currentChart.chart.metadata.name != "worker" &&
                   currentChart.chart.metadata.name != "job" &&
                   renderUrl()}
+
+                {currentChart.canonical_name !== "" && renderHelmReleaseName()}
                 <InfoWrapper>
                   {/*
                   <StatusIndicator

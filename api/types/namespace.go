@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -83,7 +82,7 @@ type ListReleasesRequest struct {
 }
 
 // swagger:model
-type ListReleasesResponse []*release.Release
+type ListReleasesResponse []*Release
 
 type GetConfigMapRequest struct {
 	Name string `schema:"name,required"`

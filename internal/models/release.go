@@ -28,13 +28,17 @@ type Release struct {
 	NotificationConfig uint
 	BuildConfig        uint
 	Tags               []*Tag `json:"tags" gorm:"many2many:release_tags"`
+
+	// A configurable canonical name of a Porter release
+	CanonicalName string
 }
 
 func (r *Release) ToReleaseType() *types.PorterRelease {
 	res := &types.PorterRelease{
-		ID:           r.ID,
-		WebhookToken: r.WebhookToken,
-		ImageRepoURI: r.ImageRepoURI,
+		ID:            r.ID,
+		WebhookToken:  r.WebhookToken,
+		ImageRepoURI:  r.ImageRepoURI,
+		CanonicalName: r.CanonicalName,
 	}
 
 	if r.GitActionConfig != nil {

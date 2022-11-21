@@ -20,6 +20,7 @@ import { isDeployedFromGithub } from "shared/release/utils";
 import TagSelector from "./TagSelector";
 import { PORTER_IMAGE_TEMPLATES } from "shared/common";
 import DynamicLink from "components/DynamicLink";
+import CanonicalName from "./CanonicalName";
 
 type PropsType = {
   currentChart: ChartType;
@@ -243,6 +244,13 @@ const SettingsSection: React.FC<PropsType> = ({
         ) : null}
 
         <>
+          <Heading>Canonical Name</Heading>
+          <Helper>Set a canonical name for this application (lowercase letters, numbers, and "-" only)</Helper>
+          <CanonicalName
+            release={currentChart}
+            onSave={() => refreshChart()}
+          />
+
           <Heading>Redeploy Webhook</Heading>
           <Helper>
             Programmatically deploy by calling this secret webhook.

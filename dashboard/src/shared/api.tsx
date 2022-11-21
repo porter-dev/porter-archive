@@ -151,7 +151,7 @@ const createEnvironment = baseApi<
     mode: "auto" | "manual";
     disable_new_comments: boolean;
     git_repo_branches: string[];
-    namespace_annotations: Record<string, string>;
+    namespace_labels: Record<string, string>;
   },
   {
     project_id: number;
@@ -176,7 +176,7 @@ const updateEnvironment = baseApi<
     mode: "auto" | "manual";
     disable_new_comments: boolean;
     git_repo_branches: string[]; // Array with branch names
-    namespace_annotations: Record<string, string>;
+    namespace_labels: Record<string, string>;
   },
   {
     project_id: number;
@@ -1983,6 +1983,22 @@ const updateReleaseTags = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/update_tags`
 );
 
+const updateCanonicalName = baseApi<
+  {
+    canonical_name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+  }
+>(
+  "PATCH",
+  ({ project_id, cluster_id, namespace, release_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/update_canonical_name`
+);
+
 const getGitProviders = baseApi<{}, { project_id: number }>(
   "GET",
   ({ project_id }) => `/api/projects/${project_id}/integrations/git`
@@ -2574,6 +2590,7 @@ export default {
   getTagsByProjectId,
   createTag,
   updateReleaseTags,
+  updateCanonicalName,
   getGitProviders,
   getGitlabRepos,
   getGitlabBranches,

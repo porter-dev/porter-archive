@@ -21,6 +21,7 @@ import {
   MuiThemeProvider,
   withStyles,
 } from "@material-ui/core/styles";
+import { Link } from "react-router-dom";
 
 type Props = {
   chart: ChartType;
@@ -117,97 +118,110 @@ const Chart: React.FunctionComponent<Props> = ({
     timeStyle: "long",
   });
 
+  const getExpandedChartLinkURL = () => {
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+      get: (searchParams, prop: string) => searchParams.get(prop),
+    });
+
+    const cluster = context.currentCluster?.name;
+
+    const route = `${isJob ? "/jobs" : "/applications"}/${cluster}/${
+      chart.namespace
+    }/${chart.name}`;
+
+    const newURLSearchParams = new URLSearchParams({
+      // @ts-ignore
+      project_id: params.project_id,
+      closeChartRedirectUrl,
+    });
+
+    return `${route}?${newURLSearchParams.toString()}`;
+  };
+
   return (
-    <StyledChart
-      onClick={() => {
-        const cluster = context.currentCluster?.name;
-        let route = `${isJob ? "/jobs" : "/applications"}/${cluster}/${
-          chart.namespace
-        }/${chart.name}`;
-        pushFiltered({ location, history }, route, ["project_id"], {
-          closeChartRedirectUrl,
-        });
-      }}
-    >
-      <Title>
-        <IconWrapper>{renderIcon()}</IconWrapper>
-        {chart.canonical_name === "" ? chart.name : chart.canonical_name}
-        {chart?.config?.description && (
-          <>
-            <Dot style={{ marginLeft: "9px", color: "#ffffff88" }}>•</Dot>
-            <MuiThemeProvider theme={theme}>
-              <Tooltip
-                TransitionComponent={Zoom}
-                placement={"bottom-start"}
-                title={
-                  <div
-                    style={{
-                      fontFamily: "Work Sans, sans-serif",
-                      fontSize: "12px",
-                      fontWeight: "normal",
-                      padding: "5px 6px",
-                      color: "#ffffffdd",
-                      lineHeight: "16px",
-                    }}
-                  >
-                    {chart.config.description as string}
-                  </div>
-                }
-              >
-                <Description>{chart.config.description}</Description>
-              </Tooltip>
-            </MuiThemeProvider>
-          </>
-        )}
-      </Title>
+    <Link to={getExpandedChartLinkURL}>
+      <StyledChart>
+        <Title>
+          <IconWrapper>{renderIcon()}</IconWrapper>
+          {chart.canonical_name === "" ? chart.name : chart.canonical_name}
+          {chart?.config?.description && (
+            <>
+              <Dot style={{ marginLeft: "9px", color: "#ffffff88" }}>•</Dot>
+              <MuiThemeProvider theme={theme}>
+                <Tooltip
+                  TransitionComponent={Zoom}
+                  placement={"bottom-start"}
+                  title={
+                    <div
+                      style={{
+                        fontFamily: "Work Sans, sans-serif",
+                        fontSize: "12px",
+                        fontWeight: "normal",
+                        padding: "5px 6px",
+                        color: "#ffffffdd",
+                        lineHeight: "16px",
+                      }}
+                    >
+                      {chart.config.description as string}
+                    </div>
+                  }
+                >
+                  <Description>{chart.config.description}</Description>
+                </Tooltip>
+              </MuiThemeProvider>
+            </>
+          )}
+        </Title>
 
-      <BottomWrapper>
-        <InfoWrapper>
-          <StatusIndicator
-            controllers={filteredControllers}
-            status={chart.info.status}
-            margin_left={"17px"}
-          />
-          <LastDeployed>
-            {jobStatus?.status ? (
-              <>
-                <Dot>•</Dot>
-                <JobStatus status={jobStatus.status}>
-                  {jobStatus.status === JobStatusType.Running
-                    ? "Started running"
-                    : `Last run ${jobStatus.status}`}{" "}
-                  at {readableDate(jobStatus.start_time)}
-                </JobStatus>
-              </>
-            ) : (
-              <>
-                <Dot>•</Dot>
-                <JobStatus>
-                  Last deployed {readableDate(chart.info.last_deployed)}
-                </JobStatus>
-              </>
-            )}
-            {chart.config?.schedule?.enabled ? (
-              <>
-                <Dot style={{ marginLeft: "10px" }}>•</Dot>
-                <JobStatus>
-                  Next run {rtf.format(interval?.next().toDate() || new Date())}
-                </JobStatus>
-              </>
-            ) : null}
-          </LastDeployed>
-        </InfoWrapper>
+        <BottomWrapper>
+          <InfoWrapper>
+            <StatusIndicator
+              controllers={filteredControllers}
+              status={chart.info.status}
+              margin_left={"17px"}
+            />
+            <LastDeployed>
+              {jobStatus?.status ? (
+                <>
+                  <Dot>•</Dot>
+                  <JobStatus status={jobStatus.status}>
+                    {jobStatus.status === JobStatusType.Running
+                      ? "Started running"
+                      : `Last run ${jobStatus.status}`}{" "}
+                    at {readableDate(jobStatus.start_time)}
+                  </JobStatus>
+                </>
+              ) : (
+                <>
+                  <Dot>•</Dot>
+                  <JobStatus>
+                    Last deployed {readableDate(chart.info.last_deployed)}
+                  </JobStatus>
+                </>
+              )}
+              {chart.config?.schedule?.enabled ? (
+                <>
+                  <Dot style={{ marginLeft: "10px" }}>•</Dot>
+                  <JobStatus>
+                    Next run{" "}
+                    {rtf.format(interval?.next().toDate() || new Date())}
+                  </JobStatus>
+                </>
+              ) : null}
+            </LastDeployed>
+          </InfoWrapper>
 
-        <TagWrapper>
-          Namespace
-          <NamespaceTag>{chart.namespace}</NamespaceTag>
-        </TagWrapper>
-      </BottomWrapper>
+          <TagWrapper>
+            Namespace
+            <NamespaceTag>{chart.namespace}</NamespaceTag>
+          </TagWrapper>
+        </BottomWrapper>
 
-      <TopRightContainer>
-        <span>v{chart.version}</span>
-      </TopRightContainer>
-    </StyledChart>
+        <TopRightContainer>
+          <span>v{chart.version}</span>
+        </TopRightContainer>
+      </StyledChart>
+    </Link>
   );
 };
 

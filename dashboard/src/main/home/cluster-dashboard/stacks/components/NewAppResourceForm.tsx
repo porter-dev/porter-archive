@@ -64,7 +64,7 @@ const NewAppResourceForm = (props: {
     onSubmit,
   } = props;
 
-  const { currentCluster } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
 
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -209,7 +209,11 @@ const NewAppResourceForm = (props: {
       .getTemplateInfo<ExpandedPorterTemplate>(
         "<token>",
         {},
-        { name: templateInfo.name, version: templateInfo.version }
+        {
+          project_id: currentProject.id,
+          name: templateInfo.name,
+          version: templateInfo.version,
+        }
       )
       .then((res) => {
         if (isSubscribed) {

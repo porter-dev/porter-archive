@@ -131,7 +131,7 @@ const Chart: React.FunctionComponent<Props> = ({
     >
       <Title>
         <IconWrapper>{renderIcon()}</IconWrapper>
-        {chart.name}
+        {chart.canonical_name === "" ? chart.name : chart.canonical_name}
         {chart?.config?.description && (
           <>
             <Dot style={{ marginLeft: "9px", color: "#ffffff88" }}>•</Dot>

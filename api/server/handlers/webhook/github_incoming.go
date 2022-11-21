@@ -387,7 +387,51 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 		}
 	}
 
+	client, err := getGithubClientFromEnvironment(c.Config(), env)
+
+	if err != nil {
+		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s] error creating github client: %w",
+			webhookID, owner, repo, err)
+	}
+
+	depl := &models.Deployment{
+		EnvironmentID: env.ID,
+		Namespace:     "",
+		Status:        types.DeploymentStatusCreating,
+		PullRequestID: 0,
+		PRName:        fmt.Sprintf("Deployment for branch %s", branch),
+		RepoName:      repo,
+		RepoOwner:     owner,
+		CommitSHA:     event.GetHeadCommit().GetSHA()[:7],
+		PRBranchFrom:  branch,
+		PRBranchInto:  branch,
+	}
+
+	depl, err = c.Repo().Environment().CreateDeployment(depl)
+
+	if err != nil {
+		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, branch: %s] "+
+			"error creating new deployment: %w", webhookID, owner, repo, env.ID, branch, err)
+	}
+
 	// FIXME: we should case on if env mode is auto or manual
+	_, err = client.Actions.CreateWorkflowDispatchEventByFileName(
+		r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
+		github.CreateWorkflowDispatchEventRequest{
+			Ref: branch,
+			Inputs: map[string]interface{}{
+				"pr_number":      depl.ID,
+				"pr_title":       fmt.Sprintf("Deployment for branch %s", branch),
+				"pr_branch_from": branch,
+				"pr_branch_into": branch,
+			},
+		},
+	)
+
+	if err != nil {
+		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, branch: %s] "+
+			"error creating workflow dispatch event: %w", webhookID, owner, repo, env.ID, branch, err)
+	}
 
 	return nil
 }

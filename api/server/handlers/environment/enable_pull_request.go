@@ -121,7 +121,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			Ref: request.BranchFrom,
 			Inputs: map[string]interface{}{
 				"pr_number":      strconv.FormatUint(uint64(request.Number), 10),
-				"pr_title":       *pr.Title,
+				"pr_title":       pr.GetTitle(),
 				"pr_branch_from": request.BranchFrom,
 				"pr_branch_into": request.BranchInto,
 			},

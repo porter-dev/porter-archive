@@ -148,7 +148,7 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if depl.PRBranchFrom != depl.PRBranchInto {
+	if !depl.IsBranchDeploy() {
 		// add a check for the PR to be open before creating a comment
 		prClosed, err := isGithubPRClosed(client, owner, name, int(depl.PullRequestID))
 

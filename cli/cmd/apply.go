@@ -789,13 +789,7 @@ func (t *DeploymentHook) PreApply() error {
 	}
 
 	if t.isBranchDeploy() {
-		t.namespace = fmt.Sprintf("previewbranch-%s-%s-%s", t.branchFrom,
-			strings.ReplaceAll(strings.ToLower(t.repoOwner), "_", "-"),
-			strings.ReplaceAll(strings.ToLower(t.repoName), "_", "-"))
-
-		if len(t.namespace) > 63 {
-			t.namespace = t.namespace[:63] // Kubernetes' DNS 1123 label requirement
-		}
+		t.namespace = preview.GetNamespaceForBranchDeploy(t.branchFrom, t.repoOwner, t.repoName)
 	}
 
 	nsList, err := t.client.GetK8sNamespaces(

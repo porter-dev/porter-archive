@@ -16,17 +16,17 @@ type Environment struct {
 	DeploymentCount      uint              `json:"deployment_count"`
 	LastDeploymentStatus string            `json:"last_deployment_status"`
 	NewCommentsDisabled  bool              `json:"new_comments_disabled"`
-	NamespaceAnnotations map[string]string `json:"namespace_annotations,omitempty"`
+	NamespaceLabels      map[string]string `json:"namespace_labels,omitempty"`
 	GitDeployBranches    []string          `json:"git_deploy_branches"`
 }
 
 type CreateEnvironmentRequest struct {
-	Name                 string            `json:"name" form:"required"`
-	Mode                 string            `json:"mode" form:"oneof=auto manual" default:"manual"`
-	DisableNewComments   bool              `json:"disable_new_comments"`
-	GitRepoBranches      []string          `json:"git_repo_branches"`
-	NamespaceAnnotations map[string]string `json:"namespace_annotations"`
-	GitDeployBranches    []string          `json:"git_deploy_branches"`
+	Name               string            `json:"name" form:"required"`
+	Mode               string            `json:"mode" form:"oneof=auto manual" default:"manual"`
+	DisableNewComments bool              `json:"disable_new_comments"`
+	GitRepoBranches    []string          `json:"git_repo_branches"`
+	NamespaceLabels    map[string]string `json:"namespace_labels"`
+	GitDeployBranches  []string          `json:"git_deploy_branches"`
 }
 
 type GitHubMetadata struct {
@@ -152,9 +152,9 @@ type ValidatePorterYAMLResponse struct {
 }
 
 type UpdateEnvironmentSettingsRequest struct {
-	Mode                 string            `json:"mode" form:"oneof=auto manual"`
-	DisableNewComments   bool              `json:"disable_new_comments"`
-	GitRepoBranches      []string          `json:"git_repo_branches"`
-	NamespaceAnnotations map[string]string `json:"namespace_annotations"`
-	GitDeployBranches    []string          `json:"git_deploy_branches"`
+	Mode               string            `json:"mode" form:"oneof=auto manual"`
+	DisableNewComments bool              `json:"disable_new_comments"`
+	GitRepoBranches    []string          `json:"git_repo_branches"`
+	NamespaceLabels    map[string]string `json:"namespace_labels"`
+	GitDeployBranches  []string          `json:"git_deploy_branches"`
 }

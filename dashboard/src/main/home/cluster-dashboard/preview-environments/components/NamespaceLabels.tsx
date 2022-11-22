@@ -11,7 +11,7 @@ type PropsType = {
   setValues: (x: KeyValueType[]) => void;
 };
 
-const NamespaceAnnotations = ({ values, setValues }: PropsType) => {
+const NamespaceLabels = ({ values, setValues }: PropsType) => {
   useEffect(() => {
     if (!values) {
       setValues([]);
@@ -82,7 +82,7 @@ const NamespaceAnnotations = ({ values, setValues }: PropsType) => {
   );
 };
 
-export default NamespaceAnnotations;
+export default NamespaceLabels;
 
 const Spacer = styled.div`
   width: 10px;

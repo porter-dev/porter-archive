@@ -145,7 +145,7 @@ const createEnvironment = baseApi<
     mode: "auto" | "manual";
     disable_new_comments: boolean;
     git_repo_branches: string[];
-    namespace_annotations: Record<string, string>;
+    namespace_labels: Record<string, string>;
     git_deploy_branches: string[];
   },
   {
@@ -171,7 +171,7 @@ const updateEnvironment = baseApi<
     mode: "auto" | "manual";
     disable_new_comments: boolean;
     git_repo_branches: string[]; // Array with branch names
-    namespace_annotations: Record<string, string>;
+    namespace_labels: Record<string, string>;
     git_deploy_branches: string[];
   },
   {

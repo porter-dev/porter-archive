@@ -77,14 +77,14 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		GitDeployBranches:   strings.Join(request.GitDeployBranches, ","),
 	}
 
-	if len(request.NamespaceAnnotations) > 0 {
-		var annotations []string
+	if len(request.NamespaceLabels) > 0 {
+		var labels []string
 
-		for k, v := range request.NamespaceAnnotations {
-			annotations = append(annotations, fmt.Sprintf("%s=%s", k, v))
+		for k, v := range request.NamespaceLabels {
+			labels = append(labels, fmt.Sprintf("%s=%s", k, v))
 		}
 
-		env.NamespaceAnnotations = []byte(strings.Join(annotations, ","))
+		env.NamespaceLabels = []byte(strings.Join(labels, ","))
 	}
 
 	// write Github actions files to the repo

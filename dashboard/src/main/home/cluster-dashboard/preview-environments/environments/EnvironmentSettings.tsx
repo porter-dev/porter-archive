@@ -69,14 +69,12 @@ const EnvironmentSettings = () => {
       setDeploymentMode(environment.mode);
 
       if (environment.namespace_labels) {
-        const labels: KeyValueType[] = [];
-
-        Object.keys(environment.namespace_labels).forEach((k) => {
-          labels.push({
-            key: k,
-            value: environment.namespace_labels[k],
-          });
-        });
+        const labels: KeyValueType[] = Object.entries(
+          environment.namespace_labels
+        ).map(([key, value]) => ({
+          key,
+          value,
+        }));
 
         setNamespaceLabels(labels);
       }
@@ -295,10 +293,11 @@ const EnvironmentSettings = () => {
         <NamespaceLabels
           values={namespaceLabels}
           setValues={(x: KeyValueType[]) => {
-            let labels: KeyValueType[] = [];
-            x.forEach((entry) => {
-              labels.push({ key: entry.key, value: entry.value });
-            });
+            const labels: KeyValueType[] = x.map((entry) => ({
+              key: entry.key,
+              value: entry.value,
+            }));
+
             setNamespaceLabels(labels);
           }}
         />

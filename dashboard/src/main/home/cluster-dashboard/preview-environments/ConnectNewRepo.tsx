@@ -113,7 +113,7 @@ const ConnectNewRepo: React.FC = () => {
 
   const addRepo = () => {
     let [owner, repoName] = repo.split("/");
-    let labels: Record<string, string> = {};
+    const labels: Record<string, string> = {};
 
     setStatus("loading");
 

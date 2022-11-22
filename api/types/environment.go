@@ -74,7 +74,7 @@ type CreateDeploymentRequest struct {
 	*GitHubMetadata
 
 	Namespace     string `json:"namespace" form:"required"`
-	PullRequestID uint   `json:"pull_request_id" form:"required"`
+	PullRequestID uint   `json:"pull_request_id"`
 }
 
 type SuccessfullyDeployedResource struct {

@@ -788,6 +788,12 @@ func (t *DeploymentHook) PreApply() error {
 		return fmt.Errorf("could not find environment for deployment")
 	}
 
+	if t.isBranchDeploy() {
+		t.namespace = fmt.Sprintf("previewbranch-%s-%s-%s", t.branchFrom,
+			strings.ReplaceAll(strings.ToLower(t.repoOwner), "_", "-"),
+			strings.ReplaceAll(strings.ToLower(t.repoName), "_", "-"))[:63] // Kubernetes' DNS 1123 label requirement
+	}
+
 	nsList, err := t.client.GetK8sNamespaces(
 		context.Background(), t.projectID, t.clusterID,
 	)

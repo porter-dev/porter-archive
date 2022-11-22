@@ -68,6 +68,7 @@ const EnvironmentSettings = () => {
       setBaseBranches(environment.git_repo_branches);
       setNewCommentsDisabled(environment.new_comments_disabled);
       setDeploymentMode(environment.mode);
+      setDeployBranches(environment.git_deploy_branches);
 
       if (environment.namespace_labels) {
         const labels: KeyValueType[] = Object.entries(

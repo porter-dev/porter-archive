@@ -396,23 +396,30 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 	namespace := fmt.Sprintf("previewbranch-%s-%s-%s", branch, strings.ReplaceAll(strings.ToLower(owner), "_", "-"),
 		strings.ReplaceAll(strings.ToLower(repo), "_", "-"))
 
-	depl := &models.Deployment{
-		EnvironmentID: env.ID,
-		Namespace:     namespace[:63], // Kubernetes' DNS 1123 label requirement
-		Status:        types.DeploymentStatusCreating,
-		PRName:        fmt.Sprintf("Deployment for branch %s", branch),
-		RepoName:      repo,
-		RepoOwner:     owner,
-		CommitSHA:     event.GetAfter()[:7],
-		PRBranchFrom:  branch,
-		PRBranchInto:  branch,
-	}
+	depl, err := c.Repo().Environment().ReadDeployment(env.ID, namespace)
 
-	depl, err = c.Repo().Environment().CreateDeployment(depl)
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		depl := &models.Deployment{
+			EnvironmentID: env.ID,
+			Namespace:     namespace[:63], // Kubernetes' DNS 1123 label requirement
+			Status:        types.DeploymentStatusCreating,
+			PRName:        fmt.Sprintf("Deployment for branch %s", branch),
+			RepoName:      repo,
+			RepoOwner:     owner,
+			CommitSHA:     event.GetAfter()[:7],
+			PRBranchFrom:  branch,
+			PRBranchInto:  branch,
+		}
 
-	if err != nil {
+		_, err := c.Repo().Environment().CreateDeployment(depl)
+
+		if err != nil {
+			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, branch: %s] "+
+				"error creating new deployment: %w", webhookID, owner, repo, env.ID, branch, err)
+		}
+	} else if err != nil {
 		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, branch: %s] "+
-			"error creating new deployment: %w", webhookID, owner, repo, env.ID, branch, err)
+			"error reading deployment: %w", webhookID, owner, repo, env.ID, branch, err)
 	}
 
 	// FIXME: we should case on if env mode is auto or manual

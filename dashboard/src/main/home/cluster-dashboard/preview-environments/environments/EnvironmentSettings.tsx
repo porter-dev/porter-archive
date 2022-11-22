@@ -18,9 +18,7 @@ import Banner from "components/Banner";
 import InputRow from "components/form-components/InputRow";
 import Modal from "main/home/modals/Modal";
 import { useRouting } from "shared/routing";
-import NamespaceAnnotations, {
-  KeyValueType,
-} from "../components/NamespaceAnnotations";
+import NamespaceLabels, { KeyValueType } from "../components/NamespaceLabels";
 import BranchFilterSelector from "../components/BranchFilterSelector";
 
 const EnvironmentSettings = () => {
@@ -41,9 +39,7 @@ const EnvironmentSettings = () => {
     deploymentMode,
     setDeploymentMode,
   ] = useState<EnvironmentDeploymentMode>("manual");
-  const [namespaceAnnotations, setNamespaceAnnotations] = useState<
-    KeyValueType[]
-  >([]);
+  const [namespaceLabels, setNamespaceLabels] = useState<KeyValueType[]>([]);
   const {
     environment_id: environmentId,
     repo_name: repoName,
@@ -73,17 +69,15 @@ const EnvironmentSettings = () => {
       setNewCommentsDisabled(environment.new_comments_disabled);
       setDeploymentMode(environment.mode);
 
-      if (environment.namespace_annotations) {
-        const annotations: KeyValueType[] = [];
+      if (environment.namespace_labels) {
+        const labels: KeyValueType[] = Object.entries(
+          environment.namespace_labels
+        ).map(([key, value]) => ({
+          key,
+          value,
+        }));
 
-        Object.keys(environment.namespace_annotations).forEach((k) => {
-          annotations.push({
-            key: k,
-            value: environment.namespace_annotations[k],
-          });
-        });
-
-        setNamespaceAnnotations(annotations);
+        setNamespaceLabels(labels);
       }
     };
 
@@ -127,11 +121,11 @@ const EnvironmentSettings = () => {
   }, [environment]);
 
   const handleSave = async () => {
-    let annotations: Record<string, string> = {};
+    let labels: Record<string, string> = {};
 
     setSaveStatus("loading");
 
-    namespaceAnnotations
+    namespaceLabels
       .filter((elem: KeyValueType, index: number, self: KeyValueType[]) => {
         // remove any collisions that are duplicates
         let numCollisions = self.reduce((n, _elem: KeyValueType) => {
@@ -149,7 +143,7 @@ const EnvironmentSettings = () => {
       })
       .forEach((elem: KeyValueType) => {
         if (elem.key !== "" && elem.value !== "") {
-          annotations[elem.key] = elem.value;
+          labels[elem.key] = elem.value;
         }
       });
 
@@ -160,7 +154,7 @@ const EnvironmentSettings = () => {
           mode: deploymentMode,
           disable_new_comments: newCommentsDisabled,
           git_repo_branches: baseBranches,
-          namespace_annotations: annotations,
+          namespace_labels: labels,
           git_deploy_branches: deployBranches,
         },
         {
@@ -304,19 +298,20 @@ const EnvironmentSettings = () => {
           showLoading={isLoadingBranches}
         />
         <Br />
-        <Heading>Namespace annotations</Heading>
+        <Heading>Namespace labels</Heading>
         <Helper>
-          Custom annotations to be injected into the Kubernetes namespace
-          created for each deployment.
+          Custom labels to be injected into the Kubernetes namespace created for
+          each deployment.
         </Helper>
-        <NamespaceAnnotations
-          values={namespaceAnnotations}
+        <NamespaceLabels
+          values={namespaceLabels}
           setValues={(x: KeyValueType[]) => {
-            let annotations: KeyValueType[] = [];
-            x.forEach((entry) => {
-              annotations.push({ key: entry.key, value: entry.value });
-            });
-            setNamespaceAnnotations(annotations);
+            const labels: KeyValueType[] = x.map((entry) => ({
+              key: entry.key,
+              value: entry.value,
+            }));
+
+            setNamespaceLabels(labels);
           }}
         />
         <SavePreviewEnvironmentSettings

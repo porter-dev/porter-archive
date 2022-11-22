@@ -241,7 +241,7 @@ func getPreviewApplyActionYAML(opts *EnvOpts) ([]byte, error) {
 				"inputs": map[string]interface{}{
 					"pr_number": map[string]interface{}{
 						"description": "Pull request number",
-						"type":        "number",
+						"type":        "string",
 						"required":    true,
 					},
 					"pr_title": map[string]interface{}{

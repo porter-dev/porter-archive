@@ -390,19 +390,20 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
 	if err != nil {
-		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s] error creating github client: %w",
-			webhookID, owner, repo, err)
+		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s] error creating github client: %w", webhookID, owner, repo, err)
 	}
+
+	namespace := fmt.Sprintf("previewbranch-%s-%s-%s", branch, strings.ReplaceAll(strings.ToLower(owner), "_", "-"),
+		strings.ReplaceAll(strings.ToLower(repo), "_", "-"))
 
 	depl := &models.Deployment{
 		EnvironmentID: env.ID,
-		Namespace:     "",
+		Namespace:     namespace[:63], // Kubernetes' DNS 1123 label requirement
 		Status:        types.DeploymentStatusCreating,
-		PullRequestID: 0,
 		PRName:        fmt.Sprintf("Deployment for branch %s", branch),
 		RepoName:      repo,
 		RepoOwner:     owner,
-		CommitSHA:     event.GetHeadCommit().GetSHA()[:7],
+		CommitSHA:     event.GetAfter()[:7],
 		PRBranchFrom:  branch,
 		PRBranchInto:  branch,
 	}
@@ -420,7 +421,7 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 		github.CreateWorkflowDispatchEventRequest{
 			Ref: branch,
 			Inputs: map[string]interface{}{
-				"pr_number":      depl.ID,
+				"pr_number":      fmt.Sprintf("%d", depl.ID),
 				"pr_title":       fmt.Sprintf("Deployment for branch %s", branch),
 				"pr_branch_from": branch,
 				"pr_branch_into": branch,

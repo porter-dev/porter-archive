@@ -11,7 +11,7 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 
 export const AddResourceButton = () => {
-  const { capabilities } = useContext(Context);
+  const { currentProject, capabilities } = useContext(Context);
   const [templates, setTemplates] = useState<PorterTemplate[]>([]);
   const [currentTemplate, setCurrentTemplate] = useState<PorterTemplate>();
   const [currentVersion, setCurrentVersion] = useState("");
@@ -23,7 +23,9 @@ export const AddResourceButton = () => {
         {
           repo_url: capabilities?.default_app_helm_repo_url,
         },
-        {}
+        {
+          project_id: currentProject.id,
+        }
       );
       let sortedVersionData = res.data
         .map((template: PorterTemplate) => {

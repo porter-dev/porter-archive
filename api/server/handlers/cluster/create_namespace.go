@@ -55,7 +55,7 @@ func (c *CreateNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	namespace, err := agent.CreateNamespace(request.Name, request.Annotations)
+	namespace, err := agent.CreateNamespace(request.Name, request.Labels)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

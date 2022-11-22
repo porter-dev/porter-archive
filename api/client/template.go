@@ -9,13 +9,14 @@ import (
 
 func (c *Client) ListTemplates(
 	ctx context.Context,
+	projectID uint,
 	req *types.ListTemplatesRequest,
 ) (*types.ListTemplatesResponse, error) {
 	resp := &types.ListTemplatesResponse{}
 
 	err := c.getRequest(
 		fmt.Sprintf(
-			"/templates",
+			"/v1/projects/%d/templates", projectID,
 		),
 		req,
 		resp,
@@ -26,6 +27,7 @@ func (c *Client) ListTemplates(
 
 func (c *Client) GetTemplate(
 	ctx context.Context,
+	projectID uint,
 	name, version string,
 	req *types.GetTemplateRequest,
 ) (*types.GetTemplateResponse, error) {
@@ -33,7 +35,8 @@ func (c *Client) GetTemplate(
 
 	err := c.getRequest(
 		fmt.Sprintf(
-			"/templates/%s/%s",
+			"/v1/projects/%d/templates/%s/versions/%s",
+			projectID,
 			name, version,
 		),
 		req,

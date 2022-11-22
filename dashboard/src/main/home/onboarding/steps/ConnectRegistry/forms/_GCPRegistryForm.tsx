@@ -351,7 +351,7 @@ export const GARegistryConfig: React.FC<{
 
     setButtonStatus("loading");
 
-    let gcpProjectId = NaN;
+    let gcpProjectId: string;
 
     try {
       const gcp_integration = await api
@@ -375,7 +375,30 @@ export const GARegistryConfig: React.FC<{
       return;
     }
 
-    const registryUrl = `${region}-docker.pkg.dev/${gcpProjectId}`;
+    let registryURL: string;
+
+    // GCP project IDs can have the ':' character like example.com:my-project
+    // if this is the case then we need to case on this
+    //
+    // see: https://cloud.google.com/artifact-registry/docs/docker/names#domain
+    if (gcpProjectId.includes(":")) {
+      const domainProjectID = gcpProjectId.split(":");
+
+      if (
+        domainProjectID.length !== 2 ||
+        domainProjectID[0].length === 0 ||
+        domainProjectID[1].length === 0
+      ) {
+        setButtonStatus(
+          "Invalid GCP project ID. Please check your credentials."
+        );
+        return;
+      }
+
+      registryURL = `${region}-docker.pkg.dev/${domainProjectID[0]}/${domainProjectID[1]}`;
+    } else {
+      registryURL = `${region}-docker.pkg.dev/${gcpProjectId}`;
+    }
 
     try {
       const data = await api
@@ -385,7 +408,7 @@ export const GARegistryConfig: React.FC<{
             name: registryName,
             gcp_integration_id:
               snap.StateHandler.connected_registry.credentials.id,
-            url: registryUrl,
+            url: registryURL,
           },
           {
             id: project.id,
@@ -395,7 +418,7 @@ export const GARegistryConfig: React.FC<{
       nextFormStep({
         settings: {
           registry_connection_id: data.id,
-          gcr_url: registryUrl,
+          gcr_url: registryURL,
           registry_name: registryName,
         },
       });

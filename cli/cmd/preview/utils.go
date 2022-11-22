@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
@@ -119,7 +120,7 @@ func GetTarget(resourceName string, input map[string]interface{}) (*preview.Targ
 		output.Cluster = uint(cluster)
 	}
 
-	output.Namespace = os.Getenv("PORTER_NAMESPACE")
+	output.Namespace = getNamespace()
 
 	// next, check for values in the YAML file
 	if output.Project == 0 {
@@ -173,6 +174,34 @@ func GetTarget(resourceName string, input map[string]interface{}) (*preview.Targ
 	}
 
 	return output, nil
+}
+
+func GetNamespaceForBranchDeploy(branch, owner, name string) string {
+	namespace := fmt.Sprintf("previewbranch-%s-%s-%s", branch,
+		strings.ReplaceAll(strings.ToLower(owner), "_", "-"),
+		strings.ReplaceAll(strings.ToLower(name), "_", "-"))
+
+	if len(namespace) > 63 {
+		namespace = namespace[:63] // Kubernetes' DNS 1123 label requirement
+	}
+
+	return namespace
+}
+
+func getNamespace() string {
+	if owner, ok := os.LookupEnv("PORTER_REPO_OWNER"); ok {
+		if repo, ok := os.LookupEnv("PORTER_REPO_NAME"); ok {
+			if branchFrom, ok := os.LookupEnv("PORTER_BRANCH_FROM"); ok {
+				if branchInto, ok := os.LookupEnv("PORTER_BRANCH_INTO"); ok {
+					if branchInto == branchFrom { // branch deploy
+						return GetNamespaceForBranchDeploy(branchInto, owner, repo)
+					}
+				}
+			}
+		}
+	}
+
+	return os.Getenv("PORTER_NAMESPACE")
 }
 
 func existsInRepo(projectID uint, name, version, url string) (map[string]interface{}, error) {

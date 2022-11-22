@@ -193,6 +193,8 @@ const DeploymentCard: React.FC<{
     },
   ];
 
+  console.error(deployment, deployment.gh_pr_branch_from, deployment.gh_pr_branch_into, deployment.gh_pr_branch_from === deployment.gh_pr_branch_into);
+
   return (
     <DeploymentCardWrapper
       to={`/preview-environments/details/${deployment.id}?environment_id=${deployment.environment_id}`}
@@ -216,7 +218,9 @@ const DeploymentCard: React.FC<{
               {deployment.gh_pr_name}
             </StyledLink>
           </EllipsisTextWrapper>
-          {deployment.gh_pr_branch_from && deployment.gh_pr_branch_into ? (
+          {deployment.gh_pr_branch_from &&
+          deployment.gh_pr_branch_into &&
+          deployment.gh_pr_branch_from !== deployment.gh_pr_branch_into ? (
             <MergeInfoWrapper>
               <MergeInfo
                 onMouseOver={() => setShowMergeInfoTooltip(true)}

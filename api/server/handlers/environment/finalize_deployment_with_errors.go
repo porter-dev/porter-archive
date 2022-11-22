@@ -119,20 +119,6 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 		return
 	}
 
-	// add a check for the PR to be open before creating a comment
-	prClosed, err := isGithubPRClosed(client, owner, name, int(depl.PullRequestID))
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
-		return
-	}
-
-	if prClosed {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("github PR has been closed"),
-			http.StatusConflict))
-		return
-	}
-
 	depl.Status = types.DeploymentStatusFailed
 
 	// we do not care of the error in this case because the list deployments endpoint
@@ -147,51 +133,67 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 		},
 	)
 
-	workflowRun, err := commonutils.GetLatestWorkflowRun(client, depl.RepoOwner, depl.RepoName,
-		fmt.Sprintf("porter_%s_env.yml", env.Name), depl.PRBranchFrom)
+	if !depl.IsBranchDeploy() {
+		// add a check for the PR to be open before creating a comment
+		prClosed, err := isGithubPRClosed(client, owner, name, int(depl.PullRequestID))
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
+			return
+		}
 
-	commentBody := fmt.Sprintf(
-		"## Porter Preview Environments\n"+
-			"❌ Errors encountered while deploying the changes\n"+
-			"||Deployment Information|\n"+
-			"|-|-|\n"+
-			"| Latest SHA | [`%s`](https://github.com/%s/%s/commit/%s) |\n"+
-			"| Build Logs | %s |\n",
-		depl.CommitSHA, depl.RepoOwner, depl.RepoName, depl.CommitSHA, workflowRun.GetHTMLURL(),
-	)
+		if prClosed {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("github PR has been closed"),
+				http.StatusConflict))
+			return
+		}
 
-	if len(request.SuccessfulResources) > 0 {
-		commentBody += "#### Successfully deployed resources\n"
+		workflowRun, err := commonutils.GetLatestWorkflowRun(client, depl.RepoOwner, depl.RepoName,
+			fmt.Sprintf("porter_%s_env.yml", env.Name), depl.PRBranchFrom)
 
-		for _, res := range request.SuccessfulResources {
-			if res.ReleaseType == "job" {
-				commentBody += fmt.Sprintf("- [`%s`](%s/jobs/%s/%s/%s?project_id=%d)\n",
-					res.ReleaseName, c.Config().ServerConf.ServerURL, cluster.Name, depl.Namespace,
-					res.ReleaseName, project.ID)
-			} else {
-				commentBody += fmt.Sprintf("- [`%s`](%s/applications/%s/%s/%s?project_id=%d)\n",
-					res.ReleaseName, c.Config().ServerConf.ServerURL, cluster.Name, depl.Namespace,
-					res.ReleaseName, project.ID)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		commentBody := fmt.Sprintf(
+			"## Porter Preview Environments\n"+
+				"❌ Errors encountered while deploying the changes\n"+
+				"||Deployment Information|\n"+
+				"|-|-|\n"+
+				"| Latest SHA | [`%s`](https://github.com/%s/%s/commit/%s) |\n"+
+				"| Build Logs | %s |\n",
+			depl.CommitSHA, depl.RepoOwner, depl.RepoName, depl.CommitSHA, workflowRun.GetHTMLURL(),
+		)
+
+		if len(request.SuccessfulResources) > 0 {
+			commentBody += "#### Successfully deployed resources\n"
+
+			for _, res := range request.SuccessfulResources {
+				if res.ReleaseType == "job" {
+					commentBody += fmt.Sprintf("- [`%s`](%s/jobs/%s/%s/%s?project_id=%d)\n",
+						res.ReleaseName, c.Config().ServerConf.ServerURL, cluster.Name, depl.Namespace,
+						res.ReleaseName, project.ID)
+				} else {
+					commentBody += fmt.Sprintf("- [`%s`](%s/applications/%s/%s/%s?project_id=%d)\n",
+						res.ReleaseName, c.Config().ServerConf.ServerURL, cluster.Name, depl.Namespace,
+						res.ReleaseName, project.ID)
+				}
 			}
 		}
-	}
 
-	commentBody += "#### Failed resources\n"
+		commentBody += "#### Failed resources\n"
 
-	for res, err := range request.Errors {
-		commentBody += fmt.Sprintf("<details>\n  <summary><code>%s</code></summary>\n\n  **Error:** %s\n</details>\n", res, err)
-	}
+		for res, err := range request.Errors {
+			commentBody += fmt.Sprintf("<details>\n  <summary><code>%s</code></summary>\n\n  **Error:** %s\n</details>\n", res, err)
+		}
 
-	err = createOrUpdateComment(client, c.Repo(), env.NewCommentsDisabled, depl, github.String(commentBody))
+		err = createOrUpdateComment(client, c.Repo(), env.NewCommentsDisabled, depl, github.String(commentBody))
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	c.WriteResult(w, r, depl.ToDeploymentType())

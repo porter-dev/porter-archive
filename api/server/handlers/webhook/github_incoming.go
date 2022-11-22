@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
@@ -59,6 +60,13 @@ func (c *GithubIncomingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error processing pull request webhook event: %w", err)))
 			return
 		}
+	case *github.PushEvent:
+		err = c.processPushEvent(event, r)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error processing push webhook event: %w", err)))
+			return
+		}
 	}
 }
 
@@ -101,6 +109,21 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 		}
 
 		if !found {
+			return nil
+		}
+	} else if len(envType.GitDeployBranches) > 0 {
+		// if the pull request's head branch is in the list of deploy branches
+		// then we ignore it to avoid a double deploy
+		found := false
+
+		for _, br := range envType.GitDeployBranches {
+			if br == event.GetPullRequest().GetHead().GetRef() {
+				found = true
+				break
+			}
+		}
+
+		if found {
 			return nil
 		}
 	}
@@ -315,6 +338,99 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 	if err != nil {
 		return fmt.Errorf("[owner: %s, repo: %s, environmentID: %d, deploymentID: %d] error updating deployment: %w",
 			env.GitRepoOwner, env.GitRepoName, env.ID, depl.ID, err)
+	}
+
+	return nil
+}
+
+func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent, r *http.Request) error {
+	if !strings.HasPrefix(event.GetRef(), "refs/heads/") {
+		return nil
+	}
+
+	// get the webhook id from the request
+	webhookID, reqErr := requestutils.GetURLParamString(r, types.URLParamIncomingWebhookID)
+
+	if reqErr != nil {
+		return fmt.Errorf(reqErr.Error())
+	}
+
+	owner := event.GetRepo().GetOwner().GetLogin()
+	repo := event.GetRepo().GetName()
+
+	env, err := c.Repo().Environment().ReadEnvironmentByWebhookIDOwnerRepoName(webhookID, owner, repo)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+
+		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s] error reading environment: %w", webhookID, owner, repo, err)
+	}
+
+	envType := env.ToEnvironmentType()
+
+	branch := strings.TrimPrefix(event.GetRef(), "refs/heads/")
+
+	if len(envType.GitDeployBranches) > 0 {
+		found := false
+
+		for _, br := range envType.GitDeployBranches {
+			if br == branch {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return nil
+		}
+	}
+
+	client, err := getGithubClientFromEnvironment(c.Config(), env)
+
+	if err != nil {
+		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s] error creating github client: %w",
+			webhookID, owner, repo, err)
+	}
+
+	depl := &models.Deployment{
+		EnvironmentID: env.ID,
+		Namespace:     "",
+		Status:        types.DeploymentStatusCreating,
+		PullRequestID: 0,
+		PRName:        fmt.Sprintf("Deployment for branch %s", branch),
+		RepoName:      repo,
+		RepoOwner:     owner,
+		CommitSHA:     event.GetHeadCommit().GetSHA()[:7],
+		PRBranchFrom:  branch,
+		PRBranchInto:  branch,
+	}
+
+	depl, err = c.Repo().Environment().CreateDeployment(depl)
+
+	if err != nil {
+		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, branch: %s] "+
+			"error creating new deployment: %w", webhookID, owner, repo, env.ID, branch, err)
+	}
+
+	// FIXME: we should case on if env mode is auto or manual
+	_, err = client.Actions.CreateWorkflowDispatchEventByFileName(
+		r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
+		github.CreateWorkflowDispatchEventRequest{
+			Ref: branch,
+			Inputs: map[string]interface{}{
+				"pr_number":      depl.ID,
+				"pr_title":       fmt.Sprintf("Deployment for branch %s", branch),
+				"pr_branch_from": branch,
+				"pr_branch_into": branch,
+			},
+		},
+	)
+
+	if err != nil {
+		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, branch: %s] "+
+			"error creating workflow dispatch event: %w", webhookID, owner, repo, env.ID, branch, err)
 	}
 
 	return nil

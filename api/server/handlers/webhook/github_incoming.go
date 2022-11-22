@@ -396,12 +396,18 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 	namespace := fmt.Sprintf("previewbranch-%s-%s-%s", branch, strings.ReplaceAll(strings.ToLower(owner), "_", "-"),
 		strings.ReplaceAll(strings.ToLower(repo), "_", "-"))
 
+	if len(namespace) > 63 {
+		namespace = namespace[:63] // Kubernetes' DNS 1123 label requirement
+	}
+
+	var deplID uint
+
 	depl, err := c.Repo().Environment().ReadDeployment(env.ID, namespace)
 
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		depl := &models.Deployment{
+		depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
 			EnvironmentID: env.ID,
-			Namespace:     namespace[:63], // Kubernetes' DNS 1123 label requirement
+			Namespace:     namespace,
 			Status:        types.DeploymentStatusCreating,
 			PRName:        fmt.Sprintf("Deployment for branch %s", branch),
 			RepoName:      repo,
@@ -409,17 +415,19 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 			CommitSHA:     event.GetAfter()[:7],
 			PRBranchFrom:  branch,
 			PRBranchInto:  branch,
-		}
-
-		_, err := c.Repo().Environment().CreateDeployment(depl)
+		})
 
 		if err != nil {
 			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, branch: %s] "+
 				"error creating new deployment: %w", webhookID, owner, repo, env.ID, branch, err)
 		}
+
+		deplID = depl.ID
 	} else if err != nil {
 		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, branch: %s] "+
 			"error reading deployment: %w", webhookID, owner, repo, env.ID, branch, err)
+	} else {
+		deplID = depl.ID
 	}
 
 	// FIXME: we should case on if env mode is auto or manual
@@ -428,7 +436,7 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 		github.CreateWorkflowDispatchEventRequest{
 			Ref: branch,
 			Inputs: map[string]interface{}{
-				"pr_number":      fmt.Sprintf("%d", depl.ID),
+				"pr_number":      fmt.Sprintf("%d", deplID),
 				"pr_title":       fmt.Sprintf("Deployment for branch %s", branch),
 				"pr_branch_from": branch,
 				"pr_branch_into": branch,

@@ -754,6 +754,10 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 	return res, nil
 }
 
+func (t *DeploymentHook) isBranchDeploy() bool {
+	return t.branchFrom != "" && t.branchInto != "" && t.branchFrom == t.branchInto
+}
+
 func (t *DeploymentHook) PreApply() error {
 	if isSystemNamespace(t.namespace) {
 		color.New(color.FgYellow).Printf("attempting to deploy to system namespace '%s'\n", t.namespace)
@@ -782,6 +786,10 @@ func (t *DeploymentHook) PreApply() error {
 
 	if t.envID == 0 {
 		return fmt.Errorf("could not find environment for deployment")
+	}
+
+	if t.isBranchDeploy() {
+		t.namespace = preview.GetNamespaceForBranchDeploy(t.branchFrom, t.repoOwner, t.repoName)
 	}
 
 	nsList, err := t.client.GetK8sNamespaces(
@@ -826,51 +834,72 @@ func (t *DeploymentHook) PreApply() error {
 		}
 	}
 
-	// attempt to read the deployment -- if it doesn't exist, create it
-	_, err = t.client.GetDeployment(
-		context.Background(),
-		t.projectID, t.clusterID, t.envID,
-		&types.GetDeploymentRequest{
-			PRNumber: t.prID,
-		},
-	)
+	var deplErr error
 
-	if err != nil && strings.Contains(err.Error(), "not found") {
+	if t.isBranchDeploy() {
+		_, deplErr = t.client.GetDeployment(
+			context.Background(),
+			t.projectID, t.clusterID, t.envID,
+			&types.GetDeploymentRequest{
+				Namespace: t.namespace,
+			},
+		)
+	} else {
+		_, deplErr = t.client.GetDeployment(
+			context.Background(),
+			t.projectID, t.clusterID, t.envID,
+			&types.GetDeploymentRequest{
+				PRNumber: t.prID,
+			},
+		)
+	}
+
+	if deplErr != nil && strings.Contains(deplErr.Error(), "not found") {
 		// in this case, create the deployment
+		createReq := &types.CreateDeploymentRequest{
+			Namespace:     t.namespace,
+			PullRequestID: t.prID,
+			CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
+				ActionID: t.actionID,
+			},
+			GitHubMetadata: &types.GitHubMetadata{
+				PRName:       t.prName,
+				RepoName:     t.repoName,
+				RepoOwner:    t.repoOwner,
+				CommitSHA:    t.commitSHA,
+				PRBranchFrom: t.branchFrom,
+				PRBranchInto: t.branchInto,
+			},
+		}
+
+		if t.isBranchDeploy() {
+			createReq.PullRequestID = 0
+		}
+
 		_, err = t.client.CreateDeployment(
 			context.Background(),
 			t.projectID, t.gitInstallationID, t.clusterID,
-			t.repoOwner, t.repoName,
-			&types.CreateDeploymentRequest{
-				Namespace:     t.namespace,
-				PullRequestID: t.prID,
-				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
-					ActionID: t.actionID,
-				},
-				GitHubMetadata: &types.GitHubMetadata{
-					PRName:       t.prName,
-					RepoName:     t.repoName,
-					RepoOwner:    t.repoOwner,
-					CommitSHA:    t.commitSHA,
-					PRBranchFrom: t.branchFrom,
-					PRBranchInto: t.branchInto,
-				},
-			},
+			t.repoOwner, t.repoName, createReq,
 		)
 	} else if err == nil {
+		updateReq := &types.UpdateDeploymentRequest{
+			Namespace: t.namespace,
+			PRNumber:  t.prID,
+			CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
+				ActionID: t.actionID,
+			},
+			PRBranchFrom: t.branchFrom,
+			CommitSHA:    t.commitSHA,
+		}
+
+		if t.isBranchDeploy() {
+			updateReq.PRNumber = 0
+		}
+
 		_, err = t.client.UpdateDeployment(
 			context.Background(),
 			t.projectID, t.gitInstallationID, t.clusterID,
-			t.repoOwner, t.repoName,
-			&types.UpdateDeploymentRequest{
-				Namespace: t.namespace,
-				PRNumber:  t.prID,
-				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
-					ActionID: t.actionID,
-				},
-				PRBranchFrom: t.branchFrom,
-				CommitSHA:    t.commitSHA,
-			},
+			t.repoOwner, t.repoName, updateReq,
 		)
 	}
 
@@ -953,8 +982,13 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 	}
 
 	req := &types.FinalizeDeploymentRequest{
-		PRNumber:  t.prID,
 		Subdomain: strings.Join(subdomains, ", "),
+	}
+
+	if t.isBranchDeploy() {
+		req.Namespace = t.namespace
+	} else {
+		req.PRNumber = t.prID
 	}
 
 	for _, res := range t.resourceGroup.Resources {
@@ -980,47 +1014,82 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 }
 
 func (t *DeploymentHook) OnError(error) {
-	// if the deployment exists, throw an error for that deployment
-	_, err := t.client.GetDeployment(
-		context.Background(),
-		t.projectID, t.clusterID, t.envID,
-		&types.GetDeploymentRequest{
-			PRNumber: t.prID,
-		},
-	)
+	var deplErr error
 
-	if err == nil {
+	if t.isBranchDeploy() {
+		_, deplErr = t.client.GetDeployment(
+			context.Background(),
+			t.projectID, t.clusterID, t.envID,
+			&types.GetDeploymentRequest{
+				Namespace: t.namespace,
+			},
+		)
+	} else {
+		_, deplErr = t.client.GetDeployment(
+			context.Background(),
+			t.projectID, t.clusterID, t.envID,
+			&types.GetDeploymentRequest{
+				PRNumber: t.prID,
+			},
+		)
+	}
+
+	// if the deployment exists, throw an error for that deployment
+	if deplErr == nil {
+		req := &types.UpdateDeploymentStatusRequest{
+			CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
+				ActionID: t.actionID,
+			},
+			PRBranchFrom: t.branchFrom,
+			Status:       string(types.DeploymentStatusFailed),
+		}
+
+		if t.isBranchDeploy() {
+			req.Namespace = t.namespace
+		} else {
+			req.PRNumber = t.prID
+		}
+
 		// FIXME: try to use the error with a custom logger
 		t.client.UpdateDeploymentStatus(
 			context.Background(),
 			t.projectID, t.gitInstallationID, t.clusterID,
-			t.repoOwner, t.repoName,
-			&types.UpdateDeploymentStatusRequest{
-				PRNumber: t.prID,
-				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
-					ActionID: t.actionID,
-				},
-				PRBranchFrom: t.branchFrom,
-				Status:       string(types.DeploymentStatusFailed),
-			},
+			t.repoOwner, t.repoName, req,
 		)
 	}
 }
 
 func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
-	// if the deployment exists, throw an error for that deployment
-	_, getDeplErr := t.client.GetDeployment(
-		context.Background(),
-		t.projectID, t.clusterID, t.envID,
-		&types.GetDeploymentRequest{
-			PRNumber: t.prID,
-		},
-	)
+	var deplErr error
 
-	if getDeplErr == nil {
+	if t.isBranchDeploy() {
+		_, deplErr = t.client.GetDeployment(
+			context.Background(),
+			t.projectID, t.clusterID, t.envID,
+			&types.GetDeploymentRequest{
+				Namespace: t.namespace,
+			},
+		)
+	} else {
+		_, deplErr = t.client.GetDeployment(
+			context.Background(),
+			t.projectID, t.clusterID, t.envID,
+			&types.GetDeploymentRequest{
+				PRNumber: t.prID,
+			},
+		)
+	}
+
+	// if the deployment exists, throw an error for that deployment
+	if deplErr == nil {
 		req := &types.FinalizeDeploymentWithErrorsRequest{
-			PRNumber: t.prID,
-			Errors:   make(map[string]string),
+			Errors: make(map[string]string),
+		}
+
+		if t.isBranchDeploy() {
+			req.Namespace = t.namespace
+		} else {
+			req.PRNumber = t.prID
 		}
 
 		for _, res := range t.resourceGroup.Resources {

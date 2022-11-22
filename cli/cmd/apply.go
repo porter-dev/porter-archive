@@ -811,8 +811,8 @@ func (t *DeploymentHook) PreApply() error {
 			Name: t.namespace,
 		}
 
-		if len(deplEnv.NamespaceAnnotations) > 0 {
-			createNS.Annotations = deplEnv.NamespaceAnnotations
+		if len(deplEnv.NamespaceLabels) > 0 {
+			createNS.Labels = deplEnv.NamespaceLabels
 		}
 
 		// create the new namespace

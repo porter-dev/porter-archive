@@ -15,9 +15,7 @@ import PullRequestIcon from "assets/pull_request_icon.svg";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import BranchFilterSelector from "./components/BranchFilterSelector";
 import Helper from "components/form-components/Helper";
-import NamespaceAnnotations, {
-  KeyValueType,
-} from "./components/NamespaceAnnotations";
+import NamespaceLabels, { KeyValueType } from "./components/NamespaceLabels";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -49,10 +47,8 @@ const ConnectNewRepo: React.FC = () => {
   // Disable new comments data
   const [isNewCommentsDisabled, setIsNewCommentsDisabled] = useState(false);
 
-  // Namespace annotations
-  const [namespaceAnnotations, setNamespaceAnnotations] = useState<
-    KeyValueType[]
-  >([]);
+  // Namespace labels
+  const [namespaceLabels, setNamespaceLabels] = useState<KeyValueType[]>([]);
 
   useEffect(() => {
     api
@@ -117,11 +113,11 @@ const ConnectNewRepo: React.FC = () => {
 
   const addRepo = () => {
     let [owner, repoName] = repo.split("/");
-    let annotations: Record<string, string> = {};
+    const labels: Record<string, string> = {};
 
     setStatus("loading");
 
-    namespaceAnnotations
+    namespaceLabels
       .filter((elem: KeyValueType, index: number, self: KeyValueType[]) => {
         // remove any collisions that are duplicates
         let numCollisions = self.reduce((n, _elem: KeyValueType) => {
@@ -139,7 +135,7 @@ const ConnectNewRepo: React.FC = () => {
       })
       .forEach((elem: KeyValueType) => {
         if (elem.key !== "" && elem.value !== "") {
-          annotations[elem.key] = elem.value;
+          labels[elem.key] = elem.value;
         }
       });
 
@@ -151,7 +147,7 @@ const ConnectNewRepo: React.FC = () => {
           mode: enableAutomaticDeployments ? "auto" : "manual",
           disable_new_comments: isNewCommentsDisabled,
           git_repo_branches: selectedBranches,
-          namespace_annotations: annotations,
+          namespace_labels: labels,
         },
         {
           project_id: currentProject.id,
@@ -272,19 +268,19 @@ const ConnectNewRepo: React.FC = () => {
         showLoading={isLoadingBranches}
       />
 
-      <Heading>Namespace annotations</Heading>
+      <Heading>Namespace labels</Heading>
       <Helper>
-        Custom annotations to be injected into the Kubernetes namespace created
-        for each deployment.
+        Custom labels to be injected into the Kubernetes namespace created for
+        each deployment.
       </Helper>
-      <NamespaceAnnotations
-        values={namespaceAnnotations}
+      <NamespaceLabels
+        values={namespaceLabels}
         setValues={(x: KeyValueType[]) => {
-          let annotations: KeyValueType[] = [];
+          let labels: KeyValueType[] = [];
           x.forEach((entry) => {
-            annotations.push({ key: entry.key, value: entry.value });
+            labels.push({ key: entry.key, value: entry.value });
           });
-          setNamespaceAnnotations(annotations);
+          setNamespaceLabels(labels);
         }}
       />
 

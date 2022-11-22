@@ -83,3 +83,22 @@ func (hr *HelmRepo) getChartBasic(
 
 	return loader.LoadChart(client, hr.RepoURL, chartName, chartVersion)
 }
+
+func ValidateRepoURL(
+	defaultAddonRepoURL, defaultAppRepoURL string,
+	hrs []*models.HelmRepo,
+	repo_url string,
+) bool {
+	if repo_url == defaultAddonRepoURL || repo_url == defaultAppRepoURL {
+		return true
+	}
+
+	// otherwise, iterate through helm repos
+	for _, hr := range hrs {
+		if hr.RepoURL == repo_url {
+			return true
+		}
+	}
+
+	return false
+}

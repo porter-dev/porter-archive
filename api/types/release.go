@@ -38,6 +38,9 @@ type PorterRelease struct {
 
 	// Whether this release is tied to a stack or not
 	StackID string `json:"stack_id"`
+
+	// The canonical name of this release
+	CanonicalName string `json:"canonical_name"`
 }
 
 // swagger:model
@@ -210,4 +213,8 @@ type PartialGitActionConfig struct {
 
 type UpdateGitActionConfigRequest struct {
 	GitActionConfig *PartialGitActionConfig `json:"git_action_config"`
+}
+
+type UpdateCanonicalNameRequest struct {
+	CanonicalName string `json:"canonical_name"`
 }

@@ -3,8 +3,8 @@ package connect
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/fatih/color"
 
@@ -23,8 +23,8 @@ func GAR(
 		return 0, fmt.Errorf("no project set, please run porter config set-project")
 	}
 
-	keyFileLocation, err := utils.PromptPlaintext(fmt.Sprintf(`Please provide the full path to a service account key file.
-Key file location: `))
+	keyFileLocation, err := utils.PromptPlaintext(`Please provide the full path to a service account key file.
+Key file location: `)
 
 	if err != nil {
 		return 0, err
@@ -33,7 +33,7 @@ Key file location: `))
 	// attempt to read the key file location
 	if info, err := os.Stat(keyFileLocation); !os.IsNotExist(err) && !info.IsDir() {
 		// read the file
-		bytes, err := ioutil.ReadFile(keyFileLocation)
+		bytes, err := os.ReadFile(keyFileLocation)
 
 		if err != nil {
 			return 0, err
@@ -54,8 +54,8 @@ Key file location: `))
 
 		color.New(color.FgGreen).Printf("created gcp integration with id %d\n", integration.ID)
 
-		region, err := utils.PromptPlaintext(fmt.Sprintf(`Please enter the artifact registry region. For example, us-central-1.
-Artifact registry region: `))
+		region, err := utils.PromptPlaintext(`Please enter the artifact registry region. For example, us-central1.
+Artifact registry region: `)
 
 		if err != nil {
 			return 0, err
@@ -63,10 +63,26 @@ Artifact registry region: `))
 
 		// create the registry
 		// query for registry name
-		regName, err := utils.PromptPlaintext(fmt.Sprintf(`Give this registry a name: `))
+		regName, err := utils.PromptPlaintext("Give this registry a name: ")
 
 		if err != nil {
 			return 0, err
+		}
+
+		// GCP project IDs can have the ':' character like example.com:my-project
+		// if this is the case then we need to case on this
+		//
+		// see: https://cloud.google.com/artifact-registry/docs/docker/names#domain
+		var registryURL string
+
+		if domain, projectID, found := strings.Cut(integration.GCPProjectID, ":"); found {
+			if domain == "" || projectID == "" {
+				return 0, fmt.Errorf("invalid project ID: %s", integration.GCPProjectID)
+			}
+
+			registryURL = fmt.Sprintf("%s-docker.pkg.dev/%s/%s", region, domain, projectID)
+		} else {
+			registryURL = fmt.Sprintf("%s-docker.pkg.dev/%s", region, integration.GCPProjectID)
 		}
 
 		reg, err := client.CreateRegistry(
@@ -75,7 +91,7 @@ Artifact registry region: `))
 			&types.CreateRegistryRequest{
 				Name:             regName,
 				GCPIntegrationID: integration.ID,
-				URL:              region + "-docker.pkg.dev/" + integration.GCPProjectID,
+				URL:              registryURL,
 			},
 		)
 

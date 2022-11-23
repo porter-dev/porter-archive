@@ -110,6 +110,9 @@ type ServerConf struct {
 	// DisableRegistrySecretsInjection is used to denote if Porter should not inject
 	// imagePullSecrets into a kubernetes deployment (Porter application)
 	DisablePullSecretsInjection bool `env:"DISABLE_PULL_SECRETS_INJECTION,default=false"`
+
+	// EnableAutoPreviewBranchDeploy is used to enable preview branch deployments automatically
+	EnableAutoPreviewBranchDeploy bool `env:"ENABLE_AUTO_PREVIEW_BRANCH_DEPLOY,default=false"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

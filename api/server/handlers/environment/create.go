@@ -271,7 +271,7 @@ func autoDeployBranch(
 
 			var deplID uint
 
-			_, err = config.Repo.Environment().ReadDeployment(env.ID, namespace)
+			depl, err := config.Repo.Environment().ReadDeployment(env.ID, namespace)
 
 			if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 				depl, err := config.Repo.Environment().CreateDeployment(&models.Deployment{
@@ -296,6 +296,8 @@ func autoDeployBranch(
 				return
 			} else if onlyNewDeployments {
 				return
+			} else {
+				deplID = depl.ID
 			}
 
 			_, err = client.Actions.CreateWorkflowDispatchEventByFileName(

@@ -728,7 +728,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   // Check if porter agent is installed. If not installed hide the `Logs` component
   useEffect(() => {
-    if (!currentCluster.agent_integration_enabled) {
+    if (
+      !currentCluster.agent_integration_enabled ||
+      // If chart is an add on, we don't need to check if agent is installed
+      !["web", "worker", "job"].includes(currentChart?.chart?.metadata?.name)
+    ) {
       return;
     }
 
@@ -757,7 +761,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           );
         }
       });
-  }, []);
+  }, [currentChart]);
 
   useEffect(() => {
     if (logData.revision) {

@@ -112,6 +112,8 @@ type ServerConf struct {
 	DisablePullSecretsInjection bool `env:"DISABLE_PULL_SECRETS_INJECTION,default=false"`
 
 	// EnableAutoPreviewBranchDeploy is used to enable preview branch deployments automatically
+	// The default behvior is to require a user to manually git push for a preview deployment
+	// against a deploy branch to be created
 	EnableAutoPreviewBranchDeploy bool `env:"ENABLE_AUTO_PREVIEW_BRANCH_DEPLOY,default=false"`
 }
 

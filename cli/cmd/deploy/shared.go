@@ -29,6 +29,12 @@ func coalesceEnvGroups(
 	envGroups []types.EnvGroupMeta,
 	config map[string]interface{},
 ) error {
+	originalEnvConfig, err := GetNestedMap(config, "container", "env", "normal")
+
+	if err != nil || originalEnvConfig == nil {
+		originalEnvConfig = make(map[string]interface{})
+	}
+
 	for _, group := range envGroups {
 		if group.Name == "" {
 			return fmt.Errorf("env group name cannot be empty")
@@ -56,9 +62,11 @@ func coalesceEnvGroups(
 		}
 
 		for k, v := range envGroup.Variables {
-			if _, ok := envConfig[k]; !ok {
-				envConfig[k] = v
+			// If original env config already have the value, do not override
+			if _, ok := originalEnvConfig[k]; ok {
+				continue
 			}
+			envConfig[k] = v
 		}
 
 		containerMap, _ := config["container"].(map[string]interface{})

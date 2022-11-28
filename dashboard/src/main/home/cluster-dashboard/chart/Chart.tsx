@@ -1,4 +1,10 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import styled from "styled-components";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 
@@ -22,6 +28,7 @@ import {
   withStyles,
 } from "@material-ui/core/styles";
 import { Link } from "react-router-dom";
+import _ from "lodash";
 
 type Props = {
   chart: ChartType;
@@ -118,7 +125,7 @@ const Chart: React.FunctionComponent<Props> = ({
     timeStyle: "long",
   });
 
-  const getExpandedChartLinkURL = () => {
+  const getExpandedChartLinkURL = useCallback(() => {
     const params = new Proxy(new URLSearchParams(window.location.search), {
       get: (searchParams, prop: string) => searchParams.get(prop),
     });
@@ -129,14 +136,18 @@ const Chart: React.FunctionComponent<Props> = ({
       chart.namespace
     }/${chart.name}`;
 
-    const newURLSearchParams = new URLSearchParams({
+    const newParams = {
       // @ts-ignore
       project_id: params.project_id,
       closeChartRedirectUrl,
-    });
+    };
+
+    const newURLSearchParams = new URLSearchParams(
+      _.omitBy(newParams, _.isNil)
+    );
 
     return `${route}?${newURLSearchParams.toString()}`;
-  };
+  }, [chart, context.currentCluster, isJob, closeChartRedirectUrl]);
 
   return (
     <Link to={getExpandedChartLinkURL}>

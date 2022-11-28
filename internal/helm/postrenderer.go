@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/heroku/color"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -679,8 +678,6 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 
 		containers, ok := containersVal.([]interface{})
 
-		color.Magenta("containers: %v", containers)
-
 		if !ok {
 			continue
 		}
@@ -770,8 +767,6 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 			_container["env"] = envVarArr
 			newContainers = append(newContainers, _container)
 		}
-
-		color.Red("newContainers: %v", containers)
 
 		podSpec["containers"] = newContainers
 	}

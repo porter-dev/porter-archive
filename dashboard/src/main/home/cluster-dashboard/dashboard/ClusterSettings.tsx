@@ -304,8 +304,9 @@ const ClusterSettings: React.FC = () => {
         <DarkMatter />
         {keyRotationSection}
         <DarkMatter />
-        {renameClusterSection}
-        <DarkMatter />
+        {/* Disabled this field due to https://discord.com/channels/542888846271184896/856554532972134420/1042497537912864788 */}
+        {/* {renameClusterSection}
+        <DarkMatter /> */}
         <Heading>Delete Cluster</Heading>
         {helperText}
         <Button

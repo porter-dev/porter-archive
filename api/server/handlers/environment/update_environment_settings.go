@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -79,6 +80,61 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 		env.GitRepoBranches = strings.Join(request.GitRepoBranches, ",")
 	}
 
+	newBranches = []string{}
+
+	for _, br := range request.GitDeployBranches {
+		name := strings.TrimSpace(br)
+
+		if len(name) > 0 {
+			newBranches = append(newBranches, name)
+		}
+	}
+
+	changed = !reflect.DeepEqual(env.ToEnvironmentType().GitDeployBranches, newBranches)
+
+	if changed {
+		// let us check if the webhook has access to the "push" event
+		client, err := getGithubClientFromEnvironment(c.Config(), env)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		hook, _, err := client.Repositories.GetHook(
+			context.Background(), env.GitRepoOwner, env.GitRepoName, env.GithubWebhookID,
+		)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		found := false
+
+		for _, ev := range hook.Events {
+			if ev == "push" {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			hook.Events = append(hook.Events, "push")
+
+			_, _, err := client.Repositories.EditHook(
+				context.Background(), env.GitRepoOwner, env.GitRepoName, env.GithubWebhookID, hook,
+			)
+
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+		}
+
+		env.GitDeployBranches = strings.Join(request.GitDeployBranches, ",")
+	}
+
 	if request.DisableNewComments != env.NewCommentsDisabled {
 		env.NewCommentsDisabled = request.DisableNewComments
 		changed = true
@@ -89,18 +145,18 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 		changed = true
 	}
 
-	if len(request.NamespaceAnnotations) > 0 {
-		var annotations []string
+	if len(request.NamespaceLabels) > 0 {
+		var labels []string
 
-		for k, v := range request.NamespaceAnnotations {
-			annotations = append(annotations, fmt.Sprintf("%s=%s", k, v))
+		for k, v := range request.NamespaceLabels {
+			labels = append(labels, fmt.Sprintf("%s=%s", k, v))
 		}
 
-		env.NamespaceAnnotations = []byte(strings.Join(annotations, ","))
+		env.NamespaceLabels = []byte(strings.Join(labels, ","))
 
 		changed = true
 	} else {
-		env.NamespaceAnnotations = []byte{}
+		env.NamespaceLabels = []byte{}
 
 		changed = true
 	}

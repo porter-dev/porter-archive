@@ -23,7 +23,9 @@ type Environment struct {
 	Mode string
 
 	NewCommentsDisabled  bool
+	NamespaceLabels      []byte
 	NamespaceAnnotations []byte
+	GitDeployBranches    string
 
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
 	// aren't present
@@ -59,8 +61,8 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
 
-		NewCommentsDisabled:  e.NewCommentsDisabled,
-		NamespaceAnnotations: make(map[string]string),
+		NewCommentsDisabled: e.NewCommentsDisabled,
+		NamespaceLabels:     make(map[string]string),
 
 		Name: e.Name,
 		Mode: e.Mode,
@@ -74,15 +76,23 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		env.GitRepoBranches = []string{}
 	}
 
-	if len(e.NamespaceAnnotations) > 0 {
-		env.NamespaceAnnotations = make(map[string]string)
-		annotations := string(e.NamespaceAnnotations)
+	branches = getGitRepoBranches(e.GitDeployBranches)
 
-		for _, a := range strings.Split(annotations, ",") {
+	if len(branches) > 0 {
+		env.GitDeployBranches = branches
+	} else {
+		env.GitDeployBranches = []string{}
+	}
+
+	if len(e.NamespaceLabels) > 0 {
+		env.NamespaceLabels = make(map[string]string)
+		labels := string(e.NamespaceLabels)
+
+		for _, a := range strings.Split(labels, ",") {
 			k, v, found := strings.Cut(a, "=")
 
 			if found {
-				env.NamespaceAnnotations[k] = v
+				env.NamespaceLabels[k] = v
 			}
 		}
 	}
@@ -109,7 +119,6 @@ type Deployment struct {
 }
 
 func (d *Deployment) ToDeploymentType() *types.Deployment {
-
 	ghMetadata := &types.GitHubMetadata{
 		DeploymentID: d.GHDeploymentID,
 		PRName:       d.PRName,
@@ -131,4 +140,8 @@ func (d *Deployment) ToDeploymentType() *types.Deployment {
 		PullRequestID:  d.PullRequestID,
 		GitHubMetadata: ghMetadata,
 	}
+}
+
+func (d *Deployment) IsBranchDeploy() bool {
+	return d.PullRequestID == 0 && d.PRBranchFrom != "" && d.PRBranchInto != "" && d.PRBranchFrom == d.PRBranchInto
 }

@@ -203,16 +203,19 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
                 <ClashIcon className="material-icons">sync_problem</ClashIcon>
               </ClashIconWrapper>
               <ClashingKeyExplanation>
-                <b>{key}</b> is defined in both environments
+                <b>{key}</b> is defined in both environments. Value in the
+                selected environment group will be overriden.
               </ClashingKeyExplanation>
             </ClashingKeyTop>
             <ClashingKeyDefinitions>
-              <ClashingKeyLabel>Old</ClashingKeyLabel>
+              <ClashingKeyLabel>Current</ClashingKeyLabel>
               <ClashingKeyValue>
                 {formattedEnvironmentValue(this.props.existingValues[key]) ||
                   emptyValue}
               </ClashingKeyValue>
-              <ClashingKeyLabel>New</ClashingKeyLabel>
+              <ClashingKeyLabel>
+                From {this.state.selectedEnvGroup.name}
+              </ClashingKeyLabel>
               <ClashingKeyValue>
                 {formattedEnvironmentValue(value) || emptyValue}
               </ClashingKeyValue>

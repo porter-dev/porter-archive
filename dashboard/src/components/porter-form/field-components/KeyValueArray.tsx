@@ -290,7 +290,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
       return (
         <Wrapper>
           <Helper color="#f5cb42" style={{ marginLeft: "10px" }}>
-            Overridden by the env group "{env_group?.name}"
+            Overrides variable in the env group "{env_group?.name}"
           </Helper>
         </Wrapper>
       );

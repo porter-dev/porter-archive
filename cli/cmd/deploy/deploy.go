@@ -437,18 +437,7 @@ func GetEnvForRelease(
 ) (map[string]string, error) {
 	res := make(map[string]string)
 
-	// first, get the env vars from "container.env.normal"
-	normalEnv, err := GetNormalEnv(client, config, projID, clusterID, namespace, true)
-
-	if err != nil {
-		return nil, fmt.Errorf("error while fetching container.env.normal variables: %w", err)
-	}
-
-	for k, v := range normalEnv {
-		res[k] = v
-	}
-
-	// next, get the env vars specified by "container.env.synced"
+	// first, get the env vars specified by "container.env.synced"
 	// look for container.env.synced
 	syncedEnv, err := GetSyncedEnv(client, config, projID, clusterID, namespace, true)
 
@@ -457,6 +446,17 @@ func GetEnvForRelease(
 	}
 
 	for k, v := range syncedEnv {
+		res[k] = v
+	}
+
+	// next, get the env vars from "container.env.normal"
+	normalEnv, err := GetNormalEnv(client, config, projID, clusterID, namespace, true)
+
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching container.env.normal variables: %w", err)
+	}
+
+	for k, v := range normalEnv {
 		res[k] = v
 	}
 

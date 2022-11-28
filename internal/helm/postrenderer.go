@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/heroku/color"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -671,11 +672,14 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 	for _, podSpec := range e.podSpecs {
 		containersVal, hasContainers := podSpec["containers"]
 
+		// If the pod spec does not contain `containers` field, continue
 		if !hasContainers {
 			continue
 		}
 
 		containers, ok := containersVal.([]interface{})
+
+		color.Magenta("containers: %v", containers)
 
 		if !ok {
 			continue
@@ -693,14 +697,14 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 			}
 
 			// read container env variables
-			envInter, ok := _container["env"]
+			containerEnv, ok := _container["env"]
 
 			if !ok {
 				newContainers = append(newContainers, _container)
 				continue
 			}
 
-			env, ok := envInter.([]interface{})
+			env, ok := containerEnv.([]interface{})
 
 			if !ok {
 				newContainers = append(newContainers, _container)
@@ -727,15 +731,21 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 				}
 
 				// check if the env var already exists, if it does perform reconciliation
-				if currVal, exists := envVars[envVarNameStr]; exists {
-					currValMap, ok := currVal.(resource)
+				if existingVal, exists := envVars[envVarNameStr]; exists {
+					existingValMap, ok := existingVal.(resource)
 
 					if !ok {
 						continue
 					}
 
 					// if the current value has a valueFrom field, this should override the existing env var
-					if _, currValFromFieldExists := currValMap["valueFrom"]; currValFromFieldExists {
+					_, existingValHasValueField := existingValMap["value"]
+					_, existingValHasValueFromField := existingValMap["valueFrom"]
+					_, currValHasValueFromField := envVarMap["valueFrom"]
+
+					if existingValHasValueField && currValHasValueFromField {
+						continue
+					} else if existingValHasValueFromField && currValHasValueFromField {
 						continue
 					} else {
 						envVars[envVarNameStr] = envVarMap
@@ -760,6 +770,8 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 			_container["env"] = envVarArr
 			newContainers = append(newContainers, _container)
 		}
+
+		color.Red("newContainers: %v", containers)
 
 		podSpec["containers"] = newContainers
 	}

@@ -56,7 +56,9 @@ func coalesceEnvGroups(
 		}
 
 		for k, v := range envGroup.Variables {
-			envConfig[k] = v
+			if _, ok := envConfig[k]; !ok {
+				envConfig[k] = v
+			}
 		}
 
 		containerMap, _ := config["container"].(map[string]interface{})

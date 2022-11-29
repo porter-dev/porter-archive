@@ -237,19 +237,19 @@ func (t *helmRevisionsCountTracker) Run() error {
 							continue
 						}
 
-						if len(revisions) <= 100 {
-							log.Printf("release %s of namespace %s in cluster ID %d has <= 100 revisions. "+
+						if len(revisions) <= 20 {
+							log.Printf("release %s of namespace %s in cluster ID %d has <= 20 revisions. "+
 								"skipping release...", rel.Name, ns.Name, cluster.ID)
 							continue
 						}
 
-						log.Printf("release %s of namespace %s in cluster ID %d has more than 100 revisions. attempting to "+
+						log.Printf("release %s of namespace %s in cluster ID %d has more than 20 revisions. attempting to "+
 							"delete the older ones.", rel.Name, ns.Name, cluster.ID)
 
 						// sort revisions from newest to oldest
 						releaseutil.Reverse(revisions, releaseutil.SortByRevision)
 
-						for i := 100; i < len(revisions); i += 1 {
+						for i := 20; i < len(revisions); i += 1 {
 							rev := revisions[i]
 
 							// store the revision in the s3 bucket before deleting it

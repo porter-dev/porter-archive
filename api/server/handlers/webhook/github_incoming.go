@@ -370,21 +370,25 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 
 	envType := env.ToEnvironmentType()
 
+	if len(envType.GitDeployBranches) == 0 {
+		return nil
+	}
+
 	branch := strings.TrimPrefix(event.GetRef(), "refs/heads/")
 
-	if len(envType.GitDeployBranches) > 0 {
-		found := false
+	fmt.Println(envType.GitDeployBranches)
 
-		for _, br := range envType.GitDeployBranches {
-			if br == branch {
-				found = true
-				break
-			}
-		}
+	found := false
 
-		if !found {
-			return nil
+	for _, br := range envType.GitDeployBranches {
+		if br == branch {
+			found = true
+			break
 		}
+	}
+
+	if !found {
+		return nil
 	}
 
 	client, err := getGithubClientFromEnvironment(c.Config(), env)

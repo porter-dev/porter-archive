@@ -60,38 +60,54 @@ func GetSource(projectID uint, resourceName string, input map[string]interface{}
 		output.Version = "latest"
 	}
 
-	output.IsApplication = output.Repo == "https://charts.getporter.dev"
+	apiClient := config.GetAPIClient()
+
+	serverMetadata, err := apiClient.GetPorterInstanceMetadata(context.Background())
+
+	if err != nil {
+		return nil, fmt.Errorf("error fetching Porter instance metadata: %w", err)
+	}
 
 	if output.Repo == "" {
-		output.Repo = "https://charts.getporter.dev"
+		if serverMetadata.DefaultAppHelmRepoURL != "" {
+			output.Repo = serverMetadata.DefaultAppHelmRepoURL
+		} else {
+			output.Repo = "https://charts.getporter.dev"
+		}
 
 		values, err := existsInRepo(projectID, output.Name, output.Version, output.Repo)
 
 		if err == nil {
-			// found in "https://charts.getporter.dev"
 			output.SourceValues = values
-			output.IsApplication = true
+			output.IsApplication = output.Repo == "https://charts.getporter.dev"
+
 			return output, nil
 		}
 
-		output.Repo = "https://chart-addons.getporter.dev"
+		if serverMetadata.DefaultAddonHelmRepoURL != "" {
+			output.Repo = serverMetadata.DefaultAddonHelmRepoURL
+		} else {
+			output.Repo = "https://chart-addons.getporter.dev"
+		}
 
 		values, err = existsInRepo(projectID, output.Name, output.Version, output.Repo)
 
 		if err == nil {
-			// found in https://chart-addons.getporter.dev
 			output.SourceValues = values
+
 			return output, nil
 		}
 
-		return nil, fmt.Errorf("error parsing source for resource '%s': source does not exist in "+
-			"'https://charts.getporter.dev' or 'https://chart-addons.getporter.dev'", resourceName)
+		return nil, fmt.Errorf("error parsing source for resource '%s': source chart does not exist in the default "+
+			"Helm repositories", resourceName)
 	} else {
 		// we look in the passed-in repo
 		values, err := existsInRepo(projectID, output.Name, output.Version, output.Repo)
 
 		if err == nil {
 			output.SourceValues = values
+			output.IsApplication = output.Repo == "https://charts.getporter.dev"
+
 			return output, nil
 		}
 	}

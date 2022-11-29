@@ -368,7 +368,7 @@ func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, cl
 
 	if tag == "" {
 		color.New(color.FgYellow).Printf("for resource %s, since PORTER_TAG is not set, the Docker image tag will default to"+
-			" the git repo SHA", resourceName)
+			" the git repo SHA\n", resourceName)
 
 		commit, err := git.LastCommit()
 

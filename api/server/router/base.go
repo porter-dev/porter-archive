@@ -81,7 +81,7 @@ func GetBaseRoutes(
 		Router:   r,
 	})
 
-	// GET /api/capabilities -> user.NewUserCreateHandler
+	// GET /api/metadata -> metadata.NewMetadataGetHandler
 	getMetadataEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,

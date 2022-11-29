@@ -376,8 +376,6 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 
 	branch := strings.TrimPrefix(event.GetRef(), "refs/heads/")
 
-	fmt.Println(envType.GitDeployBranches)
-
 	found := false
 
 	for _, br := range envType.GitDeployBranches {

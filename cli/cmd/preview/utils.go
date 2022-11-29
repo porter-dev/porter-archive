@@ -79,7 +79,7 @@ func GetSource(projectID uint, resourceName string, input map[string]interface{}
 
 		if err == nil {
 			output.SourceValues = values
-			output.IsApplication = output.Repo == "https://charts.getporter.dev"
+			output.IsApplication = true
 
 			return output, nil
 		}
@@ -106,7 +106,7 @@ func GetSource(projectID uint, resourceName string, input map[string]interface{}
 
 		if err == nil {
 			output.SourceValues = values
-			output.IsApplication = output.Repo == "https://charts.getporter.dev"
+			output.IsApplication = output.Repo == serverMetadata.DefaultAppHelmRepoURL || output.Repo == "https://charts.getporter.dev"
 
 			return output, nil
 		}

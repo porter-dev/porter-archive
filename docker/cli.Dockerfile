@@ -13,6 +13,7 @@ COPY /cli ./cli
 COPY /internal ./internal
 COPY /api ./api
 COPY /pkg ./pkg
+COPY /provisioner ./provisioner
 
 RUN --mount=type=cache,target=$GOPATH/pkg/mod \
     go mod download

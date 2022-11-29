@@ -79,6 +79,11 @@ func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		if !isSystemNamespace(depl.Namespace) {
 			agent.DeleteNamespace(depl.Namespace)
 		}
+
+		if _, err := c.Repo().Environment().DeleteDeployment(depl); err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	ghWebhookID := env.GithubWebhookID

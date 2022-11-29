@@ -72,21 +72,23 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
-	// add a check for the PR to be open before creating a comment
-	prClosed, err := isGithubPRClosed(client, depl.RepoOwner, depl.RepoName, int(depl.PullRequestID))
+	if !depl.IsBranchDeploy() {
+		// add a check for the PR to be open before creating a comment
+		prClosed, err := isGithubPRClosed(client, depl.RepoOwner, depl.RepoName, int(depl.PullRequestID))
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",
-				depl.ID, err), http.StatusConflict,
-		))
-		return
-	}
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",
+					depl.ID, err), http.StatusConflict,
+			))
+			return
+		}
 
-	if prClosed {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Github PR has been closed"),
-			http.StatusConflict))
-		return
+		if prClosed {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Github PR has been closed"),
+				http.StatusConflict))
+			return
+		}
 	}
 
 	latestWorkflowRun, err := commonutils.GetLatestWorkflowRun(client, env.GitRepoOwner, env.GitRepoName,
@@ -105,12 +107,18 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
+	prNumber := depl.PullRequestID
+
+	if depl.IsBranchDeploy() {
+		prNumber = depl.ID
+	}
+
 	ghResp, err := client.Actions.CreateWorkflowDispatchEventByFileName(
 		r.Context(), env.GitRepoOwner, env.GitRepoName, fmt.Sprintf("porter_%s_env.yml", env.Name),
 		github.CreateWorkflowDispatchEventRequest{
 			Ref: depl.PRBranchFrom,
 			Inputs: map[string]interface{}{
-				"pr_number":      strconv.FormatUint(uint64(depl.PullRequestID), 10),
+				"pr_number":      strconv.FormatUint(uint64(prNumber), 10),
 				"pr_title":       depl.PRName,
 				"pr_branch_from": depl.PRBranchFrom,
 				"pr_branch_into": depl.PRBranchInto,

@@ -40,7 +40,8 @@ const ConnectNewRepo: React.FC = () => {
   });
 
   // Branch selector data
-  const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
+  const [baseBranches, setBaseBranches] = useState<string[]>([]);
+  const [deployBranches, setDeployBranches] = useState<string[]>([]);
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
 
@@ -146,8 +147,9 @@ const ConnectNewRepo: React.FC = () => {
           name: `preview`,
           mode: enableAutomaticDeployments ? "auto" : "manual",
           disable_new_comments: isNewCommentsDisabled,
-          git_repo_branches: selectedBranches,
+          git_repo_branches: baseBranches,
           namespace_labels: labels,
+          git_deploy_branches: deployBranches,
         },
         {
           project_id: currentProject.id,
@@ -254,6 +256,17 @@ const ConnectNewRepo: React.FC = () => {
         />
       </CheckboxWrapper>
 
+      <Heading>Deploy from branches</Heading>
+      <Helper>
+        Choose the list of branches that you want to deploy changes from.
+      </Helper>
+      <BranchFilterSelector
+        onChange={setDeployBranches}
+        options={availableBranches}
+        value={deployBranches}
+        showLoading={isLoadingBranches}
+      />
+
       <Heading>Select allowed branches</Heading>
       <Helper>
         If the pull request has a base branch included in this list, it will be
@@ -262,9 +275,9 @@ const ConnectNewRepo: React.FC = () => {
         (Leave empty to allow all branches)
       </Helper>
       <BranchFilterSelector
-        onChange={setSelectedBranches}
+        onChange={setBaseBranches}
         options={availableBranches}
-        value={selectedBranches}
+        value={baseBranches}
         showLoading={isLoadingBranches}
       />
 

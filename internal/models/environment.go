@@ -25,6 +25,7 @@ type Environment struct {
 	NewCommentsDisabled  bool
 	NamespaceLabels      []byte
 	NamespaceAnnotations []byte
+	GitDeployBranches    string
 
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
 	// aren't present
@@ -75,6 +76,14 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		env.GitRepoBranches = []string{}
 	}
 
+	branches = getGitRepoBranches(e.GitDeployBranches)
+
+	if len(branches) > 0 {
+		env.GitDeployBranches = branches
+	} else {
+		env.GitDeployBranches = []string{}
+	}
+
 	if len(e.NamespaceLabels) > 0 {
 		env.NamespaceLabels = make(map[string]string)
 		labels := string(e.NamespaceLabels)
@@ -110,7 +119,6 @@ type Deployment struct {
 }
 
 func (d *Deployment) ToDeploymentType() *types.Deployment {
-
 	ghMetadata := &types.GitHubMetadata{
 		DeploymentID: d.GHDeploymentID,
 		PRName:       d.PRName,
@@ -132,4 +140,8 @@ func (d *Deployment) ToDeploymentType() *types.Deployment {
 		PullRequestID:  d.PullRequestID,
 		GitHubMetadata: ghMetadata,
 	}
+}
+
+func (d *Deployment) IsBranchDeploy() bool {
+	return d.PullRequestID == 0 && d.PRBranchFrom != "" && d.PRBranchInto != "" && d.PRBranchFrom == d.PRBranchInto
 }

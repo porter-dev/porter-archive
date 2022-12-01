@@ -95,15 +95,35 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		res.PorterRelease = &types.PorterRelease{}
 	}
 
-	// detect if Porter application chart and attempt to get the latest version
-	// from chart repo
-	cache := c.Config().URLCache
-	chartRepoURL, foundFirst := cache.GetURL(helmRelease.Chart.Metadata.Name)
+	chartRepoURL := ""
 
-	if !foundFirst {
-		cache.Update()
+	// First try to find the chart from the release's chart metadata
+	sources := helmRelease.Chart.Metadata.Sources
 
-		chartRepoURL, _ = cache.GetURL(helmRelease.Chart.Metadata.Name)
+	if len(sources) != 0 {
+		chartRepoURL = sources[0]
+
+		// Try to fetch the repo index to see if the URL is a valid repo
+		_, err := loader.LoadRepoIndexPublic(chartRepoURL)
+
+		if err != nil {
+			// If we have an error, reset the chartRepoURL to empty
+			chartRepoURL = ""
+		}
+	}
+
+	// If chartRepoURL was not set, try to find the chart from the cache
+	if chartRepoURL == "" {
+		cache := c.Config().URLCache
+		chartRepoURLFromCache, foundFirst := cache.GetURL(helmRelease.Chart.Metadata.Name)
+
+		if foundFirst {
+			chartRepoURL = chartRepoURLFromCache
+		} else {
+			cache.Update()
+
+			chartRepoURL, _ = cache.GetURL(helmRelease.Chart.Metadata.Name)
+		}
 	}
 
 	if chartRepoURL != "" {

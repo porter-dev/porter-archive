@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
@@ -247,8 +248,103 @@ func (repo *EnvironmentRepository) ListDeployments(environmentID uint, states ..
 }
 
 func (repo *EnvironmentRepository) DeleteDeployment(deployment *models.Deployment) (*models.Deployment, error) {
-	if err := repo.db.Delete(deployment).Error; err != nil {
-		return nil, err
+	depl := &models.Deployment{}
+
+	if err := repo.db.Where("id = ?", deployment.ID).First(&depl).Error; err != nil {
+		return nil, fmt.Errorf("error fetching deployment ID %d: %w", deployment.ID, err)
 	}
+
+	revisions, err := repo.ListDeploymentRevisions(depl.ID)
+
+	if err != nil {
+		return nil, fmt.Errorf("error fetching revisions for deployment ID %d: %w", depl.ID, err)
+	}
+
+	err = repo.db.Model(&depl).Association("Revisions").Clear()
+
+	if err != nil {
+		return nil, fmt.Errorf("error clearing revision associations for deployment ID %d: %w", depl.ID, err)
+	}
+
+	for _, rev := range revisions {
+		err := repo.db.Model(&rev).Association("Resources").Clear()
+
+		if err != nil {
+			return nil, fmt.Errorf("error clearing resource associations for revision ID %d: %w", rev.ID, err)
+		}
+
+		for _, res := range rev.Resources {
+			if err := repo.db.Delete(&res).Error; err != nil {
+				return nil, fmt.Errorf("error deleting resource ID %d: %w", res.ID, err)
+			}
+		}
+
+		if err := repo.db.Delete(&rev).Error; err != nil {
+			return nil, fmt.Errorf("error deleting revision ID %d: %w", rev.ID, err)
+		}
+	}
+
+	if err := repo.db.Delete(deployment).Error; err != nil {
+		return nil, fmt.Errorf("error deleting deployment ID %d: %w", deployment.ID, err)
+	}
+
 	return deployment, nil
+}
+
+func (repo *EnvironmentRepository) AddNewDeploymentRevision(deploymentID uint, revision *models.DeploymentRevision) (*models.DeploymentRevision, error) {
+	if deploymentID == 0 {
+		return nil, fmt.Errorf("deployment ID cannot be set to 0")
+	}
+
+	depl := &models.Deployment{}
+
+	if err := repo.db.Where("id = ?", deploymentID).First(&depl).Error; err != nil {
+		return nil, fmt.Errorf("error fetching deployment ID %d: %w", deploymentID, err)
+	}
+
+	assoc := repo.db.Model(&depl).Association("Revisions")
+
+	if assoc.Error != nil {
+		return nil, fmt.Errorf("error fetting association Revisions for deployment ID %d: %w", deploymentID, assoc.Error)
+	}
+
+	revision.RevisionNumber = uint(assoc.Count() + 1)
+
+	if err := assoc.Append(revision); err != nil {
+		return nil, fmt.Errorf("error appending new revision for deployment ID %d: %w", deploymentID, err)
+	}
+
+	return revision, nil
+}
+
+func (repo *EnvironmentRepository) ListDeploymentRevisions(deploymentID uint) ([]*models.DeploymentRevision, error) {
+	depl := &models.Deployment{}
+
+	if err := repo.db.Where("id = ?", deploymentID).First(&depl).Error; err != nil {
+		return nil, fmt.Errorf("error fetching deployment ID %d: %w", deploymentID, err)
+	}
+
+	var revisions []*models.DeploymentRevision
+
+	if err := repo.db.Preload("Resources").Where("deployment_id = ?", deploymentID).Order("revision_number desc").Find(&revisions).Error; err != nil {
+		return nil, fmt.Errorf("error fetching revisions for deployment ID %d: %w", deploymentID, err)
+	}
+
+	return revisions, nil
+}
+
+func (repo *EnvironmentRepository) ReadDeploymentRevision(deploymentID, revisionNumber uint) (*models.DeploymentRevision, error) {
+	depl := &models.Deployment{}
+
+	if err := repo.db.Where("id = ?", deploymentID).First(&depl).Error; err != nil {
+		return nil, fmt.Errorf("error fetching deployment ID %d: %w", deploymentID, err)
+	}
+
+	revision := &models.DeploymentRevision{}
+
+	if err := repo.db.Preload("Resources").Where("deployment_id = ? AND revision_number = ?", deploymentID, revisionNumber).First(&revision).Error; err != nil {
+		return nil, fmt.Errorf("error fetching revision number %d for deployment ID %d: %w", revisionNumber, deploymentID, err)
+	}
+
+	return revision, nil
 }

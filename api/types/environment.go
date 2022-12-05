@@ -65,6 +65,18 @@ type Deployment struct {
 	LastWorkflowRunURL string           `json:"last_workflow_run_url"`
 }
 
+type DeploymentRevision struct {
+	RevisionNumber uint                         `json:"revision_number"`
+	DeploymentID   uint                         `json:"deployment_id"`
+	Resources      []DeploymentRevisionResource `json:"resources"`
+}
+
+type DeploymentRevisionResource struct {
+	Name   string           `json:"name"`
+	Status DeploymentStatus `json:"status"`
+	Errors []string         `json:"errors"`
+}
+
 type CreateGHDeploymentRequest struct {
 	ActionID uint `json:"action_id" form:"required"`
 }

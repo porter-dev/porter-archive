@@ -81,3 +81,15 @@ func (repo *EnvironmentRepository) ListDeployments(environmentID uint, states ..
 func (repo *EnvironmentRepository) DeleteDeployment(deployment *models.Deployment) (*models.Deployment, error) {
 	panic("unimplemented")
 }
+
+func (repo *EnvironmentRepository) AddNewDeploymentRevision(deploymentID uint, revision *models.DeploymentRevision) (*models.DeploymentRevision, error) {
+	panic("unimplemented")
+}
+
+func (repo *EnvironmentRepository) ListDeploymentRevisions(deploymentID uint) ([]*models.DeploymentRevision, error) {
+	panic("unimplemented")
+}
+
+func (repo *EnvironmentRepository) ReadDeploymentRevision(deploymentID, revisionNumber uint) (*models.DeploymentRevision, error) {
+	panic("unimplemented")
+}

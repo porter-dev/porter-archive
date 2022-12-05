@@ -19,4 +19,7 @@ type EnvironmentRepository interface {
 	ListDeployments(environmentID uint, states ...string) ([]*models.Deployment, error)
 	UpdateDeployment(deployment *models.Deployment) (*models.Deployment, error)
 	DeleteDeployment(deployment *models.Deployment) (*models.Deployment, error)
+	AddNewDeploymentRevision(deploymentID uint, revision *models.DeploymentRevision) (*models.DeploymentRevision, error)
+	ListDeploymentRevisions(deploymentID uint) ([]*models.DeploymentRevision, error)
+	ReadDeploymentRevision(deploymentID, revisionNumber uint) (*models.DeploymentRevision, error)
 }

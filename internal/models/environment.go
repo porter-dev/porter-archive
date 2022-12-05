@@ -100,6 +100,53 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 	return env
 }
 
+type DeploymentRevision struct {
+	gorm.Model
+
+	DeploymentID uint
+
+	RevisionNumber uint
+	Resources      []DeploymentRevisionResource
+}
+
+func (d *DeploymentRevision) ToDeploymentRevisionType() *types.DeploymentRevision {
+	resources := []types.DeploymentRevisionResource{}
+
+	for _, res := range d.Resources {
+		resources = append(resources, res.ToDeploymentResourceType())
+	}
+
+	return &types.DeploymentRevision{
+		RevisionNumber: d.RevisionNumber,
+		DeploymentID:   d.DeploymentID,
+		Resources:      resources,
+	}
+}
+
+type DeploymentRevisionResource struct {
+	gorm.Model
+
+	DeploymentRevisionID uint
+
+	Name   string
+	Status types.DeploymentStatus
+	Errors []byte
+}
+
+func (d *DeploymentRevisionResource) ToDeploymentResourceType() types.DeploymentRevisionResource {
+	res := types.DeploymentRevisionResource{
+		Name:   d.Name,
+		Status: d.Status,
+		Errors: []string{},
+	}
+
+	if len(d.Errors) > 0 {
+		res.Errors = strings.Split(string(d.Errors), ",")
+	}
+
+	return res
+}
+
 type Deployment struct {
 	gorm.Model
 
@@ -116,6 +163,8 @@ type Deployment struct {
 	CommitSHA      string
 	PRBranchFrom   string
 	PRBranchInto   string
+
+	Revisions []DeploymentRevision
 }
 
 func (d *Deployment) ToDeploymentType() *types.Deployment {

@@ -19,6 +19,7 @@ type ServerConf struct {
 	Port                 int           `env:"SERVER_PORT,default=8080"`
 	StaticFilePath       string        `env:"STATIC_FILE_PATH,default=/porter/static"`
 	CookieName           string        `env:"COOKIE_NAME,default=porter"`
+	// CookieSecrets must be in the format "16-chars;16-chars"
 	CookieSecrets        []string      `env:"COOKIE_SECRETS,default=random_hash_key_;random_block_key"`
 	CookieInsecure       bool          `env:"COOKIE_INSECURE,default=false"`
 	TokenGeneratorSecret string        `env:"TOKEN_GENERATOR_SECRET,default=secret"`

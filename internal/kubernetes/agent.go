@@ -963,30 +963,15 @@ func (a *Agent) GetIstioIngress(namespace, name string) (*istiov1beta1.Gateway, 
 		return nil, err
 	}
 
-	gateway, err := clientset.NetworkingV1beta1().Gateways(namespace).List(
-		context.Background(), metav1.ListOptions{},
+	gateway, err := clientset.NetworkingV1beta1().Gateways(namespace).Get(
+		context.Background(), name, metav1.GetOptions{},
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var istioGateways []*istiov1beta1.Gateway
-
-	for _, g := range gateway.Items {
-		for k, v := range g.Annotations {
-			if k == "meta.helm.sh/release-name" && v == name {
-				istioGateways = append(istioGateways, g)
-				break
-			}
-		}
-	}
-
-	if len(istioGateways) == 0 {
-		return nil, IsNotFoundError
-	}
-
-	return istioGateways[0], nil
+	return gateway, nil
 }
 
 var IsNotFoundError = fmt.Errorf("not found")

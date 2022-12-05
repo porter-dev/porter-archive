@@ -6,6 +6,7 @@ import "time"
 type ServerConf struct {
 	Debug bool `env:"DEBUG,default=false"`
 
+	// ServerURL must have the protocol set .i.e http or https
 	ServerURL string `env:"SERVER_URL,default=http://localhost:8080"`
 
 	// The instance name is used to set a name for integrations linked only by a project ID,

@@ -819,7 +819,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
   useEffect((): any => {
     let isSubscribed = true;
 
-    const ingressComponent = components?.find((c) => c.Kind === "Ingress");
+    const ingressComponent = components?.find(
+      (c) =>
+        c.Kind === "Ingress" ||
+        (c.Kind === "Gateway" &&
+          c.RawYAML?.apiVersion &&
+          c.RawYAML?.apiVersion?.startsWith("networking.istio.io"))
+    );
 
     const ingressName = ingressComponent?.Name;
 

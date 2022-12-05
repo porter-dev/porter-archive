@@ -468,6 +468,36 @@ func getClusterRoutes(
 			Router:   r,
 		})
 
+		// GET /api/projects/{project_id}/clusters/{cluster_id}/environments/{environment_id}/deployments/{deployment_id}/revisions -> environment.NewListDeploymentRevisionsHandler
+		listDeploymentRevisionsEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbGet,
+				Method: types.HTTPVerbGet,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/environments/{environment_id}/deployments/{deployment_id}/revisions",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+					types.PreviewEnvironmentScope,
+				},
+			},
+		)
+
+		listDeploymentRevisionsHandler := environment.NewListDeploymentRevisionsHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: listDeploymentRevisionsEndpoint,
+			Handler:  listDeploymentRevisionsHandler,
+			Router:   r,
+		})
+
 		// PATCH /api/projects/{project_id}/clusters/{cluster_id}/deployments/{deployment_id}/reenable -> environment.NewReenableDeploymentHandler
 		reenableDeploymentEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{

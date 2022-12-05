@@ -118,6 +118,26 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	var resources []models.DeploymentRevisionResource
+
+	for _, res := range request.SuccessfulResources {
+		resources = append(resources, models.DeploymentRevisionResource{
+			Name:   res.ReleaseName,
+			Type:   res.ReleaseType,
+			Status: types.DeploymentStatusCreated,
+		})
+	}
+
+	_, err = c.Repo().Environment().AddNewDeploymentRevision(depl.ID, &models.DeploymentRevision{
+		Status:    types.DeploymentStatusCreated,
+		Resources: resources,
+	})
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
 	if err != nil {

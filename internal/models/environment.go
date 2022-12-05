@@ -106,6 +106,7 @@ type DeploymentRevision struct {
 	DeploymentID uint
 
 	RevisionNumber uint
+	Status         types.DeploymentStatus
 	Resources      []DeploymentRevisionResource
 }
 
@@ -119,6 +120,7 @@ func (d *DeploymentRevision) ToDeploymentRevisionType() *types.DeploymentRevisio
 	return &types.DeploymentRevision{
 		RevisionNumber: d.RevisionNumber,
 		DeploymentID:   d.DeploymentID,
+		Status:         d.Status,
 		Resources:      resources,
 	}
 }
@@ -129,19 +131,17 @@ type DeploymentRevisionResource struct {
 	DeploymentRevisionID uint
 
 	Name   string
+	Type   string
 	Status types.DeploymentStatus
-	Errors []byte
+	Errors string
 }
 
 func (d *DeploymentRevisionResource) ToDeploymentResourceType() types.DeploymentRevisionResource {
 	res := types.DeploymentRevisionResource{
 		Name:   d.Name,
+		Type:   d.Type,
 		Status: d.Status,
-		Errors: []string{},
-	}
-
-	if len(d.Errors) > 0 {
-		res.Errors = strings.Split(string(d.Errors), ",")
+		Errors: d.Errors,
 	}
 
 	return res

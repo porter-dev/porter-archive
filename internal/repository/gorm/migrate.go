@@ -21,6 +21,8 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.Release{},
 		&models.Environment{},
 		&models.Deployment{},
+		&models.DeploymentRevision{},
+		&models.DeploymentRevisionResource{},
 		&models.Session{},
 		&models.GitRepo{},
 		&models.Registry{},

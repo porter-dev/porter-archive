@@ -68,13 +68,15 @@ type Deployment struct {
 type DeploymentRevision struct {
 	RevisionNumber uint                         `json:"revision_number"`
 	DeploymentID   uint                         `json:"deployment_id"`
+	Status         DeploymentStatus             `json:"status"`
 	Resources      []DeploymentRevisionResource `json:"resources"`
 }
 
 type DeploymentRevisionResource struct {
 	Name   string           `json:"name"`
+	Type   string           `json:"type"`
 	Status DeploymentStatus `json:"status"`
-	Errors []string         `json:"errors"`
+	Errors string           `json:"errors"`
 }
 
 type CreateGHDeploymentRequest struct {

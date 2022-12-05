@@ -851,6 +851,15 @@ const ExpandedChart: React.FC<Props> = (props) => {
           );
           return;
         }
+
+        if (
+          res.data?.spec?.servers &&
+          res.data?.spec?.servers[0]?.hosts &&
+          res.data?.spec?.servers[0]?.hosts[0]
+        ) {
+          setUrl(`http://${res.data?.spec?.servers[0]?.hosts[0]}`);
+          return;
+        }
       })
       .catch(console.log);
     return () => (isSubscribed = false);

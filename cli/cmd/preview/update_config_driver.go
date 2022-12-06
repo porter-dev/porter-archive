@@ -77,13 +77,19 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 
 	shouldCreate := err != nil
 
+	color.New(color.FgBlue).Println("checking for the existence of PORTER_TAG environment variable for the image tag")
+
 	tag := os.Getenv("PORTER_TAG")
 
 	if tag == "" {
+		color.New(color.FgBlue).Println("PORTER_TAG environment variable not found, checking for update_config.tag in porter.yaml for the image tag")
+
 		tag = d.config.UpdateConfig.Tag
 	}
 
 	if tag == "" {
+		color.New(color.FgBlue).Println("update_config.tag not found in porter.yaml, falling back to the latest git commit SHA as the image tag")
+
 		commit, err := git.LastCommit()
 
 		if err != nil {
@@ -157,7 +163,9 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 			return nil, err
 		}
 
-		_, err = createAgent.CreateFromRegistry(d.config.UpdateConfig.Image, d.config.Values)
+		image := fmt.Sprintf("%s:%s", strings.Split(d.config.UpdateConfig.Image, ":")[0], tag)
+
+		_, err = createAgent.CreateFromRegistry(image, d.config.Values)
 
 		if err != nil {
 			return nil, err

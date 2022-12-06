@@ -126,6 +126,8 @@ require (
 	github.com/xanzy/go-gitlab v0.68.0 // indirect
 	github.com/yashtewari/glob-intersection v0.1.0 // indirect
 	go.uber.org/goleak v1.1.12 // indirect
+	istio.io/api v0.0.0-20221109202042-b9e5d446a83d // indirect
+	istio.io/client-go v1.16.0 // indirect
 )
 
 require (

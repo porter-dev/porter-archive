@@ -23,8 +23,6 @@ import (
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
 
-	errors2 "errors"
-
 	"github.com/porter-dev/porter/internal/helm/grapher"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -49,6 +47,9 @@ import (
 	"k8s.io/kubectl/pkg/scheme"
 
 	rspb "helm.sh/helm/v3/pkg/release"
+
+	istiov1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	versionedclient "istio.io/client-go/pkg/clientset/versioned"
 )
 
 // Agent is a Kubernetes agent for performing operations that interact with the
@@ -949,6 +950,30 @@ func (a *Agent) GetNetworkingV1Beta1Ingress(namespace string, name string) (*net
 	return resp, nil
 }
 
+func (a *Agent) GetIstioIngress(namespace, name string) (*istiov1beta1.Gateway, error) {
+	restConf, err := a.RESTClientGetter.ToRESTConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := versionedclient.NewForConfig(restConf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	gateway, err := clientset.NetworkingV1beta1().Gateways(namespace).Get(
+		context.Background(), name, metav1.GetOptions{},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return gateway, nil
+}
+
 var IsNotFoundError = fmt.Errorf("not found")
 
 type BadRequestError struct {
@@ -1370,7 +1395,7 @@ func (a *Agent) RunWebsocketTask(task func() error) error {
 			return nil
 		}
 
-		if !errors2.Is(err, &AuthError{}) {
+		if !goerrors.Is(err, &AuthError{}) {
 			return err
 		}
 

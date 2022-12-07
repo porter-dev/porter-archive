@@ -39,6 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/informers"
@@ -617,6 +618,10 @@ func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 
 // CreateNamespace creates a namespace with the given name.
 func (a *Agent) CreateNamespace(name string, labels map[string]string) (*v1.Namespace, error) {
+	if len(validation.IsDNS1123Label(name)) > 0 {
+		return nil, fmt.Errorf("invalid namespace name %s", name)
+	}
+
 	// check if namespace exists
 	checkNS, err := a.Clientset.CoreV1().Namespaces().Get(
 		context.TODO(),
@@ -694,6 +699,11 @@ func (a *Agent) GetNamespace(name string) (*v1.Namespace, error) {
 
 // DeleteNamespace deletes the namespace given the name.
 func (a *Agent) DeleteNamespace(name string) error {
+	if len(validation.IsDNS1123Label(name)) > 0 {
+		// invalid kubernetes namespace name so we should just return nil
+		return nil
+	}
+
 	// check if namespace exists
 	checkNS, err := a.Clientset.CoreV1().Namespaces().Get(
 		context.TODO(),

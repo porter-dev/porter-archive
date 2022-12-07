@@ -326,7 +326,8 @@ func (repo *EnvironmentRepository) ListDeploymentRevisions(deploymentID uint) ([
 
 	var revisions []*models.DeploymentRevision
 
-	if err := repo.db.Preload("Resources").Where("deployment_id = ?", deploymentID).Order("revision_number desc").Find(&revisions).Error; err != nil {
+	// FIXME: use proper pagination
+	if err := repo.db.Preload("Resources").Where("deployment_id = ?", deploymentID).Order("revision_number desc").Limit(25).Find(&revisions).Error; err != nil {
 		return nil, fmt.Errorf("error fetching revisions for deployment ID %d: %w", deploymentID, err)
 	}
 

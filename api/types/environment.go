@@ -17,6 +17,7 @@ type Environment struct {
 	LastDeploymentStatus string            `json:"last_deployment_status"`
 	NewCommentsDisabled  bool              `json:"new_comments_disabled"`
 	NamespaceLabels      map[string]string `json:"namespace_labels,omitempty"`
+	GitDeployBranches    []string          `json:"git_deploy_branches"`
 }
 
 type CreateEnvironmentRequest struct {
@@ -25,6 +26,7 @@ type CreateEnvironmentRequest struct {
 	DisableNewComments bool              `json:"disable_new_comments"`
 	GitRepoBranches    []string          `json:"git_repo_branches"`
 	NamespaceLabels    map[string]string `json:"namespace_labels"`
+	GitDeployBranches  []string          `json:"git_deploy_branches"`
 }
 
 type GitHubMetadata struct {
@@ -72,7 +74,7 @@ type CreateDeploymentRequest struct {
 	*GitHubMetadata
 
 	Namespace     string `json:"namespace" form:"required"`
-	PullRequestID uint   `json:"pull_request_id" form:"required"`
+	PullRequestID uint   `json:"pull_request_id"`
 }
 
 type SuccessfullyDeployedResource struct {
@@ -84,18 +86,14 @@ type FinalizeDeploymentRequest struct {
 	SuccessfulResources []*SuccessfullyDeployedResource `json:"successful_resources"`
 	Subdomain           string                          `json:"subdomain"`
 	PRNumber            uint                            `json:"pr_number"`
-
-	// legacy usage for backwards compatibility
-	Namespace string `json:"namespace"`
+	Namespace           string                          `json:"namespace"`
 }
 
 type FinalizeDeploymentWithErrorsRequest struct {
 	SuccessfulResources []*SuccessfullyDeployedResource `json:"successful_resources"`
 	Errors              map[string]string               `json:"errors" form:"required"`
 	PRNumber            uint                            `json:"pr_number"`
-
-	// legacy usage for backwards compatibility
-	Namespace string `json:"namespace"`
+	Namespace           string                          `json:"namespace"`
 }
 
 type UpdateDeploymentRequest struct {
@@ -104,9 +102,7 @@ type UpdateDeploymentRequest struct {
 	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
 	CommitSHA    string `json:"commit_sha" form:"required"`
 	PRNumber     uint   `json:"pr_number"`
-
-	// legacy usage for backwards compatibility
-	Namespace string `json:"namespace"`
+	Namespace    string `json:"namespace"`
 }
 
 type ListDeploymentRequest struct {
@@ -119,9 +115,7 @@ type UpdateDeploymentStatusRequest struct {
 	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
 	Status       string `json:"status" form:"required,oneof=created creating inactive failed"`
 	PRNumber     uint   `json:"pr_number"`
-
-	// legacy usage for backwards compatibility
-	Namespace string `json:"namespace"`
+	Namespace    string `json:"namespace"`
 }
 
 type DeleteDeploymentRequest struct {
@@ -129,11 +123,9 @@ type DeleteDeploymentRequest struct {
 }
 
 type GetDeploymentRequest struct {
-	DeploymentID uint `schema:"id"`
-	PRNumber     uint `schema:"pr_number"`
-
-	// legacy usage for backwards compatibility
-	Namespace string `schema:"namespace"`
+	DeploymentID uint   `schema:"id"`
+	PRNumber     uint   `schema:"pr_number"`
+	Namespace    string `schema:"namespace"`
 }
 
 type PullRequest struct {
@@ -164,4 +156,5 @@ type UpdateEnvironmentSettingsRequest struct {
 	DisableNewComments bool              `json:"disable_new_comments"`
 	GitRepoBranches    []string          `json:"git_repo_branches"`
 	NamespaceLabels    map[string]string `json:"namespace_labels"`
+	GitDeployBranches  []string          `json:"git_deploy_branches"`
 }

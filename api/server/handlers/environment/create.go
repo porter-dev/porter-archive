@@ -74,6 +74,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		Mode:                request.Mode,
 		WebhookID:           string(webhookUID),
 		NewCommentsDisabled: request.DisableNewComments,
+		GitDeployBranches:   strings.Join(request.GitDeployBranches, ","),
 	}
 
 	if len(request.NamespaceLabels) > 0 {
@@ -104,7 +105,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 				"content_type": "json",
 				"secret":       c.Config().ServerConf.GithubIncomingWebhookSecret,
 			},
-			Events: []string{"pull_request"},
+			Events: []string{"pull_request", "push"},
 			Active: github.Bool(true),
 		},
 	)

@@ -29,12 +29,7 @@ export default class Help extends Component<PropsType, StateType> {
           <Dropdown dropdownWidth="155px" dropdownMaxHeight="300px">
             <Option
               onClick={() => {
-                window
-                  .open(
-                    "https://docs.porter.run",
-                    "_blank"
-                  )
-                  .focus();
+                window.open("https://docs.porter.run", "_blank").focus();
               }}
             >
               <i className="material-icons-outlined">book</i>

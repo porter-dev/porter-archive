@@ -397,10 +397,9 @@ const ConfigSection = styled.div`
 
 const JobLogsWrapper = styled.div`
   min-height: 450px;
-  height: 65vh;
+  height: fit-content;
   width: 100%;
   border-radius: 8px;
-  overflow-y: auto;
 `;
 
 const Status = styled.div<{ color: string }>`

@@ -101,7 +101,7 @@ class Sidebar extends Component<PropsType, StateType> {
 
   renderProjectContents = () => {
     let { currentView } = this.props;
-    let { currentProject } = this.context;
+    let { currentProject, user } = this.context;
     if (currentProject) {
       return (
         <ScrollWrapper>
@@ -114,12 +114,14 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={rocket} />
             Launch
           </NavButton>
-          {currentProject && currentProject.managed_infra_enabled && (
-            <NavButton path={"/infrastructure"}>
-              <i className="material-icons">build_circle</i>
-              Infrastructure
-            </NavButton>
-          )}
+          {currentProject &&
+            currentProject.managed_infra_enabled &&
+            user.isPorterUser && (
+              <NavButton path={"/infrastructure"}>
+                <i className="material-icons">build_circle</i>
+                Infrastructure
+              </NavButton>
+            )}
           {this.props.isAuthorized("integrations", "", [
             "get",
             "create",

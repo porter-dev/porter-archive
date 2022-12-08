@@ -435,16 +435,18 @@ class Home extends Component<PropsType, StateType> {
                 return <Onboarding />;
               }}
             />
-            <Route
-              path="/infrastructure"
-              render={() => {
-                return (
-                  <DashboardWrapper>
-                    <InfrastructureRouter />
-                  </DashboardWrapper>
-                );
-              }}
-            />
+            {this.context.user.isPorterUser ? (
+              <Route
+                path="/infrastructure"
+                render={() => {
+                  return (
+                    <DashboardWrapper>
+                      <InfrastructureRouter />
+                    </DashboardWrapper>
+                  );
+                }}
+              />
+            ) : null}
             <Route
               path="/dashboard"
               render={() => {

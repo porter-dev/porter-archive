@@ -7,11 +7,13 @@ const BranchFilterSelector = ({
   options,
   onChange,
   showLoading,
+  multiSelect = true,
 }: {
   value: string[];
   options: string[];
   onChange: (value: string[]) => void;
   showLoading?: boolean;
+  multiSelect?: boolean;
 }) => {
   const filteredBranches = useMemo(() => {
     if (!options.length) {
@@ -26,6 +28,11 @@ const BranchFilterSelector = ({
   }, [options, value]);
 
   const handleAddBranch = (branch: string) => {
+    if (!multiSelect) {
+      onChange([branch]);
+      return;
+    }
+
     const newSelectedBranches = [...value, branch];
 
     onChange(newSelectedBranches);
@@ -55,14 +62,14 @@ const BranchFilterSelector = ({
       {/* List selected branches  */}
 
       <BranchRowList>
-      {value.map((branch) => (
-        <BranchRow key={branch}>
-          <div>{branch}</div>
-          <RemoveBranchButton onClick={() => handleDeleteBranch(branch)}>
-            x
-          </RemoveBranchButton>
-        </BranchRow>
-      ))}
+        {value.map((branch) => (
+          <BranchRow key={branch}>
+            <div>{branch}</div>
+            <RemoveBranchButton onClick={() => handleDeleteBranch(branch)}>
+              x
+            </RemoveBranchButton>
+          </BranchRow>
+        ))}
       </BranchRowList>
     </>
   );

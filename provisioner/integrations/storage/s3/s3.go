@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/porter-dev/porter/internal/encryption"
@@ -17,7 +18,7 @@ import (
 )
 
 type S3StorageClient struct {
-	client        s3.Cli
+	client        *s3.Client
 	bucket        string
 	encryptionKey *[32]byte
 }
@@ -31,7 +32,8 @@ type S3Options struct {
 }
 
 func NewS3StorageClient(opts *S3Options) (*S3StorageClient, error) {
-	awsConf := &aws.Config{
+
+	awsConf := aws.Config{
 		Credentials: credentials.NewStaticCredentialsProvider(
 			opts.AWSAccessKeyID,
 			opts.AWSSecretKey,
@@ -40,15 +42,9 @@ func NewS3StorageClient(opts *S3Options) (*S3StorageClient, error) {
 		Region: opts.AWSRegion,
 	}
 
+	// TODO: delete this comment by 2023-01-30 if no issues are noticed when creating a new S3 client
+	// aws-sdk-go used a SharedConfigState: enabled which is no longer available in v2, without specifying the file name
 	client := s3.NewFromConfig(awsConf)
-	// sess, err = session.NewSessionWithOptions(session.Options{
-	// 	SharedConfigState: session.SharedConfigEnable,
-	// 	Config:            *awsConf,
-	// })
-
-	// if err != nil {
-	// 	return nil, fmt.Errorf("cannot create AWS session: %v", err)
-	// }
 
 	return &S3StorageClient{
 		bucket:        opts.AWSBucketName,
@@ -58,6 +54,8 @@ func NewS3StorageClient(opts *S3Options) (*S3StorageClient, error) {
 }
 
 func (s *S3StorageClient) WriteFile(infra *models.Infra, name string, fileBytes []byte, shouldEncrypt bool) error {
+	ctx := context.Background()
+
 	body := fileBytes
 	var err error
 	if shouldEncrypt {
@@ -68,11 +66,11 @@ func (s *S3StorageClient) WriteFile(infra *models.Infra, name string, fileBytes 
 		}
 	}
 
-	// _, err = s.client.PutObject(&s3.PutObjectInput{
-	// 	Body:   aws.ReadSeekCloser(bytes.NewReader(body)),
-	// 	Bucket: &s.bucket,
-	// 	Key:    aws.String(getKeyFromInfra(infra, name)),
-	// })
+	_, err = s.client.PutObject(ctx, &s3.PutObjectInput{
+		Body:   manager.ReadSeekCloser(bytes.NewReader(body)),
+		Bucket: &s.bucket,
+		Key:    aws.String(getKeyFromInfra(infra, name)),
+	})
 
 	return err
 }
@@ -91,7 +89,7 @@ func (s *S3StorageClient) WriteFileWithKey(fileBytes []byte, shouldEncrypt bool,
 	}
 
 	_, err = s.client.PutObject(ctx, &s3.PutObjectInput{
-		Body:   types.ReadSeekCloser(bytes.NewReader(body)),
+		Body:   manager.ReadSeekCloser(bytes.NewReader(body)),
 		Bucket: &s.bucket,
 		Key:    aws.String(key),
 	})
@@ -137,7 +135,9 @@ func (s *S3StorageClient) ReadFile(infra *models.Infra, name string, shouldDecry
 }
 
 func (s *S3StorageClient) DeleteFile(infra *models.Infra, name string) error {
-	_, err := s.client.DeleteObject(&s3.DeleteObjectInput{
+	ctx := context.Background()
+
+	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: &s.bucket,
 		Key:    aws.String(getKeyFromInfra(infra, name)),
 	})

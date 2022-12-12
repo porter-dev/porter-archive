@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -9,7 +10,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
@@ -123,6 +124,8 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 }
 
 func createECRRegistry(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Registry, error) {
+	ctx := context.Background()
+
 	reg := &models.Registry{
 		ProjectID:        infra.ProjectID,
 		AWSIntegrationID: infra.AWSIntegrationID,
@@ -137,15 +140,9 @@ func createECRRegistry(config *config.Config, infra *models.Infra, operation *mo
 		return nil, err
 	}
 
-	sess, err := awsInt.GetSession()
+	svc := ecr.NewFromConfig(awsInt.Config())
 
-	if err != nil {
-		return nil, err
-	}
-
-	ecrSvc := ecr.New(sess)
-
-	authOutput, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+	authOutput, err := svc.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
 
 	if err != nil {
 		return nil, err

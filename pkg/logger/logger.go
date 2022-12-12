@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/pkg/telemetry"
 	"github.com/rs/zerolog"
 )
 
@@ -145,11 +145,9 @@ func AddLoggingContextScopes(ctx context.Context, event *zerolog.Event) map[stri
 	res := make(map[string]interface{})
 
 	// case on the context values that exist, add them to event
-	if userVal := ctx.Value(types.UserScope); userVal != nil {
-		if userModel, ok := userVal.(*models.User); ok {
-			event.Uint("user_id", userModel.ID)
-			res["user_id"] = userModel.ID
-		}
+	if user, ok := telemetry.UserFromContext(ctx); ok {
+		event.Uint("user_id", user.ID)
+		res["user_id"] = user.ID
 	}
 
 	// if this is a project-scoped route, add various scopes

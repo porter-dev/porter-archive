@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/config/loader"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/pkg/telemetry"
 	"gorm.io/gorm"
 )
 
@@ -25,6 +27,8 @@ func main() {
 	flag.BoolVar(&versionFlag, "version", false, "print version and exit")
 	flag.Parse()
 
+	ctx := context.Background()
+
 	// Exit safely when version is used
 	if versionFlag {
 		fmt.Println(Version)
@@ -34,13 +38,22 @@ func main() {
 	cl := loader.NewEnvLoader(Version)
 
 	config, err := cl.LoadConfig()
-
 	if err != nil {
 		log.Fatal("Config loading failed: ", err)
 	}
 
-	err = initData(config)
+	tc := telemetry.TracerConfig{
+		ServiceName:  "porter-server",
+		CollectorURL: "localhost:4317",
+	}
 
+	tp, err := telemetry.InitTracer(ctx, tc)
+	if err != nil {
+		log.Fatal("Unable to load telemetry: ", err)
+	}
+	defer func() { tp.TraceProvider.Shutdown(ctx) }()
+
+	err = initData(config)
 	if err != nil {
 		log.Fatal("Data initialization failed: ", err)
 	}

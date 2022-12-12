@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/porter-dev/porter/api/types"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -24,8 +26,8 @@ const (
 // NewSpan is a convenience function for creating a new span, with a Porter-namespaced name to avoid conflicts.
 // Any commonly used variables in the context, will be added to the span such as clusterID, projectID.
 // When using this function, make sure to call `defer span.End()` immediately after, to avoid lost spans.
-func (t Tracer) NewSpan(ctx context.Context, name string) (context.Context, trace.Span) {
-	ctx, span := t.TraceProvider.Tracer(t.config.ServiceName).Start(ctx, prefixSpanKey(name))
+func NewSpan(ctx context.Context, name string) (context.Context, trace.Span) {
+	ctx, span := otel.Tracer("").Start(ctx, prefixSpanKey(name))
 
 	if user, ok := UserFromContext(ctx); ok {
 		WithAttributes(span, AttributeKV{Key: AttributeKeyUser, Value: user.ID})
@@ -66,6 +68,22 @@ func WithAttributes(span trace.Span, attrs ...AttributeKV) {
 			}
 		}
 	}
+}
+
+// Error adds the given error message and related context to a span
+// If message is empty, the span status_message will be set to the error
+// It is advised to let the raw error be set at err, and message to be a human
+// readable string
+func Error(_ context.Context, span trace.Span, err error, message string) error {
+	span.RecordError(err)
+
+	m := message
+	if m == "" {
+		m = err.Error()
+	}
+	span.SetStatus(codes.Error, m)
+
+	return err
 }
 
 func prefixSpanKey(name string) string {

@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/credentials"
 )
 
@@ -24,6 +25,7 @@ type TracerConfig struct {
 type Tracer struct {
 	config        TracerConfig
 	TraceProvider *sdktrace.TracerProvider
+	Tracer        trace.Tracer
 }
 
 // InitTracer creates a new otel trace provider, pointing at the provided collectorURL, with sensible defaults set
@@ -65,6 +67,7 @@ func InitTracer(ctx context.Context, conf TracerConfig) (Tracer, error) {
 	tracer.TraceProvider = tp
 
 	otel.SetTracerProvider(tp)
+	tracer.Tracer = tp.Tracer("") // changing this will break globally accessed tracers
 
 	return tracer, nil
 }

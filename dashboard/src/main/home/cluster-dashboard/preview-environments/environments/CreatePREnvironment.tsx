@@ -17,6 +17,8 @@ import RadioFilter from "components/RadioFilter";
 import sort from "assets/sort.svg";
 import { search } from "shared/search";
 import _ from "lodash";
+import { readableDate } from "shared/string_utils";
+import dayjs from "dayjs";
 
 interface Props {
   environmentID: string;
@@ -100,10 +102,12 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
     });
 
     switch (sortOrder) {
-    //   case "Newest":
-    //     return _.sortBy(filteredBySearch, "updated_at").reverse();
-    //   case "Oldest":
-    //     return _.sortBy(filteredBySearch, "updated_at");
+      case "Recently Updated":
+        return _.sortBy(filteredBySearch, "updated_at").reverse();
+      case "Newest":
+        return _.sortBy(filteredBySearch, "created_at").reverse();
+      case "Oldest":
+        return _.sortBy(filteredBySearch, "created_at");
       case "Alphabetical":
       default:
         return _.sortBy(filteredBySearch, "gh_pr_name");
@@ -150,18 +154,18 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
           <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
             <i className="material-icons">refresh</i>
           </RefreshButton>
-          {/* TODO: Uncomment when we support sorting. Right now we dont get dates from backend */}
-          {/* <RadioFilter
+          <RadioFilter
             icon={sort}
             selected={sortOrder}
             setSelected={setSortOrder}
             options={[
+              { label: "Recently Updated", value: "Recently Updated" },
               { label: "Newest", value: "Newest" },
               { label: "Oldest", value: "Oldest" },
               { label: "Alphabetical", value: "Alphabetical" },
             ]}
             name="Sort"
-          /> */}
+          />
         </Flex>
       </FlexRow>
       <Br height="10px" />
@@ -197,6 +201,11 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
                         <i className="material-icons">arrow_forward</i>
                         {pullRequest.branch_into}
                       </MergeInfo>
+                      <SepDot>•</SepDot>
+                      <LastDeployed>
+                        Last updated{" "}
+                        {dayjs(pullRequest.updated_at).format("hh:mma on MM/DD/YYYY")}
+                      </LastDeployed>
                     </MergeInfoWrapper>
                   </DeploymentImageContainer>
                 </Flex>
@@ -275,6 +284,15 @@ const PullRequestRow = styled.div<{ isLast?: boolean; isSelected?: boolean }>`
   }
 `;
 
+const InfoWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
+`;
+
 const Code = styled.span`
   font-family: monospace; ;
 `;
@@ -299,7 +317,6 @@ const DeploymentImageContainer = styled.div`
 const LastDeployed = styled.div`
   font-size: 13px;
   margin-top: -1px;
-  margin-left: 10px;
   display: flex;
   align-items: center;
   color: #aaaabb66;
@@ -311,6 +328,7 @@ const MergeInfoWrapper = styled.div`
   margin-right: 8px;
   position: relative;
   margin-left: 10px;
+  gap: 8px;
 `;
 
 const MergeInfo = styled.div`
@@ -328,6 +346,10 @@ const MergeInfo = styled.div`
     font-size: 16px;
     margin: 0 2px;
   }
+`;
+
+const SepDot = styled.div`
+  color: #aaaabb66;
 `;
 
 const PRIcon = styled.img`
@@ -446,7 +468,6 @@ const SearchRow = styled.div`
 const SearchRowWrapper = styled(SearchRow)`
   border-radius: 5px;
   width: 250px;
-  margin-top: 35px;
 `;
 
 const SearchBarWrapper = styled.div`

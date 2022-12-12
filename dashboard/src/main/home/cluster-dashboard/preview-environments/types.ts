@@ -55,4 +55,6 @@ export type PullRequest = {
   repo_name: string;
   branch_from: string;
   branch_into: string;
+  created_at: string;
+  updated_at: string;
 };

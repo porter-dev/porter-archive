@@ -18,7 +18,7 @@ import (
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/notifier/slack"
 	"github.com/porter-dev/porter/internal/stacks"
-	"helm.sh/helm/v3/pkg/release"
+	"github.com/stefanmcshane/helm/pkg/release"
 )
 
 var (

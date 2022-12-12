@@ -9,7 +9,7 @@ import (
 
 	"github.com/porter-dev/porter/api/types"
 
-	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/utils"
@@ -154,22 +154,18 @@ func linkRegistry(client *api.Client, projectID uint, intID uint) (uint, error) 
 }
 
 func waitForAuthorizationToken(region string, creds *aws.PorterAWSCredentials) error {
+	ctx := context.Background()
+
 	awsInt := &integrations.AWSIntegration{
 		AWSRegion:          region,
 		AWSAccessKeyID:     []byte(creds.AWSAccessKeyID),
 		AWSSecretAccessKey: []byte(creds.AWSSecretAccessKey),
 	}
 
-	sess, err := awsInt.GetSession()
-
-	if err != nil {
-		return err
-	}
-
-	ecrSvc := ecr.New(sess)
+	ecrSvc := ecr.NewFromConfig(awsInt.Config())
 
 	for i := 0; i < 30; i++ {
-		_, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+		_, err := ecrSvc.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
 
 		if err == nil {
 			return nil

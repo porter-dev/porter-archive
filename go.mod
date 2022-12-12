@@ -2,6 +2,8 @@ module github.com/porter-dev/porter
 
 go 1.18
 
+replace helm.sh/helm/v3 => github.com/stefanmcshane/helm
+
 require (
 	cloud.google.com/go v0.102.0
 	github.com/AlecAivazis/survey/v2 v2.2.9

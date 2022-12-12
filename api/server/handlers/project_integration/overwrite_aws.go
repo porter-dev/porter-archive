@@ -73,9 +73,10 @@ func (p *OverwriteAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// app.Logger.Info().Msgf("AWS integration overwritten: %d", awsIntegration.ID)
+	aint := awsIntegration.ToAWSIntegrationType()
 
 	res := types.OverwriteAWSResponse{
-		AWSIntegration: awsIntegration.ToAWSIntegrationType(),
+		AWSIntegration: &aint,
 	}
 
 	p.WriteResult(w, r, res)

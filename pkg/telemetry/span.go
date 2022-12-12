@@ -28,14 +28,14 @@ func (t Tracer) NewSpan(ctx context.Context, name string) (context.Context, trac
 	ctx, span := t.TraceProvider.Tracer(t.config.ServiceName).Start(ctx, prefixSpanKey(name))
 
 	if user, ok := UserFromContext(ctx); ok {
-		WithAttributes(span, AttributeKV{Key: SpanKeyUser, Value: user.ID})
+		WithAttributes(span, AttributeKV{Key: AttributeKeyUser, Value: user.ID})
 	}
 
 	WithAttributes(
 		span,
 		// TODO: find out where these context keys are actually stored. I believe that these are scopes, not context keys
-		AttributeKV{Key: SpanKeyCluster, Value: stringFromContext(ctx, types.ClusterScope)},
-		AttributeKV{Key: SpanKeyProject, Value: stringFromContext(ctx, types.ProjectScope)},
+		AttributeKV{Key: AttributeKeyCluster, Value: stringFromContext(ctx, types.ClusterScope)},
+		AttributeKV{Key: AttributeKeyProject, Value: stringFromContext(ctx, types.ProjectScope)},
 	)
 
 	return ctx, span

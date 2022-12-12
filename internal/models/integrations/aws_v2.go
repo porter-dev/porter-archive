@@ -9,14 +9,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-	"github.com/aws/aws-sdk-go/aws/session"
+	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
 
-// AWSv2Integration is an auth mechanism that uses a AWS IAM user to
+// AWSIntegration is an auth mechanism that uses a AWS IAM user to
 // authenticate
-type AWSv2Integration struct {
+type AWSIntegration struct {
 	gorm.Model
 
 	// The id of the user that linked this auth mechanism
@@ -52,7 +52,7 @@ type AWSv2Integration struct {
 	AWSSessionToken []byte `json:"aws_session_token"`
 }
 
-func (a *AWSv2Integration) ToAWSv2IntegrationType() types.AWSIntegration {
+func (a *AWSIntegration) ToAWSIntegrationType() types.AWSIntegration {
 	return types.AWSIntegration{
 		CreatedAt: a.CreatedAt,
 		ID:        a.ID,
@@ -62,14 +62,13 @@ func (a *AWSv2Integration) ToAWSv2IntegrationType() types.AWSIntegration {
 	}
 }
 
-// GetSession retrieves an AWS session to use based on the access key and secret
-// access key
-func (a *AWSv2Integration) GetSession() (*session.Session, error) {
+// Config returns a populated AWS Config for use with aws-go-sdk-v2 services
+func (a *AWSIntegration) Config() aws.Config {
 	awsConf := aws.Config{
-		Credentials: credentials.NewStaticCredentials(
-			string(a.AWSAccessKeyID),
-			string(a.AWSSecretAccessKey),
-			string(a.AWSSessionToken),
+		Credentials: credentials.NewStaticCredentialsProvider(
+			*aws.String(string(a.AWSAccessKeyID)),
+			*aws.String(string(a.AWSSecretAccessKey)),
+			*aws.String(string(a.AWSSessionToken)),
 		),
 	}
 
@@ -77,39 +76,15 @@ func (a *AWSv2Integration) GetSession() (*session.Session, error) {
 		awsConf.Region = a.AWSRegion
 	}
 
-	return session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	})
-}
-
-func (a *AWSv2Integration) STSClient() (*sts.PresignClient, error) {
-	awsConf := aws.Config{
-		Credentials: credentials.NewStaticCredentials(
-			string(a.AWSAccessKeyID),
-			string(a.AWSSecretAccessKey),
-			string(a.AWSSessionToken),
-		),
-	}
-
-	if a.AWSRegion != "" {
-		awsConf.Region = a.AWSRegion
-	}
-
-	return sts.NewPresignClient(sts.NewFromConfig(awsConf)), nil
+	return awsConf
 }
 
 // PopulateAWSArn uses the access key/secret to get the caller identity, and
 // attaches it to the AWS integration
-func (a *AWSv2Integration) PopulateAWSArn() error {
-	sess, err := a.GetSession()
+func (a *AWSIntegration) PopulateAWSArn(ctx context.Context) error {
+	svc := sts.NewFromConfig(a.Config())
 
-	if err != nil {
-		return err
-	}
-
-	svc := sts.New(sess)
-
-	result, err := svc.GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	result, err := svc.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 
 	if err != nil {
 		return err
@@ -121,7 +96,7 @@ func (a *AWSv2Integration) PopulateAWSArn() error {
 }
 
 // GetBearerToken retrieves a bearer token for an AWS account
-func (a *AWSv2Integration) GetBearerToken(
+func (a *AWSIntegration) GetBearerToken(
 	ctx context.Context,
 	getTokenCache GetTokenCacheFunc,
 	setTokenCache SetTokenCacheFunc,
@@ -149,23 +124,54 @@ func (a *AWSv2Integration) GetBearerToken(
 		}
 	}
 
-	// cli, _ := a.STSClient().
-	a.STSClient()
+	token, err := a.GetWithSTS(ctx, clusterID)
+	if err != nil {
+		return "", err
+	}
 
-	// client := sts.NewFromConfig(x.Config)
+	setTokenCache(token.Token, token.Expiration)
 
-	// presignedURLRequest, err := client.PresignGetCallerIdentity(ctx, &sts.GetCallerIdentityInput{}, func(presignOptions *sts.PresignOptions) {
-	// 	presignOptions.ClientOptions = append(presignOptions.ClientOptions, g.appendPresignHeaderValuesFunc(clusterID))
-	// })
-	// if err != nil {
-	// 	return "", fmt.Errorf("failed to presign caller identity: %w", err)
-	// }
+	return token.Token, nil
+}
 
-	// Set token expiration to 1 minute before the presigned URL (15 mins) expires for some cushion
-	tokenExpiration := time.Now().Local().Add(14 * time.Minute)
-	tokenWithPrefix := fmt.Sprintf("k8s-aws-v1.%s", base64.RawURLEncoding.EncodeToString([]byte(presignedURLRequest.URL)))
+// Token is generated and used by Kubernetes client-go to authenticate with a Kubernetes cluster.
+// Original source: https://github.com/weaveworks/eksctl/blob/5f2a59056a4852470c66502205d2db0aa7c84c5e/pkg/eks/auth/generator.go#LL46C24-L46C24
+type Token struct {
+	Token      string
+	Expiration time.Time
+}
 
-	setTokenCache(tokenWithPrefix, tokenExpiration)
+const (
+	clusterIDHeader        = "x-k8s-aws-id"
+	presignedURLExpiration = 10 * time.Minute
+	v1Prefix               = "k8s-aws-v1."
+)
 
-	return tokenWithPrefix, nil
+// GetWithSTS returns a token valid for clusterID using the given STS client.
+// This implementation follows the steps outlined here:
+// https://github.com/kubernetes-sigs/aws-iam-authenticator#api-authorization-from-outside-a-cluster
+// We either add this implementation or have to maintain two versions of STS since aws-iam-authenticator is
+// not switching over to aws-go-sdk-v2.
+func (a AWSIntegration) GetWithSTS(ctx context.Context, clusterID string) (Token, error) {
+	presignClient := sts.NewPresignClient(sts.NewFromConfig(a.Config()))
+	// generate a sts:GetCallerIdentity request and add our custom cluster ID header
+	presignedURLRequest, err := presignClient.PresignGetCallerIdentity(ctx, &sts.GetCallerIdentityInput{}, func(presignOptions *sts.PresignOptions) {
+		presignOptions.ClientOptions = append(presignOptions.ClientOptions, a.appendPresignHeaderValuesFunc(clusterID))
+	})
+	if err != nil {
+		return Token{}, fmt.Errorf("failed to presign caller identity: %w", err)
+	}
+
+	tokenExpiration := time.Now().Local().Add(presignedURLExpiration)
+	// Add the token with k8s-aws-v1. prefix.
+	return Token{v1Prefix + base64.RawURLEncoding.EncodeToString([]byte(presignedURLRequest.URL)), tokenExpiration}, nil
+}
+
+func (a AWSIntegration) appendPresignHeaderValuesFunc(clusterID string) func(stsOptions *sts.Options) {
+	return func(stsOptions *sts.Options) {
+		// Add clusterId Header
+		stsOptions.APIOptions = append(stsOptions.APIOptions, smithyhttp.SetHeaderValue(clusterIDHeader, clusterID))
+		// Add X-Amz-Expires query param
+		stsOptions.APIOptions = append(stsOptions.APIOptions, smithyhttp.SetHeaderValue("X-Amz-Expires", "60"))
+	}
 }

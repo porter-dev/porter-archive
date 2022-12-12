@@ -88,19 +88,19 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.1 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/andybalholm/cascadia v1.1.0 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.16.4 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.17.2 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.15.9 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.12.4 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.5 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.11 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.5 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.26 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.20 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.12 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.17.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ecrpublic v1.13.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.20 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.11.7 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.16.6 // indirect
-	github.com/aws/smithy-go v1.11.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.17.6 // indirect
+	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.0.0-20220517224237-e6f29200ae04 // indirect
 	github.com/chrismellard/docker-credential-acr-env v0.0.0-20220327082430-c57b701bfc08 // indirect
 	github.com/cosmtrek/air v1.30.0 // indirect

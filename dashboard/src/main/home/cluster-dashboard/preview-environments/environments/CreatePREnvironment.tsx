@@ -19,6 +19,7 @@ import { search } from "shared/search";
 import _ from "lodash";
 import { readableDate } from "shared/string_utils";
 import dayjs from "dayjs";
+import Loading from "components/Loading";
 
 interface Props {
   environmentID: string;
@@ -35,7 +36,7 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
   );
 
   // Get all PRs for the current environment
-  const { isLoading: getPullRequestsLoading, data: pullRequests } = useQuery<
+  const { isLoading: pullRequestsLoading, data: pullRequests } = useQuery<
     PullRequest[]
   >(
     ["pullRequests", currentProject.id, currentCluster.id, environmentID],
@@ -96,10 +97,14 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
   };
 
   const filteredPullRequests = useMemo(() => {
-    const filteredBySearch = search<PullRequest>(pullRequests, searchValue, {
-      isCaseSensitive: false,
-      keys: ["pr_title", "branch_from", "branch_into"],
-    });
+    const filteredBySearch = search<PullRequest>(
+      pullRequests ?? [],
+      searchValue,
+      {
+        isCaseSensitive: false,
+        keys: ["pr_title", "branch_from", "branch_into"],
+      }
+    );
 
     switch (sortOrder) {
       case "Recently Updated":
@@ -114,17 +119,22 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
     }
   }, [pullRequests, searchValue, sortOrder]);
 
-  if (!filteredPullRequests?.length) {
-    const noPullRequestsMessage = pullRequests?.length
-      ? `
-        No pull requests match your search. Try searching for a different pull request.
-    `
-      : `You do not have any pull requests.`;
-
+  if (pullRequestsLoading) {
     return (
       <>
         <Br height="30px" />
-        <Placeholder height="370px">{noPullRequestsMessage}</Placeholder>
+        <Placeholder minHeight="50vh">
+          <Loading />
+        </Placeholder>
+      </>
+    );
+  }
+
+  if (!pullRequests.length) {
+    return (
+      <>
+        <Br height="30px" />
+        <Placeholder height="50vh">{`You do not have any pull requests.`}</Placeholder>
       </>
     );
   }
@@ -143,6 +153,8 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
               <SearchInput
                 value={searchValue}
                 onChange={(e: any) => {
+                  setSelectedPR(undefined);
+                  setPorterYAMLErrors([])
                   setSearchValue(e.target.value);
                 }}
                 placeholder="Search"
@@ -169,51 +181,60 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
         </Flex>
       </FlexRow>
       <Br height="10px" />
-      <PullRequestList>
-        {(filteredPullRequests ?? []).map(
-          (pullRequest: PullRequest, i: number) => {
-            return (
-              <PullRequestRow
-                onClick={() => {
-                  handlePRRowItemClick(pullRequest);
-                }}
-                isLast={i === filteredPullRequests.length - 1}
-                isSelected={pullRequest === selectedPR}
-              >
-                <PRName>
-                  <PRIcon src={pr_icon} alt="pull request icon" />
-                  <EllipsisTextWrapper tooltipText={pullRequest.pr_title}>
-                    {pullRequest.pr_title}
-                  </EllipsisTextWrapper>
-                </PRName>
+      {filteredPullRequests?.length ? (
+        <PullRequestList>
+          {(filteredPullRequests ?? []).map(
+            (pullRequest: PullRequest, i: number) => {
+              return (
+                <PullRequestRow
+                  onClick={() => {
+                    handlePRRowItemClick(pullRequest);
+                  }}
+                  isLast={i === filteredPullRequests.length - 1}
+                  isSelected={pullRequest === selectedPR}
+                >
+                  <PRName>
+                    <PRIcon src={pr_icon} alt="pull request icon" />
+                    <EllipsisTextWrapper tooltipText={pullRequest.pr_title}>
+                      {pullRequest.pr_title}
+                    </EllipsisTextWrapper>
+                  </PRName>
 
-                <Flex>
-                  <DeploymentImageContainer>
-                    {/* <InfoWrapper>
+                  <Flex>
+                    <DeploymentImageContainer>
+                      {/* <InfoWrapper>
                   <LastDeployed>
                     #{pullRequest.pr_number} last updated xyz
                   </LastDeployed>
                 </InfoWrapper>
                 <SepDot>•</SepDot> */}
-                    <MergeInfoWrapper>
-                      <MergeInfo>
-                        {pullRequest.branch_from}
-                        <i className="material-icons">arrow_forward</i>
-                        {pullRequest.branch_into}
-                      </MergeInfo>
-                      <SepDot>•</SepDot>
-                      <LastDeployed>
-                        Last updated{" "}
-                        {dayjs(pullRequest.updated_at).format("hh:mma on MM/DD/YYYY")}
-                      </LastDeployed>
-                    </MergeInfoWrapper>
-                  </DeploymentImageContainer>
-                </Flex>
-              </PullRequestRow>
-            );
-          }
-        )}
-      </PullRequestList>
+                      <MergeInfoWrapper>
+                        <MergeInfo>
+                          {pullRequest.branch_from}
+                          <i className="material-icons">arrow_forward</i>
+                          {pullRequest.branch_into}
+                        </MergeInfo>
+                        <SepDot>•</SepDot>
+                        <LastDeployed>
+                          Last updated{" "}
+                          {dayjs(pullRequest.updated_at).format(
+                            "hh:mma on MM/DD/YYYY"
+                          )}
+                        </LastDeployed>
+                      </MergeInfoWrapper>
+                    </DeploymentImageContainer>
+                  </Flex>
+                </PullRequestRow>
+              );
+            }
+          )}
+        </PullRequestList>
+      ) : (
+        <>
+          <Br height="30px" />
+          <Placeholder height="50vh">{`No pull requests match your search query.`}</Placeholder>
+        </>
+      )}
       {showErrorsModal && selectedPR ? (
         <PorterYAMLErrorsModal
           errors={porterYAMLErrors}

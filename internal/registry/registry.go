@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -12,10 +13,18 @@ import (
 	"time"
 
 	artifactregistry "cloud.google.com/go/artifactregistry/apiv1beta2"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
+	ecrTypes "github.com/aws/aws-sdk-go-v2/service/ecr/types"
+	"github.com/digitalocean/godo"
+	"github.com/docker/cli/cli/config/configfile"
+	"github.com/docker/cli/cli/config/types"
+	"github.com/docker/distribution/reference"
+	ptypes "github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	ints "github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
@@ -23,40 +32,22 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	artifactregistrypb "google.golang.org/genproto/googleapis/devtools/artifactregistry/v1beta2"
-
-	ints "github.com/porter-dev/porter/internal/models/integrations"
-
-	ptypes "github.com/porter-dev/porter/api/types"
-
-	"github.com/digitalocean/godo"
-	"github.com/docker/cli/cli/config/configfile"
-	"github.com/docker/cli/cli/config/types"
-	"github.com/docker/distribution/reference"
-
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry"
-
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 )
 
 // Registry wraps the gorm Registry model
 type Registry models.Registry
 
 func GetECRRegistryURL(awsIntRepo repository.AWSIntegrationRepository, projectID, awsIntID uint) (string, error) {
+	ctx := context.Background()
+
 	awsInt, err := awsIntRepo.ReadAWSIntegration(projectID, awsIntID)
-
 	if err != nil {
 		return "", err
 	}
 
-	sess, err := awsInt.GetSession()
+	svc := ecr.NewFromConfig(awsInt.Config())
 
-	if err != nil {
-		return "", err
-	}
-
-	ecrSvc := ecr.New(sess)
-
-	output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+	output, err := svc.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
 
 	if err != nil {
 		return "", err
@@ -380,6 +371,8 @@ func (r *Registry) listGARRepositories(
 }
 
 func (r *Registry) listECRRepositories(repo repository.Repository) ([]*ptypes.RegistryRepository, error) {
+	ctx := context.Background()
+
 	aws, err := repo.AWSIntegration().ReadAWSIntegration(
 		r.ProjectID,
 		r.AWSIntegrationID,
@@ -389,15 +382,9 @@ func (r *Registry) listECRRepositories(repo repository.Repository) ([]*ptypes.Re
 		return nil, err
 	}
 
-	sess, err := aws.GetSession()
+	svc := ecr.NewFromConfig(aws.Config())
 
-	if err != nil {
-		return nil, err
-	}
-
-	svc := ecr.New(sess)
-
-	resp, err := svc.DescribeRepositories(&ecr.DescribeRepositoriesInput{})
+	resp, err := svc.DescribeRepositories(ctx, &ecr.DescribeRepositoriesInput{})
 
 	if err != nil {
 		return nil, err
@@ -777,6 +764,8 @@ func (r *Registry) createECRRepository(
 	repo repository.Repository,
 	name string,
 ) error {
+	ctx := context.Background()
+
 	aws, err := repo.AWSIntegration().ReadAWSIntegration(
 		r.ProjectID,
 		r.AWSIntegrationID,
@@ -786,27 +775,23 @@ func (r *Registry) createECRRepository(
 		return err
 	}
 
-	sess, err := aws.GetSession()
-
-	if err != nil {
-		return err
-	}
-
-	svc := ecr.New(sess)
+	svc := ecr.NewFromConfig(aws.Config())
 
 	// determine if repository already exists
-	_, err = svc.DescribeRepositories(&ecr.DescribeRepositoriesInput{
-		RepositoryNames: []*string{&name},
+	_, err = svc.DescribeRepositories(ctx, &ecr.DescribeRepositoriesInput{
+		RepositoryNames: []string{name},
 	})
-
-	// if the repository was not found, create it
-	if aerr, ok := err.(awserr.Error); ok && aerr.Code() == ecr.ErrCodeRepositoryNotFoundException {
-		_, err = svc.CreateRepository(&ecr.CreateRepositoryInput{
-			RepositoryName: &name,
-		})
-
-		return err
-	} else if err != nil {
+	if err != nil {
+		// if the repository was not found, create it
+		var nsk *ecrTypes.RegistryPolicyNotFoundException
+		if errors.As(err, &nsk) {
+			_, err = svc.CreateRepository(ctx, &ecr.CreateRepositoryInput{
+				RepositoryName: &name,
+			})
+			if err != nil {
+				return err
+			}
+		}
 		return err
 	}
 
@@ -909,26 +894,22 @@ func (r *Registry) GetECRPaginatedImages(
 	maxResults int64,
 	nextToken *string,
 ) ([]*ptypes.Image, *string, error) {
+	ctx := context.Background()
+
 	aws, err := repo.AWSIntegration().ReadAWSIntegration(
 		r.ProjectID,
 		r.AWSIntegrationID,
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
 
-	sess, err := aws.GetSession()
+	svc := ecr.NewFromConfig(aws.Config())
 
-	if err != nil {
-		return nil, nil, err
-	}
-
-	svc := ecr.New(sess)
-
-	resp, err := svc.ListImages(&ecr.ListImagesInput{
+	mr := int32(maxResults)
+	resp, err := svc.ListImages(ctx, &ecr.ListImagesInput{
 		RepositoryName: &repoName,
-		MaxResults:     &maxResults,
+		MaxResults:     &mr,
 		NextToken:      nextToken,
 	})
 
@@ -941,11 +922,11 @@ func (r *Registry) GetECRPaginatedImages(
 	}
 
 	imageIDLen := len(resp.ImageIds)
-	imageDetails := make([]*ecr.ImageDetail, 0)
+	imageDetails := make([]ecrTypes.ImageDetail, 0)
 	imageIDMap := make(map[string]bool)
 
 	for _, id := range resp.ImageIds {
-		if id != nil && id.ImageTag != nil {
+		if id.ImageDigest != nil && id.ImageTag != nil {
 			imageIDMap[*id.ImageTag] = true
 		}
 	}
@@ -965,7 +946,7 @@ func (r *Registry) GetECRPaginatedImages(
 		go func(start, end int) {
 			defer wg.Done()
 
-			describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
+			describeResp, err := svc.DescribeImages(ctx, &ecr.DescribeImagesInput{
 				RepositoryName: &repoName,
 				ImageIds:       resp.ImageIds[start:end],
 			})
@@ -989,14 +970,14 @@ func (r *Registry) GetECRPaginatedImages(
 		for _, tag := range img.ImageTags {
 			newImage := &ptypes.Image{
 				Digest:         *img.ImageDigest,
-				Tag:            *tag,
+				Tag:            tag,
 				RepositoryName: repoName,
 				PushedAt:       img.ImagePushedAt,
 			}
 
-			if _, ok := imageIDMap[*tag]; ok {
-				if _, ok := imageInfoMap[*tag]; !ok {
-					imageInfoMap[*tag] = newImage
+			if _, ok := imageIDMap[tag]; ok {
+				if _, ok := imageInfoMap[tag]; !ok {
+					imageInfoMap[tag] = newImage
 				}
 			}
 
@@ -1018,6 +999,8 @@ func (r *Registry) GetECRPaginatedImages(
 }
 
 func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
+	ctx := context.Background()
+
 	aws, err := repo.AWSIntegration().ReadAWSIntegration(
 		r.ProjectID,
 		r.AWSIntegrationID,
@@ -1027,21 +1010,16 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
-	sess, err := aws.GetSession()
-
-	if err != nil {
-		return nil, err
-	}
-
-	svc := ecr.New(sess)
+	svc := ecr.NewFromConfig(aws.Config())
 
 	maxResults := int64(1000)
 
-	var imageIDs []*ecr.ImageIdentifier
+	var imageIDs []ecrTypes.ImageIdentifier
 
-	resp, err := svc.ListImages(&ecr.ListImagesInput{
+	mr := int32(maxResults)
+	resp, err := svc.ListImages(ctx, &ecr.ListImagesInput{
 		RepositoryName: &repoName,
-		MaxResults:     &maxResults,
+		MaxResults:     &mr,
 	})
 
 	if err != nil {
@@ -1057,9 +1035,9 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 	nextToken := resp.NextToken
 
 	for nextToken != nil {
-		resp, err := svc.ListImages(&ecr.ListImagesInput{
+		resp, err := svc.ListImages(ctx, &ecr.ListImagesInput{
 			RepositoryName: &repoName,
-			MaxResults:     &maxResults,
+			MaxResults:     &mr,
 			NextToken:      nextToken,
 		})
 
@@ -1072,7 +1050,7 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 	}
 
 	imageIDLen := len(imageIDs)
-	imageDetails := make([]*ecr.ImageDetail, 0)
+	imageDetails := make([]ecrTypes.ImageDetail, 0)
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -1089,7 +1067,7 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		go func(start, end int) {
 			defer wg.Done()
 
-			describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
+			describeResp, err := svc.DescribeImages(ctx, &ecr.DescribeImagesInput{
 				RepositoryName: &repoName,
 				ImageIds:       imageIDs[start:end],
 			})
@@ -1113,13 +1091,13 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		for _, tag := range img.ImageTags {
 			newImage := &ptypes.Image{
 				Digest:         *img.ImageDigest,
-				Tag:            *tag,
+				Tag:            tag,
 				RepositoryName: repoName,
 				PushedAt:       img.ImagePushedAt,
 			}
 
-			if _, ok := imageInfoMap[*tag]; !ok {
-				imageInfoMap[*tag] = newImage
+			if _, ok := imageInfoMap[tag]; !ok {
+				imageInfoMap[tag] = newImage
 			}
 		}
 	}
@@ -1588,6 +1566,9 @@ func (r *Registry) GetDockerConfigJSON(
 func (r *Registry) getECRDockerConfigFile(
 	repo repository.Repository,
 ) (*configfile.ConfigFile, error) {
+
+	ctx := context.Background()
+
 	aws, err := repo.AWSIntegration().ReadAWSIntegration(
 		r.ProjectID,
 		r.AWSIntegrationID,
@@ -1597,15 +1578,9 @@ func (r *Registry) getECRDockerConfigFile(
 		return nil, err
 	}
 
-	sess, err := aws.GetSession()
+	svc := ecr.NewFromConfig(aws.Config())
 
-	if err != nil {
-		return nil, err
-	}
-
-	ecrSvc := ecr.New(sess)
-
-	output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+	output, err := svc.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
 
 	if err != nil {
 		return nil, err

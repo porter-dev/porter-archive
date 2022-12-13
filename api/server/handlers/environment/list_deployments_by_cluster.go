@@ -293,6 +293,8 @@ func fetchOpenPullRequests(
 				RepoName:   env.GitRepoName,
 				BranchFrom: pr.GetHead().GetRef(),
 				BranchInto: pr.GetBase().GetRef(),
+				CreatedAt:  pr.GetCreatedAt(),
+				UpdatedAt:  pr.GetUpdatedAt(),
 			})
 		}
 	}

@@ -55,7 +55,6 @@ require (
 	google.golang.org/protobuf v1.28.1
 	gorm.io/driver/sqlite v1.1.3
 	gorm.io/gorm v1.22.3
-	helm.sh/helm/v3 v3.10.2 // indirect
 	k8s.io/api v0.25.2
 	k8s.io/apimachinery v0.25.2
 	k8s.io/cli-runtime v0.25.2
@@ -80,7 +79,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.17.6
 	github.com/aws/smithy-go v1.13.5
 	github.com/briandowns/spinner v1.18.1
-	github.com/matryer/is v1.4.0
 	github.com/open-policy-agent/opa v0.44.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221212201837-5275a9d15b63
@@ -139,6 +137,7 @@ require (
 	github.com/yashtewari/glob-intersection v0.1.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.4 // indirect
 	golang.org/x/tools v0.3.0 // indirect
+	helm.sh/helm/v3 v3.10.2 // indirect
 	istio.io/api v0.0.0-20221109202042-b9e5d446a83d // indirect
 )
 

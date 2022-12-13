@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/porter-dev/porter/internal/helm"
-	"helm.sh/helm/v3/pkg/chart"
+	"github.com/stefanmcshane/helm/pkg/chart"
 )
 
 // TemplateWriter upgrades and installs charts by setting Helm values

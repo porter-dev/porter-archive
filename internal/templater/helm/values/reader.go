@@ -6,8 +6,8 @@ import (
 	"github.com/porter-dev/porter/internal/templater"
 	"github.com/porter-dev/porter/internal/templater/utils"
 
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/release"
+	"github.com/stefanmcshane/helm/pkg/chart"
+	"github.com/stefanmcshane/helm/pkg/release"
 )
 
 // TemplateReader implements the templater.TemplateReader for reading from

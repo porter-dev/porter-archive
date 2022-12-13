@@ -6,8 +6,8 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/stefanmcshane/helm/pkg/release"
 	"gorm.io/gorm"
-	"helm.sh/helm/v3/pkg/release"
 )
 
 func UpdateHelmRevision(config *config.Config, projID, clusterID uint, rel *release.Release) error {

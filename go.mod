@@ -5,7 +5,7 @@ go 1.18
 require (
 	cloud.google.com/go v0.104.0 // indirect
 	github.com/AlecAivazis/survey/v2 v2.2.9
-	github.com/Masterminds/semver/v3 v3.1.1
+	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/aws/aws-sdk-go v1.44.143
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.4
 	github.com/buildpacks/pack v0.27.0
@@ -55,7 +55,6 @@ require (
 	google.golang.org/protobuf v1.28.1
 	gorm.io/driver/sqlite v1.1.3
 	gorm.io/gorm v1.22.3
-	helm.sh/helm/v3 v3.10.2
 	k8s.io/api v0.25.2
 	k8s.io/apimachinery v0.25.2
 	k8s.io/cli-runtime v0.25.2
@@ -82,6 +81,7 @@ require (
 	github.com/briandowns/spinner v1.18.1
 	github.com/open-policy-agent/opa v0.44.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
+	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d
 	github.com/xanzy/go-gitlab v0.68.0
 	go.uber.org/goleak v1.1.12
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
@@ -135,7 +135,6 @@ require (
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.1 // indirect
 	github.com/yashtewari/glob-intersection v0.1.0 // indirect
-	go.etcd.io/etcd/api/v3 v3.5.4 // indirect
 	golang.org/x/tools v0.3.0 // indirect
 	istio.io/api v0.0.0-20221109202042-b9e5d446a83d // indirect
 )
@@ -153,7 +152,7 @@ require (
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
+	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Microsoft/hcsshim v0.9.4 // indirect
@@ -204,7 +203,7 @@ require (
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/heroku/color v0.0.6 // indirect
-	github.com/huandu/xstrings v1.3.2 // indirect
+	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/itchyny/astgen-go v0.0.0-20210113000433-0da0671862a3 // indirect
@@ -267,7 +266,7 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/rubenv/sql-migrate v1.1.2 // indirect
+	github.com/rubenv/sql-migrate v1.2.0 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 // indirect
 	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect

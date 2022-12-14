@@ -149,7 +149,7 @@ jobs:
         env:
           GOOS: linux
           GOARCH: amd64
-          CGO_ENABLED: 1
+          CGO_ENABLED: 0
       # Note: we have to zip all binaries before uploading them as artifacts --
       # without this step, the binaries will be uploaded but the file metadata will
       # be listed as plaintext after downloading the artifact in a later step
@@ -211,7 +211,7 @@ jobs:
         env:
           GOOS: darwin
           GOARCH: amd64
-          CGO_ENABLED: 1
+          CGO_ENABLED: 0
       - name: Upload binaries
         uses: actions/upload-artifact@v2
         with:

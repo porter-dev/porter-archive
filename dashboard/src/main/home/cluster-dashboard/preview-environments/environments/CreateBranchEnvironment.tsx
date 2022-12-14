@@ -4,7 +4,7 @@ import { Context } from "shared/Context";
 import { Environment } from "../types";
 import Helper from "components/form-components/Helper";
 import api from "shared/api";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { validatePorterYAML } from "../utils";
 import Banner from "components/Banner";
 import { useRouting } from "shared/routing";
@@ -12,6 +12,7 @@ import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
 import Placeholder from "components/Placeholder";
 import BranchFilterSelector from "../components/BranchFilterSelector";
 import _ from "lodash";
+import Loading from "components/Loading";
 
 interface Props {
   environmentID: string;
@@ -20,11 +21,17 @@ interface Props {
 const CreateBranchEnvironment = ({ environmentID }: Props) => {
   const router = useRouting();
   const [showErrorsModal, setShowErrorsModal] = useState<boolean>(false);
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const {
+    currentProject,
+    currentCluster,
+    setCurrentError,
+    setCurrentModal,
+  } = useContext(Context);
 
-  const { data: environment } = useQuery<Environment>(
+  const {
+    data: environment,
+    isLoading: environmentLoading,
+  } = useQuery<Environment>(
     ["environment", currentProject.id, currentCluster.id, environmentID],
     async () => {
       const { data: environment } = await api.getEnvironment<Environment>(
@@ -69,12 +76,15 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
     }
   );
 
-  const [selectedBranch, setSelectedBranch] = useState<string>();
+  const environmentGitDeployBranches = environment?.git_deploy_branches ?? [];
+  const [selectedBranches, setSelectedBranches] = useState<string[]>(
+    environmentGitDeployBranches
+  );
   const [loading, setLoading] = useState(false);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
 
   const handleRowItemClick = async (branch: string) => {
-    setSelectedBranch(branch);
+    //setSelectedBranch(branch);
     setLoading(true);
 
     const res = await validatePorterYAML({
@@ -91,23 +101,19 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
 
   const handleCreatePreviewDeployment = async () => {
     try {
-      //   await api.createPreviewEnvironmentDeployment(
-      //     "<token>",
-      //     {
-      //       pr_title: "",
-      //       pr_number: 0,
-      //       repo_owner: environment.git_repo_name,
-      //       repo_name: environment.git_repo_owner,
-      //       branch_from: selectedBranch,
-      //       branch_into: selectedBranch,
-      //     },
-      //     {
-      //       cluster_id: currentCluster?.id,
-      //       project_id: currentProject?.id,
-      //     }
-      //   );
-
-      throw Error("Not implemented yet. (CreateBranchEnvironment.tsx:");
+      await api.updateEnvironment(
+        "token",
+        {
+          disable_new_comments: environment.new_comments_disabled,
+          ...environment,
+          git_deploy_branches: selectedBranches,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          environment_id: environment.id,
+        }
+      );
 
       router.push(
         `/preview-environments/deployments/${environmentID}/${environment.git_repo_name}/${environment.git_repo_owner}?status_filter=all`
@@ -116,6 +122,17 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
       setCurrentError(err);
     }
   };
+
+  if (branchesLoading || environmentLoading) {
+    return (
+      <>
+        <Br height="30px" />
+        <Placeholder minHeight="50vh">
+          <Loading />
+        </Placeholder>
+      </>
+    );
+  }
 
   if (!branches?.length) {
     return (
@@ -134,21 +151,21 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
       </Helper>
       <Br height="10px" />
       <BranchFilterSelector
-        onChange={(branches) => setSelectedBranch(branches[0])}
+        onChange={(branches) => setSelectedBranches(branches)}
         options={branches}
-        value={_.compact([selectedBranch])}
+        value={selectedBranches}
         showLoading={branchesLoading}
         multiSelect={false}
       />
-      {showErrorsModal && selectedBranch ? (
+      {/* {showErrorsModal && selectedBranch ? (
         <PorterYAMLErrorsModal
           errors={porterYAMLErrors}
           onClose={() => setShowErrorsModal(false)}
           repo={environment.git_repo_name + "/" + environment.git_repo_owner}
           branch={selectedBranch}
         />
-      ) : null}
-      {selectedBranch && porterYAMLErrors.length ? (
+      ) : null} */}
+      {/* {selectedBranch && porterYAMLErrors.length ? (
         <ValidationErrorBannerWrapper>
           <Banner type="warning">
             We found some errors in the porter.yaml file in the&nbsp;
@@ -158,15 +175,18 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
             </LearnMoreButton>
           </Banner>
         </ValidationErrorBannerWrapper>
-      ) : null}
+      ) : null} */}
       <CreatePreviewDeploymentWrapper>
         <SubmitButton
           onClick={handleCreatePreviewDeployment}
-          disabled={loading || !selectedBranch || porterYAMLErrors.length > 0}
+          disabled={
+            loading
+            //|| porterYAMLErrors.length > 0
+          }
         >
-          Create preview deployment
+          Update branch deployments
         </SubmitButton>
-        {selectedBranch && porterYAMLErrors.length ? (
+        {/* {selectedBranch && porterYAMLErrors.length ? (
           <RevalidatePorterYAMLSpanWrapper>
             Please fix your porter.yaml file to continue.{" "}
             <RevalidateSpan
@@ -184,7 +204,7 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
               Refresh
             </RevalidateSpan>
           </RevalidatePorterYAMLSpanWrapper>
-        ) : null}
+        ) : null} */}
       </CreatePreviewDeploymentWrapper>
     </>
   );

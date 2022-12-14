@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/eks"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -33,6 +34,8 @@ func NewGetClusterInfoHandler(
 }
 
 func (c *GetClusterInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
@@ -55,31 +58,19 @@ func (c *GetClusterInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	awsSession, err := awsInt.GetSession()
+	// clusterName := cluster.Name
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("error fetching new session for AWS with "+
-			"project ID: %d and integration ID: %d. Error: %w", proj.ID, cluster.AWSIntegrationID, err), http.StatusConflict))
-		return
+	if strings.HasPrefix(cluster.Name, "arn:aws:eks:") {
+		parts := strings.Split(cluster.Name, "/")
+		cluster.Name = parts[len(parts)-1]
 	}
 
-	clusterName := cluster.Name
+	awsConf := awsInt.Config()
 
-	if strings.HasPrefix(clusterName, "arn:aws:eks:") {
-		parts := strings.Split(clusterName, "/")
-		clusterName = parts[len(parts)-1]
-	}
+	eksSvc := eks.NewFromConfig(awsConf)
 
-	awsConf := aws.NewConfig()
-
-	if awsInt.AWSRegion != "" {
-		awsConf = awsConf.WithRegion(awsInt.AWSRegion)
-	}
-
-	eksSvc := eks.New(awsSession, awsConf)
-
-	clusterInfo, err := eksSvc.DescribeCluster(&eks.DescribeClusterInput{
-		Name: &clusterName,
+	clusterInfo, err := eksSvc.DescribeCluster(ctx, &eks.DescribeClusterInput{
+		Name: &cluster.Name,
 	})
 
 	if err != nil || clusterInfo.Cluster == nil {
@@ -87,40 +78,39 @@ func (c *GetClusterInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	ec2Svc := ec2.New(awsSession, awsConf)
+	ec2Svc := ec2.NewFromConfig(awsConf)
 
 	res := &types.GetAWSClusterInfoResponse{
-		Name:       clusterName,
+		Name:       cluster.Name,
 		ARN:        *clusterInfo.Cluster.Arn,
-		Status:     *clusterInfo.Cluster.Status,
+		Status:     string(clusterInfo.Cluster.Status),
 		K8sVersion: *clusterInfo.Cluster.Version,
 		EKSVersion: *clusterInfo.Cluster.PlatformVersion,
 	}
 
-	err = ec2Svc.DescribeSubnetsPages(&ec2.DescribeSubnetsInput{
-		Filters: []*ec2.Filter{
+	subnetPaginate := ec2.NewDescribeSubnetsPaginator(ec2Svc, &ec2.DescribeSubnetsInput{
+		Filters: []ec2Types.Filter{
 			{
 				Name: aws.String("vpc-id"),
-				Values: []*string{
-					clusterInfo.Cluster.ResourcesVpcConfig.VpcId,
+				Values: []string{
+					*clusterInfo.Cluster.ResourcesVpcConfig.VpcId,
 				},
 			},
 		},
-	}, func(page *ec2.DescribeSubnetsOutput, lastPage bool) bool {
-		if page == nil {
-			return false
+	})
+	for subnetPaginate.HasMorePages() {
+		page, err := subnetPaginate.NextPage(ctx)
+		if err != nil {
+			continue
 		}
-
 		for _, subnet := range page.Subnets {
 			res.Subnets = append(res.Subnets, &types.AWSSubnet{
 				SubnetID:                *subnet.SubnetId,
 				AvailabilityZone:        *subnet.AvailabilityZone,
-				AvailableIPAddressCount: *subnet.AvailableIpAddressCount,
+				AvailableIPAddressCount: int64(*subnet.AvailableIpAddressCount),
 			})
 		}
-
-		return !lastPage
-	})
+	}
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

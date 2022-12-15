@@ -2,7 +2,7 @@ package types
 
 import (
 	"github.com/porter-dev/porter/internal/helm/upgrade"
-	"helm.sh/helm/v3/pkg/chart"
+	"github.com/stefanmcshane/helm/pkg/chart"
 )
 
 const (

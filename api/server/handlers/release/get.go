@@ -13,8 +13,8 @@ import (
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater/parser"
-	"github.com/stefanmcshane/helm/pkg/release"
 	"gorm.io/gorm"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 type ReleaseGetHandler struct {

@@ -13,7 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/integrations/ci/gitlab"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/stefanmcshane/helm/pkg/release"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 type DeleteReleaseHandler struct {

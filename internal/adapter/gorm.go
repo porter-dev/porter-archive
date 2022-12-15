@@ -8,9 +8,9 @@ import (
 
 	"gorm.io/gorm/logger"
 
+	"github.com/glebarez/sqlite"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 

@@ -20,7 +20,6 @@ type S3StorageClient struct {
 	bucket        string
 	encryptionKey *[32]byte
 }
-
 type S3Options struct {
 	AWSRegion      string
 	AWSAccessKeyID string
@@ -57,13 +56,11 @@ func NewS3StorageClient(opts *S3Options) (*S3StorageClient, error) {
 		client:        s3.New(sess),
 	}, nil
 }
-
 func (s *S3StorageClient) WriteFile(infra *models.Infra, name string, fileBytes []byte, shouldEncrypt bool) error {
 	body := fileBytes
 	var err error
 	if shouldEncrypt {
 		body, err = encryption.Encrypt(fileBytes, s.encryptionKey)
-
 		if err != nil {
 			return err
 		}
@@ -74,7 +71,6 @@ func (s *S3StorageClient) WriteFile(infra *models.Infra, name string, fileBytes 
 		Bucket: &s.bucket,
 		Key:    aws.String(getKeyFromInfra(infra, name)),
 	})
-
 	return err
 }
 
@@ -83,7 +79,6 @@ func (s *S3StorageClient) WriteFileWithKey(fileBytes []byte, shouldEncrypt bool,
 	var err error
 	if shouldEncrypt {
 		body, err = encryption.Encrypt(fileBytes, s.encryptionKey)
-
 		if err != nil {
 			return err
 		}
@@ -94,7 +89,6 @@ func (s *S3StorageClient) WriteFileWithKey(fileBytes []byte, shouldEncrypt bool,
 		Bucket: &s.bucket,
 		Key:    aws.String(key),
 	})
-
 	return err
 }
 
@@ -119,19 +113,14 @@ func (s *S3StorageClient) ReadFile(infra *models.Infra, name string, shouldDecry
 
 	if shouldDecrypt {
 		var encryptedData bytes.Buffer
-
 		_, err = encryptedData.ReadFrom(output.Body)
-
 		if err != nil {
 			return nil, err
 		}
-
 		data, err := encryption.Decrypt(encryptedData.Bytes(), s.encryptionKey)
-
 		if err != nil {
 			return nil, err
 		}
-
 		return data, nil
 	} else {
 		return io.ReadAll(output.Body)
@@ -143,11 +132,9 @@ func (s *S3StorageClient) DeleteFile(infra *models.Infra, name string) error {
 		Bucket: &s.bucket,
 		Key:    aws.String(getKeyFromInfra(infra, name)),
 	})
-
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 

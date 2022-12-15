@@ -4,13 +4,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stefanmcshane/helm/pkg/chart"
-	"github.com/stefanmcshane/helm/pkg/release"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
 
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/pkg/logger"
-	"github.com/stefanmcshane/helm/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage"
 	"k8s.io/client-go/kubernetes/fake"
 )
 

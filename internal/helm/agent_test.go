@@ -3,14 +3,14 @@ package helm_test
 import (
 	"testing"
 
-	"github.com/stefanmcshane/helm/pkg/storage/driver"
+	"helm.sh/helm/v3/pkg/storage/driver"
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/pkg/logger"
 
-	"github.com/stefanmcshane/helm/pkg/chart"
-	"github.com/stefanmcshane/helm/pkg/release"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 func newAgentFixture(t *testing.T, namespace string) *helm.Agent {

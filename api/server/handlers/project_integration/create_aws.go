@@ -1,7 +1,6 @@
 package project_integration
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -46,18 +45,14 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	aint := aws.ToAWSIntegrationType()
-
 	res := types.CreateAWSResponse{
-		AWSIntegration: &aint,
+		AWSIntegration: aws.ToAWSIntegrationType(),
 	}
 
 	p.WriteResult(w, r, res)
 }
 
 func CreateAWSIntegration(request *types.CreateAWSRequest, projectID, userID uint) *ints.AWSIntegration {
-	ctx := context.Background()
-
 	resp := &ints.AWSIntegration{
 		UserID:             userID,
 		ProjectID:          projectID,
@@ -69,7 +64,7 @@ func CreateAWSIntegration(request *types.CreateAWSRequest, projectID, userID uin
 	}
 
 	// attempt to populate the ARN
-	resp.PopulateAWSArn(ctx)
+	resp.PopulateAWSArn()
 
 	return resp
 }

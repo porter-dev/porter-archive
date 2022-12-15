@@ -16,8 +16,8 @@ package helm
 import (
 	"github.com/porter-dev/porter/pkg/logger"
 
-	"github.com/stefanmcshane/helm/pkg/storage"
-	"github.com/stefanmcshane/helm/pkg/storage/driver"
+	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 

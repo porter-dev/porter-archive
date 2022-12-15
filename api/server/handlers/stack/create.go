@@ -16,7 +16,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 
-	helmrelease "github.com/stefanmcshane/helm/pkg/release"
+	helmrelease "helm.sh/helm/v3/pkg/release"
 )
 
 type StackCreateHandler struct {

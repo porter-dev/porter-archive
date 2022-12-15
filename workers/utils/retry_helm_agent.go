@@ -11,7 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/pkg/logger"
-	"github.com/stefanmcshane/helm/pkg/release"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 type RetryHelmAgent struct {

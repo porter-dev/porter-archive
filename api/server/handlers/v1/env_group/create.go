@@ -8,7 +8,7 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	"github.com/stefanmcshane/helm/pkg/release"
+	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/porter-dev/porter/api/server/authz"

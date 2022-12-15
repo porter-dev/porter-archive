@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/ecr"
+	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -16,7 +16,7 @@ import (
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
 
-	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/arn"
 )
 
 type RegistryGetECRTokenHandler struct {
@@ -34,7 +34,6 @@ func NewRegistryGetECRTokenHandler(
 }
 
 func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	request := &types.GetRegistryECRTokenRequest{}
@@ -65,7 +64,7 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 			// if the aws integration doesn't have an ARN populated, populate it
 			if awsInt.AWSArn == "" {
-				err = awsInt.PopulateAWSArn(ctx)
+				err = awsInt.PopulateAWSArn()
 
 				if err != nil {
 					continue
@@ -81,9 +80,16 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			// if the account id is passed as part of the request, verify the account id matches the account id in the ARN
 			if awsInt.AWSRegion == request.Region && (request.AccountID == "" || request.AccountID == parsedARN.AccountID) {
 				// get the aws integration and session
-				ecrSvc := ecr.NewFromConfig(awsInt.Config())
+				sess, err := awsInt.GetSession()
 
-				output, err := ecrSvc.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
+				if err != nil {
+					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+					return
+				}
+
+				ecrSvc := ecr.New(sess)
+
+				output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
 
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

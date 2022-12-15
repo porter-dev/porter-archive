@@ -41,9 +41,9 @@ import (
 	"github.com/porter-dev/porter/internal/repository"
 	rcreds "github.com/porter-dev/porter/internal/repository/credentials"
 	rgorm "github.com/porter-dev/porter/internal/repository/gorm"
-	"github.com/stefanmcshane/helm/pkg/releaseutil"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
+	"helm.sh/helm/v3/pkg/releaseutil"
 )
 
 var stepSize int = 20

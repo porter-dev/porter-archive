@@ -25,9 +25,9 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
-	"github.com/stefanmcshane/helm/pkg/release"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v2"
+	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/api/core/v1"
 )
 

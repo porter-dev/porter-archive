@@ -2,7 +2,6 @@ package helm
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"net/url"
@@ -10,13 +9,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
-	"github.com/stefanmcshane/helm/pkg/postrender"
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v2"
+	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/docker/distribution/reference"
 )
@@ -464,8 +463,6 @@ func (d *DockerSecretsPostRenderer) getImageList(podSpec resource) []string {
 var ecrPattern = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fips)?\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?`)
 
 func (d *DockerSecretsPostRenderer) isRegistryNative(regName string) bool {
-	ctx := context.Background()
-
 	isNative := false
 
 	if strings.Contains(regName, "gcr") && d.Cluster.AuthMechanism == models.GCP {
@@ -506,7 +503,7 @@ func (d *DockerSecretsPostRenderer) isRegistryNative(regName string) bool {
 			return false
 		}
 
-		err = awsInt.PopulateAWSArn(ctx)
+		err = awsInt.PopulateAWSArn()
 
 		if err != nil {
 			return false

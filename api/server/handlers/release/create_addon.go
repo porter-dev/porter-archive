@@ -15,7 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
-	"helm.sh/helm/v3/pkg/chart"
+	"github.com/stefanmcshane/helm/pkg/chart"
 )
 
 type CreateAddonHandler struct {

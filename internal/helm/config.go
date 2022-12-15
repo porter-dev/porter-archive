@@ -9,12 +9,12 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/pkg/logger"
-	"github.com/stefanmcshane/helm/pkg/action"
-	"github.com/stefanmcshane/helm/pkg/chartutil"
-	"github.com/stefanmcshane/helm/pkg/kube"
-	kubefake "github.com/stefanmcshane/helm/pkg/kube/fake"
-	"github.com/stefanmcshane/helm/pkg/storage"
 	"golang.org/x/oauth2"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/kube"
+	kubefake "helm.sh/helm/v3/pkg/kube/fake"
+	"helm.sh/helm/v3/pkg/storage"
 	k8s "k8s.io/client-go/kubernetes"
 )
 

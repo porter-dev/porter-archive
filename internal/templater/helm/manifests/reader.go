@@ -6,7 +6,7 @@ import (
 
 	"github.com/porter-dev/porter/internal/templater"
 	"github.com/porter-dev/porter/internal/templater/utils"
-	"github.com/stefanmcshane/helm/pkg/release"
+	"helm.sh/helm/v3/pkg/release"
 	"sigs.k8s.io/yaml"
 )
 

@@ -10,8 +10,8 @@ import (
 	"github.com/porter-dev/porter/internal/templater"
 	"github.com/porter-dev/porter/internal/templater/infra"
 	"github.com/porter-dev/porter/internal/templater/utils"
-	"github.com/stefanmcshane/helm/pkg/chart"
-	"github.com/stefanmcshane/helm/pkg/release"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
 	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/yaml"
 

@@ -46,7 +46,7 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/kubectl/pkg/scheme"
 
-	rspb "github.com/stefanmcshane/helm/pkg/release"
+	rspb "helm.sh/helm/v3/pkg/release"
 
 	istiov1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	versionedclient "istio.io/client-go/pkg/clientset/versioned"

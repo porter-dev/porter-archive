@@ -1,7 +1,6 @@
 package kubernetes
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -229,7 +228,6 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientCo
 
 func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error) {
 	cluster := conf.Cluster
-	ctx := context.Background()
 
 	apiConfig := &api.Config{}
 
@@ -354,7 +352,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			shouldOverride = true
 		}
 
-		tok, err := awsAuth.GetBearerToken(ctx, conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
+		tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
 
 		if err != nil {
 			return nil, err

@@ -37,8 +37,7 @@ func (p *ListAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var res types.ListAWSResponse = make([]*types.AWSIntegration, 0)
 
 	for _, awsInt := range awsInts {
-		aint := awsInt.ToAWSIntegrationType()
-		res = append(res, &aint)
+		res = append(res, awsInt.ToAWSIntegrationType())
 	}
 
 	p.WriteResult(w, r, res)

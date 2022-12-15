@@ -12,8 +12,8 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/porter-dev/porter/api/types"
-	"github.com/stefanmcshane/helm/pkg/chart"
-	chartloader "github.com/stefanmcshane/helm/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chart"
+	chartloader "helm.sh/helm/v3/pkg/chart/loader"
 )
 
 // RepoIndexToPorterChartList converts an index file to a list of porter charts

@@ -6,7 +6,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/stefanmcshane/helm/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart"
 
 	"github.com/porter-dev/porter/internal/repository"
 )

@@ -14,7 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/stacks"
-	helmrelease "github.com/stefanmcshane/helm/pkg/release"
+	helmrelease "helm.sh/helm/v3/pkg/release"
 )
 
 type StackAddApplicationHandler struct {

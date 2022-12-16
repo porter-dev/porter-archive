@@ -35,7 +35,13 @@ func NewCreateEnvironmentHandler(
 	}
 }
 
+// ServerHTTP authenticates as the given project and cluster's Github App,
+// creating a Github hook which listens to "pull_request" and "push" against the given
+// branch. This will then create a Github Action Workflow file, and commit it to the given branch.
+// Should the commit fail due to a protected branch, Porter will open a PR automatically against the branch
+// with the required Github Action Workflow yaml
 func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	ga, _ := r.Context().Value(types.GitInstallationScope).(*integrations.GithubAppInstallation)
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
@@ -99,7 +105,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	// create incoming webhook
 	hook, _, err := client.Repositories.CreateHook(
-		context.Background(), owner, name, &github.Hook{
+		ctx, owner, name, &github.Hook{
 			Config: map[string]interface{}{
 				"url":          webhookURL,
 				"content_type": "json",
@@ -121,7 +127,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	env, err = c.Repo().Environment().CreateEnvironment(env)
 
 	if err != nil {
-		_, deleteErr := client.Repositories.DeleteHook(context.Background(), owner, name, hook.GetID())
+		_, deleteErr := client.Repositories.DeleteHook(ctx, owner, name, hook.GetID())
 
 		if deleteErr != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("%v: %w", errGithubAPI, deleteErr),

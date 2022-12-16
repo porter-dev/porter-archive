@@ -23,6 +23,8 @@ var (
 	errGithubAPI           = errors.New("error communicating with the github API")
 )
 
+// getGithubClientFromEnvironment uses the provided config.ServerConf.GithubAppID to create a github client,
+// by authenticating as the provided Github App
 func getGithubClientFromEnvironment(config *config.Config, env *models.Environment) (*github.Client, error) {
 	// get the github app client
 	ghAppId, err := strconv.Atoi(config.ServerConf.GithubAppID)

@@ -41,6 +41,7 @@ type tester struct {
 	initAWSs       []*ints.AWSIntegration
 	initAllowlist  []*models.Allowlist
 	initTags       []*models.Tag
+	initAPITokens  []*models.APIToken
 }
 
 func setupTestEnv(tester *tester, t *testing.T) {
@@ -79,6 +80,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.Onboarding{},
 		&models.Allowlist{},
 		&models.Tag{},
+		&models.APIToken{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},
@@ -637,4 +639,22 @@ func initKubeEvents(tester *tester, t *testing.T) {
 	}
 
 	tester.initKubeEvents = initEvents
+}
+
+func initAPITokens(tester *tester, t *testing.T) {
+	t.Helper()
+
+	ti := time.Now().Add(10 * time.Minute)
+	tokens := &models.APIToken{
+		UniqueID:        "1",
+		ProjectID:       tester.initProjects[0].Model.ID,
+		CreatedByUserID: 1,
+		Expiry:          &ti,
+		Revoked:         false,
+		Name:            "test-key",
+	}
+
+	tester.db.Create(&tokens)
+
+	tester.initAPITokens = append(tester.initAPITokens, tokens)
 }

@@ -20,6 +20,7 @@ interface Props {
 
 const CreateBranchEnvironment = ({ environmentID }: Props) => {
   const router = useRouting();
+  const [loading, setLoading] = useState<boolean>(false);
   const [showErrorsModal, setShowErrorsModal] = useState<boolean>(false);
   const {
     currentProject,
@@ -80,7 +81,6 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
   const [selectedBranches, setSelectedBranches] = useState<string[]>(
     environmentGitDeployBranches
   );
-  const [loading, setLoading] = useState(false);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
 
   const handleRowItemClick = async (branch: string) => {
@@ -99,9 +99,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
     setLoading(false);
   };
 
-  const handleCreatePreviewDeployment = async () => {
-    try {
-      await api.updateEnvironment(
+  const updateDeployBranchesMutation = useMutation({
+    mutationFn: () => {
+      return api.updateEnvironment(
         "token",
         {
           disable_new_comments: environment.new_comments_disabled,
@@ -114,14 +114,15 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
           environment_id: environment.id,
         }
       );
-
+    },
+    onError: (err) => {
+      setCurrentError(err as string);
+    },
+    onSuccess: () =>
       router.push(
         `/preview-environments/deployments/${environmentID}/${environment.git_repo_name}/${environment.git_repo_owner}?status_filter=all`
-      );
-    } catch (err) {
-      setCurrentError(err);
-    }
-  };
+      ),
+  });
 
   if (branchesLoading || environmentLoading) {
     return (
@@ -178,9 +179,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
       ) : null} */}
       <CreatePreviewDeploymentWrapper>
         <SubmitButton
-          onClick={handleCreatePreviewDeployment}
+          onClick={() => updateDeployBranchesMutation.mutate()}
           disabled={
-            loading
+            updateDeployBranchesMutation.isLoading || loading
             //|| porterYAMLErrors.length > 0
           }
         >

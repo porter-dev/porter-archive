@@ -192,7 +192,7 @@ func GetTarget(resourceName string, input map[string]interface{}) (*preview.Targ
 	return output, nil
 }
 
-func GetNamespaceForBranchDeploy(branch, owner, name string) string {
+func DefaultPreviewEnvironmentNamespace(branch, owner, name string) string {
 	namespace := fmt.Sprintf("previewbranch-%s-%s-%s", branch,
 		strings.ReplaceAll(strings.ToLower(owner), "_", "-"),
 		strings.ReplaceAll(strings.ToLower(name), "_", "-"))
@@ -210,7 +210,7 @@ func getNamespace() string {
 			if branchFrom, ok := os.LookupEnv("PORTER_BRANCH_FROM"); ok {
 				if branchInto, ok := os.LookupEnv("PORTER_BRANCH_INTO"); ok {
 					if branchInto == branchFrom { // branch deploy
-						return GetNamespaceForBranchDeploy(branchInto, owner, repo)
+						return DefaultPreviewEnvironmentNamespace(branchInto, owner, repo)
 					}
 				}
 			}

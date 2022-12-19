@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -142,21 +143,16 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 
 	worker.SetDefaultDriver("deploy")
 
-	if hasDeploymentHookEnvVars() {
-		deplNamespace := os.Getenv("PORTER_NAMESPACE")
-
-		if deplNamespace == "" {
-			return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
-		}
-
-		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
-
-		if err != nil {
-			return fmt.Errorf("error creating deployment hook: %w", err)
-		}
-
-		worker.RegisterHook("deployment", deploymentHook)
+	deploymentHookConfig := DeploymentHookConfig{
+		PorterAPIClient: client,
+		ResourceGroup:   resGroup,
 	}
+	deploymentHook, err := NewDeploymentHook(deploymentHookConfig)
+	if err != nil {
+		return fmt.Errorf("error creating deployment hook: %w", err)
+	}
+
+	worker.RegisterHook("deployment", &deploymentHook)
 
 	cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
 	worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
@@ -188,40 +184,80 @@ func applyValidate() error {
 	return nil
 }
 
-func hasDeploymentHookEnvVars() bool {
-	if ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID"); ghIDStr == "" {
-		return false
+// parseDeploymentHookEnvVars will check if an apply has the appropriate deployment hook environment variables
+// and add them to the provided config if present.
+// Any supplied values in the DeploymentHookConfig will take precedence over the environment variables
+func parseDeploymentHookEnvVars(conf *DeploymentHookConfig) error {
+	errResp := func(err error, key string) error {
+		return fmt.Errorf("unable to parse required environment variable: %s - %w", key, err)
 	}
 
-	if prIDStr := os.Getenv("PORTER_PULL_REQUEST_ID"); prIDStr == "" {
-		return false
+	if conf.GithubAppID == 0 {
+		ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID")
+		ghID, err := strconv.Atoi(ghIDStr)
+		if err != nil {
+			return errResp(err, "PORTER_GIT_INSTALLATION_ID")
+		}
+		conf.GithubAppID = ghID
 	}
 
-	if branchFrom := os.Getenv("PORTER_BRANCH_FROM"); branchFrom == "" {
-		return false
+	if conf.BranchFrom == "" {
+		conf.BranchFrom = os.Getenv("PORTER_BRANCH_FROM")
+		if conf.BranchFrom == "" {
+			return errResp(errors.New("required parameter missing"), "PORTER_BRANCH_FROM")
+		}
 	}
 
-	if branchInto := os.Getenv("PORTER_BRANCH_INTO"); branchInto == "" {
-		return false
+	if conf.BranchInto == "" {
+		conf.BranchInto = os.Getenv("PORTER_BRANCH_INTO")
 	}
 
-	if actionIDStr := os.Getenv("PORTER_ACTION_ID"); actionIDStr == "" {
-		return false
+	if conf.GithubActionID == 0 {
+		actionIDStr := os.Getenv("PORTER_ACTION_ID")
+		actionID, err := strconv.Atoi(actionIDStr)
+		if err != nil {
+			return errResp(err, "PORTER_ACTION_ID")
+		}
+		conf.GithubActionID = actionID
 	}
 
-	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName == "" {
-		return false
+	if conf.RepoName == "" {
+		conf.RepoName = os.Getenv("PORTER_REPO_NAME")
+		if conf.RepoName == "" {
+			return errResp(errors.New("required parameter missing"), "PORTER_REPO_NAME")
+		}
 	}
 
-	if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner == "" {
-		return false
+	if conf.RepoOwner == "" {
+		conf.RepoOwner = os.Getenv("PORTER_REPO_OWNER")
+		if conf.RepoOwner == "" {
+			return errResp(errors.New("required parameter missing"), "PORTER_REPO_OWNER")
+		}
 	}
 
-	if prName := os.Getenv("PORTER_PR_NAME"); prName == "" {
-		return false
+	if conf.PullRequestID == 0 {
+		prIDStr := os.Getenv("PORTER_PULL_REQUEST_ID")
+		prID, err := strconv.Atoi(prIDStr)
+		if err != nil {
+			return errResp(err, "PORTER_PULL_REQUEST_ID")
+		}
+		conf.PullRequestID = prID
 	}
 
-	return true
+	if conf.PullRequestName == "" {
+		conf.PullRequestName = os.Getenv("PORTER_PR_NAME")
+	}
+
+	if conf.Namespace == "" {
+		conf.Namespace = os.Getenv("PORTER_NAMESPACE")
+		if conf.Namespace == "" {
+			conf.Namespace = preview.DefaultPreviewEnvironmentNamespace(conf.BranchFrom, conf.RepoOwner, conf.RepoName)
+		}
+		// setting namespace env var is required here as we rely on it globally. This can be removed when preview.getNamespace() is no longer used.
+		os.Setenv("PORTER_NAMESPACE", conf.Namespace)
+	}
+
+	return nil
 }
 
 type DeployDriver struct {
@@ -675,6 +711,7 @@ func (d *DeployDriver) getAddonConfig(resource *switchboardModels.Resource) (map
 	})
 }
 
+// DeploymentHook is used for deploying an application into a given cluster
 type DeploymentHook struct {
 	client                                                                    *api.Client
 	resourceGroup                                                             *switchboardTypes.ResourceGroup
@@ -682,74 +719,79 @@ type DeploymentHook struct {
 	branchFrom, branchInto, namespace, repoName, repoOwner, prName, commitSHA string
 }
 
-func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
-	res := &DeploymentHook{
-		client:        client,
-		resourceGroup: resourceGroup,
-		namespace:     namespace,
-	}
+// DeploymentHookConfig contains all config and overrides for initialising a deployment DeploymentHook
+// which is used for deploying a given `porter apply`
+type DeploymentHookConfig struct {
+	// ProjectID is the Porter Project ID for the cluster
+	ProjectID int
+	// ClusterID is the Porter Cluster ID for deploying into
+	ClusterID int
+	// PorterAPIClient is the settings used for communicating with the Porter API
+	PorterAPIClient *api.Client
+	// ResourceGroup ...
+	ResourceGroup *switchboardTypes.ResourceGroup
+	// Namespace is the name of the namespace into which an application will be deployed.
+	// If this is not provided, a default namespace will be used.
+	// In the case of preview environments, this will be previewbranch-XXX, where XXX is your PR name
+	Namespace string
 
-	ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID")
-	ghID, err := strconv.Atoi(ghIDStr)
+	// BranchFrom is the branch from which the preview environment will be created
+	BranchFrom string
+	// BranchInto is the branch in with a PR will be created. If using branch based preview environments,
+	// set this value to the same as BranchFrom
+	BranchInto string
 
+	// GithubID is the ID of the Github App used for deployment
+	GithubAppID int
+	// GithubActionID is the ID of the Github Action used to deploy an application
+	GithubActionID int
+	// PullRequestName is the name of a PR which will be used in the Preview Environment workflows
+	PullRequestName string
+	// PullRequestID is the ID of a PR which will be used in the Preview Environment workflows
+	PullRequestID int
+	// RepoName is the name of the given repository for deploying. In Github, with will be of the format <RepoOwner/RepoName> .i.e porter-dev/porter
+	RepoName string
+	// RepoOwner is the owner of the given repository for deploying. In Github, with will be of the format <RepoOwner/RepoName> .i.e porter-dev/porter
+	RepoOwner string
+}
+
+// NewDeploymentHook is used for creating a new DeploymentHook, checking that the required variable combinations are present
+func NewDeploymentHook(conf DeploymentHookConfig) (DeploymentHook, error) {
+	err := parseDeploymentHookEnvVars(&conf)
 	if err != nil {
-		return nil, err
+		return DeploymentHook{}, err
 	}
 
-	res.gitInstallationID = uint(ghID)
+	res := DeploymentHook{
+		client:        conf.PorterAPIClient,
+		resourceGroup: conf.ResourceGroup,
+		namespace:     conf.Namespace,
 
-	prIDStr := os.Getenv("PORTER_PULL_REQUEST_ID")
-	prID, err := strconv.Atoi(prIDStr)
+		projectID: uint(conf.ProjectID),
+		clusterID: uint(conf.ClusterID),
 
-	if err != nil {
-		return nil, err
+		branchFrom: conf.BranchFrom,
+		branchInto: conf.BranchInto,
+
+		gitInstallationID: uint(conf.GithubAppID),
+		actionID:          uint(conf.GithubActionID),
+		repoName:          conf.RepoName,
+		repoOwner:         conf.RepoOwner,
 	}
-
-	res.prID = uint(prID)
-
-	res.projectID = cliConf.Project
-
-	if res.projectID == 0 {
-		return nil, fmt.Errorf("project id must be set")
-	}
-
-	res.clusterID = cliConf.Cluster
-
-	if res.clusterID == 0 {
-		return nil, fmt.Errorf("cluster id must be set")
-	}
-
-	branchFrom := os.Getenv("PORTER_BRANCH_FROM")
-	res.branchFrom = branchFrom
-
-	branchInto := os.Getenv("PORTER_BRANCH_INTO")
-	res.branchInto = branchInto
-
-	actionIDStr := os.Getenv("PORTER_ACTION_ID")
-	actionID, err := strconv.Atoi(actionIDStr)
-
-	if err != nil {
-		return nil, err
-	}
-
-	res.actionID = uint(actionID)
-
-	repoName := os.Getenv("PORTER_REPO_NAME")
-	res.repoName = repoName
-
-	repoOwner := os.Getenv("PORTER_REPO_OWNER")
-	res.repoOwner = repoOwner
-
-	prName := os.Getenv("PORTER_PR_NAME")
-	res.prName = prName
 
 	commit, err := git.LastCommit()
-
 	if err != nil {
-		return nil, fmt.Errorf(err.Error())
+		return res, fmt.Errorf(err.Error())
 	}
-
 	res.commitSHA = commit.Sha[:7]
+
+	if !res.isBranchDeploy() {
+		if conf.PullRequestID == 0 || conf.PullRequestName == "" {
+			if err != nil {
+				return res, errors.New("PR based deploys require a PullRequestID and PullRequestName")
+			}
+		}
+	}
 
 	return res, nil
 }
@@ -788,14 +830,9 @@ func (t *DeploymentHook) PreApply() error {
 		return fmt.Errorf("could not find environment for deployment")
 	}
 
-	if t.isBranchDeploy() {
-		t.namespace = preview.GetNamespaceForBranchDeploy(t.branchFrom, t.repoOwner, t.repoName)
-	}
-
 	nsList, err := t.client.GetK8sNamespaces(
 		context.Background(), t.projectID, t.clusterID,
 	)
-
 	if err != nil {
 		return fmt.Errorf("error fetching namespaces: %w", err)
 	}

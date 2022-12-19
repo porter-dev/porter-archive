@@ -71,6 +71,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry v0.5.0
 	github.com/briandowns/spinner v1.18.1
 	github.com/glebarez/sqlite v1.6.0
+	github.com/matryer/is v1.4.0
 	github.com/open-policy-agent/opa v0.44.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d

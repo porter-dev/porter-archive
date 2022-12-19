@@ -17,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/riandyrn/otelchi"
 )
 
 func NewAPIRouter(config *config.Config) *chi.Mux {
@@ -65,6 +66,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 
 		// set the content type for all API endpoints and log all request info
 		r.Use(middleware.ContentTypeJSON)
+		r.Use(otelchi.Middleware("porter-server"))
 
 		baseRoutes := baseRegisterer.GetRoutes(
 			r,

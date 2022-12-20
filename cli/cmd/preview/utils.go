@@ -207,6 +207,7 @@ func DefaultPreviewEnvironmentNamespace(branch, owner, name string) string {
 // getNamespace does a best-guess effort to find the namespace for the preview environment target.
 // It currently relies on only environment variables, but will need refactored in future
 // if we choose to support non-environment based directives such as cmd flags or porter.yaml values
+// PORTER_NAMESPACE gets set in the `porter apply` pre-apply step for DeploymentHooks
 func getNamespace() string {
 	if ns, ok := os.LookupEnv("PORTER_NAMESPACE"); ok {
 		return ns

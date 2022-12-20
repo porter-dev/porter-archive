@@ -204,7 +204,14 @@ func DefaultPreviewEnvironmentNamespace(branch, owner, name string) string {
 	return namespace
 }
 
+// getNamespace does a best-guess effort to find the namespace for the preview environment target.
+// It currently relies on only environment variables, but will need refactored in future
+// if we choose to support non-environment based directives such as cmd flags or porter.yaml values
 func getNamespace() string {
+	if ns, ok := os.LookupEnv("PORTER_NAMESPACE"); ok {
+		return ns
+	}
+
 	if owner, ok := os.LookupEnv("PORTER_REPO_OWNER"); ok {
 		if repo, ok := os.LookupEnv("PORTER_REPO_NAME"); ok {
 			if branchFrom, ok := os.LookupEnv("PORTER_BRANCH_FROM"); ok {
@@ -217,7 +224,7 @@ func getNamespace() string {
 		}
 	}
 
-	return os.Getenv("PORTER_NAMESPACE")
+	return "default"
 }
 
 func existsInRepo(projectID uint, name, version, url string) (map[string]interface{}, error) {

@@ -145,7 +145,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 
 	deploymentHookConfig := DeploymentHookConfig{
 		PorterAPIClient: client,
-		ResourceGroup:   resGroup,
+		ResourceGroup:   *resGroup,
 	}
 	deploymentHook, err := NewDeploymentHook(deploymentHookConfig)
 	if err != nil {
@@ -729,7 +729,7 @@ type DeploymentHookConfig struct {
 	// PorterAPIClient is the settings used for communicating with the Porter API
 	PorterAPIClient *api.Client
 	// ResourceGroup ...
-	ResourceGroup *switchboardTypes.ResourceGroup
+	ResourceGroup switchboardTypes.ResourceGroup
 	// Namespace is the name of the namespace into which an application will be deployed.
 	// If this is not provided, a default namespace will be used.
 	// In the case of preview environments, this will be previewbranch-XXX, where XXX is your PR name

@@ -151,6 +151,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	if err != nil {
 		return fmt.Errorf("error creating deployment hook: %w", err)
 	}
+	fmt.Printf("stefan %#v\n\n%#v\n%v\n", deploymentHook, deploymentHookConfig, deploymentHook.isBranchDeploy())
 
 	worker.RegisterHook("deployment", &deploymentHook)
 
@@ -812,8 +813,6 @@ func NewDeploymentHook(conf DeploymentHookConfig) (DeploymentHook, error) {
 			}
 		}
 	}
-	fmt.Printf("stefan %#v %v\n", res, res.isBranchDeploy())
-	fmt.Println(res.clusterID, res.projectID)
 
 	return res, nil
 }
@@ -939,29 +938,33 @@ func (t *DeploymentHook) PreApply() error {
 			t.projectID, t.gitInstallationID, t.clusterID,
 			t.repoOwner, t.repoName, createReq,
 		)
-	} else if err == nil {
-		updateReq := &types.UpdateDeploymentRequest{
-			Namespace: t.namespace,
-			PRNumber:  t.prID,
-			CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
-				ActionID: t.actionID,
-			},
-			PRBranchFrom: t.branchFrom,
-			CommitSHA:    t.commitSHA,
-		}
-
-		if t.isBranchDeploy() {
-			updateReq.PRNumber = 0
-		}
-
-		_, err = t.client.UpdateDeployment(
-			context.Background(),
-			t.projectID, t.gitInstallationID, t.clusterID,
-			t.repoOwner, t.repoName, updateReq,
-		)
+		return fmt.Errorf("error creating deployment: %w", err)
 	}
 
-	return err
+	updateReq := &types.UpdateDeploymentRequest{
+		Namespace: t.namespace,
+		PRNumber:  t.prID,
+		CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
+			ActionID: t.actionID,
+		},
+		PRBranchFrom: t.branchFrom,
+		CommitSHA:    t.commitSHA,
+	}
+
+	if t.isBranchDeploy() {
+		updateReq.PRNumber = 0
+	}
+
+	_, err = t.client.UpdateDeployment(
+		context.Background(),
+		t.projectID, t.gitInstallationID, t.clusterID,
+		t.repoOwner, t.repoName, updateReq,
+	)
+	if err != nil {
+		return fmt.Errorf("error updating deployment: %w", err)
+	}
+
+	return nil
 }
 
 func (t *DeploymentHook) DataQueries() map[string]interface{} {

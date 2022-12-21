@@ -153,9 +153,8 @@ func createGithubDeployment(
 			RequiredContexts: &requiredContexts,
 		},
 	)
-
 	if err != nil {
-		return nil, fmt.Errorf("%v: %w", errGithubAPI, err)
+		return nil, fmt.Errorf("create deployment failed - %v: %w", errGithubAPI, err)
 	}
 
 	depID := deployment.GetID()
@@ -174,7 +173,7 @@ func createGithubDeployment(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%v: %w", errGithubAPI, err)
+		return nil, fmt.Errorf("create deployment status failed - %v: %w", errGithubAPI, err)
 	}
 
 	return deployment, nil

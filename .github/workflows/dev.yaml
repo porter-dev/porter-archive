@@ -19,6 +19,10 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+      - name: Login to ECR
+        id: login-ecr
+        run: |
+          aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 801172602658.dkr.ecr.us-east-2.amazonaws.com          
       - name: Install kubectl
         uses: azure/setup-kubectl@v2.0
         with:

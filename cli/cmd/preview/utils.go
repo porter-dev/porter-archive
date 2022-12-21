@@ -205,6 +205,9 @@ func GetNamespaceForBranchDeploy(branch, owner, name string) string {
 }
 
 func getNamespace() string {
+	if os.Getenv("PORTER_NAMESPACE") != "" {
+		return os.Getenv("PORTER_NAMESPACE")
+	}
 	if owner, ok := os.LookupEnv("PORTER_REPO_OWNER"); ok {
 		if repo, ok := os.LookupEnv("PORTER_REPO_NAME"); ok {
 			if branchFrom, ok := os.LookupEnv("PORTER_BRANCH_FROM"); ok {
@@ -217,7 +220,7 @@ func getNamespace() string {
 		}
 	}
 
-	return os.Getenv("PORTER_NAMESPACE")
+	return "default"
 }
 
 func existsInRepo(projectID uint, name, version, url string) (map[string]interface{}, error) {

@@ -789,7 +789,11 @@ func (t *DeploymentHook) PreApply() error {
 	}
 
 	if t.isBranchDeploy() {
-		t.namespace = preview.GetNamespaceForBranchDeploy(t.branchFrom, t.repoOwner, t.repoName)
+		if os.Getenv("PORTER_NAMESPACE") == "" {
+			t.namespace = preview.GetNamespaceForBranchDeploy(t.branchFrom, t.repoOwner, t.repoName)
+		} else {
+			t.namespace = os.Getenv("PORTER_NAMESPACE")
+		}
 	}
 
 	nsList, err := t.client.GetK8sNamespaces(

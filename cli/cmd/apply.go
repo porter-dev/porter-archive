@@ -810,7 +810,7 @@ func (t *DeploymentHook) PreApply() error {
 	)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("error listing environments: %w", err)
 	}
 
 	envs := *envList

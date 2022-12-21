@@ -19,10 +19,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-      - name: Login to ECR
-        id: login-ecr
-        run: |
-          aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 801172602658.dkr.ecr.us-east-2.amazonaws.com          
       - name: Install kubectl
         uses: azure/setup-kubectl@v2.0
         with:
@@ -51,12 +47,26 @@ jobs:
       - name: Push
         run: |
           docker push gcr.io/porter-dev-273614/porter:dev
-          docker push 801172602658.dkr.ecr.us-east-2.amazonaws.com/porter:dev
       - name: Deploy to cluster
         run: |
           aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name dev
 
           kubectl rollout restart deployment/porter
+      - name: Configure AWS Dev credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ECR_DEV_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_DEV_AWS_ACCESS_SECRET_KEY }}
+          aws-region: us-east-2
+      - name: Login to dev ECR
+        id: login-ecr
+        run: |
+          aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 801172602658.dkr.ecr.us-east-2.amazonaws.com
+      - name: Push to dev registry
+        run: |
+          docker push 801172602658.dkr.ecr.us-east-2.amazonaws.com/porter:dev
+
+
   deploy-provisioner:
     runs-on: ubuntu-latest
     steps:

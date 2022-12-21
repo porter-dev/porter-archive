@@ -33,12 +33,11 @@ func checkLoginAndRun(args []string, runner func(user *types.GetAuthenticatedUse
 			return ErrCannotConnect
 		}
 
-		red.Fprintf(os.Stderr, "Error: %v\n", err.Error())
+		red.Fprintf(os.Stderr, "error with AuthCheck: %v\n", err.Error())
 		return err
 	}
 
 	err = runner(user, client, args)
-
 	if err != nil {
 		red := color.New(color.FgRed)
 
@@ -52,7 +51,7 @@ func checkLoginAndRun(args []string, runner func(user *types.GetAuthenticatedUse
 			return nil
 		}
 
-		red.Fprintf(os.Stderr, "Error: %v\n", err.Error())
+		red.Fprintf(os.Stderr, "error with runner: %v\n", err.Error())
 		return err
 	}
 

@@ -192,13 +192,22 @@ func parseDeploymentHookEnvVars(conf *DeploymentHookConfig) error {
 		return fmt.Errorf("unable to parse required environment variable: %s - %w", key, err)
 	}
 
-	if conf.GithubAppID == 0 {
-		ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID")
-		ghID, err := strconv.Atoi(ghIDStr)
+	if conf.ProjectID == 0 {
+		pIDStr := os.Getenv("PORTER_PROJECT")
+		pID, err := strconv.Atoi(pIDStr)
 		if err != nil {
-			return errResp(err, "PORTER_GIT_INSTALLATION_ID")
+			return errResp(err, "PORTER_PROJECT")
 		}
-		conf.GithubAppID = ghID
+		conf.ProjectID = pID
+	}
+
+	if conf.ClusterID == 0 {
+		cIDStr := os.Getenv("PORTER_CLUSTER")
+		cID, err := strconv.Atoi(cIDStr)
+		if err != nil {
+			return errResp(err, "PORTER_CLUSTER")
+		}
+		conf.ClusterID = cID
 	}
 
 	if conf.BranchFrom == "" {
@@ -210,6 +219,15 @@ func parseDeploymentHookEnvVars(conf *DeploymentHookConfig) error {
 
 	if conf.BranchInto == "" {
 		conf.BranchInto = os.Getenv("PORTER_BRANCH_INTO")
+	}
+
+	if conf.GithubAppID == 0 {
+		ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID")
+		ghID, err := strconv.Atoi(ghIDStr)
+		if err != nil {
+			return errResp(err, "PORTER_GIT_INSTALLATION_ID")
+		}
+		conf.GithubAppID = ghID
 	}
 
 	if conf.GithubActionID == 0 {
@@ -235,6 +253,10 @@ func parseDeploymentHookEnvVars(conf *DeploymentHookConfig) error {
 		}
 	}
 
+	if conf.PullRequestName == "" {
+		conf.PullRequestName = os.Getenv("PORTER_PR_NAME")
+	}
+
 	if conf.PullRequestID == 0 {
 		prIDStr := os.Getenv("PORTER_PULL_REQUEST_ID")
 		prID, err := strconv.Atoi(prIDStr)
@@ -242,10 +264,6 @@ func parseDeploymentHookEnvVars(conf *DeploymentHookConfig) error {
 			return errResp(err, "PORTER_PULL_REQUEST_ID")
 		}
 		conf.PullRequestID = prID
-	}
-
-	if conf.PullRequestName == "" {
-		conf.PullRequestName = os.Getenv("PORTER_PR_NAME")
 	}
 
 	if conf.Namespace == "" {
@@ -777,6 +795,8 @@ func NewDeploymentHook(conf DeploymentHookConfig) (DeploymentHook, error) {
 		actionID:          uint(conf.GithubActionID),
 		repoName:          conf.RepoName,
 		repoOwner:         conf.RepoOwner,
+		prName:            conf.PullRequestName,
+		prID:              uint(conf.PullRequestID),
 	}
 
 	commit, err := git.LastCommit()
@@ -792,6 +812,8 @@ func NewDeploymentHook(conf DeploymentHookConfig) (DeploymentHook, error) {
 			}
 		}
 	}
+	fmt.Printf("stefan %#v %v\n", res, res.isBranchDeploy())
+	fmt.Println(res.clusterID, res.projectID)
 
 	return res, nil
 }
@@ -808,7 +830,6 @@ func (t *DeploymentHook) PreApply() error {
 	envList, err := t.client.ListEnvironments(
 		context.Background(), t.projectID, t.clusterID,
 	)
-
 	if err != nil {
 		return fmt.Errorf("error listing environments: %w", err)
 	}

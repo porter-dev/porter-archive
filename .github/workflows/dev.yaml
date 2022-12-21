@@ -43,10 +43,11 @@ jobs:
           EOL
       - name: Build
         run: |
-          DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter:dev -f ./ee/docker/ee.Dockerfile
+          DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter:dev -t 801172602658.dkr.ecr.us-east-2.amazonaws.com/porter:dev -f ./ee/docker/ee.Dockerfile
       - name: Push
         run: |
           docker push gcr.io/porter-dev-273614/porter:dev
+          docker push 801172602658.dkr.ecr.us-east-2.amazonaws.com/porter:dev
       - name: Deploy to cluster
         run: |
           aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name dev

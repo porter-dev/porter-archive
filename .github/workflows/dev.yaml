@@ -43,7 +43,7 @@ jobs:
           EOL
       - name: Build
         run: |
-          DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter:dev -t 801172602658.dkr.ecr.us-east-2.amazonaws.com/porter:dev -f ./ee/docker/ee.Dockerfile
+          DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter:dev -f ./ee/docker/ee.Dockerfile
       - name: Push
         run: |
           docker push gcr.io/porter-dev-273614/porter:dev
@@ -52,21 +52,6 @@ jobs:
           aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name dev
 
           kubectl rollout restart deployment/porter
-      - name: Configure AWS Dev credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.ECR_DEV_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.ECR_DEV_AWS_ACCESS_SECRET_KEY }}
-          aws-region: us-east-2
-      - name: Login to dev ECR
-        id: login-ecr
-        run: |
-          aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 801172602658.dkr.ecr.us-east-2.amazonaws.com
-      - name: Push to dev registry
-        run: |
-          docker push 801172602658.dkr.ecr.us-east-2.amazonaws.com/porter:dev
-
-
   deploy-provisioner:
     runs-on: ubuntu-latest
     steps:

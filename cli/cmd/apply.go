@@ -764,7 +764,7 @@ func NewDeploymentHook(conf DeploymentHookConfig) (DeploymentHook, error) {
 
 	res := DeploymentHook{
 		client:        conf.PorterAPIClient,
-		resourceGroup: conf.ResourceGroup,
+		resourceGroup: &conf.ResourceGroup,
 		namespace:     conf.Namespace,
 
 		projectID: uint(conf.ProjectID),

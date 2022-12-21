@@ -25,7 +25,7 @@ func Test_Apply(t *testing.T) {
 		}
 		conf := DeploymentHookConfig{
 			PorterAPIClient: &cli,
-			ResourceGroup:   &switchboardTypes.ResourceGroup{},
+			ResourceGroup:   switchboardTypes.ResourceGroup{},
 			GithubAppID:     -1,
 			PullRequestID:   -1,
 			GithubActionID:  -1,

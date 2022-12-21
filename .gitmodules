@@ -1,3 +1,0 @@
-[submodule "switchboard"]
-	path = switchboard
-	url = git@github.com:porter-dev/switchboard.git

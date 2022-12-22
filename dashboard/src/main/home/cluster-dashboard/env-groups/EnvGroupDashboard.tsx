@@ -35,8 +35,6 @@ type StateType = {
 };
 
 const EnvGroupDashboard = (props: PropsType) => {
-  const { currentProject } = useContext(Context);
-
   const [state, setState] = useState<StateType>({
     expand: false,
     update: [] as any[],
@@ -47,40 +45,6 @@ const EnvGroupDashboard = (props: PropsType) => {
       ? localStorage.getItem("SortType")
       : "Newest",
   });
-
-  const {
-    data: envGroups,
-    isLoading: listEnvGroupsLoading,
-    isError,
-  } = useQuery<any[]>(
-    [
-      "envGroupList",
-      currentProject.id,
-      state.namespace,
-      props.currentCluster.id,
-    ],
-    async () => {
-      try {
-        if (!state.namespace) {
-          return [];
-        }
-
-        const res = await api.listEnvGroups(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            namespace: state.namespace,
-            cluster_id: props.currentCluster.id,
-          }
-        );
-
-        return res.data;
-      } catch (err) {
-        throw err;
-      }
-    }
-  );
 
   const setNamespace = (namespace: string) => {
     setState((state) => ({ ...state, namespace }));
@@ -188,30 +152,6 @@ const EnvGroupDashboard = (props: PropsType) => {
       );
     }
   };
-
-  useEffect(() => {
-    const selectedEnvGroup = getQueryParam(props, "selected_env_group");
-
-    if (!selectedEnvGroup || !envGroups) {
-      return;
-    }
-
-    const envGroup = envGroups.find(
-      (envGroup) => envGroup.name === selectedEnvGroup
-    );
-
-    if (envGroup) {
-      setExpandedEnvGroup(envGroup);
-    }
-  }, [envGroups]);
-
-  if (listEnvGroupsLoading) {
-    return (
-      <Placeholder>
-        <Loading />
-      </Placeholder>
-    );
-  }
 
   return <>{renderContents()}</>;
 };

@@ -98,11 +98,6 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
       });
   }, [currentCluster, namespace, sortType]);
 
-  const handleExpand = (envGroup: any) => {
-    pushQueryParams(props, { selected_env_group: envGroup.name }, []);
-    props.setExpandedEnvGroup(envGroup);
-  };
-
   const renderEnvGroupList = () => {
     if (isLoading || (!namespace && namespace !== "")) {
       return (
@@ -130,7 +125,6 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
         <EnvGroup
           key={i}
           envGroup={envGroup}
-          setExpanded={() => handleExpand(envGroup)}
         />
       );
     });

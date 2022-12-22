@@ -17,42 +17,27 @@ export type EnvGroupData = {
 
 type PropsType = {
   envGroup: EnvGroupData;
-  setExpanded: () => void;
 };
 
 type StateType = {
-  expand: boolean;
   update: any[];
 };
 
 export default class EnvGroup extends Component<PropsType, StateType> {
   state = {
-    expand: false,
     update: [] as any[],
   };
 
   render() {
-    let { envGroup, setExpanded } = this.props;
+    let { envGroup } = this.props;
     let name = envGroup?.name;
     let timestamp = envGroup?.created_at;
     let namespace = envGroup?.namespace;
     let version = envGroup?.version;
 
-    const getExpandedENVGroupLink = () => {
-      const params = new URLSearchParams(window.location.search);
-
-      params.set("selected_env_group", name);
-
-      return `${window.location.pathname}?${params.toString()}`;
-    };
-
     return (
-      <Link to={getExpandedENVGroupLink()} target="_self">
-        <StyledEnvGroup
-          onMouseEnter={() => this.setState({ expand: true })}
-          onMouseLeave={() => this.setState({ expand: false })}
-          onClick={() => setExpanded()}
-        >
+      <Link to={`/env-groups/${name}${window.location.search}`} target="_self">
+        <StyledEnvGroup>
           <Title>
             <IconWrapper>
               <Icon src={key} />

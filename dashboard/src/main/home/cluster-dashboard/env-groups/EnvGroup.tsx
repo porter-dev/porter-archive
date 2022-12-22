@@ -5,6 +5,8 @@ import key from "assets/key.svg";
 
 import { Context } from "shared/Context";
 import { readableDate } from "shared/string_utils";
+import { Link } from "react-router-dom";
+import _ from "lodash";
 
 export type EnvGroupData = {
   name: string;
@@ -36,33 +38,44 @@ export default class EnvGroup extends Component<PropsType, StateType> {
     let namespace = envGroup?.namespace;
     let version = envGroup?.version;
 
+    const getExpandedENVGroupLink = () => {
+      const params = new URLSearchParams(window.location.search);
+
+      params.set("selected_env_group", name);
+
+      return `${window.location.pathname}?${params.toString()}`;
+    };
+
     return (
-      <StyledEnvGroup
-        onMouseEnter={() => this.setState({ expand: true })}
-        onMouseLeave={() => this.setState({ expand: false })}
-        expand={this.state.expand}
-        onClick={() => setExpanded()}
-      >
-        <Title>
-          <IconWrapper>
-            <Icon src={key} />
-          </IconWrapper>
-          {name}
-        </Title>
+      <Link to={getExpandedENVGroupLink()} target="_self">
+        <StyledEnvGroup
+          onMouseEnter={() => this.setState({ expand: true })}
+          onMouseLeave={() => this.setState({ expand: false })}
+          onClick={() => setExpanded()}
+        >
+          <Title>
+            <IconWrapper>
+              <Icon src={key} />
+            </IconWrapper>
+            {name}
+          </Title>
 
-        <BottomWrapper>
-          <InfoWrapper>
-            <LastDeployed>Last updated {readableDate(timestamp)}</LastDeployed>
-          </InfoWrapper>
+          <BottomWrapper>
+            <InfoWrapper>
+              <LastDeployed>
+                Last updated {readableDate(timestamp)}
+              </LastDeployed>
+            </InfoWrapper>
 
-          <TagWrapper>
-            Namespace
-            <NamespaceTag>{namespace}</NamespaceTag>
-          </TagWrapper>
-        </BottomWrapper>
+            <TagWrapper>
+              Namespace
+              <NamespaceTag>{namespace}</NamespaceTag>
+            </TagWrapper>
+          </BottomWrapper>
 
-        <Version>v{version}</Version>
-      </StyledEnvGroup>
+          <Version>v{version}</Version>
+        </StyledEnvGroup>
+      </Link>
     );
   }
 }

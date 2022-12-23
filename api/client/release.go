@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/porter-dev/porter/api/types"
-	"github.com/stefanmcshane/helm/pkg/release"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 func (c *Client) ListReleases(

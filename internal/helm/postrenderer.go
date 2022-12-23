@@ -13,9 +13,9 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
-	"github.com/stefanmcshane/helm/pkg/postrender"
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v2"
+	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/docker/distribution/reference"
 )

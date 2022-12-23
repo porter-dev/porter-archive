@@ -26,6 +26,7 @@ RUN --mount=type=cache,target=$GOPATH/pkg/mod \
 FROM base AS build-go
 
 ARG version=production
+ARG CGO_ENABLED=0
 
 
 # build proto files

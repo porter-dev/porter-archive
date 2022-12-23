@@ -3,7 +3,7 @@ package types
 import (
 	"time"
 
-	"github.com/stefanmcshane/helm/pkg/action"
+	"helm.sh/helm/v3/pkg/action"
 	v1 "k8s.io/api/core/v1"
 )
 

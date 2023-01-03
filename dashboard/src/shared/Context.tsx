@@ -129,7 +129,9 @@ class ContextProvider extends Component<PropsType, StateType> {
     },
     user: null,
     setUser: (userId: number, email: string) => {
-      this.setState({ user: { userId, email } });
+      this.setState({
+        user: { userId, email, isPorterUser: email.endsWith("@porter.run") },
+      });
     },
     devOpsMode: true,
     setDevOpsMode: (devOpsMode: boolean) => {

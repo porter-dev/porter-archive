@@ -12,7 +12,6 @@ import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import ClusterDashboard from "./cluster-dashboard/ClusterDashboard";
 import Dashboard from "./dashboard/Dashboard";
-import WelcomeForm from "./WelcomeForm";
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 
@@ -435,16 +434,18 @@ class Home extends Component<PropsType, StateType> {
                 return <Onboarding />;
               }}
             />
-            <Route
-              path="/infrastructure"
-              render={() => {
-                return (
-                  <DashboardWrapper>
-                    <InfrastructureRouter />
-                  </DashboardWrapper>
-                );
-              }}
-            />
+            {this.context.user.isPorterUser ? (
+              <Route
+                path="/infrastructure"
+                render={() => {
+                  return (
+                    <DashboardWrapper>
+                      <InfrastructureRouter />
+                    </DashboardWrapper>
+                  );
+                }}
+              />
+            ) : null}
             <Route
               path="/dashboard"
               render={() => {

@@ -65,10 +65,11 @@ class ProjectSettings extends Component<PropsType, StateType> {
     this.setState({ projectName: currentProject.name });
     const tabOptions = [];
     tabOptions.push({ value: "manage-access", label: "Manage access" });
-    tabOptions.push({
-      value: "billing",
-      label: "Billing",
-    });
+    // ? Disabled for now https://discord.com/channels/542888846271184896/1059277393031856208/1059277395913351258
+    // tabOptions.push({
+    //   value: "billing",
+    //   label: "Billing",
+    // });
 
     if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
       // if (this.context?.hasBillingEnabled) {

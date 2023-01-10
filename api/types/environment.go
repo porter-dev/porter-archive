@@ -129,12 +129,14 @@ type GetDeploymentRequest struct {
 }
 
 type PullRequest struct {
-	Title      string `json:"pr_title"`
-	Number     uint   `json:"pr_number"`
-	RepoOwner  string `json:"repo_owner"`
-	RepoName   string `json:"repo_name"`
-	BranchFrom string `json:"branch_from"`
-	BranchInto string `json:"branch_into"`
+	Title      string    `json:"pr_title"`
+	Number     uint      `json:"pr_number"`
+	RepoOwner  string    `json:"repo_owner"`
+	RepoName   string    `json:"repo_name"`
+	BranchFrom string    `json:"branch_from"`
+	BranchInto string    `json:"branch_into"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type ToggleNewCommentRequest struct {

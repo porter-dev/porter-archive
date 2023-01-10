@@ -9,8 +9,8 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/spf13/cobra"
+	"github.com/stefanmcshane/helm/pkg/time"
 	"gopkg.in/yaml.v2"
-	"helm.sh/helm/v3/pkg/time"
 )
 
 // getCmd represents the "porter get" base command when called

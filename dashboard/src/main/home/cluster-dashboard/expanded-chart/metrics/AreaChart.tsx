@@ -1,4 +1,8 @@
+import _ from "lodash";
 import React, { useCallback, useMemo, useRef } from "react";
+import chroma from "chroma-js";
+import * as stats from "simple-statistics";
+import styled from "styled-components";
 import { AreaClosed, Bar, Line, LinePath } from "@visx/shape";
 import { curveMonotoneX } from "@visx/curve";
 import { scaleLinear, scaleTime } from "@visx/scale";
@@ -13,6 +17,7 @@ import { LinearGradient } from "@visx/gradient";
 import { bisector, extent, max } from "d3-array";
 import { timeFormat } from "d3-time-format";
 import { NormalizedMetricsData } from "./types";
+import { AggregatedDataColors } from "./utils";
 
 var globalData: NormalizedMetricsData[];
 
@@ -46,6 +51,7 @@ const bisectDate = bisector<NormalizedMetricsData, Date>(
 
 export type AreaProps = {
   data: NormalizedMetricsData[];
+  aggregatedData?: Record<string, NormalizedMetricsData[]>;
   dataKey: string;
   hpaEnabled?: boolean;
   hpaData?: NormalizedMetricsData[];
@@ -57,6 +63,7 @@ export type AreaProps = {
 
 const AreaChart: React.FunctionComponent<AreaProps> = ({
   data,
+  aggregatedData = {},
   dataKey,
   hpaEnabled = false,
   hpaData = [],
@@ -76,6 +83,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
   } = useTooltip<{
     data: NormalizedMetricsData;
     tooltipHpaData: NormalizedMetricsData;
+    aggregatedData?: Record<string, NormalizedMetricsData>;
   }>();
 
   const svgContainer = useRef();
@@ -103,12 +111,41 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
         domain: [
           0,
           1.25 *
-            max([...globalData, ...(isHpaEnabled ? hpaData : [])], getValue),
+            max(
+              [
+                ...globalData,
+                ...Object.values(aggregatedData).flat(),
+                ...(isHpaEnabled ? hpaData : []),
+              ],
+              getValue
+            ),
         ],
         nice: true,
       }),
     [margin.top, width, height, data, hpaData, isHpaEnabled]
   );
+
+  const getAggregatedDataTooltip = (x0: Date) => {
+    let aggregatedTooltipData: Record<string, NormalizedMetricsData> = {};
+    for (let [key, values] of Object.entries(aggregatedData)) {
+      const index = bisectDate(values, x0, 1);
+      const d0 = values[index - 1];
+      const d1 = values[index];
+      let d = d0;
+
+      if (d1 && getDate(d1)) {
+        d =
+          x0.valueOf() - getDate(d0).valueOf() >
+          getDate(d1).valueOf() - x0.valueOf()
+            ? d1
+            : d0;
+      }
+
+      aggregatedTooltipData[key] = d;
+    }
+
+    return aggregatedTooltipData;
+  };
 
   // tooltip handler
   const handleTooltip = useCallback(
@@ -139,7 +176,11 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
 
       if (!isHpaEnabled || hpaIndex !== hpaIndex2) {
         showTooltip({
-          tooltipData: { data: d, tooltipHpaData: undefined },
+          tooltipData: {
+            data: d,
+            tooltipHpaData: undefined,
+            aggregatedData: getAggregatedDataTooltip(x0),
+          },
           tooltipLeft: x || 0,
           tooltipTop: valueScale(getValue(d)) || 0,
         });
@@ -168,7 +209,11 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
       point = point?.matrixTransform(container.getScreenCTM().inverse());
 
       showTooltip({
-        tooltipData: { data: d, tooltipHpaData },
+        tooltipData: {
+          data: d,
+          tooltipHpaData,
+          aggregatedData: getAggregatedDataTooltip(x0),
+        },
         tooltipLeft: x || 0,
         tooltipTop: point.y || 0,
       });
@@ -221,6 +266,14 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
           to={accentColor}
           toOpacity={0}
         />
+        {Object.entries(AggregatedDataColors).map(([dataKey, color]) => (
+          <LinearGradient
+            id={`area-gradient-${dataKey}`}
+            from={color}
+            to={color}
+            toOpacity={0}
+          />
+        ))}
         <GridRows
           left={margin.left}
           scale={valueScale}
@@ -250,6 +303,18 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
           fill="url(#area-gradient)"
           curve={curveMonotoneX}
         />
+        {Object.entries(aggregatedData).map(([key, data]) => (
+          <LinePath<NormalizedMetricsData>
+            data={data}
+            x={(d) => dateScale(getDate(d)) ?? 0}
+            y={(d) => valueScale(getValue(d)) ?? 0}
+            height={innerHeight}
+            strokeWidth={1}
+            stroke={AggregatedDataColors[key]}
+            // fill={`url(#area-gradient-${key})`}
+            curve={curveMonotoneX}
+          />
+        ))}
         {isHpaEnabled && (
           <LinePath<NormalizedMetricsData>
             stroke="#ffffff"
@@ -322,6 +387,19 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
               strokeWidth={2}
               pointerEvents="none"
             />
+            {Object.values(tooltipData.aggregatedData)?.map((d) => (
+              <circle
+                cx={tooltipLeft}
+                cy={valueScale(getValue(d)) + 1}
+                r={4}
+                fill="black"
+                fillOpacity={0.1}
+                stroke="black"
+                strokeOpacity={0.1}
+                strokeWidth={2}
+                pointerEvents="none"
+              />
+            ))}
             <circle
               cx={tooltipLeft}
               cy={dataGraphTooltipGlyphPosition}
@@ -331,6 +409,17 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
               strokeWidth={2}
               pointerEvents="none"
             />
+            {Object.values(tooltipData.aggregatedData)?.map((d) => (
+              <circle
+                cx={tooltipLeft}
+                cy={valueScale(getValue(d))}
+                r={4}
+                fill={accentColorDark}
+                stroke="white"
+                strokeWidth={2}
+                pointerEvents="none"
+              />
+            ))}
             {isHpaEnabled && hpaGraphTooltipGlyphPosition !== null && (
               <>
                 <circle
@@ -368,13 +457,17 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
               ...defaultStyles,
               background: "#26272f",
               color: "#aaaabb",
-              textAlign: "center",
             }}
           >
-            {formatDate(getDate(tooltipData.data))}
-            <div style={{ color: accentColor }}>
+            <TooltipDate>{formatDate(getDate(tooltipData.data))}</TooltipDate>
+            <TooltipDataRow>
               {dataKey}: {getValue(tooltipData.data)}
-            </div>
+            </TooltipDataRow>
+            {Object.entries(tooltipData.aggregatedData).map(([key, value]) => (
+              <TooltipDataRow color={AggregatedDataColors[key]}>
+                {`${key.toUpperCase()}. ${dataKey}`}: {getValue(value)}
+              </TooltipDataRow>
+            ))}
             {isHpaEnabled && hpaGraphTooltipGlyphPosition !== null && (
               <div style={{ color: "#FFF" }}>
                 Autoscaling Threshold: {getValue(tooltipData.tooltipHpaData)}
@@ -388,3 +481,13 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
 };
 
 export default AreaChart;
+
+const TooltipDate = styled.div`
+  text-align: center;
+  margin-bottom: 8px;
+`;
+
+const TooltipDataRow = styled.div<{ color?: string }>`
+  color: ${(props) => props.color ?? accentColor};
+  margin-bottom: 4px;
+`;

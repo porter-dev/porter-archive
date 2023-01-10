@@ -56,6 +56,7 @@ export interface ChartType {
   namespace: string;
   latest_version: string;
   tags: any;
+  canonical_name: string;
 }
 
 export interface ChartTypeWithExtendedConfig extends ChartType {

@@ -14,7 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater/parser"
-	"helm.sh/helm/v3/pkg/release"
+	"github.com/stefanmcshane/helm/pkg/release"
 )
 
 type StreamFormHandler struct {

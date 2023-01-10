@@ -33,9 +33,10 @@ func NewGetIngressHandler(
 
 func (c *GetIngressHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	agent, err := c.GetAgent(r, cluster, "")
 	name, _ := requestutils.GetURLParamString(r, types.URLParamIngressName)
 	namespace, _ := requestutils.GetURLParamString(r, types.URLParamNamespace)
+
+	agent, err := c.GetAgent(r, cluster, "")
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -58,17 +59,20 @@ func (c *GetIngressHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	ingress3, err := agent.GetNetworkingV1Ingress(namespace, name)
 
-	if targetErr := kubernetes.IsNotFoundError; errors.Is(err, targetErr) {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("ingress %s/%s was not found", namespace, name),
-			http.StatusNotFound,
-		))
+	if err == nil && ingress3 != nil {
+		c.WriteResult(w, r, ingress3)
+		return
+	}
 
+	ingress4, err := agent.GetIstioIngress(namespace, name)
+
+	if errors.Is(err, kubernetes.IsNotFoundError) {
+		c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("ingress %s/%s was not found", namespace, name)))
 		return
 	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	c.WriteResult(w, r, ingress3)
+	c.WriteResult(w, r, ingress4)
 }

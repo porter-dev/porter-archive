@@ -19,14 +19,15 @@ import (
 	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
+	"github.com/porter-dev/porter/internal/helm/repo"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/integrations/ci/gitlab"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
+	"github.com/stefanmcshane/helm/pkg/release"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v2"
-	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -74,6 +75,28 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	if request.RepoURL == "" {
 		request.RepoURL = c.Config().ServerConf.DefaultApplicationHelmRepoURL
+	}
+
+	// if the repo url is not an addon or application url, validate against the helm repos
+	if request.RepoURL != c.Config().ServerConf.DefaultAddonHelmRepoURL && request.RepoURL != c.Config().ServerConf.DefaultApplicationHelmRepoURL {
+		// load the helm repos in the project
+		hrs, err := c.Repo().HelmRepo().ListHelmReposByProjectID(cluster.ProjectID)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		isValid := repo.ValidateRepoURL(c.Config().ServerConf.DefaultAddonHelmRepoURL, c.Config().ServerConf.DefaultApplicationHelmRepoURL, hrs, request.RepoURL)
+
+		if !isValid {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("invalid repo_url parameter"),
+				http.StatusBadRequest,
+			))
+
+			return
+		}
 	}
 
 	if request.TemplateVersion == "latest" {

@@ -655,6 +655,15 @@ const ExpandedChart: React.FC<Props> = (props) => {
     );
   };
 
+  const renderHelmReleaseName = () => {
+    return (
+      <Url>
+        <Bolded>Helm Release Name:</Bolded>
+        {currentChart.name}
+      </Url>
+    );
+  };
+
   const handleUninstallChart = async () => {
     setDeleting(true);
     setCurrentOverlay(null);
@@ -719,7 +728,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   // Check if porter agent is installed. If not installed hide the `Logs` component
   useEffect(() => {
-    if (!currentCluster.agent_integration_enabled) {
+    if (
+      !currentCluster.agent_integration_enabled ||
+      // If chart is an add on, we don't need to check if agent is installed
+      !["web", "worker", "job"].includes(currentChart?.chart?.metadata?.name)
+    ) {
       return;
     }
 
@@ -748,7 +761,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           );
         }
       });
-  }, []);
+  }, [currentChart]);
 
   useEffect(() => {
     if (logData.revision) {
@@ -806,7 +819,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
   useEffect((): any => {
     let isSubscribed = true;
 
-    const ingressComponent = components?.find((c) => c.Kind === "Ingress");
+    const ingressComponent = components?.find(
+      (c) =>
+        c.Kind === "Ingress" ||
+        (c.Kind === "Gateway" &&
+          c.RawYAML?.apiVersion &&
+          c.RawYAML?.apiVersion?.startsWith("networking.istio.io"))
+    );
 
     const ingressName = ingressComponent?.Name;
 
@@ -836,6 +855,15 @@ const ExpandedChart: React.FC<Props> = (props) => {
           setUrl(
             `http://${res.data?.status?.loadBalancer?.ingress[0]?.hostname}`
           );
+          return;
+        }
+
+        if (
+          res.data?.spec?.servers &&
+          res.data?.spec?.servers[0]?.hosts &&
+          res.data?.spec?.servers[0]?.hosts[0]
+        ) {
+          setUrl(`http://${res.data?.spec?.servers[0]?.hosts[0]}`);
           return;
         }
       })
@@ -873,7 +901,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   icon={currentChart.chart.metadata.icon}
                   iconWidth="33px"
                 >
-                  {currentChart.name}
+                  {currentChart.canonical_name === ""
+                    ? currentChart.name
+                    : currentChart.canonical_name}
                   <DeploymentType currentChart={currentChart} />
                   <TagWrapper>
                     Namespace{" "}
@@ -884,6 +914,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
                 {currentChart.chart.metadata.name != "worker" &&
                   currentChart.chart.metadata.name != "job" &&
                   renderUrl()}
+
+                {currentChart.canonical_name !== "" && renderHelmReleaseName()}
                 <InfoWrapper>
                   {/*
                   <StatusIndicator

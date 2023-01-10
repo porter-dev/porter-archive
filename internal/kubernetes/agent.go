@@ -23,8 +23,6 @@ import (
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
 
-	errors2 "errors"
-
 	"github.com/porter-dev/porter/internal/helm/grapher"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -48,7 +46,10 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/kubectl/pkg/scheme"
 
-	rspb "helm.sh/helm/v3/pkg/release"
+	rspb "github.com/stefanmcshane/helm/pkg/release"
+
+	istiov1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	versionedclient "istio.io/client-go/pkg/clientset/versioned"
 )
 
 // Agent is a Kubernetes agent for performing operations that interact with the
@@ -616,7 +617,7 @@ func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 }
 
 // CreateNamespace creates a namespace with the given name.
-func (a *Agent) CreateNamespace(name string, annotations map[string]string) (*v1.Namespace, error) {
+func (a *Agent) CreateNamespace(name string, labels map[string]string) (*v1.Namespace, error) {
 	// check if namespace exists
 	checkNS, err := a.Clientset.CoreV1().Namespaces().Get(
 		context.TODO(),
@@ -666,8 +667,8 @@ func (a *Agent) CreateNamespace(name string, annotations map[string]string) (*v1
 		},
 	}
 
-	if len(annotations) > 0 {
-		namespace.SetAnnotations(annotations)
+	if len(labels) > 0 {
+		namespace.SetLabels(labels)
 	}
 
 	return a.Clientset.CoreV1().Namespaces().Create(
@@ -947,6 +948,30 @@ func (a *Agent) GetNetworkingV1Beta1Ingress(namespace string, name string) (*net
 	}
 
 	return resp, nil
+}
+
+func (a *Agent) GetIstioIngress(namespace, name string) (*istiov1beta1.Gateway, error) {
+	restConf, err := a.RESTClientGetter.ToRESTConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := versionedclient.NewForConfig(restConf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	gateway, err := clientset.NetworkingV1beta1().Gateways(namespace).Get(
+		context.Background(), name, metav1.GetOptions{},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return gateway, nil
 }
 
 var IsNotFoundError = fmt.Errorf("not found")
@@ -1370,7 +1395,7 @@ func (a *Agent) RunWebsocketTask(task func() error) error {
 			return nil
 		}
 
-		if !errors2.Is(err, &AuthError{}) {
+		if !goerrors.Is(err, &AuthError{}) {
 			return err
 		}
 

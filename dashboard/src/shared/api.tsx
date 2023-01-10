@@ -145,7 +145,8 @@ const createEnvironment = baseApi<
     mode: "auto" | "manual";
     disable_new_comments: boolean;
     git_repo_branches: string[];
-    namespace_annotations: Record<string, string>;
+    namespace_labels: Record<string, string>;
+    git_deploy_branches: string[];
   },
   {
     project_id: number;
@@ -170,7 +171,8 @@ const updateEnvironment = baseApi<
     mode: "auto" | "manual";
     disable_new_comments: boolean;
     git_repo_branches: string[]; // Array with branch names
-    namespace_annotations: Record<string, string>;
+    namespace_labels: Record<string, string>;
+    git_deploy_branches: string[];
   },
   {
     project_id: number;
@@ -1228,9 +1230,9 @@ const getTemplateInfo = baseApi<
   {
     repo_url?: string;
   },
-  { name: string; version: string }
+  { project_id: number; name: string; version: string }
 >("GET", (pathParams) => {
-  return `/api/templates/${pathParams.name}/${pathParams.version}`;
+  return `/api/v1/projects/${pathParams.project_id}/templates/${pathParams.name}/versions/${pathParams.version}`;
 });
 
 const getTemplateUpgradeNotes = baseApi<
@@ -1238,17 +1240,21 @@ const getTemplateUpgradeNotes = baseApi<
     repo_url?: string;
     prev_version: string;
   },
-  { name: string; version: string }
+  { project_id: number; name: string; version: string }
 >("GET", (pathParams) => {
-  return `/api/templates/${pathParams.name}/${pathParams.version}/upgrade_notes`;
+  return `/api/v1/projects/${pathParams.project_id}/templates/${pathParams.name}/versions/${pathParams.version}/upgrade_notes`;
 });
 
 const getTemplates = baseApi<
   {
     repo_url?: string;
   },
-  {}
->("GET", "/api/templates");
+  {
+    project_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/v1/projects/${pathParams.project_id}/templates`;
+});
 
 const getHelmRepos = baseApi<
   {},
@@ -1958,6 +1964,22 @@ const updateReleaseTags = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/update_tags`
 );
 
+const updateCanonicalName = baseApi<
+  {
+    canonical_name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+  }
+>(
+  "PATCH",
+  ({ project_id, cluster_id, namespace, release_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/update_canonical_name`
+);
+
 const getGitProviders = baseApi<{}, { project_id: number }>(
   "GET",
   ({ project_id }) => `/api/projects/${project_id}/integrations/git`
@@ -2476,6 +2498,7 @@ export default {
   getTagsByProjectId,
   createTag,
   updateReleaseTags,
+  updateCanonicalName,
   getGitProviders,
   getGitlabRepos,
   getGitlabBranches,

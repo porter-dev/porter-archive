@@ -69,8 +69,25 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 		if !found {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("base branch '%s' is not enabled for this preview environment, please enable it in the settings page",
-					request.BranchInto), http.StatusBadRequest,
+				fmt.Errorf("base branch '%s' is not enabled for this preview environment, please enable it "+
+					"in the settings page to continue", request.BranchInto), http.StatusBadRequest,
+			))
+			return
+		}
+	} else if len(envType.GitDeployBranches) > 0 {
+		found := false
+
+		for _, branch := range env.ToEnvironmentType().GitDeployBranches {
+			if branch == request.BranchFrom {
+				found = true
+				break
+			}
+		}
+
+		if found {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("head branch '%s' is enabled for branch deploys for this preview environment, "+
+					"please disable it in the settings page to continue", request.BranchInto), http.StatusBadRequest,
 			))
 			return
 		}
@@ -104,7 +121,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			Ref: request.BranchFrom,
 			Inputs: map[string]interface{}{
 				"pr_number":      strconv.FormatUint(uint64(request.Number), 10),
-				"pr_title":       *pr.Title,
+				"pr_title":       pr.GetTitle(),
 				"pr_branch_from": request.BranchFrom,
 				"pr_branch_into": request.BranchInto,
 			},

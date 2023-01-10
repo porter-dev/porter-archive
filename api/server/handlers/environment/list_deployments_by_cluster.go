@@ -281,6 +281,10 @@ func fetchOpenPullRequests(
 			}
 		}
 
+		if isDeployBranch(pr.GetHead().GetRef(), env) {
+			continue
+		}
+
 		if _, ok := deplInfoMap[fmt.Sprintf("%s-%s-%d", env.GitRepoOwner, env.GitRepoName, pr.GetNumber())]; !ok {
 			prs = append(prs, &types.PullRequest{
 				Title:      pr.GetTitle(),
@@ -289,9 +293,21 @@ func fetchOpenPullRequests(
 				RepoName:   env.GitRepoName,
 				BranchFrom: pr.GetHead().GetRef(),
 				BranchInto: pr.GetBase().GetRef(),
+				CreatedAt:  pr.GetCreatedAt(),
+				UpdatedAt:  pr.GetUpdatedAt(),
 			})
 		}
 	}
 
 	return prs, nil
+}
+
+func isDeployBranch(branch string, env *models.Environment) bool {
+	for _, b := range env.ToEnvironmentType().GitDeployBranches {
+		if b == branch {
+			return true
+		}
+	}
+
+	return false
 }

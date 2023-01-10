@@ -109,21 +109,23 @@ func (c *UpdateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// add a check for the PR to be open before creating a comment
-	prClosed, err := isGithubPRClosed(client, owner, name, int(depl.PullRequestID))
+	if !depl.IsBranchDeploy() {
+		// add a check for the PR to be open before creating a comment
+		prClosed, err := isGithubPRClosed(client, owner, name, int(depl.PullRequestID))
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",
-				depl.ID, err), http.StatusConflict,
-		))
-		return
-	}
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",
+					depl.ID, err), http.StatusConflict,
+			))
+			return
+		}
 
-	if prClosed {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Github PR has been closed"),
-			http.StatusConflict))
-		return
+		if prClosed {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Github PR has been closed"),
+				http.StatusConflict))
+			return
+		}
 	}
 
 	ghDeployment, err := createGithubDeployment(client, env, request.PRBranchFrom, request.ActionID)
@@ -133,7 +135,10 @@ func (c *UpdateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	depl.Namespace = request.Namespace
+	if !depl.IsBranchDeploy() {
+		depl.Namespace = request.Namespace
+	}
+
 	depl.GHDeploymentID = ghDeployment.GetID()
 	depl.CommitSHA = request.CommitSHA
 

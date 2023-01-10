@@ -56,7 +56,23 @@ func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var res types.ListReleasesResponse = releases
+	var res types.ListReleasesResponse
+
+	for _, helmRel := range releases {
+		rel, err := c.Repo().Release().ReadRelease(cluster.ID, helmRel.Name, helmRel.Namespace)
+
+		if err == nil {
+			res = append(res, &types.Release{
+				Release:       helmRel,
+				PorterRelease: rel.ToReleaseType(),
+			})
+		} else {
+			res = append(res, &types.Release{
+				Release:       helmRel,
+				PorterRelease: &types.PorterRelease{},
+			})
+		}
+	}
 
 	c.WriteResult(w, r, res)
 }

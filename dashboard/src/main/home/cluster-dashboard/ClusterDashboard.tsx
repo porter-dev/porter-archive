@@ -30,6 +30,7 @@ import loadable from "@loadable/component";
 import Loading from "components/Loading";
 import JobRunTable from "./chart/JobRunTable";
 import TagFilter from "./TagFilter";
+import ExpandedEnvGroupDashboard from "./env-groups/ExpandedEnvGroupDashboard";
 
 // @ts-ignore
 const LazyDatabasesRoutes = loadable(() => import("./databases/routes.tsx"), {
@@ -333,6 +334,16 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           />
 
           {this.renderBodyForApps()}
+        </GuardedRoute>
+        <GuardedRoute
+          path={"/env-groups/:name"}
+          scope="env_group"
+          resource=""
+          verb={["get", "list"]}
+        >
+          <ExpandedEnvGroupDashboard
+            currentCluster={this.props.currentCluster}
+          />
         </GuardedRoute>
         <GuardedRoute
           path={"/env-groups"}

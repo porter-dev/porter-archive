@@ -10,6 +10,7 @@ import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import AreaChart from "../expanded-chart/metrics/AreaChart";
 import {
   AvailableMetrics,
+  GenericMetricResponse,
   NormalizedMetricsData,
 } from "../expanded-chart/metrics/types";
 import SelectRow from "../../../../components/form-components/SelectRow";
@@ -18,6 +19,7 @@ import {
   resolutions,
   secondsBeforeNow,
 } from "../expanded-chart/metrics/MetricsSection";
+import AggregatedDataLegend from "../expanded-chart/metrics/AggregatedDataLegend";
 
 const Metrics: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -36,6 +38,9 @@ const Metrics: React.FC = () => {
   );
   const [selectedPercentile, setSelectedPercentile] = useState("0.99");
   const [data, setData] = useState<NormalizedMetricsData[]>([]);
+  const [aggregatedData, setAggregatedData] = useState<
+    Record<string, NormalizedMetricsData[]>
+  >({});
   const [showMetricsSettings, setShowMetricsSettings] = useState(false);
   const [isLoading, setIsLoading] = useState(0);
   const [hpaData, setHpaData] = useState([]);
@@ -218,6 +223,39 @@ const Metrics: React.FC = () => {
 
       setIsLoading((prev) => prev + 1);
       setData([]);
+      setAggregatedData({});
+
+      const allPodsRes = await api.getMetrics(
+        "<token>",
+        {
+          metric: selectedMetric,
+          shouldsum: false,
+          kind: "Ingress",
+          namespace: selectedIngress?.namespace || "default",
+          percentile:
+            selectedMetric == "nginx:latency-histogram"
+              ? parseFloat(selectedPercentile)
+              : undefined,
+          startrange: start,
+          endrange: end,
+          resolution: resolutions[selectedRange],
+          pods: [],
+          name: selectedIngress?.name,
+        },
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      );
+
+      const allPodsData: GenericMetricResponse[] = allPodsRes.data ?? [];
+      const allPodsMetrics = allPodsData.flatMap((d) => d.results);
+      const allPodsMetricsNormalized = new MetricNormalizer(
+        [{ results: allPodsMetrics }],
+        selectedMetric as AvailableMetrics
+      );
+      setAggregatedData(allPodsMetricsNormalized.getAggregatedData());
+      //
 
       const res = await api.getMetrics(
         "<token>",
@@ -320,11 +358,13 @@ const Metrics: React.FC = () => {
       )}
       {data.length > 0 && isLoading === 0 && (
         <>
+          <AggregatedDataLegend data={data} />
           <ParentSize>
             {({ width, height }) => (
               <AreaChart
                 dataKey={selectedMetricLabel}
                 data={data}
+                aggregatedData={aggregatedData}
                 hpaData={hpaData}
                 hpaEnabled={false}
                 width={width}

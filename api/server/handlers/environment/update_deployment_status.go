@@ -72,32 +72,38 @@ func (c *UpdateDeploymentStatusHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	var depl *models.Deployment
+	depl, err := c.Repo().Environment().ReadDeploymentForBranch(env.ID, owner, name, request.PRBranchFrom)
 
-	// read the deployment
-	if request.PRNumber != 0 {
-		depl, err = c.Repo().Environment().ReadDeploymentByGitDetails(env.ID, owner, name, request.PRNumber)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
 
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
+	if depl == nil {
+		if request.PRNumber != 0 {
+			depl, err = c.Repo().Environment().ReadDeploymentByGitDetails(env.ID, owner, name, request.PRNumber)
+
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
+					return
+				}
+
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
+		} else if request.Namespace != "" {
+			depl, err = c.Repo().Environment().ReadDeployment(env.ID, request.Namespace)
 
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-	} else if request.Namespace != "" {
-		depl, err = c.Repo().Environment().ReadDeployment(env.ID, request.Namespace)
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
+					return
+				}
 
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				c.HandleAPIError(w, r, apierrors.NewErrNotFound(errDeploymentNotFound))
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
-
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
 		}
 	}
 

@@ -200,14 +200,14 @@ func (repo *EnvironmentRepository) ReadDeploymentForBranch(environmentID uint, o
 
 	switch repo.db.Dialector.Name() {
 	case "sqlite":
-		if err := repo.db.Order("id asc").
+		if err := repo.db.Order("id desc").
 			Where("environment_id = ? AND repo_owner LIKE ? AND repo_name LIKE ? AND pr_branch_from = ? AND pr_branch_into = ?",
 				environmentID, owner, name, branch, branch).
 			First(&depl).Error; err != nil {
 			return nil, err
 		}
 	case "postgres":
-		if err := repo.db.Order("id asc").
+		if err := repo.db.Order("id desc").
 			Where("environment_id = ? AND repo_owner iLIKE ? AND repo_name iLIKE ? AND pr_branch_from = ? AND pr_branch_into = ?",
 				environmentID, owner, name, branch, branch).
 			First(&depl).Error; err != nil {

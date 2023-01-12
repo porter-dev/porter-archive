@@ -837,7 +837,7 @@ func (t *DeploymentHook) PreApply() error {
 			context.Background(),
 			t.projectID, t.clusterID, t.envID,
 			&types.GetDeploymentRequest{
-				Namespace: t.namespace,
+				Branch: t.branchFrom,
 			},
 		)
 	} else {
@@ -1017,7 +1017,7 @@ func (t *DeploymentHook) OnError(error) {
 			context.Background(),
 			t.projectID, t.clusterID, t.envID,
 			&types.GetDeploymentRequest{
-				Namespace: t.namespace,
+				Branch: t.branchFrom,
 			},
 		)
 	} else {
@@ -1063,7 +1063,7 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 			context.Background(),
 			t.projectID, t.clusterID, t.envID,
 			&types.GetDeploymentRequest{
-				Namespace: t.namespace,
+				Branch: t.branchFrom,
 			},
 		)
 	} else {

@@ -141,10 +141,7 @@ func (c *UpdateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if !depl.IsBranchDeploy() {
-		depl.Namespace = request.Namespace
-	}
-
+	depl.Namespace = request.Namespace
 	depl.GHDeploymentID = ghDeployment.GetID()
 	depl.CommitSHA = request.CommitSHA
 

@@ -195,6 +195,29 @@ func (repo *EnvironmentRepository) ReadDeploymentByGitDetails(
 	return depl, nil
 }
 
+func (repo *EnvironmentRepository) ReadDeploymentForBranch(environmentID uint, owner, name, branch string) (*models.Deployment, error) {
+	depl := &models.Deployment{}
+
+	switch repo.db.Dialector.Name() {
+	case "sqlite":
+		if err := repo.db.Order("id desc").
+			Where("environment_id = ? AND repo_owner LIKE ? AND repo_name LIKE ? AND pr_branch_from = ? AND pr_branch_into = ?",
+				environmentID, owner, name, branch, branch).
+			First(&depl).Error; err != nil {
+			return nil, err
+		}
+	case "postgres":
+		if err := repo.db.Order("id desc").
+			Where("environment_id = ? AND repo_owner iLIKE ? AND repo_name iLIKE ? AND pr_branch_from = ? AND pr_branch_into = ?",
+				environmentID, owner, name, branch, branch).
+			First(&depl).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	return depl, nil
+}
+
 func (repo *EnvironmentRepository) ListDeploymentsByCluster(projectID, clusterID uint, states ...string) ([]*models.Deployment, error) {
 	query := repo.db.
 		Order("deployments.updated_at desc").

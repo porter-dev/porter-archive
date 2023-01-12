@@ -788,10 +788,6 @@ func (t *DeploymentHook) PreApply() error {
 		return fmt.Errorf("could not find environment for deployment")
 	}
 
-	if t.isBranchDeploy() {
-		t.namespace = preview.GetNamespaceForBranchDeploy(t.branchFrom, t.repoOwner, t.repoName)
-	}
-
 	nsList, err := t.client.GetK8sNamespaces(
 		context.Background(), t.projectID, t.clusterID,
 	)
@@ -841,7 +837,7 @@ func (t *DeploymentHook) PreApply() error {
 			context.Background(),
 			t.projectID, t.clusterID, t.envID,
 			&types.GetDeploymentRequest{
-				Namespace: t.namespace,
+				Branch: t.branchFrom,
 			},
 		)
 	} else {
@@ -1021,7 +1017,7 @@ func (t *DeploymentHook) OnError(error) {
 			context.Background(),
 			t.projectID, t.clusterID, t.envID,
 			&types.GetDeploymentRequest{
-				Namespace: t.namespace,
+				Branch: t.branchFrom,
 			},
 		)
 	} else {
@@ -1067,7 +1063,7 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 			context.Background(),
 			t.projectID, t.clusterID, t.envID,
 			&types.GetDeploymentRequest{
-				Namespace: t.namespace,
+				Branch: t.branchFrom,
 			},
 		)
 	} else {

@@ -70,6 +70,10 @@ func (repo *EnvironmentRepository) ReadDeploymentByGitDetails(environmentID uint
 	panic("unimplemented")
 }
 
+func (repo *EnvironmentRepository) ReadDeploymentForBranch(environmentID uint, owner, name, branch string) (*models.Deployment, error) {
+	panic("unimplemented")
+}
+
 func (repo *EnvironmentRepository) ListDeploymentsByCluster(projectID, clusterID uint, states ...string) ([]*models.Deployment, error) {
 	panic("unimplemented")
 }

@@ -6,7 +6,7 @@ import Helper from "components/form-components/Helper";
 import pr_icon from "assets/pull_request_icon.svg";
 import api from "shared/api";
 import { EllipsisTextWrapper } from "../components/styled";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPRDeploymentList, validatePorterYAML } from "../utils";
 import Banner from "components/Banner";
 import { useRouting } from "shared/routing";
@@ -16,7 +16,7 @@ import RadioFilter from "components/RadioFilter";
 
 import sort from "assets/sort.svg";
 import { search } from "shared/search";
-import _ from "lodash";
+import _, { create } from "lodash";
 import { readableDate } from "shared/string_utils";
 import dayjs from "dayjs";
 import Loading from "components/Loading";
@@ -59,6 +59,28 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
   const [loading, setLoading] = useState(false);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
 
+  const handleCreatePreviewDeployment = async () => {
+    try {
+      await api.createPreviewEnvironmentDeployment("<token>", selectedPR, {
+        cluster_id: currentCluster?.id,
+        project_id: currentProject?.id,
+      });
+
+      router.push(
+        `/preview-environments/deployments/${environmentID}/${selectedPR.repo_owner}/${selectedPR.repo_name}?status_filter=all`
+      );
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const createPreviewDeploymentMutation = useMutation({
+    mutationFn: handleCreatePreviewDeployment,
+    onError: (err) => {
+      setCurrentError(err as any);
+    },
+  });
+
   const handleRefresh = () => {
     queryClient.invalidateQueries({
       queryKey: ["pullRequests"],
@@ -79,21 +101,6 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
     setPorterYAMLErrors(res.data.errors ?? []);
 
     setLoading(false);
-  };
-
-  const handleCreatePreviewDeployment = async () => {
-    try {
-      await api.createPreviewEnvironmentDeployment("<token>", selectedPR, {
-        cluster_id: currentCluster?.id,
-        project_id: currentProject?.id,
-      });
-
-      router.push(
-        `/preview-environments/deployments/${environmentID}/${selectedPR.repo_owner}/${selectedPR.repo_name}?status_filter=all`
-      );
-    } catch (err) {
-      setCurrentError(err);
-    }
   };
 
   const filteredPullRequests = useMemo(() => {
@@ -154,7 +161,7 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
                 value={searchValue}
                 onChange={(e: any) => {
                   setSelectedPR(undefined);
-                  setPorterYAMLErrors([])
+                  setPorterYAMLErrors([]);
                   setSearchValue(e.target.value);
                 }}
                 placeholder="Search"
@@ -256,10 +263,17 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
       ) : null}
       <CreatePreviewDeploymentWrapper>
         <SubmitButton
-          onClick={handleCreatePreviewDeployment}
-          disabled={loading || !selectedPR || porterYAMLErrors.length > 0}
+          onClick={() => createPreviewDeploymentMutation.mutate()}
+          disabled={
+            loading ||
+            !selectedPR ||
+            porterYAMLErrors.length > 0 ||
+            createPreviewDeploymentMutation.isLoading
+          }
         >
-          Create preview deployment
+          {createPreviewDeploymentMutation.isLoading
+            ? "Creating..."
+            : "Create preview deployment"}
         </SubmitButton>
         {selectedPR && porterYAMLErrors.length ? (
           <RevalidatePorterYAMLSpanWrapper>

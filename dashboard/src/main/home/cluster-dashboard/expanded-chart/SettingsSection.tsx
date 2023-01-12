@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import api from "shared/api";
 import yaml from "js-yaml";
+import * as traverse from "traverse";
 
 import { ActionConfigType, ChartType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
@@ -245,11 +246,11 @@ const SettingsSection: React.FC<PropsType> = ({
 
         <>
           <Heading>Canonical Name</Heading>
-          <Helper>Set a canonical name for this application (lowercase letters, numbers, and "-" only)</Helper>
-          <CanonicalName
-            release={currentChart}
-            onSave={() => refreshChart()}
-          />
+          <Helper>
+            Set a canonical name for this application (lowercase letters,
+            numbers, and "-" only)
+          </Helper>
+          <CanonicalName release={currentChart} onSave={() => refreshChart()} />
 
           <Heading>Redeploy Webhook</Heading>
           <Helper>
@@ -305,6 +306,30 @@ const SettingsSection: React.FC<PropsType> = ({
     return true;
   };
 
+  const canBeDeleted = () => {
+    const chart = currentChart;
+
+    if (chart.config) {
+      const values = chart.config;
+      const t = traverse(values);
+      const paths = t.paths();
+
+      return !paths.some((path) => {
+        if (
+          Array.isArray(path) &&
+          path.at(-2) === "nodeSelector" &&
+          path.at(-1) === "porter.run/system"
+        ) {
+          return t.get(path) === true;
+        }
+
+        return false;
+      });
+    }
+
+    return true;
+  };
+
   return (
     <Wrapper>
       {!loadingWebhookToken ? (
@@ -326,7 +351,11 @@ const SettingsSection: React.FC<PropsType> = ({
           )}
 
           <Heading>Additional Settings</Heading>
-          <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
+          <Button
+            color="#b91133"
+            onClick={() => setShowDeleteOverlay(true)}
+            disabled={!canBeDeleted()}
+          >
             Delete {currentChart.name}
           </Button>
         </StyledSettingsSection>

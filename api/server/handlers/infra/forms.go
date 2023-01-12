@@ -444,6 +444,10 @@ tabs:
           value: "1.21"
         - label: "1.22"
           value: "1.22"
+        - label: "1.23"
+          value: "1.23"
+        - label: "1.24"
+          value: "1.24"
     - type: number-input
       label: Minimum number of EC2 instances to create in the application autoscaling group.
       variable: min_instances

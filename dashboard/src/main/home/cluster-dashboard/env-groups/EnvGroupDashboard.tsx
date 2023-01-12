@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import sliders from "assets/sliders.svg";
@@ -15,6 +15,10 @@ import ExpandedEnvGroup from "./ExpandedEnvGroup";
 import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, pushQueryParams } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { useQuery } from "@tanstack/react-query";
+import api from "shared/api";
+import Loading from "components/Loading";
+import Placeholder from "components/Placeholder";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -30,8 +34,8 @@ type StateType = {
   createEnvMode: boolean;
 };
 
-class EnvGroupDashboard extends Component<PropsType, StateType> {
-  state = {
+const EnvGroupDashboard = (props: PropsType) => {
+  const [state, setState] = useState<StateType>({
     expand: false,
     update: [] as any[],
     namespace: null as string,
@@ -40,48 +44,71 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
     sortType: localStorage.getItem("SortType")
       ? localStorage.getItem("SortType")
       : "Newest",
+  });
+
+  const setNamespace = (namespace: string) => {
+    setState((state) => ({ ...state, namespace }));
+    pushQueryParams(props, {
+      namespace: namespace ?? "ALL",
+    });
   };
 
-  renderBody = () => {
-    if (this.state.createEnvMode) {
+  const setSortType = (sortType: string) => {
+    setState((state) => ({ ...state, sortType }));
+  };
+
+  const toggleCreateEnvMode = () => {
+    setState((state) => ({
+      ...state,
+      createEnvMode: !state.createEnvMode,
+    }));
+  };
+
+  const setExpandedEnvGroup = (envGroup: any | null) => {
+    setState((state) => ({ ...state, expandedEnvGroup: envGroup }));
+  };
+
+  const closeExpanded = () => {
+    pushQueryParams(props, {}, ["selected_env_group"]);
+    const redirectUrlOnClose = getQueryParam(props, "redirect_url");
+    if (redirectUrlOnClose) {
+      props.history.push(redirectUrlOnClose);
+      return;
+    }
+    setExpandedEnvGroup(null);
+  };
+
+  const renderBody = () => {
+    const goBack = () =>
+      setState((state) => ({ ...state, createEnvMode: false }));
+
+    if (state.createEnvMode) {
       return (
-        <CreateEnvGroup
-          goBack={() => this.setState({ createEnvMode: false })}
-          currentCluster={this.props.currentCluster}
-        />
+        <CreateEnvGroup goBack={goBack} currentCluster={props.currentCluster} />
       );
     } else {
-      const isAuthorizedToAdd = this.props.isAuthorized("env_group", "", [
+      const isAuthorizedToAdd = props.isAuthorized("env_group", "", [
         "get",
         "create",
       ]);
+
       return (
         <>
           <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
             <SortFilterWrapper>
               <NamespaceSelector
-                setNamespace={(namespace) =>
-                  this.setState({ namespace }, () => {
-                    pushQueryParams(this.props, {
-                      namespace: this.state.namespace || "ALL",
-                    });
-                  })
-                }
-                namespace={this.state.namespace}
+                setNamespace={setNamespace}
+                namespace={state.namespace}
               />
             </SortFilterWrapper>
             <Flex>
               <SortSelector
                 currentView="env-groups"
-                setSortType={(sortType) => this.setState({ sortType })}
-                sortType={this.state.sortType}
+                setSortType={setSortType}
+                sortType={state.sortType}
               />
               {isAuthorizedToAdd && (
-                <Button
-                  onClick={() =>
-                    this.setState({ createEnvMode: !this.state.createEnvMode })
-                  }
-                >
+                <Button onClick={toggleCreateEnvMode}>
                   <i className="material-icons">add</i> Create env group
                 </Button>
               )}
@@ -89,39 +116,25 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
           </ControlRow>
 
           <EnvGroupList
-            currentCluster={this.props.currentCluster}
-            namespace={this.state.namespace}
-            sortType={this.state.sortType}
-            setExpandedEnvGroup={(envGroup: any) => {
-              this.setState({ expandedEnvGroup: envGroup });
-            }}
+            currentCluster={props.currentCluster}
+            namespace={state.namespace}
+            sortType={state.sortType}
+            setExpandedEnvGroup={setExpandedEnvGroup}
           />
         </>
       );
     }
   };
 
-  closeExpanded = () => {
-    pushQueryParams(this.props, {}, ["selected_env_group"]);
-    const redirectUrlOnClose = getQueryParam(this.props, "redirect_url");
-    if (redirectUrlOnClose) {
-      this.props.history.push(redirectUrlOnClose);
-      return;
-    }
-    this.setState({ expandedEnvGroup: null });
-  };
-
-  renderContents = () => {
-    if (this.state.expandedEnvGroup) {
+  const renderContents = () => {
+    if (state.expandedEnvGroup) {
       return (
         <ExpandedEnvGroup
-          isAuthorized={this.props.isAuthorized}
-          namespace={
-            this.state.expandedEnvGroup?.namespace || this.state.namespace
-          }
-          currentCluster={this.props.currentCluster}
-          envGroup={this.state.expandedEnvGroup}
-          closeExpanded={() => this.closeExpanded()}
+          isAuthorized={props.isAuthorized}
+          namespace={state.expandedEnvGroup?.namespace || state.namespace}
+          currentCluster={props.currentCluster}
+          envGroup={state.expandedEnvGroup}
+          closeExpanded={() => closeExpanded()}
         />
       );
     } else {
@@ -134,18 +147,14 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
             disableLineBreak
             capitalize={false}
           />
-          {this.renderBody()}
+          {renderBody()}
         </>
       );
     }
   };
 
-  render() {
-    return <>{this.renderContents()}</>;
-  }
-}
-
-EnvGroupDashboard.contextType = Context;
+  return <>{renderContents()}</>;
+};
 
 export default withRouter(withAuth(EnvGroupDashboard));
 

@@ -482,7 +482,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
 
-          git clone https://abelanger5:${{ secrets.PORTER_DEV_GITHUB_TOKEN }}@github.com/porter-dev/porter-update-action
+          git clone https://portersupport:${{ secrets.PORTER_DEV_GITHUB_TOKEN }}@github.com/porter-dev/porter-update-action
 
           cd porter-update-action
 
@@ -520,7 +520,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
 
-          git clone https://abelanger5:${{ secrets.PORTER_DEV_GITHUB_TOKEN }}@github.com/porter-dev/porter-cli-action
+          git clone https://portersupport:${{ secrets.PORTER_DEV_GITHUB_TOKEN }}@github.com/porter-dev/porter-cli-action
 
           cd porter-cli-action
 
@@ -558,7 +558,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
 
-          git clone https://abelanger5:${{ secrets.PORTER_DEV_GITHUB_TOKEN }}@github.com/porter-dev/new-release-tests
+          git clone https://portersupport:${{ secrets.PORTER_DEV_GITHUB_TOKEN }}@github.com/porter-dev/new-release-tests
 
           cd new-release-tests/.github/workflows
 

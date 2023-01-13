@@ -68,13 +68,7 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// make sure we do not delete any kubernetes "system" namespaces
 	if !isSystemNamespace(depl.Namespace) {
-		err = agent.DeleteNamespace(depl.Namespace)
-
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting preview deployment namespace: %w",
-				err)))
-			return
-		}
+		agent.DeleteNamespace(depl.Namespace)
 	}
 
 	// check that the environment belongs to the project and cluster IDs

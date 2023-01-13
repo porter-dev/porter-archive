@@ -76,9 +76,9 @@ func validateGetDeploymentRequest(
 	request *types.GetDeploymentRequest,
 	repo repository.Repository,
 ) (*models.Deployment, apierrors.RequestError) {
-	if request.PRNumber == 0 && request.DeploymentID == 0 && request.Namespace == "" {
+	if request.PRNumber == 0 && request.DeploymentID == 0 && request.Namespace == "" && request.Branch == "" {
 		return nil, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("one of id, pr_number or namespace must be present in request body"), http.StatusBadRequest,
+			fmt.Errorf("one of id, pr_number, namespace or branch must be present in request body"), http.StatusBadRequest,
 		)
 	}
 
@@ -108,6 +108,16 @@ func validateGetDeploymentRequest(
 		}
 	} else if request.Namespace != "" {
 		depl, err = repo.Environment().ReadDeployment(envID, request.Namespace)
+
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, apierrors.NewErrNotFound(errDeploymentNotFound)
+			}
+
+			return nil, apierrors.NewErrInternal(err)
+		}
+	} else if request.Branch != "" {
+		depl, err = repo.Environment().ReadDeploymentForBranch(envID, owner, name, request.Branch)
 
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {

@@ -99,7 +99,7 @@ jobs:
           EOL
       - name: Add and commit porter.rb file
         run: |
-          git clone https://abelanger5:${{ secrets.HOMEBREW_GITHUB_TOKEN }}@github.com/porter-dev/homebrew-porter
+          git clone https://portersupport:${{ secrets.HOMEBREW_GITHUB_TOKEN }}@github.com/porter-dev/homebrew-porter
 
           cd homebrew-porter
           git config user.name "Update Bot"

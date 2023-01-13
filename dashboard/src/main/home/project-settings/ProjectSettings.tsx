@@ -13,6 +13,7 @@ import { RouteComponentProps, withRouter, WithRouterProps } from "react-router";
 import { getQueryParam } from "shared/routing";
 import BillingPage from "./BillingPage";
 import APITokensSection from "./APITokensSection";
+import _ from "lodash";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 
@@ -30,39 +31,45 @@ class ProjectSettings extends Component<PropsType, StateType> {
   };
 
   componentDidUpdate(prevProps: PropsType) {
-    const selectedTab = getQueryParam(this.props, "selected_tab");
-    if (prevProps.location.search !== this.props.location.search) {
-      if (selectedTab) {
-        this.setState({ currentTab: selectedTab });
-      } else {
-        this.setState({ currentTab: "manage-access" });
-      }
-    }
-    if (
-      this.context?.hasBillingEnabled &&
-      !this.state.tabOptions.find((t) => t.value === "billing")
-    ) {
-      const tabOptions = this.state.tabOptions;
-      // tabOptions.splice(1, 0, { value: "billing", label: "Billing" });
-      this.setState({ tabOptions });
-      return;
-    }
+    const selectedTab =
+      getQueryParam(this.props, "selected_tab") || "manage-access";
 
     if (
-      !this.context?.hasBillingEnabled &&
-      this.state.tabOptions.find((t) => t.value === "billing")
+      prevProps.location.search !== this.props.location.search &&
+      this.state.currentTab !== selectedTab
     ) {
-      const tabOptions = this.state.tabOptions;
-      const billingIndex = this.state.tabOptions.findIndex(
-        (t) => t.value === "billing"
-      );
-      // tabOptions.splice(billingIndex, 1);
+      this.setState({ currentTab: selectedTab });
     }
+
+    // if (
+    //   this.context?.hasBillingEnabled &&
+    //   !this.state.tabOptions.find((t) => t.value === "billing")
+    // ) {
+    //   const tabOptions = this.state.tabOptions;
+    //   tabOptions.splice(1, 0, { value: "billing", label: "Billing" });
+    //   this.setState({ tabOptions });
+    //   return;
+    // }
+
+    // if (
+    //   !this.context?.hasBillingEnabled &&
+    //   this.state.tabOptions.find((t) => t.value === "billing")
+    // ) {
+    //   const tabOptions = this.state.tabOptions;
+    //   const billingIndex = this.state.tabOptions.findIndex(
+    //     (t) => t.value === "billing"
+    //   );
+    //   tabOptions.splice(billingIndex, 1);
+    // }
   }
 
   componentDidMount() {
     let { currentProject } = this.context;
-    this.setState({ projectName: currentProject.name });
+
+    if (this.state.projectName !== currentProject.name) {
+      this.setState({ projectName: currentProject.name });
+    }
+
     const tabOptions = [];
     tabOptions.push({ value: "manage-access", label: "Manage access" });
     // ? Disabled for now https://discord.com/channels/542888846271184896/1059277393031856208/1059277395913351258
@@ -92,10 +99,12 @@ class ProjectSettings extends Component<PropsType, StateType> {
       });
     }
 
-    this.setState({ tabOptions });
+    if (_.isEqual(tabOptions, this.state.tabOptions)) {
+      this.setState({ tabOptions });
+    }
 
     const selectedTab = getQueryParam(this.props, "selected_tab");
-    if (selectedTab) {
+    if (selectedTab && selectedTab !== this.state.currentTab) {
       this.setState({ currentTab: selectedTab });
     }
   }

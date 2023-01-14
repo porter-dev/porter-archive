@@ -231,7 +231,7 @@ const LogsSection: React.FC<Props> = ({
         <Log key={[log.lineNumber, i].join(".")}>
           <span className="line-number">{log.lineNumber}.</span>
           <span className="line-timestamp">
-            {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
+            {log.timestamp ? dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss") : "-"}
           </span>
           <LogOuter key={[log.lineNumber, i].join(".")}>
             {log.line?.map((ansi, j) => {

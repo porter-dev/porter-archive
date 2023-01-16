@@ -1,6 +1,7 @@
 import Anser, { AnserJsonEntry } from "anser";
 import dayjs from "dayjs";
 import _ from "lodash";
+import { z } from "zod";
 import { useContext, useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -20,33 +21,48 @@ export enum Direction {
 export interface Log {
   line: AnserJsonEntry[];
   lineNumber: number;
-  timestamp: string;
+  timestamp?: string;
 }
 
-interface LogLine {
-  log: string;
-  stream: string;
-  time: string;
-}
+const LogSchema = z.object({
+  log: z.string(),
+  stream: z.string(),
+  time: z.string(),
+});
+
+type LogLine = z.infer<typeof LogSchema>;
 
 export const parseLogs = (logs: string[] = []): Log[] => {
-  return logs
-    .filter(Boolean)
-    .filter(isJSON)
-    .map((logLine: string, idx) => {
-      try {
-        const parsedLine: LogLine = JSON.parse(logLine);
-        // TODO Move log parsing to the render method
-        const ansiLog = Anser.ansiToJson(parsedLine.log);
+  return logs.filter(Boolean).map((logLine: string, idx) => {
+    try {
+      if (!isJSON(logLine)) {
         return {
-          line: ansiLog,
+          line: Anser.ansiToJson(logLine),
           lineNumber: idx + 1,
-          timestamp: parsedLine.time,
+          timestamp: undefined,
         };
-      } catch (err) {
-        console.error(err, logLine);
       }
-    });
+
+      const parsedLine: LogLine = JSON.parse(logLine);
+
+      LogSchema.parse(parsedLine);
+
+      // TODO Move log parsing to the render method
+      const ansiLog = Anser.ansiToJson(parsedLine.log);
+      return {
+        line: ansiLog,
+        lineNumber: idx + 1,
+        timestamp: parsedLine.time,
+      };
+    } catch (err) {
+      console.error(err, logLine);
+      return {
+        line: Anser.ansiToJson(logLine),
+        lineNumber: idx + 1,
+        timestamp: undefined,
+      };
+    }
+  });
 };
 
 interface PaginationInfo {

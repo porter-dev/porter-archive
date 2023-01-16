@@ -1199,8 +1199,8 @@ func (t *CloneEnvGroupHook) PreApply() error {
 					_, err = t.client.CloneEnvGroup(
 						context.Background(), target.Project, target.Cluster, group.Namespace,
 						&types.CloneEnvGroupRequest{
-							Name:      group.Name,
-							Namespace: target.Namespace,
+							SourceName:      group.Name,
+							TargetNamespace: target.Namespace,
 						},
 					)
 

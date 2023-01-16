@@ -50,12 +50,12 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	cm, _, err := agent.GetLatestVersionedConfigMap(request.Name, namespace)
+	cm, _, err := agent.GetLatestVersionedConfigMap(request.SourceName, namespace)
 
 	if err != nil {
 		if errors.Is(err, kubernetes.IsNotFoundError) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", request.Name, namespace), http.StatusNotFound,
+				fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", request.SourceName, namespace), http.StatusNotFound,
 				"no config map found for envgroup",
 			))
 			return
@@ -65,12 +65,12 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	secret, _, err := agent.GetLatestVersionedSecret(request.Name, namespace)
+	secret, _, err := agent.GetLatestVersionedSecret(request.SourceName, namespace)
 
 	if err != nil {
 		if errors.Is(err, kubernetes.IsNotFoundError) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", request.Name, namespace), http.StatusNotFound,
+				fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", request.SourceName, namespace), http.StatusNotFound,
 				"no k8s secret found for envgroup",
 			))
 			return
@@ -80,8 +80,8 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if request.CloneName == "" {
-		request.CloneName = request.Name
+	if request.TargetName == "" {
+		request.TargetName = request.SourceName
 	}
 
 	vars := make(map[string]string)
@@ -98,8 +98,8 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	configMap, err := envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
-		Name:            request.CloneName,
-		Namespace:       request.Namespace,
+		Name:            request.TargetName,
+		Namespace:       request.TargetNamespace,
 		Variables:       vars,
 		SecretVariables: secretVars,
 	})

@@ -20,6 +20,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	"github.com/porter-dev/porter/cli/cmd/preview"
+	previewV2Beta1 "github.com/porter-dev/porter/cli/cmd/preview/v2beta1"
 	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -29,6 +30,7 @@ import (
 	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 // applyCmd represents the "porter apply" base command when called
@@ -105,65 +107,89 @@ func init() {
 }
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
-	if _, ok := os.LookupEnv("PORTER_VALIDATE_YAML"); ok {
-		err := applyValidate()
-
-		if err != nil {
-			return err
-		}
-	}
-
 	fileBytes, err := ioutil.ReadFile(porterYAML)
 
 	if err != nil {
 		return fmt.Errorf("error reading porter.yaml: %w", err)
 	}
 
-	resGroup, err := parser.ParseRawBytes(fileBytes)
-
-	if err != nil {
-		return fmt.Errorf("error parsing porter.yaml: %w", err)
+	var previewVersion struct {
+		Version string `json:"version"`
 	}
 
-	basePath, err := os.Getwd()
+	err = yaml.Unmarshal(fileBytes, &previewVersion)
 
 	if err != nil {
-		return fmt.Errorf("error getting working directory: %w", err)
+		return fmt.Errorf("error unmarshaling porter.yaml: %w", err)
 	}
 
-	worker := switchboardWorker.NewWorker()
-	worker.RegisterDriver("deploy", NewDeployDriver)
-	worker.RegisterDriver("build-image", preview.NewBuildDriver)
-	worker.RegisterDriver("push-image", preview.NewPushDriver)
-	worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
-	worker.RegisterDriver("random-string", preview.NewRandomStringDriver)
-	worker.RegisterDriver("env-group", preview.NewEnvGroupDriver)
-	worker.RegisterDriver("os-env", preview.NewOSEnvDriver)
+	if previewVersion.Version == "v2beta1" {
+		ns := os.Getenv("PORTER_NAMESPACE")
 
-	worker.SetDefaultDriver("deploy")
-
-	if hasDeploymentHookEnvVars() {
-		deplNamespace := os.Getenv("PORTER_NAMESPACE")
-
-		if deplNamespace == "" {
-			return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
-		}
-
-		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
+		applier, err := previewV2Beta1.NewApplier(client, fileBytes, ns)
 
 		if err != nil {
-			return fmt.Errorf("error creating deployment hook: %w", err)
+			return err
 		}
 
-		worker.RegisterHook("deployment", deploymentHook)
+		return applier.Apply()
+	} else if previewVersion.Version == "v1" {
+		if _, ok := os.LookupEnv("PORTER_VALIDATE_YAML"); ok {
+			err := applyValidate()
+
+			if err != nil {
+				return err
+			}
+		}
+
+		resGroup, err := parser.ParseRawBytes(fileBytes)
+
+		if err != nil {
+			return fmt.Errorf("error parsing porter.yaml: %w", err)
+		}
+
+		basePath, err := os.Getwd()
+
+		if err != nil {
+			return fmt.Errorf("error getting working directory: %w", err)
+		}
+
+		worker := switchboardWorker.NewWorker()
+		worker.RegisterDriver("deploy", NewDeployDriver)
+		worker.RegisterDriver("build-image", preview.NewBuildDriver)
+		worker.RegisterDriver("push-image", preview.NewPushDriver)
+		worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
+		worker.RegisterDriver("random-string", preview.NewRandomStringDriver)
+		worker.RegisterDriver("env-group", preview.NewEnvGroupDriver)
+		worker.RegisterDriver("os-env", preview.NewOSEnvDriver)
+
+		worker.SetDefaultDriver("deploy")
+
+		if hasDeploymentHookEnvVars() {
+			deplNamespace := os.Getenv("PORTER_NAMESPACE")
+
+			if deplNamespace == "" {
+				return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
+			}
+
+			deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
+
+			if err != nil {
+				return fmt.Errorf("error creating deployment hook: %w", err)
+			}
+
+			worker.RegisterHook("deployment", deploymentHook)
+		}
+
+		cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
+		worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
+
+		return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
+			BasePath: basePath,
+		})
 	}
 
-	cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
-	worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
-
-	return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
-		BasePath: basePath,
-	})
+	return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
 }
 
 func applyValidate() error {

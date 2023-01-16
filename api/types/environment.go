@@ -126,7 +126,7 @@ type GetDeploymentRequest struct {
 	DeploymentID uint   `schema:"id"`
 	PRNumber     uint   `schema:"pr_number"`
 	Namespace    string `schema:"namespace"`
-	Branch       string `schema:branch`
+	Branch       string `schema:"branch"`
 }
 
 type PullRequest struct {

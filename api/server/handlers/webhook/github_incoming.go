@@ -395,21 +395,13 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s] error creating github client: %w", webhookID, owner, repo, err)
 	}
 
-	namespace := fmt.Sprintf("previewbranch-%s-%s-%s", branch, strings.ReplaceAll(strings.ToLower(owner), "_", "-"),
-		strings.ReplaceAll(strings.ToLower(repo), "_", "-"))
-
-	if len(namespace) > 63 {
-		namespace = namespace[:63] // Kubernetes' DNS 1123 label requirement
-	}
-
 	var deplID uint
 
-	depl, err := c.Repo().Environment().ReadDeployment(env.ID, namespace)
+	depl, err := c.Repo().Environment().ReadDeploymentForBranch(env.ID, owner, repo, branch)
 
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
 			EnvironmentID: env.ID,
-			Namespace:     namespace,
 			Status:        types.DeploymentStatusCreating,
 			PRName:        fmt.Sprintf("Deployment for branch %s", branch),
 			RepoName:      repo,

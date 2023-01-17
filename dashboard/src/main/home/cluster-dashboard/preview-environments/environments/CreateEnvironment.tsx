@@ -46,13 +46,13 @@ const CreateEnvironment: React.FC = () => {
         capitalize={false}
       />
       <DarkMatter />
-      {/* <TabSelector
+      <TabSelector
         options={TAB_OPTIONS}
         currentTab={currentTab.value}
         setCurrentTab={(value: string) =>
           setCurrentTab(TAB_OPTIONS.find((tab) => tab.value === value))
         }
-      /> */}
+      />
 
       {currentTab.value === "pull_requests" ? (
         <CreatePREnvironment environmentID={environment_id} />

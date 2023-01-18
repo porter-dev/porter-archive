@@ -115,6 +115,8 @@ tabs:
           value: postgres12
         - label: "Postgres 13"
           value: postgres13
+        - label: "Postgres 14"
+          value: postgres14
   - name: pg-9-versions
     show_if:
       is: "postgres9"
@@ -179,7 +181,7 @@ tabs:
       label:  Database Version
       variable: db_engine_version
       settings:
-        default: "10.18"
+        default: "10.22"
         options:
         - label: "v10.1"
           value: "10.1"
@@ -217,6 +219,14 @@ tabs:
           value: "10.17"
         - label: "v10.18"
           value: "10.18"
+        - label: "v10.19"
+          value: "10.19"
+        - label: "v10.20"
+          value: "10.20"
+        - label: "v10.21"
+          value: "10.21"
+        - label: "v10.22"
+          value: "10.22"
   - name: pg-11-versions
     show_if:
       is: "postgres11"
@@ -226,7 +236,7 @@ tabs:
       label:  Database Version
       variable: db_engine_version
       settings:
-        default: "11.13"
+        default: "11.17"
         options:
         - label: "v11.1"
           value: "11.1"
@@ -254,6 +264,14 @@ tabs:
           value: "11.12"
         - label: "v11.13"
           value: "11.13"
+        - label: "v11.14"
+          value: "11.14"
+        - label: "v11.15"
+          value: "11.15"
+        - label: "v11.16"
+          value: "11.16"
+        - label: "v11.17"
+          value: "11.17"
   - name: pg-12-versions
     show_if:
       is: "postgres12"
@@ -263,7 +281,7 @@ tabs:
       label:  Database Version
       variable: db_engine_version
       settings:
-        default: "12.8"
+        default: "12.12"
         options:
         - label: "v12.2"
           value: "12.2"
@@ -279,8 +297,14 @@ tabs:
           value: "12.7"
         - label: "v12.8"
           value: "12.8"
+          - label: "v12.9"
+          value: "12.9"
         - label: "v12.10"
           value: "12.10"
+        - label: "v12.11"
+          value: "12.11"
+        - label: "v12.12"
+          value: "12.12"
   - name: pg-13-versions
     show_if:
       is: "postgres13"
@@ -290,7 +314,7 @@ tabs:
       label:  Database Version
       variable: db_engine_version
       settings:
-        default: "13.4"
+        default: "13.8"
         options:
         - label: "v13.1"
           value: "13.1"
@@ -300,8 +324,35 @@ tabs:
           value: "13.3"
         - label: "v13.4"
           value: "13.4"
+        - label: "v13.5"
+          value: "13.5"
         - label: "v13.6"
           value: "13.6"
+        - label: "v13.7"
+          value: "13.7"
+        - label: "v13.8"
+          value: "13.8"
+  - name: pg-14-versions
+    show_if:
+      is: "postgres14"
+      variable: db_family
+    contents:
+    - type: select
+      label:  Database Version
+      variable: db_engine_version
+      settings:
+        default: "14.5"
+        options:
+        - label: "v14.1"
+          value: "14.1"
+        - label: "v14.2"
+          value: "14.2"
+        - label: "v14.3"
+          value: "14.3"
+        - label: "v14.4"
+          value: "14.4"
+        - label: "v14.5"
+          value: "14.5"
   - name: additional-settings
     contents:
     - type: heading

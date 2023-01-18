@@ -30,21 +30,33 @@ type Build struct {
 	// UseCache   *bool     `yaml:"use_cache"`
 }
 
-type Resource struct {
-	Name      *string          `yaml:"name" validate:"required,unique"`
-	DependsOn []*string        `yaml:"depends_on"`
-	Type      *string          `yaml:"type" validate:"required"`
-	ChartURL  *string          `yaml:"chart_url" validate:"url"`
-	Version   *string          `yaml:"version"`
-	Build     map[*string]*any `yaml:"build"`
-	Deploy    map[*string]*any `yaml:"deploy"`
+type HelmChart struct {
+	URL     *string `yaml:"url" validate:"url"`
+	Name    *string `yaml:"name" validate:"required"`
+	Version *string `yaml:"version"`
+}
+
+type AppResource struct {
+	Name      *string    `yaml:"name" validate:"required"`
+	DependsOn []*string  `yaml:"depends_on"`
+	Chart     *HelmChart `yaml:"helm_chart"`
+	BuildRef  *string    `yaml:"build_ref"`
+	// Deploy     map[*string]*any `yaml:"deploy"`
+	HelmValues map[string]any `yaml:"helm_values"`
+}
+
+type AddonResource struct {
+	Name       *string        `yaml:"name" validate:"required"`
+	DependsOn  []*string      `yaml:"depends_on"`
+	Chart      *HelmChart     `yaml:"helm_chart" validate:"required"`
+	HelmValues map[string]any `yaml:"helm_values"`
 }
 
 type PorterYAML struct {
 	Version *string `yaml:"version"`
 	// Variables []*Variable `yaml:"variables"`
 	// EnvGroups []*EnvGroup `yaml:"env_groups"`
-	Builds []*Build    `yaml:"builds"`
-	Apps   []*Resource `yaml:"apps"`
-	Addons []*Resource `yaml:"addons"`
+	Builds []*Build         `yaml:"builds"`
+	Apps   []*AppResource   `yaml:"apps"`
+	Addons []*AddonResource `yaml:"addons"`
 }

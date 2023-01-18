@@ -139,8 +139,6 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		if err != nil {
 			return err
 		}
-
-		return nil
 	} else if previewVersion.Version == "v1" {
 		if _, ok := os.LookupEnv("PORTER_VALIDATE_YAML"); ok {
 			err := applyValidate()

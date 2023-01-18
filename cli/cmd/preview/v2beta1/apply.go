@@ -152,10 +152,14 @@ func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
 		Version: "v1",
 	}
 
+	buildRefs := make(map[string]*Build)
+
 	for _, b := range a.parsed.Builds {
 		if b == nil {
 			continue
 		}
+
+		buildRefs[b.GetName()] = b
 
 		bi, err := b.getV1BuildImage()
 
@@ -172,13 +176,25 @@ func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
 		v1File.Resources = append(v1File.Resources, bi, pi)
 	}
 
-	// fileBytes, err := yaml.Marshal(v1File)
+	for _, app := range a.parsed.Apps {
+		if app == nil {
+			continue
+		}
 
-	// if err != nil {
-	// 	return nil, err
-	// }
+		if _, ok := buildRefs[app.GetBuildRef()]; !ok {
+			errMsg := composePreviewMessage(fmt.Sprintf("build_ref '%s' referenced by app '%s' does not exist",
+				app.GetBuildRef(), app.GetName()), Error)
+			return nil, fmt.Errorf("%s: %w", errMsg, err)
+		}
 
-	// fmt.Println(string(fileBytes))
+		ai, err := app.getV1Resource(buildRefs[app.GetBuildRef()])
+
+		if err != nil {
+			return nil, err
+		}
+
+		v1File.Resources = append(v1File.Resources, ai)
+	}
 
 	return v1File, nil
 }

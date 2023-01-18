@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -120,6 +121,14 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 	}
 
 	depl.Status = types.DeploymentStatusFailed
+
+	var lastErrors []string
+
+	for resName, errString := range request.Errors {
+		lastErrors = append(lastErrors, "%s: %s,", resName, errString)
+	}
+
+	depl.LastErrors = strings.Join(lastErrors, ",")
 
 	// we do not care of the error in this case because the list deployments endpoint
 	// talks to the github API to fetch the deployment status correctly

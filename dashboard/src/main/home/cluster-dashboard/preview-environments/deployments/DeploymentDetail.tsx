@@ -29,6 +29,10 @@ const DeploymentDetail = () => {
   const [expandedPorterYAMLErrors, setExpandedPorterYAMLErrors] = useState<
     string[]
   >([]);
+  const [
+    expandedLastDeploymentErrors,
+    setExpandedLastDeploymentErrors,
+  ] = useState<string[]>([]);
 
   const { currentProject, currentCluster } = useContext(Context);
 
@@ -208,6 +212,23 @@ const DeploymentDetail = () => {
           </Message>
         </Modal>
       )}
+      {expandedLastDeploymentErrors.length > 0 && (
+        <Modal
+          onRequestClose={() => setExpandedLastDeploymentErrors([])}
+          height="auto"
+        >
+          <Message>
+            {expandedLastDeploymentErrors.map((el) => {
+              return (
+                <div>
+                  {"- "}
+                  {el}
+                </div>
+              );
+            })}
+          </Message>
+        </Modal>
+      )}
       <BreadcrumbRow>
         <Breadcrumb to={`/preview-environments/deployments/settings`}>
           <ArrowIcon src={PullRequestIcon} />
@@ -284,6 +305,22 @@ const DeploymentDetail = () => {
               <LinkButton
                 onClick={() => {
                   setExpandedPorterYAMLErrors(porterYAMLErrors);
+                }}
+              >
+                View details
+              </LinkButton>
+            </Banner>
+          </ErrorBannerWrapper>
+        ) : null}
+        {prDeployment.last_errors.length > 0 ? (
+          <ErrorBannerWrapper style={{ marginTop: -20 }}>
+            <Banner type="error">
+              The previous deployment had errors.
+              <LinkButton
+                onClick={() => {
+                  setExpandedLastDeploymentErrors(
+                    prDeployment.last_errors.split(",")
+                  );
                 }}
               >
                 View details

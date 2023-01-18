@@ -63,6 +63,7 @@ type Deployment struct {
 	PullRequestID      uint             `json:"pull_request_id"`
 	InstallationID     uint             `json:"gh_installation_id"`
 	LastWorkflowRunURL string           `json:"last_workflow_run_url"`
+	LastErrors         string           `json:"last_errors"`
 }
 
 type CreateGHDeploymentRequest struct {

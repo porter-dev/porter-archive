@@ -196,6 +196,20 @@ func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
 		v1File.Resources = append(v1File.Resources, ai)
 	}
 
+	for _, addon := range a.parsed.Addons {
+		if addon == nil {
+			continue
+		}
+
+		ai, err := addon.getV1Addon()
+
+		if err != nil {
+			return nil, err
+		}
+
+		v1File.Resources = append(v1File.Resources, ai)
+	}
+
 	return v1File, nil
 }
 

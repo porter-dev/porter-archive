@@ -30,6 +30,10 @@ const Flex = styled.div`
   display: flex;
   margin-top: 10px;
   align-items: center;
+  > i {
+    font-size: 16px;
+    margin-right: 12px;
+  }
 `;
 
 const Wrapper = styled.div`

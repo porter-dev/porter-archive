@@ -27,6 +27,7 @@ export type PRDeployment = {
   gh_commit_sha: string;
   gh_pr_branch_from?: string;
   gh_pr_branch_into?: string;
+  last_errors: string;
 };
 
 export type EnvironmentDeploymentMode = "manual" | "auto";

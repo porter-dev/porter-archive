@@ -116,6 +116,7 @@ type Deployment struct {
 	CommitSHA      string
 	PRBranchFrom   string
 	PRBranchInto   string
+	LastErrors     string
 }
 
 func (d *Deployment) ToDeploymentType() *types.Deployment {
@@ -139,6 +140,7 @@ func (d *Deployment) ToDeploymentType() *types.Deployment {
 		Subdomain:      d.Subdomain,
 		PullRequestID:  d.PullRequestID,
 		GitHubMetadata: ghMetadata,
+		LastErrors:     d.LastErrors,
 	}
 }
 

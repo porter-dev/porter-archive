@@ -123,6 +123,8 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		return fmt.Errorf("error unmarshaling porter.yaml: %w", err)
 	}
 
+	var resGroup *switchboardTypes.ResourceGroup
+
 	if previewVersion.Version == "v2beta1" {
 		ns := os.Getenv("PORTER_NAMESPACE")
 
@@ -132,7 +134,13 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			return err
 		}
 
-		return applier.Apply()
+		resGroup, err = applier.DowngradeToV1()
+
+		if err != nil {
+			return err
+		}
+
+		return nil
 	} else if previewVersion.Version == "v1" {
 		if _, ok := os.LookupEnv("PORTER_VALIDATE_YAML"); ok {
 			err := applyValidate()
@@ -142,54 +150,54 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			}
 		}
 
-		resGroup, err := parser.ParseRawBytes(fileBytes)
+		resGroup, err = parser.ParseRawBytes(fileBytes)
 
 		if err != nil {
 			return fmt.Errorf("error parsing porter.yaml: %w", err)
 		}
-
-		basePath, err := os.Getwd()
-
-		if err != nil {
-			return fmt.Errorf("error getting working directory: %w", err)
-		}
-
-		worker := switchboardWorker.NewWorker()
-		worker.RegisterDriver("deploy", NewDeployDriver)
-		worker.RegisterDriver("build-image", preview.NewBuildDriver)
-		worker.RegisterDriver("push-image", preview.NewPushDriver)
-		worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
-		worker.RegisterDriver("random-string", preview.NewRandomStringDriver)
-		worker.RegisterDriver("env-group", preview.NewEnvGroupDriver)
-		worker.RegisterDriver("os-env", preview.NewOSEnvDriver)
-
-		worker.SetDefaultDriver("deploy")
-
-		if hasDeploymentHookEnvVars() {
-			deplNamespace := os.Getenv("PORTER_NAMESPACE")
-
-			if deplNamespace == "" {
-				return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
-			}
-
-			deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
-
-			if err != nil {
-				return fmt.Errorf("error creating deployment hook: %w", err)
-			}
-
-			worker.RegisterHook("deployment", deploymentHook)
-		}
-
-		cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
-		worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
-
-		return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
-			BasePath: basePath,
-		})
+	} else {
+		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
 	}
 
-	return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
+	basePath, err := os.Getwd()
+
+	if err != nil {
+		return fmt.Errorf("error getting working directory: %w", err)
+	}
+
+	worker := switchboardWorker.NewWorker()
+	worker.RegisterDriver("deploy", NewDeployDriver)
+	worker.RegisterDriver("build-image", preview.NewBuildDriver)
+	worker.RegisterDriver("push-image", preview.NewPushDriver)
+	worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
+	worker.RegisterDriver("random-string", preview.NewRandomStringDriver)
+	worker.RegisterDriver("env-group", preview.NewEnvGroupDriver)
+	worker.RegisterDriver("os-env", preview.NewOSEnvDriver)
+
+	worker.SetDefaultDriver("deploy")
+
+	if hasDeploymentHookEnvVars() {
+		deplNamespace := os.Getenv("PORTER_NAMESPACE")
+
+		if deplNamespace == "" {
+			return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
+		}
+
+		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
+
+		if err != nil {
+			return fmt.Errorf("error creating deployment hook: %w", err)
+		}
+
+		worker.RegisterHook("deployment", deploymentHook)
+	}
+
+	cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
+	worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
+
+	return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
+		BasePath: basePath,
+	})
 }
 
 func applyValidate() error {

@@ -3,20 +3,18 @@ package v2beta1
 import (
 	"context"
 	"fmt"
-	"os"
-	"strings"
 
 	api "github.com/porter-dev/porter/api/client"
-	apiTypes "github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
+	"github.com/porter-dev/switchboard/pkg/types"
 	"gopkg.in/yaml.v3"
 )
 
-const (
-	constantsEnvGroup = "preview-env-constants"
+// const (
+// 	constantsEnvGroup = "preview-env-constants"
 
-	defaultCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789~`!@#$%^&*()_+-={}[]"
-)
+// 	defaultCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789~`!@#$%^&*()_+-={}[]"
+// )
 
 type PreviewApplier struct {
 	apiClient *api.Client
@@ -24,9 +22,9 @@ type PreviewApplier struct {
 	namespace string
 	parsed    *PorterYAML
 
-	variablesMap map[string]string
-	osEnv        map[string]string
-	envGroups    map[string]*apiTypes.EnvGroup
+	// variablesMap map[string]string
+	// osEnv        map[string]string
+	// envGroups    map[string]*apiTypes.EnvGroup
 }
 
 func NewApplier(client *api.Client, raw []byte, namespace string) (*PreviewApplier, error) {
@@ -73,9 +71,9 @@ func validateCLIEnvironment(namespace string) error {
 		return fmt.Errorf("no cluster selected, please run 'porter config set-cluster' to select a cluster")
 	}
 
-	if namespace == "" {
-		return fmt.Errorf("no namespace provided, please set the PORTER_NAMESPACE environment variable")
-	}
+	// if namespace == "" {
+	// 	printInfoMessage("no namespace provided, falling back to namespace 'default'")
+	// }
 
 	return nil
 }
@@ -108,9 +106,9 @@ func (a *PreviewApplier) Apply() error {
 	}
 
 	if !nsFound {
-		errMsg := composePreviewMessage(fmt.Sprintf("namespace '%s' does not exist in project '%d', cluster '%d'",
-			a.namespace, config.GetCLIConfig().Project, config.GetCLIConfig().Cluster), Error)
-		return fmt.Errorf("%s: %w", errMsg, err)
+		// 	errMsg := composePreviewMessage(fmt.Sprintf("namespace '%s' does not exist in project '%d', cluster '%d'",
+		// 		a.namespace, config.GetCLIConfig().Project, config.GetCLIConfig().Cluster), Error)
+		// 	return fmt.Errorf("%s: %w", errMsg, err)
 	}
 
 	printInfoMessage(fmt.Sprintf("Applying porter.yaml with the following attributes:\n"+
@@ -143,202 +141,244 @@ func (a *PreviewApplier) Apply() error {
 	return nil
 }
 
-func (a *PreviewApplier) readOSEnv() error {
-	printInfoMessage("Reading OS environment variables")
-
-	env := os.Environ()
-	osEnv := make(map[string]string)
-
-	for _, e := range env {
-		k, v, _ := strings.Cut(e, "=")
-		kCopy := k
-
-		if k != "" && v != "" && strings.HasPrefix(k, "PORTER_APPLY_") {
-			// we only read in env variables that start with PORTER_APPLY_
-			for strings.HasPrefix(k, "PORTER_APPLY_") {
-				k = strings.TrimPrefix(k, "PORTER_APPLY_")
-			}
-
-			if k == "" {
-				printWarningMessage(fmt.Sprintf("Ignoring invalid OS environment variable '%s'", kCopy))
-			}
-
-			osEnv[k] = v
-		}
-	}
-
-	a.osEnv = osEnv
-
-	return nil
-}
-
-func (a *PreviewApplier) processVariables() error {
-	printInfoMessage("Processing variables")
-
-	constantsMap := make(map[string]string)
-	variablesMap := make(map[string]string)
-
-	for _, v := range a.parsed.Variables {
-		if v == nil {
-			continue
-		}
-
-		if v.Once != nil && *v.Once {
-			// a constant which should be stored in the env group on first run
-			if exists, err := a.constantExistsInEnvGroup(*v.Name); err == nil {
-				if exists == nil {
-					// this should not happen
-					return fmt.Errorf("internal error: please let the Porter team know about this and quote the following " +
-						"error:\n-----\nERROR: checking for constant existence in env group returned nil with no error")
-				}
-
-				val := *exists
-
-				if !val {
-					// create the constant in the env group
-					if *v.Value != "" {
-						constantsMap[*v.Name] = *v.Value
-					} else if v.Random != nil && *v.Random {
-						constantsMap[*v.Name] = randomString(*v.Length, defaultCharset)
-					} else {
-						// this should not happen
-						return fmt.Errorf("internal error: please let the Porter team know about this and quote the following "+
-							"error:\n-----\nERROR: for variable '%s', random is false and value is empty", *v.Name)
-					}
-				}
-			} else {
-				return fmt.Errorf("error checking for existence of constant %s: %w", *v.Name, err)
-			}
-		} else {
-			if v.Value != nil && *v.Value != "" {
-				variablesMap[*v.Name] = *v.Value
-			} else if v.Random != nil && *v.Random {
-				variablesMap[*v.Name] = randomString(*v.Length, defaultCharset)
-			} else {
-				// this should not happen
-				return fmt.Errorf("internal error: please let the Porter team know about this and quote the following "+
-					"error:\n-----\nERROR: for variable '%s', random is false and value is empty", *v.Name)
-			}
-		}
-	}
-
-	if len(constantsMap) > 0 {
-		// we need to create these constants in the env group
-		_, err := a.apiClient.CreateEnvGroup(
-			context.Background(),
-			config.GetCLIConfig().Project,
-			config.GetCLIConfig().Cluster,
-			a.namespace,
-			&apiTypes.CreateEnvGroupRequest{
-				Name:      constantsEnvGroup,
-				Variables: constantsMap,
-			},
-		)
-
-		if err != nil {
-			return fmt.Errorf("error creating constants (variables with once set to true) in env group: %w", err)
-		}
-
-		for k, v := range constantsMap {
-			variablesMap[k] = v
-		}
-	}
-
-	a.variablesMap = variablesMap
-
-	return nil
-}
-
-func (a *PreviewApplier) constantExistsInEnvGroup(name string) (*bool, error) {
-	apiResponse, err := a.apiClient.GetEnvGroup(
-		context.Background(),
-		config.GetCLIConfig().Project,
-		config.GetCLIConfig().Cluster,
-		a.namespace,
-		&apiTypes.GetEnvGroupRequest{
-			Name: constantsEnvGroup,
-			// we do not care about the version because it always needs to be the latest
-		},
-	)
+func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
+	err := a.Apply()
 
 	if err != nil {
-		if strings.Contains(err.Error(), "env group not found") {
-			return booleanptr(false), nil
-		}
-
 		return nil, err
 	}
 
-	if _, ok := apiResponse.Variables[name]; ok {
-		return booleanptr(true), nil
+	v1File := &types.ResourceGroup{
+		Version: "v1",
 	}
 
-	return booleanptr(false), nil
-}
-
-func (a *PreviewApplier) processEnvGroups() error {
-	printInfoMessage("Processing env groups")
-
-	for _, eg := range a.parsed.EnvGroups {
-		if eg == nil {
+	for _, b := range a.parsed.Builds {
+		if b == nil {
 			continue
 		}
 
-		if eg.Name == nil || *eg.Name == "" {
+		bi, err := b.getV1BuildImage()
 
+		if err != nil {
+			return nil, err
 		}
 
-		envGroup, err := a.apiClient.GetEnvGroup(
-			context.Background(),
-			config.GetCLIConfig().Project,
-			config.GetCLIConfig().Cluster,
-			a.namespace,
-			&apiTypes.GetEnvGroupRequest{
-				Name: *eg.Name,
-			},
-		)
+		pi, err := b.getV1PushImage()
 
-		if err != nil && strings.Contains(err.Error(), "env group not found") {
-			if eg.CloneFrom == nil {
-				return fmt.Errorf(composePreviewMessage(fmt.Sprintf("empty clone_from for env group '%s'", *eg.Name), Error))
-			}
-
-			egNS, egName, found := strings.Cut(*eg.CloneFrom, "/")
-
-			if !found {
-				return fmt.Errorf("error parsing clone_from for env group '%s': invalid format", *eg.Name)
-			}
-
-			// clone the env group
-			envGroup, err := a.apiClient.CloneEnvGroup(
-				context.Background(),
-				config.GetCLIConfig().Project,
-				config.GetCLIConfig().Cluster,
-				egNS,
-				&apiTypes.CloneEnvGroupRequest{
-					SourceName:      egName,
-					TargetNamespace: a.namespace,
-					TargetName:      *eg.Name,
-				},
-			)
-
-			if err != nil {
-				return fmt.Errorf("error cloning env group '%s' from '%s': %w", egName, egNS, err)
-			}
-
-			a.envGroups[*eg.Name] = &apiTypes.EnvGroup{
-				Name:      envGroup.Name,
-				Variables: envGroup.Variables,
-			}
-		} else if err != nil {
-			return fmt.Errorf("error checking for env group '%s': %w", *eg.Name, err)
-		} else {
-			a.envGroups[*eg.Name] = &apiTypes.EnvGroup{
-				Name:      envGroup.Name,
-				Variables: envGroup.Variables,
-			}
+		if err != nil {
+			return nil, err
 		}
+
+		v1File.Resources = append(v1File.Resources, bi, pi)
 	}
 
-	return nil
+	// fileBytes, err := yaml.Marshal(v1File)
+
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// fmt.Println(string(fileBytes))
+
+	return v1File, nil
 }
+
+// func (a *PreviewApplier) readOSEnv() error {
+// 	printInfoMessage("Reading OS environment variables")
+
+// 	env := os.Environ()
+// 	osEnv := make(map[string]string)
+
+// 	for _, e := range env {
+// 		k, v, _ := strings.Cut(e, "=")
+// 		kCopy := k
+
+// 		if k != "" && v != "" && strings.HasPrefix(k, "PORTER_APPLY_") {
+// 			// we only read in env variables that start with PORTER_APPLY_
+// 			for strings.HasPrefix(k, "PORTER_APPLY_") {
+// 				k = strings.TrimPrefix(k, "PORTER_APPLY_")
+// 			}
+
+// 			if k == "" {
+// 				printWarningMessage(fmt.Sprintf("Ignoring invalid OS environment variable '%s'", kCopy))
+// 			}
+
+// 			osEnv[k] = v
+// 		}
+// 	}
+
+// 	a.osEnv = osEnv
+
+// 	return nil
+// }
+
+// func (a *PreviewApplier) processVariables() error {
+// 	printInfoMessage("Processing variables")
+
+// 	constantsMap := make(map[string]string)
+// 	variablesMap := make(map[string]string)
+
+// 	for _, v := range a.parsed.Variables {
+// 		if v == nil {
+// 			continue
+// 		}
+
+// 		if v.Once != nil && *v.Once {
+// 			// a constant which should be stored in the env group on first run
+// 			if exists, err := a.constantExistsInEnvGroup(*v.Name); err == nil {
+// 				if exists == nil {
+// 					// this should not happen
+// 					return fmt.Errorf("internal error: please let the Porter team know about this and quote the following " +
+// 						"error:\n-----\nERROR: checking for constant existence in env group returned nil with no error")
+// 				}
+
+// 				val := *exists
+
+// 				if !val {
+// 					// create the constant in the env group
+// 					if *v.Value != "" {
+// 						constantsMap[*v.Name] = *v.Value
+// 					} else if v.Random != nil && *v.Random {
+// 						constantsMap[*v.Name] = randomString(*v.Length, defaultCharset)
+// 					} else {
+// 						// this should not happen
+// 						return fmt.Errorf("internal error: please let the Porter team know about this and quote the following "+
+// 							"error:\n-----\nERROR: for variable '%s', random is false and value is empty", *v.Name)
+// 					}
+// 				}
+// 			} else {
+// 				return fmt.Errorf("error checking for existence of constant %s: %w", *v.Name, err)
+// 			}
+// 		} else {
+// 			if v.Value != nil && *v.Value != "" {
+// 				variablesMap[*v.Name] = *v.Value
+// 			} else if v.Random != nil && *v.Random {
+// 				variablesMap[*v.Name] = randomString(*v.Length, defaultCharset)
+// 			} else {
+// 				// this should not happen
+// 				return fmt.Errorf("internal error: please let the Porter team know about this and quote the following "+
+// 					"error:\n-----\nERROR: for variable '%s', random is false and value is empty", *v.Name)
+// 			}
+// 		}
+// 	}
+
+// 	if len(constantsMap) > 0 {
+// 		// we need to create these constants in the env group
+// 		_, err := a.apiClient.CreateEnvGroup(
+// 			context.Background(),
+// 			config.GetCLIConfig().Project,
+// 			config.GetCLIConfig().Cluster,
+// 			a.namespace,
+// 			&apiTypes.CreateEnvGroupRequest{
+// 				Name:      constantsEnvGroup,
+// 				Variables: constantsMap,
+// 			},
+// 		)
+
+// 		if err != nil {
+// 			return fmt.Errorf("error creating constants (variables with once set to true) in env group: %w", err)
+// 		}
+
+// 		for k, v := range constantsMap {
+// 			variablesMap[k] = v
+// 		}
+// 	}
+
+// 	a.variablesMap = variablesMap
+
+// 	return nil
+// }
+
+// func (a *PreviewApplier) constantExistsInEnvGroup(name string) (*bool, error) {
+// 	apiResponse, err := a.apiClient.GetEnvGroup(
+// 		context.Background(),
+// 		config.GetCLIConfig().Project,
+// 		config.GetCLIConfig().Cluster,
+// 		a.namespace,
+// 		&apiTypes.GetEnvGroupRequest{
+// 			Name: constantsEnvGroup,
+// 			// we do not care about the version because it always needs to be the latest
+// 		},
+// 	)
+
+// 	if err != nil {
+// 		if strings.Contains(err.Error(), "env group not found") {
+// 			return booleanptr(false), nil
+// 		}
+
+// 		return nil, err
+// 	}
+
+// 	if _, ok := apiResponse.Variables[name]; ok {
+// 		return booleanptr(true), nil
+// 	}
+
+// 	return booleanptr(false), nil
+// }
+
+// func (a *PreviewApplier) processEnvGroups() error {
+// 	printInfoMessage("Processing env groups")
+
+// 	for _, eg := range a.parsed.EnvGroups {
+// 		if eg == nil {
+// 			continue
+// 		}
+
+// 		if eg.Name == nil || *eg.Name == "" {
+
+// 		}
+
+// 		envGroup, err := a.apiClient.GetEnvGroup(
+// 			context.Background(),
+// 			config.GetCLIConfig().Project,
+// 			config.GetCLIConfig().Cluster,
+// 			a.namespace,
+// 			&apiTypes.GetEnvGroupRequest{
+// 				Name: *eg.Name,
+// 			},
+// 		)
+
+// 		if err != nil && strings.Contains(err.Error(), "env group not found") {
+// 			if eg.CloneFrom == nil {
+// 				return fmt.Errorf(composePreviewMessage(fmt.Sprintf("empty clone_from for env group '%s'", *eg.Name), Error))
+// 			}
+
+// 			egNS, egName, found := strings.Cut(*eg.CloneFrom, "/")
+
+// 			if !found {
+// 				return fmt.Errorf("error parsing clone_from for env group '%s': invalid format", *eg.Name)
+// 			}
+
+// 			// clone the env group
+// 			envGroup, err := a.apiClient.CloneEnvGroup(
+// 				context.Background(),
+// 				config.GetCLIConfig().Project,
+// 				config.GetCLIConfig().Cluster,
+// 				egNS,
+// 				&apiTypes.CloneEnvGroupRequest{
+// 					SourceName:      egName,
+// 					TargetNamespace: a.namespace,
+// 					TargetName:      *eg.Name,
+// 				},
+// 			)
+
+// 			if err != nil {
+// 				return fmt.Errorf("error cloning env group '%s' from '%s': %w", egName, egNS, err)
+// 			}
+
+// 			a.envGroups[*eg.Name] = &apiTypes.EnvGroup{
+// 				Name:      envGroup.Name,
+// 				Variables: envGroup.Variables,
+// 			}
+// 		} else if err != nil {
+// 			return fmt.Errorf("error checking for env group '%s': %w", *eg.Name, err)
+// 		} else {
+// 			a.envGroups[*eg.Name] = &apiTypes.EnvGroup{
+// 				Name:      envGroup.Name,
+// 				Variables: envGroup.Variables,
+// 			}
+// 		}
+// 	}
+
+// 	return nil
+// }

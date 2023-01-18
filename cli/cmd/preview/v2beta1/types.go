@@ -1,17 +1,17 @@
 package v2beta1
 
-type Variable struct {
-	Name   *string `yaml:"name" validate:"required,unique"`
-	Value  *string `yaml:"value" validate:"required_if=Random false"`
-	Once   *bool   `yaml:"once"`
-	Random *bool   `yaml:"random"`
-	Length *uint   `yaml:"length"`
-}
+// type Variable struct {
+// 	Name   *string `yaml:"name" validate:"required,unique"`
+// 	Value  *string `yaml:"value" validate:"required_if=Random false"`
+// 	Once   *bool   `yaml:"once"`
+// 	Random *bool   `yaml:"random"`
+// 	Length *uint   `yaml:"length"`
+// }
 
-type EnvGroup struct {
-	Name      *string `yaml:"name" validate:"required"`
-	CloneFrom *string `yaml:"clone_from" validate:"required"`
-}
+// type EnvGroup struct {
+// 	Name      *string `yaml:"name" validate:"required"`
+// 	CloneFrom *string `yaml:"clone_from" validate:"required"`
+// }
 
 type BuildEnv struct {
 	Raw        map[*string]*string `yaml:"raw"`
@@ -41,10 +41,10 @@ type Resource struct {
 }
 
 type PorterYAML struct {
-	Version   *string     `yaml:"version"`
-	Variables []*Variable `yaml:"variables"`
-	EnvGroups []*EnvGroup `yaml:"env_groups"`
-	Builds    []*Build    `yaml:"builds"`
-	Apps      []*Resource `yaml:"apps"`
-	Addons    []*Resource `yaml:"addons"`
+	Version *string `yaml:"version"`
+	// Variables []*Variable `yaml:"variables"`
+	// EnvGroups []*EnvGroup `yaml:"env_groups"`
+	Builds []*Build    `yaml:"builds"`
+	Apps   []*Resource `yaml:"apps"`
+	Addons []*Resource `yaml:"addons"`
 }

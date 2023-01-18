@@ -119,7 +119,7 @@ func (b *Build) GetEnvGroups() []string {
 	return eg
 }
 
-func (b *Build) getV1Build() (*types.Resource, error) {
+func (b *Build) getV1BuildImage() (*types.Resource, error) {
 	config := &preview.BuildDriverConfig{}
 
 	if b.GetMethod() == "pack" {
@@ -157,10 +157,36 @@ func (b *Build) getV1Build() (*types.Resource, error) {
 	}
 
 	return &types.Resource{
-		Name:   b.GetName(),
+		Name:   fmt.Sprintf("%s-build-image", b.GetName()),
 		Driver: "build-image",
 		Source: map[string]any{
 			"name": "web",
+		},
+		Target: map[string]any{
+			"app_name": b.GetName(),
+		},
+		Config: rawConfig,
+	}, nil
+}
+
+func (b *Build) getV1PushImage() (*types.Resource, error) {
+	config := &preview.PushDriverConfig{}
+
+	config.Push.Image = fmt.Sprintf("\"{ .%s-build-image.image }\"", b.GetName())
+
+	rawConfig := make(map[string]any)
+
+	err := mapstructure.Decode(config, &rawConfig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.Resource{
+		Name:   b.GetName(),
+		Driver: "push-image",
+		DependsOn: []string{
+			fmt.Sprintf("%s-build-image", b.GetName()),
 		},
 		Target: map[string]any{
 			"app_name": b.GetName(),

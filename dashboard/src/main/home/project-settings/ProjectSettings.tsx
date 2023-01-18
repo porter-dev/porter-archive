@@ -99,7 +99,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
       });
     }
 
-    if (_.isEqual(tabOptions, this.state.tabOptions)) {
+    if (!_.isEqual(tabOptions, this.state.tabOptions)) {
       this.setState({ tabOptions });
     }
 

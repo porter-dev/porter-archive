@@ -13,18 +13,21 @@ type EnvGroup struct {
 	CloneFrom *string `yaml:"clone_from" validate:"required"`
 }
 
+type BuildEnv struct {
+	Raw        map[*string]*string `yaml:"raw"`
+	ImportFrom []*string           `yaml:"import_from"`
+}
+
 type Build struct {
-	Name         *string             `yaml:"name" validate:"required"`
-	Context      *string             `yaml:"context" validate:"dir"`
-	Method       *string             `yaml:"method" validate:"required,oneof=pack docker registry"`
-	Builder      *string             `yaml:"builder" validate:"required_if=Method pack"`
-	Buildpacks   []*string           `yaml:"buildpacks"`
-	Dockerfile   *string             `yaml:"dockerfile" validate:"required_if=Method docker"`
-	Image        *string             `yaml:"image" validate:"required_if=Method registry"`
-	Env          map[*string]*string `yaml:"env"`
-	EnvGroups    []*string           `yaml:"env_groups"`
-	UseCache     *bool               `yaml:"use_cache"`
-	ImageRepoURI *string             `yaml:"image_repo_uri"`
+	Name       *string   `yaml:"name" validate:"required"`
+	Context    *string   `yaml:"context" validate:"dir"`
+	Method     *string   `yaml:"method" validate:"required,oneof=pack docker registry"`
+	Builder    *string   `yaml:"builder" validate:"required_if=Method pack"`
+	Buildpacks []*string `yaml:"buildpacks"`
+	Dockerfile *string   `yaml:"dockerfile" validate:"required_if=Method docker"`
+	Image      *string   `yaml:"image" validate:"required_if=Method registry"`
+	Env        *BuildEnv `yaml:"env"`
+	// UseCache   *bool     `yaml:"use_cache"`
 }
 
 type Resource struct {

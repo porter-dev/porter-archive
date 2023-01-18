@@ -9,7 +9,6 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	apiTypes "github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
-	"github.com/porter-dev/switchboard/pkg/worker"
 	"gopkg.in/yaml.v3"
 )
 
@@ -122,33 +121,24 @@ func (a *PreviewApplier) Apply() error {
 		a.namespace),
 	)
 
-	err = a.readOSEnv()
+	// err = a.readOSEnv()
 
-	if err != nil {
-		errMsg := composePreviewMessage("error reading OS environment variables", Error)
-		return fmt.Errorf("%s: %w", errMsg, err)
-	}
+	// if err != nil {
+	// 	errMsg := composePreviewMessage("error reading OS environment variables", Error)
+	// 	return fmt.Errorf("%s: %w", errMsg, err)
+	// }
 
-	err = a.processVariables()
+	// err = a.processVariables()
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	err = a.processEnvGroups()
+	// err = a.processEnvGroups()
 
-	if err != nil {
-		return err
-	}
-
-	w := worker.NewWorker()
-	w.RegisterDriver("default", &DefaultDriver{
-		Vars:      a.variablesMap,
-		Env:       a.osEnv,
-		APIClient: a.apiClient,
-		Namespace: a.namespace,
-	})
-	w.SetDefaultDriver("default")
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }

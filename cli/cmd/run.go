@@ -149,7 +149,7 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 
 	if len(podsSimple) == 0 {
 		return fmt.Errorf("At least one pod must exist in this deployment.")
-	} else if nonInteractive || len(podsSimple) == 1 || !existingPod {
+	} else if nonInteractive || len(podsSimple) == 1 {
 		selectedPod = podsSimple[0]
 	} else {
 		podNames := make([]string, 0)

@@ -190,6 +190,9 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		worker.RegisterHook("deployment", deploymentHook)
 	}
 
+	errorEmitterHook := NewErrorEmitterHook(client, resGroup)
+	worker.RegisterHook("erroremitter", errorEmitterHook)
+
 	cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
 	worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
 
@@ -1265,4 +1268,34 @@ func isSystemNamespace(namespace string) bool {
 		namespace == "kube-system" || namespace == "monitoring" ||
 		namespace == "porter-agent-system" || namespace == "default" ||
 		namespace == "ingress-nginx-private"
+}
+
+type ErrorEmitterHook struct{}
+
+func NewErrorEmitterHook(*api.Client, *switchboardTypes.ResourceGroup) *ErrorEmitterHook {
+	return &ErrorEmitterHook{}
+}
+
+func (t *ErrorEmitterHook) PreApply() error {
+	return nil
+}
+
+func (t *ErrorEmitterHook) DataQueries() map[string]interface{} {
+	return nil
+}
+
+func (t *ErrorEmitterHook) PostApply(map[string]interface{}) error {
+	return nil
+}
+
+func (t *ErrorEmitterHook) OnError(err error) {
+	color.New(color.FgRed).Fprintf(os.Stderr, "Errors while building: %s\n", err.Error())
+}
+
+func (t *ErrorEmitterHook) OnConsolidatedErrors(errMap map[string]error) {
+	color.New(color.FgRed).Fprintf(os.Stderr, "Errors while building:\n")
+
+	for resName, err := range errMap {
+		color.New(color.FgRed).Fprintf(os.Stderr, "  - %s: %s\n", resName, err.Error())
+	}
 }

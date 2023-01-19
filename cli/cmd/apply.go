@@ -20,6 +20,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	"github.com/porter-dev/porter/cli/cmd/preview"
+	previewV2Beta1 "github.com/porter-dev/porter/cli/cmd/preview/v2beta1"
 	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -29,6 +30,7 @@ import (
 	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 // applyCmd represents the "porter apply" base command when called
@@ -105,24 +107,54 @@ func init() {
 }
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
-	if _, ok := os.LookupEnv("PORTER_VALIDATE_YAML"); ok {
-		err := applyValidate()
-
-		if err != nil {
-			return err
-		}
-	}
-
 	fileBytes, err := ioutil.ReadFile(porterYAML)
 
 	if err != nil {
 		return fmt.Errorf("error reading porter.yaml: %w", err)
 	}
 
-	resGroup, err := parser.ParseRawBytes(fileBytes)
+	var previewVersion struct {
+		Version string `json:"version"`
+	}
+
+	err = yaml.Unmarshal(fileBytes, &previewVersion)
 
 	if err != nil {
-		return fmt.Errorf("error parsing porter.yaml: %w", err)
+		return fmt.Errorf("error unmarshaling porter.yaml: %w", err)
+	}
+
+	var resGroup *switchboardTypes.ResourceGroup
+
+	if previewVersion.Version == "v2beta1" {
+		ns := os.Getenv("PORTER_NAMESPACE")
+
+		applier, err := previewV2Beta1.NewApplier(client, fileBytes, ns)
+
+		if err != nil {
+			return err
+		}
+
+		resGroup, err = applier.DowngradeToV1()
+
+		if err != nil {
+			return err
+		}
+	} else if previewVersion.Version == "v1" {
+		if _, ok := os.LookupEnv("PORTER_VALIDATE_YAML"); ok {
+			err := applyValidate()
+
+			if err != nil {
+				return err
+			}
+		}
+
+		resGroup, err = parser.ParseRawBytes(fileBytes)
+
+		if err != nil {
+			return fmt.Errorf("error parsing porter.yaml: %w", err)
+		}
+	} else {
+		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
 	}
 
 	basePath, err := os.Getwd()
@@ -157,6 +189,9 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 
 		worker.RegisterHook("deployment", deploymentHook)
 	}
+
+	errorEmitterHook := NewErrorEmitterHook(client, resGroup)
+	worker.RegisterHook("erroremitter", errorEmitterHook)
 
 	cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
 	worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
@@ -1173,8 +1208,8 @@ func (t *CloneEnvGroupHook) PreApply() error {
 					_, err = t.client.CloneEnvGroup(
 						context.Background(), target.Project, target.Cluster, group.Namespace,
 						&types.CloneEnvGroupRequest{
-							Name:      group.Name,
-							Namespace: target.Namespace,
+							SourceName:      group.Name,
+							TargetNamespace: target.Namespace,
 						},
 					)
 
@@ -1233,4 +1268,34 @@ func isSystemNamespace(namespace string) bool {
 		namespace == "kube-system" || namespace == "monitoring" ||
 		namespace == "porter-agent-system" || namespace == "default" ||
 		namespace == "ingress-nginx-private"
+}
+
+type ErrorEmitterHook struct{}
+
+func NewErrorEmitterHook(*api.Client, *switchboardTypes.ResourceGroup) *ErrorEmitterHook {
+	return &ErrorEmitterHook{}
+}
+
+func (t *ErrorEmitterHook) PreApply() error {
+	return nil
+}
+
+func (t *ErrorEmitterHook) DataQueries() map[string]interface{} {
+	return nil
+}
+
+func (t *ErrorEmitterHook) PostApply(map[string]interface{}) error {
+	return nil
+}
+
+func (t *ErrorEmitterHook) OnError(err error) {
+	color.New(color.FgRed).Fprintf(os.Stderr, "Errors while building: %s\n", err.Error())
+}
+
+func (t *ErrorEmitterHook) OnConsolidatedErrors(errMap map[string]error) {
+	color.New(color.FgRed).Fprintf(os.Stderr, "Errors while building:\n")
+
+	for resName, err := range errMap {
+		color.New(color.FgRed).Fprintf(os.Stderr, "  - %s: %s\n", resName, err.Error())
+	}
 }

@@ -149,7 +149,7 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 
 	if len(podsSimple) == 0 {
 		return fmt.Errorf("At least one pod must exist in this deployment.")
-	} else if nonInteractive || len(podsSimple) == 1 || !existingPod {
+	} else if nonInteractive || len(podsSimple) == 1 {
 		selectedPod = podsSimple[0]
 	} else {
 		podNames := make([]string, 0)
@@ -461,7 +461,7 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 		return err
 	}
 
-	newPod, err := createEphemeralPodFromExisting(config, existing, args)
+	newPod, err := createEphemeralPodFromExisting(config, existing, container, args)
 	if err != nil {
 		return err
 	}
@@ -922,7 +922,12 @@ func deletePod(config *PorterRunSharedConfig, name, namespace string) error {
 	return nil
 }
 
-func createEphemeralPodFromExisting(config *PorterRunSharedConfig, existing *v1.Pod, args []string) (*v1.Pod, error) {
+func createEphemeralPodFromExisting(
+	config *PorterRunSharedConfig,
+	existing *v1.Pod,
+	container string,
+	args []string,
+) (*v1.Pod, error) {
 	newPod := existing.DeepCopy()
 
 	// only copy the pod spec, overwrite metadata
@@ -932,9 +937,6 @@ func createEphemeralPodFromExisting(config *PorterRunSharedConfig, existing *v1.
 	}
 
 	newPod.Status = v1.PodStatus{}
-
-	// only use "primary" container
-	newPod.Spec.Containers = newPod.Spec.Containers[0:1]
 
 	// set restart policy to never
 	newPod.Spec.RestartPolicy = v1.RestartPolicyNever
@@ -951,17 +953,22 @@ func createEphemeralPodFromExisting(config *PorterRunSharedConfig, existing *v1.
 		cmdArgs = args[1:]
 	}
 
-	newPod.Spec.Containers[0].Command = []string{cmdRoot}
-	newPod.Spec.Containers[0].Args = cmdArgs
-	newPod.Spec.Containers[0].TTY = true
-	newPod.Spec.Containers[0].Stdin = true
-	newPod.Spec.Containers[0].StdinOnce = true
-	newPod.Spec.NodeName = ""
+	for i := 0; i < len(newPod.Spec.Containers); i++ {
+		if newPod.Spec.Containers[i].Name == container {
+			newPod.Spec.Containers[i].Command = []string{cmdRoot}
+			newPod.Spec.Containers[i].Args = cmdArgs
+			newPod.Spec.Containers[i].TTY = true
+			newPod.Spec.Containers[i].Stdin = true
+			newPod.Spec.Containers[i].StdinOnce = true
+		}
 
-	// remove health checks and probes
-	newPod.Spec.Containers[0].LivenessProbe = nil
-	newPod.Spec.Containers[0].ReadinessProbe = nil
-	newPod.Spec.Containers[0].StartupProbe = nil
+		// remove health checks and probes
+		newPod.Spec.Containers[i].LivenessProbe = nil
+		newPod.Spec.Containers[i].ReadinessProbe = nil
+		newPod.Spec.Containers[i].StartupProbe = nil
+	}
+
+	newPod.Spec.NodeName = ""
 
 	// create the pod and return it
 	return config.Clientset.CoreV1().Pods(existing.ObjectMeta.Namespace).Create(

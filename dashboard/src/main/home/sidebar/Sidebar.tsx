@@ -116,7 +116,7 @@ class Sidebar extends Component<PropsType, StateType> {
           </NavButton>
           {currentProject &&
             currentProject.managed_infra_enabled &&
-            user?.isPorterUser && (
+            (user?.isPorterUser || [6683].includes(currentProject.id)) && (
               <NavButton path={"/infrastructure"}>
                 <i className="material-icons">build_circle</i>
                 Infrastructure

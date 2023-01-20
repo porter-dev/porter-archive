@@ -110,6 +110,11 @@ type ServerConf struct {
 	// DisableRegistrySecretsInjection is used to denote if Porter should not inject
 	// imagePullSecrets into a kubernetes deployment (Porter application)
 	DisablePullSecretsInjection bool `env:"DISABLE_PULL_SECRETS_INJECTION,default=false"`
+
+	// DisableTemporaryKubeconfig is used to denote if Porter should not
+	// create a temporary kubeconfig file for a cluster. When set to true, the
+	// /api/projects/{project_id}/clusters/{cluster_id}/kubeconfig will be disabled.
+	DisableTemporaryKubeconfig bool `env:"DISABLE_TEMPORARY_KUBECONFIG,default=false"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

@@ -762,33 +762,35 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/kubeconfig -> cluster.NewGetTemporaryKubeconfigHandler
-	getTemporaryKubeconfigEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbUpdate, // we do not want users with no-write access to be able to use this
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/kubeconfig",
+	if !config.ServerConf.DisableTemporaryKubeconfig {
+		// GET /api/projects/{project_id}/clusters/{cluster_id}/kubeconfig -> cluster.NewGetTemporaryKubeconfigHandler
+		getTemporaryKubeconfigEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbUpdate, // we do not want users with no-write access to be able to use this
+				Method: types.HTTPVerbGet,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/kubeconfig",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+				},
 			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
+		)
 
-	getTemporaryKubeconfigHandler := cluster.NewGetTemporaryKubeconfigHandler(
-		config,
-		factory.GetResultWriter(),
-	)
+		getTemporaryKubeconfigHandler := cluster.NewGetTemporaryKubeconfigHandler(
+			config,
+			factory.GetResultWriter(),
+		)
 
-	routes = append(routes, &router.Route{
-		Endpoint: getTemporaryKubeconfigEndpoint,
-		Handler:  getTemporaryKubeconfigHandler,
-		Router:   r,
-	})
+		routes = append(routes, &router.Route{
+			Endpoint: getTemporaryKubeconfigEndpoint,
+			Handler:  getTemporaryKubeconfigHandler,
+			Router:   r,
+		})
+	}
 
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/prometheus/detect -> cluster.NewDetectPrometheusInstalledHandler
 	detectPrometheusInstalledEndpoint := factory.NewAPIEndpoint(

@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -29,6 +30,13 @@ func NewGetTemporaryKubeconfigHandler(
 }
 
 func (c *GetTemporaryKubeconfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if c.Config().ServerConf.DisableTemporaryKubeconfig {
+		c.HandleAPIError(w, r, apierrors.NewErrNotFound(
+			errors.New("temporary kubeconfig generation is disabled on this instance"),
+		))
+		return
+	}
+
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	outOfClusterConfig := c.GetOutOfClusterConfig(cluster)

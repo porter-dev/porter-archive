@@ -212,14 +212,14 @@ func (c *CLIConfig) SetHost(host string) error {
 }
 
 func (c *CLIConfig) SetProject(projectID uint) error {
+	viper.Set("project", projectID)
+
+	color.New(color.FgGreen).Printf("Set the current project as %d\n", projectID)
+
 	if config.Kubeconfig != "" || viper.IsSet("kubeconfig") {
-		viper.Set("kubeconfig", "")
-		color.New(color.FgBlue).Println("Removing local kubeconfig")
-		config.Kubeconfig = ""
+		color.New(color.FgYellow).Println("Please change local kubeconfig if needed")
 	}
 
-	viper.Set("project", projectID)
-	color.New(color.FgGreen).Printf("Set the current project as %d\n", projectID)
 	err := viper.WriteConfig()
 
 	if err != nil {
@@ -232,14 +232,14 @@ func (c *CLIConfig) SetProject(projectID uint) error {
 }
 
 func (c *CLIConfig) SetCluster(clusterID uint) error {
+	viper.Set("cluster", clusterID)
+
+	color.New(color.FgGreen).Printf("Set the current cluster as %d\n", clusterID)
+
 	if config.Kubeconfig != "" || viper.IsSet("kubeconfig") {
-		viper.Set("kubeconfig", "")
-		color.New(color.FgBlue).Println("Removing local kubeconfig")
-		config.Kubeconfig = ""
+		color.New(color.FgYellow).Println("Please change local kubeconfig if needed")
 	}
 
-	viper.Set("cluster", clusterID)
-	color.New(color.FgGreen).Printf("Set the current cluster as %d\n", clusterID)
 	err := viper.WriteConfig()
 
 	if err != nil {

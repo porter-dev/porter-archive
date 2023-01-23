@@ -47,6 +47,7 @@ type TestRepository struct {
 	tag                       repository.TagRepository
 	stack                     repository.StackRepository
 	monitor                   repository.MonitorTestResultRepository
+	samlIntegration           repository.SAMLIntegrationRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -217,6 +218,10 @@ func (t *TestRepository) MonitorTestResult() repository.MonitorTestResultReposit
 	return t.monitor
 }
 
+func (t *TestRepository) SAMLIntegration() repository.SAMLIntegrationRepository {
+	return t.samlIntegration
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -263,5 +268,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		tag:                       NewTagRepository(),
 		stack:                     NewStackRepository(),
 		monitor:                   NewMonitorTestResultRepository(canQuery),
+		samlIntegration:           NewSAMLIntegrationRepository(canQuery),
 	}
 }

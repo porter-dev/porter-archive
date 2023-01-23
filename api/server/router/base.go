@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/healthcheck"
 	"github.com/porter-dev/porter/api/server/handlers/metadata"
 	"github.com/porter-dev/porter/api/server/handlers/release"
+	"github.com/porter-dev/porter/api/server/handlers/saml"
 	"github.com/porter-dev/porter/api/server/handlers/user"
 	"github.com/porter-dev/porter/api/server/handlers/webhook"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -541,6 +542,56 @@ func GetBaseRoutes(
 			Router:   r,
 		})
 	}
+
+	// POST /api/login/saml/validate -> saml.NewValidateSAMLHandler
+	samlValidateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/login/saml/validate",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	samlValidateHandler := saml.NewValidateSAMLHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: samlValidateEndpoint,
+		Handler:  samlValidateHandler,
+		Router:   r,
+	})
+
+	// // GET /api/login/saml/{idp} -> saml.NewSAMLLoginHandler
+	// samlLoginEndpoint := factory.NewAPIEndpoint(
+	// 	&types.APIRequestMetadata{
+	// 		Verb:   types.APIVerbGet,
+	// 		Method: types.HTTPVerbGet,
+	// 		Path: &types.Path{
+	// 			Parent:       basePath,
+	// 			RelativePath: "/login/saml/{idp}",
+	// 		},
+	// 		Scopes: []types.PermissionScope{},
+	// 	},
+	// )
+
+	// samlLoginHandler := credentials.NewGetCredentialsHandler(
+	// 	config,
+	// 	factory.GetDecoderValidator(),
+	// 	factory.GetResultWriter(),
+	// )
+
+	// routes = append(routes, &router.Route{
+	// 	Endpoint: samlLoginEndpoint,
+	// 	Handler:  samlLoginHandler,
+	// 	Router:   r,
+	// })
 
 	return routes
 }

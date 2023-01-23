@@ -49,6 +49,7 @@ type GormRepository struct {
 	tag                       repository.TagRepository
 	stack                     repository.StackRepository
 	monitor                   repository.MonitorTestResultRepository
+	samlIntegration           repository.SAMLIntegrationRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -219,6 +220,10 @@ func (t *GormRepository) MonitorTestResult() repository.MonitorTestResultReposit
 	return t.monitor
 }
 
+func (t *GormRepository) SAMLIntegration() repository.SAMLIntegrationRepository {
+	return t.samlIntegration
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -265,5 +270,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		tag:                       NewTagRepository(db),
 		stack:                     NewStackRepository(db),
 		monitor:                   NewMonitorTestResultRepository(db),
+		samlIntegration:           NewSAMLIntegrationRepository(db),
 	}
 }

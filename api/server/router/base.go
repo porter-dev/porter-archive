@@ -568,30 +568,5 @@ func GetBaseRoutes(
 		Router:   r,
 	})
 
-	// // GET /api/login/saml/{idp} -> saml.NewSAMLLoginHandler
-	// samlLoginEndpoint := factory.NewAPIEndpoint(
-	// 	&types.APIRequestMetadata{
-	// 		Verb:   types.APIVerbGet,
-	// 		Method: types.HTTPVerbGet,
-	// 		Path: &types.Path{
-	// 			Parent:       basePath,
-	// 			RelativePath: "/login/saml/{idp}",
-	// 		},
-	// 		Scopes: []types.PermissionScope{},
-	// 	},
-	// )
-
-	// samlLoginHandler := credentials.NewGetCredentialsHandler(
-	// 	config,
-	// 	factory.GetDecoderValidator(),
-	// 	factory.GetResultWriter(),
-	// )
-
-	// routes = append(routes, &router.Route{
-	// 	Endpoint: samlLoginEndpoint,
-	// 	Handler:  samlLoginHandler,
-	// 	Router:   r,
-	// })
-
 	return routes
 }

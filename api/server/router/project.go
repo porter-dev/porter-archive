@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/policy"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/handlers/registry"
+	"github.com/porter-dev/porter/api/server/handlers/saml"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
@@ -1258,6 +1259,35 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: createTagEndpoint,
 		Handler:  createTagHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/saml -> saml.NewCreateSAMLIntegrationHandler
+	createSAMLEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/saml",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	createSAMLHandler := saml.NewCreateSAMLIntegrationHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createSAMLEndpoint,
+		Handler:  createSAMLHandler,
 		Router:   r,
 	})
 

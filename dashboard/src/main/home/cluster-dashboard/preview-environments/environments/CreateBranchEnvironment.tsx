@@ -1,32 +1,38 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
 import { Environment } from "../types";
 import Helper from "components/form-components/Helper";
 import api from "shared/api";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { validatePorterYAML } from "../utils";
 import Banner from "components/Banner";
 import { useRouting } from "shared/routing";
 import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
 import Placeholder from "components/Placeholder";
-import BranchFilterSelector from "../components/BranchFilterSelector";
 import _ from "lodash";
 import Loading from "components/Loading";
+import { EllipsisTextWrapper } from "../components/styled";
+import pr_icon from "assets/pull_request_icon.svg";
+import { search } from "shared/search";
+import RadioFilter from "components/RadioFilter";
+import sort from "assets/sort.svg";
 
 interface Props {
   environmentID: string;
 }
 
 const CreateBranchEnvironment = ({ environmentID }: Props) => {
+  const queryClient = useQueryClient();
   const router = useRouting();
+  const [searchValue, setSearchValue] = useState("");
+  const [sortOrder, setSortOrder] = useState("Newest");
   const [loading, setLoading] = useState<boolean>(false);
   const [showErrorsModal, setShowErrorsModal] = useState<boolean>(false);
   const {
     currentProject,
     currentCluster,
     setCurrentError,
-    setCurrentModal,
   } = useContext(Context);
 
   const {
@@ -78,13 +84,11 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
   );
 
   const environmentGitDeployBranches = environment?.git_deploy_branches ?? [];
-  const [selectedBranches, setSelectedBranches] = useState<string[]>(
-    environmentGitDeployBranches
-  );
+  const [selectedBranch, setSelectedBranch] = useState<string>(null);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
 
   const handleRowItemClick = async (branch: string) => {
-    //setSelectedBranch(branch);
+    setSelectedBranch(branch);
     setLoading(true);
 
     const res = await validatePorterYAML({
@@ -99,6 +103,28 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
     setLoading(false);
   };
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({
+      queryKey: ["branches"],
+    });
+  };
+
+  const filteredBranches = useMemo(() => {
+    const filteredBySearch = search<string>(
+      branches ?? [],
+      searchValue,
+      {
+        isCaseSensitive: false,
+      }
+    );
+
+    switch (sortOrder) {
+      case "Alphabetical":
+      default:
+        return _.sortBy(filteredBySearch);
+    }
+  }, [branches, searchValue, sortOrder]);
+
   const updateDeployBranchesMutation = useMutation({
     mutationFn: () => {
       return api.updateEnvironment(
@@ -106,7 +132,12 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
         {
           disable_new_comments: environment.new_comments_disabled,
           ...environment,
-          git_deploy_branches: selectedBranches,
+          git_deploy_branches: _.uniq(
+            [
+              ...environmentGitDeployBranches,
+              selectedBranch,
+            ]
+          ),
         },
         {
           project_id: currentProject.id,
@@ -150,23 +181,66 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
         Select a branch to preview. Branches must contain a{" "}
         <Code>porter.yaml</Code> file.
       </Helper>
+      <FlexRow>
+        <Flex>
+          <SearchRowWrapper>
+            <SearchBarWrapper>
+              <i className="material-icons">search</i>
+              <SearchInput
+                value={searchValue}
+                onChange={(e: any) => {
+                  setSelectedBranch(undefined);
+                  setPorterYAMLErrors([]);
+                  setSearchValue(e.target.value);
+                }}
+                placeholder="Search"
+              />
+            </SearchBarWrapper>
+          </SearchRowWrapper>
+        </Flex>
+        <Flex>
+          <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
+            <i className="material-icons">refresh</i>
+          </RefreshButton>
+          <RadioFilter
+            icon={sort}
+            selected={sortOrder}
+            setSelected={setSortOrder}
+            options={[
+              { label: "Alphabetical", value: "Alphabetical" },
+            ]}
+            name="Sort"
+          />
+        </Flex>
+      </FlexRow>
       <Br height="10px" />
-      <BranchFilterSelector
-        onChange={(branches) => setSelectedBranches(branches)}
-        options={branches}
-        value={selectedBranches}
-        showLoading={branchesLoading}
-        multiSelect={false}
-      />
-      {/* {showErrorsModal && selectedBranch ? (
+      <BranchList>
+      {
+        (filteredBranches ?? []).map((branch, i) => (
+          <BranchRow
+            onClick={() => handleRowItemClick(branch)}
+            isLast={i === filteredBranches.length - 1}
+            isSelected={branch === selectedBranch}
+          >
+            <BranchName>
+              <BranchIcon src={pr_icon} alt="branch icon" />
+                <EllipsisTextWrapper tooltipText={branch}>
+                  {branch}
+                </EllipsisTextWrapper>
+            </BranchName>
+          </BranchRow>
+        ))
+      }
+      </BranchList>
+      {showErrorsModal && selectedBranch ? (
         <PorterYAMLErrorsModal
           errors={porterYAMLErrors}
           onClose={() => setShowErrorsModal(false)}
           repo={environment.git_repo_name + "/" + environment.git_repo_owner}
           branch={selectedBranch}
         />
-      ) : null} */}
-      {/* {selectedBranch && porterYAMLErrors.length ? (
+      ) : null}
+      {selectedBranch && porterYAMLErrors.length ? (
         <ValidationErrorBannerWrapper>
           <Banner type="warning">
             We found some errors in the porter.yaml file in the&nbsp;
@@ -176,18 +250,20 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
             </LearnMoreButton>
           </Banner>
         </ValidationErrorBannerWrapper>
-      ) : null} */}
+      ) : null}
       <CreatePreviewDeploymentWrapper>
         <SubmitButton
           onClick={() => updateDeployBranchesMutation.mutate()}
           disabled={
             updateDeployBranchesMutation.isLoading || loading
-            //|| porterYAMLErrors.length > 0
+            || porterYAMLErrors.length > 0 || !selectedBranch
           }
         >
-          Update branch deployments
+          {
+            updateDeployBranchesMutation.isLoading ? 'Creating...' : 'Create Preview Deployment'
+          }
         </SubmitButton>
-        {/* {selectedBranch && porterYAMLErrors.length ? (
+        {selectedBranch && porterYAMLErrors.length ? (
           <RevalidatePorterYAMLSpanWrapper>
             Please fix your porter.yaml file to continue.{" "}
             <RevalidateSpan
@@ -205,7 +281,7 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
               Refresh
             </RevalidateSpan>
           </RevalidatePorterYAMLSpanWrapper>
-        ) : null} */}
+        ) : null}
       </CreatePreviewDeploymentWrapper>
     </>
   );
@@ -213,7 +289,14 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
 
 export default CreateBranchEnvironment;
 
-const PullRequestRow = styled.div<{ isLast?: boolean; isSelected?: boolean }>`
+const BranchList = styled.div`
+  border: 1px solid #494b4f;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 33px;
+`;
+
+const BranchRow = styled.div<{ isLast?: boolean; isSelected?: boolean }>`
   width: 100%;
   padding: 15px;
   cursor: pointer;
@@ -224,6 +307,41 @@ const PullRequestRow = styled.div<{ isLast?: boolean; isSelected?: boolean }>`
   }
 `;
 
+const SearchRowWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  height: 30px;
+  margin-right: 10px;
+  background: #26292e;
+  border-radius: 5px;
+  border: 1px solid #aaaabb33;
+  border-radius: 5px;
+  width: 250px;
+`;
+
+const SearchBarWrapper = styled.div`
+  display: flex;
+  flex: 1;
+
+  > i {
+    color: #aaaabb;
+    padding-top: 1px;
+    margin-left: 8px;
+    font-size: 16px;
+    margin-right: 8px;
+  }
+`;
+
+const BranchName = styled.div`
+  font-family: "Work Sans", sans-serif;
+  font-weight: 500;
+  color: #ffffff;
+  display: flex;
+  font-size: 14px;
+  align-items: center;
+  margin-bottom: 10px;
+`;
+
 const Code = styled.span`
   font-family: monospace; ;
 `;
@@ -231,6 +349,14 @@ const Code = styled.span`
 const Flex = styled.div`
   display: flex;
   align-items: center;
+`;
+
+const FlexRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
 `;
 
 const DeploymentImageContainer = styled.div`
@@ -279,22 +405,12 @@ const MergeInfo = styled.div`
   }
 `;
 
-const PRIcon = styled.img`
+const BranchIcon = styled.img`
   font-size: 20px;
   height: 16px;
   margin-right: 10px;
   color: #aaaabb;
   opacity: 50%;
-`;
-
-const PRName = styled.div`
-  font-family: "Work Sans", sans-serif;
-  font-weight: 500;
-  color: #ffffff;
-  display: flex;
-  font-size: 14px;
-  align-items: center;
-  margin-bottom: 10px;
 `;
 
 const SubmitButton = styled.div`
@@ -338,6 +454,16 @@ const SubmitButton = styled.div`
   }
 `;
 
+const SearchInput = styled.input`
+  outline: none;
+  border: none;
+  font-size: 13px;
+  background: none;
+  width: 100%;
+  color: white;
+  height: 100%;
+`;
+
 const Br = styled.div<{ height: string }>`
   width: 100%;
   height: ${(props) => props.height || "2px"};
@@ -349,7 +475,7 @@ const ValidationErrorBannerWrapper = styled.div`
 
 const LearnMoreButton = styled.div`
   text-decoration: underline;
-  fontweight: bold;
+  font-weight: bold;
   cursor: pointer;
 `;
 
@@ -370,4 +496,26 @@ const RevalidateSpan = styled.span`
   color: #aaaabb;
   text-decoration: underline;
   cursor: pointer;
+`;
+
+const RefreshButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${(props: { color: string }) => props.color};
+  cursor: pointer;
+  border: none;
+  width: 30px;
+  height: 30px;
+  margin-right: 15px;
+  background: none;
+  border-radius: 50%;
+  margin-left: 10px;
+  > i {
+    font-size: 20px;
+  }
+  :hover {
+    background-color: rgb(97 98 102 / 44%);
+    color: white;
+  }
 `;

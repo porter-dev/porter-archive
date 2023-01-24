@@ -4,10 +4,6 @@ builds:
 - name: porter
   method: docker
   dockerfile: ./docker/Dockerfile
-  env:
-    raw: {}
-    import_from:
-      - default/base-env
 
 apps:
 - name: porter-dashboard

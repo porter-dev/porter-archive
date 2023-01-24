@@ -36,12 +36,6 @@ RUN go build -ldflags="-w -s -X 'main.Version=${version}'" -a -o ./bin/app ./cmd
     go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate && \
     go build -ldflags '-w -s' -a -o ./bin/ready ./cmd/ready
 
-# Go test environment
-# -------------------
-FROM base AS porter-test
-
-RUN go test ./...
-
 # Webpack build environment
 # -------------------------
 FROM node:16 as build-webpack

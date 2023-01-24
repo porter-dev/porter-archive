@@ -254,14 +254,6 @@ func autoDeployBranch(
 		go func(branch string) {
 			defer wg.Done()
 
-			namespace := fmt.Sprintf("previewbranch-%s-%s-%s", branch, strings.ReplaceAll(
-				strings.ToLower(env.GitRepoOwner), "_", "-"),
-				strings.ReplaceAll(strings.ToLower(env.GitRepoName), "_", "-"))
-
-			if len(namespace) > 63 {
-				namespace = namespace[:63] // Kubernetes' DNS 1123 label requirement
-			}
-
 			client, err := getGithubClientFromEnvironment(config, env)
 
 			if err != nil {
@@ -271,33 +263,41 @@ func autoDeployBranch(
 
 			var deplID uint
 
-			depl, err := config.Repo.Environment().ReadDeployment(env.ID, namespace)
+			depl, err := config.Repo.Environment().ReadDeploymentForBranch(env.ID, env.GitRepoOwner, env.GitRepoName, branch)
 
-			if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-				depl, err := config.Repo.Environment().CreateDeployment(&models.Deployment{
-					EnvironmentID: env.ID,
-					Namespace:     namespace,
-					Status:        types.DeploymentStatusCreating,
-					PRName:        fmt.Sprintf("Deployment for branch %s", branch),
-					RepoName:      env.GitRepoName,
-					RepoOwner:     env.GitRepoOwner,
-					PRBranchFrom:  branch,
-					PRBranchInto:  branch,
-				})
-
-				if err != nil {
-					errs = append(errs, fmt.Errorf("error creating deployment for branch %s: %w", branch, err))
+			if err == nil {
+				if onlyNewDeployments {
 					return
 				}
 
 				deplID = depl.ID
-			} else if err != nil {
-				errs = append(errs, fmt.Errorf("error reading deployment for branch %s: %w", branch, err))
-				return
-			} else if onlyNewDeployments {
-				return
 			} else {
-				deplID = depl.ID
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					depl, err := config.Repo.Environment().CreateDeployment(&models.Deployment{
+						EnvironmentID: env.ID,
+						Status:        types.DeploymentStatusCreating,
+						PRName:        fmt.Sprintf("Deployment for branch %s", branch),
+						RepoName:      env.GitRepoName,
+						RepoOwner:     env.GitRepoOwner,
+						PRBranchFrom:  branch,
+						PRBranchInto:  branch,
+					})
+
+					if err != nil {
+						errs = append(errs, fmt.Errorf("error creating deployment for branch %s: %w", branch, err))
+						return
+					}
+
+					deplID = depl.ID
+				} else {
+					errs = append(errs, fmt.Errorf("error reading deployment for branch %s: %w", branch, err))
+					return
+				}
+			}
+
+			if deplID == 0 {
+				errs = append(errs, fmt.Errorf("deployment id is 0 for branch %s", branch))
+				return
 			}
 
 			_, err = client.Actions.CreateWorkflowDispatchEventByFileName(

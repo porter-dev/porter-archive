@@ -24,6 +24,7 @@ apps:
         cpu: 400m
         memory: 512Mi
 
+
 addons:
 - name: postgres
   helm_chart:

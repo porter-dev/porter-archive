@@ -24,3 +24,4 @@ addons:
 - name: postgres
   helm_chart:
     name: postgres
+    url: https://charts.bitnami.com/postgres

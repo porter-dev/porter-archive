@@ -13,6 +13,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import SidebarLink from "./SidebarLink";
+import { overrideInfraTabEnabled } from "utils/infrastructure";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -116,7 +117,8 @@ class Sidebar extends Component<PropsType, StateType> {
           </NavButton>
           {currentProject &&
             currentProject.managed_infra_enabled &&
-            user?.isPorterUser && (
+            (user?.isPorterUser ||
+              overrideInfraTabEnabled({ projectID: currentProject.id })) && (
               <NavButton path={"/infrastructure"}>
                 <i className="material-icons">build_circle</i>
                 Infrastructure

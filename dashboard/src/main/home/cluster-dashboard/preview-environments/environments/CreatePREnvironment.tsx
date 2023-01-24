@@ -457,7 +457,7 @@ const ValidationErrorBannerWrapper = styled.div`
 
 const LearnMoreButton = styled.div`
   text-decoration: underline;
-  fontweight: bold;
+  font-weight: bold;
   cursor: pointer;
 `;
 

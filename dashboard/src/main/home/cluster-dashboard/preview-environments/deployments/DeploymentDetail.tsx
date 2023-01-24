@@ -167,7 +167,7 @@ const DeploymentDetail = () => {
               </DeploymentImageContainer>
               <Dot>•</Dot>
               <GHALink
-                to={`https://github.com/${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}/pulls/${prDeployment.pull_request_id}`}
+                to={`https://github.com/${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}/pull/${prDeployment.pull_request_id}`}
                 target="_blank"
               >
                 <GithubIcon />

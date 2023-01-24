@@ -27,6 +27,7 @@ import Onboarding from "./onboarding/Onboarding";
 import ModalHandler from "./ModalHandler";
 import { NewProjectFC } from "./new-project/NewProject";
 import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
+import { overrideInfraTabEnabled } from "utils/infrastructure";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -434,7 +435,10 @@ class Home extends Component<PropsType, StateType> {
                 return <Onboarding />;
               }}
             />
-            {this.context?.user?.isPorterUser ? (
+            {this.context?.user?.isPorterUser ||
+            overrideInfraTabEnabled({
+              projectID: this.context?.currentProject?.id,
+            }) ? (
               <Route
                 path="/infrastructure"
                 render={() => {

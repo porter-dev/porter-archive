@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/porter-dev/porter/api/types"
@@ -97,6 +98,10 @@ func (c *Client) GetKubeconfig(
 		nil,
 		resp,
 	)
+
+	if err != nil && strings.Contains(err.Error(), "404") {
+		return nil, fmt.Errorf("temporary kubeconfig generation is disabled, please use a local kubeconfig")
+	}
 
 	return resp, err
 }

@@ -491,6 +491,9 @@ func updateFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	}
 
 	if waitForSuccessfulDeploy {
+		// solves timing issue where replicasets were not on the cluster, before our initial check
+		time.Sleep(10 * time.Second)
+
 		err := checkDeploymentStatus(client)
 
 		if err != nil {
@@ -613,6 +616,9 @@ func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client *api.Client, ar
 	}
 
 	if waitForSuccessfulDeploy {
+		// solves timing issue where replicasets were not on the cluster, before our initial check
+		time.Sleep(10 * time.Second)
+
 		err := checkDeploymentStatus(client)
 
 		if err != nil {

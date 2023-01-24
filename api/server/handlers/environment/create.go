@@ -251,10 +251,10 @@ func autoDeployBranch(
 	for _, branch := range branches {
 		wg.Add(1)
 
-		go func(branch string) {
+		go func(errs []error, branch string) {
 			defer wg.Done()
 			errs = append(errs, createWorkflowDispatchForBranch(env, config, onlyNewDeployments, branch)...)
-		}(branch)
+		}(errs, branch)
 	}
 
 	wg.Wait()

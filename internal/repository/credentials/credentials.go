@@ -62,6 +62,11 @@ type GitlabCredential struct {
 	AppClientSecret []byte `json:"app_client_secret"`
 }
 
+type SAMLCredential struct {
+	AppClientID     []byte `json:"app_client_id"`
+	AppClientSecret []byte `json:"app_client_secret"`
+}
+
 type CredentialStorage interface {
 	// OAuth
 	WriteOAuthCredential(oauthIntegration *integrations.OAuthIntegration, data *OAuthCredential) error
@@ -87,4 +92,7 @@ type CredentialStorage interface {
 	WriteGitlabCredential(giIntegration *integrations.GitlabIntegration, data *GitlabCredential) error
 	GetGitlabCredential(giIntegration *integrations.GitlabIntegration) (*GitlabCredential, error)
 	CreateGitlabToken(giIntegration *integrations.GitlabIntegration) (string, error)
+
+	// SAML
+
 }

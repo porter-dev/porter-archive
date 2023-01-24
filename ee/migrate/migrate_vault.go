@@ -1,5 +1,4 @@
 //go:build ee
-// +build ee
 
 package migrate
 

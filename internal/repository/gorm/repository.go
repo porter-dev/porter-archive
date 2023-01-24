@@ -270,6 +270,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		tag:                       NewTagRepository(db),
 		stack:                     NewStackRepository(db),
 		monitor:                   NewMonitorTestResultRepository(db),
-		samlIntegration:           NewSAMLIntegrationRepository(db),
+		samlIntegration:           NewSAMLIntegrationRepository(db, key, storageBackend),
 	}
 }

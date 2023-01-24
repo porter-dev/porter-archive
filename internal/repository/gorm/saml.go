@@ -3,18 +3,25 @@ package gorm
 import (
 	"github.com/porter-dev/porter/internal/models/saml"
 	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/repository/credentials"
 	"gorm.io/gorm"
 )
 
 // SAMLIntegrationRepository uses gorm.DB for querying the database
 type SAMLIntegrationRepository struct {
-	db *gorm.DB
+	db             *gorm.DB
+	key            *[32]byte
+	storageBackend credentials.CredentialStorage
 }
 
 // NewSAMLIntegrationRepository returns a SAMLIntegrationRepository which uses
 // gorm.DB for querying the database
-func NewSAMLIntegrationRepository(db *gorm.DB) repository.SAMLIntegrationRepository {
-	return &SAMLIntegrationRepository{db}
+func NewSAMLIntegrationRepository(
+	db *gorm.DB,
+	key *[32]byte,
+	storageBackend credentials.CredentialStorage,
+) repository.SAMLIntegrationRepository {
+	return &SAMLIntegrationRepository{db, key, storageBackend}
 }
 
 func (repo *SAMLIntegrationRepository) ValidateSAMLIntegration(domain string) (*saml.SAMLIntegration, error) {
@@ -27,4 +34,8 @@ func (repo *SAMLIntegrationRepository) ValidateSAMLIntegration(domain string) (*
 	}
 
 	return integ, nil
+}
+
+func (repo *SAMLIntegrationRepository) CreateSAMLIntegration(integ *saml.SAMLIntegration) (*saml.SAMLIntegration, error) {
+	return nil, nil
 }

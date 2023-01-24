@@ -3,6 +3,7 @@ package gorm
 import (
 	"github.com/porter-dev/porter/internal/models"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
+	"github.com/porter-dev/porter/internal/models/saml"
 
 	"gorm.io/gorm"
 )
@@ -74,5 +75,6 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&ints.GithubAppInstallation{},
 		&ints.GithubAppOAuthIntegration{},
 		&ints.SlackIntegration{},
+		&saml.SAMLIntegration{},
 	)
 }

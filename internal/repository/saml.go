@@ -5,5 +5,6 @@ import (
 )
 
 type SAMLIntegrationRepository interface {
-	ValidateSAMLIntegration(domain string) (*saml.SAMLIntegration, error)
+	ValidateSAMLIntegration(string) (*saml.SAMLIntegration, error)
+	CreateSAMLIntegration(*saml.SAMLIntegration) (*saml.SAMLIntegration, error)
 }

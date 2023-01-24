@@ -8,8 +8,10 @@ import (
 type SAMLIntegration struct {
 	gorm.Model
 
-	Domains       string
-	IntegrationID uint
-	Type          types.IDPType
-	SignOnURL     string
+	ProjectID uint
+
+	Domains         string
+	Type            types.IDPType
+	SignOnURL       string
+	CertificateData []byte
 }

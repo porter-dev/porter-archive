@@ -26,3 +26,9 @@ func (repo *SAMLIntegrationRepository) ValidateSAMLIntegration(domain string) (*
 
 	return integ, nil
 }
+
+func (repo *SAMLIntegrationRepository) CreateSAMLIntegration(integ *saml.SAMLIntegration) (*saml.SAMLIntegration, error) {
+	repo.integrations = append(repo.integrations, integ)
+
+	return integ, nil
+}

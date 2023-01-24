@@ -7,5 +7,12 @@ const (
 )
 
 type ValidateSAMLRequest struct {
-	Email string `json:"email"`
+	Email string `json:"email" form:"required,email"`
+}
+
+type CreateSAMLIntegrationRequest struct {
+	Domains         []string `json:"domains" form:"required,fqdn"`
+	Type            IDPType  `json:"type" form:"required,oneof=okta"`
+	SignOnURL       string   `json:"sign_on_url" form:"required,url"`
+	CertificateData []byte   `json:"certificate_data" form:"required"`
 }

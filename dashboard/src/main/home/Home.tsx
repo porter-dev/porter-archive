@@ -434,7 +434,7 @@ class Home extends Component<PropsType, StateType> {
                 return <Onboarding />;
               }}
             />
-            {this.context.user.isPorterUser ? (
+            {this.context?.user?.isPorterUser ? (
               <Route
                 path="/infrastructure"
                 render={() => {

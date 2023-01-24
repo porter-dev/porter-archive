@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/porter-dev/porter/internal/models/integrations"
+	"github.com/porter-dev/porter/internal/models/saml"
 	"github.com/porter-dev/porter/internal/repository/credentials"
 )
 
@@ -213,6 +214,35 @@ func (c *Client) CreateGitlabToken(giIntegration *integrations.GitlabIntegration
 }
 
 func (c *Client) getGitlabCredentialPath(giIntegration *integrations.GitlabIntegration) string {
+	return fmt.Sprintf(
+		"kv/data/secret/%s/%d/gitlab/%d",
+		c.secretPrefix,
+		giIntegration.ProjectID,
+		giIntegration.ID,
+	)
+}
+
+func (c *Client) WriteSAMLCredential(samlIntegration *saml.SAMLIntegration, data *credentials.GitlabCredential) error {
+	reqData := &CreateVaultSecretRequest{
+		Data: data,
+	}
+
+	return c.postRequest(fmt.Sprintf("/v1/%s", c.getSAMLCredentialPath(samlIntegration)), reqData, nil)
+}
+
+func (c *Client) GetSAMLCredential(samlIntegration *saml.SAMLIntegration) (*credentials.SAMLCredential, error) {
+	resp := &GetGitlabCredentialResponse{}
+
+	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getSAMLCredentialPath(samlIntegration)), resp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Data.Data, nil
+}
+
+func (c *Client) getSAMLCredentialPath(giIntegration *integrations.GitlabIntegration) string {
 	return fmt.Sprintf(
 		"kv/data/secret/%s/%d/gitlab/%d",
 		c.secretPrefix,

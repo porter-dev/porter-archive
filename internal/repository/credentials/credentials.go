@@ -1,6 +1,9 @@
 package credentials
 
-import "github.com/porter-dev/porter/internal/models/integrations"
+import (
+	"github.com/porter-dev/porter/internal/models/integrations"
+	"github.com/porter-dev/porter/internal/models/saml"
+)
 
 type OAuthCredential struct {
 	// The ID issued to the client
@@ -63,8 +66,7 @@ type GitlabCredential struct {
 }
 
 type SAMLCredential struct {
-	AppClientID     []byte `json:"app_client_id"`
-	AppClientSecret []byte `json:"app_client_secret"`
+	CertificateData []byte `json:"certificate_data"`
 }
 
 type CredentialStorage interface {
@@ -94,5 +96,6 @@ type CredentialStorage interface {
 	CreateGitlabToken(giIntegration *integrations.GitlabIntegration) (string, error)
 
 	// SAML
-
+	WriteSAMLCredential(samlIntegration *saml.SAMLIntegration, data *SAMLCredential) error
+	GetSAMLCredential(samlIntegration *saml.SAMLIntegration) (*SAMLCredential, error)
 }

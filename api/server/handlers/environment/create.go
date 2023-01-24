@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -19,6 +20,7 @@ import (
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
+	"gorm.io/gorm"
 )
 
 type CreateEnvironmentHandler struct {
@@ -209,9 +211,115 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	c.WriteResult(w, r, env.ToEnvironmentType())
+	envType := env.ToEnvironmentType()
+
+	if len(envType.GitDeployBranches) > 0 && c.Config().ServerConf.EnableAutoPreviewBranchDeploy {
+		errs := autoDeployBranch(env, c.Config(), envType.GitDeployBranches, false)
+
+		if len(errs) > 0 {
+			errString := errs[0].Error()
+
+			for _, e := range errs {
+				errString += ": " + e.Error()
+			}
+
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("error auto deploying preview branches: %s", errString), http.StatusConflict),
+			)
+			return
+		}
+	}
+
+	c.WriteResult(w, r, envType)
 }
 
 func getGithubWebhookURLFromUID(serverURL, webhookUID string) string {
 	return fmt.Sprintf("%s/api/github/incoming_webhook/%s", serverURL, string(webhookUID))
+}
+
+func autoDeployBranch(
+	env *models.Environment,
+	config *config.Config,
+	branches []string,
+	onlyNewDeployments bool,
+) []error {
+	var (
+		errs []error
+		wg   sync.WaitGroup
+	)
+
+	for _, branch := range branches {
+		wg.Add(1)
+
+		go func(branch string) {
+			defer wg.Done()
+
+			namespace := fmt.Sprintf("previewbranch-%s-%s-%s", branch, strings.ReplaceAll(
+				strings.ToLower(env.GitRepoOwner), "_", "-"),
+				strings.ReplaceAll(strings.ToLower(env.GitRepoName), "_", "-"))
+
+			if len(namespace) > 63 {
+				namespace = namespace[:63] // Kubernetes' DNS 1123 label requirement
+			}
+
+			client, err := getGithubClientFromEnvironment(config, env)
+
+			if err != nil {
+				errs = append(errs, err)
+				return
+			}
+
+			var deplID uint
+
+			depl, err := config.Repo.Environment().ReadDeployment(env.ID, namespace)
+
+			if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+				depl, err := config.Repo.Environment().CreateDeployment(&models.Deployment{
+					EnvironmentID: env.ID,
+					Namespace:     namespace,
+					Status:        types.DeploymentStatusCreating,
+					PRName:        fmt.Sprintf("Deployment for branch %s", branch),
+					RepoName:      env.GitRepoName,
+					RepoOwner:     env.GitRepoOwner,
+					PRBranchFrom:  branch,
+					PRBranchInto:  branch,
+				})
+
+				if err != nil {
+					errs = append(errs, fmt.Errorf("error creating deployment for branch %s: %w", branch, err))
+					return
+				}
+
+				deplID = depl.ID
+			} else if err != nil {
+				errs = append(errs, fmt.Errorf("error reading deployment for branch %s: %w", branch, err))
+				return
+			} else if onlyNewDeployments {
+				return
+			} else {
+				deplID = depl.ID
+			}
+
+			_, err = client.Actions.CreateWorkflowDispatchEventByFileName(
+				context.Background(), env.GitRepoOwner, env.GitRepoName, fmt.Sprintf("porter_%s_env.yml", env.Name),
+				github.CreateWorkflowDispatchEventRequest{
+					Ref: branch,
+					Inputs: map[string]interface{}{
+						"pr_number":      fmt.Sprintf("%d", deplID),
+						"pr_title":       fmt.Sprintf("Deployment for branch %s", branch),
+						"pr_branch_from": branch,
+						"pr_branch_into": branch,
+					},
+				},
+			)
+
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}(branch)
+	}
+
+	wg.Wait()
+
+	return errs
 }

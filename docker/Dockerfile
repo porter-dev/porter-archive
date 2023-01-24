@@ -7,6 +7,8 @@ WORKDIR /porter
 
 RUN apk update && apk add --no-cache gcc musl-dev git protoc
 
+ARG CGO_ENABLED=0
+
 COPY go.mod go.sum ./
 COPY /cmd ./cmd
 COPY /internal ./internal
@@ -26,7 +28,7 @@ RUN --mount=type=cache,target=$GOPATH/pkg/mod \
 FROM base AS build-go
 
 ARG version=production
-
+ARG CGO_ENABLED=0
 
 # build proto files
 RUN sh ./scripts/build/proto.sh

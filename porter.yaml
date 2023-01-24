@@ -7,6 +7,8 @@ builds:
 
 apps:
 - name: porter-dashboard
+  depends_on:
+    - postgres
   helm_chart:
     name: web
   build_ref: porter
@@ -18,3 +20,8 @@ apps:
         cpu: 400m
         memory: 512Mi
 
+addons:
+- name: postgres
+  helm_chart:
+    name: bitnami/postgres
+    url: https://charts.bitnami.com/bitnami

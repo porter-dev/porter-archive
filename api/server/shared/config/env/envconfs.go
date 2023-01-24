@@ -111,6 +111,10 @@ type ServerConf struct {
 	// imagePullSecrets into a kubernetes deployment (Porter application)
 	DisablePullSecretsInjection bool `env:"DISABLE_PULL_SECRETS_INJECTION,default=false"`
 
+	// EnableAutoPreviewBranchDeploy is used to enable preview branch deployments automatically
+	// The default behaviour is to automatically create preview deployment against a deploy branch
+	EnableAutoPreviewBranchDeploy bool `env:"ENABLE_AUTO_PREVIEW_BRANCH_DEPLOY,default=true"`
+
 	// DisableTemporaryKubeconfig is used to denote if Porter should not
 	// create a temporary kubeconfig file for a cluster. When set to true, the
 	// /api/projects/{project_id}/clusters/{cluster_id}/kubeconfig will be disabled.

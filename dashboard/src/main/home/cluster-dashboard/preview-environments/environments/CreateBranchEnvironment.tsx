@@ -17,6 +17,7 @@ import pr_icon from "assets/pull_request_icon.svg";
 import { search } from "shared/search";
 import RadioFilter from "components/RadioFilter";
 import sort from "assets/sort.svg";
+import { toast } from "react-hot-toast";
 
 interface Props {
   environmentID: string;
@@ -29,11 +30,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
   const [sortOrder, setSortOrder] = useState("Newest");
   const [loading, setLoading] = useState<boolean>(false);
   const [showErrorsModal, setShowErrorsModal] = useState<boolean>(false);
-  const {
-    currentProject,
-    currentCluster,
-    setCurrentError,
-  } = useContext(Context);
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
 
   const {
     data: environment,
@@ -110,13 +109,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
   };
 
   const filteredBranches = useMemo(() => {
-    const filteredBySearch = search<string>(
-      branches ?? [],
-      searchValue,
-      {
-        isCaseSensitive: false,
-      }
-    );
+    const filteredBySearch = search<string>(branches ?? [], searchValue, {
+      isCaseSensitive: false,
+    });
 
     switch (sortOrder) {
       case "Alphabetical":
@@ -126,18 +121,16 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
   }, [branches, searchValue, sortOrder]);
 
   const updateDeployBranchesMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: (branch: string) => {
       return api.updateEnvironment(
         "token",
         {
           disable_new_comments: environment.new_comments_disabled,
           ...environment,
-          git_deploy_branches: _.uniq(
-            [
-              ...environmentGitDeployBranches,
-              selectedBranch,
-            ]
-          ),
+          git_deploy_branches: _.uniq([
+            ...environmentGitDeployBranches,
+            branch,
+          ]),
         },
         {
           project_id: currentProject.id,
@@ -149,10 +142,19 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
     onError: (err) => {
       setCurrentError(err as string);
     },
-    onSuccess: () =>
-      router.push(
-        `/preview-environments/deployments/${environmentID}/${environment.git_repo_name}/${environment.git_repo_owner}?status_filter=all`
-      ),
+    onSuccess: async (data, branch) => {
+      toast.success(
+        `Branch added to deploy branches. Pushes to the ${branch} branch will be tracked. You will be redirected.`
+      );
+
+      _.delay(
+        () =>
+          router.push(
+            `/preview-environments/deployments/${environmentID}/${environment.git_repo_owner}/${environment.git_repo_name}?status_filter=all`
+          ),
+        2000
+      );
+    },
   });
 
   if (branchesLoading || environmentLoading) {
@@ -206,17 +208,14 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
             icon={sort}
             selected={sortOrder}
             setSelected={setSortOrder}
-            options={[
-              { label: "Alphabetical", value: "Alphabetical" },
-            ]}
+            options={[{ label: "Alphabetical", value: "Alphabetical" }]}
             name="Sort"
           />
         </Flex>
       </FlexRow>
       <Br height="10px" />
       <BranchList>
-      {
-        (filteredBranches ?? []).map((branch, i) => (
+        {(filteredBranches ?? []).map((branch, i) => (
           <BranchRow
             onClick={() => handleRowItemClick(branch)}
             isLast={i === filteredBranches.length - 1}
@@ -224,13 +223,12 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
           >
             <BranchName>
               <BranchIcon src={pr_icon} alt="branch icon" />
-                <EllipsisTextWrapper tooltipText={branch}>
-                  {branch}
-                </EllipsisTextWrapper>
+              <EllipsisTextWrapper tooltipText={branch}>
+                {branch}
+              </EllipsisTextWrapper>
             </BranchName>
           </BranchRow>
-        ))
-      }
+        ))}
       </BranchList>
       {showErrorsModal && selectedBranch ? (
         <PorterYAMLErrorsModal
@@ -253,15 +251,17 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
       ) : null}
       <CreatePreviewDeploymentWrapper>
         <SubmitButton
-          onClick={() => updateDeployBranchesMutation.mutate()}
+          onClick={() => updateDeployBranchesMutation.mutate(selectedBranch)}
           disabled={
-            updateDeployBranchesMutation.isLoading || loading
-            || porterYAMLErrors.length > 0 || !selectedBranch
+            updateDeployBranchesMutation.isLoading ||
+            loading ||
+            porterYAMLErrors.length > 0 ||
+            !selectedBranch
           }
         >
-          {
-            updateDeployBranchesMutation.isLoading ? 'Creating...' : 'Create Preview Deployment'
-          }
+          {updateDeployBranchesMutation.isLoading
+            ? "Creating..."
+            : "Create Preview Deployment"}
         </SubmitButton>
         {selectedBranch && porterYAMLErrors.length ? (
           <RevalidatePorterYAMLSpanWrapper>

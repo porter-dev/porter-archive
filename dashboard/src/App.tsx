@@ -5,6 +5,7 @@ import styled, { createGlobalStyle } from "styled-components";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import MainWrapper from "./main/MainWrapper";
+import { Toaster } from "react-hot-toast";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,17 @@ export default class App extends Component {
           <PorterErrorBoundary errorBoundaryLocation="globalErrorBoundary">
             <BrowserRouter>
               <MainWrapper />
+              <Toaster
+                toastOptions={{
+                  style: {
+                    background: "#272731cc",
+                    border: "1px solid #ffffff55",
+                    color: "#ffffff",
+                    padding: "15px",
+                  },
+                }}
+                position="bottom-left"
+              />
             </BrowserRouter>
           </PorterErrorBoundary>
         </StyledMain>

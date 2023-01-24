@@ -253,73 +253,85 @@ func autoDeployBranch(
 
 		go func(branch string) {
 			defer wg.Done()
-
-			client, err := getGithubClientFromEnvironment(config, env)
-
-			if err != nil {
-				errs = append(errs, err)
-				return
-			}
-
-			var deplID uint
-
-			depl, err := config.Repo.Environment().ReadDeploymentForBranch(env.ID, env.GitRepoOwner, env.GitRepoName, branch)
-
-			if err == nil {
-				if onlyNewDeployments {
-					return
-				}
-
-				deplID = depl.ID
-			} else {
-				if errors.Is(err, gorm.ErrRecordNotFound) {
-					depl, err := config.Repo.Environment().CreateDeployment(&models.Deployment{
-						EnvironmentID: env.ID,
-						Status:        types.DeploymentStatusCreating,
-						PRName:        fmt.Sprintf("Deployment for branch %s", branch),
-						RepoName:      env.GitRepoName,
-						RepoOwner:     env.GitRepoOwner,
-						PRBranchFrom:  branch,
-						PRBranchInto:  branch,
-					})
-
-					if err != nil {
-						errs = append(errs, fmt.Errorf("error creating deployment for branch %s: %w", branch, err))
-						return
-					}
-
-					deplID = depl.ID
-				} else {
-					errs = append(errs, fmt.Errorf("error reading deployment for branch %s: %w", branch, err))
-					return
-				}
-			}
-
-			if deplID == 0 {
-				errs = append(errs, fmt.Errorf("deployment id is 0 for branch %s", branch))
-				return
-			}
-
-			_, err = client.Actions.CreateWorkflowDispatchEventByFileName(
-				context.Background(), env.GitRepoOwner, env.GitRepoName, fmt.Sprintf("porter_%s_env.yml", env.Name),
-				github.CreateWorkflowDispatchEventRequest{
-					Ref: branch,
-					Inputs: map[string]interface{}{
-						"pr_number":      fmt.Sprintf("%d", deplID),
-						"pr_title":       fmt.Sprintf("Deployment for branch %s", branch),
-						"pr_branch_from": branch,
-						"pr_branch_into": branch,
-					},
-				},
-			)
-
-			if err != nil {
-				errs = append(errs, err)
-			}
+			errs = append(errs, createWorkflowDispatchForBranch(env, config, onlyNewDeployments, branch)...)
 		}(branch)
 	}
 
 	wg.Wait()
+
+	return errs
+}
+
+func createWorkflowDispatchForBranch(
+	env *models.Environment,
+	config *config.Config,
+	onlyNewDeployments bool,
+	branch string,
+) []error {
+	var errs []error
+
+	client, err := getGithubClientFromEnvironment(config, env)
+
+	if err != nil {
+		errs = append(errs, err)
+		return errs
+	}
+
+	var deplID uint
+
+	depl, err := config.Repo.Environment().ReadDeploymentForBranch(env.ID, env.GitRepoOwner, env.GitRepoName, branch)
+
+	if err == nil {
+		if onlyNewDeployments {
+			return errs
+		}
+
+		deplID = depl.ID
+	} else {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			depl, err := config.Repo.Environment().CreateDeployment(&models.Deployment{
+				EnvironmentID: env.ID,
+				Status:        types.DeploymentStatusCreating,
+				PRName:        fmt.Sprintf("Deployment for branch %s", branch),
+				RepoName:      env.GitRepoName,
+				RepoOwner:     env.GitRepoOwner,
+				PRBranchFrom:  branch,
+				PRBranchInto:  branch,
+			})
+
+			if err != nil {
+				errs = append(errs, fmt.Errorf("error creating deployment for branch %s: %w", branch, err))
+				return errs
+			}
+
+			deplID = depl.ID
+		} else {
+			errs = append(errs, fmt.Errorf("error reading deployment for branch %s: %w", branch, err))
+			return errs
+		}
+	}
+
+	if deplID == 0 {
+		errs = append(errs, fmt.Errorf("deployment id is 0 for branch %s", branch))
+		return errs
+	}
+
+	_, err = client.Actions.CreateWorkflowDispatchEventByFileName(
+		context.Background(), env.GitRepoOwner, env.GitRepoName, fmt.Sprintf("porter_%s_env.yml", env.Name),
+		github.CreateWorkflowDispatchEventRequest{
+			Ref: branch,
+			Inputs: map[string]interface{}{
+				"pr_number":      fmt.Sprintf("%d", deplID),
+				"pr_title":       fmt.Sprintf("Deployment for branch %s", branch),
+				"pr_branch_from": branch,
+				"pr_branch_into": branch,
+			},
+		},
+	)
+
+	if err != nil {
+		errs = append(errs, err)
+	}
 
 	return errs
 }

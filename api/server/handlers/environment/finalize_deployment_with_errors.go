@@ -125,7 +125,7 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 	var lastErrors []string
 
 	for resName, errString := range request.Errors {
-		lastErrors = append(lastErrors, "%s: %s,", resName, errString)
+		lastErrors = append(lastErrors, fmt.Sprintf("%s: %s", resName, errString))
 	}
 
 	depl.LastErrors = strings.Join(lastErrors, ",")

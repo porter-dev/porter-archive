@@ -81,6 +81,7 @@ jobs:
           curl -L https://github.com/porter-dev/porter/releases/download/${version}/porter_${version}_Darwin_x86_64.zip --output $name
 
           sha=$(cat porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip | openssl sha256 | sed 's/(stdin)= //g')
+          sha=${sha#"SHA256"}
 
           cat >porter.rb <<EOL
           class Porter < Formula

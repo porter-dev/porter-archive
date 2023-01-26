@@ -4,7 +4,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -17,13 +16,14 @@ import (
 
 func main() {
 	if errors.SentryDSN != "" {
-		fmt.Println("initialising sentry")
-
 		err := sentry.Init(sentry.ClientOptions{
 			Dsn:         errors.SentryDSN,
 			Environment: "cli",
 			Debug:       config.Version == "dev",
 			Release:     config.Version,
+			IgnoreErrors: []string{
+				"Forbidden",
+			},
 		})
 
 		if err != nil {

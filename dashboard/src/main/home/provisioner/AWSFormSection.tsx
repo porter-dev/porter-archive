@@ -83,6 +83,8 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
   const [selectedInfras, setSelectedInfras] = useState([...provisionOptions]);
   const [buttonStatus, setButtonStatus] = useState("");
   const [provisionConfirmed, setProvisionConfirmed] = useState(false);
+  const [kmsEncryptionEnabled, setKmsEncryptionEnabled] = useState(false);
+
   // This is added only for tracking purposes
   // With this prop we will track down if the user has had an intent of filling the formulary
   const [isFormDirty, setIsFormDirty] = useState(false);
@@ -217,6 +219,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
             cluster_name: clusterName,
             machine_type: awsMachineType,
             issuer_email: context.user.email,
+            kmsEncryptionEnabled: kmsEncryptionEnabled,
           },
         },
         { project_id: currentProject.id }
@@ -419,6 +422,15 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
           </Highlight>
           .
         </Helper>
+        <CheckboxRow
+          isRequired={false}
+          checked={kmsEncryptionEnabled}
+          toggle={() => {
+            setIsFormDirty(true);
+            setKmsEncryptionEnabled(!kmsEncryptionEnabled);
+          }}
+          label="Enable KMS encryption of secrets in kubernetes cluster. This will incur costs according to KMS pricing in your region. A KMS Key will be created for you."
+        />
         <CheckboxRow
           isRequired={true}
           checked={provisionConfirmed}

@@ -17,6 +17,7 @@ import pr_icon from "assets/pull_request_icon.svg";
 import { search } from "shared/search";
 import RadioFilter from "components/RadioFilter";
 import sort from "assets/sort.svg";
+import BranchRow from "./BranchRow";
 
 interface Props {
   environmentID: string;
@@ -29,11 +30,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
   const [sortOrder, setSortOrder] = useState("Newest");
   const [loading, setLoading] = useState<boolean>(false);
   const [showErrorsModal, setShowErrorsModal] = useState<boolean>(false);
-  const {
-    currentProject,
-    currentCluster,
-    setCurrentError,
-  } = useContext(Context);
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
 
   const {
     data: environment,
@@ -110,13 +109,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
   };
 
   const filteredBranches = useMemo(() => {
-    const filteredBySearch = search<string>(
-      branches ?? [],
-      searchValue,
-      {
-        isCaseSensitive: false,
-      }
-    );
+    const filteredBySearch = search<string>(branches ?? [], searchValue, {
+      isCaseSensitive: false,
+    });
 
     switch (sortOrder) {
       case "Alphabetical":
@@ -132,12 +127,10 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
         {
           disable_new_comments: environment.new_comments_disabled,
           ...environment,
-          git_deploy_branches: _.uniq(
-            [
-              ...environmentGitDeployBranches,
-              selectedBranch,
-            ]
-          ),
+          git_deploy_branches: _.uniq([
+            ...environmentGitDeployBranches,
+            selectedBranch,
+          ]),
         },
         {
           project_id: currentProject.id,
@@ -206,31 +199,21 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
             icon={sort}
             selected={sortOrder}
             setSelected={setSortOrder}
-            options={[
-              { label: "Alphabetical", value: "Alphabetical" },
-            ]}
+            options={[{ label: "Alphabetical", value: "Alphabetical" }]}
             name="Sort"
           />
         </Flex>
       </FlexRow>
       <Br height="10px" />
       <BranchList>
-      {
-        (filteredBranches ?? []).map((branch, i) => (
+        {(filteredBranches ?? []).map((branch, i) => (
           <BranchRow
+            branch={branch}
             onClick={() => handleRowItemClick(branch)}
             isLast={i === filteredBranches.length - 1}
             isSelected={branch === selectedBranch}
-          >
-            <BranchName>
-              <BranchIcon src={pr_icon} alt="branch icon" />
-                <EllipsisTextWrapper tooltipText={branch}>
-                  {branch}
-                </EllipsisTextWrapper>
-            </BranchName>
-          </BranchRow>
-        ))
-      }
+          />
+        ))}
       </BranchList>
       {showErrorsModal && selectedBranch ? (
         <PorterYAMLErrorsModal
@@ -255,13 +238,15 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
         <SubmitButton
           onClick={() => updateDeployBranchesMutation.mutate()}
           disabled={
-            updateDeployBranchesMutation.isLoading || loading
-            || porterYAMLErrors.length > 0 || !selectedBranch
+            updateDeployBranchesMutation.isLoading ||
+            loading ||
+            porterYAMLErrors.length > 0 ||
+            !selectedBranch
           }
         >
-          {
-            updateDeployBranchesMutation.isLoading ? 'Creating...' : 'Create Preview Deployment'
-          }
+          {updateDeployBranchesMutation.isLoading
+            ? "Creating..."
+            : "Create Preview Deployment"}
         </SubmitButton>
         {selectedBranch && porterYAMLErrors.length ? (
           <RevalidatePorterYAMLSpanWrapper>
@@ -296,17 +281,6 @@ const BranchList = styled.div`
   margin-top: 33px;
 `;
 
-const BranchRow = styled.div<{ isLast?: boolean; isSelected?: boolean }>`
-  width: 100%;
-  padding: 15px;
-  cursor: pointer;
-  background: ${(props) => (props.isSelected ? "#ffffff11" : "#26292e")};
-  border-bottom: ${(props) => (props.isLast ? "" : "1px solid #494b4f")};
-  :hover {
-    background: #ffffff11;
-  }
-`;
-
 const SearchRowWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -330,16 +304,6 @@ const SearchBarWrapper = styled.div`
     font-size: 16px;
     margin-right: 8px;
   }
-`;
-
-const BranchName = styled.div`
-  font-family: "Work Sans", sans-serif;
-  font-weight: 500;
-  color: #ffffff;
-  display: flex;
-  font-size: 14px;
-  align-items: center;
-  margin-bottom: 10px;
 `;
 
 const Code = styled.span`
@@ -403,14 +367,6 @@ const MergeInfo = styled.div`
     font-size: 16px;
     margin: 0 2px;
   }
-`;
-
-const BranchIcon = styled.img`
-  font-size: 20px;
-  height: 16px;
-  margin-right: 10px;
-  color: #aaaabb;
-  opacity: 50%;
 `;
 
 const SubmitButton = styled.div`

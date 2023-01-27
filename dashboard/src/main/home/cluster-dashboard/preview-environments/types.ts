@@ -59,3 +59,10 @@ export type PullRequest = {
   created_at: string;
   updated_at: string;
 };
+
+export type Branch = {
+  name: string;
+  commit_sha: string;
+  last_updated_at: string;
+  url: string;
+};

@@ -212,6 +212,7 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
             onClick={() => handleRowItemClick(branch)}
             isLast={i === filteredBranches.length - 1}
             isSelected={branch === selectedBranch}
+            environment={environment}
           />
         ))}
       </BranchList>

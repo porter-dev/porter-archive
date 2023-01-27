@@ -61,7 +61,8 @@ func (c *GithubGetBranchMetadataHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		c.HandleAPIError(
 			w,
 			r,
-			apierrors.NewErrPassThroughToClient(fmt.Errorf("Error getting branch %s for repository %s/%s. Error: %w", branch, owner, name, err), http.StatusConflict),
+			apierrors.NewErrPassThroughToClient(fmt.Errorf("Error communicating with the GitHub API. Please try again."),
+				http.StatusConflict, fmt.Sprintf("Error getting branch %s for repository %s/%s: %v", branch, owner, name, err))
 		)
 		return
 	}

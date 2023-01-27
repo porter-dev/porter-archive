@@ -1,5 +1,6 @@
 import Modal from "main/home/modals/Modal";
-import React from "react";
+import React, { useContext } from "react";
+import { Context } from "shared/Context";
 import { ChartType } from "shared/types";
 import styled from "styled-components";
 
@@ -8,6 +9,7 @@ const ConnectToJobInstructionsModal: React.FC<{
   onClose: () => void;
   chartName: string;
 }> = ({ show, chartName, onClose }) => {
+  const { currentCluster, currentProject } = useContext(Context);
   if (!show) {
     return null;
   }
@@ -26,6 +28,13 @@ const ConnectToJobInstructionsModal: React.FC<{
       </a>
       ).
       <br />
+      <br />
+      Run the following commands to set your current project and cluster
+      <Code>
+        porter config set-project {currentProject.id}
+        <br />
+        porter config set-cluster {currentCluster.id}
+      </Code>
       <br />
       Run the following line of code, and make sure to change the command to
       something your container can run:

@@ -398,15 +398,6 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
           .
         </Helper>
         <CheckboxRow
-          isRequired={false}
-          checked={kmsEncryptionEnabled}
-          toggle={() => {
-            setIsFormDirty(true);
-            setKmsEncryptionEnabled(!kmsEncryptionEnabled);
-          }}
-          label="Enable KMS encryption of secrets in kubernetes cluster. This will incur costs according to KMS pricing in your region. A KMS Key will be created for you."
-        />
-        <CheckboxRow
           isRequired={true}
           checked={provisionConfirmed}
           toggle={() => {

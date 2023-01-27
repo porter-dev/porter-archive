@@ -83,6 +83,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
   const [selectedInfras, setSelectedInfras] = useState([...provisionOptions]);
   const [buttonStatus, setButtonStatus] = useState("");
   const [provisionConfirmed, setProvisionConfirmed] = useState(false);
+  const [eksUseKms, setEksUseKms] = useState(false);
   // This is added only for tracking purposes
   // With this prop we will track down if the user has had an intent of filling the formulary
   const [isFormDirty, setIsFormDirty] = useState(false);
@@ -217,6 +218,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
             cluster_name: clusterName,
             machine_type: awsMachineType,
             issuer_email: context.user.email,
+            is_kms_enabled: eksUseKms,
           },
         },
         { project_id: currentProject.id }
@@ -339,38 +341,6 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
           }}
           label="⚙️ AWS Machine Type"
         />
-        {/*
-        <Helper>
-          Estimated Cost:{" "}
-          <CostHighlight highlight={this.props.highlightCosts}>
-            {`\$${
-              70 + 3 * costMapping[this.state.awsMachineType] + 30
-            }/Month`}
-          </CostHighlight>
-          <Tooltip
-            title={
-              <div
-                style={{
-                  fontFamily: "Work Sans, sans-serif",
-                  fontSize: "12px",
-                  fontWeight: "normal",
-                  padding: "5px 6px",
-                }}
-              >
-                EKS cost: ~$70/month <br />
-                Machine (x3) cost: ~$
-                {`${3 * costMapping[this.state.awsMachineType]}`}/month <br />
-                Networking cost: ~$30/month
-              </div>
-            }
-            placement="top"
-          >
-            <StyledInfoTooltip>
-              <i className="material-icons">help_outline</i>
-            </StyledInfoTooltip>
-          </Tooltip>
-        </Helper>
-        */}
         <InputRow
           type="text"
           value={awsAccessId}
@@ -410,6 +380,14 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
           }}
         />
         {renderClusterNameSection()}
+        <CheckboxRow
+          checked={eksUseKms}
+          toggle={() => {
+            setIsFormDirty(true);
+            setEksUseKms(!eksUseKms);
+          }}
+          label="Enable secret encryption with AWS Key Management Service"
+        />
         <Helper>
           By default, Porter creates a cluster with three t2.medium instances
           (2vCPUs and 4GB RAM each). AWS will bill you for any provisioned
@@ -419,6 +397,15 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
           </Highlight>
           .
         </Helper>
+        <CheckboxRow
+          isRequired={false}
+          checked={kmsEncryptionEnabled}
+          toggle={() => {
+            setIsFormDirty(true);
+            setKmsEncryptionEnabled(!kmsEncryptionEnabled);
+          }}
+          label="Enable KMS encryption of secrets in kubernetes cluster. This will incur costs according to KMS pricing in your region. A KMS Key will be created for you."
+        />
         <CheckboxRow
           isRequired={true}
           checked={provisionConfirmed}

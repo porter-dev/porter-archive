@@ -297,7 +297,7 @@ tabs:
           value: "12.7"
         - label: "v12.8"
           value: "12.8"
-          - label: "v12.9"
+        - label: "v12.9"
           value: "12.9"
         - label: "v12.10"
           value: "12.10"

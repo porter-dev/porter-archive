@@ -2,6 +2,7 @@ package gitinstallation
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -11,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/helm/repo"
 )
 
 type GithubGetBranchMetadataHandler struct {
@@ -56,7 +58,11 @@ func (c *GithubGetBranchMetadataHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(
+			w,
+			r,
+			apierrors.NewErrPassThroughToClient(fmt.Errorf("Error getting branch %s for repository %s/%s. Error: %w", branch, owner, name, err), http.StatusConflict),
+		)
 		return
 	}
 

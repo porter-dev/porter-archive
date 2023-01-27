@@ -198,7 +198,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			WriteBufferSize: 1024,
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
-				return true || origin == sc.ServerURL
+				return origin == sc.ServerURL
 			},
 		},
 	}

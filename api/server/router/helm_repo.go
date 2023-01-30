@@ -81,6 +81,35 @@ func getHelmRepoRoutes(
 		Router:   r,
 	})
 
+	// PATCH /api/projects/{project_id}/helmrepos/{helm_repo_id} -> registry.NewHelmRepoUpdateHandler
+	updateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPatch,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.HelmRepoScope,
+			},
+		},
+	)
+
+	updateHandler := helmrepo.NewHelmRepoUpdateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateEndpoint,
+		Handler:  updateHandler,
+		Router:   r,
+	})
+
 	// DELETE /api/projects/{project_id}/helmrepos/{helm_repo_id} -> registry.NewHelmRepoDeleteHandler
 	deleteEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

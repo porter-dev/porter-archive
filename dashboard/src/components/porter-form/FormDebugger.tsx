@@ -61,7 +61,7 @@ export default class FormDebugger extends Component<PropsType, StateType> {
     try {
       formData = yaml.load(this.state.rawYaml);
     } catch (err: any) {
-      console.log("YAML parsing error.");
+      console.log("YAML parsing error.", err);
     }
     return (
       <StyledFormDebugger>

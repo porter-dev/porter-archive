@@ -471,7 +471,7 @@ tabs:
           value: m6i.4xlarge
         - label: r5.large
           value: r5.large
-        - value: r5.xlarge
+        - label: r5.xlarge
           value: r5.xlarge
     - type: string-input
       label: 👤 Issuer Email
@@ -758,6 +758,15 @@ tabs:
           value: t3.large
         - label: t3.xlarge
           value: t3.xlarge
+  - name: kms_secret_encryption
+    contents:
+    - type: heading
+      label: KMS Encryption
+    - type: checkbox
+      variable: is_kms_enabled
+      label: Encrypt all Kubernetes secrets with AWS Key Management Service (KMS)
+      settings:
+        default: false
 `
 
 const gcrForm = `name: GCR

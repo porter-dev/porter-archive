@@ -14,8 +14,8 @@ type HelmRepo struct {
 
 type GetHelmRepoResponse HelmRepo
 
-type CreateHelmRepoRequest struct {
-	URL                string `json:"url"`
+type CreateUpdateHelmRepoRequest struct {
+	URL                string `json:"url" form:"required"`
 	Name               string `json:"name" form:"required"`
 	BasicIntegrationID uint   `json:"basic_integration_id"`
 }

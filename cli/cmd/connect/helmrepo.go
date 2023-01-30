@@ -77,7 +77,7 @@ Password:`)
 	reg, err := client.CreateHelmRepo(
 		context.Background(),
 		projectID,
-		&types.CreateHelmRepoRequest{
+		&types.CreateUpdateHelmRepoRequest{
 			URL:                repoURL,
 			Name:               repoName,
 			BasicIntegrationID: basicIntegrationID,

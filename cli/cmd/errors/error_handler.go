@@ -24,22 +24,20 @@ func (h *standardErrorHandler) HandleError(err error) {
 type sentryErrorHandler struct{}
 
 func (h *sentryErrorHandler) HandleError(err error) {
-	if SentryDSN == "" {
-		panic("using SentryErrorHandler but Sentry DSN is not set")
-	}
+	if SentryDSN != "" {
+		localHub := sentry.CurrentHub().Clone()
 
-	localHub := sentry.CurrentHub().Clone()
-
-	localHub.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetTags(map[string]string{
-			"host":    config.GetCLIConfig().Host,
-			"project": fmt.Sprintf("%d", config.GetCLIConfig().Project),
-			"cluster": fmt.Sprintf("%d", config.GetCLIConfig().Cluster),
+		localHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetTags(map[string]string{
+				"host":    config.GetCLIConfig().Host,
+				"project": fmt.Sprintf("%d", config.GetCLIConfig().Project),
+				"cluster": fmt.Sprintf("%d", config.GetCLIConfig().Cluster),
+			})
 		})
-	})
 
-	if eventID := localHub.CaptureException(err); eventID == nil {
-		color.New(color.FgRed).Fprintf(os.Stderr, "error in sending exception to sentry\n")
+		if eventID := localHub.CaptureException(err); eventID == nil {
+			color.New(color.FgRed).Fprintf(os.Stderr, "error in sending exception to sentry\n")
+		}
 	}
 
 	color.New(color.FgRed).Fprintf(os.Stderr, "error: %s\n", err.Error())

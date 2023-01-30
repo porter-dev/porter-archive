@@ -9,27 +9,47 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
 )
 
-type HelmRepoCreateHandler struct {
+type HelmRepoUpdateHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewHelmRepoCreateHandler(
+func NewHelmRepoUpdateHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *HelmRepoCreateHandler {
-	return &HelmRepoCreateHandler{
+) *HelmRepoUpdateHandler {
+	return &HelmRepoUpdateHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (p *HelmRepoCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *HelmRepoUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+
+	helmRepoID, reqErr := requestutils.GetURLParamUint(r, "helm_repo_id")
+
+	if reqErr != nil {
+		p.HandleAPIError(w, r, reqErr)
+		return
+	}
+
+	helmRepo, err := p.Repo().HelmRepo().ReadHelmRepo(proj.ID, helmRepoID)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			p.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such helm repo")))
+			return
+		}
+
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
 
 	request := &types.CreateUpdateHelmRepoRequest{}
 
@@ -57,20 +77,16 @@ func (p *HelmRepoCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	hr := &models.HelmRepo{
-		Name:                   request.Name,
-		ProjectID:              proj.ID,
-		RepoURL:                request.URL,
-		BasicAuthIntegrationID: request.BasicIntegrationID,
-	}
+	helmRepo.Name = request.Name
+	helmRepo.RepoURL = request.URL
+	helmRepo.BasicAuthIntegrationID = request.BasicIntegrationID
 
-	// handle write to the database
-	hr, err := p.Repo().HelmRepo().CreateHelmRepo(hr)
+	helmRepo, err = p.Repo().HelmRepo().UpdateHelmRepo(helmRepo)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	p.WriteResult(w, r, hr.ToHelmRepoType())
+	p.WriteResult(w, r, helmRepo.ToHelmRepoType())
 }

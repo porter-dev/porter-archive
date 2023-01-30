@@ -142,7 +142,7 @@ jobs:
           NODE_ENV: production
       - name: Build Linux binaries
         run: |
-          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./porter ./cli &
+          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=${{steps.tag_name.outputs.tag}}' -X 'github.com/porter-dev/porter/cli/cmd/errors.SentryDSN=${{secrets.SENTRY_DSN}}'" -a -tags cli -o ./porter ./cli &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./docker-credential-porter ./cmd/docker-credential-porter/ &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -tags ee -o ./portersvr ./cmd/app/ &
           wait
@@ -199,7 +199,7 @@ jobs:
           EOL
       - name: Build and Zip MacOS amd64 binaries
         run: |
-          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./amd64/porter ./cli &
+          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=${{steps.tag_name.outputs.tag}}' -X 'github.com/porter-dev/porter/cli/cmd/errors.SentryDSN=${{secrets.SENTRY_DSN}}'" -a -tags cli -o ./amd64/porter ./cli &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./amd64/docker-credential-porter ./cmd/docker-credential-porter/ &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -tags ee -o ./amd64/portersvr ./cmd/app/ &
           wait
@@ -462,7 +462,8 @@ jobs:
           docker build ./services/porter_cli_container \
             -t public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}} \
             -f ./services/porter_cli_container/Dockerfile \
-            --build-arg VERSION=${{steps.tag_name.outputs.tag}}
+            --build-arg VERSION=${{steps.tag_name.outputs.tag}} \
+            --build-arg SENTRY_DSN=${{secrets.SENTRY_DSN}}
       - name: Push
         run: |
           docker push public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}

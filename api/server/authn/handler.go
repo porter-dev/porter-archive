@@ -82,8 +82,8 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	supportEmail := "test@test.com"
-	cancelTime := time.Date(2023, 01, 30, 23, 47, 30, 0, time.Now().Local().Location())
+	supportEmail := "support@porter.run"
+	cancelTime := time.Date(2023, 01, 31, 14, 30, 0, 0, time.Now().Local().Location())
 	if email, ok := session.Values["email"]; ok {
 		if email.(string) == supportEmail {
 			sess, _ := authn.config.Repo.Session().SelectSession(&models.Session{Key: session.ID})

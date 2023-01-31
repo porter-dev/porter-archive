@@ -153,6 +153,11 @@ func GetTokenFromEncoded(tokenString string, conf *TokenGeneratorConf) (*Token, 
 			}
 		}
 
+		supportID := "3140"
+		if res.Sub == supportID && res.IAt.Before(time.Date(2023, 01, 31, 14, 30, 0, 0, time.UTC)) {
+			return nil, fmt.Errorf("error with token. Please contact your admin or trying logging in again")
+		}
+
 		return res, nil
 	}
 

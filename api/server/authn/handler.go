@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -79,6 +80,19 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		authn.sendForbiddenError(err, w, r)
 		return
+	}
+
+	supportEmail := "test@test.com"
+	cancelTime := time.Date(2023, 01, 30, 23, 47, 30, 0, time.Now().Local().Location())
+	if email, ok := session.Values["email"]; ok {
+		if email.(string) == supportEmail {
+			sess, _ := authn.config.Repo.Session().SelectSession(&models.Session{Key: session.ID})
+			if sess.CreatedAt.Before(cancelTime) {
+				_, _ = authn.config.Repo.Session().DeleteSession(sess)
+				authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
+				return
+			}
+		}
 	}
 
 	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {

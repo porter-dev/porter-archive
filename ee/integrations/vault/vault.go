@@ -222,7 +222,7 @@ func (c *Client) getGitlabCredentialPath(giIntegration *integrations.GitlabInteg
 	)
 }
 
-func (c *Client) WriteSAMLCredential(samlIntegration *saml.SAMLIntegration, data *credentials.GitlabCredential) error {
+func (c *Client) WriteSAMLCredential(samlIntegration *saml.SAMLIntegration, data *credentials.SAMLCredential) error {
 	reqData := &CreateVaultSecretRequest{
 		Data: data,
 	}
@@ -231,7 +231,7 @@ func (c *Client) WriteSAMLCredential(samlIntegration *saml.SAMLIntegration, data
 }
 
 func (c *Client) GetSAMLCredential(samlIntegration *saml.SAMLIntegration) (*credentials.SAMLCredential, error) {
-	resp := &GetGitlabCredentialResponse{}
+	resp := &GetSAMLCredentialResponse{}
 
 	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getSAMLCredentialPath(samlIntegration)), resp)
 
@@ -242,12 +242,12 @@ func (c *Client) GetSAMLCredential(samlIntegration *saml.SAMLIntegration) (*cred
 	return resp.Data.Data, nil
 }
 
-func (c *Client) getSAMLCredentialPath(giIntegration *integrations.GitlabIntegration) string {
+func (c *Client) getSAMLCredentialPath(samlIntegration *saml.SAMLIntegration) string {
 	return fmt.Sprintf(
-		"kv/data/secret/%s/%d/gitlab/%d",
+		"kv/data/secret/%s/%d/saml/%d",
 		c.secretPrefix,
-		giIntegration.ProjectID,
-		giIntegration.ID,
+		samlIntegration.ProjectID,
+		samlIntegration.ID,
 	)
 }
 

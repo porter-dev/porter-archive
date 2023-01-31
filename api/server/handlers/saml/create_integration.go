@@ -73,7 +73,7 @@ func (h *CreateSAMLIntegrationHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		ProjectID:       project.ID,
 		Domains:         strings.Join(request.Domains, ","),
 		SignOnURL:       request.SignOnURL,
-		CertificateData: request.CertificateData,
+		CertificateData: []byte(request.CertificateData),
 	}
 
 	if _, err := h.Repo().SAMLIntegration().CreateSAMLIntegration(integ); err != nil {

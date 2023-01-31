@@ -69,6 +69,16 @@ type GetGitlabCredentialData struct {
 	Data     *credentials.GitlabCredential `json:"data"`
 }
 
+type GetSAMLCredentialResponse struct {
+	*VaultGetResponse
+	Data *GetSAMLCredentialData `json:"data"`
+}
+
+type GetSAMLCredentialData struct {
+	Metadata *VaultMetadata              `json:"metadata"`
+	Data     *credentials.SAMLCredential `json:"data"`
+}
+
 type CreatePolicyRequest struct {
 	Policy string `json:"policy"`
 }

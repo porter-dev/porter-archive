@@ -37,5 +37,9 @@ func (repo *SAMLIntegrationRepository) ValidateSAMLIntegration(domain string) (*
 }
 
 func (repo *SAMLIntegrationRepository) CreateSAMLIntegration(integ *saml.SAMLIntegration) (*saml.SAMLIntegration, error) {
+	if err := repo.db.Create(integ).Error; err != nil {
+		return nil, err
+	}
+
 	return nil, nil
 }

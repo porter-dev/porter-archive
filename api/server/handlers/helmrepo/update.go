@@ -51,6 +51,24 @@ func (p *HelmRepoUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	if helmRepo.BasicAuthIntegrationID != 0 {
+		bi, err := p.Repo().BasicIntegration().ReadBasicIntegration(proj.ID, helmRepo.BasicAuthIntegrationID)
+
+		if err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+		} else {
+			_, err = p.Repo().BasicIntegration().DeleteBasicIntegration(bi)
+
+			if err != nil {
+				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+		}
+	}
+
 	request := &types.CreateUpdateHelmRepoRequest{}
 
 	ok := p.DecodeAndValidate(w, r, request)

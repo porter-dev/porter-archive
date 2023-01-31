@@ -51,7 +51,17 @@ func (p *HelmRepoUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if helmRepo.BasicAuthIntegrationID != 0 {
+	request := &types.CreateUpdateHelmRepoRequest{}
+
+	ok := p.DecodeAndValidate(w, r, request)
+
+	if !ok {
+		return
+	}
+
+	if request.BasicIntegrationID != 0 &&
+		helmRepo.BasicAuthIntegrationID != 0 &&
+		request.BasicIntegrationID != helmRepo.BasicAuthIntegrationID {
 		bi, err := p.Repo().BasicIntegration().ReadBasicIntegration(proj.ID, helmRepo.BasicAuthIntegrationID)
 
 		if err != nil {
@@ -67,14 +77,6 @@ func (p *HelmRepoUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 				return
 			}
 		}
-	}
-
-	request := &types.CreateUpdateHelmRepoRequest{}
-
-	ok := p.DecodeAndValidate(w, r, request)
-
-	if !ok {
-		return
 	}
 
 	// if a basic integration is specified, verify that it exists in the project

@@ -2,7 +2,6 @@ import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import TitleSection from "components/TitleSection";
 import React, { useEffect, useMemo, useState } from "react";
-import Cohere from "cohere-js";
 import { useParams } from "react-router";
 import styled from "styled-components";
 import ProviderSelector, {
@@ -217,9 +216,6 @@ const ProvisionResources: React.FC<{}> = () => {
     if (typeof infraStatus.hasError !== "boolean") return;
 
     if (infraStatus.hasError) {
-      Cohere.widget("show");
-      Cohere.widget("expand");
-
       const cause = new Error(
         JSON.stringify({
           description: infraStatus.description,
@@ -233,16 +229,8 @@ const ProvisionResources: React.FC<{}> = () => {
           { cause }
         )
       );
-    } else {
-      Cohere.widget("hide");
     }
   }, [infraStatus]);
-
-  useEffect(() => {
-    return () => {
-      Cohere.widget("hide");
-    };
-  }, []);
 
   const Content = () => {
     switch (step) {

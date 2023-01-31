@@ -435,9 +435,9 @@ class Home extends Component<PropsType, StateType> {
                 return <Onboarding />;
               }}
             />
-            {this.context.user.isPorterUser ||
+            {this.context?.user?.isPorterUser ||
             overrideInfraTabEnabled({
-              projectID: this.context.currentProject.id,
+              projectID: this.context?.currentProject?.id,
             }) ? (
               <Route
                 path="/infrastructure"

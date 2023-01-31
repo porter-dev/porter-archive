@@ -133,6 +133,23 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 		}
 
 		env.GitDeployBranches = strings.Join(request.GitDeployBranches, ",")
+
+		if len(request.GitDeployBranches) > 0 && c.Config().ServerConf.EnableAutoPreviewBranchDeploy {
+			errs := autoDeployBranch(env, c.Config(), request.GitDeployBranches, true)
+
+			if len(errs) > 0 {
+				errString := errs[0].Error()
+
+				for _, e := range errs {
+					errString += ": " + e.Error()
+				}
+
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+					fmt.Errorf("error auto deploying preview branches: %s", errString), http.StatusConflict),
+				)
+				return
+			}
+		}
 	}
 
 	if request.DisableNewComments != env.NewCommentsDisabled {

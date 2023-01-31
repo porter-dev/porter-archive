@@ -35,7 +35,7 @@ func (s *SessionRepository) UpdateSession(session *models.Session) (*models.Sess
 // DeleteSession deletes a session by Key
 func (s *SessionRepository) DeleteSession(session *models.Session) (*models.Session, error) {
 
-	if err := s.db.Where("Key = ?", session.Key).Delete(session).Error; err != nil {
+	if err := s.db.Where("Key = ?", session.Key).Unscoped().Delete(session).Error; err != nil {
 		return nil, err
 	}
 
@@ -45,7 +45,7 @@ func (s *SessionRepository) DeleteSession(session *models.Session) (*models.Sess
 // SelectSession returns a session with matching key
 func (s *SessionRepository) SelectSession(session *models.Session) (*models.Session, error) {
 
-	if err := s.db.Where("Key = ?", session.Key).First(session).Error; err != nil {
+	if err := s.db.Where("Key = ? AND deleted_at is null", session.Key).First(session).Error; err != nil {
 		return nil, err
 	}
 

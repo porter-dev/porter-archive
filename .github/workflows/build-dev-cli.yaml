@@ -28,7 +28,9 @@ jobs:
           DOCKER_BUILDKIT=1 docker build . \
             -t public.ecr.aws/o1j4x7p4/porter-cli:dev \
             -f ./services/porter_cli_container/dev.Dockerfile \
-            -e SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+            --build-arg SENTRY_DSN
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
       - name: Push to ECR public
         run: |
           docker push public.ecr.aws/o1j4x7p4/porter-cli:dev

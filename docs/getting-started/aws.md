@@ -174,7 +174,12 @@ Copy and paste the below JSON to the field.
         "kms:ListResourceTags",
         "kms:ScheduleKeyDeletion",
         "kms:TagResource",
+<<<<<<< Updated upstream
         "kms:UntagResource"
+=======
+        "kms:UntagResource",
+        "kms:EnableKeyRotation"
+>>>>>>> Stashed changes
       ],
       "Resource": "*"
     }

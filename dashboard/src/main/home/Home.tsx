@@ -3,7 +3,6 @@ import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 import styled from "styled-components";
 
 import api from "shared/api";
-import { H } from "highlight.run";
 import { Context } from "shared/Context";
 import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
 import { ClusterType, ProjectType } from "shared/types";
@@ -158,15 +157,6 @@ class Home extends Component<PropsType, StateType> {
     let { match } = this.props;
 
     let { user } = this.context;
-
-    // Initialize Highlight
-    if (
-      window.location.href.includes("dashboard.getporter.dev") &&
-      !user.email.includes("@getporter.dev")
-    ) {
-      H.init("y2d13lgr");
-      H.identify(user.email, { id: user.id });
-    }
 
     // Handle redirect from DO
     let queryString = window.location.search;

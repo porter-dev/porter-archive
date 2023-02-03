@@ -173,7 +173,7 @@ const ModalHandler: React.FC<{
         <Modal
           onRequestClose={() => setCurrentModal(null, null)}
           width="760px"
-          height="440px"
+          height="480px"
           title="Account Settings"
         >
           <AccountSettingsModal />

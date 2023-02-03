@@ -88,7 +88,7 @@ const EnvGroupArray = ({
               return (
                 <InputWrapper key={i}>
                   <Input
-                    placeholder="ex: key"
+                    placeholder="ex: koy"
                     width="270px"
                     value={entry.key}
                     onChange={(e: any) => {

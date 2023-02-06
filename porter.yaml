@@ -13,6 +13,8 @@ apps:
     name: web
   build_ref: porter
   helm_values:
+    container:
+      command: /porter/migrate && /porter/app
     resources:
       requests:
         cpu: 400m
@@ -23,3 +25,8 @@ addons:
   helm_chart:
     name: postgresql
     url: https://charts.bitnami.com/bitnami
+  helm_values:
+    global:
+      auth:
+        username: porter
+        database: porter

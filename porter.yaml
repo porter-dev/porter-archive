@@ -9,6 +9,8 @@ apps:
 - name: porter-dashboard
   # depends_on:
   #   - postgres
+  helm_chart:
+    name: web
   build_ref: porter
   helm_values:
     resources:

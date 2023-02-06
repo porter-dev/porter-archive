@@ -9,12 +9,8 @@ apps:
 - name: porter-dashboard
   # depends_on:
   #   - postgres
-  helm_chart:
-    name: web
   build_ref: porter
-  helm_values: # refer https://github.com/porter-dev/porter-charts/blob/master/applications/web/values.yaml
-    container:
-      command: 
+  helm_values:
     resources:
       requests:
         cpu: 400m

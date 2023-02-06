@@ -31,7 +31,7 @@ func (c *Client) CreateRegistry(
 func (c *Client) CreateHelmRepo(
 	ctx context.Context,
 	projectID uint,
-	req *types.CreateHelmRepoRequest,
+	req *types.CreateUpdateHelmRepoRequest,
 ) (*types.HelmRepo, error) {
 	resp := &types.HelmRepo{}
 

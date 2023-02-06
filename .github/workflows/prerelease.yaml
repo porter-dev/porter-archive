@@ -142,7 +142,7 @@ jobs:
           NODE_ENV: production
       - name: Build Linux binaries
         run: |
-          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./porter ./cli &
+          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=${{steps.tag_name.outputs.tag}}' -X 'github.com/porter-dev/porter/cli/cmd/errors.SentryDSN=${{secrets.SENTRY_DSN}}'" -a -tags cli -o ./porter ./cli &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./docker-credential-porter ./cmd/docker-credential-porter/ &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -tags ee -o ./portersvr ./cmd/app/ &
           wait
@@ -199,7 +199,7 @@ jobs:
           EOL
       - name: Build and Zip MacOS amd64 binaries
         run: |
-          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./amd64/porter ./cli &
+          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=${{steps.tag_name.outputs.tag}}' -X 'github.com/porter-dev/porter/cli/cmd/errors.SentryDSN=${{secrets.SENTRY_DSN}}'" -a -tags cli -o ./amd64/porter ./cli &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./amd64/docker-credential-porter ./cmd/docker-credential-porter/ &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -tags ee -o ./amd64/portersvr ./cmd/app/ &
           wait
@@ -457,15 +457,22 @@ jobs:
         id: login-ecr
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Login to GHCR
+        id: login-ghcr
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Build
         run: |
           docker build ./services/porter_cli_container \
             -t public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}} \
             -f ./services/porter_cli_container/Dockerfile \
-            --build-arg VERSION=${{steps.tag_name.outputs.tag}}
-      - name: Push
+            --build-arg VERSION=${{steps.tag_name.outputs.tag}} \
+            --build-arg SENTRY_DSN=${{secrets.SENTRY_DSN}}
+      - name: Push to ECR public
+        run: docker push public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+      - name: Push to GHCR
         run: |
-          docker push public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+          docker tag public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}} ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
+          docker push ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
   update-porter-update-action:
     name: Update porter-update-action
     runs-on: ubuntu-latest
@@ -489,7 +496,8 @@ jobs:
           git checkout -B "${{steps.tag_name.outputs.tag}}"
 
           cat >Dockerfile <<EOL
-          FROM public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+          FROM ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
+          LABEL org.opencontainers.image.source="https://github.com/porter-dev/porter"
 
           COPY entrypoint.sh /action/
 
@@ -527,7 +535,8 @@ jobs:
           git checkout -B "${{steps.tag_name.outputs.tag}}"
 
           cat >Dockerfile <<EOL
-          FROM public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+          FROM ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
+          LABEL org.opencontainers.image.source="https://github.com/porter-dev/porter"
 
           COPY entrypoint.sh /action/
 

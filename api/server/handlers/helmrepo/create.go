@@ -31,7 +31,7 @@ func NewHelmRepoCreateHandler(
 func (p *HelmRepoCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	request := &types.CreateHelmRepoRequest{}
+	request := &types.CreateUpdateHelmRepoRequest{}
 
 	ok := p.DecodeAndValidate(w, r, request)
 

@@ -58,11 +58,18 @@ jobs:
         id: login-ecr
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Login to GHCR
+        id: login-ghcr
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Pull versioned CLI image and push to latest
         run: |
           docker pull public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
           docker tag public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}} public.ecr.aws/o1j4x7p4/porter-cli:latest
           docker push public.ecr.aws/o1j4x7p4/porter-cli:latest
+
+          docker pull ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
+          docker tag ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}} ghcr.io/porter-dev/porter/porter-cli:latest
+          docker push ghcr.io/porter-dev/porter/porter-cli:latest
   update-homebrew-repo:
     name: Update the Homebrew repo with the new CLI version
     runs-on: ubuntu-latest
@@ -81,6 +88,7 @@ jobs:
           curl -L https://github.com/porter-dev/porter/releases/download/${version}/porter_${version}_Darwin_x86_64.zip --output $name
 
           sha=$(cat porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip | openssl sha256 | sed 's/(stdin)= //g')
+          sha=${sha#"SHA256"}
 
           cat >porter.rb <<EOL
           class Porter < Formula

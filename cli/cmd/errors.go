@@ -10,6 +10,7 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
+	cliErrors "github.com/porter-dev/porter/cli/cmd/errors"
 )
 
 var ErrNotLoggedIn error = errors.New("You are not logged in.")
@@ -52,7 +53,8 @@ func checkLoginAndRun(args []string, runner func(user *types.GetAuthenticatedUse
 			return nil
 		}
 
-		red.Fprintf(os.Stderr, "Error: %v\n", err.Error())
+		cliErrors.GetErrorHandler().HandleError(err)
+
 		return err
 	}
 

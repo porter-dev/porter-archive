@@ -20,11 +20,19 @@ jobs:
         id: login-ecr
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Login to GHCR
+        id: login-ghcr
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Build
         run: |
           DOCKER_BUILDKIT=1 docker build . \
             -t public.ecr.aws/o1j4x7p4/porter-cli:dev \
-            -f ./services/porter_cli_container/dev.Dockerfile
-      - name: Push
+            -f ./services/porter_cli_container/dev.Dockerfile \
+            --build-arg SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+      - name: Push to ECR public
         run: |
           docker push public.ecr.aws/o1j4x7p4/porter-cli:dev
+      - name: Push to GHCR
+        run: |
+          docker tag public.ecr.aws/o1j4x7p4/porter-cli:dev ghcr.io/porter-dev/porter/porter-cli:dev
+          docker push ghcr.io/porter-dev/porter/porter-cli:dev

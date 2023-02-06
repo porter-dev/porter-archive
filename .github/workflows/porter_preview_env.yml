@@ -29,7 +29,7 @@ jobs:
       uses: porter-dev/porter-preview-action@v0.2.1
       with:
         action_id: ${{ github.run_id }}
-        cluster: "2481"
+        cluster: "2489"
         host: https://dashboard.getporter.dev
         installation_id: "18533943"
         namespace: pr-${{ github.event.inputs.pr_number }}-porter
@@ -40,6 +40,6 @@ jobs:
         project: "6680"
         repo_name: porter
         repo_owner: porter-dev
-        token: ${{ secrets.PORTER_PREVIEW_6680_2481 }}
+        token: ${{ secrets.PORTER_PREVIEW_6680_2489 }}
     concurrency:
       group: ${{ github.workflow }}-${{ github.event.inputs.pr_number }}

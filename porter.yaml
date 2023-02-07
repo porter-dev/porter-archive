@@ -16,6 +16,8 @@ apps:
     name: web
   build_ref: porter
   helm_values:
+    ingress:
+      enabled: true
     container:
       port: 8080
     resources:

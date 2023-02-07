@@ -27,3 +27,6 @@ addons:
 - name: postgres
   helm_chart:
     name: postgresql
+  helm_values:
+    image:
+      tag: 15-debian-11

@@ -1,21 +1,60 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
+	"text/template"
+
+	"github.com/google/go-github/v50/github"
 )
 
+type Tag struct {
+	TagName string
+}
+
+func getLatestCLIRelease() (string, error) {
+	client := github.NewClient(nil)
+
+	rel, _, err := client.Repositories.GetLatestRelease(context.Background(), "porter-dev", "porter")
+
+	if err != nil {
+		return "", err
+	}
+
+	return rel.GetTagName(), nil
+}
+
 func serve(w http.ResponseWriter, req *http.Request) {
-	contents, err := ioutil.ReadFile("install.sh")
+	latestTag, err := getLatestCLIRelease()
+
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
-	w.Header().Add("Content-Type", "text/plain")
-	w.Write(contents)
+
+	contents, err := os.ReadFile("install.sh")
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, err := template.New("install").Parse(string(contents))
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, Tag{TagName: latestTag})
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.Header().Add("Content-Type", "text/plain")
+	}
 }
 
 func main() {

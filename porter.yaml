@@ -27,9 +27,3 @@ addons:
 - name: postgres
   helm_chart:
     name: postgresql
-  helm_values:
-    postgresqlUsername: porter
-    postgresqlPassword: porter
-    postgresqlDatabase: porter
-    image:
-      tag: 13.6.0-debian-10-r55

@@ -14,7 +14,7 @@ download_and_install() {
 
     echo "[INFO] Since the Porter CLI gets installed in /usr/local/bin, you may be asked to input your password."
 
-    curl -L $(curl -s https://api.github.com/repos/porter-dev/porter/releases/latest | grep "browser_download_url.*/porter_.*_${osname}_x86_64\.zip" | cut -d ":" -f 2,3 | tr -d \") --output porter.zip
+    curl -L https://github.com/porter-dev/porter/releases/download/{{ .TagName }}/porter_{{ .TagName }}_${osname}_x86_64.zip --output porter.zip
     unzip -a porter.zip
     rm porter.zip
 

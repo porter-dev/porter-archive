@@ -30,3 +30,6 @@ addons:
   helm_values:
     image:
       tag: 15-debian-11
+    postgresqlUsername: postgres
+    postgresqlPassword: postgres
+    postgresqlDatabase: postgres

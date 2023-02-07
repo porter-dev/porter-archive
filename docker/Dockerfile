@@ -7,6 +7,8 @@ WORKDIR /porter
 
 RUN apk update && apk add --no-cache gcc musl-dev git protoc
 
+ARG CGO_ENABLED=0
+
 COPY go.mod go.sum ./
 COPY /cmd ./cmd
 COPY /internal ./internal
@@ -18,32 +20,21 @@ COPY /pkg ./pkg
 RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
 RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1
 
-RUN --mount=type=cache,target=$GOPATH/pkg/mod \
-    go mod download
+RUN go mod download
 
 # Go build environment
 # --------------------
 FROM base AS build-go
 
 ARG version=production
-
+ARG CGO_ENABLED=0
 
 # build proto files
 RUN sh ./scripts/build/proto.sh
 
-RUN --mount=type=cache,target=/root/.cache/go-build \
-    --mount=type=cache,target=$GOPATH/pkg/mod \
-    go build -ldflags="-w -s -X 'main.Version=${version}'" -a -o ./bin/app ./cmd/app && \
+RUN go build -ldflags="-w -s -X 'main.Version=${version}'" -a -o ./bin/app ./cmd/app && \
     go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate && \
     go build -ldflags '-w -s' -a -o ./bin/ready ./cmd/ready
-
-# Go test environment
-# -------------------
-FROM base AS porter-test
-
-RUN --mount=type=cache,target=/root/.cache/go-build \
-    --mount=type=cache,target=$GOPATH/pkg/mod \
-    go test ./...
 
 # Webpack build environment
 # -------------------------

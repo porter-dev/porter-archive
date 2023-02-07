@@ -389,9 +389,10 @@ export const ExpandedEnvGroupFC = ({
       case "variables-editor":
         return (
           <EnvGroupVariablesEditor
-            onChange={(x) =>
+            onChange={(x) => {
+              console.log("got here", x)
               setCurrentEnvGroup((prev) => ({ ...prev, variables: x }))
-            }
+            }}
             handleUpdateValues={handleUpdateValues}
             variables={variables}
             buttonStatus={buttonStatus}
@@ -487,6 +488,7 @@ const EnvGroupVariablesEditor = ({
         <EnvGroupArray
           values={variables}
           setValues={(x: any) => {
+            console.log("wohaaa", x)
             onChange(x);
           }}
           fileUpload={true}

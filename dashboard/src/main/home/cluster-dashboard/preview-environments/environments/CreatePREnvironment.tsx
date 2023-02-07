@@ -148,10 +148,12 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
 
   return (
     <>
+      <Br height="7px" />
       <Helper>
         Select an open pull request to preview. Pull requests must contain a{" "}
         <Code>porter.yaml</Code> file.
       </Helper>
+      <DarkMatter />
       <FlexRow>
         <Flex>
           <SearchRowWrapper>
@@ -187,7 +189,6 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
           />
         </Flex>
       </FlexRow>
-      <Br height="10px" />
       {filteredPullRequests?.length ? (
         <PullRequestList>
           {(filteredPullRequests ?? []).map(
@@ -300,6 +301,12 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
 };
 
 export default CreatePREnvironment;
+
+const DarkMatter = styled.div`
+  height: 0px;
+  width: 100%;
+  margin-top: -10px;
+`;
 
 const PullRequestList = styled.div`
   border: 1px solid #494b4f;

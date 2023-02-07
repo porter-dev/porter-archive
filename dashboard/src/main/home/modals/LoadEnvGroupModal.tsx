@@ -522,7 +522,8 @@ const StyledLoadEnvGroupModal = styled.div`
   height: 100%;
   padding: 25px 30px;
   border-radius: 8px;
-  background: #202227;
+  background: #20222744;
+  backdrop-filter: saturate(180%) blur(10px);
 `;
 
 const Flex = styled.div`

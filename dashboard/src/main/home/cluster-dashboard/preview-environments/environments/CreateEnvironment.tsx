@@ -9,7 +9,7 @@ import TabSelector from "components/TabSelector";
 import CreateBranchEnvironment from "./CreateBranchEnvironment";
 
 const TAB_OPTIONS = [
-  { label: "Pull Requests", value: "pull_requests" },
+  { label: "Pull requests", value: "pull_requests" },
   { label: "Branches", value: "branches" },
 ];
 
@@ -45,7 +45,6 @@ const CreateEnvironment: React.FC = () => {
         disableLineBreak
         capitalize={false}
       />
-      <DarkMatter />
       <TabSelector
         options={TAB_OPTIONS}
         currentTab={currentTab.value}

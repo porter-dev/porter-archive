@@ -402,6 +402,9 @@ const DeploymentCardWrapper = styled(DynamicLink)`
   border-radius: 5px;
   background: #26292e;
   border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
+  }
 
   animation: fadeIn 0.5s;
   @keyframes fadeIn {

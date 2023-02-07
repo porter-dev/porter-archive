@@ -274,17 +274,6 @@ const EnvironmentSettings = () => {
           }
         />
         <Br />
-        <Heading>Deploy from branches</Heading>
-        <Helper>
-          Choose the list of branches that you want to deploy changes from.
-        </Helper>
-        <BranchFilterSelector
-          onChange={setDeployBranches}
-          options={availableBranches}
-          value={deployBranches}
-          showLoading={isLoadingBranches}
-        />
-        <Br />
         <Heading>Select allowed branches</Heading>
         <Helper>
           If the pull request has a base branch included in this list, it will
@@ -357,7 +346,7 @@ const DeletePreviewEnvironmentModal = (
   return (
     <Modal
       height="fit-content"
-      title={`Remove Preview Envs for ${props.repoOwner}/${props.repoName}`}
+      title={`Remove preview envs for ${props.repoOwner}/${props.repoName}`}
       onRequestClose={props.onClose}
     >
       <DeletePreviewEnvironmentModalContentsWrapper>
@@ -373,14 +362,12 @@ const DeletePreviewEnvironmentModal = (
           setValue={(x: string) => props.setPrompt(x)}
           width={"500px"}
         />
-        <Flex justifyContent="center" alignItems="center">
-          <DeleteButton
-            onClick={() => props.onDelete()}
-            disabled={props.disabled}
-          >
-            Delete
-          </DeleteButton>
-        </Flex>
+        <DeleteButton
+          onClick={() => props.onDelete()}
+          disabled={props.disabled}
+        >
+          Delete preview environment
+        </DeleteButton>
       </DeletePreviewEnvironmentModalContentsWrapper>
     </Modal>
   );

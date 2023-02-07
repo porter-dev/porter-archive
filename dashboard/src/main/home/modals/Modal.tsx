@@ -144,7 +144,8 @@ const StyledModal = styled.div`
   z-index: 999;
   font-size: 13px;
   border-radius: 10px;
-  background: #202227;
+  background: #20222744;
+  backdrop-filter: saturate(180%) blur(10px);
   border: 1px solid #ffffff55;
   overflow: auto;
   color: #ffffff;

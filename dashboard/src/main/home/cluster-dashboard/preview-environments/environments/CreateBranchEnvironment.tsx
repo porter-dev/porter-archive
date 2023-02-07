@@ -177,10 +177,12 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
 
   return (
     <>
+      <Br height="7px" />
       <Helper>
         Select a branch to preview. Branches must contain a{" "}
         <Code>porter.yaml</Code> file.
       </Helper>
+      <DarkMatter />
       <FlexRow>
         <Flex>
           <SearchRowWrapper>
@@ -213,7 +215,6 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
           />
         </Flex>
       </FlexRow>
-      <Br height="10px" />
       <BranchList>
       {
         (filteredBranches ?? []).map((branch, i) => (
@@ -289,6 +290,12 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
 
 export default CreateBranchEnvironment;
 
+const DarkMatter = styled.div`
+  height: 0px;
+  width: 100%;
+  margin-top: -10px;
+`;
+
 const BranchList = styled.div`
   border: 1px solid #494b4f;
   border-radius: 5px;
@@ -299,6 +306,7 @@ const BranchList = styled.div`
 const BranchRow = styled.div<{ isLast?: boolean; isSelected?: boolean }>`
   width: 100%;
   padding: 15px;
+  padding-bottom: 8px;
   cursor: pointer;
   background: ${(props) => (props.isSelected ? "#ffffff11" : "#26292e")};
   border-bottom: ${(props) => (props.isLast ? "" : "1px solid #494b4f")};

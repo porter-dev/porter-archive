@@ -18,8 +18,8 @@ const ConnectToJobInstructionsModal: React.FC<{
     <Modal
       onRequestClose={() => onClose()}
       width="700px"
-      height="300px"
-      title="Shell Access Instructions"
+      height="350px"
+      title="Shell access instructions"
     >
       To get shell access to this job run, make sure you have the Porter CLI
       installed (installation instructions&nbsp;

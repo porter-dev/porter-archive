@@ -88,11 +88,12 @@ const EnvGroupArray = ({
               return (
                 <InputWrapper key={i}>
                   <Input
-                    placeholder="ex: koy"
+                    placeholder="ex: key"
                     width="270px"
                     value={entry.key}
                     onChange={(e: any) => {
                       let _values = values;
+                      console.log("tested")
                       _values[i].key = e.target.value;
                       setValues(_values);
                     }}

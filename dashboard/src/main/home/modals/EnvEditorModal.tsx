@@ -165,5 +165,6 @@ const StyledLoadEnvGroupModal = styled.div`
   padding: 25px 30px;
   overflow: hidden;
   border-radius: 6px;
-  background: #202227;
+  background: #20222744;
+  backdrop-filter: saturate(180%) blur(10px);
 `;

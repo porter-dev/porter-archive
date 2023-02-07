@@ -364,7 +364,6 @@ const ProviderSelector = (props: {
     <>
       <ProviderSelectorStyles.Wrapper ref={wrapperRef} isOpen={isOpen}>
         <ProviderSelectorStyles.Icon className={icon} />
-
         <ProviderSelectorStyles.Button
           onClick={() => setIsOpen((prev) => !prev)}
         >
@@ -453,7 +452,8 @@ const ProviderSelectorStyles = {
     }
   `,
   Icon: styled.span`
-    font-size: 24px;
+    font-size: 20px;
+    filter: invert(1);
     margin-left: 9px;
     margin-right: -29px;
     color: white;

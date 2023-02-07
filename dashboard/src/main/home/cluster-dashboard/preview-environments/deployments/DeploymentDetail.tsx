@@ -263,9 +263,6 @@ const DeploymentDetail = () => {
                 {prDeployment.subdomain}
               </PRLink>
             )}
-            <TagWrapper>
-              Namespace <NamespaceTag>{prDeployment.namespace}</NamespaceTag>
-            </TagWrapper>
           </InfoWrapper>
           <Flex>
             <Status>
@@ -288,11 +285,17 @@ const DeploymentDetail = () => {
               {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
             </DeploymentImageContainer>
             <Dot>•</Dot>
+            <TagWrapper>
+              Namespace <NamespaceTag>{prDeployment.namespace}</NamespaceTag>
+            </TagWrapper>
             {prDeployment.last_workflow_run_url ? (
-              <GHALink to={prDeployment.last_workflow_run_url} target="_blank">
-                <img src={github} /> View last workflow run
-                <i className="material-icons">open_in_new</i>
-              </GHALink>
+              <>
+                <Dot>•</Dot>
+                <GHALink to={prDeployment.last_workflow_run_url} target="_blank">
+                  <img src={github} /> View last workflow run
+                  <i className="material-icons">open_in_new</i>
+                </GHALink>
+              </>
             ) : null}
           </Flex>
           <LinkToActionsWrapper></LinkToActionsWrapper>
@@ -407,7 +410,6 @@ const Wrap = styled.div`
 const Flex = styled.div`
   display: flex;
   align-items: center;
-  margin-top: 20px;
 `;
 
 const GHALink = styled(DynamicLink)`
@@ -512,7 +514,7 @@ const TagWrapper = styled.div`
   height: 20px;
   font-size: 12px;
   display: flex;
-  margin-left: 20px;
+  margin-left: 13px;
   margin-bottom: -3px;
   align-items: center;
   font-weight: 400;
@@ -614,6 +616,7 @@ const ChartListWrapper = styled.div`
   width: 100%;
   margin: auto;
   padding-bottom: 125px;
+  margin-top: -7px;
 `;
 
 const LinkToActionsWrapper = styled.div`

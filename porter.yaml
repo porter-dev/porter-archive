@@ -4,6 +4,9 @@ builds:
 - name: porter
   method: docker
   dockerfile: ./docker/Dockerfile
+  env:
+    import_from:
+      - default/base-env
 
 apps:
 - name: porter-dashboard
@@ -14,7 +17,7 @@ apps:
   build_ref: porter
   helm_values:
     container:
-      command: /porter/migrate && /porter/app
+      port: 8080
     resources:
       requests:
         cpu: 400m
@@ -24,9 +27,9 @@ addons:
 - name: postgres
   helm_chart:
     name: postgresql
-    url: https://charts.bitnami.com/bitnami
   helm_values:
-    global:
-      auth:
-        username: porter
-        database: porter
+    postgresqlUsername: porter
+    postgresqlPassword: porter
+    postgresqlDatabase: porter
+    image:
+      tag: 13.6.0-debian-10-r55

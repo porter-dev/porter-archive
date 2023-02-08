@@ -19,7 +19,7 @@ apps:
   depends_on:
     - postgres
   helm_chart:
-    - name: job
+    name: job
   build_ref: job
 - name: porter-dashboard
   depends_on:

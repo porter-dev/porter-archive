@@ -7,11 +7,23 @@ builds:
   env:
     import_from:
       - default/base-env
+- name: job
+  method: registry
+  image: gcr.io/porter-dev-273614/preview-env-setup-job:latest
+  env:
+    import_from:
+      - default/base-env
 
 apps:
-- name: porter-dashboard
+- name: setup-job
   depends_on:
     - postgres
+  helm_chart:
+    - name: job
+  build_ref: job
+- name: porter-dashboard
+  depends_on:
+    - setup-job
   helm_chart:
     name: web
   build_ref: porter

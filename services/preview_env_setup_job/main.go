@@ -16,14 +16,19 @@ import (
 	pgorm "github.com/porter-dev/porter/internal/repository/gorm"
 )
 
+type EnvConf struct {
+	env.DBConf
+	env.ServerConf
+}
+
 func main() {
-	conf := env.DBConf{}
+	conf := EnvConf{}
 
 	if err := envdecode.StrictDecode(&conf); err != nil {
 		log.Fatalf("Failed to decode DB conf: %v", err)
 	}
 
-	db, err := adapter.New(&conf)
+	db, err := adapter.New(&conf.DBConf)
 
 	if err != nil {
 		log.Fatalf("Failed to create DB adapter: %v", err)
@@ -103,7 +108,9 @@ func main() {
 
 	expiry := time.Now().Add(7 * 24 * time.Hour)
 
-	apiToken, err := repo.APIToken().CreateAPIToken(&models.APIToken{
+	secretKey := "volume-miss-king-master"
+
+	_, err = repo.APIToken().CreateAPIToken(&models.APIToken{
 		UniqueID:        "test-user-admin-token",
 		ProjectID:       proj.ID,
 		CreatedByUserID: user.ID,
@@ -111,6 +118,12 @@ func main() {
 		PolicyUID:       policy.UniqueID,
 		PolicyName:      policy.Name,
 		Name:            "Admin Token",
-		SecretKey:       []byte("volume-miss-king-master"),
+		SecretKey:       []byte(secretKey),
 	})
+
+	if err != nil {
+		log.Fatalf("Failed to create admin API token: %v", err)
+	}
+
+	log.Println("Successfully created test user, project, policy, and API token")
 }

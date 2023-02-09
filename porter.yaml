@@ -18,7 +18,7 @@ builds:
 apps:
 - name: setup-job
   depends_on:
-    - postgres
+    - porter-dashboard
   run_once: true
   helm_chart:
     name: job
@@ -26,7 +26,6 @@ apps:
 - name: porter-dashboard
   depends_on:
     - postgres
-    - setup-job
   helm_chart:
     name: web
   build_ref: porter

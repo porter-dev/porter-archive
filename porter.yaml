@@ -24,6 +24,7 @@ apps:
   build_ref: job
 - name: porter-dashboard
   depends_on:
+    - postgres
     - setup-job
   helm_chart:
     name: web

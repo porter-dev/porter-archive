@@ -8,8 +8,9 @@ builds:
     import_from:
       - default/base-env
 - name: job
-  method: registry
-  image: gcr.io/porter-dev-273614/preview-env-setup-job:latest
+  method: docker
+  context: ./services/preview_env_setup_job
+  dockerfile: ./services/preview_env_setup_job/Dockerfile
   env:
     import_from:
       - default/base-env

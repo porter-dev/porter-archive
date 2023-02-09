@@ -19,6 +19,7 @@ apps:
 - name: setup-job
   depends_on:
     - postgres
+  run_once: true
   helm_chart:
     name: job
   build_ref: job

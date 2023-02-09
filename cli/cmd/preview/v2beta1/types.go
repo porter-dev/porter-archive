@@ -43,6 +43,7 @@ type AppResource struct {
 	BuildRef  *string    `yaml:"build_ref"`
 	// Deploy     map[*string]*any `yaml:"deploy"`
 	HelmValues map[string]any `yaml:"helm_values"`
+	RunOnce    *bool          `yaml:"run_once"`
 }
 
 type AddonResource struct {

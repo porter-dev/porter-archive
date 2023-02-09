@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/models"
+	"golang.org/x/crypto/bcrypt"
 
 	rcreds "github.com/porter-dev/porter/internal/repository/credentials"
 	"github.com/porter-dev/porter/internal/repository/gorm"
@@ -52,9 +53,15 @@ func main() {
 
 	log.Println("Creating test user")
 
+	hashedPW, err := bcrypt.GenerateFromPassword([]byte("test"), 8)
+
+	if err != nil {
+		log.Fatalf("Failed to hash password: %v", err)
+	}
+
 	user, err := repo.User().CreateUser(&models.User{
 		Email:         "test@test.com",
-		Password:      "test",
+		Password:      string(hashedPW),
 		EmailVerified: true,
 	})
 

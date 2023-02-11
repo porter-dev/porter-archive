@@ -49,6 +49,7 @@ func main() {
 
 	if config.RedisConf.Enabled {
 		redis, err := adapter.NewRedisClient(config.RedisConf)
+		defer redis.Close()
 
 		if err != nil {
 			config.Logger.Fatal().Err(err).Msg("redis connection failed")

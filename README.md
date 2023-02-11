@@ -30,7 +30,6 @@ Porter brings the simplicity of a traditional PaaS to your own cloud provider wh
 - One-click provisioning of a Kubernetes cluster in your own cloud console
   - ✅ AWS
   - ✅ GCP
-  - ✅ Digital Ocean
 - Simple deploy of any public or private Docker image
 - Auto CI/CD with [buildpacks](https://buildpacks.io) for non-Dockerized apps
 - Heroku-like GUI to monitor application status, logs, and history

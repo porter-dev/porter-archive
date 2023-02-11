@@ -126,6 +126,7 @@ Copy and paste the below JSON to the field.
         "eks:ListNodegroups",
         "eks:UpdateNodegroupConfig",
         "eks:UpdateNodegroupVersion",
+        "eks:AssociateEncryptionConfig",
         "iam:AddRoleToInstanceProfile",
         "iam:AttachRolePolicy",
         "iam:CreateInstanceProfile",
@@ -171,7 +172,14 @@ Copy and paste the below JSON to the field.
         "kms:Get*",
         "kms:ListAliases",
         "kms:ListResourceTags",
-        "kms:ScheduleKeyDeletion"
+        "kms:ScheduleKeyDeletion",
+        "kms:TagResource",
+<<<<<<< Updated upstream
+        "kms:UntagResource"
+=======
+        "kms:UntagResource",
+        "kms:EnableKeyRotation"
+>>>>>>> Stashed changes
       ],
       "Resource": "*"
     }

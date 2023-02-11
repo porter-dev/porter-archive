@@ -5,7 +5,6 @@ builds:
   method: docker
   dockerfile: ./docker/Dockerfile
   env:
-    raw: {}
     import_from:
       - default/base-env
 
@@ -16,9 +15,11 @@ apps:
   helm_chart:
     name: web
   build_ref: porter
-  helm_values: # refer https://github.com/porter-dev/porter-charts/blob/master/applications/web/values.yaml
+  helm_values:
+    ingress:
+      enabled: true
     container:
-      command: 
+      port: 8080
     resources:
       requests:
         cpu: 400m
@@ -27,4 +28,10 @@ apps:
 addons:
 - name: postgres
   helm_chart:
-    name: postgres
+    name: postgresql
+  helm_values:
+    image:
+      tag: 15-debian-11
+    postgresqlUsername: postgres
+    postgresqlPassword: postgres
+    postgresqlDatabase: postgres

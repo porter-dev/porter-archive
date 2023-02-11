@@ -172,7 +172,7 @@ func (b *Build) getV1BuildImage() (*types.Resource, error) {
 func (b *Build) getV1PushImage() (*types.Resource, error) {
 	config := &preview.PushDriverConfig{}
 
-	config.Push.Image = fmt.Sprintf("\"{ .%s-build-image.image }\"", b.GetName())
+	config.Push.Image = fmt.Sprintf("{ .%s-build-image.image }", b.GetName())
 
 	rawConfig := make(map[string]any)
 

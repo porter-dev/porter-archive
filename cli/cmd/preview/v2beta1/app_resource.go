@@ -48,7 +48,7 @@ func (a *AppResource) getV1Resource(b *Build) (*types.Resource, error) {
 	config := &preview.ApplicationConfig{}
 
 	config.Build.Method = "registry"
-	config.Build.Image = fmt.Sprintf("\"{ .%s.image }\"", b.GetName())
+	config.Build.Image = fmt.Sprintf("{ .%s.image }", b.GetName())
 	config.Build.Env = b.GetRawEnv()
 	config.Values = a.HelmValues
 

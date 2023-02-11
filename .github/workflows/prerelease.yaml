@@ -457,6 +457,9 @@ jobs:
         id: login-ecr
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Login to GHCR
+        id: login-ghcr
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Build
         run: |
           docker build ./services/porter_cli_container \
@@ -464,9 +467,12 @@ jobs:
             -f ./services/porter_cli_container/Dockerfile \
             --build-arg VERSION=${{steps.tag_name.outputs.tag}} \
             --build-arg SENTRY_DSN=${{secrets.SENTRY_DSN}}
-      - name: Push
+      - name: Push to ECR public
+        run: docker push public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+      - name: Push to GHCR
         run: |
-          docker push public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+          docker tag public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}} ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
+          docker push ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
   update-porter-update-action:
     name: Update porter-update-action
     runs-on: ubuntu-latest
@@ -490,7 +496,8 @@ jobs:
           git checkout -B "${{steps.tag_name.outputs.tag}}"
 
           cat >Dockerfile <<EOL
-          FROM public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+          FROM ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
+          LABEL org.opencontainers.image.source="https://github.com/porter-dev/porter"
 
           COPY entrypoint.sh /action/
 
@@ -528,7 +535,8 @@ jobs:
           git checkout -B "${{steps.tag_name.outputs.tag}}"
 
           cat >Dockerfile <<EOL
-          FROM public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+          FROM ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
+          LABEL org.opencontainers.image.source="https://github.com/porter-dev/porter"
 
           COPY entrypoint.sh /action/
 

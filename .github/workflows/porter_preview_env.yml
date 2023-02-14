@@ -53,12 +53,13 @@ jobs:
         echo "$VCLUSTER_KUBECONFIG" > /tmp/vcluster_kubeconfig
 
         dashboard_domain=$(echo "$DOMAINS" | jq '.subdomains[] | select(test("porter-dashboard*"))')
+        dashboard_domain=$(sed -e 's/^"//' -e 's/"$//' <<<"$dashboard_domain")
 
         if [ -z "$dashboard_domain" ]; then
           exit 1
         fi
 
-        export PORTER_HOST="$dashboard_domain"
+        export PORTER_HOST="https://${dashboard_domain}"
 
         porter connect kubeconfig --kubeconfig /tmp/vcluster_kubeconfig
       env:

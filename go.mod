@@ -296,7 +296,7 @@ require (
 	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apiextensions-apiserver v0.25.2 // indirect
 	k8s.io/apiserver v0.25.2 // indirect
 	k8s.io/component-base v0.25.2 // indirect

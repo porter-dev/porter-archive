@@ -7,8 +7,22 @@ builds:
   env:
     import_from:
       - default/base-env
+- name: job
+  method: docker
+  context: ./services/preview_env_setup_job
+  dockerfile: ./services/preview_env_setup_job/Dockerfile
+  env:
+    import_from:
+      - default/base-env
 
 apps:
+- name: setup-job
+  depends_on:
+    - porter-dashboard
+  run_once: true
+  helm_chart:
+    name: job
+  build_ref: job
 - name: porter-dashboard
   depends_on:
     - postgres

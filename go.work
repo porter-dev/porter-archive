@@ -3,4 +3,5 @@ go 1.19
 use (
 	.
 	./services/cli_install_script_container
+	./services/preview_env_setup_job
 )

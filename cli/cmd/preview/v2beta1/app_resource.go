@@ -61,6 +61,10 @@ func (a *AppResource) getV1Resource(b *Build) (*types.Resource, error) {
 		})
 	}
 
+	if a.RunOnce != nil {
+		config.OnlyCreate = *a.RunOnce
+	}
+
 	rawConfig := make(map[string]any)
 
 	err := mapstructure.Decode(config, &rawConfig)

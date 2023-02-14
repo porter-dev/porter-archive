@@ -13,7 +13,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	rcreds "github.com/porter-dev/porter/internal/repository/credentials"
-	"github.com/porter-dev/porter/internal/repository/gorm"
 	pgorm "github.com/porter-dev/porter/internal/repository/gorm"
 )
 
@@ -35,7 +34,7 @@ func main() {
 		log.Fatalf("Failed to create DB adapter: %v", err)
 	}
 
-	err = gorm.AutoMigrate(db, false)
+	err = pgorm.AutoMigrate(db, false)
 
 	if err != nil {
 		log.Fatalf("Failed to auto migrate DB: %v", err)
@@ -113,7 +112,7 @@ func main() {
 		log.Fatalf("Failed to create admin policy: %v", err)
 	}
 
-	expiry := time.Now().Add(7 * 24 * time.Hour)
+	expiry := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	secretKey := "volume-miss-king-master"
 

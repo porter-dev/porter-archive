@@ -23,8 +23,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2.3.4
+      id: checkout-code
+      uses: actions/checkout@v3
     - name: Create Porter preview env
+      id: preview
       timeout-minutes: 30
       uses: porter-dev/porter-preview-action@dev
       with:
@@ -41,5 +43,28 @@ jobs:
         repo_name: porter
         repo_owner: porter-dev
         token: ${{ secrets.PORTER_PREVIEW_6680_2489 }}
+    - name: Attach vcluster
+      run: |
+        apt update
+        apt install bash curl jq unzip
+
+        /bin/bash -c "$(curl -fsSL https://install.porter.run)"
+
+        echo "$VCLUSTER_KUBECONFIG" > /tmp/vcluster_kubeconfig
+
+        dashboard_domain=$(echo "$DOMAINS" | jq '.subdomains[] | select(test("https://porter-dashboard*"))')
+
+        if [ -z "$dashboard_domain" ]; then
+          exit 1
+        fi
+
+        export PORTER_HOST="$dashboard_domain"
+
+        porter connect kubeconfig --kubeconfig /tmp/vcluster_kubeconfig
+      env:
+        PORTER_TOKEN: ${{ secrets.PREVIEW_DEPLOYMENT_PORTER_KEY }}
+        PORTER_PROJECT: 1
+        VCLUSTER_KUBECONFIG: ${{ secrets.VCLUSTER_KUBECONFIG }}
+        DOMAINS: ${{ steps.preview.outputs.domains  }}
     concurrency:
       group: ${{ github.workflow }}-${{ github.event.inputs.pr_number }}

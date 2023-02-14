@@ -45,14 +45,14 @@ jobs:
         token: ${{ secrets.PORTER_PREVIEW_6680_2489 }}
     - name: Attach vcluster
       run: |
-        apt update
-        apt install bash curl jq unzip
+        sudo apt-get update
+        sudo apt-get install bash curl jq unzip
 
         /bin/bash -c "$(curl -fsSL https://install.porter.run)"
 
         echo "$VCLUSTER_KUBECONFIG" > /tmp/vcluster_kubeconfig
 
-        dashboard_domain=$(echo "$DOMAINS" | jq '.subdomains[] | select(test("https://porter-dashboard*"))')
+        dashboard_domain=$(echo "$DOMAINS" | jq '.subdomains[] | select(test("porter-dashboard*"))')
 
         if [ -z "$dashboard_domain" ]; then
           exit 1

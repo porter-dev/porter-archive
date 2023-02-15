@@ -66,7 +66,7 @@ const PorterForm: React.FC<Props> = (props) => {
 
   const { currentTab, setCurrentTab } = props;
 
-  const renderSectionField = (field: FormField): JSX.Element => {
+  const renderSectionField = (field: FormField, num?: number, i?: number): JSX.Element => {
     const injected = props.injectedProps?.[field.type];
 
     const bundledProps = {
@@ -77,7 +77,9 @@ const PorterForm: React.FC<Props> = (props) => {
 
     switch (field.type) {
       case "heading":
-        return <Heading>{field.label}</Heading>;
+        // Remove top margin from heading if it's the first form element in the tab
+        // TODO: Handle Job form and form variables more gracefully
+        return <Heading isAtTop={num + i < 1 || (formData.name === "Job" && num + i === 1)}>{field.label}</Heading>;
       case "subtitle":
         return <Helper>{field.label}</Helper>;
       case "input":
@@ -106,13 +108,13 @@ const PorterForm: React.FC<Props> = (props) => {
     return <p>Not Implemented: {(field as any).type}</p>;
   };
 
-  const renderSection = (section: Section): JSX.Element => {
+  const renderSection = (section: Section, num: number): JSX.Element => {
     return (
       <>
         {section.contents?.map((field, i) => {
           return (
             <React.Fragment key={field.id}>
-              {renderSectionField(field)}
+              {renderSectionField(field, num, i)}
             </React.Fragment>
           );
         })}
@@ -172,10 +174,10 @@ const PorterForm: React.FC<Props> = (props) => {
 
     return (
       <StyledPorterForm showSave={showSaveButton()}>
-        {tab.sections?.map((section) => {
+        {tab.sections?.map((section, i) => {
           return (
             <React.Fragment key={section.name}>
-              {renderSection(section)}
+              {renderSection(section, i)}
             </React.Fragment>
           );
         })}
@@ -221,12 +223,14 @@ const PorterForm: React.FC<Props> = (props) => {
       <br />
       {showSaveButton() && (
         <SaveButton
-          text={props.saveButtonText || "Deploy"}
+          text={props.saveButtonText || "Deploy app"}
           onClick={submit}
+          clearPosition={true}
           makeFlush={!props.isInModal}
           status={
             validationInfo.validated ? renderSaveStatus() : validationInfo.error
           }
+          statusPosition="right"
           disabled={isDisabled()}
         />
       )}
@@ -252,11 +256,15 @@ const Spacer = styled.div`
 const StyledPorterForm = styled.div<{ showSave?: boolean }>`
   width: 100%;
   height: ${(props) => (props.showSave ? "calc(100% - 50px)" : "100%")};
-  background: #ffffff11;
   color: #ffffff;
-  padding: 0px 35px 20px;
   position: relative;
   border-radius: 8px;
   font-size: 13px;
   overflow: auto;
+  padding: 30px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
 `;

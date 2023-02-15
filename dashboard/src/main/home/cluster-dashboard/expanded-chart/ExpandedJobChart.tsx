@@ -286,7 +286,7 @@ export const ExpandedJobChartFC: React.FC<{
               setCurrentOverlay(null);
             }
           }}
-          saveButtonText="Save Config"
+          saveButtonText="Save config"
         />
       );
     }
@@ -376,7 +376,7 @@ export const ExpandedJobChartFC: React.FC<{
               leftTabOptions={leftTabOptions}
               rightTabOptions={rightTabOptions}
               saveValuesStatus={saveStatus}
-              saveButtonText="Save Config"
+              saveButtonText="Save config"
               includeHiddenFields
               addendum={
                 <TabButton

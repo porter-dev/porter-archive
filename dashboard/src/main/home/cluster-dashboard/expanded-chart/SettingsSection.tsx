@@ -216,7 +216,7 @@ const SettingsSection: React.FC<PropsType> = ({
         {!currentChart.stack_id?.length &&
         !PORTER_IMAGE_TEMPLATES.includes(selectedImageUrl) ? (
           <>
-            <Heading>Source Settings</Heading>
+            <Heading isAtTop>Source settings</Heading>
             <Helper>Specify an image tag to use.</Helper>
             <ImageSelector
               selectedTag={selectedTag}
@@ -475,13 +475,15 @@ const Wrapper = styled.div`
 
 const StyledSettingsSection = styled.div`
   width: 100%;
-  background: #ffffff11;
-  padding: 0 35px;
+  padding: 30px;
   padding-bottom: 15px;
   position: relative;
   border-radius: 8px;
   overflow: auto;
   height: calc(100% - 55px);
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
 `;
 
 const Holder = styled.div`

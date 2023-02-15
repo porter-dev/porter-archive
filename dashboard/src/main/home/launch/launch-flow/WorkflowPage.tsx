@@ -72,7 +72,7 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
 
   return (
     <StyledWorkflowPage>
-      <Heading>GitHub Actions</Heading>
+      <Heading isAtTop>GitHub Actions</Heading>
       <Helper>
         To auto-deploy each time you push changes, Porter will write GitHub
         Secrets and this GitHub Actions workflow to your repository.

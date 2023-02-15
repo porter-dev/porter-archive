@@ -147,67 +147,71 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
               <i className="material-icons">keyboard_backspace</i>
               Back
             </Button>
-            <Title>Create an Environment Group</Title>
+            <Title>Create an environment group</Title>
           </HeaderSection>
-          <DarkMatter antiHeight="-13px" />
-          <Heading isAtTop={true}>Name</Heading>
-          <Subtitle>
-            <Warning
-              makeFlush={true}
-              highlight={
-                !isAlphanumeric(this.state.envGroupName) &&
-                this.state.envGroupName !== ""
-              }
-            >
-              Lowercase letters, numbers, and "-" only.
-            </Warning>
-          </Subtitle>
-          <DarkMatter antiHeight="-29px" />
-          <InputRow
-            type="text"
-            value={this.state.envGroupName}
-            setValue={(x: string) => this.setState({ envGroupName: x })}
-            placeholder="ex: doctor-scientist"
-            width="100%"
-          />
-
-          <Heading>Destination</Heading>
-          <Subtitle>
-            Specify the namespace you would like to create this environment
-            group in.
-          </Subtitle>
-          <DestinationSection>
-            <NamespaceLabel>
-              <i className="material-icons">view_list</i>Namespace
-            </NamespaceLabel>
-            <Selector
-              key={"namespace"}
-              activeValue={this.state.selectedNamespace}
-              setActiveValue={(namespace: string) =>
-                this.setState({ selectedNamespace: namespace })
-              }
-              options={this.state.namespaceOptions}
-              width="250px"
-              dropdownWidth="335px"
-              closeOverlay={true}
+          <Wrapper>
+            <DarkMatter antiHeight="-13px" />
+            <Heading isAtTop={true}>Name</Heading>
+            <Subtitle>
+              <Warning
+                makeFlush={true}
+                highlight={
+                  !isAlphanumeric(this.state.envGroupName) &&
+                  this.state.envGroupName !== ""
+                }
+              >
+                Lowercase letters, numbers, and "-" only.
+              </Warning>
+            </Subtitle>
+            <DarkMatter antiHeight="-29px" />
+            <InputRow
+              type="text"
+              value={this.state.envGroupName}
+              setValue={(x: string) => this.setState({ envGroupName: x })}
+              placeholder="ex: doctor-scientist"
+              width="100%"
             />
-          </DestinationSection>
 
-          <Heading>Environment variables</Heading>
-          <Helper>
-            Set environment variables for your secrets and environment-specific
-            configuration.
-          </Helper>
-          <EnvGroupArray
-            namespace={this.state.selectedNamespace}
-            values={this.state.envVariables}
-            setValues={(x: any) => this.setState({ envVariables: x })}
-            fileUpload={true}
-            secretOption={true}
-          />
-          <SaveButton
+            <Heading>Destination</Heading>
+            <Subtitle>
+              Specify the namespace you would like to create this environment
+              group in.
+            </Subtitle>
+            <DestinationSection>
+              <NamespaceLabel>
+                <i className="material-icons">view_list</i>Namespace
+              </NamespaceLabel>
+              <Selector
+                key={"namespace"}
+                activeValue={this.state.selectedNamespace}
+                setActiveValue={(namespace: string) =>
+                  this.setState({ selectedNamespace: namespace })
+                }
+                options={this.state.namespaceOptions}
+                width="250px"
+                dropdownWidth="335px"
+                closeOverlay={true}
+              />
+            </DestinationSection>
+
+            <Heading>Environment variables</Heading>
+            <Helper>
+              Set environment variables for your secrets and environment-specific
+              configuration.
+            </Helper>
+            <EnvGroupArray
+              namespace={this.state.selectedNamespace}
+              values={this.state.envVariables}
+              setValues={(x: any) => this.setState({ envVariables: x })}
+              fileUpload={true}
+              secretOption={true}
+            />
+           </Wrapper> 
+           <SaveButton
             disabled={this.isDisabled()}
             text="Create env group"
+            clearPosition={true}
+            statusPosition="right"
             onClick={this.onSubmit}
             status={
               this.isDisabled()
@@ -224,6 +228,16 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
 }
 
 CreateEnvGroup.contextType = Context;
+
+const Wrapper = styled.div`
+  padding: 30px;
+  padding-bottom: 25px;
+  border-radius: 5px;
+  margin-top: -15px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  margin-bottom: 30px;
+`;
 
 const Buffer = styled.div`
   width: 100%;

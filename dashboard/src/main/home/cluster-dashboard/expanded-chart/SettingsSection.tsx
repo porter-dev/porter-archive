@@ -234,7 +234,7 @@ const SettingsSection: React.FC<PropsType> = ({
                 <SaveButton
                   clearPosition={true}
                   statusPosition="right"
-                  text="Save Source Settings"
+                  text="Save source settings"
                   status={saveValuesStatus}
                   onClick={handleSubmit}
                 />

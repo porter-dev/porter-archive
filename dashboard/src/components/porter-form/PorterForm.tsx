@@ -53,6 +53,8 @@ interface Props {
   // The tab to redirect to after saving the form
   redirectTabAfterSave?: string;
   injectedProps?: InjectedProps;
+
+  absoluteSave: boolean;
 }
 
 const PorterForm: React.FC<Props> = (props) => {
@@ -225,6 +227,7 @@ const PorterForm: React.FC<Props> = (props) => {
         <SaveButton
           text={props.saveButtonText || "Deploy app"}
           onClick={submit}
+          absoluteSave={props.absoluteSave}
           clearPosition={true}
           makeFlush={!props.isInModal}
           status={

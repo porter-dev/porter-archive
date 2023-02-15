@@ -65,7 +65,7 @@ const ActionConfEditor: React.FC<Props> = (props) => {
           }}
         >
           <i className="material-icons">keyboard_backspace</i>
-          Select Repo
+          Select repo
         </BackButton>
       </>
     );
@@ -103,7 +103,7 @@ const ActionConfEditor: React.FC<Props> = (props) => {
           }}
         >
           <i className="material-icons">keyboard_backspace</i>
-          Select Branch
+          Select branch
         </BackButton>
       </>
     );

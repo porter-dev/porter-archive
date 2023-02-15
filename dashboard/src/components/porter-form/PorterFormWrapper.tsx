@@ -116,6 +116,7 @@ const PorterFormWrapper: React.FC<PropsType> = ({
           hideSpacer={hideBottomSpacer}
           redirectTabAfterSave={redirectTabAfterSave}
           injectedProps={injectedProps}
+          absoluteSave
         />
       </PorterFormContextProvider>
     </React.Fragment>

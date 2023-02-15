@@ -112,7 +112,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
   return (
     <>
       <DarkMatter />
-      <Heading>GitHub Settings</Heading>
+      <Heading>GitHub settings</Heading>
       <InputRow
         disabled={true}
         label="Git repository"
@@ -183,7 +183,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
           }}
         >
           <i className="material-icons">keyboard_backspace</i>
-          Select Folder
+          Select folder
         </BackButton>
         {selectedRegistry ? (
           <StatusWrapper successful={true}>

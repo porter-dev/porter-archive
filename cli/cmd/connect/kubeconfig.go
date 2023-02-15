@@ -27,6 +27,7 @@ func Kubeconfig(
 	contexts []string,
 	projectID uint,
 	isLocal bool,
+	automaticallyAcceptInteractivePrompts bool,
 ) (uint, error) {
 	// if project ID is 0, ask the user to set the project ID or create a project
 	if projectID == 0 {
@@ -195,6 +196,7 @@ func Kubeconfig(
 						kubeconfigPath,
 						cc.ContextName,
 						allResolver,
+						automaticallyAcceptInteractivePrompts,
 					)
 
 					if err != nil {
@@ -434,23 +436,34 @@ func resolveAWSAction(
 	kubeconfigPath string,
 	contextName string,
 	resolver *types.ClusterResolverAll,
+	skipPrompt bool,
 ) error {
-	userResp, err := utils.PromptPlaintext(
-		fmt.Sprintf(
-			`Detected AWS cluster in kubeconfig for the endpoint %s (%s). 
-Porter can set up an IAM user in your AWS account to connect to this cluster automatically.
-Would you like to proceed? %s `,
-			color.New(color.FgCyan).Sprintf("%s", endpoint),
-			clusterName,
-			color.New(color.FgCyan).Sprintf("[y/n]"),
-		),
-	)
+	attemptCreate := false
 
-	if err != nil {
-		return err
+	if skipPrompt {
+		attemptCreate = true
 	}
 
-	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
+	if !skipPrompt {
+		userResp, err := utils.PromptPlaintext(
+			fmt.Sprintf(
+				`Detected AWS cluster in kubeconfig for the endpoint %s (%s). 
+				Porter can set up an IAM user in your AWS account to connect to this cluster automatically.
+				Would you like to proceed? %s `,
+				color.New(color.FgCyan).Sprintf("%s", endpoint),
+				clusterName,
+				color.New(color.FgCyan).Sprintf("[y/n]"),
+			),
+		)
+		if err != nil {
+			return err
+		}
+		if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
+			attemptCreate = true
+		}
+	}
+
+	if attemptCreate {
 		agent, err := awsLocal.NewDefaultKubernetesAgent(kubeconfigPath, contextName)
 
 		if err != nil {

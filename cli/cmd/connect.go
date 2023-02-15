@@ -10,9 +10,10 @@ import (
 )
 
 var (
-	kubeconfigPath string
-	print          *bool
-	contexts       *[]string
+	kubeconfigPath                        string
+	automaticallyAcceptInteractivePrompts bool
+	print                                 *bool
+	contexts                              *[]string
 )
 
 var connectCmd = &cobra.Command{
@@ -129,6 +130,13 @@ func init() {
 		"path to kubeconfig",
 	)
 
+	connectKubeconfigCmd.PersistentFlags().BoolVar(
+		&automaticallyAcceptInteractivePrompts,
+		"accept-prompts",
+		false,
+		"Automatically accept any interactive prompts presented when connecting a cluster. Useful for automated flows connecting to public cloud Kubernetes distros",
+	)
+
 	contexts = connectKubeconfigCmd.PersistentFlags().StringArray(
 		"context",
 		nil,
@@ -144,7 +152,7 @@ func init() {
 	connectCmd.AddCommand(connectHelmRepoCmd)
 }
 
-func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	isLocal := false
 
 	if cliConf.Driver == "local" {
@@ -157,6 +165,7 @@ func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client *api.Cli
 		*contexts,
 		cliConf.Project,
 		isLocal,
+		automaticallyAcceptInteractivePrompts,
 	)
 
 	if err != nil {

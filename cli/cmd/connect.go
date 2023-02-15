@@ -152,7 +152,7 @@ func init() {
 	connectCmd.AddCommand(connectHelmRepoCmd)
 }
 
-func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	isLocal := false
 
 	if cliConf.Driver == "local" {

@@ -76,7 +76,7 @@ export default class GCRForm extends Component<PropsType, StateType> {
     return (
       <StyledForm>
         <CredentialWrapper>
-          <Heading>Porter Settings</Heading>
+          <Heading isAtTop>Porter settings</Heading>
           <Helper>
             Give a name to this set of registry credentials (just for Porter).
           </Helper>
@@ -87,15 +87,15 @@ export default class GCRForm extends Component<PropsType, StateType> {
               this.setState({ credentialsName })
             }
             isRequired={true}
-            label="🏷️ Registry Name"
+            label="🏷️ Registry name"
             placeholder="ex: paper-straw"
             width="100%"
           />
-          <Heading>GCP Settings</Heading>
+          <Heading>GCP settings</Heading>
           <Helper>Service account credentials for GCP permissions.</Helper>
           <UploadArea
             setValue={(x: any) => this.setState({ serviceAccountKey: x })}
-            label="🔒 GCP Key Data (JSON)"
+            label="🔒 GCP key data (JSON)"
             placeholder="Choose a file or drag it here."
             width="100%"
             height="100%"
@@ -117,8 +117,10 @@ export default class GCRForm extends Component<PropsType, StateType> {
           />
         </CredentialWrapper>
         <SaveButton
-          text="Save Settings"
+          text="Save settings"
           makeFlush={true}
+          clearPosition={true}
+          statusPosition="right"
           disabled={this.isDisabled()}
           onClick={this.isDisabled() ? null : this.handleSubmit}
         />
@@ -130,9 +132,11 @@ export default class GCRForm extends Component<PropsType, StateType> {
 GCRForm.contextType = Context;
 
 const CredentialWrapper = styled.div`
-  padding: 5px 40px 25px;
-  background: #ffffff11;
+  padding: 30px;
   border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  margin-bottom: 30px;
 `;
 
 const StyledForm = styled.div`

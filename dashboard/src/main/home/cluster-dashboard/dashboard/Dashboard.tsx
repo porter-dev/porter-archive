@@ -28,7 +28,7 @@ const tabOptions: {
   label: string;
   value: TabEnum;
 }[] = [
-  { label: "Configuration", value: "configuration" },
+  // { label: "Configuration", value: "configuration" },
   { label: "Nodes", value: "nodes" },
   /*
   { label: "Incidents", value: "incidents" },
@@ -55,10 +55,11 @@ export const Dashboard: React.FunctionComponent = () => {
         return <Metrics />;
       case "namespaces":
         return <NamespaceList />;
+      /*
       case "configuration":
         return (
           <FormWrapper>
-            <Heading>
+            <Heading isAtTop>
               Cluster configuration
             </Heading>
             <SelectRow
@@ -72,6 +73,7 @@ export const Dashboard: React.FunctionComponent = () => {
             />
           </FormWrapper>
         );
+      */
       default:
         return <NodeList />;
     }
@@ -272,5 +274,9 @@ const Bolded = styled.span`
 
 const FormWrapper = styled.div<{ showSave?: boolean }>`
   width: 100%;
-
+  margin-top: 35px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  padding: 30px;
 `;

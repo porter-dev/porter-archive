@@ -265,7 +265,7 @@ const StyledPorterForm = styled.div<{ showSave?: boolean }>`
   font-size: 13px;
   overflow: auto;
   padding: 30px;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   font-size: 13px;
   border-radius: 5px;
   background: #26292e;

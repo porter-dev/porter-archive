@@ -324,8 +324,8 @@ class RevisionSection extends Component<PropsType, StateType> {
         >
           <RevisionPreview>
             {isCurrent
-              ? `Current Revision`
-              : `Previewing Revision (Not Deployed)`}{" "}
+              ? `Current revision`
+              : `Previewing revision (not deployed)`}{" "}
             - <Revision>No. {this.props.chart.version}</Revision>
             <i className="material-icons">arrow_drop_down</i>
           </RevisionPreview>
@@ -472,12 +472,10 @@ const RevisionHeader = styled.div`
   width: 100%;
   padding-left: 15px;
   cursor: pointer;
-  background: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-    props.showRevisions ? "#ffffff11" : ""};
   :hover {
-    background: #ffffff18;
+    background: ${props => props.showRevisions && "#ffffff18"};
     > div > i {
-      background: #ffffff22;
+      background: ${props => props.showRevisions && "#ffffff22"};
     }
   }
 
@@ -497,10 +495,14 @@ const StyledRevisionSection = styled.div`
   width: 100%;
   max-height: ${(props: { showRevisions: boolean }) =>
     props.showRevisions ? "255px" : "40px"};
-  background: #ffffff11;
   margin: 20px 0px 18px;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
+  }
   animation: ${(props: { showRevisions: boolean }) =>
     props.showRevisions ? "expandRevisions 0.3s" : ""};
   animation-timing-function: ease-out;

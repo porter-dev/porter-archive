@@ -479,7 +479,7 @@ const EnvGroupVariablesEditor = ({
   return (
     <TabWrapper>
       <InnerWrapper>
-        <Heading>Environment variables</Heading>
+        <Heading isAtTop>Environment variables</Heading>
         <Helper>
           Set environment variables for your secrets and environment-specific
           configuration.
@@ -507,6 +507,8 @@ const EnvGroupVariablesEditor = ({
           onClick={() => handleUpdateValues()}
           status={buttonStatus}
           makeFlush={true}
+          clearPosition={true}
+          statusPosition="right"
         />
       )}
     </TabWrapper>
@@ -570,33 +572,7 @@ const EnvGroupSettings = ({
     <TabWrapper>
       {isAuthorized("env_group", "", ["get", "delete"]) && (
         <InnerWrapper full={true}>
-          {/* <Heading>Name</Heading>
-                <Subtitle>
-                  <Warning makeFlush={true} highlight={!isEnvGroupNameValid}>
-                    Lowercase letters, numbers, and "-" only.
-                  </Warning>
-                </Subtitle>
-                <DarkMatter antiHeight="-29px" />
-                <InputRow
-                  type="text"
-                  value={newName}
-                  setValue={(x: string) =>
-                    this.setState({ newEnvGroupName: x })
-                  }
-                  placeholder="ex: doctor-scientist"
-                  width="100%"
-                />
-                <Button
-                  color="#616FEEcc"
-                  disabled={!(isEnvGroupNameDifferent && isEnvGroupNameValid)}
-                  onClick={this.handleRename}
-                >
-                  Rename {name}
-                </Button>
-
-                <DarkMatter /> */}
-
-          <Heading>Manage environment group</Heading>
+          <Heading isAtTop>Manage environment group</Heading>
           <Helper>
             Permanently delete this set of environment variables. This action
             cannot be undone.
@@ -895,12 +871,14 @@ const CloneButton = styled(Button)`
 const InnerWrapper = styled.div<{ full?: boolean }>`
   width: 100%;
   height: ${(props) => (props.full ? "100%" : "calc(100% - 65px)")};
-  background: #ffffff11;
-  padding: 0 35px;
+  padding: 30px;
   padding-bottom: 15px;
   position: relative;
-  border-radius: 8px;
   overflow: auto;
+  margin-bottom: 30px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
 `;
 
 const TabWrapper = styled.div`

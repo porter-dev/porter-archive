@@ -19,6 +19,8 @@ type Props = {
   // Provide the classname to modify styles from other components
   className?: string;
   successText?: string;
+
+  absoluteSave?: boolean;
 };
 
 const SaveButton: React.FC<Props> = (props) => {
@@ -68,6 +70,7 @@ const SaveButton: React.FC<Props> = (props) => {
 
   return (
     <ButtonWrapper
+      absoluteSave={props.absoluteSave}
       makeFlush={props.makeFlush}
       clearPosition={props.clearPosition}
       className={props.className}
@@ -147,9 +150,11 @@ const StatusWrapper = styled.div<{
 `;
 
 const ButtonWrapper = styled.div`
-  ${(props: { makeFlush: boolean; clearPosition?: boolean }) => {
+  ${(props: { makeFlush: boolean; clearPosition?: boolean; absoluteSave: boolean }) => {
     const baseStyles = `
       display: flex;
+      position: ${props.absoluteSave ? "absolute" : ""};
+      bottom: ${props.absoluteSave ? "5px" : ""};
       align-items: center;
       z-index: 99;
     `;

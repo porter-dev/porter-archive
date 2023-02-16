@@ -357,7 +357,7 @@ const BuildSettingsTab: React.FC<Props> = ({
 
         {!chart.git_action_config.dockerfile_path ? (
           <>
-            <Heading>Buildpack Settings</Heading>
+            <Heading>Buildpack settings</Heading>
             <BuildpackConfigSection
               ref={buildpackConfigRef}
               currentChart={chart}

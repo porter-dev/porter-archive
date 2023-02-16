@@ -3,6 +3,7 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import TabSelector from "components/TabSelector";
+import Heading from "components/form-components/Heading";
 import TitleSection from "components/TitleSection";
 import api from "shared/api";
 
@@ -19,13 +20,15 @@ import CopyToClipboard from "components/CopyToClipboard";
 import Loading from "components/Loading";
 
 import { DetailedIngressError } from "shared/types";
+import SelectRow from "components/form-components/SelectRow";
 
-type TabEnum = "nodes" | "settings" | "namespaces" | "metrics" | "incidents";
+type TabEnum = "nodes" | "settings" | "namespaces" | "metrics" | "incidents" | "configuration";
 
 const tabOptions: {
   label: string;
   value: TabEnum;
 }[] = [
+  // { label: "Configuration", value: "configuration" },
   { label: "Nodes", value: "nodes" },
   /*
   { label: "Incidents", value: "incidents" },
@@ -52,7 +55,25 @@ export const Dashboard: React.FunctionComponent = () => {
         return <Metrics />;
       case "namespaces":
         return <NamespaceList />;
-      case "nodes":
+      /*
+      case "configuration":
+        return (
+          <FormWrapper>
+            <Heading isAtTop>
+              Cluster configuration
+            </Heading>
+            <SelectRow
+              value={"us-east-1"}
+              width="150px"
+              options={[
+                { label: "us-east-1", value: "us-east-1" }
+              ]}
+              setActiveValue={(option) => null}
+              label="AWS region"
+            />
+          </FormWrapper>
+        );
+      */
       default:
         return <NodeList />;
     }
@@ -112,15 +133,18 @@ export const Dashboard: React.FunctionComponent = () => {
     }
 
     return (
+      <>
+      <Bolded>To configure custom domains for your apps, add a CNAME record pointing to the following Ingress IP:</Bolded>
+      <br /><br />
       <CopyToClipboard
         as={Url}
         text={ingressIp}
         wrapperProps={{ onClick: (e: any) => e.stopPropagation() }}
       >
-        <Bolded>Ingress IP:</Bolded>
         <span>{ingressIp}</span>
         <i className="material-icons-outlined">content_copy</i>
       </CopyToClipboard>
+      </>
     );
   };
 
@@ -169,7 +193,6 @@ export const Dashboard: React.FunctionComponent = () => {
         currentTab={currentTab}
         setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
       />
-
       {renderTab()}
     </>
   );
@@ -221,7 +244,7 @@ const InfoSection = styled.div`
   margin-top: 36px;
   font-family: "Work Sans", sans-serif;
   margin-left: 0px;
-  margin-bottom: 35px;
+  margin-bottom: 30px;
 `;
 
 const Url = styled.a`
@@ -247,4 +270,13 @@ const Bolded = styled.span`
   color: #8b949f;
   margin-right: 6px;
   white-space: nowrap;
+`;
+
+const FormWrapper = styled.div<{ showSave?: boolean }>`
+  width: 100%;
+  margin-top: 35px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  padding: 30px;
 `;

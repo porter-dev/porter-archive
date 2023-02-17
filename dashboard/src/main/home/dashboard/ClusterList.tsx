@@ -199,7 +199,6 @@ const CodeBlock = styled.span`
 `;
 
 const StyledClusterList = styled.div`
-  margin-top: -7px;
   padding-left: 2px;
   overflow: visible;
 `;

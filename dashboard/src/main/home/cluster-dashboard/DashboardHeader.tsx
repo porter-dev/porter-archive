@@ -68,9 +68,9 @@ const TopRow = styled.div`
 `;
 
 const Description = styled.div`
-  color: #8b949f;
+  color: #aaaabb;
   margin-top: 13px;
-  margin-left: 2px;
+  margin-left: 1px;
   font-size: 13px;
 `;
 
@@ -79,10 +79,10 @@ const InfoLabel = styled.div`
   height: 20px;
   display: flex;
   align-items: center;
-  color: #8b949f;
+  color: #aaaabb;
   font-size: 13px;
   > i {
-    color: #8b949f;
+    color: #aaaabb;
     font-size: 18px;
     margin-right: 5px;
   }

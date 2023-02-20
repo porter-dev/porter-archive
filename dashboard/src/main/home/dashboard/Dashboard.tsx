@@ -7,11 +7,17 @@ import { InfraType } from "shared/types";
 import api from "shared/api";
 
 import { RouteComponentProps, withRouter } from "react-router";
+
+import ProvisionerSettings from "../provisioner/ProvisionerSettings";
+import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
+import TabRegion from "components/TabRegion";
 import FormDebugger from "components/porter-form/FormDebugger";
 import TitleSection from "components/TitleSection";
 import ClusterSection from "./ClusterSection";
+import { StatusPage } from "../onboarding/steps/ProvisionResources/forms/StatusPage";
+import Banner from "components/Banner";
 
-import { pushFiltered } from "shared/routing";
+import { pushFiltered, pushQueryParams } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = RouteComponentProps &
@@ -87,13 +93,62 @@ class Dashboard extends Component<PropsType, StateType> {
     }
   }
 
+  currentTab = () => new URLSearchParams(this.props.location.search).get("tab");
+
+  renderTabContents = () => {
+    if (this.currentTab() === "provisioner") {
+      return (
+        <StatusPage
+          filter={[]}
+          project_id={this.props.projectId}
+          setInfraStatus={() => null}
+        />
+      );
+    } else if (this.currentTab() === "create-cluster") {
+      let helperText = "Create a cluster to link to this project";
+      let helperType = "info";
+      if (
+        true
+      ) {
+        helperText =
+          "You need to update your billing to provision or connect a new cluster";
+        helperType = "warning";
+      }
+      return (
+        <>
+          <Banner type={helperType} noMargin>
+            {helperText}
+          </Banner>
+          <Br />
+          <ProvisionerSettings infras={this.state.infras} provisioner={true} />
+        </>
+      );
+    } else {
+      return <ClusterPlaceholderContainer />;
+    }
+  };
+
   onShowProjectSettings = () => {
     pushFiltered(this.props, "/project-settings", ["project_id"]);
   };
 
+  setCurrentTab = (x: string) => pushQueryParams(this.props, { tab: x });
+
   render() {
     let { currentProject, capabilities } = this.context;
     let { onShowProjectSettings } = this;
+
+    let tabOptions = [{ label: "Connected clusters", value: "overview" }];
+
+    if (this.props.isAuthorized("cluster", "", ["get", "create"])) {
+      tabOptions.push({ label: "Create a cluster", value: "create-cluster" });
+    }
+
+    tabOptions.push({ label: "Provisioner status", value: "provisioner" });
+
+    if (!capabilities?.provisioner) {
+      tabOptions = [{ label: "Project overview", value: "overview" }];
+    }
 
     return (
       <>
@@ -137,7 +192,19 @@ class Dashboard extends Component<PropsType, StateType> {
                     .
                   </Description>
                 </InfoSection>
-                <ClusterSection />
+                {
+                  currentProject.capi_provisioner_enabled ? (
+                    <ClusterSection />
+                  ) : (
+                    <TabRegion
+                      currentTab={this.currentTab()}
+                      setCurrentTab={this.setCurrentTab}
+                      options={tabOptions}
+                    >
+                      {this.renderTabContents()}
+                    </TabRegion>
+                  )
+                }
               </>
             )}
           </DashboardWrapper>

@@ -53,7 +53,11 @@ const ProvisionerFlow: React.FC<Props> = ({
       </StyledProvisionerFlow>
     );
   } else if (currentStep === "credentials") {
-    return <CredentialsForm />;
+    return (
+      <CredentialsForm 
+        goBack={() => setCurrentStep("cloud")}
+      />
+    );
   }
 };
 

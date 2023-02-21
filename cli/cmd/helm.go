@@ -11,8 +11,10 @@ import (
 )
 
 var helmCmd = &cobra.Command{
-	Use:   "helm",
-	Short: "Use helm to interact with a Porter cluster",
+	Use:                   "helm",
+	Short:                 "Use helm to interact with a Porter cluster",
+	DisableFlagParsing:    true,
+	DisableFlagsInUseLine: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runHelm)
 

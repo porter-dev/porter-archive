@@ -12,8 +12,10 @@ import (
 )
 
 var kubectlCmd = &cobra.Command{
-	Use:   "kubectl",
-	Short: "Use kubectl to interact with a Porter cluster",
+	Use:                   "kubectl",
+	Short:                 "Use kubectl to interact with a Porter cluster",
+	DisableFlagParsing:    true,
+	DisableFlagsInUseLine: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runKubectl)
 
@@ -54,7 +56,7 @@ func runKubectl(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	err = cmd.Run()
 
 	if err != nil {
-		return fmt.Errorf("error running helm: %w", err)
+		return fmt.Errorf("error running kubectl: %w", err)
 	}
 
 	return nil

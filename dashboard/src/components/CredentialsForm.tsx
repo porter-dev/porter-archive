@@ -2,10 +2,13 @@ import React, { useEffect, useState, useContext, useMemo } from "react";
 import styled from "styled-components";
 
 import api from "shared/api";
+import aws from "assets/aws.png";
 import { Context } from "shared/Context";
 
 import Heading from "components/form-components/Heading";
 import Helper from "./form-components/Helper";
+import InputRow from "./form-components/InputRow";
+import SaveButton from "./SaveButton";
 
 type Props = {
   goBack: () => void;
@@ -26,6 +29,8 @@ const CredentialsForm: React.FC<Props> = ({
   const { currentProject } = useContext(Context);
   const [awsCredentials, setAWSCredentials] = useState<AWSCredential[]>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [awsAccessKeyID, setAWSAccessKeyID] = useState("");
+  const [awsSecretAccessKey, setAWSSecretAccessKey] = useState("");
 
   useEffect(() => {
     api
@@ -40,7 +45,6 @@ const CredentialsForm: React.FC<Props> = ({
         if (!Array.isArray(data)) {
           throw Error("Data is not an array");
         }
-
         setAWSCredentials(data);
         setIsLoading(false);
       })
@@ -49,12 +53,58 @@ const CredentialsForm: React.FC<Props> = ({
       });
   }, [currentProject]);
 
+  const renderContent = () => {
+    if (awsCredentials.length > 0) {
+      return (
+        <CredentialList>
+          {
+            awsCredentials.map((cred: AWSCredential, i: number) => {
+              return (
+                <Credential key={cred.id} isLast={awsCredentials.length - 1 === i}>
+                  <Name>{cred.aws_arn || "n/a"}</Name>
+                </Credential>
+              );
+            })
+          }
+        </CredentialList>
+      );
+    }
+    return (
+      <>
+        <InputRow 
+          type="string"
+          value={awsAccessKeyID}
+          setValue={(e: string) => setAWSAccessKeyID(e)}
+          label="👤 AWS access ID"
+          placeholder="ex: AKIAIOSFODNN7EXAMPLE"
+          isRequired
+        />
+        <InputRow 
+          type="password"
+          value={awsSecretAccessKey}
+          setValue={(e: string) => setAWSSecretAccessKey(e)}
+          label="🔒 AWS secret key"
+          placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
+          isRequired
+        />
+        <Br />
+        <SaveButton
+          disabled={awsAccessKeyID === "" || awsSecretAccessKey === ""}
+          onClick={() => console.log("go straight to editor form")}
+          clearPosition
+          text="Continue"
+        />
+      </>
+    );
+  }
+
   return (
     <StyledCredentialsForm>
       <Heading isAtTop>
         <BackButton onClick={goBack}>
           <i className="material-icons">keyboard_backspace</i>
         </BackButton>
+        <Img src={aws} />
         AWS credentials
       </Heading>
       <Helper>
@@ -64,17 +114,7 @@ const CredentialsForm: React.FC<Props> = ({
         isLoading ? (
           <>Loading . . .</>
         ) : (
-          <CredentialList>
-            {
-              awsCredentials.map((cred: AWSCredential, i: number) => {
-                return (
-                  <Credential key={cred.id} isLast={awsCredentials.length - 1 === i}>
-                    <Name>{cred.aws_arn || "n/a"}</Name>
-                  </Credential>
-                )
-              })
-            }
-          </CredentialList>
+          renderContent()
         )
       }
     </StyledCredentialsForm>
@@ -82,6 +122,16 @@ const CredentialsForm: React.FC<Props> = ({
 };
 
 export default CredentialsForm;
+
+const Br = styled.div`
+  width: 100%;
+  height: 25px;
+`;
+
+const Img = styled.img`
+  height: 18px;
+  margin-right: 15px;
+`;
 
 const BackButton = styled.div`
   width: 30px;

@@ -48,7 +48,7 @@ const AccountSettingsModal = () => {
       />
 
       <Heading>
-        <GitIcon src={github} /> Github
+        <GitIcon src={github} /> GitHub
       </Heading>
       {accessLoading ? (
         <LoadingWrapper>

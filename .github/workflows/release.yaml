@@ -8,9 +8,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Run workflow
@@ -22,9 +20,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Setup docker
@@ -43,9 +39,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Configure AWS credentials
@@ -76,9 +70,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Create and commit porter.rb file

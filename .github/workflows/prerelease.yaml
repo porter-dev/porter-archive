@@ -9,13 +9,11 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v3
       - name: Setup docker
         uses: docker/login-action@v1
         with:
@@ -55,13 +53,11 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v3
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -83,13 +79,11 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v3
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -112,9 +106,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout code
@@ -179,9 +171,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout code
@@ -225,9 +215,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Download binaries
@@ -326,9 +314,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Download binaries
@@ -440,13 +426,11 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v3
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -480,9 +464,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Push new branch with updated CLI
@@ -519,9 +501,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Push new branch with updated CLI
@@ -558,9 +538,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Update new-release-tests

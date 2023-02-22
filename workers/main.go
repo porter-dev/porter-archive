@@ -56,6 +56,8 @@ type EnvConf struct {
 	LegacyProjectIDs []uint `env:"LEGACY_PROJECT_IDS"`
 
 	Port uint `env:"PORT,default=3000"`
+
+	RevisionsCount int `env:"REVISIONS_COUNT,default=20"`
 }
 
 func main() {

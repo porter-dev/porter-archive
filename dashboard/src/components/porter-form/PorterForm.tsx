@@ -81,7 +81,7 @@ const PorterForm: React.FC<Props> = (props) => {
       case "heading":
         // Remove top margin from heading if it's the first form element in the tab
         // TODO: Handle Job form and form variables more gracefully
-        return <Heading isAtTop={num + i < 1 || (formData.name === "Job" && num + i === 1)}>{field.label}</Heading>;
+        return <Heading isAtTop={num + i < 1 || (formData.name === "Job" && num + i === 1) || (formData.name === "Worker" && num + i === 1)}>{field.label}</Heading>;
       case "subtitle":
         return <Helper>{field.label}</Helper>;
       case "input":

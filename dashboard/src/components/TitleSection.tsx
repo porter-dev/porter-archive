@@ -57,7 +57,7 @@ const BackButton = styled.div`
   > i {
     cursor: pointer;
     font-size: 24px;
-    color: #969fbbaa;
+    color: #aaaabb;
     margin-right: 10px;
     padding: 3px;
     margin-left: 0px;

@@ -7,6 +7,7 @@ import Banner from "components/Banner";
 
 import ProvisionerFlow from "components/ProvisionerFlow";
 import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
+import TitleSection from "components/TitleSection";
 
 type Props = {
 };
@@ -19,13 +20,8 @@ const ClusterSection = (props: Props) => {
   if (currentStep === "cloud") {
     return (
       <>
-        <Flex>
-          <BackButton width="87px" onClick={() => setCurrentStep("")}>
-            <i className="material-icons">first_page</i>
-            Back
-          </BackButton>
+        <TitleSection handleNavBack={() => setCurrentStep("")}>
           <Title>
-            <Flex>
             <ClusterIcon>
               <svg
                 width="19"
@@ -83,10 +79,9 @@ const ClusterSection = (props: Props) => {
               </svg>
             </ClusterIcon>
             Provision a new cluster
-            </Flex>
           </Title>
-        </Flex>
-        <Br />
+        </TitleSection>
+        <Br height="7px" />
         <Banner>
           You have currently provisioned {usage?.current.cluster || "0"} out of {usage?.limit.clusters || "0"} clusters for this project.
         </Banner>
@@ -107,9 +102,9 @@ const ClusterSection = (props: Props) => {
 
 export default ClusterSection;
 
-const Br = styled.div`
+const Br = styled.div<{ height?: string }>`
   width: 100%;
-  height: 30px;
+  height: ${props => props.height || "30px"};
 `;
 
 const ClusterIcon = styled.div`
@@ -118,7 +113,7 @@ const ClusterIcon = styled.div`
     display: flex;
     align-items: center;
     margin-bottom: -1x;
-    margin-right: 10px;
+    margin-right: 15px;
     color: #ffffff;
   }
 `;
@@ -127,41 +122,11 @@ const Title = styled.div`
   font-size: 20px;
   font-weight: 500;
   font-family: "Work Sans", sans-serif;
-  margin-left: 15px;
+  margin-left: 5px;
   border-radius: 2px;
   color: #ffffff;
-`;
-
-const Flex = styled.div`
   display: flex;
   align-items: center;
-`;
-
-const BackButton = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  font-size: 13px;
-  height: 35px;
-  padding: 5px 13px;
-  padding-right: 15px;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  width: ${(props: { width: string }) => props.width};
-  color: white;
-  background: #ffffff11;
-
-  :hover {
-    background: #ffffff22;
-  }
-
-  > i {
-    color: white;
-    font-size: 16px;
-    margin-right: 6px;
-    margin-left: -2px;
-  }
 `;
 
 const Button = styled.div`

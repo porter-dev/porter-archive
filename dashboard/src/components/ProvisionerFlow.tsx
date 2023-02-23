@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
 
+import ProvisionerForm from "components/ProvisionerForm";
 import CredentialsForm from "components/CredentialsForm";
 import Helper from "components/form-components/Helper";
 
@@ -16,6 +17,7 @@ const ProvisionerFlow: React.FC<Props> = ({
 }) => {
   const { usage, hasBillingEnabled } = useContext(Context);
   const [currentStep, setCurrentStep] = useState("cloud");
+  const [credentialId, setCredentialId] = useState(null);
 
   const isUsageExceeded = useMemo(() => {
     if (!hasBillingEnabled) {
@@ -56,6 +58,17 @@ const ProvisionerFlow: React.FC<Props> = ({
     return (
       <CredentialsForm 
         goBack={() => setCurrentStep("cloud")}
+        proceed={(id) => {
+          setCredentialId(id);
+          setCurrentStep("cluster");
+        }}
+      />
+    );
+  } else if (currentStep === "cluster") {
+    return (
+      <ProvisionerForm
+        goBack={() => setCurrentStep("credentials")}
+        credentialId={credentialId}
       />
     );
   }

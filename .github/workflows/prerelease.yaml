@@ -115,6 +115,10 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.18
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
       - name: Write Dashboard Environment Variables
         run: |
           cat >./dashboard/.env <<EOL
@@ -132,6 +136,7 @@ jobs:
           zip --junk-paths ./release/static/static_${{steps.tag_name.outputs.tag}}.zip ./dashboard/build/*
         env:
           NODE_ENV: production
+          NODE_OPTIONS: --openssl-legacy-provider
       - name: Build Linux binaries
         run: |
           go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=${{steps.tag_name.outputs.tag}}' -X 'github.com/porter-dev/porter/cli/cmd/errors.SentryDSN=${{secrets.SENTRY_DSN}}'" -a -tags cli -o ./porter ./cli &

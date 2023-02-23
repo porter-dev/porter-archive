@@ -110,9 +110,9 @@ jobs:
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: 1.18
       - name: Write Dashboard Environment Variables
@@ -154,13 +154,13 @@ jobs:
           zip --junk-paths ./release/linux/portersvr_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./portersvr
           zip --junk-paths ./release/linux/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./docker-credential-porter
       - name: Upload binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: ./release/linux
           name: linux-binaries
           retention-days: 1
       - name: Upload static binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: ./release/static
           name: static-binaries
@@ -175,9 +175,9 @@ jobs:
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: 1.18
       - name: Write Dashboard Environment Variables
@@ -203,7 +203,7 @@ jobs:
           GOARCH: amd64
           CGO_ENABLED: 0
       - name: Upload binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: ./release/darwin
           name: mac-binaries
@@ -219,7 +219,7 @@ jobs:
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Download binaries
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: mac-binaries
           path: release/
@@ -300,7 +300,7 @@ jobs:
           gon ./docker-credential-porter.gon.json &
           wait
       - name: Upload binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: ./release
           name: mac-binaries
@@ -318,17 +318,17 @@ jobs:
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Download binaries
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: linux-binaries
           path: release/linux
       - name: Download binaries
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: static-binaries
           path: release/static
       - name: Download binaries
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: mac-binaries
           path: release/darwin

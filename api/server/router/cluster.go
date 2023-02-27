@@ -1353,7 +1353,7 @@ func getClusterRoutes(
 		},
 	)
 
-	notifyNewIncidentHandler := cluster.NewNotifyNewIncidentHandler(
+	notifyNewIncidentHandler := cluster.NewNotifyNewIncidentChanceHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -1382,7 +1382,7 @@ func getClusterRoutes(
 		},
 	)
 
-	notifyResolvedIncidentHandler := cluster.NewNotifyResolvedIncidentHandler(
+	notifyResolvedIncidentHandler := cluster.NewNotifyResolvedIncidentChanceHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

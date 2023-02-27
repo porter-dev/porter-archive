@@ -52,6 +52,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [currentChart, setCurrentChart] = useState<ChartType>(
     props.currentChart
   );
+  const [compareChart, setCompareChart] = useState<ChartType>(null);
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [components, setComponents] = useState<ResourceType[]>([]);
@@ -79,6 +80,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [logData, setLogData] = useState<InitLogData>({});
   const [overrideCurrentTab, setOverrideCurrentTab] = useState("");
   const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
+  const [comparisonMode, setComparisonMode] = useState<boolean>(false);
 
   const {
     isStack,
@@ -192,7 +194,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           if (
             oldControllers &&
             oldControllers[object.metadata.uid]?.status?.conditions ==
-              object.status?.conditions
+            object.status?.conditions
           ) {
             return oldControllers;
           }
@@ -525,6 +527,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         return (
           <ValuesYaml
             currentChart={chart}
+            compareChart={compareChart}
             refreshChart={() => getChartData(currentChart)}
             disabled={!isAuthorized("application", "", ["get", "update"])}
           />
@@ -612,6 +615,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     setIsPreview(!isCurrent);
     getChartData(chart);
+    setCurrentChart(chart);
   };
 
   // TODO: consolidate with pop + push in refreshTabs
@@ -886,7 +890,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
               isFullscreen={true}
               setIsFullscreen={setIsFullscreen}
               currentChart={currentChart}
-              setInitData={() => {}}
+              setInitData={() => { }}
             />
           ) : (
             <StyledExpandedChart>
@@ -956,6 +960,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                       setShowRevisions(!showRevisions);
                     }}
                     chart={currentChart}
+                    compareChart={compareChart}
                     refreshChart={() => getChartData(currentChart)}
                     setRevision={setRevision}
                     forceRefreshRevisions={forceRefreshRevisions}
@@ -963,10 +968,19 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     shouldUpdate={
                       currentChart.latest_version &&
                       currentChart.latest_version !==
-                        currentChart.chart.metadata.version
+                      currentChart.chart.metadata.version
                     }
+                    setCompareChart={setCompareChart}
                     latestVersion={currentChart.latest_version}
                     upgradeVersion={handleUpgradeVersion}
+                    comparisonMode={comparisonMode}
+                    toggleComparisonMode={() => {
+                      if (!comparisonMode) {
+                        setOverrideCurrentTab('values');
+
+                      }
+                      setComparisonMode(!comparisonMode);
+                    }}
                   />
                   {isStack && isLoadingStackEnvGroups ? (
                     <>
@@ -1169,11 +1183,11 @@ const TabButton = styled.div`
   border-radius: 20px;
   text-shadow: 0px 0px 8px
     ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "#ffffff66" : "none"};
+    props.devOpsMode ? "#ffffff66" : "none"};
   cursor: pointer;
   :hover {
     color: ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "" : "#aaaabb99"};
+    props.devOpsMode ? "" : "#aaaabb99"};
   }
 
   > i {

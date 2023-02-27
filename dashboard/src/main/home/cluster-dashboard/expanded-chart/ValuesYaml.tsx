@@ -9,15 +9,18 @@ import { Context } from "shared/Context";
 
 import YamlEditor from "components/YamlEditor";
 import SaveButton from "components/SaveButton";
+import ReactDiffViewer from "react-diff-viewer";
 
 type PropsType = {
   currentChart: ChartType;
+  compareChart?: ChartType;
   refreshChart: () => void;
   disabled?: boolean;
 };
 
 type StateType = {
   values: string;
+  compareValues: string;
   saveValuesStatus: string | null;
 };
 
@@ -25,15 +28,20 @@ type StateType = {
 export default class ValuesYaml extends Component<PropsType, StateType> {
   state = {
     values: "",
+    compareValues: "",
     saveValuesStatus: null as string | null,
   };
 
   updateValues() {
     let values = "# Nothing here yet";
+    let compareValues = "# Nothing here yet";
     if (this.props.currentChart.config) {
       values = yaml.dump(this.props.currentChart.config);
+      if (this.props.compareChart?.config) {
+        compareValues = yaml.dump(this.props.compareChart.config);
+      }
     }
-    this.setState({ values });
+    this.setState({ values, compareValues });
   }
 
   componentDidMount() {
@@ -41,7 +49,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    if (this.props.currentChart !== prevProps.currentChart) {
+    if (this.props.currentChart !== prevProps.currentChart || this.props.compareChart !== prevProps.compareChart) {
       this.updateValues();
     }
   }
@@ -94,26 +102,38 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <StyledValuesYaml>
-        <Wrapper>
-          <YamlEditor
-            value={this.state.values}
-            onChange={(e: any) => this.setState({ values: e })}
-            readOnly={this.props.disabled}
-            height="calc(100vh - 412px)"
+      <>
+        {this.props.compareChart ?
+          <ReactDiffViewer
+            oldValue={this.state.values}
+            newValue={this.state.compareValues}
+            splitView
+            useDarkTheme
+            leftTitle={`Version ${this.props.currentChart.version.toString()}`}
+            rightTitle={`Version ${this.props.compareChart.version.toString()}`}
           />
-        </Wrapper>
-        {!this.props.disabled && (
-          <SaveButton
-            text="Update values"
-            onClick={this.handleSaveValues}
-            status={this.state.saveValuesStatus}
-            statusPosition="right"
-            clearPosition={true}
-            makeFlush={true}
-          />
-        )}
-      </StyledValuesYaml>
+          :
+          <StyledValuesYaml>
+            <Wrapper>
+              <YamlEditor
+                value={this.state.values}
+                onChange={(e: any) => this.setState({ values: e })}
+                readOnly={this.props.disabled}
+                height="calc(100vh - 412px)"
+              />
+            </Wrapper>
+            {!this.props.disabled && (
+              <SaveButton
+                text="Update values"
+                onClick={this.handleSaveValues}
+                status={this.state.saveValuesStatus}
+                statusPosition="right"
+                clearPosition={true}
+                makeFlush={true}
+              />
+            )}
+          </StyledValuesYaml>}
+      </>
     );
   }
 }

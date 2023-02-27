@@ -24,6 +24,10 @@ type PropsType = WithAuthProps & {
   latestVersion: string;
   showRevisions?: boolean;
   toggleShowRevisions?: () => void;
+  comparisonMode: boolean;
+  toggleComparisonMode: () => void;
+  setCompareChart: (chart: ChartType) => void;
+  compareChart?: ChartType;
 };
 
 type StateType = {
@@ -72,6 +76,7 @@ class RevisionSection extends Component<PropsType, StateType> {
       })
       .catch(console.log);
   };
+
 
   componentDidMount() {
     this.refreshHistory();
@@ -146,6 +151,7 @@ class RevisionSection extends Component<PropsType, StateType> {
       this.refreshHistory().then(() => {
         this.props.setRevision(this.state.revisions[0], true);
       });
+
     } else if (this.props.chart !== prevProps.chart) {
       this.refreshHistory();
     }
@@ -184,11 +190,27 @@ class RevisionSection extends Component<PropsType, StateType> {
   };
 
   handleClickRevision = (revision: ChartType) => {
-    this.props.setRevision(
-      revision,
-      revision.version === this.state.maxVersion
-    );
+    if (this.props.comparisonMode) {
+      this.props.setCompareChart(revision);
+    } else {
+      this.props.setRevision(
+        revision,
+        revision.version === this.state.maxVersion
+      );
+    }
   };
+
+  startComparison = () => {
+    this.props.setCompareChart(
+      this.props.comparisonMode ?
+        null
+        :
+        this.props.chart.version > 0 ?
+          this.state.revisions.find((revision) => revision.version === this.props.chart.version - 1)
+          :
+          null);
+    this.props.toggleComparisonMode();
+  }
 
   renderRevisionList = () => {
     return this.state.revisions.map((revision: ChartType, i: number) => {
@@ -206,7 +228,7 @@ class RevisionSection extends Component<PropsType, StateType> {
         <Tr
           key={i}
           onClick={() => this.handleClickRevision(revision)}
-          selected={this.props.chart.version === revision.version}
+          selected={this.props.chart.version === revision.version || this.props.compareChart?.version === revision.version}
         >
           <Td>{revision.version}</Td>
           <Td>{readableDate(revision.info.last_deployed)}</Td>
@@ -251,7 +273,7 @@ class RevisionSection extends Component<PropsType, StateType> {
   };
 
   renderExpanded = () => {
-    if (this.state.expandRevisions) {
+    if (this.state.expandRevisions || this.props.comparisonMode) {
       return (
         <TableWrapper>
           <RevisionsTable>
@@ -342,6 +364,16 @@ class RevisionSection extends Component<PropsType, StateType> {
               </RevisionUpdateMessage>
             </div>
           )}
+          <CompareVersionsWrapper>
+            <CompareVersionsToggle
+              checked={this.props.comparisonMode}
+              disabled={this.state.revisions.length < 2}
+              onChange={this.startComparison}
+              onClick={(e) => {
+                e.stopPropagation();
+              }} />
+            <span>Compare Versions</span>
+          </CompareVersionsWrapper>
         </RevisionHeader>
         <RevisionList>{this.renderExpanded()}</RevisionList>
       </div>
@@ -418,7 +450,7 @@ const RollbackButton = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled: boolean }) =>
-      props.disabled ? "" : "#405eddbb"};
+    props.disabled ? "" : "#405eddbb"};
   }
 `;
 
@@ -430,8 +462,10 @@ const Tr = styled.tr`
     props.selected ? "#ffffff11" : ""};
   :hover {
     background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-      props.disableHover ? "" : "#ffffff22"};
+    props.disableHover ? "" : "#ffffff22"};
   }
+  border: ${(props: { disableHover?: boolean; selected?: boolean }) =>
+    props.selected ? "2px solid #8590ff" : ""};
 `;
 
 const Td = styled.td`
@@ -485,9 +519,9 @@ const RevisionHeader = styled.div`
     cursor: pointer;
     border-radius: 20px;
     background: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-      props.showRevisions ? "#ffffff18" : ""};
+    props.showRevisions ? "#ffffff18" : ""};
     transform: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-      props.showRevisions ? "rotate(180deg)" : ""};
+    props.showRevisions ? "rotate(180deg)" : ""};
   }
 `;
 
@@ -519,7 +553,14 @@ const StyledRevisionSection = styled.div`
 const RevisionPreview = styled.div`
   display: flex;
   align-items: center;
+  justify-content: space-between;
 `;
+
+const CompareVersionsWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  padding-right: 15px;
+`
 
 const RevisionUpdateMessage = styled.div`
   color: white;
@@ -547,4 +588,8 @@ const A = styled.a`
   color: #8590ff;
   text-decoration: underline;
   cursor: pointer;
+`;
+
+const CompareVersionsToggle = styled.input.attrs({ type: 'checkbox' })`
+  
 `;

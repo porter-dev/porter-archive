@@ -38,6 +38,7 @@ class YamlEditor extends Component<PropsType, StateType> {
     e.preventDefault();
   };
 
+
   render() {
     return (
       <Holder>
@@ -67,22 +68,22 @@ class YamlEditor extends Component<PropsType, StateType> {
 export default YamlEditor;
 
 const Editor = styled.form`
-  border-radius: ${(props: { border: boolean }) =>
+        border-radius: ${(props: { border: boolean }) =>
     props.border ? "10px" : ""};
-  border: ${(props: { border: boolean }) =>
+        border: ${(props: { border: boolean }) =>
     props.border ? "1px solid #ffffff33" : ""};
-`;
+        `;
 
 const Holder = styled.div`
-  .ace_scrollbar {
-    display: none;
+        .ace_scrollbar {
+          display: none;
   }
-  .ace_editor,
-  .ace_editor * {
-    font-family: "Monaco", "Menlo", "Ubuntu Mono", "Droid Sans Mono", "Consolas",
-      monospace !important;
-    font-size: 12px !important;
-    font-weight: 400 !important;
-    letter-spacing: 0 !important;
+        .ace_editor,
+        .ace_editor * {
+          font - family: "Monaco", "Menlo", "Ubuntu Mono", "Droid Sans Mono", "Consolas",
+        monospace !important;
+        font-size: 12px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0 !important;
   }
-`;
+        `;

@@ -191,7 +191,18 @@ class RevisionSection extends Component<PropsType, StateType> {
 
   handleClickRevision = (revision: ChartType) => {
     if (this.props.comparisonMode) {
-      this.props.setCompareChart(revision);
+      if (this.props.compareChart) {
+        if (revision.version === this.props.chart.version) {
+          this.props.setRevision(this.props.compareChart, this.props.compareChart.version === this.state.maxVersion)
+          this.props.toggleComparisonMode();
+          this.props.setCompareChart(null);
+        } else if (revision.version === this.props.compareChart.version) {
+          this.props.toggleComparisonMode();
+          this.props.setCompareChart(null);
+        } else {
+          this.props.setCompareChart(revision);
+        }
+      }
     } else {
       this.props.setRevision(
         revision,

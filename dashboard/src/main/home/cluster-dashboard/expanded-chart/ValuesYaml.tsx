@@ -10,6 +10,7 @@ import { Context } from "shared/Context";
 import YamlEditor from "components/YamlEditor";
 import SaveButton from "components/SaveButton";
 import ReactDiffViewer from "react-diff-viewer";
+import { readableDate } from "shared/string_utils";
 
 type PropsType = {
   currentChart: ChartType;
@@ -101,16 +102,18 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
   };
 
   render() {
+    const compareVersionPrecedesCurrentVersion = this.props.compareChart && this.props.compareChart.version < this.props.currentChart.version;
+
     return (
       <>
         {this.props.compareChart ?
           <ReactDiffViewer
-            oldValue={this.state.values}
-            newValue={this.state.compareValues}
+            oldValue={compareVersionPrecedesCurrentVersion ? this.state.compareValues : this.state.values}
+            newValue={compareVersionPrecedesCurrentVersion ? this.state.values : this.state.compareValues}
             splitView
             useDarkTheme
-            leftTitle={`Version ${this.props.currentChart.version.toString()}`}
-            rightTitle={`Version ${this.props.compareChart.version.toString()}`}
+            leftTitle={compareVersionPrecedesCurrentVersion ? `Version ${this.props.compareChart.version.toString()} (Deployed ${readableDate(this.props.compareChart.info.last_deployed)})` : `Version ${this.props.currentChart.version.toString()} (Deployed ${readableDate(this.props.currentChart.info.last_deployed)})`}
+            rightTitle={compareVersionPrecedesCurrentVersion ? `Version ${this.props.currentChart.version.toString()} (Deployed ${readableDate(this.props.currentChart.info.last_deployed)})` : `Version ${this.props.compareChart.version.toString()} (Deployed ${readableDate(this.props.compareChart.info.last_deployed)})`}
           />
           :
           <StyledValuesYaml>

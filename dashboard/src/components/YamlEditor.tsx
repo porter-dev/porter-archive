@@ -4,6 +4,7 @@ import AceEditor from "react-ace";
 
 import "shared/ace-porter-theme";
 import "ace-builds/src-noconflict/mode-yaml";
+import 'brace/ext/searchbox';
 
 type PropsType = {
   value: string;

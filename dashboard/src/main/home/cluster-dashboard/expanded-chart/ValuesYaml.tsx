@@ -9,7 +9,7 @@ import { Context } from "shared/Context";
 
 import YamlEditor from "components/YamlEditor";
 import SaveButton from "components/SaveButton";
-import ReactDiffViewer from "react-diff-viewer";
+import ReactDiffViewer, { DiffMethod } from "react-diff-viewer";
 import { readableDate } from "shared/string_utils";
 
 type PropsType = {
@@ -116,6 +116,8 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
             useDarkTheme
             leftTitle={compareVersionPrecedesCurrentVersion ? `Version ${compareChart.version.toString()} (Deployed ${readableDate(compareChart.info.last_deployed)})` : `Version ${currentChart.version.toString()} (Deployed ${readableDate(currentChart.info.last_deployed)})`}
             rightTitle={compareVersionPrecedesCurrentVersion ? `Version ${currentChart.version.toString()} (Deployed ${readableDate(currentChart.info.last_deployed)})` : `Version ${compareChart.version.toString()} (Deployed ${readableDate(compareChart.info.last_deployed)})`}
+            styles={DiffViewerStyles}
+            compareMethod={DiffMethod.TRIMMED_LINES}
           />
           :
           <StyledValuesYaml>
@@ -174,3 +176,18 @@ const StyledValuesYaml = styled.div`
     }
   }
 `;
+
+const DiffViewerStyles = {
+  variables: {
+    dark: {
+      diffViewerBackground: "#1b1d26",
+      gutterBackground: "#1b1d26",
+      emptyLineBackground: "#1b1d26",
+      diffViewerColor: '#f05671',
+      diffViewerTitleBackground: '#2c2c2c',
+      diffViewerTitleColor: 'white',
+    }
+  },
+
+
+}

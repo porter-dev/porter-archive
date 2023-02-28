@@ -974,13 +974,14 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     latestVersion={currentChart.latest_version}
                     upgradeVersion={handleUpgradeVersion}
                     comparisonMode={comparisonMode}
-                    toggleComparisonMode={() => {
+                    setComparisonMode={(x: boolean) => {
                       if (!comparisonMode) {
                         setOverrideCurrentTab('values');
 
                       }
-                      setComparisonMode(!comparisonMode);
+                      setComparisonMode(x);
                     }}
+                    devOpsMode={devOpsMode}
                   />
                   {isStack && isLoadingStackEnvGroups ? (
                     <>

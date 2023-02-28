@@ -25,9 +25,10 @@ type PropsType = WithAuthProps & {
   showRevisions?: boolean;
   toggleShowRevisions?: () => void;
   comparisonMode: boolean;
-  toggleComparisonMode: () => void;
+  setComparisonMode: (x: boolean) => void;
   setCompareChart: (chart: ChartType) => void;
   compareChart?: ChartType;
+  devOpsMode: boolean;
 };
 
 type StateType = {
@@ -76,7 +77,6 @@ class RevisionSection extends Component<PropsType, StateType> {
       })
       .catch(console.log);
   };
-
 
   componentDidMount() {
     this.refreshHistory();
@@ -151,9 +151,13 @@ class RevisionSection extends Component<PropsType, StateType> {
       this.refreshHistory().then(() => {
         this.props.setRevision(this.state.revisions[0], true);
       });
-
     } else if (this.props.chart !== prevProps.chart) {
       this.refreshHistory();
+    }
+
+    if (prevProps.devOpsMode && !this.props.devOpsMode && prevProps.comparisonMode) {
+      this.props.setComparisonMode(false);
+      this.props.setCompareChart(null);
     }
   }
 
@@ -194,10 +198,10 @@ class RevisionSection extends Component<PropsType, StateType> {
       if (this.props.compareChart) {
         if (revision.version === this.props.chart.version) {
           this.props.setRevision(this.props.compareChart, this.props.compareChart.version === this.state.maxVersion)
-          this.props.toggleComparisonMode();
+          this.props.setComparisonMode(false);
           this.props.setCompareChart(null);
         } else if (revision.version === this.props.compareChart.version) {
-          this.props.toggleComparisonMode();
+          this.props.setComparisonMode(false);
           this.props.setCompareChart(null);
         } else {
           this.props.setCompareChart(revision);
@@ -211,7 +215,7 @@ class RevisionSection extends Component<PropsType, StateType> {
     }
   };
 
-  startComparison = () => {
+  startOrEndComparison = () => {
     this.props.setCompareChart(
       this.props.comparisonMode ?
         null
@@ -220,7 +224,7 @@ class RevisionSection extends Component<PropsType, StateType> {
           this.state.revisions.find((revision) => revision.version === this.props.chart.version - 1)
           :
           null);
-    this.props.toggleComparisonMode();
+    this.props.setComparisonMode(!this.props.comparisonMode);
   }
 
   renderRevisionList = () => {
@@ -304,6 +308,7 @@ class RevisionSection extends Component<PropsType, StateType> {
         </TableWrapper>
       );
     }
+
   };
 
   renderContents = () => {
@@ -375,16 +380,18 @@ class RevisionSection extends Component<PropsType, StateType> {
               </RevisionUpdateMessage>
             </div>
           )}
-          <CompareVersionsWrapper>
-            <CompareVersionsToggle
-              checked={this.props.comparisonMode}
-              disabled={this.state.revisions.length < 2}
-              onChange={this.startComparison}
-              onClick={(e) => {
-                e.stopPropagation();
-              }} />
-            <span>Compare Versions</span>
-          </CompareVersionsWrapper>
+          {this.props.devOpsMode &&
+            <CompareVersionsWrapper>
+              <CompareVersionsToggle
+                checked={this.props.comparisonMode}
+                disabled={this.state.revisions.length < 2}
+                onChange={this.startOrEndComparison}
+                onClick={(e) => {
+                  e.stopPropagation();
+                }} />
+              <span>Compare Versions</span>
+            </CompareVersionsWrapper>
+          }
         </RevisionHeader>
         <RevisionList>{this.renderExpanded()}</RevisionList>
       </div>
@@ -393,7 +400,7 @@ class RevisionSection extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <StyledRevisionSection showRevisions={this.state.expandRevisions}>
+      <StyledRevisionSection showRevisions={this.state.expandRevisions || this.props.comparisonMode}>
         {this.renderContents()}
         <ConfirmOverlay
           show={this.state.rollbackRevision && true}

@@ -102,26 +102,28 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
   };
 
   render() {
-    const compareVersionPrecedesCurrentVersion = this.props.compareChart && this.props.compareChart.version < this.props.currentChart.version;
+    const { currentChart, compareChart, disabled } = this.props;
+    const { values, compareValues, saveValuesStatus } = this.state;
+    const compareVersionPrecedesCurrentVersion = compareChart && compareChart.version < currentChart.version;
 
     return (
       <>
-        {this.props.compareChart ?
+        {compareChart ?
           <ReactDiffViewer
-            oldValue={compareVersionPrecedesCurrentVersion ? this.state.compareValues : this.state.values}
-            newValue={compareVersionPrecedesCurrentVersion ? this.state.values : this.state.compareValues}
+            oldValue={compareVersionPrecedesCurrentVersion ? compareValues : values}
+            newValue={compareVersionPrecedesCurrentVersion ? values : compareValues}
             splitView
             useDarkTheme
-            leftTitle={compareVersionPrecedesCurrentVersion ? `Version ${this.props.compareChart.version.toString()} (Deployed ${readableDate(this.props.compareChart.info.last_deployed)})` : `Version ${this.props.currentChart.version.toString()} (Deployed ${readableDate(this.props.currentChart.info.last_deployed)})`}
-            rightTitle={compareVersionPrecedesCurrentVersion ? `Version ${this.props.currentChart.version.toString()} (Deployed ${readableDate(this.props.currentChart.info.last_deployed)})` : `Version ${this.props.compareChart.version.toString()} (Deployed ${readableDate(this.props.compareChart.info.last_deployed)})`}
+            leftTitle={compareVersionPrecedesCurrentVersion ? `Version ${compareChart.version.toString()} (Deployed ${readableDate(compareChart.info.last_deployed)})` : `Version ${currentChart.version.toString()} (Deployed ${readableDate(currentChart.info.last_deployed)})`}
+            rightTitle={compareVersionPrecedesCurrentVersion ? `Version ${currentChart.version.toString()} (Deployed ${readableDate(currentChart.info.last_deployed)})` : `Version ${compareChart.version.toString()} (Deployed ${readableDate(compareChart.info.last_deployed)})`}
           />
           :
           <StyledValuesYaml>
             <Wrapper>
               <YamlEditor
-                value={this.state.values}
+                value={values}
                 onChange={(e: any) => this.setState({ values: e })}
-                readOnly={this.props.disabled}
+                readOnly={disabled}
                 height="calc(100vh - 412px)"
               />
             </Wrapper>
@@ -129,7 +131,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
               <SaveButton
                 text="Update values"
                 onClick={this.handleSaveValues}
-                status={this.state.saveValuesStatus}
+                status={saveValuesStatus}
                 statusPosition="right"
                 clearPosition={true}
                 makeFlush={true}

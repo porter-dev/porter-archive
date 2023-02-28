@@ -38,7 +38,6 @@ class YamlEditor extends Component<PropsType, StateType> {
     e.preventDefault();
   };
 
-
   render() {
     return (
       <Holder>

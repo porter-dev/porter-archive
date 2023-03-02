@@ -781,8 +781,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
           }
         )
         .then((res) => {
+          setLatestChart(props.currentChart);
           setCurrentChart(res.data || props.currentChart);
-          setLatestChart(res.data || props.currentChart);
         })
         .catch(console.log);
 

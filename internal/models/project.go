@@ -63,7 +63,7 @@ type Project struct {
 	ManagedInfraEnabled    bool
 	StacksEnabled          bool
 	APITokensEnabled       bool
-	CAPIProvisionerEnabled bool
+	CapiProvisionerEnabled bool
 }
 
 // ToProjectType generates an external types.Project to be shared over REST
@@ -83,6 +83,6 @@ func (p *Project) ToProjectType() *types.Project {
 		ManagedInfraEnabled:    p.ManagedInfraEnabled,
 		StacksEnabled:          p.StacksEnabled,
 		APITokensEnabled:       p.APITokensEnabled,
-		CAPIProvisionerEnabled: p.CAPIProvisionerEnabled,
+		CapiProvisionerEnabled: p.CapiProvisionerEnabled,
 	}
 }

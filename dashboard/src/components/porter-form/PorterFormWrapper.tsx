@@ -60,6 +60,7 @@ const PorterFormWrapper: React.FC<PropsType> = ({
   };
 
   const getInitialTab = (): string => {
+    console.log(formData);
     if (leftTabOptions?.length > 0) {
       return leftTabOptions[0].value;
     } else if (formData?.tabs?.length > 0) {

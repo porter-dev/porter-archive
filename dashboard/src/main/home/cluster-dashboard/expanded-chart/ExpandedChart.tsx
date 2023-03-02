@@ -52,6 +52,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [currentChart, setCurrentChart] = useState<ChartType>(
     props.currentChart
   );
+  const [latestChart, setLatestChart] = useState<ChartType>(props.currentChart);
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [components, setComponents] = useState<ResourceType[]>([]);
@@ -396,7 +397,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           chart: currentChart.name,
           values: valuesYaml,
         });
-
+        setLatestChart(currentChart);
         cb && cb();
       } catch (err) {
         const parsedErr = err?.response?.data?.error;
@@ -524,6 +525,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
       case "values":
         return (
           <ValuesYaml
+            latestChart={latestChart}
+            newestVersion={isPreview}
             currentChart={chart}
             refreshChart={() => getChartData(currentChart)}
             disabled={!isAuthorized("application", "", ["get", "update"])}
@@ -779,12 +782,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
         )
         .then((res) => {
           setCurrentChart(res.data || props.currentChart);
+          setLatestChart(res.data || props.currentChart);
         })
         .catch(console.log);
 
       return;
     }
-
+    setLatestChart(props.currentChart);
     setCurrentChart(props.currentChart);
   }, [logData, props.currentChart]);
 

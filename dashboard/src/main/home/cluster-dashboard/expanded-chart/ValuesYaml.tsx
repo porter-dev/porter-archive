@@ -2,15 +2,16 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 import _ from "lodash";
-
-import { ChartType, StorageType } from "shared/types";
+import { ChartType } from "shared/types";
 import api from "shared/api";
 import { Context } from "shared/Context";
-
 import YamlEditor from "components/YamlEditor";
 import SaveButton from "components/SaveButton";
+import DiffViewer from "react-diff-viewer";
 
 type PropsType = {
+  newestVersion: boolean;
+  latestChart: ChartType;
   currentChart: ChartType;
   refreshChart: () => void;
   disabled?: boolean;
@@ -18,22 +19,29 @@ type PropsType = {
 
 type StateType = {
   values: string;
+  originalValues: string;
   saveValuesStatus: string | null;
+  showDiffView: boolean;
 };
 
-// TODO: handle zoom out
 export default class ValuesYaml extends Component<PropsType, StateType> {
   state = {
     values: "",
+    originalValues: "",
     saveValuesStatus: null as string | null,
+    showDiffView: false,
   };
 
   updateValues() {
+    let originalValues = "# Nothing here yet";
+    if (this.props.currentChart.config) {
+      originalValues = yaml.dump(this.props.latestChart.config);
+    }
     let values = "# Nothing here yet";
     if (this.props.currentChart.config) {
       values = yaml.dump(this.props.currentChart.config);
     }
-    this.setState({ values });
+    this.setState({ values, originalValues });
   }
 
   componentDidMount() {
@@ -74,7 +82,10 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({ saveValuesStatus: "successful" });
+        this.setState({
+          saveValuesStatus: "successful",
+          originalValues: valuesString,
+        });
         this.props.refreshChart();
       })
       .catch((err) => {
@@ -92,18 +103,55 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
       });
   };
 
+  handleToggleDiffView = () => {
+    this.setState((prevState) => ({ showDiffView: !prevState.showDiffView }));
+  };
+
   render() {
+    const { disabled, newestVersion, currentChart, latestChart } = this.props;
+    const { values, originalValues, showDiffView } = this.state;
+
     return (
       <StyledValuesYaml>
-        <Wrapper>
-          <YamlEditor
-            value={this.state.values}
-            onChange={(e: any) => this.setState({ values: e })}
-            readOnly={this.props.disabled}
-            height="calc(100vh - 412px)"
-          />
-        </Wrapper>
-        {!this.props.disabled && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: "10px",
+          }}
+        >
+          <label style={{ marginLeft: "10px" }}>
+            Show diff view
+            <input
+              type="checkbox"
+              checked={showDiffView}
+              onChange={this.handleToggleDiffView}
+            />
+          </label>
+        </div>
+        {showDiffView ? (
+          <Wrapper>
+            <DiffViewer
+              leftTitle={`Current Version`}
+              rightTitle={`Revision No. ${currentChart.version.toString()}`}
+              oldValue={originalValues}
+              newValue={values}
+              splitView={true}
+              hideLineNumbers={false}
+              useDarkTheme={true}
+            />
+          </Wrapper>
+        ) : (
+          <Wrapper>
+            <YamlEditor
+              value={values}
+              onChange={(e: any) => this.setState({ values: e })}
+              readOnly={disabled}
+              height="calc(100vh - 412px)"
+            />
+          </Wrapper>
+        )}
+        {!disabled && (
           <SaveButton
             text="Update values"
             onClick={this.handleSaveValues}

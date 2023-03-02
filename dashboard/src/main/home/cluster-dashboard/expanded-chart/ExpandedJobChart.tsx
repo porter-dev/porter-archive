@@ -69,6 +69,7 @@ export const ExpandedJobChartFC: React.FC<{
     selectedJob,
     setSelectedJob,
   } = useJobs(chart);
+  const [latestChart, setLatestChart] = useState<ChartType>(props.currentChart);
 
   const {
     isStack,
@@ -250,6 +251,8 @@ export const ExpandedJobChartFC: React.FC<{
     if (currentTab === "values") {
       return (
         <ValuesYaml
+          latestChart={latestChart}
+          newestVersion={false}
           currentChart={chart}
           refreshChart={() => refreshChart()}
           disabled={!isAuthorized("job", "", ["get", "update"])}

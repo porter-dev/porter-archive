@@ -11,8 +11,9 @@ check_prereqs() {
 
 download_and_install() {
     check_prereqs
-
+    
     echo "[INFO] Since the Porter CLI gets installed in /usr/local/bin, you may be asked to input your password."
+    echo "[INFO] Please make sure /usr/local/bin is included in your PATH."
 
     curl -L https://github.com/porter-dev/porter/releases/download/{{ .TagName }}/porter_{{ .TagName }}_${osname}_x86_64.zip --output porter.zip
     unzip -a porter.zip

@@ -35,6 +35,12 @@ const regionOptions = [
   { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" },
 ];
 
+const machineTypeOptions = [
+  { value: "t3.medium", label: "t3.medium" },
+  { value: "t3.xlarge", label: "t3.xlarge" },
+  { value: "t3.2xlarge", label: "t3.2xlarge" },
+];
+
 type Props = {
   goBack: () => void;
   credentialId: any;
@@ -48,6 +54,43 @@ const ProvisionerForm: React.FC<Props> = ({
   const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
+  const [machineType, setMachineType] = useState("t3.medium")
+
+  const createCluster = async () => {
+    try {
+      await api.provisionCluster(
+        "<token>",
+        {
+          project_id: currentProject.id,
+          cloud_provider: "aws",
+          cloud_provider_credentials_id: credentialId,
+          cluster_settings: {
+            cluster_name: clusterName,
+            cluster_version: "v1.24.0",
+            cidr_range: "172.0.0.0/16",
+            region: awsRegion,
+            node_groups: [
+              {
+                instance_type: "t3.medium",
+                min_instances: 1,
+                max_instances: 5,
+                node_group_type: 1
+              },
+              {
+                instance_type: machineType,
+                min_instances: 1,
+                max_instances: 10,
+                node_group_type: 3
+              }
+            ]
+          }
+        },
+        { project_id: currentProject.id }
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   return (
     <>
@@ -64,6 +107,7 @@ const ProvisionerForm: React.FC<Props> = ({
         Configure settings for your new cluster. 
       </Helper>
       <StyledForm>
+        <Heading isAtTop>EKS configuration</Heading>
         <InputRow
           width="350px"
           isRequired
@@ -82,7 +126,22 @@ const ProvisionerForm: React.FC<Props> = ({
           setActiveValue={setAwsRegion}
           label="📍 AWS Region"
         />
+        <SelectRow
+          options={machineTypeOptions}
+          width="350px"
+          value={machineType}
+          scrollBuffer={true}
+          dropdownMaxHeight="240px"
+          setActiveValue={setMachineType}
+          label="⚙️ Machine type"
+        />
       </StyledForm>
+      <SaveButton
+        disabled={!clusterName && true}
+        onClick={createCluster}
+        clearPosition
+        text="Provision"
+      />
     </>
   );
 };
@@ -128,7 +187,7 @@ const BackButton = styled.div`
 
 const StyledForm = styled.div`
   position: relative;
-  padding: 15px 30px 25px;
+  padding: 30px 30px 25px;
   border-radius: 5px;
   background: #26292e;
   border: 1px solid #494b4f;

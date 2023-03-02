@@ -1261,5 +1261,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// POST /api/project/{project_id}/provision/cluster -> project.NewProvisionClusterHandler
+	provisionClusterEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/provision/cluster",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	provisionClusterHandler := project.NewProvisionClusterHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: provisionClusterEndpoint,
+		Handler:  provisionClusterHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

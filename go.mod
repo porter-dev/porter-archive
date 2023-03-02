@@ -1,6 +1,6 @@
 module github.com/porter-dev/porter
 
-go 1.18
+go 1.20
 
 require (
 	cloud.google.com/go v0.105.0 // indirect
@@ -70,8 +70,10 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.23.1
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry v0.5.0
 	github.com/briandowns/spinner v1.18.1
+	github.com/bufbuild/connect-go v1.5.2
 	github.com/glebarez/sqlite v1.6.0
 	github.com/open-policy-agent/opa v0.44.0
+	github.com/porter-dev/api-contracts v0.0.10
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d
 	github.com/xanzy/go-gitlab v0.68.0

@@ -86,10 +86,11 @@ func NewOutOfClusterAgentGetter(config *config.Config) KubernetesAgentGetter {
 
 func (d *OutOfClusterAgentGetter) GetOutOfClusterConfig(cluster *models.Cluster) *kubernetes.OutOfClusterConfig {
 	return &kubernetes.OutOfClusterConfig{
-		Repo:                      d.config.Repo,
-		DigitalOceanOAuth:         d.config.DOConf,
-		Cluster:                   cluster,
-		AllowInClusterConnections: d.config.ServerConf.InitInCluster,
+		Repo:                        d.config.Repo,
+		DigitalOceanOAuth:           d.config.DOConf,
+		Cluster:                     cluster,
+		AllowInClusterConnections:   d.config.ServerConf.InitInCluster,
+		CAPIManagementClusterClient: d.config.ClusterControlPlaneClient,
 	}
 }
 

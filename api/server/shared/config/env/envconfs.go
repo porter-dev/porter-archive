@@ -76,6 +76,9 @@ type ServerConf struct {
 	ProvisionerServerURL string `env:"PROVISIONER_SERVER_URL"`
 	ProvisionerToken     string `env:"PROVISIONER_TOKEN"`
 
+	// ClusterControlPlane settings
+	ClusterControlPlaneAddress string `env:"CLUSTER_CONTROL_PLANE_ADDRESS"`
+
 	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`
 
 	// PowerDNS client API key and the host of the PowerDNS API server

@@ -1,12 +1,14 @@
 package loader
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
 	gorillaws "github.com/gorilla/websocket"
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
@@ -225,6 +227,12 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	if sc.PowerDNSAPIKey != "" && sc.PowerDNSAPIServerURL != "" {
 		res.PowerDNSClient = powerdns.NewClient(sc.PowerDNSAPIServerURL, sc.PowerDNSAPIKey, sc.AppRootDomain)
 	}
+
+	if sc.ClusterControlPlaneAddress == "" {
+		return res, errors.New("must provide CLUSTER_CONTROL_PLANE_ADDRESS")
+	}
+	client := porterv1connect.NewClusterControlPlaneServiceClient(http.DefaultClient, sc.ClusterControlPlaneAddress)
+	res.ClusterControlPlaneClient = client
 
 	return res, nil
 }

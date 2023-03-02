@@ -1,9 +1,13 @@
 package cluster
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -36,10 +40,34 @@ func (c *GetTemporaryKubeconfigHandler) ServeHTTP(w http.ResponseWriter, r *http
 		))
 		return
 	}
+	ctx := r.Context()
 
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	outOfClusterConfig := c.GetOutOfClusterConfig(cluster)
+
+	if cluster.ProvisionedBy == "CAPI" {
+		kubeconfigResp, err := c.Config().ClusterControlPlaneClient.KubeConfigForCluster(context.Background(), connect.NewRequest(
+			&porterv1.KubeConfigForClusterRequest{
+				ProjectId: int64(cluster.ProjectID),
+				ClusterId: int64(cluster.ID),
+			},
+		))
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting temporary capi config: %w", err)))
+			return
+		}
+
+		if kubeconfigResp.Msg == nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error reading temporary capi config: %w", err)))
+			return
+		}
+		res := &types.GetTemporaryKubeconfigResponse{
+			Kubeconfig: []byte(kubeconfigResp.Msg.KubeConfig),
+		}
+		c.WriteResult(w, r, res)
+		return
+	}
 
 	kubeconfig, err := outOfClusterConfig.CreateRawConfigFromCluster()
 

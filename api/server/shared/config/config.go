@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/gorilla/sessions"
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/api/server/shared/websocket"
@@ -92,6 +93,9 @@ type Config struct {
 
 	// PowerDNSClient is a client for PowerDNS, if the Porter instance supports vanity URLs
 	PowerDNSClient *powerdns.Client
+
+	// ClusterControlPlaneClient is a client for ClusterControlPlane
+	ClusterControlPlaneClient porterv1connect.ClusterControlPlaneServiceClient
 
 	// CredentialBackend is the backend for credential storage, if external cred storage (like Vault)
 	// is used

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import {
   ArrayInputField,
   CheckboxField,
@@ -60,6 +60,7 @@ interface Props {
 const PorterForm: React.FC<Props> = (props) => {
   const {
     formData,
+    latestData,
     isReadOnly,
     validationInfo,
     onSubmit,
@@ -67,10 +68,14 @@ const PorterForm: React.FC<Props> = (props) => {
   } = useContext(PorterFormContext);
 
   const { currentTab, setCurrentTab } = props;
+  const [showDiff, setShowDiff] = useState(false); // add this state for the checkbox
 
-  const renderSectionField = (field: FormField, num?: number, i?: number): JSX.Element => {
+  const renderSectionField = (
+    field: FormField,
+    num?: number,
+    i?: number
+  ): JSX.Element => {
     const injected = props.injectedProps?.[field.type];
-
     const bundledProps = {
       ...field,
       isReadOnly,
@@ -81,7 +86,17 @@ const PorterForm: React.FC<Props> = (props) => {
       case "heading":
         // Remove top margin from heading if it's the first form element in the tab
         // TODO: Handle Job form and form variables more gracefully
-        return <Heading isAtTop={num + i < 1 || (formData.name === "Job" && num + i === 1) || (formData.name === "Worker" && num + i === 1)}>{field.label}</Heading>;
+        return (
+          <Heading
+            isAtTop={
+              num + i < 1 ||
+              (formData.name === "Job" && num + i === 1) ||
+              (formData.name === "Worker" && num + i === 1)
+            }
+          >
+            {field.label}
+          </Heading>
+        );
       case "subtitle":
         return <Helper>{field.label}</Helper>;
       case "input":
@@ -110,18 +125,149 @@ const PorterForm: React.FC<Props> = (props) => {
     return <p>Not Implemented: {(field as any).type}</p>;
   };
 
-  const renderSection = (section: Section, num: number): JSX.Element => {
-    return (
-      <>
-        {section.contents?.map((field, i) => {
-          return (
-            <React.Fragment key={field.id}>
-              {renderSectionField(field, num, i)}
-            </React.Fragment>
-          );
-        })}
-      </>
-    );
+  const renderLatestField = (
+    field: FormField,
+    num?: number,
+    i?: number
+  ): JSX.Element => {
+    const injected = props.injectedProps?.[field.type];
+    const bundledPropsLatest = {
+      ...field,
+      isReadOnly,
+      injectedProps: injected ?? {},
+    };
+    console.log(field);
+    console.log(bundledPropsLatest);
+    switch (field.type) {
+      case "heading":
+        // Remove top margin from heading if it's the first form element in the tab
+        // TODO: Handle Job form and form variables more gracefully
+        return (
+          <Heading
+            isAtTop={
+              num + i < 1 ||
+              (latestData.name === "Job" && num + i === 1) ||
+              (latestData.name === "Worker" && num + i === 1)
+            }
+          >
+            {field.label}
+          </Heading>
+        );
+      case "subtitle":
+        return <Helper>{field.label}</Helper>;
+      case "input":
+        return <Input {...(bundledPropsLatest as InputField)} />;
+      case "checkbox":
+        return <Checkbox {...(bundledPropsLatest as CheckboxField)} />;
+      case "key-value-array":
+        return (
+          <KeyValueArray {...(bundledPropsLatest as KeyValueArrayField)} />
+        );
+      case "array-input":
+        return <ArrayInput {...(bundledPropsLatest as ArrayInputField)} />;
+      case "select":
+        return <Select {...(bundledPropsLatest as SelectField)} />;
+      case "service-ip-list":
+        return (
+          <ServiceIPList {...(bundledPropsLatest as ServiceIPListField)} />
+        );
+      case "resource-list":
+        return <ResourceList {...(bundledPropsLatest as ResourceListField)} />;
+      case "velero-create-backup":
+        return <VeleroForm />;
+      case "cron":
+        return <CronInput {...(bundledPropsLatest as CronField)} />;
+      case "text-area":
+        return <TextAreaInput {...(bundledPropsLatest as TextAreaField)} />;
+      case "url-link":
+        return <UrlLink {...(bundledPropsLatest as UrlLinkField)} />;
+    }
+    return <p>Not Implemented: {(field as any).type}</p>;
+  };
+  const renderSection = (
+    section: Section,
+    num: number,
+    latestData: Section,
+    nums: number
+  ): JSX.Element => {
+    if (showDiff) {
+      return (
+        <div style={{ display: "flex" }}>
+          <div style={{ flex: 1 }}>
+            {section.contents?.map((field, i) => (
+              <React.Fragment key={field.id}>
+                {renderSectionField(field, num, i)}
+              </React.Fragment>
+            ))}
+          </div>
+          <div
+            style={{
+              flex: 1,
+              marginLeft: "20px",
+              borderLeft: "1px solid #ccc",
+              paddingLeft: "20px",
+            }}
+          >
+            {latestData.contents?.map((fielding, j) => (
+              <React.Fragment key={fielding.id}>
+                {renderLatestField(fielding, nums, j)}
+              </React.Fragment>
+            ))}
+          </div>
+          {isReadOnly && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                margin: "10px",
+              }}
+            >
+              <label style={{ marginLeft: "10px" }}>
+                Show diff view
+                <input
+                  type="checkbox"
+                  checked={showDiff}
+                  onChange={() => setShowDiff(!showDiff)}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+      );
+    } else {
+      // Render a single section
+      return (
+        <>
+          {isReadOnly && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                margin: "10px",
+              }}
+            >
+              <label style={{ marginLeft: "10px" }}>
+                Show diff view
+                <input
+                  type="checkbox"
+                  checked={showDiff}
+                  onChange={() => setShowDiff(!showDiff)}
+                />
+              </label>
+            </div>
+          )}
+          {section.contents?.map((field, i) => {
+            return (
+              <React.Fragment key={field.id}>
+                {renderSectionField(field, num, i)}
+              </React.Fragment>
+            );
+          })}
+        </>
+      );
+    }
   };
 
   const getTabOptions = (): TabOption[] => {
@@ -164,6 +310,7 @@ const PorterForm: React.FC<Props> = (props) => {
     }
 
     const tab = formData.tabs?.filter((tab) => tab.name == currentTab)[0];
+    const tabby = latestData.tabs?.filter((tab) => tab.name == currentTab)[0];
 
     // Handle external tab
     if (!tab) {
@@ -177,9 +324,12 @@ const PorterForm: React.FC<Props> = (props) => {
     return (
       <StyledPorterForm showSave={showSaveButton()}>
         {tab.sections?.map((section, i) => {
+          const latestSection = tabby?.sections?.find(
+            (s) => s.name === section.name
+          );
           return (
             <React.Fragment key={section.name}>
-              {renderSection(section, i)}
+              {renderSection(section, i, latestSection, i)}
             </React.Fragment>
           );
         })}

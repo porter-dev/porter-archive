@@ -69,7 +69,7 @@ export const ExpandedJobChartFC: React.FC<{
     selectedJob,
     setSelectedJob,
   } = useJobs(chart);
-  const [latestChart, setLatestChart] = useState<ChartType>(props.currentChart);
+  const [latestChart, setLatestChart] = useState<ChartType>(oldChart);
 
   const {
     isStack,
@@ -298,6 +298,9 @@ export const ExpandedJobChartFC: React.FC<{
   };
 
   const formData = useMemo(() => cloneDeep(chart?.form || {}), [chart]);
+  const latestformData = useMemo(() => cloneDeep(latestChart?.form || {}), [
+    latestChart,
+  ]);
 
   if (status === "loading" || isLoadingStackEnvGroups) {
     return <Loading />;
@@ -362,6 +365,7 @@ export const ExpandedJobChartFC: React.FC<{
             rightTabOptions?.length > 0) && (
             <PorterFormWrapper
               formData={formData}
+              latestData={latestformData}
               valuesToOverride={{
                 namespace: chart?.namespace,
                 clusterId: currentCluster?.id,

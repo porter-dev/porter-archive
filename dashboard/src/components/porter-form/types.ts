@@ -188,6 +188,7 @@ export interface Section {
   name: string;
   show_if?: ShowIf;
   contents: FormField[];
+  latestContents?: FormField[];
 }
 
 export interface Tab {

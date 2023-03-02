@@ -27,6 +27,7 @@ import { getFinalVariablesForSelect } from "./field-components/Select";
 
 export interface BaseProps {
   rawFormData: PorterFormData;
+  latestFormData: PorterFormData;
   initialVariables?: PorterFormVariableList;
   overrideVariables?: PorterFormVariableList;
   includeHiddenFields?: boolean;
@@ -51,6 +52,7 @@ export type Props = PropsWithMetadata | PropsWithoutMetadata;
 
 interface ContextProps {
   formData: PorterFormData;
+  latestData: PorterFormData;
   formState: PorterFormState;
   onSubmit: (cb?: () => void) => void;
   dispatchAction: (event: PorterFormAction) => void;
@@ -424,6 +426,10 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     restructureToNewFields(props.rawFormData),
     state.variables
   );
+  const latestData = computeFormStructure(
+    restructureToNewFields(props.latestFormData),
+    state.variables
+  );
   const [requiredIds, varMapping] = computeRequiredVariables(formData);
   const isValidated = doValidation(requiredIds);
 
@@ -533,6 +539,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     <Provider
       value={{
         formData: formData,
+        latestData: latestData,
         formState: state,
         dispatchAction: dispatch,
         isReadOnly: props.isReadOnly,

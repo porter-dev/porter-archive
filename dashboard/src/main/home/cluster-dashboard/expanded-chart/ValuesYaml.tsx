@@ -7,7 +7,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import YamlEditor from "components/YamlEditor";
 import SaveButton from "components/SaveButton";
-import DiffViewer from "react-diff-viewer";
+import DiffViewer, { DiffMethod } from "react-diff-viewer";
 
 type PropsType = {
   newestVersion: boolean;
@@ -139,6 +139,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
               splitView={true}
               hideLineNumbers={false}
               useDarkTheme={true}
+              compareMethod={DiffMethod.TRIMMED_LINES}
             />
           </Wrapper>
         ) : (

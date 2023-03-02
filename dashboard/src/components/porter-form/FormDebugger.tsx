@@ -160,6 +160,7 @@ export default class FormDebugger extends Component<PropsType, StateType> {
         <PorterFormWrapper
           showStateDebugger={this.state.showStateDebugger}
           formData={formData}
+          latestData={formData}
           valuesToOverride={{
             input_a: this.state.valuesToOverride?.input_a?.value,
           }}

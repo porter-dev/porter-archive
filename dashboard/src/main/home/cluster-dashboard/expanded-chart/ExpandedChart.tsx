@@ -989,6 +989,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                         <BodyWrapper>
                           <PorterFormWrapper
                             formData={cloneDeep(currentChart.form)}
+                            latestData={cloneDeep(latestChart.form)}
                             valuesToOverride={{
                               namespace: props.namespace,
                               clusterId: currentCluster.id,

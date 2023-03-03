@@ -17,6 +17,7 @@ type PropsType = {
   addendum?: any;
   color?: string | null;
   suppressAnimation?: boolean;
+  showDiff?: boolean;
 };
 
 type StateType = {};

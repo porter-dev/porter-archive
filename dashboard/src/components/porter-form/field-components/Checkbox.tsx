@@ -29,7 +29,6 @@ const Checkbox: React.FC<Props> = ({
       [variable]: value ? value[0] : false,
     },
   });
-  console.log(isReadOnly)
   if (state == undefined) {
     return <></>;
   }

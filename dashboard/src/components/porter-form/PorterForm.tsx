@@ -125,65 +125,6 @@ const PorterForm: React.FC<Props> = (props) => {
     return <p>Not Implemented: {(field as any).type}</p>;
   };
 
-  const renderLatestField = (
-    field: FormField,
-    num?: number,
-    i?: number
-  ): JSX.Element => {
-    const injected = props.injectedProps?.[field.type];
-    const bundledPropsLatest = {
-      ...field,
-      isReadOnly,
-      injectedProps: injected ?? {},
-    };
-    console.log(field);
-    console.log(bundledPropsLatest);
-    switch (field.type) {
-      case "heading":
-        // Remove top margin from heading if it's the first form element in the tab
-        // TODO: Handle Job form and form variables more gracefully
-        return (
-          <Heading
-            isAtTop={
-              num + i < 1 ||
-              (latestData.name === "Job" && num + i === 1) ||
-              (latestData.name === "Worker" && num + i === 1)
-            }
-          >
-            {field.label}
-          </Heading>
-        );
-      case "subtitle":
-        return <Helper>{field.label}</Helper>;
-      case "input":
-        return <Input {...(bundledPropsLatest as InputField)} />;
-      case "checkbox":
-        return <Checkbox {...(bundledPropsLatest as CheckboxField)} />;
-      case "key-value-array":
-        return (
-          <KeyValueArray {...(bundledPropsLatest as KeyValueArrayField)} />
-        );
-      case "array-input":
-        return <ArrayInput {...(bundledPropsLatest as ArrayInputField)} />;
-      case "select":
-        return <Select {...(bundledPropsLatest as SelectField)} />;
-      case "service-ip-list":
-        return (
-          <ServiceIPList {...(bundledPropsLatest as ServiceIPListField)} />
-        );
-      case "resource-list":
-        return <ResourceList {...(bundledPropsLatest as ResourceListField)} />;
-      case "velero-create-backup":
-        return <VeleroForm />;
-      case "cron":
-        return <CronInput {...(bundledPropsLatest as CronField)} />;
-      case "text-area":
-        return <TextAreaInput {...(bundledPropsLatest as TextAreaField)} />;
-      case "url-link":
-        return <UrlLink {...(bundledPropsLatest as UrlLinkField)} />;
-    }
-    return <p>Not Implemented: {(field as any).type}</p>;
-  };
   const renderSection = (
     section: Section,
     num: number,
@@ -191,6 +132,10 @@ const PorterForm: React.FC<Props> = (props) => {
     nums: number
   ): JSX.Element => {
     if (showDiff) {
+      latestData.contents.forEach((obj, index) => {
+        obj.id = obj.id + index;
+      });
+
       return (
         <div style={{ display: "flex" }}>
           <div style={{ flex: 1 }}>
@@ -208,9 +153,9 @@ const PorterForm: React.FC<Props> = (props) => {
               paddingLeft: "20px",
             }}
           >
-            {latestData.contents?.map((fielding, j) => (
-              <React.Fragment key={fielding.id}>
-                {renderLatestField(fielding, nums, j)}
+            {latestData.contents?.map((field, j) => (
+              <React.Fragment key={field.id}>
+                {renderSectionField(field, nums, j)}
               </React.Fragment>
             ))}
           </div>
@@ -369,6 +314,7 @@ const PorterForm: React.FC<Props> = (props) => {
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
         suppressAnimation={true}
+        showDiff={showDiff}
       >
         {renderTab()}
       </TabRegion>

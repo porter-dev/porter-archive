@@ -29,7 +29,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
     values: "",
     originalValues: "",
     saveValuesStatus: null as string | null,
-    showDiffView: false,
+    showDiffView: true,
   };
 
   updateValues() {
@@ -113,23 +113,27 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
 
     return (
       <StyledValuesYaml>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            marginBottom: "10px",
-          }}
-        >
-          <label style={{ marginLeft: "10px" }}>
-            Show diff view
-            <input
-              type="checkbox"
-              checked={showDiffView}
-              onChange={this.handleToggleDiffView}
-            />
-          </label>
-        </div>
-        {showDiffView ? (
+        {currentChart.version != latestChart.version ? (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginBottom: "10px",
+            }}
+          >
+            <label style={{ marginLeft: "10px" }}>
+              Hide diff view
+              <input
+                type="checkbox"
+                checked={showDiffView}
+                onChange={this.handleToggleDiffView}
+              />
+            </label>
+          </div>
+        ) : (
+          <></>
+        )}
+        {showDiffView && currentChart.version != latestChart.version ? (
           <Wrapper>
             <DiffViewer
               leftTitle={`Current Version`}

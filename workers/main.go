@@ -206,6 +206,7 @@ func getJob(id string, input map[string]interface{}) worker.Job {
 			AWSRegion:          envDecoder.AWSRegion,
 			S3BucketName:       envDecoder.S3BucketName,
 			EncryptionKey:      envDecoder.EncryptionKey,
+			RevisionsCount:     envDecoder.RevisionsCount,
 		})
 
 		if err != nil {

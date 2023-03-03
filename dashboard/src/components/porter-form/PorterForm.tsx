@@ -140,7 +140,7 @@ const PorterForm: React.FC<Props> = (props) => {
         <div style={{ display: "flex" }}>
           <div style={{ flex: 1 }}>
             {section.contents?.map((field, i) => (
-              <React.Fragment key={field.id}>
+              <React.Fragment key={field.id + Math.random()}>
                 {renderSectionField(field, num, i)}
               </React.Fragment>
             ))}
@@ -154,7 +154,7 @@ const PorterForm: React.FC<Props> = (props) => {
             }}
           >
             {latestData.contents?.map((field, j) => (
-              <React.Fragment key={field.id}>
+              <React.Fragment key={field.id + Math.random()}>
                 {renderSectionField(field, nums, j)}
               </React.Fragment>
             ))}

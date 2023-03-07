@@ -1,5 +1,5 @@
 # Build
-FROM golang:1.19-alpine as base
+FROM golang:1.20-alpine as base
 
 WORKDIR /app
 COPY . .

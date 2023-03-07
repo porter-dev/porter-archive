@@ -2,7 +2,7 @@
 
 # Buildtime environment
 # -------------------------------------------
-FROM golang:1.18-alpine3.16 as build
+FROM golang:1.20-alpine as build
 WORKDIR /app
 
 RUN apk update && apk add gcc binutils-gold musl-dev

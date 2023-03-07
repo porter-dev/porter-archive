@@ -1,6 +1,6 @@
 module github.com/porter-dev/porter
 
-go 1.18
+go 1.20
 
 require (
 	cloud.google.com/go v0.105.0 // indirect

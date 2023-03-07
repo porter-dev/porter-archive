@@ -153,10 +153,10 @@ type GetBuildEnvOpts struct {
 // GetBuildEnv retrieves the build env from the release config and returns it.
 //
 // It returns a flattened map of all environment variables including:
-//    1. container.env.normal from the release config
-//    2. container.env.build from the release config
-//    3. container.env.synced from the release config
-//    4. any additional env var that was passed into the DeployAgent as opts.SharedOpts.AdditionalEnv
+//  1. container.env.normal from the release config
+//  2. container.env.build from the release config
+//  3. container.env.synced from the release config
+//  4. any additional env var that was passed into the DeployAgent as opts.SharedOpts.AdditionalEnv
 func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, error) {
 	conf := d.Release.Config
 

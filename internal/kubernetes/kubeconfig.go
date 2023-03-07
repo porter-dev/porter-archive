@@ -111,7 +111,6 @@ func GetRawConfigFromBytes(kubeconfig []byte) (*api.Config, error) {
 // (3) If a bearer token exists, uses bearer token auth mechanism
 // (4) If a username/password exist, uses basic auth mechanism
 // (5) Otherwise, the config gets skipped
-//
 func parseAuthInfoForResolvers(authInfo *api.AuthInfo) (authMechanism models.ClusterAuth, resolvers []models.ClusterResolver) {
 	resolvers = make([]models.ClusterResolver, 0)
 

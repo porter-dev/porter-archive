@@ -602,7 +602,7 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 
 	// create the cronjob
 
-	cronJob := &batchv1beta1.CronJob{
+	cronJob := &batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "porter-ephemeral-pod-deletion-cronjob",
 		},

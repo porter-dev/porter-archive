@@ -59,8 +59,8 @@ func (c *AnalyticsSegment) Identify(identifier segmentIdentifier) error {
 	return err
 }
 
-//	Superset of segment client track function, this will accept analytics defined tracks only
-//	and will log an error if the client is not initialized
+// Superset of segment client track function, this will accept analytics defined tracks only
+// and will log an error if the client is not initialized
 func (c *AnalyticsSegment) Track(track segmentTrack) error {
 	if !c.isEnabled {
 		c.logger.Error().Msg("Analytics not enabled")

@@ -199,14 +199,24 @@ func (c *CLIConfig) SetHost(host string) error {
 	host = strings.TrimRight(host, "/")
 
 	viper.Set("host", host)
-	color.New(color.FgGreen).Printf("Set the current host as %s\n", host)
+
+	// let us clear the project ID, cluster ID, and token when we reset a host
+	viper.Set("project", 0)
+	viper.Set("cluster", 0)
+	viper.Set("token", "")
+
 	err := viper.WriteConfig()
 
 	if err != nil {
 		return err
 	}
 
+	color.New(color.FgGreen).Printf("Set the current host as %s\n", host)
+
 	config.Host = host
+	config.Project = 0
+	config.Cluster = 0
+	config.Token = ""
 
 	return nil
 }

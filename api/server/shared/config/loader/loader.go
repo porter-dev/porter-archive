@@ -233,7 +233,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 
 	res.DisableCAPIProvisioner = sc.DisableCAPIProvisioner
-	if sc.DisableCAPIProvisioner {
+	if !sc.DisableCAPIProvisioner {
 		if sc.ClusterControlPlaneAddress == "" {
 			return res, errors.New("must provide CLUSTER_CONTROL_PLANE_ADDRESS")
 		}

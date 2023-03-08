@@ -206,7 +206,7 @@ export const Dashboard: React.FunctionComponent = () => {
       {
         context.currentProject.capi_provisioner_enabled &&
         (
-          true || context.currentCluster.status === "UPDATING" ||
+          context.currentCluster.status === "UPDATING" ||
           context.currentCluster.status === "UPDATING_UNAVAILABLE"
         ) && (
           <ProvisionerStatus />

@@ -5,6 +5,7 @@ import api from "shared/api";
 import loading from "assets/loading.gif";
 
 import { Context } from "shared/Context";
+import ExpandableSection from "components/ExpandableSection";
 
 type Props = {};
 
@@ -14,28 +15,40 @@ const ProvisionerStatus: React.FC<Props> = ({}) => {
 
   return (
     <StyledProvisionerStatus>
-      <Flex>
-        <Icon src="https://img.stackshare.io/service/7991/amazon-eks.png" />
-        Elastic Kubernetes Service
-        <Status>
-          <Img src={loading} /> Updating
-        </Status>
-      </Flex>
+      <ExpandableSection
+        Header={(
+          <>
+            <Icon src="https://img.stackshare.io/service/7991/amazon-eks.png" />
+            Elastic Kubernetes Service
+            <Status>
+              <Img src={loading} /> Updating
+            </Status>
+          </>
+        )}
+        ExpandedSection={(
+          <DummyLogs>[Logs unimplemented]</DummyLogs>
+        )}
+      />
     </StyledProvisionerStatus>
   );
 };
 
 export default ProvisionerStatus;
 
+const DummyLogs = styled.div`
+  height: 150px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  background: #101420;
+  font-family: monospace;
+`;
+
 const Icon = styled.img`
   height: 20px;
   margin-right: 10px;
-`;
-
-const Flex = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: 13px;
 `;
 
 const Img = styled.img`
@@ -51,13 +64,5 @@ const Status = styled.div`
 `;
 
 const StyledProvisionerStatus = styled.div`
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
-  height: 40px;
   margin-bottom: 22px;
-  font-size: 14px;
-  padding-left: 12px;
-  display: flex;
-  align-items: center;
 `;

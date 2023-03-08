@@ -10,6 +10,7 @@ export type SelectorPropsType = {
   setActiveValue: (x: string) => void;
   width: string;
   height?: string;
+  disabled?: boolean;
   dropdownLabel?: string;
   dropdownWidth?: string;
   dropdownMaxHeight?: string;
@@ -162,11 +163,14 @@ export default class Selector extends Component<SelectorPropsType, StateType> {
       <StyledSelector width={this.props.width}>
         <MainSelector
           ref={this.parentRef}
+          disabled={this.props.disabled}
           onClick={() => {
-            if (this.props.refreshOptions) {
-              this.props.refreshOptions();
+            if (!this.props.disabled) {
+              if (this.props.refreshOptions) {
+                this.props.refreshOptions();
+              }
+              this.setState({ expanded: !this.state.expanded });
             }
-            this.setState({ expanded: !this.state.expanded });
           }}
           expanded={this.state.expanded}
           width={this.props.width}
@@ -306,15 +310,6 @@ const Option = styled.div`
   }
 `;
 
-const CloseOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 999;
-`;
-
 const Dropdown = styled.div`
   background: #26282f;
   width: ${(props: { dropdownWidth: string; dropdownMaxHeight: string }) =>
@@ -333,40 +328,34 @@ const StyledSelector = styled.div<{ width: string }>`
   width: ${(props) => props.width};
 `;
 
-const MainSelector = styled.div`
-  width: ${(props: { expanded: boolean; width: string; height?: string }) =>
-    props.width};
-  height: ${(props: { expanded: boolean; width: string; height?: string }) =>
-    props.height ? props.height : "35px"};
+const MainSelector = styled.div<{ 
+  disabled?: boolean;
+  expanded: boolean;
+  width: string;
+  height?: string;
+}>`
+  width: ${props => props.width};
+  height: ${props => props.height ? props.height : "35px"};
   border: 1px solid #ffffff55;
   font-size: 13px;
   padding: 5px 10px;
   padding-left: 15px;
   border-radius: 3px;
   display: flex;
+  color: ${props => props.disabled ? "#ffffff44" : "#ffffff"};
   justify-content: space-between;
   align-items: center;
-  cursor: pointer;
-  background: ${(props: {
-    expanded: boolean;
-    width: string;
-    height?: string;
-  }) => (props.expanded ? "#ffffff33" : "#ffffff11")};
+  cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
+  background: ${props => props.expanded ? "#ffffff33" : "#ffffff11"};
   :hover {
-    background: ${(props: {
-      expanded: boolean;
-      width: string;
-      height?: string;
-    }) => (props.expanded ? "#ffffff33" : "#ffffff22")};
+    background: ${props => props.expanded ? "#ffffff33" : (
+      props.disabled ? "#ffffff11" : "#ffffff22"
+    )};
   }
 
   > i {
     font-size: 20px;
-    transform: ${(props: {
-      expanded: boolean;
-      width: string;
-      height?: string;
-    }) => (props.expanded ? "rotate(180deg)" : "")};
+    transform: ${props => props.expanded ? "rotate(180deg)" : ""};
   }
 `;
 

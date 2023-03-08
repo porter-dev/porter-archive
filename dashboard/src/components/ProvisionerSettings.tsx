@@ -49,7 +49,7 @@ const ProvisionerForm: React.FC<Props> = ({
   credentialId,
   clusterId,
 }) => {
-  const { currentProject } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
@@ -58,6 +58,7 @@ const ProvisionerForm: React.FC<Props> = ({
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
   const [cidrRange, setCidrRange] = useState("172.0.0.0/16");
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
   const createCluster = async () => {
     var data: any = {
@@ -101,6 +102,13 @@ const ProvisionerForm: React.FC<Props> = ({
     }
   }
 
+  useEffect(() => {
+    setIsReadOnly(
+      currentCluster.status === "UPDATING" || 
+      currentCluster.status === "UPDATING_UNAVAILABLE"
+    );
+  }, []);
+
   return (
     <>
       <StyledForm>
@@ -108,6 +116,7 @@ const ProvisionerForm: React.FC<Props> = ({
         <InputRow
           width="350px"
           isRequired
+          disabled={isReadOnly}
           type="string"
           value={clusterName}
           setValue={(x: string) => setClusterName(x)}
@@ -117,6 +126,7 @@ const ProvisionerForm: React.FC<Props> = ({
         <SelectRow
           options={regionOptions}
           width="350px"
+          disabled={isReadOnly}
           value={awsRegion}
           scrollBuffer={true}
           dropdownMaxHeight="240px"
@@ -126,6 +136,7 @@ const ProvisionerForm: React.FC<Props> = ({
         <SelectRow
           options={machineTypeOptions}
           width="350px"
+          disabled={isReadOnly}
           value={machineType}
           scrollBuffer={true}
           dropdownMaxHeight="240px"
@@ -148,6 +159,7 @@ const ProvisionerForm: React.FC<Props> = ({
               <InputRow
                 width="350px"
                 type="number"
+                disabled={isReadOnly}
                 value={minInstances}
                 setValue={(x: number) => setMinInstances(x)}
                 label="Minimum number of application EC2 instances"
@@ -156,6 +168,7 @@ const ProvisionerForm: React.FC<Props> = ({
               <InputRow
                 width="350px"
                 type="number"
+                disabled={isReadOnly}
                 value={maxInstances}
                 setValue={(x: number) => setMaxInstances(x)}
                 label="Minimum number of application EC2 instances"
@@ -164,6 +177,7 @@ const ProvisionerForm: React.FC<Props> = ({
               <InputRow
                 width="350px"
                 type="string"
+                disabled={isReadOnly}
                 value={cidrRange}
                 setValue={(x: string) => setCidrRange(x)}
                 label="VPC CIDR range"
@@ -174,10 +188,12 @@ const ProvisionerForm: React.FC<Props> = ({
         }
       </StyledForm>
       <SaveButton
-        disabled={!clusterName && true}
+        disabled={(!clusterName && true) || isReadOnly}
         onClick={createCluster}
         clearPosition
         text="Provision"
+        statusPosition="right"
+        status={isReadOnly && "Provisioning is still in progress"}
       />
     </>
   );

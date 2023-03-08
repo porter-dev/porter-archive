@@ -323,11 +323,11 @@ class RevisionSection extends Component<PropsType, StateType> {
           }}
         >
           <RevisionPreview>
+            <i className="material-icons">arrow_drop_down</i>
             {isCurrent
               ? `Current revision`
               : `Previewing revision (not deployed)`}{" "}
             - <Revision>No. {this.props.chart.version}</Revision>
-            <i className="material-icons">arrow_drop_down</i>
           </RevisionPreview>
           {this.props.shouldUpdate && isCurrent && (
             <div>
@@ -470,24 +470,19 @@ const RevisionHeader = styled.div`
   height: 40px;
   font-size: 13px;
   width: 100%;
-  padding-left: 15px;
+  padding-left: 10px;
   cursor: pointer;
   :hover {
     background: ${props => props.showRevisions && "#ffffff18"};
-    > div > i {
-      background: ${props => props.showRevisions && "#ffffff22"};
-    }
   }
 
   > div > i {
-    margin-left: 12px;
+    margin-right: 8px;
     font-size: 20px;
     cursor: pointer;
     border-radius: 20px;
-    background: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-      props.showRevisions ? "#ffffff18" : ""};
     transform: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-      props.showRevisions ? "rotate(180deg)" : ""};
+      props.showRevisions ? "" : "rotate(-90deg)"};
   }
 `;
 

@@ -806,7 +806,7 @@ tabs:
   - name: add_custom_tags
     contents:
     - type: heading
-      label: Add Custom Tags
+      label: Add Custom Tags on AWS Resources Provisioned by Porter
     - type: key-value-array
       variable: custom_tags
       settings:

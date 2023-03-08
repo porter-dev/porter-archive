@@ -64,7 +64,7 @@ const ProvisionerForm: React.FC<Props> = ({
     var data: any = {
       project_id: currentProject.id,
       cloud_provider: "aws",
-      cloud_provider_credentials_id: credentialId,
+      cloud_provider_credentials_id: "arn:aws:iam::833148400593:role/porter-manager",
       cluster_settings: {
         cluster_name: clusterName,
         cluster_version: "v1.24.0",
@@ -75,13 +75,13 @@ const ProvisionerForm: React.FC<Props> = ({
             instance_type: "t3.medium",
             min_instances: 1,
             max_instances: 5,
-            node_group_type: 1
+            node_group_type: "SYSTEM"
           },
           {
             instance_type: machineType,
             min_instances: minInstances || 1,
             max_instances: maxInstances || 10,
-            node_group_type: 3
+            node_group_type: "APPLICATION"
           }
         ]
       }
@@ -104,7 +104,7 @@ const ProvisionerForm: React.FC<Props> = ({
 
   useEffect(() => {
     setIsReadOnly(
-      currentCluster.status === "UPDATING" || 
+      currentCluster.status === "UPDATING" ||
       currentCluster.status === "UPDATING_UNAVAILABLE"
     );
   }, []);

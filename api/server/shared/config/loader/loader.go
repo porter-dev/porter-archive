@@ -1,6 +1,7 @@
 package loader
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -21,6 +22,7 @@ import (
 	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
+	"github.com/porter-dev/porter/internal/nats"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/notifier/sendgrid"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -60,6 +62,8 @@ func sharedInit() {
 }
 
 func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
+	ctx := context.Background()
+
 	envConf := InstanceEnvConf
 	sc := envConf.ServerConf
 
@@ -233,6 +237,15 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 	client := porterv1connect.NewClusterControlPlaneServiceClient(http.DefaultClient, sc.ClusterControlPlaneAddress)
 	res.ClusterControlPlaneClient = client
+
+	if sc.NATSUrl == "" {
+		return res, errors.New("must provide NATS_URL")
+	}
+	pnats, err := nats.NewConnection(ctx, nats.Config{URL: sc.NATSUrl})
+	if err != nil {
+		return res, fmt.Errorf("error setting up connection to NATS cluster")
+	}
+	res.NATS = pnats
 
 	return res, nil
 }

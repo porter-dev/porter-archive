@@ -122,6 +122,9 @@ type ServerConf struct {
 	// create a temporary kubeconfig file for a cluster. When set to true, the
 	// /api/projects/{project_id}/clusters/{cluster_id}/kubeconfig will be disabled.
 	DisableTemporaryKubeconfig bool `env:"DISABLE_TEMPORARY_KUBECONFIG,default=false"`
+
+	// NATSUrl is the URL of the NATS cluster
+	NATSUrl string `env:"NATS_URL"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

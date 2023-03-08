@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
+	"github.com/porter-dev/porter/internal/nats"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
@@ -100,6 +101,9 @@ type Config struct {
 	// CredentialBackend is the backend for credential storage, if external cred storage (like Vault)
 	// is used
 	CredentialBackend credentials.CredentialStorage
+
+	// NATS contains the required config for connecting to a NATS cluster for streaming
+	NATS nats.NATS
 }
 
 type ConfigLoader interface {

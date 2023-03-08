@@ -104,6 +104,9 @@ type Config struct {
 
 	// NATS contains the required config for connecting to a NATS cluster for streaming
 	NATS nats.NATS
+
+	// DisableCAPIProvisioner disables checks for ClusterControlPlaneClient and NATS, if set to true
+	DisableCAPIProvisioner bool
 }
 
 type ConfigLoader interface {

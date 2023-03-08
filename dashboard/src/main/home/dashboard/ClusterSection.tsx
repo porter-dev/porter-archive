@@ -6,7 +6,7 @@ import { Context } from "shared/Context";
 import Banner from "components/Banner";
 
 import ProvisionerFlow from "components/ProvisionerFlow";
-import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
+import ClusterList from "./ClusterList";
 import TitleSection from "components/TitleSection";
 
 type Props = {
@@ -95,7 +95,7 @@ const ClusterSection = (props: Props) => {
       <Button onClick={() => setCurrentStep("cloud")}>
         <i className="material-icons">add</i> Create a cluster
       </Button>
-      <ClusterPlaceholderContainer />
+      <ClusterList />
     </>
   );
 };

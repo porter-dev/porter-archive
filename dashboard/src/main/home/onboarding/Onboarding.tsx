@@ -165,6 +165,7 @@ const Onboarding = () => {
           />
           <Br />
           <ProvisionerFlow />
+          <Div />
         </Wrapper>
       )
     } else {
@@ -182,6 +183,11 @@ const Onboarding = () => {
 };
 
 export default Onboarding;
+
+const Div = styled.div`
+  width: 100%;
+  height: 100px;
+`;
 
 const Br = styled.div`
   width: 100%;

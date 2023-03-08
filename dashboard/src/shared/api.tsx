@@ -857,6 +857,7 @@ const getInfraTemplate = baseApi<
 const provisionCluster = baseApi<
   {
     project_id: number,
+    cluster_id?: number,
     cloud_provider: string,
     cloud_provider_credentials_id: string,
     cluster_settings: {

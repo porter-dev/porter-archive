@@ -11,6 +11,8 @@ export interface ClusterType {
   aws_integration_id?: number;
   aws_cluster_id?: string;
   preview_envs_enabled?: boolean;
+  cloud_provider_credential_identifier?: string;
+  status?: string;
 }
 
 export interface DetailedClusterType extends ClusterType {

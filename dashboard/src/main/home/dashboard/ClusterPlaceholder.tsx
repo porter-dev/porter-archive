@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";
 
-import ClusterList from "./ClusterList";
+import ClusterList from "./OldClusterList";
 import Loading from "components/Loading";
 import NoClusterPlaceholder from "../NoClusterPlaceholder";
 

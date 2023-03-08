@@ -134,7 +134,7 @@ export const ClusterSection: React.FC<Props> = ({
               window.location.pathname.startsWith("/cluster-dashboard")
             }
           >
-            <Icon className="material-icons">device_hub</Icon>
+            <Img enlarge={true} src={settings} />
             Cluster settings
           </NavButton>
         </Relative>

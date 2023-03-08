@@ -1,4 +1,5 @@
 import Loading from "components/Loading";
+import ProvisionerFlow from "components/ProvisionerFlow";
 import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -8,6 +9,10 @@ import Routes from "./Routes";
 import { OFState } from "./state";
 import { useSteps } from "./state/StepHandler";
 import { Onboarding as OnboardingSaveType } from "./types";
+
+import lightning from "assets/lightning.png";
+
+import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
 const Onboarding = () => {
   const context = useContext(Context);
@@ -147,12 +152,52 @@ const Onboarding = () => {
     checkIfUserHasClusters();
   }, [context?.currentProject?.id]);
 
+  const renderOnboarding = () => {
+    if (context?.currentProject?.capi_provisioner_enabled) {
+      return (
+        <Wrapper>
+          <DashboardHeader
+            image={lightning}
+            title="Getting started"
+            description="Create a new cluster in your own cloud provider to get started with Porter."
+            disableLineBreak
+            capitalize={false}
+          />
+          <Br />
+          <ProvisionerFlow />
+          <Div />
+        </Wrapper>
+      )
+    } else {
+      return (
+        <StyledOnboarding>
+          {isLoading ? <Loading /> : <Routes />}
+        </StyledOnboarding>
+      )
+    }
+  };
+
   return (
-    <StyledOnboarding>{isLoading ? <Loading /> : <Routes />}</StyledOnboarding>
+    <>{renderOnboarding()}</>
   );
 };
 
 export default Onboarding;
+
+const Div = styled.div`
+  width: 100%;
+  height: 100px;
+`;
+
+const Br = styled.div`
+  width: 100%;
+  height: 1px;
+  margin-top: -1px;
+`;
+
+const Wrapper = styled.div`
+  width: 100%;
+`;
 
 const ViewWrapper = styled.div`
   width: 100%;

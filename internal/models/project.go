@@ -75,13 +75,14 @@ func (p *Project) ToProjectType() *types.Project {
 	}
 
 	return &types.Project{
-		ID:                  p.ID,
-		Name:                p.Name,
-		Roles:               roles,
-		PreviewEnvsEnabled:  p.PreviewEnvsEnabled,
-		RDSDatabasesEnabled: p.RDSDatabasesEnabled,
-		ManagedInfraEnabled: p.ManagedInfraEnabled,
-		StacksEnabled:       p.StacksEnabled,
-		APITokensEnabled:    p.APITokensEnabled,
+		ID:                     p.ID,
+		Name:                   p.Name,
+		Roles:                  roles,
+		PreviewEnvsEnabled:     p.PreviewEnvsEnabled,
+		RDSDatabasesEnabled:    p.RDSDatabasesEnabled,
+		ManagedInfraEnabled:    p.ManagedInfraEnabled,
+		StacksEnabled:          p.StacksEnabled,
+		APITokensEnabled:       p.APITokensEnabled,
+		CapiProvisionerEnabled: p.CapiProvisionerEnabled,
 	}
 }

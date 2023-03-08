@@ -6,27 +6,25 @@ import { Context } from "shared/Context";
 import { InfraType } from "shared/types";
 import api from "shared/api";
 
+import { RouteComponentProps, withRouter } from "react-router";
+
 import ProvisionerSettings from "../provisioner/ProvisionerSettings";
 import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
-import { RouteComponentProps, withRouter } from "react-router";
 import TabRegion from "components/TabRegion";
-import Provisioner from "../provisioner/Provisioner";
 import FormDebugger from "components/porter-form/FormDebugger";
 import TitleSection from "components/TitleSection";
+import ClusterSection from "./ClusterSection";
+import { StatusPage } from "../onboarding/steps/ProvisionResources/forms/StatusPage";
+import Banner from "components/Banner";
 
 import { pushFiltered, pushQueryParams } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { StatusPage } from "../onboarding/steps/ProvisionResources/forms/StatusPage";
-import Banner from "components/Banner";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
     projectId: number | null;
     setRefreshClusters: (x: boolean) => void;
   };
-
-// TODO: rethink this list, should be coupled with tabOptions
-const tabOptionStrings = ["overview", "create-cluster", "provisioner"];
 
 type StateType = {
   infras: InfraType[];
@@ -93,15 +91,7 @@ class Dashboard extends Component<PropsType, StateType> {
     if (this.props.projectId && prevProps.projectId !== this.props.projectId) {
       this.refreshInfras();
     }
-
-    if (!tabOptionStrings.includes(this.currentTab())) {
-      this.setCurrentTab("overview");
-    }
   }
-
-  onShowProjectSettings = () => {
-    pushFiltered(this.props, "/project-settings", ["project_id"]);
-  };
 
   currentTab = () => new URLSearchParams(this.props.location.search).get("tab");
 
@@ -138,9 +128,11 @@ class Dashboard extends Component<PropsType, StateType> {
     }
   };
 
-  setCurrentTab = (x: string) => {
-    pushQueryParams(this.props, { tab: x });
+  onShowProjectSettings = () => {
+    pushFiltered(this.props, "/project-settings", ["project_id"]);
   };
+
+  setCurrentTab = (x: string) => pushQueryParams(this.props, { tab: x });
 
   render() {
     let { currentProject, capabilities } = this.context;
@@ -200,13 +192,19 @@ class Dashboard extends Component<PropsType, StateType> {
                     .
                   </Description>
                 </InfoSection>
-                <TabRegion
-                  currentTab={this.currentTab()}
-                  setCurrentTab={this.setCurrentTab}
-                  options={tabOptions}
-                >
-                  {this.renderTabContents()}
-                </TabRegion>
+                {
+                  currentProject.capi_provisioner_enabled ? (
+                    <ClusterSection />
+                  ) : (
+                    <TabRegion
+                      currentTab={this.currentTab()}
+                      setCurrentTab={this.setCurrentTab}
+                      options={tabOptions}
+                    >
+                      {this.renderTabContents()}
+                    </TabRegion>
+                  )
+                }
               </>
             )}
           </DashboardWrapper>
@@ -219,6 +217,49 @@ class Dashboard extends Component<PropsType, StateType> {
 Dashboard.contextType = Context;
 
 export default withRouter(withAuth(Dashboard));
+
+const Button = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: "Work Sans", sans-serif;
+  border-radius: 5px;
+  font-weight: 500;
+  width: 147px;
+  margin-bottom: 30px;
+  color: white;
+  height: 30px;
+  padding: 0 8px;
+  padding-right: 13px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#616FEEcc"};
+  :hover {
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#505edddd"};
+  }
+
+  > i {
+    color: white;
+    width: 18px;
+    height: 18px;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+    justify-content: center;
+  }
+`;
 
 const Br = styled.div`
   width: 100%;
@@ -252,7 +293,7 @@ const TopRow = styled.div`
 `;
 
 const Description = styled.div`
-  color: #8b949f;
+  color: #aaaabb;
   margin-top: 13px;
   margin-left: 2px;
   font-size: 13px;
@@ -263,10 +304,10 @@ const InfoLabel = styled.div`
   height: 20px;
   display: flex;
   align-items: center;
-  color: #8b949f;
+  color: #aaaabb;
   font-size: 13px;
   > i {
-    color: #8b949f;
+    color: #aaaabb;
     font-size: 18px;
     margin-right: 5px;
   }

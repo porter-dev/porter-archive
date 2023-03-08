@@ -1,68 +1,82 @@
-import React, { Component } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
+import { pushFiltered } from "shared/routing";
+import { useHistory, useLocation } from "react-router";
+
+import api from "shared/api";
+import loading from "assets/loading.gif";
+import Loading from "components/Loading";
 
 import { Context } from "shared/Context";
-import api from "shared/api";
-import { ClusterType, DetailedClusterType } from "shared/types";
-import Helper from "components/form-components/Helper";
-import { pushFiltered } from "shared/routing";
 
-import { RouteComponentProps, withRouter } from "react-router";
+type Props = {};
 
-import Modal from "../modals/Modal";
-import Heading from "components/form-components/Heading";
+const ClusterList: React.FC<Props> = ({}) => {
+  const { currentProject, setCurrentCluster } = useContext(Context);
+  const [isLoading, setIsLoading] = useState(true);
+  const [clusters, setClusters] = useState(null);
+  const location = useLocation();
+  const history = useHistory();
 
-type PropsType = RouteComponentProps & {
-  currentCluster: ClusterType;
-};
+  useEffect(() => {
+    api.getClusters(
+      "<token>",
+      {},
+      { id: currentProject.id },
+    )
+      .then(({ data }) => {
+        setClusters(data);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setIsLoading(false);
+      });
+   /*
+    const dummyData = [
+      {
+        id: 3,
+        project_id: 2,
+        name: "dummy-cluster-one",
+        server: "https://73727E5A0EF0FD07D24D7C1FDCE041E6.gr7.us-east-1.eks.amazonaws.com",
+        service: "eks",
+        agent_integration_enabled: false,
+        infra_id: 0,
+        aws_integration_id: 5,
+        preview_envs_enabled: true,
+        status: "READY",
+      },
+      {
+        id: 4,
+        project_id: 2,
+        name: "dummy-cluster-two",
+        server: "https://73727E5A0EF0FD07D24D7C1FDCE041E6.gr7.us-east-1.eks.amazonaws.com",
+        service: "eks",
+        agent_integration_enabled: false,
+        infra_id: 0,
+        aws_integration_id: 5,
+        preview_envs_enabled: true,
+        status: "UPDATING",
+      },
+      {
+        id: 5,
+        project_id: 2,
+        name: "dummy-cluster-three",
+        server: "https://73727E5A0EF0FD07D24D7C1FDCE041E6.gr7.us-east-1.eks.amazonaws.com",
+        service: "eks",
+        agent_integration_enabled: false,
+        infra_id: 0,
+        aws_integration_id: 5,
+        preview_envs_enabled: true,
+        status: "UPDATING_UNAVAILABLE",
+      },
+    ];
+    setClusters(dummyData);
+    setIsLoading(false);
+    */
+  }, [currentProject]);
 
-type StateType = {
-  loading: boolean;
-  error: string;
-  clusters: DetailedClusterType[];
-  showErrorModal?: {
-    clusterId: number;
-    show: boolean;
-  };
-};
-
-class Templates extends Component<PropsType, StateType> {
-  state: StateType = {
-    loading: true,
-    error: "",
-    clusters: [],
-    showErrorModal: undefined,
-  };
-
-  componentDidMount() {
-    this.updateClusterList();
-  }
-
-  componentDidUpdate(prevProps: PropsType) {
-    if (prevProps.currentCluster?.name != this.props.currentCluster?.name) {
-      this.updateClusterList();
-    }
-  }
-
-  updateClusterList = async () => {
-    try {
-      const res = await api.getClusters(
-        "<token>",
-        {},
-        { id: this.context.currentProject.id }
-      );
-
-      if (res.data) {
-        this.setState({ clusters: res.data, loading: false, error: "" });
-      } else {
-        this.setState({ loading: false, error: "Response data missing" });
-      }
-    } catch (err) {
-      this.setState(err);
-    }
-  };
-
-  renderIcon = () => {
+  const renderIcon = () => {
     return (
       <DashboardIcon>
         <svg
@@ -123,85 +137,73 @@ class Templates extends Component<PropsType, StateType> {
     );
   };
 
-  renderClusters = () => {
-    return this.state.clusters.map(
-      (cluster: DetailedClusterType, i: number) => {
-        return (
-          <TemplateBlock
-            onClick={() => {
-              this.context.setCurrentCluster(cluster);
-              pushFiltered(this.props, "/applications", ["project_id"], {
-                cluster: cluster.name,
-              });
-            }}
-            key={i}
-          >
-            {this.renderIcon()}
-            <TemplateTitle>{cluster.name}</TemplateTitle>
-          </TemplateBlock>
-        );
+  return (
+    <>
+      {
+        isLoading ? (
+          <LoadingWrapper><Loading /></LoadingWrapper>
+        ) : (
+          <StyledClusterList>
+            {clusters.map((cluster: any) => {
+              return (
+                <ClusterRow
+                  onClick={() => {
+                    setCurrentCluster(cluster);
+                    pushFiltered({ location, history }, "/applications", ["project_id"], {
+                      cluster: cluster.name,
+                    });
+                  }}
+                >
+                  {renderIcon()}
+                  {cluster.name}
+                  {
+                    cluster.status === "UPDATING" && (
+                      <Status
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentCluster(cluster);
+                          pushFiltered({ location, history }, "/cluster-dashboard", ["project_id"], {
+                            cluster: cluster.name,
+                          });
+                        }}
+                      >
+                        <Img src={loading} /> Updating
+                      </Status>
+                    )
+                  }
+                </ClusterRow>
+              )
+            })}
+          </StyledClusterList>
+        )
       }
-    );
-  };
+    </>
+  );
+};
 
-  renderErrorModal = () => {
-    const clusterError =
-      this.state.showErrorModal?.show &&
-      this.state.clusters.find(
-        (c) => c.id === this.state.showErrorModal?.clusterId
-      );
-    const ingressError = clusterError?.ingress_error;
-    return (
-      <>
-        {clusterError && (
-          <Modal
-            onRequestClose={() => this.setState({ showErrorModal: undefined })}
-            width="665px"
-            height="min-content"
-          >
-            Porter encountered an error. Full error log:
-            <CodeBlock>{ingressError.error}</CodeBlock>
-          </Modal>
-        )}
-      </>
-    );
-  };
+export default ClusterList;
 
-  render() {
-    return (
-      <StyledClusterList>
-        {/* <Heading isAtTop>Connected clusters</Heading> */}
-        <TemplateList>{this.renderClusters()}</TemplateList>
-        {this.renderErrorModal()}
-      </StyledClusterList>
-    );
-  }
-}
-
-Templates.contextType = Context;
-
-export default withRouter(Templates);
-
-const CodeBlock = styled.span`
-  display: block;
-  background-color: #1b1d26;
-  color: white;
-  border-radius: 5px;
-  font-family: monospace;
-  user-select: text;
-  max-height: 400px;
-  width: 90%;
-  margin-left: 5%;
-  margin-top: 20px;
-  overflow-y: auto;
-  padding: 10px;
-  overflow-wrap: break-word;
+const Img = styled.img`
+  height: 15px;
+  margin-right: 7px;
 `;
 
-const StyledClusterList = styled.div`
-  margin-top: -7px;
-  padding-left: 2px;
-  overflow: visible;
+const Status = styled.div`
+  margin-left: 15px;
+  border-radius: 50px;
+  padding: 5px 10px;
+  background: #ffffff11;
+  color: #aaaabb;
+  display: flex;
+  align-items: center;
+
+  :hover {
+    background: #ffffff22;
+    border: 1px solid #7a7b80;
+    margin-top: -1px;
+    margin-bottom: -1px;
+    margin-left: 14px;
+  }
 `;
 
 const DashboardIcon = styled.div`
@@ -221,15 +223,7 @@ const DashboardIcon = styled.div`
   }
 `;
 
-const TemplateTitle = styled.div`
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-`;
-
-const TemplateBlock = styled.div`
+const ClusterRow = styled.div`
   align-items: center;
   user-select: none;
   display: flex;
@@ -259,7 +253,12 @@ const TemplateBlock = styled.div`
   }
 `;
 
-const TemplateList = styled.div`
-  overflow-y: auto;
-  overflow: visible;
+const StyledClusterList = styled.div`
+`;
+
+const LoadingWrapper = styled.div`
+  height: calc(100vh - 450px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;

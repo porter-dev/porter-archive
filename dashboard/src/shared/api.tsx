@@ -854,6 +854,40 @@ const getInfraTemplate = baseApi<
   return `/api/projects/${project_id}/infras/templates/${name}/${version}`;
 });
 
+const provisionCluster = baseApi<
+  {
+    project_id: number,
+    cluster_id?: number,
+    cloud_provider: string,
+    cloud_provider_credentials_id: string,
+    cluster_settings: {
+      cluster_name: string,
+      cluster_version: string,
+      cidr_range: string,
+      region: string,
+      node_groups: [
+        {
+          instance_type: string,
+          min_instances: number,
+          max_instances: number,
+          node_group_type: number
+        },
+        {
+          instance_type: string,
+          min_instances: number,
+          max_instances: number,
+          node_group_type: number
+        }
+      ]
+    }
+  },
+  {
+    project_id: number;
+  }
+>("POST", ({ project_id }) => {
+  return `/api/projects/${project_id}/provision/cluster`;
+});
+
 const provisionInfra = baseApi<
   {
     kind: string;
@@ -2392,6 +2426,7 @@ export default {
   listInfraTemplates,
   getInfraTemplate,
   getInfra,
+  provisionCluster,
   provisionInfra,
   deleteInfra,
   updateInfra,

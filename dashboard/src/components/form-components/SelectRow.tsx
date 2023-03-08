@@ -13,6 +13,7 @@ type PropsType = {
   dropdownMaxHeight?: string;
   scrollBuffer?: boolean;
   doc?: string;
+  disabled?: boolean;
   selectorProps?: Partial<SelectorPropsType>;
 };
 
@@ -32,6 +33,7 @@ export default class SelectRow extends Component<PropsType, StateType> {
         </Wrapper>
         <SelectWrapper>
           <Selector
+            disabled={this.props.disabled}
             scrollBuffer={this.props.scrollBuffer}
             activeValue={this.props.value}
             setActiveValue={this.props.setActiveValue}

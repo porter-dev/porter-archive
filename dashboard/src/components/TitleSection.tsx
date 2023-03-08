@@ -57,7 +57,7 @@ const BackButton = styled.div`
   > i {
     cursor: pointer;
     font-size: 24px;
-    color: #969fbbaa;
+    color: #aaaabb;
     margin-right: 10px;
     padding: 3px;
     margin-left: 0px;
@@ -78,6 +78,8 @@ const StyledTitleSection = styled.div`
 const Icon = styled.img<{ width: string }>`
   width: ${(props) => props.width || "25px"};
   margin-right: 16px;
+  display: flex;
+  align-items: center;
 `;
 
 const MaterialIcon = styled.span<{ width: string }>`

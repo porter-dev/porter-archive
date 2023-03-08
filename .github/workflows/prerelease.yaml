@@ -9,13 +9,11 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v3
       - name: Setup docker
         uses: docker/login-action@v1
         with:
@@ -37,7 +35,7 @@ jobs:
         run: |
           docker push porter1/porter:${{steps.tag_name.outputs.tag}}
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v1-node16
         with:
           aws-access-key-id: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
@@ -55,15 +53,13 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v3
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v1-node16
         with:
           aws-access-key-id: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
@@ -83,15 +79,13 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v3
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v1-node16
         with:
           aws-access-key-id: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
@@ -112,17 +106,19 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: 1.18
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
       - name: Write Dashboard Environment Variables
         run: |
           cat >./dashboard/.env <<EOL
@@ -140,6 +136,7 @@ jobs:
           zip --junk-paths ./release/static/static_${{steps.tag_name.outputs.tag}}.zip ./dashboard/build/*
         env:
           NODE_ENV: production
+          NODE_OPTIONS: --openssl-legacy-provider
       - name: Build Linux binaries
         run: |
           go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=${{steps.tag_name.outputs.tag}}' -X 'github.com/porter-dev/porter/cli/cmd/errors.SentryDSN=${{secrets.SENTRY_DSN}}'" -a -tags cli -o ./porter ./cli &
@@ -162,13 +159,13 @@ jobs:
           zip --junk-paths ./release/linux/portersvr_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./portersvr
           zip --junk-paths ./release/linux/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./docker-credential-porter
       - name: Upload binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: ./release/linux
           name: linux-binaries
           retention-days: 1
       - name: Upload static binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: ./release/static
           name: static-binaries
@@ -179,15 +176,13 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: 1.18
       - name: Write Dashboard Environment Variables
@@ -213,7 +208,7 @@ jobs:
           GOARCH: amd64
           CGO_ENABLED: 0
       - name: Upload binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: ./release/darwin
           name: mac-binaries
@@ -225,13 +220,11 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Download binaries
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: mac-binaries
           path: release/
@@ -312,7 +305,7 @@ jobs:
           gon ./docker-credential-porter.gon.json &
           wait
       - name: Upload binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: ./release
           name: mac-binaries
@@ -326,23 +319,21 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Download binaries
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: linux-binaries
           path: release/linux
       - name: Download binaries
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: static-binaries
           path: release/static
       - name: Download binaries
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: mac-binaries
           path: release/darwin
@@ -440,15 +431,13 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v3
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v1-node16
         with:
           aws-access-key-id: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
@@ -457,6 +446,9 @@ jobs:
         id: login-ecr
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Login to GHCR
+        id: login-ghcr
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Build
         run: |
           docker build ./services/porter_cli_container \
@@ -464,9 +456,12 @@ jobs:
             -f ./services/porter_cli_container/Dockerfile \
             --build-arg VERSION=${{steps.tag_name.outputs.tag}} \
             --build-arg SENTRY_DSN=${{secrets.SENTRY_DSN}}
-      - name: Push
+      - name: Push to ECR public
+        run: docker push public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+      - name: Push to GHCR
         run: |
-          docker push public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+          docker tag public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}} ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
+          docker push ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
   update-porter-update-action:
     name: Update porter-update-action
     runs-on: ubuntu-latest
@@ -474,9 +469,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Push new branch with updated CLI
@@ -490,7 +483,8 @@ jobs:
           git checkout -B "${{steps.tag_name.outputs.tag}}"
 
           cat >Dockerfile <<EOL
-          FROM public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+          FROM ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
+          LABEL org.opencontainers.image.source="https://github.com/porter-dev/porter"
 
           COPY entrypoint.sh /action/
 
@@ -512,9 +506,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Push new branch with updated CLI
@@ -528,7 +520,8 @@ jobs:
           git checkout -B "${{steps.tag_name.outputs.tag}}"
 
           cat >Dockerfile <<EOL
-          FROM public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+          FROM ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
+          LABEL org.opencontainers.image.source="https://github.com/porter-dev/porter"
 
           COPY entrypoint.sh /action/
 
@@ -550,9 +543,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Update new-release-tests

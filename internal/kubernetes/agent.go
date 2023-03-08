@@ -26,7 +26,6 @@ import (
 	"github.com/porter-dev/porter/internal/helm/grapher"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/extensions/v1beta1"
 	netv1 "k8s.io/api/networking/v1"
@@ -1080,8 +1079,8 @@ func (a *Agent) GetJob(c grapher.Object) (*batchv1.Job, error) {
 }
 
 // GetCronJob gets the CronJob by name and namespace
-func (a *Agent) GetCronJob(c grapher.Object) (*batchv1beta1.CronJob, error) {
-	res, err := a.Clientset.BatchV1beta1().CronJobs(c.Namespace).Get(
+func (a *Agent) GetCronJob(c grapher.Object) (*batchv1.CronJob, error) {
+	res, err := a.Clientset.BatchV1().CronJobs(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},

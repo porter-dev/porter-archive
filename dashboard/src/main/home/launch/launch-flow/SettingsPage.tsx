@@ -134,7 +134,7 @@ class SettingsPage extends Component<PropsType, StateType> {
       } = this.props;
       return (
         <FadeWrapper>
-          <Heading>Additional Settings</Heading>
+          <Heading>Additional settings</Heading>
           <Helper>
             Configure additional settings for this template. (Optional)
           </Helper>
@@ -229,7 +229,7 @@ class SettingsPage extends Component<PropsType, StateType> {
       return (
         <BackButton width="155px" onClick={() => setPage("source")}>
           <i className="material-icons">first_page</i>
-          Source Settings
+          Source settings
         </BackButton>
       );
     }
@@ -438,6 +438,7 @@ const PaddingWrapper = styled.div`
 
 const StyledSettingsPage = styled.div`
   position: relative;
+  padding-bottom: 20px;
 `;
 
 const Subtitle = styled.div`

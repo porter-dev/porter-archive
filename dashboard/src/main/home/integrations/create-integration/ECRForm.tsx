@@ -75,7 +75,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
     return (
       <StyledForm>
         <CredentialWrapper>
-          <Heading>Porter Settings</Heading>
+          <Heading isAtTop>Porter settings</Heading>
           <Helper>
             Give a name to this set of registry credentials (just for Porter).
           </Helper>
@@ -87,13 +87,13 @@ export default class ECRForm extends Component<PropsType, StateType> {
             placeholder="ex: paper-straw"
             width="100%"
           />
-          <Heading>AWS Settings</Heading>
+          <Heading>AWS settings</Heading>
           <Helper>AWS access credentials.</Helper>
           <InputRow
             type="text"
             value={this.state.awsRegion}
             setValue={(x: string) => this.setState({ awsRegion: x })}
-            label="📍 AWS Region"
+            label="📍 AWS region"
             placeholder="ex: mars-north-12"
             width="100%"
           />
@@ -101,7 +101,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
             type="text"
             value={this.state.awsAccessId}
             setValue={(x: string) => this.setState({ awsAccessId: x })}
-            label="👤 AWS Access ID"
+            label="👤 AWS access ID"
             placeholder="ex: AKIAIOSFODNN7EXAMPLE"
             width="100%"
           />
@@ -109,14 +109,16 @@ export default class ECRForm extends Component<PropsType, StateType> {
             type="password"
             value={this.state.awsSecretKey}
             setValue={(x: string) => this.setState({ awsSecretKey: x })}
-            label="🔒 AWS Secret Key"
+            label="🔒 AWS secret key"
             placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
             width="100%"
           />
         </CredentialWrapper>
         <SaveButton
-          text="Save Settings"
+          text="Save settings"
           makeFlush={true}
+          clearPosition={true}
+          statusPosition="right"
           disabled={this.isDisabled()}
           onClick={this.isDisabled() ? null : this.handleSubmit}
         />
@@ -128,9 +130,11 @@ export default class ECRForm extends Component<PropsType, StateType> {
 ECRForm.contextType = Context;
 
 const CredentialWrapper = styled.div`
-  padding: 5px 40px 25px;
-  background: #ffffff11;
+  padding: 30px;
   border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  margin-bottom: 30px;
 `;
 
 const StyledForm = styled.div`

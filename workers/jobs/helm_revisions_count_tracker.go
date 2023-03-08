@@ -60,6 +60,7 @@ type helmRevisionsCountTracker struct {
 	awsRegion          string
 	s3BucketName       string
 	encryptionKey      *[32]byte
+	revisionsCount     int
 }
 
 // HelmRevisionsCountTrackerOpts holds the options required to run this job
@@ -74,6 +75,7 @@ type HelmRevisionsCountTrackerOpts struct {
 	AWSRegion          string
 	S3BucketName       string
 	EncryptionKey      string
+	RevisionsCount     int
 }
 
 func NewHelmRevisionsCountTracker(
@@ -115,7 +117,7 @@ func NewHelmRevisionsCountTracker(
 	return &helmRevisionsCountTracker{
 		enqueueTime, db, repo, doConf, opts.DBConf, credBackend,
 		opts.AWSAccessKeyID, opts.AWSSecretAccessKey, opts.AWSRegion,
-		opts.S3BucketName, &s3Key,
+		opts.S3BucketName, &s3Key, opts.RevisionsCount,
 	}, nil
 }
 
@@ -237,19 +239,19 @@ func (t *helmRevisionsCountTracker) Run() error {
 							continue
 						}
 
-						if len(revisions) <= 20 {
-							log.Printf("release %s of namespace %s in cluster ID %d has <= 20 revisions. "+
-								"skipping release...", rel.Name, ns.Name, cluster.ID)
+						if len(revisions) <= t.revisionsCount {
+							log.Printf("release %s of namespace %s in cluster ID %d has <= %d revisions. "+
+								"skipping release...", t.revisionsCount, rel.Name, ns.Name, cluster.ID)
 							continue
 						}
 
-						log.Printf("release %s of namespace %s in cluster ID %d has more than 20 revisions. attempting to "+
-							"delete the older ones.", rel.Name, ns.Name, cluster.ID)
+						log.Printf("release %s of namespace %s in cluster ID %d has more than %d revisions. attempting to "+
+							"delete the older ones.", t.revisionsCount, rel.Name, ns.Name, cluster.ID)
 
 						// sort revisions from newest to oldest
 						releaseutil.Reverse(revisions, releaseutil.SortByRevision)
 
-						for i := 20; i < len(revisions); i += 1 {
+						for i := t.revisionsCount; i < len(revisions); i += 1 {
 							rev := revisions[i]
 
 							// store the revision in the s3 bucket before deleting it

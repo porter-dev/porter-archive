@@ -2,7 +2,7 @@
 
 # Base Go environment
 # -------------------
-FROM golang:1.18 as base
+FROM golang:1.20 as base
 WORKDIR /porter
 
 RUN apt-get update && apt-get install -y gcc musl-dev git
@@ -22,7 +22,7 @@ RUN --mount=type=cache,target=$GOPATH/pkg/mod \
 # --------------------
 FROM base AS build-go
 
-ARG version=dev
+ARG SENTRY_DSN
 
 RUN make build-cli-dev
 

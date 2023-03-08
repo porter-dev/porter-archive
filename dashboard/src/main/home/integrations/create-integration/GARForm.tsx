@@ -107,7 +107,7 @@ const GARForm = (props: { closeForm: () => void }) => {
   return (
     <StyledForm>
       <CredentialWrapper>
-        <Heading>Porter Settings</Heading>
+        <Heading isAtTop>Porter settings</Heading>
         <Helper>
           Give a name to this set of registry credentials (just for Porter).
         </Helper>
@@ -118,21 +118,20 @@ const GARForm = (props: { closeForm: () => void }) => {
             setCredentialsName(credentialsName)
           }
           isRequired={true}
-          label="🏷️ Registry Name"
+          label="🏷️ Registry name"
           placeholder="ex: paper-straw"
           width="100%"
         />
-        <Heading>GCP Settings</Heading>
+        <Heading>GCP settings</Heading>
         <Helper>Service account credentials for GCP permissions.</Helper>
         <UploadArea
           setValue={(x: any) => setServiceAccountKey(x)}
-          label="🔒 GCP Key Data (JSON)"
+          label="🔒 GCP key data (JSON)"
           placeholder="Choose a file or drag it here."
           width="100%"
           height="100%"
           isRequired={true}
         />
-        <Helper>GAR Region</Helper>
         <SelectRow
           options={GAR_REGION_OPTIONS}
           width="100%"
@@ -142,13 +141,15 @@ const GARForm = (props: { closeForm: () => void }) => {
           setActiveValue={(x: string) => {
             setRegion(x);
           }}
-          label="📍 GCP Region"
+          label="📍 GAR region"
         />
       </CredentialWrapper>
       <SaveButton
-        text="Save Settings"
+        text="Save settings"
         status={buttonStatus}
         makeFlush={true}
+        clearPosition={true}
+        statusPosition="right"
         disabled={!isValid()}
         onClick={!isValid() ? null : handleSubmit}
       />
@@ -159,9 +160,11 @@ const GARForm = (props: { closeForm: () => void }) => {
 export default GARForm;
 
 const CredentialWrapper = styled.div`
-  padding: 5px 40px 25px;
-  background: #ffffff11;
+  padding: 30px;
   border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  margin-bottom: 30px;
 `;
 
 const StyledForm = styled.div`

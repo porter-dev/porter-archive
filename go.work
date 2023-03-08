@@ -1,0 +1,7 @@
+go 1.20
+
+use (
+	.
+	./services/cli_install_script_container
+	./services/preview_env_setup_job
+)

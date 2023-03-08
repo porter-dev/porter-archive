@@ -8,9 +8,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Run workflow
@@ -22,9 +20,7 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Setup docker
@@ -43,13 +39,11 @@ jobs:
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v1-node16
         with:
           aws-access-key-id: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
@@ -58,20 +52,25 @@ jobs:
         id: login-ecr
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Login to GHCR
+        id: login-ghcr
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: Pull versioned CLI image and push to latest
         run: |
           docker pull public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
           docker tag public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}} public.ecr.aws/o1j4x7p4/porter-cli:latest
           docker push public.ecr.aws/o1j4x7p4/porter-cli:latest
+
+          docker pull ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}}
+          docker tag ghcr.io/porter-dev/porter/porter-cli:${{steps.tag_name.outputs.tag}} ghcr.io/porter-dev/porter/porter-cli:latest
+          docker push ghcr.io/porter-dev/porter/porter-cli:latest
   update-homebrew-repo:
     name: Update the Homebrew repo with the new CLI version
     runs-on: ubuntu-latest
     steps:
       - name: Get tag name
         id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
         env:
           GITHUB_TAG: ${{ github.ref }}
       - name: Create and commit porter.rb file

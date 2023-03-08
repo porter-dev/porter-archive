@@ -274,7 +274,7 @@ class SourcePage extends Component<PropsType, StateType> {
             width="470px"
           />
         </InputWrapper>
-        <Heading>Deployment Method</Heading>
+        <Heading>Deployment method</Heading>
         <Helper>
           Deploy from a Git repository or a Docker registry:
           <Required>*</Required>
@@ -296,6 +296,8 @@ class SourcePage extends Component<PropsType, StateType> {
           disabled={!this.checkSourceSelected()}
           onClick={this.handleContinue}
           status={this.getButtonStatus()}
+          clearPosition={true}
+          statusPosition="right"
           makeFlush={true}
           helper={this.getButtonHelper()}
         />
@@ -324,7 +326,7 @@ const StyledSourcePage = styled.div`
 
 const Buffer = styled.div`
   width: 100%;
-  height: 35px;
+  height: 15px;
 `;
 
 const Br = styled.div`
@@ -476,12 +478,13 @@ const Highlight = styled.a`
 
 const StyledSourceBox = styled.div`
   width: 100%;
-  background: #ffffff11;
   color: #ffffff;
   padding: 14px 35px 20px;
   position: relative;
-  border-radius: 5px;
   font-size: 13px;
   margin-top: 6px;
   margin-bottom: 25px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
 `;

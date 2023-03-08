@@ -148,8 +148,8 @@ const _RevisionList = ({
         >
           <RevisionPreview>
             {currentRevision.id === latestRevision.id
-              ? `Current Revision`
-              : `Previewing Revision (Not Deployed)`}{" "}
+              ? `Current revision`
+              : `Previewing revision (not deployed)`}{" "}
             - <Revision>No. {currentRevision.id}</Revision>
             <i className="material-icons">arrow_drop_down</i>
           </RevisionPreview>

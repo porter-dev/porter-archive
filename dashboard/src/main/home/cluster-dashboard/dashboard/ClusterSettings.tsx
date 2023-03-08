@@ -162,14 +162,14 @@ const ClusterSettings: React.FC = () => {
     if (successfulRotate) {
       keyRotationSection = (
         <div>
-          <Heading>Credential Rotation</Heading>
+          <Heading>Credential rotation</Heading>
           <Helper>Successfully rotated credentials!</Helper>
         </div>
       );
     } else if (startRotateCreds) {
       keyRotationSection = (
         <div>
-          <Heading>Credential Rotation</Heading>
+          <Heading>Credential rotation</Heading>
           <Helper>Input the new credentials for the EKS cluster.</Helper>
           <InputRow
             type="text"
@@ -197,12 +197,12 @@ const ClusterSettings: React.FC = () => {
     } else {
       keyRotationSection = (
         <div>
-          <Heading>Credential Rotation</Heading>
+          <Heading>Credential rotation</Heading>
           <Helper>
             Rotate the credentials that Porter uses to connect to the cluster.
           </Helper>
           <Button color="#616FEEcc" onClick={() => setStartRotateCreds(true)}>
-            Rotate Credentials
+            Rotate credentials
           </Button>
         </div>
       );
@@ -225,7 +225,7 @@ const ClusterSettings: React.FC = () => {
 
   let renameClusterSection = (
     <div>
-      <Heading>Rename Cluster</Heading>
+      <Heading>Rename cluster</Heading>
       <InputRow
         type="text"
         value={newClusterName}
@@ -244,7 +244,7 @@ const ClusterSettings: React.FC = () => {
 
   let enableAgentIntegration = (
     <div>
-      <Heading>Enable Agent</Heading>
+      <Heading>Enable agent</Heading>
       <CheckboxRow
         label={"Allow the Porter agent to be installed on the cluster"}
         toggle={() => setEnableAgent(!enableAgent)}
@@ -268,7 +268,7 @@ const ClusterSettings: React.FC = () => {
     } else {
       enablePreviewEnvironments = (
         <div>
-          <Heading>Enable Preview Environments</Heading>
+          <Heading>Enable preview environments</Heading>
           <CheckboxRow
             label={"Create preview environments on this cluster"}
             toggle={() => setEnablePreviewEnvs(!enablePreviewEnvs)}
@@ -289,7 +289,7 @@ const ClusterSettings: React.FC = () => {
   if (successfulRename) {
     renameClusterSection = (
       <div>
-        <Heading>Credential Rotation</Heading>
+        <Heading>Credential rotation</Heading>
         <Helper>Successfully renamed the cluster! Reload the page.</Helper>
       </div>
     );
@@ -298,6 +298,7 @@ const ClusterSettings: React.FC = () => {
   return (
     <div>
       <StyledSettingsSection>
+        <DarkMatter />
         {enableAgentIntegration}
         <DarkMatter />
         {enablePreviewEnvironments}
@@ -307,13 +308,13 @@ const ClusterSettings: React.FC = () => {
         {/* Disabled this field due to https://discord.com/channels/542888846271184896/856554532972134420/1042497537912864788 */}
         {/* {renameClusterSection}
         <DarkMatter /> */}
-        <Heading>Delete Cluster</Heading>
+        <Heading>Delete cluster</Heading>
         {helperText}
         <Button
           color="#b91133"
           onClick={() => setCurrentModal("UpdateClusterModal")}
         >
-          Delete Cluster
+          Delete cluster
         </Button>
       </StyledSettingsSection>
     </div>
@@ -330,13 +331,16 @@ const DarkMatter = styled.div`
 const StyledSettingsSection = styled.div`
   margin-top: 35px;
   width: 100%;
-  background: #ffffff11;
-  padding: 0 35px;
+  padding: 30px;
+  padding-top: 5px;
   padding-bottom: 15px;
   position: relative;
   border-radius: 8px;
   overflow: auto;
   height: 100%;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
 `;
 
 const Button = styled.button`

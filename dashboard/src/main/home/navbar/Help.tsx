@@ -44,11 +44,6 @@ export default class Help extends Component<PropsType, StateType> {
               <Icon src={discordLogo} />
               Community
             </Option>
-            <Line />
-            <Option id={"intercom_help"}>
-              <i className="material-icons-outlined">message</i>
-              Message us
-            </Option>
           </Dropdown>
         </>
       );

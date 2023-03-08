@@ -11,7 +11,7 @@ const createPreviewActionName = "porter-dev/porter-preview-action"
 func getCheckoutCodeStep() GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Checkout code",
-		Uses: "actions/checkout@v2.3.4",
+		Uses: "actions/checkout@v3",
 	}
 }
 
@@ -19,7 +19,7 @@ func getSetTagStep() GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Set Github tag",
 		ID:   "vars",
-		Run:  `echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"`,
+		Run:  `echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT`,
 	}
 }
 

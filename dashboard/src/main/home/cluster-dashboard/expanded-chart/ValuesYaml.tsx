@@ -105,9 +105,11 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
         </Wrapper>
         {!this.props.disabled && (
           <SaveButton
-            text="Update Values"
+            text="Update values"
             onClick={this.handleSaveValues}
             status={this.state.saveValuesStatus}
+            statusPosition="right"
+            clearPosition={true}
             makeFlush={true}
           />
         )}
@@ -121,6 +123,7 @@ ValuesYaml.contextType = Context;
 const Wrapper = styled.div`
   overflow: auto;
   border-radius: 8px;
+  margin-bottom: 30px;
   border: 1px solid #ffffff33;
 `;
 

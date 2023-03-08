@@ -66,7 +66,7 @@ type Cluster struct {
 	AWSClusterID string
 
 	// Status defines the current status of the cluster. Accepted values: [READY, UPDATING]
-	Status string `json:"status"`
+	Status types.ClusterStatus `json:"status"`
 
 	// ProvisionedBy is used for identifing the provisioner used for the cluster. Accepted values: [CAPI, ]
 	ProvisionedBy string `json:"provisioned_by"`
@@ -127,6 +127,7 @@ func (c *Cluster) ToClusterType() *types.Cluster {
 		AWSIntegrationID:        c.AWSIntegrationID,
 		AWSClusterID:            c.AWSClusterID,
 		PreviewEnvsEnabled:      c.PreviewEnvsEnabled,
+		Status:                  c.Status,
 	}
 }
 

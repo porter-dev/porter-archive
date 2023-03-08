@@ -30,6 +30,12 @@ func NewProvisionClusterHandler(
 
 // ServeHTTP creates a CAPI cluster by adding the configuration to a NATS stream
 func (c *CreateClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if !c.Config().DisableCAPIProvisioner {
+		// TODO: delete this block after April 2023. It is only required whilst people are not easily able to get NATS and Cluster Control Plane running on their local environment
+		w.WriteHeader(http.StatusCreated)
+		return
+	}
+
 	var capiClusterReq types.CAPIClusterRequest
 	ctx := r.Context()
 

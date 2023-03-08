@@ -107,8 +107,8 @@ func (c *BillingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		project.PreviewEnvsEnabled = previewEnvsEnabled
 	}
 
-	if capiProvisionerEnabled, err := strconv.ParseBool(features.CAPIProvisionerEnabled); err == nil {
-		project.CAPIProvisionerEnabled = capiProvisionerEnabled
+	if capiProvisionerEnabled, err := strconv.ParseBool(features.CapiProvisionerEnabled); err == nil {
+		project.CapiProvisionerEnabled = capiProvisionerEnabled
 	}
 
 	_, err = c.Repo().Project().UpdateProject(project)

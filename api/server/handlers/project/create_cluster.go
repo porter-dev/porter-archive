@@ -42,6 +42,7 @@ func (c *CreateClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if ok := c.DecodeAndValidate(w, r, &capiClusterReq); !ok {
 		return
 	}
+	c.Config().Repo.Cluster()
 
 	capiCluster := porterv1.Kubernetes{
 		ProjectId: int32(capiClusterReq.ProjectID),

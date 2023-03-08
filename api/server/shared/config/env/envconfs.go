@@ -127,7 +127,7 @@ type ServerConf struct {
 	NATSUrl string `env:"NATS_URL"`
 
 	// DisableCAPIProvisioner disables checks for ClusterControlPlaneClient and NATS, if set to true
-	DisableCAPIProvisioner bool `env:"DISABLE_TEMPORARY_KUBECONFIG"`
+	DisableCAPIProvisioner bool `env:"DISABLE_CAPI_PROVISIONER"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

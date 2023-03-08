@@ -117,17 +117,20 @@ func (c *Cluster) ToClusterType() *types.Cluster {
 	}
 
 	return &types.Cluster{
-		ID:                      c.ID,
-		ProjectID:               c.ProjectID,
-		Name:                    c.Name,
-		Server:                  c.Server,
-		Service:                 serv,
-		AgentIntegrationEnabled: c.AgentIntegrationEnabled,
-		InfraID:                 c.InfraID,
-		AWSIntegrationID:        c.AWSIntegrationID,
-		AWSClusterID:            c.AWSClusterID,
-		PreviewEnvsEnabled:      c.PreviewEnvsEnabled,
-		Status:                  c.Status,
+		ID:                                c.ID,
+		ProjectID:                         c.ProjectID,
+		Name:                              c.Name,
+		Server:                            c.Server,
+		Service:                           serv,
+		AgentIntegrationEnabled:           c.AgentIntegrationEnabled,
+		InfraID:                           c.InfraID,
+		AWSIntegrationID:                  c.AWSIntegrationID,
+		AWSClusterID:                      c.AWSClusterID,
+		PreviewEnvsEnabled:                c.PreviewEnvsEnabled,
+		Status:                            c.Status,
+		ProvisionedBy:                     c.ProvisionedBy,
+		CloudProvider:                     c.CloudProvider,
+		CloudProviderCredentialIdentifier: c.CloudProviderCredentialIdentifier,
 	}
 }
 

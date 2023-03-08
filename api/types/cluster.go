@@ -41,6 +41,17 @@ type Cluster struct {
 
 	// Cluster provisioning status if managed by Porter
 	Status ClusterStatus `json:"status"`
+
+	// ProvisionedBy is used for identifing the provisioner used for the cluster. Accepted values: [CAPI, ]
+	ProvisionedBy string `json:"provisioned_by"`
+
+	// CloudProvider is the cloud provider that hosts the Kubernetes Cluster. Accepted values: [AWS, GCP, AZURE]
+	CloudProvider string `json:"cloud_provider"`
+
+	// CloudProviderCredentialIdentifier is a reference to find the credentials required for access the cluster's API.
+	// This was likely the credential that was used to create the cluster.
+	// For AWS EKS clusters, this will be an ARN for the final target role in the assume role chain.
+	CloudProviderCredentialIdentifier string `json:"cloud_provider_credential_identifier"`
 }
 
 type ClusterCandidate struct {

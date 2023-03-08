@@ -1,16 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
 type Props = {
+  isInitiallyExpanded?: boolean;
   Header: any;
   ExpandedSection: any;
 };
 
 const ExpandableSection: React.FC<Props> = ({
+  isInitiallyExpanded,
   Header,
   ExpandedSection,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  useEffect(() => {
+    setIsExpanded(isInitiallyExpanded);
+  }, [isInitiallyExpanded]);
 
   return (
     <StyledExpandableSection isExpanded={isExpanded}>

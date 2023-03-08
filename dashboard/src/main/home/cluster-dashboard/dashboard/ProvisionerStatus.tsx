@@ -16,6 +16,7 @@ const ProvisionerStatus: React.FC<Props> = ({}) => {
   return (
     <StyledProvisionerStatus>
       <ExpandableSection
+        isInitiallyExpanded={true}
         Header={(
           <>
             <Icon src="https://img.stackshare.io/service/7991/amazon-eks.png" />

@@ -38,6 +38,9 @@ type Cluster struct {
 
 	// Whether preview environments is enabled on this cluster
 	PreviewEnvsEnabled bool `json:"preview_envs_enabled"`
+
+	// Cluster provisioning status if managed by Porter
+	Status ClusterStatus `json:"status"`
 }
 
 type ClusterCandidate struct {
@@ -167,6 +170,17 @@ type ClusterGetResponse struct {
 	// Error displayed in case couldn't get the IP
 	IngressError error `json:"ingress_error"`
 }
+
+// ClusterStatus to track provisioning state
+type ClusterStatus string
+
+const (
+	Ready    ClusterStatus = "READY"
+	Updating ClusterStatus = "UPDATING"
+
+	// For initial provisioning or for when the cluster is updating but not ready
+	UpdatingUnavailable ClusterStatus = "UPDATING_UNAVAILABLE"
+)
 
 type ClusterService string
 

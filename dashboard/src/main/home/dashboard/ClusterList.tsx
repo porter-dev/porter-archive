@@ -32,48 +32,6 @@ const ClusterList: React.FC<Props> = ({}) => {
         console.error(err);
         setIsLoading(false);
       });
-   /*
-    const dummyData = [
-      {
-        id: 3,
-        project_id: 2,
-        name: "dummy-cluster-one",
-        server: "https://73727E5A0EF0FD07D24D7C1FDCE041E6.gr7.us-east-1.eks.amazonaws.com",
-        service: "eks",
-        agent_integration_enabled: false,
-        infra_id: 0,
-        aws_integration_id: 5,
-        preview_envs_enabled: true,
-        status: "READY",
-      },
-      {
-        id: 4,
-        project_id: 2,
-        name: "dummy-cluster-two",
-        server: "https://73727E5A0EF0FD07D24D7C1FDCE041E6.gr7.us-east-1.eks.amazonaws.com",
-        service: "eks",
-        agent_integration_enabled: false,
-        infra_id: 0,
-        aws_integration_id: 5,
-        preview_envs_enabled: true,
-        status: "UPDATING",
-      },
-      {
-        id: 5,
-        project_id: 2,
-        name: "dummy-cluster-three",
-        server: "https://73727E5A0EF0FD07D24D7C1FDCE041E6.gr7.us-east-1.eks.amazonaws.com",
-        service: "eks",
-        agent_integration_enabled: false,
-        infra_id: 0,
-        aws_integration_id: 5,
-        preview_envs_enabled: true,
-        status: "UPDATING_UNAVAILABLE",
-      },
-    ];
-    setClusters(dummyData);
-    setIsLoading(false);
-    */
   }, [currentProject]);
 
   const renderIcon = () => {
@@ -147,6 +105,7 @@ const ClusterList: React.FC<Props> = ({}) => {
             {clusters.map((cluster: any) => {
               return (
                 <ClusterRow
+                  key={cluster.id}
                   onClick={() => {
                     setCurrentCluster(cluster);
                     pushFiltered({ location, history }, "/applications", ["project_id"], {

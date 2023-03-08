@@ -527,7 +527,7 @@ tabs:
     show_if: additional_nodegroup_enabled
     contents:
     - type: string-input
-      label: Label for this node group.
+      label: Label for this node group. Multiple labels should be comma separated.
       variable: additional_nodegroup_label
       placeholder: "ex: porter.run/workload-kind=job"
       settings:
@@ -633,10 +633,20 @@ tabs:
 - name: advanced
   label: Advanced
   sections:
+  - name: workload_machine_label
+    contents:
+    - type: heading
+      label: Application Node Group Settings
+    - type: string-input
+      label: Add custom node labels to the application node group. If you are adding multiple labels, they should be comma separated.
+      variable: custom_node_labels_application
+      placeholder: "ex: mylabel=custom-label,mylabel2=another-one"
+      settings:
+        default: ""
   - name: system_machine_type
     contents:
     - type: heading
-      label: System Machine Type Settings
+      label: System Node Group Settings
     - type: select
       label: ⚙️ AWS System Machine Type
       variable: system_machine_type
@@ -667,6 +677,12 @@ tabs:
           value: c6i.2xlarge
         - label: c6i.4xlarge
           value: c6i.4xlarge
+    - type: string-input
+      label: Add custom node labels to the system node group. If you are adding multiple labels, they should be comma separated.
+      variable: custom_node_labels_system
+      placeholder: "ex: mylabel=custom-label,mylabel2=another-one"
+      settings:
+        default: ""
   - name: spot_instance_should_enable
     contents:
     - type: heading
@@ -758,6 +774,12 @@ tabs:
           value: t3.large
         - label: t3.xlarge
           value: t3.xlarge
+    - type: string-input
+      label: Add custom node labels to the monitoring node group. If you are adding multiple labels, they should be comma separated.
+      variable: custom_node_labels_monitoring
+      placeholder: "ex: mylabel=custom-label,mylabel2=another-one"
+      settings:
+        default: ""
   - name: kms_secret_encryption
     contents:
     - type: heading
@@ -767,6 +789,28 @@ tabs:
       label: Encrypt all Kubernetes secrets with AWS Key Management Service (KMS)
       settings:
         default: false
+  - name: enable_logging
+    contents:
+    - type: heading
+      label: Enable AWS Logging 
+    - type: checkbox
+      variable: vpc_flow_logs_enabled
+      label: Enable VPC Flow Logs
+      settings:
+        default: false
+    - type: checkbox
+      variable: eks_control_plane_logs_enabled
+      label: Enable EKS Control Plane Logs
+      settings:
+        default: false
+  - name: add_custom_tags
+    contents:
+    - type: heading
+      label: Add Custom Tags
+    - type: key-value-array
+      variable: custom_tags
+      settings:
+        default: {} 
 `
 
 const gcrForm = `name: GCR

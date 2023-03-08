@@ -120,37 +120,39 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
   const onSubmit = (values: any) => {
     setIsLoading(true);
 
-    api
-      .provisionInfra(
-        "<token>",
-        {
-          kind: currentTemplate.kind,
-          values: values,
-          aws_integration_id: currentCredential["aws_integration_id"],
-          do_integration_id: currentCredential["do_integration_id"],
-          gcp_integration_id: currentCredential["gcp_integration_id"],
-          azure_integration_id: currentCredential["azure_integration_id"],
-          cluster_id: selectedClusterID || null,
-        },
-        {
-          project_id: currentProject.id,
-        }
-      )
-      .then(({ data }) => {
-        setIsLoading(false);
+    console.log(values)
 
-        if (origin) {
-          pushFiltered(origin, ["project_id"]);
-        } else if (data?.infra_id) {
-          pushFiltered(`/infrastructure/${data?.infra_id}`, ["project_id"]);
-        } else {
-          pushFiltered(`/infrastructure`, ["project_id"]);
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        setIsLoading(false);
-      });
+    // api
+    //   .provisionInfra(
+    //     "<token>",
+    //     {
+    //       kind: currentTemplate.kind,
+    //       values: values,
+    //       aws_integration_id: currentCredential["aws_integration_id"],
+    //       do_integration_id: currentCredential["do_integration_id"],
+    //       gcp_integration_id: currentCredential["gcp_integration_id"],
+    //       azure_integration_id: currentCredential["azure_integration_id"],
+    //       cluster_id: selectedClusterID || null,
+    //     },
+    //     {
+    //       project_id: currentProject.id,
+    //     }
+    //   )
+    //   .then(({ data }) => {
+    //     setIsLoading(false);
+
+    //     if (origin) {
+    //       pushFiltered(origin, ["project_id"]);
+    //     } else if (data?.infra_id) {
+    //       pushFiltered(`/infrastructure/${data?.infra_id}`, ["project_id"]);
+    //     } else {
+    //       pushFiltered(`/infrastructure`, ["project_id"]);
+    //     }
+    //   })
+    //   .catch((err) => {
+    //     console.error(err);
+    //     setIsLoading(false);
+    //   });
   };
 
   if (hasError) {

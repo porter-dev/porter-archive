@@ -104,8 +104,10 @@ const ProvisionerForm: React.FC<Props> = ({
 
   useEffect(() => {
     setIsReadOnly(
-      currentCluster.status === "UPDATING" || 
-      currentCluster.status === "UPDATING_UNAVAILABLE"
+      clusterId && (
+        currentCluster.status === "UPDATING" || 
+        currentCluster.status === "UPDATING_UNAVAILABLE"
+      )
     );
   }, []);
 

@@ -204,18 +204,12 @@ export const Dashboard: React.FunctionComponent = () => {
       */}
 
       {
-        context.currentProject.capi_provisioner_enabled && (
-          <>
-            <ProvisionerStatus />
-            {/*
-            <RevisionHeader isCurrent={true} showRevisions={false}>
-              <RevisionPreview>
-                Current version - <Revision>No. 4</Revision>
-                <i className="material-icons">arrow_drop_down</i>
-              </RevisionPreview>
-            </RevisionHeader>
-            */}
-          </>
+        context.currentProject.capi_provisioner_enabled &&
+        (
+          context.currentCluster.status === "UPDATING" ||
+          context.currentCluster.status === "UPDATING_UNAVAILABLE"
+        ) && (
+          <ProvisionerStatus />
         )
       }
 

@@ -31,6 +31,8 @@ import Loading from "components/Loading";
 import JobRunTable from "./chart/JobRunTable";
 import TagFilter from "./TagFilter";
 import ExpandedEnvGroupDashboard from "./env-groups/ExpandedEnvGroupDashboard";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
 
 // @ts-ignore
 const LazyDatabasesRoutes = loadable(() => import("./databases/routes.tsx"), {
@@ -189,8 +191,8 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     if (currentCluster.status === "UPDATING_UNAVAILABLE") {
       return (
         <Placeholder>
-          Your cluster is still being created
-
+          <Heading isAtTop>Your cluster is being created</Heading>
+          <Helper>You can view the status of your cluster creation here.</Helper>
         </Placeholder>
       )
     }
@@ -378,7 +380,10 @@ ClusterDashboard.contextType = Context;
 export default withRouter(withAuth(ClusterDashboard));
 
 const Placeholder = styled.div`
-  
+  padding: 15px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
 `;
 
 const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`

@@ -15,6 +15,9 @@ type CAPIConfig struct {
 	// Base64Config is the CAPI config for a cluster, encoded in base64
 	Base64Config string
 
+	// Base64RequestJSON is the JSON submitted by the frontend, encoded in base64
+	Base64RequestJSON string
+
 	// ClusterID is the ID of the cluster that the config created.
 	// This should be a foreign key, but GORM doesnt play well with FKs.
 	ClusterID int

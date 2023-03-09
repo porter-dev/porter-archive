@@ -43,4 +43,5 @@ type Repository interface {
 	Tag() TagRepository
 	Stack() StackRepository
 	MonitorTestResult() MonitorTestResultRepository
+	CAPIConfigRepository() CAPIConfigRepository
 }

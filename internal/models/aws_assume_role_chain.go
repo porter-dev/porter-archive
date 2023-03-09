@@ -13,17 +13,17 @@ type AWSAssumeRoleChain struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey"`
 
 	// SourceARN is ARN which will assume the target ARN
-	SourceARN string `json:"source_arn"`
+	SourceARN string `json:"source_arn" gorm:"UNIQUE_INDEX:aws_assume_role_chains_project_id_source_arn_target_arn_key"`
 
 	// TargetARN is ARN which will assume the target ARN
-	TargetARN string `json:"target_arn"`
+	TargetARN string `json:"target_arn" gorm:"UNIQUE_INDEX:aws_assume_role_chains_project_id_source_arn_target_arn_key"`
 
 	// ExternalID is ID which is required when assuming a role
 	ExternalID string `json:"external_id"`
 
 	// ProjectID is the ID of the project that the config belongs to.
 	// This should be a foreign key, but GORM doesnt play well with FKs.
-	ProjectID int
+	ProjectID int `json:"project_id" gorm:"UNIQUE_INDEX:aws_assume_role_chains_project_id_source_arn_target_arn_key"`
 }
 
 // TableName overrides the table name

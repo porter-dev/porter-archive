@@ -49,6 +49,7 @@ type GormRepository struct {
 	tag                       repository.TagRepository
 	stack                     repository.StackRepository
 	monitor                   repository.MonitorTestResultRepository
+	capiConfig                repository.CAPIConfigRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -218,6 +219,9 @@ func (t *GormRepository) Stack() repository.StackRepository {
 func (t *GormRepository) MonitorTestResult() repository.MonitorTestResultRepository {
 	return t.monitor
 }
+func (t *GormRepository) CAPIConfigRepository() repository.CAPIConfigRepository {
+	return t.capiConfig
+}
 
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
@@ -265,5 +269,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		tag:                       NewTagRepository(db),
 		stack:                     NewStackRepository(db),
 		monitor:                   NewMonitorTestResultRepository(db),
+		capiConfig:                NewCAPIConfigRepository(db),
 	}
 }

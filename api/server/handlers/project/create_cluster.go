@@ -1,6 +1,7 @@
 package project
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -29,20 +31,51 @@ func NewProvisionClusterHandler(
 }
 
 // ServeHTTP creates a CAPI cluster by adding the configuration to a NATS stream
+// This inserts a row into the cluster table in order to create an ID for this cluster, as well as stores the raw request JSON for updating later
 func (c *CreateClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !c.Config().DisableCAPIProvisioner {
-		// TODO: delete this block after April 2023. It is only required whilst people are not easily able to get NATS and Cluster Control Plane running on their local environment
-		w.WriteHeader(http.StatusCreated)
-		return
-	}
-
 	var capiClusterReq types.CAPIClusterRequest
 	ctx := r.Context()
 
 	if ok := c.DecodeAndValidate(w, r, &capiClusterReq); !ok {
 		return
 	}
-	c.Config().Repo.Cluster()
+
+	if capiClusterReq.ClusterID == 0 {
+		dbCluster := models.Cluster{
+			ProjectID:                         uint(capiClusterReq.ProjectID),
+			Status:                            types.UpdatingUnavailable,
+			ProvisionedBy:                     "CAPI",
+			CloudProvider:                     "AWS",
+			CloudProviderCredentialIdentifier: capiClusterReq.CloudProviderCredentialsID,
+		}
+		cl, err := c.Config().Repo.Cluster().CreateCluster(&dbCluster)
+		if err != nil {
+			e := fmt.Errorf("error creating new cluster: %w", err)
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			return
+		}
+		capiClusterReq.ClusterID = int64(cl.ID)
+	}
+
+	by, err := json.Marshal(capiClusterReq)
+	if err != nil {
+		e := fmt.Errorf("error marshalling capi config: %w", err)
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+		return
+	}
+
+	capiConfig := models.CAPIConfig{
+		ClusterID:         int(capiClusterReq.ClusterID),
+		ProjectID:         int(capiClusterReq.ProjectID),
+		Base64RequestJSON: string(by),
+	}
+
+	_, err = c.Config().Repo.CAPIConfigRepository().Insert(ctx, capiConfig)
+	if err != nil {
+		e := fmt.Errorf("error creating new capi config: %w", err)
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+		return
+	}
 
 	capiCluster := porterv1.Kubernetes{
 		ProjectId: int32(capiClusterReq.ProjectID),
@@ -75,22 +108,30 @@ func (c *CreateClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	by, err := proto.Marshal(&capiCluster)
-	if err != nil {
-		e := fmt.Errorf("error marshalling proto: %w", err)
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
-		return
-	}
+	// This gates the cluster actually being provisioned by CAPI
+	// This can be removed whenever we are able to run NATS and CCP locally, easier
+	if !c.Config().DisableCAPIProvisioner {
+		kubeBy, err := proto.Marshal(&capiCluster)
+		if err != nil {
+			e := fmt.Errorf("error marshalling proto: %w", err)
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			return
+		}
 
-	subject := "porter.system.infrastructure.update"
-	_, err = c.Config().NATS.JetStream.Publish(subject, by, nats.Context(ctx))
-	if err != nil {
-		e := fmt.Errorf("error publishing cluster for creation: %w", err)
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
-		return
+		subject := "porter.system.infrastructure.update"
+		_, err = c.Config().NATS.JetStream.Publish(subject, kubeBy, nats.Context(ctx))
+		if err != nil {
+			e := fmt.Errorf("error publishing cluster for creation: %w", err)
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	c.WriteResult(w, r, types.Cluster{
+		ID: uint(capiClusterReq.ClusterID),
+	})
+
 }
 
 var (

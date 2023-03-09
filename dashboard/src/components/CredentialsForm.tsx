@@ -82,7 +82,7 @@ const CredentialsForm: React.FC<Props> = ({
       )
       .then(({ data }) => {
         setCreateStatus("successful");
-        proceed(data.id);
+        proceed(data.cloud_provider_credentials_id);
       })
       .catch((err) => {
         console.error(err);
@@ -98,7 +98,7 @@ const CredentialsForm: React.FC<Props> = ({
             {
               awsCredentials.map((cred: AWSCredential, i: number) => {
                 return (
-                  <Credential 
+                  <Credential
                     key={cred.id}
                     isSelected={cred.id === selectedCredentials?.id}
                     onClick={() => {
@@ -143,7 +143,7 @@ const CredentialsForm: React.FC<Props> = ({
               </CloseButton>
             )
           }
-          <InputRow 
+          <InputRow
             type="string"
             value={awsAccessKeyID}
             setValue={(e: string) => setAWSAccessKeyID(e)}
@@ -151,7 +151,7 @@ const CredentialsForm: React.FC<Props> = ({
             placeholder="ex: AKIAIOSFODNN7EXAMPLE"
             isRequired
           />
-          <InputRow 
+          <InputRow
             type="password"
             value={awsSecretAccessKey}
             setValue={(e: string) => setAWSSecretAccessKey(e)}

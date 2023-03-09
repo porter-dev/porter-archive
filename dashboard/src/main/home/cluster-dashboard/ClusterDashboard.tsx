@@ -186,6 +186,15 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       ["get", "create"]
     );
 
+    if (currentCluster.status === "UPDATING_UNAVAILABLE") {
+      return (
+        <Placeholder>
+          Your cluster is still being created
+
+        </Placeholder>
+      )
+    }
+
     return (
       <>
         <ControlRow>
@@ -367,6 +376,10 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 ClusterDashboard.contextType = Context;
 
 export default withRouter(withAuth(ClusterDashboard));
+
+const Placeholder = styled.div`
+  
+`;
 
 const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`
   padding: 0 10px;

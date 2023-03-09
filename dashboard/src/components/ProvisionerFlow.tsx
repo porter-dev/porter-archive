@@ -17,7 +17,7 @@ const ProvisionerFlow: React.FC<Props> = ({
 }) => {
   const { usage, hasBillingEnabled } = useContext(Context);
   const [currentStep, setCurrentStep] = useState("cloud");
-  const [credentialId, setCredentialId] = useState(null);
+  const [credentialId, setCredentialId] = useState("");
 
   const isUsageExceeded = useMemo(() => {
     if (!hasBillingEnabled) {

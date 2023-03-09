@@ -41,7 +41,7 @@ const machineTypeOptions = [
 ];
 
 type Props = {
-  credentialId: any;
+  credentialId: string;
   clusterId?: number;
 };
 

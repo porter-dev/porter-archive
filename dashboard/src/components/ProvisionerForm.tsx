@@ -9,7 +9,7 @@ import ProvisionerSettings from "./ProvisionerSettings";
 
 type Props = {
   goBack: () => void;
-  credentialId: any;
+  credentialId: string;
 };
 
 const ProvisionerForm: React.FC<Props> = ({

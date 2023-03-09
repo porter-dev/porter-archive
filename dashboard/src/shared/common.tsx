@@ -29,7 +29,7 @@ export const integrationList: any = {
     icon:
       "https://user-images.githubusercontent.com/5147537/54070671-0a173780-4263-11e9-8946-09ac0e37d8c6.png",
     label: "Slack",
-    buttonText: "Install Application",
+    buttonText: "Install application",
   },
   registry: {
     icon:

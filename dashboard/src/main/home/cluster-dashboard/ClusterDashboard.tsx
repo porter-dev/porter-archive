@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
+import loading from "assets/loading.gif";
 import { Route, Switch } from "react-router-dom";
 
 import { Context } from "shared/Context";
@@ -191,7 +192,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     if (currentCluster.status === "UPDATING_UNAVAILABLE") {
       return (
         <Placeholder>
-          <Heading isAtTop>Your cluster is being created</Heading>
+          <Heading isAtTop>
+            <Img src={loading} /> Your cluster is being created
+          </Heading>
           <Helper>You can view the status of your cluster creation here.</Helper>
         </Placeholder>
       )
@@ -379,11 +382,17 @@ ClusterDashboard.contextType = Context;
 
 export default withRouter(withAuth(ClusterDashboard));
 
+const Img = styled.img`
+  height: 15px;
+  margin-right: 15px;
+`;
+
 const Placeholder = styled.div`
-  padding: 15px;
+  padding: 25px;
   border-radius: 5px;
   background: #26292e;
   border: 1px solid #494b4f;
+  padding-bottom: 10px;
 `;
 
 const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`

@@ -75,13 +75,19 @@ const ProvisionerForm: React.FC<Props> = ({
             instance_type: "t3.medium",
             min_instances: 1,
             max_instances: 5,
-            node_group_type: 1
+            node_group_type: "SYSTEM"
+          },
+          {
+            instance_type: "t3.large",
+            min_instances: 1,
+            max_instances: 5,
+            node_group_type: "MONITORING"
           },
           {
             instance_type: machineType,
             min_instances: minInstances || 1,
             max_instances: maxInstances || 10,
-            node_group_type: 3
+            node_group_type: "APPLICATION"
           }
         ]
       }

@@ -14,7 +14,7 @@ import EnvGroupList from "./EnvGroupList";
 import CreateEnvGroup from "./CreateEnvGroup";
 import ExpandedEnvGroup from "./ExpandedEnvGroup";
 import { RouteComponentProps, withRouter } from "react-router";
-import { getQueryParam, pushQueryParams } from "shared/routing";
+import { getQueryParam, pushQueryParams, pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
@@ -48,6 +48,8 @@ const EnvGroupDashboard = (props: PropsType) => {
       ? localStorage.getItem("SortType")
       : "Newest",
   });
+
+  const { currentCluster } = useContext(Context);
 
   const setNamespace = (namespace: string) => {
     setState((state) => ({ ...state, namespace }));
@@ -87,7 +89,17 @@ const EnvGroupDashboard = (props: PropsType) => {
         <Heading isAtTop>
           <Img src={loading} /> Your cluster is being created
         </Heading>
-        <Helper>You can view the status of your cluster creation here.</Helper>
+        <Helper>
+          You can view the status of your cluster creation{" "}
+          <Link onClick={() => {
+            pushFiltered(props, "/cluster-dashboard", ["project_id"], {
+              cluster: currentCluster.name,
+            });
+          }}>
+            here
+            <i className="material-icons">arrow_forward</i> 
+          </Link>
+        </Helper>
       </ClusterPlaceholder>
     )
   }
@@ -175,6 +187,20 @@ const EnvGroupDashboard = (props: PropsType) => {
 };
 
 export default withRouter(withAuth(EnvGroupDashboard));
+
+const Link = styled.a`
+  text-decoration: underline;
+  position: relative;
+  cursor: pointer;
+  > i {
+    color: #aaaabb;
+    font-size: 15px;
+    position: absolute;
+    right: -17px;
+    top: 1px;
+  }
+`;
+
 
 const Img = styled.img`
   height: 15px;

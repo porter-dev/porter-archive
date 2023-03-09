@@ -187,7 +187,17 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         <Heading isAtTop>
           <Img src={loading} /> Your cluster is being created
         </Heading>
-        <Helper>You can view the status of your cluster creation here.</Helper>
+        <Helper>
+          You can view the status of your cluster creation{" "}
+          <Link onClick={() => {
+            pushFiltered(this.props, "/cluster-dashboard", ["project_id"], {
+              cluster: this.context.currentCluster.name,
+            });
+          }}>
+            here
+            <i className="material-icons">arrow_forward</i> 
+          </Link>
+        </Helper>
       </Placeholder>
     )
   }
@@ -389,6 +399,19 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 ClusterDashboard.contextType = Context;
 
 export default withRouter(withAuth(ClusterDashboard));
+
+const Link = styled.a`
+  text-decoration: underline;
+  position: relative;
+  cursor: pointer;
+  > i {
+    color: #aaaabb;
+    font-size: 15px;
+    position: absolute;
+    right: -17px;
+    top: 1px;
+  }
+`;
 
 const Img = styled.img`
   height: 15px;

@@ -64,7 +64,7 @@ const ProvisionerForm: React.FC<Props> = ({
     var data: any = {
       project_id: currentProject.id,
       cloud_provider: "aws",
-      cloud_provider_credentials_id: credentialId,
+      cloud_provider_credentials_id: String(credentialId),
       cluster_settings: {
         cluster_name: clusterName,
         cluster_version: "v1.24.0",

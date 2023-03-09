@@ -181,6 +181,17 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     );
   };
 
+  renderClusterCreatePlaceholder = () => {
+    return (
+      <Placeholder>
+        <Heading isAtTop>
+          <Img src={loading} /> Your cluster is being created
+        </Heading>
+        <Helper>You can view the status of your cluster creation here.</Helper>
+      </Placeholder>
+    )
+  }
+
   renderBodyForApps = () => {
     let { currentCluster, currentView } = this.props;
     const isAuthorizedToAdd = this.props.isAuthorized(
@@ -190,14 +201,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     );
 
     if (currentCluster.status === "UPDATING_UNAVAILABLE") {
-      return (
-        <Placeholder>
-          <Heading isAtTop>
-            <Img src={loading} /> Your cluster is being created
-          </Heading>
-          <Helper>You can view the status of your cluster creation here.</Helper>
-        </Placeholder>
-      )
+      return this.renderClusterCreatePlaceholder();
     }
 
     return (
@@ -241,6 +245,10 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       [],
       ["get", "create"]
     );
+
+    if (currentCluster.status === "UPDATING_UNAVAILABLE") {
+      return this.renderClusterCreatePlaceholder();
+    }
 
     return (
       <>

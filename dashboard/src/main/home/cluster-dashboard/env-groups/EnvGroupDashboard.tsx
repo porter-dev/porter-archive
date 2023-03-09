@@ -2,6 +2,7 @@ import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import sliders from "assets/sliders.svg";
+import loading from "assets/loading.gif";
 
 import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";
@@ -19,6 +20,8 @@ import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
 import Loading from "components/Loading";
 import Placeholder from "components/Placeholder";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -78,7 +81,22 @@ const EnvGroupDashboard = (props: PropsType) => {
     setExpandedEnvGroup(null);
   };
 
+  const renderClusterCreatePlaceholder = () => {
+    return (
+      <ClusterPlaceholder>
+        <Heading isAtTop>
+          <Img src={loading} /> Your cluster is being created
+        </Heading>
+        <Helper>You can view the status of your cluster creation here.</Helper>
+      </ClusterPlaceholder>
+    )
+  }
+
   const renderBody = () => {
+    if (props.currentCluster.status === "UPDATING_UNAVAILABLE") {
+      return renderClusterCreatePlaceholder();
+    }
+
     const goBack = () =>
       setState((state) => ({ ...state, createEnvMode: false }));
 
@@ -157,6 +175,19 @@ const EnvGroupDashboard = (props: PropsType) => {
 };
 
 export default withRouter(withAuth(EnvGroupDashboard));
+
+const Img = styled.img`
+  height: 15px;
+  margin-right: 15px;
+`;
+
+const ClusterPlaceholder = styled.div`
+  padding: 25px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  padding-bottom: 10px;
+`;
 
 const Flex = styled.div`
   display: flex;

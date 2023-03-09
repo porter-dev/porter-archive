@@ -3,6 +3,7 @@ package gorm
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -20,6 +21,9 @@ func NewCAPIConfigRepository(db *gorm.DB) repository.CAPIConfigRepository {
 
 // Insert creates a new record in the capi_configs table
 func (cr CAPIConfigRepository) Insert(ctx context.Context, conf models.CAPIConfig) (models.CAPIConfig, error) {
+	if conf.ID == uuid.Nil {
+		conf.ID = uuid.New()
+	}
 	tx := cr.db.Create(&conf)
 	if tx.Error != nil {
 		return conf, tx.Error

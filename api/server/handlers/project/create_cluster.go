@@ -1,6 +1,7 @@
 package project
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -47,6 +48,7 @@ func (c *CreateClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			ProvisionedBy:                     "CAPI",
 			CloudProvider:                     "AWS",
 			CloudProviderCredentialIdentifier: capiClusterReq.CloudProviderCredentialsID,
+			Name:                              capiClusterReq.ClusterSettings.ClusterName,
 		}
 		cl, err := c.Config().Repo.Cluster().CreateCluster(&dbCluster)
 		if err != nil {
@@ -63,11 +65,12 @@ func (c *CreateClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
 		return
 	}
+	b64 := base64.StdEncoding.EncodeToString(by)
 
 	capiConfig := models.CAPIConfig{
 		ClusterID:         int(capiClusterReq.ClusterID),
 		ProjectID:         int(capiClusterReq.ProjectID),
-		Base64RequestJSON: string(by),
+		Base64RequestJSON: string(b64),
 	}
 
 	_, err = c.Config().Repo.CAPIConfigRepository().Insert(ctx, capiConfig)

@@ -9,7 +9,7 @@ import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
 import InputRow from "./form-components/InputRow";
 import SaveButton from "./SaveButton";
-import { Contract, EnumKubernetesKind, EnumCloudProvider, NodeGroupType } from "@porter-dev/api-contracts";
+import { Contract, EnumKubernetesKind, EnumCloudProvider, NodeGroupType, EKSNodeGroup, EKS, Cluster } from "@porter-dev/api-contracts";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -61,50 +61,46 @@ const ProvisionerForm: React.FC<Props> = ({
   const [isReadOnly, setIsReadOnly] = useState(false);
 
   const createCluster = async () => {
-    var data: Contract = {
-      cluster: {
+    var data = new Contract({
+      cluster: new Cluster({
         projectId: currentProject.id,
-        clusterId: null,
         kind: EnumKubernetesKind.EKS,
         cloudProvider: EnumCloudProvider.AWS,
         cloudProviderCredentialsId: String(credentialId),
         kindValues: {
           case: "eksKind",
-          value: {
+          value: new EKS({
             clusterName,
             clusterVersion: "v1.24.0",
             cidrRange: cidrRange || "172.0.0.0/16",
             region: awsRegion,
             nodeGroups: [
-              {
+              new EKSNodeGroup({
                 instanceType: "t3.medium",
                 minInstances: 1,
                 maxInstances: 5,
                 nodeGroupType: NodeGroupType.SYSTEM,
                 isStateful: false,
-                nameSuffix: "",
-              },
-              {
+              }),
+              new EKSNodeGroup({
                 instanceType: "t3.large",
                 minInstances: 1,
                 maxInstances: 5,
                 nodeGroupType: NodeGroupType.MONITORING,
                 isStateful: false,
-                nameSuffix: "",
-              },
-              {
+              }),
+              new EKSNodeGroup({
                 instanceType: machineType,
                 minInstances: minInstances || 1,
                 maxInstances: maxInstances || 10,
                 nodeGroupType: NodeGroupType.APPLICATION,
                 isStateful: false,
-                nameSuffix: "",
-              }
+              })
             ]
-          }
+          })
         },
-      }
-    };
+      })
+    });
 
     if (clusterId) {
       data["cluster"]["clusterId"] = clusterId;
@@ -124,7 +120,7 @@ const ProvisionerForm: React.FC<Props> = ({
   useEffect(() => {
     setIsReadOnly(
       clusterId && (
-        currentCluster.status === "UPDATING" || 
+        currentCluster.status === "UPDATING" ||
         currentCluster.status === "UPDATING_UNAVAILABLE"
       )
     );

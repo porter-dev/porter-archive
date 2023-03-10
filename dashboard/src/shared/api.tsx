@@ -7,6 +7,7 @@ import {
   CreateStackBody,
   SourceConfig,
 } from "main/home/cluster-dashboard/stacks/types";
+import { Contract } from "@porter-dev/api-contracts";
 
 /**
  * Generic api call format
@@ -886,6 +887,20 @@ const provisionCluster = baseApi<
   }
 >("POST", ({ project_id }) => {
   return `/api/projects/${project_id}/provision/cluster`;
+});
+
+const createContract = baseApi<
+  Contract,
+  { project_id: number }
+>("POST", ({ project_id }) => {
+  return `/api/projects/${project_id}/contract`;
+});
+
+const getContracts = baseApi<
+  {},
+  { project_id: number }
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/contracts`;
 });
 
 const provisionInfra = baseApi<
@@ -2545,6 +2560,8 @@ export default {
   listIncidents,
   getIncident,
   getIncidentEvents,
+  createContract,
+  getContracts,
   // STACKS
   listStacks,
   getStack,

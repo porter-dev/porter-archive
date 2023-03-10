@@ -2,7 +2,6 @@ import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
 
 import api from "shared/api";
-import aws from "assets/aws.png";
 
 import { Context } from "shared/Context";
 
@@ -10,6 +9,7 @@ import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
 import InputRow from "./form-components/InputRow";
 import SaveButton from "./SaveButton";
+import { Contract, EnumKubernetesKind, EnumCloudProvider, NodeGroupType } from "@porter-dev/api-contracts";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -61,44 +61,57 @@ const ProvisionerForm: React.FC<Props> = ({
   const [isReadOnly, setIsReadOnly] = useState(false);
 
   const createCluster = async () => {
-    var data: any = {
-      project_id: currentProject.id,
-      cloud_provider: "aws",
-      cloud_provider_credentials_id: String(credentialId),
-      cluster_settings: {
-        cluster_name: clusterName,
-        cluster_version: "v1.24.0",
-        cidr_range: cidrRange || "172.0.0.0/16",
-        region: awsRegion,
-        node_groups: [
-          {
-            instance_type: "t3.medium",
-            min_instances: 1,
-            max_instances: 5,
-            node_group_type: "SYSTEM"
-          },
-          {
-            instance_type: "t3.large",
-            min_instances: 1,
-            max_instances: 5,
-            node_group_type: "MONITORING"
-          },
-          {
-            instance_type: machineType,
-            min_instances: minInstances || 1,
-            max_instances: maxInstances || 10,
-            node_group_type: "APPLICATION"
+    var data: Contract = {
+      cluster: {
+        projectId: currentProject.id,
+        clusterId: null,
+        kind: EnumKubernetesKind.EKS,
+        cloudProvider: EnumCloudProvider.AWS,
+        cloudProviderCredentialsId: String(credentialId),
+        kindValues: {
+          case: "eksKind",
+          value: {
+            clusterName,
+            clusterVersion: "v1.24.0",
+            cidrRange: cidrRange || "172.0.0.0/16",
+            region: awsRegion,
+            nodeGroups: [
+              {
+                instanceType: "t3.medium",
+                minInstances: 1,
+                maxInstances: 5,
+                nodeGroupType: NodeGroupType.SYSTEM,
+                isStateful: false,
+                nameSuffix: "",
+              },
+              {
+                instanceType: "t3.large",
+                minInstances: 1,
+                maxInstances: 5,
+                nodeGroupType: NodeGroupType.MONITORING,
+                isStateful: false,
+                nameSuffix: "",
+              },
+              {
+                instanceType: machineType,
+                minInstances: minInstances || 1,
+                maxInstances: maxInstances || 10,
+                nodeGroupType: NodeGroupType.APPLICATION,
+                isStateful: false,
+                nameSuffix: "",
+              }
+            ]
           }
-        ]
+        },
       }
     };
 
     if (clusterId) {
-      data["cluster_id"] = clusterId;
+      data["cluster"]["clusterId"] = clusterId;
     }
 
     try {
-      await api.provisionCluster(
+      await api.createContract(
         "<token>",
         data,
         { project_id: currentProject.id }

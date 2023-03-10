@@ -47,7 +47,7 @@ type TestRepository struct {
 	tag                       repository.TagRepository
 	stack                     repository.StackRepository
 	monitor                   repository.MonitorTestResultRepository
-	capiConfig                repository.CAPIConfigRepository
+	apiContractRevision       repository.APIContractRevisioner
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -217,8 +217,8 @@ func (t *TestRepository) Stack() repository.StackRepository {
 func (t *TestRepository) MonitorTestResult() repository.MonitorTestResultRepository {
 	return t.monitor
 }
-func (t *TestRepository) CAPIConfigRepository() repository.CAPIConfigRepository {
-	return t.capiConfig
+func (t *TestRepository) APIContractRevisioner() repository.APIContractRevisioner {
+	return t.apiContractRevision
 }
 
 // NewRepository returns a Repository which persists users in memory
@@ -267,6 +267,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		tag:                       NewTagRepository(),
 		stack:                     NewStackRepository(),
 		monitor:                   NewMonitorTestResultRepository(canQuery),
-		capiConfig:                NewCAPIConfigRepository(canQuery),
+		apiContractRevision:       NewAPIContractRevisioner(),
 	}
 }

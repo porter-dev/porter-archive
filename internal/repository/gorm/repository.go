@@ -49,7 +49,7 @@ type GormRepository struct {
 	tag                       repository.TagRepository
 	stack                     repository.StackRepository
 	monitor                   repository.MonitorTestResultRepository
-	capiConfig                repository.CAPIConfigRepository
+	apiContractRevisions      repository.APIContractRevisioner
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -219,8 +219,8 @@ func (t *GormRepository) Stack() repository.StackRepository {
 func (t *GormRepository) MonitorTestResult() repository.MonitorTestResultRepository {
 	return t.monitor
 }
-func (t *GormRepository) CAPIConfigRepository() repository.CAPIConfigRepository {
-	return t.capiConfig
+func (t *GormRepository) APIContractRevisioner() repository.APIContractRevisioner {
+	return t.apiContractRevisions
 }
 
 // NewRepository returns a Repository which persists users in memory
@@ -269,6 +269,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		tag:                       NewTagRepository(db),
 		stack:                     NewStackRepository(db),
 		monitor:                   NewMonitorTestResultRepository(db),
-		capiConfig:                NewCAPIConfigRepository(db),
+		apiContractRevisions:      NewAPIContractRevisioner(db),
 	}
 }

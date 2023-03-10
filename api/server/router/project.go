@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-chi/chi"
+	apiContract "github.com/porter-dev/porter/api/server/handlers/api_contract"
 	"github.com/porter-dev/porter/api/server/handlers/api_token"
 	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
@@ -1261,14 +1262,14 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// POST /api/project/{project_id}/provision/cluster -> project.NewProvisionClusterHandler
-	provisionClusterEndpoint := factory.NewAPIEndpoint(
+	// POST /api/project/{project_id}/contract -> apiContract.NewAPIContractUpdateHandler
+	updateAPIContractEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/provision/cluster",
+				RelativePath: relPath + "/contract",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -1277,15 +1278,43 @@ func getProjectRoutes(
 		},
 	)
 
-	provisionClusterHandler := project.NewProvisionClusterHandler(
+	updateAPIContractHandler := apiContract.NewAPIContractUpdateHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: provisionClusterEndpoint,
-		Handler:  provisionClusterHandler,
+		Endpoint: updateAPIContractEndpoint,
+		Handler:  updateAPIContractHandler,
+		Router:   r,
+	})
+
+	// GET /api/project/{project_id}/contracts -> apiContract.NewAPIContractUpdateHandler
+	listAPIContractRevisionsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/contracts",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listAPIContractRevisionHandler := apiContract.NewAPIContractRevisionListHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listAPIContractRevisionsEndpoint,
+		Handler:  listAPIContractRevisionHandler,
 		Router:   r,
 	})
 

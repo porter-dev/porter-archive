@@ -310,29 +310,3 @@ type ListClusterResponse []*Cluster
 type CreateClusterCandidateResponse []*ClusterCandidate
 
 type ListClusterCandidateResponse []*ClusterCandidate
-
-// CAPIClusterRequest is the object that contains all information for creating a CAPI Cluster
-type CAPIClusterRequest struct {
-	ProjectID                  int64           `json:"project_id"`
-	ClusterID                  int64           `json:"cluster_id"`
-	CloudProvider              string          `json:"cloud_provider"`
-	CloudProviderCredentialsID string          `json:"cloud_provider_credentials_id"`
-	ClusterSettings            ClusterSettings `json:"cluster_settings"`
-}
-
-// ClusterSettings contains all EKS cluster settings for a CAPI cluster
-type ClusterSettings struct {
-	ClusterName    string      `json:"cluster_name"`
-	ClusterVersion string      `json:"cluster_version"`
-	CIDRRange      string      `json:"cidr_range"`
-	Region         string      `json:"region"`
-	NodeGroups     []NodeGroup `json:"node_groups"`
-}
-
-// NodeGroup contains all EKS node group settings for a CAPI cluster
-type NodeGroup struct {
-	InstanceType  string `json:"instance_type"`
-	MinInstances  int64  `json:"min_instances"`
-	MaxInstances  int64  `json:"max_instances"`
-	NodeGroupType string `json:"node_group_type"`
-}

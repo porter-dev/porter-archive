@@ -25,7 +25,6 @@ const ClusterList: React.FC<Props> = ({}) => {
       { id: currentProject.id },
     )
       .then(({ data }) => {
-        console.log(data);
         setClusters(data);
         setIsLoading(false);
       })

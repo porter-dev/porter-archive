@@ -16,12 +16,7 @@ import ExpandedEnvGroup from "./ExpandedEnvGroup";
 import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, pushQueryParams, pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { useQuery } from "@tanstack/react-query";
-import api from "shared/api";
-import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -83,30 +78,9 @@ const EnvGroupDashboard = (props: PropsType) => {
     setExpandedEnvGroup(null);
   };
 
-  const renderClusterCreatePlaceholder = () => {
-    return (
-      <ClusterPlaceholder>
-        <Heading isAtTop>
-          <Img src={loading} /> Your cluster is being created
-        </Heading>
-        <Helper>
-          You can view the status of your cluster creation{" "}
-          <Link onClick={() => {
-            pushFiltered(props, "/cluster-dashboard", ["project_id"], {
-              cluster: currentCluster.name,
-            });
-          }}>
-            here
-            <i className="material-icons">arrow_forward</i> 
-          </Link>
-        </Helper>
-      </ClusterPlaceholder>
-    )
-  }
-
   const renderBody = () => {
     if (props.currentCluster.status === "UPDATING_UNAVAILABLE") {
-      return renderClusterCreatePlaceholder();
+      return <ClusterProvisioningPlaceholder />
     }
 
     const goBack = () =>
@@ -187,33 +161,6 @@ const EnvGroupDashboard = (props: PropsType) => {
 };
 
 export default withRouter(withAuth(EnvGroupDashboard));
-
-const Link = styled.a`
-  text-decoration: underline;
-  position: relative;
-  cursor: pointer;
-  > i {
-    color: #aaaabb;
-    font-size: 15px;
-    position: absolute;
-    right: -17px;
-    top: 1px;
-  }
-`;
-
-
-const Img = styled.img`
-  height: 15px;
-  margin-right: 15px;
-`;
-
-const ClusterPlaceholder = styled.div`
-  padding: 25px;
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
-  padding-bottom: 10px;
-`;
 
 const Flex = styled.div`
   display: flex;

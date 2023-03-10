@@ -32,8 +32,7 @@ import Loading from "components/Loading";
 import JobRunTable from "./chart/JobRunTable";
 import TagFilter from "./TagFilter";
 import ExpandedEnvGroupDashboard from "./env-groups/ExpandedEnvGroupDashboard";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 
 // @ts-ignore
 const LazyDatabasesRoutes = loadable(() => import("./databases/routes.tsx"), {
@@ -181,27 +180,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     );
   };
 
-  renderClusterCreatePlaceholder = () => {
-    return (
-      <Placeholder>
-        <Heading isAtTop>
-          <Img src={loading} /> Your cluster is being created
-        </Heading>
-        <Helper>
-          You can view the status of your cluster creation{" "}
-          <Link onClick={() => {
-            pushFiltered(this.props, "/cluster-dashboard", ["project_id"], {
-              cluster: this.context.currentCluster.name,
-            });
-          }}>
-            here
-            <i className="material-icons">arrow_forward</i> 
-          </Link>
-        </Helper>
-      </Placeholder>
-    )
-  }
-
   renderBodyForApps = () => {
     let { currentCluster, currentView } = this.props;
     const isAuthorizedToAdd = this.props.isAuthorized(
@@ -211,7 +189,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     );
 
     if (currentCluster.status === "UPDATING_UNAVAILABLE") {
-      return this.renderClusterCreatePlaceholder();
+      return <ClusterProvisioningPlaceholder />
     }
 
     return (
@@ -257,7 +235,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     );
 
     if (currentCluster.status === "UPDATING_UNAVAILABLE") {
-      return this.renderClusterCreatePlaceholder();
+      return <ClusterProvisioningPlaceholder />
     }
 
     return (
@@ -399,32 +377,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 ClusterDashboard.contextType = Context;
 
 export default withRouter(withAuth(ClusterDashboard));
-
-const Link = styled.a`
-  text-decoration: underline;
-  position: relative;
-  cursor: pointer;
-  > i {
-    color: #aaaabb;
-    font-size: 15px;
-    position: absolute;
-    right: -17px;
-    top: 1px;
-  }
-`;
-
-const Img = styled.img`
-  height: 15px;
-  margin-right: 15px;
-`;
-
-const Placeholder = styled.div`
-  padding: 25px;
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
-  padding-bottom: 10px;
-`;
 
 const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`
   padding: 0 10px;

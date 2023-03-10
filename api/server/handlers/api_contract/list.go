@@ -54,6 +54,6 @@ func (c *APIContractRevisionListHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	c.WriteResult(w, r, revisions)
 }

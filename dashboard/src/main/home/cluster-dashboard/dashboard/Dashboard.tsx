@@ -176,6 +176,38 @@ export const Dashboard: React.FunctionComponent = () => {
     updateClusterWithDetailedData();
   }, []);
 
+  const renderContents = () => {
+    if (context.currentProject.capi_provisioner_enabled) {
+      return (
+        <>
+          {(
+            context.currentCluster.status === "UPDATING" ||
+            context.currentCluster.status === "UPDATING_UNAVAILABLE"
+          ) && (
+            <ProvisionerStatus />
+          )}
+          <TabSelector
+            options={currentTabOptions}
+            currentTab={currentTab}
+            setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+          />
+          {renderTab()}
+        </>
+      );
+    } else {
+      return (
+        <>
+          <TabSelector
+            options={currentTabOptions}
+            currentTab={currentTab}
+            setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+          />
+          {renderTab()}
+        </>
+      );
+    }
+  };
+
   return (
     <>
       <DashboardHeader
@@ -203,22 +235,7 @@ export const Dashboard: React.FunctionComponent = () => {
       </InfoSection>
       */}
 
-      {
-        context.currentProject.capi_provisioner_enabled &&
-        (
-          context.currentCluster.status === "UPDATING" ||
-          context.currentCluster.status === "UPDATING_UNAVAILABLE"
-        ) && (
-          <ProvisionerStatus />
-        )
-      }
-
-      <TabSelector
-        options={currentTabOptions}
-        currentTab={currentTab}
-        setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
-      />
-      {renderTab()}
+      {renderContents()}
     </>
   );
 };

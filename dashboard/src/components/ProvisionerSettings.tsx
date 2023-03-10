@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
 import { RouteComponentProps, withRouter } from "react-router";
 
+import { OFState } from "main/home/onboarding/state";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
@@ -129,8 +130,9 @@ const ProvisionerSettings: React.FC<Props> = props => {
           .then(({ data }) => {
             data.forEach((cluster: ClusterType) => {
               if (cluster.id === res.data.cluster_id) {
-                setHasFinishedOnboarding(true);
+                // setHasFinishedOnboarding(true);
                 setCurrentCluster(cluster);
+                OFState.actions.goTo("clean_up");
                 pushFiltered(props, "/cluster-dashboard", ["project_id"], {
                   cluster: cluster.name,
                 });

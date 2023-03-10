@@ -325,7 +325,7 @@ class RevisionSection extends Component<PropsType, StateType> {
           <RevisionPreview>
             <i className="material-icons">arrow_drop_down</i>
             {isCurrent
-              ? `Current revision`
+              ? `Current version`
               : `Previewing revision (not deployed)`}{" "}
             - <Revision>No. {this.props.chart.version}</Revision>
           </RevisionPreview>

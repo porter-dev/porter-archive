@@ -1,27 +1,26 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
+import { useLocation } from "react-router";
 import settings from "assets/settings-centered.svg";
 
-import DashboardHeader from "../DashboardHeader";
+import api from "shared/api";
+import { DetailedIngressError } from "shared/types";
+import { getQueryParam } from "shared/routing";
+import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
+
+import ClusterRevisionSelector from "./ClusterRevisionSelector";
+import DashboardHeader from "../DashboardHeader";
 import TabSelector from "components/TabSelector";
 import ProvisionerSettings from "components/ProvisionerSettings";
 import ProvisionerStatus from "./ProvisionerStatus";
-import api from "shared/api";
-
 import NodeList from "./NodeList";
-
 import { NamespaceList } from "./NamespaceList";
 import ClusterSettings from "./ClusterSettings";
-import useAuth from "shared/auth/useAuth";
 import Metrics from "./Metrics";
-import { useLocation } from "react-router";
-import { getQueryParam } from "shared/routing";
 
 import CopyToClipboard from "components/CopyToClipboard";
 import Loading from "components/Loading";
-
-import { DetailedIngressError } from "shared/types";
 
 type TabEnum = "nodes" | "settings" | "namespaces" | "metrics" | "incidents" | "configuration";
 
@@ -186,6 +185,7 @@ export const Dashboard: React.FunctionComponent = () => {
           ) && (
             <ProvisionerStatus />
           )}
+          <ClusterRevisionSelector />
           <TabSelector
             options={currentTabOptions}
             currentTab={currentTab}

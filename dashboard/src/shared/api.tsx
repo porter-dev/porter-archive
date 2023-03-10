@@ -897,7 +897,7 @@ const createContract = baseApi<
 });
 
 const getContracts = baseApi<
-  {},
+  { cluster_id?: number },
   { project_id: number }
 >("GET", ({ project_id }) => {
   return `/api/projects/${project_id}/contracts`;
@@ -921,9 +921,7 @@ const provisionInfra = baseApi<
 });
 
 const updateInfra = baseApi<
-  {
-    values?: any;
-  },
+  { values?: any },
   {
     project_id: number;
     infra_id: number;
@@ -950,9 +948,7 @@ const retryCreateInfra = baseApi<
 });
 
 const retryDeleteInfra = baseApi<
-  {
-    values?: any;
-  },
+  { values?: any },
   {
     project_id: number;
     infra_id: number;

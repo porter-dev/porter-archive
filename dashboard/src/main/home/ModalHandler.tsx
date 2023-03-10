@@ -108,9 +108,9 @@ const ModalHandler: React.FC<{
         modal === "UpdateClusterModal" && (
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
-            width="565px"
+            width="600px"
             height="275px"
-            title="Cluster Settings"
+            title="Delete cluster"
           >
             <UpdateClusterModal
               setRefreshClusters={(x: boolean) => setRefreshClusters(x)}

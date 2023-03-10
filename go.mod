@@ -24,7 +24,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.0
 	github.com/go-test/deep v1.0.7
 	github.com/golang-jwt/jwt/v4 v4.4.1 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.2
 	github.com/google/go-github/v39 v39.2.0
 	github.com/google/go-github/v41 v41.0.0
 	github.com/gorilla/schema v1.2.0
@@ -52,7 +52,7 @@ require (
 	google.golang.org/api v0.103.0
 	google.golang.org/genproto v0.0.0-20221202195650-67e5cbc046fd
 	google.golang.org/grpc v1.50.1
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.29.0
 	gorm.io/gorm v1.24.2
 	k8s.io/api v0.26.0
 	k8s.io/apimachinery v0.26.0
@@ -74,7 +74,7 @@ require (
 	github.com/glebarez/sqlite v1.6.0
 	github.com/nats-io/nats.go v1.24.0
 	github.com/open-policy-agent/opa v0.44.0
-	github.com/porter-dev/api-contracts v0.0.23
+	github.com/porter-dev/api-contracts v0.0.38
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d
 	github.com/xanzy/go-gitlab v0.68.0

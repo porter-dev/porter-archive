@@ -85,9 +85,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
     if (!currentCluster?.infra_id || !currentCluster.service) {
       return (
         <Warning highlight={true}>
-          ⚠️ Since this cluster was not provisioned by Porter, deleting the
-          cluster will only detach this cluster from your project. To delete the
-          cluster itself, you must do so manually.
+          ⚠️ Deleting the cluster will only detach this cluster from your project. To delete resources you must do so manually.
         </Warning>
       );
     }
@@ -115,7 +113,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
             value={this.state.clusterName}
             setValue={(x: string) => this.setState({ clusterName: x })}
             placeholder="ex: perspective-vortex"
-            width="470px"
+            width="490px"
           />
         </InputWrapper>
 
@@ -125,11 +123,11 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
           href="https://docs.getporter.dev/docs/deleting-dangling-resources"
           target="_blank"
         >
-          <i className="material-icons">help_outline</i> Help
+          <i className="material-icons">help_outline</i> How to delete resources
         </Help>
 
         <SaveButton
-          text="Delete Cluster"
+          text="Delete cluster"
           color="#b91133"
           onClick={() => this.setState({ showDeleteOverlay: true })}
           status={this.state.status}
@@ -156,6 +154,7 @@ const Help = styled.a`
   bottom: 35px;
   display: flex;
   align-items: center;
+  z-index: 999;
   justify-content: center;
   color: #ffffff55;
   font-size: 13px;
@@ -164,8 +163,8 @@ const Help = styled.a`
   }
 
   > i {
-    margin-right: 9px;
-    font-size: 16px;
+    margin-right: 5px;
+    font-size: 14px;
   }
 `;
 
@@ -175,7 +174,6 @@ const Warning = styled.div`
   border-radius: 3px;
   width: calc(100%);
   margin-top: 10px;
-  margin-left: 2px;
   line-height: 1.4em;
   align-items: center;
   color: white;
@@ -188,15 +186,15 @@ const Warning = styled.div`
 `;
 
 const DashboardIcon = styled.div`
-  width: 25px;
-  min-width: 25px;
-  height: 25px;
+  width: 35px;
+  min-width: 35px;
+  height: 35px;
   border-radius: 3px;
   overflow: hidden;
   position: relative;
   margin-right: 10px;
   font-weight: 400;
-  margin-top: 14px;
+  margin-top: 8px;
   display: flex;
   align-items: center;
   justify-content: center;

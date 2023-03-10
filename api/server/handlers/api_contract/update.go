@@ -2,11 +2,12 @@ package api_contract
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/nats-io/nats.go"
+	helpers "github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -14,7 +15,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	"google.golang.org/protobuf/proto"
 )
 
 type APIContractUpdateHandler struct {
@@ -32,16 +32,25 @@ func NewAPIContractUpdateHandler(
 }
 
 // ServeHTTP parses the Porter API contract for validity, and forwards the requests for handling on to another service
-// For now, this handling cluster creation only, by insertin a row into the cluster table in order to create an ID for this cluster, as well as stores the raw request JSON for updating later
+// For now, this handling cluster creation only, by inserting a row into the cluster table in order to create an ID for this cluster, as well as stores the raw request JSON for updating later
 func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var apiContract porterv1.Contract
 	ctx := r.Context()
 
-	if ok := c.DecodeAndValidate(w, r, &apiContract); !ok {
+	var apiContract porterv1.Contract
+
+	err := helpers.UnmarshalContractObject(r.Body, &apiContract)
+	if err != nil {
+		e := fmt.Errorf("error parsing api contract: %w", err)
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
 		return
 	}
 
-	// handle cluster object for now
+	if apiContract.Cluster == nil {
+		e := errors.New("missing cluster object")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+		return
+	}
+
 	cl := apiContract.Cluster
 
 	if cl.ClusterId == 0 {
@@ -62,8 +71,7 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		apiContract.Cluster.ClusterId = int32(dbCluster.ID)
 	}
 
-	var jpbm jsonpb.Marshaler
-	by, err := jpbm.MarshalToString(&apiContract)
+	by, err := helpers.MarshalContractObject(ctx, &apiContract)
 	if err != nil {
 		e := fmt.Errorf("error marshalling api contract: %w", err)
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
@@ -86,13 +94,18 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	// This gates the cluster actually being provisioned by CAPI
 	// This can be removed whenever we are able to run NATS and CCP locally, easier
-	kubeBy, err := proto.Marshal(&apiContract)
-	if err != nil {
-		e := fmt.Errorf("error marshalling proto: %w", err)
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
-		return
-	}
 	if !c.Config().DisableCAPIProvisioner {
+		resp := porterv1.ContractRevision{
+			ProjectId:  cl.ProjectId,
+			ClusterId:  cl.ClusterId,
+			RevisionId: contractRevision.ID.String(),
+		}
+		kubeBy, err := helpers.MarshalContractObject(ctx, &resp)
+		if err != nil {
+			e := fmt.Errorf("error marshalling api contract: %w", err)
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			return
+		}
 		subject := "porter.system.infrastructure.update"
 		_, err = c.Config().NATS.JetStream.Publish(subject, kubeBy, nats.Context(ctx))
 		if err != nil {

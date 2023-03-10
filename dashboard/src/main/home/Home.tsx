@@ -61,6 +61,7 @@ const Home: React.FC<Props> = props => {
     currentModal,
     currentOverlay,
     hasFinishedOnboarding,
+    shouldRefreshClusters,
     setProjects,
     setCurrentProject,
     setCapabilities,
@@ -70,6 +71,7 @@ const Home: React.FC<Props> = props => {
     setCurrentModal,
     setHasBillingEnabled,
     setUsage,
+    setShouldRefreshClusters,
   } = useContext(Context);
 
   const [showWelcome, setShowWelcome] = useState(false);
@@ -214,6 +216,14 @@ const Home: React.FC<Props> = props => {
       setCanCreateProject(false);
     }
   }, []);
+
+  // Hacky legacy shim for remote cluster refresh until Context is properly split
+  useEffect(() => {
+    if (shouldRefreshClusters) {
+      setForceRefreshClusters(true);
+      setShouldRefreshClusters(false);
+    }
+  }, [shouldRefreshClusters]);
 
   const checkIfProjectHasBilling = async (projectId: number) => {
     if (!projectId) {

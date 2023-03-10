@@ -99,7 +99,9 @@ class Templates extends Component<PropsType, StateType> {
           }
         });
 
-        if (numUnavailable === data.length) {
+        if (data.length === 0) {
+          this.setState({ readyClusterStatus: "onboarding" });
+        } else if (numUnavailable === data.length) {
           this.setState({ readyClusterStatus: "none-ready" });
         } else {
           this.setState({ readyClusterStatus: "has-ready" });

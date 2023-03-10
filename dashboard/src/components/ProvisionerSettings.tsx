@@ -1,15 +1,17 @@
 import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
+import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
-
 import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
 
 import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
 import InputRow from "./form-components/InputRow";
 import SaveButton from "./SaveButton";
 import { Contract, EnumKubernetesKind, EnumCloudProvider, NodeGroupType, EKSNodeGroup, EKS, Cluster } from "@porter-dev/api-contracts";
+import { ClusterType } from "shared/types";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -40,16 +42,19 @@ const machineTypeOptions = [
   { value: "t3.2xlarge", label: "t3.2xlarge" },
 ];
 
-type Props = {
+type Props = RouteComponentProps & {
   credentialId: string;
   clusterId?: number;
 };
 
-const ProvisionerForm: React.FC<Props> = ({
-  credentialId,
-  clusterId,
-}) => {
-  const { currentProject, currentCluster } = useContext(Context);
+const ProvisionerSettings: React.FC<Props> = props => {
+  const {
+    currentProject,
+    currentCluster,
+    setCurrentCluster,
+    setShouldRefreshClusters,
+    setHasFinishedOnboarding,
+  } = useContext(Context);
   const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
@@ -66,7 +71,7 @@ const ProvisionerForm: React.FC<Props> = ({
         projectId: currentProject.id,
         kind: EnumKubernetesKind.EKS,
         cloudProvider: EnumCloudProvider.AWS,
-        cloudProviderCredentialsId: String(credentialId),
+        cloudProviderCredentialsId: String(props.credentialId),
         kindValues: {
           case: "eksKind",
           value: new EKS({
@@ -102,8 +107,8 @@ const ProvisionerForm: React.FC<Props> = ({
       })
     });
 
-    if (clusterId) {
-      data["cluster"]["clusterId"] = clusterId;
+    if (props.clusterId) {
+      data["cluster"]["clusterId"] = props.clusterId;
     }
 
     try {
@@ -112,7 +117,30 @@ const ProvisionerForm: React.FC<Props> = ({
         data,
         { project_id: currentProject.id }
       );
-      console.log(res.data);
+
+      // Only refresh and set clusters on initial create
+      if (!props.clusterId) {
+        setShouldRefreshClusters(true);
+        api.getClusters(
+          "<token>",
+          {},
+          { id: currentProject.id },
+        )
+          .then(({ data }) => {
+            data.forEach((cluster: ClusterType) => {
+              if (cluster.id === res.data.cluster_id) {
+                setHasFinishedOnboarding(true);
+                setCurrentCluster(cluster);
+                pushFiltered(props, "/cluster-dashboard", ["project_id"], {
+                  cluster: cluster.name,
+                });
+              }
+            });
+          })
+          .catch((err) => {
+            console.error(err);
+          });
+      }
     } catch (err) {
       console.log(err);
     }
@@ -120,7 +148,7 @@ const ProvisionerForm: React.FC<Props> = ({
 
   useEffect(() => {
     setIsReadOnly(
-      clusterId && (
+      props.clusterId && (
         currentCluster.status === "UPDATING" ||
         currentCluster.status === "UPDATING_UNAVAILABLE"
       )
@@ -217,7 +245,7 @@ const ProvisionerForm: React.FC<Props> = ({
   );
 };
 
-export default ProvisionerForm;
+export default withRouter(ProvisionerSettings);
 
 const ExpandHeader = styled.div<{ isExpanded: boolean }>`
   display: flex;

@@ -373,6 +373,8 @@ export interface ContextProps {
   setCanCreateProject: (canCreateProject: boolean) => void;
   enableGitlab: boolean;
   setEnableGitlab: (enableGitlab: boolean) => void;
+  shouldRefreshClusters: boolean;
+  setShouldRefreshClusters: (shouldRefreshClusters: boolean) => void;
 }
 
 export enum JobStatusType {

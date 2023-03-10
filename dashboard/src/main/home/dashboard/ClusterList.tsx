@@ -8,6 +8,8 @@ import loading from "assets/loading.gif";
 import Loading from "components/Loading";
 
 import { Context } from "shared/Context";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
 
 type Props = {};
 
@@ -101,41 +103,53 @@ const ClusterList: React.FC<Props> = ({}) => {
         isLoading ? (
           <LoadingWrapper><Loading /></LoadingWrapper>
         ) : (
-          <StyledClusterList>
-            {clusters.map((cluster: any) => {
-              return (
-                <ClusterRow
-                  key={cluster.id}
-                  onClick={() => {
-                    setCurrentCluster(cluster);
-                    pushFiltered({ location, history }, "/applications", ["project_id"], {
-                      cluster: cluster.name,
-                    });
-                  }}
-                >
-                  {renderIcon()}
-                  {cluster.name}
-                  {
-                    (
-                      cluster.status === "UPDATING" || cluster.status === "UPDATING_UNAVAILABLE"
-                    ) && (
-                      <Status
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCurrentCluster(cluster);
-                          pushFiltered({ location, history }, "/cluster-dashboard", ["project_id"], {
-                            cluster: cluster.name,
-                          });
-                        }}
-                      >
-                        <Img src={loading} /> Updating
-                      </Status>
-                    )
-                  }
-                </ClusterRow>
+          <>
+            {
+              clusters.length === 0 && (
+                <Placeholder>
+                  <Heading isAtTop>No clusters found</Heading>
+                  <Helper>
+                    Create a cluster to deploy new applications.
+                  </Helper>
+                </Placeholder>
               )
-            })}
-          </StyledClusterList>
+            }
+            <StyledClusterList>
+              {clusters.map((cluster: any) => {
+                return (
+                  <ClusterRow
+                    key={cluster.id}
+                    onClick={() => {
+                      setCurrentCluster(cluster);
+                      pushFiltered({ location, history }, "/applications", ["project_id"], {
+                        cluster: cluster.name,
+                      });
+                    }}
+                  >
+                    {renderIcon()}
+                    {cluster.name}
+                    {
+                      (
+                        cluster.status === "UPDATING" || cluster.status === "UPDATING_UNAVAILABLE"
+                      ) && (
+                        <Status
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentCluster(cluster);
+                            pushFiltered({ location, history }, "/cluster-dashboard", ["project_id"], {
+                              cluster: cluster.name,
+                            });
+                          }}
+                        >
+                          <Img src={loading} /> Updating
+                        </Status>
+                      )
+                    }
+                  </ClusterRow>
+                )
+              })}
+            </StyledClusterList>
+          </>
         )
       }
     </>
@@ -143,6 +157,14 @@ const ClusterList: React.FC<Props> = ({}) => {
 };
 
 export default ClusterList;
+
+const Placeholder = styled.div`
+  padding: 25px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  padding-bottom: 10px;
+`;
 
 const Img = styled.img`
   height: 15px;

@@ -26,20 +26,15 @@ func NewAPIContractRevisionListHandler(
 	}
 }
 
-// APIContractListRequest contains all parameters required for filtering APIContractRevisions
-type APIContractRevisionsListRequest struct {
-	ProjectID uint `json:"project_id"`
-	ClusterID uint `json:"cluster_id"`
-}
-
 // ServeHTTP returns a list of Porter API contract revisions for a given project.
 // If clusterID is also given, it will list by project_id, cluster_id
 func (c *APIContractRevisionListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	cluster, _ := r.Context().Value(types.ProjectScope).(*models.Cluster)
 
 	ctx := r.Context()
 
-	revisions, err := c.Config().Repo.APIContractRevisioner().List(ctx, proj.ID, 0)
+	revisions, err := c.Config().Repo.APIContractRevisioner().List(ctx, proj.ID, cluster.ID)
 	if err != nil {
 		e := fmt.Errorf("error creating new capi config: %w", err)
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))

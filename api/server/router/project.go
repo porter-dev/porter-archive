@@ -1262,7 +1262,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// POST /api/project/{project_id}/contract -> apiContract.NewAPIContractUpdateHandler
+	// POST /api/projects/{project_id}/contract -> apiContract.NewAPIContractUpdateHandler
 	updateAPIContractEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -1290,7 +1290,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/project/{project_id}/contracts -> apiContract.NewAPIContractUpdateHandler
+	// GET /api/projects/{project_id}/contracts -> apiContract.NewAPIContractUpdateHandler
 	listAPIContractRevisionsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -1311,10 +1311,38 @@ func getProjectRoutes(
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
-
 	routes = append(routes, &router.Route{
 		Endpoint: listAPIContractRevisionsEndpoint,
 		Handler:  listAPIContractRevisionHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/contracts/{revision_id} -> apiContract.NewAPIContractUpdateHandler
+	deleteAPIContractRevisionsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/contracts/{%s}", relPath, types.URLParamAPIContractRevisionID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.APIContractRevisionScope,
+			},
+		},
+	)
+
+	deleteAPIContractRevisionHandler := apiContract.NewAPIContractRevisionDeleteHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteAPIContractRevisionsEndpoint,
+		Handler:  deleteAPIContractRevisionHandler,
 		Router:   r,
 	})
 

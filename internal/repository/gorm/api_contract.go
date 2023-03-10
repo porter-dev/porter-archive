@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/models"
@@ -49,4 +50,42 @@ func (cr APIContractRepository) List(ctx context.Context, projectID uint, cluste
 	}
 
 	return confs, nil
+}
+
+// Delete deleted a record in the api_contract_revisions table
+func (cr APIContractRepository) Delete(ctx context.Context, projectID uint, clusterID uint, revisionID uuid.UUID) error {
+
+	conf := models.APIContractRevision{
+		ID:        revisionID,
+		ProjectID: int(projectID),
+	}
+
+	if clusterID != 0 {
+		conf.ClusterID = int(clusterID)
+	}
+
+	tx := cr.db.Delete(&conf)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return nil
+}
+
+// Get returns a record in the api_contract_revisions table
+func (cr APIContractRepository) Get(ctx context.Context, revisionID uuid.UUID) (models.APIContractRevision, error) {
+
+	if revisionID == uuid.Nil {
+		return models.APIContractRevision{}, errors.New("invalid contract revision id supplied")
+	}
+
+	rev, ok := cr.db.Get(revisionID.String())
+	if !ok {
+		return models.APIContractRevision{}, errors.New("no contract revision found for that id")
+	}
+
+	if revision, ok := rev.(models.APIContractRevision); ok {
+		return revision, nil
+	}
+
+	return models.APIContractRevision{}, errors.New("unable to convert response to contract revision")
 }

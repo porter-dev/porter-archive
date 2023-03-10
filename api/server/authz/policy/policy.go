@@ -1,6 +1,8 @@
 package policy
 
 import (
+	"fmt"
+
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -26,17 +28,21 @@ func HasScopeAccess(
 			continue
 		}
 
+		fmt.Println("STEFAN1", matchDocs)
 		for matchScope, matchDoc := range matchDocs {
 			// for the matching scope, make sure it matches the allowed resources if the
 			// resource list is explicitly set
 			if len(matchDoc.Resources) > 0 && reqScopes[matchScope].Verb != types.APIVerbList {
 				if !isResourceAllowed(matchDoc, reqScopes[matchScope].Resource) {
+					fmt.Println("STEFANR", matchScope, *matchDoc, reqScopes[matchScope].Resource)
 					isValid = false
 				}
 			}
 
 			// for the matching scope, make sure it matches the allowed verbs
 			if !isVerbAllowed(matchDoc, reqScopes[matchScope].Verb) {
+				fmt.Println("STEFANP", *matchDoc, matchScope, reqScopes[matchScope].Verb)
+
 				isValid = false
 			}
 		}

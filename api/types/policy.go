@@ -5,21 +5,22 @@ import "time"
 type PermissionScope string
 
 const (
-	UserScope               PermissionScope = "user"
-	ProjectScope            PermissionScope = "project"
-	ClusterScope            PermissionScope = "cluster"
-	RegistryScope           PermissionScope = "registry"
-	InviteScope             PermissionScope = "invite"
-	HelmRepoScope           PermissionScope = "helm_repo"
-	InfraScope              PermissionScope = "infra"
-	OperationScope          PermissionScope = "operation"
-	GitInstallationScope    PermissionScope = "git_installation"
-	NamespaceScope          PermissionScope = "namespace"
-	SettingsScope           PermissionScope = "settings"
-	ReleaseScope            PermissionScope = "release"
-	StackScope              PermissionScope = "stack"
-	GitlabIntegrationScope  PermissionScope = "gitlab_integration"
-	PreviewEnvironmentScope PermissionScope = "preview_environment"
+	UserScope                PermissionScope = "user"
+	ProjectScope             PermissionScope = "project"
+	ClusterScope             PermissionScope = "cluster"
+	RegistryScope            PermissionScope = "registry"
+	InviteScope              PermissionScope = "invite"
+	HelmRepoScope            PermissionScope = "helm_repo"
+	InfraScope               PermissionScope = "infra"
+	OperationScope           PermissionScope = "operation"
+	GitInstallationScope     PermissionScope = "git_installation"
+	NamespaceScope           PermissionScope = "namespace"
+	SettingsScope            PermissionScope = "settings"
+	ReleaseScope             PermissionScope = "release"
+	StackScope               PermissionScope = "stack"
+	GitlabIntegrationScope   PermissionScope = "gitlab_integration"
+	PreviewEnvironmentScope  PermissionScope = "preview_environment"
+	APIContractRevisionScope PermissionScope = "contract_revision"
 )
 
 type NameOrUInt struct {
@@ -56,7 +57,8 @@ var ScopeHeirarchy = ScopeTree{
 		InfraScope: {
 			OperationScope: {},
 		},
-		SettingsScope: {},
+		SettingsScope:            {},
+		APIContractRevisionScope: {},
 	},
 }
 
@@ -89,6 +91,10 @@ var AdminPolicy = []*PolicyDocument{
 			},
 			SettingsScope: {
 				Scope: SettingsScope,
+				Verbs: ReadWriteVerbGroup(),
+			},
+			APIContractRevisionScope: {
+				Scope: APIContractRevisionScope,
 				Verbs: ReadWriteVerbGroup(),
 			},
 		},
@@ -124,6 +130,10 @@ var DeveloperPolicy = []*PolicyDocument{
 				Scope: SettingsScope,
 				Verbs: ReadVerbGroup(),
 			},
+			APIContractRevisionScope: {
+				Scope: APIContractRevisionScope,
+				Verbs: ReadWriteVerbGroup(),
+			},
 		},
 	},
 }
@@ -156,6 +166,10 @@ var ViewerPolicy = []*PolicyDocument{
 			SettingsScope: {
 				Scope: SettingsScope,
 				Verbs: []APIVerb{},
+			},
+			APIContractRevisionScope: {
+				Scope: APIContractRevisionScope,
+				Verbs: ReadVerbGroup(),
 			},
 		},
 	},

@@ -38,7 +38,7 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	var apiContract porterv1.Contract
 
-	err := helpers.UnmarshalContractObject(r.Body, &apiContract)
+	err := helpers.UnmarshalContractObjectFromReader(r.Body, &apiContract)
 	if err != nil {
 		e := fmt.Errorf("error parsing api contract: %w", err)
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
@@ -53,6 +53,18 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	cl := apiContract.Cluster
 
+	if cl.CloudProviderCredentialsId == "" {
+		e := errors.New("missing cloud_provider_credential_identifier")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+		return
+	}
+
+	if cl.GetEksKind() == nil {
+		e := errors.New("missing eks_kind_values")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+		return
+	}
+
 	if cl.ClusterId == 0 {
 		dbClusterInput := models.Cluster{
 			ProjectID:                         uint(cl.ProjectId),
@@ -61,6 +73,7 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			CloudProvider:                     "AWS",
 			CloudProviderCredentialIdentifier: cl.CloudProviderCredentialsId,
 			Name:                              cl.GetEksKind().ClusterName,
+			VanityName:                        cl.GetEksKind().ClusterName,
 		}
 		dbCluster, err := c.Config().Repo.Cluster().CreateCluster(&dbClusterInput)
 		if err != nil {

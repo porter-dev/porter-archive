@@ -1274,6 +1274,7 @@ func getProjectRoutes(
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
+				types.APIContractRevisionScope,
 			},
 		},
 	)
@@ -1302,6 +1303,7 @@ func getProjectRoutes(
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
+				types.APIContractRevisionScope,
 			},
 		},
 	)

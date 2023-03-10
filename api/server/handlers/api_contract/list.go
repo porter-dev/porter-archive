@@ -49,7 +49,7 @@ func (c *APIContractRevisionListHandler) ServeHTTP(w http.ResponseWriter, r *htt
 
 	revisions, err := c.Config().Repo.APIContractRevisioner().List(ctx, proj.ID, uint(clusterID))
 	if err != nil {
-		e := fmt.Errorf("error creating new api contract revision: %w", err)
+		e := fmt.Errorf("error listing api contract revision: %w", err)
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
 		return
 	}

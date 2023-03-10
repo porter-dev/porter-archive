@@ -11,7 +11,7 @@ import (
 type APIContractRevisioner interface {
 	Insert(ctx context.Context, conf models.APIContractRevision) (models.APIContractRevision, error)
 	// List returns a slice of APIContractRevision, sorted by created_at descending
-	List(ctx context.Context, projectID uint, clusterID uint) ([]models.APIContractRevision, error)
+	List(ctx context.Context, projectID uint, clusterID uint) ([]*models.APIContractRevision, error)
 	Get(ctx context.Context, revisionID uuid.UUID) (models.APIContractRevision, error)
 	Delete(ctx context.Context, projectID uint, clusterID uint, revisionID uuid.UUID) error
 }

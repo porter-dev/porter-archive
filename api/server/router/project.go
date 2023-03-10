@@ -1293,8 +1293,8 @@ func getProjectRoutes(
 	// GET /api/projects/{project_id}/contracts -> apiContract.NewAPIContractUpdateHandler
 	listAPIContractRevisionsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
 				RelativePath: relPath + "/contracts",
@@ -1321,7 +1321,7 @@ func getProjectRoutes(
 	deleteAPIContractRevisionsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbDelete,
-			Method: types.HTTPVerbPost,
+			Method: types.HTTPVerbDelete,
 			Path: &types.Path{
 				Parent:       basePath,
 				RelativePath: fmt.Sprintf("%s/contracts/{%s}", relPath, types.URLParamAPIContractRevisionID),

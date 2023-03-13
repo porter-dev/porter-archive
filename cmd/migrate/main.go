@@ -49,11 +49,11 @@ func main() {
 		logger.Fatal().Err(err).Msg("failed to drop clusters token cache constraint")
 		return
 	}
-	if err := db.Exec("alter table aws_assume_role_chains ADD CONSTRAINT fk_projects FOREIGN KEY(project_id) REFERENCES projects(id);").Error; err != nil {
+	if err := db.Exec("alter table aws_assume_role_chains ADD CONSTRAINT IF NOT EXISTS fk_projects FOREIGN KEY(project_id) REFERENCES projects(id);").Error; err != nil {
 		logger.Fatal().Err(err).Msg("failed to create fk constraint for assume role chains")
 		return
 	}
-	if err := db.Exec("alter table aws_assume_role_chains ADD unique (project_id, source_arn, target_arn);").Error; err != nil {
+	if err := db.Exec("alter table aws_assume_role_chains ADD IF NOT EXISTS unique (project_id, source_arn, target_arn);").Error; err != nil {
 		logger.Fatal().Err(err).Msg("failed to create unique constraint for assume role chains")
 		return
 	}

@@ -37,7 +37,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
       return Date.parse(a.CreatedAt) > Date.parse(b.CreatedAt) ? -1 : 1;
     });
     let activeCandidate;
-    if (data[0].condition === "UPDATING" || data[0].condition === "UPDATING_UNAVAILABLE") {
+    if (data[0].condition === "") {
       activeCandidate = data[0];
       setPendingContract(activeCandidate);
     };

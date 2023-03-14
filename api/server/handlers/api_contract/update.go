@@ -53,6 +53,7 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 		w.WriteHeader(http.StatusCreated)
 		c.WriteResult(w, r, rev)
+		return
 	}
 
 	updateRequest := connect.NewRequest(&porterv1.UpdateContractRequest{

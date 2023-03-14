@@ -118,9 +118,6 @@ const ProvisionerSettings: React.FC<Props> = props => {
         data,
         { project_id: currentProject.id }
       );
-      console.log("tsj", data.toJsonString());
-      console.log("js", JSON.stringify(data));
-
 
       // Only refresh and set clusters on initial create
       if (!props.clusterId) {

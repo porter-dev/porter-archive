@@ -245,7 +245,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		}
 		pnats, err := nats.NewConnection(ctx, nats.Config{URL: sc.NATSUrl})
 		if err != nil {
-			return res, fmt.Errorf("error setting up connection to NATS cluster")
+			return res, fmt.Errorf("error setting up connection to NATS cluster: %w", err)
 		}
 		res.NATS = pnats
 	}

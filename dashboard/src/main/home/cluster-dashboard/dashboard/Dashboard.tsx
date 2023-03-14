@@ -34,6 +34,8 @@ export const Dashboard: React.FunctionComponent = () => {
   const [currentTabOptions, setCurrentTabOptions] = useState(tabOptions);
   const [isAuthorized] = useAuth();
   const location = useLocation();
+  const [selectedClusterVersion, setSelectedClusterVersion] = useState(null);
+  const [showProvisionerStatus, setShowProvisionerStatus] = useState(false);
   const [ingressIp, setIngressIp] = useState(null);
   const [ingressError, setIngressError] = useState(null);
 
@@ -51,6 +53,7 @@ export const Dashboard: React.FunctionComponent = () => {
           <>
             <Br />
             <ProvisionerSettings
+              selectedClusterVersion={selectedClusterVersion}
               clusterId={context.currentCluster.id}
               credentialId={context.currentCluster.cloud_provider_credential_identifier}
             />
@@ -179,13 +182,19 @@ export const Dashboard: React.FunctionComponent = () => {
     if (context.currentProject.capi_provisioner_enabled) {
       return (
         <>
+          <ClusterRevisionSelector
+            selectedClusterVersion={selectedClusterVersion}
+            setSelectedClusterVersion={setSelectedClusterVersion}
+            setShowProvisionerStatus={setShowProvisionerStatus}
+          />
           {(
-            context.currentCluster.status === "UPDATING" ||
-            context.currentCluster.status === "UPDATING_UNAVAILABLE"
+            showProvisionerStatus && (
+              context.currentCluster.status === "UPDATING" ||
+              context.currentCluster.status === "UPDATING_UNAVAILABLE"
+            )
           ) && (
             <ProvisionerStatus />
           )}
-          <ClusterRevisionSelector />
           <TabSelector
             options={currentTabOptions}
             currentTab={currentTab}

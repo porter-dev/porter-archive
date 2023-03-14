@@ -44,6 +44,7 @@ const machineTypeOptions = [
 ];
 
 type Props = RouteComponentProps & {
+  selectedClusterVersion?: Contract;
   credentialId: string;
   clusterId?: number;
 };
@@ -156,6 +157,23 @@ const ProvisionerSettings: React.FC<Props> = props => {
       )
     );
   }, []);
+
+  useEffect(() => {
+    const contract = props.selectedClusterVersion as any;
+    if (contract?.cluster) {
+      contract.cluster.eksKind.nodeGroups.map((nodeGroup: any) => {
+        if (nodeGroup.nodeGroupType === "NODE_GROUP_TYPE_APPLICATION") {
+          setMachineType(nodeGroup.instanceType);
+          setMinInstances(nodeGroup.minInstances);
+          setMaxInstances(nodeGroup.maxInstances);
+        }
+      });
+      setCreateStatus("");
+      setClusterName(contract.cluster.eksKind.clusterName);
+      setAwsRegion(contract.cluster.eksKind.region);
+      setCidrRange(contract.cluster.eksKind.cidrRange);
+    }
+  }, [props.selectedClusterVersion]);
 
   return (
     <>

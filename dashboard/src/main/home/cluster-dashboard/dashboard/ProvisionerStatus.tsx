@@ -21,9 +21,6 @@ const ProvisionerStatus: React.FC<Props> = ({}) => {
           <>
             <Icon src="https://img.stackshare.io/service/7991/amazon-eks.png" />
             Elastic Kubernetes Service
-            <Status>
-              <Img src={loading} /> Updating
-            </Status>
           </>
         )}
         ExpandedSection={(

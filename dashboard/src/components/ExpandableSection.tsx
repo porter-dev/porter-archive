@@ -5,12 +5,14 @@ type Props = {
   isInitiallyExpanded?: boolean;
   Header: any;
   ExpandedSection: any;
+  color?: any;
 };
 
 const ExpandableSection: React.FC<Props> = ({
   isInitiallyExpanded,
   Header,
   ExpandedSection,
+  color,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   useEffect(() => {
@@ -22,6 +24,7 @@ const ExpandableSection: React.FC<Props> = ({
       <HeaderRow 
         isExpanded={isExpanded}
         onClick={() => setIsExpanded(!isExpanded)}
+        color={color}
       >
         <i className="material-icons">arrow_drop_down</i> 
         {Header}
@@ -37,7 +40,10 @@ const ExpandableSection: React.FC<Props> = ({
 
 export default ExpandableSection;
 
-const HeaderRow = styled.div<{ isExpanded: boolean }>`
+const HeaderRow = styled.div<{ 
+  isExpanded: boolean;
+  color?: string;
+}>`
   display: flex;
   align-items: center;
   height: 40px;
@@ -51,7 +57,7 @@ const HeaderRow = styled.div<{ isExpanded: boolean }>`
 
   > i {
     margin-right: 8px;
-    color: #ffffff66;
+    color: ${props => props.color || "#ffffff66"};
     font-size: 20px;
     cursor: pointer;
     border-radius: 20px;

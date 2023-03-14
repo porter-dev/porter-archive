@@ -257,12 +257,12 @@ class RevisionSection extends Component<PropsType, StateType> {
           <RevisionsTable>
             <tbody>
               <Tr disableHover={true}>
-                <Th>Revision No.</Th>
+                <Th>Revision no.</Th>
                 <Th>Timestamp</Th>
                 <Th>
                   {this.props.chart.git_action_config ? "Commit" : "Image Tag"}
                 </Th>
-                <Th>Template Version</Th>
+                <Th>Template version</Th>
                 <Th>Rollback</Th>
               </Tr>
               {this.renderRevisionList()}

@@ -4,6 +4,7 @@ import styled from "styled-components";
 import api from "shared/api";
 import loading from "assets/loading.gif";
 
+import { readableDate } from "shared/string_utils";
 import { Context } from "shared/Context";
 import ExpandableSection from "components/ExpandableSection";
 import { 
@@ -15,11 +16,47 @@ import {
   EnumCloudProvider 
 } from "@porter-dev/api-contracts";
 
-type Props = {};
+type Props = {
+  selectedClusterVersion: any;
+  setSelectedClusterVersion: any;
+  setShowProvisionerStatus: any;
+};
 
-const ClusterRevisionSelector: React.FC<Props> = ({}) => {
-  const { currentProject } = useContext(Context);
-  const [versions, setVersions] = useState<Contract[]>(null);
+const ClusterRevisionSelector: React.FC<Props> = ({
+  selectedClusterVersion,
+  setSelectedClusterVersion,
+  setShowProvisionerStatus,
+}) => {
+  const { currentProject, currentCluster } = useContext(Context);
+  const [versions, setVersions] = useState<any[]>(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [pendingContract, setPendingContract] = useState(null);
+
+  const processVersions = (data: any) => {
+    data.sort((a: any, b: any) => {
+      return Date.parse(a.CreatedAt) > Date.parse(b.CreatedAt) ? -1 : 1;
+    });
+    let activeCandidate;
+    if (data[0].condition === "UPDATING" || data[0].condition === "UPDATING_UNAVAILABLE") {
+      activeCandidate = data[0];
+      setPendingContract(activeCandidate);
+    };
+    const successes = data.filter((x: any) => {
+      return x.condition === "SUCCESS";
+    });
+
+    // Handle active provisioning attempt
+    if (activeCandidate) {
+      setSelectedClusterVersion(JSON.parse(atob(activeCandidate.base64_contract)));
+      setSelectedId(-1);
+      setShowProvisionerStatus(true);
+    } else {
+      setSelectedClusterVersion(JSON.parse(atob(successes[0].base64_contract)));
+      setSelectedId(0);
+      setShowProvisionerStatus(false);
+    }
+    setVersions(successes);
+  }
 
   useEffect(() => {
     api.getContracts(
@@ -28,71 +65,129 @@ const ClusterRevisionSelector: React.FC<Props> = ({}) => {
       { project_id: currentProject.id },
     )
       .then(({ data }) => {
-        console.log(data);
+        const filtered_data = data.filter((x: any) => {
+          return x.cluster_id === currentCluster.id;
+        });
+        processVersions(filtered_data);
       })
       .catch((err) => {
         console.error(err);
       });
-   /*
-    setVersions([
-      new Contract({
-        cluster: new Cluster({
-          projectId: currentProject.id,
-          kind: EnumKubernetesKind.EKS,
-          cloudProvider: EnumCloudProvider.AWS,
-          cloudProviderCredentialsId: "0",
-          kindValues: {
-            case: "eksKind",
-            value: new EKS({
-              clusterName: "my-great-eks-cluster",
-              clusterVersion: "v1.24.0",
-              cidrRange: cidrRange || "172.0.0.0/16",
-              region: awsRegion,
-              nodeGroups: [
-                new EKSNodeGroup({
-                  instanceType: "t3.medium",
-                  minInstances: 1,
-                  maxInstances: 5,
-                  nodeGroupType: NodeGroupType.SYSTEM,
-                  isStateful: false,
-                }),
-                new EKSNodeGroup({
-                  instanceType: "t3.large",
-                  minInstances: 1,
-                  maxInstances: 5,
-                  nodeGroupType: NodeGroupType.MONITORING,
-                  isStateful: false,
-                }),
-                new EKSNodeGroup({
-                  instanceType: machineType,
-                  minInstances: minInstances || 1,
-                  maxInstances: maxInstances || 10,
-                  nodeGroupType: NodeGroupType.APPLICATION,
-                  isStateful: false,
-                })
-              ]
-            })
-          },
+  }, [currentCluster]);
+  
+  const createContract = () => {
+    if (false) {
+      api.createContract(
+        "<token>",
+        selectedClusterVersion,
+        { project_id: currentProject.id }
+      )
+        .then(() => {
         })
-      }),
-    ])
-    */
-  }, []);
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  };
+
+  const renderVersionList = () => {
+    return versions?.map((version: any, i: number) => {
+      return (
+        <Tr
+          key={i}
+          onClick={() => {
+            setSelectedClusterVersion(JSON.parse(atob(version.base64_contract)));
+            setSelectedId(i);
+            setShowProvisionerStatus(false);
+          }}
+          selected={selectedId === i}
+        >
+          <Td>{versions.length - i}</Td>
+          <Td>{readableDate(version.CreatedAt)}</Td>
+          {/*
+          <Td>
+            <RollbackButton
+              disabled={i === 0}
+              onClick={createContract}
+            >
+              {i === 0 ? "Current" : "Revert"}
+            </RollbackButton>
+          </Td>
+          */}
+        </Tr>
+      );
+    });
+  };
+
+  const renderActiveAttempt = () => {
+    return (
+      <Tr
+        onClick={() => {
+          setSelectedClusterVersion(JSON.parse(atob(pendingContract.base64_contract)));
+          setSelectedId(-1);
+          setShowProvisionerStatus(true);
+        }}
+        selected={selectedId === -1}
+      >
+        <Td><Flex><Img src={loading} /> Updating</Flex></Td>
+        <Td>{readableDate(pendingContract.CreatedAt)}</Td>
+        {/*
+        <Td>
+          <RollbackButton
+            disabled={i === 0}
+            onClick={createContract}
+          >
+            {i === 0 ? "Current" : "Revert"}
+          </RollbackButton>
+        </Td>
+        */}
+      </Tr>
+    );
+  };
 
   return (
     <StyledClusterRevisionSelector>
       <ExpandableSection
         isInitiallyExpanded={false}
+        color={selectedId <= 0 ? "#ffffff66" : "#f5cb42"}
         Header={(
           <>
-            <Label>Current version -</Label>
-            No. 1
+            <Label isCurrent={selectedId <= 0}>
+              {
+                selectedId === 0 ? (
+                  "Current version -"
+                ) : (
+                  selectedId === -1 ? (
+                    "In progress -"
+                  ) : (
+                    "Previewing revision (not deployed) -"
+                  )
+                )
+              }
+            </Label>
+            {
+              selectedId === -1 ? (
+                <><Img src={loading} /> Updating</>
+              ) : (
+                `No. ${versions?.length - selectedId}`
+              )
+            }
           </>
         )}
         ExpandedSection={(
-          <RevisionList>
-
-          </RevisionList>
+          <TableWrapper>
+            <RevisionsTable>
+              <tbody>
+                <Tr disableHover={true}>
+                  <Th>Version no.</Th>
+                  <Th>Created</Th>
+                  {/* <Th>Rollback</Th> */}
+                </Tr>
+                {pendingContract && renderActiveAttempt()}
+                {renderVersionList()}
+              </tbody>
+            </RevisionsTable>
+          </TableWrapper>
         )}
       />
     </StyledClusterRevisionSelector>
@@ -101,18 +196,83 @@ const ClusterRevisionSelector: React.FC<Props> = ({}) => {
 
 export default ClusterRevisionSelector;
 
-const Label = styled.div`
-  color: #ffffff66;
-  margin-right: 5px;
-`;
-
-const RevisionList = styled.div`
-  height: 150px;
-  width: 100%;
+const Flex = styled.div`
   display: flex;
   align-items: center;
+  color: #aaaabb;
+`;
+
+const Img = styled.img`
+  height: 15px;
+  margin-right: 7px;
+`;
+
+const RollbackButton = styled.div`
+  cursor: ${(props: { disabled: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+  display: flex;
+  border-radius: 3px;
+  cursor: not-allowed;
+  align-items: center;
   justify-content: center;
+  font-weight: 500;
+  height: 21px;
   font-size: 13px;
+  width: 70px;
+  background: ${(props: { disabled: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#616FEEcc"};
+  :hover {
+    background: ${(props: { disabled: boolean }) =>
+      props.disabled ? "" : "#405eddbb"};
+  }
+`;
+
+const Tr = styled.tr`
+  height: 40px;
+  line-height: 2.2em;
+  cursor: ${(props: { disableHover?: boolean; selected?: boolean }) =>
+    props.disableHover ? "" : "pointer"};
+  background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
+    props.selected ? "#ffffff11" : ""};
+  :hover {
+    background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
+      props.disableHover ? "" : "#ffffff22"};
+  }
+`;
+
+const Td = styled.td`
+  font-size: 13px;
+  color: #ffffff;
+  padding-left: 32px;
+`;
+
+const Th = styled.td`
+  font-size: 13px;
+  font-weight: 500;
+  color: #aaaabb;
+  padding-left: 32px;
+`;
+
+const RevisionsTable = styled.table`
+  width: 100%;
+  margin-top: 5px;
+  padding-left: 32px;
+  padding-bottom: 20px;
+  min-width: 500px;
+  border-collapse: collapse;
+`;
+
+const TableWrapper = styled.div`
+  padding-bottom: 20px;
+  width: 100%;
+  font-size: 13px;
+  overflow-y: auto;
+  max-height: 200px;
+`;
+
+const Label = styled.div<{ isCurrent?: boolean }>`
+  color: ${props => props.isCurrent ? "#ffffff66" : "#f5cb42"};
+  margin-right: 5px;
 `;
 
 const StyledClusterRevisionSelector = styled.div`

@@ -1,7 +1,6 @@
 package loader
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -61,7 +60,7 @@ func sharedInit() {
 }
 
 func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
-	ctx := context.Background()
+	// ctx := context.Background()
 
 	envConf := InstanceEnvConf
 	sc := envConf.ServerConf

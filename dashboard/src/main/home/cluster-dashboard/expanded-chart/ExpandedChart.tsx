@@ -22,6 +22,7 @@ import Loading from "components/Loading";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
+import SaveButton from "components/SaveButton"
 import DeploymentType from "./DeploymentType";
 import EventsTab from "./events/EventsTab";
 import BuildSettingsTab from "./build-settings/BuildSettingsTab";
@@ -602,6 +603,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
     setRightTabOptions(rightTabOptions);
   };
 
+  const compare = () => {
+    
+  }
+
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
     // if we've set the revision, we also override the revision in log data
     let newLogData = logData;
@@ -924,6 +929,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     margin_left={"0px"}
                   />
                   */}
+                  <InfoTextWrapper>
                   <DeployStatusSection
                     chart={currentChart}
                     setLogData={renderLogsAtTimestamp}
@@ -932,6 +938,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     <Dot>•</Dot>Last deployed
                     {" " + getReadableDate(currentChart.info.last_deployed)}
                   </LastDeployed>
+                  </InfoTextWrapper>
+                    <SaveButton text={"Compare"} onClick={compare}/>
                 </InfoWrapper>
               </HeaderWrapper>
               {deleting ? (
@@ -1191,11 +1199,17 @@ const Dot = styled.div`
 `;
 
 const InfoWrapper = styled.div`
+  justify-content: space-between;
   display: flex;
   align-items: center;
   margin-left: 3px;
   margin-top: 22px;
 `;
+
+const InfoTextWrapper = styled.div`
+  flex-direction: row;
+  display: flex;
+`
 
 const LastDeployed = styled.div`
   font-size: 13px;

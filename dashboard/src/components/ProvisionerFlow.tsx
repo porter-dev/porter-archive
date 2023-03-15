@@ -23,7 +23,7 @@ const ProvisionerFlow: React.FC<Props> = ({
     if (!hasBillingEnabled) {
       return false;
     }
-    return usage.current.clusters >= usage.limit.clusters;
+    return usage?.current.clusters >= usage?.limit.clusters;
   }, [usage]);
 
   if (currentStep === "cloud") {

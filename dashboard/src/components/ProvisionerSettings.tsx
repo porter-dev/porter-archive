@@ -68,6 +68,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
   const [isReadOnly, setIsReadOnly] = useState(false);
 
   const createCluster = async () => {
+    console.log("attempting cluster creation");
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -112,6 +113,8 @@ const ProvisionerSettings: React.FC<Props> = props => {
     if (props.clusterId) {
       data["cluster"]["clusterId"] = props.clusterId;
     }
+    console.log("this should be empty", props.clusterId);
+    console.log("data", data);
 
     try {
       const res = await api.createContract(
@@ -151,6 +154,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
           });
       }
     } catch (err) {
+      console.log("error");
       console.log(err);
     }
   }

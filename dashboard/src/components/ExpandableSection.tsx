@@ -49,6 +49,7 @@ const HeaderRow = styled.div<{
   height: 40px;
   font-size: 13px;
   width: 100%;
+  margin-top: -1px;
   padding-left: 10px;
   cursor: pointer;
   :hover {

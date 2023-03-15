@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
 
+import aws from "assets/aws.png";
 import api from "shared/api";
 import loading from "assets/loading.gif";
 
@@ -19,8 +20,8 @@ const ProvisionerStatus: React.FC<Props> = ({}) => {
         isInitiallyExpanded={true}
         Header={(
           <>
-            <Icon src="https://img.stackshare.io/service/7991/amazon-eks.png" />
-            Elastic Kubernetes Service
+            <Icon src={aws} />
+            AWS provisioning status
           </>
         )}
         ExpandedSection={(
@@ -45,8 +46,9 @@ const DummyLogs = styled.div`
 `;
 
 const Icon = styled.img`
-  height: 20px;
+  height: 16px;
   margin-right: 10px;
+  margin-bottom: -1px;
 `;
 
 const Img = styled.img`

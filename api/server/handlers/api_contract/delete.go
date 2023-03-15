@@ -33,6 +33,12 @@ func (c *APIContractRevisionDeleteHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 	ctx := r.Context()
 
+	if revision == nil {
+		e := fmt.Errorf("nil revision")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+		return
+	}
+
 	err := c.Config().Repo.APIContractRevisioner().Delete(ctx, proj.ID, 0, revision.ID)
 	if err != nil {
 		e := fmt.Errorf("error delete api contract revision: %w", err)

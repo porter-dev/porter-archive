@@ -3,6 +3,7 @@ import styled from "styled-components";
 
 import api from "shared/api";
 import loading from "assets/loading.gif";
+import pencil from "assets/pencil.png";
 
 import { readableDate } from "shared/string_utils";
 import { Context } from "shared/Context";
@@ -31,16 +32,24 @@ const ClusterRevisionSelector: React.FC<Props> = ({
   const [versions, setVersions] = useState<any[]>(null);
   const [selectedId, setSelectedId] = useState(null);
   const [pendingContract, setPendingContract] = useState(null);
+  const [failedContractId, setFailedContractId] = useState("");
 
   const processVersions = (data: any) => {
+    setFailedContractId("");
     data.sort((a: any, b: any) => {
       return Date.parse(a.CreatedAt) > Date.parse(b.CreatedAt) ? -1 : 1;
     });
     let activeCandidate;
-    if (data[0].condition === "") {
+    if (data[0].condition !== "SUCCESS") {
       activeCandidate = data[0];
       setPendingContract(activeCandidate);
-    };
+
+      if (data[0].condition !== "") {
+        console.log(data[0])
+        setFailedContractId(data[0].id);
+      }
+    }
+
     const successes = data.filter((x: any) => {
       return x.condition === "SUCCESS";
     });
@@ -58,7 +67,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
     setVersions(successes);
   }
 
-  useEffect(() => {
+  const updateContracts = () => {
     api.getContracts(
       "<token>",
       {},
@@ -73,6 +82,10 @@ const ClusterRevisionSelector: React.FC<Props> = ({
       .catch((err) => {
         console.error(err);
       });
+  };
+
+  useEffect(() => {
+    updateContracts();
   }, [currentCluster]);
   
   const createContract = () => {
@@ -88,6 +101,23 @@ const ClusterRevisionSelector: React.FC<Props> = ({
           console.log(err);
         });
     }
+  };
+
+const deleteContract = () => {
+    api.deleteContract(
+      "<token>",
+      {},
+      { 
+        project_id: currentProject.id,
+        revision_id: failedContractId,
+      }
+    )
+      .then(() => {
+        updateContracts();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   const renderVersionList = () => {
@@ -129,7 +159,15 @@ const ClusterRevisionSelector: React.FC<Props> = ({
         }}
         selected={selectedId === -1}
       >
-        <Td><Flex><Img src={loading} /> Updating</Flex></Td>
+        <Td>
+          {
+            failedContractId ? (
+              <Failed>Failed</Failed>
+            ) : (
+              <Flex><Img src={loading} /> Updating</Flex>
+            )
+          }
+        </Td>
         <Td>{readableDate(pendingContract.CreatedAt)}</Td>
         {/*
         <Td>
@@ -158,7 +196,11 @@ const ClusterRevisionSelector: React.FC<Props> = ({
                   "Current version -"
                 ) : (
                   selectedId === -1 ? (
-                    "In progress -"
+                    failedContractId ? (
+                      "Update failed -"
+                    ) : (
+                      "In progress -"
+                    )
                   ) : (
                     "Previewing revision (not deployed) -"
                   )
@@ -167,7 +209,19 @@ const ClusterRevisionSelector: React.FC<Props> = ({
             </Label>
             {
               selectedId === -1 ? (
-                <><Img src={loading} /> Updating</>
+                failedContractId ? (
+                  <>
+                    <Button onClick={(e) => {
+                      deleteContract();
+                      e.stopPropagation();
+                    }}>
+                      <Icon src={pencil} />
+                      Clear attempt
+                    </Button>
+                  </>
+                ) : (
+                  <><Img src={loading} /> Updating</>
+                )
               ) : (
                 `No. ${versions?.length - selectedId}`
               )
@@ -183,7 +237,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
                   <Th>Created</Th>
                   {/* <Th>Rollback</Th> */}
                 </Tr>
-                {pendingContract && renderActiveAttempt()}
+                {(pendingContract || failedContractId) && renderActiveAttempt()}
                 {renderVersionList()}
               </tbody>
             </RevisionsTable>
@@ -195,6 +249,35 @@ const ClusterRevisionSelector: React.FC<Props> = ({
 };
 
 export default ClusterRevisionSelector;
+
+const Icon = styled.img`
+  height: 15px;
+  margin-right: 5px;
+  margin-left: -2px;
+`;
+
+const Button = styled.div`
+  border-radius: 3px;
+  padding: 10px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #616FEEcc;
+  :hover {
+    background: #505edddd;
+  }
+`;
+
+const Failed = styled.div`
+  background: #cc3d42;
+  width: 55px;
+  border-radius: 3px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
 
 const Flex = styled.div`
   display: flex;

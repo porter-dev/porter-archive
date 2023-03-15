@@ -903,6 +903,13 @@ const getContracts = baseApi<
   return `/api/projects/${project_id}/contracts`;
 });
 
+const deleteContract = baseApi<
+  {},
+  { project_id: number, revision_id: string }
+>("DELETE", ({ project_id, revision_id }) => {
+  return `/api/projects/${project_id}/contracts/${revision_id}`;
+});
+
 const provisionInfra = baseApi<
   {
     kind: string;
@@ -2558,6 +2565,7 @@ export default {
   getIncidentEvents,
   createContract,
   getContracts,
+  deleteContract,
   // STACKS
   listStacks,
   getStack,

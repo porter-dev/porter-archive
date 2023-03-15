@@ -1,6 +1,7 @@
 package api_contract
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 
@@ -46,13 +47,28 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	if c.Config().DisableCAPIProvisioner {
 		// return dummy data if capi provisioner disabled
 		// remove this stub when we can spin up all services locally, easily
-		rev := models.APIContractRevision{
-			ID:        uuid.New(),
-			ClusterID: int(apiContract.Cluster.ClusterId),
-			ProjectID: int(apiContract.Cluster.ProjectId),
+		by, err := helpers.MarshalContractObject(ctx, &apiContract)
+		if err != nil {
+			e := fmt.Errorf("error marshalling mock api contract: %w", err)
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			return
+		}
+		b64Contract := base64.StdEncoding.EncodeToString([]byte(by))
+
+		revisionInput := models.APIContractRevision{
+			ID:             uuid.New(),
+			ClusterID:      int(apiContract.Cluster.ClusterId),
+			ProjectID:      int(apiContract.Cluster.ProjectId),
+			Base64Contract: b64Contract,
+		}
+		revision, err := c.Config().Repo.APIContractRevisioner().Insert(ctx, revisionInput)
+		if err != nil {
+			e := fmt.Errorf("error updating mock contract: %w", err)
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			return
 		}
 		w.WriteHeader(http.StatusCreated)
-		c.WriteResult(w, r, rev)
+		c.WriteResult(w, r, revision)
 		return
 	}
 

@@ -1290,7 +1290,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/contracts -> apiContract.NewAPIContractUpdateHandler
+	// GET /api/projects/{project_id}/contracts -> apiContract.NewAPIContractRevisionListHandler
 	listAPIContractRevisionsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,

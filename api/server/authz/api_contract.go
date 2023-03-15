@@ -56,6 +56,7 @@ func (n *APIContractRevisionMiddleware) ServeHTTP(w http.ResponseWriter, r *http
 		apierrors.HandleAPIError(n.config.Logger, n.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
 	}
+	fmt.Println("STEFAN", rev, uid)
 
 	r = r.Clone(NewAPIContractRevisionContext(ctx, rev))
 	n.next.ServeHTTP(w, r)

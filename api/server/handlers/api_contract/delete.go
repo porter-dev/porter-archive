@@ -32,9 +32,10 @@ func (c *APIContractRevisionDeleteHandler) ServeHTTP(w http.ResponseWriter, r *h
 	revision, _ := r.Context().Value(types.APIContractRevisionScope).(*models.APIContractRevision)
 
 	ctx := r.Context()
+	fmt.Println("STEFAN", revision)
 
 	if revision == nil {
-		e := fmt.Errorf("nil revision")
+		e := fmt.Errorf("nil revision: %s", r.URL.Path)
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
 		return
 	}

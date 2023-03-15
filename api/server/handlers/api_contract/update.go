@@ -46,7 +46,27 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	if c.Config().DisableCAPIProvisioner {
 		// return dummy data if capi provisioner disabled
-		// remove this stub when we can spin up all services locally, easily
+		// TODO: remove this stub when we can spin up all services locally, easily
+		clusterID := apiContract.Cluster.ClusterId
+		if apiContract.Cluster.ClusterId == 0 {
+			dbcli := models.Cluster{
+				ProjectID:                         uint(apiContract.Cluster.ProjectId),
+				Status:                            "UPDATING_UNAVAILABLE",
+				ProvisionedBy:                     "CAPI",
+				CloudProvider:                     "AWS",
+				CloudProviderCredentialIdentifier: apiContract.Cluster.CloudProviderCredentialsId,
+				Name:                              apiContract.Cluster.GetEksKind().ClusterName,
+				VanityName:                        apiContract.Cluster.GetEksKind().ClusterName,
+			}
+			dbcl, err := c.Config().Repo.Cluster().CreateCluster(&dbcli)
+			if err != nil {
+				e := fmt.Errorf("error updating mock contract: %w", err)
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+				return
+			}
+			clusterID = int32(dbcl.ID)
+		}
+
 		by, err := helpers.MarshalContractObject(ctx, &apiContract)
 		if err != nil {
 			e := fmt.Errorf("error marshalling mock api contract: %w", err)
@@ -57,7 +77,7 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 		revisionInput := models.APIContractRevision{
 			ID:             uuid.New(),
-			ClusterID:      int(apiContract.Cluster.ClusterId),
+			ClusterID:      int(clusterID),
 			ProjectID:      int(apiContract.Cluster.ProjectId),
 			Base64Contract: b64Contract,
 		}
@@ -67,8 +87,13 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
 			return
 		}
+		resp := &porterv1.ContractRevision{
+			ClusterId:  int32(clusterID),
+			ProjectId:  apiContract.Cluster.ProjectId,
+			RevisionId: revision.ID.String(),
+		}
 		w.WriteHeader(http.StatusCreated)
-		c.WriteResult(w, r, revision)
+		c.WriteResult(w, r, resp)
 		return
 	}
 

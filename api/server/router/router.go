@@ -235,6 +235,8 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 	// preview environment middleware to handle previw environments for a specific project-cluster pair
 	previewEnvFactory := authz.NewPreviewEnvironmentScopedFactory(config)
 
+	apiContractRevisionFactory := authz.NewAPIContractRevisionScopedFactory(config)
+
 	for _, route := range routes {
 		atomicGroup := route.Router.Group(nil)
 
@@ -276,6 +278,8 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 				atomicGroup.Use(gitlabIntFactory.Middleware)
 			case types.PreviewEnvironmentScope:
 				atomicGroup.Use(previewEnvFactory.Middleware)
+			case types.APIContractRevisionScope:
+				atomicGroup.Use(apiContractRevisionFactory.Middleware)
 			}
 		}
 

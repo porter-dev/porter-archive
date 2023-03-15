@@ -104,6 +104,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
   };
 
 const deleteContract = () => {
+    console.log(failedContractId);
     api.deleteContract(
       "<token>",
       {},

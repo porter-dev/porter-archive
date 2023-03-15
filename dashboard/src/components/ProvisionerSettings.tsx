@@ -121,7 +121,10 @@ const ProvisionerSettings: React.FC<Props> = props => {
       );
 
       // Only refresh and set clusters on initial create
+      console.log("created cluster id:", res.data.cluster_id);
+      console.log("raw request:", res);
       if (!props.clusterId) {
+        console.log("refreshing clusters")
         setShouldRefreshClusters(true);
         api.getClusters(
           "<token>",
@@ -129,8 +132,11 @@ const ProvisionerSettings: React.FC<Props> = props => {
           { id: currentProject.id },
         )
           .then(({ data }) => {
+            console.log("res", data);
             data.forEach((cluster: ClusterType) => {
+              console.log("checking against:", cluster.id);
               if (cluster.id === res.data.cluster_id) {
+                console.log("matched cluster id");
                 // setHasFinishedOnboarding(true);
                 setCurrentCluster(cluster);
                 OFState.actions.goTo("clean_up");

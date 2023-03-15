@@ -9,6 +9,7 @@ import { pushFiltered } from "shared/routing";
 
 import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
 import InputRow from "./form-components/InputRow";
 import SaveButton from "./SaveButton";
 import { Contract, EnumKubernetesKind, EnumCloudProvider, NodeGroupType, EKSNodeGroup, EKS, Cluster } from "@porter-dev/api-contracts";
@@ -68,7 +69,6 @@ const ProvisionerSettings: React.FC<Props> = props => {
   const [isReadOnly, setIsReadOnly] = useState(false);
 
   const createCluster = async () => {
-    console.log("attempting cluster creation");
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -113,8 +113,6 @@ const ProvisionerSettings: React.FC<Props> = props => {
     if (props.clusterId) {
       data["cluster"]["clusterId"] = props.clusterId;
     }
-    console.log("this should be empty", props.clusterId);
-    console.log("data", data);
 
     try {
       const res = await api.createContract(
@@ -124,10 +122,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
       );
 
       // Only refresh and set clusters on initial create
-      console.log("created cluster id:", res.data.cluster_id);
-      console.log("raw request:", res);
       if (!props.clusterId) {
-        console.log("refreshing clusters")
         setShouldRefreshClusters(true);
         api.getClusters(
           "<token>",
@@ -135,11 +130,8 @@ const ProvisionerSettings: React.FC<Props> = props => {
           { id: currentProject.id },
         )
           .then(({ data }) => {
-            console.log("res", data);
             data.forEach((cluster: ClusterType) => {
-              console.log("checking against:", cluster.id);
               if (cluster.id === res.data.cluster_id) {
-                console.log("matched cluster id");
                 // setHasFinishedOnboarding(true);
                 setCurrentCluster(cluster);
                 OFState.actions.goTo("clean_up");
@@ -154,7 +146,6 @@ const ProvisionerSettings: React.FC<Props> = props => {
           });
       }
     } catch (err) {
-      console.log("error");
       console.log(err);
     }
   }
@@ -185,9 +176,43 @@ const ProvisionerSettings: React.FC<Props> = props => {
     }
   }, [props.selectedClusterVersion]);
 
-  return (
-    <>
-      <StyledForm>
+  const renderForm = () => {
+    
+    // Render simplified form if initial create
+    if (!props.clusterId) {
+      return (
+        <>
+          <Heading isAtTop>Cluster configuration</Heading>
+          <Helper>
+            Porter will create a new cluster for your applications in the specified region.
+          </Helper>
+          <InputRow
+            width="350px"
+            isRequired
+            disabled={isReadOnly}
+            type="string"
+            value={clusterName}
+            setValue={(x: string) => setClusterName(x)}
+            label="🏷️ Cluster name"
+            placeholder="ex: total-perspective-vortex"
+          />
+          <SelectRow
+            options={regionOptions}
+            width="350px"
+            disabled={isReadOnly}
+            value={awsRegion}
+            scrollBuffer={true}
+            dropdownMaxHeight="240px"
+            setActiveValue={setAwsRegion}
+            label="📍 Select an AWS region"
+          />
+        </>
+      )
+    }
+
+    // If settings, update full form
+    return (
+      <>
         <Heading isAtTop>EKS configuration</Heading>
         <InputRow
           width="350px"
@@ -207,7 +232,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
           scrollBuffer={true}
           dropdownMaxHeight="240px"
           setActiveValue={setAwsRegion}
-          label="📍 AWS Region"
+          label="📍 AWS region"
         />
         <SelectRow
           options={machineTypeOptions}
@@ -262,6 +287,14 @@ const ProvisionerSettings: React.FC<Props> = props => {
             </>
           )
         }
+      </>
+    )
+  }
+
+  return (
+    <>
+      <StyledForm>
+        {renderForm()}
       </StyledForm>
       <SaveButton
         disabled={(!clusterName && true) || isReadOnly}

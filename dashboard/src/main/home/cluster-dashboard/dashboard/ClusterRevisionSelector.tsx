@@ -217,7 +217,7 @@ const deleteContract = () => {
                       e.stopPropagation();
                     }}>
                       <Icon src={pencil} />
-                      Clear attempt
+                      Retry
                     </Button>
                   </>
                 ) : (

@@ -45,6 +45,7 @@ func (n *APIContractRevisionMiddleware) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
+	fmt.Println("STEFAN", uid)
 	rev, err := n.config.Repo.APIContractRevisioner().Get(ctx, uid)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -56,7 +57,7 @@ func (n *APIContractRevisionMiddleware) ServeHTTP(w http.ResponseWriter, r *http
 		apierrors.HandleAPIError(n.config.Logger, n.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
 	}
-	fmt.Println("STEFAN", rev, uid)
+	fmt.Println("STEFANREV", rev)
 
 	r = r.Clone(NewAPIContractRevisionContext(ctx, rev))
 	n.next.ServeHTTP(w, r)

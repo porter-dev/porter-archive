@@ -120,6 +120,7 @@ func (c *Cluster) ToClusterType() *types.Cluster {
 		ID:                                c.ID,
 		ProjectID:                         c.ProjectID,
 		Name:                              c.Name,
+		VanityName:                        c.VanityName,
 		Server:                            c.Server,
 		Service:                           serv,
 		AgentIntegrationEnabled:           c.AgentIntegrationEnabled,

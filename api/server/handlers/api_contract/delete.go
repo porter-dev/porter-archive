@@ -1,9 +1,11 @@
 package api_contract
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -28,14 +30,12 @@ func NewAPIContractRevisionDeleteHandler(
 
 // ServeHTTP returns deletes a given project and cluster's contract revision
 func (c *APIContractRevisionDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	revision, _ := r.Context().Value(types.APIContractRevisionScope).(*models.APIContractRevision)
-
 	ctx := r.Context()
-	fmt.Println("STEFAN", revision)
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	revision := ctx.Value(types.APIContractRevisionScope).(models.APIContractRevision)
 
-	if revision == nil {
-		e := fmt.Errorf("nil revision: %s", r.URL.Path)
+	if revision.ID == uuid.Nil {
+		e := errors.New("nil revision provided in path")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
 		return
 	}

@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import api from "shared/api";
 import loading from "assets/loading.gif";
-import pencil from "assets/pencil.png";
+import warning from "assets/warning.png";
 
 import { readableDate } from "shared/string_utils";
 import { Context } from "shared/Context";
@@ -45,7 +45,6 @@ const ClusterRevisionSelector: React.FC<Props> = ({
       setPendingContract(activeCandidate);
 
       if (data[0].condition !== "") {
-        console.log(data[0])
         setFailedContractId(data[0].id);
       }
     }
@@ -104,7 +103,6 @@ const ClusterRevisionSelector: React.FC<Props> = ({
   };
 
 const deleteContract = () => {
-    console.log(failedContractId);
     api.deleteContract(
       "<token>",
       {},
@@ -163,13 +161,25 @@ const deleteContract = () => {
         <Td>
           {
             failedContractId ? (
-              <Failed>Failed</Failed>
+              <Failed>Update failed</Failed>
             ) : (
               <Flex><Img src={loading} /> Updating</Flex>
             )
           }
         </Td>
         <Td>{readableDate(pendingContract.CreatedAt)}</Td>
+        {
+          failedContractId && (
+            <DeleteButton>
+              <i 
+                className="material-icons-outlined"
+                onClick={deleteContract}
+              >
+                close
+              </i>
+            </DeleteButton>
+          )
+        }
         {/*
         <Td>
           <RollbackButton
@@ -198,12 +208,12 @@ const deleteContract = () => {
                 ) : (
                   selectedId === -1 ? (
                     failedContractId ? (
-                      "Update failed -"
+                      ""
                     ) : (
                       "In progress -"
                     )
                   ) : (
-                    "Previewing revision (not deployed) -"
+                    "Previewing version (not deployed) -"
                   )
                 )
               }
@@ -211,15 +221,7 @@ const deleteContract = () => {
             {
               selectedId === -1 ? (
                 failedContractId ? (
-                  <>
-                    <Button onClick={(e) => {
-                      deleteContract();
-                      e.stopPropagation();
-                    }}>
-                      <Icon src={pencil} />
-                      Retry
-                    </Button>
-                  </>
+                  <><WarningIcon src={warning} /> Last update failed</>
                 ) : (
                   <><Img src={loading} /> Updating</>
                 )
@@ -251,29 +253,35 @@ const deleteContract = () => {
 
 export default ClusterRevisionSelector;
 
-const Icon = styled.img`
-  height: 15px;
-  margin-right: 5px;
-  margin-left: -2px;
-`;
-
-const Button = styled.div`
-  border-radius: 3px;
-  padding: 10px;
-  height: 26px;
+const DeleteButton = styled.div`
+  position: absolute;
+  right: 10px;
+  top: 0px;
+  height: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: #616FEEcc;
-  :hover {
-    background: #505edddd;
+
+  > i {
+    font-size: 16px;
+    padding: 5px;
+    :hover {
+      background: #ffffff22;
+      border-radius: 40px;
+    }
   }
+`;
+
+const WarningIcon = styled.img`
+  height: 20px;
+  margin-right: 10px;
+  margin-left: -4px;
 `;
 
 const Failed = styled.div`
   background: #cc3d42;
-  width: 55px;
+  width: 100px;
   border-radius: 3px;
+  color: white;
   height: 22px;
   display: flex;
   align-items: center;
@@ -313,6 +321,7 @@ const RollbackButton = styled.div`
 
 const Tr = styled.tr`
   height: 40px;
+  position: relative;
   line-height: 2.2em;
   cursor: ${(props: { disableHover?: boolean; selected?: boolean }) =>
     props.disableHover ? "" : "pointer"};

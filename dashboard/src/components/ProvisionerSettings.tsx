@@ -40,6 +40,7 @@ const regionOptions = [
 
 const machineTypeOptions = [
   { value: "t3.medium", label: "t3.medium" },
+  { value: "t3.large", label: "t3.large" },
   { value: "t3.xlarge", label: "t3.xlarge" },
   { value: "t3.2xlarge", label: "t3.2xlarge" },
 ];
@@ -61,7 +62,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
   const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
-  const [machineType, setMachineType] = useState("t3.medium");
+  const [machineType, setMachineType] = useState("t3.xlarge");
   const [isExpanded, setIsExpanded] = useState(false);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);

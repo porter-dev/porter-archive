@@ -21,6 +21,7 @@ import Metrics from "./Metrics";
 
 import CopyToClipboard from "components/CopyToClipboard";
 import Loading from "components/Loading";
+import Spacer from "components/porter/Spacer";
 
 type TabEnum = "nodes" | "settings" | "namespaces" | "metrics" | "incidents" | "configuration";
 
@@ -193,7 +194,10 @@ export const Dashboard: React.FunctionComponent = () => {
               context.currentCluster.status === "UPDATING_UNAVAILABLE"
             )
           ) && (
-            <ProvisionerStatus />
+            <>
+              <Spacer y={1} />
+              <ProvisionerStatus />
+            </>
           )}
           <TabSelector
             options={currentTabOptions}

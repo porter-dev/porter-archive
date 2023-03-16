@@ -41,6 +41,7 @@ const CredentialsForm: React.FC<Props> = ({
   const [createStatus, setCreateStatus] = useState("");
 
   useEffect(() => {
+    console.log("great creds")
     api
       .getAWSIntegration(
         "<token>",
@@ -50,10 +51,13 @@ const CredentialsForm: React.FC<Props> = ({
         }
       )
       .then(({ data }) => {
+        console.log("creds data", data);
         if (!Array.isArray(data)) {
-          throw Error("Data is not an array");
+          console.log("no creds");
+          setAWSCredentials([]);
+        } else {
+          setAWSCredentials(data);
         }
-        setAWSCredentials(data);
         setIsLoading(false);
       })
       .catch((err) => {

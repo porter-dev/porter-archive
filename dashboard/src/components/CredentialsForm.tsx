@@ -12,6 +12,7 @@ import Heading from "components/form-components/Heading";
 import Helper from "./form-components/Helper";
 import InputRow from "./form-components/InputRow";
 import SaveButton from "./SaveButton";
+import Loading from "./Loading";
 
 type Props = {
   goBack: () => void;
@@ -41,7 +42,6 @@ const CredentialsForm: React.FC<Props> = ({
   const [createStatus, setCreateStatus] = useState("");
 
   useEffect(() => {
-    console.log("great creds")
     api
       .getAWSIntegration(
         "<token>",
@@ -51,9 +51,7 @@ const CredentialsForm: React.FC<Props> = ({
         }
       )
       .then(({ data }) => {
-        console.log("creds data", data);
         if (!Array.isArray(data)) {
-          console.log("no creds");
           setAWSCredentials([]);
         } else {
           setAWSCredentials(data);
@@ -192,7 +190,7 @@ const CredentialsForm: React.FC<Props> = ({
       </Helper>
       {
         isLoading ? (
-          <>Loading . . .</>
+          <Loading height="150px" />
         ) : (
           renderContent()
         )

@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 
 import TitleSection from "components/TitleSection";
+import Spacer from "components/porter/Spacer";
 
 type PropsType = {
   image?: any;
@@ -28,31 +29,26 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
           {this.props.title}
         </TitleSection>
 
-        <Br />
-
         {this.props.description && (
-          <InfoSection>
-            <TopRow>
-              <InfoLabel>
-                <i className="material-icons">info</i> Info
-              </InfoLabel>
-            </TopRow>
-            <Description>{this.props.description}</Description>
-          </InfoSection>
+          <>
+            <Spacer height="35px" />
+            <InfoSection>
+              <TopRow>
+                <InfoLabel>
+                  <i className="material-icons">info</i> Info
+                </InfoLabel>
+              </TopRow>
+              <Description>{this.props.description}</Description>
+            </InfoSection>
+          </>
         )}
-
-        {!this.props.disableLineBreak && <LineBreak />}
+        <Spacer height="35px" />
       </>
     );
   }
 }
 
 DashboardHeader.contextType = Context;
-
-const Br = styled.div`
-  width: 100%;
-  height: 1px;
-`;
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
@@ -89,10 +85,9 @@ const InfoLabel = styled.div`
 `;
 
 const InfoSection = styled.div`
-  margin-top: 15px;
+
   font-family: "Work Sans", sans-serif;
   margin-left: 0px;
-  margin-bottom: 35px;
 `;
 
 const ClusterLabel = styled.div`

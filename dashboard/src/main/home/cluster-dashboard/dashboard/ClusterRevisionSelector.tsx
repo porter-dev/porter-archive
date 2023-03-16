@@ -16,17 +16,20 @@ import {
   EnumKubernetesKind, 
   EnumCloudProvider 
 } from "@porter-dev/api-contracts";
+import Spacer from "components/porter/Spacer";
 
 type Props = {
   selectedClusterVersion: any;
   setSelectedClusterVersion: any;
   setShowProvisionerStatus: any;
+  setProvisionFailureReason: any;
 };
 
 const ClusterRevisionSelector: React.FC<Props> = ({
   selectedClusterVersion,
   setSelectedClusterVersion,
   setShowProvisionerStatus,
+  setProvisionFailureReason,
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [versions, setVersions] = useState<any[]>(null);
@@ -37,6 +40,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
 
   const processVersions = (data: any) => {
     setFailedContractId("");
+    setProvisionFailureReason("");
     data.sort((a: any, b: any) => {
       return Date.parse(a.CreatedAt) > Date.parse(b.CreatedAt) ? -1 : 1;
     });
@@ -47,6 +51,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
 
       if (data[0].condition !== "") {
         setFailedContractId(data[0].id);
+        setProvisionFailureReason(data[0].condition);
       }
     }
 
@@ -206,59 +211,62 @@ const deleteContract = () => {
         hideSelector ? (
           <></>
         ) : (
-          <StyledClusterRevisionSelector>
-            <ExpandableSection
-              isInitiallyExpanded={false}
-              color={selectedId <= 0 ? "#ffffff66" : "#f5cb42"}
-              Header={(
-                <>
-                  <Label isCurrent={selectedId <= 0}>
-                    {
-                      selectedId === 0 ? (
-                        "Current version -"
-                      ) : (
-                        selectedId === -1 ? (
-                          failedContractId ? (
-                            ""
-                          ) : (
-                            "In progress -"
-                          )
+          <>
+            <StyledClusterRevisionSelector>
+              <ExpandableSection
+                isInitiallyExpanded={false}
+                color={selectedId <= 0 ? "#ffffff66" : "#f5cb42"}
+                Header={(
+                  <>
+                    <Label isCurrent={selectedId <= 0}>
+                      {
+                        selectedId === 0 ? (
+                          "Current version -"
                         ) : (
-                          "Previewing version (not deployed) -"
+                          selectedId === -1 ? (
+                            failedContractId ? (
+                              ""
+                            ) : (
+                              "In progress -"
+                            )
+                          ) : (
+                            "Previewing version (not deployed) -"
+                          )
                         )
+                      }
+                    </Label>
+                    {
+                      selectedId === -1 ? (
+                        failedContractId ? (
+                          <><WarningIcon src={warning} /> Last update failed</>
+                        ) : (
+                          <><Img src={loading} /> Updating</>
+                        )
+                      ) : (
+                        `No. ${versions?.length - selectedId}`
                       )
                     }
-                  </Label>
-                  {
-                    selectedId === -1 ? (
-                      failedContractId ? (
-                        <><WarningIcon src={warning} /> Last update failed</>
-                      ) : (
-                        <><Img src={loading} /> Updating</>
-                      )
-                    ) : (
-                      `No. ${versions?.length - selectedId}`
-                    )
-                  }
-                </>
-              )}
-              ExpandedSection={(
-                <TableWrapper>
-                  <RevisionsTable>
-                    <tbody>
-                      <Tr disableHover={true}>
-                        <Th>Version no.</Th>
-                        <Th>Created</Th>
-                        {/* <Th>Rollback</Th> */}
-                      </Tr>
-                      {(pendingContract || failedContractId) && renderActiveAttempt()}
-                      {renderVersionList()}
-                    </tbody>
-                  </RevisionsTable>
-                </TableWrapper>
-              )}
-            />
-          </StyledClusterRevisionSelector>
+                  </>
+                )}
+                ExpandedSection={(
+                  <TableWrapper>
+                    <RevisionsTable>
+                      <tbody>
+                        <Tr disableHover={true}>
+                          <Th>Version no.</Th>
+                          <Th>Created</Th>
+                          {/* <Th>Rollback</Th> */}
+                        </Tr>
+                        {(pendingContract || failedContractId) && renderActiveAttempt()}
+                        {renderVersionList()}
+                      </tbody>
+                    </RevisionsTable>
+                  </TableWrapper>
+                )}
+              />
+            </StyledClusterRevisionSelector>
+            <Spacer y={1} />
+          </>
         )
       }
     </>
@@ -286,9 +294,9 @@ const DeleteButton = styled.div`
 `;
 
 const WarningIcon = styled.img`
-  height: 20px;
+  height: 18px;
   margin-right: 10px;
-  margin-left: -4px;
+  margin-left: -8px;
 `;
 
 const Failed = styled.div`

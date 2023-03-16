@@ -240,7 +240,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
     return (
       <>
-        <ControlRow style={{ marginTop: "35px" }}>
+        <ControlRow>
           <FilterWrapper>
             <LastRunStatusSelector
               lastRunStatus={this.state.lastRunStatus}

@@ -18,6 +18,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, getQueryParams } from "shared/routing";
 import TemplateList from "./TemplateList";
 import { capitalize } from "lodash";
+import Spacer from "components/porter/Spacer";
 
 const initialTabOptions = [
   { label: "New application", value: "porter" },
@@ -421,6 +422,7 @@ class Templates extends Component<PropsType, StateType> {
               <i className="material-icons">help_outline</i>
             </a>
           </TitleSection>
+          <Spacer height="20px" />
           {this.renderContents()}
         </TemplatesWrapper>
       );

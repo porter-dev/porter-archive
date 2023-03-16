@@ -12,9 +12,13 @@ import Spacer from "components/porter/Spacer";
 import Helper from "components/form-components/Helper";
 import Text from "components/porter/Text";
 
-type Props = {};
+type Props = {
+  provisionFailureReason: string;
+};
 
-const ProvisionerStatus: React.FC<Props> = ({}) => {
+const ProvisionerStatus: React.FC<Props> = ({
+  provisionFailureReason,
+}) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [progress, setProgress] = useState(1);
 
@@ -54,15 +58,19 @@ const ProvisionerStatus: React.FC<Props> = ({}) => {
           AWS provisioning status
         </Flex>
         <Spacer height="18px" />
-        <LoadingBar completed={progress} total={4} />
+        <LoadingBar
+          color={provisionFailureReason && "failed"}
+          completed={progress} 
+          total={5} 
+        />
         <Spacer height="18px" />
         <Text color="#aaaabb">
           Setup can take up to 20 minutes. You can close this window and come back later. 
         </Text>
       </HeaderSection>
       {
-        false && (
-          <DummyLogs>[Logs unimplemented]</DummyLogs>
+        provisionFailureReason && (
+          <DummyLogs>Error: {provisionFailureReason}</DummyLogs>
         )
       }
     </StyledProvisionerStatus>
@@ -82,11 +90,9 @@ const HeaderSection = styled.div`
 `;
 
 const DummyLogs = styled.div`
-  height: 150px;
+  padding: 15px;
   width: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 13px;
   background: #101420;
   font-family: monospace;
@@ -111,7 +117,6 @@ const Status = styled.div`
 `;
 
 const StyledProvisionerStatus = styled.div`
-  margin-bottom: 22px;
   border-radius: 5px;
   background: #26292e;
   border: 1px solid #494b4f;

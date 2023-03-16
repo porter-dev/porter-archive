@@ -267,7 +267,6 @@ const Placeholder = styled.div`
 `;
 
 const StyledIntegrationList = styled.div`
-  margin-top: 30px;
   margin-bottom: 80px;
 `;
 

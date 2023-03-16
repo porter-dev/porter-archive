@@ -19,6 +19,7 @@ import Banner from "components/Banner";
 
 import { pushFiltered, pushQueryParams } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import Spacer from "components/porter/Spacer";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -179,7 +180,7 @@ class Dashboard extends Component<PropsType, StateType> {
                     </i>
                   )}
                 </TitleSection>
-                <Br />
+                <Spacer height="15px" />
 
                 <InfoSection>
                   <TopRow>

@@ -37,6 +37,7 @@ export const Dashboard: React.FunctionComponent = () => {
   const location = useLocation();
   const [selectedClusterVersion, setSelectedClusterVersion] = useState(null);
   const [showProvisionerStatus, setShowProvisionerStatus] = useState(false);
+  const [provisionFailureReason, setProvisionFailureReason] = useState("");
   const [ingressIp, setIngressIp] = useState(null);
   const [ingressError, setIngressError] = useState(null);
 
@@ -104,6 +105,7 @@ export const Dashboard: React.FunctionComponent = () => {
 
   // Need to reset tab to reset views that don't auto-update on cluster switch (esp namespaces + settings)
   useEffect(() => {
+    setShowProvisionerStatus(false);
     if (context.currentProject.capi_provisioner_enabled) {
       setCurrentTab("configuration");
     } else {
@@ -187,6 +189,7 @@ export const Dashboard: React.FunctionComponent = () => {
             selectedClusterVersion={selectedClusterVersion}
             setSelectedClusterVersion={setSelectedClusterVersion}
             setShowProvisionerStatus={setShowProvisionerStatus}
+            setProvisionFailureReason={setProvisionFailureReason}
           />
           {(
             showProvisionerStatus && (
@@ -195,8 +198,10 @@ export const Dashboard: React.FunctionComponent = () => {
             )
           ) && (
             <>
+              <ProvisionerStatus
+                provisionFailureReason={provisionFailureReason}
+              />
               <Spacer y={1} />
-              <ProvisionerStatus />
             </>
           )}
           <TabSelector

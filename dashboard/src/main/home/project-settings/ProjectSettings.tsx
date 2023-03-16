@@ -14,6 +14,7 @@ import { getQueryParam } from "shared/routing";
 import BillingPage from "./BillingPage";
 import APITokensSection from "./APITokensSection";
 import _ from "lodash";
+import Spacer from "components/porter/Spacer";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 
@@ -185,6 +186,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
     return (
       <StyledProjectSettings>
         <TitleSection>Project settings</TitleSection>
+        <Spacer height="20px" />
         <TabRegion
           currentTab={this.state.currentTab}
           setCurrentTab={(x: string) => this.setState({ currentTab: x })}

@@ -136,7 +136,7 @@ const ControlRow = styled.div`
   margin-left: auto;
   justify-content: space-between;
   align-items: center;
-  margin: 35px 0 30px;
+  margin-bottom: 30px;
   padding-left: 0px;
 `;
 

@@ -69,10 +69,8 @@ const BackButton = styled.div`
 `;
 
 const StyledTitleSection = styled.div`
-  margin-bottom: 15px;
   display: flex;
   align-items: center;
-  height: 35px;
 `;
 
 const Icon = styled.img<{ width: string }>`

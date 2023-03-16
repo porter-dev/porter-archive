@@ -65,7 +65,6 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		res.CloudProviderCredentialIdentifier = credResp.Msg.TargetArn
-		fmt.Println("stefan", credResp.Msg.ProjectId, credResp.Msg.TargetArn)
 	}
 
 	p.WriteResult(w, r, res)

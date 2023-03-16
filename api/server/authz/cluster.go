@@ -95,12 +95,14 @@ func (d *OutOfClusterAgentGetter) GetOutOfClusterConfig(cluster *models.Cluster)
 }
 
 func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Cluster, namespace string) (*kubernetes.Agent, error) {
-	// look for the agent in context
-	ctxAgentVal := r.Context().Value(KubernetesAgentCtxKey)
+	// look for the agent in context if cluster isnt a capi cluster
+	if cluster.ProvisionedBy != "CAPI" {
+		ctxAgentVal := r.Context().Value(KubernetesAgentCtxKey)
 
-	if ctxAgentVal != nil {
-		if agent, ok := ctxAgentVal.(*kubernetes.Agent); ok {
-			return agent, nil
+		if ctxAgentVal != nil {
+			if agent, ok := ctxAgentVal.(*kubernetes.Agent); ok {
+				return agent, nil
+			}
 		}
 	}
 

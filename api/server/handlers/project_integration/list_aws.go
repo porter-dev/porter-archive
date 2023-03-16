@@ -72,5 +72,11 @@ func (p *ListAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		res = append(res, awsInt.ToAWSIntegrationType())
 	}
 
+	if len(awsInts) == 0 {
+		// so that the datatype stays the same on all returns
+		p.WriteResult(w, r, []*types.AWSIntegration{})
+		return
+	}
+
 	p.WriteResult(w, r, res)
 }

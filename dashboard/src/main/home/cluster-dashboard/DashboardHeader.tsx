@@ -8,7 +8,7 @@ import TitleSection from "components/TitleSection";
 type PropsType = {
   image?: any;
   title: any;
-  description?: string;
+  description?: any;
   materialIconClass?: string;
   disableLineBreak?: boolean;
   capitalize?: boolean;

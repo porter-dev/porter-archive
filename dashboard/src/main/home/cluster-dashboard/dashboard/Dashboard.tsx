@@ -222,27 +222,16 @@ export const Dashboard: React.FunctionComponent = () => {
       <DashboardHeader
         image={settings}
         title={context.currentCluster.name}
-        description={`Cluster settings and status for ${context.currentCluster.name}.`}
+        description={
+          ingressIp ? (
+            <>{renderIngressIp(ingressIp, ingressError)}</>
+          ) : (
+            `Cluster settings and status for ${context.currentCluster.name}.`
+          )
+        }
         disableLineBreak
         capitalize={false}
       />
-
-      {/*
-      <TitleSection>
-        <DashboardIcon>
-          <i className="material-icons">device_hub</i>
-        </DashboardIcon>
-        {context.currentCluster.name}
-      </TitleSection>
-      <InfoSection>
-        <TopRow>
-          <InfoLabel>
-            <i className="material-icons">info</i> Info
-          </InfoLabel>
-        </TopRow>
-        <Description>{renderIngressIp(ingressIp, ingressError)}</Description>
-      </InfoSection>
-      */}
 
       {renderContents()}
     </>
@@ -347,10 +336,9 @@ const InfoLabel = styled.div`
 `;
 
 const InfoSection = styled.div`
-  margin-top: 36px;
-  font-family: "Work Sans", sans-serif;
-  margin-left: 0px;
-  margin-bottom: 30px;
+  margin-top: -20px;
+  font-size: 13px;
+  margin-bottom: 25px;
 `;
 
 const Url = styled.a`
@@ -373,7 +361,7 @@ const Url = styled.a`
 `;
 
 const Bolded = styled.span`
-  color: #8b949f;
+  color: #aaaabb;
   margin-right: 6px;
   white-space: nowrap;
 `;

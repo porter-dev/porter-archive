@@ -44,4 +44,5 @@ type Repository interface {
 	Stack() StackRepository
 	MonitorTestResult() MonitorTestResultRepository
 	APIContractRevisioner() APIContractRevisioner
+	AWSAssumeRoleChainer() AWSAssumeRoleChainer
 }

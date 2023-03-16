@@ -51,9 +51,10 @@ const CredentialsForm: React.FC<Props> = ({
       )
       .then(({ data }) => {
         if (!Array.isArray(data)) {
-          throw Error("Data is not an array");
+          setAWSCredentials([]);
+        } else {
+          setAWSCredentials(data);
         }
-        setAWSCredentials(data);
         setIsLoading(false);
       })
       .catch((err) => {

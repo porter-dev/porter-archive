@@ -749,6 +749,16 @@ const getCluster = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
 
+const getClusterStatus = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/status`;
+});
+
 const getClusterNodes = baseApi<
   {},
   {
@@ -2431,6 +2441,7 @@ export default {
   getCluster,
   getClusterNodes,
   getClusterNode,
+  getClusterStatus,
   getConfigMap,
   getPRDeploymentList,
   getPRDeploymentByID,

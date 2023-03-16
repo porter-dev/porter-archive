@@ -6,33 +6,80 @@ import api from "shared/api";
 import loading from "assets/loading.gif";
 
 import { Context } from "shared/Context";
-import ExpandableSection from "components/ExpandableSection";
+import ExpandableSection from "components/porter/ExpandableSection";
+import LoadingBar from "components/porter/LoadingBar";
+import Spacer from "components/porter/Spacer";
+import Helper from "components/form-components/Helper";
+import Text from "components/porter/Text";
 
 type Props = {};
 
 const ProvisionerStatus: React.FC<Props> = ({}) => {
-  const { currentProject, setCurrentCluster } = useContext(Context);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { currentProject, currentCluster } = useContext(Context);
+  const [progress, setProgress] = useState(1);
+
+  // Continuously poll provisioning status
+  const pollProvisioningStatus = async () => {
+    try {
+      const res = await api.getClusterStatus(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      );
+      const { status } = res.data;
+      switch (status) {
+        case status["BOOTSTRAP_READY"]:
+          setProgress(2);
+          break;
+        case status["CONTROL_PLANE_READY"]:
+          setProgress(3);
+          break;
+        case status["INFRASTRUCTURE_READY"]:
+          setProgress(4);
+          break;
+        default:
+          setProgress(1);
+      }
+    } catch (error) {}
+  };
 
   return (
     <StyledProvisionerStatus>
-      <ExpandableSection
-        isInitiallyExpanded={true}
-        Header={(
-          <>
-            <Icon src={aws} />
-            AWS provisioning status
-          </>
-        )}
-        ExpandedSection={(
+      <HeaderSection>
+        <Flex>
+          <Icon src={aws} />
+          AWS provisioning status
+        </Flex>
+        <Spacer height="18px" />
+        <LoadingBar completed={progress} total={4} />
+        <Spacer height="18px" />
+        <Text color="#aaaabb">
+          Setup can take up to 20 minutes. You can close this window and come back later. 
+        </Text>
+      </HeaderSection>
+      {
+        false && (
           <DummyLogs>[Logs unimplemented]</DummyLogs>
-        )}
-      />
+        )
+      }
     </StyledProvisionerStatus>
   );
 };
 
 export default ProvisionerStatus;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const HeaderSection = styled.div`
+  padding: 15px;
+  padding-bottom: 18px;
+`;
 
 const DummyLogs = styled.div`
   height: 150px;
@@ -65,4 +112,10 @@ const Status = styled.div`
 
 const StyledProvisionerStatus = styled.div`
   margin-bottom: 22px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  font-size: 13px;
+  width: 100%;
+  overflow: hidden;
 `;

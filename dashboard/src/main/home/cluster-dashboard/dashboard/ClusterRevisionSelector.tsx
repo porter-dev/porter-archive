@@ -7,7 +7,7 @@ import warning from "assets/warning.png";
 
 import { readableDate } from "shared/string_utils";
 import { Context } from "shared/Context";
-import ExpandableSection from "components/ExpandableSection";
+import ExpandableSection from "components/porter/ExpandableSection";
 import { 
   Contract, 
   Cluster, 
@@ -383,5 +383,4 @@ const Label = styled.div<{ isCurrent?: boolean }>`
 `;
 
 const StyledClusterRevisionSelector = styled.div`
-  margin-bottom: 22px;
 `;

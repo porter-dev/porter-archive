@@ -74,7 +74,7 @@ require (
 	github.com/glebarez/sqlite v1.6.0
 	github.com/nats-io/nats.go v1.24.0
 	github.com/open-policy-agent/opa v0.44.0
-	github.com/porter-dev/api-contracts v0.0.41
+	github.com/porter-dev/api-contracts v0.0.43
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d
 	github.com/xanzy/go-gitlab v0.68.0

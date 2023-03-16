@@ -18,6 +18,9 @@ type Cluster struct {
 	// Name of the cluster
 	Name string `json:"name"`
 
+	// VanityName is the display name of the cluster
+	VanityName string `json:"vanity_name"`
+
 	// Server endpoint for the cluster
 	Server string `json:"server"`
 

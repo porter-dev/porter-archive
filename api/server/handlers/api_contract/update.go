@@ -108,5 +108,5 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	c.WriteResult(w, r, revision)
+	c.WriteResult(w, r, revision.Msg)
 }

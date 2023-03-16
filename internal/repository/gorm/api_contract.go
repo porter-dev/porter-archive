@@ -3,6 +3,7 @@ package gorm
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/models"
@@ -78,14 +79,11 @@ func (cr APIContractRepository) Get(ctx context.Context, revisionID uuid.UUID) (
 		return models.APIContractRevision{}, errors.New("invalid contract revision id supplied")
 	}
 
-	rev, ok := cr.db.Get(revisionID.String())
-	if !ok {
-		return models.APIContractRevision{}, errors.New("no contract revision found for that id")
+	var acr models.APIContractRevision
+	tx := cr.db.Find(&acr, "id = ?", revisionID.String())
+	if tx.Error != nil {
+		return models.APIContractRevision{}, fmt.Errorf("no contract revision found for id %s: %w", revisionID, tx.Error)
 	}
 
-	if revision, ok := rev.(models.APIContractRevision); ok {
-		return revision, nil
-	}
-
-	return models.APIContractRevision{}, errors.New("unable to convert response to contract revision")
+	return acr, nil
 }

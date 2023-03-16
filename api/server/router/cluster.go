@@ -1046,7 +1046,7 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}//status -> cluster.NewClusterStatusHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/status -> cluster.NewClusterStatusHandler
 	clusterStatusEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,

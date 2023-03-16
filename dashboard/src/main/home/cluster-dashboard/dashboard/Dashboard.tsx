@@ -230,12 +230,12 @@ export const Dashboard: React.FunctionComponent = () => {
     <>
       <DashboardHeader
         image={settings}
-        title={context.currentCluster.name}
+        title={context.currentCluster.vanity_name || context.currentCluster.name}
         description={
           ingressIp ? (
             <>{renderIngressIp(ingressIp, ingressError)}</>
           ) : (
-            `Cluster settings and status for ${context.currentCluster.name}.`
+            `Cluster settings and status for ${context.currentCluster.vanity_name || context.currentCluster.name}.`
           )
         }
         disableLineBreak

@@ -144,7 +144,7 @@ const List = styled.div`
   border-radius: 5px;
   margin-top: 20px;
   border: 1px solid #ffffff44;
-  max-height: 200px;
+  max-height: 120px;
   overflow-y: auto;
 `;
 

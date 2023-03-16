@@ -137,7 +137,7 @@ class Templates extends Component<PropsType, StateType> {
             key={i}
           >
             {this.renderIcon()}
-            <TemplateTitle>{cluster.name}</TemplateTitle>
+            <TemplateTitle>{cluster.vanity_name || cluster.name}</TemplateTitle>
           </TemplateBlock>
         );
       }

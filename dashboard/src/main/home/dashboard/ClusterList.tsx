@@ -27,6 +27,7 @@ const ClusterList: React.FC<Props> = ({}) => {
       { id: currentProject.id },
     )
       .then(({ data }) => {
+        console.log(data);
         setClusters(data);
         setIsLoading(false);
       })
@@ -127,7 +128,7 @@ const ClusterList: React.FC<Props> = ({}) => {
                     }}
                   >
                     {renderIcon()}
-                    {cluster.name}
+                    {cluster.vanity_name || cluster.name}
                     {
                       (
                         cluster.status === "UPDATING" || cluster.status === "UPDATING_UNAVAILABLE"

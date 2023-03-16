@@ -30,8 +30,8 @@ func NewListAWSHandler(
 type ListAWSAssumeRoleLink struct {
 	// ID is the ID of the assume role chain in the db. UUID as a string
 	ID string `json:"id"`
-	// ARN is the target ARN in an assume role chain
-	ARN string `json:"arn"`
+	// ARN is the target ARN in an AWS assume role chain
+	ARN string `json:"aws_arn"`
 	// ProjectID is the projec that this link belongs to
 	ProjectID int `json:"project_id"`
 }

@@ -115,6 +115,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
       data["cluster"]["clusterId"] = props.clusterId;
     }
 
+    console.log(0);
     try {
       const res = await api.createContract(
         "<token>",
@@ -122,8 +123,12 @@ const ProvisionerSettings: React.FC<Props> = props => {
         { project_id: currentProject.id }
       );
 
+      console.log("res is:", res);
+      console.log("cluster id is:", res.data.contract_revision?.cluster_id);
+
       // Only refresh and set clusters on initial create
       if (!props.clusterId) {
+        console.log(1);
         setShouldRefreshClusters(true);
         api.getClusters(
           "<token>",
@@ -131,9 +136,12 @@ const ProvisionerSettings: React.FC<Props> = props => {
           { id: currentProject.id },
         )
           .then(({ data }) => {
+            console.log(2);
             data.forEach((cluster: ClusterType) => {
+              console.log("cluster id:", cluster.id)
               if (cluster.id === res.data.contract_revision?.cluster_id) {
                 // setHasFinishedOnboarding(true);
+                console.log(3);
                 setCurrentCluster(cluster);
                 OFState.actions.goTo("clean_up");
                 pushFiltered(props, "/cluster-dashboard", ["project_id"], {

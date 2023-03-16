@@ -138,7 +138,7 @@ const CredentialsForm: React.FC<Props> = ({
         <StyledForm>
           {
             awsCredentials.length > 0 && (
-              <CloseButton width="172px" onClick={() => setShowCreateForm(false)}>
+              <CloseButton onClick={() => setShowCreateForm(false)}>
                 <i className="material-icons">close</i>
               </CloseButton>
             )

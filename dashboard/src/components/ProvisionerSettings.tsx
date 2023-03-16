@@ -132,7 +132,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
         )
           .then(({ data }) => {
             data.forEach((cluster: ClusterType) => {
-              if (cluster.id === res.data.cluster_id) {
+              if (cluster.id === res.data.contract_revision?.cluster_id) {
                 // setHasFinishedOnboarding(true);
                 setCurrentCluster(cluster);
                 OFState.actions.goTo("clean_up");

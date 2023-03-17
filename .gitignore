@@ -16,6 +16,7 @@ staging.sh
 bin
 openapi.yaml
 .idea
+vendor
 
 # Local docs directories
 /docs/.obsidian

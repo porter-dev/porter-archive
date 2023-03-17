@@ -40,7 +40,8 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	proj := &models.Project{
-		Name: request.Name,
+		Name:                   request.Name,
+		CapiProvisionerEnabled: true,
 	}
 
 	var err error

@@ -1,14 +1,15 @@
 package types
 
 type Project struct {
-	ID                  uint    `json:"id"`
-	Name                string  `json:"name"`
-	Roles               []*Role `json:"roles"`
-	PreviewEnvsEnabled  bool    `json:"preview_envs_enabled"`
-	RDSDatabasesEnabled bool    `json:"enable_rds_databases"`
-	ManagedInfraEnabled bool    `json:"managed_infra_enabled"`
-	APITokensEnabled    bool    `json:"api_tokens_enabled"`
-	StacksEnabled       bool    `json:"stacks_enabled"`
+	ID                     uint    `json:"id"`
+	Name                   string  `json:"name"`
+	Roles                  []*Role `json:"roles"`
+	PreviewEnvsEnabled     bool    `json:"preview_envs_enabled"`
+	RDSDatabasesEnabled    bool    `json:"enable_rds_databases"`
+	ManagedInfraEnabled    bool    `json:"managed_infra_enabled"`
+	APITokensEnabled       bool    `json:"api_tokens_enabled"`
+	StacksEnabled          bool    `json:"stacks_enabled"`
+	CapiProvisionerEnabled bool    `json:"capi_provisioner_enabled"`
 }
 
 type FeatureFlags struct {
@@ -16,6 +17,7 @@ type FeatureFlags struct {
 	ManagedInfraEnabled        string `json:"managed_infra_enabled,omitempty"`
 	StacksEnabled              string `json:"stacks_enabled,omitempty"`
 	ManagedDatabasesEnabled    string `json:"managed_databases_enabled,omitempty"`
+	CapiProvisionerEnabled     string `json:"capi_provisioner_enabled,omitempty"`
 }
 
 type CreateProjectRequest struct {

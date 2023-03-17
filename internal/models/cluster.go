@@ -42,6 +42,9 @@ type Cluster struct {
 	// Name of the cluster
 	Name string `json:"name"`
 
+	// VanityName allows for a display-only name without changing how the cluster looks
+	VanityName string `json:"vanity_name"`
+
 	// Server endpoint for the cluster
 	Server string `json:"server"`
 
@@ -61,6 +64,20 @@ type Cluster struct {
 	PreviewEnvsEnabled bool
 
 	AWSClusterID string
+
+	// Status defines the current status of the cluster. Accepted values: [READY, UPDATING]
+	Status types.ClusterStatus `json:"status"`
+
+	// ProvisionedBy is used for identifing the provisioner used for the cluster. Accepted values: [CAPI, ]
+	ProvisionedBy string `json:"provisioned_by"`
+
+	// CloudProvider is the cloud provider that hosts the Kubernetes Cluster. Accepted values: [AWS, GCP, AZURE]
+	CloudProvider string `json:"cloud_provider"`
+
+	// CloudProviderCredentialIdentifier is a reference to find the credentials required for access the cluster's API.
+	// This was likely the credential that was used to create the cluster.
+	// For AWS EKS clusters, this will be an ARN for the final target role in the assume role chain.
+	CloudProviderCredentialIdentifier string `json:"cloud_provider_credential_identifier"`
 
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage
@@ -100,16 +117,21 @@ func (c *Cluster) ToClusterType() *types.Cluster {
 	}
 
 	return &types.Cluster{
-		ID:                      c.ID,
-		ProjectID:               c.ProjectID,
-		Name:                    c.Name,
-		Server:                  c.Server,
-		Service:                 serv,
-		AgentIntegrationEnabled: c.AgentIntegrationEnabled,
-		InfraID:                 c.InfraID,
-		AWSIntegrationID:        c.AWSIntegrationID,
-		AWSClusterID:            c.AWSClusterID,
-		PreviewEnvsEnabled:      c.PreviewEnvsEnabled,
+		ID:                                c.ID,
+		ProjectID:                         c.ProjectID,
+		Name:                              c.Name,
+		VanityName:                        c.VanityName,
+		Server:                            c.Server,
+		Service:                           serv,
+		AgentIntegrationEnabled:           c.AgentIntegrationEnabled,
+		InfraID:                           c.InfraID,
+		AWSIntegrationID:                  c.AWSIntegrationID,
+		AWSClusterID:                      c.AWSClusterID,
+		PreviewEnvsEnabled:                c.PreviewEnvsEnabled,
+		Status:                            c.Status,
+		ProvisionedBy:                     c.ProvisionedBy,
+		CloudProvider:                     c.CloudProvider,
+		CloudProviderCredentialIdentifier: c.CloudProviderCredentialIdentifier,
 	}
 }
 

@@ -509,10 +509,11 @@ const Placeholder = styled.div`
   align-items: center;
   margin-top: 23px;
   justify-content: center;
-  background: #ffffff11;
-  border-radius: 5px;
-  color: #ffffff44;
   font-size: 13px;
+  color: #aaaabb;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
 `;
 
 const ButtonWrapper = styled.div`

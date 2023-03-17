@@ -76,6 +76,9 @@ type ServerConf struct {
 	ProvisionerServerURL string `env:"PROVISIONER_SERVER_URL"`
 	ProvisionerToken     string `env:"PROVISIONER_TOKEN"`
 
+	// ClusterControlPlane settings
+	ClusterControlPlaneAddress string `env:"CLUSTER_CONTROL_PLANE_ADDRESS"`
+
 	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`
 
 	// PowerDNS client API key and the host of the PowerDNS API server
@@ -119,6 +122,12 @@ type ServerConf struct {
 	// create a temporary kubeconfig file for a cluster. When set to true, the
 	// /api/projects/{project_id}/clusters/{cluster_id}/kubeconfig will be disabled.
 	DisableTemporaryKubeconfig bool `env:"DISABLE_TEMPORARY_KUBECONFIG,default=false"`
+
+	// NATSUrl is the URL of the NATS cluster
+	NATSUrl string `env:"NATS_URL"`
+
+	// DisableCAPIProvisioner disables checks for ClusterControlPlaneClient and NATS, if set to true
+	DisableCAPIProvisioner bool `env:"DISABLE_CAPI_PROVISIONER"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

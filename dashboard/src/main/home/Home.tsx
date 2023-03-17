@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 import styled from "styled-components";
 
@@ -45,67 +45,78 @@ const GuardedIntegrations = fakeGuardedRoute("integrations", "", [
   "delete",
 ])(Integrations);
 
-type PropsType = RouteComponentProps &
-  WithAuthProps & {
-    logOut: () => void;
-    currentProject: ProjectType;
-    currentCluster: ClusterType;
-    currentRoute: PorterUrl;
-  };
-
-type StateType = {
-  forceSidebar: boolean;
-  showWelcome: boolean;
-  handleDO: boolean; // Trigger DO infra calls after oauth flow if needed
-  ghRedirect: boolean;
-  forceRefreshClusters: boolean; // For updating ClusterSection from modal on deletion
-
-  // Track last project id for refreshing clusters on project change
-  prevProjectId: number | null;
-  showWelcomeForm: boolean;
+type Props = RouteComponentProps & WithAuthProps & {
+  logOut: () => void;
+  currentProject: ProjectType;
+  currentCluster: ClusterType;
+  currentRoute: PorterUrl;
 };
 
-// TODO: Handle cluster connected but with some failed infras (no successful set)
-// TODO: Set up current view / sidebar tab as dynamic Routes
-class Home extends Component<PropsType, StateType> {
-  state = {
-    forceSidebar: true,
-    showWelcome: false,
-    prevProjectId: null as number | null,
-    forceRefreshClusters: false,
-    sidebarReady: false,
-    handleDO: false,
-    ghRedirect: false,
-    showWelcomeForm: true,
+const Home: React.FC<Props> = props => {
+  const {
+    user,
+    projects,
+    currentCluster,
+    currentProject,
+    currentModal,
+    currentOverlay,
+    hasFinishedOnboarding,
+    shouldRefreshClusters,
+    setProjects,
+    setCurrentProject,
+    setCapabilities,
+    setCanCreateProject,
+    setHasFinishedOnboarding,
+    setCurrentError,
+    setCurrentModal,
+    setHasBillingEnabled,
+    setUsage,
+    setShouldRefreshClusters,
+  } = useContext(Context);
+
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [prevProjectId, setPrevProjectId] = useState<number | null>(null);
+  const [forceRefreshClusters, setForceRefreshClusters] = useState(false);
+  const [sidebarReady, setSidebarReady] = useState(false);
+  const [handleDO, setHandleDO] = useState(false);
+  const [ghRedirect, setGhRedirect] = useState(false);
+  const [showWelcomeForm, setShowWelcomeForm] = useState(true);
+  const [forceSidebar, setForceSidebar] = useState(true);
+
+  const redirectToNewProject = () => {
+    pushFiltered(props, "/new-project", ["project_id"]);
   };
 
-  getMetadata = () => {
+  const redirectToOnboarding = () => {
+    pushFiltered(props, "/onboarding", []);
+  };
+
+  const getMetadata = () => {
     api
       .getMetadata("<token>", {}, {})
-      .then((res) => {
-        this.context.setCapabilities(res.data);
+      .then(res => {
+        setCapabilities(res.data);
       })
       .catch((err) => {
         console.log(err);
       });
   };
 
-  getProjects = (id?: number) => {
-    let { user, setProjects, setCurrentProject } = this.context;
-    let { currentProject } = this.props;
+  const getProjects = (id?: number) => {
+    let { currentProject } = props;
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
     let projectId = urlParams.get("project_id");
     if (!projectId && currentProject?.id) {
-      pushQueryParams(this.props, { project_id: currentProject.id.toString() });
+      pushQueryParams(props, { project_id: currentProject.id.toString() });
     }
 
     api
       .getProjects("<token>", {}, { id: user.userId })
-      .then((res) => {
+      .then(res => {
         if (res.data) {
           if (res.data.length === 0) {
-            this.redirectToNewProject();
+            redirectToNewProject();
           } else if (res.data.length > 0 && !currentProject) {
             setProjects(res.data);
 
@@ -135,28 +146,47 @@ class Home extends Component<PropsType, StateType> {
       .catch(console.log);
   };
 
-  checkIfCanCreateProject = () => {
+  const checkIfCanCreateProject = () => {
     api
       .getCanCreateProject("<token>", {}, {})
       .then((res) => {
         if (res.status === 403) {
-          this.context.setCanCreateProject(false);
+          setCanCreateProject(false);
           return;
         }
-        this.context.setCanCreateProject(true);
+        setCanCreateProject(true);
       })
       .catch((err) => {
-        this.context.setCanCreateProject(false);
+        setCanCreateProject(false);
         console.error(err);
       });
   };
 
-  componentDidMount() {
-    this.checkOnboarding();
-    this.checkIfCanCreateProject();
-    let { match } = this.props;
+  const checkOnboarding = async () => {
+    try {
+      const project_id = currentProject?.id;
+      if (!project_id) {
+        return;
+      }
+      const res = await api.getOnboardingState("<token>", {}, { project_id });
 
-    let { user } = this.context;
+      if (res.status === 404) {
+        setHasFinishedOnboarding(true);
+        return;
+      }
+
+      if (res?.data && res?.data.current_step !== "clean_up") {
+        setHasFinishedOnboarding(false);
+      } else {
+        setHasFinishedOnboarding(true);
+      }
+    } catch (error) {}
+  }
+
+  useEffect(() => {
+    checkOnboarding();
+    checkIfCanCreateProject();
+    let { match } = props;
 
     // Handle redirect from DO
     let queryString = window.location.search;
@@ -164,30 +194,38 @@ class Home extends Component<PropsType, StateType> {
 
     let err = urlParams.get("error");
     if (err) {
-      this.context.setCurrentError(err);
+      setCurrentError(err);
     }
 
     let defaultProjectId = parseInt(urlParams.get("project_id"));
 
-    this.setState({ ghRedirect: urlParams.get("gh_oauth") !== null });
+    setGhRedirect(urlParams.get("gh_oauth") !== null);
     urlParams.delete("gh_oauth");
-    this.getProjects(defaultProjectId);
-    this.getMetadata();
+    getProjects(defaultProjectId);
+    getMetadata();
 
     if (
-      !this.context.hasFinishedOnboarding &&
-      this.props.history.location.pathname &&
-      !this.props.history.location.pathname.includes("onboarding")
+      !hasFinishedOnboarding &&
+      props.history.location.pathname &&
+      !props.history.location.pathname.includes("onboarding")
     ) {
-      this.context.setCurrentModal("RedirectToOnboardingModal");
+      setCurrentModal("RedirectToOnboardingModal");
     }
-  }
 
-  componentWillUnmount(): void {
-    this.context.setCanCreateProject(false);
-  }
+    return () => {
+      setCanCreateProject(false);
+    }
+  }, []);
 
-  async checkIfProjectHasBilling(projectId: number) {
+  // Hacky legacy shim for remote cluster refresh until Context is properly split
+  useEffect(() => {
+    if (shouldRefreshClusters) {
+      setForceRefreshClusters(true);
+      setShouldRefreshClusters(false);
+    }
+  }, [shouldRefreshClusters]);
+
+  const checkIfProjectHasBilling = async (projectId: number) => {
     if (!projectId) {
       return false;
     }
@@ -197,117 +235,96 @@ class Home extends Component<PropsType, StateType> {
         {},
         { project_id: projectId }
       );
-      this.context.setHasBillingEnabled(res.data?.has_billing);
+      setHasBillingEnabled(res.data?.has_billing);
       return res?.data?.has_billing;
     } catch (error) {
       console.log(error);
     }
   }
 
-  async checkOnboarding() {
-    try {
-      const project_id = this.context?.currentProject?.id;
-      if (!project_id) {
-        return;
-      }
-      const res = await api.getOnboardingState("<token>", {}, { project_id });
+  useEffect(() => {
+    getMetadata();
+    checkOnboarding();
+    if (!process.env.DISABLE_BILLING) {
+      checkIfProjectHasBilling(currentProject?.id)
+        .then((isBillingEnabled) => {
+          if (isBillingEnabled) {
+            api
+              .getUsage(
+                "<token>",
+                {},
+                { project_id: currentProject?.id }
+              )
+              .then((res) => {
+                const usage = res.data;
+                setUsage(usage);
+                if (usage.exceeded) {
+                  setCurrentModal("UsageWarningModal", { usage });
+                }
+              })
+              .catch(console.log);
+          }
+        })
+        .catch(console.log);
+    }
+  }, [props.currentProject?.id])
 
-      if (res.status === 404) {
-        this.context.setHasFinishedOnboarding(true);
-        return;
-      }
-
-      if (res?.data && res?.data.current_step !== "clean_up") {
-        this.context.setHasFinishedOnboarding(false);
-      } else {
-        this.context.setHasFinishedOnboarding(true);
-      }
-    } catch (error) {}
-  }
-
-  // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
-  // 1. Make sure clicking cluster in drawer shows cluster-dashboard
-  // 2. Make sure switching projects shows appropriate initial view (dashboard || provisioner)
-  // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
-  componentDidUpdate(prevProps: PropsType) {
+  useEffect(() => {
     if (
-      !this.context.hasFinishedOnboarding &&
-      prevProps.match.url !== this.props.match.url &&
-      this.props.history.location.pathname &&
-      !this.props.history.location.pathname.includes("onboarding") &&
-      !this.props.history.location.pathname.includes("new-project") &&
-      !this.props.history.location.pathname.includes("project-settings")
+      !hasFinishedOnboarding &&
+      props.history.location.pathname &&
+      !props.history.location.pathname.includes("onboarding") &&
+      !props.history.location.pathname.includes("new-project") &&
+      !props.history.location.pathname.includes("project-settings")
     ) {
-      this.context.setCurrentModal("RedirectToOnboardingModal");
+      setCurrentModal("RedirectToOnboardingModal");
+    }
+  }, [props.match.url]);
+
+  const prevCurrentCluster: any = useRef();
+  useEffect(() => {
+    if (!prevCurrentCluster.current && props.currentCluster) {
+      getMetadata();
     }
 
-    if (prevProps.currentProject?.id !== this.props.currentProject?.id) {
-      this.checkOnboarding();
+    // Store previous value (legacy retrofit)
+    prevCurrentCluster.current = props.currentCluster;
+  }, [props.currentCluster]);
 
-      if (!process.env.DISABLE_BILLING) {
-        this.checkIfProjectHasBilling(this?.context?.currentProject?.id)
-          .then((isBillingEnabled) => {
-            if (isBillingEnabled) {
-              api
-                .getUsage(
-                  "<token>",
-                  {},
-                  { project_id: this.context?.currentProject?.id }
-                )
-                .then((res) => {
-                  const usage = res.data;
-                  this.context.setUsage(usage);
-                  if (usage.exceeded) {
-                    this.context.setCurrentModal("UsageWarningModal", {
-                      usage,
-                    });
-                  }
-                })
-                .catch(console.log);
-            }
-          })
-          .catch(console.log);
-      }
-    }
-
-    if (
-      prevProps.currentProject !== this.props.currentProject ||
-      (!prevProps.currentCluster && this.props.currentCluster)
-    ) {
-      this.getMetadata();
-    }
-  }
-
-  projectOverlayCall = async () => {
-    let { user, setProjects, setCurrentProject } = this.context;
+  const projectOverlayCall = async () => {
     try {
-      const res = await api.getProjects("<token>", {}, { id: user.userId });
+      const res = await api.getProjects(
+        "<token>",
+        {},
+        { id: user.userId }
+      );
       if (!res.data) {
-        this.context.setCurrentModal(null, null);
+        setCurrentModal(null, null);
         return;
       }
 
       setProjects(res.data);
       if (!res.data.length) {
-        setCurrentProject(null, () => this.redirectToNewProject());
+        setCurrentProject(null, () => redirectToNewProject());
       } else {
         setCurrentProject(res.data[0]);
       }
-      this.context.setCurrentModal(null, null);
+      setCurrentModal(null, null);
     } catch (error) {
-      /** @todo Centralize with error handler */
       console.log(error);
     }
   };
 
-  handleDelete = async () => {
-    let { setCurrentModal, currentProject } = this.context;
+  const handleDelete = async () => {
     localStorage.removeItem(currentProject.id + "-cluster");
     try {
-      await api.deleteProject("<token>", {}, { id: currentProject?.id });
-      this.projectOverlayCall();
+      await api.deleteProject(
+        "<token>",
+        {},
+        { id: currentProject?.id }
+      );
+      projectOverlayCall();
     } catch (error) {
-      /** @todo Centralize with error handler */
       console.log(error);
     }
 
@@ -336,188 +353,141 @@ class Home extends Component<PropsType, StateType> {
       console.log(error);
     }
     setCurrentModal(null, null);
-    pushFiltered(this.props, "/dashboard", []);
+    pushFiltered(props, "/dashboard", []);
   };
 
-  redirectToNewProject = () => {
-    pushFiltered(this.props, "/new-project", ["project_id"]);
-  };
-
-  redirectToOnboarding = () => {
-    pushFiltered(this.props, "/onboarding", []);
-  };
-
-  render() {
-    let {
-      currentModal,
-      setCurrentModal,
-      currentProject,
-      currentOverlay,
-      projects,
-    } = this.context;
-
-    const { cluster, baseRoute } = this.props.match.params as any;
-    return (
-      <StyledHome>
-        <ModalHandler
-          setRefreshClusters={(x) => this.setState({ forceRefreshClusters: x })}
-        />
-        {currentOverlay && (
-          <ConfirmOverlay
-            show={true}
-            message={currentOverlay.message}
-            onYes={currentOverlay.onYes}
-            onNo={currentOverlay.onNo}
-          />
-        )}
-
-        {/* Render sidebar when there's at least one project */}
-        {projects?.length > 0 && baseRoute !== "new-project" ? (
-          <Sidebar
-            key="sidebar"
-            forceSidebar={this.state.forceSidebar}
-            setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
-            currentView={this.props.currentRoute}
-            forceRefreshClusters={this.state.forceRefreshClusters}
-            setRefreshClusters={(x: boolean) =>
-              this.setState({ forceRefreshClusters: x })
-            }
-          />
-        ) : (
-          <>
-            <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
-              <Icon src={discordLogo} />
-              Join Our Discord
-            </DiscordButton>
-            {/* This should only be shown on the first render of the app */}
-            {/* this.state.showWelcomeForm &&
-              localStorage.getItem("welcomed") != "true" &&
-              projects?.length === 0 && (
-                <>
-                  <WelcomeForm
-                    closeForm={() => this.setState({ showWelcomeForm: false })}
-                  />
-                  <Navbar
-                    logOut={this.props.logOut}
-                    currentView={this.props.currentRoute} // For form feedback
-                  />
-                </>
-              ) */}
-          </>
-        )}
-
-        <ViewWrapper id="HomeViewWrapper">
-          <Navbar
-            logOut={this.props.logOut}
-            currentView={this.props.currentRoute} // For form feedback
-          />
-
-          <Switch>
-            <Route
-              path="/new-project"
-              render={() => {
-                return <NewProjectFC />;
-              }}
-            ></Route>
-            <Route
-              path="/onboarding"
-              render={() => {
-                return <Onboarding />;
-              }}
-            />
-            {this.context?.user?.isPorterUser ||
-            overrideInfraTabEnabled({
-              projectID: this.context?.currentProject?.id,
-            }) ? (
-              <Route
-                path="/infrastructure"
-                render={() => {
-                  return (
-                    <DashboardWrapper>
-                      <InfrastructureRouter />
-                    </DashboardWrapper>
-                  );
-                }}
-              />
-            ) : null}
-            <Route
-              path="/dashboard"
-              render={() => {
-                return (
-                  <DashboardWrapper>
-                    <Dashboard
-                      projectId={this.context.currentProject?.id}
-                      setRefreshClusters={(x: boolean) =>
-                        this.setState({ forceRefreshClusters: x })
-                      }
-                    />
-                  </DashboardWrapper>
-                );
-              }}
-            />
-            <Route
-              path={[
-                "/cluster-dashboard",
-                "/applications",
-                "/jobs",
-                "/env-groups",
-                "/databases",
-                "/preview-environments",
-                "/stacks",
-              ]}
-              render={() => {
-                let { currentCluster } = this.context;
-                if (currentCluster?.id === -1) {
-                  return <Loading />;
-                } else if (!currentCluster || !currentCluster.name) {
-                  return (
-                    <DashboardWrapper>
-                      <PageNotFound />
-                    </DashboardWrapper>
-                  );
-                }
-                return (
-                  <DashboardWrapper>
-                    <ClusterDashboard
-                      currentCluster={currentCluster}
-                      setSidebar={(x: boolean) =>
-                        this.setState({ forceSidebar: x })
-                      }
-                      currentView={this.props.currentRoute}
-                      // setCurrentView={(x: string) => this.setState({ currentView: x })}
-                    />
-                  </DashboardWrapper>
-                );
-              }}
-            />
-            <Route
-              path={"/integrations"}
-              render={() => <GuardedIntegrations />}
-            />
-            <Route
-              path={"/project-settings"}
-              render={() => <GuardedProjectSettings />}
-            />
-            <Route path={"*"} render={() => <LaunchWrapper />} />
-          </Switch>
-        </ViewWrapper>
-
+  const { cluster, baseRoute } = props.match.params as any;
+  return (
+    <StyledHome>
+      <ModalHandler setRefreshClusters={setForceRefreshClusters} />
+      {currentOverlay && (
         <ConfirmOverlay
-          show={currentModal === "UpdateProjectModal"}
-          message={
-            currentProject
-              ? `Are you sure you want to delete ${currentProject.name}?`
-              : ""
-          }
-          onYes={this.handleDelete}
-          onNo={() => setCurrentModal(null, null)}
+          show={true}
+          message={currentOverlay.message}
+          onYes={currentOverlay.onYes}
+          onNo={currentOverlay.onNo}
         />
-      </StyledHome>
-    );
-  }
-}
+      )}
 
-Home.contextType = Context;
+      {/* Render sidebar when there's at least one project */}
+      {projects?.length > 0 && baseRoute !== "new-project" ? (
+        <Sidebar
+          key="sidebar"
+          forceSidebar={forceSidebar}
+          setWelcome={setShowWelcome}
+          currentView={props.currentRoute}
+          forceRefreshClusters={forceRefreshClusters}
+          setRefreshClusters={setForceRefreshClusters}
+        />
+      ) : (
+        <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
+          <Icon src={discordLogo} />
+          Join Our Discord
+        </DiscordButton>
+      )}
+
+      <ViewWrapper id="HomeViewWrapper">
+        <Navbar
+          logOut={props.logOut}
+          currentView={props.currentRoute} // For form feedback
+        />
+
+        <Switch>
+          <Route
+            path="/new-project"
+            render={() => {
+              return <NewProjectFC />;
+            }}
+          ></Route>
+          <Route
+            path="/onboarding"
+            render={() => {
+              return <Onboarding />;
+            }}
+          />
+          {user?.isPorterUser || overrideInfraTabEnabled({
+            projectID: currentProject?.id,
+          }) ? (
+            <Route
+              path="/infrastructure"
+              render={() => {
+                return (
+                  <DashboardWrapper>
+                    <InfrastructureRouter />
+                  </DashboardWrapper>
+                );
+              }}
+            />
+          ) : null}
+          <Route
+            path="/dashboard"
+            render={() => {
+              return (
+                <DashboardWrapper>
+                  <Dashboard
+                    projectId={currentProject?.id}
+                    setRefreshClusters={setForceRefreshClusters}
+                  />
+                </DashboardWrapper>
+              );
+            }}
+          />
+          <Route
+            path={[
+              "/cluster-dashboard",
+              "/applications",
+              "/jobs",
+              "/env-groups",
+              "/databases",
+              "/preview-environments",
+              "/stacks",
+            ]}
+            render={() => {
+              if (currentCluster?.id === -1) {
+                return <Loading />;
+              } else if (!currentCluster || !currentCluster.name) {
+                return (
+                  <DashboardWrapper>
+                    <PageNotFound />
+                  </DashboardWrapper>
+                );
+              }
+              return (
+                <DashboardWrapper>
+                  <ClusterDashboard
+                    currentCluster={currentCluster}
+                    setSidebar={setForceSidebar}
+                    currentView={props.currentRoute}
+                  />
+                </DashboardWrapper>
+              );
+            }}
+          />
+          <Route
+            path={"/integrations"}
+            render={() => <GuardedIntegrations />}
+          />
+          <Route
+            path={"/project-settings"}
+            render={() => <GuardedProjectSettings />}
+          />
+          <Route path={"*"} render={() => <LaunchWrapper />} />
+        </Switch>
+      </ViewWrapper>
+
+      <ConfirmOverlay
+        show={currentModal === "UpdateProjectModal"}
+        message={
+          currentProject
+            ? `Are you sure you want to delete ${currentProject.name}?`
+            : ""
+        }
+        onYes={handleDelete}
+        onNo={() => setCurrentModal(null, null)}
+      />
+    </StyledHome>
+  );
+}
 
 export default withRouter(withAuth(Home));
 

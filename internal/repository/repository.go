@@ -43,4 +43,6 @@ type Repository interface {
 	Tag() TagRepository
 	Stack() StackRepository
 	MonitorTestResult() MonitorTestResultRepository
+	APIContractRevisioner() APIContractRevisioner
+	AWSAssumeRoleChainer() AWSAssumeRoleChainer
 }

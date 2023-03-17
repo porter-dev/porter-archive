@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
@@ -37,12 +38,10 @@ func main() {
 	}
 
 	err = gorm.AutoMigrate(db, envConf.ServerConf.Debug)
-
 	if err != nil {
 		logger.Fatal().Err(err).Msg("gorm auto-migration failed")
 		return
 	}
-
 	if err := db.Raw("ALTER TABLE clusters DROP CONSTRAINT IF EXISTS fk_cluster_token_caches").Error; err != nil {
 		logger.Fatal().Err(err).Msg("failed to drop cluster token cache constraint")
 		return
@@ -50,6 +49,23 @@ func main() {
 	if err := db.Raw("ALTER TABLE cluster_token_caches DROP CONSTRAINT IF EXISTS fk_clusters_token_cache").Error; err != nil {
 		logger.Fatal().Err(err).Msg("failed to drop clusters token cache constraint")
 		return
+	}
+
+	err = db.Transaction(func(tx *pgorm.DB) error {
+		if err := db.Exec("alter table aws_assume_role_chains DROP CONSTRAINT IF EXISTS fk_projects;").Error; err != nil {
+			return fmt.Errorf("failed to drop fk constraint for assume role chains: %w", err)
+		}
+		if err := db.Exec("alter table aws_assume_role_chains ADD CONSTRAINT fk_projects FOREIGN KEY(project_id) REFERENCES projects(id);").Error; err != nil {
+			return fmt.Errorf("failed to create fk constraint for assume role chains: %w", err)
+		}
+
+		if err := db.Exec("alter table aws_assume_role_chains ADD unique (project_id, source_arn, target_arn);").Error; err != nil {
+			return fmt.Errorf("failed to create unique constraint for assume role chains: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		logger.Fatal().Err(err).Msg("error updating cluster control plane tables")
 	}
 
 	tx := db.Begin()

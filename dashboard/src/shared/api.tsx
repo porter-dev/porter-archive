@@ -7,6 +7,7 @@ import {
   CreateStackBody,
   SourceConfig,
 } from "main/home/cluster-dashboard/stacks/types";
+import { Contract } from "@porter-dev/api-contracts";
 
 /**
  * Generic api call format
@@ -748,6 +749,16 @@ const getCluster = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
 
+const getClusterStatus = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/status`;
+});
+
 const getClusterNodes = baseApi<
   {},
   {
@@ -854,6 +865,61 @@ const getInfraTemplate = baseApi<
   return `/api/projects/${project_id}/infras/templates/${name}/${version}`;
 });
 
+const provisionCluster = baseApi<
+  {
+    project_id: number,
+    cluster_id?: number,
+    cloud_provider: string,
+    cloud_provider_credentials_id: string,
+    cluster_settings: {
+      cluster_name: string,
+      cluster_version: string,
+      cidr_range: string,
+      region: string,
+      node_groups: [
+        {
+          instance_type: string,
+          min_instances: number,
+          max_instances: number,
+          node_group_type: number
+        },
+        {
+          instance_type: string,
+          min_instances: number,
+          max_instances: number,
+          node_group_type: number
+        }
+      ]
+    }
+  },
+  {
+    project_id: number;
+  }
+>("POST", ({ project_id }) => {
+  return `/api/projects/${project_id}/provision/cluster`;
+});
+
+const createContract = baseApi<
+  Contract,
+  { project_id: number }
+>("POST", ({ project_id }) => {
+  return `/api/projects/${project_id}/contract`;
+});
+
+const getContracts = baseApi<
+  { cluster_id?: number },
+  { project_id: number }
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/contracts`;
+});
+
+const deleteContract = baseApi<
+  {},
+  { project_id: number, revision_id: string }
+>("DELETE", ({ project_id, revision_id }) => {
+  return `/api/projects/${project_id}/contracts/${revision_id}`;
+});
+
 const provisionInfra = baseApi<
   {
     kind: string;
@@ -872,9 +938,7 @@ const provisionInfra = baseApi<
 });
 
 const updateInfra = baseApi<
-  {
-    values?: any;
-  },
+  { values?: any },
   {
     project_id: number;
     infra_id: number;
@@ -901,9 +965,7 @@ const retryCreateInfra = baseApi<
 });
 
 const retryDeleteInfra = baseApi<
-  {
-    values?: any;
-  },
+  { values?: any },
   {
     project_id: number;
     infra_id: number;
@@ -2379,6 +2441,7 @@ export default {
   getCluster,
   getClusterNodes,
   getClusterNode,
+  getClusterStatus,
   getConfigMap,
   getPRDeploymentList,
   getPRDeploymentByID,
@@ -2392,6 +2455,7 @@ export default {
   listInfraTemplates,
   getInfraTemplate,
   getInfra,
+  provisionCluster,
   provisionInfra,
   deleteInfra,
   updateInfra,
@@ -2510,6 +2574,9 @@ export default {
   listIncidents,
   getIncident,
   getIncidentEvents,
+  createContract,
+  getContracts,
+  deleteContract,
   // STACKS
   listStacks,
   getStack,

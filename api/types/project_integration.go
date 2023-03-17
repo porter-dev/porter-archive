@@ -85,6 +85,7 @@ type CreateAWSRequest struct {
 
 type CreateAWSResponse struct {
 	*AWSIntegration
+	CloudProviderCredentialIdentifier string `json:"cloud_provider_credentials_id"`
 }
 
 type OverwriteAWSRequest struct {

@@ -58,11 +58,12 @@ type Project struct {
 	AzureIntegrations  []ints.AzureIntegration  `json:"azure_integrations"`
 	GitlabIntegrations []ints.GitlabIntegration `json:"gitlab_integrations"`
 
-	PreviewEnvsEnabled  bool
-	RDSDatabasesEnabled bool
-	ManagedInfraEnabled bool
-	StacksEnabled       bool
-	APITokensEnabled    bool
+	PreviewEnvsEnabled     bool
+	RDSDatabasesEnabled    bool
+	ManagedInfraEnabled    bool
+	StacksEnabled          bool
+	APITokensEnabled       bool
+	CapiProvisionerEnabled bool
 }
 
 // ToProjectType generates an external types.Project to be shared over REST
@@ -74,13 +75,14 @@ func (p *Project) ToProjectType() *types.Project {
 	}
 
 	return &types.Project{
-		ID:                  p.ID,
-		Name:                p.Name,
-		Roles:               roles,
-		PreviewEnvsEnabled:  p.PreviewEnvsEnabled,
-		RDSDatabasesEnabled: p.RDSDatabasesEnabled,
-		ManagedInfraEnabled: p.ManagedInfraEnabled,
-		StacksEnabled:       p.StacksEnabled,
-		APITokensEnabled:    p.APITokensEnabled,
+		ID:                     p.ID,
+		Name:                   p.Name,
+		Roles:                  roles,
+		PreviewEnvsEnabled:     p.PreviewEnvsEnabled,
+		RDSDatabasesEnabled:    p.RDSDatabasesEnabled,
+		ManagedInfraEnabled:    p.ManagedInfraEnabled,
+		StacksEnabled:          p.StacksEnabled,
+		APITokensEnabled:       p.APITokensEnabled,
+		CapiProvisionerEnabled: p.CapiProvisionerEnabled,
 	}
 }

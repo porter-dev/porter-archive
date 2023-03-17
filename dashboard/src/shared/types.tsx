@@ -3,6 +3,7 @@ import ValuesYaml from "main/home/cluster-dashboard/expanded-chart/ValuesYaml";
 export interface ClusterType {
   id: number;
   name: string;
+  vanity_name?: string;
   server: string;
   service_account_id: number;
   agent_integration_enabled: boolean;
@@ -11,6 +12,8 @@ export interface ClusterType {
   aws_integration_id?: number;
   aws_cluster_id?: string;
   preview_envs_enabled?: boolean;
+  cloud_provider_credential_identifier?: string;
+  status?: string;
 }
 
 export interface DetailedClusterType extends ClusterType {
@@ -261,6 +264,7 @@ export interface ProjectType {
   preview_envs_enabled: boolean;
   enable_rds_databases: boolean;
   managed_infra_enabled: boolean;
+  capi_provisioner_enabled: boolean;
   api_tokens_enabled: boolean;
   stacks_enabled: boolean;
   roles: {
@@ -370,6 +374,8 @@ export interface ContextProps {
   setCanCreateProject: (canCreateProject: boolean) => void;
   enableGitlab: boolean;
   setEnableGitlab: (enableGitlab: boolean) => void;
+  shouldRefreshClusters: boolean;
+  setShouldRefreshClusters: (shouldRefreshClusters: boolean) => void;
 }
 
 export enum JobStatusType {

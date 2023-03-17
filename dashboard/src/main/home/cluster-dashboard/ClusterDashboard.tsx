@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
+import loading from "assets/loading.gif";
 import { Route, Switch } from "react-router-dom";
 
 import { Context } from "shared/Context";
@@ -31,6 +32,7 @@ import Loading from "components/Loading";
 import JobRunTable from "./chart/JobRunTable";
 import TagFilter from "./TagFilter";
 import ExpandedEnvGroupDashboard from "./env-groups/ExpandedEnvGroupDashboard";
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 
 // @ts-ignore
 const LazyDatabasesRoutes = loadable(() => import("./databases/routes.tsx"), {
@@ -186,6 +188,10 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       ["get", "create"]
     );
 
+    if (currentCluster.status === "UPDATING_UNAVAILABLE") {
+      return <ClusterProvisioningPlaceholder />
+    }
+
     return (
       <>
         <ControlRow>
@@ -228,9 +234,13 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       ["get", "create"]
     );
 
+    if (currentCluster.status === "UPDATING_UNAVAILABLE") {
+      return <ClusterProvisioningPlaceholder />
+    }
+
     return (
       <>
-        <ControlRow style={{ marginTop: "35px" }}>
+        <ControlRow>
           <FilterWrapper>
             <LastRunStatusSelector
               lastRunStatus={this.state.lastRunStatus}

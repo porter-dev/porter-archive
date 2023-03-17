@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-chi/chi"
+	apiContract "github.com/porter-dev/porter/api/server/handlers/api_contract"
 	"github.com/porter-dev/porter/api/server/handlers/api_token"
 	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
@@ -1258,6 +1259,90 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: createTagEndpoint,
 		Handler:  createTagHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/contract -> apiContract.NewAPIContractUpdateHandler
+	updateAPIContractEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/contract",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	updateAPIContractHandler := apiContract.NewAPIContractUpdateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateAPIContractEndpoint,
+		Handler:  updateAPIContractHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/contracts -> apiContract.NewAPIContractRevisionListHandler
+	listAPIContractRevisionsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/contracts",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listAPIContractRevisionHandler := apiContract.NewAPIContractRevisionListHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+	routes = append(routes, &router.Route{
+		Endpoint: listAPIContractRevisionsEndpoint,
+		Handler:  listAPIContractRevisionHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/contracts/{revision_id} -> apiContract.NewAPIContractUpdateHandler
+	deleteAPIContractRevisionsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/contracts/{%s}", relPath, types.URLParamAPIContractRevisionID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.APIContractRevisionScope,
+			},
+		},
+	)
+
+	deleteAPIContractRevisionHandler := apiContract.NewAPIContractRevisionDeleteHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteAPIContractRevisionsEndpoint,
+		Handler:  deleteAPIContractRevisionHandler,
 		Router:   r,
 	})
 

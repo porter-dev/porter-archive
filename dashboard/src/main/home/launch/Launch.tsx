@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { ChartTypeWithExtendedConfig, PorterTemplate } from "shared/types";
+import { ChartTypeWithExtendedConfig, PorterTemplate, ClusterType } from "shared/types";
 
 import TabSelector from "components/TabSelector";
 import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
@@ -11,12 +11,14 @@ import Loading from "components/Loading";
 import LaunchFlow from "./launch-flow/LaunchFlow";
 import NoClusterPlaceholder from "../NoClusterPlaceholder";
 import TitleSection from "components/TitleSection";
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 
 import semver from "semver";
 import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, getQueryParams } from "shared/routing";
 import TemplateList from "./TemplateList";
 import { capitalize } from "lodash";
+import Spacer from "components/porter/Spacer";
 
 const initialTabOptions = [
   { label: "New application", value: "porter" },
@@ -43,6 +45,7 @@ type StateType = {
   isOnLaunchFlow: boolean;
   clonedChart: ChartTypeWithExtendedConfig;
   tabOptions: TabOption[];
+  readyClusterStatus: string;
 };
 class Templates extends Component<PropsType, StateType> {
   private previousContext: any;
@@ -58,6 +61,7 @@ class Templates extends Component<PropsType, StateType> {
     isOnLaunchFlow: false,
     clonedChart: null as ChartTypeWithExtendedConfig,
     tabOptions: initialTabOptions,
+    readyClusterStatus: "checking",
   };
 
   componentDidMount() {
@@ -81,6 +85,32 @@ class Templates extends Component<PropsType, StateType> {
     if (!this.context.currentProject) {
       return;
     }
+
+    // Block launch tab on initial provisioning
+    api.getClusters(
+      "<token>",
+      {},
+      { id: this.context.currentProject.id },
+    )
+      .then(({ data }) => {
+        let numUnavailable = 0;
+        data.forEach((cluster: ClusterType) => {
+          if (cluster.status === "UPDATING_UNAVAILABLE") {
+            numUnavailable += 1;
+          }
+        });
+
+        if (data.length === 0) {
+          this.setState({ readyClusterStatus: "onboarding" });
+        } else if (numUnavailable === data.length) {
+          this.setState({ readyClusterStatus: "none-ready" });
+        } else {
+          this.setState({ readyClusterStatus: "has-ready" });
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      });
 
     let default_addon_helm_repo_url = this.context?.capabilities
       ?.default_addon_helm_repo_url;
@@ -336,7 +366,16 @@ class Templates extends Component<PropsType, StateType> {
   };
 
   renderContents = () => {
-    if (this.context.currentCluster) {
+    if (this.state.readyClusterStatus === "checking") {
+      return <Loading height="300px" />;
+    } else if (this.state.readyClusterStatus === "none-ready") {
+      return (
+        <>
+          <Br />
+          <ClusterProvisioningPlaceholder />
+        </>
+      )
+    } else if (this.context.currentCluster) {
       return (
         <>
           <TabSelector
@@ -353,7 +392,7 @@ class Templates extends Component<PropsType, StateType> {
         </>
       );
     } else if (this.context.currentCluster?.id === -1) {
-      return <Loading />;
+      return <Loading height="300px" />;
     } else if (!this.context.currentCluster) {
       return (
         <>
@@ -383,6 +422,7 @@ class Templates extends Component<PropsType, StateType> {
               <i className="material-icons">help_outline</i>
             </a>
           </TitleSection>
+          <Spacer height="20px" />
           {this.renderContents()}
         </TemplatesWrapper>
       );
@@ -404,6 +444,11 @@ class Templates extends Component<PropsType, StateType> {
 Templates.contextType = Context;
 
 export default withRouter(Templates);
+
+const Br = styled.div`
+  width: 100%;
+  height: 10px;
+`;
 
 const Placeholder = styled.div`
   padding-top: 200px;

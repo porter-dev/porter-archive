@@ -33,20 +33,21 @@ const (
 type URLParam string
 
 const (
-	URLParamProjectID         URLParam = "project_id"
-	URLParamClusterID         URLParam = "cluster_id"
-	URLParamRegistryID        URLParam = "registry_id"
-	URLParamHelmRepoID        URLParam = "helm_repo_id"
-	URLParamGitInstallationID URLParam = "git_installation_id"
-	URLParamInfraID           URLParam = "infra_id"
-	URLParamOperationID       URLParam = "operation_id"
-	URLParamInviteID          URLParam = "invite_id"
-	URLParamNamespace         URLParam = "namespace"
-	URLParamReleaseName       URLParam = "name"
-	URLParamStackID           URLParam = "stack_id"
-	URLParamReleaseVersion    URLParam = "version"
-	URLParamWildcard          URLParam = "*"
-	URLParamIntegrationID     URLParam = "integration_id"
+	URLParamProjectID             URLParam = "project_id"
+	URLParamClusterID             URLParam = "cluster_id"
+	URLParamRegistryID            URLParam = "registry_id"
+	URLParamHelmRepoID            URLParam = "helm_repo_id"
+	URLParamGitInstallationID     URLParam = "git_installation_id"
+	URLParamInfraID               URLParam = "infra_id"
+	URLParamOperationID           URLParam = "operation_id"
+	URLParamInviteID              URLParam = "invite_id"
+	URLParamNamespace             URLParam = "namespace"
+	URLParamReleaseName           URLParam = "name"
+	URLParamStackID               URLParam = "stack_id"
+	URLParamReleaseVersion        URLParam = "version"
+	URLParamWildcard              URLParam = "*"
+	URLParamIntegrationID         URLParam = "integration_id"
+	URLParamAPIContractRevisionID URLParam = "contract_revision_id"
 )
 
 type Path struct {

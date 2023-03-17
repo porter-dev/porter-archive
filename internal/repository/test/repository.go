@@ -47,6 +47,8 @@ type TestRepository struct {
 	tag                       repository.TagRepository
 	stack                     repository.StackRepository
 	monitor                   repository.MonitorTestResultRepository
+	apiContractRevision       repository.APIContractRevisioner
+	awsAssumeRoleChainer      repository.AWSAssumeRoleChainer
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -216,6 +218,12 @@ func (t *TestRepository) Stack() repository.StackRepository {
 func (t *TestRepository) MonitorTestResult() repository.MonitorTestResultRepository {
 	return t.monitor
 }
+func (t *TestRepository) APIContractRevisioner() repository.APIContractRevisioner {
+	return t.apiContractRevision
+}
+func (t *TestRepository) AWSAssumeRoleChainer() repository.AWSAssumeRoleChainer {
+	return t.awsAssumeRoleChainer
+}
 
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
@@ -263,5 +271,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		tag:                       NewTagRepository(),
 		stack:                     NewStackRepository(),
 		monitor:                   NewMonitorTestResultRepository(canQuery),
+		apiContractRevision:       NewAPIContractRevisioner(),
+		awsAssumeRoleChainer:      NewAWSAssumeRoleChainer(),
 	}
 }

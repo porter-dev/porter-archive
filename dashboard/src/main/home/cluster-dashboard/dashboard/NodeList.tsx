@@ -155,7 +155,7 @@ const StyledChart = styled.div`
   :not(:last-child) {
     margin-bottom: 25px;
   }
-  border-radius: 8px;
+  border-radius: 5px;
   background: #26292e;
   border: 1px solid #494b4f;
 `;

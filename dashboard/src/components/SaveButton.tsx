@@ -200,7 +200,7 @@ const Button = styled.button<{
   border: 0;
   border-radius: ${(props) => (props.rounded ? "100px" : "5px")};
   background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
-  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   user-select: none;
   :focus {
     outline: 0;

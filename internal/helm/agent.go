@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -405,6 +406,12 @@ func (a *Agent) InstallChart(
 	doAuth *oauth2.Config,
 	disablePullSecretsInjection bool,
 ) (*release.Release, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
+		}
+	}()
+
 	cmd := action.NewInstall(a.ActionConfig)
 
 	if cmd.Version == "" && cmd.Devel {

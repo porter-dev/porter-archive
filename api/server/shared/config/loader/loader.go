@@ -1,12 +1,14 @@
 package loader
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
 	gorillaws "github.com/gorilla/websocket"
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
@@ -58,6 +60,8 @@ func sharedInit() {
 }
 
 func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
+	// ctx := context.Background()
+
 	envConf := InstanceEnvConf
 	sc := envConf.ServerConf
 
@@ -224,6 +228,24 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	if sc.PowerDNSAPIKey != "" && sc.PowerDNSAPIServerURL != "" {
 		res.PowerDNSClient = powerdns.NewClient(sc.PowerDNSAPIServerURL, sc.PowerDNSAPIKey, sc.AppRootDomain)
+	}
+
+	res.DisableCAPIProvisioner = sc.DisableCAPIProvisioner
+	if !sc.DisableCAPIProvisioner {
+		if sc.ClusterControlPlaneAddress == "" {
+			return res, errors.New("must provide CLUSTER_CONTROL_PLANE_ADDRESS")
+		}
+		client := porterv1connect.NewClusterControlPlaneServiceClient(http.DefaultClient, sc.ClusterControlPlaneAddress)
+		res.ClusterControlPlaneClient = client
+
+		// if sc.NATSUrl == "" {
+		// 	return res, errors.New("must provide NATS_URL")
+		// }
+		// pnats, err := nats.NewConnection(ctx, nats.Config{URL: sc.NATSUrl})
+		// if err != nil {
+		// 	return res, fmt.Errorf("error setting up connection to NATS cluster: %w", err)
+		// }
+		// res.NATS = pnats
 	}
 
 	return res, nil

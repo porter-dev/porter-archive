@@ -566,7 +566,7 @@ const StyledMetricsSection = styled.div`
   flex-direction: column;
   position: relative;
   font-size: 13px;
-  border-radius: 8px;
+  border-radius: 5px;
   border: 1px solid #ffffff33;
   padding: 18px 22px;
   animation: floatIn 0.3s;

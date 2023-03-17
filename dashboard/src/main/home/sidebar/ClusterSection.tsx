@@ -134,7 +134,7 @@ export const ClusterSection: React.FC<Props> = ({
               window.location.pathname.startsWith("/cluster-dashboard")
             }
           >
-            <Icon className="material-icons">device_hub</Icon>
+            <Img enlarge={true} src={settings} />
             Cluster settings
           </NavButton>
         </Relative>
@@ -216,7 +216,7 @@ export const ClusterSection: React.FC<Props> = ({
             </svg>
           </ClusterIcon>
           <Tooltip title={cluster?.name}>
-            <ClusterName>{cluster?.name}</ClusterName>
+            <ClusterName>{cluster?.vanity_name || cluster?.name}</ClusterName>
           </Tooltip>
           <I isExpanded={isExpanded} className="material-icons">
             arrow_drop_down

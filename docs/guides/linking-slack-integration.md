@@ -4,7 +4,7 @@ Porter has a Slack application that you can install into a channel of any worksp
 
 ## Installing Application
 
-To install the Slack application, navigate to the **Integrations** section on the left and click **Slack**. Then, click **Install Application** in the top right:
+To install the Slack application, navigate to the **Integrations** section on the left and click **Slack**. Then, click **Install application** in the top right:
 
 ![image](https://user-images.githubusercontent.com/25856165/128559944-d14cb6f9-8bfd-4294-8ed1-5455f3c3304d.png)
 

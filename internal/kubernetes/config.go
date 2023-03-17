@@ -1,13 +1,18 @@
 package kubernetes
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/bufbuild/connect-go"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
@@ -62,19 +67,92 @@ func GetAgentOutOfClusterConfig(conf *OutOfClusterConfig) (*Agent, error) {
 		return GetAgentInClusterConfig(conf.DefaultNamespace)
 	}
 
-	restConf, err := conf.ToRESTConfig()
+	var restConf *rest.Config
 
-	if err != nil {
-		return nil, err
+	if conf.Cluster.ProvisionedBy == "CAPI" {
+		rc, err := restConfigForCAPICluster(context.Background(), conf.CAPIManagementClusterClient, *conf.Cluster)
+		if err != nil {
+			return nil, err
+		}
+		restConf = rc
+	} else {
+		rc, err := conf.ToRESTConfig()
+		if err != nil {
+			return nil, err
+		}
+		restConf = rc
+	}
+
+	if restConf == nil {
+		return nil, fmt.Errorf("error getting rest config for cluster %s", conf.Cluster.ProvisionedBy)
 	}
 
 	clientset, err := kubernetes.NewForConfig(restConf)
-
 	if err != nil {
 		return nil, err
 	}
 
 	return &Agent{conf, clientset}, nil
+}
+
+// restConfigForCAPICluster gets the kubernetes rest API client for a CAPI cluster
+func restConfigForCAPICluster(ctx context.Context, mgmtClusterConnection porterv1connect.ClusterControlPlaneServiceClient, cluster models.Cluster) (*rest.Config, error) {
+	kc, err := kubeConfigForCAPICluster(ctx, mgmtClusterConnection, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	rc, err := writeKubeConfigToFileAndRestClient([]byte(kc))
+	if err != nil {
+		return nil, err
+	}
+	return rc, nil
+}
+
+// kubeConfigForCAPICluster grabs the raw kube config for a capi cluster
+func kubeConfigForCAPICluster(ctx context.Context, mgmtClusterConnection porterv1connect.ClusterControlPlaneServiceClient, cluster models.Cluster) (string, error) {
+	kubeconfigResp, err := mgmtClusterConnection.KubeConfigForCluster(context.Background(), connect.NewRequest(
+		&porterv1.KubeConfigForClusterRequest{
+			ProjectId: int64(cluster.ProjectID),
+			ClusterId: int64(cluster.ID),
+		},
+	))
+	if err != nil {
+		return "", fmt.Errorf("error getting capi config: %w", err)
+	}
+	if kubeconfigResp.Msg == nil {
+		return "", errors.New("no kubeconfig returned for capi cluster")
+	}
+	if kubeconfigResp.Msg.KubeConfig == "" {
+		return "", errors.New("no kubeconfig returned for capi cluster")
+	}
+	return kubeconfigResp.Msg.KubeConfig, nil
+}
+
+// writeKubeConfigToFileAndRestClient writes a literal kubeconfig to a temporary file
+// then uses the client-go kubernetes package to create a rest.Config from it
+func writeKubeConfigToFileAndRestClient(kubeconf []byte) (*rest.Config, error) {
+	tmpFile, err := os.CreateTemp(os.TempDir(), "kconf-")
+	if err != nil {
+		return nil, fmt.Errorf("unable to create temp file: %w", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err = tmpFile.Write(kubeconf); err != nil {
+		return nil, fmt.Errorf("unable to write to temp file: %w", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		return nil, fmt.Errorf("unable to close temp file: %w", err)
+	}
+	kconfPath, err := filepath.Abs(tmpFile.Name())
+	if err != nil {
+		return nil, fmt.Errorf("unable to find temp file: %w", err)
+	}
+	rest, err := clientcmd.BuildConfigFromFlags("", kconfPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable create rest config from temp file: %w", err)
+	}
+	return rest, nil
 }
 
 // IsInCluster returns true if the process is running in a Kubernetes cluster,
@@ -118,14 +196,23 @@ type OutOfClusterConfig struct {
 
 	// Only required if using DigitalOcean OAuth as an auth mechanism
 	DigitalOceanOAuth *oauth2.Config
+
+	CAPIManagementClusterClient porterv1connect.ClusterControlPlaneServiceClient
 }
 
 // ToRESTConfig creates a kubernetes REST client factory -- it calls ClientConfig on
 // the result of ToRawKubeConfigLoader, and also adds a custom http transport layer
 // if necessary (required for GCP auth)
 func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
-	cmdConf, err := conf.GetClientConfigFromCluster()
+	if conf.Cluster.ProvisionedBy == "CAPI" {
+		rc, err := restConfigForCAPICluster(context.Background(), conf.CAPIManagementClusterClient, *conf.Cluster)
+		if err != nil {
+			return nil, err
+		}
+		return rc, nil
+	}
 
+	cmdConf, err := conf.GetClientConfigFromCluster()
 	if err != nil {
 		return nil, err
 	}
@@ -192,6 +279,14 @@ func (conf *OutOfClusterConfig) ToRESTMapper() (meta.RESTMapper, error) {
 func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientConfig, error) {
 	if conf.Cluster == nil {
 		return nil, fmt.Errorf("cluster cannot be nil")
+	}
+
+	if conf.Cluster.ProvisionedBy == "CAPI" {
+		rc, err := kubeConfigForCAPICluster(context.Background(), conf.CAPIManagementClusterClient, *conf.Cluster)
+		if err != nil {
+			return nil, err
+		}
+		return clientcmd.NewClientConfigFromBytes([]byte(rc))
 	}
 
 	if conf.Cluster.AuthMechanism == models.Local {

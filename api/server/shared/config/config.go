@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/gorilla/sessions"
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/api/server/shared/websocket"
@@ -10,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
+	"github.com/porter-dev/porter/internal/nats"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
@@ -93,9 +95,18 @@ type Config struct {
 	// PowerDNSClient is a client for PowerDNS, if the Porter instance supports vanity URLs
 	PowerDNSClient *powerdns.Client
 
+	// ClusterControlPlaneClient is a client for ClusterControlPlane
+	ClusterControlPlaneClient porterv1connect.ClusterControlPlaneServiceClient
+
 	// CredentialBackend is the backend for credential storage, if external cred storage (like Vault)
 	// is used
 	CredentialBackend credentials.CredentialStorage
+
+	// NATS contains the required config for connecting to a NATS cluster for streaming
+	NATS nats.NATS
+
+	// DisableCAPIProvisioner disables checks for ClusterControlPlaneClient and NATS, if set to true
+	DisableCAPIProvisioner bool
 }
 
 type ConfigLoader interface {

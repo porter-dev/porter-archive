@@ -10,6 +10,7 @@ import IntegrationCategories from "./IntegrationCategories";
 import IntegrationList from "./IntegrationList";
 import TitleSection from "components/TitleSection";
 import { Context } from "shared/Context";
+import Spacer from "components/porter/Spacer";
 
 type PropsType = RouteComponentProps;
 
@@ -75,7 +76,7 @@ const Integrations: React.FC<PropsType> = (props) => {
         <Route>
           <div>
             <TitleSection>Integrations</TitleSection>
-
+            <Spacer y={1} />
             <IntegrationList
               currentCategory={""}
               integrations={IntegrationCategoryStrings}

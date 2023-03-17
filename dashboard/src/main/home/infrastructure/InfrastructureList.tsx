@@ -178,7 +178,7 @@ const InfrastructureList = () => {
         <DashboardIcon>
           <i className="material-icons">build_circle</i>
         </DashboardIcon>
-        Managed Infrastructure
+        Managed infrastructure (legacy)
       </StyledTitleSection>
       <InfoSection>
         <Description>

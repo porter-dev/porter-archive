@@ -74,7 +74,7 @@ class SettingsPage extends Component<PropsType, StateType> {
         let clusterOptions: { label: string; value: string }[] = [];
         let clusterMap: { [clusterId: string]: ClusterType } = {};
         res.data.forEach((cluster: ClusterType, i: number) => {
-          clusterOptions.push({ label: cluster.name, value: cluster.name });
+          clusterOptions.push({ label: cluster.vanity_name || cluster.name, value: cluster.name });
           clusterMap[cluster.name] = cluster;
         });
         if (res.data.length > 0) {

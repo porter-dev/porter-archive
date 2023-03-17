@@ -1,48 +1,43 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
+import { useLocation } from "react-router";
+import settings from "assets/settings-centered.svg";
 
-import { Context } from "shared/Context";
-import TabSelector from "components/TabSelector";
-import Heading from "components/form-components/Heading";
-import TitleSection from "components/TitleSection";
 import api from "shared/api";
+import { DetailedIngressError } from "shared/types";
+import { getQueryParam } from "shared/routing";
+import useAuth from "shared/auth/useAuth";
+import { Context } from "shared/Context";
 
+import ClusterRevisionSelector from "./ClusterRevisionSelector";
+import DashboardHeader from "../DashboardHeader";
+import TabSelector from "components/TabSelector";
+import ProvisionerSettings from "components/ProvisionerSettings";
+import ProvisionerStatus from "./ProvisionerStatus";
 import NodeList from "./NodeList";
-
 import { NamespaceList } from "./NamespaceList";
 import ClusterSettings from "./ClusterSettings";
-import useAuth from "shared/auth/useAuth";
 import Metrics from "./Metrics";
-import { useLocation } from "react-router";
-import { getQueryParam } from "shared/routing";
 
 import CopyToClipboard from "components/CopyToClipboard";
 import Loading from "components/Loading";
-
-import { DetailedIngressError } from "shared/types";
-import SelectRow from "components/form-components/SelectRow";
+import Spacer from "components/porter/Spacer";
 
 type TabEnum = "nodes" | "settings" | "namespaces" | "metrics" | "incidents" | "configuration";
 
-const tabOptions: {
+var tabOptions: {
   label: string;
   value: TabEnum;
-}[] = [
-  // { label: "Configuration", value: "configuration" },
-  { label: "Nodes", value: "nodes" },
-  /*
-  { label: "Incidents", value: "incidents" },
-  */
-  { label: "Metrics", value: "metrics" },
-  { label: "Namespaces", value: "namespaces" },
-  { label: "Settings", value: "settings" },
-];
+}[] = [{ label: "Additional settings", value: "settings" }];
 
 export const Dashboard: React.FunctionComponent = () => {
   const [currentTab, setCurrentTab] = useState<TabEnum>("nodes");
   const [currentTabOptions, setCurrentTabOptions] = useState(tabOptions);
   const [isAuthorized] = useAuth();
   const location = useLocation();
+  const [selectedClusterVersion, setSelectedClusterVersion] = useState(null);
+  const [showProvisionerStatus, setShowProvisionerStatus] = useState(false);
+  const [provisionFailureReason, setProvisionFailureReason] = useState("");
   const [ingressIp, setIngressIp] = useState(null);
   const [ingressError, setIngressError] = useState(null);
 
@@ -55,29 +50,40 @@ export const Dashboard: React.FunctionComponent = () => {
         return <Metrics />;
       case "namespaces":
         return <NamespaceList />;
-      /*
       case "configuration":
         return (
-          <FormWrapper>
-            <Heading isAtTop>
-              Cluster configuration
-            </Heading>
-            <SelectRow
-              value={"us-east-1"}
-              width="150px"
-              options={[
-                { label: "us-east-1", value: "us-east-1" }
-              ]}
-              setActiveValue={(option) => null}
-              label="AWS region"
+          <>
+            <Br />
+            <ProvisionerSettings
+              selectedClusterVersion={selectedClusterVersion}
+              clusterId={context.currentCluster.id}
+              credentialId={context.currentCluster.cloud_provider_credential_identifier}
             />
-          </FormWrapper>
+            <Div />
+          </>
         );
-      */
       default:
         return <NodeList />;
     }
   };
+
+  useEffect(() => {
+    if (
+      context.currentCluster.status !== "UPDATING_UNAVAILABLE" &&
+      !tabOptions.find((tab) => tab.value === "nodes")
+    ) {      
+      tabOptions.unshift({ label: "Namespaces", value: "namespaces" });
+      tabOptions.unshift({ label: "Metrics", value: "metrics" });
+      tabOptions.unshift({ label: "Nodes", value: "nodes" }); 
+    }
+    
+    if (
+      context.currentProject.capi_provisioner_enabled &&
+      !tabOptions.find((tab) => tab.value === "configuration")
+    ) {
+      tabOptions.unshift({ value: "configuration", label: "Configuration" });
+    } 
+  }, []);
 
   useEffect(() => {
     setCurrentTabOptions(
@@ -99,7 +105,12 @@ export const Dashboard: React.FunctionComponent = () => {
 
   // Need to reset tab to reset views that don't auto-update on cluster switch (esp namespaces + settings)
   useEffect(() => {
-    setCurrentTab("nodes");
+    setShowProvisionerStatus(false);
+    if (context.currentProject.capi_provisioner_enabled) {
+      setCurrentTab("configuration");
+    } else {
+      setCurrentTab("nodes");
+    }
   }, [context.currentCluster]);
 
   const renderIngressIp = (
@@ -170,33 +181,126 @@ export const Dashboard: React.FunctionComponent = () => {
     updateClusterWithDetailedData();
   }, []);
 
+  const renderContents = () => {
+    if (context.currentProject.capi_provisioner_enabled) {
+      return (
+        <>
+          <ClusterRevisionSelector
+            selectedClusterVersion={selectedClusterVersion}
+            setSelectedClusterVersion={setSelectedClusterVersion}
+            setShowProvisionerStatus={setShowProvisionerStatus}
+            setProvisionFailureReason={setProvisionFailureReason}
+          />
+          {(
+            showProvisionerStatus && (
+              context.currentCluster.status === "UPDATING" ||
+              context.currentCluster.status === "UPDATING_UNAVAILABLE"
+            )
+          ) && (
+            <>
+              <ProvisionerStatus
+                provisionFailureReason={provisionFailureReason}
+              />
+              <Spacer y={1} />
+            </>
+          )}
+          <TabSelector
+            options={currentTabOptions}
+            currentTab={currentTab}
+            setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+          />
+          {renderTab()}
+        </>
+      );
+    } else {
+      return (
+        <>
+          <TabSelector
+            options={currentTabOptions}
+            currentTab={currentTab}
+            setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+          />
+          {renderTab()}
+        </>
+      );
+    }
+  };
+
   return (
     <>
-      <TitleSection>
-        <DashboardIcon>
-          <i className="material-icons">device_hub</i>
-        </DashboardIcon>
-        {context.currentCluster.name}
-      </TitleSection>
-
-      <InfoSection>
-        <TopRow>
-          <InfoLabel>
-            <i className="material-icons">info</i> Info
-          </InfoLabel>
-        </TopRow>
-        <Description>{renderIngressIp(ingressIp, ingressError)}</Description>
-      </InfoSection>
-
-      <TabSelector
-        options={currentTabOptions}
-        currentTab={currentTab}
-        setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+      <DashboardHeader
+        image={settings}
+        title={context.currentCluster.vanity_name || context.currentCluster.name}
+        description={
+          ingressIp ? (
+            <>{renderIngressIp(ingressIp, ingressError)}</>
+          ) : (
+            `Cluster settings and status for ${context.currentCluster.vanity_name || context.currentCluster.name}.`
+          )
+        }
+        disableLineBreak
+        capitalize={false}
       />
-      {renderTab()}
+
+      {renderContents()}
     </>
   );
 };
+
+const Div = styled.div`
+  width: 100%;
+  height: 50px;
+`;
+
+const Br = styled.div`
+  width: 100%;
+  height: 35px;
+`;
+
+const RevisionHeader = styled.div`
+  color: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
+    props.isCurrent ? "#ffffff66" : "#f5cb42"};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 40px;
+  font-size: 13px;
+  width: 100%;
+  padding-left: 15px;
+  cursor: pointer;
+  :hover {
+    background: ${props => props.showRevisions && "#ffffff18"};
+    > div > i {
+      background: ${props => props.showRevisions && "#ffffff22"};
+    }
+  }
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  margin-top: 25px;
+  margin-bottom: 22px;
+
+  > div > i {
+    margin-left: 12px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 20px;
+    background: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
+      props.showRevisions ? "#ffffff18" : ""};
+    transform: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
+      props.showRevisions ? "rotate(180deg)" : ""};
+  }
+`;
+
+const Revision = styled.div`
+  color: #ffffff;
+  margin-left: 5px;
+`;
+
+const RevisionPreview = styled.div`
+  display: flex;
+  align-items: center;
+`;
 
 const DashboardIcon = styled.div`
   height: 35px;
@@ -241,10 +345,9 @@ const InfoLabel = styled.div`
 `;
 
 const InfoSection = styled.div`
-  margin-top: 36px;
-  font-family: "Work Sans", sans-serif;
-  margin-left: 0px;
-  margin-bottom: 30px;
+  margin-top: -20px;
+  font-size: 13px;
+  margin-bottom: 25px;
 `;
 
 const Url = styled.a`
@@ -267,7 +370,7 @@ const Url = styled.a`
 `;
 
 const Bolded = styled.span`
-  color: #8b949f;
+  color: #aaaabb;
   margin-right: 6px;
   white-space: nowrap;
 `;

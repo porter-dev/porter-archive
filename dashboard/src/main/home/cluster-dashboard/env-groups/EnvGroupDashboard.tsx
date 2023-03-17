@@ -2,6 +2,7 @@ import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import sliders from "assets/sliders.svg";
+import loading from "assets/loading.gif";
 
 import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";
@@ -13,12 +14,9 @@ import EnvGroupList from "./EnvGroupList";
 import CreateEnvGroup from "./CreateEnvGroup";
 import ExpandedEnvGroup from "./ExpandedEnvGroup";
 import { RouteComponentProps, withRouter } from "react-router";
-import { getQueryParam, pushQueryParams } from "shared/routing";
+import { getQueryParam, pushQueryParams, pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { useQuery } from "@tanstack/react-query";
-import api from "shared/api";
-import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -45,6 +43,8 @@ const EnvGroupDashboard = (props: PropsType) => {
       ? localStorage.getItem("SortType")
       : "Newest",
   });
+
+  const { currentCluster } = useContext(Context);
 
   const setNamespace = (namespace: string) => {
     setState((state) => ({ ...state, namespace }));
@@ -79,6 +79,10 @@ const EnvGroupDashboard = (props: PropsType) => {
   };
 
   const renderBody = () => {
+    if (props.currentCluster.status === "UPDATING_UNAVAILABLE") {
+      return <ClusterProvisioningPlaceholder />
+    }
+
     const goBack = () =>
       setState((state) => ({ ...state, createEnvMode: false }));
 

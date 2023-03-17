@@ -153,7 +153,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
               onClick={() => setShowBuildpacksConfig((prev) => !prev)}
               isExpanded={showBuildpacksConfig}
             >
-              Buildpacks Settings
+              Buildpacks settings
               <i className="material-icons">arrow_drop_down</i>
             </ExpandHeader>
           </Heading>
@@ -217,7 +217,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
   cursor: pointer;
   > i {
     margin-left: 10px;
-    transform: ${(props) => (props.isExpanded ? "" : "rotate(180deg)")};
+    transform: ${(props) => (props.isExpanded ? "rotate(180deg)" : "")};
   }
 `;
 

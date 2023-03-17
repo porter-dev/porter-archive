@@ -2,6 +2,7 @@ import aws from "../assets/aws.png";
 import digitalOcean from "../assets/do.png";
 import gcp from "../assets/gcp.png";
 import github from "../assets/github.png";
+import azure from "assets/azure.png";
 
 export const infraNames: any = {
   ecr: "Elastic Container Registry (ECR)",
@@ -28,7 +29,7 @@ export const integrationList: any = {
     icon:
       "https://user-images.githubusercontent.com/5147537/54070671-0a173780-4263-11e9-8946-09ac0e37d8c6.png",
     label: "Slack",
-    buttonText: "Install Application",
+    buttonText: "Install application",
   },
   registry: {
     icon:
@@ -101,11 +102,12 @@ export const integrationList: any = {
   gcp: {
     icon: gcp,
     label: "GCP",
+    tagline: "Coming soon"
   },
-  gar: {
-    icon:
-      "https://carlossanchez.files.wordpress.com/2019/06/21046548.png?w=640",
-    label: "Google Artifact Registry (GAR)",
+  azure: {
+    icon: azure,
+    label: "Azure",
+    tagline: "Coming soon"
   },
   do: {
     icon: digitalOcean,

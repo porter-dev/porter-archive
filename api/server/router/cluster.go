@@ -558,6 +558,36 @@ func getClusterRoutes(
 			Router:   r,
 		})
 
+		// POST /api/projects/{project_id}/clusters/{cluster_id}/rename -> cluster.NewRenameClusterHandler
+		renameClusterEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbCreate,
+				Method: types.HTTPVerbPost,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/rename",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+					types.PreviewEnvironmentScope,
+				},
+			},
+		)
+
+		renameClusterHandler := cluster.NewRenameClusterHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: renameClusterEndpoint,
+			Handler:  renameClusterHandler,
+			Router:   r,
+		})
+
 		// DELETE /api/projects/{project_id}/clusters/{cluster_id}/deployments/{deployment_id} ->
 		// environment.NewDeleteDeploymentHandler
 		deleteDeploymentEndpoint := factory.NewAPIEndpoint(

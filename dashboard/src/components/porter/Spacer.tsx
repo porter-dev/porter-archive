@@ -13,19 +13,26 @@ const Spacer: React.FC<Props> = ({
   inline,
 }) => {
   const getCalcHeight = () => {
-    return 25 * y;
+    if (y) {
+      return 25 * y + "px";
+    }
+    return null
   };
   
   return (
     <StyledSpacer
-      height={height || (getCalcHeight() + "px")}
+      height={height || getCalcHeight()}
+      width={inline && "15px"}
     />
   );
 };
 
 export default Spacer;
 
-const StyledSpacer = styled.div<{ height: string }>`
-  height: ${props => props.height};
-  width: ${props => props.height ? "100%" : ""};
+const StyledSpacer = styled.div<{ 
+  height: string;
+  width: string;
+}>`
+  height: ${props => props.height || "100%"};
+  width: ${props => props.height ? "100%" : props.width};
 `;

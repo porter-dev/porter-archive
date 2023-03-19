@@ -103,8 +103,8 @@ const CloseButton = styled.div`
   justify-content: center;
   z-index: 1;
   border-radius: 50%;
-  right: 15px;
-  top: 12px;
+  right: 12px;
+  top: 10px;
   cursor: pointer;
   :hover {
     background-color: #ffffff11;
@@ -131,16 +131,18 @@ const Overlay = styled.div`
   justify-content: center;
 `;
 
-const StyledModal = styled.div`
+const StyledModal = styled.div<{
+  width: string;
+  height: string;
+}>`
   position: absolute;
-  width: ${(props: { width?: string; height?: string }) =>
-    props.width ? props.width : "760px"};
+  width: ${props => props.width || "760px"};
   max-width: 80vw;
-  height: ${(props: { width?: string; height?: string }) =>
-    props.height ? props.height : "425px"};
+  height: ${props => props.height || "425px"};
   max-height: calc(100vh - 30px);
   overflow: visible;
-  padding: 25px 32px;
+  padding: 25px;
+  padding-bottom: 30px;
   z-index: 999;
   font-size: 13px;
   border-radius: 10px;

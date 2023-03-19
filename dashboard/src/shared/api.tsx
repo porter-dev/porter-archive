@@ -113,6 +113,18 @@ const updateCluster = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
 
+const renameCluster = baseApi<
+  {
+    name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/rename`;
+});
+
 const createAzureIntegration = baseApi<
   {
     azure_client_id: string;
@@ -2391,6 +2403,7 @@ export default {
   createAWSIntegration,
   overwriteAWSIntegration,
   updateCluster,
+  renameCluster,
   createAzureIntegration,
   createGitlabIntegration,
   createEmailVerification,

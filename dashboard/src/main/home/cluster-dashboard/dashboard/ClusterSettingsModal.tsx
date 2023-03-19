@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
+import api from "shared/api";
 
 import Modal from "main/home/modals/Modal";
 import Input from "components/porter/Input";
@@ -13,12 +14,37 @@ type Props = {
 
 const ClusterSettingsModal: React.FC<Props> = ({
 }) => {
-  const { setCurrentModal, currentCluster } = useContext(Context);
+  const { 
+    setCurrentModal, 
+    currentCluster, 
+    currentProject,
+    setShouldRefreshClusters,
+  } = useContext(Context);
   const [clusterName, setClusterName] = useState("");
+  const [status, setStatus] = useState("");
 
   useEffect(() => {
     setClusterName(currentCluster.vanity_name || currentCluster.name);
   }, []);
+
+  const renameCluster = async () => {
+    setStatus("loading");
+    try {
+      const res = await api.renameCluster(
+        "<token>",
+        { name: clusterName },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      );
+      setStatus("success");
+      setShouldRefreshClusters(true);
+    } catch (err) {
+      setStatus("error");
+      console.log(err);
+    }
+  }
 
   return (
     <Modal
@@ -94,7 +120,13 @@ const ClusterSettingsModal: React.FC<Props> = ({
         />
       </Flex>
       <Spacer y={1} />
-      <Button>Save</Button>
+      <Button 
+        onClick={renameCluster}
+        disabled={clusterName === ""}
+        status={status}
+      >
+        Save
+      </Button>
     </Modal>
   );
 };

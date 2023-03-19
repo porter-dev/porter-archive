@@ -5,6 +5,7 @@ import loading from "assets/loading.gif";
 
 type Props = {
   children: React.ReactNode;
+  onClick: () => void;
   disabled?: boolean;
   status?: string;
   loadingText?: string;
@@ -13,6 +14,7 @@ type Props = {
 
 const Button: React.FC<Props> = ({
   children,
+  onClick,
   disabled,
   status,
   loadingText,
@@ -48,6 +50,7 @@ const Button: React.FC<Props> = ({
     <Wrapper>
       <StyledButton
         disabled={disabled}
+        onClick={() => !disabled && onClick()}
       >
         <Text>{children}</Text>
       </StyledButton>
@@ -114,19 +117,19 @@ const StyledButton = styled.button<{
 }>`
   height: 35px;
   font-size: 13px;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
   padding: 15px;
   border: none;
   outline: none;
   font-weight: 500;
   color: white;
-  background: #5561C0;
+  background: ${props => props.disabled ? "#aaaabb" : "#5561C0"};
   display: flex;
   ailgn-items: center;
   justify-content: center;
   border-radius: 5px;
 
   :hover {
-    filter: ${props => !props.disabled ? "brightness(120%)" : ""};
+    filter: ${props => props.disabled ? "" : "brightness(120%)"};
   }
 `;

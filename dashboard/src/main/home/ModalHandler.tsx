@@ -84,8 +84,15 @@ const ModalHandler: React.FC<{
     }
   }, [currentModal, currentProject]);
 
+  const renderModal = () => {
+    if (modal && typeof modal !== 'string') {
+      return modal;
+    }
+  }
+
   return (
     <>
+      {renderModal()}
       {modal === "RedirectToOnboardingModal" && (
         <Modal width="600px" height="180px" title="You're almost ready...">
           <RedirectToOnboardingModal />

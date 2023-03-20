@@ -8,6 +8,7 @@ type Props = {
   onClick: () => void;
   disabled?: boolean;
   status?: string;
+  helperText?: string;
   loadingText?: string;
   successText?: string;
 };
@@ -17,6 +18,7 @@ const Button: React.FC<Props> = ({
   onClick,
   disabled,
   status,
+  helperText,
   loadingText,
   successText,
 }) => {
@@ -36,6 +38,10 @@ const Button: React.FC<Props> = ({
             {loadingText || "Updating . . ."}
           </StatusWrapper>
         );
+      case "":
+        return helperText && (
+          <StatusWrapper success={false}>{helperText}</StatusWrapper>
+        )   
       default:
         return (
           <StatusWrapper success={false}>
@@ -54,7 +60,7 @@ const Button: React.FC<Props> = ({
       >
         <Text>{children}</Text>
       </StyledButton>
-      {status && renderStatus()}
+      {(helperText || status) && renderStatus()}
     </Wrapper>
   );
 };
@@ -83,6 +89,7 @@ const StatusWrapper = styled.div<{
   success?: boolean;
 }>`
   display: flex;
+  line-height: 1.5;
   align-items: center;
   font-family: "Work Sans", sans-serif;
   font-size: 13px;

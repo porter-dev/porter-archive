@@ -25,7 +25,7 @@ const ProvisionerStatus: React.FC<Props> = ({
   // Continuously poll provisioning status
   const pollProvisioningStatus = async () => {
     try {
-      const res = await api.getClusterStatus(
+      const res = await api.getClusterState(
         "<token>",
         {},
         {
@@ -34,6 +34,7 @@ const ProvisionerStatus: React.FC<Props> = ({
         }
       );
       const { status } = res.data;
+      console.log("status", status);
       switch (status) {
         case status["BOOTSTRAP_READY"]:
           setProgress(2);
@@ -47,8 +48,14 @@ const ProvisionerStatus: React.FC<Props> = ({
         default:
           setProgress(1);
       }
-    } catch (error) {}
+    } catch (err) {
+      console.log("hello", err);
+    }
   };
+
+  useEffect(() => {
+    pollProvisioningStatus(); 
+  }, []);
 
   return (
     <StyledProvisionerStatus>

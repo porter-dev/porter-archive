@@ -32,7 +32,7 @@ var tabOptions: {
 }[] = [{ label: "Additional settings", value: "settings" }];
 
 export const Dashboard: React.FunctionComponent = () => {
-  const [currentTab, setCurrentTab] = useState<TabEnum>("nodes");
+  const [currentTab, setCurrentTab] = useState<TabEnum>("settings");
   const [currentTabOptions, setCurrentTabOptions] = useState(tabOptions);
   const [isAuthorized] = useAuth();
   const location = useLocation();

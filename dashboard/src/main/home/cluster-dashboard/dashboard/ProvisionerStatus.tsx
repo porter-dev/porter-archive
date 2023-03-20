@@ -34,7 +34,6 @@ const ProvisionerStatus: React.FC<Props> = ({
         }
       );
       const { status } = res.data;
-      console.log("status", status);
       switch (status) {
         case status["BOOTSTRAP_READY"]:
           setProgress(2);
@@ -49,7 +48,7 @@ const ProvisionerStatus: React.FC<Props> = ({
           setProgress(1);
       }
     } catch (err) {
-      console.log("hello", err);
+      console.log(err);
     }
   };
 

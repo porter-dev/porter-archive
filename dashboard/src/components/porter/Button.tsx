@@ -10,6 +10,8 @@ type Props = {
   status?: string;
   loadingText?: string;
   successText?: string;
+  width?: string;
+  height?: string;
 };
 
 const Button: React.FC<Props> = ({
@@ -19,6 +21,8 @@ const Button: React.FC<Props> = ({
   status,
   loadingText,
   successText,
+  width,
+  height,
 }) => {
   const renderStatus = () => {
     switch(status) {
@@ -51,6 +55,8 @@ const Button: React.FC<Props> = ({
       <StyledButton
         disabled={disabled}
         onClick={() => !disabled && onClick()}
+        width={width}
+        height={height}
       >
         <Text>{children}</Text>
       </StyledButton>
@@ -114,8 +120,11 @@ const Text = styled.div`
 
 const StyledButton = styled.button<{
   disabled: boolean;
+  width: string;
+  height: string;
 }>`
-  height: 35px;
+  height: ${props => props.height || "35px"};
+  width: ${props => props.width || "auto"};
   font-size: 13px;
   cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
   padding: 15px;

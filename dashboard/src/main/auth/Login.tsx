@@ -47,6 +47,8 @@ const Login: React.FC<Props> = ({
   const handleLogin = (): void => {
     if (!emailRegex.test(email)) {
       setEmailError(true);
+    } else if (password === "") {
+      setCredentialError(true);
     } else {
       api.logInUser(
         "",
@@ -205,7 +207,7 @@ const Login: React.FC<Props> = ({
               }}
               width="100%"
               height="40px"
-              error={credentialError && "Incorrect email or password"}
+              error={credentialError && ""}
             >
               {hasResetPassword && (
                 <ForgotPassword>

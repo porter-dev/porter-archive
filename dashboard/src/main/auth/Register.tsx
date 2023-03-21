@@ -3,8 +3,12 @@ import styled from "styled-components";
 
 import github from "assets/github-icon.png";
 import logo from "assets/logo.png";
-
 import GoogleIcon from "assets/GoogleIcon";
+
+import api from "shared/api";
+import { emailRegex } from "shared/regex";
+import { Context } from "shared/Context";
+
 import Heading from "components/form-components/Heading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
@@ -29,15 +33,56 @@ const Register: React.FC<Props> = ({
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState(false);
+  const [hasBasic, setHasBasic] = useState(true);
   const [hasGithub, setHasGithub] = useState(true);
-  const [hasGoogle, setHasGoogle] = useState(true);
+  const [hasGoogle, setHasGoogle] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
 
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowDimensions(getWindowDimensions());
-    };
+  const handleRegister = (): void => {
+    if (!emailRegex.test(email)) {
+      this.setState({ emailError: true });
+    }
 
+    if (confirmPassword !== password) {
+      this.setState({ confirmPasswordError: true });
+    }
+
+    // Check for valid input
+    if (emailRegex.test(email) && confirmPassword === password) {
+      // Attempt user registration
+      api
+        .registerUser(
+          "",
+          {
+            email: email,
+            password: password,
+          },
+          {}
+        )
+        .then((res: any) => {
+          if (res?.data?.redirect) {
+            window.location.href = res.data.redirect;
+          } else {
+            setUser(res?.data?.id, res?.data?.email);
+            authenticate();
+          }
+        })
+        .catch((err) => setCurrentError(err.response.data.error));
+    }
+  };
+
+  const handleResize = () => {
+    setWindowDimensions(getWindowDimensions());
+  };
+
+  const handleKeyDown = (e: any) => {
+    if (e.key === "Enter") {
+      handleLogin();
+    };
+  };
+
+  useEffect(() => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);

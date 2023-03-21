@@ -33,7 +33,7 @@ function buildLogger(scope: string = "global") {
       if (typeof currentSeverity === "string") {
         acc[currentSeverity] = logFunctionBuilder(
           scope,
-          Sentry.Severity.fromString(currentSeverity)
+          Sentry.Severity.Info
         );
       }
 

@@ -65,6 +65,7 @@ export default class Main extends Component<PropsType, StateType> {
             initialized: true,
             hasInfo: res.data.company_name && true,
             loading: false,
+            userId: res.data.id,
           });
         } else {
           this.setState({ isLoggedIn: false, loading: false });
@@ -99,6 +100,7 @@ export default class Main extends Component<PropsType, StateType> {
             initialized: true,
             hasInfo: res.data.company_name && true,
             loading: false,
+            userId: res.data.id,
           });
         } else {
           this.setState({ isLoggedIn: false, loading: false });

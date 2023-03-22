@@ -1,90 +1,61 @@
-import React, { ChangeEvent, Component } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
-import logo from "assets/logo.png";
+
 import github from "assets/github-icon.png";
+import logo from "assets/logo.png";
+import docs from "assets/docs.png";
+import blog from "assets/blog.png";
+import community from "assets/community.png";
 import GoogleIcon from "assets/GoogleIcon";
 
 import api from "shared/api";
 import { emailRegex } from "shared/regex";
 import { Context } from "shared/Context";
 
-type PropsType = {
+import DynamicLink from "components/DynamicLink";
+import Heading from "components/form-components/Heading";
+import Button from "components/porter/Button";
+import Container from "components/porter/Container";
+import Input from "components/porter/Input";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import Link from "components/porter/Link";
+
+type Props = {
   authenticate: () => void;
 };
 
-type StateType = {
-  email: string;
-  password: string;
-  emailError: boolean;
-  credentialError: boolean;
-  hasBasic: boolean;
-  hasGithub: boolean;
-  hasGoogle: boolean;
-  hasResetPassword: boolean;
-};
+const getWindowDimensions = () => {
+  const { innerWidth: width, innerHeight: height } = window;
+  return { width, height };
+}
 
-export default class Login extends Component<PropsType, StateType> {
-  state = {
-    email: "",
-    password: "",
-    emailError: false,
-    credentialError: false,
-    hasBasic: true,
-    hasGithub: true,
-    hasGoogle: false,
-    hasResetPassword: true,
-  };
+const Login: React.FC<Props> = ({
+  authenticate,
+}) => {
+  const { setUser, setCurrentError } = useContext(Context);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState(false);
+  const [credentialError, setCredentialError] = useState(false);
+  const [hasBasic, setHasBasic] = useState(true);
+  const [hasGithub, setHasGithub] = useState(true);
+  const [hasGoogle, setHasGoogle] = useState(false);
+  const [hasResetPassword, setHasResetPassword] = useState(true);
+  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
 
-  handleKeyDown = (e: any) => {
-    e.key === "Enter" ? this.handleLogin() : null;
-  };
-
-  componentDidMount() {
-    let urlParams = new URLSearchParams(window.location.search);
-    let emailFromCLI = urlParams.get("email");
-    emailFromCLI
-      ? this.setState({ email: emailFromCLI })
-      : document.addEventListener("keydown", this.handleKeyDown);
-
-    // get capabilities to case on github
-    api
-      .getMetadata("", {}, {})
-      .then((res) => {
-        this.setState({
-          hasBasic: res.data?.basic_login,
-          hasGithub: res.data?.github_login,
-          hasGoogle: res.data?.google_login,
-          hasResetPassword: res.data?.email,
-        });
-      })
-      .catch((err) => console.log(err));
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener("keydown", this.handleKeyDown);
-  }
-
-  handleLogin = (): void => {
-    let { email, password } = this.state;
-    let { authenticate } = this.props;
-    let { setUser } = this.context;
-
-    // Check for valid input
+  const handleLogin = (): void => {
     if (!emailRegex.test(email)) {
-      this.setState({ emailError: true });
+      setEmailError(true);
+    } else if (password === "") {
+      setCredentialError(true);
     } else {
-      // Attempt user login
-      api
-        .logInUser(
-          "",
-          {
-            email: email,
-            password: password,
-          },
-          {}
-        )
+      api.logInUser(
+        "",
+        { email: email, password: password },
+        {}
+      )
         .then((res) => {
-          // TODO: case and set credential error
           if (res?.data?.redirect) {
             window.location.href = res.data.redirect;
           } else {
@@ -92,197 +63,252 @@ export default class Login extends Component<PropsType, StateType> {
             authenticate();
           }
         })
-        .catch((err) => this.context.setCurrentError(err.response.data.error));
+        .catch((err) => setCurrentError(err.response.data.error));
     }
   };
 
-  renderEmailError = () => {
-    let { emailError } = this.state;
-    if (emailError) {
-      return (
-        <ErrorHelper>
-          <div />
-          Please enter a valid email
-        </ErrorHelper>
-      );
-    }
+  const handleResize = () => {
+    setWindowDimensions(getWindowDimensions());
   };
 
-  renderCredentialError = () => {
-    let { credentialError } = this.state;
-    if (credentialError) {
-      return (
-        <ErrorHelper>
-          <div />
-          Incorrect email or password
-        </ErrorHelper>
-      );
-    }
+  const handleKeyDown = (e: any) => {
+    if (e.key === "Enter") {
+      handleLogin();
+    };
   };
 
-  githubRedirect = () => {
+  // Manually re-register event listener on email/password change
+  useEffect(() => {
+    document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [email, password]);
+
+  useEffect(() => {
+
+    // Get capabilities to case on login methods
+    api.getMetadata("", {}, {})
+      .then((res) => {
+        setHasBasic(res.data?.basic_login);
+        setHasGithub(res.data?.github_login);
+        setHasGoogle(res.data?.google_login);
+        setHasResetPassword(res.data?.email);
+      })
+      .catch((err) => console.log(err));
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailFromCLI = urlParams.get("email");
+    emailFromCLI && setEmail(emailFromCLI);
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  const githubRedirect = () => {
     let redirectUrl = `/api/oauth/login/github`;
     window.location.href = redirectUrl;
   };
 
-  googleRedirect = () => {
+  const googleRedirect = () => {
     let redirectUrl = `/api/oauth/login/google`;
     window.location.href = redirectUrl;
   };
 
-  renderGithubSection = () => {
-    if (this.state.hasGithub) {
-      return (
-        <OAuthButton onClick={this.githubRedirect}>
-          <IconWrapper>
-            <Icon src={github} />
-            Log in with GitHub
-          </IconWrapper>
-        </OAuthButton>
-      );
-    }
-  };
-
-  renderGoogleSection = () => {
-    if (this.state.hasGoogle) {
-      return (
-        <OAuthButton onClick={this.googleRedirect}>
-          <IconWrapper>
-            <StyledGoogleIcon />
-            Log in with Google
-          </IconWrapper>
-        </OAuthButton>
-      );
-    }
-  };
-
-  renderBasicSection = () => {
-    if (this.state.hasBasic) {
-      let { email, password, credentialError, emailError } = this.state;
-
-      return (
-        <div>
-          <InputWrapper>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                this.setState({
-                  email: e.target.value,
-                  emailError: false,
-                  credentialError: false,
-                })
-              }
-              valid={!credentialError && !emailError}
-            />
-            {this.renderEmailError()}
-          </InputWrapper>
-          <InputWrapper>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                this.setState({
-                  password: e.target.value,
-                  credentialError: false,
-                })
-              }
-              valid={!credentialError}
-            />
-            {this.renderCredentialError()}
-          </InputWrapper>
-          <Button onClick={this.handleLogin}>Continue</Button>
-        </div>
-      );
-    }
-  };
-
-  renderHelper() {
-    if (this.state.hasResetPassword) {
-      return (
-        <Helper>
-          <Link href="/register">Sign up</Link> |
-          <Link href="/password/reset">Forgot password?</Link>
-        </Helper>
-      );
-    }
-
-    return (
-      <Helper>
-        <Link href="/register">Sign up</Link>
-      </Helper>
-    );
-  }
-
-  render() {
-    return (
-      <StyledLogin>
-        <LoginPanel
-          hasBasic={this.state.hasBasic}
-          numOAuth={+this.state.hasGithub + +this.state.hasGoogle}
-        >
-          <OverflowWrapper>
-            <GradientBg />
-          </OverflowWrapper>
-          <FormWrapper>
+  return (
+    <StyledLogin>
+      {windowDimensions.width > windowDimensions.height && (
+        <Wrapper>
+          <Logo src={logo} />
+          <Spacer y={2} />
+          <Jumbotron>
+            <Shiny>Welcome back to Porter</Shiny>
+          </Jumbotron>
+          <Spacer y={2} />
+          <LinkRow to="https://docs.porter.run" target="_blank">
+            <img src={docs} /> Read the Porter docs
+          </LinkRow>
+          <Spacer y={0.5} />
+          <LinkRow to="https://blog.porter.run" target="_blank">
+            <img src={blog} /> See what's new with Porter
+          </LinkRow>
+          <Spacer y={0.5} />
+          <LinkRow to="https://discord.com/invite/34n7NN7FJ7" target="_blank">
+            <img src={community} /> Join the community
+          </LinkRow>
+        </Wrapper>
+      )}
+      <Wrapper>
+        {windowDimensions.width <= windowDimensions.height && (
+          <Flex>
             <Logo src={logo} />
-            <Prompt>Log in to Porter</Prompt>
-            {this.renderGithubSection()}
-            {this.renderGoogleSection()}
-            {(this.state.hasGithub || this.state.hasGoogle) &&
-            this.state.hasBasic ? (
+            <Spacer y={2} />
+          </Flex>
+        )}
+        <Heading isAtTop>
+          Log in to your Porter account
+        </Heading>
+        <Spacer y={1} />
+        {(hasGithub || hasGoogle) && (
+          <>
+            <Container row>
+              {hasGithub && (
+                <OAuthButton onClick={githubRedirect}>
+                  <Icon src={github} />
+                  Log in with GitHub
+                </OAuthButton>
+              )}
+              {hasGithub && hasGoogle && (
+                <Spacer inline x={2} />
+              )}
+              {hasGoogle && (
+                <OAuthButton onClick={googleRedirect}>
+                  <StyledGoogleIcon />
+                  Log in with Google
+                </OAuthButton>
+              )}
+            </Container>
+            {hasBasic && (
               <OrWrapper>
                 <Line />
                 <Or>or</Or>
               </OrWrapper>
-            ) : null}
-            <DarkMatter />
-            {this.renderBasicSection()}
-            {this.renderHelper()}
-          </FormWrapper>
-        </LoginPanel>
-        <Footer>
-          © 2021 Porter Technologies Inc. •
-          <Link
-            href="https://docs.getporter.dev/docs/terms-of-service"
-            target="_blank"
-          >
-            Terms & Privacy
-          </Link>
-        </Footer>
-      </StyledLogin>
-    );
-  }
-}
+            )}
+          </>
+        )}
+        {hasBasic && (
+          <>
+            <Input
+              type="email"
+              placeholder="Email"
+              label="Email"
+              value={email}
+              setValue={(x) => {
+                setEmail(x);
+                setEmailError(false);
+                setCredentialError(false);
+              }}
+              width="100%"
+              height="40px"
+              error={(emailError && "Please enter a valid email") || (credentialError && "")}
+            />
+            <Spacer y={1} />
+            <Input
+              type="password"
+              placeholder="Password"
+              label="Password"
+              value={password}
+              setValue={(x) => {
+                setPassword(x);
+                setCredentialError(false);
+              }}
+              width="100%"
+              height="40px"
+              error={credentialError && ""}
+            >
+              {hasResetPassword && (
+                <ForgotPassword>
+                  <Link to="/password/reset">Forgot your password?</Link>
+                </ForgotPassword>
+              )}
+            </Input>
+            <Spacer height="30px" />
+            <Button onClick={handleLogin} width="100%" height="40px">
+              Continue
+            </Button>
+          </>
+        )}
+        <Spacer y={1} />
+        <Text 
+          size={13}
+          color="helper"
+        >
+          Don't have an account? <Link to="/register">Sign up</Link>
+        </Text>
+      </Wrapper>
+    </StyledLogin>
+  );
+};
 
-Login.contextType = Context;
+export default Login;
 
-const Footer = styled.div`
+const ForgotPassword = styled.div`
   position: absolute;
-  bottom: 0;
-  left: 0;
-  margin-bottom: 30px;
-  width: 100vw;
-  text-align: center;
-  color: #aaaabb;
+  right: 0;
+  top: 0;
   font-size: 13px;
-  padding-right: 8px;
-  font: Work Sans, sans-serif;
 `;
 
-const DarkMatter = styled.div`
-  margin-top: -10px;
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+`;
+
+const LinkRow = styled(DynamicLink)`
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  width: 220px;
+  color: #aaaabb;
+  > i {
+    font-size: 18px;
+    margin-right: 10px;
+    float: left;
+    color: #4797ff;
+  }
+
+  > img {
+    height: 18px;
+    margin-right: 10px;
+  }
+
+  :hover {
+    filter: brightness(2);
+  }
+`;
+
+const Shiny = styled.span`
+  background-image: linear-gradient(225deg, #fff, #7980ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
+const Jumbotron = styled.div`
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1.5;
+`;
+
+const Logo = styled.img`
+  height: 24px;
+  user-select: none;
+`;
+
+const StyledGoogleIcon = styled(GoogleIcon)`
+  width: 38px;
+  height: 38px;
+`;
+
+const Line = styled.div`
+  height: 2px;
+  width: 100%;
+  background: #ffffff22;
+  margin: 35px 0px 30px;
 `;
 
 const Or = styled.div`
   position: absolute;
-  width: 30px;
+  width: 50px;
   text-align: center;
   background: #111114;
   z-index: 999;
-  left: calc(50% - 15px);
+  left: calc(50% - 25px);
   margin-top: -1px;
 `;
 
@@ -294,194 +320,35 @@ const OrWrapper = styled.div`
   position: relative;
 `;
 
-const IconWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 10px;
-  height: 100%;
-`;
-
 const Icon = styled.img`
   height: 18px;
-  margin: 0 10px;
+  margin: 14px;
 `;
 
-const StyledGoogleIcon = styled(GoogleIcon)`
-  width: 38px;
-  height: 38px;
-`;
-
-const OAuthButton = styled.button`
-  width: 200px;
-  height: 30px;
-  border: 0;
+const OAuthButton = styled.div`
+  width: 100%;
+  height: 40px;
   display: flex;
   background: #ffffff;
   align-items: center;
-  border-radius: 3px;
+  border-radius: 5px;
   color: #000000;
   cursor: pointer;
   user-select: none;
   font-weight: 500;
   font-size: 13px;
-  margin: 10px 0;
-  overflow: hidden;
   :hover {
     background: #ffffffdd;
   }
 `;
 
-const Link = styled.a`
-  margin-left: 5px;
-  color: #819bfd;
-`;
-
-const Helper = styled.div`
-  position: absolute;
-  bottom: 30px;
-  width: 100%;
-  text-align: center;
-  font-size: 13px;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff44;
-`;
-
-const OverflowWrapper = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 10px;
-`;
-
-const ErrorHelper = styled.div`
-  position: absolute;
-  right: -185px;
-  top: 8px;
-  height: 30px;
-  width: 170px;
-  user-select: none;
-  background: #272731;
-  font-family: "Work Sans", sans-serif;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ff3b62;
-  border-radius: 3px;
-
-  > div {
-    background: #272731;
-    height: 15px;
-    width: 15px;
-    position: absolute;
-    left: -3px;
-    top: 7px;
-    transform: rotate(45deg);
-    z-index: -1;
-  }
-`;
-
-const Line = styled.div`
-  min-height: 3px;
-  width: 100px;
-  z-index: 999;
-  background: #ffffff22;
-  margin: 30px 0px 30px;
-`;
-
-const Button = styled.button`
-  width: 200px;
-  min-height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: "Work Sans", sans-serif;
-  cursor: pointer;
-  margin-top: 9px;
-  border-radius: 2px;
-  border: 0;
-  background: #819bfd;
-  color: white;
-  font-weight: 500;
-  font-size: 14px;
-`;
-
-const InputWrapper = styled.div`
-  position: relative;
-`;
-
-const Input = styled.input`
-  width: 200px;
-  font-family: "Work Sans", sans-serif;
-  margin: 8px 0px;
-  height: 30px;
-  padding: 8px;
-  background: #ffffff12;
-  color: #ffffff;
-  border: ${(props: { valid?: boolean }) =>
-    props.valid ? "0" : "1px solid #ff3b62"};
-  border-radius: 2px;
-  font-size: 14px;
-`;
-
-const Prompt = styled.div`
-  font-family: "Work Sans", sans-serif;
-  font-weight: 500;
-  font-size: 15px;
-  margin-bottom: 18px;
-`;
-
-const Logo = styled.img`
-  width: 110px;
-  margin-top: 55px;
-  margin-bottom: 40px;
-  user-select: none;
-`;
-
-const FormWrapper = styled.div`
-  width: calc(100% - 8px);
-  height: calc(100% - 8px);
-  background: #111114;
-  z-index: 1;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const GradientBg = styled.div`
-  background: linear-gradient(#8ce1ff, #a59eff, #fba8ff);
-  width: 200%;
-  height: 200%;
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  animation: flip 6s infinite linear;
-  @keyframes flip {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-const LoginPanel = styled.div`
-  width: 330px;
-  height: ${(props: { numOAuth: number; hasBasic: boolean }) =>
-    280 + +props.hasBasic * 150 + props.numOAuth * 50}px;
-  background: white;
+const Wrapper = styled.div`
+  width: 500px;
   margin-top: -20px;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
   position: relative;
-  align-items: center;
+  padding: 25px;
+  border-radius: 5px;
+  font-size: 13px;
 `;
 
 const StyledLogin = styled.div`

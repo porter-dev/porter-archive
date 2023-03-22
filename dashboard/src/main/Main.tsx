@@ -119,7 +119,7 @@ export default class Main extends Component<PropsType, StateType> {
           <Route
             path="/"
             render={() => {
-              return <VerifyEmail handleLogout={this.handleLogOut} />;
+              return <VerifyEmail handleLogOut={this.handleLogOut} />;
             }}
           />
         </Switch>

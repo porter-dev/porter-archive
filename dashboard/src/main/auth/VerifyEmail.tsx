@@ -1,148 +1,208 @@
-import React, { Component } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
+
+import github from "assets/github-icon.png";
 import logo from "assets/logo.png";
+import GoogleIcon from "assets/GoogleIcon";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
 
-type PropsType = {
-  handleLogout: () => void;
+import Heading from "components/form-components/Heading";
+import Button from "components/porter/Button";
+import Container from "components/porter/Container";
+import Input from "components/porter/Input";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import Link from "components/porter/Link";
+
+type Props = {
+  handleLogOut: () => void;
 };
 
-type StateType = {
-  submitted: boolean;
-};
-
-export default class VerifyEmail extends Component<PropsType, StateType> {
-  state = {
-    submitted: false,
-  };
-
-  handleSendEmail = (): void => {
-    api
-      .createEmailVerification("", {}, {})
-      .then((res) => {
-        this.setState({ submitted: true });
-      })
-      .catch((err) => this.context.setCurrentError(err.response.data.error));
-  };
-
-  render() {
-    let { submitted } = this.state;
-
-    let formSection = (
-      <div>
-        <InputWrapper>
-          <StatusText>A verification email should have been sent to</StatusText>
-          <Email>{this.context.user?.email}</Email>
-        </InputWrapper>
-        <StatusText>Didn't get it?</StatusText>
-        <Button onClick={this.handleSendEmail}>
-          Resend Verification Email
-        </Button>
-      </div>
-    );
-
-    if (submitted) {
-      formSection = (
-        <>
-          <Buffer />
-          <StatusText lessPadding={true}>
-            A verification email was sent to{" "}
-            <White>{this.context.user?.email}</White>
-          </StatusText>
-          <StatusText lessPadding={true}>
-            Check your inbox for a verification email. Don't forget to check
-            your spam folder
-          </StatusText>
-          <StatusText lessPadding={true}>
-            Need help?
-            <Link href="mailto:contact@getporter.dev">Contact us</Link>
-          </StatusText>
-        </>
-      );
-    }
-
-    return (
-      <StyledLogin>
-        <LoginPanel>
-          <OverflowWrapper>
-            <GradientBg />
-          </OverflowWrapper>
-          <FormWrapper>
-            <Logo src={logo} />
-            <Prompt>Verify Your Email</Prompt>
-            <DarkMatter />
-            {formSection}
-            <Helper>
-              Want to use a different email?
-              <Link onClick={this.props.handleLogout}>Log out</Link>
-            </Helper>
-          </FormWrapper>
-        </LoginPanel>
-
-        <Footer>
-          © 2021 Porter Technologies Inc. •
-          <Link
-            href="https://docs.getporter.dev/docs/terms-of-service"
-            target="_blank"
-          >
-            Terms & Privacy
-          </Link>
-        </Footer>
-      </StyledLogin>
-    );
-  }
+const getWindowDimensions = () => {
+  const { innerWidth: width, innerHeight: height } = window;
+  return { width, height };
 }
 
-VerifyEmail.contextType = Context;
+const Register: React.FC<Props> = ({
+  handleLogOut,
+}) => {
+  const { user, setCurrentError } = useContext(Context);
+  const [submitted, setSubmitted] = useState(false);
+  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
 
-const Buffer = styled.div`
-  width: 100%;
-  height: 20px;
-`;
+  const handleResize = () => {
+    setWindowDimensions(getWindowDimensions());
+  };
 
-const White = styled.div`
-  color: white;
-`;
+  useEffect(() => {
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleSendEmail = (): void => {
+    api.createEmailVerification("", {}, {})
+      .then((res) => {
+        setSubmitted(true);
+      })
+      .catch((err) => setCurrentError(err.response.data.error));
+  };
+
+  return (
+    <StyledRegister>
+      {windowDimensions.width > windowDimensions.height && (
+        <Wrapper>
+          <Logo src={logo} />
+          <Spacer y={2} />
+          <Jumbotron>
+            Deploy and scale <Shiny>effortlessly</Shiny> with Porter
+          </Jumbotron>
+          <Spacer y={2} />
+          <CheckRow>
+            <i className="material-icons">done</i> Generous free tier for small teams
+          </CheckRow>
+          <Spacer y={0.5} />
+          <CheckRow>
+            <i className="material-icons">done</i> Bring your own cloud (and cloud credits)
+          </CheckRow>
+          <Spacer y={0.5} />
+          <CheckRow>
+            <i className="material-icons">done</i> Fully automated setup and deployment
+          </CheckRow>
+        </Wrapper>
+      )}
+      <Wrapper>
+        {windowDimensions.width <= windowDimensions.height && (
+          <Flex>
+            <Logo src={logo} />
+            <Spacer y={2} />
+          </Flex>
+        )}
+        <Heading isAtTop>
+          Verify your email
+        </Heading>
+        <Spacer y={1} />
+        {submitted ? (
+          <>
+            <Text color="helper" size={13}>
+              A new verification email was sent to:
+            </Text>
+            <Spacer y={1} />
+            <Email>{user?.email}</Email>
+            <Spacer y={1} />
+            <Text color="helper" size={13}>
+              Don't forget to check your spam folder.
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper" size={13}>
+              If you still need help, please contact support@porter.run.
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text color="helper" size={13}>
+              We've sent a verification link to the following email address:
+            </Text>
+            <Spacer y={1} />
+            <Email>{user?.email}</Email>
+            <Spacer y={1} />
+            <Text color="helper" size={13}>
+              Please click the link in your inbox to verify your email.
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper" size={13}>
+              Didn't receive anything?
+            </Text>
+            <Spacer height="30px" />
+            <Button onClick={handleSendEmail} width="100%" height="40px">
+              Resend verification email
+            </Button>
+          </>
+        )}
+        <Spacer y={1} />
+        <Text 
+          size={13}
+          color="helper"
+        >
+          Want to use a different email? <Link onClick={handleLogOut}>Log out</Link>
+        </Text>
+      </Wrapper>
+    </StyledRegister>
+  );
+};
+
+export default Register;
 
 const Email = styled.div`
-  background: #ffffff11;
-  border: 1px solid #ffffff44;
-  border-radius: 3px;
+  width: 100%;
+  height: 40px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
   font-size: 14px;
-  color: #aaaabb;
-  height: 30px;
-  margin: 0 60px;
+  display: flex;
+  align-items: center;
+  padding: 15px;
+`;
+
+const Flex = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
 `;
 
-const Footer = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  margin-bottom: 30px;
-  width: 100vw;
-  text-align: center;
+const CheckRow = styled.div`
+  font-size: 14px;
+  display: flex;
+  align-items: center;
   color: #aaaabb;
-  font-size: 13px;
-  padding-right: 8px;
-  font: Work Sans, sans-serif;
+  > i {
+    font-size: 18px;
+    margin-right: 10px;
+    float: left;
+    color: #4797ff;
+  }
 `;
 
-const DarkMatter = styled.div`
-  margin-top: -20px;
+const Shiny = styled.span`
+  background-image: linear-gradient(225deg, #fff, #7980ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
+const Jumbotron = styled.div`
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1.5;
+`;
+
+const Logo = styled.img`
+  height: 24px;
+  user-select: none;
+`;
+
+const StyledGoogleIcon = styled(GoogleIcon)`
+  width: 38px;
+  height: 38px;
+`;
+
+const Line = styled.div`
+  height: 2px;
+  width: 100%;
+  background: #ffffff22;
+  margin: 35px 0px 30px;
 `;
 
 const Or = styled.div`
   position: absolute;
-  width: 30px;
+  width: 50px;
   text-align: center;
   background: #111114;
   z-index: 999;
-  left: calc(50% - 15px);
+  left: calc(50% - 25px);
   margin-top: -1px;
 `;
 
@@ -154,26 +214,18 @@ const OrWrapper = styled.div`
   position: relative;
 `;
 
-const IconWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 10px;
-  height: 100%;
-`;
-
 const Icon = styled.img`
   height: 18px;
-  margin-right: 20px;
+  margin: 14px;
 `;
 
 const OAuthButton = styled.div`
-  width: 200px;
-  height: 30px;
+  width: 100%;
+  height: 40px;
   display: flex;
   background: #ffffff;
   align-items: center;
-  border-radius: 3px;
+  border-radius: 5px;
   color: #000000;
   cursor: pointer;
   user-select: none;
@@ -184,168 +236,16 @@ const OAuthButton = styled.div`
   }
 `;
 
-const Link = styled.a`
-  margin-left: 5px;
-  color: #819bfd;
-  cursor: pointer;
-`;
-
-const Helper = styled.div`
-  position: absolute;
-  bottom: 30px;
-  width: 100%;
-  text-align: center;
-  font-size: 13px;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff44;
-`;
-
-const OverflowWrapper = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 10px;
-`;
-
-const ErrorHelper = styled.div`
-  position: absolute;
-  right: -185px;
-  top: 8px;
-  height: 30px;
-  width: 170px;
-  user-select: none;
-  background: #272731;
-  font-family: "Work Sans", sans-serif;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ff3b62;
-  border-radius: 3px;
-
-  > div {
-    background: #272731;
-    height: 15px;
-    width: 15px;
-    position: absolute;
-    left: -3px;
-    top: 7px;
-    transform: rotate(45deg);
-    z-index: -1;
-  }
-`;
-
-const Line = styled.div`
-  min-height: 3px;
-  width: 100px;
-  z-index: 999;
-  background: #ffffff22;
-  margin: 30px 0px 30px;
-`;
-
-const Button = styled.button`
-  width: 200px;
-  min-height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: "Work Sans", sans-serif;
-  cursor: pointer;
-  margin: 9px auto;
-  border-radius: 2px;
-  border: 0;
-  background: #819bfd;
-  color: white;
-  font-weight: 500;
-  font-size: 14px;
-`;
-
-const InputWrapper = styled.div`
-  position: relative;
-`;
-
-const Input = styled.input`
-  width: 200px;
-  font-family: "Work Sans", sans-serif;
-  margin: 8px 0px;
-  height: 30px;
-  padding: 8px;
-  background: #ffffff12;
-  color: #ffffff;
-  border: ${(props: { valid?: boolean }) =>
-    props.valid ? "0" : "1px solid #ff3b62"};
-  border-radius: 2px;
-  font-size: 14px;
-`;
-
-const Prompt = styled.div`
-  font-family: "Work Sans", sans-serif;
-  font-weight: 500;
-  font-size: 15px;
-  margin-bottom: 18px;
-`;
-
-const Logo = styled.img`
-  width: 140px;
-  margin-top: 50px;
-  margin-bottom: 60px;
-  user-select: none;
-`;
-
-const StatusText = styled.div<{ lessPadding?: boolean }>`
-  padding: ${(props) => (props.lessPadding ? "10px" : "18px")} 40px;
-  font-family: "Work Sans", sans-serif;
-  font-size: 14px;
-  line-height: 160%;
-  color: #aaaabb;
-  text-align: center;
-`;
-
-const FormWrapper = styled.div`
-  width: calc(100% - 8px);
-  height: calc(100% - 8px);
-  background: #111114;
-  z-index: 1;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const GradientBg = styled.div`
-  background: linear-gradient(#8ce1ff, #a59eff, #fba8ff);
-  width: 180%;
-  height: 180%;
-  position: absolute;
-  top: -40%;
-  left: -40%;
-  animation: flip 6s infinite linear;
-  @keyframes flip {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-const LoginPanel = styled.div`
-  width: 330px;
-  height: 470px;
-  background: white;
+const Wrapper = styled.div`
+  width: 500px;
   margin-top: -20px;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
   position: relative;
-  align-items: center;
+  padding: 25px;
+  border-radius: 5px;
+  font-size: 13px;
 `;
 
-const StyledLogin = styled.div`
+const StyledRegister = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;

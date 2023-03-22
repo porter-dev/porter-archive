@@ -92,7 +92,7 @@ const StyledInput = styled.input<{
   padding: 5px 10px;
   width: ${props => props.width || "200px"};
   color: #ffffff;
-  font-saize: 13px;
+  font-size: 13px;
   outline: none;
   border-radius: 5px;
   background: #26292e;

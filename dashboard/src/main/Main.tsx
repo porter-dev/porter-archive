@@ -24,6 +24,7 @@ type StateType = {
   initialized: boolean;
   local: boolean;
   userId: number;
+  version: string;
 };
 
 export default class Main extends Component<PropsType, StateType> {
@@ -35,9 +36,20 @@ export default class Main extends Component<PropsType, StateType> {
     initialized: localStorage.getItem("init") === "true",
     local: false,
     userId: null as number,
+    version: null as string,
   };
 
   componentDidMount() {
+
+    // Get capabilities to case on user info requirements
+    api.getMetadata("", {}, {})
+      .then((res) => {
+        this.setState({
+          version: res.data?.version,
+        })
+      })
+      .catch((err) => console.log(err));
+
     let { setUser, setCurrentError } = this.context;
     let urlParams = new URLSearchParams(window.location.search);
     let error = urlParams.get("error");
@@ -111,7 +123,7 @@ export default class Main extends Component<PropsType, StateType> {
   };
 
   renderMain = () => {
-    if (this.state.loading) {
+    if (this.state.loading || !this.state.version) {
       return <Loading />;
     }
 
@@ -135,7 +147,7 @@ export default class Main extends Component<PropsType, StateType> {
 
     // Handle case where new user signs up via OAuth and has not set name and company
     if (
-      this.context.capabilities.version === "production" &&
+      this.state.version === "production" &&
       !this.state.hasInfo && 
       this.state.userId > 9312 &&
       this.state.isLoggedIn

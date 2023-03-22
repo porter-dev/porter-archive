@@ -13,8 +13,9 @@ type User struct {
 	Password      string `json:"password"`
 	EmailVerified bool   `json:"email_verified"`
 
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	CompanyName string `json:"company_name"`
 
 	// ID of oauth integration for github connection (optional)
 	GithubAppIntegrationID uint
@@ -30,5 +31,8 @@ func (u *User) ToUserType() *types.User {
 		ID:            u.ID,
 		Email:         u.Email,
 		EmailVerified: u.EmailVerified,
+		FirstName:     u.FirstName,
+		LastName:      u.LastName,
+		CompanyName:   u.CompanyName,
 	}
 }

@@ -40,10 +40,11 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := &models.User{
-		Email:     request.Email,
-		Password:  request.Password,
-		FirstName: request.FirstName,
-		LastName:  request.LastName,
+		Email:       request.Email,
+		Password:    request.Password,
+		FirstName:   request.FirstName,
+		LastName:    request.LastName,
+		CompanyName: request.CompanyName,
 	}
 
 	// check if user exists

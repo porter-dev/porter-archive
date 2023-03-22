@@ -144,6 +144,7 @@ const Email = styled.div`
   display: flex;
   align-items: center;
   padding: 15px;
+  color: #aaaabb;
 `;
 
 const Flex = styled.div`

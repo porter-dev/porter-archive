@@ -8,6 +8,7 @@ import ResetPasswordFinalize from "./auth/ResetPasswordFinalize";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import VerifyEmail from "./auth/VerifyEmail";
+import SetInfo from "./auth/SetInfo";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
 import Loading from "components/Loading";
@@ -19,8 +20,10 @@ type StateType = {
   loading: boolean;
   isLoggedIn: boolean;
   isEmailVerified: boolean;
+  hasInfo: boolean;
   initialized: boolean;
   local: boolean;
+  userId: number;
 };
 
 export default class Main extends Component<PropsType, StateType> {
@@ -28,8 +31,10 @@ export default class Main extends Component<PropsType, StateType> {
     loading: true,
     isLoggedIn: false,
     isEmailVerified: false,
+    hasInfo: false,
     initialized: localStorage.getItem("init") === "true",
     local: false,
+    userId: null as number,
   };
 
   componentDidMount() {
@@ -41,11 +46,12 @@ export default class Main extends Component<PropsType, StateType> {
       .checkAuth("", {}, {})
       .then((res) => {
         if (res && res?.data) {
-          setUser(res?.data?.id, res?.data?.email);
+          setUser(res.data.id, res.data.email);
           this.setState({
             isLoggedIn: true,
-            isEmailVerified: res?.data?.email_verified,
+            isEmailVerified: res.data.email_verified,
             initialized: true,
+            hasInfo: res.data.company_name && true,
             loading: false,
           });
         } else {
@@ -79,6 +85,7 @@ export default class Main extends Component<PropsType, StateType> {
             isLoggedIn: true,
             isEmailVerified: res?.data?.email_verified,
             initialized: true,
+            hasInfo: res.data.company_name && true,
             loading: false,
           });
         } else {
@@ -124,6 +131,30 @@ export default class Main extends Component<PropsType, StateType> {
           />
         </Switch>
       );
+    }
+
+    // Handle case where new user signs up via OAuth and has not set name and company
+    if (
+      this.context.capabilities.version === "production" &&
+      !this.state.hasInfo && 
+      this.state.userId > 9312 &&
+      this.state.isLoggedIn
+    ) {
+      return (
+        <Switch>
+          <Route
+            path="/"
+            render={() => {
+              return (
+                <SetInfo 
+                  handleLogOut={this.handleLogOut}
+                  authenticate={this.authenticate}
+                />
+              );
+            }}
+          />
+        </Switch>
+      )
     }
 
     return (

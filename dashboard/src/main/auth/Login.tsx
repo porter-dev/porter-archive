@@ -193,7 +193,7 @@ const Login: React.FC<Props> = ({
               }}
               width="100%"
               height="40px"
-              error={(emailError && "Please enter a valid email") || (credentialError && "")}
+              error={emailError && "Please enter a valid email"}
             />
             <Spacer y={1} />
             <Input

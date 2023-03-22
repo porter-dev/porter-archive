@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
 
 import github from "assets/github-icon.png";
@@ -29,8 +29,11 @@ const getWindowDimensions = () => {
 const Register: React.FC<Props> = ({
   authenticate,
 }) => {
+  const { setUser, setCurrentError } = useContext(Context);
   const [firstName, setFirstName] = useState("");
+  const [firstNameError, setFirstNameError] = useState(false);
   const [lastName, setLastName] = useState("");
+  const [lastNameError, setLastNameError] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState(false);
@@ -41,23 +44,24 @@ const Register: React.FC<Props> = ({
 
   const handleRegister = (): void => {
     if (!emailRegex.test(email)) {
-      this.setState({ emailError: true });
+      setEmailError(true);
     }
 
-    if (confirmPassword !== password) {
-      this.setState({ confirmPasswordError: true });
+    if (firstName === "") {
+      setFirstNameError(true);
+    }
+
+    if (lastName === "") {
+      setLastNameError(true);
     }
 
     // Check for valid input
-    if (emailRegex.test(email) && confirmPassword === password) {
+    if (emailRegex.test(email) && firstName !== "" && lastName !== "") {
       // Attempt user registration
       api
         .registerUser(
           "",
-          {
-            email: email,
-            password: password,
-          },
+          { email: email, password: password },
           {}
         )
         .then((res: any) => {
@@ -78,9 +82,18 @@ const Register: React.FC<Props> = ({
 
   const handleKeyDown = (e: any) => {
     if (e.key === "Enter") {
-      handleLogin();
+      handleRegister();
     };
   };
+
+  // Manually re-register event listener on email/password change
+  useEffect(() => {
+    document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [email, password, firstName, lastName]);
 
   useEffect(() => {
     window.addEventListener('resize', handleResize);
@@ -92,34 +105,9 @@ const Register: React.FC<Props> = ({
     window.location.href = redirectUrl;
   };
 
-  const renderOAuthSection = () => {
-    if (hasGithub || hasGoogle) {
-      return (
-        <>
-          <Container row>
-            {hasGithub && (
-              <OAuthButton onClick={githubRedirect}>
-                <Icon src={github} />
-                Sign up with GitHub
-              </OAuthButton>
-            )}
-            {hasGithub && hasGoogle && (
-              <Spacer inline x={2} />
-            )}
-            {hasGoogle && (
-              <OAuthButton onClick={githubRedirect}>
-                <StyledGoogleIcon />
-                Sign up with Google
-              </OAuthButton>
-            )}
-          </Container>
-          <OrWrapper>
-            <Line />
-            <Or>or</Or>
-          </OrWrapper>
-        </>
-      );
-    }
+  const googleRedirect = () => {
+    let redirectUrl = `/api/oauth/login/google`;
+    window.location.href = redirectUrl;
   };
 
   return (
@@ -156,49 +144,102 @@ const Register: React.FC<Props> = ({
           Create your Porter account
         </Heading>
         <Spacer y={1} />
-        {renderOAuthSection()}
-        <Container row>
-          <Input
-            placeholder="First name"
-            label="First name"
-            value={firstName}
-            setValue={setFirstName}
-            width="100%"
-            height="40px"
-          />
-          <Spacer inline x={2} />
-          <Input
-            placeholder="Last name"
-            label="Last name"
-            value={lastName}
-            setValue={setLastName}
-            width="100%"
-            height="40px"
-          />
-        </Container>
-        <Spacer y={1} />
-        <Input
-          placeholder="Email"
-          label="Email"
-          value={email}
-          setValue={setEmail}
-          width="100%"
-          height="40px"
-        />
-        <Spacer y={1} />
-        <Input
-          placeholder="Password"
-          label="Password"
-          value={password}
-          setValue={setPassword}
-          width="100%"
-          height="40px"
-          type="password"
-        />
-        <Spacer height="30px" />
-        <Button onClick={authenticate} width="100%" height="40px">
-          Continue
-        </Button>
+        {(hasGithub || hasGoogle) && (
+          <>
+            <Container row>
+              {hasGithub && (
+                <OAuthButton onClick={githubRedirect}>
+                  <Icon src={github} />
+                  Sign up with GitHub
+                </OAuthButton>
+              )}
+              {hasGithub && hasGoogle && (
+                <Spacer inline x={2} />
+              )}
+              {hasGoogle && (
+                <OAuthButton onClick={googleRedirect}>
+                  <StyledGoogleIcon />
+                  Sign up with Google
+                </OAuthButton>
+              )}
+            </Container>
+            {hasBasic && (
+              <OrWrapper>
+                <Line />
+                <Or>or</Or>
+              </OrWrapper>
+            )}
+          </>
+        )}
+        {hasBasic && (
+          <>
+            <Container row>
+              <RowWrapper>
+                <Input
+                  placeholder="First name"
+                  label="First name"
+                  value={firstName}
+                  setValue={(x) => {
+                    setFirstName(x);
+                    setFirstNameError(false);
+                  }}
+                  width="100%"
+                  height="40px"
+                  error={(firstNameError && "First name cannot be blank")}
+                />
+                {!firstNameError && lastNameError && (
+                  <Spacer height="27px" />
+                )}
+              </RowWrapper>
+              <Spacer inline x={2} />
+              <RowWrapper>
+                <Input
+                  placeholder="Last name"
+                  label="Last name"
+                  value={lastName}
+                  setValue={(x) => {
+                    setLastName(x);
+                    setLastNameError(false);
+                  }}
+                  width="100%"
+                  height="40px"
+                  error={(lastNameError && "Last name cannot be blank")}
+                />
+                {!lastNameError && firstNameError && (
+                  <Spacer height="27px" />
+                )}
+              </RowWrapper>
+            </Container>
+            <Spacer y={1} />
+            <Input
+              type="email"
+              placeholder="Email"
+              label="Email"
+              value={email}
+              setValue={(x) => {
+                setEmail(x);
+                setEmailError(false);
+              }}
+              width="100%"
+              height="40px"
+              error={(emailError && "Please enter a valid email")}
+            />
+            <Spacer y={1} />
+            <Input
+              placeholder="Password"
+              label="Password"
+              value={password}
+              setValue={setPassword}
+              width="100%"
+              height="40px"
+              type="password"
+            />
+            <Spacer height="30px" />
+            <Button onClick={handleRegister} width="100%" height="40px">
+              Continue
+            </Button>
+          </>
+        )}
         <Spacer y={1} />
         <Text 
           size={13}
@@ -212,6 +253,10 @@ const Register: React.FC<Props> = ({
 };
 
 export default Register;
+
+const RowWrapper = styled.div`
+  width: 100%;
+`;
 
 const Flex = styled.div`
   display: flex;

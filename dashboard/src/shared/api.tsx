@@ -1393,6 +1393,8 @@ const logOutUser = baseApi("POST", "/api/logout");
 const registerUser = baseApi<{
   email: string;
   password: string;
+  first_name: string;
+  last_name: string;
 }>("POST", "/api/users");
 
 const rollbackChart = baseApi<

@@ -119,6 +119,16 @@ const Register: React.FC<Props> = ({
   }, [email, password, firstName, lastName]);
 
   useEffect(() => {
+
+    // Get capabilities to case on login methods
+    api.getMetadata("", {}, {})
+      .then((res) => {
+        setHasBasic(res.data?.basic_login);
+        setHasGithub(res.data?.github_login);
+        setHasGoogle(res.data?.google_login);
+      })
+      .catch((err) => console.log(err));
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);

@@ -66,6 +66,10 @@
     "valtio": "^1.2.4",
     "zod": "^3.20.2"
   },
+  "resolutions": {
+    "@types/react": "16.14.0",
+    "@types/react-dom": "16.14.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js",

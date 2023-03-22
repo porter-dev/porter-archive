@@ -407,7 +407,7 @@ const Home: React.FC<Props> = props => {
           />
           {user?.isPorterUser || overrideInfraTabEnabled({
             projectID: currentProject?.id,
-          }) ? (
+          }) && (
             <Route
               path="/infrastructure"
               render={() => {
@@ -418,7 +418,7 @@ const Home: React.FC<Props> = props => {
                 );
               }}
             />
-          ) : null}
+          )}
           <Route
             path="/dashboard"
             render={() => {

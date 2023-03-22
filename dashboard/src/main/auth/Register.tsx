@@ -61,7 +61,12 @@ const Register: React.FC<Props> = ({
       api
         .registerUser(
           "",
-          { email: email, password: password },
+          { 
+            email: email,
+            password: password,
+            first_name: firstName,
+            last_name: lastName,
+          },
           {}
         )
         .then((res: any) => {

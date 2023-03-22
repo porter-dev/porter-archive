@@ -121,6 +121,31 @@ func getUserRoutes(
 		Router:   r,
 	})
 
+	// POST /api/users/update/info -> user.UpdateUserInfoHandler
+	updateUserInfoEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/users/update/info",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	updateUserInfoHandler := user.NewUpdateUserInfoHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateUserInfoEndpoint,
+		Handler:  updateUserInfoHandler,
+		Router:   r,
+	})
+
 	// GET /api/users/current -> user.NewUserGetCurrentHandler
 	authCheckEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -1,0 +1,48 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+helmCharts:
+- name: web
+  repo: https://charts.getporter.dev
+  releaseName: porter-server
+  valuesFile: server.yaml
+- name: web
+  repo: https://charts.getporter.dev
+  releaseName: porter-dashboard
+  valuesFile: dashboard.yaml
+
+configMapGenerator:
+- name: porter-server-env
+  env: .server.env
+- name: porter-dashboard-env
+  env: .dashboard.env
+generatorOptions:
+  disableNameSuffixHash: true
+
+patchesStrategicMerge:
+- |-
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: porter-server-web
+  spec:
+    template:
+      spec:
+        containers:
+        - name: web
+          envFrom:
+          - configMapRef: 
+              name: porter-server-env
+- |-
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: porter-dashboard-web
+  spec:
+    template:
+      spec:
+        containers:
+        - name: web
+          envFrom:
+          - configMapRef: 
+              name: porter-dashboard-env

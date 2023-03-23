@@ -1,0 +1,10 @@
+FROM golang:1.20.1 as installer
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+RUN chmod +x /go/bin/dlv
+
+FROM debian:bullseye-slim as runner
+WORKDIR /app
+COPY --from=installer /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=installer /go/bin/dlv /
+COPY ./porter /app

@@ -1,0 +1,9 @@
+FROM node:16
+WORKDIR /app
+
+COPY dashboard /app/
+
+ENV NODE_ENV=development
+
+RUN npm ci --legacy-peer-deps
+RUN npm i -g webpack-dev-server@3.11.0

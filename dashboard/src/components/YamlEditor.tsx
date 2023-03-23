@@ -3,6 +3,7 @@ import styled from "styled-components";
 import AceEditor from "react-ace";
 
 import "shared/ace-porter-theme";
+import 'ace-builds/src-noconflict/ext-searchbox';
 import "ace-builds/src-noconflict/mode-yaml";
 
 type PropsType = {
@@ -49,7 +50,6 @@ class YamlEditor extends Component<PropsType, StateType> {
             onChange={this.props.onChange}
             name="codeEditor"
             readOnly={this.props.readOnly}
-            editorProps={{ $blockScrolling: true }}
             height={this.props.height}
             width="100%"
             style={{ borderRadius: "10px" }}

@@ -10,6 +10,8 @@ import Loading from "components/Loading";
 import { getQueryParam, pushQueryParams } from "shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
 
+import Placeholder from "components/Placeholder";
+
 type Props = RouteComponentProps & {
   currentCluster: ClusterType;
   namespace: string;
@@ -107,15 +109,15 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
       );
     } else if (hasError) {
       return (
-        <Placeholder>
+        <Placeholder height="370px">
           <i className="material-icons">error</i> Error connecting to cluster.
         </Placeholder>
       );
     } else if (envGroups.length === 0) {
       return (
-        <Placeholder>
+        <Placeholder height="370px">
           <i className="material-icons">category</i>
-          No environment groups found in this namespace.
+          No environment groups found with the given filters.
         </Placeholder>
       );
     }
@@ -134,27 +136,6 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
 };
 
 export default withRouter(EnvGroupList);
-
-const Placeholder = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #ffffff44;
-  background: #26282f;
-  border-radius: 5px;
-  height: 370px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff44;
-  font-size: 13px;
-
-  > i {
-    font-size: 16px;
-    margin-right: 12px;
-  }
-`;
 
 const LoadingWrapper = styled.div`
   padding-top: 100px;

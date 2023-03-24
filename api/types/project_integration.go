@@ -75,6 +75,16 @@ type AWSIntegration struct {
 
 type ListAWSResponse []*AWSIntegration
 
+type RolePreflightCheckRequest struct {
+	ProjectID	  uint	 `json:"project_id"`
+	TargetARN     string `json:"target_arn"`
+	ExternalID	  string `json:"external_id"`
+}
+
+type RolePreflightCheckResponse struct {
+	TargetARN     string `json:"target_arn"`
+}
+
 type CreateAWSRequest struct {
 	AWSRegion          string `json:"aws_region"`
 	AWSClusterID       string `json:"aws_cluster_id"`

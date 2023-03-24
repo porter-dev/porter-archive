@@ -17,6 +17,9 @@ bin
 openapi.yaml
 .idea
 vendor
+zarf/helm/charts
+*.env
+porter
 
 # Local docs directories
 /docs/.obsidian

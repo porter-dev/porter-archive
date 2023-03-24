@@ -179,6 +179,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
       setCreateStatus("");
       setClusterName(contract.cluster.eksKind.clusterName);
       setAwsRegion(contract.cluster.eksKind.region);
+      setClusterVersion(contract.cluster.eksKind.clusterVersion);
       setCidrRange(contract.cluster.eksKind.cidrRange);
     }
   }, [props.selectedClusterVersion]);

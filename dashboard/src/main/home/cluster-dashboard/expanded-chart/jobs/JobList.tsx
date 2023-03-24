@@ -6,7 +6,7 @@ import { Context } from "shared/Context";
 import JobResource from "./JobResource";
 import useAuth from "shared/auth/useAuth";
 import usePagination from "shared/hooks/usePagination";
-import Selector from "components/Selector";
+import Placeholder from "components/Placeholder";
 
 type PropsType = {
   jobs: any[];
@@ -73,7 +73,7 @@ const JobListFC = (props: PropsType): JSX.Element => {
   if (!props.jobs?.length) {
     return (
       <JobListWrapper>
-        <Placeholder>
+        <Placeholder height="350px">
           <i className="material-icons">category</i>
           There are no jobs currently running.
         </Placeholder>
@@ -194,22 +194,6 @@ const PaginationAction = styled.button`
 
 const PageCounter = styled.span`
   margin: 0 5px;
-`;
-
-const Placeholder = styled.div`
-  width: 100%;
-  min-height: 250px;
-  height: 30vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff44;
-  font-size: 14px;
-
-  > i {
-    font-size: 18px;
-    margin-right: 10px;
-  }
 `;
 
 const JobListWrapper = styled.div`

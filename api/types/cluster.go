@@ -308,6 +308,10 @@ type UpdateClusterRequest struct {
 	PreviewEnvsEnabled *bool `json:"preview_envs_enabled"`
 }
 
+type RenameClusterRequest struct {
+	Name string `json:"name"`
+}
+
 type ListClusterResponse []*Cluster
 
 type CreateClusterCandidateResponse []*ClusterCandidate

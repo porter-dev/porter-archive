@@ -113,6 +113,18 @@ const updateCluster = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
 
+const renameCluster = baseApi<
+  {
+    name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/rename`;
+});
+
 const createAzureIntegration = baseApi<
   {
     azure_client_id: string;
@@ -920,6 +932,13 @@ const deleteContract = baseApi<
   return `/api/projects/${project_id}/contracts/${revision_id}`;
 });
 
+const getClusterState = baseApi<
+  {},
+  { project_id: number, cluster_id: number }
+>("GET", ({ project_id, cluster_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/state`;
+});
+
 const provisionInfra = baseApi<
   {
     kind: string;
@@ -1381,6 +1400,9 @@ const logOutUser = baseApi("POST", "/api/logout");
 const registerUser = baseApi<{
   email: string;
   password: string;
+  first_name: string;
+  last_name: string;
+  company_name: string;
 }>("POST", "/api/users");
 
 const rollbackChart = baseApi<
@@ -1409,6 +1431,17 @@ const uninstallTemplate = baseApi<
 >("DELETE", (pathParams) => {
   let { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0`;
+});
+
+const updateUserInfo = baseApi<
+  {
+    first_name: string;
+    last_name: string;
+    company_name: string;
+  },
+  {}
+>("POST", (pathParams) => {
+  return `/api/users/update/info`;
 });
 
 const updateUser = baseApi<
@@ -2391,6 +2424,7 @@ export default {
   createAWSIntegration,
   overwriteAWSIntegration,
   updateCluster,
+  renameCluster,
   createAzureIntegration,
   createGitlabIntegration,
   createEmailVerification,
@@ -2477,6 +2511,7 @@ export default {
   getPodByName,
   getMatchingPods,
   getAllReleasePods,
+  getClusterState,
   getMetrics,
   getNamespaces,
   getNGINXIngresses,
@@ -2510,6 +2545,7 @@ export default {
   registerUser,
   rollbackChart,
   uninstallTemplate,
+  updateUserInfo,
   updateUser,
   renameConfigMap,
   updateConfigMap,

@@ -339,7 +339,7 @@ export interface CapabilityType {
 export interface ContextProps {
   currentModal?: string;
   currentModalData: any;
-  setCurrentModal: (currentModal: string, currentModalData?: any) => void;
+  setCurrentModal: (currentModal: any, currentModalData?: any) => void;
   currentOverlay: {
     message: string;
     onYes: any;

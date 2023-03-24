@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import styled from "styled-components";
 import _ from "lodash";
-import randomWords from "random-words";
+import { generateSlug } from "random-word-slugs";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
@@ -66,7 +66,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   const [buildConfig, setBuildConfig] = useState();
 
   const generateRandomName = () => {
-    const randomTemplateName = randomWords({ exactly: 3, join: "-" });
+    const randomTemplateName = generateSlug();
     return randomTemplateName;
   };
 

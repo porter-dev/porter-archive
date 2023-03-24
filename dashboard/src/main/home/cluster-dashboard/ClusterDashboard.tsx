@@ -138,8 +138,12 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     if (prevProps.currentView !== this.props.currentView) {
       let params = this.props.match.params as any;
       let currentNamespace = params.namespace;
+      console.log("lmfaoa", currentNamespace)
+      console.log("idk", window.location.search)
       if (!currentNamespace) {
+        console.log("lmfaob", window.location.search)
         currentNamespace = getQueryParam(this.props, "namespace");
+        console.log("lmfaow", currentNamespace)
       }
       this.setState(
         {

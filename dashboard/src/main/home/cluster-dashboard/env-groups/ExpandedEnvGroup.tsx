@@ -31,6 +31,7 @@ import useAuth from "shared/auth/useAuth";
 import { fillWithDeletedVariables } from "components/porter-form/utils";
 import DynamicLink from "components/DynamicLink";
 import DocsHelper from "components/DocsHelper";
+import Spacer from "components/porter/Spacer";
 
 type PropsType = WithAuthProps & {
   namespace: string;
@@ -434,6 +435,8 @@ export const ExpandedEnvGroupFC = ({
           </TagWrapper>
         </TitleSection>
       </HeaderWrapper>
+
+      <Spacer y={1} />
 
       {isDeleting ? (
         <>

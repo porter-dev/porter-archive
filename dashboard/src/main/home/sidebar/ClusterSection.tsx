@@ -69,6 +69,9 @@ export const ClusterSection: React.FC<Props> = ({
           </NavButton>
           <NavButton
             path="/env-groups"
+            onClick={() => {
+              console.log("del2 begin trace", window.location.search)
+            }}
             targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&

@@ -45,6 +45,11 @@ const machineTypeOptions = [
   { value: "t3.2xlarge", label: "t3.2xlarge" },
 ];
 
+const clusterVersionOptions = [
+  { value: "v1.24.0", label: "1.24.0" },
+  { value: "v1.25.0", label: "1.25.0" },
+];
+
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   credentialId: string;
@@ -67,6 +72,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
   const [cidrRange, setCidrRange] = useState("172.0.0.0/16");
+  const [clusterVersion, setClusterVersion] = useState("v1.24.0");
   const [isReadOnly, setIsReadOnly] = useState(false);
 
   const createCluster = async () => {
@@ -80,7 +86,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
           case: "eksKind",
           value: new EKS({
             clusterName,
-            clusterVersion: "v1.24.0",
+            clusterVersion: clusterVersion || "v1.24.0",
             cidrRange: cidrRange || "172.0.0.0/16",
             region: awsRegion,
             nodeGroups: [
@@ -218,7 +224,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
         <InputRow
           width="350px"
           isRequired
-          disabled={isReadOnly}
+          disabled={isReadOnly || true}
           type="string"
           value={clusterName}
           setValue={(x: string) => setClusterName(x)}
@@ -228,24 +234,13 @@ const ProvisionerSettings: React.FC<Props> = props => {
         <SelectRow
           options={regionOptions}
           width="350px"
-          disabled={isReadOnly}
+          disabled={isReadOnly || true}
           value={awsRegion}
           scrollBuffer={true}
           dropdownMaxHeight="240px"
           setActiveValue={setAwsRegion}
           label="📍 AWS region"
         />
-        <SelectRow
-          options={machineTypeOptions}
-          width="350px"
-          disabled={isReadOnly}
-          value={machineType}
-          scrollBuffer={true}
-          dropdownMaxHeight="240px"
-          setActiveValue={setMachineType}
-          label="⚙️ Machine type"
-        />
-
         <Heading>
           <ExpandHeader
             onClick={() => setIsExpanded(!isExpanded)}
@@ -258,14 +253,25 @@ const ProvisionerSettings: React.FC<Props> = props => {
         {
           isExpanded && (
             <>
-              <InputRow
+              <SelectRow
+                options={clusterVersionOptions}
                 width="350px"
-                type="number"
                 disabled={isReadOnly}
-                value={minInstances}
-                setValue={(x: number) => setMinInstances(x)}
-                label="Minimum number of application EC2 instances"
-                placeholder="ex: 1"
+                value={clusterVersion}
+                scrollBuffer={true}
+                dropdownMaxHeight="240px"
+                setActiveValue={setClusterVersion}
+                label="Cluster version"
+              />
+              <SelectRow
+                options={machineTypeOptions}
+                width="350px"
+                disabled={isReadOnly}
+                value={machineType}
+                scrollBuffer={true}
+                dropdownMaxHeight="240px"
+                setActiveValue={setMachineType}
+                label="Machine type"
               />
               <InputRow
                 width="350px"
@@ -273,7 +279,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
                 disabled={isReadOnly}
                 value={maxInstances}
                 setValue={(x: number) => setMaxInstances(x)}
-                label="Minimum number of application EC2 instances"
+                label="Maximum number of application EC2 instances"
                 placeholder="ex: 1"
               />
               <InputRow

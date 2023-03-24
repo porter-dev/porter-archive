@@ -932,6 +932,13 @@ const deleteContract = baseApi<
   return `/api/projects/${project_id}/contracts/${revision_id}`;
 });
 
+const getClusterState = baseApi<
+  {},
+  { project_id: number, cluster_id: number }
+>("GET", ({ project_id, cluster_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/state`;
+});
+
 const provisionInfra = baseApi<
   {
     kind: string;
@@ -2504,6 +2511,7 @@ export default {
   getPodByName,
   getMatchingPods,
   getAllReleasePods,
+  getClusterState,
   getMetrics,
   getNamespaces,
   getNGINXIngresses,

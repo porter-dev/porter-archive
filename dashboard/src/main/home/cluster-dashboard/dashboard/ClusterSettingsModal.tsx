@@ -124,6 +124,7 @@ const ClusterSettingsModal: React.FC<Props> = ({
         onClick={renameCluster}
         disabled={clusterName === ""}
         status={status}
+        helperText="Note: The vanity name for your cluster will not change the cluster's name in your cloud provider."
       >
         Save
       </Button>

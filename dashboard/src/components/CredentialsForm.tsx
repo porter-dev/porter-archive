@@ -37,7 +37,7 @@ const CredentialsForm: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [awsAccessKeyID, setAWSAccessKeyID] = useState("");
   const [awsSecretAccessKey, setAWSSecretAccessKey] = useState("");
-  const [selectedCredentials, setSelectedCredentials] = useState<AWSCredential>(null);
+  const [selectedCredentials, setSelectedCredentials] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createStatus, setCreateStatus] = useState("");
 
@@ -128,7 +128,7 @@ const CredentialsForm: React.FC<Props> = ({
           <Br height="34px" />
           <SaveButton
             disabled={!selectedCredentials && true}
-            onClick={() => proceed(selectedCredentials.id)}
+            onClick={() => proceed(selectedCredentials.aws_arn)}
             clearPosition
             text="Continue"
           />

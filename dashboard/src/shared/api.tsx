@@ -1400,6 +1400,9 @@ const logOutUser = baseApi("POST", "/api/logout");
 const registerUser = baseApi<{
   email: string;
   password: string;
+  first_name: string;
+  last_name: string;
+  company_name: string;
 }>("POST", "/api/users");
 
 const rollbackChart = baseApi<
@@ -1428,6 +1431,17 @@ const uninstallTemplate = baseApi<
 >("DELETE", (pathParams) => {
   let { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0`;
+});
+
+const updateUserInfo = baseApi<
+  {
+    first_name: string;
+    last_name: string;
+    company_name: string;
+  },
+  {}
+>("POST", (pathParams) => {
+  return `/api/users/update/info`;
 });
 
 const updateUser = baseApi<
@@ -2531,6 +2545,7 @@ export default {
   registerUser,
   rollbackChart,
   uninstallTemplate,
+  updateUserInfo,
   updateUser,
   renameConfigMap,
   updateConfigMap,

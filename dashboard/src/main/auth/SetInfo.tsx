@@ -19,6 +19,7 @@ import Link from "components/porter/Link";
 
 type Props = {
   authenticate: () => void;
+  handleLogOut: () => void;
 };
 
 const getWindowDimensions = () => {
@@ -26,30 +27,24 @@ const getWindowDimensions = () => {
   return { width, height };
 }
 
-const Register: React.FC<Props> = ({
+const SetInfo: React.FC<Props> = ({
   authenticate,
+  handleLogOut,
 }) => {
-  const { setUser, setCurrentError } = useContext(Context);
+  const { user, setCurrentError } = useContext(Context);
   const [firstName, setFirstName] = useState("");
   const [firstNameError, setFirstNameError] = useState(false);
   const [lastName, setLastName] = useState("");
   const [lastNameError, setLastNameError] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const [companyNameError, setCompanyNameError] = useState(false);
-  const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState(false);
-  const [password, setPassword] = useState("");
-  const [passwordError, setPasswordError] = useState(false);
-  const [hasBasic, setHasBasic] = useState(true);
-  const [hasGithub, setHasGithub] = useState(true);
-  const [hasGoogle, setHasGoogle] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
 
-  const handleRegister = (): void => {
-    if (!emailRegex.test(email)) {
-      setEmailError(true);
-    }
+  const handleResize = () => {
+    setWindowDimensions(getWindowDimensions());
+  };
 
+  const finishAccountSetup = async () => {
     if (firstName === "") {
       setFirstNameError(true);
     }
@@ -58,54 +53,34 @@ const Register: React.FC<Props> = ({
       setLastNameError(true);
     }
 
-    if (password === "") {
-      setPasswordError(true);
-    }
-
     if (companyName === "") {
       setCompanyNameError(true);
     }
 
-    // Check for valid input
     if (
-      emailRegex.test(email) && 
       firstName !== "" &&
       lastName !== "" &&
-      password !== "" &&
       companyName !== ""
     ) {
-      // Attempt user registration
-      api
-        .registerUser(
-          "",
-          { 
-            email: email,
-            password: password,
-            first_name: firstName,
-            last_name: lastName,
-            company_name: companyName,
-          },
-          {}
-        )
+      api.updateUserInfo(
+        "",
+        { 
+          first_name: firstName,
+          last_name: lastName,
+          company_name: companyName,
+        },
+        { id: user.id }
+      )
         .then((res: any) => {
-          if (res?.data?.redirect) {
-            window.location.href = res.data.redirect;
-          } else {
-            setUser(res?.data?.id, res?.data?.email);
-            authenticate();
-          }
+          authenticate();
         })
-        .catch((err) => setCurrentError(err.response.data.error));
+        .catch((err) => setCurrentError(err));
     }
-  };
-
-  const handleResize = () => {
-    setWindowDimensions(getWindowDimensions());
   };
 
   const handleKeyDown = (e: any) => {
     if (e.key === "Enter") {
-      handleRegister();
+      finishAccountSetup();
     };
   };
 
@@ -116,32 +91,12 @@ const Register: React.FC<Props> = ({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [email, password, firstName, lastName]);
+  }, [firstName, lastName, companyName]);
 
   useEffect(() => {
-
-    // Get capabilities to case on login methods
-    api.getMetadata("", {}, {})
-      .then((res) => {
-        setHasBasic(res.data?.basic_login);
-        setHasGithub(res.data?.github_login);
-        setHasGoogle(res.data?.google_login);
-      })
-      .catch((err) => console.log(err));
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  const githubRedirect = () => {
-    let redirectUrl = `/api/oauth/login/github`;
-    window.location.href = redirectUrl;
-  };
-
-  const googleRedirect = () => {
-    let redirectUrl = `/api/oauth/login/google`;
-    window.location.href = redirectUrl;
-  };
 
   return (
     <StyledRegister>
@@ -174,132 +129,76 @@ const Register: React.FC<Props> = ({
           </Flex>
         )}
         <Heading isAtTop>
-          Create your Porter account
+          Finish setting up your account
         </Heading>
         <Spacer y={1} />
-        {(hasGithub || hasGoogle) && (
-          <>
-            <Container row>
-              {hasGithub && (
-                <OAuthButton onClick={githubRedirect}>
-                  <Icon src={github} />
-                  Sign up with GitHub
-                </OAuthButton>
-              )}
-              {hasGithub && hasGoogle && (
-                <Spacer inline x={2} />
-              )}
-              {hasGoogle && (
-                <OAuthButton onClick={googleRedirect}>
-                  <StyledGoogleIcon />
-                  Sign up with Google
-                </OAuthButton>
-              )}
-            </Container>
-            {hasBasic && (
-              <OrWrapper>
-                <Line />
-                <Or>or</Or>
-              </OrWrapper>
+        <Container row>
+          <RowWrapper>
+            <Input
+              placeholder="First name"
+              label="First name"
+              value={firstName}
+              setValue={(x) => {
+                setFirstName(x);
+                setFirstNameError(false);
+              }}
+              width="100%"
+              height="40px"
+              error={(firstNameError && "First name cannot be blank")}
+            />
+            {!firstNameError && lastNameError && (
+              <Spacer height="27px" />
             )}
-          </>
-        )}
-        {hasBasic && (
-          <>
-            <Container row>
-              <RowWrapper>
-                <Input
-                  placeholder="First name"
-                  label="First name"
-                  value={firstName}
-                  setValue={(x) => {
-                    setFirstName(x);
-                    setFirstNameError(false);
-                  }}
-                  width="100%"
-                  height="40px"
-                  error={(firstNameError && "First name cannot be blank")}
-                />
-                {!firstNameError && lastNameError && (
-                  <Spacer height="27px" />
-                )}
-              </RowWrapper>
-              <Spacer inline x={2} />
-              <RowWrapper>
-                <Input
-                  placeholder="Last name"
-                  label="Last name"
-                  value={lastName}
-                  setValue={(x) => {
-                    setLastName(x);
-                    setLastNameError(false);
-                  }}
-                  width="100%"
-                  height="40px"
-                  error={(lastNameError && "Last name cannot be blank")}
-                />
-                {!lastNameError && firstNameError && (
-                  <Spacer height="27px" />
-                )}
-              </RowWrapper>
-            </Container>
-            <Spacer y={1} />
+          </RowWrapper>
+          <Spacer inline x={2} />
+          <RowWrapper>
             <Input
-              placeholder="Company name"
-              label="Company name"
-              value={companyName}
+              placeholder="Last name"
+              label="Last name"
+              value={lastName}
               setValue={(x) => {
-                setCompanyName(x);
-                setCompanyNameError(false);
+                setLastName(x);
+                setLastNameError(false);
               }}
               width="100%"
               height="40px"
-              error={(companyNameError && "")}
+              error={(lastNameError && "Last name cannot be blank")}
             />
-            <Spacer y={1} />
-            <Input
-              type="email"
-              placeholder="Email"
-              label="Email"
-              value={email}
-              setValue={(x) => {
-                setEmail(x);
-                setEmailError(false);
-              }}
-              width="100%"
-              height="40px"
-              error={(emailError && "Please enter a valid email")}
-            />
-            <Spacer y={1} />
-            <Input
-              placeholder="Password"
-              label="Password"
-              value={password}
-              setValue={setPassword}
-              width="100%"
-              height="40px"
-              type="password"
-              error={(passwordError && "")}
-            />
-            <Spacer height="30px" />
-            <Button onClick={handleRegister} width="100%" height="40px">
-              Continue
-            </Button>
-          </>
-        )}
+            {!lastNameError && firstNameError && (
+              <Spacer height="27px" />
+            )}
+          </RowWrapper>
+        </Container>
+        <Spacer y={1} />
+        <Input
+          placeholder="Company name"
+          label="Company name"
+          value={companyName}
+          setValue={(x) => {
+            setCompanyName(x);
+            setCompanyNameError(false);
+          }}
+          width="100%"
+          height="40px"
+          error={(companyNameError && "")}
+        />
+        <Spacer height="30px" />
+        <Button onClick={finishAccountSetup} width="100%" height="40px">
+          Continue
+        </Button>
         <Spacer y={1} />
         <Text 
           size={13}
           color="helper"
         >
-          Already have an account? <Link to="/login">Log in</Link>
+          Want to use a different login method? <Link onClick={handleLogOut}>Log out</Link>
         </Text>
       </Wrapper>
     </StyledRegister>
   );
 };
 
-export default Register;
+export default SetInfo;
 
 const RowWrapper = styled.div`
   width: 100%;

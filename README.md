@@ -5,7 +5,7 @@
 
 **Porter is a Kubernetes-powered PaaS that runs in your own cloud provider.** Porter brings the Heroku experience to your own AWS/GCP account, while upgrading your infrastructure to Kubernetes. Get started on Porter without the overhead of DevOps and customize your infrastructure later when you need to.
 
-![Provisioning View](https://user-images.githubusercontent.com/22849518/104234811-fe2dcb00-5421-11eb-9ce3-c0ebefc37476.png)
+<img width="1440" alt="image" src="https://user-images.githubusercontent.com/93286801/227250589-1ebe0f79-c352-4eb4-adfd-7cb10957be3d.png">
 
 ## Community and Updates
 
@@ -21,7 +21,7 @@ A traditional PaaS like Heroku is great for minimizing unnecessary DevOps work b
 
 Porter brings the simplicity of a traditional PaaS to your own cloud provider while preserving the configurability of Kubernetes. Porter is built on top of a popular Kubernetes package manager `helm` and is compatible with standard Kubernetes management tools like `kubectl`, preparing your infra for mature DevOps work from day one.
 
-![image](https://user-images.githubusercontent.com/65516095/103713478-71e75800-4f8a-11eb-915f-adee9d4f5bf7.png)
+<img width="1440" alt="image" src="https://user-images.githubusercontent.com/93286801/227251932-13caf45f-6082-4d6d-85f5-812698e09dae.png">
 
 ## Features
 
@@ -48,7 +48,7 @@ For those who are familiar with Kubernetes and Helm:
 - In-depth view of releases, including revision histories and component graphs
 - Rollback/update of existing releases, including editing of raw `values.yaml`
 
-![Graph View](https://user-images.githubusercontent.com/22849518/101073320-43322800-356d-11eb-9b69-a68bd951992e.png)
+<img width="1426" alt="image" src="https://user-images.githubusercontent.com/93286801/227253754-8e8921e9-4609-4e92-9e3d-6732fb9cfe1c.png">
 
 ## Docs
 
@@ -65,5 +65,3 @@ Below are instructions for a quickstart. For full documentation, please visit ou
 ## Want to Help?
 
 We welcome all contributions. If you're interested in contributing, please read our [contributing guide](https://github.com/porter-dev/porter/blob/master/CONTRIBUTING.md) and [join our Discord community](https://discord.gg/GJynMR3KXK).
-
-![porter](https://user-images.githubusercontent.com/65516095/103712859-def9ee00-4f88-11eb-804c-4b775d697ec4.jpeg)

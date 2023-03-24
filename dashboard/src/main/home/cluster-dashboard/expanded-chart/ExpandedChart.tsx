@@ -575,8 +575,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
       );
     }
 
-    //if (currentChart?.git_action_config?.git_repo && !isStack) {
-    if (true) {
+    if (currentChart?.git_action_config?.git_repo && !isStack) {
       rightTabOptions.push({
         label: "Build Settings",
         value: "build-settings",

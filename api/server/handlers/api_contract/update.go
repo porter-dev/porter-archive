@@ -46,8 +46,8 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if !project.CapiProvisionerEnabled && !c.Config().DisableCAPIProvisioner {
-		// return dummy data if capi provisioner disabled
+	if !project.CapiProvisionerEnabled && c.Config().DisableCAPIProvisioner {
+		// return dummy data if capi provisioner disabled in project settings, and as env var
 		// TODO: remove this stub when we can spin up all services locally, easily
 		clusterID := apiContract.Cluster.ClusterId
 		if apiContract.Cluster.ClusterId == 0 {

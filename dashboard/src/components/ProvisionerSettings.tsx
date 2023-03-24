@@ -58,6 +58,7 @@ type Props = RouteComponentProps & {
 
 const ProvisionerSettings: React.FC<Props> = props => {
   const {
+    user,
     currentProject,
     currentCluster,
     setCurrentCluster,
@@ -242,15 +243,19 @@ const ProvisionerSettings: React.FC<Props> = props => {
           setActiveValue={setAwsRegion}
           label="📍 AWS region"
         />
-        <Heading>
-          <ExpandHeader
-            onClick={() => setIsExpanded(!isExpanded)}
-            isExpanded={isExpanded}
-          >
-            <i className="material-icons">arrow_drop_down</i>
-            Advanced settings
-          </ExpandHeader>
-        </Heading>
+        {
+          user?.isPorterUser && (
+            <Heading>
+              <ExpandHeader
+                onClick={() => setIsExpanded(!isExpanded)}
+                isExpanded={isExpanded}
+              >
+                <i className="material-icons">arrow_drop_down</i>
+                Advanced settings
+              </ExpandHeader>
+            </Heading>
+          )
+        }
         {
           isExpanded && (
             <>

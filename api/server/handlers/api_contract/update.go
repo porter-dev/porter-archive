@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -34,6 +35,7 @@ func NewAPIContractUpdateHandler(
 // For now, this handling cluster creation only, by inserting a row into the cluster table in order to create an ID for this cluster, as well as stores the raw request JSON for updating later
 func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	var apiContract porterv1.Contract
 
@@ -44,7 +46,7 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if c.Config().DisableCAPIProvisioner {
+	if !project.CapiProvisionerEnabled && !c.Config().DisableCAPIProvisioner {
 		// return dummy data if capi provisioner disabled
 		// TODO: remove this stub when we can spin up all services locally, easily
 		clusterID := apiContract.Cluster.ClusterId

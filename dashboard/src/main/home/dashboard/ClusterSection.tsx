@@ -8,6 +8,7 @@ import Banner from "components/Banner";
 import ProvisionerFlow from "components/ProvisionerFlow";
 import ClusterList from "./ClusterList";
 import TitleSection from "components/TitleSection";
+import Spacer from "components/porter/Spacer";
 
 type Props = {
 };
@@ -81,7 +82,7 @@ const ClusterSection = (props: Props) => {
             Provision a new cluster
           </Title>
         </TitleSection>
-        <Br height="7px" />
+        <Spacer y={1} />
         <Banner>
           You have currently provisioned {usage?.current.cluster || "0"} out of {usage?.limit.clusters || "0"} clusters for this project.
         </Banner>

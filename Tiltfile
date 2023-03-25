@@ -5,8 +5,12 @@ secret_settings(disable_scrub=True)
 if not os.path.exists("vendor"):
     local(command="go mod vendor")
 
+if config.tilt_subcommand == "up":
+    local(command="cd dashboard; npm i --legacy-peer-deps")
+
 if config.tilt_subcommand == "down":
     local(command="rm -rf vendor")
+    local(command="rm -rf dashboard/node_modules")
 
 ## Build binary locally for faster devexp
 local_resource(
@@ -41,67 +45,13 @@ docker_build_with_restart(
 
 # Frontend
 # docker_build(
-#     ref='porter1/porter-dashboard', 
-#     context='.',
-#     dockerfile="zarf/docker/Dockerfile.dashboard.tilt",
-#     build_args={'node_env': 'development'},
-#     entrypoint='npm start',
-#     live_update=[
-#         fall_back_on(['dashboard/package.json', 'dashboard/package-lock.json']),
-#         sync('dashboard', '/app/'),
-#     ]
-# )
-# local_resource(
-#   'porter-dashboard',
-#   '''cd dashboard && NODE_ENV=production webpack --config webpack.config.js''',
-#   deps=[
-#     "dashboard"
-#   ],
-#   ignore=[
-#     "dashboard/node_modules"
-#   ],
-#   resource_deps=["postgresql"],
-#   labels=["porter"]
-# )
-
-# docker_build_with_restart(
-#     ref="porter1/porter-dashboard",
-#     context=".",
-#     dockerfile="zarf/docker/Dockerfile.dashboard.tilt",
-#     entrypoint='serve -s /app/build -p 8081',
-#     build_args={},
-#     only=[
-#         "dashboard/build",
-#     ],
-#     live_update=[
-#         sync('./dashboard/build', '/app/build/'),
-#     ]
-# ) 
-# docker_build_with_restart(
 #     ref="porter1/porter-dashboard",
 #     context=".",
 #     dockerfile="zarf/docker/Dockerfile.dashboard.tilt",
 #     entrypoint='webpack-dev-server --config webpack.config.js',
-#     build_args={},
-#     only=[
-#         "dashboard",
-#     ],
-#     live_update=[
-#         sync('./dashboard', '/app/'),
-#     ]
-# ) 
-docker_build(
-    ref="porter1/porter-dashboard",
-    context=".",
-    dockerfile="zarf/docker/Dockerfile.dashboard.tilt",
-    entrypoint='webpack-dev-server --config webpack.config.js',
-    live_update=[
-        # when package.json changes, we need to do a full build
-        fall_back_on(['dashboard/package.json', 'dashboard/package-lock.json']),
-        # Map the local source code into the container under /src
-        sync('dashboard', '/app/'),
-    ]
-)
+#     # entrypoint='npm start',
+#     only=['dashboard/package.json', 'dashboard/package-lock.json']
+# )
 
 allow_k8s_contexts('kind-porter')
 

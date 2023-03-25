@@ -3,7 +3,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 
-// const dotenv = require("dotenv");
+const dotenv = require("dotenv");
 
 const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
   .BundleAnalyzerPlugin;
@@ -11,13 +11,11 @@ const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
 const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = () => {
-  // let env = dotenv.config().parsed;
+  let env = dotenv.config().parsed;
 
-  // if (!env) {
-  //   env = process.env;
-  // }
-  const env = process.env;
-
+  if (!env) {
+    env = process.env;
+  }
   const envKeys = Object.keys(env).reduce((prev, next) => {
     const varName = `process.env.${next}`;
     if (typeof env[next] !== "string") return prev;

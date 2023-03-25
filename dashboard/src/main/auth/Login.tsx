@@ -222,7 +222,7 @@ const Login: React.FC<Props> = ({
           </>
         )}
         <Spacer y={1} />
-        <Text 
+        <Text
           size={13}
           color="helper"
         >

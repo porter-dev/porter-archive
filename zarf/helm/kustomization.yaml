@@ -46,3 +46,21 @@ patchesStrategicMerge:
           envFrom:
           - configMapRef: 
               name: porter-dashboard-env
+- |-
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: porter-dashboard-web
+  spec:
+    template:
+      spec:
+        volumes:
+        - name: hot-reload
+          hostPath:
+            path: /host/porter/dashboard
+            type: ''
+        containers:
+        - name: web
+          volumeMounts:
+          - name: hot-reload
+            mountPath: /app

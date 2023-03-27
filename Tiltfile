@@ -1,4 +1,5 @@
 load('ext://restart_process', 'docker_build_with_restart')
+load('ext://dotenv', 'dotenv')
 
 secret_settings(disable_scrub=True)
 
@@ -53,6 +54,36 @@ docker_build_with_restart(
 #     only=['dashboard/package.json', 'dashboard/package-lock.json']
 # )
 
+# docker_build(
+#     ref="porter1/porter-dashboard",
+#     context=".",
+#     dockerfile="zarf/docker/Dockerfile.dashboard.tilt",
+#     build_args={'node_env': 'development'},
+#     entrypoint='npm start',
+#     ignore=[
+#         "dashboard/node_modules",
+#         "dashboard/package-lock.json",
+#         "dashboard/webpack.config.js"
+#     ],
+#     live_update=[
+#         sync('dashboard', '/app'),
+#         run('cd /app && npm start', trigger=['./package.json']),
+
+#         # # if all that changed was start-time.txt, make sure the server
+#         # # reloads so that it will reflect the new startup time
+#         # run('touch /app/index.js', trigger='./start-time.txt'),
+# ])
+
+dotenv(fn='zarf/helm/.dashboard.env')
+
+local_resource(
+    name="porter-dashboard",
+    serve_cmd="npm start",
+    serve_dir="dashboard",
+    resource_deps=["postgresql"],
+    labels=["porter"]
+)
+
 allow_k8s_contexts('kind-porter')
 
 cluster = str(local('kubectl config current-context')).strip()
@@ -70,7 +101,7 @@ if (cluster.startswith("kind-")):
     updated_install = encode_yaml_stream(decoded)
     k8s_yaml(updated_install)
     k8s_resource(workload='porter-server-web', port_forwards="8080:8080", labels=["porter"])
-    k8s_resource(workload='porter-dashboard-web', port_forwards="8081:8081", labels=["porter"], resource_deps=["postgresql"])
+    # k8s_resource(workload='porter-dashboard-web', port_forwards="8081:8081", labels=["porter"], resource_deps=["postgresql"])
 else:
     local("echo 'Be careful that you aren't connected to a staging or prod cluster' && exit 1")
     exit()

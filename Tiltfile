@@ -53,7 +53,7 @@ local_resource(
         "DEV_SERVER_PORT":"8081",
         "ENABLE_PROXY":true,
         "API_SERVER":"http://localhost:8080"
-    }
+    },
     resource_deps=["postgresql"],
     labels=["porter"]
 )

@@ -14,8 +14,8 @@ if config.tilt_subcommand == "down":
 
 ## Build binary locally for faster devexp
 local_resource(
-  'porter',
-  '''GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod vendor -gcflags '-N -l' -o ./porter ./cmd/app/main.go''',
+  name='porter-binary',
+  cmd='''GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod vendor -gcflags '-N -l' -tags ee -o ./porter ./cmd/app/main.go''',
   deps=[
     "api",
     "build",
@@ -37,10 +37,12 @@ docker_build_with_restart(
     build_args={},
     only=[
         "porter",
+        "migrate"
     ],
     live_update=[
         sync('./porter', '/app/'),
-    ]
+        sync('./migrate', '/app/'),
+    ], 
 ) 
 
 # Frontend
@@ -57,6 +59,22 @@ local_resource(
     resource_deps=["postgresql"],
     labels=["porter"]
 )
+
+# Migrations
+local_resource(
+    name="migrations-binary",
+    cmd='''GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod vendor -gcflags '-N -l' -tags ee -o ./migrate ./cmd/migrate/main.go ./cmd/migrate/migrate_ee.go''',
+    resource_deps=["postgresql"],
+    labels=["porter"],
+)
+local_resource(
+    name="run-migrations",
+    cmd='''kubectl exec -it deploy/porter-server-web -- /app/migrate''',
+    resource_deps=["migrations-binary", "porter-binary"],
+    labels=["porter"],
+    trigger_mode=TRIGGER_MODE_MANUAL,
+)
+
 
 allow_k8s_contexts('kind-porter')
 

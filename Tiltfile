@@ -75,7 +75,6 @@ if (cluster.startswith("kind-")):
     updated_install = encode_yaml_stream(decoded)
     k8s_yaml(updated_install)
     k8s_resource(workload='porter-server-web', port_forwards="8080:8080", labels=["porter"])
-    # k8s_resource(workload='porter-dashboard-web', port_forwards="8081:8081", labels=["porter"], resource_deps=["postgresql"])
 else:
     local("echo 'Be careful that you aren't connected to a staging or prod cluster' && exit 1")
     exit()

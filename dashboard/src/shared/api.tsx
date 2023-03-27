@@ -71,6 +71,16 @@ const getGitlabIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/gitlab`
 );
 
+const preflightCheckAWS = baseApi<
+  {
+    target_arn: string;
+    external_id: string;
+  },
+  { id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/integrations/aws/preflight`;
+});
+
 const createAWSIntegration = baseApi<
   {
     aws_region: string;
@@ -468,29 +478,6 @@ const getPRDeploymentByID = baseApi<
 
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/deployment`;
 });
-
-// TODO (soham): Check if we are really using this?
-// const getPRDeployment = baseApi<
-//   {
-//     namespace: string;
-//   },
-//   {
-//     cluster_id: number;
-//     project_id: number;
-//     git_installation_id: number;
-//     git_repo_owner: string;
-//     git_repo_name: string;
-//   }
-// >("GET", (pathParams) => {
-//   const {
-//     cluster_id,
-//     project_id,
-//     git_installation_id,
-//     git_repo_owner,
-//     git_repo_name,
-//   } = pathParams;
-//   return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
-// });
 
 const deletePRDeployment = baseApi<
   {},
@@ -2479,7 +2466,6 @@ export default {
   getConfigMap,
   getPRDeploymentList,
   getPRDeploymentByID,
-  // getPRDeployment,
   getGHAWorkflowTemplate,
   getGitRepoList,
   getGitRepoPermission,
@@ -2587,6 +2573,7 @@ export default {
   addApplicationToEnvGroup,
   removeApplicationFromEnvGroup,
   provisionDatabase,
+  preflightCheckAWS,
   getDatabases,
   getPreviousLogsForContainer,
   upgradePorterAgent,

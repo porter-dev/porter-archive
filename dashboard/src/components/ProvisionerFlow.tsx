@@ -7,6 +7,13 @@ import { Context } from "shared/Context";
 import ProvisionerForm from "components/ProvisionerForm";
 import CredentialsForm from "components/CredentialsForm";
 import Helper from "components/form-components/Helper";
+import Modal from "./porter/Modal";
+import Text from "./porter/Text";
+import Spacer from "./porter/Spacer";
+import Fieldset from "./porter/Fieldset";
+import Checkbox from "./porter/Checkbox";
+import Button from "./porter/Button";
+import ExpandableSection from "./porter/ExpandableSection";
 
 const providers = ["aws", "gcp", "azure"];
 
@@ -18,6 +25,8 @@ const ProvisionerFlow: React.FC<Props> = ({
   const { usage, hasBillingEnabled } = useContext(Context);
   const [currentStep, setCurrentStep] = useState("cloud");
   const [credentialId, setCredentialId] = useState("");
+  const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
+  const [costConfirmed, setCostConfirmed] = useState(false);
 
   const isUsageExceeded = useMemo(() => {
     if (!hasBillingEnabled) {
@@ -28,31 +37,92 @@ const ProvisionerFlow: React.FC<Props> = ({
 
   if (currentStep === "cloud") {
     return (
-      <StyledProvisionerFlow>
-        <Helper>
-          Select your hosting backend:
-        </Helper>
-        <BlockList>
-          {providers.map((provider: string, i: number) => {
-            let providerInfo = integrationList[provider];
-            return (
-              <Block
-                key={i}
-                disabled={isUsageExceeded || provider === "gcp" || provider === "azure"}
-                onClick={() => {
-                  if (!(isUsageExceeded || provider === "gcp" || provider === "azure")) {
-                    setCurrentStep("credentials");
-                  }
-                }}
-              >
-                <Icon src={providerInfo.icon} />
-                <BlockTitle>{providerInfo.label}</BlockTitle>
-                <BlockDescription>{providerInfo.tagline || "Hosted in your own cloud"}</BlockDescription>
-              </Block>
-            );
-          })}
-        </BlockList>
-      </StyledProvisionerFlow>
+      <>
+        <StyledProvisionerFlow>
+          <Helper>
+            Select your hosting backend:
+          </Helper>
+          <BlockList>
+            {providers.map((provider: string, i: number) => {
+              let providerInfo = integrationList[provider];
+              return (
+                <Block
+                  key={i}
+                  disabled={isUsageExceeded || provider === "gcp" || provider === "azure"}
+                  onClick={() => {
+                    if (!(isUsageExceeded || provider === "gcp" || provider === "azure")) {
+                      setShowCostConfirmModal(true);
+                    }
+                  }}
+                >
+                  <Icon src={providerInfo.icon} />
+                  <BlockTitle>{providerInfo.label}</BlockTitle>
+                  <BlockDescription>{providerInfo.tagline || "Hosted in your own cloud"}</BlockDescription>
+                </Block>
+              );
+            })}
+          </BlockList>
+        </StyledProvisionerFlow>
+        {showCostConfirmModal && (
+          <Modal closeModal={() => setShowCostConfirmModal(false)}>
+            <Text size={16} weight={500}>
+              Important: AWS base cost
+            </Text>
+            <Spacer height="15px" />
+            <Text color="helper">
+              Porter will create resources in your existing AWS account for hosting your applications. You will be separately charged by AWS and can use your cloud credits.
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              AWS base cost before cloud credits:
+            </Text>
+            <Spacer y={1} />
+            <ExpandableSection
+              background="#ffffff11"
+              Header={
+                <Cost>$315.94 / mo</Cost>
+              }
+              ExpandedSection={
+                <Dark>
+                  <Text>
+                    • Amazon Elastic Kubernetes Service (EKS) = $73/mo
+                    <Spacer height="15px" />
+                    • Amazon EC2:
+                    <Spacer height="15px" />
+                    <Tab />+ System workloads: t3.medium instance (2) = $60.74/mo
+                    <Spacer height="15px" />
+                    <Tab />+ Monitoring workloads: t3.large instance (1) = $60.74/mo
+                    <Spacer height="15px" />
+                    <Tab />+ Application workloads: t3.xlarge instance (1) = $121.47/mo
+                  </Text>
+                </Dark>
+              }
+            />
+            <Spacer y={1} />
+            <Text color="helper">
+              All AWS resources will be automatically deleted when you delete your Porter project.
+            </Text>
+            <Spacer y={1} />
+            <Checkbox 
+              checked={costConfirmed} 
+              toggleChecked={() => setCostConfirmed(!costConfirmed)}
+            >
+              I understand and wish to proceed.
+            </Checkbox>
+            <Spacer y={1} />
+            <Button
+              disabled={!costConfirmed}
+              onClick={() => {
+                setShowCostConfirmModal(false);
+                setCostConfirmed(false);
+                setCurrentStep("credentials");
+              }}
+            >
+              Continue
+            </Button>
+          </Modal>
+        )}
+      </>
     );
   } else if (currentStep === "credentials") {
     return (
@@ -75,6 +145,23 @@ const ProvisionerFlow: React.FC<Props> = ({
 };
 
 export default ProvisionerFlow;
+
+const Dark = styled.div`
+  position: relative;
+  padding: 25px;
+  background: #1b1d2688;
+  font-size: 13px;
+`;
+
+const Cost = styled.div`
+  font-weight: 600;
+  font-size: 20px;
+`;
+
+const Tab = styled.span`
+  margin-left: 20px;
+  height: 1px;
+`;
 
 const BlockList = styled.div`
   overflow: visible;

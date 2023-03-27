@@ -1,0 +1,104 @@
+# Default values for docker-template.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+auto_deploy: true
+
+replicaCount: 1
+
+terminationGracePeriodSeconds: 30
+
+image:
+  repository: porter1/porter-server
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: latest
+
+service:
+  port: 8080
+
+ingress:
+  enabled: false
+  hosts: []
+  porter_hosts: []
+  provider: aws
+  custom_domain: false
+  custom_paths: []
+  rewriteCustomPathsEnabled: true
+  annotations: {}
+  wildcard: false
+  tls: true
+  useDefaultIngressTLSSecret: false
+
+container:
+  port: 8080
+  command: porter
+  args: ""
+  env:
+    normal:
+  lifecycle:
+    postStart:
+    preStop:
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+health:
+  livenessProbe:
+    enabled: false
+    path: "/livez"
+    scheme: "HTTP"
+    initialDelaySeconds: 0
+    periodSeconds: 5
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
+    auth:
+      enabled: false
+      username: ""
+      password: ""
+
+  livenessCommand:
+    enabled: false
+    command: "ls -l"
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: false
+    path: "/readyz"
+    scheme: "HTTP"
+    initialDelaySeconds: 0
+    periodSeconds: 5
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
+    auth:
+      enabled: false
+      username: ""
+      password: ""
+
+  startupProbe:
+    enabled: false
+    path: "/startupz"
+    scheme: "HTTP"
+    failureThreshold: 3
+    periodSeconds: 5
+    timeoutSeconds: 1
+    auth:
+      enabled: false
+      username: ""
+      password: ""
+      
+emptyDir:
+  enabled: false
+  mountPath: /local
+
+podSecurityContext: 
+  runAsNonRoot: false
+  runAsUser: 0

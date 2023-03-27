@@ -16,10 +16,13 @@ staging.sh
 bin
 openapi.yaml
 .idea
+
+
 vendor
-zarf/helm/charts
-*.env
+**/*.env
+**/node_modules
 porter
+zarf/helm/charts
 
 # Local docs directories
 /docs/.obsidian

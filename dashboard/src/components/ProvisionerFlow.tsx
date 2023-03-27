@@ -14,6 +14,7 @@ import Fieldset from "./porter/Fieldset";
 import Checkbox from "./porter/Checkbox";
 import Button from "./porter/Button";
 import ExpandableSection from "./porter/ExpandableSection";
+import Window from "./porter/Window";
 
 const providers = ["aws", "gcp", "azure"];
 
@@ -64,7 +65,10 @@ const ProvisionerFlow: React.FC<Props> = ({
           </BlockList>
         </StyledProvisionerFlow>
         {showCostConfirmModal && (
-          <Modal closeModal={() => setShowCostConfirmModal(false)}>
+          <Modal closeModal={() => {
+            setCostConfirmed(false);
+            setShowCostConfirmModal(false);
+          }}>
             <Text size={16} weight={500}>
               Important: AWS base cost
             </Text>

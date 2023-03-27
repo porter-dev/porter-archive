@@ -1,5 +1,4 @@
 load('ext://restart_process', 'docker_build_with_restart')
-load('ext://dotenv', 'dotenv')
 
 secret_settings(disable_scrub=True)
 
@@ -45,41 +44,16 @@ docker_build_with_restart(
 ) 
 
 # Frontend
-# docker_build(
-#     ref="porter1/porter-dashboard",
-#     context=".",
-#     dockerfile="zarf/docker/Dockerfile.dashboard.tilt",
-#     entrypoint='webpack-dev-server --config webpack.config.js',
-#     # entrypoint='npm start',
-#     only=['dashboard/package.json', 'dashboard/package-lock.json']
-# )
-
-# docker_build(
-#     ref="porter1/porter-dashboard",
-#     context=".",
-#     dockerfile="zarf/docker/Dockerfile.dashboard.tilt",
-#     build_args={'node_env': 'development'},
-#     entrypoint='npm start',
-#     ignore=[
-#         "dashboard/node_modules",
-#         "dashboard/package-lock.json",
-#         "dashboard/webpack.config.js"
-#     ],
-#     live_update=[
-#         sync('dashboard', '/app'),
-#         run('cd /app && npm start', trigger=['./package.json']),
-
-#         # # if all that changed was start-time.txt, make sure the server
-#         # # reloads so that it will reflect the new startup time
-#         # run('touch /app/index.js', trigger='./start-time.txt'),
-# ])
-
-dotenv(fn='zarf/helm/.dashboard.env')
-
 local_resource(
     name="porter-dashboard",
     serve_cmd="npm start",
     serve_dir="dashboard",
+    serve_env={
+        "NODE_ENV":"development",
+        "DEV_SERVER_PORT":"8081",
+        "ENABLE_PROXY":true,
+        "API_SERVER":"http://localhost:8080"
+    }
     resource_deps=["postgresql"],
     labels=["porter"]
 )

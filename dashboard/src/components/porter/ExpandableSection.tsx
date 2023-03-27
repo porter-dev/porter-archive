@@ -6,6 +6,7 @@ type Props = {
   Header: any;
   ExpandedSection: any;
   color?: any;
+  background?: string;
 };
 
 const ExpandableSection: React.FC<Props> = ({
@@ -13,6 +14,7 @@ const ExpandableSection: React.FC<Props> = ({
   Header,
   ExpandedSection,
   color,
+  background,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   useEffect(() => {
@@ -20,7 +22,10 @@ const ExpandableSection: React.FC<Props> = ({
   }, [isInitiallyExpanded]);
 
   return (
-    <StyledExpandableSection isExpanded={isExpanded}>
+    <StyledExpandableSection 
+      isExpanded={isExpanded}
+      background={background}
+    >
       <HeaderRow 
         isExpanded={isExpanded}
         onClick={() => setIsExpanded(!isExpanded)}
@@ -66,13 +71,16 @@ const HeaderRow = styled.div<{
   }
 `;
 
-const StyledExpandableSection = styled.div<{ isExpanded: boolean }>`
+const StyledExpandableSection = styled.div<{ 
+  isExpanded: boolean;
+  background?: string;
+}>`
   width: 100%;
   height: ${props => props.isExpanded ? "" : "40px"};
   max-height: 255px;
   overflow: hidden;
   border-radius: 5px;
-  background: #26292e;
+  background: ${props => props.background || "#26292e"};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

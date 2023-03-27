@@ -4,11 +4,13 @@ import styled from "styled-components";
 type Props = {
   size?: number;
   color?: string;
+  weight?: number;
   children: any;
 };
 
 const Text: React.FC<Props> = ({
   size,
+  weight,
   color,
   children
 }) => {
@@ -25,6 +27,7 @@ const Text: React.FC<Props> = ({
     <StyledText
       size={size}
       color={getColor()}
+      weight={weight}
     >
       {children}
     </StyledText>
@@ -35,8 +38,11 @@ export default Text;
 
 const StyledText = styled.div<{ 
   size?: number; 
-  color?: string 
+  color?: string;
+  weight?: number;
 }>`
+  line-height: 1.5;
+  font-weight: ${props => props.weight || 400};
   color: ${props => props.color || "#ffffff"};
   font-size: ${props => props.size || 13}px;
 `;

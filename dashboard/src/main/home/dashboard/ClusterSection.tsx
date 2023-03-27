@@ -93,9 +93,11 @@ const ClusterSection = (props: Props) => {
   }
   return (
     <>
-      <Button onClick={() => setCurrentStep("cloud")}>
-        <i className="material-icons">add</i> Create a cluster
-      </Button>
+      {usage?.current.cluster > 1 && (
+        <Button onClick={() => setCurrentStep("cloud")}>
+          <i className="material-icons">add</i> Create a cluster
+        </Button>
+      )}
       <ClusterList />
     </>
   );

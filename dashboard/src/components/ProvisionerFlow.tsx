@@ -64,7 +64,10 @@ const ProvisionerFlow: React.FC<Props> = ({
           </BlockList>
         </StyledProvisionerFlow>
         {showCostConfirmModal && (
-          <Modal closeModal={() => setShowCostConfirmModal(false)}>
+          <Modal closeModal={() => {
+            setCostConfirmed(false);
+            setShowCostConfirmModal(false);
+          }}>
             <Text size={16} weight={500}>
               Important: AWS base cost
             </Text>

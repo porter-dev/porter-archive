@@ -35,7 +35,6 @@ const ExpandableSection: React.FC<Props> = ({
       isExpanded={isExpanded}
       background={background}
       noWrapper={noWrapper}
-      maxHeight={maxHeight}
     >
       {noWrapper ? (
         <Container row>

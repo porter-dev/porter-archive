@@ -12,10 +12,14 @@ if config.tilt_subcommand == "down":
     local(command="rm -rf vendor")
     local(command="rm -rf dashboard/node_modules")
 
+build_args = "GOOS=linux GOARCH=arm64"
+if os.getenv("PLATFORM") == "amd64":
+    build_args = "GOOS=linux GOARCH=amd64"
+
 ## Build binary locally for faster devexp
 local_resource(
   name='porter-binary',
-  cmd='''GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod vendor -gcflags '-N -l' -tags ee -o ./bin/porter ./cmd/app/main.go''',
+  cmd='''GOWORK=off CGO_ENABLED=0 %s go build -mod vendor -gcflags '-N -l' -tags ee -o ./bin/porter ./cmd/app/main.go''' % build_args,
   deps=[
     "api",
     "build",
@@ -62,7 +66,7 @@ local_resource(
 # Migrations
 local_resource(
     name="migrations-binary",
-    cmd='''GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod vendor -gcflags '-N -l' -tags ee -o ./bin/migrate ./cmd/migrate/main.go ./cmd/migrate/migrate_ee.go''',
+    cmd='''GOWORK=off CGO_ENABLED=0 %s go build -mod vendor -gcflags '-N -l' -tags ee -o ./bin/migrate ./cmd/migrate/main.go ./cmd/migrate/migrate_ee.go''' % build_args,
     resource_deps=["postgresql"],
     labels=["porter"],
 )

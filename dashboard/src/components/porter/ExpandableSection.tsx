@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import Container from "./Container";
 
 type Props = {
   isInitiallyExpanded?: boolean;
@@ -7,6 +8,10 @@ type Props = {
   ExpandedSection: any;
   color?: any;
   background?: string;
+  noWrapper?: boolean;
+  expandText?: string;
+  collapseText?: string;
+  maxHeight?: string;
 };
 
 const ExpandableSection: React.FC<Props> = ({
@@ -15,6 +20,10 @@ const ExpandableSection: React.FC<Props> = ({
   ExpandedSection,
   color,
   background,
+  noWrapper,
+  expandText,
+  collapseText,
+  maxHeight,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   useEffect(() => {
@@ -25,15 +34,25 @@ const ExpandableSection: React.FC<Props> = ({
     <StyledExpandableSection 
       isExpanded={isExpanded}
       background={background}
+      noWrapper={noWrapper}
     >
-      <HeaderRow 
-        isExpanded={isExpanded}
-        onClick={() => setIsExpanded(!isExpanded)}
-        color={color}
-      >
-        <i className="material-icons">arrow_drop_down</i> 
-        {Header}
-      </HeaderRow>
+      {noWrapper ? (
+        <Container row>
+          {Header}
+          <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
+            {isExpanded ? collapseText : expandText}
+          </ExpandButton>
+        </Container>
+      ) : (
+        <HeaderRow 
+          isExpanded={isExpanded}
+          onClick={() => setIsExpanded(!isExpanded)}
+          color={color}
+        >
+          {!noWrapper && <i className="material-icons">arrow_drop_down</i>}
+          {Header}
+        </HeaderRow>
+      )}
       {
         isExpanded && (
           ExpandedSection
@@ -44,6 +63,13 @@ const ExpandableSection: React.FC<Props> = ({
 };
 
 export default ExpandableSection;
+
+const ExpandButton = styled.div`
+  margin-left: 15px;
+  color: #aaaabb;
+  cursor: pointer;
+  font-size: 13px;
+`;
 
 const HeaderRow = styled.div<{ 
   isExpanded: boolean;
@@ -74,16 +100,17 @@ const HeaderRow = styled.div<{
 const StyledExpandableSection = styled.div<{ 
   isExpanded: boolean;
   background?: string;
+  noWrapper?: boolean;
 }>`
   width: 100%;
-  height: ${props => props.isExpanded ? "" : "40px"};
-  max-height: 255px;
+  height: ${props => (props.isExpanded || props.noWrapper) ? "" : "40px"};
+  max-height: 300px;
   overflow: hidden;
   border-radius: 5px;
-  background: ${props => props.background || "#26292e"};
-  border: 1px solid #494b4f;
+  background: ${props => !props.noWrapper && (props.background || "#26292e")};
+  border: ${props => !props.noWrapper && "1px solid #494b4f"};
   :hover {
-    border: 1px solid #7a7b80;
+    border: ${props => !props.noWrapper && "1px solid #7a7b80"};
   }
   animation: ${props => props.isExpanded ? "expandRevisions 0.3s" : ""};
   animation-timing-function: ease-out;
@@ -92,7 +119,7 @@ const StyledExpandableSection = styled.div<{
       max-height: 40px;
     }
     to {
-      max-height: 250px;
+      max-height: 300px;
     }
   }
 `;

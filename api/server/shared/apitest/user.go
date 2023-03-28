@@ -12,7 +12,10 @@ func CreateTestUser(t *testing.T, config *config.Config, verified bool) *models.
 	hashedPw, _ := bcrypt.GenerateFromPassword([]byte("hello"), 8)
 
 	user, err := config.Repo.User().CreateUser(&models.User{
-		Email:         "test@test.it",
+		FirstName:     "Mister",
+		LastName:      "Porter",
+		CompanyName:   "Porter Technologies, Inc.",
+		Email:         "mrp@porter.run",
 		Password:      string(hashedPw),
 		EmailVerified: verified,
 	})

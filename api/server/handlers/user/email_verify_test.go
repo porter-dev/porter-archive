@@ -33,7 +33,7 @@ func TestEmailVerifyInitiateSuccessful(t *testing.T) {
 	}
 
 	initiateOpts := fakeNotifier.GetSendEmailVerificationLastOpts()
-	assert.Equal(t, "test@test.it", initiateOpts.Email)
+	assert.Equal(t, "mrp@porter.run", initiateOpts.Email)
 
 	// parse the url and compare
 	parsedURL, err := url.Parse(initiateOpts.URL)

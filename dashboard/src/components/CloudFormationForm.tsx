@@ -82,6 +82,9 @@ const CloudFormationForm: React.FC<Props> = ({
                 👤 AWS account ID
                 <i 
                   className="material-icons"
+                  onClick={() => {
+                    window.open("https://console.aws.amazon.com/billing/home?region=us-east-1#/account", "_blank")
+                  }}
                 >
                   help_outline
                 </i>

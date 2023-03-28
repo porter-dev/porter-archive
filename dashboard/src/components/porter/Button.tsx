@@ -10,9 +10,12 @@ type Props = {
   status?: string;
   helperText?: string;
   loadingText?: string;
+  errorText?: string;
   successText?: string;
   width?: string;
   height?: string;
+  color?: string;
+  withBorder?: boolean;
 };
 
 const Button: React.FC<Props> = ({
@@ -22,9 +25,12 @@ const Button: React.FC<Props> = ({
   status,
   helperText,
   loadingText,
+  errorText,
   successText,
   width,
   height,
+  color,
+  withBorder,
 }) => {
   const renderStatus = () => {
     switch(status) {
@@ -50,7 +56,7 @@ const Button: React.FC<Props> = ({
         return (
           <StatusWrapper success={false}>
             <i className="material-icons">error_outline</i>
-            Could not update
+            {errorText || "Could not update"}
           </StatusWrapper>
         );
     }
@@ -63,6 +69,8 @@ const Button: React.FC<Props> = ({
         onClick={() => !disabled && onClick()}
         width={width}
         height={height}
+        color={color}
+        withBorder={withBorder}
       >
         <Text>{children}</Text>
       </StyledButton>
@@ -129,6 +137,8 @@ const StyledButton = styled.button<{
   disabled: boolean;
   width: string;
   height: string;
+  color: string;
+  withBorder: boolean;
 }>`
   height: ${props => props.height || "35px"};
   width: ${props => props.width || "auto"};
@@ -139,11 +149,12 @@ const StyledButton = styled.button<{
   outline: none;
   font-weight: 500;
   color: white;
-  background: ${props => props.disabled ? "#aaaabb" : "#5561C0"};
+  background: ${props => (props.disabled && !props.color) ? "#aaaabb" : (props.color || "#5561C0")};
   display: flex;
   ailgn-items: center;
   justify-content: center;
   border-radius: 5px;
+  border: ${props => props.withBorder ? "1px solid #494b4f" : "none"};
 
   :hover {
     filter: ${props => props.disabled ? "" : "brightness(120%)"};

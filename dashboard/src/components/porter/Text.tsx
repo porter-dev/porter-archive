@@ -45,4 +45,6 @@ const StyledText = styled.div<{
   font-weight: ${props => props.weight || 400};
   color: ${props => props.color || "#ffffff"};
   font-size: ${props => props.size || 13}px;
+  display: flex;
+  align-items: center;
 `;

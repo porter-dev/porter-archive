@@ -6,7 +6,7 @@ type Props = {
   width?: string;
   value: string;
   setValue: (value: string) => void;
-  label?: string;
+  label?: string | React.ReactNode;
   height?: string;
   type?: string;
   error?: string;

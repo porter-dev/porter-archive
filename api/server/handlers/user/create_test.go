@@ -1,7 +1,6 @@
 package user_test
 
 import (
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -18,8 +17,11 @@ func TestCreateUserSuccessful(t *testing.T) {
 		string(types.HTTPVerbPost),
 		"/api/users",
 		&types.CreateUserRequest{
-			Email:    "test@test.it",
-			Password: "somepassword",
+			FirstName:   "Mister",
+			LastName:    "Porter",
+			CompanyName: "Porter Technologies, Inc.",
+			Email:       "mrp@porter.run",
+			Password:    "somepassword",
 		},
 	)
 
@@ -35,7 +37,10 @@ func TestCreateUserSuccessful(t *testing.T) {
 
 	expUser := &types.CreateUserResponse{
 		ID:            1,
-		Email:         "test@test.it",
+		FirstName:     "Mister",
+		LastName:      "Porter",
+		CompanyName:   "Porter Technologies, Inc.",
+		Email:         "mrp@porter.run",
 		EmailVerified: false,
 	}
 
@@ -50,8 +55,11 @@ func TestCreateUserBadEmail(t *testing.T) {
 		string(types.HTTPVerbPost),
 		"/api/users",
 		&types.CreateUserRequest{
-			Email:    "notanemail",
-			Password: "somepassword",
+			FirstName:   "Mister",
+			LastName:    "Porter",
+			CompanyName: "Porter Technologies, Inc.",
+			Email:       "notanemail",
+			Password:    "somepassword",
 		},
 	)
 
@@ -66,7 +74,7 @@ func TestCreateUserBadEmail(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	apitest.AssertResponseError(t, rr, http.StatusBadRequest, &types.ExternalError{
-		Error: fmt.Sprintf("validation failed on field 'Email' on condition 'email'"),
+		Error: "validation failed on field 'Email' on condition 'email'",
 	})
 }
 
@@ -76,7 +84,10 @@ func TestCreateUserMissingField(t *testing.T) {
 		string(types.HTTPVerbPost),
 		"/api/users",
 		&types.CreateUserRequest{
-			Email: "test@test.it",
+			FirstName:   "Mister",
+			LastName:    "Porter",
+			CompanyName: "Porter Technologies, Inc.",
+			Email:       "mrp@porter.run",
 		},
 	)
 
@@ -91,7 +102,7 @@ func TestCreateUserMissingField(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	apitest.AssertResponseError(t, rr, http.StatusBadRequest, &types.ExternalError{
-		Error: fmt.Sprintf("validation failed on field 'Password' on condition 'required'"),
+		Error: "validation failed on field 'Password' on condition 'required'",
 	})
 }
 
@@ -101,8 +112,11 @@ func TestCreateUserSameEmail(t *testing.T) {
 		string(types.HTTPVerbPost),
 		"/api/users",
 		&types.CreateUserRequest{
-			Email:    "test@test.it",
-			Password: "somepassword",
+			FirstName:   "Mister",
+			LastName:    "Porter",
+			CompanyName: "Porter Technologies, Inc.",
+			Email:       "mrp@porter.run",
+			Password:    "somepassword",
 		},
 	)
 
@@ -120,7 +134,7 @@ func TestCreateUserSameEmail(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	apitest.AssertResponseError(t, rr, http.StatusBadRequest, &types.ExternalError{
-		Error: fmt.Sprintf("email already taken"),
+		Error: "email already taken",
 	})
 }
 
@@ -130,8 +144,11 @@ func TestFailingCreateUserMethod(t *testing.T) {
 		string(types.HTTPVerbPost),
 		"/api/users",
 		&types.CreateUserRequest{
-			Email:    "test@test.it",
-			Password: "somepassword",
+			FirstName:   "Mister",
+			LastName:    "Porter",
+			CompanyName: "Porter Technologies, Inc.",
+			Email:       "mrp@porter.run",
+			Password:    "somepassword",
 		},
 	)
 
@@ -154,8 +171,11 @@ func TestFailingCreateSessionMethod(t *testing.T) {
 		string(types.HTTPVerbPost),
 		"/api/users",
 		&types.CreateUserRequest{
-			Email:    "test@test.it",
-			Password: "somepassword",
+			FirstName:   "Mister",
+			LastName:    "Porter",
+			CompanyName: "Porter Technologies, Inc.",
+			Email:       "mrp@porter.run",
+			Password:    "somepassword",
 		},
 	)
 

@@ -25,7 +25,10 @@ func TestGetCurrentUserSuccessful(t *testing.T) {
 
 	expUser := &types.GetAuthenticatedUserResponse{
 		ID:            1,
-		Email:         "test@test.it",
+		FirstName:     "Mister",
+		LastName:      "Porter",
+		CompanyName:   "Porter Technologies, Inc.",
+		Email:         "mrp@porter.run",
 		EmailVerified: true,
 	}
 

@@ -18,7 +18,7 @@ func TestLoginUserSuccessful(t *testing.T) {
 		string(types.HTTPVerbPost),
 		"/api/login",
 		&types.LoginUserRequest{
-			Email:    "test@test.it",
+			Email:    "mrp@porter.run",
 			Password: "hello",
 		},
 	)
@@ -36,7 +36,10 @@ func TestLoginUserSuccessful(t *testing.T) {
 
 	expUser := &types.LoginUserResponse{
 		ID:            1,
-		Email:         "test@test.it",
+		FirstName:     "Mister",
+		LastName:      "Porter",
+		CompanyName:   "Porter Technologies, Inc.",
+		Email:         "mrp@porter.run",
 		EmailVerified: true,
 	}
 
@@ -51,7 +54,7 @@ func TestLoginUserIncorrectPassword(t *testing.T) {
 		string(types.HTTPVerbPost),
 		"/api/login",
 		&types.LoginUserRequest{
-			Email:    "test@test.it",
+			Email:    "mrp@porter.run",
 			Password: "hello1",
 		},
 	)
@@ -105,7 +108,7 @@ func TestLoginUserEmptyPassword(t *testing.T) {
 		string(types.HTTPVerbPost),
 		"/api/login",
 		&types.LoginUserRequest{
-			Email:    "test@test.it",
+			Email:    "mrp@porter.run",
 			Password: "",
 		},
 	)
@@ -157,7 +160,7 @@ func TestLoginUserFailingReadUserByEmailMethod(t *testing.T) {
 		string(types.HTTPVerbPost),
 		"/api/login",
 		&types.LoginUserRequest{
-			Email:    "test@test.it",
+			Email:    "mrp@porter.run",
 			Password: "hello",
 		},
 	)

@@ -14,6 +14,7 @@ import Fieldset from "./porter/Fieldset";
 import Checkbox from "./porter/Checkbox";
 import Button from "./porter/Button";
 import ExpandableSection from "./porter/ExpandableSection";
+import Input from "./porter/Input";
 
 const providers = ["aws", "gcp", "azure"];
 
@@ -26,7 +27,7 @@ const ProvisionerFlow: React.FC<Props> = ({
   const [currentStep, setCurrentStep] = useState("cloud");
   const [credentialId, setCredentialId] = useState("");
   const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
-  const [costConfirmed, setCostConfirmed] = useState(false);
+  const [confirmCost, setConfirmCost] = useState("");
 
   const isUsageExceeded = useMemo(() => {
     if (!hasBillingEnabled) {
@@ -65,11 +66,11 @@ const ProvisionerFlow: React.FC<Props> = ({
         </StyledProvisionerFlow>
         {showCostConfirmModal && (
           <Modal closeModal={() => {
-            setCostConfirmed(false);
+            setConfirmCost("");
             setShowCostConfirmModal(false);
           }}>
             <Text size={16} weight={500}>
-              Important: AWS base cost
+              AWS base cost consent
             </Text>
             <Spacer height="15px" />
             <Text color="helper">
@@ -103,21 +104,20 @@ const ProvisionerFlow: React.FC<Props> = ({
             />
             <Spacer y={1} />
             <Text color="helper">
-              All AWS resources will be automatically deleted when you delete your Porter project.
+              Porter metered cost: $0.019/hr/vCPU + $0.009/hr/GB RAM.
             </Text>
             <Spacer y={1} />
-            <Checkbox 
-              checked={costConfirmed} 
-              toggleChecked={() => setCostConfirmed(!costConfirmed)}
-            >
-              I understand and wish to proceed.
-            </Checkbox>
+            <Text color="helper">
+              All AWS resources will be automatically deleted when you delete your Porter project. Please enter the base cost ("315.94") below to proceed:
+            </Text>
+            <Spacer y={1} />
+            <Input placeholder="315.94" value={confirmCost} setValue={setConfirmCost} width="100%" height="40px" />
             <Spacer y={1} />
             <Button
-              disabled={!costConfirmed}
+              disabled={confirmCost !== "315.94"}
               onClick={() => {
                 setShowCostConfirmModal(false);
-                setCostConfirmed(false);
+                setConfirmCost("");
                 setCurrentStep("credentials");
               }}
             >

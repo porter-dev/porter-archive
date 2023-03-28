@@ -15,7 +15,7 @@ if config.tilt_subcommand == "down":
 ## Build binary locally for faster devexp
 local_resource(
   name='porter-binary',
-  cmd='''GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod vendor -gcflags '-N -l' -tags ee -o ./porter ./cmd/app/main.go''',
+  cmd='''GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod vendor -gcflags '-N -l' -tags ee -o ./porter-binary ./cmd/app/main.go''',
   deps=[
     "api",
     "build",
@@ -63,7 +63,7 @@ local_resource(
 # Migrations
 local_resource(
     name="migrations-binary",
-    cmd='''GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod vendor -gcflags '-N -l' -tags ee -o ./migrate ./cmd/migrate/main.go ./cmd/migrate/migrate_ee.go''',
+    cmd='''GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod vendor -gcflags '-N -l' -tags ee -o ./migrate-binary ./cmd/migrate/main.go ./cmd/migrate/migrate_ee.go''',
     resource_deps=["postgresql"],
     labels=["porter"],
 )

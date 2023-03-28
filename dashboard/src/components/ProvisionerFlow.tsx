@@ -8,6 +8,14 @@ import ProvisionerForm from "components/ProvisionerForm";
 import CloudFormationForm from "components/CloudFormationForm";
 import CredentialsForm from "components/CredentialsForm";
 import Helper from "components/form-components/Helper";
+import Modal from "./porter/Modal";
+import Text from "./porter/Text";
+import Spacer from "./porter/Spacer";
+import Fieldset from "./porter/Fieldset";
+import Checkbox from "./porter/Checkbox";
+import Button from "./porter/Button";
+import ExpandableSection from "./porter/ExpandableSection";
+import Input from "./porter/Input";
 
 const providers = ["aws", "gcp", "azure"];
 
@@ -19,6 +27,8 @@ const ProvisionerFlow: React.FC<Props> = ({
   const { usage, hasBillingEnabled } = useContext(Context);
   const [currentStep, setCurrentStep] = useState("cloud");
   const [credentialId, setCredentialId] = useState("");
+  const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
+  const [confirmCost, setConfirmCost] = useState("");
 
   const isUsageExceeded = useMemo(() => {
     if (!hasBillingEnabled) {
@@ -29,31 +39,94 @@ const ProvisionerFlow: React.FC<Props> = ({
 
   if (currentStep === "cloud") {
     return (
-      <StyledProvisionerFlow>
-        <Helper>
-          Select your hosting backend:
-        </Helper>
-        <BlockList>
-          {providers.map((provider: string, i: number) => {
-            let providerInfo = integrationList[provider];
-            return (
-              <Block
-                key={i}
-                disabled={isUsageExceeded || provider === "gcp" || provider === "azure"}
-                onClick={() => {
-                  if (!(isUsageExceeded || provider === "gcp" || provider === "azure")) {
-                    setCurrentStep("credentials");
-                  }
-                }}
-              >
-                <Icon src={providerInfo.icon} />
-                <BlockTitle>{providerInfo.label}</BlockTitle>
-                <BlockDescription>{providerInfo.tagline || "Hosted in your own cloud"}</BlockDescription>
-              </Block>
-            );
-          })}
-        </BlockList>
-      </StyledProvisionerFlow>
+      <>
+        <StyledProvisionerFlow>
+          <Helper>
+            Select your hosting backend:
+          </Helper>
+          <BlockList>
+            {providers.map((provider: string, i: number) => {
+              let providerInfo = integrationList[provider];
+              return (
+                <Block
+                  key={i}
+                  disabled={isUsageExceeded || provider === "gcp" || provider === "azure"}
+                  onClick={() => {
+                    if (!(isUsageExceeded || provider === "gcp" || provider === "azure")) {
+                      setShowCostConfirmModal(true);
+                    }
+                  }}
+                >
+                  <Icon src={providerInfo.icon} />
+                  <BlockTitle>{providerInfo.label}</BlockTitle>
+                  <BlockDescription>{providerInfo.tagline || "Hosted in your own cloud"}</BlockDescription>
+                </Block>
+              );
+            })}
+          </BlockList>
+        </StyledProvisionerFlow>
+        {showCostConfirmModal && (
+          <Modal closeModal={() => {
+            setConfirmCost("");
+            setShowCostConfirmModal(false);
+          }}>
+            <Text size={16} weight={500}>
+              AWS base cost consent
+            </Text>
+            <Spacer height="15px" />
+            <Text color="helper">
+              Porter will create resources in your existing AWS account for hosting your applications. You will be separately charged by AWS and can use your cloud credits.
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              AWS base cost before cloud credits:
+            </Text>
+            <Spacer y={1} />
+            <ExpandableSection
+              background="#ffffff11"
+              Header={
+                <Cost>$315.94 / mo</Cost>
+              }
+              ExpandedSection={
+                <Dark>
+                  <Text>
+                    • Amazon Elastic Kubernetes Service (EKS) = $73/mo
+                    <Spacer height="15px" />
+                    • Amazon EC2:
+                    <Spacer height="15px" />
+                    <Tab />+ System workloads: t3.medium instance (2) = $60.74/mo
+                    <Spacer height="15px" />
+                    <Tab />+ Monitoring workloads: t3.large instance (1) = $60.74/mo
+                    <Spacer height="15px" />
+                    <Tab />+ Application workloads: t3.xlarge instance (1) = $121.47/mo
+                  </Text>
+                </Dark>
+              }
+            />
+            <Spacer y={1} />
+            <Text color="helper">
+              Porter metered cost: $0.019/hr/vCPU + $0.009/hr/GB RAM.
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              All AWS resources will be automatically deleted when you delete your Porter project. Please enter the base cost ("315.94") below to proceed:
+            </Text>
+            <Spacer y={1} />
+            <Input placeholder="315.94" value={confirmCost} setValue={setConfirmCost} width="100%" height="40px" />
+            <Spacer y={1} />
+            <Button
+              disabled={confirmCost !== "315.94"}
+              onClick={() => {
+                setShowCostConfirmModal(false);
+                setConfirmCost("");
+                setCurrentStep("credentials");
+              }}
+            >
+              Continue
+            </Button>
+          </Modal>
+        )}
+      </>
     );
   } else if (currentStep === "credentials") {
     return (
@@ -76,6 +149,23 @@ const ProvisionerFlow: React.FC<Props> = ({
 };
 
 export default ProvisionerFlow;
+
+const Dark = styled.div`
+  position: relative;
+  padding: 25px;
+  background: #1b1d2688;
+  font-size: 13px;
+`;
+
+const Cost = styled.div`
+  font-weight: 600;
+  font-size: 20px;
+`;
+
+const Tab = styled.span`
+  margin-left: 20px;
+  height: 1px;
+`;
 
 const BlockList = styled.div`
   overflow: visible;

@@ -1,5 +1,4 @@
 load('ext://restart_process', 'docker_build_with_restart')
-load('ext://dotenv', 'dotenv')
 
 secret_settings(disable_scrub=True)
 
@@ -15,8 +14,8 @@ if config.tilt_subcommand == "down":
 
 ## Build binary locally for faster devexp
 local_resource(
-  'porter',
-  '''GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod vendor -gcflags '-N -l' -o ./porter ./cmd/app/main.go''',
+  name='porter-binary',
+  cmd='''GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod vendor -gcflags '-N -l' -tags ee -o ./bin/porter ./cmd/app/main.go''',
   deps=[
     "api",
     "build",
@@ -37,52 +36,44 @@ docker_build_with_restart(
     entrypoint='/app/porter',
     build_args={},
     only=[
-        "porter",
+        "bin",
     ],
     live_update=[
-        sync('./porter', '/app/'),
-    ]
+        sync('./bin/porter', '/app/'),
+        sync('./bin/migrate', '/app/'),
+    ], 
 ) 
 
 # Frontend
-# docker_build(
-#     ref="porter1/porter-dashboard",
-#     context=".",
-#     dockerfile="zarf/docker/Dockerfile.dashboard.tilt",
-#     entrypoint='webpack-dev-server --config webpack.config.js',
-#     # entrypoint='npm start',
-#     only=['dashboard/package.json', 'dashboard/package-lock.json']
-# )
-
-docker_build(
-    ref="porter1/porter-dashboard",
-    context=".",
-    dockerfile="zarf/docker/Dockerfile.dashboard.tilt",
-    build_args={'node_env': 'development'},
-    entrypoint='npm start',
-    ignore=[
-        "dashboard/node_modules",
-        "dashboard/package-lock.json",
-        "dashboard/webpack.config.js"
-    ],
-    live_update=[
-        sync('dashboard', '/app'),
-        run('cd /app && npm start', trigger=['./package.json']),
-
-        # # if all that changed was start-time.txt, make sure the server
-        # # reloads so that it will reflect the new startup time
-        # run('touch /app/index.js', trigger='./start-time.txt'),
-])
-
-dotenv(fn='zarf/helm/.dashboard.env')
-
 local_resource(
     name="porter-dashboard",
     serve_cmd="npm start",
     serve_dir="dashboard",
+    serve_env={
+        "NODE_ENV": "development",
+        "DEV_SERVER_PORT": "8081",
+        "ENABLE_PROXY": "true",
+        "API_SERVER": "http://localhost:8080"
+    },
     resource_deps=["postgresql"],
     labels=["porter"]
 )
+
+# Migrations
+local_resource(
+    name="migrations-binary",
+    cmd='''GOWORK=off CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -mod vendor -gcflags '-N -l' -tags ee -o ./bin/migrate ./cmd/migrate/main.go ./cmd/migrate/migrate_ee.go''',
+    resource_deps=["postgresql"],
+    labels=["porter"],
+)
+local_resource(
+    name="run-migrations",
+    cmd='''kubectl exec -it deploy/porter-server-web -- /app/migrate''',
+    resource_deps=["migrations-binary", "porter-binary"],
+    labels=["porter"],
+    trigger_mode=TRIGGER_MODE_MANUAL,
+)
+
 
 allow_k8s_contexts('kind-porter')
 
@@ -101,7 +92,6 @@ if (cluster.startswith("kind-")):
     updated_install = encode_yaml_stream(decoded)
     k8s_yaml(updated_install)
     k8s_resource(workload='porter-server-web', port_forwards="8080:8080", labels=["porter"])
-    k8s_resource(workload='porter-dashboard', port_forwards="8081:8081", labels=["porter"], resource_deps=["postgresql"])
 else:
     local("echo 'Be careful that you aren't connected to a staging or prod cluster' && exit 1")
     exit()

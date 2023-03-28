@@ -21,7 +21,7 @@ openapi.yaml
 vendor
 **/*.env
 **/node_modules
-porter
+./porter
 zarf/helm/charts
 
 # Local docs directories

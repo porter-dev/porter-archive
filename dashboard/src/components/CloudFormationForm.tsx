@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext, useMemo } from "react";
 import styled from "styled-components";
+import { v4 as uuidv4 } from 'uuid';
 
 import api from "shared/api";
 import aws from "assets/aws.png";
@@ -39,6 +40,7 @@ const CloudFormationForm: React.FC<Props> = ({
   const [roleStatus, setRoleStatus] = useState("");
 
   const checkIfRoleExists = () => {
+    let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-role`
     setRoleStatus("loading");
     // api
     //   .preflightCheckAWS(
@@ -63,17 +65,18 @@ const CloudFormationForm: React.FC<Props> = ({
       proceed();
   };
 
+  const directToCloudFormation = () => {
+    let externalId = uuidv4();
+    window.open(
+      `https://console.aws.amazon.com/cloudformation/home?
+      #/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}`
+    )
+  }
+
   const renderContent = () => {
     return (
       <>
         <StyledForm>
-          {
-            AWSCredentials.length > 0 && (
-              <CloseButton onClick={() => setShowCreateForm(false)}>
-                <i className="material-icons">close</i>
-              </CloseButton>
-            )
-          }
           <InputRow
             type="string"
             value={AWSAccountID}
@@ -84,11 +87,7 @@ const CloudFormationForm: React.FC<Props> = ({
           />
           <SaveButton
             disabled={AWSAccountID === ""}
-            onClick={() => { window.open(
-                  `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://s3.eu-central-1.amazonaws.com/cloudformation-templates-eu-central-1&param_KeyName=test`
-                )
-              }
-            }
+            onClick={directToCloudFormation}
             clearPosition
             text="Grant Permissions"
           />
@@ -119,11 +118,7 @@ const CloudFormationForm: React.FC<Props> = ({
         Grant Porter permissions to create infrastructure in your AWS account.
       </Helper>
       {
-        isLoading ? (
-          <Loading height="150px" />
-        ) : (
-          renderContent()
-        )
+        renderContent()
       }
     </>
   );

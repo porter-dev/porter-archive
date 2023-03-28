@@ -5,6 +5,7 @@ import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
 
 import ProvisionerForm from "components/ProvisionerForm";
+import CloudFormationForm from "components/CloudFormationForm";
 import CredentialsForm from "components/CredentialsForm";
 import Helper from "components/form-components/Helper";
 
@@ -56,10 +57,10 @@ const ProvisionerFlow: React.FC<Props> = ({
     );
   } else if (currentStep === "credentials") {
     return (
-      <CredentialsForm 
+      <CloudFormationForm 
         goBack={() => setCurrentStep("cloud")}
-        proceed={(id) => {
-          setCredentialId(id);
+        proceed={() => {
+          // setCredentialId(id);
           setCurrentStep("cluster");
         }}
       />

@@ -135,8 +135,8 @@ const ProvisionerFlow: React.FC<Props> = ({
     return (
       <CloudFormationForm 
         goBack={() => setCurrentStep("cloud")}
-        proceed={() => {
-          // setCredentialId(id);
+        proceed={(id) => {
+          setCredentialId(id);
           setCurrentStep("cluster");
         }}
       />

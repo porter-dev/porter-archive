@@ -18,7 +18,7 @@ import DocsHelper from "./DocsHelper";
 
 type Props = {
   goBack: () => void;
-  proceed: () => void;
+  proceed: (id: string) => void;
 };
 
 const CloudFormationForm: React.FC<Props> = ({
@@ -52,7 +52,7 @@ const CloudFormationForm: React.FC<Props> = ({
     //     setCreateStatus("Error creating credentials");
     //   });
       setRoleStatus("successful");
-      proceed();
+      proceed(targetARN);
   };
 
   const directToCloudFormation = () => {

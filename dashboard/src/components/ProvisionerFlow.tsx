@@ -104,8 +104,10 @@ const ProvisionerFlow: React.FC<Props> = ({
             />
             <Spacer y={1} />
             <Text color="helper">
-              Porter metered cost: $0.019/hr/vCPU + $0.009/hr/GB RAM.
+              Separate from the AWS cost, Porter charges based on the amount of resources that are currently being used. Porter pricing is as follows, prorated to the minute. 
             </Text>
+            <Spacer y={1}/>
+            <Cost>$0.019/hr/vCPU + $0.009/hr/GB RAM</Cost>
             <Spacer y={1} />
             <Text color="helper">
               All AWS resources will be automatically deleted when you delete your Porter project. Please enter the base cost ("315.94") below to proceed:

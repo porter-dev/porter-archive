@@ -1,8 +1,0 @@
-# Fill out this file, and renamed to '.server.env' in order to run this with Tilt
-SQL_LITE=false
-DB_NAME=porter
-DB_USER=porter
-DB_PASSWORD=porter
-DB_HOST=postgresql
-DB_PORT=5432
-CLUSTER_CONTROL_PLANE_ADDRESS=http://ccp-web:7833

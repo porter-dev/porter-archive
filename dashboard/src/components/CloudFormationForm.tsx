@@ -11,32 +11,17 @@ import Heading from "components/form-components/Heading";
 import Helper from "./form-components/Helper";
 import InputRow from "./form-components/InputRow";
 import SaveButton from "./SaveButton";
-import Loading from "./Loading";
 
 type Props = {
   goBack: () => void;
   proceed: () => void;
 };
 
-type AWSCredential = {
-  created_at: string;
-  id: number;
-  user_id: number;
-  project_id: number;
-  aws_arn: string;
-};
-
-
 const CloudFormationForm: React.FC<Props> = ({
   goBack,
   proceed,
 }) => {
-  const { currentProject } = useContext(Context);
-  const [AWSCredentials, setAWSCredentials] = useState<AWSCredential[]>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [AWSAccountID, setAWSAccountID] = useState("");
-  const [selectedCredentials, setSelectedCredentials] = useState<AWSCredential>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [roleStatus, setRoleStatus] = useState("");
 
   const checkIfRoleExists = () => {
@@ -126,50 +111,9 @@ const CloudFormationForm: React.FC<Props> = ({
 
 export default CloudFormationForm;
 
-const CloseButton = styled.div`
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  padding: 5px;
-  border-radius: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  background: #ffffff11;
-  :hover {
-    background: #ffffff22;
-    > i {
-      color: #ffffff;
-    }
-  }
-  > i {
-    font-size: 20px;
-    color: #aaaabb;
-  }
-`;
-
 const Spacer = styled.div`
   height: 1px;
   width: 17px;
-`;
-
-const Icon = styled.img`
-  width: 15px;
-  margin-right: 15px;
-`;
-
-const CreateRow = styled.div`
-  height: 50px;
-  display: flex;
-  cursor: pointer;
-  align-items: center;
-  font-size: 13px;
-  padding: 20px;
-  background: #ffffff11;
-  :hover {
-    background: #ffffff18; 
-  }
 `;
 
 const Img = styled.img`

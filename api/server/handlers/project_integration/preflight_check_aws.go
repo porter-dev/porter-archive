@@ -42,9 +42,9 @@ func (p *CreatePreflightCheckAWSHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	}
 
 	checkReq := porterv1.RolePreflightCheckRequest{
-		ProjectID:       int64(project.ID),
-		TargetARN:		 request.TargetARN,
-		ExternalID: 	 request.ExternalID,
+		ProjectId:       int64(project.ID),
+		TargetArn:		 request.TargetARN,
+		ExternalId: 	 request.ExternalID,
 	}
 
 	checkResp, err := p.Config().ClusterControlPlaneClient.RolePreflightCheck(ctx, connect.NewRequest(&checkReq))

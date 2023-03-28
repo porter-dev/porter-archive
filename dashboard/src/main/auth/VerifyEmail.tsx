@@ -125,7 +125,7 @@ const Register: React.FC<Props> = ({
           size={13}
           color="helper"
         >
-          Want to use a different email? <Link onClick={handleLogOut}>Log out</Link>
+          Want to use a different email?<Spacer inline width="5px" /><Link onClick={handleLogOut}>Log out</Link>
         </Text>
       </Wrapper>
     </StyledRegister>

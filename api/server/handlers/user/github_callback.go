@@ -167,6 +167,9 @@ func upsertUserFromToken(config *config.Config, tok *oauth2.Token) (*models.User
 			config.AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
 				UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
 				Email:               user.Email,
+				FirstName:           user.FirstName,
+				LastName:            user.LastName,
+				CompanyName:         user.CompanyName,
 			}))
 		} else if err == nil {
 			return nil, fmt.Errorf("email already registered")

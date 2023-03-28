@@ -80,13 +80,18 @@ func (p segmentProperties) addAdditionalProperties(props map[string]interface{})
 type UserCreateTrackOpts struct {
 	*UserScopedTrackOpts
 
-	Email string
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
 }
 
 // UserCreateTrack returns a track for when a user is created
 func UserCreateTrack(opts *UserCreateTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
 
 	return getSegmentUserTrack(
 		opts.UserScopedTrackOpts,

@@ -108,6 +108,9 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	u.Config().AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
 		UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
 		Email:               user.Email,
+		FirstName:           user.FirstName,
+		LastName:            user.LastName,
+		CompanyName:         user.CompanyName,
 	}))
 
 	if redirect != "" {

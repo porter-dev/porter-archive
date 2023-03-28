@@ -53,6 +53,7 @@ const clusterVersionOptions = [
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   credentialId: string;
+  AWSAccountID: string;
   clusterId?: number;
 };
 
@@ -122,40 +123,60 @@ const ProvisionerSettings: React.FC<Props> = props => {
       data["cluster"]["clusterId"] = props.clusterId;
     }
 
-    try {
-      const res = await api.createContract(
+    api
+      .preflightCheckAWSUsage(
         "<token>",
-        data,
-        { project_id: currentProject.id }
-      );
+        {
+          // TODO: change this back
+          // target_arn: `arn:aws:iam::${props.AWSAccountID}:role/porter-role`,
+          target_arn: "arn:aws:iam::844966915049:role/PorterRole-RootRole-1S8V1TYOMOXTK",
+          region: awsRegion
+        },
+        {
+          id: currentProject.id,
+        }
+      )
+      .then(({ data }) => {
+        console.log(data)
+      })
+      .catch((err) => {
+        console.error(err);
+      });
 
-      // Only refresh and set clusters on initial create
-      if (!props.clusterId) {
-        setShouldRefreshClusters(true);
-        api.getClusters(
-          "<token>",
-          {},
-          { id: currentProject.id },
-        )
-          .then(({ data }) => {
-            data.forEach((cluster: ClusterType) => {
-              if (cluster.id === res.data.contract_revision?.cluster_id) {
-                // setHasFinishedOnboarding(true);
-                setCurrentCluster(cluster);
-                OFState.actions.goTo("clean_up");
-                pushFiltered(props, "/cluster-dashboard", ["project_id"], {
-                  cluster: cluster.name,
-                });
-              }
-            });
-          })
-          .catch((err) => {
-            console.error(err);
-          });
-      }
-    } catch (err) {
-      console.log(err);
-    }
+    // try {
+    //   const res = await api.createContract(
+    //     "<token>",
+    //     data,
+    //     { project_id: currentProject.id }
+    //   );
+
+    //   // Only refresh and set clusters on initial create
+    //   if (!props.clusterId) {
+    //     setShouldRefreshClusters(true);
+    //     api.getClusters(
+    //       "<token>",
+    //       {},
+    //       { id: currentProject.id },
+    //     )
+    //       .then(({ data }) => {
+    //         data.forEach((cluster: ClusterType) => {
+    //           if (cluster.id === res.data.contract_revision?.cluster_id) {
+    //             // setHasFinishedOnboarding(true);
+    //             setCurrentCluster(cluster);
+    //             OFState.actions.goTo("clean_up");
+    //             pushFiltered(props, "/cluster-dashboard", ["project_id"], {
+    //               cluster: cluster.name,
+    //             });
+    //           }
+    //         });
+    //       })
+    //       .catch((err) => {
+    //         console.error(err);
+    //       });
+    //   }
+    // } catch (err) {
+    //   console.log(err);
+    // }
   }
 
   useEffect(() => {
@@ -186,7 +207,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
   }, [props.selectedClusterVersion]);
 
   const renderForm = () => {
-    
+
     // Render simplified form if initial create
     if (!props.clusterId) {
       return (

@@ -71,14 +71,24 @@ const getGitlabIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/gitlab`
 );
 
-const preflightCheckAWS = baseApi<
+const preflightCheckAWSRole = baseApi<
   {
     target_arn: string;
     external_id: string;
   },
   { id: number }
 >("POST", (pathParams) => {
-  return `/api/projects/${pathParams.id}/integrations/aws/preflight`;
+  return `/api/projects/${pathParams.id}/integrations/aws/preflight/role`;
+});
+
+const preflightCheckAWSUsage = baseApi<
+  {
+    target_arn: string;
+    region: string;
+  },
+  { id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/integrations/aws/preflight/usage`;
 });
 
 const createAWSIntegration = baseApi<
@@ -577,11 +587,9 @@ const detectBuildpack = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${
-    pathParams.git_repo_id
-  }/repos/${pathParams.kind}/${pathParams.owner}/${
-    pathParams.name
-  }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
 });
 
 const detectGitlabBuildpack = baseApi<
@@ -612,11 +620,9 @@ const getBranchContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${
-    pathParams.git_repo_id
-  }/repos/${pathParams.kind}/${pathParams.owner}/${
-    pathParams.name
-  }/${encodeURIComponent(pathParams.branch)}/contents`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/contents`;
 });
 
 const getProcfileContents = baseApi<
@@ -632,11 +638,9 @@ const getProcfileContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${
-    pathParams.git_repo_id
-  }/repos/${pathParams.kind}/${pathParams.owner}/${
-    pathParams.name
-  }/${encodeURIComponent(pathParams.branch)}/procfile`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/procfile`;
 });
 
 const getGitlabProcfileContents = baseApi<
@@ -1490,11 +1494,9 @@ const getEnvGroup = baseApi<
     version?: number;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/clusters/${
-    pathParams.cluster_id
-  }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${
-    pathParams.version ? "&version=" + pathParams.version : ""
-  }`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id
+    }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${pathParams.version ? "&version=" + pathParams.version : ""
+    }`;
 });
 
 const getConfigMap = baseApi<
@@ -2396,7 +2398,7 @@ const removeStackEnvGroup = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/remove_env_group/${env_group_name}`
 );
 
-const getGithubStatus = baseApi<{}, {}>("GET", ({}) => `/api/status/github`);
+const getGithubStatus = baseApi<{}, {}>("GET", ({ }) => `/api/status/github`);
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
@@ -2573,7 +2575,8 @@ export default {
   addApplicationToEnvGroup,
   removeApplicationFromEnvGroup,
   provisionDatabase,
-  preflightCheckAWS,
+  preflightCheckAWSRole,
+  preflightCheckAWSUsage,
   getDatabases,
   getPreviousLogsForContainer,
   upgradePorterAgent,

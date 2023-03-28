@@ -19,13 +19,16 @@ import DocsHelper from "./DocsHelper";
 type Props = {
   goBack: () => void;
   proceed: () => void;
+  AWSAccountID: string;
+  setAWSAccountID: (id: string) => void;
 };
 
 const CloudFormationForm: React.FC<Props> = ({
   goBack,
   proceed,
+  AWSAccountID,
+  setAWSAccountID
 }) => {
-  const [AWSAccountID, setAWSAccountID] = useState("");
   const [grantPermissionsError, setGrantPermissionsError] = useState("");
   const [roleStatus, setRoleStatus] = useState("");
 
@@ -33,7 +36,7 @@ const CloudFormationForm: React.FC<Props> = ({
     let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-role`
     setRoleStatus("loading");
     // api
-    //   .preflightCheckAWS(
+    //   .preflightCheckAWSRole(
     //     "<token>",
     //     {
     //       target_arn: targetARN,
@@ -51,8 +54,8 @@ const CloudFormationForm: React.FC<Props> = ({
     //     console.error(err);
     //     setCreateStatus("Error creating credentials");
     //   });
-      setRoleStatus("successful");
-      proceed();
+    setRoleStatus("successful");
+    proceed();
   };
 
   const directToCloudFormation = () => {
@@ -80,7 +83,7 @@ const CloudFormationForm: React.FC<Props> = ({
             label={
               <Flex>
                 👤 AWS account ID
-                <i 
+                <i
                   className="material-icons"
                 >
                   help_outline

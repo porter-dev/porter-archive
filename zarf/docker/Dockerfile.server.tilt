@@ -7,4 +7,4 @@ FROM debian:bullseye-slim as runner
 WORKDIR /app
 COPY --from=installer /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=installer /go/bin/dlv /
-COPY ./porter /app
+COPY ./bin/porter /app

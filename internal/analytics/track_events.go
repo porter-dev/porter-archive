@@ -8,6 +8,10 @@ const (
 	UserVerifyEmail SegmentEvent = "User Verified Email"
 	ProjectCreate   SegmentEvent = "New Project Event"
 
+	CostConsentComplete    SegmentEvent = "Cost Consent Complete"
+	CredentialStepComplete SegmentEvent = "Credential Step Complete"
+	ProvisioningAttempted  SegmentEvent = "Provisioning Attempted"
+
 	ClusterProvisioningStart   SegmentEvent = "Cluster Provisioning Started"
 	ClusterProvisioningError   SegmentEvent = "Cluster Provisioning Error"
 	ClusterProvisioningSuccess SegmentEvent = "Cluster Provisioning Success"

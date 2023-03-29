@@ -2236,6 +2236,17 @@ const getIncidentEvents = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/incidents/events`
 );
 
+// TRACKING
+
+const updateOnboardingStep = baseApi<
+  {
+    step: string;
+  },
+  {}
+>("POST", (pathParams) => {
+  return `/api/onboarding_step`;
+});
+
 // STACKS
 
 const createStack = baseApi<
@@ -2613,6 +2624,8 @@ export default {
   createContract,
   getContracts,
   deleteContract,
+  // TRACKING
+  updateOnboardingStep,
   // STACKS
   listStacks,
   getStack,

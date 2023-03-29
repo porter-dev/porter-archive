@@ -132,6 +132,51 @@ func ProjectCreateTrack(opts *ProjectCreateTrackOpts) segmentTrack {
 	)
 }
 
+// CostConsentTrackOpts are the options for creating a track when a user completes the cost consent
+type CostConsentTrackOpts struct {
+	*UserScopedTrackOpts
+}
+
+// CostConsentTrack returns a track for when a user completes the cost consent
+func CostConsentTrack(opts *CostConsentTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, CostConsentComplete),
+	)
+}
+
+// CredentialStepTrackOpts are the options for creating a track when a user completes the credential step
+type CredentialStepTrackOpts struct {
+	*UserScopedTrackOpts
+}
+
+// CredentialStepTrack returns a track for when a user completes the credential step
+func CredentialStepTrack(opts *CredentialStepTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, CredentialStepComplete),
+	)
+}
+
+// ProvisioningAttemptedTrackOpts are the options for creating a track when a user attempts provisioning
+type ProvisioningAttemptTrackOpts struct {
+	*UserScopedTrackOpts
+}
+
+// ProvisioningAttemptTrack returns a track for when a user attempts provisioning
+func ProvisioningAttemptTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ProvisioningAttempted),
+	)
+}
+
 // ClusterProvisioningStartTrackOpts are the options for creating a track when a cluster
 // has started provisioning
 type ClusterProvisioningStartTrackOpts struct {

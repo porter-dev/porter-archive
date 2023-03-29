@@ -76,7 +76,21 @@ const ProvisionerSettings: React.FC<Props> = props => {
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
   const [isReadOnly, setIsReadOnly] = useState(false);
 
+  const markProvisioningStarted = async () => {
+    try {
+      const res = await api.updateOnboardingStep(
+        "<token>", 
+        { step: "provisioning-started" }, 
+        {}
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   const createCluster = async () => {
+    markProvisioningStarted();
+    
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,

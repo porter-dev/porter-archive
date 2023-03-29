@@ -71,8 +71,10 @@ export const Dashboard: React.FunctionComponent = () => {
     if (
       context.currentCluster.status !== "UPDATING_UNAVAILABLE" &&
       !tabOptions.find((tab) => tab.value === "nodes")
-    ) {      
-      tabOptions.unshift({ label: "Namespaces", value: "namespaces" });
+    ) {  
+      if (!context.currentProject.capi_provisioner_enabled) {
+        tabOptions.unshift({ label: "Namespaces", value: "namespaces" });
+      }
       tabOptions.unshift({ label: "Metrics", value: "metrics" });
       tabOptions.unshift({ label: "Nodes", value: "nodes" }); 
     }
@@ -82,7 +84,7 @@ export const Dashboard: React.FunctionComponent = () => {
       !tabOptions.find((tab) => tab.value === "configuration")
     ) {
       tabOptions.unshift({ value: "configuration", label: "Configuration" });
-    } 
+    }
   }, []);
 
   useEffect(() => {

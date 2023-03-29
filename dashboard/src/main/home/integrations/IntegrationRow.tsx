@@ -77,7 +77,7 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
           </MaterialIconTray>
         </MainRow>
         {this.props.expanded && !this.state.editMode && (
-          <ImageHodler adjustMargin={this.props.category !== "repo"}>
+          <ImageHolder adjustMargin={this.props.category !== "repo"}>
             {this.props.category !== "repo" ? (
               <ImageList
                 selectedImageUrl={null}
@@ -104,7 +104,7 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
                 userId={this.props.itemId}
               />
             )}
-          </ImageHodler>
+          </ImageHolder>
         )}
         {this.props.expanded && this.state.editMode && (
           <CreateIntegrationForm
@@ -220,7 +220,7 @@ const I = styled.i`
     props.showList ? "rotate(180deg)" : ""};
 `;
 
-const ImageHodler = styled.div`
+const ImageHolder = styled.div`
   width: 100%;
   padding: 12px;
   margin-top: ${(props: { adjustMargin: boolean }) =>

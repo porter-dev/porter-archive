@@ -12,6 +12,7 @@ import SlackIntegrationList from "./SlackIntegrationList";
 import TitleSection from "components/TitleSection";
 import GitlabIntegrationList from "./GitlabIntegrationList";
 import leftArrow from "assets/left-arrow.svg";
+import Spacer from "components/porter/Spacer";
 
 type Props = RouteComponentProps & {
   category: string;
@@ -150,6 +151,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
           {buttonText}
         </Button>
       </Flex>
+      <Spacer y={1} />
       {loading ? (
         <Loading />
       ) : props.category === "gitlab" ? (
@@ -209,7 +211,6 @@ const Breadcrumb = styled.div`
 const Flex = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: -20px;
   justify-content: space-between;
 
   > i {

@@ -17,6 +17,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, pushQueryParams, pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import Spacer from "components/porter/Spacer";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -44,7 +45,7 @@ const EnvGroupDashboard = (props: PropsType) => {
       : "Newest",
   });
 
-  const { currentCluster } = useContext(Context);
+  const { currentProject } = useContext(Context);
 
   const setNamespace = (namespace: string) => {
     setState((state) => ({ ...state, namespace }));
@@ -100,17 +101,20 @@ const EnvGroupDashboard = (props: PropsType) => {
         <>
           <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
             <SortFilterWrapper>
-              <NamespaceSelector
-                setNamespace={setNamespace}
-                namespace={state.namespace}
-              />
-            </SortFilterWrapper>
-            <Flex>
               <SortSelector
                 currentView="env-groups"
                 setSortType={setSortType}
                 sortType={state.sortType}
               />
+              <Spacer inline width="10px" />
+              {!currentProject.capi_provisioner_enabled && (
+                <NamespaceSelector
+                  setNamespace={setNamespace}
+                  namespace={state.namespace}
+                />
+              )}
+            </SortFilterWrapper>
+            <Flex>
               {isAuthorizedToAdd && (
                 <Button onClick={toggleCreateEnvMode}>
                   <i className="material-icons">add</i> Create env group
@@ -121,7 +125,7 @@ const EnvGroupDashboard = (props: PropsType) => {
 
           <EnvGroupList
             currentCluster={props.currentCluster}
-            namespace={state.namespace}
+            namespace={currentProject.capi_provisioner_enabled ? "default" : state.namespace}
             sortType={state.sortType}
             setExpandedEnvGroup={setExpandedEnvGroup}
           />

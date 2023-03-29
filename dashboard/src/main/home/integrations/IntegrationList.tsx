@@ -259,7 +259,6 @@ const Placeholder = styled.div`
   font-size: 13px;
   font-family: "Work Sans", sans-serif;
   justify-content: center;
-  margin-top: 40px;
   color: #aaaabb;
   border-radius: 5px;
   background: #26292e;

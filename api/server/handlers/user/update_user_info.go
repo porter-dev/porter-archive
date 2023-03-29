@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -38,6 +39,14 @@ func (v *UpdateUserInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		user.LastName = request.LastName
 		user.CompanyName = request.CompanyName
 	}
+
+	v.Config().AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
+		UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+		Email:               user.Email,
+		FirstName:           user.FirstName,
+		LastName:            user.LastName,
+		CompanyName:         user.CompanyName,
+	}))
 
 	user, err := v.Repo().User().UpdateUser(user)
 	if err != nil {

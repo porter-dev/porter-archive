@@ -80,13 +80,18 @@ func (p segmentProperties) addAdditionalProperties(props map[string]interface{})
 type UserCreateTrackOpts struct {
 	*UserScopedTrackOpts
 
-	Email string
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
 }
 
 // UserCreateTrack returns a track for when a user is created
 func UserCreateTrack(opts *UserCreateTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
 
 	return getSegmentUserTrack(
 		opts.UserScopedTrackOpts,
@@ -124,6 +129,51 @@ func ProjectCreateTrack(opts *ProjectCreateTrackOpts) segmentTrack {
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, ProjectCreate),
+	)
+}
+
+// CostConsentTrackOpts are the options for creating a track when a user completes the cost consent
+type CostConsentTrackOpts struct {
+	*UserScopedTrackOpts
+}
+
+// CostConsentTrack returns a track for when a user completes the cost consent
+func CostConsentTrack(opts *CostConsentTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, CostConsentComplete),
+	)
+}
+
+// CredentialStepTrackOpts are the options for creating a track when a user completes the credential step
+type CredentialStepTrackOpts struct {
+	*UserScopedTrackOpts
+}
+
+// CredentialStepTrack returns a track for when a user completes the credential step
+func CredentialStepTrack(opts *CredentialStepTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, CredentialStepComplete),
+	)
+}
+
+// ProvisioningAttemptedTrackOpts are the options for creating a track when a user attempts provisioning
+type ProvisioningAttemptTrackOpts struct {
+	*UserScopedTrackOpts
+}
+
+// ProvisioningAttemptTrack returns a track for when a user attempts provisioning
+func ProvisioningAttemptTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ProvisioningAttempted),
 	)
 }
 

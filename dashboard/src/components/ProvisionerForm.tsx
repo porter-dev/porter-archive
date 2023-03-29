@@ -28,7 +28,7 @@ const ProvisionerForm: React.FC<Props> = ({
         Configure settings
       </Heading>
       <Helper>
-        Configure settings for your new cluster. 
+        Configure settings for your new cluster.
       </Helper>
       <ProvisionerSettings credentialId={credentialId} />
     </>

@@ -3,6 +3,7 @@ import styled from "styled-components";
 
 import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
+import api from "shared/api";
 
 import ProvisionerForm from "components/ProvisionerForm";
 import CredentialsForm from "components/CredentialsForm";
@@ -35,6 +36,18 @@ const ProvisionerFlow: React.FC<Props> = ({
     }
     return usage?.current.clusters >= usage?.limit.clusters;
   }, [usage]);
+
+  const markStepCostConsent = async () => {
+    try {
+      const res = await api.updateOnboardingStep(
+        "<token>", 
+        { step: "cost-consent-complete" }, 
+        {}
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   if (currentStep === "cloud") {
     return (
@@ -121,6 +134,7 @@ const ProvisionerFlow: React.FC<Props> = ({
               onClick={() => {
                 setShowCostConfirmModal(false);
                 setConfirmCost("");
+                markStepCostConsent();
                 setCurrentStep("credentials");
               }}
             >

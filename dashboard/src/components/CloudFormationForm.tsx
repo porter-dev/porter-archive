@@ -18,7 +18,7 @@ import DocsHelper from "./DocsHelper";
 
 type Props = {
   goBack: () => void;
-  proceed: () => void;
+  proceed: (id: string) => void;
   AWSAccountID: string;
   setAWSAccountID: (id: string) => void;
 };
@@ -55,7 +55,7 @@ const CloudFormationForm: React.FC<Props> = ({
     //     setCreateStatus("Error creating credentials");
     //   });
     setRoleStatus("successful");
-    proceed();
+    proceed(targetARN);
   };
 
   const directToCloudFormation = () => {
@@ -85,6 +85,9 @@ const CloudFormationForm: React.FC<Props> = ({
                 👤 AWS account ID
                 <i
                   className="material-icons"
+                  onClick={() => {
+                    window.open("https://console.aws.amazon.com/billing/home?region=us-east-1#/account", "_blank")
+                  }}
                 >
                   help_outline
                 </i>

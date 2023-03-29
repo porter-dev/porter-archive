@@ -292,7 +292,7 @@ const Register: React.FC<Props> = ({
           size={13}
           color="helper"
         >
-          Already have an account? <Link to="/login">Log in</Link>
+          Already have an account?<Spacer width="5px" inline /><Link to="/login">Log in</Link>
         </Text>
       </Wrapper>
     </StyledRegister>

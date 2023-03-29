@@ -1,7 +1,7 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
     "Resources": {
-        "RootRole": {
+        "PorterRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
                 "AssumeRolePolicyDocument": {
@@ -19,7 +19,7 @@
                                     "sts:ExternalId": {
                                         "Ref": "ExternalIdParameter"
                                     }
-                                }
+                                }   
                             },
                             "Action": [
                                 "sts:AssumeRole"
@@ -56,7 +56,8 @@
                     "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
                     "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
                     "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-                ]
+                ],
+                "RoleName": "PorterRole"
             }
         }
     },

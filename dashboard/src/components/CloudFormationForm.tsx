@@ -31,35 +31,46 @@ const CloudFormationForm: React.FC<Props> = ({
 }) => {
   const [grantPermissionsError, setGrantPermissionsError] = useState("");
   const [roleStatus, setRoleStatus] = useState("");
+  const { currentProject } = useContext(Context);
+
+  const getExternalId = () => {
+    let externalId = localStorage.getItem(AWSAccountID)
+    console.log(externalId)
+    if (!externalId) {
+      externalId = uuidv4()
+      localStorage.setItem(AWSAccountID, externalId);
+    }
+
+    return externalId
+  }
 
   const checkIfRoleExists = () => {
+    let externalId = getExternalId();
     let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-role`
     setRoleStatus("loading");
-    // api
-    //   .preflightCheckAWSRole(
-    //     "<token>",
-    //     {
-    //       target_arn: targetARN,
-    //       external_id: externalID,
-    //     },
-    //     {
-    //       id: currentProject.id,
-    //     }
-    //   )
-    //   .then(({ data }) => {
-    //     setRoleStatus("successful");
-    //     proceed();
-    //   })
-    //   .catch((err) => {
-    //     console.error(err);
-    //     setCreateStatus("Error creating credentials");
-    //   });
-    setRoleStatus("successful");
-    proceed(targetARN);
+    api
+      .preflightCheckAWSRole(
+        "<token>",
+        {
+          target_arn: targetARN,
+          external_id: externalId,
+        },
+        {
+          id: currentProject.id,
+        }
+      )
+      .then(({ data }) => {
+        setRoleStatus("successful");
+        proceed(targetARN);
+      })
+      .catch((err) => {
+        console.log(err);
+        setRoleStatus("Role does not exist in the AWS account.");
+      });
   };
 
   const directToCloudFormation = () => {
-    let externalId = uuidv4();
+    let externalId = getExternalId();
     window.open(
       `https://console.aws.amazon.com/cloudformation/home?
       #/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}`
@@ -93,7 +104,6 @@ const CloudFormationForm: React.FC<Props> = ({
                 </i>
               </Flex>
             }
-            type="number"
             value={AWSAccountID}
             setValue={(e) => {
               setGrantPermissionsError("");
@@ -120,7 +130,9 @@ const CloudFormationForm: React.FC<Props> = ({
         </Fieldset>
         <Spacer y={1} />
         <SaveButton
-          onClick={checkIfRoleExists}
+          onClick={() => {
+            checkIfRoleExists()
+          }}
           status={roleStatus}
           statusPosition="right"
           clearPosition

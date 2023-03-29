@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	gorillaws "github.com/gorilla/websocket"
@@ -202,6 +204,29 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			WriteBufferSize: 1024,
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
+
+				// check if the server url is localhost, and allow all localhost origins
+				serverParsed, err := url.Parse(sc.ServerURL)
+				if err != nil {
+					return false
+				}
+				host, _, err := net.SplitHostPort(serverParsed.Host)
+				if err != nil {
+					return false
+				}
+				if host == "localhost" {
+					parsedOrigin, err := url.Parse(origin)
+					if err != nil {
+						return false
+					}
+					originHost, _, err := net.SplitHostPort(parsedOrigin.Host)
+					if err != nil {
+						return false
+					}
+					if originHost == "localhost" {
+						return true
+					}
+				}
 				return origin == sc.ServerURL
 			},
 		},

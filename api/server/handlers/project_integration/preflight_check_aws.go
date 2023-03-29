@@ -51,7 +51,11 @@ func (p *CreatePreflightCheckAWSHandler) ServeHTTP(w http.ResponseWriter, r *htt
 
 	if err != nil {
 		e := fmt.Errorf("preflight check failed: %w", err)
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			e,
+			http.StatusNotFound,
+		))
+
 		return
 	}
 	

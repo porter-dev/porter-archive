@@ -3,6 +3,7 @@ import styled from "styled-components";
 
 type Props = {
   height?: string;
+  width?: string;
   y?: number;
   x?: number;
   inline?: boolean;
@@ -10,6 +11,7 @@ type Props = {
 
 const Spacer: React.FC<Props> = ({
   height,
+  width,
   y,
   x,
   inline,
@@ -31,7 +33,7 @@ const Spacer: React.FC<Props> = ({
   return (
     <StyledSpacer
       height={height || getCalcHeight()}
-      width={inline && getCalcWidth()}
+      width={inline && (width || getCalcWidth())}
     />
   );
 };

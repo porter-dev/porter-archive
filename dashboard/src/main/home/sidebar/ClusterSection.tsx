@@ -3,8 +3,8 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { ClusterType, ProjectType } from "shared/types";
 import { Tooltip } from "@material-ui/core";
-import settings from "assets/settings.svg";
 
+import settings from "assets/settings.svg";
 import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
 import sliders from "assets/sliders.svg";

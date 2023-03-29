@@ -150,7 +150,13 @@ class Sidebar extends Component<PropsType, StateType> {
 
           {this.context.hasFinishedOnboarding && (
             <>
-              <SidebarLabel>Clusters</SidebarLabel>
+              <SidebarLabel>
+                {currentProject.capi_provisioner_enabled ? (
+                  "Your team"
+                ) : (
+                  "Clusters"
+                )}
+              </SidebarLabel>
               <Clusters
                 setWelcome={this.props.setWelcome}
                 currentView={currentView}

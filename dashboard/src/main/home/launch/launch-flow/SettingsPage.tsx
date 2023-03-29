@@ -134,9 +134,9 @@ class SettingsPage extends Component<PropsType, StateType> {
       } = this.props;
       return (
         <FadeWrapper>
-          <Heading>Additional settings</Heading>
+          <Heading>Application settings</Heading>
           <Helper>
-            Configure additional settings for this template. (Optional)
+            Configure application settings for this template. (Optional)
           </Helper>
           <PorterFormWrapper
             formData={form}
@@ -239,6 +239,7 @@ class SettingsPage extends Component<PropsType, StateType> {
 
   render() {
     let { selectedCluster } = this.state;
+    let { currentProject } = this.context;
 
     let { selectedNamespace, setSelectedNamespace } = this.props;
 
@@ -247,50 +248,53 @@ class SettingsPage extends Component<PropsType, StateType> {
         <StyledSettingsPage>
           {this.renderHeaderSection()}
           {this.props.isCloning && this.getNameInput()}
-
-          <Heading>Destination</Heading>
-          <Helper>
-            Specify the cluster and namespace you would like to deploy your
-            application to.
-          </Helper>
-          <ClusterSection>
-            <ClusterLabel>
-              <i className="material-icons">device_hub</i>Cluster
-            </ClusterLabel>
-            <Selector
-              activeValue={selectedCluster}
-              setActiveValue={(cluster: string) => {
-                this.context.setCurrentCluster(this.state.clusterMap[cluster]);
-                this.updateNamespaces(this.state.clusterMap[cluster].id);
-                this.setState({
-                  selectedCluster: cluster,
-                });
-              }}
-              options={this.state.clusterOptions}
-              width="250px"
-              dropdownWidth="335px"
-              closeOverlay={true}
-            />
-            <NamespaceLabel>
-              <i className="material-icons">view_list</i>Namespace
-            </NamespaceLabel>
-            <Selector
-              key={"namespace"}
-              refreshOptions={() => {
-                this.updateNamespaces(this.context.currentCluster.id);
-              }}
-              addButton={this.props.isAuthorized("namespace", "", [
-                "get",
-                "create",
-              ])}
-              activeValue={selectedNamespace}
-              setActiveValue={setSelectedNamespace}
-              options={this.state.namespaceOptions}
-              width="250px"
-              dropdownWidth="335px"
-              closeOverlay={true}
-            />
-          </ClusterSection>
+          {!currentProject.capi_provisioner_enabled && (
+            <>
+              <Heading>Destination</Heading>
+              <Helper>
+                Specify the cluster and namespace you would like to deploy your
+                application to.
+              </Helper>
+              <ClusterSection>
+                <ClusterLabel>
+                  <i className="material-icons">device_hub</i>Cluster
+                </ClusterLabel>
+                <Selector
+                  activeValue={selectedCluster}
+                  setActiveValue={(cluster: string) => {
+                    this.context.setCurrentCluster(this.state.clusterMap[cluster]);
+                    this.updateNamespaces(this.state.clusterMap[cluster].id);
+                    this.setState({
+                      selectedCluster: cluster,
+                    });
+                  }}
+                  options={this.state.clusterOptions}
+                  width="250px"
+                  dropdownWidth="335px"
+                  closeOverlay={true}
+                />
+                <NamespaceLabel>
+                  <i className="material-icons">view_list</i>Namespace
+                </NamespaceLabel>
+                <Selector
+                  key={"namespace"}
+                  refreshOptions={() => {
+                    this.updateNamespaces(this.context.currentCluster.id);
+                  }}
+                  addButton={this.props.isAuthorized("namespace", "", [
+                    "get",
+                    "create",
+                  ])}
+                  activeValue={selectedNamespace}
+                  setActiveValue={setSelectedNamespace}
+                  options={this.state.namespaceOptions}
+                  width="250px"
+                  dropdownWidth="335px"
+                  closeOverlay={true}
+                />
+              </ClusterSection>
+            </>
+          )}
           {this.renderSettingsRegion()}
           {this.props.fullActionConfig?.git_repo &&
             this.props.fullActionConfig?.kind === "github" && (

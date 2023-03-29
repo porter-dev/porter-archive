@@ -36,7 +36,7 @@ const JobDashboard: React.FC<Props> = ({
   sortType,
   ...props
 }) => {
-  const { currentCluster } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const [lastRunStatus, setLastRunStatus] = useState("all" as JobStatusType);
   const [showRuns, setShowRuns] = useState(false);
   const [selectedTag, setSelectedTag] = useState("none");
@@ -59,15 +59,17 @@ const JobDashboard: React.FC<Props> = ({
                 lastRunStatus={lastRunStatus}
                 setLastRunStatus={setLastRunStatus}
               />
-              <NamespaceSelector
-                setNamespace={(x) => {
-                  setNamespace(x);
-                  pushQueryParams(props, {
-                    namespace: x || "ALL",
-                  });
-                }}
-                namespace={namespace}
-              />
+              {!currentProject.capi_provisioner_enabled && (
+                <NamespaceSelector
+                  setNamespace={(x) => {
+                    setNamespace(x);
+                    pushQueryParams(props, {
+                      namespace: x || "ALL",
+                    });
+                  }}
+                  namespace={namespace}
+                />
+              )}
               <TagFilter
                 onSelect={setSelectedTag}
               />
@@ -115,7 +117,7 @@ const JobDashboard: React.FC<Props> = ({
               currentView={currentView}
               currentCluster={currentCluster}
               lastRunStatus={lastRunStatus}
-              namespace={namespace}
+              namespace={currentProject.capi_provisioner_enabled ? "default" : namespace}
               sortType={sortType}
               selectedTag={selectedTag}
             />

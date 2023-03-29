@@ -19,6 +19,7 @@ import DashboardHeader from "../DashboardHeader";
 import ChartList from "../chart/ChartList";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import SortSelector from "../SortSelector";
+import Spacer from "components/porter/Spacer";
 
 type Props = RouteComponentProps & WithAuthProps & {
   currentView: PorterUrl;
@@ -37,7 +38,7 @@ const AppDashboard: React.FC<Props> = ({
   setSortType,
   ...props
 }) => {
-  const { currentCluster } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const [selectedTag, setSelectedTag] = useState("none");
 
   return (
@@ -54,25 +55,28 @@ const AppDashboard: React.FC<Props> = ({
         <>
           <ControlRow>
             <FilterWrapper>
-              <NamespaceSelector
-                setNamespace={(x) => {
-                  setNamespace(x);
-                  pushQueryParams(props, {
-                    namespace: x || "ALL",
-                  });
-                }}
-                namespace={namespace}
-              />
-              <TagFilter
-                onSelect={setSelectedTag}
-              />
-            </FilterWrapper>
-            <Flex>
               <SortSelector
                 setSortType={setSortType}
                 sortType={sortType}
                 currentView={currentView}
               />
+              <Spacer inline width="10px" />
+              {!currentProject.capi_provisioner_enabled && (
+                <NamespaceSelector
+                  setNamespace={(x) => {
+                    setNamespace(x);
+                    pushQueryParams(props, {
+                      namespace: x || "ALL",
+                    });
+                  }}
+                  namespace={namespace}
+                />
+              )}
+              <TagFilter
+                onSelect={setSelectedTag}
+              />
+            </FilterWrapper>
+            <Flex>
               {props.isAuthorized(
                 "namespace", 
                 [], 
@@ -91,7 +95,7 @@ const AppDashboard: React.FC<Props> = ({
           <ChartList
             currentView={currentView}
             currentCluster={currentCluster}
-            namespace={namespace}
+            namespace={currentProject.capi_provisioner_enabled ? "default" : namespace}
             sortType={sortType}
             selectedTag={selectedTag}
           />

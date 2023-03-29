@@ -36,6 +36,7 @@ func NewAPIContractUpdateHandler(
 func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
 
 	var apiContract porterv1.Contract
 
@@ -99,6 +100,9 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	apiContract.User = &porterv1.User{
+		Id: int32(user.ID),
+	}
 	updateRequest := connect.NewRequest(&porterv1.UpdateContractRequest{
 		Contract: &apiContract,
 	})

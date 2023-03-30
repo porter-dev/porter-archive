@@ -31,7 +31,6 @@ func (c *StateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
 	fileBytes, err := c.Config.StorageManager.ReadFile(infra, ptypes.DefaultCurrentStateFile, true)
-
 	if err != nil {
 		// if the file does not exist yet, return a 404 status code
 		if errors.Is(err, storage.FileDoesNotExist) {

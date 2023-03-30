@@ -14,7 +14,6 @@ func CloneSourceConfigs(sourceConfigs []models.StackSourceConfig) ([]models.Stac
 	// TODO: add parsing/writes for git-based sources
 	for _, sourceConfig := range sourceConfigs {
 		uid, err := encryption.GenerateRandomBytes(16)
-
 		if err != nil {
 			return nil, err
 		}
@@ -42,7 +41,6 @@ func CloneAppResources(
 	// TODO: add parsing/writes for git-based sources
 	for _, appResource := range appResources {
 		uid, err := encryption.GenerateRandomBytes(16)
-
 		if err != nil {
 			return nil, err
 		}
@@ -83,7 +81,6 @@ func CloneEnvGroups(envGroups []models.StackEnvGroup) ([]models.StackEnvGroup, e
 
 	for _, envGroup := range envGroups {
 		uid, err := encryption.GenerateRandomBytes(16)
-
 		if err != nil {
 			return nil, err
 		}

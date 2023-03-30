@@ -28,7 +28,6 @@ func (c *HelmRepoListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	hrs, err := c.Repo().HelmRepo().ListHelmReposByProjectID(proj.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -18,7 +18,6 @@ func TokenToSlackIntegration(token *oauth2.Token) (*integrations.SlackIntegratio
 	}
 
 	teamInfo, err := getTeamInfo(token)
-
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +59,6 @@ func getTeamInfo(token *oauth2.Token) (*teamInfoResponse, error) {
 	// Send req using http Client
 	client := &http.Client{}
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}

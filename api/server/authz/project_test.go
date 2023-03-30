@@ -21,7 +21,6 @@ func TestProjectMiddlewareSuccessful(t *testing.T) {
 	proj, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +48,6 @@ func TestProjectMiddlewareFailedRead(t *testing.T) {
 	_, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
-
 	if err != nil {
 		t.Fatal(err)
 	}

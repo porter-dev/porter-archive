@@ -21,7 +21,6 @@ var getCmd = &cobra.Command{
 	Short: "Fetches a release.",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, get)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -35,7 +34,6 @@ var getValuesCmd = &cobra.Command{
 	Short: "Fetches the Helm values for a release.",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, getValues)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -74,7 +72,6 @@ type getReleaseInfo struct {
 
 func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	rel, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0])
-
 	if err != nil {
 		return err
 	}
@@ -89,7 +86,6 @@ func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 
 	if output == "yaml" {
 		bytes, err := yaml.Marshal(relInfo)
-
 		if err != nil {
 			return err
 		}
@@ -97,7 +93,6 @@ func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 		fmt.Println(string(bytes))
 	} else if output == "json" {
 		bytes, err := json.Marshal(relInfo)
-
 		if err != nil {
 			return err
 		}
@@ -116,7 +111,6 @@ func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 
 func getValues(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	rel, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0])
-
 	if err != nil {
 		return err
 	}
@@ -125,7 +119,6 @@ func getValues(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 
 	if output == "json" {
 		bytes, err := json.Marshal(values)
-
 		if err != nil {
 			return err
 		}
@@ -133,7 +126,6 @@ func getValues(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 		fmt.Println(string(bytes))
 	} else { // yaml is the default
 		bytes, err := yaml.Marshal(values)
-
 		if err != nil {
 			return err
 		}

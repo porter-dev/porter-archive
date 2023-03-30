@@ -70,14 +70,12 @@ func (c *GetTemporaryKubeconfigHandler) ServeHTTP(w http.ResponseWriter, r *http
 	}
 
 	kubeconfig, err := outOfClusterConfig.CreateRawConfigFromCluster()
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	kubeconfigBytes, err := clientcmd.Write(*kubeconfig)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

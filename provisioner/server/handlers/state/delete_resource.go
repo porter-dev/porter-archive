@@ -35,7 +35,6 @@ func (c *DeleteResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	operation.Status = "completed"
 
 	operation, err := c.Config.Repo.Infra().UpdateOperation(operation)
-
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
@@ -87,7 +86,6 @@ func (c *DeleteResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 func deleteRegistry(config *config.Config, infra *models.Infra, operation *models.Operation) (*models.Registry, error) {
 	reg, err := config.Repo.Registry().ReadRegistryByInfraID(infra.ProjectID, infra.ID)
-
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +101,6 @@ func deleteRegistry(config *config.Config, infra *models.Infra, operation *model
 
 func deleteCluster(config *config.Config, infra *models.Infra, operation *models.Operation) (*models.Cluster, error) {
 	cluster, err := config.Repo.Cluster().ReadClusterByInfraID(infra.ProjectID, infra.ID)
-
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +116,6 @@ func deleteCluster(config *config.Config, infra *models.Infra, operation *models
 
 func deleteDatabase(config *config.Config, infra *models.Infra, operation *models.Operation) (*models.Database, error) {
 	database, err := config.Repo.Database().ReadDatabaseByInfraID(infra.ProjectID, infra.ID)
-
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +135,6 @@ func deleteS3Bucket(config *config.Config, infra *models.Infra, operation *model
 	lastApplied := make(map[string]interface{})
 
 	err := json.Unmarshal(operation.LastApplied, &lastApplied)
-
 	if err != nil {
 		return err
 	}

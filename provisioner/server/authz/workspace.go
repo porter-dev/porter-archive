@@ -50,7 +50,6 @@ func (p *WorkspaceScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	name, err := models.ParseWorkspaceID(workspaceID)
-
 	if err != nil {
 		apierrors.HandleAPIError(
 			p.config.Logger,
@@ -82,7 +81,6 @@ func (p *WorkspaceScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	// look for infra with that ID and project ID
 	infra, err := p.config.Repo.Infra().ReadInfra(name.ProjectID, name.InfraID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			apierrors.HandleAPIError(
@@ -102,7 +100,6 @@ func (p *WorkspaceScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	// look for matching operation for the infra
 	operation, err := p.config.Repo.Infra().ReadOperation(infra.ID, name.OperationUID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)

@@ -59,7 +59,6 @@ func (s *IncidentNotifier) NotifyNew(incident *types.Incident, url string) error
 	}
 
 	payload, err := json.Marshal(slackPayload)
-
 	if err != nil {
 		return err
 	}
@@ -71,7 +70,6 @@ func (s *IncidentNotifier) NotifyNew(incident *types.Incident, url string) error
 
 	for _, slackInt := range s.slackInts {
 		_, err := client.Post(string(slackInt.Webhook), "application/json", reqBody)
-
 		if err != nil {
 			return err
 		}
@@ -117,7 +115,6 @@ func (s *IncidentNotifier) NotifyResolved(incident *types.Incident, url string) 
 	}
 
 	payload, err := json.Marshal(slackPayload)
-
 	if err != nil {
 		return err
 	}
@@ -129,7 +126,6 @@ func (s *IncidentNotifier) NotifyResolved(incident *types.Incident, url string) 
 
 	for _, slackInt := range s.slackInts {
 		_, err := client.Post(string(slackInt.Webhook), "application/json", reqBody)
-
 		if err != nil {
 			return err
 		}

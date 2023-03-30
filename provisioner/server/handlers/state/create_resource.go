@@ -36,6 +36,7 @@ func NewCreateResourceHandler(
 		decoderValidator: shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
 	}
 }
+
 func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// read the infra from the attached scope
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
@@ -119,7 +120,6 @@ func createECRRegistry(config *config.Config, infra *models.Infra, operation *mo
 	}
 
 	sess, err := awsInt.GetSession()
-
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,6 @@ func createECRRegistry(config *config.Config, infra *models.Infra, operation *mo
 	ecrSvc := ecr.New(sess)
 
 	authOutput, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
-
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +137,7 @@ func createECRRegistry(config *config.Config, infra *models.Infra, operation *mo
 	}
 	return reg, nil
 }
+
 func createRDSDatabase(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Database, error) {
 	// check for infra id being 0 as a safeguard so that all non-provisioned
 	// clusters are not matched by read
@@ -183,6 +183,7 @@ func createRDSDatabase(config *config.Config, infra *models.Infra, operation *mo
 	}
 	return database, nil
 }
+
 func createS3Bucket(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) error {
 	lastApplied := make(map[string]interface{})
 	err := json.Unmarshal(operation.LastApplied, &lastApplied)
@@ -191,6 +192,7 @@ func createS3Bucket(config *config.Config, infra *models.Infra, operation *model
 	}
 	return createS3EnvGroup(config, infra, lastApplied, output)
 }
+
 func createCluster(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Cluster, error) {
 	// check for infra id being 0 as a safeguard so that all non-provisioned
 	// clusters are not matched by read
@@ -242,6 +244,7 @@ func createCluster(config *config.Config, infra *models.Infra, operation *models
 	}
 	return cluster, nil
 }
+
 func getNewCluster(infra *models.Infra) *models.Cluster {
 	res := &models.Cluster{
 		ProjectID:           infra.ProjectID,
@@ -264,6 +267,7 @@ func getNewCluster(infra *models.Infra) *models.Cluster {
 	}
 	return res
 }
+
 func transformClusterCAData(ca []byte) ([]byte, error) {
 	re := regexp.MustCompile(`^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$`)
 	// if it matches the base64 regex, decode it
@@ -278,6 +282,7 @@ func transformClusterCAData(ca []byte) ([]byte, error) {
 	// otherwise just return the CA
 	return ca, nil
 }
+
 func createDOCRRegistry(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Registry, error) {
 	reg := &models.Registry{
 		ProjectID:       infra.ProjectID,
@@ -288,6 +293,7 @@ func createDOCRRegistry(config *config.Config, infra *models.Infra, operation *m
 	}
 	return config.Repo.Registry().CreateRegistry(reg)
 }
+
 func createGCRRegistry(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Registry, error) {
 	reg := &models.Registry{
 		ProjectID:        infra.ProjectID,
@@ -298,6 +304,7 @@ func createGCRRegistry(config *config.Config, infra *models.Infra, operation *mo
 	}
 	return config.Repo.Registry().CreateRegistry(reg)
 }
+
 func createGARRegistry(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Registry, error) {
 	reg := &models.Registry{
 		ProjectID:        infra.ProjectID,
@@ -308,6 +315,7 @@ func createGARRegistry(config *config.Config, infra *models.Infra, operation *mo
 	}
 	return config.Repo.Registry().CreateRegistry(reg)
 }
+
 func createACRRegistry(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Registry, error) {
 	reg := &models.Registry{
 		ProjectID:          infra.ProjectID,
@@ -318,6 +326,7 @@ func createACRRegistry(config *config.Config, infra *models.Infra, operation *mo
 	}
 	return config.Repo.Registry().CreateRegistry(reg)
 }
+
 func createRDSEnvGroup(config *config.Config, infra *models.Infra, database *models.Database, lastApplied map[string]interface{}) error {
 	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, infra.ParentClusterID)
 	if err != nil {
@@ -355,6 +364,7 @@ func createRDSEnvGroup(config *config.Config, infra *models.Infra, database *mod
 	}
 	return nil
 }
+
 func deleteRDSEnvGroup(config *config.Config, infra *models.Infra, lastApplied map[string]interface{}) error {
 	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, infra.ParentClusterID)
 	if err != nil {
@@ -375,6 +385,7 @@ func deleteRDSEnvGroup(config *config.Config, infra *models.Infra, lastApplied m
 	}
 	return nil
 }
+
 func createS3EnvGroup(config *config.Config, infra *models.Infra, lastApplied map[string]interface{}, output map[string]interface{}) error {
 	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, infra.ParentClusterID)
 	if err != nil {
@@ -405,6 +416,7 @@ func createS3EnvGroup(config *config.Config, infra *models.Infra, lastApplied ma
 	}
 	return nil
 }
+
 func deleteS3EnvGroup(config *config.Config, infra *models.Infra, lastApplied map[string]interface{}) error {
 	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, infra.ParentClusterID)
 	if err != nil {

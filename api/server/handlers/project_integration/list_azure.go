@@ -28,7 +28,6 @@ func (p *ListAzureHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	azInts, err := p.Repo().AzureIntegration().ListAzureIntegrationsByProjectID(project.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

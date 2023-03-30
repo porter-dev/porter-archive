@@ -25,7 +25,6 @@ func ParseUpgradeFileFromBytes(upgradeNotes []byte) (*UpgradeFile, error) {
 	res := &UpgradeFile{}
 
 	err := yaml.Unmarshal(upgradeNotes, res)
-
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +36,6 @@ func ParseUpgradeFileFromBytes(upgradeNotes []byte) (*UpgradeFile, error) {
 // between a previous and target version.
 func (u *UpgradeFile) GetUpgradeFileBetweenVersions(prev, target string) (*UpgradeFile, error) {
 	prevVersion, err := semver.NewVersion(prev)
-
 	if err != nil {
 		return nil, err
 	}
@@ -48,13 +46,11 @@ func (u *UpgradeFile) GetUpgradeFileBetweenVersions(prev, target string) (*Upgra
 
 	for _, note := range u.UpgradeNotes {
 		notePrevVersion, err := semver.NewVersion(note.PreviousVersion)
-
 		if err != nil {
 			return nil, err
 		}
 
 		noteTargetVersion, err := semver.NewVersion(note.TargetVersion)
-
 		if err != nil {
 			return nil, err
 		}

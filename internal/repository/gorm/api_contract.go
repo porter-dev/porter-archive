@@ -55,7 +55,6 @@ func (cr APIContractRepository) List(ctx context.Context, projectID uint, cluste
 
 // Delete deleted a record in the api_contract_revisions table
 func (cr APIContractRepository) Delete(ctx context.Context, projectID uint, clusterID uint, revisionID uuid.UUID) error {
-
 	conf := models.APIContractRevision{
 		ID:        revisionID,
 		ProjectID: int(projectID),
@@ -74,7 +73,6 @@ func (cr APIContractRepository) Delete(ctx context.Context, projectID uint, clus
 
 // Get returns a record in the api_contract_revisions table
 func (cr APIContractRepository) Get(ctx context.Context, revisionID uuid.UUID) (models.APIContractRevision, error) {
-
 	if revisionID == uuid.Nil {
 		return models.APIContractRevision{}, errors.New("invalid contract revision id supplied")
 	}

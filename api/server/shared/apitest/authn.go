@@ -22,14 +22,12 @@ func AuthenticateUserWithCookie(
 ) *http.Cookie {
 	rr2 := httptest.NewRecorder()
 	req2, err := http.NewRequest("GET", "/login", nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// set the user as authenticated
 	session, err := config.Store.Get(req2, config.ServerConf.CookieName)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,13 +58,11 @@ func AuthenticateUserWithCookie(
 // AuthenticateUserWithToken uses the JWT token generator to create a token for a user
 func AuthenticateUserWithToken(t *testing.T, config *config.Config, userID uint) string {
 	issToken, err := token.GetTokenForUser(userID)
-
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	res, err := issToken.EncodeToken(config.TokenConf)
-
 	if err != nil {
 		t.Fatal(err)
 	}

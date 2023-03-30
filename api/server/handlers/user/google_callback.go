@@ -36,7 +36,6 @@ func NewUserOAuthGoogleCallbackHandler(
 
 func (p *UserOAuthGoogleCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	session, err := p.Config().Store.Get(r, p.Config().ServerConf.CookieName)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -53,7 +52,6 @@ func (p *UserOAuthGoogleCallbackHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	}
 
 	token, err := p.Config().GoogleConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
@@ -82,7 +80,6 @@ func (p *UserOAuthGoogleCallbackHandler) ServeHTTP(w http.ResponseWriter, r *htt
 
 	// save the user as authenticated in the session
 	redirect, err := authn.SaveUserAuthenticated(w, r, p.Config(), user)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -107,7 +104,6 @@ func (p *UserOAuthGoogleCallbackHandler) ServeHTTP(w http.ResponseWriter, r *htt
 
 func upsertGoogleUserFromToken(config *config.Config, tok *oauth2.Token) (*models.User, error) {
 	gInfo, err := getGoogleUserInfoFromToken(tok)
-
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +174,6 @@ func getGoogleUserInfoFromToken(tok *oauth2.Token) (*googleUserInfo, error) {
 	client := &http.Client{}
 
 	response, err := client.Do(req)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed getting user info: %s", err.Error())
 	}
@@ -186,7 +181,6 @@ func getGoogleUserInfoFromToken(tok *oauth2.Token) (*googleUserInfo, error) {
 	defer response.Body.Close()
 
 	contents, err := ioutil.ReadAll(response.Body)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed reading response body: %s", err.Error())
 	}

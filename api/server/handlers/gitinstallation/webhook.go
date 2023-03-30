@@ -31,14 +31,12 @@ func NewGithubAppWebhookHandler(
 
 func (c *GithubAppWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	payload, err := github.ValidatePayload(r, []byte(c.Config().GithubAppConf.WebhookSecret))
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	event, err := github.ParseWebHook(github.WebHookType(r), payload)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -55,7 +53,6 @@ func (c *GithubAppWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 					AccountID:      *e.Installation.Account.ID,
 					InstallationID: *e.Installation.ID,
 				})
-
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				}
@@ -68,7 +65,6 @@ func (c *GithubAppWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		}
 		if *e.Action == "deleted" {
 			err := c.Repo().GithubAppInstallation().DeleteGithubAppInstallationByAccountID(*e.Installation.Account.ID)
-
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return

@@ -30,11 +30,13 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 )
 
-var namespace string
-var verbose bool
-var existingPod bool
-var nonInteractive bool
-var containerName string
+var (
+	namespace      string
+	verbose        bool
+	existingPod    bool
+	nonInteractive bool
+	containerName  string
+)
 
 // runCmd represents the "porter run" base command when called
 // without any subcommands
@@ -44,7 +46,6 @@ var runCmd = &cobra.Command{
 	Short: "Runs a command inside a connected cluster container.",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, run)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -58,7 +59,6 @@ var cleanupCmd = &cobra.Command{
 	Short: "Delete any lingering ephemeral pods that were created with \"porter run\".",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, cleanup)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -122,7 +122,6 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 		release, err := client.GetRelease(
 			context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0],
 		)
-
 		if err != nil {
 			return fmt.Errorf("error fetching release %s: %w", args[0], err)
 		}
@@ -138,7 +137,6 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 	}
 
 	podsSimple, err := getPods(client, namespace, args[0])
-
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())
 	}
@@ -158,7 +156,6 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 		}
 
 		selectedPodName, err := utils.PromptSelect("Select the pod:", podNames)
-
 		if err != nil {
 			return err
 		}
@@ -203,7 +200,6 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 		}
 
 		selectedContainer, err := utils.PromptSelect("Select the container:", selectedPod.ContainerNames)
-
 		if err != nil {
 			return err
 		}
@@ -328,7 +324,6 @@ func (p *PorterRunSharedConfig) setSharedConfig() error {
 	cID := cliConf.Cluster
 
 	kubeResp, err := p.Client.GetKubeconfig(context.Background(), pID, cID, cliConf.Kubeconfig)
-
 	if err != nil {
 		return err
 	}
@@ -336,13 +331,11 @@ func (p *PorterRunSharedConfig) setSharedConfig() error {
 	kubeBytes := kubeResp.Kubeconfig
 
 	cmdConf, err := clientcmd.NewClientConfigFromBytes(kubeBytes)
-
 	if err != nil {
 		return err
 	}
 
 	restConf, err := cmdConf.ClientConfig()
-
 	if err != nil {
 		return err
 	}
@@ -357,7 +350,6 @@ func (p *PorterRunSharedConfig) setSharedConfig() error {
 	p.RestConf = restConf
 
 	clientset, err := kubernetes.NewForConfig(restConf)
-
 	if err != nil {
 		return err
 	}
@@ -365,7 +357,6 @@ func (p *PorterRunSharedConfig) setSharedConfig() error {
 	p.Clientset = clientset
 
 	restClient, err := rest.RESTClientFor(restConf)
-
 	if err != nil {
 		return err
 	}
@@ -385,7 +376,6 @@ func getPods(client *api.Client, namespace, releaseName string) ([]podSimple, er
 	cID := cliConf.Cluster
 
 	resp, err := client.GetK8sAllPods(context.TODO(), pID, cID, namespace, releaseName)
-
 	if err != nil {
 		return nil, err
 	}
@@ -437,7 +427,6 @@ func executeRun(config *PorterRunSharedConfig, namespace, name, container string
 
 	return t.Safe(func() error {
 		exec, err := remotecommand.NewSPDYExecutor(config.RestConf, "POST", req.URL())
-
 		if err != nil {
 			return err
 		}
@@ -455,7 +444,6 @@ func executeRun(config *PorterRunSharedConfig, namespace, name, container string
 
 func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, container string, args []string) error {
 	existing, err := getExistingPod(config, name, namespace)
-
 	if err != nil {
 		return err
 	}
@@ -860,7 +848,6 @@ func pipePodLogsToStdout(config *PorterRunSharedConfig, namespace, name, contain
 	podLogs, err := req.Stream(
 		context.Background(),
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -881,7 +868,6 @@ func pipeEventsToStdout(config *PorterRunSharedConfig, namespace, name, containe
 			FieldSelector: fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=%s", name, namespace),
 		},
 	)
-
 	if err != nil {
 		return err
 	}
@@ -910,7 +896,6 @@ func deletePod(config *PorterRunSharedConfig, name, namespace string) error {
 		name,
 		metav1.DeleteOptions{},
 	)
-
 	if err != nil {
 		color.New(color.FgRed).Fprintf(os.Stderr, "Could not delete ephemeral pod: %s\n", err.Error())
 		return err

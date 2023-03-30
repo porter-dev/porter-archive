@@ -1,8 +1,9 @@
 package project
 
 import (
-	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"net/http"
+
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -28,7 +29,6 @@ func (p *CollaboratorsListHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	roles, err := p.Repo().Project().ListProjectRoles(proj.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -44,7 +44,6 @@ func (p *CollaboratorsListHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	users, err := p.Repo().User().ListUsersByIDs(idArr)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -46,7 +46,6 @@ func NewPorterPostrenderer(
 	}
 
 	envVarPostrenderer, err := NewEnvironmentVariablePostrenderer()
-
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +115,6 @@ func NewDockerSecretsPostRenderer(
 		}
 
 		parsedRegURL, err := url.Parse(regURL)
-
 		if err != nil {
 			continue
 		}
@@ -148,7 +146,6 @@ func (d *DockerSecretsPostRenderer) Run(
 	bufCopy := bytes.NewBuffer(renderedManifests.Bytes())
 
 	linkedRegs, err := d.getRegistriesToLink(bufCopy)
-
 	// if we encountered an error here, we'll render the manifests anyway
 	// without modification
 	if err != nil {
@@ -209,7 +206,6 @@ func (d *DockerSecretsPostRenderer) Run(
 				}
 
 				newData, err := dCopy.Run(bytes.NewBufferString(manifestDataStr))
-
 				if err != nil {
 					continue
 				}
@@ -228,7 +224,6 @@ func (d *DockerSecretsPostRenderer) Run(
 		linkedRegs,
 		d.DOAuth,
 	)
-
 	if err != nil {
 		return renderedManifests, nil
 	}
@@ -276,7 +271,6 @@ func (d *DockerSecretsPostRenderer) getRegistriesToLink(renderedManifests *bytes
 		// read the image url
 		for _, image := range images {
 			regName, err := getRegNameFromImageRef(image)
-
 			if err != nil {
 				continue
 			}
@@ -408,7 +402,6 @@ func (d *DockerSecretsPostRenderer) updatePodSpecs(secrets map[string]string) {
 			}
 
 			regName, err := getRegNameFromImageRef(image)
-
 			if err != nil {
 				continue
 			}
@@ -498,7 +491,6 @@ func (d *DockerSecretsPostRenderer) isRegistryNative(regName string) bool {
 		eksRegion := matches[3]
 
 		awsInt, err := d.Repo.AWSIntegration().ReadAWSIntegration(d.Cluster.ProjectID, d.Cluster.AWSIntegrationID)
-
 		if err != nil {
 			return false
 		}
@@ -510,7 +502,6 @@ func (d *DockerSecretsPostRenderer) isRegistryNative(regName string) bool {
 		}
 
 		parsedARN, err := arn.Parse(awsInt.AWSArn)
-
 		if err != nil {
 			return false
 		}
@@ -593,7 +584,6 @@ func (e *EnvironmentVariablePostrenderer) Run(
 				}
 
 				newData, err := dCopy.Run(bytes.NewBufferString(manifestDataStr))
-
 				if err != nil {
 					continue
 				}
@@ -801,7 +791,6 @@ func getNestedResource(res resource, keys ...string) resource {
 
 func getRegNameFromImageRef(image string) (string, error) {
 	named, err := reference.ParseNormalizedNamed(image)
-
 	if err != nil {
 		return "", err
 	}
@@ -838,8 +827,7 @@ func getRegNameFromImageRef(image string) (string, error) {
 	return regName, nil
 }
 
-type DeprecatedAPIVersionMapper struct {
-}
+type DeprecatedAPIVersionMapper struct{}
 
 type APIVersionKind struct {
 	oldAPIVersion, newAPIVersion, oldKind, newKind string
@@ -850,13 +838,11 @@ func (d *DeprecatedAPIVersionMapper) Run(
 	newRenderedManifests *bytes.Buffer,
 ) (modifiedManifests *bytes.Buffer, err error) {
 	oldResources, err := decodeRenderedManifests(oldRenderedManifests)
-
 	if err != nil {
 		return nil, err
 	}
 
 	newResources, err := decodeRenderedManifests(newRenderedManifests)
-
 	if err != nil {
 		return nil, err
 	}

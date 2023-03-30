@@ -11,7 +11,6 @@ func TestWorker(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	uuid, err := uuid.NewUUID()
-
 	if err != nil {
 		panic(err)
 	}

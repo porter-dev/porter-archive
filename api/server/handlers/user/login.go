@@ -44,7 +44,6 @@ func (u *UserLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// check that passwords match
 	storedUser, err := u.Repo().User().ReadUserByEmail(request.Email)
-
 	// case on user not existing, send forbidden error if not exist
 	if err != nil {
 		if targetErr := gorm.ErrRecordNotFound; errors.Is(err, targetErr) {
@@ -64,7 +63,6 @@ func (u *UserLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// save the user as authenticated in the session
 	redirect, err := authn.SaveUserAuthenticated(w, r, u.Config(), storedUser)
-
 	if err != nil {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

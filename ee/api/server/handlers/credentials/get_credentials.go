@@ -41,7 +41,6 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	// populate the request from the headers
 	req.CredExchangeToken = r.Header.Get("X-Porter-Token")
 	tokID, err := strconv.ParseUint(r.Header.Get("X-Porter-Token-ID"), 10, 64)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
@@ -52,7 +51,6 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// read the access token in the header, check against DB
 	ceToken, err := c.Repo().CredentialsExchangeToken().ReadCredentialsExchangeToken(req.CredExchangeID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
@@ -86,7 +84,6 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	if ceToken.DOCredentialID != 0 {
 		doInt, err := repo.OAuthIntegration().ReadOAuthIntegration(ceToken.ProjectID, ceToken.DOCredentialID)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 			return
@@ -99,7 +96,6 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 	} else if ceToken.GCPCredentialID != 0 {
 		gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(ceToken.ProjectID, ceToken.GCPCredentialID)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 			return
@@ -110,7 +106,6 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 	} else if ceToken.AWSCredentialID != 0 {
 		awsInt, err := repo.AWSIntegration().ReadAWSIntegration(ceToken.ProjectID, ceToken.AWSCredentialID)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 			return

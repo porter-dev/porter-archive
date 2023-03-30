@@ -44,7 +44,6 @@ func (c *ProvisionDestroyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// get the values from the previous operation to re-use
 	lastOp, err := c.Config.Repo.Infra().GetLatestOperation(infra)
-
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
@@ -52,7 +51,6 @@ func (c *ProvisionDestroyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// create a new operation and write it to the database
 	operationUID, err := models.GetOperationID()
-
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
@@ -75,7 +73,6 @@ func (c *ProvisionDestroyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	ceToken, rawToken, err := createCredentialsExchangeToken(c.Config, infra)
-
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
@@ -115,7 +112,6 @@ func (c *ProvisionDestroyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	op, err := operation.ToOperationType()
-
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return

@@ -32,7 +32,6 @@ func NewCRDDeleteHandler(
 func (c *CRDDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	client, err := c.GetDynamicClient(r, cluster)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

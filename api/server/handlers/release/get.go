@@ -55,7 +55,6 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if release.BuildConfig != 0 {
 			bc, err := c.Repo().BuildConfig().GetBuildConfig(release.BuildConfig)
-
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
@@ -66,21 +65,18 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if release.StackResourceID != 0 {
 			stackResource, err := c.Repo().Stack().ReadStackResource(release.StackResourceID)
-
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
 
 			stackRevision, err := c.Repo().Stack().ReadStackRevision(stackResource.StackRevisionID)
-
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
 
 			stack, err := c.Repo().Stack().ReadStackByID(cluster.ProjectID, stackRevision.StackID)
-
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
@@ -125,7 +121,6 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// look for the form using the dynamic client
 	dynClient, err := c.GetDynamicClient(r, cluster)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

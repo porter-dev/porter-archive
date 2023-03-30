@@ -36,7 +36,6 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	helmAgent, err := c.GetHelmAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -49,7 +48,6 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	releases, err := c.Repo().Release().ListReleasesByImageRepoURI(cluster.ID, request.ImageRepoURI)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("releases not found with given image repo uri"),
@@ -60,7 +58,6 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -79,7 +76,6 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			defer wg.Done()
 			// read release via agent
 			rel, err := helmAgent.GetRelease(releases[index].Name, 0, false)
-
 			if err != nil {
 				// if this is a release not found error, just return - the release has likely been deleted from the underlying
 				// cluster but has not been deleted from the Porter database yet

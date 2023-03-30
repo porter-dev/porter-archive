@@ -61,7 +61,6 @@ func (c *UpdateDeploymentStatusHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	// read the environment to get the environment id
 	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID), owner, name)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(errEnvironmentNotFound))
@@ -113,7 +112,6 @@ func (c *UpdateDeploymentStatusHandler) ServeHTTP(w http.ResponseWriter, r *http
 	}
 
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("unable to get github client: %w", err), http.StatusConflict,
@@ -124,7 +122,6 @@ func (c *UpdateDeploymentStatusHandler) ServeHTTP(w http.ResponseWriter, r *http
 	if !depl.IsBranchDeploy() {
 		// add a check for the PR to be open before creating a comment
 		prClosed, err := isGithubPRClosed(client, depl.RepoOwner, depl.RepoName, int(depl.PullRequestID))
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",

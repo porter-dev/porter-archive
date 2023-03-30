@@ -21,7 +21,6 @@ type PorterAWSCredentials struct {
 
 func (a *Agent) CreateIAMKubernetesMapping(clusterIDGuess string) (*PorterAWSCredentials, error) {
 	user, err := a.getIAMUserIfExists()
-
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +34,6 @@ func (a *Agent) CreateIAMKubernetesMapping(clusterIDGuess string) (*PorterAWSCre
 		resp, err := a.IAMService.CreateUser(&iam.CreateUserInput{
 			UserName: &name,
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +59,6 @@ func (a *Agent) CreateIAMKubernetesMapping(clusterIDGuess string) (*PorterAWSCre
 	resp, err := a.IAMService.CreateAccessKey(&iam.CreateAccessKeyInput{
 		UserName: &name,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +71,6 @@ func (a *Agent) CreateIAMKubernetesMapping(clusterIDGuess string) (*PorterAWSCre
 
 	// (3) Use the eksctl authconfigmap package to map this user to a cluster identity.
 	authCm, err := NewFromClientSet(a.Clientset)
-
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +80,6 @@ func (a *Agent) CreateIAMKubernetesMapping(clusterIDGuess string) (*PorterAWSCre
 		"admin",
 		[]string{"system:masters"},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +103,6 @@ func (a *Agent) CreateIAMKubernetesMapping(clusterIDGuess string) (*PorterAWSCre
 // to the user
 func (a *Agent) CreateIAMECRUser(region string) (*PorterAWSCredentials, error) {
 	user, err := a.getIAMUserIfExists()
-
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +118,6 @@ func (a *Agent) CreateIAMECRUser(region string) (*PorterAWSCredentials, error) {
 		resp, err := a.IAMService.CreateUser(&iam.CreateUserInput{
 			UserName: &name,
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -150,7 +143,6 @@ func (a *Agent) CreateIAMECRUser(region string) (*PorterAWSCredentials, error) {
 	resp, err := a.IAMService.CreateAccessKey(&iam.CreateAccessKeyInput{
 		UserName: &name,
 	})
-
 	if err != nil {
 		return nil, err
 	}

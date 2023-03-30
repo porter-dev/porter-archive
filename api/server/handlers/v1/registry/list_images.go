@@ -68,7 +68,6 @@ func (c *RegistryListImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		}
 
 		imgs, nextToken, err := regAPI.GetECRPaginatedImages(repoName, c.Repo(), request.Num, nextToken)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -81,7 +80,6 @@ func (c *RegistryListImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		res.Images = append(res.Images, imgs...)
 	} else {
 		imgs, err := regAPI.ListImages(repoName, c.Repo(), c.Config().DOConf)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return

@@ -38,7 +38,6 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	helmAgent, err := p.agentGetter.GetHelmAgent(r, cluster, "")
-
 	if err != nil {
 		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
@@ -52,7 +51,6 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	version, _ := requestutils.GetURLParamUint(r, types.URLParamReleaseVersion)
 
 	release, err := helmAgent.GetRelease(name, int(version), false)
-
 	if err != nil {
 		// ugly casing since at the time of this commit Helm doesn't have an errors package.
 		// so we rely on the Helm error containing "not found"

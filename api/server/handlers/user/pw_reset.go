@@ -66,7 +66,6 @@ func (c *UserPasswordInitiateResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 				URL:   fmt.Sprintf("%s/api/oauth/login/github", c.Config().ServerConf.ServerURL),
 			},
 		)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -83,7 +82,6 @@ func (c *UserPasswordInitiateResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 		r,
 		request,
 	)
-
 	if err != nil {
 		return
 	}
@@ -174,14 +172,12 @@ func (c *UserPasswordFinalizeResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 		&request.VerifyTokenFinalizeRequest,
 		request.Email,
 	)
-
 	if err != nil {
 		return
 	}
 
 	// check that the email exists
 	user, err := c.Repo().User().ReadUserByEmail(request.Email)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			err = fmt.Errorf("finalize password reset failed: email does not exist")
@@ -194,7 +190,6 @@ func (c *UserPasswordFinalizeResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 
 	hashedPW, err := bcrypt.GenerateFromPassword([]byte(request.NewPassword), 8)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -232,7 +227,6 @@ func VerifyToken(
 	email string,
 ) (*models.PWResetToken, error) {
 	token, err := pwResetRepo.ReadPWResetToken(request.TokenID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			err = fmt.Errorf("verify token failed: token does not exist")
@@ -283,14 +277,12 @@ func CreatePWResetTokenForEmail(
 	expiry := time.Now().Add(30 * time.Minute)
 
 	rawToken, err := random.StringWithCharset(32, "")
-
 	if err != nil {
 		handleErr(w, r, apierrors.NewErrInternal(err))
 		return nil, "", err
 	}
 
 	hashedToken, err := bcrypt.GenerateFromPassword([]byte(rawToken), 8)
-
 	if err != nil {
 		handleErr(w, r, apierrors.NewErrInternal(err))
 		return nil, "", err

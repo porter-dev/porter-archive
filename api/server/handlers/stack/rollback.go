@@ -36,7 +36,6 @@ func (p *StackRollbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	helmAgent, err := p.GetHelmAgent(r, cluster, "")
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -54,7 +53,6 @@ func (p *StackRollbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	// read the target revision
 	revision, err := p.Repo().Stack().ReadStackRevisionByNumber(stack.ID, req.TargetRevision)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -62,7 +60,6 @@ func (p *StackRollbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	// read the latest revision
 	latestRevision, err := p.Repo().Stack().ReadStackRevisionByNumber(stack.ID, stack.Revisions[0].RevisionNumber)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -74,21 +71,18 @@ func (p *StackRollbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	revision.Status = string(types.StackRevisionStatusDeploying)
 
 	newSourceConfigs, err := stacks.CloneSourceConfigs(revision.SourceConfigs)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	appResources, err := stacks.CloneAppResources(revision.Resources, revision.SourceConfigs, newSourceConfigs)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	envGroups, err := stacks.CloneEnvGroups(revision.EnvGroups)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -114,7 +108,6 @@ func (p *StackRollbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			helmRevisionID: resource.HelmRevisionID,
 			name:           resource.Name,
 		})
-
 		if err != nil {
 			rollbackErrors = append(rollbackErrors, err.Error())
 		}

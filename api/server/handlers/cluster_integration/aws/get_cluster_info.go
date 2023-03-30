@@ -42,7 +42,6 @@ func (c *GetClusterInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	awsInt, err := c.Repo().AWSIntegration().ReadAWSIntegration(proj.ID, cluster.AWSIntegrationID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no AWS integration found with project ID: %d and "+
@@ -56,7 +55,6 @@ func (c *GetClusterInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	awsSession, err := awsInt.GetSession()
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("error fetching new session for AWS with "+
 			"project ID: %d and integration ID: %d. Error: %w", proj.ID, cluster.AWSIntegrationID, err), http.StatusConflict))

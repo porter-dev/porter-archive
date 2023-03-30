@@ -103,26 +103,22 @@ func GetTokenFromEncoded(tokenString string, conf *TokenGeneratorConf) (*Token, 
 
 		return []byte(conf.TokenSecret), nil
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("could not parse token: %v", err)
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		iby, err := strconv.ParseUint(fmt.Sprintf("%v", claims["iby"]), 10, 64)
-
 		if err != nil {
 			return nil, fmt.Errorf("invalid iby claim: %v", err)
 		}
 
 		projID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["project_id"]), 10, 64)
-
 		if err != nil {
 			return nil, fmt.Errorf("invalid project_id claim: %v", err)
 		}
 
 		iatUnix, err := strconv.ParseInt(fmt.Sprintf("%v", claims["iat"]), 10, 64)
-
 		if err != nil {
 			return nil, fmt.Errorf("invalid iat claim: %v", err)
 		}
@@ -154,7 +150,7 @@ func GetTokenFromEncoded(tokenString string, conf *TokenGeneratorConf) (*Token, 
 		}
 
 		supportID := "3140"
-		if res.Sub == supportID && res.IAt.Before(time.Date(2023, 01, 31, 14, 30, 0, 0, time.UTC)) {
+		if res.Sub == supportID && res.IAt.Before(time.Date(2023, 0o1, 31, 14, 30, 0, 0, time.UTC)) {
 			return nil, fmt.Errorf("error with token. Please contact your admin or trying logging in again")
 		}
 

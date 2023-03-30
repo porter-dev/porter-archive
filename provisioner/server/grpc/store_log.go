@@ -18,13 +18,11 @@ func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error
 	}
 
 	infra, err := s.config.Repo.Infra().ReadInfra(name.ProjectID, name.InfraID)
-
 	if err != nil {
 		return err
 	}
 
 	operation, err := s.config.Repo.Infra().ReadOperation(name.InfraID, name.OperationUID)
-
 	if err != nil {
 		return err
 	}

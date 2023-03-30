@@ -28,7 +28,6 @@ func (c *ListClusterCandidatesHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	ccs, err := c.Repo().Cluster().ListClusterCandidatesByProjectID(proj.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

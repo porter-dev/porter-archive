@@ -32,7 +32,6 @@ func (c *GetAgentStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	k8sAgent, err := c.GetAgent(r, cluster, "porter-agent-system")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -40,14 +39,12 @@ func (c *GetAgentStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// get agent service
 	agentSvc, err := porter_agent.GetAgentService(k8sAgent.Clientset)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	status, err := porter_agent.GetAgentStatus(k8sAgent.Clientset, agentSvc)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -33,7 +33,6 @@ func NewRetryHelmAgent(
 	}
 
 	helmAgent, err := helm.GetAgentOutOfClusterConfig(form, l)
-
 	if err != nil {
 		return nil, err
 	}

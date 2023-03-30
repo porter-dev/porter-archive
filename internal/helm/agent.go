@@ -46,7 +46,6 @@ func (a *Agent) ListReleases(
 			LabelSelector: lsel,
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +105,6 @@ func (a *Agent) GetRelease(
 	cmd.Version = version
 
 	release, err := cmd.Run(name)
-
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +126,6 @@ func (a *Agent) GetRelease(
 
 				if !depExists {
 					depChart, err := loader.LoadChartPublic(dep.Repository, dep.Name, dep.Version)
-
 					if err != nil {
 						return nil, fmt.Errorf("Error retrieving chart dependency %s/%s-%s: %s", dep.Repository, dep.Name, dep.Version, err.Error())
 					}
@@ -184,7 +181,6 @@ func (a *Agent) UpgradeRelease(
 	disablePullSecretsInjection bool,
 ) (*release.Release, error) {
 	valuesYaml, err := chartutil.ReadValues([]byte(values))
-
 	if err != nil {
 		return nil, fmt.Errorf("Values could not be parsed: %v", err)
 	}
@@ -202,7 +198,6 @@ func (a *Agent) UpgradeReleaseByValues(
 ) (*release.Release, error) {
 	// grab the latest release
 	rel, err := a.GetRelease(conf.Name, 0, true)
-
 	if err != nil {
 		return nil, fmt.Errorf("Could not get release to be upgraded: %v", err)
 	}
@@ -239,7 +234,6 @@ func (a *Agent) UpgradeReleaseByValues(
 	}
 
 	res, err := cmd.Run(conf.Name, ch, conf.Values)
-
 	if err != nil {
 		// refer: https://github.com/helm/helm/blob/release-3.8/pkg/action/action.go#L62
 		// issue tracker: https://github.com/helm/helm/issues/4558
@@ -250,7 +244,6 @@ func (a *Agent) UpgradeReleaseByValues(
 					LabelSelector: fmt.Sprintf("owner=helm,status in (pending-install, pending-upgrade, pending-rollback),name=%s", rel.Name),
 				},
 			)
-
 			if err != nil {
 				return nil, fmt.Errorf("Upgrade failed: %w", err)
 			}
@@ -300,7 +293,6 @@ func (a *Agent) UpgradeReleaseByValues(
 					LabelSelector: fmt.Sprintf("owner=helm,name=%s", rel.Name),
 				},
 			)
-
 			if err != nil {
 				return nil, fmt.Errorf("Upgrade failed: %w", err)
 			}
@@ -329,7 +321,6 @@ func (a *Agent) UpgradeReleaseByValues(
 				installCmd.IncludeCRDs = true
 
 				newRelDryRun, err := installCmd.Run(ch, conf.Values)
-
 				if err != nil {
 					return nil, err
 				}
@@ -340,7 +331,6 @@ func (a *Agent) UpgradeReleaseByValues(
 				versionMapper := &DeprecatedAPIVersionMapper{}
 
 				updatedManifestBuffer, err := versionMapper.Run(oldManifestBuffer, newManifestBuffer)
-
 				if err != nil {
 					return nil, err
 				}
@@ -356,7 +346,6 @@ func (a *Agent) UpgradeReleaseByValues(
 				}
 
 				res, err := cmd.Run(conf.Name, ch, conf.Values)
-
 				if err != nil {
 					return nil, fmt.Errorf("Upgrade failed: %w", err)
 				}
@@ -390,7 +379,6 @@ func (a *Agent) InstallChartFromValuesBytes(
 	disablePullSecretsInjection bool,
 ) (*release.Release, error) {
 	valuesYaml, err := chartutil.ReadValues(values)
-
 	if err != nil {
 		return nil, fmt.Errorf("Values could not be parsed: %v", err)
 	}

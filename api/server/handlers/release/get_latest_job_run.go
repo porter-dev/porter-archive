@@ -32,14 +32,12 @@ func (c *GetLatestJobRunHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	jobs, err := agent.ListJobsByLabel(helmRelease.Namespace, getJobLabels(helmRelease)...)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

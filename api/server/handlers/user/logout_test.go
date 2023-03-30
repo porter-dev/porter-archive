@@ -30,7 +30,6 @@ func TestLogoutUserSuccessful(t *testing.T) {
 
 	// read the session to make sure "authenticated" is false
 	session, err := config.Store.Get(req, config.ServerConf.CookieName)
-
 	if err != nil {
 		t.Fatal(err)
 	}

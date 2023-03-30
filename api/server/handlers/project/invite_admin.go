@@ -26,7 +26,6 @@ func NewProjectInviteAdminHandler(
 }
 
 func (p *ProjectInviteAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	// Only add admin user if config is set
 	InstanceEnvConf, _ := envloader.FromEnv()
 	adminUserId := InstanceEnvConf.ServerConf.AdminUserId

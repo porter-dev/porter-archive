@@ -22,7 +22,6 @@ var listCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 || (args[0] == "all") {
 			err := checkLoginAndRun(args, listAll)
-
 			if err != nil {
 				os.Exit(1)
 			}
@@ -38,7 +37,6 @@ var listAppsCmd = &cobra.Command{
 	Short:   "Lists applications in a specific namespace, or across all namespaces",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, listApps)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -51,7 +49,6 @@ var listJobsCmd = &cobra.Command{
 	Short:   "Lists jobs in a specific namespace, or across all namespaces",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, listJobs)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -64,7 +61,6 @@ var listAddonsCmd = &cobra.Command{
 	Short:   "Lists addons in a specific namespace, or across all namespaces",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, listAddons)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -95,7 +91,6 @@ func init() {
 
 func listAll(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	err := writeReleases(client, "all")
-
 	if err != nil {
 		return err
 	}
@@ -105,7 +100,6 @@ func listAll(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []s
 
 func listApps(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	err := writeReleases(client, "application")
-
 	if err != nil {
 		return err
 	}
@@ -115,7 +109,6 @@ func listApps(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []
 
 func listJobs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	err := writeReleases(client, "job")
-
 	if err != nil {
 		return err
 	}
@@ -125,7 +118,6 @@ func listJobs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []
 
 func listAddons(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	err := writeReleases(client, "addon")
-
 	if err != nil {
 		return err
 	}
@@ -139,7 +131,6 @@ func writeReleases(client *api.Client, kind string) error {
 
 	if allNamespaces {
 		resp, err := client.GetK8sNamespaces(context.Background(), cliConf.Project, cliConf.Cluster)
-
 		if err != nil {
 			return err
 		}
@@ -171,7 +162,6 @@ func writeReleases(client *api.Client, kind string) error {
 				},
 			},
 		)
-
 		if err != nil {
 			return err
 		}

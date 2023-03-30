@@ -29,7 +29,6 @@ func (repo *SlackIntegrationRepository) CreateSlackIntegration(
 	slackInt *ints.SlackIntegration,
 ) (*ints.SlackIntegration, error) {
 	err := repo.EncryptSlackIntegrationData(slackInt, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +77,6 @@ func (repo *SlackIntegrationRepository) EncryptSlackIntegrationData(
 ) error {
 	if len(slackInt.ClientID) > 0 {
 		cipherData, err := encryption.Encrypt(slackInt.ClientID, key)
-
 		if err != nil {
 			return err
 		}
@@ -88,7 +86,6 @@ func (repo *SlackIntegrationRepository) EncryptSlackIntegrationData(
 
 	if len(slackInt.AccessToken) > 0 {
 		cipherData, err := encryption.Encrypt(slackInt.AccessToken, key)
-
 		if err != nil {
 			return err
 		}
@@ -98,7 +95,6 @@ func (repo *SlackIntegrationRepository) EncryptSlackIntegrationData(
 
 	if len(slackInt.RefreshToken) > 0 {
 		cipherData, err := encryption.Encrypt(slackInt.RefreshToken, key)
-
 		if err != nil {
 			return err
 		}
@@ -108,7 +104,6 @@ func (repo *SlackIntegrationRepository) EncryptSlackIntegrationData(
 
 	if len(slackInt.Webhook) > 0 {
 		cipherData, err := encryption.Encrypt(slackInt.Webhook, key)
-
 		if err != nil {
 			return err
 		}
@@ -127,7 +122,6 @@ func (repo *SlackIntegrationRepository) DecryptSlackIntegrationData(
 ) error {
 	if len(slackInt.ClientID) > 0 {
 		plaintext, err := encryption.Decrypt(slackInt.ClientID, key)
-
 		if err != nil {
 			return err
 		}
@@ -137,7 +131,6 @@ func (repo *SlackIntegrationRepository) DecryptSlackIntegrationData(
 
 	if len(slackInt.AccessToken) > 0 {
 		plaintext, err := encryption.Decrypt(slackInt.AccessToken, key)
-
 		if err != nil {
 			return err
 		}
@@ -147,7 +140,6 @@ func (repo *SlackIntegrationRepository) DecryptSlackIntegrationData(
 
 	if len(slackInt.RefreshToken) > 0 {
 		plaintext, err := encryption.Decrypt(slackInt.RefreshToken, key)
-
 		if err != nil {
 			return err
 		}
@@ -157,7 +149,6 @@ func (repo *SlackIntegrationRepository) DecryptSlackIntegrationData(
 
 	if len(slackInt.Webhook) > 0 {
 		plaintext, err := encryption.Decrypt(slackInt.Webhook, key)
-
 		if err != nil {
 			return err
 		}

@@ -23,7 +23,8 @@ func NewRubyRuntime() Runtime {
 func (runtime *rubyRuntime) detectPuma(gemfileContent string, results chan struct {
 	string
 	bool
-}) {
+},
+) {
 	pumaFound := false
 	quotes := `["']`
 	pumaRe := regexp.MustCompile(fmt.Sprintf(`^\s*gem %spuma%s`, quotes, quotes))
@@ -47,7 +48,8 @@ func (runtime *rubyRuntime) detectPuma(gemfileContent string, results chan struc
 func (runtime *rubyRuntime) detectThin(gemfileContent string, results chan struct {
 	string
 	bool
-}) {
+},
+) {
 	thinFound := false
 	quotes := `["']`
 	thinRe := regexp.MustCompile(fmt.Sprintf(`^\s*gem %sthin%s`, quotes, quotes))
@@ -71,7 +73,8 @@ func (runtime *rubyRuntime) detectThin(gemfileContent string, results chan struc
 func (runtime *rubyRuntime) detectUnicorn(gemfileContent string, results chan struct {
 	string
 	bool
-}) {
+},
+) {
 	unicornFound := false
 	quotes := `["']`
 	unicornRe := regexp.MustCompile(fmt.Sprintf(`^\s*gem %sunicorn%s`, quotes, quotes))
@@ -95,7 +98,8 @@ func (runtime *rubyRuntime) detectUnicorn(gemfileContent string, results chan st
 func (runtime *rubyRuntime) detectPassenger(gemfileContent string, results chan struct {
 	string
 	bool
-}) {
+},
+) {
 	passengerFound := false
 	quotes := `["']`
 	passengerRe := regexp.MustCompile(fmt.Sprintf(`^\s*gem %spassenger%s`, quotes, quotes))
@@ -196,7 +200,8 @@ func (runtime *rubyRuntime) detectRackupGitlab(
 func (runtime *rubyRuntime) detectRake(gemfileContent string, results chan struct {
 	string
 	bool
-}) {
+},
+) {
 	rakeFound := false
 	quotes := `["']`
 	rakeRe := regexp.MustCompile(fmt.Sprintf(`^\s*gem %srake%s`, quotes, quotes))

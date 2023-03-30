@@ -62,7 +62,6 @@ func GetSource(projectID uint, resourceName string, input map[string]interface{}
 	apiClient := config.GetAPIClient()
 
 	serverMetadata, err := apiClient.GetPorterInstanceMetadata(context.Background())
-
 	if err != nil {
 		return nil, fmt.Errorf("error fetching Porter instance metadata: %w", err)
 	}
@@ -202,7 +201,6 @@ func existsInRepo(projectID uint, name, version, url string) (map[string]interfa
 			},
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

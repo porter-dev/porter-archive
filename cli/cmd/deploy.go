@@ -70,7 +70,6 @@ specify it as follows:
 	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, updateFull)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -99,7 +98,6 @@ destination path for a .env file. For example:
 	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, updateGetEnv)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -142,7 +140,6 @@ for the application:
 	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, updateBuild)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -183,7 +180,6 @@ linked it via "porter connect".
 	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, updatePush)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -214,7 +210,6 @@ the image that the application uses if no --values file is specified:
 	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, updateUpgrade)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -236,7 +231,6 @@ var updateSetEnvGroupCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, updateSetEnvGroup)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -249,28 +243,29 @@ var updateUnsetEnvGroupCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, updateUnsetEnvGroup)
-
 		if err != nil {
 			os.Exit(1)
 		}
 	},
 }
 
-var app string
-var getEnvFileDest string
-var localPath string
-var tag string
-var dockerfile string
-var method string
-var stream bool
-var buildFlagsEnv []string
-var forcePush bool
-var useCache bool
-var version uint
-var varType string
-var normalEnvGroupVars []string
-var secretEnvGroupVars []string
-var waitForSuccessfulDeploy bool
+var (
+	app                     string
+	getEnvFileDest          string
+	localPath               string
+	tag                     string
+	dockerfile              string
+	method                  string
+	stream                  bool
+	buildFlagsEnv           []string
+	forcePush               bool
+	useCache                bool
+	version                 uint
+	varType                 string
+	normalEnvGroupVars      []string
+	secretEnvGroupVars      []string
+	waitForSuccessfulDeploy bool
+)
 
 func init() {
 	buildFlagsEnv = []string{}
@@ -447,14 +442,12 @@ func init() {
 
 func updateFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	fullPath, err := filepath.Abs(localPath)
-
 	if err != nil {
 		return err
 	}
 
 	if os.Getenv("GITHUB_ACTIONS") == "" && source == "local" && fullPath == homedir.HomeDir() {
 		proceed, err := utils.PromptConfirm("You are deploying your home directory. Do you want to continue?", false)
-
 		if err != nil {
 			return err
 		}
@@ -467,7 +460,6 @@ func updateFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	color.New(color.FgGreen).Println("Deploying app:", app)
 
 	updateAgent, err := updateGetAgent(client)
-
 	if err != nil {
 		return err
 	}
@@ -495,7 +487,6 @@ func updateFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		time.Sleep(10 * time.Second)
 
 		err := checkDeploymentStatus(client)
-
 		if err != nil {
 			return err
 		}
@@ -506,7 +497,6 @@ func updateFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 func updateGetEnv(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	updateAgent, err := updateGetAgent(client)
-
 	if err != nil {
 		return err
 	}
@@ -514,7 +504,6 @@ func updateGetEnv(_ *types.GetAuthenticatedUserResponse, client *api.Client, arg
 	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
 		UseNewConfig: false,
 	})
-
 	if err != nil {
 		return err
 	}
@@ -532,7 +521,6 @@ func updateGetEnv(_ *types.GetAuthenticatedUserResponse, client *api.Client, arg
 
 func updateBuild(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	updateAgent, err := updateGetAgent(client)
-
 	if err != nil {
 		return err
 	}
@@ -549,7 +537,6 @@ func updatePush(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		image := args[0]
 
 		registries, err := client.ListRegistries(context.Background(), cliConf.Project)
-
 		if err != nil {
 			return err
 		}
@@ -579,7 +566,6 @@ func updatePush(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		}
 
 		agent, err := docker.NewAgentWithAuthGetter(client, cliConf.Project)
-
 		if err != nil {
 			return err
 		}
@@ -594,7 +580,6 @@ func updatePush(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	}
 
 	updateAgent, err := updateGetAgent(client)
-
 	if err != nil {
 		return err
 	}
@@ -604,7 +589,6 @@ func updatePush(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	updateAgent, err := updateGetAgent(client)
-
 	if err != nil {
 		return err
 	}
@@ -620,7 +604,6 @@ func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client *api.Client, ar
 		time.Sleep(10 * time.Second)
 
 		err := checkDeploymentStatus(client)
-
 		if err != nil {
 			return err
 		}
@@ -663,7 +646,6 @@ func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client
 			delete(newEnvGroup.Variables, v)
 
 			key, value, err := validateVarValue(v)
-
 			if err != nil {
 				return err
 			}
@@ -679,7 +661,6 @@ func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client
 			delete(newEnvGroup.Variables, v)
 
 			key, value, err := validateVarValue(v)
-
 			if err != nil {
 				return err
 			}
@@ -690,7 +671,6 @@ func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client
 		s.Suffix = fmt.Sprintf(" Updating env group '%s' in namespace '%s'", name, namespace)
 	} else { // legacy usage
 		key, value, err := validateVarValue(args[0])
-
 		if err != nil {
 			return err
 		}
@@ -837,7 +817,6 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 
 	if useCache {
 		err := config.SetDockerConfig(updateAgent.Client)
-
 		if err != nil {
 			return err
 		}
@@ -853,7 +832,6 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 		UseNewConfig: true,
 		NewConfig:    valuesObj,
 	})
-
 	if err != nil {
 		if stream {
 			// another concern: is it safe to ignore the error here?
@@ -1000,7 +978,6 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 			updateAgent.Opts.Namespace,
 			false,
 		)
-
 		if err != nil {
 			return err
 		}
@@ -1019,7 +996,6 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 			updateAgent.Opts.Namespace,
 			false,
 		)
-
 		if err != nil {
 			return err
 		}
@@ -1076,7 +1052,6 @@ func checkDeploymentStatus(client *api.Client) error {
 	}
 
 	err := sharedConf.setSharedConfig()
-
 	if err != nil {
 		return fmt.Errorf("could not retrieve kubernetes credentials: %w", err)
 	}
@@ -1091,7 +1066,6 @@ func checkDeploymentStatus(client *api.Client) error {
 			LabelSelector: fmt.Sprintf("app.kubernetes.io/instance=%s", app),
 		},
 	)
-
 	if err != nil {
 		return fmt.Errorf("could not get deployments for app %s: %w", app, err)
 	}
@@ -1127,7 +1101,6 @@ func checkDeploymentStatus(client *api.Client) error {
 			LabelSelector: fmt.Sprintf("app.kubernetes.io/instance=%s", app),
 		},
 	)
-
 	if err != nil {
 		return fmt.Errorf("error fetching pods for app %s: %w", app, err)
 	}
@@ -1147,7 +1120,6 @@ func checkDeploymentStatus(client *api.Client) error {
 						ref.Name,
 						metav1.GetOptions{},
 					)
-
 					if err != nil {
 						return fmt.Errorf("error fetching new replicaset: %w", err)
 					}
@@ -1185,7 +1157,6 @@ func checkDeploymentStatus(client *api.Client) error {
 			rsName,
 			metav1.GetOptions{},
 		)
-
 		if err != nil {
 			return fmt.Errorf("error fetching new replicaset: %w", err)
 		}

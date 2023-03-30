@@ -25,7 +25,6 @@ func NewInfraRepository(db *gorm.DB, key *[32]byte) repository.InfraRepository {
 // CreateInfra creates a new aws infra
 func (repo *InfraRepository) CreateInfra(infra *models.Infra) (*models.Infra, error) {
 	err := repo.EncryptInfraData(infra, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +63,6 @@ func (repo *InfraRepository) ReadInfra(projectID, infraID uint) (*models.Infra, 
 	}
 
 	err := repo.DecryptInfraData(infra, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +76,6 @@ func (repo *InfraRepository) ListInfrasByProjectID(
 	projectID uint,
 	apiVersion string,
 ) ([]*models.Infra, error) {
-
 	infras := []*models.Infra{}
 
 	query := repo.db.Where("project_id = ?", projectID).Order("updated_at desc")
@@ -135,7 +132,6 @@ func (repo *InfraRepository) UpdateInfra(
 	ai *models.Infra,
 ) (*models.Infra, error) {
 	err := repo.EncryptInfraData(ai, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +157,6 @@ func (repo *InfraRepository) AddOperation(infra *models.Infra, operation *models
 
 	// encrypt the operation data
 	err := repo.EncryptOperationData(operation, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +228,6 @@ func (repo *InfraRepository) UpdateOperation(
 	operation *models.Operation,
 ) (*models.Operation, error) {
 	err := repo.EncryptOperationData(operation, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +253,6 @@ func (repo *InfraRepository) EncryptInfraData(
 ) error {
 	if len(infra.LastApplied) > 0 {
 		cipherData, err := encryption.Encrypt(infra.LastApplied, key)
-
 		if err != nil {
 			return err
 		}
@@ -278,7 +271,6 @@ func (repo *InfraRepository) DecryptInfraData(
 ) error {
 	if len(infra.LastApplied) > 0 {
 		plaintext, err := encryption.Decrypt(infra.LastApplied, key)
-
 		if err != nil {
 			return err
 		}
@@ -297,7 +289,6 @@ func (repo *InfraRepository) EncryptOperationData(
 ) error {
 	if len(operation.LastApplied) > 0 {
 		cipherData, err := encryption.Encrypt(operation.LastApplied, key)
-
 		if err != nil {
 			return err
 		}
@@ -316,7 +307,6 @@ func (repo *InfraRepository) DecryptOperationData(
 ) error {
 	if len(operation.LastApplied) > 0 {
 		plaintext, err := encryption.Decrypt(operation.LastApplied, key)
-
 		if err != nil {
 			return err
 		}

@@ -39,7 +39,6 @@ func (c *GetLogPodValuesHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -47,14 +46,12 @@ func (c *GetLogPodValuesHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	// get agent service
 	agentSvc, err := porter_agent.GetAgentService(agent.Clientset)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	podVals, err := porter_agent.GetPodValues(agent.Clientset, agentSvc, request)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

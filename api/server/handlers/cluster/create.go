@@ -41,7 +41,6 @@ func (c *CreateClusterManualHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	cluster, err := getClusterModelFromManualRequest(c.Repo(), proj, request)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -69,7 +68,6 @@ func getClusterModelFromManualRequest(
 
 		// check that the integration exists
 		_, err := repo.GCPIntegration().ReadGCPIntegration(project.ID, request.GCPIntegrationID)
-
 		if err != nil {
 			return nil, fmt.Errorf("gcp integration not found")
 		}
@@ -78,7 +76,6 @@ func getClusterModelFromManualRequest(
 
 		// check that the integration exists
 		_, err := repo.AWSIntegration().ReadAWSIntegration(project.ID, request.AWSIntegrationID)
-
 		if err != nil {
 			return nil, fmt.Errorf("aws integration not found")
 		}
@@ -95,7 +92,6 @@ func getClusterModelFromManualRequest(
 		// if it matches the base64 regex, decode it
 		if re.MatchString(request.CertificateAuthorityData) {
 			decoded, err := base64.StdEncoding.DecodeString(request.CertificateAuthorityData)
-
 			if err != nil {
 				return nil, err
 			}
@@ -124,7 +120,6 @@ func createClusterFromCandidate(
 ) (*models.Cluster, *models.ClusterCandidate, error) {
 	// we query the repo again to get the decrypted version of the cluster candidate
 	cc, err := repo.Cluster().ReadClusterCandidate(project.ID, candidate.ID)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -143,7 +138,6 @@ func createClusterFromCandidate(
 	}
 
 	cluster, err := cResolver.ResolveCluster(repo)
-
 	if err != nil {
 		return nil, nil, err
 	}

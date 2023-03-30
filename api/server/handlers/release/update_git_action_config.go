@@ -39,14 +39,12 @@ func (c *UpdateGitActionConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	// look up the release in the database; if not found, do not populate Porter fields
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	release, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	actionConfig, err := c.Repo().GitActionConfig().ReadGitActionConfig(release.GitActionConfig.ID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			w.WriteHeader(http.StatusNotFound)

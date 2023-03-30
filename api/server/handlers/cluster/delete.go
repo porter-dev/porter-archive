@@ -66,7 +66,6 @@ func (c *ClusterDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	err := c.Repo().Cluster().DeleteCluster(cluster)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-// 	"net"
+	// 	"net"
 	"net/http"
-// 	"net/url"
+	// 	"net/url"
 	"strconv"
 
 	gorillaws "github.com/gorilla/websocket"
@@ -35,10 +35,12 @@ import (
 	pgorm "gorm.io/gorm"
 )
 
-var InstanceBillingManager billing.BillingManager
-var InstanceEnvConf *envloader.EnvConf
-var InstanceDB *pgorm.DB
-var InstanceCredentialBackend credentials.CredentialStorage
+var (
+	InstanceBillingManager    billing.BillingManager
+	InstanceEnvConf           *envloader.EnvConf
+	InstanceDB                *pgorm.DB
+	InstanceCredentialBackend credentials.CredentialStorage
+)
 
 type EnvConfigLoader struct {
 	version string
@@ -178,7 +180,6 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		}
 
 		secret, err := ioutil.ReadFile(sc.GithubAppSecretPath)
-
 		if err != nil {
 			return nil, fmt.Errorf("could not read github app secret: %s", err)
 		}
@@ -208,24 +209,24 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 				// check if the server url is localhost, and allow all localhost origins
 				//serverParsed, err := url.Parse(sc.ServerURL)
 				//if err != nil {
-					//return false
+				//return false
 				//}
 				//host, _, err := net.SplitHostPort(serverParsed.Host)
 				//if err != nil {
-					//return false
+				//return false
 				//}
 				//if host == "localhost" {
-					//parsedOrigin, err := url.Parse(origin)
-					//if err != nil {
-						//return false
-					//}
-					//originHost, _, err := net.SplitHostPort(parsedOrigin.Host)
-					//if err != nil {
-						//return false
-					//}
-					//if originHost == "localhost" {
-						//return true
-					//}
+				//parsedOrigin, err := url.Parse(origin)
+				//if err != nil {
+				//return false
+				//}
+				//originHost, _, err := net.SplitHostPort(parsedOrigin.Host)
+				//if err != nil {
+				//return false
+				//}
+				//if originHost == "localhost" {
+				//return true
+				//}
 				//}
 				return origin == sc.ServerURL
 			},
@@ -281,7 +282,6 @@ func getProvisionerServiceClient(sc *env.ServerConf) (*client.Client, error) {
 		baseURL := fmt.Sprintf("%s/api/v1", sc.ProvisionerServerURL)
 
 		pClient, err := client.NewClient(baseURL, sc.ProvisionerToken, 0)
-
 		if err != nil {
 			return nil, err
 		}

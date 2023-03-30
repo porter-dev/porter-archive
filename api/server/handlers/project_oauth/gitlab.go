@@ -42,14 +42,12 @@ func (p *ProjectOAuthGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	integrationID, err := strconv.ParseUint(integrationIDStr, 10, 32)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
 	}
 
 	giIntegration, err := p.Repo().GitlabIntegration().ReadGitlabIntegration(proj.ID, uint(integrationID))
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			p.HandleAPIError(w, r, apierrors.NewErrForbidden(

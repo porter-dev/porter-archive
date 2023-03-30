@@ -28,7 +28,6 @@ func (p *ListGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	gitlabInts, err := p.Repo().GitlabIntegration().ListGitlabIntegrationsByProjectID(project.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

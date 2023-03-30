@@ -26,7 +26,6 @@ func TestCreateRelease(t *testing.T) {
 	}
 
 	release, err := tester.repo.Release().CreateRelease(release)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -87,7 +86,6 @@ func TestListReleasesByImageRepoURI(t *testing.T) {
 		}
 
 		release, err := tester.repo.Release().CreateRelease(release)
-
 		if err != nil {
 			t.Fatalf("%v\n", err)
 		}
@@ -98,7 +96,6 @@ func TestListReleasesByImageRepoURI(t *testing.T) {
 	}
 
 	resReleases, err := tester.repo.Release().ListReleasesByImageRepoURI(1, "uri1")
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -131,7 +128,6 @@ func TestDeleteRelease(t *testing.T) {
 	}
 
 	release, err := tester.repo.Release().CreateRelease(release)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

@@ -65,7 +65,7 @@ func initAndLoadConfig(_config *CLIConfig) {
 	porterDir := filepath.Join(home, ".porter")
 
 	if _, err := os.Stat(porterDir); os.IsNotExist(err) {
-		os.Mkdir(porterDir, 0700)
+		os.Mkdir(porterDir, 0o700)
 	} else if err != nil {
 		color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
@@ -89,12 +89,10 @@ func initAndLoadConfig(_config *CLIConfig) {
 	viper.BindEnv("token")
 
 	err := viper.ReadInConfig()
-
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// create blank config file
-			err := ioutil.WriteFile(filepath.Join(home, ".porter", "porter.yaml"), []byte{}, 0644)
-
+			err := ioutil.WriteFile(filepath.Join(home, ".porter", "porter.yaml"), []byte{}, 0o644)
 			if err != nil {
 				color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err)
 				os.Exit(1)
@@ -184,7 +182,6 @@ func (c *CLIConfig) SetDriver(driver string) error {
 	viper.Set("driver", driver)
 	color.New(color.FgGreen).Printf("Set the current driver as %s\n", driver)
 	err := viper.WriteConfig()
-
 	if err != nil {
 		return err
 	}
@@ -206,7 +203,6 @@ func (c *CLIConfig) SetHost(host string) error {
 	viper.Set("token", "")
 
 	err := viper.WriteConfig()
-
 	if err != nil {
 		return err
 	}
@@ -231,7 +227,6 @@ func (c *CLIConfig) SetProject(projectID uint) error {
 	}
 
 	err := viper.WriteConfig()
-
 	if err != nil {
 		return err
 	}
@@ -251,7 +246,6 @@ func (c *CLIConfig) SetCluster(clusterID uint) error {
 	}
 
 	err := viper.WriteConfig()
-
 	if err != nil {
 		return err
 	}
@@ -264,7 +258,6 @@ func (c *CLIConfig) SetCluster(clusterID uint) error {
 func (c *CLIConfig) SetToken(token string) error {
 	viper.Set("token", token)
 	err := viper.WriteConfig()
-
 	if err != nil {
 		return err
 	}
@@ -278,7 +271,6 @@ func (c *CLIConfig) SetRegistry(registryID uint) error {
 	viper.Set("registry", registryID)
 	color.New(color.FgGreen).Printf("Set the current registry as %d\n", registryID)
 	err := viper.WriteConfig()
-
 	if err != nil {
 		return err
 	}
@@ -292,7 +284,6 @@ func (c *CLIConfig) SetHelmRepo(helmRepoID uint) error {
 	viper.Set("helm_repo", helmRepoID)
 	color.New(color.FgGreen).Printf("Set the current Helm repo as %d\n", helmRepoID)
 	err := viper.WriteConfig()
-
 	if err != nil {
 		return err
 	}
@@ -304,7 +295,6 @@ func (c *CLIConfig) SetHelmRepo(helmRepoID uint) error {
 
 func (c *CLIConfig) SetKubeconfig(kubeconfig string) error {
 	path, err := filepath.Abs(kubeconfig)
-
 	if err != nil {
 		return err
 	}

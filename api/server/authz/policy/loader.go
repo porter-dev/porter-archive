@@ -111,7 +111,6 @@ func GetAPIPolicyFromUID(policyRepo repository.PolicyRepository, projectID uint,
 	default:
 		// look up the policy and make sure it exists
 		policyModel, err := policyRepo.ReadPolicy(projectID, uid)
-
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, apierrors.NewErrPassThroughToClient(
@@ -124,7 +123,6 @@ func GetAPIPolicyFromUID(policyRepo repository.PolicyRepository, projectID uint,
 		}
 
 		apiPolicy, err := policyModel.ToAPIPolicyType()
-
 		if err != nil {
 			return nil, apierrors.NewErrInternal(err)
 		}

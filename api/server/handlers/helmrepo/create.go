@@ -42,7 +42,6 @@ func (p *HelmRepoCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	// if a basic integration is specified, verify that it exists in the project
 	if request.BasicIntegrationID != 0 {
 		_, err := p.Repo().BasicIntegration().ReadBasicIntegration(proj.ID, request.BasicIntegrationID)
-
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				p.HandleAPIError(w, r, apierrors.NewErrForbidden(
@@ -66,7 +65,6 @@ func (p *HelmRepoCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// handle write to the database
 	hr, err := p.Repo().HelmRepo().CreateHelmRepo(hr)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -81,7 +81,6 @@ func (a *AuthGetter) GetGCRCredentials(serverURL string, projID uint) (user stri
 		tokenResp, err := a.Client.GetGCRAuthorizationToken(context.Background(), projID, &types.GetRegistryGCRTokenRequest{
 			ServerURL: serverURL,
 		})
-
 		if err != nil {
 			return "", "", err
 		}
@@ -112,7 +111,6 @@ func (a *AuthGetter) GetGARCredentials(serverURL string, projID uint) (user stri
 	}
 
 	parsedURL, err := url.Parse(serverURL)
-
 	if err != nil {
 		return "", "", err
 	}
@@ -128,7 +126,6 @@ func (a *AuthGetter) GetGARCredentials(serverURL string, projID uint) (user stri
 		tokenResp, err := a.Client.GetGARAuthorizationToken(context.Background(), projID, &types.GetRegistryGARTokenRequest{
 			ServerURL: serverURL,
 		})
-
 		if err != nil {
 			return "", "", err
 		}
@@ -160,7 +157,6 @@ func (a *AuthGetter) GetDOCRCredentials(serverURL string, projID uint) (user str
 		tokenResp, err := a.Client.GetDOCRAuthorizationToken(context.Background(), projID, &types.GetRegistryGCRTokenRequest{
 			ServerURL: serverURL,
 		})
-
 		if err != nil {
 			return "", "", err
 		}
@@ -209,7 +205,6 @@ func (a *AuthGetter) GetECRCredentials(serverURL string, projID uint) (user stri
 			Region:    matches[3],
 			AccountID: matches[1],
 		})
-
 		if err != nil {
 			return "", "", err
 		}
@@ -237,7 +232,6 @@ func (a *AuthGetter) GetDockerHubCredentials(serverURL string, projID uint) (use
 	} else {
 		// get a token from the server
 		tokenResp, err := a.Client.GetDockerhubAuthorizationToken(context.Background(), projID)
-
 		if err != nil {
 			return "", "", err
 		}
@@ -265,7 +259,6 @@ func (a *AuthGetter) GetACRCredentials(serverURL string, projID uint) (user stri
 	} else {
 		// get a token from the server
 		tokenResp, err := a.Client.GetACRAuthorizationToken(context.Background(), projID)
-
 		if err != nil {
 			return "", "", err
 		}
@@ -286,7 +279,6 @@ func (a *AuthGetter) GetACRCredentials(serverURL string, projID uint) (user stri
 
 func decodeDockerToken(token string) (string, string, error) {
 	decodedToken, err := base64.StdEncoding.DecodeString(token)
-
 	if err != nil {
 		return "", "", fmt.Errorf("Invalid token: %v", err)
 	}
@@ -338,7 +330,7 @@ func NewFileCredentialsCache() CredentialsCache {
 	path := filepath.Join(home, ".porter")
 
 	if _, err := os.Stat(path); err != nil {
-		os.MkdirAll(path, 0700)
+		os.MkdirAll(path, 0o700)
 	}
 
 	return &FileCredentialCache{path: path, filename: "cache.json"}

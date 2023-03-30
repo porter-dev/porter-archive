@@ -17,7 +17,6 @@ func NewAgentFromEnv() (*Agent, error) {
 		client.FromEnv,
 		client.WithAPIVersionNegotiation(),
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +30,6 @@ func NewAgentFromEnv() (*Agent, error) {
 
 func NewAgentWithAuthGetter(client *api.Client, projID uint) (*Agent, error) {
 	agent, err := NewAgentFromEnv()
-
 	if err != nil {
 		return nil, err
 	}

@@ -41,7 +41,6 @@ func (t *TemplateListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	repoIndex, err := loader.LoadRepoIndexPublic(repoURL)
-
 	if err != nil {
 		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

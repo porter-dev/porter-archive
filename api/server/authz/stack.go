@@ -40,7 +40,6 @@ func (p *StackScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request
 	stackID := reqScopes[types.StackScope].Resource.Name
 
 	stack, err := p.config.Repo.Stack().ReadStackByStringID(proj.ID, stackID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(

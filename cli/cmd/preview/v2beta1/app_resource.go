@@ -68,7 +68,6 @@ func (a *AppResource) getV1Resource(b *Build) (*types.Resource, error) {
 	rawConfig := make(map[string]any)
 
 	err := mapstructure.Decode(config, &rawConfig)
-
 	if err != nil {
 		return nil, err
 	}

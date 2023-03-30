@@ -39,7 +39,6 @@ func (c *GetLogRevisionValuesHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -47,14 +46,12 @@ func (c *GetLogRevisionValuesHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	// get agent service
 	agentSvc, err := porter_agent.GetAgentService(agent.Clientset)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	revisions, err := porter_agent.GetRevisionValues(agent.Clientset, agentSvc, request)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

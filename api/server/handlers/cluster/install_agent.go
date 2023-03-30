@@ -47,14 +47,12 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	k8sAgent, err := c.GetAgent(r, cluster, "porter-agent-system")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	helmAgent, err := c.GetHelmAgent(r, cluster, "porter-agent-system")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -68,7 +66,6 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	chart, err := loader.LoadChartPublic(c.Config().ServerConf.DefaultAddonHelmRepoURL, "porter-agent", "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -84,14 +81,12 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	// add api token to values
 	jwt, err := token.GetTokenForAPI(user.ID, proj.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	encoded, err := jwt.EncodeToken(c.Config().TokenConf)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -159,7 +154,6 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 func checkAndDeleteOlderAgent(k8sAgent *kubernetes.Agent, helmAgent *helm.Agent) error {
 	namespaceList, err := k8sAgent.Clientset.CoreV1().Namespaces().List(context.Background(), v1.ListOptions{})
-
 	if err != nil {
 		return fmt.Errorf("error listing namespaces: %w", err)
 	}

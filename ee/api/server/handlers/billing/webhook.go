@@ -31,7 +31,6 @@ func NewBillingWebhookHandler(
 
 func (c *BillingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	payload, err := ioutil.ReadAll(r.Body)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -50,7 +49,6 @@ func (c *BillingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// parse usage and update project
 	newUsage, features, err := c.Config().BillingManager.ParseProjectUsageFromWebhook(payload)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -85,7 +83,6 @@ func (c *BillingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// update the feature flags
 	project, err := c.Repo().Project().ReadProject(newUsage.ProjectID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

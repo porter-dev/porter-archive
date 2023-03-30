@@ -44,7 +44,6 @@ func (p *StackUpdateStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stack, err := p.Repo().Stack().ReadStackByID(proj.ID, stack.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -54,7 +53,6 @@ func (p *StackUpdateStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stack.Name = req.Name
 
 	newStack, err := p.Repo().Stack().UpdateStack(stack)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

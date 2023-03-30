@@ -33,7 +33,6 @@ func (c *InfraGetStateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	// call apply on the provisioner service
 	resp, err := c.Config().ProvisionerClient.GetState(context.Background(), proj.ID, infra.ID)
-
 	if err != nil {
 		if errors.Is(err, client.ErrDoesNotExist) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))

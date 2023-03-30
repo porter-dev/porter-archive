@@ -35,7 +35,6 @@ func TestCreateClusterCandidate(t *testing.T) {
 	expCC := *cc
 
 	cc, err := tester.repo.Cluster().CreateClusterCandidate(cc)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -89,7 +88,6 @@ func TestCreateClusterCandidateWithResolvers(t *testing.T) {
 	expCC := *cc
 
 	cc, err := tester.repo.Cluster().CreateClusterCandidate(cc)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -140,7 +138,6 @@ func TestListClusterCandidatesByProjectID(t *testing.T) {
 	ccs, err := tester.repo.Cluster().ListClusterCandidatesByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -187,7 +184,6 @@ func TestUpdateClusterCandidateCreatedClusterID(t *testing.T) {
 		tester.initCCs[0].ID,
 		tester.initClusters[0].ID,
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -233,7 +229,6 @@ func TestCreateCluster(t *testing.T) {
 	expCluster := *cluster
 
 	cluster, err := tester.repo.Cluster().CreateCluster(cluster)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -274,7 +269,6 @@ func TestListClustersByProjectID(t *testing.T) {
 	clusters, err := tester.repo.Cluster().ListClustersByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -322,7 +316,6 @@ func TestUpdateCluster(t *testing.T) {
 	cluster, err := tester.repo.Cluster().UpdateCluster(
 		cluster,
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -377,7 +370,6 @@ func TestUpdateClusterToken(t *testing.T) {
 	}
 
 	cluster, err := tester.repo.Cluster().CreateCluster(cluster)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -445,7 +437,6 @@ func TestDeleteCluster(t *testing.T) {
 	defer cleanup(tester, t)
 
 	cluster, err := tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, tester.initClusters[0].Model.ID)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -463,7 +454,6 @@ func TestDeleteCluster(t *testing.T) {
 	}
 
 	clusters, err := tester.repo.Cluster().ListClustersByProjectID(tester.initProjects[0].Model.ID)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

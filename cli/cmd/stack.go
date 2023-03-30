@@ -36,7 +36,6 @@ var stackEnvGroupAddCmd = &cobra.Command{
 	Short: "Add an env group to a stack",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, stackAddEnvGroup)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -49,7 +48,6 @@ var stackEnvGroupRemoveCmd = &cobra.Command{
 	Short: "Remove an existing env group from a stack",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, stackRemoveEnvGroup)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -114,7 +112,6 @@ func stackAddEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 	}
 
 	listStacks, err := client.ListStacks(context.Background(), cliConf.Project, cliConf.Cluster, namespace)
-
 	if err != nil {
 		return err
 	}
@@ -138,7 +135,6 @@ func stackAddEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 
 	for _, v := range normalEnvGroupVars {
 		key, val, err := validateVarValue(v)
-
 		if err != nil {
 			return err
 		}
@@ -148,7 +144,6 @@ func stackAddEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 
 	for _, v := range secretEnvGroupVars {
 		key, val, err := validateVarValue(v)
-
 		if err != nil {
 			return err
 		}
@@ -185,7 +180,6 @@ func stackRemoveEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Clie
 	}
 
 	listStacks, err := client.ListStacks(context.Background(), cliConf.Project, cliConf.Cluster, namespace)
-
 	if err != nil {
 		return err
 	}

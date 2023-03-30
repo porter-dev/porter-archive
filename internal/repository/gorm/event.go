@@ -104,7 +104,6 @@ func (repo *KubeEventRepository) CreateEvent(
 			)
 		  )
 		`, event.ProjectID, event.ClusterID, event.ProjectID, event.ClusterID).Error
-
 		if err != nil {
 			return nil, err
 		}
@@ -255,7 +254,6 @@ func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEven
 				SELECT id FROM kube_sub_events k2 WHERE k2.kube_event_id = ? ORDER BY k2.updated_at desc, k2.id desc LIMIT 19
 			  )
 			`, event.ID, event.ID).Error
-
 		if err != nil {
 			return err
 		}

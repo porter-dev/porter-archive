@@ -412,7 +412,7 @@ func getClusterRoutes(
 		createDeploymentEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{
 				Verb:   types.APIVerbCreate,
-				Method: types.HTTPVerbPatch,
+				Method: types.HTTPVerbPost,
 				Path: &types.Path{
 					Parent:       basePath,
 					RelativePath: relPath + "/deployments",
@@ -593,7 +593,7 @@ func getClusterRoutes(
 		// environment.NewFinalizeDeploymentWithErrorsHandler
 		finalizeDeploymentWithErrorsEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{
-				Verb:   types.APIVerbUpdate,
+				Verb:   types.APIVerbCreate,
 				Method: types.HTTPVerbPost,
 				Path: &types.Path{
 					Parent:       basePath,

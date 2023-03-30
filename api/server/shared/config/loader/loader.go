@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net"
+// 	"net"
 	"net/http"
-	"net/url"
+// 	"net/url"
 	"strconv"
 
 	gorillaws "github.com/gorilla/websocket"

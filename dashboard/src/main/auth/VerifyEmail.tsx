@@ -60,7 +60,7 @@ const Register: React.FC<Props> = ({
           </Jumbotron>
           <Spacer y={2} />
           <CheckRow>
-            <i className="material-icons">done</i> Generous free tier for small teams
+            <i className="material-icons">done</i> Production-ready environment in minutes
           </CheckRow>
           <Spacer y={0.5} />
           <CheckRow>

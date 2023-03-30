@@ -408,6 +408,36 @@ func getClusterRoutes(
 			Router:   r,
 		})
 
+		// POST /api/projects/{project_id}/clusters/{cluster_id}/deployments -> environment.NewCreateDeploymentByClusterHandler
+		createDeploymentEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbCreate,
+				Method: types.HTTPVerbPatch,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/deployments",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+					types.PreviewEnvironmentScope,
+				},
+			},
+		)
+
+		createDeploymentHandler := environment.NewCreateDeploymentByClusterHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: createDeploymentEndpoint,
+			Handler:  createDeploymentHandler,
+			Router:   r,
+		})
+
 		// GET /api/projects/{project_id}/clusters/{cluster_id}/deployments -> environment.NewListDeploymentsByClusterHandler
 		listDeploymentsEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{
@@ -438,6 +468,66 @@ func getClusterRoutes(
 			Router:   r,
 		})
 
+		// PATCH /api/projects/{project_id}/clusters/{cluster_id}/deployments -> environment.NewUpdateDeploymentByClusterHandler
+		updateDeploymentEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbUpdate,
+				Method: types.HTTPVerbPatch,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/deployments",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+					types.PreviewEnvironmentScope,
+				},
+			},
+		)
+
+		updateDeploymentHandler := environment.NewUpdateDeploymentByClusterHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: updateDeploymentEndpoint,
+			Handler:  updateDeploymentHandler,
+			Router:   r,
+		})
+
+		// PATCH /api/projects/{project_id}/clusters/{cluster_id}/deployments/status -> environment.NewUpdateDeploymentStatusByClusterHandler
+		updateDeploymentStatusEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbUpdate,
+				Method: types.HTTPVerbPatch,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/deployments/status",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+					types.PreviewEnvironmentScope,
+				},
+			},
+		)
+
+		updateDeploymentStatusHandler := environment.NewUpdateDeploymentStatusByClusterHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: updateDeploymentStatusEndpoint,
+			Handler:  updateDeploymentStatusHandler,
+			Router:   r,
+		})
+
 		// GET /api/projects/{project_id}/clusters/{cluster_id}/environments/{environment_id}/deployment -> environment.NewGetDeploymentByClusterHandler
 		getDeploymentEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{
@@ -465,6 +555,68 @@ func getClusterRoutes(
 		routes = append(routes, &router.Route{
 			Endpoint: getDeploymentEndpoint,
 			Handler:  getDeploymentHandler,
+			Router:   r,
+		})
+
+		// POST /api/projects/{project_id}/clusters/{cluster_id}/deployments/finalize ->
+		// environment.NewFinalizeDeploymentByClusterHandler
+		finalizeDeploymentEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbCreate,
+				Method: types.HTTPVerbPost,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/deployments/finalize",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+					types.PreviewEnvironmentScope,
+				},
+			},
+		)
+
+		finalizeDeploymentHandler := environment.NewFinalizeDeploymentByClusterHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: finalizeDeploymentEndpoint,
+			Handler:  finalizeDeploymentHandler,
+			Router:   r,
+		})
+
+		// POST /api/projects/{project_id}/clusters/{cluster_id}/deployments/finalize_errors ->
+		// environment.NewFinalizeDeploymentWithErrorsHandler
+		finalizeDeploymentWithErrorsEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbUpdate,
+				Method: types.HTTPVerbPost,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "deployments/finalize_errors",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+					types.PreviewEnvironmentScope,
+				},
+			},
+		)
+
+		finalizeDeploymentWithErrorsHandler := environment.NewFinalizeDeploymentWithErrorsByClusterHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: finalizeDeploymentWithErrorsEndpoint,
+			Handler:  finalizeDeploymentWithErrorsHandler,
 			Router:   r,
 		})
 

@@ -1,6 +1,7 @@
 package release
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -48,9 +49,10 @@ func NewCreateReleaseHandler(
 }
 
 func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	namespace := r.Context().Value(types.NamespaceScope).(string)
+	ctx := r.Context()
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	namespace := ctx.Value(types.NamespaceScope).(string)
 	operationID := oauth.CreateRandomState()
 
 	c.Config().AnalyticsClient.Track(analytics.ApplicationLaunchStartTrack(
@@ -190,6 +192,7 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	if request.GitActionConfig != nil {
 		_, _, err := createGitAction(
+			ctx,
 			c.Config(),
 			user.ID,
 			cluster.ProjectID,
@@ -286,6 +289,7 @@ func CreateAddonReleaseFromHelmRelease(
 }
 
 func createGitAction(
+	ctx context.Context,
 	config *config.Config,
 	userID, projectID, clusterID uint,
 	request *types.CreateGitActionConfigRequest,
@@ -307,7 +311,7 @@ func createGitAction(
 		nameSpl := strings.Split(request.ImageRepoURI, "/")
 		repoName := nameSpl[len(nameSpl)-1]
 
-		err = regAPI.CreateRepository(config.Repo, repoName)
+		err = regAPI.CreateRepository(ctx, config, repoName)
 
 		if err != nil {
 			return nil, nil, err

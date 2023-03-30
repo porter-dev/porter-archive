@@ -15,6 +15,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/bufbuild/connect-go"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
@@ -64,12 +67,20 @@ func GetECRRegistryURL(awsIntRepo repository.AWSIntegrationRepository, projectID
 
 // ListRepositories lists the repositories for a registry
 func (r *Registry) ListRepositories(
+	ctx context.Context,
 	repo repository.Repository,
-	doAuth *oauth2.Config, // only required if using DOCR
+	conf *config.Config,
 ) ([]*ptypes.RegistryRepository, error) {
 	// switch on the auth mechanism to get a token
 	if r.AWSIntegrationID != 0 {
-		return r.listECRRepositories(repo)
+		aws, err := repo.AWSIntegration().ReadAWSIntegration(
+			r.ProjectID,
+			r.AWSIntegrationID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		return r.listECRRepositories(aws)
 	}
 
 	if r.GCPIntegrationID != 0 {
@@ -81,7 +92,7 @@ func (r *Registry) ListRepositories(
 	}
 
 	if r.DOIntegrationID != 0 {
-		return r.listDOCRRepositories(repo, doAuth)
+		return r.listDOCRRepositories(repo, conf.DOConf)
 	}
 
 	if r.AzureIntegrationID != 0 {
@@ -90,6 +101,33 @@ func (r *Registry) ListRepositories(
 
 	if r.BasicIntegrationID != 0 {
 		return r.listPrivateRegistryRepositories(repo)
+	}
+
+	project, err := conf.Repo.Project().ReadProject(r.ProjectID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting project for repository: %w", err)
+	}
+
+	if project.CapiProvisionerEnabled {
+		uri := strings.TrimPrefix(r.URL, "https://")
+		splits := strings.Split(uri, ".")
+		accountID := splits[0]
+		region := splits[3]
+		req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{
+			ProjectId:    int64(r.ProjectID),
+			AwsAccountId: accountID,
+		})
+		creds, err := conf.ClusterControlPlaneClient.AssumeRoleCredentials(ctx, req)
+		if err != nil {
+			return nil, fmt.Errorf("error getting capi credentials for repository: %w", err)
+		}
+		aws := &ints.AWSIntegration{
+			AWSAccessKeyID:     []byte(creds.Msg.AwsAccessId),
+			AWSSecretAccessKey: []byte(creds.Msg.AwsSecretKey),
+			AWSSessionToken:    []byte(creds.Msg.AwsSessionToken),
+			AWSRegion:          region,
+		}
+		return r.listECRRepositories(aws)
 	}
 
 	return nil, fmt.Errorf("error listing repositories")
@@ -364,15 +402,7 @@ func (r *Registry) listGARRepositories(
 	return res, nil
 }
 
-func (r *Registry) listECRRepositories(repo repository.Repository) ([]*ptypes.RegistryRepository, error) {
-	aws, err := repo.AWSIntegration().ReadAWSIntegration(
-		r.ProjectID,
-		r.AWSIntegrationID,
-	)
-	if err != nil {
-		return nil, err
-	}
-
+func (r *Registry) listECRRepositories(aws *ints.AWSIntegration) ([]*ptypes.RegistryRepository, error) {
 	sess, err := aws.GetSession()
 	if err != nil {
 		return nil, err
@@ -720,14 +750,49 @@ func (r *Registry) setTokenCacheFunc(
 // CreateRepository creates a repository for a registry, if needed
 // (currently only required for ECR)
 func (r *Registry) CreateRepository(
-	repo repository.Repository,
+	ctx context.Context,
+	conf *config.Config,
 	name string,
 ) error {
 	// if aws, create repository
 	if r.AWSIntegrationID != 0 {
-		return r.createECRRepository(repo, name)
+		aws, err := conf.Repo.AWSIntegration().ReadAWSIntegration(
+			r.ProjectID,
+			r.AWSIntegrationID,
+		)
+		if err != nil {
+			return err
+		}
+		return r.createECRRepository(aws, name)
 	} else if r.GCPIntegrationID != 0 && strings.Contains(r.URL, "pkg.dev") {
-		return r.createGARRepository(repo, name)
+		return r.createGARRepository(conf.Repo, name)
+	}
+
+	project, err := conf.Repo.Project().ReadProject(r.ProjectID)
+	if err != nil {
+		return fmt.Errorf("error getting project for repository: %w", err)
+	}
+
+	if project.CapiProvisionerEnabled {
+		uri := strings.TrimPrefix(r.URL, "https://")
+		splits := strings.Split(uri, ".")
+		accountID := splits[0]
+		region := splits[3]
+		req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{
+			ProjectId:    int64(r.ProjectID),
+			AwsAccountId: accountID,
+		})
+		creds, err := conf.ClusterControlPlaneClient.AssumeRoleCredentials(ctx, req)
+		if err != nil {
+			return fmt.Errorf("error getting capi credentials for repository: %w", err)
+		}
+		aws := &ints.AWSIntegration{
+			AWSAccessKeyID:     []byte(creds.Msg.AwsAccessId),
+			AWSSecretAccessKey: []byte(creds.Msg.AwsSecretKey),
+			AWSSessionToken:    []byte(creds.Msg.AwsSessionToken),
+			AWSRegion:          region,
+		}
+		return r.createECRRepository(aws, name)
 	}
 
 	// otherwise, no-op
@@ -735,17 +800,9 @@ func (r *Registry) CreateRepository(
 }
 
 func (r *Registry) createECRRepository(
-	repo repository.Repository,
+	aws *ints.AWSIntegration,
 	name string,
 ) error {
-	aws, err := repo.AWSIntegration().ReadAWSIntegration(
-		r.ProjectID,
-		r.AWSIntegrationID,
-	)
-	if err != nil {
-		return err
-	}
-
 	sess, err := aws.GetSession()
 	if err != nil {
 		return err

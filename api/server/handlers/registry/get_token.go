@@ -2,11 +2,14 @@ package registry
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/bufbuild/connect-go"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -34,11 +37,39 @@ func NewRegistryGetECRTokenHandler(
 }
 
 func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	ctx := r.Context()
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	request := &types.GetRegistryECRTokenRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		return
+	}
+
+	if proj.CapiProvisionerEnabled {
+		ecrRequest := porterv1.ECRTokenForRegistryRequest{
+			ProjectId:    int64(proj.ID),
+			Region:       request.Region,
+			AwsAccountId: request.AccountID,
+		}
+		ecrResponse, err := c.Config().ClusterControlPlaneClient.ECRTokenForRegistry(ctx, connect.NewRequest(&ecrRequest))
+		if err != nil {
+			e := fmt.Errorf("error getting ecr token for capi cluster: %v", err)
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			return
+		}
+		if ecrResponse.Msg == nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("nil message received for ecr token")))
+			return
+		}
+		expiry := ecrResponse.Msg.Expiry.AsTime()
+
+		resp := &types.GetRegistryTokenResponse{
+			Token:     ecrResponse.Msg.Token,
+			ExpiresAt: &expiry,
+		}
+
+		c.WriteResult(w, r, resp)
 		return
 	}
 

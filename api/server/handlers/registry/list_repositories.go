@@ -26,13 +26,14 @@ func NewRegistryListRepositoriesHandler(
 }
 
 func (c *RegistryListRepositoriesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	reg, _ := r.Context().Value(types.RegistryScope).(*models.Registry)
+	ctx := r.Context()
+	reg, _ := ctx.Value(types.RegistryScope).(*models.Registry)
 
 	// cast to a registry from registry package
 	_reg := registry.Registry(*reg)
 	regAPI := &_reg
 
-	repos, err := regAPI.ListRepositories(c.Repo(), c.Config().DOConf)
+	repos, err := regAPI.ListRepositories(ctx, c.Repo(), c.Config())
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -39,7 +39,6 @@ func (p *RegistryUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	reg.Name = request.Name
 
 	reg, err := p.Repo().Registry().UpdateRegistry(reg)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

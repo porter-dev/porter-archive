@@ -76,13 +76,11 @@ func (g *GCPIntegration) GetBearerToken(
 		g.GCPKeyData,
 		scopes...,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	tok, err := creds.TokenSource.Token()
-
 	if err != nil {
 		return nil, err
 	}

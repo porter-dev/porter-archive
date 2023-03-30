@@ -27,7 +27,6 @@ func (repo *PWResetTokenRepository) CreatePWResetToken(a *models.PWResetToken) (
 
 // ReadPWResetToken gets an invite specified by a unique token
 func (repo *PWResetTokenRepository) ReadPWResetToken(id uint) (*models.PWResetToken, error) {
-
 	pwReset := &models.PWResetToken{}
 
 	if err := repo.db.Where("id = ?", id).First(&pwReset).Error; err != nil {

@@ -127,7 +127,6 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 
 	for i := 0; i < int(retryCount); i++ {
 		strData, err := json.Marshal(data)
-
 		if err != nil {
 			return nil
 		}
@@ -137,7 +136,6 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 			fmt.Sprintf("%s%s", c.BaseURL, relPath),
 			strings.NewReader(string(strData)),
 		)
-
 		if err != nil {
 			return err
 		}
@@ -182,7 +180,6 @@ func (c *Client) patchRequest(relPath string, data interface{}, response interfa
 
 	for i := 0; i < int(retryCount); i++ {
 		strData, err := json.Marshal(data)
-
 		if err != nil {
 			return nil
 		}
@@ -192,7 +189,6 @@ func (c *Client) patchRequest(relPath string, data interface{}, response interfa
 			fmt.Sprintf("%s%s", c.BaseURL, relPath),
 			strings.NewReader(string(strData)),
 		)
-
 		if err != nil {
 			return err
 		}
@@ -221,7 +217,6 @@ func (c *Client) patchRequest(relPath string, data interface{}, response interfa
 
 func (c *Client) deleteRequest(relPath string, data interface{}, response interface{}) error {
 	strData, err := json.Marshal(data)
-
 	if err != nil {
 		return nil
 	}
@@ -231,7 +226,6 @@ func (c *Client) deleteRequest(relPath string, data interface{}, response interf
 		fmt.Sprintf("%s%s", c.BaseURL, relPath),
 		strings.NewReader(string(strData)),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -263,7 +257,6 @@ func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (
 	}
 
 	res, err := c.HTTPClient.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -302,18 +295,16 @@ func (c *Client) saveCookie(cookie *http.Cookie) error {
 	data, err := json.Marshal(&CookieStorage{
 		Cookie: cookie,
 	})
-
 	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(c.CookieFilePath, data, 0644)
+	return ioutil.WriteFile(c.CookieFilePath, data, 0o644)
 }
 
 // retrieves single cookie from file
 func (c *Client) getCookie() (*http.Cookie, error) {
 	data, err := ioutil.ReadFile(c.CookieFilePath)
-
 	if err != nil {
 		return nil, err
 	}
@@ -353,7 +344,6 @@ func GetProjectIDFromToken(token string) (uint, bool, error) {
 	}
 
 	decodedBytes, err := base64.RawStdEncoding.DecodeString(encoded)
-
 	if err != nil {
 		return 0, false, fmt.Errorf("could not decode jwt token from base64: %v", err)
 	}

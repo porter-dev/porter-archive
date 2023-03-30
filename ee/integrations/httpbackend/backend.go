@@ -38,7 +38,6 @@ func (c *Client) GetDesiredState(name string) (*DesiredTFState, error) {
 	resp := &GetDesiredStateResp{}
 
 	err := c.getRequest(fmt.Sprintf("%s/%s/state", c.backendURL, name), resp)
-
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +53,6 @@ func (c *Client) getRequest(path string, dst interface{}) error {
 		path,
 		nil,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -63,7 +61,6 @@ func (c *Client) getRequest(path string, dst interface{}) error {
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 
 	res, err := c.httpClient.Do(req)
-
 	if err != nil {
 		return err
 	}
@@ -72,7 +69,6 @@ func (c *Client) getRequest(path string, dst interface{}) error {
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		resBytes, err := ioutil.ReadAll(res.Body)
-
 		if err != nil {
 			return fmt.Errorf("request failed with status code %d, but could not read body (%s)\n", res.StatusCode, err.Error())
 		}

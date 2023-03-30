@@ -85,7 +85,6 @@ func (a *AWSIntegration) GetSession() (*session.Session, error) {
 // attaches it to the AWS integration
 func (a *AWSIntegration) PopulateAWSArn() error {
 	sess, err := a.GetSession()
-
 	if err != nil {
 		return err
 	}
@@ -93,7 +92,6 @@ func (a *AWSIntegration) PopulateAWSArn() error {
 	svc := sts.New(sess)
 
 	result, err := svc.GetCallerIdentity(&sts.GetCallerIdentityInput{})
-
 	if err != nil {
 		return err
 	}
@@ -120,13 +118,11 @@ func (a *AWSIntegration) GetBearerToken(
 	}
 
 	generator, err := token.NewGenerator(false, false)
-
 	if err != nil {
 		return "", err
 	}
 
 	sess, err := a.GetSession()
-
 	if err != nil {
 		return "", err
 	}
@@ -148,7 +144,6 @@ func (a *AWSIntegration) GetBearerToken(
 		Session:       sess,
 		ClusterID:     validClusterId,
 	})
-
 	if err != nil {
 		return "", err
 	}

@@ -17,7 +17,6 @@ func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, er
 	services, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app=prometheus,component=server,heritage=Helm",
 	})
-
 	if err != nil {
 		return nil, false, err
 	}
@@ -34,7 +33,6 @@ func getKubeStateMetricsService(clientset kubernetes.Interface) (*v1.Service, bo
 	services, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/name=kube-state-metrics",
 	})
-
 	if err != nil {
 		return nil, false, err
 	}
@@ -122,7 +120,6 @@ func QueryPrometheus(
 	}
 
 	selectionRegex, err := getSelectionRegex(opts.Kind, opts.Name)
-
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +206,6 @@ func QueryPrometheus(
 	)
 
 	rawQuery, err := resp.DoRaw(context.TODO())
-
 	if err != nil {
 		// in this case, it's very likely that prometheus doesn't contain any data for the given labels
 		if strings.Contains(err.Error(), "rejected our request for an unknown reason") {
@@ -253,7 +249,6 @@ func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, er
 	rawQueryObj := &promRawQuery{}
 
 	err := json.Unmarshal(rawQuery, rawQueryObj)
-
 	if err != nil {
 		return nil, err
 	}
@@ -532,7 +527,6 @@ func getKubeHPAMetricName(
 	)
 
 	rawQuery, err := resp.DoRaw(context.TODO())
-
 	if err != nil {
 		return fmt.Sprintf("kube_hpa_%s", suffix), "hpa"
 	}
@@ -568,7 +562,6 @@ func getKubeCPUMetricName(
 	)
 
 	rawQuery, err := resp.DoRaw(context.TODO())
-
 	if err != nil {
 		return "kube_pod_container_resource_requests_cpu_cores"
 	}
@@ -604,7 +597,6 @@ func getKubeMemoryMetricName(
 	)
 
 	rawQuery, err := resp.DoRaw(context.TODO())
-
 	if err != nil {
 		return "kube_pod_container_resource_requests_memory_bytes"
 	}

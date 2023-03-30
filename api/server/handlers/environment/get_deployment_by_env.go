@@ -46,7 +46,6 @@ func (c *GetDeploymentByEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *
 	}
 
 	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, envID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(errEnvironmentNotFound))

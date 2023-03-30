@@ -33,13 +33,11 @@ func testDriver(t *testing.T, storage *storage.Storage) {
 	}
 
 	err := storage.Create(rel)
-
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	gotRel, err := storage.Get("porter", 1)
-
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -61,7 +61,6 @@ func SetupEnv(opts *EnvOpts) error {
 		opts.GitRepoOwner,
 		opts.GitRepoName,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -69,7 +68,6 @@ func SetupEnv(opts *EnvOpts) error {
 	defaultBranch := repo.GetDefaultBranch()
 
 	applyWorkflowYAML, err := getPreviewApplyActionYAML(opts)
-
 	if err != nil {
 		return err
 	}
@@ -77,7 +75,6 @@ func SetupEnv(opts *EnvOpts) error {
 	githubBranch, _, err := opts.Client.Repositories.GetBranch(
 		context.Background(), opts.GitRepoOwner, opts.GitRepoName, defaultBranch, true,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -119,7 +116,6 @@ func SetupEnv(opts *EnvOpts) error {
 				Head:  github.String("porter-preview"),
 			},
 		)
-
 		if err != nil {
 			return err
 		}
@@ -148,7 +144,6 @@ func DeleteEnv(opts *EnvOpts) error {
 		opts.GitRepoOwner,
 		opts.GitRepoName,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -180,7 +175,6 @@ func DeleteEnv(opts *EnvOpts) error {
 	githubBranch, _, err := opts.Client.Repositories.GetBranch(
 		context.Background(), opts.GitRepoOwner, opts.GitRepoName, defaultBranch, true,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -292,7 +286,6 @@ func createNewBranch(
 		_, err := client.Git.DeleteRef(
 			context.Background(), gitRepoOwner, gitRepoName, headBranchRef,
 		)
-
 		if err != nil {
 			return err
 		}
@@ -303,7 +296,6 @@ func createNewBranch(
 	base, _, err := client.Repositories.GetBranch(
 		context.Background(), gitRepoOwner, gitRepoName, baseBranch, true,
 	)
-
 	if err != nil {
 		return err
 	}

@@ -21,7 +21,6 @@ func NewReadyzHandler(
 
 func (c *ReadyzHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	db, err := c.Config.DB.DB()
-
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return

@@ -9,7 +9,6 @@ import (
 // query string
 func NewQuery(key, query string, defaultVal interface{}) (*templater.TemplateReaderQuery, error) {
 	jquery, err := gojq.Parse(query)
-
 	if err != nil {
 		return nil, err
 	}

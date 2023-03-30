@@ -40,7 +40,6 @@ func (p *HelmRepoDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	helmRepo, err := p.Repo().HelmRepo().ReadHelmRepo(proj.ID, helmRepoID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			p.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such helm repo")))

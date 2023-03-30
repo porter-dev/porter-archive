@@ -45,6 +45,7 @@ module.exports = () => {
     htmlPluginOpts = {
       template: path.resolve(__dirname, "src", "hosted.index.html"),
       intercomAppId: `${env.INTERCOM_APP_ID}`,
+      hotjarId: `${env.HOTJAR_ID}`,
       intercomSrc: `${process.env.INTERCOM_SRC}`,
       segmentWriteKey: `${process.env.SEGMENT_WRITE_KEY}`,
       segmentKey: `${process.env.SEGMENT_PUBLIC_KEY}`,

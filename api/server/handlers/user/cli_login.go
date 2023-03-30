@@ -48,7 +48,6 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// generate the token
 	jwt, err := token.GetTokenForUser(user.ID)
-
 	if err != nil {
 		err = fmt.Errorf("CLI token creation failed: %s", err.Error())
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -56,7 +55,6 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	encoded, err := jwt.EncodeToken(c.Config().TokenConf)
-
 	if err != nil {
 		err = fmt.Errorf("CLI token encoding failed: %s", err.Error())
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -65,7 +63,6 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// generate 64 characters long authorization code
 	code, err := encryption.GenerateRandomBytes(32)
-
 	if err != nil {
 		err = fmt.Errorf("CLI random code generation failed: %s", err.Error())
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -47,7 +47,6 @@ func (t *ChartGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		TemplateName:    name,
 		TemplateVersion: version,
 	})
-
 	if err != nil {
 		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -66,7 +65,6 @@ func (t *ChartGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, file := range chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
 			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data, "declared", "")
-
 			if err != nil {
 				break
 			}

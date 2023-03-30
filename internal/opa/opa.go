@@ -100,7 +100,7 @@ func (runner *KubernetesOPARunner) GetRecommendations(categories []string) ([]*O
 	collectionNames := categories
 
 	if len(categories) == 0 {
-		for catName, _ := range runner.Policies {
+		for catName := range runner.Policies {
 			collectionNames = append(collectionNames, catName)
 		}
 	}
@@ -164,7 +164,6 @@ func (runner *KubernetesOPARunner) runHelmReleaseQueries(name string, collection
 	res := make([]*OPARecommenderQueryResult, 0)
 
 	helmAgent, err := helm.GetAgentFromK8sAgent("secret", collection.Match.Namespace, logger.New(false, os.Stdout), runner.k8sAgent)
-
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +215,6 @@ func (runner *KubernetesOPARunner) runHelmReleaseQueries(name string, collection
 				"failed",
 			},
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -241,7 +239,6 @@ func (runner *KubernetesOPARunner) runHelmReleaseQueries(name string, collection
 					"namespace": helmRelease.Namespace,
 				}),
 			)
-
 			if err != nil {
 				return nil, err
 			}
@@ -288,14 +285,12 @@ func (runner *KubernetesOPARunner) runPodQueries(name string, collection Kuberne
 	lsel := strings.Join(lselArr, ",")
 
 	pods, err := runner.k8sAgent.GetPodsByLabel(lsel, collection.Match.Namespace)
-
 	if err != nil {
 		return nil, err
 	}
 
 	for _, pod := range pods.Items {
 		unstructuredPod, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&pod)
-
 		if err != nil {
 			return nil, err
 		}
@@ -305,7 +300,6 @@ func (runner *KubernetesOPARunner) runPodQueries(name string, collection Kuberne
 				context.Background(),
 				rego.EvalInput(unstructuredPod),
 			)
-
 			if err != nil {
 				return nil, err
 			}
@@ -346,14 +340,12 @@ func (runner *KubernetesOPARunner) runDaemonsetQueries(name string, collection K
 	daemonsets, err := runner.k8sAgent.Clientset.AppsV1().DaemonSets(collection.Match.Namespace).List(context.Background(), v1.ListOptions{
 		LabelSelector: lsel,
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
 	for _, ds := range daemonsets.Items {
 		unstructuredDS, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&ds)
-
 		if err != nil {
 			return nil, err
 		}
@@ -363,7 +355,6 @@ func (runner *KubernetesOPARunner) runDaemonsetQueries(name string, collection K
 				context.Background(),
 				rego.EvalInput(unstructuredDS),
 			)
-
 			if err != nil {
 				return nil, err
 			}
@@ -405,7 +396,6 @@ func (runner *KubernetesOPARunner) runCRDListQueries(name string, collection Kub
 	}
 
 	crdList, err := runner.dynamicClient.Resource(objRes).Namespace(collection.Match.Namespace).List(context.Background(), v1.ListOptions{})
-
 	if err != nil {
 		return nil, err
 	}
@@ -416,7 +406,6 @@ func (runner *KubernetesOPARunner) runCRDListQueries(name string, collection Kub
 				context.Background(),
 				rego.EvalInput(crd.Object),
 			)
-
 			if err != nil {
 				return nil, err
 			}

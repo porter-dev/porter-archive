@@ -41,14 +41,12 @@ func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// verify the credentials
 	err := checkInfraCredentials(c.Config(), proj, infra, req.InfraCredentials)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
 	}
 
 	lastOperation, err := c.Repo().Infra().GetLatestOperation(infra)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -78,7 +76,6 @@ func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp, err := c.Config().ProvisionerClient.Delete(context.Background(), proj.ID, infra.ID, &ptypes.DeleteBaseRequest{
 		OperationKind: "delete",
 	})
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

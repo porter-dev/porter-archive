@@ -39,7 +39,6 @@ func (c *ListIncidentEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -47,14 +46,12 @@ func (c *ListIncidentEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	// get agent service
 	agentSvc, err := porter_agent.GetAgentService(agent.Clientset)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	events, err := porter_agent.ListIncidentEvents(agent.Clientset, agentSvc, request)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

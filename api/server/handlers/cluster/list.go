@@ -30,7 +30,6 @@ func (p *ClusterListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// read all clusters for this project
 	clusters, err := p.Repo().Cluster().ListClustersByProjectID(proj.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

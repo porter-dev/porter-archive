@@ -21,7 +21,6 @@ func redirect(
 		fmt.Fprint(w, successScreen)
 
 		queryParams, err := url.ParseQuery(r.URL.RawQuery)
-
 		if err != nil {
 			return
 		}
@@ -36,7 +35,6 @@ func Login(
 	host string,
 ) (string, error) {
 	listener, err := net.Listen("tcp", ":0")
-
 	if err != nil {
 		panic(err)
 	}
@@ -91,7 +89,6 @@ func ExchangeToken(host, code string) (string, error) {
 		fmt.Sprintf("%s/api/cli/login/exchange", host),
 		strings.NewReader(fmt.Sprintf(`{"authorization_code": "%s"}`, code)),
 	)
-
 	if err != nil {
 		return "", err
 	}
@@ -110,7 +107,6 @@ func ExchangeToken(host, code string) (string, error) {
 	}
 
 	res, err := client.Do(req)
-
 	if err != nil {
 		return "", err
 	}

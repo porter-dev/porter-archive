@@ -114,7 +114,6 @@ func GlobalStreamListener(
 				Block:    0,
 			},
 		).Result()
-
 		if err != nil {
 			errorChan <- err
 			return
@@ -139,7 +138,6 @@ func GlobalStreamListener(
 
 			// parse the id to identify the infra
 			name, err := models.ParseWorkspaceID(workspaceID)
-
 			if err != nil {
 				config.Logger.Debug().Msg(fmt.Sprintf("could not parse workspace ID: %s %s", workspaceID, err.Error()))
 				continue
@@ -148,14 +146,12 @@ func GlobalStreamListener(
 			config.Logger.Debug().Msg(fmt.Sprintf("reading infra %d and operation %s for project %d", name.InfraID, name.OperationUID, name.ProjectID))
 
 			infra, err := repo.Infra().ReadInfra(name.ProjectID, name.InfraID)
-
 			if err != nil {
 				config.Logger.Debug().Msg(fmt.Sprintf("could not read infra %d in project %d: %s", name.InfraID, name.ProjectID, err.Error()))
 				continue
 			}
 
 			operation, err := repo.Infra().ReadOperation(name.InfraID, name.OperationUID)
-
 			if err != nil {
 				config.Logger.Debug().Msg(fmt.Sprintf("could not read operation %s, infra %d in project %d: %s", name.OperationUID, name.InfraID, name.ProjectID, err.Error()))
 				continue
@@ -173,7 +169,6 @@ func GlobalStreamListener(
 			switch fmt.Sprintf("%v", statusVal) {
 			case "created", "error", "destroyed":
 				err := cleanupOperation(config, client, infra, operation, workspaceID)
-
 				if err != nil {
 					config.Alerter.SendAlert(context.Background(), err, map[string]interface{}{
 						"workspace_id": workspaceID,
@@ -189,7 +184,6 @@ func cleanupOperation(config *config.Config, client *redis.Client, infra *models
 	l.Debug().Msg(fmt.Sprintf("pushing state for %s", workspaceID))
 
 	err := pushNewStateToStorage(config, client, infra, operation, workspaceID)
-
 	if err != nil {
 		return err
 	}
@@ -233,7 +227,6 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 		return err
 	} else {
 		err := json.Unmarshal(currStateBytes, currState)
-
 		if err != nil {
 			return err
 		}
@@ -249,7 +242,6 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 
 	// get the length of the stream being read
 	length, err := client.XLen(context.Background(), streamName).Result()
-
 	if err != nil {
 		return err
 	}
@@ -263,7 +255,6 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 				Count:   50,
 			},
 		).Result()
-
 		if err != nil {
 			return err
 		}
@@ -290,7 +281,6 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 			}
 
 			err := json.Unmarshal([]byte(dataString), stateData)
-
 			if err != nil {
 				continue
 			}
@@ -322,7 +312,6 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 
 	// push the new state to S3
 	newStateBytes, err := json.Marshal(currState)
-
 	if err != nil {
 		return err
 	}
@@ -360,7 +349,6 @@ func cleanupStateStream(config *config.Config, client *redis.Client, workspaceID
 		context.Background(),
 		streamName,
 	).Result()
-
 	if err != nil {
 		return err
 	}
@@ -381,7 +369,6 @@ func pushLogsToStorage(config *config.Config, client *redis.Client, infra *model
 
 	// get the length of the stream being read
 	length, err := client.XLen(context.Background(), streamName).Result()
-
 	if err != nil {
 		return err
 	}
@@ -395,7 +382,6 @@ func pushLogsToStorage(config *config.Config, client *redis.Client, infra *model
 				Count:   50,
 			},
 		).Result()
-
 		if err != nil {
 			return err
 		}
@@ -425,7 +411,6 @@ func pushLogsToStorage(config *config.Config, client *redis.Client, infra *model
 
 	// push the logs for that operation to S3
 	fileBytes, err := io.ReadAll(bytesBuffer)
-
 	if err != nil {
 		return err
 	}
@@ -440,7 +425,6 @@ func cleanupLogStream(config *config.Config, client *redis.Client, infra *models
 		context.Background(),
 		streamName,
 	).Result()
-
 	if err != nil {
 		return err
 	}

@@ -156,7 +156,6 @@ func (t *helmRevisionsCountTracker) Run() error {
 				log.Printf("starting release revision monitoring for cluster with ID %d", cluster.ID)
 
 				cluster, err := t.repo.Cluster().ReadCluster(projID, clusterID)
-
 				if err != nil {
 					log.Printf("error reading cluster ID %d: %v. skipping cluster ...", clusterID, err)
 					return
@@ -166,7 +165,6 @@ func (t *helmRevisionsCountTracker) Run() error {
 				s3Client, err := s3.NewS3StorageClient(&s3.S3Options{
 					t.awsRegion, t.awsAccessKeyID, t.awsSecretAccessKey, t.s3BucketName, t.encryptionKey,
 				})
-
 				if err != nil {
 					log.Printf("error creating S3 client for cluster ID %d: %v. skipping cluster ...", cluster.ID, err)
 					return
@@ -179,14 +177,12 @@ func (t *helmRevisionsCountTracker) Run() error {
 					AllowInClusterConnections: false,
 					Timeout:                   5 * time.Second,
 				})
-
 				if err != nil {
 					log.Printf("error getting k8s agent for cluster ID %d: %v. skipping cluster ...", cluster.ID, err)
 					return
 				}
 
 				namespaces, err := k8sAgent.ListNamespaces()
-
 				if err != nil {
 					log.Printf("error fetching namespaces for cluster ID %d: %v. skipping cluster ...", cluster.ID, err)
 					return
@@ -203,7 +199,6 @@ func (t *helmRevisionsCountTracker) Run() error {
 						AllowInClusterConnections: false,
 						Timeout:                   5 * time.Second,
 					}, logger.New(true, os.Stdout), 3, time.Second)
-
 					if err != nil {
 						log.Printf("error fetching helm client for namespace %s in cluster ID %d: %v. "+
 							"skipping namespace ...", ns.Name, cluster.ID, err)
@@ -221,7 +216,6 @@ func (t *helmRevisionsCountTracker) Run() error {
 							"failed",
 						},
 					})
-
 					if err != nil {
 						log.Printf("error fetching releases for namespace %s in cluster ID %d: %v. skipping namespace ...",
 							ns.Name, cluster.ID, err)
@@ -232,7 +226,6 @@ func (t *helmRevisionsCountTracker) Run() error {
 
 					for _, rel := range releases {
 						revisions, err := agent.GetReleaseHistory(rel.Name)
-
 						if err != nil {
 							log.Printf("error fetching release history for release %s in namespace %s of cluster ID %d: %v."+
 								" skipping release ...", rel.Name, ns.Name, cluster.ID, err)
@@ -256,7 +249,6 @@ func (t *helmRevisionsCountTracker) Run() error {
 
 							// store the revision in the s3 bucket before deleting it
 							data, err := json.Marshal(rev)
-
 							if err != nil {
 								log.Printf("error marshalling revision for release %s, number %d: %v. skipping revision ...",
 									rev.Name, rev.Version, err)

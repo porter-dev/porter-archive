@@ -36,7 +36,6 @@ func (c *GetReleaseStepsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	namespace := r.Context().Value(types.NamespaceScope).(string)
 
 	release, err := c.Repo().Release().ReadRelease(cluster.ID, name, namespace)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			w.WriteHeader(http.StatusNotFound)
@@ -51,7 +50,6 @@ func (c *GetReleaseStepsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	if release.EventContainer != 0 {
 		subevents, err := c.Repo().BuildEvent().ReadEventsByContainerID(release.EventContainer)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return

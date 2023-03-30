@@ -44,7 +44,6 @@ func (c *StreamJobRunsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

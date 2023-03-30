@@ -47,7 +47,6 @@ func (p *ListGitIntegrationHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	tok, err := gitinstallation.GetGithubAppOauthTokenFromRequest(p.Config(), r)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// return empty array, this is not an error
@@ -65,7 +64,6 @@ func (p *ListGitIntegrationHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	accountIDMap := make(map[int64]string)
 
 	ghAuthUser, _, err := client.Users.Get(context.Background(), "")
-
 	if err != nil {
 		p.WriteResult(w, r, res)
 		return
@@ -81,7 +79,6 @@ func (p *ListGitIntegrationHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	for {
 		orgs, pages, err := client.Organizations.List(context.Background(), "", opts)
-
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			p.WriteResult(w, r, res)
@@ -99,7 +96,6 @@ func (p *ListGitIntegrationHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	installationData, err := p.Repo().GithubAppInstallation().ReadGithubAppInstallationByAccountIDs(accountIDs)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		p.WriteResult(w, r, res)

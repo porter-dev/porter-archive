@@ -14,13 +14,11 @@ func TestGetAndEncodeTokenForUser(t *testing.T) {
 	}
 
 	tok, err := token.GetTokenForUser(1)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
 	tokString, err := tok.EncodeToken(conf)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -33,7 +31,6 @@ func TestGetAndEncodeTokenForUser(t *testing.T) {
 	}
 
 	gotToken, err := token.GetTokenFromEncoded(tokString, conf)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

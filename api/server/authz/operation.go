@@ -39,7 +39,6 @@ func (p *OperationScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	// look for matching operation for the infra
 	operation, err := p.config.Repo.Infra().ReadOperation(infra.ID, operationID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)

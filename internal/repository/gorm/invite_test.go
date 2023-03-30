@@ -28,7 +28,6 @@ func TestCreateInvite(t *testing.T) {
 	}
 
 	invite, err := tester.repo.Invite().CreateInvite(invite)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -70,7 +69,6 @@ func TestListInvitesByProjectID(t *testing.T) {
 	invites, err := tester.repo.Invite().ListInvitesByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

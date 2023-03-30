@@ -13,14 +13,15 @@ import (
 	cliErrors "github.com/porter-dev/porter/cli/cmd/errors"
 )
 
-var ErrNotLoggedIn error = errors.New("You are not logged in.")
-var ErrCannotConnect error = errors.New("Unable to connect to the Porter server.")
+var (
+	ErrNotLoggedIn   error = errors.New("You are not logged in.")
+	ErrCannotConnect error = errors.New("Unable to connect to the Porter server.")
+)
 
 func checkLoginAndRun(args []string, runner func(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error) error {
 	client := config.GetAPIClient()
 
 	user, err := client.AuthCheck(context.Background())
-
 	if err != nil {
 		red := color.New(color.FgRed)
 

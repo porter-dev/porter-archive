@@ -43,13 +43,11 @@ type Registry models.Registry
 
 func GetECRRegistryURL(awsIntRepo repository.AWSIntegrationRepository, projectID, awsIntID uint) (string, error) {
 	awsInt, err := awsIntRepo.ReadAWSIntegration(projectID, awsIntID)
-
 	if err != nil {
 		return "", err
 	}
 
 	sess, err := awsInt.GetSession()
-
 	if err != nil {
 		return "", err
 	}
@@ -57,7 +55,6 @@ func GetECRRegistryURL(awsIntRepo repository.AWSIntegrationRepository, projectID
 	ecrSvc := ecr.New(sess)
 
 	output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
-
 	if err != nil {
 		return "", err
 	}
@@ -120,7 +117,6 @@ func (r *Registry) GetGCRToken(repo repository.Repository) (*oauth2.Token, error
 		r.ProjectID,
 		r.GCPIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +136,6 @@ func (r *Registry) listGCRRepositories(
 		r.ProjectID,
 		r.GCPIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +162,6 @@ func (r *Registry) listGCRRepositories(
 		fmt.Sprintf("https://%s/v2/_catalog", regHostname),
 		nil,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +169,6 @@ func (r *Registry) listGCRRepositories(
 	req.SetBasicAuth("_json_key", string(gcp.GCPKeyData))
 
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +191,6 @@ func (r *Registry) listGCRRepositories(
 	res := make([]*ptypes.RegistryRepository, 0)
 
 	parsedURL, err := url.Parse("https://" + r.URL)
-
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +212,6 @@ func (r *Registry) GetGARToken(repo repository.Repository) (*oauth2.Token, error
 		r.ProjectID,
 		r.GCPIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +243,6 @@ func (r *Registry) listGARRepositories(
 		r.ProjectID,
 		r.GCPIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +251,6 @@ func (r *Registry) listGARRepositories(
 		reg:  r,
 		repo: repo,
 	}), option.WithScopes("roles/artifactregistry.reader"))
-
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +259,6 @@ func (r *Registry) listGARRepositories(
 	nextToken := ""
 
 	parsedURL, err := url.Parse("https://" + r.URL)
-
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +300,6 @@ func (r *Registry) listGARRepositories(
 		reg:  r,
 		repo: repo,
 	}), option.WithScopes("roles/artifactregistry.reader"))
-
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +322,6 @@ func (r *Registry) listGARRepositories(
 			for {
 				resp, err := dockerSvc.List(fmt.Sprintf("projects/%s/locations/%s/repositories/%s",
 					gcpInt.GCPProjectID, location, repoName)).PageSize(1000).PageToken(nextToken).Do()
-
 				if err != nil {
 					// FIXME: we should report this error using a channel
 					return
@@ -343,7 +329,6 @@ func (r *Registry) listGARRepositories(
 
 				for _, image := range resp.DockerImages {
 					named, err := reference.ParseNamed(image.Uri)
-
 					if err != nil {
 						// let us skip this image becaue it has a malformed URI coming from the GCP API
 						continue
@@ -384,13 +369,11 @@ func (r *Registry) listECRRepositories(repo repository.Repository) ([]*ptypes.Re
 		r.ProjectID,
 		r.AWSIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	sess, err := aws.GetSession()
-
 	if err != nil {
 		return nil, err
 	}
@@ -398,7 +381,6 @@ func (r *Registry) listECRRepositories(repo repository.Repository) ([]*ptypes.Re
 	svc := ecr.New(sess)
 
 	resp, err := svc.DescribeRepositories(&ecr.DescribeRepositoriesInput{})
-
 	if err != nil {
 		return nil, err
 	}
@@ -421,7 +403,6 @@ func (r *Registry) listACRRepositories(repo repository.Repository) ([]*ptypes.Re
 		r.ProjectID,
 		r.AzureIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +414,6 @@ func (r *Registry) listACRRepositories(repo repository.Repository) ([]*ptypes.Re
 		fmt.Sprintf("%s/v2/_catalog", r.URL),
 		nil,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -441,7 +421,6 @@ func (r *Registry) listACRRepositories(repo repository.Repository) ([]*ptypes.Re
 	req.SetBasicAuth(az.AzureClientID, string(az.ServicePrincipalSecret))
 
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -474,7 +453,6 @@ func (r *Registry) GetACRCredentials(repo repository.Repository) (string, string
 		r.ProjectID,
 		r.AzureIntegrationID,
 	)
-
 	if err != nil {
 		return "", "", err
 	}
@@ -485,13 +463,11 @@ func (r *Registry) GetACRCredentials(repo repository.Repository) (string, string
 
 		// create an acr repo token
 		cred, err := azidentity.NewClientSecretCredential(az.AzureTenantID, az.AzureClientID, string(az.ServicePrincipalSecret), nil)
-
 		if err != nil {
 			return "", "", err
 		}
 
 		scopeMapsClient, err := armcontainerregistry.NewScopeMapsClient(az.AzureSubscriptionID, cred, nil)
-
 		if err != nil {
 			return "", "", err
 		}
@@ -503,13 +479,11 @@ func (r *Registry) GetACRCredentials(repo repository.Repository) (string, string
 			"_repositories_admin",
 			nil,
 		)
-
 		if err != nil {
 			return "", "", err
 		}
 
 		tokensClient, err := armcontainerregistry.NewTokensClient(az.AzureSubscriptionID, cred, nil)
-
 		if err != nil {
 			return "", "", err
 		}
@@ -527,19 +501,16 @@ func (r *Registry) GetACRCredentials(repo repository.Repository) (string, string
 			},
 			nil,
 		)
-
 		if err != nil {
 			return "", "", err
 		}
 
 		tokResp, err := pollerResp.PollUntilDone(context.Background(), 2*time.Second)
-
 		if err != nil {
 			return "", "", err
 		}
 
 		registriesClient, err := armcontainerregistry.NewRegistriesClient(az.AzureSubscriptionID, cred, nil)
-
 		if err != nil {
 			return "", "", err
 		}
@@ -552,13 +523,11 @@ func (r *Registry) GetACRCredentials(repo repository.Repository) (string, string
 				TokenID: tokResp.ID,
 			},
 			&armcontainerregistry.RegistriesClientBeginGenerateCredentialsOptions{ResumeToken: ""})
-
 		if err != nil {
 			return "", "", err
 		}
 
 		genCredentialsResp, err := poller.PollUntilDone(context.Background(), 2*time.Second)
-
 		if err != nil {
 			return "", "", err
 		}
@@ -592,13 +561,11 @@ func (r *Registry) listDOCRRepositories(
 		r.ProjectID,
 		r.DOIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
-
 	if err != nil {
 		return nil, err
 	}
@@ -614,7 +581,6 @@ func (r *Registry) listDOCRRepositories(
 	name := urlArr[1]
 
 	repos, _, err := client.Registry.ListRepositories(context.TODO(), name, &godo.ListOptions{})
-
 	if err != nil {
 		return nil, err
 	}
@@ -651,7 +617,6 @@ func (r *Registry) listPrivateRegistryRepositories(
 		r.ProjectID,
 		r.BasicIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -668,7 +633,6 @@ func (r *Registry) listPrivateRegistryRepositories(
 		fmt.Sprintf("%s://%s/v2/_catalog", parsedURL.Scheme, parsedURL.Host),
 		nil,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -676,7 +640,6 @@ func (r *Registry) listPrivateRegistryRepositories(
 	req.SetBasicAuth(string(basic.Username), string(basic.Password))
 
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -688,7 +651,6 @@ func (r *Registry) listPrivateRegistryRepositories(
 			fmt.Sprintf("%s/", r.URL),
 			nil,
 		)
-
 		if err != nil {
 			return nil, err
 		}
@@ -729,7 +691,6 @@ func (r *Registry) getTokenCacheFunc(
 ) ints.GetTokenCacheFunc {
 	return func() (tok *ints.TokenCache, err error) {
 		reg, err := repo.Registry().ReadRegistry(r.ProjectID, r.ID)
-
 		if err != nil {
 			return nil, err
 		}
@@ -781,13 +742,11 @@ func (r *Registry) createECRRepository(
 		r.ProjectID,
 		r.AWSIntegrationID,
 	)
-
 	if err != nil {
 		return err
 	}
 
 	sess, err := aws.GetSession()
-
 	if err != nil {
 		return err
 	}
@@ -821,7 +780,6 @@ func (r *Registry) createGARRepository(
 		r.ProjectID,
 		r.GCPIntegrationID,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -830,7 +788,6 @@ func (r *Registry) createGARRepository(
 		reg:  r,
 		repo: repo,
 	}), option.WithScopes("roles/artifactregistry.admin"))
-
 	if err != nil {
 		return err
 	}
@@ -838,7 +795,6 @@ func (r *Registry) createGARRepository(
 	defer client.Close()
 
 	parsedURL, err := url.Parse("https://" + r.URL)
-
 	if err != nil {
 		return err
 	}
@@ -858,7 +814,6 @@ func (r *Registry) createGARRepository(
 				Format: artifactregistrypb.Repository_DOCKER,
 			},
 		})
-
 		if err != nil {
 			return err
 		}
@@ -913,13 +868,11 @@ func (r *Registry) GetECRPaginatedImages(
 		r.ProjectID,
 		r.AWSIntegrationID,
 	)
-
 	if err != nil {
 		return nil, nil, err
 	}
 
 	sess, err := aws.GetSession()
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -931,7 +884,6 @@ func (r *Registry) GetECRPaginatedImages(
 		MaxResults:     &maxResults,
 		NextToken:      nextToken,
 	})
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -969,7 +921,6 @@ func (r *Registry) GetECRPaginatedImages(
 				RepositoryName: &repoName,
 				ImageIds:       resp.ImageIds[start:end],
 			})
-
 			if err != nil {
 				return
 			}
@@ -1022,13 +973,11 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		r.ProjectID,
 		r.AWSIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	sess, err := aws.GetSession()
-
 	if err != nil {
 		return nil, err
 	}
@@ -1043,7 +992,6 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		RepositoryName: &repoName,
 		MaxResults:     &maxResults,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -1062,7 +1010,6 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 			MaxResults:     &maxResults,
 			NextToken:      nextToken,
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -1093,7 +1040,6 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 				RepositoryName: &repoName,
 				ImageIds:       imageIDs[start:end],
 			})
-
 			if err != nil {
 				return
 			}
@@ -1136,7 +1082,6 @@ func (r *Registry) listACRImages(repoName string, repo repository.Repository) ([
 		r.ProjectID,
 		r.AzureIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1149,7 +1094,6 @@ func (r *Registry) listACRImages(repoName string, repo repository.Repository) ([
 		fmt.Sprintf("%s/v2/%s/tags/list", r.URL, repoName),
 		nil,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1157,7 +1101,6 @@ func (r *Registry) listACRImages(repoName string, repo repository.Repository) ([
 	req.SetBasicAuth(az.AzureClientID, string(az.ServicePrincipalSecret))
 
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1189,7 +1132,6 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 		r.ProjectID,
 		r.GCPIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1198,7 +1140,6 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 	client := &http.Client{}
 
 	parsedURL, err := url.Parse("https://" + r.URL)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1210,7 +1151,6 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 		fmt.Sprintf("https://%s/v2/%s/%s/tags/list", parsedURL.Host, trimmedPath, repoName),
 		nil,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1218,7 +1158,6 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 	req.SetBasicAuth("_json_key", string(gcp.GCPKeyData))
 
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1252,7 +1191,6 @@ func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([
 		r.ProjectID,
 		r.GCPIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1261,7 +1199,6 @@ func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([
 		reg:  r,
 		repo: repo,
 	}), option.WithScopes("roles/artifactregistry.reader"))
-
 	if err != nil {
 		return nil, err
 	}
@@ -1269,7 +1206,6 @@ func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([
 	var res []*ptypes.Image
 
 	parsedURL, err := url.Parse("https://" + r.URL)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1281,14 +1217,12 @@ func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([
 	for {
 		resp, err := dockerSvc.List(fmt.Sprintf("projects/%s/locations/%s/repositories/%s",
 			gcpInt.GCPProjectID, location, repoImageSlice[0])).PageSize(1000).PageToken(nextToken).Do()
-
 		if err != nil {
 			return nil, err
 		}
 
 		for _, image := range resp.DockerImages {
 			named, err := reference.ParseNamed(image.Uri)
-
 			if err != nil {
 				continue
 			}
@@ -1330,13 +1264,11 @@ func (r *Registry) listDOCRImages(
 		r.ProjectID,
 		r.DOIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
-
 	if err != nil {
 		return nil, err
 	}
@@ -1358,7 +1290,6 @@ func (r *Registry) listDOCRImages(
 
 	for {
 		nextTags, resp, err := client.Registry.ListRepositoryTags(context.TODO(), name, repoName, opt)
-
 		if err != nil {
 			return nil, err
 		}
@@ -1370,7 +1301,6 @@ func (r *Registry) listDOCRImages(
 		}
 
 		page, err := resp.Links.CurrentPage()
-
 		if err != nil {
 			return nil, err
 		}
@@ -1400,7 +1330,6 @@ func (r *Registry) listPrivateRegistryImages(repoName string, repo repository.Re
 		r.ProjectID,
 		r.BasicIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1417,7 +1346,6 @@ func (r *Registry) listPrivateRegistryImages(repoName string, repo repository.Re
 		fmt.Sprintf("%s://%s/v2/%s/tags/list", parsedURL.Scheme, parsedURL.Host, repoName),
 		nil,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1425,7 +1353,6 @@ func (r *Registry) listPrivateRegistryImages(repoName string, repo repository.Re
 	req.SetBasicAuth(string(basic.Username), string(basic.Password))
 
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1470,7 +1397,6 @@ func (r *Registry) listDockerHubImages(repoName string, repo repository.Reposito
 		r.ProjectID,
 		r.BasicIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1483,7 +1409,6 @@ func (r *Registry) listDockerHubImages(repoName string, repo repository.Reposito
 		Username: string(basic.Username),
 		Password: string(basic.Password),
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -1493,7 +1418,6 @@ func (r *Registry) listDockerHubImages(repoName string, repo repository.Reposito
 		"https://hub.docker.com/v2/users/login",
 		strings.NewReader(string(data)),
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1501,7 +1425,6 @@ func (r *Registry) listDockerHubImages(repoName string, repo repository.Reposito
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1592,13 +1515,11 @@ func (r *Registry) getECRDockerConfigFile(
 		r.ProjectID,
 		r.AWSIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	sess, err := aws.GetSession()
-
 	if err != nil {
 		return nil, err
 	}
@@ -1606,7 +1527,6 @@ func (r *Registry) getECRDockerConfigFile(
 	ecrSvc := ecr.New(sess)
 
 	output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
-
 	if err != nil {
 		return nil, err
 	}
@@ -1614,7 +1534,6 @@ func (r *Registry) getECRDockerConfigFile(
 	token := *output.AuthorizationData[0].AuthorizationToken
 
 	decodedToken, err := base64.StdEncoding.DecodeString(token)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1649,7 +1568,6 @@ func (r *Registry) getGCRDockerConfigFile(
 		r.ProjectID,
 		r.GCPIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1681,13 +1599,11 @@ func (r *Registry) getDOCRDockerConfigFile(
 		r.ProjectID,
 		r.DOIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
-
 	if err != nil {
 		return nil, err
 	}
@@ -1718,7 +1634,6 @@ func (r *Registry) getPrivateRegistryDockerConfigFile(
 		r.ProjectID,
 		r.BasicIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1752,7 +1667,6 @@ func (r *Registry) getACRDockerConfigFile(
 	repo repository.Repository,
 ) (*configfile.ConfigFile, error) {
 	username, pw, err := r.GetACRCredentials(repo)
-
 	if err != nil {
 		return nil, err
 	}

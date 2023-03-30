@@ -66,13 +66,11 @@ func (s *DeploymentNotifier) Notify(opts *notifier.NotifyOpts) error {
 	}
 
 	basicPayload, err := json.Marshal(basicSlackPayload)
-
 	if err != nil {
 		return err
 	}
 
 	payload, err := json.Marshal(slackPayload)
-
 	if err != nil {
 		return err
 	}

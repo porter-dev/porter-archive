@@ -65,7 +65,6 @@ func (w *TemplateWriter) Transform() error {
 func (w *TemplateWriter) Create(vals map[string]interface{}) (map[string]interface{}, error) {
 	w.vals = vals
 	err := w.Transform()
-
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +72,6 @@ func (w *TemplateWriter) Create(vals map[string]interface{}) (map[string]interfa
 	create, err := w.resource.Create(context.TODO(), &unstructured.Unstructured{
 		Object: w.vals,
 	}, metav1.CreateOptions{})
-
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +84,6 @@ func (w *TemplateWriter) Create(vals map[string]interface{}) (map[string]interfa
 func (w *TemplateWriter) Update(vals map[string]interface{}) (map[string]interface{}, error) {
 	w.vals = vals
 	err := w.Transform()
-
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +91,6 @@ func (w *TemplateWriter) Update(vals map[string]interface{}) (map[string]interfa
 	update, err := w.resource.Update(context.TODO(), &unstructured.Unstructured{
 		Object: w.vals,
 	}, metav1.UpdateOptions{})
-
 	if err != nil {
 		return nil, err
 	}

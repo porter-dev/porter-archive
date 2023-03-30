@@ -12,13 +12,11 @@ func validateWebChartValues(values map[string]interface{}) error {
 	compiler := jsonschema.NewCompiler()
 
 	scm, err := compiler.Compile("https://raw.githubusercontent.com/porter-dev/porter-charts/master/applications/web/validate.json")
-
 	if err != nil {
 		return fmt.Errorf("error compiling job chart values schema: %w", err)
 	}
 
 	jsonBytes, err := json.Marshal(values)
-
 	if err != nil {
 		return fmt.Errorf("error marshalling values to JSON: %w", err)
 	}
@@ -36,13 +34,11 @@ func validateWorkerChartValues(values map[string]interface{}) error {
 	compiler := jsonschema.NewCompiler()
 
 	scm, err := compiler.Compile("https://raw.githubusercontent.com/porter-dev/porter-charts/master/applications/worker/validate.json")
-
 	if err != nil {
 		return fmt.Errorf("error compiling job chart values schema: %w", err)
 	}
 
 	jsonBytes, err := json.Marshal(values)
-
 	if err != nil {
 		return fmt.Errorf("error marshalling values to JSON: %w", err)
 	}
@@ -60,13 +56,11 @@ func validateJobChartValues(values map[string]interface{}) error {
 	compiler := jsonschema.NewCompiler()
 
 	scm, err := compiler.Compile("https://raw.githubusercontent.com/porter-dev/porter-charts/master/applications/job/validate.json")
-
 	if err != nil {
 		return fmt.Errorf("error compiling job chart values schema: %w", err)
 	}
 
 	jsonBytes, err := json.Marshal(values)
-
 	if err != nil {
 		return fmt.Errorf("error marshalling values to JSON: %w", err)
 	}
@@ -84,13 +78,11 @@ func validatePostgresChartValues(values map[string]interface{}) error {
 	compiler := jsonschema.NewCompiler()
 
 	scm, err := compiler.Compile("https://raw.githubusercontent.com/porter-dev/porter-charts/master/addons/postgresql/values.schema.json")
-
 	if err != nil {
 		return fmt.Errorf("error compiling postgres chart values schema: %w", err)
 	}
 
 	jsonBytes, err := json.Marshal(values)
-
 	if err != nil {
 		return fmt.Errorf("error marshalling values to JSON: %w", err)
 	}

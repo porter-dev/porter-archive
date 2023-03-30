@@ -165,11 +165,19 @@ func CredentialStepTrack(opts *CredentialStepTrackOpts) segmentTrack {
 // ProvisioningAttemptedTrackOpts are the options for creating a track when a user attempts provisioning
 type ProvisioningAttemptTrackOpts struct {
 	*UserScopedTrackOpts
+
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
 }
 
 // ProvisioningAttemptTrack returns a track for when a user attempts provisioning
 func ProvisioningAttemptTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
 
 	return getSegmentUserTrack(
 		opts.UserScopedTrackOpts,

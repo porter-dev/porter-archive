@@ -11,9 +11,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-var (
-	ghClient *github.Client
-)
+var ghClient *github.Client
 
 type Tag struct {
 	TagName string
@@ -21,7 +19,6 @@ type Tag struct {
 
 func getLatestCLIRelease() (string, error) {
 	rel, _, err := ghClient.Repositories.GetLatestRelease(context.Background(), "porter-dev", "porter")
-
 	if err != nil {
 		return "", err
 	}
@@ -31,7 +28,6 @@ func getLatestCLIRelease() (string, error) {
 
 func serve(w http.ResponseWriter, req *http.Request) {
 	latestTag, err := getLatestCLIRelease()
-
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error getting latest release: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -39,7 +35,6 @@ func serve(w http.ResponseWriter, req *http.Request) {
 	}
 
 	contents, err := os.ReadFile("install.sh")
-
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error reading install.sh file: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -47,7 +42,6 @@ func serve(w http.ResponseWriter, req *http.Request) {
 	}
 
 	tmpl, err := template.New("install").Parse(string(contents))
-
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error parsing install.sh template: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)

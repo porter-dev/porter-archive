@@ -24,14 +24,12 @@ func main() {
 	logger.Info().Msg("running migrations")
 
 	envConf, err := envloader.FromEnv()
-
 	if err != nil {
 		logger.Fatal().Err(err).Msg("could not load env conf")
 		return
 	}
 
 	db, err := adapter.New(envConf.DBConf)
-
 	if err != nil {
 		logger.Fatal().Err(err).Msg("could not connect to the database")
 		return
@@ -106,7 +104,6 @@ func main() {
 		for ver, fn := range startup_migrations.StartupMigrations {
 			if ver > dbMigration.Version {
 				err := fn(tx, logger)
-
 				if err != nil {
 					tx.Rollback()
 
@@ -136,7 +133,6 @@ func main() {
 		copy(newKey[:], []byte(newKeyStr))
 
 		err := keyrotate.Rotate(db, &oldKey, &newKey)
-
 		if err != nil {
 			logger.Fatal().Err(err).Msg("key rotation failed")
 		}
@@ -144,7 +140,6 @@ func main() {
 
 	if shouldPopulateSourceConfigDisplayName() {
 		err := populate_source_config_display_name.PopulateSourceConfigDisplayName(db, logger)
-
 		if err != nil {
 			logger.Fatal().Err(err).Msg("failed to populate source config display name")
 		}

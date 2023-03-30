@@ -37,7 +37,6 @@ func getStreamWriter(rw *websocket.WebsocketSafeReadWriter) func(val map[string]
 	return func(val map[string]interface{}) error {
 		// parse value into json
 		bytes, err := json.Marshal(val)
-
 		if err != nil {
 			return err
 		}
@@ -60,7 +59,6 @@ func (c *StreamFormHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// look for the form using the dynamic client
 	dynClient, err := c.GetDynamicClient(r, cluster)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

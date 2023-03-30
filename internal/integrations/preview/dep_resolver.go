@@ -36,7 +36,6 @@ func (r *dependencyResolver) Resolve() error {
 
 		for _, resource := range r.resources {
 			err := r.depResolve(resource.Name)
-
 			if err != nil {
 				return err
 			}

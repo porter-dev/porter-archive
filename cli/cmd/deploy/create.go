@@ -53,7 +53,6 @@ func (c *CreateAgent) CreateFromGithub(
 		context.Background(),
 		c.CreateOpts.ProjectID,
 	)
-
 	if err != nil {
 		return "", err
 	}
@@ -69,7 +68,6 @@ func (c *CreateAgent) CreateFromGithub(
 			c.CreateOpts.ProjectID,
 			gitInstallationID,
 		)
-
 		if err != nil {
 			return "", err
 		}
@@ -93,7 +91,6 @@ func (c *CreateAgent) CreateFromGithub(
 	}
 
 	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
-
 	if err != nil {
 		return "", err
 	}
@@ -111,13 +108,11 @@ func (c *CreateAgent) CreateFromGithub(
 	}
 
 	regID, imageURL, err := c.GetImageRepoURL(opts.ReleaseName, opts.Namespace)
-
 	if err != nil {
 		return "", err
 	}
 
 	subdomain, err := c.CreateSubdomainIfRequired(mergedValues)
-
 	if err != nil {
 		return "", err
 	}
@@ -174,7 +169,6 @@ func (c *CreateAgent) CreateFromRegistry(
 	opts := c.CreateOpts
 
 	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
-
 	if err != nil {
 		return "", err
 	}
@@ -185,7 +179,6 @@ func (c *CreateAgent) CreateFromRegistry(
 	}
 
 	subdomain, err := c.CreateSubdomainIfRequired(mergedValues)
-
 	if err != nil {
 		return "", err
 	}
@@ -249,13 +242,11 @@ func (c *CreateAgent) CreateFromDocker(
 
 	// overwrite with docker image repository and tag
 	regID, imageURL, err := c.GetImageRepoURL(opts.ReleaseName, opts.Namespace)
-
 	if err != nil {
 		return "", err
 	}
 
 	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
-
 	if err != nil {
 		return "", err
 	}
@@ -267,13 +258,11 @@ func (c *CreateAgent) CreateFromDocker(
 
 	// create docker agent
 	agent, err := docker.NewAgentWithAuthGetter(c.Client, opts.ProjectID)
-
 	if err != nil {
 		return "", err
 	}
 
 	env, err := GetEnvForRelease(c.Client, mergedValues, opts.ProjectID, opts.ClusterID, opts.Namespace)
-
 	if err != nil {
 		env = make(map[string]string)
 	}
@@ -350,7 +339,6 @@ func (c *CreateAgent) CreateFromDocker(
 	}
 
 	subdomain, err := c.CreateSubdomainIfRequired(mergedValues)
-
 	if err != nil {
 		return "", err
 	}
@@ -454,7 +442,6 @@ func (c *CreateAgent) GetLatestTemplateVersion(templateName string) (string, err
 		c.CreateOpts.ProjectID,
 		&types.ListTemplatesRequest{},
 	)
-
 	if err != nil {
 		return "", err
 	}
@@ -487,7 +474,6 @@ func (c *CreateAgent) GetLatestTemplateDefaultValues(projectID uint, templateNam
 		templateVersion,
 		&types.GetTemplateRequest{},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -498,14 +484,12 @@ func (c *CreateAgent) GetLatestTemplateDefaultValues(projectID uint, templateNam
 func (c *CreateAgent) GetMergedValues(overrideValues map[string]interface{}) (string, map[string]interface{}, error) {
 	// deploy the template
 	latestVersion, err := c.GetLatestTemplateVersion(c.CreateOpts.Kind)
-
 	if err != nil {
 		return "", nil, err
 	}
 
 	// get the values of the template
 	values, err := c.GetLatestTemplateDefaultValues(c.CreateOpts.ProjectID, c.CreateOpts.Kind, latestVersion)
-
 	if err != nil {
 		return "", nil, err
 	}
@@ -565,7 +549,6 @@ func (c *CreateAgent) CreateSubdomainIfRequired(mergedValues map[string]interfac
 							c.CreateOpts.Namespace,
 							c.CreateOpts.ReleaseName,
 						)
-
 						if err != nil {
 							return "", fmt.Errorf("Error creating subdomain: %s", err.Error())
 						}

@@ -31,7 +31,6 @@ func (p *DatabaseListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	// read all clusters for this project
 	dbs, err := p.Repo().Database().ListDatabases(proj.ID, cluster.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

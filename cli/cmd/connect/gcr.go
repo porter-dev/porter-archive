@@ -25,7 +25,6 @@ func GCR(
 
 	keyFileLocation, err := utils.PromptPlaintext(fmt.Sprintf(`Please provide the full path to a service account key file.
 Key file location: `))
-
 	if err != nil {
 		return 0, err
 	}
@@ -34,7 +33,6 @@ Key file location: `))
 	if info, err := os.Stat(keyFileLocation); !os.IsNotExist(err) && !info.IsDir() {
 		// read the file
 		bytes, err := ioutil.ReadFile(keyFileLocation)
-
 		if err != nil {
 			return 0, err
 		}
@@ -47,7 +45,6 @@ Key file location: `))
 				GCPKeyData: string(bytes),
 			},
 		)
-
 		if err != nil {
 			return 0, err
 		}
@@ -56,7 +53,6 @@ Key file location: `))
 
 		regURL, err := utils.PromptPlaintext(fmt.Sprintf(`Please provide the registry URL, in the form [GCP_DOMAIN]/[GCP_PROJECT_ID]. For example, gcr.io/my-project-123456.
 Registry URL: `))
-
 		if err != nil {
 			return 0, err
 		}
@@ -64,7 +60,6 @@ Registry URL: `))
 		// create the registry
 		// query for registry name
 		regName, err := utils.PromptPlaintext(fmt.Sprintf(`Give this registry a name: `))
-
 		if err != nil {
 			return 0, err
 		}
@@ -78,7 +73,6 @@ Registry URL: `))
 				URL:              regURL,
 			},
 		)
-
 		if err != nil {
 			return 0, err
 		}

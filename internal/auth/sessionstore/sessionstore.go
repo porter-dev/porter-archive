@@ -60,7 +60,6 @@ func (store *PGStore) MaxAge(age int) {
 // into session.Values.
 func (store *PGStore) load(session *sessions.Session) error {
 	res, err := store.Repo.SelectSession(&models.Session{Key: session.ID})
-
 	if err != nil {
 		return err
 	}

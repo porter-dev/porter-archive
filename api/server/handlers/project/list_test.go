@@ -18,7 +18,6 @@ func TestListProjectsSuccessful(t *testing.T) {
 	proj1, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +25,6 @@ func TestListProjectsSuccessful(t *testing.T) {
 	proj2, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project-2",
 	}, user)
-
 	if err != nil {
 		t.Fatal(err)
 	}

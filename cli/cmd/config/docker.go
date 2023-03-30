@@ -30,7 +30,6 @@ func SetDockerConfig(client *api.Client) error {
 		context.Background(),
 		pID,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -47,7 +46,6 @@ func SetDockerConfig(client *api.Client) error {
 
 			// strip the protocol
 			regURL, err := url.Parse(rURL)
-
 			if err != nil {
 				continue
 			}
@@ -60,7 +58,7 @@ func SetDockerConfig(client *api.Client) error {
 	dockerDir := filepath.Join(home, ".docker")
 
 	if _, err := os.Stat(dockerDir); os.IsNotExist(err) {
-		err = os.Mkdir(dockerDir, 0700)
+		err = os.Mkdir(dockerDir, 0o700)
 
 		if err != nil {
 			return err
@@ -72,8 +70,7 @@ func SetDockerConfig(client *api.Client) error {
 	// determine if configfile exists
 	if _, err := os.Stat(dockerConfigFile); os.IsNotExist(err) {
 		// if it does not exist, create it
-		err := ioutil.WriteFile(dockerConfigFile, []byte("{}"), 0700)
-
+		err := ioutil.WriteFile(dockerConfigFile, []byte("{}"), 0o700)
 		if err != nil {
 			return err
 		}
@@ -81,7 +78,6 @@ func SetDockerConfig(client *api.Client) error {
 
 	// read the file bytes
 	configBytes, err := ioutil.ReadFile(dockerConfigFile)
-
 	if err != nil {
 		return err
 	}
@@ -89,7 +85,6 @@ func SetDockerConfig(client *api.Client) error {
 	// check if the docker credential helper exists
 	if !commandExists("docker-credential-porter") {
 		err := downloadCredMatchingRelease()
-
 		if err != nil {
 			color.New(color.FgRed).Println("Failed to download credential helper binary:", err.Error())
 			os.Exit(1)
@@ -105,7 +100,6 @@ func SetDockerConfig(client *api.Client) error {
 
 	if err != nil || writer.Version != Version {
 		err := downloadCredMatchingRelease()
-
 		if err != nil {
 			color.New(color.FgRed).Println("Failed to download credential helper binary:", err.Error())
 			os.Exit(1)
@@ -145,13 +139,11 @@ func SetDockerConfig(client *api.Client) error {
 			if !isAuthenticated {
 				// get a dockerhub token from the Porter API
 				tokenResp, err := client.GetDockerhubAuthorizationToken(context.Background(), GetCLIConfig().Project)
-
 				if err != nil {
 					return err
 				}
 
 				decodedToken, err := base64.StdEncoding.DecodeString(tokenResp.Token)
-
 				if err != nil {
 					return fmt.Errorf("Invalid token: %v", err)
 				}

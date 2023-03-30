@@ -37,7 +37,6 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 
 	helmAgent, err := c.GetHelmAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -86,14 +85,12 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					rel,
 					helmRelease,
 				)
-
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 					return
 				}
 
 				actionVersion, err := semver.NewVersion(gaRunner.Version)
-
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 					return
@@ -123,7 +120,6 @@ func UpdateReleaseRepo(config *config.Config, release *models.Release, helmRelea
 		repoStr != "public.ecr.aws/o1j4x7p4/hello-porter-job" {
 		release.ImageRepoURI = repoStr
 		_, err := config.Repo.Release().UpdateRelease(release)
-
 		if err != nil {
 			return err
 		}
@@ -131,7 +127,6 @@ func UpdateReleaseRepo(config *config.Config, release *models.Release, helmRelea
 		// determine if the git action config is set, and propagate update to that as well
 		if release.GitActionConfig != nil && release.GitActionConfig.ID != 0 {
 			gitActionConfig, err := config.Repo.GitActionConfig().ReadGitActionConfig(release.GitActionConfig.ID)
-
 			if err != nil {
 				return err
 			}

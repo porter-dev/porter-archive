@@ -14,8 +14,10 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-var ErrNoWorkflowRuns = errors.New("no previous workflow runs found")
-var ErrWorkflowNotFound = errors.New("no workflow found, file missing")
+var (
+	ErrNoWorkflowRuns   = errors.New("no previous workflow runs found")
+	ErrWorkflowNotFound = errors.New("no workflow found, file missing")
+)
 
 func GetLatestWorkflowRun(client *github.Client, owner, repo, filename, branch string) (*github.WorkflowRun, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)

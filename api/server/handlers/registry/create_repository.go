@@ -46,7 +46,6 @@ func (p *RegistryCreateRepositoryHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	repoName := strings.ToLower(strings.ReplaceAll(nameSpl[len(nameSpl)-1], "_", "-"))
 
 	err := regAPI.CreateRepository(p.Repo(), repoName)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

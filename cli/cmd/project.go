@@ -29,7 +29,6 @@ var createProjectCmd = &cobra.Command{
 	Short: "Creates a project with the authorized user as admin",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, createProject)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -42,7 +41,6 @@ var deleteProjectCmd = &cobra.Command{
 	Short: "Deletes the project with the given id",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, deleteProject)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -54,7 +52,6 @@ var listProjectCmd = &cobra.Command{
 	Short: "Lists the projects for the logged in user",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, listProjects)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -73,7 +70,6 @@ func createProject(_ *types.GetAuthenticatedUserResponse, client *api.Client, ar
 	resp, err := client.CreateProject(context.Background(), &types.CreateProjectRequest{
 		Name: args[0],
 	})
-
 	if err != nil {
 		return err
 	}
@@ -85,7 +81,6 @@ func createProject(_ *types.GetAuthenticatedUserResponse, client *api.Client, ar
 
 func listProjects(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	resp, err := client.ListUserProjects(context.Background())
-
 	if err != nil {
 		return err
 	}
@@ -120,14 +115,12 @@ func deleteProject(_ *types.GetAuthenticatedUserResponse, client *api.Client, ar
 			color.New(color.FgCyan).Sprintf("[y/n]"),
 		),
 	)
-
 	if err != nil {
 		return err
 	}
 
 	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
 		id, err := strconv.ParseUint(args[0], 10, 64)
-
 		if err != nil {
 			return err
 		}
@@ -146,7 +139,6 @@ func deleteProject(_ *types.GetAuthenticatedUserResponse, client *api.Client, ar
 
 func setProjectCluster(client *api.Client, projectID uint) error {
 	resp, err := client.ListProjectClusters(context.Background(), projectID)
-
 	if err != nil {
 		return err
 	}

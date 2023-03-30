@@ -15,13 +15,11 @@ func (s *ProvisionerServer) GetLog(infra *pb.Infra, server pb.Provisioner_GetLog
 	}
 
 	modelInfra, err := s.config.Repo.Infra().ReadInfra(name.ProjectID, name.InfraID)
-
 	if err != nil {
 		return err
 	}
 
 	operation, err := s.config.Repo.Infra().ReadOperation(name.InfraID, name.OperationUID)
-
 	if err != nil {
 		return err
 	}

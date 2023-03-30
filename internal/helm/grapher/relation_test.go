@@ -11,14 +11,14 @@ var c7 = grapher.Object{
 	Kind: "StatefulSet",
 	Relations: grapher.Relations{
 		ControlRels: []grapher.ControlRel{
-			grapher.ControlRel{
+			{
 				Relation: grapher.Relation{
 					Source: 3,
 					Target: 4,
 				},
 				Replicas: 2,
 			},
-			grapher.ControlRel{
+			{
 				Relation: grapher.Relation{
 					Source: 3,
 					Target: 5,
@@ -27,13 +27,13 @@ var c7 = grapher.Object{
 			},
 		},
 		LabelRels: []grapher.LabelRel{
-			grapher.LabelRel{
+			{
 				Relation: grapher.Relation{
 					Source: 3,
 					Target: 4,
 				},
 			},
-			grapher.LabelRel{
+			{
 				Relation: grapher.Relation{
 					Source: 3,
 					Target: 5,
@@ -47,7 +47,7 @@ var c5 = grapher.Object{
 	Kind: "Pod",
 	Relations: grapher.Relations{
 		ControlRels: []grapher.ControlRel{
-			grapher.ControlRel{
+			{
 				Relation: grapher.Relation{
 					Source: 3,
 					Target: 4,
@@ -56,19 +56,19 @@ var c5 = grapher.Object{
 			},
 		},
 		LabelRels: []grapher.LabelRel{
-			grapher.LabelRel{
+			{
 				Relation: grapher.Relation{
 					Source: 1,
 					Target: 4,
 				},
 			},
-			grapher.LabelRel{
+			{
 				Relation: grapher.Relation{
 					Source: 2,
 					Target: 4,
 				},
 			},
-			grapher.LabelRel{
+			{
 				Relation: grapher.Relation{
 					Source: 3,
 					Target: 4,
@@ -82,7 +82,7 @@ var c6 = grapher.Object{
 	Kind: "Pod",
 	Relations: grapher.Relations{
 		ControlRels: []grapher.ControlRel{
-			grapher.ControlRel{
+			{
 				Relation: grapher.Relation{
 					Source: 3,
 					Target: 5,
@@ -91,19 +91,19 @@ var c6 = grapher.Object{
 			},
 		},
 		LabelRels: []grapher.LabelRel{
-			grapher.LabelRel{
+			{
 				Relation: grapher.Relation{
 					Source: 1,
 					Target: 5,
 				},
 			},
-			grapher.LabelRel{
+			{
 				Relation: grapher.Relation{
 					Source: 2,
 					Target: 5,
 				},
 			},
-			grapher.LabelRel{
+			{
 				Relation: grapher.Relation{
 					Source: 3,
 					Target: 5,
@@ -124,7 +124,7 @@ type test struct {
 
 func TestControlRels(t *testing.T) {
 	ts := []test{
-		test{
+		{
 			Expected: expControlRels1,
 			FilePath: "./test_yaml/cassandra.yaml",
 		},
@@ -133,7 +133,6 @@ func TestControlRels(t *testing.T) {
 	for _, r := range ts {
 		// Load in yaml from test files
 		file, err := ioutil.ReadFile(r.FilePath)
-
 		if err != nil {
 			t.Errorf("Error reading file %s", r.FilePath)
 		}
@@ -177,7 +176,7 @@ func TestControlRels(t *testing.T) {
 
 func TestLabelRels(t *testing.T) {
 	ts := []test{
-		test{
+		{
 			Expected: expControlRels1,
 			FilePath: "./test_yaml/cassandra.yaml",
 		},
@@ -186,7 +185,6 @@ func TestLabelRels(t *testing.T) {
 	for _, r := range ts {
 		// Load in yaml from test files
 		file, err := ioutil.ReadFile(r.FilePath)
-
 		if err != nil {
 			t.Errorf("Error reading file %s", r.FilePath)
 		}
@@ -226,7 +224,7 @@ func TestLabelRels(t *testing.T) {
 
 func TestSpecRels(t *testing.T) {
 	ts := []test{
-		test{
+		{
 			Expected: expControlRels1,
 			FilePath: "./test_yaml/ingress.yaml",
 		},
@@ -235,7 +233,6 @@ func TestSpecRels(t *testing.T) {
 	for _, r := range ts {
 		// Load in yaml from test files
 		file, err := ioutil.ReadFile(r.FilePath)
-
 		if err != nil {
 			t.Errorf("Error reading file %s", r.FilePath)
 		}

@@ -97,7 +97,6 @@ func (d *DefaultPorterHandler) PopulateOAuthSession(
 	integrationID uint,
 ) error {
 	session, err := d.Config().Store.Get(r, d.Config().ServerConf.CookieName)
-
 	if err != nil {
 		return err
 	}

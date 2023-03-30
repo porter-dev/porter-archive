@@ -61,7 +61,6 @@ func (c *UpdateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// read the environment to get the environment id
 	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID), owner, name)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -109,7 +108,6 @@ func (c *UpdateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// create deployment on GitHub API
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -118,7 +116,6 @@ func (c *UpdateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	if !depl.IsBranchDeploy() {
 		// add a check for the PR to be open before creating a comment
 		prClosed, err := isGithubPRClosed(client, owner, name, int(depl.PullRequestID))
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",
@@ -135,7 +132,6 @@ func (c *UpdateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	ghDeployment, err := createGithubDeployment(client, env, request.PRBranchFrom, request.ActionID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

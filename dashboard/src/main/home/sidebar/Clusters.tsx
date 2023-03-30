@@ -34,7 +34,7 @@ class Clusters extends Component<PropsType, StateType> {
   // Need to track initialized for animation mounting
   state = {
     clusters: [] as ClusterType[],
-    prevProjectId: this.context.currentProject.id,
+    prevProjectId: this.context.currentProject?.id,
   };
 
   updateClusters = () => {
@@ -123,9 +123,9 @@ class Clusters extends Component<PropsType, StateType> {
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps !== this.props) {
       // Refresh clusters on project change
-      if (this.state.prevProjectId !== this.context.currentProject.id) {
+      if (this.state.prevProjectId !== this.context.currentProject?.id) {
         this.updateClusters();
-        this.setState({ prevProjectId: this.context.currentProject.id });
+        this.setState({ prevProjectId: this.context.currentProject?.id });
       } else if (this.props.forceRefreshClusters === true) {
         this.updateClusters();
         this.props.setRefreshClusters(false);
@@ -210,7 +210,7 @@ class Clusters extends Component<PropsType, StateType> {
               path="/preview-environments"
               targetClusterName={cluster?.name}
               active={
-                currentCluster?.id === cluster.id &&
+                currentCluster?.id === cluster?.id &&
                 window.location.pathname.startsWith("/preview-environments")
               }
             >

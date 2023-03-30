@@ -16,9 +16,11 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-const KubernetesAgentCtxKey string = "k8s-agent"
-const KubernetesDynamicClientCtxKey string = "k8s-dyn-client"
-const HelmAgentCtxKey string = "helm-agent"
+const (
+	KubernetesAgentCtxKey         string = "k8s-agent"
+	KubernetesDynamicClientCtxKey string = "k8s-dyn-client"
+	HelmAgentCtxKey               string = "helm-agent"
+)
 
 type ClusterScopedFactory struct {
 	config *config.Config
@@ -47,7 +49,6 @@ func (p *ClusterScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 	clusterID := reqScopes[types.ClusterScope].Resource.UInt
 	cluster, err := p.config.Repo.Cluster().ReadCluster(proj.ID, clusterID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(
@@ -116,7 +117,6 @@ func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Clus
 	}
 
 	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get agent: %s", err.Error())
 	}
@@ -140,7 +140,6 @@ func (d *OutOfClusterAgentGetter) GetHelmAgent(r *http.Request, cluster *models.
 
 	// if helm agent not found in context, construct it from k8s agent
 	k8sAgent, err := d.GetAgent(r, cluster, namespace)
-
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +149,6 @@ func (d *OutOfClusterAgentGetter) GetHelmAgent(r *http.Request, cluster *models.
 	}
 
 	helmAgent, err := helm.GetAgentFromK8sAgent("secret", namespace, d.config.Logger, k8sAgent)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Helm agent: %s", err.Error())
 	}

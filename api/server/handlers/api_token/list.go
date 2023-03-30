@@ -35,7 +35,6 @@ func (p *APITokenListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	tokens, err := p.Repo().APIToken().ListAPITokensByProjectID(proj.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

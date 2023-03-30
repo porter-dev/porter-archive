@@ -46,7 +46,6 @@ func (c *GetGHATemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		namespace,
 		nil,
 	)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

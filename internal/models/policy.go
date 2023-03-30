@@ -32,7 +32,6 @@ func (p *Policy) ToAPIPolicyType() (*types.APIPolicy, error) {
 	policy := []*types.PolicyDocument{}
 
 	err := json.Unmarshal(p.PolicyBytes, &policy)
-
 	if err != nil {
 		return nil, err
 	}

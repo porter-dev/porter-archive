@@ -29,7 +29,6 @@ func applyAppResource(opts *applyAppResourceOpts) (*release.Release, error) {
 	}
 
 	chart, err := loader.LoadChartPublic(opts.request.TemplateRepoURL, opts.request.TemplateName, opts.request.TemplateVersion)
-
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +83,6 @@ type updateAppResourceTagOpts struct {
 func updateAppResourceTag(opts *updateAppResourceTagOpts) error {
 	// read the current release to get the current values
 	rel, err := opts.helmAgent.GetRelease(opts.name, 0, true)
-
 	if err != nil {
 		return err
 	}

@@ -45,7 +45,6 @@ func (p *ProjectGetUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Repo:             p.Repo(),
 		WhitelistedUsers: p.Config().WhitelistedUsers,
 	})
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -39,7 +39,6 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	stack, _ := r.Context().Value(types.StackScope).(*models.Stack)
 
 	helmAgent, err := p.GetHelmAgent(r, cluster, "")
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -53,14 +52,12 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	// read the latest revision
 	revision, err := p.Repo().Stack().ReadStackRevisionByNumber(stack.ID, stack.Revisions[0].RevisionNumber)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	sourceConfigs, err := getSourceConfigModels(req.SourceConfigs)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -73,7 +70,6 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	prevSourceConfigs := revision.SourceConfigs
 	revision.SourceConfigs = sourceConfigs
 	clonedAppResources, err := stacks.CloneAppResources(revision.Resources, prevSourceConfigs, revision.SourceConfigs)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -90,7 +86,6 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	// apply to cluster
 	registries, err := p.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

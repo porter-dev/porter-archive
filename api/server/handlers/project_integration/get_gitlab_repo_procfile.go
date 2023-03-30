@@ -61,14 +61,12 @@ func (p *GetGitlabRepoProcfileHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	}
 
 	path, err := url.QueryUnescape(request.Path)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("malformed query param path")))
 		return
 	}
 
 	client, err := getGitlabClient(p.Repo(), user.ID, project.ID, gi, p.Config())
-
 	if err != nil {
 		if errors.Is(err, errUnauthorizedGitlabUser) {
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errUnauthorizedGitlabUser, http.StatusUnauthorized))

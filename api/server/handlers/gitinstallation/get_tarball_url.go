@@ -43,7 +43,6 @@ func (c *GithubGetTarballURLHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	client, err := GetGithubAppClientFromRequest(c.Config(), r)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -56,7 +55,6 @@ func (c *GithubGetTarballURLHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		branch,
 		false,
 	)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -72,7 +70,6 @@ func (c *GithubGetTarballURLHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		},
 		false,
 	)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

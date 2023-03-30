@@ -29,7 +29,6 @@ func (repo *ClusterRepository) CreateClusterCandidate(
 	cc *models.ClusterCandidate,
 ) (*models.ClusterCandidate, error) {
 	err := repo.EncryptClusterCandidateData(cc, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +120,6 @@ func (repo *ClusterRepository) CreateCluster(
 	cluster *models.Cluster,
 ) (*models.Cluster, error) {
 	err := repo.EncryptClusterData(cluster, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +189,6 @@ func (repo *ClusterRepository) ReadCluster(
 	cluster.TokenCache = cache
 
 	err := repo.DecryptClusterData(cluster, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +218,6 @@ func (repo *ClusterRepository) ReadClusterByInfraID(
 	cluster.TokenCache = cache
 
 	err := repo.DecryptClusterData(cluster, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +248,6 @@ func (repo *ClusterRepository) UpdateCluster(
 	cluster *models.Cluster,
 ) (*models.Cluster, error) {
 	err := repo.EncryptClusterData(cluster, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +284,6 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 ) (*models.Cluster, error) {
 	if tok := tokenCache.Token; len(tok) > 0 {
 		cipherData, err := encryption.Encrypt(tok, repo.key)
-
 		if err != nil {
 			return nil, err
 		}
@@ -355,7 +349,6 @@ func (repo *ClusterRepository) EncryptClusterData(
 ) error {
 	if len(cluster.CertificateAuthorityData) > 0 {
 		cipherData, err := encryption.Encrypt(cluster.CertificateAuthorityData, key)
-
 		if err != nil {
 			return err
 		}
@@ -365,7 +358,6 @@ func (repo *ClusterRepository) EncryptClusterData(
 
 	if tok := cluster.TokenCache.Token; len(tok) > 0 {
 		cipherData, err := encryption.Encrypt(tok, key)
-
 		if err != nil {
 			return err
 		}
@@ -384,7 +376,6 @@ func (repo *ClusterRepository) EncryptClusterCandidateData(
 ) error {
 	if len(cc.AWSClusterIDGuess) > 0 {
 		cipherData, err := encryption.Encrypt(cc.AWSClusterIDGuess, key)
-
 		if err != nil {
 			return err
 		}
@@ -394,7 +385,6 @@ func (repo *ClusterRepository) EncryptClusterCandidateData(
 
 	if len(cc.Kubeconfig) > 0 {
 		cipherData, err := encryption.Encrypt(cc.Kubeconfig, key)
-
 		if err != nil {
 			return err
 		}
@@ -413,7 +403,6 @@ func (repo *ClusterRepository) DecryptClusterData(
 ) error {
 	if len(cluster.CertificateAuthorityData) > 0 {
 		plaintext, err := encryption.Decrypt(cluster.CertificateAuthorityData, key)
-
 		if err != nil {
 			return err
 		}
@@ -443,7 +432,6 @@ func (repo *ClusterRepository) DecryptClusterCandidateData(
 ) error {
 	if len(cc.AWSClusterIDGuess) > 0 {
 		plaintext, err := encryption.Decrypt(cc.AWSClusterIDGuess, key)
-
 		if err != nil {
 			return err
 		}
@@ -453,7 +441,6 @@ func (repo *ClusterRepository) DecryptClusterCandidateData(
 
 	if len(cc.Kubeconfig) > 0 {
 		plaintext, err := encryption.Decrypt(cc.Kubeconfig, key)
-
 		if err != nil {
 			return err
 		}

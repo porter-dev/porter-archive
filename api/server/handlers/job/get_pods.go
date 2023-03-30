@@ -40,7 +40,6 @@ func (c *GetPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pods, err := agent.GetJobPods(namespace, name)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

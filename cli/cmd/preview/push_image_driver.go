@@ -76,7 +76,6 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 
 	if shouldCreate {
 		regList, err := client.ListRegistries(context.Background(), d.target.Project)
-
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +113,6 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 		}
 
 		regID, imageURL, err := createAgent.GetImageRepoURL(d.target.AppName, sharedOpts.Namespace)
-
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +151,6 @@ func (d *PushDriver) getConfig(resource *models.Resource) (*preview.PushDriverCo
 		LookupTable:  *d.lookupTable,
 		Dependencies: resource.Dependencies,
 	})
-
 	if err != nil {
 		return nil, err
 	}

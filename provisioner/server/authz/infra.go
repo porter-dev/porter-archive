@@ -51,7 +51,6 @@ func (p *InfraScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// look for infra with that ID and project ID
 	infra, err := p.config.Repo.Infra().ReadInfra(proj.ID, infraID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			apierrors.HandleAPIError(

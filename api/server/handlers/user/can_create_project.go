@@ -35,7 +35,6 @@ func (c *CanCreateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	exists, err := c.Repo().Allowlist().UserEmailExists(user.Email)
-
 	if err != nil {
 		err = fmt.Errorf("couldn't retrieve user: %s", err.Error())
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -18,7 +18,6 @@ var logsCmd = &cobra.Command{
 	Short: "Logs the output from a given application.",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, logs)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -48,7 +47,6 @@ func init() {
 
 func logs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	podsSimple, err := getPods(client, namespace, args[0])
-
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())
 	}
@@ -68,7 +66,6 @@ func logs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []stri
 		}
 
 		selectedPodName, err := utils.PromptSelect("Select the pod:", podNames)
-
 		if err != nil {
 			return err
 		}
@@ -90,7 +87,6 @@ func logs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []stri
 		selectedContainerName = selectedPod.ContainerNames[0]
 	} else {
 		selectedContainer, err := utils.PromptSelect("Select the container:", selectedPod.ContainerNames)
-
 		if err != nil {
 			return err
 		}

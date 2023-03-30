@@ -35,7 +35,8 @@ func NewGetGithubAppAccountsHandler(
 func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
 	client *github.Client,
 	orgsChan chan<- *github.Organization,
-	errChan chan<- error) {
+	errChan chan<- error,
+) {
 	defer close(orgsChan)
 	defer close(errChan)
 
@@ -50,7 +51,6 @@ func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
 				PerPage: 100,
 				Page:    page,
 			})
-
 			if err != nil {
 				errChan <- err
 				return
@@ -71,7 +71,6 @@ func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
 
 func (c *GetGithubAppAccountsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	tok, err := GetGithubAppOauthTokenFromRequest(c.Config(), r)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
@@ -110,7 +109,6 @@ resultOrErrorReader:
 	}
 
 	authUser, _, err := client.Users.Get(r.Context(), "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

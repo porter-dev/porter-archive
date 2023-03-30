@@ -28,7 +28,6 @@ func NewGetGithubStatusHandler(
 
 func (c *GetGithubStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Get("https://www.githubstatus.com/api/v2/incidents/unresolved.json")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error fetching github incidents: %w", err)))
 		return
@@ -37,7 +36,6 @@ func (c *GetGithubStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error reading github incidents: %w", err)))
 		return

@@ -40,7 +40,6 @@ func (c *GetPorterEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -48,14 +47,12 @@ func (c *GetPorterEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	// get agent service
 	agentSvc, err := porter_agent.GetAgentService(agent.Clientset)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	events, err := porter_agent.ListPorterEvents(agent.Clientset, agentSvc, request)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

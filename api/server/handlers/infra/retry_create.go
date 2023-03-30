@@ -64,7 +64,6 @@ func (c *InfraRetryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	lastOperation, err := c.Repo().Infra().GetLatestOperation(infra)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -117,7 +116,6 @@ func (c *InfraRetryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		Values:        vals,
 		OperationKind: "retry_create",
 	})
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

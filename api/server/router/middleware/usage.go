@@ -33,7 +33,6 @@ func (b *UsageMiddleware) Middleware(next http.Handler) http.Handler {
 			Repo:             b.config.Repo,
 			WhitelistedUsers: b.config.WhitelistedUsers,
 		})
-
 		if err != nil {
 			apierrors.HandleAPIError(
 				b.config.Logger,

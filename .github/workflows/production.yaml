@@ -41,6 +41,7 @@ jobs:
           COHERE_API_KEY=${{secrets.COHERE_KEY}}
           INTERCOM_APP_ID=${{secrets.INTERCOM_APP_ID}}
           INTERCOM_SRC=${{secrets.INTERCOM_SRC}}
+          HOTJAR_ID=${{secrets.HOTJAR_ID}}
           SEGMENT_WRITE_KEY=${{secrets.SEGMENT_WRITE_KEY}}
           SEGMENT_PUBLIC_KEY=${{secrets.SEGMENT_PUBLIC_KEY}}
           APPLICATION_CHART_REPO_URL=https://charts.getporter.dev

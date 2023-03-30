@@ -46,7 +46,6 @@ func (c *Client) Logout(ctx context.Context) error {
 		nil,
 		nil,
 	)
-
 	if err != nil {
 		return err
 	}

@@ -29,7 +29,6 @@ func (p *PolicyListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	policies, err := p.Repo().Policy().ListPoliciesByProjectID(proj.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

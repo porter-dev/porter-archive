@@ -35,21 +35,18 @@ func (p *StackDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if len(stack.Revisions) > 0 {
 		revision, err := p.Repo().Stack().ReadStackRevisionByNumber(stack.ID, stack.Revisions[0].RevisionNumber)
-
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
 
 		k8sAgent, err := p.GetAgent(r, cluster, "")
-
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
 
 		helmAgent, err := p.GetHelmAgent(r, cluster, namespace)
-
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -70,7 +67,6 @@ func (p *StackDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stack, err := p.Repo().Stack().DeleteStack(stack)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

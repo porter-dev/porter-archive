@@ -17,7 +17,6 @@ func TestListUsersByIDs(t *testing.T) {
 	defer cleanup(tester, t)
 
 	users, err := tester.repo.User().ListUsersByIDs([]uint{1, 2})
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -56,13 +55,11 @@ func TestReadUserByGithubUserID(t *testing.T) {
 	}
 
 	user, err := tester.repo.User().CreateUser(user)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
 	readUser, err := tester.repo.User().ReadUserByGithubUserID(5)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -88,13 +85,11 @@ func TestReadUserByGoogleUserID(t *testing.T) {
 	}
 
 	user, err := tester.repo.User().CreateUser(user)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
 	readUser, err := tester.repo.User().ReadUserByGoogleUserID("alsdkfjsldaf")
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

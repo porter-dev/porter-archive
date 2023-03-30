@@ -26,8 +26,10 @@ type getURLParamErrTest struct {
 	expErrStr string
 }
 
-const urlParamNotFoundFmt = "could not find url param %s"
-const urlParamErrUintConvFmt = "could not convert url parameter %s to uint, got %s"
+const (
+	urlParamNotFoundFmt    = "could not find url param %s"
+	urlParamErrUintConvFmt = "could not convert url parameter %s to uint, got %s"
+)
 
 var getURLUintParamErrTests = []getURLParamErrTest{
 	{
@@ -91,7 +93,6 @@ func TestGetURLParamString(t *testing.T) {
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
 	res, err := requestutils.GetURLParamString(r, "name")
-
 	if err != nil {
 		t.Fatalf("[ GetURLParamString ] returneed an error when no error was expected, %v", err.Error())
 	}
@@ -113,7 +114,6 @@ func TestGetURLParamUint(t *testing.T) {
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
 	res, err := requestutils.GetURLParamUint(r, "name")
-
 	if err != nil {
 		t.Fatalf("[ GetURLParamUint ] returneed an error when no error was expected, %v", err.Error())
 	}

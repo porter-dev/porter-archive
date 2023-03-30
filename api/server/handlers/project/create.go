@@ -99,7 +99,6 @@ func CreateProjectWithUser(
 	user *models.User,
 ) (*models.Project, *models.Role, error) {
 	proj, err := projectRepo.CreateProject(proj)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -112,7 +111,6 @@ func CreateProjectWithUser(
 			Kind:      types.RoleAdmin,
 		},
 	})
-
 	if err != nil {
 		return nil, nil, err
 	}

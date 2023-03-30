@@ -43,7 +43,6 @@ func (c *GetEnvGroupAllVersionsHandler) ServeHTTP(w http.ResponseWriter, r *http
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -66,7 +65,6 @@ func (c *GetEnvGroupAllVersionsHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	for _, cm := range configMaps {
 		eg, err := envgroup.ToEnvGroup(&cm)
-
 		if err != nil {
 			continue
 		}

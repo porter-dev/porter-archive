@@ -31,7 +31,6 @@ func NewApplier(client *api.Client, raw []byte, namespace string) (*PreviewAppli
 	parsed := &PorterYAML{}
 
 	err := yaml.Unmarshal(raw, parsed)
-
 	if err != nil {
 		errMsg := composePreviewMessage("error parsing porter.yaml", Error)
 		return nil, fmt.Errorf("%s: %w", errMsg, err)
@@ -88,7 +87,6 @@ func (a *PreviewApplier) Apply() error {
 		config.GetCLIConfig().Project,
 		config.GetCLIConfig().Cluster,
 	)
-
 	if err != nil {
 		errMsg := composePreviewMessage(fmt.Sprintf("error listing namespaces for project '%d', cluster '%d'",
 			config.GetCLIConfig().Project, config.GetCLIConfig().Cluster), Error)
@@ -143,7 +141,6 @@ func (a *PreviewApplier) Apply() error {
 
 func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
 	err := a.Apply()
-
 	if err != nil {
 		return nil, err
 	}
@@ -162,13 +159,11 @@ func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
 		buildRefs[b.GetName()] = b
 
 		bi, err := b.getV1BuildImage()
-
 		if err != nil {
 			return nil, err
 		}
 
 		pi, err := b.getV1PushImage()
-
 		if err != nil {
 			return nil, err
 		}
@@ -188,7 +183,6 @@ func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
 		}
 
 		ai, err := app.getV1Resource(buildRefs[app.GetBuildRef()])
-
 		if err != nil {
 			return nil, err
 		}
@@ -202,7 +196,6 @@ func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
 		}
 
 		ai, err := addon.getV1Addon()
-
 		if err != nil {
 			return nil, err
 		}

@@ -45,7 +45,6 @@ func (c *InfraGetTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	nameLower := strings.ToLower(name)
 
 	formYAML, err := parser.FormYAMLFromBytes(&parser.ClientConfigDefault{}, getFormBytesFromKind(name), "declared", "infra")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

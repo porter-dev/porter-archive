@@ -77,13 +77,11 @@ func (e *AuthError) Error() string {
 // UpdateClientset updates the Agent's Clientset (this refreshes auth tokens)
 func (a *Agent) UpdateClientset() error {
 	restConf, err := a.RESTClientGetter.ToRESTConfig()
-
 	if err != nil {
 		return err
 	}
 
 	clientset, err := kubernetes.NewForConfig(restConf)
-
 	if err != nil {
 		return err
 	}
@@ -265,7 +263,6 @@ func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[str
 	}
 
 	patchBytes, err := json.Marshal(mergeCM)
-
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +298,6 @@ func (a *Agent) UpdateLinkedSecret(name, namespace, cmName string, data map[stri
 	}
 
 	patchBytes, err := json.Marshal(mergeSecret)
-
 	if err != nil {
 		return err
 	}
@@ -342,7 +338,6 @@ func (a *Agent) ListVersionedConfigMaps(name string, namespace string) ([]v1.Con
 			LabelSelector: fmt.Sprintf("envgroup=%s", name),
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +372,6 @@ func (a *Agent) ListAllVersionedConfigMaps(namespace string) ([]v1.ConfigMap, er
 			LabelSelector: fmt.Sprintf("envgroup"),
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -437,7 +431,6 @@ func (a *Agent) GetVersionedConfigMap(name, namespace string, version uint) (*v1
 			LabelSelector: fmt.Sprintf("envgroup=%s,version=%d", name, version),
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -461,7 +454,6 @@ func (a *Agent) GetLatestVersionedConfigMap(name, namespace string) (*v1.ConfigM
 			LabelSelector: fmt.Sprintf("envgroup=%s", name),
 		},
 	)
-
 	if err != nil {
 		return nil, 0, err
 	}
@@ -483,7 +475,6 @@ func (a *Agent) GetLatestVersionedConfigMap(name, namespace string) (*v1.ConfigM
 			}
 
 			version, err := strconv.Atoi(versionStr)
-
 			if err != nil {
 				continue
 			}
@@ -506,7 +497,6 @@ func (a *Agent) GetLatestVersionedConfigMap(name, namespace string) (*v1.ConfigM
 				}
 			}
 		}
-
 	}
 
 	if res == nil {
@@ -523,7 +513,6 @@ func (a *Agent) GetLatestVersionedSecret(name, namespace string) (*v1.Secret, ui
 			LabelSelector: fmt.Sprintf("envgroup=%s", name),
 		},
 	)
-
 	if err != nil {
 		return nil, 0, err
 	}
@@ -545,7 +534,6 @@ func (a *Agent) GetLatestVersionedSecret(name, namespace string) (*v1.Secret, ui
 			}
 
 			version, err := strconv.Atoi(versionStr)
-
 			if err != nil {
 				continue
 			}
@@ -568,7 +556,6 @@ func (a *Agent) GetLatestVersionedSecret(name, namespace string) (*v1.Secret, ui
 				}
 			}
 		}
-
 	}
 
 	if res == nil {
@@ -684,7 +671,6 @@ func (a *Agent) GetNamespace(name string) (*v1.Namespace, error) {
 		name,
 		metav1.GetOptions{},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -752,7 +738,6 @@ func (a *Agent) ListJobsByLabel(namespace string, labels ...Label) ([]batchv1.Jo
 			LabelSelector: strings.Join(selectors, ","),
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -830,7 +815,6 @@ func (a *Agent) StreamJobs(namespace string, selectors string, rw *websocket.Web
 						LabelSelector: labelSelector,
 					},
 				)
-
 				if err != nil {
 					errorchan <- err
 					return
@@ -838,7 +822,6 @@ func (a *Agent) StreamJobs(namespace string, selectors string, rw *websocket.Web
 
 				for _, job := range jobs.Items {
 					err := rw.WriteJSON(job)
-
 					if err != nil {
 						errorchan <- err
 						return
@@ -892,7 +875,6 @@ func (a *Agent) GetJobPods(namespace, jobName string) ([]v1.Pod, error) {
 			LabelSelector: fmt.Sprintf("%s=%s", "job-name", jobName),
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -951,13 +933,11 @@ func (a *Agent) GetNetworkingV1Beta1Ingress(namespace string, name string) (*net
 
 func (a *Agent) GetIstioIngress(namespace, name string) (*istiov1beta1.Gateway, error) {
 	restConf, err := a.RESTClientGetter.ToRESTConfig()
-
 	if err != nil {
 		return nil, err
 	}
 
 	clientset, err := versionedclient.NewForConfig(restConf)
-
 	if err != nil {
 		return nil, err
 	}
@@ -965,7 +945,6 @@ func (a *Agent) GetIstioIngress(namespace, name string) (*istiov1beta1.Gateway, 
 	gateway, err := clientset.NetworkingV1beta1().Gateways(namespace).Get(
 		context.Background(), name, metav1.GetOptions{},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1238,7 +1217,6 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 
 		for {
 			bytes, err := r.ReadBytes('\n')
-
 			if err != nil {
 				errorchan <- err
 				return
@@ -1331,7 +1309,6 @@ func (a *Agent) GetPreviousPodLogs(namespace string, name string, selectedContai
 // StopJobWithJobSidecar sends a termination signal to a job running with a sidecar
 func (a *Agent) StopJobWithJobSidecar(namespace, name string) error {
 	jobPods, err := a.GetJobPods(namespace, name)
-
 	if err != nil {
 		return err
 	}
@@ -1348,7 +1325,6 @@ func (a *Agent) StopJobWithJobSidecar(namespace, name string) error {
 	restConf.NegotiatedSerializer = runtime.NewSimpleNegotiatedSerializer(runtime.SerializerInfo{})
 
 	restClient, err := rest.RESTClientFor(restConf)
-
 	if err != nil {
 		return err
 	}
@@ -1366,7 +1342,6 @@ func (a *Agent) StopJobWithJobSidecar(namespace, name string) error {
 	req.Param("tty", "false")
 
 	exec, err := remotecommand.NewSPDYExecutor(restConf, "POST", req.URL())
-
 	if err != nil {
 		return err
 	}
@@ -1380,7 +1355,6 @@ func (a *Agent) StopJobWithJobSidecar(namespace, name string) error {
 // RunWebsocketTask will run a websocket task. If the websocket returns an anauthorized error, it will restart
 // the task some number of times until failing
 func (a *Agent) RunWebsocketTask(task func() error) error {
-
 	lastTime := int64(0)
 
 	for {
@@ -1409,7 +1383,6 @@ func (a *Agent) RunWebsocketTask(task func() error) error {
 // StreamControllerStatus streams controller status. Supports Deployment, StatefulSet, ReplicaSet, and DaemonSet
 // TODO: Support Jobs
 func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websocket.WebsocketSafeReadWriter) error {
-
 	run := func() error {
 		// selectors is an array of max length 1. StreamControllerStatus accepts calls without the selectors argument.
 		// selectors argument is a single string with comma separated key=value pairs. (e.g. "app=porter,porter=true")
@@ -1503,7 +1476,6 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 						Kind:      strings.ToLower(kind),
 					}
 					err := rw.WriteJSON(msg)
-
 					if err != nil {
 						errorchan <- err
 					}
@@ -1516,7 +1488,6 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 					}
 
 					err := rw.WriteJSON(msg)
-
 					if err != nil {
 						errorchan <- err
 					}
@@ -1529,7 +1500,6 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 					}
 
 					err := rw.WriteJSON(msg)
-
 					if err != nil {
 						errorchan <- err
 					}
@@ -1609,7 +1579,6 @@ func ParseSecretToHelmRelease(secret v1.Secret, chartList []string) (*rspb.Relea
 	}
 
 	helm_object, err := decodeRelease(string(releaseData))
-
 	if err != nil {
 		return nil, true, err
 	}
@@ -1836,7 +1805,6 @@ func (a *Agent) StreamPorterAgentLokiLog(
 			podList, err := a.Clientset.CoreV1().Pods("porter-agent-system").List(context.Background(), metav1.ListOptions{
 				LabelSelector: "control-plane=controller-manager",
 			})
-
 			if err != nil {
 				errorchan <- err
 				return
@@ -1850,7 +1818,6 @@ func (a *Agent) StreamPorterAgentLokiLog(
 			pod := podList.Items[0]
 
 			restConf, err := a.RESTClientGetter.ToRESTConfig()
-
 			if err != nil {
 				errorchan <- err
 				return
@@ -1893,7 +1860,6 @@ func (a *Agent) StreamPorterAgentLokiLog(
 			)
 
 			exec, err := remotecommand.NewSPDYExecutor(restConf, "POST", req.URL())
-
 			if err != nil {
 				errorchan <- err
 				return
@@ -1937,7 +1903,6 @@ func (a *Agent) CreateImagePullSecrets(
 		_reg := registry.Registry(*val)
 
 		data, err := _reg.GetDockerConfigJSON(repo, doAuth)
-
 		if err != nil {
 			return nil, err
 		}
@@ -1994,7 +1959,6 @@ func (a *Agent) CreateImagePullSecrets(
 				},
 				metav1.UpdateOptions{},
 			)
-
 			if err != nil {
 				return nil, err
 			}

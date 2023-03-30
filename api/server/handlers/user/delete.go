@@ -29,7 +29,6 @@ func (u *UserDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	user, err := u.Repo().User().DeleteUser(user)
-
 	if err != nil {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

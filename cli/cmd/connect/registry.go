@@ -24,20 +24,17 @@ func Registry(
 	// query for helm repo name
 	repoURL, err := utils.PromptPlaintext(fmt.Sprintf(`Provide the image registry URL (include the protocol). For example, https://my-custom-registry.getporter.dev.
 Image registry URL: `))
-
 	if err != nil {
 		return 0, err
 	}
 
 	username, err := utils.PromptPlaintext(fmt.Sprintf(`Provide the username/password for authentication (press enter if no authenicaiton is required).
 Username: `))
-
 	if err != nil {
 		return 0, err
 	}
 
 	password, err := utils.PromptPasswordWithConfirmation()
-
 	if err != nil {
 		return 0, err
 	}
@@ -51,7 +48,6 @@ Username: `))
 			Password: password,
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -67,7 +63,6 @@ Username: `))
 			BasicIntegrationID: integration.ID,
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}

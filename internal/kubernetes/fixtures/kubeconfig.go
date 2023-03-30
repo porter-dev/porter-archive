@@ -191,6 +191,7 @@ users:
   user:
     tokenFile: /path/to/token/file.txt
 `
+
 const GCPPlugin string = `
 apiVersion: v1
 kind: Config

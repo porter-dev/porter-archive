@@ -22,7 +22,6 @@ func GetGithubAppOauthTokenFromRequest(config *config.Config, r *http.Request) (
 
 	getOAuthInt := config.Repo.GithubAppOAuthIntegration().ReadGithubAppOauthIntegration
 	oauthInt, err := getOAuthInt(user.GithubAppIntegrationID)
-
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +63,6 @@ func GetGithubAppClientFromRequest(config *config.Config, r *http.Request) (*git
 		ga.InstallationID,
 		config.GithubAppConf.SecretPath,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +95,6 @@ func GetGithubAppPermissions(config *config.Config, r *http.Request) (*GithubApp
 		ga.InstallationID,
 		config.GithubAppConf.SecretPath,
 	)
-
 	if err != nil {
 		return nil, err
 	}

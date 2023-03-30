@@ -42,7 +42,6 @@ func (c *CreateTagHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Color:     newTag.Color,
 		ProjectID: project.ID,
 	})
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 	}

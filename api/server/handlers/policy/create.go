@@ -50,14 +50,12 @@ func (p *PolicyCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	uid, err := encryption.GenerateRandomBytes(16)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	policyBytes, err := json.Marshal(req.Policy)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -79,7 +77,6 @@ func (p *PolicyCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	res, err := policy.ToAPIPolicyType()
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

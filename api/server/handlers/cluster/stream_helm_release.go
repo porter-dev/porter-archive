@@ -40,7 +40,6 @@ func (c *StreamHelmReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

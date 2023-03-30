@@ -36,7 +36,6 @@ func (r *TemplateReader) ValuesFromTarget() (map[string]interface{}, error) {
 		man := make(map[string]interface{})
 
 		err := yaml.Unmarshal([]byte(manifest), &man)
-
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +59,6 @@ func (r *TemplateReader) RegisterQuery(query *templater.TemplateReaderQuery) err
 // Read executes a set of queries against the helm values in the release/chart
 func (r *TemplateReader) Read() (map[string]interface{}, error) {
 	values, err := r.ValuesFromTarget()
-
 	if err != nil {
 		return nil, err
 	}

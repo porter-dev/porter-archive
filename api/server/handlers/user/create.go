@@ -63,7 +63,6 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// hash the password using bcrypt
 	hashedPw, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
-
 	if err != nil {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -88,7 +87,6 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// save the user as authenticated in the session
 	redirect, err := authn.SaveUserAuthenticated(w, r, u.Config(), user)
-
 	if err != nil {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -135,7 +133,6 @@ func addUserToDefaultProject(config *config.Config, user *models.User) error {
 		if user.ID == 1 {
 			// read the default project
 			project, err := config.Repo.Project().ReadProject(1)
-
 			if err != nil {
 				return err
 			}

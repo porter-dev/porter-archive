@@ -45,14 +45,12 @@ func (c *GetEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, namespace, request.Version)
-
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
@@ -66,7 +64,6 @@ func (c *GetEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stackId, err := stacks.GetStackForEnvGroup(c.Config(), cluster.ProjectID, cluster.ID, envGroup)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.WriteResult(w, r, &types.GetEnvGroupResponse{EnvGroup: envGroup})

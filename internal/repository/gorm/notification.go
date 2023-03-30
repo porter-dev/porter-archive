@@ -72,7 +72,6 @@ func (repo JobNotificationConfigRepository) CreateNotificationConfig(am *models.
 				SELECT id FROM job_notification_configs j2 WHERE j2.project_id = ? AND j2.cluster_id = ? ORDER BY j2.updated_at desc, j2.id desc LIMIT 999
 			  )
 			`, am.ProjectID, am.ClusterID, am.ProjectID, am.ClusterID).Error
-
 		if err != nil {
 			return nil, err
 		}

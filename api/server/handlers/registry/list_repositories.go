@@ -33,7 +33,6 @@ func (c *RegistryListRepositoriesHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	regAPI := &_reg
 
 	repos, err := regAPI.ListRepositories(c.Repo(), c.Config().DOConf)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

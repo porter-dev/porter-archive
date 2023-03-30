@@ -14,7 +14,6 @@ func SaveUserAuthenticated(
 	user *models.User,
 ) (string, error) {
 	session, err := config.Store.Get(r, config.ServerConf.CookieName)
-
 	if err != nil {
 		return "", err
 	}
@@ -41,7 +40,6 @@ func SaveUserUnauthenticated(
 	config *config.Config,
 ) error {
 	session, err := config.Store.Get(r, config.ServerConf.CookieName)
-
 	if err != nil {
 		return err
 	}

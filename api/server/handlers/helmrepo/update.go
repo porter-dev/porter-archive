@@ -40,7 +40,6 @@ func (p *HelmRepoUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	helmRepo, err := p.Repo().HelmRepo().ReadHelmRepo(proj.ID, helmRepoID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			p.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such helm repo")))
@@ -82,7 +81,6 @@ func (p *HelmRepoUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	// if a basic integration is specified, verify that it exists in the project
 	if request.BasicIntegrationID != 0 {
 		_, err := p.Repo().BasicIntegration().ReadBasicIntegration(proj.ID, request.BasicIntegrationID)
-
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				p.HandleAPIError(w, r, apierrors.NewErrForbidden(

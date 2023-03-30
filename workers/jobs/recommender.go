@@ -106,7 +106,6 @@ func NewRecommender(
 	// parse input
 	parsedInput := &recommenderInput{}
 	err := mapstructure.Decode(opts.Input, parsedInput)
-
 	if err != nil {
 		return nil, err
 	}
@@ -119,13 +118,11 @@ func NewRecommender(
 	}
 
 	clusterIDs, err := getClustersToParse(db, repo.Cluster(), parsedInput, opts.LegacyProjectIDs)
-
 	if err != nil {
 		return nil, err
 	}
 
 	recommenderID, err := encryption.GenerateRandomBytes(32)
-
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +141,6 @@ func getClustersToParse(db *gorm.DB, clusterRepo repository.ClusterRepository, i
 		}
 
 		_, err := clusterRepo.ReadCluster(input.Projects[0], input.ClusterID)
-
 		if err != nil {
 			return nil, err
 		}
@@ -193,7 +189,6 @@ func (n *recommender) Run() error {
 		fmt.Println(ids.projectID, ids.clusterID)
 
 		cluster, err := n.repo.Cluster().ReadCluster(ids.projectID, ids.clusterID)
-
 		if err != nil {
 			log.Printf("error reading cluster ID %d: %v. skipping cluster ...", ids.clusterID, err)
 			continue
@@ -206,7 +201,6 @@ func (n *recommender) Run() error {
 			AllowInClusterConnections: false,
 			Timeout:                   5 * time.Second,
 		})
-
 		if err != nil {
 			log.Printf("error getting k8s agent for cluster ID %d: %v. skipping cluster ...", ids.clusterID, err)
 			continue
@@ -218,7 +212,6 @@ func (n *recommender) Run() error {
 			DigitalOceanOAuth:         n.doConf,
 			AllowInClusterConnections: false,
 		})
-
 		if err != nil {
 			log.Printf("error getting dynamic client for cluster ID %d: %v. skipping cluster ...", ids.clusterID, err)
 			continue
@@ -227,7 +220,6 @@ func (n *recommender) Run() error {
 		runner := opa.NewRunner(n.policies, cluster, k8sAgent, dynamicClient)
 
 		queryResults, err := runner.GetRecommendations(n.categories)
-
 		if err != nil {
 			log.Printf("error querying opa policies for cluster ID %d: %v. skipping cluster ...", ids.clusterID, err)
 			continue

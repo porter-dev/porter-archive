@@ -47,7 +47,6 @@ func (t *TemplateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hrs, err := t.Repo().HelmRepo().ListHelmReposByProjectID(project.ID)
-
 	if err != nil {
 		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -83,7 +82,6 @@ func (t *TemplateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	chart, err := loader.LoadChartPublic(request.RepoURL, name, version)
-
 	if err != nil {
 		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -101,7 +99,6 @@ func (t *TemplateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, file := range chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
 			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data, "declared", "")
-
 			if err != nil {
 				break
 			}

@@ -22,7 +22,6 @@ func NewWebsocketMiddleware(config *config.Config) *WebsocketMiddleware {
 func (wm *WebsocketMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, newRW, safeRW, err := wm.config.WSUpgrader.Upgrade(w, r, nil)
-
 		if err != nil {
 			if errors.Is(err, websocket.UpgraderCheckOriginErr) {
 				apierrors.HandleAPIError(wm.config.Logger, wm.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)

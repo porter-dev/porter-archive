@@ -36,13 +36,11 @@ func main() {
 	}
 
 	envConf, err := config.FromEnv()
-
 	if err != nil {
 		log.Fatal("Environment loading failed: ", err)
 	}
 
 	config, err := config.GetConfig(envConf)
-
 	if err != nil {
 		log.Fatal("Config loading failed: ", err)
 	}

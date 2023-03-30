@@ -32,7 +32,6 @@ func (c *GetNotificationHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	namespace := r.Context().Value(types.NamespaceScope).(string)
 
 	release, err := c.Repo().Release().ReadRelease(cluster.ID, name, namespace)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			w.WriteHeader(http.StatusNotFound)
@@ -53,7 +52,6 @@ func (c *GetNotificationHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	if release.NotificationConfig != 0 {
 		notifConfig, err := c.Repo().NotificationConfig().ReadNotificationConfig(release.NotificationConfig)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return

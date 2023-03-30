@@ -84,7 +84,6 @@ func LoadRepoIndex(client *BasicAuthClient, repoURL string) (*repo.IndexFile, er
 	indexURL := trimmedRepoURL + "/index.yaml"
 
 	req, err := http.NewRequest("GET", indexURL, nil)
-
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +93,6 @@ func LoadRepoIndex(client *BasicAuthClient, repoURL string) (*repo.IndexFile, er
 	}
 
 	resp, err := http.DefaultClient.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +100,6 @@ func LoadRepoIndex(client *BasicAuthClient, repoURL string) (*repo.IndexFile, er
 	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
-
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +125,6 @@ func LoadRepoIndexPublic(repoURL string) (*repo.IndexFile, error) {
 // LoadChart uses an http request to fetch a chart from a remote Helm repo
 func LoadChart(client *BasicAuthClient, repoURL, chartName, chartVersion string) (*chart.Chart, error) {
 	repoIndex, err := LoadRepoIndex(client, repoURL)
-
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +146,6 @@ func LoadChart(client *BasicAuthClient, repoURL, chartName, chartVersion string)
 
 	// download tgz
 	req, err := http.NewRequest("GET", chartURL, nil)
-
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +155,6 @@ func LoadChart(client *BasicAuthClient, repoURL, chartName, chartVersion string)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +162,6 @@ func LoadChart(client *BasicAuthClient, repoURL, chartName, chartVersion string)
 	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
-
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +182,6 @@ func LoadChartPublic(repoURL, chartName, chartVersion string) (*chart.Chart, err
 // as paths, other Helm repositories do not.
 func isValidURL(testURI string) bool {
 	_, err := url.ParseRequestURI(testURI)
-
 	if err != nil {
 		return false
 	}

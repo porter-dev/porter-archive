@@ -38,7 +38,6 @@ func (t *ChartListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if helmRepo.BasicAuthIntegrationID != 0 {
 		// read the basic integration id
 		basic, err := t.Repo().BasicIntegration().ReadBasicIntegration(proj.ID, helmRepo.BasicAuthIntegrationID)
-
 		if err != nil {
 			t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return

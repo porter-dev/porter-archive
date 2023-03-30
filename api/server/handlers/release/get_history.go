@@ -33,7 +33,6 @@ func (c *GetReleaseHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	helmAgent, err := c.GetHelmAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -42,7 +41,6 @@ func (c *GetReleaseHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	// get the name of the application
 	name, _ := requestutils.GetURLParamString(r, types.URLParamReleaseName)
 	history, err := helmAgent.GetReleaseHistory(name)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -28,7 +28,6 @@ func (p *SlackIntegrationListHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	slackInts, err := p.Repo().SlackIntegration().ListSlackIntegrationsByProjectID(project.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

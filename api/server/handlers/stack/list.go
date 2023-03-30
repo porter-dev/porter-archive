@@ -30,7 +30,6 @@ func (p *StackListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	namespace, _ := r.Context().Value(types.NamespaceScope).(string)
 
 	stacks, err := p.Repo().Stack().ListStacks(proj.ID, cluster.ID, namespace)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -17,13 +17,11 @@ func (s *ProvisionerServer) GetStateUpdate(infra *pb.Infra, server pb.Provisione
 	}
 
 	modelInfra, err := s.config.Repo.Infra().ReadInfra(name.ProjectID, name.InfraID)
-
 	if err != nil {
 		return err
 	}
 
 	operation, err := s.config.Repo.Infra().ReadOperation(name.InfraID, name.OperationUID)
-
 	if err != nil {
 		return err
 	}

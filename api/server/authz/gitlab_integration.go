@@ -40,7 +40,6 @@ func (p *GitlabIntegrationScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *
 	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 	integrationID := reqScopes[types.GitlabIntegrationScope].Resource.UInt
 	gi, err := p.config.Repo.GitlabIntegration().ReadGitlabIntegration(proj.ID, integrationID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(

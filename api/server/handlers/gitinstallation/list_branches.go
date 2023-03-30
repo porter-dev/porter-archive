@@ -37,7 +37,6 @@ func (c *GithubListBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	client, err := GetGithubAppClientFromRequest(c.Config(), r)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -49,7 +48,6 @@ func (c *GithubListBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			PerPage: 100,
 		},
 	})
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -74,7 +72,6 @@ func (c *GithubListBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			}
 
 			branches, _, err := client.Repositories.ListBranches(context.Background(), owner, name, opts)
-
 			if err != nil {
 				mu.Lock()
 				workerErr = err

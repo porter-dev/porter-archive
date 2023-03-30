@@ -16,7 +16,6 @@ func TestUserEmailExistsOnAllowlist(t *testing.T) {
 	expected := true
 
 	found, err := tester.repo.Allowlist().UserEmailExists("some@email.com")
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -38,7 +37,6 @@ func TestUserDontExistsOnAllowList(t *testing.T) {
 	expected := false
 
 	found, err := tester.repo.Allowlist().UserEmailExists("nonexisting@email.com")
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

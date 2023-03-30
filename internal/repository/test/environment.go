@@ -6,8 +6,7 @@ import (
 )
 
 // EnvironmentRepository uses gorm.DB for querying the database
-type EnvironmentRepository struct {
-}
+type EnvironmentRepository struct{}
 
 // NewEnvironmentRepository returns a DefaultEnvironmentRepository which uses
 // gorm.DB for querying the database

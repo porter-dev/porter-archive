@@ -39,7 +39,6 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		SQLLite:       true,
 		SQLLitePath:   tester.dbFileName,
 	})
-
 	if err != nil {
 		t.Fatalf("%\n", err)
 	}
@@ -90,7 +89,6 @@ func initUser(tester *tester, t *testing.T) {
 	}
 
 	user, err := tester.repo.User().CreateUser(user)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -124,7 +122,6 @@ func initCluster(tester *tester, t *testing.T) {
 	}
 
 	cluster, err := tester.repo.Cluster().CreateCluster(cluster)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -140,7 +137,6 @@ func initProject(tester *tester, t *testing.T) {
 	}
 
 	proj, err := tester.repo.Project().CreateProject(proj)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -172,7 +168,6 @@ func initKubeIntegration(tester *tester, t *testing.T) {
 	}
 
 	ki, err := tester.repo.KubeIntegration().CreateKubeIntegration(ki)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -214,7 +209,6 @@ func initEmptyStack(tester *tester, t *testing.T, stackName string) {
 	}
 
 	newStack, err := tester.repo.Stack().CreateStack(stack)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -265,7 +259,6 @@ func initStack(tester *tester, t *testing.T, stackName string) {
 	}
 
 	newStack, err := tester.repo.Stack().CreateStack(stack)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

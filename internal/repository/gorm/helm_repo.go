@@ -23,7 +23,6 @@ func NewHelmRepoRepository(db *gorm.DB, key *[32]byte) repository.HelmRepoReposi
 // CreateHelmRepo creates a new helm repo
 func (repo *HelmRepoRepository) CreateHelmRepo(hr *models.HelmRepo) (*models.HelmRepo, error) {
 	err := repo.EncryptHelmRepoData(hr, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +111,6 @@ func (repo *HelmRepoRepository) UpdateHelmRepoTokenCache(
 ) (*models.HelmRepo, error) {
 	if tok := tokenCache.Token; len(tok) > 0 {
 		cipherData, err := encryption.Encrypt(tok, repo.key)
-
 		if err != nil {
 			return nil, err
 		}
@@ -166,7 +164,6 @@ func (repo *HelmRepoRepository) EncryptHelmRepoData(
 ) error {
 	if tok := hr.TokenCache.Token; len(tok) > 0 {
 		cipherData, err := encryption.Encrypt(tok, key)
-
 		if err != nil {
 			return err
 		}
@@ -185,7 +182,6 @@ func (repo *HelmRepoRepository) DecryptHelmRepoData(
 ) error {
 	if tok := hr.TokenCache.Token; len(tok) > 0 {
 		plaintext, err := encryption.Decrypt(tok, key)
-
 		if err != nil {
 			return err
 		}

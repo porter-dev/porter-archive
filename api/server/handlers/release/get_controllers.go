@@ -40,7 +40,6 @@ func (c *GetControllersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -77,7 +76,6 @@ func getController(controller grapher.Object, agent *kubernetes.Agent) (rc inter
 	switch strings.ToLower(controller.Kind) {
 	case "deployment":
 		obj, err := agent.GetDeployment(controller)
-
 		if err != nil {
 			return nil, nil, err
 		}
@@ -85,7 +83,6 @@ func getController(controller grapher.Object, agent *kubernetes.Agent) (rc inter
 		return obj, obj.Spec.Selector, nil
 	case "statefulset":
 		obj, err := agent.GetStatefulSet(controller)
-
 		if err != nil {
 			return nil, nil, err
 		}
@@ -93,7 +90,6 @@ func getController(controller grapher.Object, agent *kubernetes.Agent) (rc inter
 		return obj, obj.Spec.Selector, nil
 	case "daemonset":
 		obj, err := agent.GetDaemonSet(controller)
-
 		if err != nil {
 			return nil, nil, err
 		}
@@ -101,7 +97,6 @@ func getController(controller grapher.Object, agent *kubernetes.Agent) (rc inter
 		return obj, obj.Spec.Selector, nil
 	case "replicaset":
 		obj, err := agent.GetReplicaSet(controller)
-
 		if err != nil {
 			return nil, nil, err
 		}
@@ -109,7 +104,6 @@ func getController(controller grapher.Object, agent *kubernetes.Agent) (rc inter
 		return obj, obj.Spec.Selector, nil
 	case "cronjob":
 		obj, err := agent.GetCronJob(controller)
-
 		if err != nil {
 			return nil, nil, err
 		}
@@ -125,7 +119,6 @@ func getController(controller grapher.Object, agent *kubernetes.Agent) (rc inter
 		return obj, res, nil
 	case "job":
 		obj, err := agent.GetJob(controller)
-
 		if err != nil {
 			return nil, nil, err
 		}

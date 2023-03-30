@@ -58,7 +58,6 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	// create a random webhook id
 	webhookUID, err := encryption.GenerateRandomBytes(32)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error generating webhook UID for new preview "+
 			"environment: %w", err)))
@@ -91,7 +90,6 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	// write Github actions files to the repo
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -137,7 +135,6 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	// generate porter jwt token
 	jwt, err := token.GetTokenForAPI(user.ID, project.ID)
-
 	if err != nil {
 		_, deleteErr := client.Repositories.DeleteHook(context.Background(), owner, name, hook.GetID())
 
@@ -160,7 +157,6 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	encoded, err := jwt.EncodeToken(c.Config().TokenConf)
-
 	if err != nil {
 		_, deleteErr := client.Repositories.DeleteHook(context.Background(), owner, name, hook.GetID())
 
@@ -271,7 +267,6 @@ func createWorkflowDispatchForBranch(
 	var errs []error
 
 	client, err := getGithubClientFromEnvironment(config, env)
-
 	if err != nil {
 		errs = append(errs, err)
 		return errs
@@ -298,7 +293,6 @@ func createWorkflowDispatchForBranch(
 				PRBranchFrom:  branch,
 				PRBranchInto:  branch,
 			})
-
 			if err != nil {
 				errs = append(errs, fmt.Errorf("error creating deployment for branch %s: %w", branch, err))
 				return errs

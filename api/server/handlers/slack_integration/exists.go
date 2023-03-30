@@ -1,8 +1,9 @@
 package slack_integration
 
 import (
-	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"net/http"
+
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -26,7 +27,6 @@ func (p *SlackIntegrationExists) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	slackInts, err := p.Repo().SlackIntegration().ListSlackIntegrationsByProjectID(project.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

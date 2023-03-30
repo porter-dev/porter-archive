@@ -37,7 +37,6 @@ func (p *StackGetRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	revision, err := p.Repo().Stack().ReadStackRevisionByNumber(stack.ID, revNumber)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

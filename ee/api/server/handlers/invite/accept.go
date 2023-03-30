@@ -36,7 +36,6 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	token, _ := requestutils.GetURLParamString(r, types.URLParamInviteToken)
 
 	proj, err := c.Repo().Project().ReadProject(projectID)
-
 	if err != nil {
 		vals := url.Values{}
 

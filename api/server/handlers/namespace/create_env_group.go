@@ -50,7 +50,6 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, namespace)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -69,7 +68,6 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -81,7 +79,6 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		Variables:       request.Variables,
 		SecretVariables: request.SecretVariables,
 	})
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -95,7 +92,6 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	releases, err := envgroup.GetSyncedReleases(helmAgent, configMap)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -134,7 +130,6 @@ func rolloutApplications(
 	releases []*release.Release,
 ) []error {
 	registries, err := config.Repo.Registry().ListRegistriesByProjectID(cluster.ProjectID)
-
 	if err != nil {
 		return []error{err}
 	}
@@ -170,7 +165,6 @@ func rolloutApplications(
 			defer wg.Done()
 			// read release via agent
 			newConfig, err := getNewConfig(release.Config, newSection)
-
 			if err != nil {
 				mu.Lock()
 				errors = append(errors, err)
@@ -221,7 +215,6 @@ type SyncedEnvSectionKey struct {
 func getNewConfig(curr map[string]interface{}, syncedEnvSection *SyncedEnvSection) (map[string]interface{}, error) {
 	// look for container.env.synced
 	envConf, err := getNestedMap(curr, "container", "env")
-
 	if err != nil {
 		return nil, err
 	}
@@ -337,7 +330,6 @@ func getNewConfig(curr map[string]interface{}, syncedEnvSection *SyncedEnvSectio
 	// Upgrade failed: template: web/templates/deployment.yaml:138:40: executing \"web/templates/deployment.yaml\"
 	// at <$syncedEnv.keys>: can't evaluate field keys in type namespace.SyncedEnvSection
 	currYAML, err := yaml.Marshal(curr)
-
 	if err != nil {
 		return nil, err
 	}

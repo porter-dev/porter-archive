@@ -56,6 +56,7 @@ func NewS3StorageClient(opts *S3Options) (*S3StorageClient, error) {
 		client:        s3.New(sess),
 	}, nil
 }
+
 func (s *S3StorageClient) WriteFile(infra *models.Infra, name string, fileBytes []byte, shouldEncrypt bool) error {
 	body := fileBytes
 	var err error
@@ -97,7 +98,6 @@ func (s *S3StorageClient) ReadFile(infra *models.Infra, name string, shouldDecry
 		Bucket: &s.bucket,
 		Key:    aws.String(getKeyFromInfra(infra, name)),
 	})
-
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {

@@ -37,7 +37,6 @@ type Agent struct {
 // the required label (a.label), an error is thrown.
 func (a *Agent) CreateLocalVolumeIfNotExist(name string) (*types.Volume, error) {
 	volListBody, err := a.VolumeList(a.ctx, filters.Args{})
-
 	if err != nil {
 		return nil, a.handleDockerClientErr(err, "Could not list volumes")
 	}
@@ -68,7 +67,6 @@ func (a *Agent) CreateLocalVolume(name string) (*types.Volume, error) {
 	}
 
 	vol, err := a.VolumeCreate(a.ctx, opts)
-
 	if err != nil {
 		return nil, a.handleDockerClientErr(err, "Could not create volume "+name)
 	}
@@ -86,7 +84,6 @@ func (a *Agent) RemoveLocalVolume(name string) error {
 // the required label (a.label), an error is thrown.
 func (a *Agent) CreateBridgeNetworkIfNotExist(name string) (id string, err error) {
 	networks, err := a.NetworkList(a.ctx, types.NetworkListOptions{})
-
 	if err != nil {
 		return "", a.handleDockerClientErr(err, "Could not list volumes")
 	}
@@ -114,7 +111,6 @@ func (a *Agent) CreateBridgeNetwork(name string) (id string, err error) {
 	}
 
 	net, err := a.NetworkCreate(a.ctx, name, opts)
-
 	if err != nil {
 		return "", a.handleDockerClientErr(err, "Could not create network "+name)
 	}
@@ -126,7 +122,6 @@ func (a *Agent) CreateBridgeNetwork(name string) (id string, err error) {
 func (a *Agent) ConnectContainerToNetwork(networkID, containerID, containerName string) error {
 	// check if the container is connected already
 	net, err := a.NetworkInspect(a.ctx, networkID, types.NetworkInspectOptions{})
-
 	if err != nil {
 		return a.handleDockerClientErr(err, "Could not inspect network"+networkID)
 	}
@@ -162,7 +157,6 @@ var PullImageErrUnauthorized = fmt.Errorf("Could not pull image: unauthorized")
 
 func getRegistryRepositoryPair(imageRepo string) ([]string, error) {
 	named, err := reference.ParseNamed(imageRepo)
-
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +169,6 @@ func getRegistryRepositoryPair(imageRepo string) ([]string, error) {
 // CheckIfImageExists checks if the image exists in the registry
 func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
 	registryToken, err := a.getContainerRegistryToken(imageRepo)
-
 	if err != nil {
 		return false
 	}
@@ -185,13 +178,11 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
 
 	if strings.Contains(imageRepo, "gcr.io") {
 		gcrRegRepo, err := getRegistryRepositoryPair(imageRepo)
-
 		if err != nil {
 			return false
 		}
 
 		named, err := reference.ParseNamed(imageRepo)
-
 		if err != nil {
 			return false
 		}
@@ -199,7 +190,6 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
 		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(
 			"https://%s/v2/%s/%s/tags/list", reference.Domain(named), gcrRegRepo[0], gcrRegRepo[1],
 		), nil)
-
 		if err != nil {
 			return false
 		}
@@ -208,7 +198,6 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", registryToken))
 
 		resp, err := http.DefaultClient.Do(req)
-
 		if err != nil {
 			return false
 		}
@@ -234,7 +223,6 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
 		return false
 	} else if strings.Contains(imageRepo, "registry.digitalocean.com") {
 		doRegRepo, err := getRegistryRepositoryPair(imageRepo)
-
 		if err != nil {
 			return false
 		}
@@ -244,7 +232,6 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
 		manifests, _, err := doClient.Registry.ListRepositoryManifests(
 			ctx, doRegRepo[0], doRegRepo[1], &godo.ListOptions{},
 		)
-
 		if err != nil {
 			return false
 		}
@@ -262,7 +249,6 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
 
 	image := imageRepo + ":" + imageTag
 	encodedRegistryAuth, err := a.getEncodedRegistryAuth(image)
-
 	if err != nil {
 		return false
 	}
@@ -282,14 +268,12 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
 // PullImage pulls an image specified by the image string
 func (a *Agent) PullImage(image string) error {
 	opts, err := a.getPullOptions(image)
-
 	if err != nil {
 		return err
 	}
 
 	// pull the specified image
 	out, err := a.ImagePull(a.ctx, image, opts)
-
 	if err != nil {
 		if client.IsErrNotFound(err) ||
 			(strings.Contains(image, "gcr.io") && strings.Contains(err.Error(), "or it may not exist")) {
@@ -311,7 +295,6 @@ func (a *Agent) PullImage(image string) error {
 // PushImage pushes an image specified by the image string
 func (a *Agent) PushImage(image string) error {
 	opts, err := a.getPushOptions(image)
-
 	if err != nil {
 		return err
 	}
@@ -342,7 +325,6 @@ func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {
 	}
 
 	authConfigEncoded, err := a.getEncodedRegistryAuth(image)
-
 	if err != nil {
 		return types.ImagePullOptions{}, err
 	}
@@ -355,13 +337,11 @@ func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {
 
 func (a *Agent) getContainerRegistryToken(image string) (string, error) {
 	serverURL, err := GetServerURLFromTag(image)
-
 	if err != nil {
 		return "", err
 	}
 
 	_, secret, err := a.authGetter.GetCredentials(serverURL)
-
 	if err != nil {
 		return "", err
 	}
@@ -372,18 +352,16 @@ func (a *Agent) getContainerRegistryToken(image string) (string, error) {
 func (a *Agent) getEncodedRegistryAuth(image string) (string, error) {
 	// get using server url
 	serverURL, err := GetServerURLFromTag(image)
-
 	if err != nil {
 		return "", err
 	}
 
 	user, secret, err := a.authGetter.GetCredentials(serverURL)
-
 	if err != nil {
 		return "", err
 	}
 
-	var authConfig = types.AuthConfig{
+	authConfig := types.AuthConfig{
 		Username:      user,
 		Password:      secret,
 		ServerAddress: "https://" + serverURL,
@@ -402,7 +380,6 @@ func (a *Agent) getPushOptions(image string) (types.ImagePushOptions, error) {
 
 func GetServerURLFromTag(image string) (string, error) {
 	named, err := reference.ParseNormalizedNamed(image)
-
 	if err != nil {
 		return "", err
 	}
@@ -461,7 +438,6 @@ func (a *Agent) WaitForContainerStop(id string) error {
 func (a *Agent) WaitForContainerHealthy(id string, streak int) error {
 	for {
 		cont, err := a.ContainerInspect(a.ctx, id)
-
 		if err != nil {
 			return a.handleDockerClientErr(err, "Error waiting for stopped container")
 		}

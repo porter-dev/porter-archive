@@ -60,7 +60,6 @@ func (p *GetGitlabRepoBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http
 	}
 
 	client, err := getGitlabClient(p.Repo(), user.ID, project.ID, gi, p.Config())
-
 	if err != nil {
 		if errors.Is(err, errUnauthorizedGitlabUser) {
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errUnauthorizedGitlabUser, http.StatusUnauthorized))
@@ -71,7 +70,6 @@ func (p *GetGitlabRepoBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http
 	}
 
 	dir, err := url.QueryUnescape(request.Dir)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("malformed query param dir")))
 		return

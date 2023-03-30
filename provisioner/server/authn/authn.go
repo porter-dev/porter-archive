@@ -63,8 +63,10 @@ func (authn *AuthNStatic) sendForbiddenError(err error, w http.ResponseWriter, r
 	apierrors.HandleAPIError(authn.config.Logger, authn.config.Alerter, w, r, reqErr, true)
 }
 
-var errInvalidToken = fmt.Errorf("authorization header exists, but token is not valid")
-var errInvalidAuthHeader = fmt.Errorf("invalid authorization header in request")
+var (
+	errInvalidToken      = fmt.Errorf("authorization header exists, but token is not valid")
+	errInvalidAuthHeader = fmt.Errorf("invalid authorization header in request")
+)
 
 // getTokenFromRequest finds an `Authorization` header of the form `Bearer <token>`,
 // and returns a valid token if it exists.
@@ -155,7 +157,6 @@ func (authn *AuthNPorterToken) getPorterTokenFromRequest(r *http.Request) (*mode
 	}
 
 	porterTokenID, err := strconv.ParseUint(r.Header.Get("X-Porter-Token-ID"), 10, 64)
-
 	if err != nil {
 		return nil, errInvalidToken
 	}
@@ -166,7 +167,6 @@ func (authn *AuthNPorterToken) getPorterTokenFromRequest(r *http.Request) (*mode
 func ValidatePorterToken(config *config.Config, tokenID uint, token string) (*models.CredentialsExchangeToken, error) {
 	// read the access token in the header, check against DB
 	ceToken, err := config.Repo.CredentialsExchangeToken().ReadCredentialsExchangeToken(tokenID)
-
 	if err != nil {
 		return nil, err
 	}

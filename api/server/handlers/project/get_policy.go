@@ -36,7 +36,6 @@ func (p *ProjectGetPolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		UserID:    user.ID,
 		ProjectID: proj.ID,
 	})
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 	}

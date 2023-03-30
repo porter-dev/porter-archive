@@ -23,7 +23,6 @@ func DOCR(
 
 	// list oauth integrations and make sure DO exists
 	resp, err := client.ListOAuthIntegrations(context.TODO(), projectID)
-
 	if err != nil {
 		return 0, err
 	}
@@ -53,7 +52,6 @@ func DOCR(
 	// use the digital ocean oauth to create a registry
 	regURL, err := utils.PromptPlaintext(fmt.Sprintf(`Please provide the registry URL, in the form registry.digitalocean.com/[REGISTRY_NAME]. For example, registry.digitalocean.com/porter-test. 
 Registry URL: `))
-
 	if err != nil {
 		return 0, err
 	}
@@ -88,7 +86,6 @@ func triggerDigitalOceanOAuth(client *api.Client, projectID uint) (*types.OAuthI
 
 	for {
 		resp, err := client.ListOAuthIntegrations(context.TODO(), projectID)
-
 		if err != nil {
 			return doAuth, err
 		}

@@ -27,7 +27,6 @@ func PushToOperationStream(
 	}
 
 	dataBytes, err := json.Marshal(pushData)
-
 	if err != nil {
 		return err
 	}
@@ -57,7 +56,6 @@ func SendOperationCompleted(
 	}
 
 	dataBytes, err := json.Marshal(data)
-
 	if err != nil {
 		return err
 	}
@@ -183,7 +181,6 @@ func StreamOperationLogs(
 					Block:   0,
 				},
 			).Result()
-
 			if err != nil {
 				errorchan <- err
 				return
@@ -305,7 +302,6 @@ func StreamStateUpdate(
 					Block:   0,
 				},
 			).Result()
-
 			if err != nil {
 				errorchan <- err
 				return
@@ -330,7 +326,6 @@ func StreamStateUpdate(
 				}
 
 				err := json.Unmarshal([]byte(dataString), stateData)
-
 				if err != nil {
 					continue
 				}

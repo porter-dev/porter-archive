@@ -20,7 +20,6 @@ func (pmw *PanicMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			err := recover()
-
 			if err != nil {
 				apierrors.HandleAPIError(pmw.config.Logger, pmw.config.Alerter, w, r, apierrors.NewErrInternal(fmt.Errorf("%v", err)), true)
 			}

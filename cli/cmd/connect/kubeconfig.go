@@ -35,7 +35,6 @@ func Kubeconfig(
 
 	// get the kubeconfig
 	rawBytes, err := local.GetKubeconfigFromHost(kubeconfigPath, contexts)
-
 	if err != nil {
 		return 0, err
 	}
@@ -49,7 +48,6 @@ func Kubeconfig(
 			IsLocal:    isLocal,
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -68,7 +66,6 @@ func Kubeconfig(
 				switch resolver.Name {
 				case types.ClusterCAData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
-
 					if err != nil {
 						return 0, err
 					}
@@ -77,7 +74,6 @@ func Kubeconfig(
 						resolver.Data["filename"],
 						absKubeconfigPath,
 					)
-
 					if err != nil {
 						return 0, err
 					}
@@ -89,13 +85,11 @@ func Kubeconfig(
 					}
 				case types.ClusterLocalhost:
 					err := resolveLocalhostAction(allResolver)
-
 					if err != nil {
 						return 0, err
 					}
 				case types.ClientCertData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
-
 					if err != nil {
 						return 0, err
 					}
@@ -104,7 +98,6 @@ func Kubeconfig(
 						resolver.Data["filename"],
 						absKubeconfigPath,
 					)
-
 					if err != nil {
 						return 0, err
 					}
@@ -116,7 +109,6 @@ func Kubeconfig(
 					}
 				case types.ClientKeyData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
-
 					if err != nil {
 						return 0, err
 					}
@@ -125,7 +117,6 @@ func Kubeconfig(
 						resolver.Data["filename"],
 						absKubeconfigPath,
 					)
-
 					if err != nil {
 						return 0, err
 					}
@@ -137,7 +128,6 @@ func Kubeconfig(
 					}
 				case types.OIDCIssuerData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
-
 					if err != nil {
 						return 0, err
 					}
@@ -146,7 +136,6 @@ func Kubeconfig(
 						resolver.Data["filename"],
 						absKubeconfigPath,
 					)
-
 					if err != nil {
 						return 0, err
 					}
@@ -158,7 +147,6 @@ func Kubeconfig(
 					}
 				case types.TokenData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
-
 					if err != nil {
 						return 0, err
 					}
@@ -167,7 +155,6 @@ func Kubeconfig(
 						resolver.Data["filename"],
 						absKubeconfigPath,
 					)
-
 					if err != nil {
 						return 0, err
 					}
@@ -183,7 +170,6 @@ func Kubeconfig(
 						cc.Name,
 						allResolver,
 					)
-
 					if err != nil {
 						return 0, err
 					}
@@ -196,7 +182,6 @@ func Kubeconfig(
 						cc.ContextName,
 						allResolver,
 					)
-
 					if err != nil {
 						return 0, err
 					}
@@ -209,7 +194,6 @@ func Kubeconfig(
 				cc.ID,
 				allResolver,
 			)
-
 			if err != nil {
 				return 0, err
 			}
@@ -223,7 +207,6 @@ func Kubeconfig(
 				projectID,
 				cc.CreatedClusterID,
 			)
-
 			if err != nil {
 				return 0, err
 			}
@@ -244,7 +227,6 @@ func resolveClusterCAAction(
 	resolver *types.ClusterResolverAll,
 ) error {
 	fileBytes, err := ioutil.ReadFile(filename)
-
 	if err != nil {
 		return err
 	}
@@ -268,7 +250,6 @@ func resolveClientCertAction(
 	resolver *types.ClusterResolverAll,
 ) error {
 	fileBytes, err := ioutil.ReadFile(filename)
-
 	if err != nil {
 		return err
 	}
@@ -284,7 +265,6 @@ func resolveClientKeyAction(
 	resolver *types.ClusterResolverAll,
 ) error {
 	fileBytes, err := ioutil.ReadFile(filename)
-
 	if err != nil {
 		return err
 	}
@@ -300,7 +280,6 @@ func resolveOIDCIssuerAction(
 	resolver *types.ClusterResolverAll,
 ) error {
 	fileBytes, err := ioutil.ReadFile(filename)
-
 	if err != nil {
 		return err
 	}
@@ -316,7 +295,6 @@ func resolveTokenDataAction(
 	resolver *types.ClusterResolverAll,
 ) error {
 	fileBytes, err := ioutil.ReadFile(filename)
-
 	if err != nil {
 		return err
 	}
@@ -342,21 +320,18 @@ Would you like to proceed? %s `,
 			color.New(color.FgCyan).Sprintf("[y/n]"),
 		),
 	)
-
 	if err != nil {
 		return err
 	}
 
 	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
 		agent, err := gcpLocal.NewDefaultAgent()
-
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
 		}
 
 		projID, err := agent.GetProjectIDForGKECluster(endpoint)
-
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
@@ -368,7 +343,6 @@ Would you like to proceed? %s `,
 
 		// create the service account and give it the correct iam permissions
 		resp, err := agent.CreateServiceAccount(name)
-
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
@@ -383,7 +357,6 @@ Would you like to proceed? %s `,
 
 		// get the service account key data to send to the server
 		bytes, err := agent.CreateServiceAccountKey(resp)
-
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)
@@ -404,7 +377,6 @@ func resolveGCPKeyActionManual(
 ) error {
 	keyFileLocation, err := utils.PromptPlaintext(fmt.Sprintf(`Please provide the full path to a service account key file.
 Key file location: `))
-
 	if err != nil {
 		return err
 	}
@@ -413,7 +385,6 @@ Key file location: `))
 	if info, err := os.Stat(keyFileLocation); !os.IsNotExist(err) && !info.IsDir() {
 		// read the file
 		bytes, err := ioutil.ReadFile(keyFileLocation)
-
 		if err != nil {
 			return err
 		}
@@ -445,21 +416,18 @@ Would you like to proceed? %s `,
 			color.New(color.FgCyan).Sprintf("[y/n]"),
 		),
 	)
-
 	if err != nil {
 		return err
 	}
 
 	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
 		agent, err := awsLocal.NewDefaultKubernetesAgent(kubeconfigPath, contextName)
-
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess, resolver)
 		}
 
 		creds, err := agent.CreateIAMKubernetesMapping(awsClusterIDGuess)
-
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveAWSActionManual(endpoint, clusterName, awsClusterIDGuess, resolver)
@@ -492,7 +460,6 @@ func resolveAWSActionManual(
 			color.New(color.FgCyan).Sprintf("[y/n]"),
 		),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -509,14 +476,12 @@ func resolveAWSActionManual(
 
 	// query for the access key id
 	accessKeyID, err := utils.PromptPlaintext(fmt.Sprintf(`AWS Access Key ID: `))
-
 	if err != nil {
 		return err
 	}
 
 	// query for the secret access key
 	secretKey, err := utils.PromptPlaintext(fmt.Sprintf(`AWS Secret Access Key: `))
-
 	if err != nil {
 		return err
 	}

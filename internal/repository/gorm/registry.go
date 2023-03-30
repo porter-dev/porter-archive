@@ -23,7 +23,6 @@ func NewRegistryRepository(db *gorm.DB, key *[32]byte) repository.RegistryReposi
 // CreateRegistry creates a new registry
 func (repo *RegistryRepository) CreateRegistry(reg *models.Registry) (*models.Registry, error) {
 	err := repo.EncryptRegistryData(reg, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +123,6 @@ func (repo *RegistryRepository) UpdateRegistryTokenCache(
 ) (*models.Registry, error) {
 	if tok := tokenCache.Token; len(tok) > 0 {
 		cipherData, err := encryption.Encrypt(tok, repo.key)
-
 		if err != nil {
 			return nil, err
 		}
@@ -178,7 +176,6 @@ func (repo *RegistryRepository) EncryptRegistryData(
 ) error {
 	if tok := registry.TokenCache.Token; len(tok) > 0 {
 		cipherData, err := encryption.Encrypt(tok, key)
-
 		if err != nil {
 			return err
 		}
@@ -197,7 +194,6 @@ func (repo *RegistryRepository) DecryptRegistryData(
 ) error {
 	if tok := registry.TokenCache.Token; len(tok) > 0 {
 		plaintext, err := encryption.Decrypt(tok, key)
-
 		if err != nil {
 			return err
 		}

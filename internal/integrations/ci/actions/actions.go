@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Masterminds/semver/v3"
 	ghinstallation "github.com/bradleyfalzon/ghinstallation/v2"
@@ -15,8 +16,6 @@ import (
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/oauth2"
-
-	"strings"
 
 	"gopkg.in/yaml.v2"
 )
@@ -59,13 +58,10 @@ type GithubActions struct {
 	ShouldCreateWorkflow bool
 }
 
-var (
-	deleteWebhookAndEnvSecretsConstraint, _ = semver.NewConstraint(" < 0.1.0")
-)
+var deleteWebhookAndEnvSecretsConstraint, _ = semver.NewConstraint(" < 0.1.0")
 
 func (g *GithubActions) Setup() ([]byte, error) {
 	client, err := g.getClient()
-
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +72,6 @@ func (g *GithubActions) Setup() ([]byte, error) {
 		g.GitRepoOwner,
 		g.GitRepoName,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +86,6 @@ func (g *GithubActions) Setup() ([]byte, error) {
 	}
 
 	workflowYAML, err := g.GetGithubActionYAML()
-
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +105,6 @@ func (g *GithubActions) Setup() ([]byte, error) {
 			branch,
 			true,
 		)
-
 		if err != nil {
 			return nil, err
 		}
@@ -149,7 +142,6 @@ func (g *GithubActions) Setup() ([]byte, error) {
 					Head:  github.String("porter-setup"),
 				},
 			)
-
 			if err != nil {
 				return nil, err
 			}
@@ -170,7 +162,6 @@ func (g *GithubActions) Setup() ([]byte, error) {
 
 func (g *GithubActions) Cleanup() error {
 	client, err := g.getClient()
-
 	if err != nil {
 		return err
 	}
@@ -181,7 +172,6 @@ func (g *GithubActions) Cleanup() error {
 		g.GitRepoOwner,
 		g.GitRepoName,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -282,13 +272,11 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 }
 
 func (g *GithubActions) getClient() (*github.Client, error) {
-
 	// in the case that this still uses the oauth integration
 	if g.GithubOAuthIntegration != nil {
 
 		// get the oauth integration
 		oauthInt, err := g.Repo.OAuthIntegration().ReadOAuthIntegration(g.ProjectID, g.GithubOAuthIntegration.OAuthIntegrationID)
-
 		if err != nil {
 			return nil, err
 		}
@@ -315,7 +303,6 @@ func (g *GithubActions) getClient() (*github.Client, error) {
 		g.GithubAppID,
 		int64(g.GithubInstallationID),
 		g.GithubAppSecretPath)
-
 	if err != nil {
 		return nil, err
 	}
@@ -332,7 +319,6 @@ func createGithubSecret(
 ) error {
 	// get the public key for the repo
 	key, _, err := client.Actions.GetRepoPublicKey(context.TODO(), gitRepoOwner, gitRepoName)
-
 	if err != nil {
 		return err
 	}
@@ -341,7 +327,6 @@ func createGithubSecret(
 	keyBytes := [32]byte{}
 
 	keyDecoded, err := base64.StdEncoding.DecodeString(*key.Key)
-
 	if err != nil {
 		return err
 	}
@@ -349,7 +334,6 @@ func createGithubSecret(
 	copy(keyBytes[:], keyDecoded[:])
 
 	secretEncoded, err := box.SealAnonymous(nil, []byte(secretValue), &keyBytes, nil)
-
 	if err != nil {
 		return err
 	}
@@ -385,7 +369,6 @@ func (g *GithubActions) deleteGithubSecret(
 
 func (g *GithubActions) CreateEnvSecret() error {
 	client, err := g.getClient()
-
 	if err != nil {
 		return err
 	}
@@ -489,7 +472,6 @@ func commitWorkflowFile(
 		filepath,
 		opts,
 	)
-
 	if err != nil {
 		return "", err
 	}

@@ -48,7 +48,6 @@ func (c *Client) GetOAuthCredential(oauthIntegration *integrations.OAuthIntegrat
 	resp := &GetOAuthCredentialResponse{}
 
 	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getOAuthCredentialPath(oauthIntegration)), resp)
-
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +73,8 @@ func (c *Client) getOAuthCredentialPath(oauthIntegration *integrations.OAuthInte
 
 func (c *Client) WriteGCPCredential(
 	gcpIntegration *integrations.GCPIntegration,
-	data *credentials.GCPCredential) error {
+	data *credentials.GCPCredential,
+) error {
 	reqData := &CreateVaultSecretRequest{
 		Data: data,
 	}
@@ -86,7 +86,6 @@ func (c *Client) GetGCPCredential(gcpIntegration *integrations.GCPIntegration) (
 	resp := &GetGCPCredentialResponse{}
 
 	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getGCPCredentialPath(gcpIntegration)), resp)
-
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +111,8 @@ func (c *Client) getGCPCredentialPath(gcpIntegration *integrations.GCPIntegratio
 
 func (c *Client) WriteAWSCredential(
 	awsIntegration *integrations.AWSIntegration,
-	data *credentials.AWSCredential) error {
+	data *credentials.AWSCredential,
+) error {
 	reqData := &CreateVaultSecretRequest{
 		Data: data,
 	}
@@ -124,7 +124,6 @@ func (c *Client) GetAWSCredential(awsIntegration *integrations.AWSIntegration) (
 	resp := &GetAWSCredentialResponse{}
 
 	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getAWSCredentialPath(awsIntegration)), resp)
-
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +149,8 @@ func (c *Client) getAWSCredentialPath(awsIntegration *integrations.AWSIntegratio
 
 func (c *Client) WriteAzureCredential(
 	azIntegration *integrations.AzureIntegration,
-	data *credentials.AzureCredential) error {
+	data *credentials.AzureCredential,
+) error {
 	reqData := &CreateVaultSecretRequest{
 		Data: data,
 	}
@@ -162,7 +162,6 @@ func (c *Client) GetAzureCredential(azIntegration *integrations.AzureIntegration
 	resp := &GetAzureCredentialResponse{}
 
 	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getAzureCredentialPath(azIntegration)), resp)
-
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +199,6 @@ func (c *Client) GetGitlabCredential(
 	resp := &GetGitlabCredentialResponse{}
 
 	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getGitlabCredentialPath(giIntegration)), resp)
-
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +231,6 @@ func (c *Client) getToken(credPath, policyName string) (string, error) {
 	}
 
 	err := c.postRequest(fmt.Sprintf("/v1/sys/policy/%s", policyName), policyReq, nil)
-
 	if err != nil {
 		return "", err
 	}
@@ -271,7 +268,6 @@ func (c *Client) deleteRequest(path string, data interface{}, dst interface{}) e
 
 func (c *Client) getRequest(path string, dst interface{}) error {
 	reqURL, err := url.Parse(c.serverURL)
-
 	if err != nil {
 		return nil
 	}
@@ -283,7 +279,6 @@ func (c *Client) getRequest(path string, dst interface{}) error {
 		reqURL.String(),
 		nil,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -293,7 +288,6 @@ func (c *Client) getRequest(path string, dst interface{}) error {
 	req.Header.Set("X-Vault-Token", c.apiKey)
 
 	res, err := c.httpClient.Do(req)
-
 	if err != nil {
 		return err
 	}
@@ -302,7 +296,6 @@ func (c *Client) getRequest(path string, dst interface{}) error {
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		resBytes, err := ioutil.ReadAll(res.Body)
-
 		if err != nil {
 			return fmt.Errorf("request failed with status code %d, but could not read body (%s)\n", res.StatusCode, err.Error())
 		}
@@ -319,7 +312,6 @@ func (c *Client) getRequest(path string, dst interface{}) error {
 
 func (c *Client) writeRequest(method, path string, data interface{}, dst interface{}) error {
 	reqURL, err := url.Parse(c.serverURL)
-
 	if err != nil {
 		return nil
 	}
@@ -341,7 +333,6 @@ func (c *Client) writeRequest(method, path string, data interface{}, dst interfa
 		reqURL.String(),
 		strings.NewReader(string(strData)),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -351,7 +342,6 @@ func (c *Client) writeRequest(method, path string, data interface{}, dst interfa
 	req.Header.Set("X-Vault-Token", c.apiKey)
 
 	res, err := c.httpClient.Do(req)
-
 	if err != nil {
 		return err
 	}
@@ -360,7 +350,6 @@ func (c *Client) writeRequest(method, path string, data interface{}, dst interfa
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		resBytes, err := ioutil.ReadAll(res.Body)
-
 		if err != nil {
 			return fmt.Errorf("request failed with status code %d, but could not read body (%s)\n", res.StatusCode, err.Error())
 		}

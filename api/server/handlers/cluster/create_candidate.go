@@ -40,7 +40,6 @@ func (c *CreateClusterCandidateHandler) ServeHTTP(w http.ResponseWriter, r *http
 	}
 
 	ccs, err := getClusterCandidateModelsFromRequest(c.Repo(), proj, request, c.Config().ServerConf.IsLocal)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -101,7 +100,6 @@ func getClusterCandidateModelsFromRequest(
 		// can only use "local" auth mechanism if the server is running locally
 		isServerLocal && request.IsLocal,
 	)
-
 	if err != nil {
 		return nil, err
 	}

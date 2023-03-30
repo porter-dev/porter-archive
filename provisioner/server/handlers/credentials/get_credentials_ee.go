@@ -63,7 +63,6 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	if ceToken.DOCredentialID != 0 {
 		doInt, err := repo.OAuthIntegration().ReadOAuthIntegration(ceToken.ProjectID, ceToken.DOCredentialID)
-
 		if err != nil {
 			apierrors.HandleAPIError(c.config.Logger, c.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)
 			return
@@ -76,7 +75,6 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 	} else if ceToken.GCPCredentialID != 0 {
 		gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(ceToken.ProjectID, ceToken.GCPCredentialID)
-
 		if err != nil {
 			apierrors.HandleAPIError(c.config.Logger, c.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)
 			return
@@ -88,7 +86,6 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 	} else if ceToken.AWSCredentialID != 0 {
 		awsInt, err := repo.AWSIntegration().ReadAWSIntegration(ceToken.ProjectID, ceToken.AWSCredentialID)
-
 		if err != nil {
 			apierrors.HandleAPIError(c.config.Logger, c.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)
 			return
@@ -104,7 +101,6 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 	} else if ceToken.AzureCredentialID != 0 {
 		azInt, err := repo.AzureIntegration().ReadAzureIntegration(ceToken.ProjectID, ceToken.AzureCredentialID)
-
 		if err != nil {
 			apierrors.HandleAPIError(c.config.Logger, c.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)
 			return

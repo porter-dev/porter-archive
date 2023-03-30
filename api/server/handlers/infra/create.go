@@ -63,7 +63,6 @@ func (c *InfraCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	suffix, err := encryption.GenerateRandomBytes(6)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -126,7 +125,6 @@ func (c *InfraCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Values:        vals,
 		OperationKind: "create",
 	})
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -142,7 +140,6 @@ func checkInfraCredentials(config *config.Config, proj *models.Project, infra *m
 
 	if req.DOIntegrationID != 0 {
 		_, err := config.Repo.OAuthIntegration().ReadOAuthIntegration(proj.ID, req.DOIntegrationID)
-
 		if err != nil {
 			return fmt.Errorf("do integration id %d not found in project %d", req.DOIntegrationID, proj.ID)
 		}
@@ -153,7 +150,6 @@ func checkInfraCredentials(config *config.Config, proj *models.Project, infra *m
 		infra.AzureIntegrationID = 0
 	} else if req.AWSIntegrationID != 0 {
 		_, err := config.Repo.AWSIntegration().ReadAWSIntegration(proj.ID, req.AWSIntegrationID)
-
 		if err != nil {
 			return fmt.Errorf("aws integration id %d not found in project %d", req.AWSIntegrationID, proj.ID)
 		}
@@ -164,7 +160,6 @@ func checkInfraCredentials(config *config.Config, proj *models.Project, infra *m
 		infra.AzureIntegrationID = 0
 	} else if req.GCPIntegrationID != 0 {
 		_, err := config.Repo.GCPIntegration().ReadGCPIntegration(proj.ID, req.GCPIntegrationID)
-
 		if err != nil {
 			return fmt.Errorf("gcp integration id %d not found in project %d", req.GCPIntegrationID, proj.ID)
 		}
@@ -175,7 +170,6 @@ func checkInfraCredentials(config *config.Config, proj *models.Project, infra *m
 		infra.AzureIntegrationID = 0
 	} else if req.AzureIntegrationID != 0 {
 		_, err := config.Repo.AzureIntegration().ReadAzureIntegration(proj.ID, req.AzureIntegrationID)
-
 		if err != nil {
 			return fmt.Errorf("azure integration id %d not found in project %d", req.AzureIntegrationID, proj.ID)
 		}
@@ -240,7 +234,6 @@ func (i *InfraRDSPostrenderer) Run(w http.ResponseWriter, r *http.Request, opts 
 
 		// find the corresponding infra id
 		clusterInfra, err := i.config.Repo.Infra().ReadInfra(proj.ID, opts.Cluster.InfraID)
-
 		if err != nil {
 			apierrors.HandleAPIError(i.config.Logger, i.config.Alerter, w, r, apierrors.NewErrForbidden(fmt.Errorf("could not get cluster infra: %v", err)), true)
 			return nil, false
@@ -250,14 +243,12 @@ func (i *InfraRDSPostrenderer) Run(w http.ResponseWriter, r *http.Request, opts 
 
 		// get the raw state for the cluster
 		rawState, err := i.config.ProvisionerClient.GetRawState(context.Background(), models.GetWorkspaceID(clusterInfra, clusterInfraOperation))
-
 		if err != nil {
 			apierrors.HandleAPIError(i.config.Logger, i.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 			return nil, false
 		}
 
 		vpcID, subnetIDs, err := getVPCFromEKSTFState(rawState)
-
 		if err != nil {
 			return values, false
 		}

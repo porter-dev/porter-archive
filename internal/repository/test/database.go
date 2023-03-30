@@ -5,8 +5,7 @@ import (
 	"github.com/porter-dev/porter/internal/repository"
 )
 
-type DatabaseRepository struct {
-}
+type DatabaseRepository struct{}
 
 func NewDatabaseRepository() repository.DatabaseRepository {
 	return &DatabaseRepository{}

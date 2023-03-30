@@ -28,7 +28,6 @@ var clusterListCmd = &cobra.Command{
 	Short: "Lists the linked clusters in the current project",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, listClusters)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -41,7 +40,6 @@ var clusterDeleteCmd = &cobra.Command{
 	Short: "Deletes the cluster with the given id",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, deleteCluster)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -59,7 +57,6 @@ var clusterNamespaceListCmd = &cobra.Command{
 	Short: "Lists the namespaces in a cluster",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, listNamespaces)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -78,7 +75,6 @@ func init() {
 
 func listClusters(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	resp, err := client.ListProjectClusters(context.Background(), cliConf.Project)
-
 	if err != nil {
 		return err
 	}
@@ -113,14 +109,12 @@ func deleteCluster(user *types.GetAuthenticatedUserResponse, client *api.Client,
 			color.New(color.FgCyan).Sprintf("[y/n]"),
 		),
 	)
-
 	if err != nil {
 		return err
 	}
 
 	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
 		id, err := strconv.ParseUint(args[0], 10, 64)
-
 		if err != nil {
 			return err
 		}
@@ -149,7 +143,6 @@ func listNamespaces(user *types.GetAuthenticatedUserResponse, client *api.Client
 		pID,
 		cID,
 	)
-
 	if err != nil {
 		return err
 	}

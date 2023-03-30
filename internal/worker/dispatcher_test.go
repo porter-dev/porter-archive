@@ -13,7 +13,6 @@ func TestDispatcher(t *testing.T) {
 
 	d := NewDispatcher(10)
 	err := d.Run(jobChan)
-
 	if err != nil {
 		panic(err)
 	}

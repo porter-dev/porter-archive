@@ -12,7 +12,6 @@ import (
 
 func AssertResponseExpected(t *testing.T, rr *httptest.ResponseRecorder, expResponse interface{}, gotTarget interface{}) {
 	err := json.NewDecoder(rr.Body).Decode(gotTarget)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +27,6 @@ func AssertResponseExpected(t *testing.T, rr *httptest.ResponseRecorder, expResp
 func AssertResponseForbidden(t *testing.T, rr *httptest.ResponseRecorder) {
 	reqErr := &types.ExternalError{}
 	err := json.NewDecoder(rr.Result().Body).Decode(reqErr)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +42,6 @@ func AssertResponseForbidden(t *testing.T, rr *httptest.ResponseRecorder) {
 func AssertResponseInternalServerError(t *testing.T, rr *httptest.ResponseRecorder) {
 	reqErr := &types.ExternalError{}
 	err := json.NewDecoder(rr.Result().Body).Decode(reqErr)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +57,6 @@ func AssertResponseInternalServerError(t *testing.T, rr *httptest.ResponseRecord
 func AssertResponseError(t *testing.T, rr *httptest.ResponseRecorder, statusCode int, expReqErr *types.ExternalError) {
 	reqErr := &types.ExternalError{}
 	err := json.NewDecoder(rr.Result().Body).Decode(reqErr)
-
 	if err != nil {
 		t.Fatal(err)
 	}

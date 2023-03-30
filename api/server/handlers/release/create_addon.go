@@ -49,7 +49,6 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	))
 
 	helmAgent, err := c.GetHelmAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -71,14 +70,12 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		TemplateName:    request.TemplateName,
 		TemplateVersion: request.TemplateVersion,
 	})
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -95,7 +92,6 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helmRelease, err := helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("error installing a new chart: %s", err.Error()),
@@ -132,7 +128,6 @@ func LoadChart(config *config.Config, opts *LoadAddonChartOpts) (*chart.Chart, e
 	} else {
 		// load the helm repos in the project
 		hrs, err := config.Repo.HelmRepo().ListHelmReposByProjectID(opts.ProjectID)
-
 		if err != nil {
 			return nil, err
 		}
@@ -142,9 +137,7 @@ func LoadChart(config *config.Config, opts *LoadAddonChartOpts) (*chart.Chart, e
 				if hr.BasicAuthIntegrationID != 0 {
 					// read the basic integration id
 					basic, err := config.Repo.BasicIntegration().ReadBasicIntegration(opts.ProjectID, hr.BasicAuthIntegrationID)
-
 					if err != nil {
-
 						return nil, err
 					}
 

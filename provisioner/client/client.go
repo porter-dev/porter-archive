@@ -30,13 +30,11 @@ type Client struct {
 
 func NewClient(baseURL, token string, tokenID uint) (*Client, error) {
 	parsedURL, err := url.Parse(baseURL)
-
 	if err != nil {
 		return nil, err
 	}
 
 	conn, err := grpc.Dial(parsedURL.Host, grpc.WithInsecure())
-
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +131,6 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 
 	for i := 0; i < int(retryCount); i++ {
 		strData, err := json.Marshal(data)
-
 		if err != nil {
 			return nil
 		}
@@ -143,7 +140,6 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 			fmt.Sprintf("%s%s", c.BaseURL, relPath),
 			strings.NewReader(string(strData)),
 		)
-
 		if err != nil {
 			return err
 		}
@@ -172,7 +168,6 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 
 func (c *Client) deleteRequest(relPath string, data interface{}, response interface{}) error {
 	strData, err := json.Marshal(data)
-
 	if err != nil {
 		return nil
 	}
@@ -182,7 +177,6 @@ func (c *Client) deleteRequest(relPath string, data interface{}, response interf
 		fmt.Sprintf("%s%s", c.BaseURL, relPath),
 		strings.NewReader(string(strData)),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -210,7 +204,6 @@ func (c *Client) sendRequest(req *http.Request, v interface{}) (*types.ExternalE
 	}
 
 	res, err := c.HTTPClient.Do(req)
-
 	if err != nil {
 		return nil, err
 	}

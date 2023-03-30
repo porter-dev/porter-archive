@@ -58,7 +58,6 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	if rel != nil && rel.NotificationConfig != 0 {
 		conf, err := c.Repo().NotificationConfig().ReadNotificationConfig(rel.NotificationConfig)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -68,7 +67,6 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	users, err := getUsersByProjectID(c.Repo(), cluster.ProjectID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -119,7 +117,6 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 
 		err := multi.NotifyNew(request, url)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -129,7 +126,6 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 func getUsersByProjectID(repo repository.Repository, projectID uint) ([]*models.User, error) {
 	roles, err := repo.Project().ListProjectRoles(projectID)
-
 	if err != nil {
 		return nil, err
 	}

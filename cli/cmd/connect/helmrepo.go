@@ -23,14 +23,12 @@ func HelmRepo(
 
 	repoName, err := utils.PromptPlaintext(fmt.Sprintf(`Provide the name that you would like to give this Helm registry. 
 Name: `))
-
 	if err != nil {
 		return 0, err
 	}
 
 	repoURL, err := utils.PromptPlaintext(fmt.Sprintf(`Provide the Helm registry URL, make sure to include the protocol. For example, https://charts.bitnami.com/bitnami.
 Registry URL: `))
-
 	if err != nil {
 		return 0, err
 	}
@@ -40,14 +38,12 @@ Registry URL: `))
 	}
 
 	username, err := utils.PromptPlaintext(fmt.Sprintf(`Helm repo username (press enter for a public registry):`))
-
 	if err != nil {
 		return 0, err
 	}
 
 	password, err := utils.PromptPassword(`Helm registry password (press enter for a public registry).
 Password:`)
-
 	if err != nil {
 		return 0, err
 	}
@@ -64,7 +60,6 @@ Password:`)
 				Password: password,
 			},
 		)
-
 		if err != nil {
 			return 0, err
 		}
@@ -83,7 +78,6 @@ Password:`)
 			BasicIntegrationID: basicIntegrationID,
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}

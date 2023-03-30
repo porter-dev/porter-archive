@@ -45,7 +45,6 @@ func (p *CreateGitlabIntegration) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	_, err := url.Parse(request.InstanceURL)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("malformed gitlab instance URL"), http.StatusBadRequest,
@@ -59,7 +58,6 @@ func (p *CreateGitlabIntegration) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		AppClientID:     []byte(request.AppClientID),
 		AppClientSecret: []byte(request.AppClientSecret),
 	})
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -62,7 +62,6 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	// read the environment to get the environment id
 	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID), owner, name)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(errEnvironmentNotFound))
@@ -120,7 +119,6 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -152,7 +150,6 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	if !depl.IsBranchDeploy() {
 		// add a check for the PR to be open before creating a comment
 		prClosed, err := isGithubPRClosed(client, owner, name, int(depl.PullRequestID))
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",
@@ -213,7 +210,6 @@ func createOrUpdateComment(
 		if depl.GHPRCommentID == 0 {
 			// create a new comment
 			err := createGithubComment(client, repo, depl, commentBody)
-
 			if err != nil {
 				return err
 			}
@@ -221,13 +217,11 @@ func createOrUpdateComment(
 			err := updateGithubComment(
 				client, depl.RepoOwner, depl.RepoName, depl.GHPRCommentID, commentBody,
 			)
-
 			if err != nil {
 				if strings.Contains(err.Error(), "404") {
 					// perhaps a deleted comment?
 					// create a new comment
 					err := createGithubComment(client, repo, depl, commentBody)
-
 					if err != nil {
 						return fmt.Errorf("invalid github comment ID for deployment with ID: %d. Error creating "+
 							"new comment: %w", depl.ID, err)
@@ -239,7 +233,6 @@ func createOrUpdateComment(
 		}
 	} else {
 		err := createGithubComment(client, repo, depl, commentBody)
-
 		if err != nil {
 			return err
 		}
@@ -263,7 +256,6 @@ func createGithubComment(
 			Body: body,
 		},
 	)
-
 	if err != nil {
 		return fmt.Errorf("error creating new github comment for owner: %s repo %s prNumber: %d. Error: %w",
 			depl.RepoOwner, depl.RepoName, depl.PullRequestID, err)

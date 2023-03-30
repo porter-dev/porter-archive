@@ -33,7 +33,7 @@ func getField(yaml map[string]interface{}, keys ...string) interface{} {
 		return yaml[keys[0]]
 	}
 
-	return getField(yaml[keys[0]].(map[string]interface{}), keys[1:len(keys)]...)
+	return getField(yaml[keys[0]].(map[string]interface{}), keys[1:]...)
 }
 
 // recursively convert all key values in generic interface{} format into strings.

@@ -12,14 +12,12 @@ import (
 	"github.com/xanzy/go-gitlab"
 )
 
-var (
-	lts = map[string]int{
-		"argon":   4,
-		"boron":   6,
-		"carbon":  8,
-		"dubnium": 10,
-	}
-)
+var lts = map[string]int{
+	"argon":   4,
+	"boron":   6,
+	"carbon":  8,
+	"dubnium": 10,
+}
 
 type nodejsRuntime struct {
 	wg sync.WaitGroup
@@ -32,7 +30,8 @@ func NewNodeRuntime() Runtime {
 func (runtime *nodejsRuntime) detectYarnGithub(results chan struct {
 	string
 	bool
-}, directoryContent []*github.RepositoryContent) {
+}, directoryContent []*github.RepositoryContent,
+) {
 	yarnLockFound := false
 	packageJSONFound := false
 	for i := 0; i < len(directoryContent); i++ {
@@ -58,7 +57,8 @@ func (runtime *nodejsRuntime) detectYarnGithub(results chan struct {
 func (runtime *nodejsRuntime) detectYarnGitlab(results chan struct {
 	string
 	bool
-}, tree []*gitlab.TreeNode) {
+}, tree []*gitlab.TreeNode,
+) {
 	yarnLockFound := false
 	packageJSONFound := false
 	for i := 0; i < len(tree); i++ {
@@ -84,7 +84,8 @@ func (runtime *nodejsRuntime) detectYarnGitlab(results chan struct {
 func (runtime *nodejsRuntime) detectNPMGithub(results chan struct {
 	string
 	bool
-}, directoryContent []*github.RepositoryContent) {
+}, directoryContent []*github.RepositoryContent,
+) {
 	packageJSONFound := false
 	for i := 0; i < len(directoryContent); i++ {
 		name := directoryContent[i].GetName()
@@ -105,7 +106,8 @@ func (runtime *nodejsRuntime) detectNPMGithub(results chan struct {
 func (runtime *nodejsRuntime) detectNPMGitlab(results chan struct {
 	string
 	bool
-}, tree []*gitlab.TreeNode) {
+}, tree []*gitlab.TreeNode,
+) {
 	packageJSONFound := false
 	for i := 0; i < len(tree); i++ {
 		name := tree[i].Name
@@ -126,7 +128,8 @@ func (runtime *nodejsRuntime) detectNPMGitlab(results chan struct {
 func (runtime *nodejsRuntime) detectStandaloneGithub(results chan struct {
 	string
 	bool
-}, directoryContent []*github.RepositoryContent) {
+}, directoryContent []*github.RepositoryContent,
+) {
 	jsFileFound := false
 	for i := 0; i < len(directoryContent); i++ {
 		name := directoryContent[i].GetName()
@@ -147,7 +150,8 @@ func (runtime *nodejsRuntime) detectStandaloneGithub(results chan struct {
 func (runtime *nodejsRuntime) detectStandaloneGitlab(results chan struct {
 	string
 	bool
-}, tree []*gitlab.TreeNode) {
+}, tree []*gitlab.TreeNode,
+) {
 	jsFileFound := false
 	for i := 0; i < len(tree); i++ {
 		name := tree[i].Name

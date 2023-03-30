@@ -15,13 +15,11 @@ import (
 
 func ConvertV1ToV2EnvGroup(agent *kubernetes.Agent, name, namespace string) (*v1.ConfigMap, error) {
 	cm, err := agent.GetConfigMap(name, namespace)
-
 	if err != nil {
 		return nil, err
 	}
 
 	secret, err := agent.GetSecret(name, namespace)
-
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +45,6 @@ func ConvertV1ToV2EnvGroup(agent *kubernetes.Agent, name, namespace string) (*v1
 		Variables:       variables,
 		SecretVariables: secretVariables,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +109,6 @@ func CreateEnvGroup(agent *kubernetes.Agent, input types.ConfigMapInput) (*v1.Co
 	}
 
 	cm, err := agent.CreateVersionedConfigMap(input.Name, input.Namespace, latestVersion, input.Variables, apps...)
-
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +159,6 @@ func ToEnvGroup(configMap *v1.ConfigMap) (*types.EnvGroup, error) {
 	}
 
 	versionInt, err := strconv.Atoi(versionLabelStr)
-
 	if err != nil {
 		return nil, fmt.Errorf("not a valid configmap, error converting version: %v", err)
 	}
@@ -206,7 +201,6 @@ func GetSyncedReleases(helmAgent *helm.Agent, configMap *v1.ConfigMap) ([]*relea
 			"failed",
 		},
 	})
-
 	if err != nil {
 		return nil, err
 	}

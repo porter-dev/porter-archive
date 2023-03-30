@@ -71,7 +71,6 @@ func main() {
 	log.Printf("legacy project ids are: %v", envDecoder.LegacyProjectIDs)
 
 	db, err := adapter.New(&envDecoder.DBConf)
-
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -208,7 +207,6 @@ func getJob(id string, input map[string]interface{}) worker.Job {
 			EncryptionKey:      envDecoder.EncryptionKey,
 			RevisionsCount:     envDecoder.RevisionsCount,
 		})
-
 		if err != nil {
 			log.Printf("error creating job with ID: helm-revisions-count-tracker. Error: %v", err)
 			return nil
@@ -225,7 +223,6 @@ func getJob(id string, input map[string]interface{}) worker.Job {
 			Input:            input,
 			LegacyProjectIDs: envDecoder.LegacyProjectIDs,
 		}, opaPolicies)
-
 		if err != nil {
 			log.Printf("error creating job with ID: recommender. Error: %v", err)
 			return nil

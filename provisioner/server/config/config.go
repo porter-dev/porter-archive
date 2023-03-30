@@ -30,8 +30,10 @@ import (
 	_gorm "gorm.io/gorm"
 )
 
-var InstanceCredentialBackend credentials.CredentialStorage
-var InstanceEnvConf *EnvConf
+var (
+	InstanceCredentialBackend credentials.CredentialStorage
+	InstanceEnvConf           *EnvConf
+)
 
 func sharedInit() {
 	var envDecoderConf EnvDecoderConf = EnvDecoderConf{}
@@ -146,7 +148,6 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 	}
 
 	db, err := adapter.New(envConf.DBConf)
-
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +191,6 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 
 	if envConf.RedisConf.Enabled {
 		redis, err := adapter.NewRedisClient(&envConf.RedisConf)
-
 		if err != nil {
 			return nil, fmt.Errorf("redis connection failed: %v", err)
 		}
@@ -207,7 +207,6 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 		})
 	} else if envConf.ProvisionerMethod == "kubernetes" {
 		provAgent, err := getProvisionerAgent(envConf.ProvisionerConf)
-
 		if err != nil {
 			return nil, err
 		}
@@ -238,7 +237,6 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 func getProvisionerAgent(conf *ProvisionerConf) (*kubernetes.Agent, error) {
 	if conf.ProvisionerCluster == "kubeconfig" && conf.SelfKubeconfig != "" {
 		agent, err := klocal.GetSelfAgentFromFileConfig(conf.SelfKubeconfig)
-
 		if err != nil {
 			return nil, fmt.Errorf("could not get in-cluster agent: %v", err)
 		}

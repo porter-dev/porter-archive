@@ -46,7 +46,6 @@ type ZIPReleaseGetter struct {
 // GetLatestRelease downloads the latest .zip release from a given Github repository
 func (z *ZIPReleaseGetter) GetLatestRelease() error {
 	releaseURL, err := z.getLatestReleaseDownloadURL()
-
 	if err != nil {
 		return err
 	}
@@ -90,13 +89,11 @@ func (z *ZIPReleaseGetter) getLatestReleaseDownloadURL() (string, error) {
 	client := github.NewClient(nil)
 
 	rel, _, err := client.Repositories.GetLatestRelease(context.Background(), z.EntityID, z.RepoName)
-
 	if err != nil {
 		return "", err
 	}
 
 	re, err := z.getDownloadRegexp()
-
 	if err != nil {
 		return "", err
 	}
@@ -117,13 +114,11 @@ func (z *ZIPReleaseGetter) getReleaseDownloadURL(releaseTag string) (string, err
 	client := github.NewClient(nil)
 
 	rel, _, err := client.Repositories.GetReleaseByTag(context.Background(), z.EntityID, z.RepoName, releaseTag)
-
 	if err != nil {
 		return "", fmt.Errorf("release %s does not exist", releaseTag)
 	}
 
 	re, err := z.getDownloadRegexp()
-
 	if err != nil {
 		return "", err
 	}
@@ -166,7 +161,6 @@ type ZIPDownloader struct {
 func (z *ZIPDownloader) DownloadToFile(url string) error {
 	// Get the data
 	resp, err := http.Get(url)
-
 	if err != nil {
 		return err
 	}
@@ -175,7 +169,6 @@ func (z *ZIPDownloader) DownloadToFile(url string) error {
 
 	// Create the file
 	out, err := os.Create(filepath.Join(z.ZipFolderDest, z.ZipName))
-
 	if err != nil {
 		return err
 	}
@@ -190,7 +183,6 @@ func (z *ZIPDownloader) DownloadToFile(url string) error {
 
 func (z *ZIPDownloader) UnzipToDir() error {
 	r, err := zip.OpenReader(filepath.Join(z.ZipFolderDest, z.ZipName))
-
 	if err != nil {
 		return err
 	}

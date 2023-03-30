@@ -34,7 +34,6 @@ func (c *GetNodeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name, _ := requestutils.GetURLParamString(r, types.URLParamNodeName)
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

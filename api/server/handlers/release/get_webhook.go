@@ -32,7 +32,6 @@ func (c *GetWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	namespace := r.Context().Value(types.NamespaceScope).(string)
 
 	release, err := c.Repo().Release().ReadRelease(cluster.ID, name, namespace)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			w.WriteHeader(http.StatusNotFound)

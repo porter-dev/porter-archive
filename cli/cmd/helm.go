@@ -15,7 +15,6 @@ var helmCmd = &cobra.Command{
 	Short: "Use helm to interact with a Porter cluster",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runHelm)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -28,13 +27,11 @@ func init() {
 
 func runHelm(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	_, err := exec.LookPath("helm")
-
 	if err != nil {
 		return fmt.Errorf("error finding helm: %w", err)
 	}
 
 	tmpFile, err := downloadTempKubeconfig(client)
-
 	if err != nil {
 		return err
 	}

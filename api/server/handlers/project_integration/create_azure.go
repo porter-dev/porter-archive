@@ -39,7 +39,6 @@ func (p *CreateAzureHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	az := CreateAzureIntegration(request, project.ID, user.ID)
 
 	az, err := p.Repo().AzureIntegration().CreateAzureIntegration(az)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

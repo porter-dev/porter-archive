@@ -254,7 +254,6 @@ func GetHistoricalLogs(
 
 	if req.StartRange != nil {
 		startVal, err := req.StartRange.MarshalText()
-
 		if err != nil {
 			return nil, err
 		}
@@ -264,7 +263,6 @@ func GetHistoricalLogs(
 
 	if req.EndRange != nil {
 		endVal, err := req.EndRange.MarshalText()
-
 		if err != nil {
 			return nil, err
 		}
@@ -316,7 +314,6 @@ func GetPodValues(
 
 	if req.StartRange != nil {
 		startVal, err := req.StartRange.MarshalText()
-
 		if err != nil {
 			return nil, err
 		}
@@ -326,7 +323,6 @@ func GetPodValues(
 
 	if req.EndRange != nil {
 		endVal, err := req.EndRange.MarshalText()
-
 		if err != nil {
 			return nil, err
 		}
@@ -370,7 +366,6 @@ func GetRevisionValues(
 
 	if req.StartRange != nil {
 		startVal, err := req.StartRange.MarshalText()
-
 		if err != nil {
 			return nil, err
 		}
@@ -380,7 +375,6 @@ func GetRevisionValues(
 
 	if req.EndRange != nil {
 		endVal, err := req.EndRange.MarshalText()
-
 		if err != nil {
 			return nil, err
 		}
@@ -426,7 +420,6 @@ func GetHistoricalKubernetesEvents(
 
 	if req.StartRange != nil {
 		startVal, err := req.StartRange.MarshalText()
-
 		if err != nil {
 			return nil, err
 		}
@@ -436,7 +429,6 @@ func GetHistoricalKubernetesEvents(
 
 	if req.EndRange != nil {
 		endVal, err := req.EndRange.MarshalText()
-
 		if err != nil {
 			return nil, err
 		}

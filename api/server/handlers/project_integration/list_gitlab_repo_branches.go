@@ -42,7 +42,6 @@ func (p *ListGitlabRepoBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http
 	}
 
 	client, err := getGitlabClient(p.Repo(), user.ID, project.ID, gi, p.Config())
-
 	if err != nil {
 		if errors.Is(err, errUnauthorizedGitlabUser) {
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errUnauthorizedGitlabUser, http.StatusUnauthorized))

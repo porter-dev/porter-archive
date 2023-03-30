@@ -308,7 +308,6 @@ var ClusterCandidatesTests = []ccsTest{
 func TestGetClusterCandidatesNonLocal(t *testing.T) {
 	for _, c := range ClusterCandidatesTests {
 		result, err := kubernetes.GetClusterCandidatesFromKubeconfig(c.raw, 1, false)
-
 		if err != nil {
 			t.Fatalf("error occurred %v\n", err)
 		}
@@ -331,14 +330,12 @@ func TestGetClusterCandidatesNonLocal(t *testing.T) {
 			// compare kubeconfig by transforming into a client config
 			resConfig, _ := clientcmd.NewClientConfigFromBytes(res.Kubeconfig)
 			expConfig, err := clientcmd.NewClientConfigFromBytes(exp.Kubeconfig)
-
 			if err != nil {
 				t.Fatalf("config from bytes, error occurred %v\n", err)
 			}
 
 			resRawConf, _ := resConfig.RawConfig()
 			expRawConf, err := expConfig.RawConfig()
-
 			if err != nil {
 				t.Fatalf("raw config conversion, error occurred %v\n", err)
 			}

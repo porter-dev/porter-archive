@@ -43,7 +43,6 @@ func (hr *HelmRepo) listChartsBasic(
 		hr.ProjectID,
 		hr.BasicAuthIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +53,6 @@ func (hr *HelmRepo) listChartsBasic(
 	}
 
 	repoIndex, err := loader.LoadRepoIndex(client, hr.RepoURL)
-
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +69,6 @@ func (hr *HelmRepo) getChartBasic(
 		hr.ProjectID,
 		hr.BasicAuthIntegrationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}

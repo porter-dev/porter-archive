@@ -25,7 +25,6 @@ func main() {
 				"Forbidden",
 			},
 		})
-
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "error initialising sentry: %s\n", err)
 			os.Exit(1)

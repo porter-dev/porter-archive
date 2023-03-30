@@ -75,7 +75,6 @@ func NewGitInstallationContext(ctx context.Context, ga *integrations.GithubAppIn
 // much overhead
 func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(githubIntegrationID, gitInstallationID uint) error {
 	oauthInt, err := p.config.Repo.GithubAppOAuthIntegration().ReadGithubAppOauthIntegration(githubIntegrationID)
-
 	if err != nil {
 		return err
 	}
@@ -99,7 +98,6 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(gith
 	accountIDs := make([]int64, 0)
 
 	AuthUser, _, err := client.Users.Get(context.Background(), "")
-
 	if err != nil {
 		return err
 	}
@@ -113,7 +111,6 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(gith
 
 	for {
 		orgs, pages, err := client.Organizations.List(context.Background(), "", opts)
-
 		if err != nil {
 			return err
 		}

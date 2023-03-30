@@ -41,7 +41,6 @@ func (p *ListGitlabReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	gi, _ := r.Context().Value(types.GitlabIntegrationScope).(*ints.GitlabIntegration)
 
 	client, err := getGitlabClient(p.Repo(), user.ID, project.ID, gi, p.Config())
-
 	if err != nil {
 		if errors.Is(err, errUnauthorizedGitlabUser) {
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errUnauthorizedGitlabUser, http.StatusUnauthorized))
@@ -82,7 +81,6 @@ func getGitlabClient(
 	config *config.Config,
 ) (*gitlab.Client, error) {
 	giAppOAuth, err := repo.GitlabAppOAuthIntegration().ReadGitlabAppOAuthIntegration(userID, projectID, gi.ID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errUnauthorizedGitlabUser
@@ -92,7 +90,6 @@ func getGitlabClient(
 	}
 
 	oauthInt, err := repo.OAuthIntegration().ReadOAuthIntegration(projectID, giAppOAuth.OAuthIntegrationID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errUnauthorizedGitlabUser
@@ -104,13 +101,11 @@ func getGitlabClient(
 	accessToken, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, commonutils.GetGitlabOAuthConf(
 		config, gi,
 	), oauth.MakeUpdateGitlabAppOAuthIntegrationFunction(projectID, giAppOAuth, repo))
-
 	if err != nil {
 		return nil, errUnauthorizedGitlabUser
 	}
 
 	client, err := gitlab.NewOAuthClient(accessToken, gitlab.WithBaseURL(gi.InstanceURL))
-
 	if err != nil {
 		return nil, err
 	}

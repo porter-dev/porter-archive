@@ -50,7 +50,6 @@ func TestOutOfClusterConfig(t *testing.T) {
 	})
 
 	namespaces, err := k8sAgent.ListNamespaces()
-
 	if err != nil {
 		t.Fatalf(err.Error())
 	}

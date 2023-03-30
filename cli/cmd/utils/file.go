@@ -13,7 +13,6 @@ func GetFileReferenceFromKubeconfig(
 	if info, err := os.Stat(filename); os.IsNotExist(err) && !info.IsDir() {
 		// attempt to discover the filename relative to the kubeconfig location
 		absPath, err := filepath.Abs(kubeconfigPath)
-
 		if err != nil {
 			return "", err
 		}

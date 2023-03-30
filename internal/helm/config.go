@@ -44,7 +44,6 @@ func GetAgentOutOfClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 	}
 
 	k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(conf)
-
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +84,6 @@ func GetAgentFromK8sAgent(stg string, ns string, l *logger.Logger, k8sAgent *kub
 func GetAgentInClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 	// create a kubernetes agent
 	k8sAgent, err := kubernetes.GetAgentInClusterConfig(form.Namespace)
-
 	if err != nil {
 		return nil, err
 	}

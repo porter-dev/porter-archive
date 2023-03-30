@@ -37,7 +37,6 @@ func verifyStaticTokenContext(config *config.Config, ctx context.Context) (*mode
 	}
 
 	err := authn.ValidateStaticToken(config, tokenArr[0])
-
 	if err != nil {
 		return nil, false
 	}
@@ -50,7 +49,6 @@ func verifyStaticTokenContext(config *config.Config, ctx context.Context) (*mode
 
 	// parse workspace id
 	name, err := models.ParseWorkspaceID(workspaceID[0])
-
 	if err != nil {
 		return nil, false
 	}
@@ -73,7 +71,6 @@ func verifyPorterTokenContext(config *config.Config, ctx context.Context) (*mode
 	}
 
 	tokenID, err := strconv.ParseUint(tokenIDArr[0], 10, 64)
-
 	if err != nil {
 		return nil, false
 	}
@@ -98,7 +95,6 @@ func verifyPorterTokenContext(config *config.Config, ctx context.Context) (*mode
 
 	// parse workspace id
 	name, err := models.ParseWorkspaceID(workspaceID[0])
-
 	if err != nil {
 		return nil, false
 	}

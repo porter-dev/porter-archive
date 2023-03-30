@@ -39,7 +39,6 @@ func (c *GetKubernetesEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -47,14 +46,12 @@ func (c *GetKubernetesEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	// get agent service
 	agentSvc, err := porter_agent.GetAgentService(agent.Clientset)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	logs, err := porter_agent.GetHistoricalKubernetesEvents(agent.Clientset, agentSvc, request)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

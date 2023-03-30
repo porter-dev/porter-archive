@@ -1,3 +1,4 @@
+//go:build ee
 // +build ee
 
 package usage
@@ -42,7 +43,6 @@ const stepSize = 100
 
 func NewUsageTracker(opts *UsageTrackerOpts) (*UsageTracker, error) {
 	db, err := adapter.New(opts.DBConf)
-
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,6 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 			Project:          project,
 			WhitelistedUsers: u.whitelistedUsers,
 		})
-
 		if err != nil {
 			fmt.Printf("Project %d: error getting usage: %v\n", project.ID, err)
 			return
@@ -120,7 +119,6 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 
 		// get the admin emails for the project
 		roles, err := u.repo.Project().ListProjectRoles(project.ID)
-
 		if err != nil {
 			fmt.Printf("Project %d: error getting admin emails: %v\n", project.ID, err)
 			return
@@ -131,7 +129,6 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 		for _, role := range roles {
 			if role.Kind == types.RoleAdmin {
 				user, err := u.repo.User().ReadUser(role.UserID)
-
 				if err != nil {
 					continue
 				}

@@ -45,7 +45,6 @@ func (c *InfraStreamStateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		Id:        int64(infra.ID),
 		Suffix:    infra.Suffix,
 	})
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -78,7 +77,6 @@ func (c *InfraStreamStateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		for {
 
 			stateUpdate, err := stream.Recv()
-
 			if err != nil {
 				if err == io.EOF || errors.Is(ctx.Err(), context.Canceled) {
 					errorchan <- nil

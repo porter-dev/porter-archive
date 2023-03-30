@@ -46,7 +46,6 @@ func (l *LocalProvisioner) Provision(opts *provisioner.ProvisionOpts) error {
 	}()
 
 	return nil
-
 }
 
 func (l *LocalProvisioner) getEnv(opts *provisioner.ProvisionOpts) ([]string, error) {
@@ -54,7 +53,6 @@ func (l *LocalProvisioner) getEnv(opts *provisioner.ProvisionOpts) ([]string, er
 
 	// marshal the values to JSON and base-64 encode them
 	valBytes, err := json.Marshal(opts.Values)
-
 	if err != nil {
 		return nil, err
 	}

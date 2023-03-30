@@ -88,7 +88,8 @@ type ServerConf struct {
 	// Email for an admin user. On a self-hosted instance of Porter, the
 	// admin user is the only user that can log in and register. After the admin
 	// user has logged in, registration is turned off.
-	AdminEmail string `env:"ADMIN_EMAIL"`
+	AdminEmail  string `env:"ADMIN_EMAIL"`
+	AdminUserId uint   `env:"ADMIN_USER_ID"`
 
 	SentryDSN string `env:"SENTRY_DSN"`
 	SentryEnv string `env:"SENTRY_ENV,default=dev"`

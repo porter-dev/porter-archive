@@ -201,6 +201,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/invite_admin -> project.NewProjectInviteAdminHandler
+	projectInviteAdminEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/invite_admin",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	projectInviteAdminHandler := project.NewProjectInviteAdminHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: projectInviteAdminEndpoint,
+		Handler:  projectInviteAdminHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/usage -> project.NewProjectGetUsageHandler
 	getUsageEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

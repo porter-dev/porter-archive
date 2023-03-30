@@ -317,6 +317,13 @@ const createInvite = baseApi<
   return `/api/projects/${pathParams.id}/invites`;
 });
 
+const inviteAdmin = baseApi<
+  {},
+  { project_id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/invite_admin`;
+});
+
 const createPasswordReset = baseApi<
   {
     email: string;
@@ -2549,6 +2556,7 @@ export default {
   getChartsFromHelmRepo,
   getChartInfoFromHelmRepo,
   linkGithubProject,
+  inviteAdmin,
   getGithubAccounts,
   listConfigMaps,
   logInUser,

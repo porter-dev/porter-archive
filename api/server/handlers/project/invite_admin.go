@@ -41,7 +41,6 @@ func (p *ProjectInviteAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	// Read the user and project from context
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	// Create role for admin if it doesn't exist
@@ -57,5 +56,5 @@ func (p *ProjectInviteAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		})
 	}
 
-	p.WriteResult(w, r, user.ToUserType())
+	p.WriteResult(w, r, proj.ToProjectType())
 }

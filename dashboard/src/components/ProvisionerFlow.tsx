@@ -24,7 +24,7 @@ type Props = {
 
 const ProvisionerFlow: React.FC<Props> = ({
 }) => {
-  const { usage, hasBillingEnabled } = useContext(Context);
+  const { usage, hasBillingEnabled, currentProject } = useContext(Context);
   const [currentStep, setCurrentStep] = useState("cloud");
   const [credentialId, setCredentialId] = useState("");
   const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
@@ -43,6 +43,15 @@ const ProvisionerFlow: React.FC<Props> = ({
         "<token>", 
         { step: "cost-consent-complete" }, 
         {}
+      );
+    } catch (err) {
+      console.log(err);
+    }
+    try {
+      const res = await api.inviteAdmin(
+        "<token>", 
+        {}, 
+        { project_id: currentProject.id }
       );
     } catch (err) {
       console.log(err);

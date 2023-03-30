@@ -11,6 +11,17 @@
     </script>
 
     <script>
+      (function(h,o,t,j,a,r){
+          h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+          h._hjSettings={hjid:"<%= htmlWebpackPlugin.options.hotjarId %>",hjsv:6};
+          a=o.getElementsByTagName('head')[0];
+          r=o.createElement('script');r.async=1;
+          r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+          a.appendChild(r);
+      })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+    </script>
+
+    <script>
       // We pre-filled your app ID in the widget URL: 'https://widget.intercom.io/widget/gq56g49i'
       (function () {
         var w = window;

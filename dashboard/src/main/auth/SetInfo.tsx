@@ -109,7 +109,7 @@ const SetInfo: React.FC<Props> = ({
           </Jumbotron>
           <Spacer y={2} />
           <CheckRow>
-            <i className="material-icons">done</i> Generous startup program for seed stage companies
+            <i className="material-icons">done</i> Generous startup program for seed-stage companies
           </CheckRow>
           <Spacer y={0.5} />
           <CheckRow>

@@ -210,7 +210,10 @@ func getProjectRoutes(
 				Parent:       basePath,
 				RelativePath: relPath + "/invite_admin",
 			},
-			Scopes: []types.PermissionScope{types.ProjectScope},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
 		},
 	)
 

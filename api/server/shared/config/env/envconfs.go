@@ -89,7 +89,7 @@ type ServerConf struct {
 	// admin user is the only user that can log in and register. After the admin
 	// user has logged in, registration is turned off.
 	AdminEmail  string `env:"ADMIN_EMAIL"`
-	AdminUserId uint   `env:"ADMIN_USER_ID"`
+	AdminUserId string `env:"ADMIN_USER_ID"`
 
 	SentryDSN string `env:"SENTRY_DSN"`
 	SentryEnv string `env:"SENTRY_ENV,default=dev"`

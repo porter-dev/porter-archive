@@ -1,8 +1,8 @@
 package project
 
 import (
-	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -31,16 +31,16 @@ func (p *ProjectInviteAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	// Only add admin user if config is set
 	InstanceEnvConf, _ := envloader.FromEnv()
-	adminUserId := InstanceEnvConf.ServerConf.AdminUserId
+	adminUserIdParsed, _ := strconv.ParseUint(InstanceEnvConf.ServerConf.AdminUserId, 10, 64)
+	adminUserId := uint(adminUserIdParsed)
+
 	if adminUserId == 0 {
-		fmt.Println("Admin user not set")
 		return
 	}
 
 	request := &types.ProjectInviteAdminRequest{}
 	ok := p.DecodeAndValidate(w, r, request)
 	if !ok {
-		fmt.Println("Failed to decode and validate")
 		return
 	}
 

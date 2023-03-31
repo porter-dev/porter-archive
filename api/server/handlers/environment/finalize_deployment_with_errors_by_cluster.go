@@ -128,7 +128,7 @@ func (c *FinalizeDeploymentWithErrorsByClusterHandler) ServeHTTP(w http.Response
 
 	// we do not care of the error in this case because the list deployments endpoint
 	// talks to the github API to fetch the deployment status correctly
-	c.Repo().Environment().UpdateDeployment(depl)
+	_, _ = c.Repo().Environment().UpdateDeployment(depl)
 
 	// FIXME: ignore the status of this API call for now
 	client.Repositories.CreateDeploymentStatus(

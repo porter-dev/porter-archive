@@ -231,6 +231,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 				// 		return true
 				// 	}
 				// }
+
 				return origin == sc.ServerURL
 			},
 		},

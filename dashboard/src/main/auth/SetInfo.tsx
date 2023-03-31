@@ -102,7 +102,9 @@ const SetInfo: React.FC<Props> = ({
     <StyledRegister>
       {windowDimensions.width > windowDimensions.height && (
         <Wrapper>
-          <Logo src={logo} />
+          <Logo src={logo} onClick={() => {
+            window.location.href = "https://porter.run"
+          }}/>
           <Spacer y={2} />
           <Jumbotron>
             Deploy and scale <Shiny>effortlessly</Shiny> with Porter

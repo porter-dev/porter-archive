@@ -1,9 +1,5 @@
 # Config file for [Air](https://github.com/cosmtrek/air) in TOML format
 
-pr testing
-
-commit 2
-
 # Working directory
 # . or absolute path, please note that the directories following must be under root.
 root = "."

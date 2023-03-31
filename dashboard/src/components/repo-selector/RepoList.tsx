@@ -10,6 +10,7 @@ import Loading from "../Loading";
 import SearchBar from "../SearchBar";
 import DynamicLink from "components/DynamicLink";
 import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
+import Text from "components/porter/Text";
 
 type Props = {
   actionConfig: ActionConfigType | null;
@@ -302,34 +303,19 @@ const RepoList: React.FC<Props> = ({
   };
 
   if (!hasProviders) {
+    const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
+    const encoded_redirect_uri = encodeURIComponent(url);
+
     return (
       <>
-        <RepoListWrapper>
-          <ExpandedWrapper>
-            <LoadingWrapper>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <div>A connected Git provider wasn't found.</div>
-                <div>
-                  You can
-                  <A
-                    to={`${window.location.origin}/api/integrations/github-app/install`}
-                  >
-                    connect a GitHub repo
-                  </A>
-                  or
-                  <A to={"/integrations"}>add a GitLab instance</A>
-                </div>
-              </div>
-            </LoadingWrapper>
-          </ExpandedWrapper>
-        </RepoListWrapper>
+                <Text size={16} weight={500}>
+                  No connected repositories were found.
+                </Text>
+                <ConnectToGithubButton
+                  href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
+                >
+                  <GitHubIcon src={github} /> Connect to GitHub
+                </ConnectToGithubButton>
       </>
     );
   }
@@ -338,6 +324,61 @@ const RepoList: React.FC<Props> = ({
 };
 
 export default RepoList;
+
+const GitHubIcon = styled.img`
+  width: 20px;
+  filter: brightness(150%);
+  margin-right: 10px;
+`;
+
+const ConnectToGithubButton = styled.a`
+  width: 180px;
+  justify-content: center;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: "Work Sans", sans-serif;
+  color: white;
+  font-weight: 500;
+  padding: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-top: 25px;
+  border: 1px solid #494b4f;
+  text-overflow: ellipsis;
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#2E3338"};
+  :hover {
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#353a3e"};
+  }
+
+  > i {
+    color: white;
+    width: 18px;
+    height: 18px;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+    justify-content: center;
+  }
+`;
+
+const Flex = styled.div`
+  padding: 20px 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
 
 const ProviderSelector = (props: {
   values: any[];

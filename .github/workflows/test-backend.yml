@@ -2,12 +2,17 @@ name: Backend CI
 on:
   - pull_request
 jobs:
-  backend-tests:
-    name: Run Go tests
-    runs-on: ubuntu-latest
+  testing_matrix:
+    strategy:
+      matrix:
+        go-version: [1.20.x]
+        os: [ubuntu-latest]
+        folder: [cli, api, cmd, internal, provisioner]
+    name: Testing matrix
+    runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-go@v3
-      with:
-        go-version: '^1.15.1'
-    - run: go test ./...
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+      - run: go test ./${{ matrix.folder }}/...

@@ -37,7 +37,6 @@ func (p *DatabaseUpdateStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	// read all clusters for this project
 	db, err := p.Repo().Database().ReadDatabaseByInfraID(proj.ID, infra.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

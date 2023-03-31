@@ -45,7 +45,6 @@ func (c *UpdateCanonicalNameHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	release, err := c.Repo().Release().ReadRelease(cluster.ID, name, namespace)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("release %s not found", name)))

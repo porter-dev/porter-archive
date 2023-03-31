@@ -52,35 +52,30 @@ func (p *StackAddEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	latestRevision, err := p.Repo().Stack().ReadStackRevisionByNumber(stack.ID, stack.Revisions[0].RevisionNumber)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	newSourceConfigs, err := stacks.CloneSourceConfigs(latestRevision.SourceConfigs)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	appResources, err := stacks.CloneAppResources(latestRevision.Resources, latestRevision.SourceConfigs, newSourceConfigs)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	envGroups, err := stacks.CloneEnvGroups(latestRevision.EnvGroups)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	newEnvGroups, err := getEnvGroupModels([]*types.CreateStackEnvGroupRequest{req}, proj.ID, cluster.ID, namespace)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -110,14 +105,12 @@ func (p *StackAddEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	revision, err := p.Repo().Stack().AppendNewRevision(newRevision)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	k8sAgent, err := p.GetAgent(r, cluster, "")
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -131,7 +124,6 @@ func (p *StackAddEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		Variables:       req.Variables,
 		SecretVariables: req.SecretVariables,
 	})
-
 	if err != nil {
 		envGroupDeployErrors = append(envGroupDeployErrors, fmt.Sprintf("error creating env group %s", req.Name))
 	}

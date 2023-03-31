@@ -44,7 +44,6 @@ func coalesceEnvGroups(
 				Version: group.Version,
 			},
 		)
-
 		if err != nil {
 			return err
 		}

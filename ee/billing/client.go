@@ -49,7 +49,6 @@ func (c *Client) CreateTeam(user *cemodels.User, proj *cemodels.Project) (string
 	}
 
 	err := c.postRequest("/api/v1/private/customer", reqData, nil)
-
 	if err != nil {
 		return "", err
 	}
@@ -78,7 +77,6 @@ func (c *Client) GetRedirectURI(user *cemodels.User, proj *cemodels.Project) (st
 
 	createCookieVals := make(map[string][]string)
 	err := schema.NewEncoder().Encode(reqData, createCookieVals)
-
 	if err != nil {
 		return "", err
 	}
@@ -120,7 +118,6 @@ func (c *Client) VerifySignature(signature string, body []byte) bool {
 
 	actual := make([]byte, 32)
 	_, err := hex.Decode(actual, []byte(signature[7:]))
-
 	if err != nil {
 		return false
 	}
@@ -149,7 +146,6 @@ func (c *Client) deleteRequest(path string, data interface{}, dst interface{}) e
 
 func (c *Client) getRequest(path string, dst interface{}, query ...map[string]string) error {
 	reqURL, err := url.Parse(c.serverURL)
-
 	if err != nil {
 		return nil
 	}
@@ -170,7 +166,6 @@ func (c *Client) getRequest(path string, dst interface{}, query ...map[string]st
 		reqURL.String(),
 		nil,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -180,7 +175,6 @@ func (c *Client) getRequest(path string, dst interface{}, query ...map[string]st
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.apiKey))
 
 	res, err := c.httpClient.Do(req)
-
 	if err != nil {
 		return err
 	}
@@ -189,7 +183,6 @@ func (c *Client) getRequest(path string, dst interface{}, query ...map[string]st
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		resBytes, err := ioutil.ReadAll(res.Body)
-
 		if err != nil {
 			return fmt.Errorf("request failed with status code %d, but could not read body (%s)\n", res.StatusCode, err.Error())
 		}
@@ -206,7 +199,6 @@ func (c *Client) getRequest(path string, dst interface{}, query ...map[string]st
 
 func (c *Client) writeRequest(method, path string, data interface{}, dst interface{}) error {
 	reqURL, err := url.Parse(c.serverURL)
-
 	if err != nil {
 		return nil
 	}
@@ -228,7 +220,6 @@ func (c *Client) writeRequest(method, path string, data interface{}, dst interfa
 		reqURL.String(),
 		strings.NewReader(string(strData)),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -238,7 +229,6 @@ func (c *Client) writeRequest(method, path string, data interface{}, dst interfa
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.apiKey))
 
 	res, err := c.httpClient.Do(req)
-
 	if err != nil {
 		return err
 	}
@@ -247,7 +237,6 @@ func (c *Client) writeRequest(method, path string, data interface{}, dst interfa
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		resBytes, err := ioutil.ReadAll(res.Body)
-
 		if err != nil {
 			return fmt.Errorf("request failed with status code %d, but could not read body (%s)\n", res.StatusCode, err.Error())
 		}
@@ -273,7 +262,6 @@ func (c *Client) ParseProjectUsageFromWebhook(payload []byte) (*cemodels.Project
 	usageData := &APIWebhookRequest{}
 
 	err := json.Unmarshal(payload, usageData)
-
 	if err != nil {
 		return nil, nil, err
 	}

@@ -38,7 +38,6 @@ func (p *ProjectScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	projID := reqScopes[types.ProjectScope].Resource.UInt
 
 	project, err := p.config.Repo.Project().ReadProject(projID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(

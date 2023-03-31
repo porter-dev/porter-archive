@@ -29,7 +29,6 @@ func main() {
 	}
 
 	db, err := adapter.New(&conf.DBConf)
-
 	if err != nil {
 		log.Fatalf("Failed to create DB adapter: %v", err)
 	}
@@ -53,7 +52,6 @@ func main() {
 	log.Println("Creating test user")
 
 	hashedPW, err := bcrypt.GenerateFromPassword([]byte("test"), 8)
-
 	if err != nil {
 		log.Fatalf("Failed to hash password: %v", err)
 	}
@@ -63,7 +61,6 @@ func main() {
 		Password:      string(hashedPW),
 		EmailVerified: true,
 	})
-
 	if err != nil {
 		log.Fatalf("Failed to create test user: %v", err)
 	}
@@ -75,7 +72,6 @@ func main() {
 		PreviewEnvsEnabled: true,
 		APITokensEnabled:   true,
 	})
-
 	if err != nil {
 		log.Fatalf("Failed to create test project: %v", err)
 	}
@@ -95,7 +91,6 @@ func main() {
 	}
 
 	policyBytes, err := json.Marshal(types.AdminPolicy)
-
 	if err != nil {
 		log.Fatalf("Failed to JSON marshal admin policy: %v", err)
 	}
@@ -107,7 +102,6 @@ func main() {
 		Name:            "Admin Policy",
 		PolicyBytes:     policyBytes,
 	})
-
 	if err != nil {
 		log.Fatalf("Failed to create admin policy: %v", err)
 	}

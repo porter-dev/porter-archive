@@ -19,7 +19,8 @@ func NewPythonRuntime() Runtime {
 func (runtime *pythonRuntime) detectPipenvGithub(results chan struct {
 	string
 	bool
-}, directoryContent []*github.RepositoryContent) {
+}, directoryContent []*github.RepositoryContent,
+) {
 	pipfileFound := false
 	pipfileLockFound := false
 	for i := 0; i < len(directoryContent); i++ {
@@ -45,7 +46,8 @@ func (runtime *pythonRuntime) detectPipenvGithub(results chan struct {
 func (runtime *pythonRuntime) detectPipenvGitlab(results chan struct {
 	string
 	bool
-}, tree []*gitlab.TreeNode) {
+}, tree []*gitlab.TreeNode,
+) {
 	pipfileFound := false
 	pipfileLockFound := false
 	for i := 0; i < len(tree); i++ {
@@ -71,7 +73,8 @@ func (runtime *pythonRuntime) detectPipenvGitlab(results chan struct {
 func (runtime *pythonRuntime) detectPipGithub(results chan struct {
 	string
 	bool
-}, directoryContent []*github.RepositoryContent) {
+}, directoryContent []*github.RepositoryContent,
+) {
 	requirementsTxtFound := false
 	for i := 0; i < len(directoryContent); i++ {
 		name := directoryContent[i].GetName()
@@ -91,7 +94,8 @@ func (runtime *pythonRuntime) detectPipGithub(results chan struct {
 func (runtime *pythonRuntime) detectPipGitlab(results chan struct {
 	string
 	bool
-}, tree []*gitlab.TreeNode) {
+}, tree []*gitlab.TreeNode,
+) {
 	requirementsTxtFound := false
 	for i := 0; i < len(tree); i++ {
 		name := tree[i].Name
@@ -111,7 +115,8 @@ func (runtime *pythonRuntime) detectPipGitlab(results chan struct {
 func (runtime *pythonRuntime) detectCondaGithub(results chan struct {
 	string
 	bool
-}, directoryContent []*github.RepositoryContent) {
+}, directoryContent []*github.RepositoryContent,
+) {
 	environmentFound := false
 	packageListFound := false
 	for i := 0; i < len(directoryContent); i++ {
@@ -136,7 +141,8 @@ func (runtime *pythonRuntime) detectCondaGithub(results chan struct {
 func (runtime *pythonRuntime) detectCondaGitlab(results chan struct {
 	string
 	bool
-}, tree []*gitlab.TreeNode) {
+}, tree []*gitlab.TreeNode,
+) {
 	environmentFound := false
 	packageListFound := false
 	for i := 0; i < len(tree); i++ {
@@ -161,7 +167,8 @@ func (runtime *pythonRuntime) detectCondaGitlab(results chan struct {
 func (runtime *pythonRuntime) detectStandaloneGithub(results chan struct {
 	string
 	bool
-}, directoryContent []*github.RepositoryContent) {
+}, directoryContent []*github.RepositoryContent,
+) {
 	pyFound := false
 	for i := 0; i < len(directoryContent); i++ {
 		name := directoryContent[i].GetName()
@@ -182,7 +189,8 @@ func (runtime *pythonRuntime) detectStandaloneGithub(results chan struct {
 func (runtime *pythonRuntime) detectStandaloneGitlab(results chan struct {
 	string
 	bool
-}, tree []*gitlab.TreeNode) {
+}, tree []*gitlab.TreeNode,
+) {
 	pyFound := false
 	for i := 0; i < len(tree); i++ {
 		name := tree[i].Name

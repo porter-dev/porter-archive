@@ -30,7 +30,6 @@ func MigrateVault(db *gorm.DB, dbConf *env.DBConf, shouldFinalize bool) error {
 	}
 
 	err := migrateOAuthIntegrationModel(db, vaultClient, shouldFinalize)
-
 	if err != nil {
 		fmt.Printf("failed on oauth migration: %v\n", err)
 

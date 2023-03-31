@@ -19,7 +19,6 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		file, err := ioutil.ReadFile("./assets/init.html")
-
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			log.Fatal("Can't find error html page")

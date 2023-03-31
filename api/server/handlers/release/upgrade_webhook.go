@@ -40,7 +40,6 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// retrieve release by token
 	release, err := c.Repo().Release().ReadReleaseByWebhookToken(token)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// throw forbidden error, since we don't want a way to verify if webhooks exist
@@ -56,7 +55,6 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster, err := c.Repo().Cluster().ReadCluster(release.ProjectID, release.ClusterID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// throw forbidden error, since we don't want a way to verify if the cluster and project
@@ -75,7 +73,6 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// in this case, we retrieve the agent by passing in the namespace field directly, since
 	// it cannot be detected from the URL
 	helmAgent, err := c.GetHelmAgent(r, cluster, release.Namespace)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -88,7 +85,6 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rel, err := helmAgent.GetRelease(release.Name, 0, true)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -127,7 +123,6 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(release.ProjectID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -147,7 +142,6 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	notifConf = nil
 	if release != nil && release.NotificationConfig != 0 {
 		conf, err := c.Repo().NotificationConfig().ReadNotificationConfig(release.NotificationConfig)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return

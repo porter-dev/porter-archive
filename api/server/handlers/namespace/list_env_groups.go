@@ -33,7 +33,6 @@ func (c *ListEnvGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -41,7 +40,6 @@ func (c *ListEnvGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	// get all versioned config maps
 	configMaps, err := agent.ListAllVersionedConfigMaps(namespace)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -51,7 +49,6 @@ func (c *ListEnvGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	for _, cm := range configMaps {
 		eg, err := envgroup.ToEnvGroup(&cm)
-
 		if err != nil {
 			continue
 		}
@@ -67,7 +64,6 @@ func (c *ListEnvGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	// get all meta-version 1 configmaps
 	configMapList, err := agent.ListConfigMaps(namespace)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -75,7 +71,6 @@ func (c *ListEnvGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	for _, v1CM := range configMapList.Items {
 		eg, err := envgroup.ToEnvGroup(&v1CM)
-
 		if err != nil {
 			continue
 		}

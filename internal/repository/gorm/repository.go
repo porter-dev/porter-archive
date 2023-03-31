@@ -220,9 +220,11 @@ func (t *GormRepository) Stack() repository.StackRepository {
 func (t *GormRepository) MonitorTestResult() repository.MonitorTestResultRepository {
 	return t.monitor
 }
+
 func (t *GormRepository) APIContractRevisioner() repository.APIContractRevisioner {
 	return t.apiContractRevisions
 }
+
 func (t *GormRepository) AWSAssumeRoleChainer() repository.AWSAssumeRoleChainer {
 	return t.awsAssumeRoleChainer
 }

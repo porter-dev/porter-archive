@@ -29,7 +29,6 @@ func NewOAuthCallbackSlackHandler(
 
 func (p *OAuthCallbackSlackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	session, err := p.Config().Store.Get(r, p.Config().ServerConf.CookieName)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -46,14 +45,12 @@ func (p *OAuthCallbackSlackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	token, err := p.Config().SlackConf.Exchange(context.TODO(), r.URL.Query().Get("code"))
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	slackInt, err := slack.TokenToSlackIntegration(token)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -73,7 +70,6 @@ func (p *OAuthCallbackSlackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	if redirectStr, ok := session.Values["redirect_uri"].(string); ok && redirectStr != "" {
 		// attempt to parse the redirect uri, if it fails just redirect to dashboard
 		redirectURI, err := url.Parse(redirectStr)
-
 		if err != nil {
 			http.Redirect(w, r, "/dashboard", 302)
 		}

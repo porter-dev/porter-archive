@@ -31,6 +31,8 @@ type CreateProjectRoleRequest struct {
 	UserID uint   `json:"user_id" form:"required"`
 }
 
+type ProjectInviteAdminRequest struct{}
+
 type ReadProjectResponse Project
 
 type ListProjectsRequest struct{}

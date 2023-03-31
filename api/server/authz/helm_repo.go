@@ -40,7 +40,6 @@ func (p *HelmRepoScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	helmRepoID := reqScopes[types.HelmRepoScope].Resource.UInt
 
 	helmRepo, err := p.config.Repo.HelmRepo().ReadHelmRepo(proj.ID, helmRepoID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(

@@ -22,7 +22,6 @@ func NewSentryAlerter(sentryDSN, sentryEnv string) (*SentryAlerter, error) {
 		Integrations:     noIntegrations,
 		Environment:      sentryEnv,
 	})
-
 	if err != nil {
 		return nil, err
 	}

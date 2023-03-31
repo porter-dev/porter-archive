@@ -20,7 +20,6 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 	svcList, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/managed-by=Helm",
 	})
-
 	if err != nil {
 		return "", false, err
 	}

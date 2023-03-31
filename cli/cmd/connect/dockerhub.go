@@ -35,13 +35,11 @@ func Dockerhub(
 	}
 
 	username, err := utils.PromptPlaintext("Docker Hub username: ")
-
 	if err != nil {
 		return 0, err
 	}
 
 	password, err := utils.PromptPassword("Provide the Docker Hub personal access token.\nToken: ")
-
 	if err != nil {
 		return 0, err
 	}
@@ -55,7 +53,6 @@ func Dockerhub(
 			Password: password,
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -71,7 +68,6 @@ func Dockerhub(
 			BasicIntegrationID: integration.ID,
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}

@@ -49,7 +49,6 @@ func GetLogsFromPorterAgent(
 	)
 
 	rawQuery, err := resp.DoRaw(context.TODO())
-
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +79,6 @@ func GetLogBucketsFromPorterAgent(
 	)
 
 	rawQuery, err := resp.DoRaw(context.TODO())
-
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +96,6 @@ func parseLogQuery(rawQuery []byte) (*AgentLogsResp, error) {
 	resp := &AgentLogsResp{}
 
 	err := json.Unmarshal(rawQuery, resp)
-
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +112,6 @@ func parseLogBucketsQuery(rawQuery []byte) (*AgentLogBucketsResp, error) {
 	resp := &AgentLogBucketsResp{}
 
 	err := json.Unmarshal(rawQuery, resp)
-
 	if err != nil {
 		return nil, err
 	}

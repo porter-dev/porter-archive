@@ -40,14 +40,12 @@ func (c *ResolveClusterCandidateHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	}
 
 	cc, err := c.Repo().Cluster().ReadClusterCandidate(proj.ID, ccID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	cluster, cc, err := createClusterFromCandidate(c.Repo(), proj, user, cc, request)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

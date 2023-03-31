@@ -40,7 +40,6 @@ func (p *RegistryScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	registryID := reqScopes[types.RegistryScope].Resource.UInt
 
 	registry, err := p.config.Repo.Registry().ReadRegistry(proj.ID, registryID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(

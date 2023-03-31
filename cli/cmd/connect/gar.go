@@ -25,7 +25,6 @@ func GAR(
 
 	keyFileLocation, err := utils.PromptPlaintext(`Please provide the full path to a service account key file.
 Key file location: `)
-
 	if err != nil {
 		return 0, err
 	}
@@ -34,7 +33,6 @@ Key file location: `)
 	if info, err := os.Stat(keyFileLocation); !os.IsNotExist(err) && !info.IsDir() {
 		// read the file
 		bytes, err := os.ReadFile(keyFileLocation)
-
 		if err != nil {
 			return 0, err
 		}
@@ -47,7 +45,6 @@ Key file location: `)
 				GCPKeyData: string(bytes),
 			},
 		)
-
 		if err != nil {
 			return 0, err
 		}
@@ -56,7 +53,6 @@ Key file location: `)
 
 		region, err := utils.PromptPlaintext(`Please enter the artifact registry region. For example, us-central1.
 Artifact registry region: `)
-
 		if err != nil {
 			return 0, err
 		}
@@ -64,7 +60,6 @@ Artifact registry region: `)
 		// create the registry
 		// query for registry name
 		regName, err := utils.PromptPlaintext("Give this registry a name: ")
-
 		if err != nil {
 			return 0, err
 		}
@@ -94,7 +89,6 @@ Artifact registry region: `)
 				URL:              registryURL,
 			},
 		)
-
 		if err != nil {
 			return 0, err
 		}

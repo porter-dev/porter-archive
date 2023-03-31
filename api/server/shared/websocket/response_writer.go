@@ -18,7 +18,6 @@ func (w *WebsocketSafeReadWriter) WriteJSON(v interface{}) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	err := w.conn.WriteJSON(v)
-
 	if err != nil {
 		if errOr(err, websocket.ErrCloseSent, syscall.EPIPE, syscall.ECONNRESET) {
 			// if close has been sent, or error is broken pipe error or connection reset, we want to
@@ -36,7 +35,6 @@ func (w *WebsocketSafeReadWriter) Write(data []byte) (int, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	err := w.conn.WriteMessage(websocket.TextMessage, data)
-
 	if err != nil {
 		if errOr(err, websocket.ErrCloseSent, syscall.EPIPE, syscall.ECONNRESET) {
 			// if close has been sent, or error is broken pipe error or connection reset, we want to

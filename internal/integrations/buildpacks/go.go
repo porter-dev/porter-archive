@@ -18,7 +18,8 @@ func NewGoRuntime() Runtime {
 func (runtime *goRuntime) detectModGithub(results chan struct {
 	string
 	bool
-}, directoryContent []*github.RepositoryContent) {
+}, directoryContent []*github.RepositoryContent,
+) {
 	goModFound := false
 	for i := 0; i < len(directoryContent); i++ {
 		name := directoryContent[i].GetName()
@@ -39,7 +40,8 @@ func (runtime *goRuntime) detectModGithub(results chan struct {
 func (runtime *goRuntime) detectModGitlab(results chan struct {
 	string
 	bool
-}, tree []*gitlab.TreeNode) {
+}, tree []*gitlab.TreeNode,
+) {
 	goModFound := false
 	for i := 0; i < len(tree); i++ {
 		name := tree[i].Name
@@ -60,7 +62,8 @@ func (runtime *goRuntime) detectModGitlab(results chan struct {
 func (runtime *goRuntime) detectDepGithub(results chan struct {
 	string
 	bool
-}, directoryContent []*github.RepositoryContent) {
+}, directoryContent []*github.RepositoryContent,
+) {
 	gopkgFound := false
 	vendorFound := false
 	for i := 0; i < len(directoryContent); i++ {
@@ -86,7 +89,8 @@ func (runtime *goRuntime) detectDepGithub(results chan struct {
 func (runtime *goRuntime) detectDepGitlab(results chan struct {
 	string
 	bool
-}, tree []*gitlab.TreeNode) {
+}, tree []*gitlab.TreeNode,
+) {
 	gopkgFound := false
 	vendorFound := false
 	for i := 0; i < len(tree); i++ {

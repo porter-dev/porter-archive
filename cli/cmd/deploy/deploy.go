@@ -63,7 +63,6 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 
 	// get release from Porter API
 	release, err := client.GetRelease(context.TODO(), opts.ProjectID, opts.ClusterID, opts.Namespace, app)
-
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +76,6 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 
 	// get docker agent
 	agent, err := docker.NewAgentWithAuthGetter(client, opts.ProjectID)
-
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +120,6 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 		deployAgent.Opts.Local = true
 
 		imageRepo, err := deployAgent.getReleaseImage()
-
 		if err != nil {
 			return nil, err
 		}
@@ -167,7 +164,6 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 	}
 
 	env, err := GetEnvForRelease(d.Client, conf, d.Opts.ProjectID, d.Opts.ClusterID, d.Opts.Namespace)
-
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +206,6 @@ func (d *DeployAgent) SetBuildEnv(envVars map[string]string) error {
 		prefixedKey := fmt.Sprintf("%s_%s", d.envPrefix, key)
 
 		err := os.Setenv(prefixedKey, val)
-
 		if err != nil {
 			return err
 		}
@@ -235,7 +230,7 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 	output := strings.Join(lines, "\n")
 
 	if fileDest != "" {
-		ioutil.WriteFile(fileDest, []byte(output), 0700)
+		ioutil.WriteFile(fileDest, []byte(output), 0o700)
 	} else {
 		fmt.Println(output)
 	}
@@ -276,7 +271,6 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
 			repoSplit[1],
 			d.Release.GitActionConfig.GitBranch,
 		)
-
 		if err != nil {
 			return err
 		}
@@ -347,7 +341,6 @@ func (d *DeployAgent) Push() error {
 func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}) error {
 	// we should fetch the latest release and its config
 	release, err := d.Client.GetRelease(context.TODO(), d.Opts.ProjectID, d.Opts.ClusterID, d.Opts.Namespace, d.App)
-
 	if err != nil {
 		return err
 	}
@@ -382,7 +375,6 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 	if currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter" ||
 		currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
 		newImage, err := d.getReleaseImage()
-
 		if err != nil {
 			return fmt.Errorf("could not overwrite hello-porter image: %s", err.Error())
 		}
@@ -399,7 +391,6 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 	}
 
 	bytes, err := json.Marshal(mergedValues)
-
 	if err != nil {
 		return err
 	}
@@ -439,7 +430,6 @@ func GetEnvForRelease(
 
 	// first, get the env vars from "container.env.normal"
 	normalEnv, err := GetNormalEnv(client, config, projID, clusterID, namespace, true)
-
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching container.env.normal variables: %w", err)
 	}
@@ -451,7 +441,6 @@ func GetEnvForRelease(
 	// next, get the env vars specified by "container.env.synced"
 	// look for container.env.synced
 	syncedEnv, err := GetSyncedEnv(client, config, projID, clusterID, namespace, true)
-
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching container.env.synced variables: %w", err)
 	}
@@ -473,7 +462,6 @@ func GetNormalEnv(
 	res := make(map[string]string)
 
 	envConfig, err := GetNestedMap(config, "container", "env", "normal")
-
 	// if the field is not found, set envConfig to an empty map; this release has no env set
 	if err != nil {
 		envConfig = make(map[string]interface{})
@@ -508,7 +496,6 @@ func GetSyncedEnv(
 	res := make(map[string]string)
 
 	envConf, err := GetNestedMap(config, "container", "env")
-
 	// if error, just return the env detected from above
 	if err != nil {
 		return res, nil
@@ -608,7 +595,6 @@ func GetSyncedEnv(
 					Name: syncedEG.Name,
 				},
 			)
-
 			if err != nil {
 				continue
 			}
@@ -633,7 +619,6 @@ func (d *DeployAgent) getReleaseImage() (string, error) {
 
 	// get the image from the conig
 	imageConfig, err := GetNestedMap(d.Release.Config, "image")
-
 	if err != nil {
 		return "", fmt.Errorf("could not get image config from release: %s", err.Error())
 	}
@@ -656,7 +641,6 @@ func (d *DeployAgent) getReleaseImage() (string, error) {
 func (d *DeployAgent) pullCurrentReleaseImage() (string, error) {
 	// pull the currently deployed image to use cache, if possible
 	imageConfig, err := GetNestedMap(d.Release.Config, "image")
-
 	if err != nil {
 		return "", fmt.Errorf("could not get image config from release: %s", err.Error())
 	}
@@ -695,7 +679,6 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 	}
 
 	err := downloader.DownloadToFile(downloadURL)
-
 	if err != nil {
 		return "", fmt.Errorf("Error downloading to file: %s", err.Error())
 	}

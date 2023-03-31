@@ -39,7 +39,6 @@ func (p *CreateBasicHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	basic := CreateBasicIntegration(request.Username, request.Password, project.ID, user.ID)
 
 	basic, err := p.Repo().BasicIntegration().CreateBasicIntegration(basic)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

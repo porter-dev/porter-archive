@@ -40,7 +40,6 @@ func (c *GetEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, envID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such environment with ID: %d", envID)))

@@ -4,9 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-// 	"net"
 	"net/http"
-// 	"net/url"
 	"strconv"
 
 	gorillaws "github.com/gorilla/websocket"
@@ -35,10 +33,12 @@ import (
 	pgorm "gorm.io/gorm"
 )
 
-var InstanceBillingManager billing.BillingManager
-var InstanceEnvConf *envloader.EnvConf
-var InstanceDB *pgorm.DB
-var InstanceCredentialBackend credentials.CredentialStorage
+var (
+	InstanceBillingManager    billing.BillingManager
+	InstanceEnvConf           *envloader.EnvConf
+	InstanceDB                *pgorm.DB
+	InstanceCredentialBackend credentials.CredentialStorage
+)
 
 type EnvConfigLoader struct {
 	version string
@@ -178,7 +178,6 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		}
 
 		secret, err := ioutil.ReadFile(sc.GithubAppSecretPath)
-
 		if err != nil {
 			return nil, fmt.Errorf("could not read github app secret: %s", err)
 		}
@@ -205,28 +204,33 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
 
-				// check if the server url is localhost, and allow all localhost origins
-				//serverParsed, err := url.Parse(sc.ServerURL)
-				//if err != nil {
-					//return false
-				//}
-				//host, _, err := net.SplitHostPort(serverParsed.Host)
-				//if err != nil {
-					//return false
-				//}
-				//if host == "localhost" {
-					//parsedOrigin, err := url.Parse(origin)
-					//if err != nil {
-						//return false
-					//}
-					//originHost, _, err := net.SplitHostPort(parsedOrigin.Host)
-					//if err != nil {
-						//return false
-					//}
-					//if originHost == "localhost" {
-						//return true
-					//}
-				//}
+				// // check if the server url is localhost, and allow all localhost origins
+				// serverParsed, err := url.Parse(sc.ServerURL)
+				// if err != nil {
+				// 	return false
+				// }
+				// host, _, err := net.SplitHostPort(serverParsed.Host)
+				// if err != nil {
+				// 	return false
+				// }
+				// if host == "localhost" {
+				// 	parsedOrigin, err := url.Parse(origin)
+				// 	if err != nil {
+				// 		return false
+				// 	}
+				// 	originHost, _, err := net.SplitHostPort(parsedOrigin.Host)
+				// 	if err != nil {
+				// 		if !strings.Contains(err.Error(), "missing port in address") {
+				// 			return false
+				// 		}
+				// 		if strings.Contains(parsedOrigin.Host, "ngrok.io") {
+				// 			return true
+				// 		}
+				// 	}
+				// 	if originHost == "localhost" {
+				// 		return true
+				// 	}
+				// }
 				return origin == sc.ServerURL
 			},
 		},
@@ -255,22 +259,13 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		res.PowerDNSClient = powerdns.NewClient(sc.PowerDNSAPIServerURL, sc.PowerDNSAPIKey, sc.AppRootDomain)
 	}
 
-	res.DisableCAPIProvisioner = sc.DisableCAPIProvisioner
-	if !sc.DisableCAPIProvisioner {
+	res.EnableCAPIProvisioner = sc.EnableCAPIProvisioner
+	if sc.EnableCAPIProvisioner {
 		if sc.ClusterControlPlaneAddress == "" {
 			return res, errors.New("must provide CLUSTER_CONTROL_PLANE_ADDRESS")
 		}
 		client := porterv1connect.NewClusterControlPlaneServiceClient(http.DefaultClient, sc.ClusterControlPlaneAddress)
 		res.ClusterControlPlaneClient = client
-
-		// if sc.NATSUrl == "" {
-		// 	return res, errors.New("must provide NATS_URL")
-		// }
-		// pnats, err := nats.NewConnection(ctx, nats.Config{URL: sc.NATSUrl})
-		// if err != nil {
-		// 	return res, fmt.Errorf("error setting up connection to NATS cluster: %w", err)
-		// }
-		// res.NATS = pnats
 	}
 
 	return res, nil
@@ -281,7 +276,6 @@ func getProvisionerServiceClient(sc *env.ServerConf) (*client.Client, error) {
 		baseURL := fmt.Sprintf("%s/api/v1", sc.ProvisionerServerURL)
 
 		pClient, err := client.NewClient(baseURL, sc.ProvisionerToken, 0)
-
 		if err != nil {
 			return nil, err
 		}

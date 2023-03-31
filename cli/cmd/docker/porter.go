@@ -47,7 +47,6 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 	volumesMap := make(map[string]struct{})
 
 	netID, err := agent.CreateBridgeNetworkIfNotExist("porter_network_" + opts.ProcessID)
-
 	if err != nil {
 		return nil, "", err
 	}
@@ -56,7 +55,6 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 	case SQLite:
 		// check if sqlite volume exists, create it if not
 		vol, err := agent.CreateLocalVolumeIfNotExist("porter_sqlite_" + opts.ProcessID)
-
 		if err != nil {
 			return nil, "", err
 		}
@@ -80,7 +78,6 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 	case Postgres:
 		// check if postgres volume exists, create it if not
 		vol, err := agent.CreateLocalVolumeIfNotExist("porter_postgres_" + opts.ProcessID)
-
 		if err != nil {
 			return nil, "", err
 		}
@@ -113,7 +110,6 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 		}
 
 		pgID, err := agent.StartPostgresContainer(startOpts)
-
 		if err != nil {
 			return nil, "", err
 		}
@@ -180,7 +176,6 @@ type PorterServerStartOpts struct {
 // using the Docker engine. It returns the container ID
 func (a *Agent) StartPorterContainer(opts PorterServerStartOpts) (string, error) {
 	id, err := a.upsertPorterContainer(opts)
-
 	if err != nil {
 		return "", err
 	}
@@ -214,7 +209,6 @@ func (a *Agent) upsertPorterContainer(opts PorterServerStartOpts) (id string, er
 			timeout, _ := time.ParseDuration("15s")
 
 			err := a.ContainerStop(a.ctx, container.ID, &timeout)
-
 			if err != nil {
 				return "", a.handleDockerClientErr(err, "Could not stop container "+container.ID)
 			}
@@ -238,7 +232,6 @@ func (a *Agent) pullAndCreatePorterContainer(opts PorterServerStartOpts) (id str
 	ports := []string{fmt.Sprintf("127.0.0.1:%d:%d/tcp", opts.HostPort, opts.ContainerPort)}
 
 	_, portBindings, err := nat.ParsePortSpecs(ports)
-
 	if err != nil {
 		return "", fmt.Errorf("Unable to parse port specification %s", ports)
 	}
@@ -264,7 +257,6 @@ func (a *Agent) pullAndCreatePorterContainer(opts PorterServerStartOpts) (id str
 		PortBindings: portBindings,
 		Mounts:       opts.Mounts,
 	}, nil, &specs.Platform{}, opts.Name)
-
 	if err != nil {
 		return "", a.handleDockerClientErr(err, "Could not create Porter container")
 	}
@@ -295,7 +287,6 @@ type PostgresOpts struct {
 // using the Docker engine
 func (a *Agent) StartPostgresContainer(opts PostgresOpts) (string, error) {
 	id, err := a.upsertPostgresContainer(opts)
-
 	if err != nil {
 		return "", err
 	}
@@ -329,7 +320,6 @@ func (a *Agent) upsertPostgresContainer(opts PostgresOpts) (id string, err error
 			timeout, _ := time.ParseDuration("15s")
 
 			err := a.ContainerStop(a.ctx, container.ID, &timeout)
-
 			if err != nil {
 				return "", a.handleDockerClientErr(err, "Could not stop postgres container "+container.ID)
 			}
@@ -367,7 +357,6 @@ func (a *Agent) pullAndCreatePostgresContainer(opts PostgresOpts) (id string, er
 	}, &container.HostConfig{
 		Mounts: opts.Mounts,
 	}, nil, &specs.Platform{}, opts.Name)
-
 	if err != nil {
 		return "", a.handleDockerClientErr(err, "Could not create Porter container")
 	}
@@ -388,7 +377,6 @@ func (a *Agent) startPostgresContainer(id string) error {
 // -- removes the container if remove is set to true
 func (a *Agent) StopPorterContainers(remove bool) error {
 	containers, err := a.getContainersCreatedByStart()
-
 	if err != nil {
 		return err
 	}
@@ -398,7 +386,6 @@ func (a *Agent) StopPorterContainers(remove bool) error {
 		timeout, _ := time.ParseDuration("15s")
 
 		err := a.ContainerStop(a.ctx, container.ID, &timeout)
-
 		if err != nil {
 			return a.handleDockerClientErr(err, "Could not stop container "+container.ID)
 		}
@@ -420,7 +407,6 @@ func (a *Agent) StopPorterContainers(remove bool) error {
 // to true
 func (a *Agent) StopPorterContainersWithProcessID(processID string, remove bool) error {
 	containers, err := a.getContainersCreatedByStart()
-
 	if err != nil {
 		return err
 	}
@@ -431,7 +417,6 @@ func (a *Agent) StopPorterContainersWithProcessID(processID string, remove bool)
 			timeout, _ := time.ParseDuration("15s")
 
 			err := a.ContainerStop(a.ctx, container.ID, &timeout)
-
 			if err != nil {
 				return a.handleDockerClientErr(err, "Could not stop container "+container.ID)
 			}
@@ -455,7 +440,6 @@ func (a *Agent) getContainersCreatedByStart() ([]types.Container, error) {
 	containers, err := a.ContainerList(a.ctx, types.ContainerListOptions{
 		All: true,
 	})
-
 	if err != nil {
 		return nil, a.handleDockerClientErr(err, "Could not list containers")
 	}

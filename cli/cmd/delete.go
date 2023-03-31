@@ -33,7 +33,6 @@ deleting a configuration:
 	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, deleteDeployment)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -48,7 +47,6 @@ var deleteAppsCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, deleteApp)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -63,7 +61,6 @@ var deleteJobsCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, deleteJob)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -78,7 +75,6 @@ var deleteAddonsCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, deleteAddon)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -93,7 +89,6 @@ var deleteHelmCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, deleteHelm)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -133,7 +128,6 @@ func deleteDeployment(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 
 	if deplIDStr := os.Getenv("PORTER_DEPLOYMENT_ID"); deplIDStr != "" {
 		deplID, err := strconv.ParseUint(deplIDStr, 10, 32)
-
 		if err != nil {
 			return fmt.Errorf("error parsing deployment ID: %s", deplIDStr)
 		}
@@ -154,7 +148,6 @@ func deleteApp(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 	resp, err := client.GetRelease(
 		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -184,7 +177,6 @@ func deleteJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 	resp, err := client.GetRelease(
 		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -214,7 +206,6 @@ func deleteAddon(_ *types.GetAuthenticatedUserResponse, client *api.Client, args
 	resp, err := client.GetRelease(
 		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -242,7 +233,6 @@ func deleteHelm(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	name := args[0]
 
 	resp, err := client.ListHelmRepos(context.Background(), cliConf.Project)
-
 	if err != nil {
 		return err
 	}

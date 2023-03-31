@@ -28,7 +28,6 @@ func (p *ListDOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	oauthInts, err := p.Repo().OAuthIntegration().ListOAuthIntegrationsByProjectID(project.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

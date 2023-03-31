@@ -124,7 +124,8 @@ func CreateRandomState() string {
 // if it needs to be updated
 func MakeUpdateOAuthIntegrationTokenFunction(
 	o *integrations.OAuthIntegration,
-	repo repository.Repository) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+	repo repository.Repository,
+) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
 	return func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
 		o.AccessToken = accessToken
 		o.RefreshToken = refreshToken
@@ -140,7 +141,8 @@ func MakeUpdateOAuthIntegrationTokenFunction(
 // if it needs to be updated
 func MakeUpdateGithubAppOauthIntegrationFunction(
 	o *integrations.GithubAppOAuthIntegration,
-	repo repository.Repository) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+	repo repository.Repository,
+) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
 	return func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
 		o.AccessToken = accessToken
 		o.RefreshToken = refreshToken
@@ -161,7 +163,6 @@ func MakeUpdateGitlabAppOAuthIntegrationFunction(
 ) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
 	return func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
 		o, err := repo.OAuthIntegration().ReadOAuthIntegration(projectID, o.OAuthIntegrationID)
-
 		if err != nil {
 			return err
 		}
@@ -197,14 +198,12 @@ func GetAccessToken(
 	})
 
 	token, err := tokSource.Token()
-
 	if err != nil {
 		return "", nil, err
 	}
 
 	if token.AccessToken != string(prevToken.AccessToken) {
 		err := updateToken([]byte(token.AccessToken), []byte(token.RefreshToken), token.Expiry)
-
 		if err != nil {
 			return "", nil, err
 		}

@@ -53,14 +53,12 @@ func (a *Agent) BuildLocal(opts *BuildOpts) (err error) {
 	tar, err := archive.TarWithOptions(opts.BuildContext, &archive.TarOptions{
 		ExcludePatterns: excludes,
 	})
-
 	if err != nil {
 		return err
 	}
 
 	if !opts.IsDockerfileInCtx {
 		dockerfileCtx, err := os.Open(dockerfilePath)
-
 		if err != nil {
 			return errors.Errorf("unable to open Dockerfile: %v", err)
 		}
@@ -98,7 +96,6 @@ func (a *Agent) BuildLocal(opts *BuildOpts) (err error) {
 		Remove:   true,
 		Platform: "linux/amd64",
 	})
-
 	if err != nil {
 		return err
 	}
@@ -130,7 +127,7 @@ func AddDockerfileToBuildContext(dockerfileCtx io.ReadCloser, buildCtx io.ReadCl
 	}
 	now := time.Now()
 	hdrTmpl := &tar.Header{
-		Mode:       0600,
+		Mode:       0o600,
 		Uid:        0,
 		Gid:        0,
 		ModTime:    now,

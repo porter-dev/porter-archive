@@ -71,13 +71,11 @@ func (c *Client) GetKubeconfig(
 
 		if _, err := os.Stat(localKubeconfigPath); !os.IsNotExist(err) {
 			file, err := os.Open(localKubeconfigPath)
-
 			if err != nil {
 				return nil, err
 			}
 
 			data, err := io.ReadAll(file)
-
 			if err != nil {
 				return nil, err
 			}

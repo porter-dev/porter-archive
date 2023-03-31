@@ -28,7 +28,6 @@ type ConfigFilePolicy struct {
 func LoadPolicies(configFilePathDir string) (*KubernetesPolicies, error) {
 	// read and parse the config file
 	fileBytes, err := ioutil.ReadFile(filepath.Join(configFilePathDir, "config.yaml"))
-
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +48,6 @@ func LoadPolicies(configFilePathDir string) (*KubernetesPolicies, error) {
 
 		for _, cfPolicy := range cfPolicyCollection.Policies {
 			fileBytes, err := ioutil.ReadFile(filepath.Join(configFilePathDir, cfPolicy.Path))
-
 			if err != nil {
 				return nil, err
 			}
@@ -58,7 +56,6 @@ func LoadPolicies(configFilePathDir string) (*KubernetesPolicies, error) {
 				rego.Query(fmt.Sprintf("data.%s", cfPolicy.Name)),
 				rego.Module(cfPolicy.Name, string(fileBytes)),
 			).PrepareForEval(context.Background())
-
 			if err != nil {
 				// Handle error.
 				return nil, err

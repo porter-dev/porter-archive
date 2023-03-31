@@ -29,7 +29,6 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	proj, err := p.Repo().Project().DeleteProject(proj)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

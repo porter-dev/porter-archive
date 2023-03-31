@@ -40,7 +40,6 @@ func (p *InviteScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	inviteID := reqScopes[types.InviteScope].Resource.UInt
 
 	invite, err := p.config.Repo.Invite().ReadInvite(proj.ID, inviteID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(

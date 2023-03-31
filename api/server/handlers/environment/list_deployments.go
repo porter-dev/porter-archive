@@ -62,7 +62,6 @@ func (c *ListDeploymentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	depls, err := c.Repo().Environment().ListDeployments(env.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

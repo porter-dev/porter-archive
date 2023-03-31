@@ -21,19 +21,16 @@ import (
 func NewDefaultAgent() (*gcp.Agent, error) {
 	ctx := context.Background()
 	creds, err := setupDefaultCredentials(ctx)
-
 	if err != nil {
 		return nil, err
 	}
 
 	c, err := getDefaultIAMClient(ctx)
-
 	if err != nil {
 		return nil, err
 	}
 
 	cloudresourcemanagerService, err := cloudresourcemanager.NewService(ctx)
-
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +59,6 @@ func setupDefaultCredentials(ctx context.Context) (*oauth2.Credentials, error) {
 		// create Application Default Credentials that use the local user creds
 		cmd := exec.Command("gcloud", "auth", "application-default", "login")
 		err := cmd.Run()
-
 		if err != nil {
 			return nil, err
 		}

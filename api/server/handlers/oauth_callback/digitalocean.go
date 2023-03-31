@@ -30,7 +30,6 @@ func NewOAuthCallbackDOHandler(
 
 func (p *OAuthCallbackDOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	session, err := p.Config().Store.Get(r, p.Config().ServerConf.CookieName)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -47,7 +46,6 @@ func (p *OAuthCallbackDOHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	token, err := p.Config().DOConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
@@ -84,7 +82,6 @@ func (p *OAuthCallbackDOHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	if redirectStr, ok := session.Values["redirect_uri"].(string); ok && redirectStr != "" {
 		// attempt to parse the redirect uri, if it fails just redirect to dashboard
 		redirectURI, err := url.Parse(redirectStr)
-
 		if err != nil {
 			http.Redirect(w, r, "/dashboard", 302)
 		}

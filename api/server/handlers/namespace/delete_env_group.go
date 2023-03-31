@@ -42,7 +42,6 @@ func (c *DeleteEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, namespace)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -50,7 +49,6 @@ func (c *DeleteEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// get the env group: if it's MetaVersion=2, return an error
 	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, namespace, 0)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

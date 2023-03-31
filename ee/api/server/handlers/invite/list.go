@@ -1,3 +1,4 @@
+//go:build ee
 // +build ee
 
 package invite
@@ -30,7 +31,6 @@ func (c *InvitesListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	invites, err := c.Repo().Invite().ListInvitesByProjectID(project.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

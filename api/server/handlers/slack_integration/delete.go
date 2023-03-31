@@ -28,7 +28,6 @@ func (p *SlackIntegrationDelete) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	integrationID, _ := requestutils.GetURLParamUint(r, types.URLParamSlackIntegrationID)
 
 	slackInts, err := p.Repo().SlackIntegration().ListSlackIntegrationsByProjectID(project.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

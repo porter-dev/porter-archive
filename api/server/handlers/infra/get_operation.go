@@ -30,7 +30,6 @@ func (c *InfraGetOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	operation, _ := r.Context().Value(types.OperationScope).(*models.Operation)
 
 	op, err := operation.ToOperationType()
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -40,7 +39,6 @@ func (c *InfraGetOperationHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	formYAML, err := parser.FormYAMLFromBytes(&parser.ClientConfigDefault{
 		InfraOperation: operation,
 	}, getFormBytesFromKind(string(infra.Kind)), "declared", "infra")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

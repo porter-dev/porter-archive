@@ -43,7 +43,6 @@ func (c *ReportErrorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	infra.Status = "errored"
 
 	infra, err := c.Config.Repo.Infra().UpdateInfra(infra)
-
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return

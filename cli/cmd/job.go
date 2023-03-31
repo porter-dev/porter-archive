@@ -41,7 +41,6 @@ use the --namespace flag:
 	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, batchImageUpdate)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -72,7 +71,6 @@ use the --namespace flag:
 	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, waitForJob)
-
 		if err != nil {
 			os.Exit(1)
 		}

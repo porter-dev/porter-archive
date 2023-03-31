@@ -50,7 +50,6 @@ func (c *AddReleaseToEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

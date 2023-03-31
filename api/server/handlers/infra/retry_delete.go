@@ -36,14 +36,12 @@ func (c *InfraRetryDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// verify the credentials
 	err := checkInfraCredentials(c.Config(), proj, infra, req.InfraCredentials)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
 	}
 
 	lastOperation, err := c.Repo().Infra().GetLatestOperation(infra)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -63,7 +61,6 @@ func (c *InfraRetryDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	resp, err := c.Config().ProvisionerClient.Delete(context.Background(), proj.ID, infra.ID, &ptypes.DeleteBaseRequest{
 		OperationKind: "retry_delete",
 	})
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

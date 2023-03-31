@@ -31,7 +31,6 @@ func TestAllSourceConfigsArePopulated(t *testing.T) {
 	createNewStackRevision(tester, t, stackName)
 
 	err := populate_source_config_display_name.PopulateSourceConfigDisplayName(tester.DB, logger)
-
 	if err != nil {
 		t.Fatalf("%\n", err)
 		return
@@ -68,7 +67,6 @@ func TestPopulateOnEmptyStack(t *testing.T) {
 	defer cleanup(tester, t)
 
 	err := populate_source_config_display_name.PopulateSourceConfigDisplayName(tester.DB, logger)
-
 	if err != nil {
 		t.Fatalf("expected no error, got %s", err)
 		return

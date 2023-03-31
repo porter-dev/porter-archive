@@ -1,6 +1,7 @@
 package release
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -48,9 +49,10 @@ func NewCreateReleaseHandler(
 }
 
 func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	namespace := r.Context().Value(types.NamespaceScope).(string)
+	ctx := r.Context()
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	namespace := ctx.Value(types.NamespaceScope).(string)
 	operationID := oauth.CreateRandomState()
 
 	c.Config().AnalyticsClient.Track(analytics.ApplicationLaunchStartTrack(
@@ -61,7 +63,6 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	))
 
 	helmAgent, err := c.GetHelmAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
 		return
@@ -81,7 +82,6 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if request.RepoURL != c.Config().ServerConf.DefaultAddonHelmRepoURL && request.RepoURL != c.Config().ServerConf.DefaultApplicationHelmRepoURL {
 		// load the helm repos in the project
 		hrs, err := c.Repo().HelmRepo().ListHelmReposByProjectID(cluster.ProjectID)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing helm repos for project : %w", err)))
 			return
@@ -104,14 +104,12 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	chart, err := loader.LoadChartPublic(request.RepoURL, request.TemplateName, request.TemplateVersion)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error loading public chart: %w", err)))
 		return
 	}
 
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing registries: %w", err)))
 		return
@@ -128,7 +126,6 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	helmRelease, err := helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("error installing a new chart: %s", err.Error()),
@@ -139,7 +136,6 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	k8sAgent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting k8s agent: %w", err)))
 		return
@@ -151,7 +147,6 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		for _, envGroupName := range request.SyncedEnvGroups {
 			// read the attached configmap
 			cm, _, err := k8sAgent.GetLatestVersionedConfigMap(envGroupName, namespace)
-
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Couldn't find the env group"), http.StatusNotFound))
 				return
@@ -162,7 +157,6 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	release, err := CreateAppReleaseFromHelmRelease(c.Config(), cluster.ProjectID, cluster.ID, 0, helmRelease)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -198,6 +192,7 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	if request.GitActionConfig != nil {
 		_, _, err := createGitAction(
+			ctx,
 			c.Config(),
 			user.ID,
 			cluster.ProjectID,
@@ -207,7 +202,6 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			namespace,
 			release,
 		)
-
 		if err != nil {
 			unwrappedErr := errors.Unwrap(err)
 
@@ -247,7 +241,6 @@ func CreateAppReleaseFromHelmRelease(
 	helmRelease *release.Release,
 ) (*models.Release, error) {
 	token, err := encryption.GenerateRandomBytes(16)
-
 	if err != nil {
 		return nil, err
 	}
@@ -296,6 +289,7 @@ func CreateAddonReleaseFromHelmRelease(
 }
 
 func createGitAction(
+	ctx context.Context,
 	config *config.Config,
 	userID, projectID, clusterID uint,
 	request *types.CreateGitActionConfigRequest,
@@ -306,7 +300,6 @@ func createGitAction(
 	if release != nil && request.RegistryID != 0 {
 		// read the registry
 		reg, err := config.Repo.Registry().ReadRegistry(projectID, request.RegistryID)
-
 		if err != nil {
 			return nil, nil, err
 		}
@@ -318,7 +311,7 @@ func createGitAction(
 		nameSpl := strings.Split(request.ImageRepoURI, "/")
 		repoName := nameSpl[len(nameSpl)-1]
 
-		err = regAPI.CreateRepository(config.Repo, repoName)
+		err = regAPI.CreateRepository(ctx, config, repoName)
 
 		if err != nil {
 			return nil, nil, err
@@ -421,7 +414,6 @@ func createGitAction(
 		IsInstallation:      true,
 		Version:             "v0.1.0",
 	})
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -466,13 +458,11 @@ func getToken(
 	}
 
 	uid, err := encryption.GenerateRandomBytes(16)
-
 	if err != nil {
 		return "", err
 	}
 
 	policyBytes, err := json.Marshal(policy)
-
 	if err != nil {
 		return "", err
 	}
@@ -493,20 +483,17 @@ func getToken(
 
 	// create the token in the database
 	tokenUID, err := encryption.GenerateRandomBytes(16)
-
 	if err != nil {
 		return "", err
 	}
 
 	secretKey, err := encryption.GenerateRandomBytes(16)
-
 	if err != nil {
 		return "", err
 	}
 
 	// hash the secret key for storage in the db
 	hashedToken, err := bcrypt.GenerateFromPassword([]byte(secretKey), 8)
-
 	if err != nil {
 		return "", err
 	}
@@ -533,7 +520,6 @@ func getToken(
 
 	// generate porter jwt token
 	jwt, err := token.GetStoredTokenForAPI(userID, projectID, apiToken.UniqueID, secretKey)
-
 	if err != nil {
 		return "", err
 	}

@@ -2,11 +2,14 @@ package registry
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/bufbuild/connect-go"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -34,7 +37,8 @@ func NewRegistryGetECRTokenHandler(
 }
 
 func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	ctx := r.Context()
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	request := &types.GetRegistryECRTokenRequest{}
 
@@ -42,9 +46,35 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	if proj.CapiProvisionerEnabled {
+		ecrRequest := porterv1.ECRTokenForRegistryRequest{
+			ProjectId:    int64(proj.ID),
+			Region:       request.Region,
+			AwsAccountId: request.AccountID,
+		}
+		ecrResponse, err := c.Config().ClusterControlPlaneClient.ECRTokenForRegistry(ctx, connect.NewRequest(&ecrRequest))
+		if err != nil {
+			e := fmt.Errorf("error getting ecr token for capi cluster: %v", err)
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			return
+		}
+		if ecrResponse.Msg == nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("nil message received for ecr token")))
+			return
+		}
+		expiry := ecrResponse.Msg.Expiry.AsTime()
+
+		resp := &types.GetRegistryTokenResponse{
+			Token:     ecrResponse.Msg.Token,
+			ExpiresAt: &expiry,
+		}
+
+		c.WriteResult(w, r, resp)
+		return
+	}
+
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -56,7 +86,6 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	for _, reg := range regs {
 		if reg.AWSIntegrationID != 0 {
 			awsInt, err := c.Repo().AWSIntegration().ReadAWSIntegration(reg.ProjectID, reg.AWSIntegrationID)
-
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
@@ -72,7 +101,6 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			}
 
 			parsedARN, err := arn.Parse(awsInt.AWSArn)
-
 			if err != nil {
 				continue
 			}
@@ -81,7 +109,6 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			if awsInt.AWSRegion == request.Region && (request.AccountID == "" || request.AccountID == parsedARN.AccountID) {
 				// get the aws integration and session
 				sess, err := awsInt.GetSession()
-
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 					return
@@ -90,7 +117,6 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 				ecrSvc := ecr.New(sess)
 
 				output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
-
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 					return
@@ -135,7 +161,6 @@ func (c *RegistryGetGCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -198,7 +223,6 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -261,7 +285,6 @@ func (c *RegistryGetDOCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -273,7 +296,6 @@ func (c *RegistryGetDOCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	for _, reg := range regs {
 		if reg.DOIntegrationID != 0 && strings.Contains(reg.URL, request.ServerURL) {
 			oauthInt, err := c.Repo().OAuthIntegration().ReadOAuthIntegration(reg.ProjectID, reg.DOIntegrationID)
-
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
@@ -284,7 +306,6 @@ func (c *RegistryGetDOCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 				c.Config().DOConf,
 				oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, c.Repo()),
 			)
-
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
@@ -323,7 +344,6 @@ func (c *RegistryGetDockerhubTokenHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -335,7 +355,6 @@ func (c *RegistryGetDockerhubTokenHandler) ServeHTTP(w http.ResponseWriter, r *h
 	for _, reg := range regs {
 		if reg.BasicIntegrationID != 0 && strings.Contains(reg.URL, "index.docker.io") {
 			basic, err := c.Repo().BasicIntegration().ReadBasicIntegration(reg.ProjectID, reg.BasicIntegrationID)
-
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
@@ -376,7 +395,6 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -390,7 +408,6 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			_reg := registry.Registry(*reg)
 
 			username, pw, err := _reg.GetACRCredentials(c.Repo())
-
 			if err != nil {
 				continue
 			}

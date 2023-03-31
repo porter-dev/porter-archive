@@ -34,7 +34,6 @@ func (c *GithubAppOAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	session, err := c.Config().Store.Get(r, c.Config().ServerConf.CookieName)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -46,7 +45,6 @@ func (c *GithubAppOAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http
 		if redirectStr, ok := session.Values["redirect_uri"].(string); ok && redirectStr != "" {
 			// attempt to parse the redirect uri, if it fails just redirect to dashboard
 			redirectURI, err := url.Parse(redirectStr)
-
 			if err != nil {
 				http.Redirect(w, r, "/dashboard", 302)
 			}
@@ -93,7 +91,6 @@ func (c *GithubAppOAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http
 	if redirectStr, ok := session.Values["redirect_uri"].(string); ok && redirectStr != "" {
 		// attempt to parse the redirect uri, if it fails just redirect to dashboard
 		redirectURI, err := url.Parse(redirectStr)
-
 		if err != nil {
 			http.Redirect(w, r, "/dashboard", 302)
 		}

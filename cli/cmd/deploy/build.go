@@ -36,7 +36,6 @@ func (b *BuildAgent) BuildDocker(
 		buildCtx,
 		dockerfilePath,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -65,7 +64,6 @@ func (b *BuildAgent) BuildPack(dockerAgent *docker.Agent, dst, tag, prevTag stri
 			fmt.Sprintf("%s:%s", b.ImageRepo, prevTag),
 			fmt.Sprintf("%s:%s", b.ImageRepo, "pack-cache"),
 		)
-
 		if err != nil {
 			return err
 		}
@@ -113,7 +111,6 @@ func ResolveDockerPaths(
 
 	// compare the path to the dockerfile with the build context
 	pathComp, err := filepath.Rel(resBuildCtxPath, resDockerfilePath)
-
 	if err != nil {
 		return "", "", false, err
 	}

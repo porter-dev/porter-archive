@@ -14,7 +14,6 @@ func commonValidator(resource *types.Resource) (*Source, *Target, error) {
 	source := &Source{}
 
 	err := mapstructure.Decode(resource.Source, source)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("for resource '%s': error parsing source: %w", resource.Name, err)
 	}
@@ -32,7 +31,6 @@ func commonValidator(resource *types.Resource) (*Source, *Target, error) {
 
 func deployDriverValidator(resource *types.Resource) error {
 	source, _, err := commonValidator(resource)
-
 	if err != nil {
 		return err
 	}
@@ -77,7 +75,6 @@ func deployDriverValidator(resource *types.Resource) error {
 
 				// check for valid image
 				_, err := reference.ParseNamed(appConfig.Build.Image)
-
 				if err != nil {
 					return fmt.Errorf("for resource '%s': error parsing image: %w", resource.Name, err)
 				}
@@ -99,21 +96,18 @@ func deployDriverValidator(resource *types.Resource) error {
 		if len(appConfig.Values) > 0 {
 			if source.Name == "web" {
 				err := validateWebChartValues(appConfig.Values)
-
 				if err != nil {
 					return fmt.Errorf("for resource '%s': error validating values for web deployment: %w",
 						resource.Name, err)
 				}
 			} else if source.Name == "worker" {
 				err := validateWorkerChartValues(appConfig.Values)
-
 				if err != nil {
 					return fmt.Errorf("for resource '%s': error validating values for worker deployment: %w",
 						resource.Name, err)
 				}
 			} else if source.Name == "job" {
 				err := validateJobChartValues(appConfig.Values)
-
 				if err != nil {
 					return fmt.Errorf("for resource '%s': error validating values for job deployment: %w",
 						resource.Name, err)
@@ -124,7 +118,6 @@ func deployDriverValidator(resource *types.Resource) error {
 		if len(resource.Config) > 0 {
 			if source.Name == "postgresql" {
 				err := validatePostgresChartValues(resource.Config)
-
 				if err != nil {
 					return fmt.Errorf("for resource '%s': error validating values for postgresql deployment: %w",
 						resource.Name, err)
@@ -138,7 +131,6 @@ func deployDriverValidator(resource *types.Resource) error {
 
 func buildImageDriverValidator(resource *types.Resource) error {
 	_, target, err := commonValidator(resource)
-
 	if err != nil {
 		return err
 	}
@@ -185,7 +177,6 @@ func buildImageDriverValidator(resource *types.Resource) error {
 
 			// check for valid image
 			_, err := reference.ParseNamed(driverConfig.Build.Image)
-
 			if err != nil {
 				return fmt.Errorf("for resource '%s': error parsing image: %w", resource.Name, err)
 			}
@@ -209,7 +200,6 @@ func buildImageDriverValidator(resource *types.Resource) error {
 
 func pushImageDriverValidator(resource *types.Resource) error {
 	_, target, err := commonValidator(resource)
-
 	if err != nil {
 		return err
 	}
@@ -246,7 +236,6 @@ func pushImageDriverValidator(resource *types.Resource) error {
 
 		// check for valid image
 		_, err := reference.ParseNamed(driverConfig.Push.Image)
-
 		if err != nil {
 			return fmt.Errorf("for resource '%s': error parsing image: %w", resource.Name, err)
 		}
@@ -257,7 +246,6 @@ func pushImageDriverValidator(resource *types.Resource) error {
 
 func updateConfigDriverValidator(resource *types.Resource) error {
 	source, target, err := commonValidator(resource)
-
 	if err != nil {
 		return err
 	}
@@ -312,21 +300,18 @@ func updateConfigDriverValidator(resource *types.Resource) error {
 	if len(driverConfig.Values) > 0 && source.Repo == "https://charts.getporter.dev" {
 		if source.Name == "web" {
 			err := validateWebChartValues(driverConfig.Values)
-
 			if err != nil {
 				return fmt.Errorf("for resource '%s': error validating values for web deployment: %w",
 					resource.Name, err)
 			}
 		} else if source.Name == "worker" {
 			err := validateWorkerChartValues(driverConfig.Values)
-
 			if err != nil {
 				return fmt.Errorf("for resource '%s': error validating values for worker deployment: %w",
 					resource.Name, err)
 			}
 		} else if source.Name == "job" {
 			err := validateJobChartValues(driverConfig.Values)
-
 			if err != nil {
 				return fmt.Errorf("for resource '%s': error validating values for job deployment: %w",
 					resource.Name, err)
@@ -341,7 +326,6 @@ func randomStringDriverValidator(resource *types.Resource) error {
 	driverConfig := &RandomStringDriverConfig{}
 
 	err := mapstructure.Decode(resource.Config, driverConfig)
-
 	if err != nil {
 		return fmt.Errorf("for resource '%s': error parsing config: %w", resource.Name, err)
 	}
@@ -353,7 +337,6 @@ func envGroupDriverValidator(resource *types.Resource) error {
 	target := &Target{}
 
 	err := mapstructure.Decode(resource.Target, target)
-
 	if err != nil {
 		return fmt.Errorf("for resource '%s': error parsing target: %w", resource.Name, err)
 	}

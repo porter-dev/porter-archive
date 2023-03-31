@@ -26,7 +26,6 @@ func TestCreateInfra(t *testing.T) {
 	}
 
 	infra, err := tester.repo.Infra().CreateInfra(infra)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -65,7 +64,6 @@ func TestListInfrasByProjectID(t *testing.T) {
 		tester.initProjects[0].Model.ID,
 		"",
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

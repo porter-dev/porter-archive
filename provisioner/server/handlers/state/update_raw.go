@@ -30,7 +30,6 @@ func (c *RawStateUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// read state file
 	fileBytes, err := io.ReadAll(r.Body)
-
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 

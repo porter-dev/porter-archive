@@ -1,9 +1,8 @@
 package keyrotate
 
 import (
-	"fmt"
-
 	"encoding/hex"
+	"fmt"
 
 	"github.com/porter-dev/porter/internal/models"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
@@ -23,7 +22,6 @@ func Rotate(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	copy(newKeyBytes[:], newKey[:])
 
 	err := rotateClusterModel(db, oldKey, newKey)
-
 	if err != nil {
 		fmt.Printf("failed on cluster rotation: %v\n", err)
 		return err
@@ -137,7 +135,6 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			db.Where("id = ?", cluster.TokenCacheID).First(&cluster.TokenCache)
 
 			err := repo.DecryptClusterData(cluster, oldKey)
-
 			if err != nil {
 				fmt.Printf("error decrypting cluster %d\n", cluster.ID)
 
@@ -153,7 +150,6 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// encrypt with the new key and re-insert
 		for _, cluster := range clusters {
 			err := repo.EncryptClusterData(cluster, newKey)
-
 			if err != nil {
 				fmt.Printf("error encrypting cluster %d\n", cluster.ID)
 
@@ -197,7 +193,6 @@ func rotateClusterCandidateModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// decrypt with the old key
 		for _, cc := range ccs {
 			err := repo.DecryptClusterCandidateData(cc, oldKey)
-
 			if err != nil {
 				fmt.Printf("error decrypting cluster candidate %d\n", cc.ID)
 
@@ -211,7 +206,6 @@ func rotateClusterCandidateModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// encrypt with the new key and re-insert
 		for _, cc := range ccs {
 			err := repo.EncryptClusterCandidateData(cc, newKey)
-
 			if err != nil {
 				fmt.Printf("error encrypting cluster candidate %d\n", cc.ID)
 
@@ -251,7 +245,6 @@ func rotateRegistryModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// decrypt with the old key
 		for _, reg := range regs {
 			err := repo.DecryptRegistryData(reg, oldKey)
-
 			if err != nil {
 				fmt.Printf("error decrypting registry %d\n", reg.ID)
 
@@ -265,7 +258,6 @@ func rotateRegistryModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// encrypt with the new key and re-insert
 		for _, reg := range regs {
 			err := repo.EncryptRegistryData(reg, newKey)
-
 			if err != nil {
 				fmt.Printf("error encrypting registry %d\n", reg.ID)
 
@@ -305,7 +297,6 @@ func rotateHelmRepoModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// decrypt with the old key
 		for _, hr := range hrs {
 			err := repo.DecryptHelmRepoData(hr, oldKey)
-
 			if err != nil {
 				fmt.Printf("error decrypting helm repo %d\n", hr.ID)
 
@@ -318,7 +309,6 @@ func rotateHelmRepoModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// encrypt with the new key and re-insert
 		for _, hr := range hrs {
 			err := repo.EncryptHelmRepoData(hr, newKey)
-
 			if err != nil {
 				fmt.Printf("error encrypting helm repo %d\n", hr.ID)
 
@@ -358,7 +348,6 @@ func rotateInfraModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// decrypt with the old key
 		for _, infra := range infras {
 			err := repo.DecryptInfraData(infra, oldKey)
-
 			if err != nil {
 				oldKeyBytes := make([]byte, 32)
 				newKeyBytes := make([]byte, 32)
@@ -377,7 +366,6 @@ func rotateInfraModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// encrypt with the new key and re-insert
 		for _, infra := range infras {
 			err := repo.EncryptInfraData(infra, newKey)
-
 			if err != nil {
 				fmt.Printf("error encrypting infra %d\n", infra.ID)
 
@@ -417,7 +405,6 @@ func rotateKubeIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// decrypt with the old key
 		for _, ki := range kis {
 			err := repo.DecryptKubeIntegrationData(ki, oldKey)
-
 			if err != nil {
 				fmt.Printf("error decrypting kube integration %d\n", ki.ID)
 
@@ -435,7 +422,6 @@ func rotateKubeIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// encrypt with the new key and re-insert
 		for _, ki := range kis {
 			err := repo.EncryptKubeIntegrationData(ki, newKey)
-
 			if err != nil {
 				fmt.Printf("error encrypting kube integration %d\n", ki.ID)
 
@@ -475,7 +461,6 @@ func rotateBasicIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// decrypt with the old key
 		for _, basic := range basics {
 			err := repo.DecryptBasicIntegrationData(basic, oldKey)
-
 			if err != nil {
 				fmt.Printf("error decrypting basic integration %d\n", basic.ID)
 
@@ -489,7 +474,6 @@ func rotateBasicIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// encrypt with the new key and re-insert
 		for _, basic := range basics {
 			err := repo.EncryptBasicIntegrationData(basic, newKey)
-
 			if err != nil {
 				fmt.Printf("error encrypting basic integration %d\n", basic.ID)
 
@@ -529,7 +513,6 @@ func rotateOIDCIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// decrypt with the old key
 		for _, oidc := range oidcs {
 			err := repo.DecryptOIDCIntegrationData(oidc, oldKey)
-
 			if err != nil {
 				fmt.Printf("error decrypting oidc integration %d\n", oidc.ID)
 
@@ -547,7 +530,6 @@ func rotateOIDCIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// encrypt with the new key and re-insert
 		for _, oidc := range oidcs {
 			err := repo.EncryptOIDCIntegrationData(oidc, newKey)
-
 			if err != nil {
 				fmt.Printf("error encrypting oidc integration %d\n", oidc.ID)
 
@@ -587,7 +569,6 @@ func rotateOAuthIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// decrypt with the old key
 		for _, oauth := range oauths {
 			err := repo.DecryptOAuthIntegrationData(oauth, oldKey)
-
 			if err != nil {
 				fmt.Printf("error decrypting oauth integration %d\n", oauth.ID)
 
@@ -602,7 +583,6 @@ func rotateOAuthIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// encrypt with the new key and re-insert
 		for _, oauth := range oauths {
 			err := repo.EncryptOAuthIntegrationData(oauth, newKey)
-
 			if err != nil {
 				fmt.Printf("error encrypting oauth integration %d\n", oauth.ID)
 
@@ -642,7 +622,6 @@ func rotateGCPIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// decrypt with the old key
 		for _, gcp := range gcps {
 			err := repo.DecryptGCPIntegrationData(gcp, oldKey)
-
 			if err != nil {
 				fmt.Printf("error decrypting gcp integration %d\n", gcp.ID)
 
@@ -655,7 +634,6 @@ func rotateGCPIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// encrypt with the new key and re-insert
 		for _, gcp := range gcps {
 			err := repo.EncryptGCPIntegrationData(gcp, newKey)
-
 			if err != nil {
 				fmt.Printf("error encrypting gcp integration %d\n", gcp.ID)
 
@@ -695,7 +673,6 @@ func rotateAWSIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// decrypt with the old key
 		for _, aws := range awss {
 			err := repo.DecryptAWSIntegrationData(aws, oldKey)
-
 			if err != nil {
 				fmt.Printf("error encrypting aws integration %d\n", aws.ID)
 
@@ -711,7 +688,6 @@ func rotateAWSIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 		// encrypt with the new key and re-insert
 		for _, aws := range awss {
 			err := repo.EncryptAWSIntegrationData(aws, newKey)
-
 			if err != nil {
 				fmt.Printf("error decrypting aws integration %d\n", aws.ID)
 

@@ -53,7 +53,6 @@ func GetDynamicClientOutOfClusterConfig(conf *OutOfClusterConfig) (dynamic.Inter
 	}
 
 	client, err := dynamic.NewForConfig(restConf)
-
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +168,6 @@ func IsInCluster() bool {
 // gives to pods to connect
 func GetAgentInClusterConfig(namespace string) (*Agent, error) {
 	conf, err := rest.InClusterConfig()
-
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +216,6 @@ func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
 	}
 
 	restConf, err := cmdConf.ClientConfig()
-
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +239,6 @@ func (conf *OutOfClusterConfig) ToRawKubeConfigLoader() clientcmd.ClientConfig {
 func (conf *OutOfClusterConfig) ToDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
 	// From: k8s.io/cli-runtime/pkg/genericclioptions/config_flags.go > func (*configFlags) ToDiscoveryClient()
 	restConf, err := conf.ToRESTConfig()
-
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +290,6 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientCo
 			conf.Cluster.ProjectID,
 			conf.Cluster.KubeIntegrationID,
 		)
-
 		if err != nil {
 			return nil, err
 		}
@@ -303,7 +298,6 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientCo
 	}
 
 	apiConfig, err := conf.CreateRawConfigFromCluster()
-
 	if err != nil {
 		return nil, err
 	}
@@ -356,7 +350,6 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			cluster.ProjectID,
 			cluster.KubeIntegrationID,
 		)
-
 		if err != nil {
 			return nil, err
 		}
@@ -368,7 +361,6 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			cluster.ProjectID,
 			cluster.KubeIntegrationID,
 		)
-
 		if err != nil {
 			return nil, err
 		}
@@ -380,7 +372,6 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			cluster.ProjectID,
 			cluster.KubeIntegrationID,
 		)
-
 		if err != nil {
 			return nil, err
 		}
@@ -391,7 +382,6 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			cluster.ProjectID,
 			cluster.OIDCIntegrationID,
 		)
-
 		if err != nil {
 			return nil, err
 		}
@@ -412,7 +402,6 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			cluster.ProjectID,
 			cluster.GCPIntegrationID,
 		)
-
 		if err != nil {
 			return nil, err
 		}
@@ -434,7 +423,6 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			cluster.ProjectID,
 			cluster.AWSIntegrationID,
 		)
-
 		if err != nil {
 			return nil, err
 		}
@@ -448,7 +436,6 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		}
 
 		tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
-
 		if err != nil {
 			return nil, err
 		}
@@ -460,13 +447,11 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			cluster.ProjectID,
 			cluster.DOIntegrationID,
 		)
-
 		if err != nil {
 			return nil, err
 		}
 
 		tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, conf.DigitalOceanOAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, conf.Repo))
-
 		if err != nil {
 			return nil, err
 		}
@@ -478,7 +463,6 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			cluster.ProjectID,
 			cluster.AzureIntegrationID,
 		)
-
 		if err != nil {
 			return nil, err
 		}

@@ -27,7 +27,6 @@ func NewEncryptionKey() *[32]byte {
 func GenerateRandomBytes(n int) (string, error) {
 	b := make([]byte, n)
 	_, err := rand.Read(b)
-
 	if err != nil {
 		return "", err
 	}

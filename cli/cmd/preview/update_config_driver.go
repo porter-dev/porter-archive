@@ -35,7 +35,6 @@ func NewUpdateConfigDriver(resource *models.Resource, opts *drivers.SharedDriver
 	}
 
 	target, err := GetTarget(resource.Name, resource.Target)
-
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +42,6 @@ func NewUpdateConfigDriver(resource *models.Resource, opts *drivers.SharedDriver
 	driver.target = target
 
 	source, err := GetSource(driver.target.Project, resource.Name, resource.Source)
-
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +89,6 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 		color.New(color.FgBlue).Println("update_config.tag not found in porter.yaml, falling back to the latest git commit SHA as the image tag")
 
 		commit, err := git.LastCommit()
-
 		if err != nil {
 			return nil, err
 		}
@@ -100,7 +97,6 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 	}
 
 	regList, err := client.ListRegistries(context.Background(), d.target.Project)
-
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +141,6 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 		}
 
 		regID, imageURL, err := createAgent.GetImageRepoURL(d.target.AppName, sharedOpts.Namespace)
-
 		if err != nil {
 			return nil, err
 		}
@@ -175,7 +170,6 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 			SharedOpts: sharedOpts,
 			Local:      false,
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -221,7 +215,6 @@ func (d *UpdateConfigDriver) getConfig(resource *models.Resource) (*preview.Upda
 		LookupTable:  *d.lookupTable,
 		Dependencies: resource.Dependencies,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +238,6 @@ func (d *UpdateConfigDriver) assignOutput(resource *models.Resource, client *api
 		d.target.Namespace,
 		d.target.AppName,
 	)
-
 	if err != nil {
 		return err
 	}

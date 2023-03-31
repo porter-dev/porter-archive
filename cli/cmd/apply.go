@@ -67,7 +67,6 @@ applying a configuration:
 	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, apply)
-
 		if err != nil {
 			if strings.Contains(err.Error(), "Forbidden") {
 				color.New(color.FgRed).Fprintf(os.Stderr, "You may have to update your GitHub secret token")
@@ -108,7 +107,6 @@ func init() {
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	fileBytes, err := ioutil.ReadFile(porterYAML)
-
 	if err != nil {
 		return fmt.Errorf("error reading porter.yaml: %w", err)
 	}
@@ -129,7 +127,6 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		ns := os.Getenv("PORTER_NAMESPACE")
 
 		applier, err := previewV2Beta1.NewApplier(client, fileBytes, ns)
-
 		if err != nil {
 			return err
 		}
@@ -142,7 +139,6 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	} else if previewVersion.Version == "v1" {
 		if _, ok := os.LookupEnv("PORTER_VALIDATE_YAML"); ok {
 			err := applyValidate()
-
 			if err != nil {
 				return err
 			}
@@ -158,7 +154,6 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	}
 
 	basePath, err := os.Getwd()
-
 	if err != nil {
 		return fmt.Errorf("error getting working directory: %w", err)
 	}
@@ -182,7 +177,6 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		}
 
 		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
-
 		if err != nil {
 			return fmt.Errorf("error creating deployment hook: %w", err)
 		}
@@ -203,7 +197,6 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 
 func applyValidate() error {
 	fileBytes, err := ioutil.ReadFile(porterYAML)
-
 	if err != nil {
 		return fmt.Errorf("error reading porter.yaml: %w", err)
 	}
@@ -275,7 +268,6 @@ func NewDeployDriver(resource *switchboardModels.Resource, opts *drivers.SharedD
 	}
 
 	target, err := preview.GetTarget(resource.Name, resource.Target)
-
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +275,6 @@ func NewDeployDriver(resource *switchboardModels.Resource, opts *drivers.SharedD
 	driver.target = target
 
 	source, err := preview.GetSource(target.Project, resource.Name, resource.Source)
-
 	if err != nil {
 		return nil, err
 	}
@@ -324,7 +315,6 @@ func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboard
 // Simple apply for addons
 func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
 	addonConfig, err := d.getAddonConfig(resource)
-
 	if err != nil {
 		return nil, fmt.Errorf("error getting addon config for resource %s: %w", resource.Name, err)
 	}
@@ -345,13 +335,11 @@ func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client *
 				},
 			},
 		)
-
 		if err != nil {
 			return nil, fmt.Errorf("error creating addon from resource %s: %w", resource.Name, err)
 		}
 	} else {
 		bytes, err := json.Marshal(addonConfig)
-
 		if err != nil {
 			return nil, fmt.Errorf("error marshalling addon config from resource %s: %w", resource.Name, err)
 		}
@@ -387,13 +375,11 @@ func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, cl
 	resourceName := resource.Name
 
 	appConfig, err := d.getApplicationConfig(resource)
-
 	if err != nil {
 		return nil, err
 	}
 
 	fullPath, err := filepath.Abs(appConfig.Build.Context)
-
 	if err != nil {
 		return nil, fmt.Errorf("for resource %s, error getting absolute path for config.build.context: %w", resourceName,
 			err)
@@ -406,7 +392,6 @@ func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, cl
 			" the git repo SHA\n", resourceName)
 
 		commit, err := git.LastCommit()
-
 		if err != nil {
 			return nil, fmt.Errorf("for resource %s, error getting last git commit: %w", resourceName, err)
 		}
@@ -444,7 +429,6 @@ func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, cl
 	if appConfig.Build.UseCache {
 		// set the docker config so that pack caching can use the repo credentials
 		err := config.SetDockerConfig(client)
-
 		if err != nil {
 			return nil, err
 		}
@@ -506,7 +490,6 @@ func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, c
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", d.source.Name, resource.Name)
 
 	regList, err := client.ListRegistries(context.Background(), d.target.Project)
-
 	if err != nil {
 		return nil, fmt.Errorf("for resource %s, error listing registries: %w", resource.Name, err)
 	}
@@ -558,7 +541,6 @@ func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, c
 		// if useCache is set, create the image repository first
 		if appConf.Build.UseCache {
 			regID, imageURL, err := createAgent.GetImageRepoURL(resource.Name, sharedOpts.Namespace)
-
 			if err != nil {
 				return nil, err
 			}
@@ -598,7 +580,6 @@ func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, c
 		SharedOpts: sharedOpts,
 		Local:      appConf.Build.Method != "registry",
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -609,7 +590,6 @@ func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, c
 			UseNewConfig: true,
 			NewConfig:    appConf.Values,
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -661,7 +641,6 @@ func (d *DeployDriver) assignOutput(resource *switchboardModels.Resource, client
 		d.target.Namespace,
 		resource.Name,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -681,7 +660,6 @@ func (d *DeployDriver) getApplicationConfig(resource *switchboardModels.Resource
 		LookupTable:  *d.lookupTable,
 		Dependencies: resource.Dependencies,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -726,7 +704,6 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 
 	ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID")
 	ghID, err := strconv.Atoi(ghIDStr)
-
 	if err != nil {
 		return nil, err
 	}
@@ -735,7 +712,6 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 
 	prIDStr := os.Getenv("PORTER_PULL_REQUEST_ID")
 	prID, err := strconv.Atoi(prIDStr)
-
 	if err != nil {
 		return nil, err
 	}
@@ -762,7 +738,6 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 
 	actionIDStr := os.Getenv("PORTER_ACTION_ID")
 	actionID, err := strconv.Atoi(actionIDStr)
-
 	if err != nil {
 		return nil, err
 	}
@@ -779,7 +754,6 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 	res.prName = prName
 
 	commit, err := git.LastCommit()
-
 	if err != nil {
 		return nil, fmt.Errorf(err.Error())
 	}
@@ -801,7 +775,6 @@ func (t *DeploymentHook) PreApply() error {
 	envList, err := t.client.ListEnvironments(
 		context.Background(), t.projectID, t.clusterID,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -826,7 +799,6 @@ func (t *DeploymentHook) PreApply() error {
 	nsList, err := t.client.GetK8sNamespaces(
 		context.Background(), t.projectID, t.clusterID,
 	)
-
 	if err != nil {
 		return fmt.Errorf("error fetching namespaces: %w", err)
 	}
@@ -1163,7 +1135,6 @@ func (t *CloneEnvGroupHook) PreApply() error {
 
 		if appConf != nil && len(appConf.EnvGroups) > 0 {
 			target, err := preview.GetTarget(res.Name, res.Target)
-
 			if err != nil {
 				return err
 			}

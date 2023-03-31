@@ -27,7 +27,6 @@ func NewEnvGroupDriver(resource *models.Resource, opts *drivers.SharedDriverOpts
 	}
 
 	target, err := GetTarget(resource.Name, resource.Target)
-
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +42,6 @@ func (d *EnvGroupDriver) ShouldApply(resource *models.Resource) bool {
 
 func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, error) {
 	driverConfig, err := d.getConfig(resource)
-
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +80,6 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 					Variables: group.Variables,
 				},
 			)
-
 			if err != nil {
 				return nil, err
 			}
@@ -115,7 +112,6 @@ func (d *EnvGroupDriver) getConfig(resource *models.Resource) (*preview.EnvGroup
 		LookupTable:  *d.lookupTable,
 		Dependencies: resource.Dependencies,
 	})
-
 	if err != nil {
 		return nil, err
 	}

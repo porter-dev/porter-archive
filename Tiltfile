@@ -62,6 +62,8 @@ local_resource(
     resource_deps=["postgresql"],
     labels=["porter"]
 )
+# local_resource('public-url', serve_cmd='lt --subdomain "$(whoami)" --port 8080', resource_deps=["porter-dashboard"], labels=["porter"])
+# local_resource('public-url', serve_cmd='ngrok http 8081 --log=stdout', resource_deps=["porter-dashboard"], labels=["porter"])
 
 # Migrations
 local_resource(

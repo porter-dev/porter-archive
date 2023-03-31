@@ -18,13 +18,13 @@ var c2 = grapher.Object{
 	Name: "my-release-cassandra-headless",
 	Relations: grapher.Relations{
 		LabelRels: []grapher.LabelRel{
-			grapher.LabelRel{
+			{
 				Relation: grapher.Relation{
 					Source: 1,
 					Target: 4,
 				},
 			},
-			grapher.LabelRel{
+			{
 				Relation: grapher.Relation{
 					Source: 1,
 					Target: 5,
@@ -39,13 +39,13 @@ var c3 = grapher.Object{
 	Name: "my-release-cassandra",
 	Relations: grapher.Relations{
 		LabelRels: []grapher.LabelRel{
-			grapher.LabelRel{
+			{
 				Relation: grapher.Relation{
 					Source: 2,
 					Target: 4,
 				},
 			},
-			grapher.LabelRel{
+			{
 				Relation: grapher.Relation{
 					Source: 2,
 					Target: 5,
@@ -117,11 +117,11 @@ type k8sObj struct {
 
 func TestParseObj(t *testing.T) {
 	k8sObjs := []k8sObj{
-		k8sObj{
+		{
 			Expected: expObjs1,
 			FilePath: "./test_yaml/cassandra.yaml",
 		},
-		k8sObj{
+		{
 			Expected: expObjs2,
 			FilePath: "./test_yaml/kafka.yaml",
 		},
@@ -130,7 +130,6 @@ func TestParseObj(t *testing.T) {
 	for _, k8sObj := range k8sObjs {
 		// Load in yaml from test files
 		file, err := ioutil.ReadFile(k8sObj.FilePath)
-
 		if err != nil {
 			t.Errorf("Error reading file %s", k8sObj.FilePath)
 		}

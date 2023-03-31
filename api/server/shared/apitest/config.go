@@ -28,7 +28,6 @@ func (t *TestConfigLoader) LoadConfig() (*config.Config, error) {
 	repo := test.NewRepository(t.canQuery, t.failingRepoMethods...)
 
 	envConf, err := envloader.FromEnv()
-
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +38,6 @@ func (t *TestConfigLoader) LoadConfig() (*config.Config, error) {
 			CookieSecrets:     envConf.ServerConf.CookieSecrets,
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +64,6 @@ func LoadConfig(t *testing.T, failingRepoMethods ...string) *config.Config {
 	configLoader := NewTestConfigLoader(true, failingRepoMethods...)
 
 	config, err := configLoader.LoadConfig()
-
 	if err != nil {
 		t.Fatal(err)
 	}

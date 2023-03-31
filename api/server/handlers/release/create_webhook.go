@@ -30,7 +30,6 @@ func (c *CreateWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	release, err := CreateAppReleaseFromHelmRelease(c.Config(), cluster.ProjectID, cluster.ID, 0, helmRelease)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

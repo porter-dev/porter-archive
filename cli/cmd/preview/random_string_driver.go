@@ -9,8 +9,10 @@ import (
 	"github.com/porter-dev/switchboard/pkg/models"
 )
 
-const defaultCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-const lowerCharset = "abcdefghijklmnopqrstuvwxyz"
+const (
+	defaultCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	lowerCharset   = "abcdefghijklmnopqrstuvwxyz"
+)
 
 type RandomStringDriver struct {
 	output map[string]interface{}
@@ -25,7 +27,6 @@ func NewRandomStringDriver(resource *models.Resource, opts *drivers.SharedDriver
 	driverConfig := &preview.RandomStringDriverConfig{}
 
 	err := mapstructure.Decode(resource.Config, driverConfig)
-
 	if err != nil {
 		return nil, err
 	}

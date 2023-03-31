@@ -24,7 +24,6 @@ func (r *OperationReader) ValuesFromTarget() (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
 	err := json.Unmarshal([]byte(r.Operation.LastApplied), &values)
-
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +41,6 @@ func (r *OperationReader) RegisterQuery(query *templater.TemplateReaderQuery) er
 // Read executes a set of queries against the operation values
 func (r *OperationReader) Read() (map[string]interface{}, error) {
 	values, err := r.ValuesFromTarget()
-
 	if err != nil {
 		return nil, err
 	}

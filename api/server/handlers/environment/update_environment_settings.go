@@ -53,7 +53,6 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 
 	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, envID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such environment with ID: %d", envID)))
@@ -95,7 +94,6 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 	if changed {
 		// let us check if the webhook has access to the "push" event
 		client, err := getGithubClientFromEnvironment(c.Config(), env)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -104,7 +102,6 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 		hook, _, err := client.Repositories.GetHook(
 			context.Background(), env.GitRepoOwner, env.GitRepoName, env.GithubWebhookID,
 		)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -125,7 +122,6 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 			_, _, err := client.Repositories.EditHook(
 				context.Background(), env.GitRepoOwner, env.GitRepoName, env.GithubWebhookID, hook,
 			)
-
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return

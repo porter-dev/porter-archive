@@ -54,7 +54,6 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, envID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such environment with ID: %d", envID)))
@@ -66,7 +65,6 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	ghClient, err := getGithubClientFromEnvironment(c.Config(), env)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -78,7 +76,6 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	if req.Branch == "" { // get the default branch name
 		repo, _, err := ghClient.Repositories.Get(r.Context(), env.GitRepoOwner, env.GitRepoName)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -106,7 +103,6 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	contents, err := fileContents.GetContent()
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

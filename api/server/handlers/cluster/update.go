@@ -41,7 +41,6 @@ func (c *ClusterUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	// sure that the old cluster name is set
 	if cluster.AWSIntegrationID != 0 && request.AWSClusterID == "" {
 		awsInt, err := c.Repo().AWSIntegration().ReadAWSIntegration(cluster.ProjectID, cluster.AWSIntegrationID)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -74,7 +73,6 @@ func (c *ClusterUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	cluster, err := c.Repo().Cluster().UpdateCluster(cluster)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

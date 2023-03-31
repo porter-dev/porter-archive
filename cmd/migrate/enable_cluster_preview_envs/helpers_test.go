@@ -36,7 +36,6 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		SQLLite:       true,
 		SQLLitePath:   tester.dbFileName,
 	})
-
 	if err != nil {
 		t.Fatalf("%\n", err)
 	}
@@ -82,7 +81,6 @@ func initUser(tester *tester, t *testing.T) {
 	}
 
 	user, err := tester.repo.User().CreateUser(user)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -112,7 +110,6 @@ func initCluster(tester *tester, t *testing.T) {
 	}
 
 	cluster, err := tester.repo.Cluster().CreateCluster(cluster)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -129,7 +126,6 @@ func initProjectPreviewEnabled(tester *tester, t *testing.T) {
 	}
 
 	proj, err := tester.repo.Project().CreateProject(proj)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -145,7 +141,6 @@ func initProjectPreviewDisabled(tester *tester, t *testing.T) {
 	}
 
 	proj, err := tester.repo.Project().CreateProject(proj)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -173,7 +168,6 @@ func initKubeIntegration(tester *tester, t *testing.T) {
 	}
 
 	ki, err := tester.repo.KubeIntegration().CreateKubeIntegration(ki)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

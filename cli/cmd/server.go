@@ -43,7 +43,6 @@ var startCmd = &cobra.Command{
 				opts.db,
 				*opts.port,
 			)
-
 			if err != nil {
 				red := color.New(color.FgRed)
 				red.Println("Error running start:", err.Error())
@@ -63,7 +62,6 @@ var startCmd = &cobra.Command{
 				opts.db,
 				*opts.port,
 			)
-
 			if err != nil {
 				red := color.New(color.FgRed)
 				red.Println("Error running start:", err.Error())
@@ -144,7 +142,6 @@ func startDocker(
 	}
 
 	_, _, err := docker.StartPorter(startOpts)
-
 	if err != nil {
 		return err
 	}
@@ -173,7 +170,6 @@ func startLocal(
 
 	if _, err := os.Stat(cmdPath); os.IsNotExist(err) {
 		err := downloadMatchingRelease(porterDir)
-
 		if err != nil {
 			color.New(color.FgRed).Println("Failed to download server binary:", err.Error())
 			os.Exit(1)
@@ -189,7 +185,6 @@ func startLocal(
 
 	if err != nil || writer.Version != config.Version {
 		err := downloadMatchingRelease(porterDir)
-
 		if err != nil {
 			color.New(color.FgRed).Println("Failed to download server binary:", err.Error())
 			os.Exit(1)
@@ -230,7 +225,6 @@ func startLocal(
 
 func stopDocker() error {
 	agent, err := docker.NewAgentFromEnv()
-
 	if err != nil {
 		return err
 	}
@@ -265,7 +259,6 @@ func downloadMatchingRelease(porterDir string) error {
 	}
 
 	err := z.GetRelease(config.Version)
-
 	if err != nil {
 		return err
 	}

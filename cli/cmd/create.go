@@ -69,19 +69,20 @@ To deploy an application from a Docker registry, use "--source registry" and pas
 	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, createFull)
-
 		if err != nil {
 			os.Exit(1)
 		}
 	},
 }
 
-var name string
-var values string
-var source string
-var image string
-var registryURL string
-var forceBuild bool
+var (
+	name        string
+	values      string
+	source      string
+	image       string
+	registryURL string
+	forceBuild  bool
+)
 
 func init() {
 	rootCmd.AddCommand(createCmd)
@@ -189,14 +190,12 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	var err error
 
 	fullPath, err := filepath.Abs(localPath)
-
 	if err != nil {
 		return err
 	}
 
 	if os.Getenv("GITHUB_ACTIONS") == "" && source == "local" && fullPath == homedir.HomeDir() {
 		proceed, err := utils.PromptConfirm("You are deploying your home directory. Do you want to continue?", false)
-
 		if err != nil {
 			return err
 		}
@@ -253,7 +252,6 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	if source == "local" {
 		if useCache {
 			regID, imageURL, err := createAgent.GetImageRepoURL(name, namespace)
-
 			if err != nil {
 				return err
 			}
@@ -306,7 +304,6 @@ func handleSubdomainCreate(subdomain string, err error) error {
 
 func createFromGithub(createAgent *deploy.CreateAgent, overrideValues map[string]interface{}) error {
 	fullPath, err := filepath.Abs(localPath)
-
 	if err != nil {
 		return err
 	}
@@ -347,7 +344,6 @@ func readValuesFile() (map[string]interface{}, error) {
 	}
 
 	valuesFilePath, err := filepath.Abs(values)
-
 	if err != nil {
 		return nil, err
 	}
@@ -357,13 +353,11 @@ func readValuesFile() (map[string]interface{}, error) {
 	}
 
 	reader, err := os.Open(valuesFilePath)
-
 	if err != nil {
 		return nil, err
 	}
 
 	bytes, err := ioutil.ReadAll(reader)
-
 	if err != nil {
 		return nil, err
 	}

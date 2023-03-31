@@ -32,7 +32,6 @@ func ECR(
 	// query for the region
 	region, err := utils.PromptPlaintext(fmt.Sprintf(`Please provide the AWS region where the ECR instance is located.
 AWS Region: `))
-
 	if err != nil {
 		return 0, err
 	}
@@ -43,7 +42,6 @@ Would you like to proceed? %s `,
 			color.New(color.FgCyan).Sprintf("[y/n]"),
 		),
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -52,7 +50,6 @@ Would you like to proceed? %s `,
 		agent := awsLocal.NewDefaultAgent()
 
 		creds, err := agent.CreateIAMECRUser(region)
-
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return ecrManual(client, projectID, region)
@@ -69,7 +66,6 @@ Would you like to proceed? %s `,
 				AWSRegion:          region,
 			},
 		)
-
 		if err != nil {
 			return 0, err
 		}
@@ -94,14 +90,12 @@ func ecrManual(
 
 	// query for the access key id
 	accessKeyID, err := utils.PromptPlaintext(fmt.Sprintf(`AWS Access Key ID: `))
-
 	if err != nil {
 		return 0, err
 	}
 
 	// query for the secret access key
 	secretKey, err := utils.PromptPlaintext(fmt.Sprintf(`AWS Secret Access Key: `))
-
 	if err != nil {
 		return 0, err
 	}
@@ -116,7 +110,6 @@ func ecrManual(
 			AWSRegion:          region,
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -130,7 +123,6 @@ func linkRegistry(client *api.Client, projectID uint, intID uint) (uint, error) 
 	// create the registry
 	// query for registry name
 	regName, err := utils.PromptPlaintext(fmt.Sprintf(`Give this registry a name: `))
-
 	if err != nil {
 		return 0, err
 	}
@@ -143,7 +135,6 @@ func linkRegistry(client *api.Client, projectID uint, intID uint) (uint, error) 
 			AWSIntegrationID: intID,
 		},
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -161,7 +152,6 @@ func waitForAuthorizationToken(region string, creds *aws.PorterAWSCredentials) e
 	}
 
 	sess, err := awsInt.GetSession()
-
 	if err != nil {
 		return err
 	}

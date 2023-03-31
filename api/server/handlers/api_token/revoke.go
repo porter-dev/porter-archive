@@ -46,7 +46,6 @@ func (p *APITokenRevokeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	token, err := p.Repo().APIToken().ReadAPIToken(proj.ID, tokenID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(

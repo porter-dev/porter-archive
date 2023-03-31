@@ -32,7 +32,6 @@ func NewGitRepoListHandler(
 func (c *GitRepoListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res := types.ListGitInstallationIDsResponse{}
 	tok, err := GetGithubAppOauthTokenFromRequest(c.Config(), r)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			// return empty array, this is not an error
@@ -49,7 +48,6 @@ func (c *GitRepoListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	accountIds := make([]int64, 0)
 
 	ghAuthUser, _, err := client.Users.Get(context.Background(), "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -64,7 +62,6 @@ func (c *GitRepoListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		orgs, pages, err := client.Organizations.List(context.Background(), "", opts)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -80,7 +77,6 @@ func (c *GitRepoListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	installationData, err := c.Repo().GithubAppInstallation().ReadGithubAppInstallationByAccountIDs(accountIds)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

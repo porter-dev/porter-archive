@@ -46,7 +46,6 @@ func (t *TemplateListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	hrs, err := t.Repo().HelmRepo().ListHelmReposByProjectID(project.ID)
-
 	if err != nil {
 		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -64,7 +63,6 @@ func (t *TemplateListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	repoIndex, err := loader.LoadRepoIndexPublic(repoURL)
-
 	if err != nil {
 		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

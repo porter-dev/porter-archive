@@ -23,13 +23,11 @@ func GetClusterCandidatesFromKubeconfig(
 	local bool,
 ) ([]*models.ClusterCandidate, error) {
 	config, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
-
 	if err != nil {
 		return nil, err
 	}
 
 	rawConf, err := config.RawConfig()
-
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +59,6 @@ func GetClusterCandidatesFromKubeconfig(
 
 		// construct the raw kubeconfig that's relevant for that context
 		contextConf, err := getConfigForContext(&rawConf, contextName)
-
 		if err != nil {
 			continue
 		}
@@ -90,13 +87,11 @@ func GetClusterCandidatesFromKubeconfig(
 // bytes
 func GetRawConfigFromBytes(kubeconfig []byte) (*api.Config, error) {
 	config, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
-
 	if err != nil {
 		return nil, err
 	}
 
 	rawConf, err := config.RawConfig()
-
 	if err != nil {
 		return nil, err
 	}

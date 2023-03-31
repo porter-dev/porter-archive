@@ -37,7 +37,6 @@ func TestPGStore(t *testing.T) {
 			CookieSecrets:     []string{"secret"},
 		},
 	)
-
 	if err != nil {
 		t.Fatal("Failed to get store", err)
 	}
@@ -140,7 +139,6 @@ func TestSessionOptionsAreUniquePerSession(t *testing.T) {
 			CookieSecrets:     []string{"secret"},
 		},
 	)
-
 	if err != nil {
 		t.Fatal("Failed to get store", err)
 	}

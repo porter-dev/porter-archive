@@ -19,7 +19,6 @@ func TestAuthenticatedUserWithCookie(t *testing.T) {
 	config, handler, next := loadHandlers(t)
 
 	req, err := http.NewRequest("GET", "/auth-endpoint", nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +39,6 @@ func TestUnauthenticatedUserWithCookie(t *testing.T) {
 	_, handler, next := loadHandlers(t)
 
 	req, err := http.NewRequest("GET", "/auth-endpoint", nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +55,6 @@ func TestUnauthenticatedUserWithCookieRedirect(t *testing.T) {
 	_, handler, next := loadHandlersWithRedirect(t)
 
 	req, err := http.NewRequest("GET", "/auth-endpoint", nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +66,6 @@ func TestUnauthenticatedUserWithCookieRedirect(t *testing.T) {
 
 	assert.Equal(t, http.StatusFound, rr.Result().StatusCode)
 	gotLoc, err := rr.Result().Location()
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +78,6 @@ func TestAuthenticatedUserWithToken(t *testing.T) {
 	config, handler, next := loadHandlers(t)
 
 	req, err := http.NewRequest("GET", "/auth-endpoint", nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +98,6 @@ func TestUnauthenticatedUserWithToken(t *testing.T) {
 	_, handler, next := loadHandlers(t)
 
 	req, err := http.NewRequest("GET", "/auth-endpoint", nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +117,6 @@ func TestAuthBadDatabaseRead(t *testing.T) {
 	config, handler, next := loadHandlers(t)
 
 	req, err := http.NewRequest("GET", "/auth-endpoint", nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,7 +143,6 @@ func TestAuthBadSessionUserWrite(t *testing.T) {
 	config, handler, next := loadHandlers(t)
 
 	req, err := http.NewRequest("GET", "/auth-endpoint", nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +170,6 @@ func TestAuthBadSessionUserIDType(t *testing.T) {
 	config, handler, next := loadHandlers(t)
 
 	req, err := http.NewRequest("GET", "/auth-endpoint", nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -84,7 +84,6 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	if request.GCPIntegrationID != 0 {
 		_, err := p.Repo().GCPIntegration().ReadGCPIntegration(proj.ID, request.GCPIntegrationID)
-
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
@@ -173,7 +172,6 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	if regModel.URL == "" && regModel.AWSIntegrationID != 0 {
 		url, err := registry.GetECRRegistryURL(p.Repo().AWSIntegration(), regModel.ProjectID, regModel.AWSIntegrationID)
-
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -200,7 +198,6 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 		// get the azure integration and overwrite the names
 		az, err := p.Repo().AzureIntegration().ReadAzureIntegration(proj.ID, request.AzureIntegrationID)
-
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return

@@ -23,7 +23,6 @@ func TestCreateNewTag(t *testing.T) {
 	}
 
 	_, err := tester.repo.Tag().CreateTag(tag)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

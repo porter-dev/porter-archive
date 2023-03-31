@@ -8,7 +8,7 @@ jobs:
         go-version: [1.20.x]
         os: [ubuntu-latest]
         folder: [cli, api, cmd, internal, provisioner]
-    name: Testing matrix
+    name: Running ${{ matrix.folder }} tests on Go ${{ matrix.go-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3

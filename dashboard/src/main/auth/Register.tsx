@@ -147,7 +147,9 @@ const Register: React.FC<Props> = ({
     <StyledRegister>
       {windowDimensions.width > windowDimensions.height && (
         <Wrapper>
-          <Logo src={logo} />
+          <a href="https://porter.run">
+            <Logo src={logo} />
+          </a>
           <Spacer y={2} />
           <Jumbotron>
             Deploy and scale <Shiny>effortlessly</Shiny> with Porter
@@ -169,7 +171,9 @@ const Register: React.FC<Props> = ({
       <Wrapper>
         {windowDimensions.width <= windowDimensions.height && (
           <Flex>
-            <Logo src={logo} />
+            <a href="https://porter.run">
+              <Logo src={logo} />
+            </a>
             <Spacer y={2} />
           </Flex>
         )}

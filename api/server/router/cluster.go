@@ -597,7 +597,7 @@ func getClusterRoutes(
 				Method: types.HTTPVerbPost,
 				Path: &types.Path{
 					Parent:       basePath,
-					RelativePath: relPath + "deployments/finalize_errors",
+					RelativePath: relPath + "/deployments/finalize_errors",
 				},
 				Scopes: []types.PermissionScope{
 					types.UserScope,

@@ -881,11 +881,12 @@ func (t *DeploymentHook) PreApply() error {
 
 		_, err = t.client.CreateDeployment(
 			context.Background(),
-			t.projectID, t.gitInstallationID, t.clusterID,
-			t.repoOwner, t.repoName, createReq,
+			t.projectID, t.clusterID, createReq,
 		)
 	} else if err == nil {
-		updateReq := &types.UpdateDeploymentRequest{
+		updateReq := &types.UpdateDeploymentByClusterRequest{
+			RepoOwner: t.repoOwner,
+			RepoName:  t.repoName,
 			Namespace: t.namespace,
 			PRNumber:  t.prID,
 			CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
@@ -899,11 +900,7 @@ func (t *DeploymentHook) PreApply() error {
 			updateReq.PRNumber = 0
 		}
 
-		_, err = t.client.UpdateDeployment(
-			context.Background(),
-			t.projectID, t.gitInstallationID, t.clusterID,
-			t.repoOwner, t.repoName, updateReq,
-		)
+		_, err = t.client.UpdateDeployment(context.Background(), t.projectID, t.clusterID, updateReq)
 	}
 
 	return err
@@ -984,7 +981,9 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 		}
 	}
 
-	req := &types.FinalizeDeploymentRequest{
+	req := &types.FinalizeDeploymentByClusterRequest{
+		RepoOwner: t.repoOwner,
+		RepoName:  t.repoName,
 		Subdomain: strings.Join(subdomains, ", "),
 	}
 
@@ -1007,11 +1006,7 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 	}
 
 	// finalize the deployment
-	_, err := t.client.FinalizeDeployment(
-		context.Background(),
-		t.projectID, t.gitInstallationID, t.clusterID,
-		t.repoOwner, t.repoName, req,
-	)
+	_, err := t.client.FinalizeDeployment(context.Background(), t.projectID, t.clusterID, req)
 
 	return err
 }
@@ -1039,7 +1034,9 @@ func (t *DeploymentHook) OnError(error) {
 
 	// if the deployment exists, throw an error for that deployment
 	if deplErr == nil {
-		req := &types.UpdateDeploymentStatusRequest{
+		req := &types.UpdateDeploymentStatusByClusterRequest{
+			RepoOwner: t.repoOwner,
+			RepoName:  t.repoName,
 			CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
 				ActionID: t.actionID,
 			},
@@ -1054,11 +1051,7 @@ func (t *DeploymentHook) OnError(error) {
 		}
 
 		// FIXME: try to use the error with a custom logger
-		t.client.UpdateDeploymentStatus(
-			context.Background(),
-			t.projectID, t.gitInstallationID, t.clusterID,
-			t.repoOwner, t.repoName, req,
-		)
+		t.client.UpdateDeploymentStatus(context.Background(), t.projectID, t.clusterID, req)
 	}
 }
 
@@ -1085,8 +1078,10 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 
 	// if the deployment exists, throw an error for that deployment
 	if deplErr == nil {
-		req := &types.FinalizeDeploymentWithErrorsRequest{
-			Errors: make(map[string]string),
+		req := &types.FinalizeDeploymentWithErrorsByClusterRequest{
+			RepoOwner: t.repoOwner,
+			RepoName:  t.repoName,
+			Errors:    make(map[string]string),
 		}
 
 		if t.isBranchDeploy() {
@@ -1109,12 +1104,7 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 		}
 
 		// FIXME: handle the error
-		t.client.FinalizeDeploymentWithErrors(
-			context.Background(),
-			t.projectID, t.gitInstallationID, t.clusterID,
-			t.repoOwner, t.repoName,
-			req,
-		)
+		t.client.FinalizeDeploymentWithErrors(context.Background(), t.projectID, t.clusterID, req)
 	}
 }
 

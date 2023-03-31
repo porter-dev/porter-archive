@@ -24,17 +24,13 @@ func (c *Client) ListEnvironments(
 
 func (c *Client) CreateDeployment(
 	ctx context.Context,
-	projID, gitInstallationID, clusterID uint,
-	gitRepoOwner, gitRepoName string,
+	projID, clusterID uint,
 	req *types.CreateDeploymentRequest,
 ) (*types.Deployment, error) {
 	resp := &types.Deployment{}
 
 	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects/%d/gitrepos/%d/%s/%s/clusters/%d/deployment",
-			projID, gitInstallationID, gitRepoOwner, gitRepoName, clusterID,
-		),
+		fmt.Sprintf("/projects/%d/clusters/%d/deployments", projID, clusterID),
 		req,
 		resp,
 	)
@@ -60,17 +56,13 @@ func (c *Client) GetDeployment(
 
 func (c *Client) UpdateDeployment(
 	ctx context.Context,
-	projID, gitInstallationID, clusterID uint,
-	gitRepoOwner, gitRepoName string,
-	req *types.UpdateDeploymentRequest,
+	projID, clusterID uint,
+	req *types.UpdateDeploymentByClusterRequest,
 ) (*types.Deployment, error) {
 	resp := &types.Deployment{}
 
-	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects/%d/gitrepos/%d/%s/%s/clusters/%d/deployment/update",
-			projID, gitInstallationID, gitRepoOwner, gitRepoName, clusterID,
-		),
+	err := c.patchRequest(
+		fmt.Sprintf("/projects/%d/clusters/%d/deployments", projID, clusterID),
 		req,
 		resp,
 	)
@@ -80,17 +72,13 @@ func (c *Client) UpdateDeployment(
 
 func (c *Client) UpdateDeploymentStatus(
 	ctx context.Context,
-	projID, gitInstallationID, clusterID uint,
-	gitRepoOwner, gitRepoName string,
-	req *types.UpdateDeploymentStatusRequest,
+	projID, clusterID uint,
+	req *types.UpdateDeploymentStatusByClusterRequest,
 ) (*types.Deployment, error) {
 	resp := &types.Deployment{}
 
-	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects/%d/gitrepos/%d/%s/%s/clusters/%d/deployment/update/status",
-			projID, gitInstallationID, gitRepoOwner, gitRepoName, clusterID,
-		),
+	err := c.patchRequest(
+		fmt.Sprintf("/projects/%d/clusters/%d/deployments/status", projID, clusterID),
 		req,
 		resp,
 	)
@@ -100,17 +88,13 @@ func (c *Client) UpdateDeploymentStatus(
 
 func (c *Client) FinalizeDeployment(
 	ctx context.Context,
-	projID, gitInstallationID, clusterID uint,
-	gitRepoOwner, gitRepoName string,
-	req *types.FinalizeDeploymentRequest,
+	projID, clusterID uint,
+	req *types.FinalizeDeploymentByClusterRequest,
 ) (*types.Deployment, error) {
 	resp := &types.Deployment{}
 
 	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects/%d/gitrepos/%d/%s/%s/clusters/%d/deployment/finalize",
-			projID, gitInstallationID, gitRepoOwner, gitRepoName, clusterID,
-		),
+		fmt.Sprintf("/projects/%d/clusters/%d/deployments/finalize", projID, clusterID),
 		req,
 		resp,
 	)
@@ -120,17 +104,13 @@ func (c *Client) FinalizeDeployment(
 
 func (c *Client) FinalizeDeploymentWithErrors(
 	ctx context.Context,
-	projID, gitInstallationID, clusterID uint,
-	gitRepoOwner, gitRepoName string,
-	req *types.FinalizeDeploymentWithErrorsRequest,
+	projID, clusterID uint,
+	req *types.FinalizeDeploymentWithErrorsByClusterRequest,
 ) (*types.Deployment, error) {
 	resp := &types.Deployment{}
 
 	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects/%d/gitrepos/%d/%s/%s/clusters/%d/deployment/finalize_errors",
-			projID, gitInstallationID, gitRepoOwner, gitRepoName, clusterID,
-		),
+		fmt.Sprintf("/projects/%d/clusters/%d/deployments/finalize_errors", projID, clusterID),
 		req,
 		resp,
 	)

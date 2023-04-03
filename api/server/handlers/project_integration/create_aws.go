@@ -63,7 +63,7 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		credResp, err := p.Config().ClusterControlPlaneClient.CreateAssumeRoleChain(ctx, connect.NewRequest(&credReq))
 		if err != nil {
 			e := fmt.Errorf("unable to create CAPI required credential: %w", err)
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusPreconditionFailed, err.Error()))
 			return
 		}
 		res.CloudProviderCredentialIdentifier = credResp.Msg.TargetArn

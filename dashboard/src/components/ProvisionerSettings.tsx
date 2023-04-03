@@ -125,6 +125,8 @@ const ProvisionerSettings: React.FC<Props> = props => {
     }
 
     try {
+      setIsReadOnly(true)
+      setErrorMessage(undefined)
       await api
         .preflightCheckAWSUsage(
           "<token>",
@@ -170,6 +172,8 @@ const ProvisionerSettings: React.FC<Props> = props => {
       setErrorMessage(undefined);
     } catch (err) {
       setErrorMessage(err.response.data.error.replace('unknown: ', ''));
+    } finally {
+      setIsReadOnly(false)
     }
   }
 

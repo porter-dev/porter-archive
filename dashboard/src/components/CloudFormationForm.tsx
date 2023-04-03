@@ -31,6 +31,7 @@ const CloudFormationForm: React.FC<Props> = ({
 }) => {
   const [grantPermissionsError, setGrantPermissionsError] = useState("");
   const [roleStatus, setRoleStatus] = useState("");
+  const [errorMessage, setErrorMessage] = useState(undefined);
   const { currentProject } = useContext(Context);
 
   const getExternalId = () => {
@@ -48,6 +49,7 @@ const CloudFormationForm: React.FC<Props> = ({
     let externalId = getExternalId();
     let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-role`
     setRoleStatus("loading");
+    setErrorMessage(undefined)
     api
       .createAWSIntegration(
         "<token>",
@@ -60,12 +62,13 @@ const CloudFormationForm: React.FC<Props> = ({
         }
       )
       .then(({ data }) => {
-        setRoleStatus("successful");
+        setRoleStatus("successful")
         proceed(targetARN);
       })
       .catch((err) => {
         console.log(err);
-        setRoleStatus("Role does not exist in the AWS account.");
+        setRoleStatus("");
+        setErrorMessage("Porter could not access your AWS account. Please make sure you have granted permissions and try again.")
       });
   };
 
@@ -158,6 +161,7 @@ const CloudFormationForm: React.FC<Props> = ({
         Grant Porter permissions to create infrastructure in your AWS account.
       </Text>
       {renderContent()}
+      {errorMessage && <ErrorContainer>{errorMessage}</ErrorContainer>}
     </>
   );
 };
@@ -220,3 +224,15 @@ const StyledForm = styled.div`
   font-size: 13px;
   margin-bottom: 30px;
 `;
+
+const ErrorContainer = styled.div`
+  position: relative;
+  margin-top: 20px;
+  padding: 30px 30px 25px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  font-size: 13px;
+  margin-bottom: 30px;
+  color: red;
+`

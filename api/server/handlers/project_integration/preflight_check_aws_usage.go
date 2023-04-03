@@ -46,8 +46,8 @@ func (p *CreatePreflightCheckAWSUsageHandler) ServeHTTP(w http.ResponseWriter, r
 	checkResp, err := p.Config().ClusterControlPlaneClient.QuotaPreflightCheck(ctx, connect.NewRequest(&checkReq))
 
 	if err != nil {
-		e := fmt.Errorf("preflight check failed: %w", err)
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+		e := fmt.Errorf("Pre-provision check failed: %w", err)
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusPreconditionFailed, err.Error()))
 		return
 	}
 

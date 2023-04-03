@@ -76,6 +76,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
   const [cidrRange, setCidrRange] = useState("172.0.0.0/16");
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>(undefined);
 
   const createCluster = async () => {
     var data = new Contract({
@@ -123,27 +124,19 @@ const ProvisionerSettings: React.FC<Props> = props => {
       data["cluster"]["clusterId"] = props.clusterId;
     }
 
-    // api
-    //   .preflightCheckAWSUsage(
-    //     "<token>",
-    //     {
-    //       // TODO: change this back
-    //       // target_arn: `arn:aws:iam::${props.AWSAccountID}:role/porter-role`,
-    //       target_arn: "arn:aws:iam::844966915049:role/PorterRole-RootRole-1S8V1TYOMOXTK",
-    //       region: awsRegion
-    //     },
-    //     {
-    //       id: currentProject.id,
-    //     }
-    //   )
-    //   .then(({ data }) => {
-    //     console.log(data)
-    //   })
-    //   .catch((err) => {
-    //     console.error(err);
-    //   });
-
     try {
+      await api
+        .preflightCheckAWSUsage(
+          "<token>",
+          {
+            target_arn: `arn:aws:iam::${props.AWSAccountID}:role/porter-role`,
+            region: awsRegion
+          },
+          {
+            id: currentProject.id,
+          }
+        );
+
       const res = await api.createContract(
         "<token>",
         data,
@@ -174,8 +167,9 @@ const ProvisionerSettings: React.FC<Props> = props => {
             console.error(err);
           });
       }
+      setErrorMessage(undefined);
     } catch (err) {
-      console.log(err);
+      setErrorMessage(err.response.data.error.replace('unknown: ', ''));
     }
   }
 
@@ -338,6 +332,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
         statusPosition="right"
         status={isReadOnly && "Provisioning is still in progress"}
       />
+      {errorMessage && <ErrorContainer>{errorMessage} Please correct the issue and try to provision again.</ErrorContainer>}
     </>
   );
 };
@@ -364,3 +359,15 @@ const StyledForm = styled.div`
   font-size: 13px;
   margin-bottom: 30px;
 `;
+
+const ErrorContainer = styled.div`
+  position: relative;
+  margin-top: 20px;
+  padding: 30px 30px 25px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  font-size: 13px;
+  margin-bottom: 30px;
+  color: red;
+`

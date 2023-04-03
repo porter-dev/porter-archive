@@ -49,11 +49,11 @@ const CloudFormationForm: React.FC<Props> = ({
     let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-role`
     setRoleStatus("loading");
     api
-      .preflightCheckAWSRole(
+      .createAWSIntegration(
         "<token>",
         {
-          target_arn: targetARN,
-          external_id: externalId,
+          aws_target_arn: targetARN,
+          aws_external_id: externalId,
         },
         {
           id: currentProject.id,

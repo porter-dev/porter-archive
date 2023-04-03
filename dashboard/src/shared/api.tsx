@@ -71,16 +71,6 @@ const getGitlabIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/gitlab`
 );
 
-const preflightCheckAWSRole = baseApi<
-  {
-    target_arn: string;
-    external_id: string;
-  },
-  { id: number }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.id}/integrations/aws/preflight/role`;
-});
-
 const preflightCheckAWSUsage = baseApi<
   {
     target_arn: string;
@@ -93,11 +83,13 @@ const preflightCheckAWSUsage = baseApi<
 
 const createAWSIntegration = baseApi<
   {
-    aws_region: string;
+    aws_region?: string;
     aws_cluster_id?: string;
-    aws_access_key_id: string;
-    aws_secret_access_key: string;
+    aws_access_key_id?: string;
+    aws_secret_access_key?: string;
     aws_assume_role_arn?: string;
+    aws_target_arn?: string;
+    aws_external_id?: string;
   },
   { id: number }
 >("POST", (pathParams) => {
@@ -2575,7 +2567,6 @@ export default {
   addApplicationToEnvGroup,
   removeApplicationFromEnvGroup,
   provisionDatabase,
-  preflightCheckAWSRole,
   preflightCheckAWSUsage,
   getDatabases,
   getPreviousLogsForContainer,

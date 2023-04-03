@@ -75,16 +75,6 @@ type AWSIntegration struct {
 
 type ListAWSResponse []*AWSIntegration
 
-type RolePreflightCheckRequest struct {
-	ProjectID  uint   `json:"project_id"`
-	TargetARN  string `json:"target_arn"`
-	ExternalID string `json:"external_id"`
-}
-
-type RolePreflightCheckResponse struct {
-	TargetARN string `json:"target_arn"`
-}
-
 type QuotaPreflightCheckRequest struct {
 	ProjectID  uint   `json:"project_id"`
 	TargetARN  string `json:"target_arn"`
@@ -100,6 +90,8 @@ type CreateAWSRequest struct {
 	AWSAccessKeyID     string `json:"aws_access_key_id"`
 	AWSSecretAccessKey string `json:"aws_secret_access_key"`
 	AWSAssumeRoleArn   string `json:"aws_assume_role_arn"`
+	TargetArn          string `json:"aws_target_arn"`
+	ExternalID         string `json:"aws_external_id"`
 }
 
 type CreateAWSResponse struct {

@@ -68,7 +68,6 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 
 	// read the environment to get the environment id
 	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID), owner, name)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(errEnvironmentNotFound))
@@ -114,7 +113,6 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 	}
 
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -145,7 +143,6 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 	if !depl.IsBranchDeploy() {
 		// add a check for the PR to be open before creating a comment
 		prClosed, err := isGithubPRClosed(client, owner, name, int(depl.PullRequestID))
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
 			return
@@ -159,7 +156,6 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 
 		workflowRun, err := commonutils.GetLatestWorkflowRun(client, depl.RepoOwner, depl.RepoName,
 			fmt.Sprintf("porter_%s_env.yml", env.Name), depl.PRBranchFrom)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return

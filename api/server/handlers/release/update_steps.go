@@ -42,7 +42,6 @@ func (c *UpdateReleaseStepsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	release, err := c.Repo().Release().ReadRelease(cluster.ID, name, namespace)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			w.WriteHeader(http.StatusNotFound)
@@ -73,7 +72,6 @@ func (c *UpdateReleaseStepsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	container, err := c.Repo().BuildEvent().ReadEventContainer(release.EventContainer)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

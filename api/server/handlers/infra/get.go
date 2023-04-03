@@ -34,7 +34,6 @@ func (c *InfraGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// look for the latest operation and attach it, if it exists
 	operation, err := c.Repo().Infra().GetLatestOperation(infra)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("latest operation not found")))
@@ -46,7 +45,6 @@ func (c *InfraGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	op, err := operation.ToOperationType()
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

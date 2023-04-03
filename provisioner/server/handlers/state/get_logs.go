@@ -40,7 +40,6 @@ func (c *LogsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fmt.Sprintf("%s-%d-%d-%s-%s-logs.txt", infra.Kind, infra.ProjectID, infra.ID, infra.Suffix, operation.UID),
 		false,
 	)
-
 	if err != nil {
 		// if the file does not exist yet, return a 404 status code
 		if errors.Is(err, storage.FileDoesNotExist) {

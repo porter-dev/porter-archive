@@ -39,7 +39,6 @@ func (c *GetPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -48,7 +47,6 @@ func (c *GetPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	pods := []v1.Pod{}
 	for _, selector := range request.Selectors {
 		podsList, err := agent.GetPodsByLabel(selector, request.Namespace)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return

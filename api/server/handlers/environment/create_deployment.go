@@ -54,7 +54,6 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// read the environment to get the environment id
 	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID), owner, name)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(
@@ -69,7 +68,6 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// create deployment on GitHub API
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -77,7 +75,6 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// add a check for Github PR status
 	prClosed, err := isGithubPRClosed(client, owner, name, int(request.PullRequestID))
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
 		return
@@ -91,7 +88,6 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	ghDeployment, err := createGithubDeployment(client, env, request.PRBranchFrom, request.ActionID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
 		return
@@ -111,7 +107,6 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		PRBranchFrom:   request.GitHubMetadata.PRBranchFrom,
 		PRBranchInto:   request.GitHubMetadata.PRBranchInto,
 	})
-
 	if err != nil {
 		// try to delete the GitHub deployment
 		_, err = client.Repositories.DeleteDeployment(
@@ -153,7 +148,6 @@ func createGithubDeployment(
 			RequiredContexts: &requiredContexts,
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", errGithubAPI, err)
 	}

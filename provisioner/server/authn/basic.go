@@ -47,14 +47,12 @@ func (authn *AuthNBasic) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		porterTokenID, err := strconv.ParseUint(porterTokenIDStr, 10, 64)
-
 		if err != nil {
 			authn.sendForbiddenError(err, w, r)
 			return
 		}
 
 		ceToken, err := ValidatePorterToken(authn.config, uint(porterTokenID), porterToken)
-
 		if err != nil {
 			authn.sendForbiddenError(err, w, r)
 			return

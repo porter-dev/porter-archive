@@ -26,7 +26,6 @@ func (c *ChartURLCache) Update() {
 
 	for _, chartRepo := range c.urls {
 		indexFile, err := loader.LoadRepoIndexPublic(chartRepo)
-
 		if err != nil {
 			continue
 		}

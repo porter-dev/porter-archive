@@ -43,7 +43,6 @@ func (c *GetPreviousLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	name, _ := requestutils.GetURLParamString(r, types.URLParamPodName)
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

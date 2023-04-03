@@ -55,7 +55,6 @@ func (c *GithubGetProcfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	client, err := GetGithubAppClientFromRequest(c.Config(), r)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -70,14 +69,12 @@ func (c *GithubGetProcfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			Ref: branch,
 		},
 	)
-
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
 	fileData, err := resp.GetContent()
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

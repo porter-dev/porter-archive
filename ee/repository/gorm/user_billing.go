@@ -1,3 +1,4 @@
+//go:build ee
 // +build ee
 
 package gorm
@@ -22,7 +23,6 @@ func NewUserBillingRepository(db *gorm.DB, key *[32]byte) repository.UserBilling
 // CreateUserBilling adds a new User row to the Users table in the database
 func (repo *UserBillingRepository) CreateUserBilling(userBilling *models.UserBilling) (*models.UserBilling, error) {
 	err := repo.EncryptUserBillingData(userBilling, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,6 @@ func (repo *UserBillingRepository) ReadUserBilling(projectID, userID uint) (*mod
 	}
 
 	err := repo.DecryptUserBillingData(userBilling, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +58,6 @@ func (repo *UserBillingRepository) ReadUserBilling(projectID, userID uint) (*mod
 // UpdateUserBilling updates user billing in the db
 func (repo *UserBillingRepository) UpdateUserBilling(userBilling *models.UserBilling) (*models.UserBilling, error) {
 	err := repo.EncryptUserBillingData(userBilling, repo.key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +83,6 @@ func (repo *UserBillingRepository) EncryptUserBillingData(
 ) error {
 	if tok := userBilling.Token; len(tok) > 0 {
 		cipherData, err := encryption.Encrypt(tok, key)
-
 		if err != nil {
 			return err
 		}
@@ -104,7 +101,6 @@ func (repo *UserBillingRepository) DecryptUserBillingData(
 ) error {
 	if tok := userBilling.Token; len(tok) > 0 {
 		plaintext, err := encryption.Decrypt(tok, key)
-
 		if err != nil {
 			return err
 		}

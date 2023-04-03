@@ -110,7 +110,6 @@ func (o *Operation) ToOperationType() (*types.Operation, error) {
 	lastApplied := make(map[string]interface{})
 
 	err := json.Unmarshal(o.LastApplied, &lastApplied)
-
 	if err != nil {
 		return nil, err
 	}
@@ -202,13 +201,11 @@ func ParseUniqueName(workspaceID string) (string, uint, uint, string, error) {
 	}
 
 	projID, err := strconv.ParseUint(strArr[1], 10, 64)
-
 	if err != nil {
 		return "", 0, 0, "", err
 	}
 
 	infraID, err := strconv.ParseUint(strArr[2], 10, 64)
-
 	if err != nil {
 		return "", 0, 0, "", err
 	}
@@ -232,13 +229,11 @@ func ParseWorkspaceID(workspaceID string) (*UniqueNameWithOperation, error) {
 	}
 
 	projID, err := strconv.ParseUint(strArr[1], 10, 64)
-
 	if err != nil {
 		return nil, err
 	}
 
 	infraID, err := strconv.ParseUint(strArr[2], 10, 64)
-
 	if err != nil {
 		return nil, err
 	}

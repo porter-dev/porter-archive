@@ -90,7 +90,27 @@ type FinalizeDeploymentRequest struct {
 	Namespace           string                          `json:"namespace"`
 }
 
+type FinalizeDeploymentByClusterRequest struct {
+	RepoOwner string `json:"gh_repo_owner" form:"required"`
+	RepoName  string `json:"gh_repo_name" form:"required"`
+
+	SuccessfulResources []*SuccessfullyDeployedResource `json:"successful_resources"`
+	Subdomain           string                          `json:"subdomain"`
+	PRNumber            uint                            `json:"pr_number"`
+	Namespace           string                          `json:"namespace"`
+}
+
 type FinalizeDeploymentWithErrorsRequest struct {
+	SuccessfulResources []*SuccessfullyDeployedResource `json:"successful_resources"`
+	Errors              map[string]string               `json:"errors" form:"required"`
+	PRNumber            uint                            `json:"pr_number"`
+	Namespace           string                          `json:"namespace"`
+}
+
+type FinalizeDeploymentWithErrorsByClusterRequest struct {
+	RepoOwner string `json:"gh_repo_owner" form:"required"`
+	RepoName  string `json:"gh_repo_name" form:"required"`
+
 	SuccessfulResources []*SuccessfullyDeployedResource `json:"successful_resources"`
 	Errors              map[string]string               `json:"errors" form:"required"`
 	PRNumber            uint                            `json:"pr_number"`
@@ -106,12 +126,36 @@ type UpdateDeploymentRequest struct {
 	Namespace    string `json:"namespace"`
 }
 
+type UpdateDeploymentByClusterRequest struct {
+	*CreateGHDeploymentRequest
+
+	RepoOwner string `json:"gh_repo_owner" form:"required"`
+	RepoName  string `json:"gh_repo_name" form:"required"`
+
+	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
+	CommitSHA    string `json:"commit_sha" form:"required"`
+	PRNumber     uint   `json:"pr_number"`
+	Namespace    string `json:"namespace"`
+}
+
 type ListDeploymentRequest struct {
 	EnvironmentID uint `schema:"environment_id"`
 }
 
 type UpdateDeploymentStatusRequest struct {
 	*CreateGHDeploymentRequest
+
+	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
+	Status       string `json:"status" form:"required,oneof=created creating inactive failed"`
+	PRNumber     uint   `json:"pr_number"`
+	Namespace    string `json:"namespace"`
+}
+
+type UpdateDeploymentStatusByClusterRequest struct {
+	*CreateGHDeploymentRequest
+
+	RepoOwner string `json:"gh_repo_owner" form:"required"`
+	RepoName  string `json:"gh_repo_name" form:"required"`
 
 	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
 	Status       string `json:"status" form:"required,oneof=created creating inactive failed"`

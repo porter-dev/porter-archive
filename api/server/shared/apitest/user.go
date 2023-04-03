@@ -19,7 +19,6 @@ func CreateTestUser(t *testing.T, config *config.Config, verified bool) *models.
 		Password:      string(hashedPw),
 		EmailVerified: verified,
 	})
-
 	if err != nil {
 		t.Fatal(err)
 	}

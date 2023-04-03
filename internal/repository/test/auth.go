@@ -490,7 +490,6 @@ func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByInstalla
 }
 
 func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountID(accountID int64) (*ints.GithubAppInstallation, error) {
-
 	if !repo.canQuery {
 		return nil, errors.New("cannot write database")
 	}
@@ -505,7 +504,6 @@ func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountI
 }
 
 func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountIDs(accountIDs []int64) ([]*ints.GithubAppInstallation, error) {
-
 	if !repo.canQuery {
 		return nil, errors.New("cannot write database")
 	}
@@ -589,8 +587,7 @@ func (repo *GithubAppOAuthIntegrationRepository) UpdateGithubAppOauthIntegration
 }
 
 // AzureIntegrationRepository (unimplemented)
-type AzureIntegrationRepository struct {
-}
+type AzureIntegrationRepository struct{}
 
 // NewAzureIntegrationRepository returns a AzureIntegrationRepository which uses
 // gorm.DB for querying the database. It accepts an encryption key to encrypt
@@ -663,6 +660,7 @@ func (repo *GitlabIntegrationRepository) ReadGitlabIntegration(projectID, id uin
 	index := int(id - 1)
 	return repo.gitlabIntegrations[index], nil
 }
+
 func (repo *GitlabIntegrationRepository) ListGitlabIntegrationsByProjectID(projectID uint) ([]*ints.GitlabIntegration, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")

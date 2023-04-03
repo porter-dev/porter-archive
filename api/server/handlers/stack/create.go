@@ -47,21 +47,18 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uid, err := encryption.GenerateRandomBytes(16)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	sourceConfigs, err := getSourceConfigModels(req.SourceConfigs)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	resources, err := getResourceModels(req.AppResources, sourceConfigs, p.Config().ServerConf.DefaultApplicationHelmRepoURL)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -80,7 +77,6 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	envGroups, err := getEnvGroupModels(req.EnvGroups, proj.ID, cluster.ID, namespace)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -125,7 +121,6 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// apply all env groups
 	k8sAgent, err := p.GetAgent(r, cluster, "")
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -140,7 +135,6 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Variables:       envGroup.Variables,
 			SecretVariables: envGroup.SecretVariables,
 		})
-
 		if err != nil {
 			envGroupDeployErrors = append(envGroupDeployErrors, fmt.Sprintf("error creating env group %s", envGroup.Name))
 		}
@@ -172,14 +166,12 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// apply all app resources
 		registries, err := p.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
-
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
 
 		helmAgent, err := p.GetHelmAgent(r, cluster, "")
-
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -282,7 +274,6 @@ func getSourceConfigModels(sourceConfigs []*types.CreateStackSourceConfigRequest
 	for _, sourceConfig := range sourceConfigs {
 		if sourceConfig.StackSourceConfigBuild == nil {
 			uid, err := encryption.GenerateRandomBytes(16)
-
 			if err != nil {
 				return nil, err
 			}
@@ -309,7 +300,6 @@ func getResourceModels(appResources []*types.CreateStackAppResourceRequest, sour
 		}
 
 		uid, err := encryption.GenerateRandomBytes(16)
-
 		if err != nil {
 			return nil, err
 		}
@@ -345,7 +335,6 @@ func getEnvGroupModels(envGroups []*types.CreateStackEnvGroupRequest, projID, cl
 
 	for _, envGroup := range envGroups {
 		uid, err := encryption.GenerateRandomBytes(16)
-
 		if err != nil {
 			return nil, err
 		}

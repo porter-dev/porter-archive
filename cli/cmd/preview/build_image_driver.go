@@ -34,7 +34,6 @@ func NewBuildDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (
 	}
 
 	target, err := GetTarget(resource.Name, resource.Target)
-
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +41,6 @@ func NewBuildDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (
 	driver.target = target
 
 	source, err := GetSource(target.Project, resource.Name, resource.Source)
-
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +69,6 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 
 	if tag == "" {
 		commit, err := git.LastCommit()
-
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +90,6 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	}
 
 	regList, err := client.ListRegistries(context.Background(), d.target.Project)
-
 	if err != nil {
 		return nil, err
 	}
@@ -142,14 +138,12 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 
 	if d.config.Build.UsePackCache {
 		err := config.SetDockerConfig(client)
-
 		if err != nil {
 			return nil, err
 		}
 
 		if d.config.Build.Method == "pack" {
 			repoResp, err := client.ListRegistryRepositories(context.Background(), d.target.Project, regID)
-
 			if err != nil {
 				return nil, err
 			}
@@ -208,13 +202,11 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 
 	// create docker agent
 	agent, err := docker.NewAgentWithAuthGetter(client, d.target.Project)
-
 	if err != nil {
 		return nil, err
 	}
 
 	_, mergedValues, err := createAgent.GetMergedValues(d.config.Values)
-
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +218,6 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 		d.target.Cluster,
 		d.target.Namespace,
 	)
-
 	if err != nil {
 		env = make(map[string]string)
 	}
@@ -323,7 +314,6 @@ func (d *BuildDriver) getConfig(resource *models.Resource) (*preview.BuildDriver
 		LookupTable:  *d.lookupTable,
 		Dependencies: resource.Dependencies,
 	})
-
 	if err != nil {
 		return nil, err
 	}

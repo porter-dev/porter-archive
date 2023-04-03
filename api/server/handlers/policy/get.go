@@ -41,7 +41,6 @@ func (p *PolicyGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	policy, err := p.Repo().Policy().ReadPolicy(proj.ID, policyID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
@@ -56,7 +55,6 @@ func (p *PolicyGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res, err := policy.ToAPIPolicyType()
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

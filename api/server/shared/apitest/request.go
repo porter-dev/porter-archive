@@ -21,7 +21,6 @@ func GetRequestAndRecorder(t *testing.T, method, route string, requestObj interf
 
 	if requestObj != nil {
 		data, err := json.Marshal(requestObj)
-
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -31,7 +30,6 @@ func GetRequestAndRecorder(t *testing.T, method, route string, requestObj interf
 
 	// method and route don't actually matter since this is meant to test handlers
 	req, err := http.NewRequest(method, route, reader)
-
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -41,14 +41,12 @@ func GetUsage(opts *GetUsageOpts) (
 
 	// query for the linked cluster counts
 	clusters, err := opts.Repo.Cluster().ListClustersByProjectID(opts.Project.ID)
-
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	// query for the linked user counts
 	roles, err := opts.Repo.Project().ListProjectRoles(opts.Project.ID)
-
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -76,7 +74,6 @@ func GetUsage(opts *GetUsageOpts) (
 	// counts have changed, re-query for the usage
 	if !isCacheFound || usageCache.Is1HrOld() || isUsageExceeded(usageCache, limit) || isUsageChanged(&oldUsageCache, usageCache) {
 		cpu, memory, err := getResourceUsage(opts, clusters)
-
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -143,13 +140,11 @@ func getResourceUsage(opts *GetUsageOpts, clusters []*models.Cluster) (uint, uin
 		}
 
 		agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
-
 		if err != nil {
 			continue
 		}
 
 		totAlloc, err := nodes.GetAllocatableResources(agent.Clientset)
-
 		if err != nil {
 			continue
 		}

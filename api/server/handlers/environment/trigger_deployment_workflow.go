@@ -45,7 +45,6 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 
 	depl, err := c.Repo().Environment().ReadDeploymentByID(project.ID, cluster.ID, deplID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -59,14 +58,12 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 
 	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, depl.EnvironmentID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -75,7 +72,6 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 	if !depl.IsBranchDeploy() {
 		// add a check for the PR to be open before creating a comment
 		prClosed, err := isGithubPRClosed(client, depl.RepoOwner, depl.RepoName, int(depl.PullRequestID))
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",

@@ -21,14 +21,12 @@ func TestEnableForProjectEnabled(t *testing.T) {
 	initCluster(tester, t)
 
 	err := EnableClusterPreviewEnvs(tester.DB, logger)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 		return
 	}
 
 	cluster, err := tester.repo.Cluster().ReadCluster(1, 1)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 		return
@@ -54,14 +52,12 @@ func TestEnableForProjectDisabled(t *testing.T) {
 	initCluster(tester, t)
 
 	err := EnableClusterPreviewEnvs(tester.DB, logger)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 		return
 	}
 
 	cluster, err := tester.repo.Cluster().ReadCluster(1, 1)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 		return

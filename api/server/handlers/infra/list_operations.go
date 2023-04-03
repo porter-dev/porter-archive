@@ -28,7 +28,6 @@ func (c *InfraListOperationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
 	ops, err := c.Repo().Infra().ListOperations(infra.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

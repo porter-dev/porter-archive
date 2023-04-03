@@ -48,7 +48,6 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		SQLLite:       true,
 		SQLLitePath:   tester.dbFileName,
 	})
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -114,7 +113,6 @@ func initUser(tester *tester, t *testing.T) {
 	}
 
 	user, err := tester.repo.User().CreateUser(user)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -130,7 +128,6 @@ func initProject(tester *tester, t *testing.T) {
 	}
 
 	proj, err := tester.repo.Project().CreateProject(proj)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -150,7 +147,6 @@ func initProjectRole(tester *tester, t *testing.T) {
 	}
 
 	role, err := tester.repo.Project().CreateProjectRole(tester.initProjects[0], role)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -180,7 +176,6 @@ func initKubeIntegration(tester *tester, t *testing.T) {
 	}
 
 	ki, err := tester.repo.KubeIntegration().CreateKubeIntegration(ki)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -207,7 +202,6 @@ func initBasicIntegration(tester *tester, t *testing.T) {
 	}
 
 	basic, err := tester.repo.BasicIntegration().CreateBasicIntegration(basic)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -239,7 +233,6 @@ func initOIDCIntegration(tester *tester, t *testing.T) {
 	}
 
 	oidc, err := tester.repo.OIDCIntegration().CreateOIDCIntegration(oidc)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -270,7 +263,6 @@ func initOAuthIntegration(tester *tester, t *testing.T) {
 	}
 
 	oauth, err := tester.repo.OAuthIntegration().CreateOAuthIntegration(oauth)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -298,7 +290,6 @@ func initGCPIntegration(tester *tester, t *testing.T) {
 	}
 
 	gcp, err := tester.repo.GCPIntegration().CreateGCPIntegration(gcp)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -327,7 +318,6 @@ func initAWSIntegration(tester *tester, t *testing.T) {
 	}
 
 	aws, err := tester.repo.AWSIntegration().CreateAWSIntegration(aws)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -355,7 +345,6 @@ func initClusterCandidate(tester *tester, t *testing.T) {
 	}
 
 	cc, err := tester.repo.Cluster().CreateClusterCandidate(cc)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -389,7 +378,6 @@ func initCluster(tester *tester, t *testing.T) {
 	}
 
 	cluster, err := tester.repo.Cluster().CreateCluster(cluster)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -415,7 +403,6 @@ func initGitRepo(tester *tester, t *testing.T) {
 	}
 
 	gr, err := tester.repo.GitRepo().CreateGitRepo(gr)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -442,7 +429,6 @@ func initRegistry(tester *tester, t *testing.T) {
 	}
 
 	reg, err := tester.repo.Registry().CreateRegistry(reg)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -470,7 +456,6 @@ func initHelmRepo(tester *tester, t *testing.T) {
 	}
 
 	hr, err := tester.repo.HelmRepo().CreateHelmRepo(hr)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -493,7 +478,6 @@ func initInfra(tester *tester, t *testing.T) {
 	}
 
 	infra, err := tester.repo.Infra().CreateInfra(infra)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -517,7 +501,6 @@ func initRelease(tester *tester, t *testing.T) {
 	}
 
 	release, err := tester.repo.Release().CreateRelease(release)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

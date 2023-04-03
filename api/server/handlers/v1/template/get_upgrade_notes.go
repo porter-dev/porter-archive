@@ -43,7 +43,6 @@ func (t *TemplateGetUpgradeNotesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	}
 
 	hrs, err := t.Repo().HelmRepo().ListHelmReposByProjectID(project.ID)
-
 	if err != nil {
 		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -85,7 +84,6 @@ func (t *TemplateGetUpgradeNotesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	}
 
 	chart, err := loader.LoadChartPublic(request.RepoURL, name, version)
-
 	if err != nil {
 		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -96,7 +94,6 @@ func (t *TemplateGetUpgradeNotesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	for _, file := range chart.Files {
 		if strings.Contains(file.Name, "upgrade.yaml") {
 			upgradeFile, err := upgrade.ParseUpgradeFileFromBytes(file.Data)
-
 			if err != nil {
 				break
 			}

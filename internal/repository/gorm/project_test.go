@@ -24,7 +24,6 @@ func TestCreateProject(t *testing.T) {
 	}
 
 	proj, err := tester.repo.Project().CreateProject(proj)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -63,13 +62,11 @@ func TestCreateProjectRole(t *testing.T) {
 	}
 
 	role, err := tester.repo.Project().CreateProjectRole(tester.initProjects[0], role)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
 	proj, err := tester.repo.Project().ReadProject(tester.initProjects[0].Model.ID)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -133,13 +130,11 @@ func TestUpdateProjectRole(t *testing.T) {
 	}
 
 	role, err := tester.repo.Project().UpdateProjectRole(tester.initProjects[0].Model.ID, role)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
 	proj, err := tester.repo.Project().ReadProject(tester.initProjects[0].Model.ID)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -203,7 +198,6 @@ func TestListProjectsByUserID(t *testing.T) {
 	}
 
 	role, err := tester.repo.Project().CreateProjectRole(tester.initProjects[1], role)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -211,7 +205,6 @@ func TestListProjectsByUserID(t *testing.T) {
 	defer cleanup(tester, t)
 
 	projects, err := tester.repo.Project().ListProjectsByUserID(tester.initUsers[0].Model.ID)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -263,7 +256,6 @@ func TestReadProjectRole(t *testing.T) {
 	defer cleanup(tester, t)
 
 	role, err := tester.repo.Project().ReadProjectRole(1, 1)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -294,7 +286,6 @@ func TestDeleteProject(t *testing.T) {
 	defer cleanup(tester, t)
 
 	proj, err := tester.repo.Project().DeleteProject(tester.initProjects[0])
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -319,14 +310,12 @@ func TestDeleteProjectRole(t *testing.T) {
 	defer cleanup(tester, t)
 
 	_, err := tester.repo.Project().DeleteProjectRole(tester.initProjects[0].Model.ID, tester.initUsers[0].Model.ID)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
 	// attempt to read the project and ensure that the error is gorm.ErrRecordNotFound
 	proj, err := tester.repo.Project().ReadProject(tester.initProjects[0].Model.ID)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

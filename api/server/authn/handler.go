@@ -70,7 +70,6 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// if the bearer token is not found, look for a request cookie
 	session, err := authn.config.Store.Get(r, authn.config.ServerConf.CookieName)
-
 	if err != nil {
 		session.Values["authenticated"] = false
 
@@ -83,7 +82,7 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	supportEmail := "support@porter.run"
-	cancelTime := time.Date(2023, 01, 31, 14, 30, 0, 0, time.Now().Local().Location())
+	cancelTime := time.Date(2023, 0o1, 31, 14, 30, 0, 0, time.Now().Local().Location())
 	if email, ok := session.Values["email"]; ok {
 		if email.(string) == supportEmail {
 			sess, _ := authn.config.Repo.Session().SelectSession(&models.Session{Key: session.ID})
@@ -139,7 +138,6 @@ func (authn *AuthN) verifyTokenWithNext(w http.ResponseWriter, r *http.Request, 
 	// if the token has a stored token id and secret we check that the token is valid in the database
 	if tok.Secret != "" && tok.TokenID != "" {
 		apiToken, err := authn.config.Repo.APIToken().ReadAPIToken(tok.ProjectID, tok.TokenID)
-
 		if err != nil {
 			authn.sendForbiddenError(fmt.Errorf("token with id %s not valid", tok.TokenID), w, r)
 			return
@@ -179,7 +177,6 @@ func (authn *AuthN) nextWithAPIToken(w http.ResponseWriter, r *http.Request, tok
 func (authn *AuthN) nextWithUserID(w http.ResponseWriter, r *http.Request, userID uint) {
 	// search for the user
 	user, err := authn.config.Repo.User().ReadUser(userID)
-
 	if err != nil {
 		authn.sendForbiddenError(fmt.Errorf("user with id %d not found in database", userID), w, r)
 		return
@@ -201,8 +198,10 @@ func (authn *AuthN) sendForbiddenError(err error, w http.ResponseWriter, r *http
 	apierrors.HandleAPIError(authn.config.Logger, authn.config.Alerter, w, r, reqErr, true)
 }
 
-var errInvalidToken = fmt.Errorf("authorization header exists, but token is not valid")
-var errInvalidAuthHeader = fmt.Errorf("invalid authorization header in request")
+var (
+	errInvalidToken      = fmt.Errorf("authorization header exists, but token is not valid")
+	errInvalidAuthHeader = fmt.Errorf("invalid authorization header in request")
+)
 
 // getTokenFromRequest finds an `Authorization` header of the form `Bearer <token>`,
 // and returns a valid token if it exists.
@@ -217,7 +216,6 @@ func (authn *AuthN) getTokenFromRequest(r *http.Request) (*token.Token, error) {
 	reqToken = strings.TrimSpace(splitToken[1])
 
 	tok, err := token.GetTokenFromEncoded(reqToken, authn.config.TokenConf)
-
 	if err != nil {
 		return nil, errInvalidToken
 	}

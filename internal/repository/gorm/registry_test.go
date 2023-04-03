@@ -26,7 +26,6 @@ func TestCreateRegistry(t *testing.T) {
 	}
 
 	reg, err := tester.repo.Registry().CreateRegistry(reg)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -60,7 +59,6 @@ func TestListRegistriesByProjectID(t *testing.T) {
 	regs, err := tester.repo.Registry().ListRegistriesByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -103,7 +101,6 @@ func TestUpdateRegistry(t *testing.T) {
 	reg, err := tester.repo.Registry().UpdateRegistry(
 		reg,
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -146,7 +143,6 @@ func TestUpdateRegistryToken(t *testing.T) {
 	}
 
 	reg, err := tester.repo.Registry().CreateRegistry(reg)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -213,7 +209,6 @@ func TestDeleteRegistry(t *testing.T) {
 	defer cleanup(tester, t)
 
 	reg, err := tester.repo.Registry().ReadRegistry(tester.initProjects[0].Model.ID, tester.initRegs[0].Model.ID)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -231,7 +226,6 @@ func TestDeleteRegistry(t *testing.T) {
 	}
 
 	regs, err := tester.repo.Registry().ListRegistriesByProjectID(tester.initProjects[0].Model.ID)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

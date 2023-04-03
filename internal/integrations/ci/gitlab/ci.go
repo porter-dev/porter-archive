@@ -40,7 +40,6 @@ type GitlabCI struct {
 
 func (g *GitlabCI) Setup() error {
 	client, err := g.getClient()
-
 	if err != nil {
 		return err
 	}
@@ -48,7 +47,6 @@ func (g *GitlabCI) Setup() error {
 	g.pID = fmt.Sprintf("%s/%s", g.GitRepoOwner, g.GitRepoName)
 
 	branches, _, err := client.Branches.ListBranches(g.pID, &gitlab.ListBranchesOptions{})
-
 	if err != nil {
 		return fmt.Errorf("error fetching list of branches: %w", err)
 	}
@@ -170,7 +168,6 @@ func (g *GitlabCI) Setup() error {
 		})
 
 		contentsYAML, err := yaml.Marshal(ciFileContentsMap)
-
 		if err != nil {
 			return fmt.Errorf("error marshalling contents of .gitlab-ci.yml while updating to add porter job")
 		}
@@ -193,7 +190,6 @@ func (g *GitlabCI) Setup() error {
 
 func (g *GitlabCI) Cleanup() error {
 	client, err := g.getClient()
-
 	if err != nil {
 		return err
 	}
@@ -201,7 +197,6 @@ func (g *GitlabCI) Cleanup() error {
 	g.pID = fmt.Sprintf("%s/%s", g.GitRepoOwner, g.GitRepoName)
 
 	branches, _, err := client.Branches.ListBranches(g.pID, &gitlab.ListBranchesOptions{})
-
 	if err != nil {
 		return fmt.Errorf("error fetching list of branches: %w", err)
 	}
@@ -293,7 +288,6 @@ func (g *GitlabCI) Cleanup() error {
 	}
 
 	contentsYAML, err := yaml.Marshal(newCIFileContentsMap)
-
 	if err != nil {
 		return fmt.Errorf("error unmarshalling contents of .gitlab-ci.yml while updating to remove porter job")
 	}
@@ -315,19 +309,16 @@ func (g *GitlabCI) Cleanup() error {
 
 func (g *GitlabCI) getClient() (*gitlab.Client, error) {
 	gi, err := g.Repo.GitlabIntegration().ReadGitlabIntegration(g.ProjectID, g.IntegrationID)
-
 	if err != nil {
 		return nil, err
 	}
 
 	giOAuthInt, err := g.Repo.GitlabAppOAuthIntegration().ReadGitlabAppOAuthIntegration(g.UserID, g.ProjectID, g.IntegrationID)
-
 	if err != nil {
 		return nil, err
 	}
 
 	oauthInt, err := g.Repo.OAuthIntegration().ReadOAuthIntegration(g.ProjectID, giOAuthInt.OAuthIntegrationID)
-
 	if err != nil {
 		return nil, err
 	}
@@ -337,13 +328,11 @@ func (g *GitlabCI) getClient() (*gitlab.Client, error) {
 		commonutils.GetGitlabOAuthConf(g.PorterConf, gi),
 		oauth.MakeUpdateGitlabAppOAuthIntegrationFunction(g.ProjectID, giOAuthInt, g.Repo),
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	client, err := gitlab.NewOAuthClient(accessToken, gitlab.WithBaseURL(gi.InstanceURL))
-
 	if err != nil {
 		return nil, err
 	}
@@ -492,7 +481,6 @@ func (g *GitlabCI) createGitlabSecret(client *gitlab.Client) error {
 func (g *GitlabCI) deleteGitlabSecret(client *gitlab.Client) error {
 	_, err := client.ProjectVariables.RemoveVariable(g.pID, g.getPorterTokenSecretName(),
 		&gitlab.RemoveProjectVariableOptions{})
-
 	if err != nil {
 		return fmt.Errorf("error removing porter token variable: %w", err)
 	}

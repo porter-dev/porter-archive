@@ -40,7 +40,6 @@ func (a *Agent) SetServiceAccountIAMPolicy(sa *adminpb.ServiceAccount) error {
 		a.ProjectID,
 		&crm.GetIamPolicyRequest{},
 	).Do()
-
 	if err != nil {
 		return err
 	}
@@ -99,7 +98,6 @@ func (a *Agent) CreateServiceAccountKey(sa *adminpb.ServiceAccount) ([]byte, err
 	}
 
 	resp, err := a.IAMClient.CreateServiceAccountKey(a.Ctx, req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +112,6 @@ func (a *Agent) GetProjectIDForGKECluster(endpoint string) (string, error) {
 	projectSvc := a.CloudResourceManagerService.Projects
 
 	resp, err := projectSvc.List().Do()
-
 	if err != nil {
 		return "", err
 	}
@@ -127,7 +124,6 @@ func (a *Agent) GetProjectIDForGKECluster(endpoint string) (string, error) {
 
 	// parse endpoint for ip address
 	u, err := url.Parse(endpoint)
-
 	if err != nil {
 		return "", err
 	}
@@ -141,7 +137,6 @@ func (a *Agent) GetProjectIDForGKECluster(endpoint string) (string, error) {
 
 		// this should be all zones
 		resp, err := projectsLocsService.Clusters.List("projects/" + projectID + "/locations/-").Do()
-
 		// we'll just continue -- if nothing is found, we'll return an error
 		if err != nil {
 			continue

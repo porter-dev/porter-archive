@@ -10,8 +10,10 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-const urlParamNotFoundFmt = "could not find url param %s"
-const urlParamErrUintConvFmt = "could not convert url parameter %s to uint, got %s"
+const (
+	urlParamNotFoundFmt    = "could not find url param %s"
+	urlParamErrUintConvFmt = "could not convert url parameter %s to uint, got %s"
+)
 
 // GetURLParamString returns a specific URL parameter as a string using
 // chi.URLParam. It returns an internal server error if the URL parameter is not found.
@@ -37,7 +39,6 @@ func GetURLParamUint(r *http.Request, param types.URLParam) (uint, apierrors.Req
 	}
 
 	res64, err := strconv.ParseUint(urlParam, 10, 64)
-
 	if err != nil {
 		return 0, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf(urlParamErrUintConvFmt, param, urlParam),

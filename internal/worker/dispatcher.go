@@ -35,7 +35,6 @@ func (d *Dispatcher) Run(jobQueue chan Job) error {
 
 		for i := 0; i < d.maxWorkers; i += 1 {
 			uuid, err := uuid.NewUUID()
-
 			if err != nil {
 				// FIXME: should let the parent thread know of this error
 				log.Printf("error creating UUID for worker: %v", err)

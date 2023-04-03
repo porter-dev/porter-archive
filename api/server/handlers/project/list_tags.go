@@ -28,7 +28,6 @@ func NewGetTagsHandler(
 func (p *GetTagsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	tags, err := p.Repo().Tag().ListTagsByProjectId(proj.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 	}

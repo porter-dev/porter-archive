@@ -30,7 +30,6 @@ func NewGithubListReposHandler(
 
 func (c *GithubListReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	client, err := GetGithubAppClientFromRequest(c.Config(), r)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -42,7 +41,6 @@ func (c *GithubListReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	repoList, resp, err := client.Apps.ListRepos(context.Background(), opt)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -67,7 +65,6 @@ func (c *GithubListReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			}
 
 			repos, _, err := client.Apps.ListRepos(context.Background(), cur_opt)
-
 			if err != nil {
 				mu.Lock()
 				workerErr = err

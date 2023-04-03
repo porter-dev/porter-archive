@@ -61,7 +61,6 @@ func GetFormFromRelease(def *ClientConfigDefault, rel *release.Release) (*types.
 // declared states.
 func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte, stateType, contextType string) (*types.FormYAML, error) {
 	form, err := unqueriedFormYAMLFromBytes(bytes, contextType)
-
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +73,6 @@ func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte, stateType, contex
 	for _, lookupVal := range lookup {
 		if lookupVal != nil {
 			queryRes, err := lookupVal.TemplateReader.Read()
-
 			if err != nil {
 				continue
 			}
@@ -118,7 +116,6 @@ func FormStreamer(
 	stopCh <-chan struct{},
 ) error {
 	form, err := unqueriedFormYAMLFromBytes(bytes, targetContext.Type)
-
 	if err != nil {
 		return err
 	}
@@ -128,7 +125,6 @@ func FormStreamer(
 	for lookupContext, lookupVal := range lookup {
 		if lookupVal != nil && areContextsEqual(targetContext, lookupContext) {
 			err := lookupVal.TemplateReader.ReadStream(on, stopCh)
-
 			if err != nil {
 				continue
 			}
@@ -168,7 +164,6 @@ func unqueriedFormYAMLFromBytes(bytes []byte, contextType string) (*types.FormYA
 	form := &types.FormYAML{}
 
 	err := yaml.Unmarshal(bytes, form)
-
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +226,6 @@ func formToLookupTable(def *ClientConfigDefault, form *types.FormYAML, stateType
 						fmt.Sprintf("%v", content.Value),
 						content.Settings.Default,
 					)
-
 					if err != nil {
 						continue
 					}
@@ -247,7 +241,6 @@ func formToLookupTable(def *ClientConfigDefault, form *types.FormYAML, stateType
 						fmt.Sprintf(".%v", content.Variable),
 						content.Settings.Default,
 					)
-
 					if err != nil {
 						continue
 					}

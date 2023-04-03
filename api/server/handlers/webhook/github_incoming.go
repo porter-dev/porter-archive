@@ -40,7 +40,6 @@ func NewGithubIncomingWebhookHandler(
 
 func (c *GithubIncomingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	payload, err := github.ValidatePayload(r, []byte(c.Config().ServerConf.GithubIncomingWebhookSecret))
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error validating webhook payload: %w", err)))
 		return
@@ -82,7 +81,6 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 	repo := event.GetRepo().GetName()
 
 	env, err := c.Repo().Environment().ReadEnvironmentByWebhookIDOwnerRepoName(webhookID, owner, repo)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil
@@ -130,7 +128,6 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 
 	// create deployment on GitHub API
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
 	if err != nil {
 		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
 			"error getting github client: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
@@ -169,7 +166,6 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 				},
 			},
 		)
-
 		if err != nil {
 			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
 				"error creating workflow dispatch event: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
@@ -178,7 +174,6 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 		depl, err := c.Repo().Environment().ReadDeploymentByGitDetails(
 			env.ID, owner, repo, uint(event.GetPullRequest().GetNumber()),
 		)
-
 		if err != nil {
 			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
 				"error reading deployment: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
@@ -201,7 +196,6 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 					},
 				},
 			)
-
 			if err != nil {
 				return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d, prNumber: %d] "+
 					"error creating workflow dispatch event: %w", webhookID, owner, repo, env.ID, depl.ID,
@@ -276,7 +270,6 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 
 			if shouldUpdate {
 				_, err := c.Repo().Environment().UpdateDeployment(depl)
-
 				if err != nil {
 					return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d, prNumber: %d] "+
 						"error updating deployment to reflect changes in the pull request %w", webhookID, owner, repo, env.ID, depl.ID,
@@ -296,14 +289,12 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 	client *github.Client,
 ) error {
 	cluster, err := c.Repo().Cluster().ReadCluster(env.ProjectID, env.ClusterID)
-
 	if err != nil {
 		return fmt.Errorf("[projectID: %d, clusterID: %d] error reading cluster when deleting existing deployment: %w",
 			env.ProjectID, env.ClusterID, err)
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		return err
 	}
@@ -359,7 +350,6 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 	repo := event.GetRepo().GetName()
 
 	env, err := c.Repo().Environment().ReadEnvironmentByWebhookIDOwnerRepoName(webhookID, owner, repo)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil
@@ -390,7 +380,6 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 	}
 
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
 	if err != nil {
 		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s] error creating github client: %w", webhookID, owner, repo, err)
 	}
@@ -410,7 +399,6 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 			PRBranchFrom:  branch,
 			PRBranchInto:  branch,
 		})
-
 		if err != nil {
 			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, branch: %s] "+
 				"error creating new deployment: %w", webhookID, owner, repo, env.ID, branch, err)
@@ -457,7 +445,6 @@ func isSystemNamespace(namespace string) bool {
 func getGithubClientFromEnvironment(config *config.Config, env *models.Environment) (*github.Client, error) {
 	// get the github app client
 	ghAppId, err := strconv.Atoi(config.ServerConf.GithubAppID)
-
 	if err != nil {
 		return nil, err
 	}
@@ -469,7 +456,6 @@ func getGithubClientFromEnvironment(config *config.Config, env *models.Environme
 		int64(env.GitInstallationID),
 		config.ServerConf.GithubAppSecretPath,
 	)
-
 	if err != nil {
 		return nil, err
 	}

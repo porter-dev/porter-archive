@@ -39,7 +39,6 @@ func (p *CreateGCPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	gcp := CreateGCPIntegration(request, project.ID, user.ID)
 
 	gcp, err := p.Repo().GCPIntegration().CreateGCPIntegration(gcp)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

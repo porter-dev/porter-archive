@@ -50,28 +50,24 @@ func (p *StackRemoveApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http
 	}
 
 	revision, err := p.Repo().Stack().ReadStackRevisionByNumber(stack.ID, stack.Revisions[0].RevisionNumber)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	newSourceConfigs, err := stacks.CloneSourceConfigs(revision.SourceConfigs)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	appResources, err := stacks.CloneAppResources(revision.Resources, revision.SourceConfigs, newSourceConfigs)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	envGroups, err := stacks.CloneEnvGroups(revision.EnvGroups)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -102,7 +98,6 @@ func (p *StackRemoveApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http
 	}
 
 	helmAgent, err := p.GetHelmAgent(r, cluster, namespace)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

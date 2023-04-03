@@ -41,7 +41,6 @@ func (c *UpdateReleaseTagsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	release, err := c.Repo().Release().ReadRelease(cluster.ID, name, namespace)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

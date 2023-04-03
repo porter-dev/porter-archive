@@ -5,8 +5,10 @@ import (
 	"strings"
 )
 
-const updateAppActionName = "porter-dev/porter-update-action"
-const createPreviewActionName = "porter-dev/porter-preview-action"
+const (
+	updateAppActionName     = "porter-dev/porter-update-action"
+	createPreviewActionName = "porter-dev/porter-preview-action"
+)
 
 func getCheckoutCodeStep() GithubActionYAMLStep {
 	return GithubActionYAMLStep{

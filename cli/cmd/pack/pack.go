@@ -21,7 +21,7 @@ var sharedPackClient *packclient.Client
 
 func init() {
 	var err error
-	//initialize a pack client
+	// initialize a pack client
 	logger := newPackLogger()
 
 	sharedPackClient, err = packclient.NewClient(packclient.WithLogger(logger))
@@ -35,7 +35,6 @@ type Agent struct{}
 
 func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, cacheImage string) error {
 	absPath, err := filepath.Abs(opts.BuildContext)
-
 	if err != nil {
 		return err
 	}

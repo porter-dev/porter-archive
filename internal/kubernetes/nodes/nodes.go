@@ -17,7 +17,6 @@ type TotalAllocatable struct {
 
 func GetAllocatableResources(clientset kubernetes.Interface) (*TotalAllocatable, error) {
 	nodeList, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-
 	if err != nil {
 		return nil, err
 	}

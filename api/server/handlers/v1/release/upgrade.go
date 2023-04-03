@@ -21,9 +21,7 @@ import (
 	"github.com/stefanmcshane/helm/pkg/release"
 )
 
-var (
-	createEnvSecretConstraint, _ = semver.NewConstraint(" < 0.1.0")
-)
+var createEnvSecretConstraint, _ = semver.NewConstraint(" < 0.1.0")
 
 type UpgradeReleaseHandler struct {
 	handlers.PorterHandlerReadWriter
@@ -47,7 +45,6 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 
 	helmAgent, err := c.GetHelmAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -60,7 +57,6 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -101,7 +97,6 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			TemplateName:    helmRelease.Chart.Metadata.Name,
 			TemplateVersion: request.ChartVersion,
 		})
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -124,7 +119,6 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	// if LatestRevision is set, check that the revision matches the latest revision in the database
 	if request.LatestRevision != 0 {
 		currHelmRelease, err := helmAgent.GetRelease(helmRelease.Name, 0, false)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("could not retrieve latest revision"),
@@ -158,7 +152,6 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	notifConf = nil
 	if rel != nil && rel.NotificationConfig != 0 {
 		conf, err := c.Repo().NotificationConfig().ReadNotificationConfig(rel.NotificationConfig)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -234,14 +227,12 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 					rel,
 					helmRelease,
 				)
-
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 					return
 				}
 
 				actionVersion, err := semver.NewVersion(gaRunner.Version)
-
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 					return

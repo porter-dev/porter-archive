@@ -25,7 +25,6 @@ var connectKubeconfigCmd = &cobra.Command{
 	Short: "Uses the local kubeconfig to add a cluster",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runConnectKubeconfig)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -37,7 +36,6 @@ var connectECRCmd = &cobra.Command{
 	Short: "Adds an ECR instance to a project",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runConnectECR)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -49,7 +47,6 @@ var connectDockerhubCmd = &cobra.Command{
 	Short: "Adds a Docker Hub registry integration to a project",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runConnectDockerhub)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -61,7 +58,6 @@ var connectRegistryCmd = &cobra.Command{
 	Short: "Adds a custom image registry to a project",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runConnectRegistry)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -73,7 +69,6 @@ var connectHelmRepoCmd = &cobra.Command{
 	Short: "Adds a custom Helm registry to a project",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runConnectHelmRepo)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -85,7 +80,6 @@ var connectGCRCmd = &cobra.Command{
 	Short: "Adds a GCR instance to a project",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runConnectGCR)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -97,7 +91,6 @@ var connectGARCmd = &cobra.Command{
 	Short: "Adds a GAR instance to a project",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runConnectGAR)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -109,7 +102,6 @@ var connectDOCRCmd = &cobra.Command{
 	Short: "Adds a DOCR instance to a project",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, runConnectDOCR)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -158,7 +150,6 @@ func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client *api.Cli
 		cliConf.Project,
 		isLocal,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -171,7 +162,6 @@ func runConnectECR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ 
 		client,
 		cliConf.Project,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -184,7 +174,6 @@ func runConnectGCR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ 
 		client,
 		cliConf.Project,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -197,7 +186,6 @@ func runConnectGAR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ 
 		client,
 		cliConf.Project,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -210,7 +198,6 @@ func runConnectDOCR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _
 		client,
 		cliConf.Project,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -223,7 +210,6 @@ func runConnectDockerhub(_ *types.GetAuthenticatedUserResponse, client *api.Clie
 		client,
 		cliConf.Project,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -236,7 +222,6 @@ func runConnectRegistry(_ *types.GetAuthenticatedUserResponse, client *api.Clien
 		client,
 		cliConf.Project,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -249,7 +234,6 @@ func runConnectHelmRepo(_ *types.GetAuthenticatedUserResponse, client *api.Clien
 		client,
 		cliConf.Project,
 	)
-
 	if err != nil {
 		return err
 	}

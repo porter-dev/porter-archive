@@ -25,7 +25,6 @@ var bluegreenCmd = &cobra.Command{
 	Short: "Automatically switches the traffic of a blue-green deployment once the new application is ready.",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, bluegreenSwitch)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -63,7 +62,6 @@ func init() {
 func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	// get the web release
 	webRelease, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, app)
-
 	if err != nil {
 		return err
 	}
@@ -111,7 +109,6 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 				LabelSelector: fmt.Sprintf("app.kubernetes.io/instance=%s", app),
 			},
 		)
-
 		if err != nil {
 			return fmt.Errorf("could not get deployments: %s", err.Error())
 		}
@@ -133,7 +130,6 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 					color.New(color.FgGreen).Printf("Switching traffic for app %s\n", app)
 
 					deployAgent, err := updateGetAgent(client)
-
 					if err != nil {
 						return err
 					}
@@ -187,7 +183,6 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 	time.Sleep(30 * time.Second)
 
 	deployAgent, err := updateGetAgent(client)
-
 	if err != nil {
 		return err
 	}
@@ -213,7 +208,6 @@ func getMaxUnavailable(deployment appsv1.Deployment) int32 {
 	maxUnavailable := deployment.Spec.Strategy.RollingUpdate.MaxUnavailable
 
 	unavailable, err := intstrutil.GetScaledValueFromIntOrPercent(intstrutil.ValueOrDefault(maxUnavailable, intstrutil.FromInt(0)), int(desired), false)
-
 	if err != nil {
 		return 0
 	}

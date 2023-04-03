@@ -28,7 +28,6 @@ func TestCreateGitRepo(t *testing.T) {
 	expGR := *gr
 
 	gr, err := tester.repo.GitRepo().CreateGitRepo(gr)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -65,7 +64,6 @@ func TestListGitReposByProjectID(t *testing.T) {
 	grs, err := tester.repo.GitRepo().ListGitReposByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -109,7 +107,6 @@ func TestUpdateGitRepo(t *testing.T) {
 	gr, err := tester.repo.GitRepo().UpdateGitRepo(
 		gr,
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

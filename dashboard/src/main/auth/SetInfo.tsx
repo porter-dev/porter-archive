@@ -102,14 +102,16 @@ const SetInfo: React.FC<Props> = ({
     <StyledRegister>
       {windowDimensions.width > windowDimensions.height && (
         <Wrapper>
-          <Logo src={logo} />
+          <Logo src={logo} onClick={() => {
+            window.location.href = "https://porter.run"
+          }}/>
           <Spacer y={2} />
           <Jumbotron>
             Deploy and scale <Shiny>effortlessly</Shiny> with Porter
           </Jumbotron>
           <Spacer y={2} />
           <CheckRow>
-            <i className="material-icons">done</i> Generous free tier for small teams
+            <i className="material-icons">done</i> Generous startup program for seed-stage companies
           </CheckRow>
           <Spacer y={0.5} />
           <CheckRow>

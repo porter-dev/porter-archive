@@ -38,7 +38,6 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -52,7 +51,6 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, controller := range controllers {
 		controller.Namespace = helmRelease.Namespace
 		_, selector, err := getController(controller, agent)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -75,7 +73,6 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 
 			jobPods, err := getPodsForJobs(agent, helmRelease.Namespace, jobLabels)
-
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
@@ -95,7 +92,6 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		podList, err := agent.GetPodsByLabel(strings.Join(selectors, ","), helmRelease.Namespace)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -113,7 +109,6 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})
 
 	jobPods, err := getPodsForJobs(agent, helmRelease.Namespace, labels)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -128,14 +123,12 @@ func getPodsForJobs(agent *kubernetes.Agent, namespace string, labels []kubernet
 	pods := make([]v1.Pod, 0)
 
 	jobs, err := agent.ListJobsByLabel(namespace, labels...)
-
 	if err != nil {
 		return nil, err
 	}
 
 	for _, job := range jobs {
 		podList, err := agent.GetPodsByLabel("job-name="+job.Name, namespace)
-
 		if err != nil {
 			return nil, err
 		}

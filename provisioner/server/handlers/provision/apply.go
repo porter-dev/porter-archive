@@ -49,7 +49,6 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// create a new operation and write it to the database
 	operationUID, err := models.GetOperationID()
-
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
@@ -57,7 +56,6 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// parse values to JSON to store in the operation
 	valuesJSON, err := json.Marshal(req.Values)
-
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
@@ -80,7 +78,6 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	ceToken, rawToken, err := createCredentialsExchangeToken(c.Config, infra)
-
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
@@ -134,7 +131,6 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	op, err := operation.ToOperationType()
-
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
@@ -169,13 +165,11 @@ func createCredentialsExchangeToken(conf *config.Config, infra *models.Infra) (*
 	expiry := time.Now().Add(6 * time.Hour)
 
 	rawToken, err := random.StringWithCharset(32, "")
-
 	if err != nil {
 		return nil, "", err
 	}
 
 	hashedToken, err := bcrypt.GenerateFromPassword([]byte(rawToken), 8)
-
 	if err != nil {
 		return nil, "", err
 	}

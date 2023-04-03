@@ -37,7 +37,6 @@ func (p *RoleUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	role, err := p.Repo().Project().ReadProjectRole(proj.ID, request.UserID)
-
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
@@ -52,7 +51,7 @@ func (p *RoleUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var res = types.UpdateRoleResponse{
+	res := types.UpdateRoleResponse{
 		Role: role.ToRoleType(),
 	}
 

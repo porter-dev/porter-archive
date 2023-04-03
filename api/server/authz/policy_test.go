@@ -31,7 +31,6 @@ func TestPolicyMiddlewareSuccessfulProjectCluster(t *testing.T) {
 	_, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +78,6 @@ func TestPolicyMiddlewareSuccessfulApplication(t *testing.T) {
 	_, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,7 +142,6 @@ func TestPolicyMiddlewareInvalidPermissions(t *testing.T) {
 	_, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +175,6 @@ func TestPolicyMiddlewareFailInvalidLoader(t *testing.T) {
 	_, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -211,7 +207,6 @@ func TestPolicyMiddlewareFailBadParam(t *testing.T) {
 	_, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
-
 	if err != nil {
 		t.Fatal(err)
 	}

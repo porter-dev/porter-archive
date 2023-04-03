@@ -28,7 +28,6 @@ var registryListCmd = &cobra.Command{
 	Short: "Lists the registries linked to a project",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, listRegistries)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -41,7 +40,6 @@ var registryDeleteCmd = &cobra.Command{
 	Short: "Deletes the registry with the given id",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, deleteRegistry)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -59,7 +57,6 @@ var registryReposListCmd = &cobra.Command{
 	Short: "Lists the repositories in an image registry",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, listRepos)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -78,7 +75,6 @@ var registryImageListCmd = &cobra.Command{
 	Short: "Lists the images the specified image repository",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, listImages)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -108,7 +104,6 @@ func listRegistries(user *types.GetAuthenticatedUserResponse, client *api.Client
 		context.Background(),
 		pID,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -143,14 +138,12 @@ func deleteRegistry(user *types.GetAuthenticatedUserResponse, client *api.Client
 			color.New(color.FgCyan).Sprintf("[y/n]"),
 		),
 	)
-
 	if err != nil {
 		return err
 	}
 
 	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
 		id, err := strconv.ParseUint(args[0], 10, 64)
-
 		if err != nil {
 			return err
 		}
@@ -177,7 +170,6 @@ func listRepos(user *types.GetAuthenticatedUserResponse, client *api.Client, arg
 		pID,
 		rID,
 	)
-
 	if err != nil {
 		return err
 	}
@@ -210,7 +202,6 @@ func listImages(user *types.GetAuthenticatedUserResponse, client *api.Client, ar
 		rID,
 		repoName,
 	)
-
 	if err != nil {
 		return err
 	}

@@ -28,7 +28,6 @@ func NewGithubGetPermissionsHandler(
 
 func (c *GithubGetPermissionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p, err := GetGithubAppPermissions(c.Config(), r)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

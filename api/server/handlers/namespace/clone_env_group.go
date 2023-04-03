@@ -44,14 +44,12 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	cm, _, err := agent.GetLatestVersionedConfigMap(request.SourceName, namespace)
-
 	if err != nil {
 		if errors.Is(err, kubernetes.IsNotFoundError) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
@@ -66,7 +64,6 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	secret, _, err := agent.GetLatestVersionedSecret(request.SourceName, namespace)
-
 	if err != nil {
 		if errors.Is(err, kubernetes.IsNotFoundError) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
@@ -103,14 +100,12 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		Variables:       vars,
 		SecretVariables: secretVars,
 	})
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	envGroup, err := envgroup.ToEnvGroup(configMap)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

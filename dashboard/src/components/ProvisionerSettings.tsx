@@ -78,7 +78,21 @@ const ProvisionerSettings: React.FC<Props> = props => {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
 
+  const markProvisioningStarted = async () => {
+    try {
+      const res = await api.updateOnboardingStep(
+        "<token>", 
+        { step: "provisioning-started" }, 
+        {}
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   const createCluster = async () => {
+    markProvisioningStarted();
+    
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,

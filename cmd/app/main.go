@@ -34,7 +34,6 @@ func main() {
 	cl := loader.NewEnvLoader(Version)
 
 	config, err := cl.LoadConfig()
-
 	if err != nil {
 		log.Fatal("Config loading failed: ", err)
 	}
@@ -64,8 +63,10 @@ func main() {
 	}
 }
 
-const defaultProjectName = "default"
-const defaultClusterName = "cluster-1"
+const (
+	defaultProjectName = "default"
+	defaultClusterName = "cluster-1"
+)
 
 func initData(conf *config.Config) error {
 	// if the config specifies in-cluster connections are permitted, create a new project with a
@@ -95,7 +96,6 @@ func initData(conf *config.Config) error {
 
 		// determine if there are any clusters in the project already
 		clusters, err := conf.Repo.Cluster().ListClustersByProjectID(1)
-
 		if err != nil {
 			return err
 		}

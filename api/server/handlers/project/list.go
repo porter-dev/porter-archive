@@ -30,7 +30,6 @@ func (p *ProjectListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// read all projects for this user
 	projects, err := p.Repo().Project().ListProjectsByUserID(user.ID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

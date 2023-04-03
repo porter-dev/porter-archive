@@ -34,7 +34,6 @@ func (rcf *CandidateResolver) ResolveIntegration(
 	repo repository.Repository,
 ) error {
 	cc, err := repo.Cluster().ReadClusterCandidate(rcf.ProjectID, rcf.ClusterCandidateID)
-
 	if err != nil {
 		return err
 	}
@@ -42,7 +41,6 @@ func (rcf *CandidateResolver) ResolveIntegration(
 	rcf.clusterCandidate = cc
 
 	rawConf, err := kubernetes.GetRawConfigFromBytes(cc.Kubeconfig)
-
 	if err != nil {
 		return err
 	}
@@ -106,7 +104,6 @@ func (rcf *CandidateResolver) resolveX509(
 	// override with resolver
 	if rcf.Resolver.ClientCertData != "" {
 		decoded, err := base64.StdEncoding.DecodeString(rcf.Resolver.ClientCertData)
-
 		if err != nil {
 			return 0, err
 		}
@@ -116,7 +113,6 @@ func (rcf *CandidateResolver) resolveX509(
 
 	if rcf.Resolver.ClientKeyData != "" {
 		decoded, err := base64.StdEncoding.DecodeString(rcf.Resolver.ClientKeyData)
-
 		if err != nil {
 			return 0, err
 		}
@@ -131,7 +127,6 @@ func (rcf *CandidateResolver) resolveX509(
 
 	// return integration id if exists
 	ki, err := repo.KubeIntegration().CreateKubeIntegration(ki)
-
 	if err != nil {
 		return 0, err
 	}
@@ -166,7 +161,6 @@ func (rcf *CandidateResolver) resolveToken(
 
 	// return integration id if exists
 	ki, err := repo.KubeIntegration().CreateKubeIntegration(ki)
-
 	if err != nil {
 		return 0, err
 	}
@@ -198,7 +192,6 @@ func (rcf *CandidateResolver) resolveBasic(
 
 	// return integration id if exists
 	ki, err := repo.KubeIntegration().CreateKubeIntegration(ki)
-
 	if err != nil {
 		return 0, err
 	}
@@ -219,7 +212,6 @@ func (rcf *CandidateResolver) resolveLocal(
 
 	// return integration id if exists
 	ki, err := repo.KubeIntegration().CreateKubeIntegration(ki)
-
 	if err != nil {
 		return 0, err
 	}
@@ -274,7 +266,6 @@ func (rcf *CandidateResolver) resolveOIDC(
 
 	// return integration id if exists
 	oidc, err := repo.OIDCIntegration().CreateOIDCIntegration(oidc)
-
 	if err != nil {
 		return 0, err
 	}
@@ -304,7 +295,6 @@ func (rcf *CandidateResolver) resolveGCP(
 
 	// return integration id if exists
 	gcp, err := repo.GCPIntegration().CreateGCPIntegration(gcp)
-
 	if err != nil {
 		return 0, err
 	}
@@ -343,7 +333,6 @@ func (rcf *CandidateResolver) resolveAWS(
 
 	// return integration id if exists
 	aws, err := repo.AWSIntegration().CreateAWSIntegration(aws)
-
 	if err != nil {
 		return 0, err
 	}
@@ -358,7 +347,6 @@ func (rcf *CandidateResolver) ResolveCluster(
 ) (*models.Cluster, error) {
 	// build a cluster from the candidate
 	cluster, err := rcf.buildCluster()
-
 	if err != nil {
 		return nil, err
 	}
@@ -402,7 +390,6 @@ func (rcf *CandidateResolver) buildCluster() (*models.Cluster, error) {
 
 	if rcf.Resolver.ClusterCAData != "" {
 		decoded, err := base64.StdEncoding.DecodeString(rcf.Resolver.ClusterCAData)
-
 		// skip if decoding error
 		if err != nil {
 			return nil, err

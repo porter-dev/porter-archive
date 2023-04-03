@@ -88,7 +88,8 @@ type ServerConf struct {
 	// Email for an admin user. On a self-hosted instance of Porter, the
 	// admin user is the only user that can log in and register. After the admin
 	// user has logged in, registration is turned off.
-	AdminEmail string `env:"ADMIN_EMAIL"`
+	AdminEmail  string `env:"ADMIN_EMAIL"`
+	AdminUserId string `env:"ADMIN_USER_ID"`
 
 	SentryDSN string `env:"SENTRY_DSN"`
 	SentryEnv string `env:"SENTRY_ENV,default=dev"`
@@ -123,11 +124,10 @@ type ServerConf struct {
 	// /api/projects/{project_id}/clusters/{cluster_id}/kubeconfig will be disabled.
 	DisableTemporaryKubeconfig bool `env:"DISABLE_TEMPORARY_KUBECONFIG,default=false"`
 
-	// NATSUrl is the URL of the NATS cluster
+	// EnableCAPIProvisioner disables checks for ClusterControlPlaneClient and NATS, if set to true
+	EnableCAPIProvisioner bool `env:"ENABLE_CAPI_PROVISIONER"`
+	// NATSUrl is the URL of the NATS cluster. This is required if ENABLE_CAPI_PROVISIONER is true
 	NATSUrl string `env:"NATS_URL"`
-
-	// DisableCAPIProvisioner disables checks for ClusterControlPlaneClient and NATS, if set to true
-	DisableCAPIProvisioner bool `env:"DISABLE_CAPI_PROVISIONER"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

@@ -10,7 +10,6 @@ import (
 
 func GitDirectory(fullpath string) (string, error) {
 	currDir, err := os.Getwd()
-
 	if err != nil {
 		return "", fmt.Errorf("could not read current directory: %s", err.Error())
 	}
@@ -36,7 +35,6 @@ func GetRemoteBranch(fullpath string) (*git.Remote, string, error) {
 	var remote *git.Remote
 
 	currDir, err := os.Getwd()
-
 	if err != nil {
 		return nil, "", fmt.Errorf("could not read current directory: %s", err.Error())
 	}
@@ -59,7 +57,6 @@ func GetRemoteBranch(fullpath string) (*git.Remote, string, error) {
 		}
 
 		remotes, err := git.Remotes()
-
 		if err != nil {
 			return nil, "", err
 		}

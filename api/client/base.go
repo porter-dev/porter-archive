@@ -14,7 +14,6 @@ func (c *Client) GetPorterInstanceMetadata(ctx context.Context) (*sharedConfig.M
 		nil,
 		resp,
 	)
-
 	if err != nil {
 		return nil, err
 	}

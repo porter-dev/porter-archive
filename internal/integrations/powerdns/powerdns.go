@@ -104,7 +104,6 @@ func canonicalize(value string) string {
 
 func (c *Client) sendRequest(method string, data *RecordData) error {
 	reqURL, err := url.Parse(c.serverURL)
-
 	if err != nil {
 		return nil
 	}
@@ -112,7 +111,6 @@ func (c *Client) sendRequest(method string, data *RecordData) error {
 	reqURL.Path = fmt.Sprintf("/api/v1/servers/localhost/zones/%s", c.runDomain)
 
 	strData, err := json.Marshal(data)
-
 	if err != nil {
 		return err
 	}
@@ -122,7 +120,6 @@ func (c *Client) sendRequest(method string, data *RecordData) error {
 		reqURL.String(),
 		strings.NewReader(string(strData)),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -132,7 +129,6 @@ func (c *Client) sendRequest(method string, data *RecordData) error {
 	req.Header.Set("X-Api-Key", c.apiKey)
 
 	res, err := c.httpClient.Do(req)
-
 	if err != nil {
 		return err
 	}
@@ -141,7 +137,6 @@ func (c *Client) sendRequest(method string, data *RecordData) error {
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		resBytes, err := ioutil.ReadAll(res.Body)
-
 		if err != nil {
 			return fmt.Errorf("request failed with status code %d, but could not read body (%s)\n", res.StatusCode, err.Error())
 		}

@@ -52,14 +52,12 @@ func (c *GetEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	envGroup, err := envgroup.GetEnvGroup(agent, name, namespace, version)
-
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("env group not found")))

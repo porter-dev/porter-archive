@@ -40,7 +40,6 @@ func (c *GetPodEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	events, err := agent.ListEvents(name, namespace)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -40,7 +40,6 @@ func (p *InfraScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request
 	infraID := reqScopes[types.InfraScope].Resource.UInt
 
 	infra, err := p.config.Repo.Infra().ReadInfra(proj.ID, infraID)
-
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(

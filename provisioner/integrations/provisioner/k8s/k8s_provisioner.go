@@ -35,7 +35,6 @@ func NewKubernetesProvisioner(k8sClient kubernetes.Interface, pc *KubernetesProv
 func (k *KubernetesProvisioner) Provision(opts *provisioner.ProvisionOpts) error {
 	// get the provisioner job template
 	job, err := k.getProvisionerJobTemplate(opts)
-
 	if err != nil {
 		return err
 	}
@@ -67,7 +66,6 @@ func (k *KubernetesProvisioner) getProvisionerJobTemplate(opts *provisioner.Prov
 	}
 
 	env, err := k.getTFEnv(opts)
-
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +145,6 @@ func (k *KubernetesProvisioner) getTFEnv(opts *provisioner.ProvisionOpts) ([]v1.
 
 	// marshal the values to JSON and base-64 encode them
 	valBytes, err := json.Marshal(opts.Values)
-
 	if err != nil {
 		return nil, err
 	}

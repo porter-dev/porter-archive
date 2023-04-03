@@ -41,7 +41,6 @@ func (c *UpdateConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -81,7 +80,6 @@ func (c *UpdateConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	configMap, err := agent.UpdateConfigMap(request.Name, namespace, request.Variables)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -95,7 +93,6 @@ func (c *UpdateConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	res, err := envgroup.ToEnvGroup(configMap)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

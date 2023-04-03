@@ -39,13 +39,11 @@ var configSetProjectCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			err := checkLoginAndRun(args, listAndSetProject)
-
 			if err != nil {
 				os.Exit(1)
 			}
 		} else {
 			projID, err := strconv.ParseUint(args[0], 10, 64)
-
 			if err != nil {
 				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 				os.Exit(1)
@@ -68,13 +66,11 @@ var configSetClusterCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			err := checkLoginAndRun(args, listAndSetCluster)
-
 			if err != nil {
 				os.Exit(1)
 			}
 		} else {
 			clusterID, err := strconv.ParseUint(args[0], 10, 64)
-
 			if err != nil {
 				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 				os.Exit(1)
@@ -97,13 +93,11 @@ var configSetRegistryCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			err := checkLoginAndRun(args, listAndSetRegistry)
-
 			if err != nil {
 				os.Exit(1)
 			}
 		} else {
 			registryID, err := strconv.ParseUint(args[0], 10, 64)
-
 			if err != nil {
 				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 				os.Exit(1)
@@ -125,7 +119,6 @@ var configSetHelmRepoCmd = &cobra.Command{
 	Short: "Saves the helm repo id in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {
 		hrID, err := strconv.ParseUint(args[0], 10, 64)
-
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 			os.Exit(1)
@@ -146,7 +139,6 @@ var configSetHostCmd = &cobra.Command{
 	Short: "Saves the host in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := cliConf.SetHost(args[0])
-
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 			os.Exit(1)
@@ -160,7 +152,6 @@ var configSetKubeconfigCmd = &cobra.Command{
 	Short: "Saves the path to kubeconfig in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := cliConf.SetKubeconfig(args[0])
-
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 			os.Exit(1)
@@ -181,7 +172,6 @@ func init() {
 
 func printConfig() error {
 	config, err := ioutil.ReadFile(filepath.Join(home, ".porter", "porter.yaml"))
-
 	if err != nil {
 		return err
 	}
@@ -218,7 +208,6 @@ func listAndSetProject(_ *types.GetAuthenticatedUserResponse, client *api.Client
 
 			return names
 		}())
-
 		if err != nil {
 			return err
 		}
@@ -259,7 +248,6 @@ func listAndSetCluster(_ *types.GetAuthenticatedUserResponse, client *api.Client
 
 			return names
 		}())
-
 		if err != nil {
 			return err
 		}
@@ -300,7 +288,6 @@ func listAndSetRegistry(_ *types.GetAuthenticatedUserResponse, client *api.Clien
 
 			return names
 		}())
-
 		if err != nil {
 			return err
 		}

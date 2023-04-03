@@ -36,7 +36,6 @@ func (p *OverwriteAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	// read the aws integration by ID and overwrite the access id/secret
 	awsIntegration, err := p.Repo().AWSIntegration().ReadAWSIntegration(project.ID, request.AWSIntegrationID)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

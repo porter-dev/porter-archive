@@ -64,7 +64,6 @@ func (c *InfraUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lastOperation, err := c.Repo().Infra().GetLatestOperation(infra)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -116,7 +115,6 @@ func (c *InfraUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Values:        vals,
 		OperationKind: "update",
 	})
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -8,7 +8,6 @@ func MergeYAML(base, override []byte) (map[string]interface{}, error) {
 	overrideVals := map[string]interface{}{}
 
 	err := yaml.Unmarshal(base, &baseVals)
-
 	if err != nil {
 		return nil, err
 	}

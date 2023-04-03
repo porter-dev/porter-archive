@@ -9,7 +9,7 @@ import { ClusterType, ProjectType } from "shared/types";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
-import ClusterDashboard from "./cluster-dashboard/ClusterDashboard";
+import DashboardRouter from "./cluster-dashboard/DashboardRouter";
 import Dashboard from "./dashboard/Dashboard";
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
@@ -80,7 +80,6 @@ const Home: React.FC<Props> = props => {
   const [sidebarReady, setSidebarReady] = useState(false);
   const [handleDO, setHandleDO] = useState(false);
   const [ghRedirect, setGhRedirect] = useState(false);
-  const [showWelcomeForm, setShowWelcomeForm] = useState(true);
   const [forceSidebar, setForceSidebar] = useState(true);
 
   const redirectToNewProject = () => {
@@ -258,7 +257,7 @@ const Home: React.FC<Props> = props => {
               .then((res) => {
                 const usage = res.data;
                 setUsage(usage);
-                if (usage.exceeded) {
+                if (usage.exceeded && false) {
                   setCurrentModal("UsageWarningModal", { usage });
                 }
               })
@@ -454,7 +453,7 @@ const Home: React.FC<Props> = props => {
               }
               return (
                 <DashboardWrapper>
-                  <ClusterDashboard
+                  <DashboardRouter
                     currentCluster={currentCluster}
                     setSidebar={setForceSidebar}
                     currentView={props.currentRoute}

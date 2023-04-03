@@ -80,3 +80,7 @@ type UpdateUserInfoRequest struct {
 	LastName    string `json:"last_name" form:"required,max=255"`
 	CompanyName string `json:"company_name" form:"required,max=255"`
 }
+
+type UpdateOnboardingStepRequest struct {
+	Step string `json:"step" form:"required,max=255"`
+}

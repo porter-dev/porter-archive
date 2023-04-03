@@ -20,7 +20,6 @@ func main() {
 	configLoader := apitest.NewTestConfigLoader(true)
 
 	config, err := configLoader.LoadConfig()
-
 	if err != nil {
 		fmt.Printf("Logging err: %s\n", err.Error())
 		return

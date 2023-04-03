@@ -36,7 +36,6 @@ func NewUserOAuthGithubCallbackHandler(
 
 func (p *UserOAuthGithubCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	session, err := p.Config().Store.Get(r, p.Config().ServerConf.CookieName)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -53,7 +52,6 @@ func (p *UserOAuthGithubCallbackHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	}
 
 	token, err := p.Config().GithubConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
@@ -79,7 +77,6 @@ func (p *UserOAuthGithubCallbackHandler) ServeHTTP(w http.ResponseWriter, r *htt
 
 	// save the user as authenticated in the session
 	redirect, err := authn.SaveUserAuthenticated(w, r, p.Config(), user)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -107,7 +104,6 @@ func upsertUserFromToken(config *config.Config, tok *oauth2.Token) (*models.User
 	client := github.NewClient(config.GithubConf.Client(oauth2.NoContext, tok))
 
 	githubUser, _, err := client.Users.Get(context.Background(), "")
-
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +113,6 @@ func upsertUserFromToken(config *config.Config, tok *oauth2.Token) (*models.User
 	// if the user does not exist, create new user
 	if err != nil && err == gorm.ErrRecordNotFound {
 		emails, _, err := client.Users.ListEmails(context.Background(), &github.ListOptions{})
-
 		if err != nil {
 			return nil, err
 		}
@@ -163,11 +158,6 @@ func upsertUserFromToken(config *config.Config, tok *oauth2.Token) (*models.User
 			if err != nil {
 				return nil, err
 			}
-
-			config.AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
-				UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-				Email:               user.Email,
-			}))
 		} else if err == nil {
 			return nil, fmt.Errorf("email already registered")
 		} else if err != nil {

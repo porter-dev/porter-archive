@@ -30,7 +30,6 @@ func (c *ListEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	envs, err := c.Repo().Environment().ListEnvironments(project.ID, cluster.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("error listing environments"), http.StatusInternalServerError, err.Error(),
@@ -44,7 +43,6 @@ func (c *ListEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		environment := env.ToEnvironmentType()
 
 		depls, err := c.Repo().Environment().ListDeployments(env.ID)
-
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("error listing environments: error listing deployments for environment ID %d", env.ID),

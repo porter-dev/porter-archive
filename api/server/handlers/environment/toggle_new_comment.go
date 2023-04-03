@@ -50,7 +50,6 @@ func (c *ToggleNewCommentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, environmentID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such environment with ID: %d", environmentID)))

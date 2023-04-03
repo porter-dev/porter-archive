@@ -1,3 +1,4 @@
+//go:build ee
 // +build ee
 
 package invite
@@ -43,7 +44,6 @@ func (c *InviteCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	// create invite model
 	invite, err := CreateInviteWithProject(request, project.ID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

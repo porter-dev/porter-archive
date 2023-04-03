@@ -37,14 +37,12 @@ func TestEmailVerifyInitiateSuccessful(t *testing.T) {
 
 	// parse the url and compare
 	parsedURL, err := url.Parse(initiateOpts.URL)
-
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// read token from the DB
 	token, err := config.Repo.PWResetToken().ReadPWResetToken(1)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +68,6 @@ func TestEmailVerifyFinalizeSuccessful(t *testing.T) {
 			Email: authUser.Email,
 		},
 	)
-
 	if err != nil {
 		t.Fatal(err)
 	}

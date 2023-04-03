@@ -29,7 +29,6 @@ func (c *RawStateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
 	fileBytes, err := c.Config.StorageManager.ReadFile(infra, ptypes.DefaultTerraformStateFile, true)
-
 	if err != nil {
 		// if the file does not exist yet, just return an empty body with a 200-response code
 		if errors.Is(err, storage.FileDoesNotExist) {

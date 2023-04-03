@@ -13,7 +13,6 @@ func main() {
 	logger := lr.NewConsole(true)
 
 	envConf, err := envloader.FromEnv()
-
 	if err != nil {
 		logger.Fatal().Err(err).Msg("")
 		return

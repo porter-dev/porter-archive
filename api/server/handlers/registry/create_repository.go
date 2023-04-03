@@ -28,7 +28,8 @@ func NewRegistryCreateRepositoryHandler(
 }
 
 func (p *RegistryCreateRepositoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	reg, _ := r.Context().Value(types.RegistryScope).(*models.Registry)
+	ctx := r.Context()
+	reg, _ := ctx.Value(types.RegistryScope).(*models.Registry)
 
 	request := &types.CreateRegistryRepositoryRequest{}
 
@@ -45,8 +46,7 @@ func (p *RegistryCreateRepositoryHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	nameSpl := strings.Split(request.ImageRepoURI, "/")
 	repoName := strings.ToLower(strings.ReplaceAll(nameSpl[len(nameSpl)-1], "_", "-"))
 
-	err := regAPI.CreateRepository(p.Repo(), repoName)
-
+	err := regAPI.CreateRepository(ctx, p.Config(), repoName)
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

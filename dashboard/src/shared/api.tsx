@@ -329,6 +329,13 @@ const createInvite = baseApi<
   return `/api/projects/${pathParams.id}/invites`;
 });
 
+const inviteAdmin = baseApi<
+  {},
+  { project_id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/invite_admin`;
+});
+
 const createPasswordReset = baseApi<
   {
     email: string;
@@ -2217,6 +2224,17 @@ const getIncidentEvents = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/incidents/events`
 );
 
+// TRACKING
+
+const updateOnboardingStep = baseApi<
+  {
+    step: string;
+  },
+  {}
+>("POST", (pathParams) => {
+  return `/api/onboarding_step`;
+});
+
 // STACKS
 
 const createStack = baseApi<
@@ -2518,6 +2536,7 @@ export default {
   getChartsFromHelmRepo,
   getChartInfoFromHelmRepo,
   linkGithubProject,
+  inviteAdmin,
   getGithubAccounts,
   listConfigMaps,
   logInUser,
@@ -2594,6 +2613,8 @@ export default {
   createContract,
   getContracts,
   deleteContract,
+  // TRACKING
+  updateOnboardingStep,
   // STACKS
   listStacks,
   getStack,

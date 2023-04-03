@@ -59,14 +59,12 @@ func (p *APITokenCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	uid, err := encryption.GenerateRandomBytes(16)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	secretKey, err := encryption.GenerateRandomBytes(16)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -74,7 +72,6 @@ func (p *APITokenCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// hash the secret key for storage in the db
 	hashedToken, err := bcrypt.GenerateFromPassword([]byte(secretKey), 8)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -101,14 +98,12 @@ func (p *APITokenCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// generate porter jwt token
 	jwt, err := token.GetStoredTokenForAPI(user.ID, proj.ID, apiToken.UniqueID, secretKey)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	encoded, err := jwt.EncodeToken(p.Config().TokenConf)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

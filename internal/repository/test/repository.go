@@ -218,9 +218,11 @@ func (t *TestRepository) Stack() repository.StackRepository {
 func (t *TestRepository) MonitorTestResult() repository.MonitorTestResultRepository {
 	return t.monitor
 }
+
 func (t *TestRepository) APIContractRevisioner() repository.APIContractRevisioner {
 	return t.apiContractRevision
 }
+
 func (t *TestRepository) AWSAssumeRoleChainer() repository.AWSAssumeRoleChainer {
 	return t.awsAssumeRoleChainer
 }

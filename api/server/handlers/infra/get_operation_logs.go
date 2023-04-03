@@ -33,7 +33,6 @@ func (c *InfraGetOperationLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 
 	// call apply on the provisioner service
 	resp, err := c.Config().ProvisionerClient.GetLogs(context.Background(), workspaceID)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -17,7 +17,6 @@ func PromptPlaintext(prompt string) (string, error) {
 
 	fmt.Print(prompt)
 	text, err := reader.ReadString('\n')
-
 	if err != nil {
 		return "", err
 	}
@@ -62,7 +61,7 @@ type selectAnswer struct {
 }
 
 func PromptSelect(prompt string, options []string) (string, error) {
-	var qs = []*survey.Question{
+	qs := []*survey.Question{
 		{
 			Name: "response",
 			Prompt: &survey.Select{
@@ -102,7 +101,6 @@ func PromptConfirm(message string, defaultVal bool) (bool, error) {
 	}
 
 	err := survey.AskOne(prompt, &value)
-
 	if err != nil {
 		return false, err
 	}

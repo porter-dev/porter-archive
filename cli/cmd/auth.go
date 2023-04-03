@@ -25,7 +25,6 @@ var loginCmd = &cobra.Command{
 	Short: "Authorizes a user for a given Porter server",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := login()
-
 		if err != nil {
 			color.Red("Error logging in: %s\n", err.Error())
 			os.Exit(1)
@@ -38,7 +37,6 @@ var registerCmd = &cobra.Command{
 	Short: "Creates a user for a given Porter server",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := register()
-
 		if err != nil {
 			color.Red("Error registering: %s\n", err.Error())
 			os.Exit(1)
@@ -51,7 +49,6 @@ var logoutCmd = &cobra.Command{
 	Short: "Logs a user out of a given Porter server",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, logout)
-
 		if err != nil {
 			os.Exit(1)
 		}
@@ -87,7 +84,6 @@ func login() error {
 			color.New(color.FgGreen).Println("Successfully logged in!")
 
 			projID, exists, err := api.GetProjectIDFromToken(cliConf.Token)
-
 			if err != nil {
 				return err
 			}
@@ -129,7 +125,6 @@ func login() error {
 
 	// log the user in
 	token, err := loginBrowser.Login(cliConf.Host)
-
 	if err != nil {
 		return err
 	}
@@ -158,7 +153,6 @@ func login() error {
 func setProjectForUser(client *api.Client, userID uint) error {
 	// get a list of projects, and set the current project
 	resp, err := client.ListUserProjects(context.Background())
-
 	if err != nil {
 		return err
 	}
@@ -186,7 +180,6 @@ func loginManual() error {
 	fmt.Println("Please log in with an email and password:")
 
 	username, err := utils.PromptPlaintext("Email: ")
-
 	if err != nil {
 		return err
 	}
@@ -213,7 +206,6 @@ func loginManual() error {
 
 	// get a list of projects, and set the current project
 	resp, err := client.ListUserProjects(context.Background())
-
 	if err != nil {
 		return err
 	}
@@ -237,13 +229,11 @@ func register() error {
 	fmt.Println("Please register your admin account with an email and password:")
 
 	username, err := utils.PromptPlaintext("Email: ")
-
 	if err != nil {
 		return err
 	}
 
 	pw, err := utils.PromptPasswordWithConfirmation()
-
 	if err != nil {
 		return err
 	}
@@ -254,7 +244,6 @@ func register() error {
 		Email:    username,
 		Password: pw,
 	})
-
 	if err != nil {
 		return err
 	}
@@ -266,7 +255,6 @@ func register() error {
 
 func logout(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	err := client.Logout(context.Background())
-
 	if err != nil {
 		return err
 	}

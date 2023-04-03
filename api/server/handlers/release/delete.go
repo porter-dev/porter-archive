@@ -38,7 +38,6 @@ func (c *DeleteReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 
 	helmAgent, err := c.GetHelmAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -99,7 +98,6 @@ func (c *DeleteReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 						rel,
 						helmRelease,
 					)
-
 					if err != nil {
 						c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 						return

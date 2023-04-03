@@ -35,7 +35,6 @@ func Validate(contents string) []error {
 	var errors []error
 
 	resGroup, err := parser.ParseRawBytes([]byte(contents))
-
 	if err != nil {
 		errors = append(errors, fmt.Errorf("error parsing porter.yaml: %w", err))
 		return errors

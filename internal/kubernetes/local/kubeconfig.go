@@ -21,7 +21,6 @@ import (
 // of contexts not specified in the contexts array, and returns generate kubeconfig.
 func GetKubeconfigFromHost(kubeconfigPath string, contexts []string) ([]byte, error) {
 	kubeconfigPath, err := ResolveKubeconfigPath(kubeconfigPath)
-
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +30,6 @@ func GetKubeconfigFromHost(kubeconfigPath string, contexts []string) ([]byte, er
 
 	clientConf := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
 	rawConf, err := clientConf.RawConfig()
-
 	if err != nil {
 		return nil, err
 	}
@@ -45,13 +43,11 @@ func GetKubeconfigFromHost(kubeconfigPath string, contexts []string) ([]byte, er
 	}
 
 	conf, err := stripAndValidateClientContexts(&rawConf, contexts[0], contexts)
-
 	if err != nil {
 		return nil, err
 	}
 
 	strippedRawConf, err := conf.RawConfig()
-
 	if err != nil {
 		return nil, err
 	}
@@ -63,19 +59,16 @@ func GetKubeconfigFromHost(kubeconfigPath string, contexts []string) ([]byte, er
 // Agent from that kubeconfig
 func GetSelfAgentFromFileConfig(kubeconfigPath string) (*kubernetes.Agent, error) {
 	configBytes, err := GetKubeconfigFromHost(kubeconfigPath, []string{})
-
 	if err != nil {
 		return nil, err
 	}
 
 	cmdConf, err := clientcmd.NewClientConfigFromBytes(configBytes)
-
 	if err != nil {
 		return nil, err
 	}
 
 	restConf, err := cmdConf.ClientConfig()
-
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +140,6 @@ func GetConfigFromHostWithCertData(kubeconfigPath string, allowedContexts []stri
 
 	clientConf := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
 	rawConf, err := clientConf.RawConfig()
-
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +156,6 @@ func GetConfigFromHostWithCertData(kubeconfigPath string, allowedContexts []stri
 	}
 
 	res, err := stripAndValidateClientContexts(&rawConf, allowedContexts[0], allowedContexts)
-
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +197,6 @@ func stripAndValidateClientContexts(
 
 	// validate the copyConf and create a ClientConfig
 	err := clientcmd.Validate(*copyConf)
-
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +216,6 @@ func populateCertificateRefs(config *clientcmdapi.Config) {
 			}
 
 			fileBytes, err := ioutil.ReadFile(*str)
-
 			if err != nil {
 				continue
 			}
@@ -254,7 +243,6 @@ func populateCertificateRefs(config *clientcmdapi.Config) {
 			}
 
 			fileBytes, err := ioutil.ReadFile(*str)
-
 			if err != nil {
 				continue
 			}
@@ -278,7 +266,6 @@ func populateOIDCPluginCerts(config *clientcmdapi.Config) {
 		if authInfo.AuthProvider != nil && authInfo.AuthProvider.Name == "oidc" {
 			if ca, ok := authInfo.AuthProvider.Config["idp-certificate-authority"]; ok && ca != "" {
 				fileBytes, err := ioutil.ReadFile(ca)
-
 				if err != nil {
 					continue
 				}

@@ -27,7 +27,6 @@ func TestCreateHelmRepo(t *testing.T) {
 	}
 
 	hr, err := tester.repo.HelmRepo().CreateHelmRepo(hr)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -65,7 +64,6 @@ func TestListHelmReposByProjectID(t *testing.T) {
 	hrs, err := tester.repo.HelmRepo().ListHelmReposByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -109,7 +107,6 @@ func TestUpdateHelmRepo(t *testing.T) {
 	hr, err := tester.repo.HelmRepo().UpdateHelmRepo(
 		hr,
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -154,7 +151,6 @@ func TestUpdateHelmRepoToken(t *testing.T) {
 	}
 
 	hr, err := tester.repo.HelmRepo().CreateHelmRepo(hr)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

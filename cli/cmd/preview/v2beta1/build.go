@@ -151,7 +151,6 @@ func (b *Build) getV1BuildImage() (*types.Resource, error) {
 	rawConfig := make(map[string]any)
 
 	err := mapstructure.Decode(config, &rawConfig)
-
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +176,6 @@ func (b *Build) getV1PushImage() (*types.Resource, error) {
 	rawConfig := make(map[string]any)
 
 	err := mapstructure.Decode(config, &rawConfig)
-
 	if err != nil {
 		return nil, err
 	}

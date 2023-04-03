@@ -43,7 +43,6 @@ func (c *StreamPodLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -55,7 +54,6 @@ func (c *StreamPodLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	startTime, err := request.StartRange.MarshalText()
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -26,7 +26,6 @@ var (
 func getGithubClientFromEnvironment(config *config.Config, env *models.Environment) (*github.Client, error) {
 	// get the github app client
 	ghAppId, err := strconv.Atoi(config.ServerConf.GithubAppID)
-
 	if err != nil {
 		return nil, fmt.Errorf("malformed GITHUB_APP_ID in server configuration: %w", err)
 	}
@@ -38,7 +37,6 @@ func getGithubClientFromEnvironment(config *config.Config, env *models.Environme
 		int64(env.GitInstallationID),
 		config.ServerConf.GithubAppSecret,
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("error in creating github client from preview environment: %w", err)
 	}
@@ -62,7 +60,6 @@ func isGithubPRClosed(
 	ghPR, _, err := client.PullRequests.Get(
 		context.Background(), owner, name, prNumber,
 	)
-
 	if err != nil {
 		return false, fmt.Errorf("%v: %w", errGithubAPI, err)
 	}

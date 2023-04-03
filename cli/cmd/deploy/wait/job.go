@@ -20,7 +20,6 @@ type WaitOpts struct {
 func WaitForJob(client *api.Client, opts *WaitOpts) error {
 	// get the job release
 	jobRelease, err := client.GetRelease(context.Background(), opts.ProjectID, opts.ClusterID, opts.Namespace, opts.Name)
-
 	if err != nil {
 		return err
 	}
@@ -49,7 +48,6 @@ func WaitForJob(client *api.Client, opts *WaitOpts) error {
 	for time.Now().Before(timeWait) {
 		// get the jobs for that job chart
 		jobs, err := client.GetJobs(context.Background(), opts.ProjectID, opts.ClusterID, opts.Namespace, opts.Name)
-
 		if err != nil {
 			return err
 		}
@@ -87,7 +85,6 @@ func getJobMatchingRevision(revision uint, jobs []v1.Job) *v1.Job {
 		}
 
 		jobRevision, err := strconv.ParseUint(revisionLabel, 10, 64)
-
 		if err != nil {
 			continue
 		}

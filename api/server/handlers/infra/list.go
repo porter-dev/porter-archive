@@ -35,7 +35,6 @@ func (p *InfraListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	infras, err := p.Repo().Infra().ListInfrasByProjectID(proj.ID, req.Version)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 	}

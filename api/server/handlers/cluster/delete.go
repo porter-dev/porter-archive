@@ -35,7 +35,7 @@ func (c *ClusterDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	if cluster.ProvisionedBy == "CAPI" {
-		if !c.Config().DisableCAPIProvisioner {
+		if c.Config().EnableCAPIProvisioner {
 			revisions, err := c.Config().Repo.APIContractRevisioner().List(ctx, cluster.ProjectID, cluster.ID)
 			if err != nil {
 				e := fmt.Errorf("error listing revisions for cluster %d: %w", cluster.ID, err)
@@ -66,7 +66,6 @@ func (c *ClusterDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	err := c.Repo().Cluster().DeleteCluster(cluster)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

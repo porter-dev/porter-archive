@@ -33,7 +33,6 @@ func NewOAuthCallbackGitlabHandler(
 
 func (p *OAuthCallbackGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	session, err := p.Config().Store.Get(r, p.Config().ServerConf.CookieName)
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -54,7 +53,6 @@ func (p *OAuthCallbackGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	integrationID := session.Values["integration_id"].(uint)
 
 	giIntegration, err := p.Repo().GitlabIntegration().ReadGitlabIntegration(projID, integrationID)
-
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			p.HandleAPIError(w, r, apierrors.NewErrForbidden(
@@ -70,7 +68,6 @@ func (p *OAuthCallbackGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	token, err := commonutils.GetGitlabOAuthConf(p.Config(), giIntegration).
 		Exchange(context.Background(), r.URL.Query().Get("code"))
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
@@ -120,7 +117,6 @@ func (p *OAuthCallbackGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	if redirectStr, ok := session.Values["redirect_uri"].(string); ok && redirectStr != "" {
 		// attempt to parse the redirect uri, if it fails just redirect to dashboard
 		redirectURI, err := url.Parse(redirectStr)
-
 		if err != nil {
 			http.Redirect(w, r, "/dashboard", http.StatusFound)
 		}

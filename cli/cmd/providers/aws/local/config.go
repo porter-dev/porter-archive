@@ -30,7 +30,6 @@ func NewDefaultKubernetesAgent(kubeconfigPath string, contextName string) (*aws.
 	// to read the current identities of the config map, to make sure user has access. Save the created
 	// clientset.
 	rawBytes, err := local.GetKubeconfigFromHost(kubeconfigPath, []string{contextName})
-
 	if err != nil {
 		return nil, err
 	}
@@ -44,13 +43,11 @@ func NewDefaultKubernetesAgent(kubeconfigPath string, contextName string) (*aws.
 	})
 
 	restConf, err := conf.ClientConfig()
-
 	if err != nil {
 		return nil, err
 	}
 
 	clientset, err := kubernetes.NewForConfig(restConf)
-
 	if err != nil {
 		return nil, err
 	}

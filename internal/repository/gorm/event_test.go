@@ -32,7 +32,6 @@ func TestCreateKubeEvent(t *testing.T) {
 	copyKubeEvent := *event
 
 	event, err := tester.repo.KubeEvent().CreateEvent(event)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -99,7 +98,6 @@ func TestReadKubeEventsByGroup(t *testing.T) {
 			ThresholdTime: time.Now().Add(-15 * time.Minute),
 		},
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -165,7 +163,6 @@ func TestDeleteKubeEvents(t *testing.T) {
 
 	// delete a specific event and then test list again
 	err := tester.repo.KubeEvent().DeleteEvent(11)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -184,7 +181,6 @@ func testListKubeEventsByProjectID(tester *tester, t *testing.T, clusterID uint,
 		clusterID,
 		opts,
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

@@ -31,7 +31,6 @@ func (v *VerifyEmailInitiateHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	err := startEmailVerification(v.Config(), w, r, user)
-
 	if err != nil {
 		v.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 	}
@@ -68,7 +67,6 @@ func (v *VerifyEmailFinalizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		&request.VerifyTokenFinalizeRequest,
 		user.Email,
 	)
-
 	if err != nil {
 		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Email verification error: valid token required"), 302)
 		return
@@ -116,7 +114,6 @@ func startEmailVerification(
 			Email: user.Email,
 		},
 	)
-
 	if err != nil {
 		return err
 	}

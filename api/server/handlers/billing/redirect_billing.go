@@ -55,7 +55,6 @@ func (c *RedirectBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	redirectURI, err := c.Config().BillingManager.GetRedirectURI(user, proj)
-
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

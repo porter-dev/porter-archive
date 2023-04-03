@@ -146,6 +146,31 @@ func getUserRoutes(
 		Router:   r,
 	})
 
+	// POST /api/onboarding_step -> user.UpdateOnboardingStepHandler
+	updateOnboardingStepEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/onboarding_step",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	updateOnboardingStepHandler := user.NewUpdateOnboardingStepHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateOnboardingStepEndpoint,
+		Handler:  updateOnboardingStepHandler,
+		Router:   r,
+	})
+
 	// GET /api/users/current -> user.NewUserGetCurrentHandler
 	authCheckEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -90,7 +90,6 @@ func (r *TemplateReader) RegisterQuery(query *templater.TemplateReaderQuery) err
 // Read returns the resulting queried data
 func (r *TemplateReader) Read() (map[string]interface{}, error) {
 	values, err := r.ValuesFromTarget()
-
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +121,6 @@ func (r *TemplateReader) ReadStream(
 			queryObj["items"] = []interface{}{u.Object}
 
 			data, err := utils.QueryValues(queryObj, r.Queries)
-
 			if err != nil {
 				return
 			}
@@ -140,7 +138,6 @@ func (r *TemplateReader) ReadStream(
 			queryObj["items"] = []interface{}{u.Object}
 
 			data, err := utils.QueryValues(queryObj, r.Queries)
-
 			if err != nil {
 				return
 			}
@@ -158,7 +155,6 @@ func (r *TemplateReader) ReadStream(
 			queryObj["items"] = []interface{}{u.Object}
 
 			data, err := utils.QueryValues(queryObj, r.Queries)
-
 			if err != nil {
 				return
 			}
@@ -175,7 +171,6 @@ func (r *TemplateReader) ReadStream(
 
 func (r *TemplateReader) valuesFromList() (map[string]interface{}, error) {
 	list, err := r.resource.List(context.TODO(), metav1.ListOptions{})
-
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +180,6 @@ func (r *TemplateReader) valuesFromList() (map[string]interface{}, error) {
 
 func (r *TemplateReader) valuesFromGet() (map[string]interface{}, error) {
 	get, err := r.resource.Get(context.TODO(), r.Object.Name, metav1.GetOptions{})
-
 	if err != nil {
 		return nil, err
 	}

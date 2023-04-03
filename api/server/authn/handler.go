@@ -83,8 +83,8 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	supportEmail := "support@porter.run"
 	cancelTime := time.Date(2023, 0o1, 31, 14, 30, 0, 0, time.Now().Local().Location())
-	if email, ok := session.Values["email"]; ok {
-		if email.(string) == supportEmail {
+	if email, ok := session.Values["email"]; ok && email != nil {
+		if emailStr, ok := email.(string); ok && emailStr == supportEmail {
 			sess, _ := authn.config.Repo.Session().SelectSession(&models.Session{Key: session.ID})
 			if sess.CreatedAt.Before(cancelTime) {
 				_, _ = authn.config.Repo.Session().DeleteSession(sess)

@@ -184,6 +184,9 @@ const CredentialsForm: React.FC<Props> = ({
         <Spacer />
         <Img src={aws} />
         Set AWS credentials
+        <HelperButton onClick={() => window.open("https://docs.porter.run/getting-started/provisioning-on-aws/", "_blank")}>
+          <i className="material-icons">help_outline</i>
+        </HelperButton>
       </Heading>
       <Helper>
         Select your credentials from the list below, or add a new set of credentials:
@@ -200,6 +203,21 @@ const CredentialsForm: React.FC<Props> = ({
 };
 
 export default CredentialsForm;
+
+const HelperButton = styled.div`
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+  justify-content: center;
+  > i {
+    color: #aaaabb;
+    width: 24px;
+    height: 24px;
+    font-size: 20px;
+    border-radius: 20px;
+  }
+`;
 
 const CloseButton = styled.div`
   position: absolute;

@@ -55,7 +55,7 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
       <Integration disabled={false}>
         <MainRow onClick={this.props.toggleCollapse} disabled={false}>
           <Flex>
-            <Icon src={"https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4"} />
+            <Icon src={icon ? icon : "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4"} />
             <Description>
               <Label>{this.props.label}</Label>
               <Subtitle>{subtitle}</Subtitle>

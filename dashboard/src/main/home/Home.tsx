@@ -257,7 +257,7 @@ const Home: React.FC<Props> = props => {
               .then((res) => {
                 const usage = res.data;
                 setUsage(usage);
-                if (usage.exceeded) {
+                if (usage.exceeded && false) {
                   setCurrentModal("UsageWarningModal", { usage });
                 }
               })

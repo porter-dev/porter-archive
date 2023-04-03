@@ -14,7 +14,7 @@ type Props = {
 };
 
 const ClusterSection = (props: Props) => {
-  const { usage } = useContext(Context);
+  const { usage, currentCluster } = useContext(Context);
 
   const [currentStep, setCurrentStep] = useState("");
 
@@ -93,7 +93,7 @@ const ClusterSection = (props: Props) => {
   }
   return (
     <>
-      {usage?.current.cluster > 1 && (
+      {(usage?.current.cluster > 1 || !currentCluster) && (
         <Button onClick={() => setCurrentStep("cloud")}>
           <i className="material-icons">add</i> Create a cluster
         </Button>

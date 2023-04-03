@@ -306,6 +306,7 @@ export type ActionConfigType = {
   git_repo: string;
   git_branch: string;
   image_repo_uri: string;
+  dockerfile_path?: string;
 } & (
   | {
       kind: "gitlab";

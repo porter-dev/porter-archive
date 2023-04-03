@@ -2,19 +2,18 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
+import settings from "assets/settings-centered.svg";
 
 import InvitePage from "./InviteList";
 import TabRegion from "components/TabRegion";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
-import TitleSection from "components/TitleSection";
+import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { RouteComponentProps, withRouter, WithRouterProps } from "react-router";
 import { getQueryParam } from "shared/routing";
-import BillingPage from "./BillingPage";
 import APITokensSection from "./APITokensSection";
 import _ from "lodash";
-import Spacer from "components/porter/Spacer";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 
@@ -185,8 +184,12 @@ class ProjectSettings extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledProjectSettings>
-        <TitleSection>Project settings</TitleSection>
-        <Spacer height="20px" />
+        <DashboardHeader
+          image={settings}
+          title="Project settings"
+          description="Configure access permissions and additional project settings."
+          disableLineBreak
+        />
         <TabRegion
           currentTab={this.state.currentTab}
           setCurrentTab={(x: string) => this.setState({ currentTab: x })}

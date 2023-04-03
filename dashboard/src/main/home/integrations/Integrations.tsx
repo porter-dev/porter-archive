@@ -4,6 +4,7 @@ import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 import { integrationList } from "shared/common";
 import styled from "styled-components";
 import { pushFiltered } from "shared/routing";
+import integrations from "assets/integrations.svg";
 
 import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 import IntegrationCategories from "./IntegrationCategories";
@@ -11,6 +12,7 @@ import IntegrationList from "./IntegrationList";
 import TitleSection from "components/TitleSection";
 import { Context } from "shared/Context";
 import Spacer from "components/porter/Spacer";
+import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
 type PropsType = RouteComponentProps;
 
@@ -74,9 +76,13 @@ const Integrations: React.FC<PropsType> = (props) => {
           }}
         />
         <Route>
-          <div>
-            <TitleSection>Integrations</TitleSection>
-            <Spacer y={1} />
+          <>
+            <DashboardHeader
+              image={integrations}
+              title="Integrations"
+              description="Manage third-party integrations for your Porter project."
+              disableLineBreak
+            />
             <IntegrationList
               currentCategory={""}
               integrations={IntegrationCategoryStrings}
@@ -86,7 +92,7 @@ const Integrations: React.FC<PropsType> = (props) => {
               isCategory={true}
               updateIntegrationList={() => {}}
             />
-          </div>
+          </>
         </Route>
       </Switch>
     </StyledIntegrations>

@@ -29,6 +29,7 @@ const ProvisionerFlow: React.FC<Props> = ({
   const [credentialId, setCredentialId] = useState("");
   const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
   const [confirmCost, setConfirmCost] = useState("");
+  const [AWSAccountID, setAWSAccountID] = useState("");
 
   const isUsageExceeded = useMemo(() => {
     if (!hasBillingEnabled) {
@@ -106,7 +107,7 @@ const ProvisionerFlow: React.FC<Props> = ({
             <Text color="helper">
               Separate from the AWS cost, Porter charges based on the amount of resources that are being used. Porter pricing is as follows, prorated to the minute:
             </Text>
-            <Spacer y={1}/>
+            <Spacer y={1} />
             <Cost>$0.019/hr/vCPU + $0.009/hr/GB RAM</Cost>
             <Spacer y={1} />
             <Text color="helper">
@@ -131,12 +132,14 @@ const ProvisionerFlow: React.FC<Props> = ({
     );
   } else if (currentStep === "credentials") {
     return (
-      <CloudFormationForm 
+      <CloudFormationForm
         goBack={() => setCurrentStep("cloud")}
         proceed={(id) => {
           setCredentialId(id);
           setCurrentStep("cluster");
         }}
+        AWSAccountID={AWSAccountID}
+        setAWSAccountID={setAWSAccountID}
       />
     );
   } else if (currentStep === "cluster") {
@@ -144,6 +147,7 @@ const ProvisionerFlow: React.FC<Props> = ({
       <ProvisionerForm
         goBack={() => setCurrentStep("credentials")}
         credentialId={credentialId}
+        AWSAccountID={AWSAccountID}
       />
     );
   }

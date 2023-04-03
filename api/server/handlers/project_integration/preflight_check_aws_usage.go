@@ -14,52 +14,42 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type CreatePreflightCheckAWSHandler struct {
+type CreatePreflightCheckAWSUsageHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewCreatePreflightCheckAWSHandler(
+func NewCreatePreflightCheckAWSUsageHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *CreatePreflightCheckAWSHandler {
-	return &CreatePreflightCheckAWSHandler{
+) *CreatePreflightCheckAWSUsageHandler {
+	return &CreatePreflightCheckAWSUsageHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (p *CreatePreflightCheckAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *CreatePreflightCheckAWSUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	ctx := r.Context()
 
-	request := &types.RolePreflightCheckRequest{}
+	request := &types.QuotaPreflightCheckRequest{}
 	if ok := p.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
 
-	res := types.RolePreflightCheckResponse{
-		TargetARN: 	     request.TargetARN,
+	checkReq := porterv1.QuotaPreflightCheckRequest{
+		ProjectId: int64(project.ID),
+		TargetArn: request.TargetARN,
+		Region:    request.Region,
 	}
 
-	checkReq := porterv1.RolePreflightCheckRequest{
-		ProjectId:       int64(project.ID),
-		TargetArn:		 request.TargetARN,
-		ExternalId: 	 request.ExternalID,
-	}
-
-	checkResp, err := p.Config().ClusterControlPlaneClient.RolePreflightCheck(ctx, connect.NewRequest(&checkReq))
+	checkResp, err := p.Config().ClusterControlPlaneClient.QuotaPreflightCheck(ctx, connect.NewRequest(&checkReq))
 
 	if err != nil {
-		e := fmt.Errorf("preflight check failed: %w", err)
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			e,
-			http.StatusNotFound,
-		))
-
+		e := fmt.Errorf("Pre-provision check failed: %w", err)
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusPreconditionFailed, err.Error()))
 		return
 	}
-	
-	res.TargetARN = checkResp.Msg.TargetArn
 
 	p.WriteResult(w, r, checkResp)
 }

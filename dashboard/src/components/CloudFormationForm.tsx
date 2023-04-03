@@ -18,23 +18,27 @@ import DocsHelper from "./DocsHelper";
 
 type Props = {
   goBack: () => void;
+  AWSAccountID: string;
+  setAWSAccountID: (id: string) => void;
   proceed: (id: string) => void;
 };
 
 const CloudFormationForm: React.FC<Props> = ({
   goBack,
   proceed,
+  AWSAccountID,
+  setAWSAccountID
 }) => {
-  const [AWSAccountID, setAWSAccountID] = useState("");
   const [grantPermissionsError, setGrantPermissionsError] = useState("");
   const [roleStatus, setRoleStatus] = useState("");
+  const [errorMessage, setErrorMessage] = useState(undefined);
   const { currentProject } = useContext(Context);
 
   const getExternalId = () => {
     let externalId = localStorage.getItem(AWSAccountID)
     console.log(externalId)
     if (!externalId) {
-      externalId = uuidv4() 
+      externalId = uuidv4()
       localStorage.setItem(AWSAccountID, externalId);
     }
 
@@ -45,24 +49,26 @@ const CloudFormationForm: React.FC<Props> = ({
     let externalId = getExternalId();
     let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-role`
     setRoleStatus("loading");
+    setErrorMessage(undefined)
     api
-      .preflightCheckAWS(
+      .createAWSIntegration(
         "<token>",
         {
-          target_arn: targetARN,
-          external_id: externalId,
+          aws_target_arn: targetARN,
+          aws_external_id: externalId,
         },
         {
           id: currentProject.id,
         }
       )
       .then(({ data }) => {
-        setRoleStatus("successful");
+        setRoleStatus("successful")
         proceed(targetARN);
       })
       .catch((err) => {
         console.log(err);
-        setRoleStatus("Role does not exist in the AWS account.");
+        setRoleStatus("");
+        setErrorMessage("Porter could not access your AWS account. Please make sure you have granted permissions and try again.")
       });
   };
 
@@ -91,7 +97,7 @@ const CloudFormationForm: React.FC<Props> = ({
             label={
               <Flex>
                 👤 AWS account ID
-                <i 
+                <i
                   className="material-icons"
                   onClick={() => {
                     window.open("https://console.aws.amazon.com/billing/home?region=us-east-1#/account", "_blank")
@@ -155,6 +161,7 @@ const CloudFormationForm: React.FC<Props> = ({
         Grant Porter permissions to create infrastructure in your AWS account.
       </Text>
       {renderContent()}
+      {errorMessage && <ErrorContainer>{errorMessage}</ErrorContainer>}
     </>
   );
 };
@@ -217,3 +224,15 @@ const StyledForm = styled.div`
   font-size: 13px;
   margin-bottom: 30px;
 `;
+
+const ErrorContainer = styled.div`
+  position: relative;
+  margin-top: 20px;
+  padding: 30px 30px 25px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  font-size: 13px;
+  margin-bottom: 30px;
+  color: red;
+`

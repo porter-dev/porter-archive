@@ -12,13 +12,18 @@ import LaunchFlow from "./launch-flow/LaunchFlow";
 import NoClusterPlaceholder from "../NoClusterPlaceholder";
 import TitleSection from "components/TitleSection";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
+import rocket from "assets/rocket.png";
 import semver from "semver";
 import { RouteComponentProps, withRouter } from "react-router";
-import { getQueryParam, getQueryParams } from "shared/routing";
+import { getQueryParam, getQueryParams, pushFiltered } from "shared/routing";
 import TemplateList from "./TemplateList";
 import { capitalize } from "lodash";
 import Spacer from "components/porter/Spacer";
+import Fieldset from "components/porter/Fieldset";
+import Text from "components/porter/Text";
+import Container from "components/porter/Container";
 
 const initialTabOptions = [
   { label: "New application", value: "porter" },
@@ -371,7 +376,6 @@ class Templates extends Component<PropsType, StateType> {
     } else if (this.state.readyClusterStatus === "none-ready") {
       return (
         <>
-          <Br />
           <ClusterProvisioningPlaceholder />
         </>
       )
@@ -396,11 +400,20 @@ class Templates extends Component<PropsType, StateType> {
     } else if (!this.context.currentCluster) {
       return (
         <>
-          <Banner>
-            <i className="material-icons">error_outline</i>
-            No cluster connected to this project.
-          </Banner>
-          <NoClusterPlaceholder />
+          <Fieldset>
+            <Text size={16}>No cluster detected</Text>
+            <Spacer height="15px" />
+            <Container row>
+              <Text color="helper">A cluster is required to deploy applications. You can automatically provision a cluster</Text>
+              <Link onClick={() => {
+                pushFiltered(this.props, "/dashboard", ["project_id"]);
+              }}>
+                here
+                <i className="material-icons">arrow_forward</i> 
+              </Link>
+            </Container>
+            <Spacer height="10px" />
+          </Fieldset>
         </>
       );
     }
@@ -413,16 +426,12 @@ class Templates extends Component<PropsType, StateType> {
     if (!this.state.isOnLaunchFlow || !this.state.currentTemplate) {
       return (
         <TemplatesWrapper>
-          <TitleSection>
-            Launch
-            <a
-              href="https://docs.porter.run/deploying-applications/overview"
-              target="_blank"
-            >
-              <i className="material-icons">help_outline</i>
-            </a>
-          </TitleSection>
-          <Spacer height="20px" />
+          <DashboardHeader
+            image={rocket}
+            title="Launch"
+            description="Deploy applications and add-ons to your environment."
+            disableLineBreak
+          />
           {this.renderContents()}
         </TemplatesWrapper>
       );
@@ -445,9 +454,18 @@ Templates.contextType = Context;
 
 export default withRouter(Templates);
 
-const Br = styled.div`
-  width: 100%;
-  height: 10px;
+const Link = styled.a`
+  text-decoration: underline;
+  margin-left: 5px;
+  position: relative;
+  cursor: pointer;
+  > i {
+    color: #aaaabb;
+    font-size: 15px;
+    position: absolute;
+    right: -17px;
+    top: 1px;
+  }
 `;
 
 const Placeholder = styled.div`
@@ -462,22 +480,6 @@ const Placeholder = styled.div`
   > i {
     font-size: 18px;
     margin-right: 12px;
-  }
-`;
-
-const Banner = styled.div`
-  height: 40px;
-  width: 100%;
-  margin: 30px 0 38px;
-  font-size: 13px;
-  display: flex;
-  border-radius: 5px;
-  padding-left: 15px;
-  align-items: center;
-  background: #ffffff11;
-  > i {
-    margin-right: 10px;
-    font-size: 18px;
   }
 `;
 

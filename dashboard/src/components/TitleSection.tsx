@@ -74,14 +74,14 @@ const StyledTitleSection = styled.div`
 `;
 
 const Icon = styled.img<{ width: string }>`
-  width: ${(props) => props.width || "25px"};
+  height: ${(props) => props.width || "24px"};
   margin-right: 16px;
   display: flex;
   align-items: center;
 `;
 
 const MaterialIcon = styled.span<{ width: string }>`
-  width: ${(props) => props.width || "25px"};
+  height: ${(props) => props.width || "24px"};
   margin-right: 16px;
 `;
 

@@ -11,10 +11,11 @@ type Source struct {
 }
 
 type Target struct {
-	AppName   string `mapstructure:"app_name"`
-	Project   uint
-	Cluster   uint
-	Namespace string
+	AppName     string `mapstructure:"app_name"`
+	Project     uint
+	Cluster     uint
+	Namespace   string
+	RegistryURL string `mapstructure:"registry_url"`
 }
 
 type RandomStringDriverConfig struct {

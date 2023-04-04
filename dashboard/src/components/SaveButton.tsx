@@ -6,7 +6,7 @@ type Props = {
   text?: string;
   onClick: () => void;
   disabled?: boolean;
-  status?: React.ReactNode | null;
+  status?: string | null;
   color?: string;
   rounded?: boolean;
   helper?: string | null;
@@ -117,7 +117,7 @@ const StatusWrapper = styled.div<{
   align-items: center;
   font-family: "Work Sans", sans-serif;
   font-size: 13px;
-  color: #ff385d;
+  color: #ffffff55;
   ${(props) => {
     if (props.position !== "right") {
       return "margin-right: 25px;";
@@ -132,7 +132,7 @@ const StatusWrapper = styled.div<{
     font-size: 18px;
     margin-right: 10px;
     float: left;
-    color: ${(props) => (props.successful ? "#4797ff" : "#ff385d")};
+    color: ${(props) => (props.successful ? "#4797ff" : "#fcba03")};
   }
 
   animation-fill-mode: forwards;

@@ -45,31 +45,30 @@ const CloudFormationForm: React.FC<Props> = ({
     return externalId
   }
 
-  const checkIfRoleExists = () => {
+  const checkIfRoleExists = async () => {
     let externalId = getExternalId();
     let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-role`
     setRoleStatus("loading");
     setErrorMessage(undefined)
-    api
-      .createAWSIntegration(
-        "<token>",
-        {
-          aws_target_arn: targetARN,
-          aws_external_id: externalId,
-        },
-        {
-          id: currentProject.id,
-        }
-      )
-      .then(({ data }) => {
-        setRoleStatus("successful")
-        proceed(targetARN);
-      })
-      .catch((err) => {
-        console.log(err);
-        setRoleStatus("");
-        setErrorMessage("Porter could not access your AWS account. Please make sure you have granted permissions and try again.")
-      });
+    try {
+      await api
+        .createAWSIntegration(
+          "<token>",
+          {
+            aws_target_arn: targetARN,
+            aws_external_id: externalId,
+          },
+          {
+            id: currentProject.id,
+          }
+        );
+      setRoleStatus("successful")
+      proceed(targetARN);
+    } catch (err) {
+      console.log(err);
+      setRoleStatus("");
+      setErrorMessage("Porter could not access your AWS account. Please make sure you have granted permissions and try again.")
+    }
   };
 
   const directToCloudFormation = () => {
@@ -132,15 +131,14 @@ const CloudFormationForm: React.FC<Props> = ({
           </Button>
         </Fieldset>
         <Spacer y={1} />
-        <SaveButton
+        <Button
           onClick={() => {
             checkIfRoleExists()
           }}
           status={roleStatus}
-          statusPosition="right"
-          clearPosition
-          text="Continue"
-        />
+        >
+          Continue
+        </Button>
       </>
     );
   }

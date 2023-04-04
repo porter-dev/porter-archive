@@ -14,6 +14,7 @@ import InputRow from "./form-components/InputRow";
 import SaveButton from "./SaveButton";
 import { Contract, EnumKubernetesKind, EnumCloudProvider, NodeGroupType, EKSNodeGroup, EKS, Cluster } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
+import Button from "./porter/Button";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -81,8 +82,8 @@ const ProvisionerSettings: React.FC<Props> = props => {
   const markProvisioningStarted = async () => {
     try {
       const res = await api.updateOnboardingStep(
-        "<token>", 
-        { step: "provisioning-started" }, 
+        "<token>",
+        { step: "provisioning-started" },
         {}
       );
     } catch (err) {
@@ -92,7 +93,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
 
   const createCluster = async () => {
     markProvisioningStarted();
-    
+
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -342,14 +343,11 @@ const ProvisionerSettings: React.FC<Props> = props => {
       <StyledForm>
         {renderForm()}
       </StyledForm>
-      <SaveButton
+      <Button
         disabled={(!clusterName && true) || isReadOnly}
         onClick={createCluster}
-        clearPosition
-        text="Provision"
-        statusPosition="right"
         status={isReadOnly && "Provisioning is still in progress"}
-      />
+      >Provision</Button>
       {errorMessage && <ErrorContainer>{errorMessage} Please correct the issue and try to provision again.</ErrorContainer>}
     </>
   );

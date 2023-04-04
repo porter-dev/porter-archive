@@ -100,6 +100,26 @@ func (c *Client) ListRegistries(
 	return resp, err
 }
 
+// GetRegistry returns a registry given a project id and registry id
+func (c *Client) GetRegistry(
+	ctx context.Context,
+	projectID, registryID uint,
+) (*types.Registry, error) {
+	resp := &types.Registry{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/registries/%d",
+			projectID,
+			registryID,
+		),
+		nil,
+		resp,
+	)
+
+	return resp, err
+}
+
 // DeleteProjectRegistry deletes a registry given a project id and registry id
 func (c *Client) DeleteProjectRegistry(
 	ctx context.Context,

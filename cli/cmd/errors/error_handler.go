@@ -3,6 +3,7 @@ package errors
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/getsentry/sentry-go"
@@ -35,9 +36,8 @@ func (h *sentryErrorHandler) HandleError(err error) {
 			})
 		})
 
-		if eventID := localHub.CaptureException(err); eventID == nil {
-			color.New(color.FgRed).Fprintf(os.Stderr, "error in sending exception to sentry\n")
-		}
+		localHub.CaptureException(err)
+		sentry.Flush(2 * time.Second)
 	}
 
 	color.New(color.FgRed).Fprintf(os.Stderr, "error: %s\n", err.Error())

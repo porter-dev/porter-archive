@@ -42,9 +42,14 @@ func (c *ClusterDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
 				return
 			}
+			if cluster.Status == types.UpdatingUnavailable || cluster.Status == types.Updating {
+				e := fmt.Errorf("unable to delete cluster %d that is updating", cluster.ID)
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+				return
+			}
 			var revisionID string
 			for _, rev := range revisions {
-				if rev.Condition == "SUCCESS" {
+				if rev.Condition != "" {
 					revisionID = rev.ID.String()
 					break
 				}

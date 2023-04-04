@@ -7,7 +7,7 @@ type Props = {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
-  status?: string;
+  status?: React.ReactNode;
   helperText?: string;
   loadingText?: string;
   successText?: string;
@@ -48,10 +48,7 @@ const Button: React.FC<Props> = ({
         )   
       default:
         return (
-          <StatusWrapper success={false}>
-            <i className="material-icons">error_outline</i>
-            Could not update
-          </StatusWrapper>
+          <StatusWrapper success={false}>{status}</StatusWrapper>
         );
     }
   };
@@ -102,7 +99,6 @@ const StatusWrapper = styled.div<{
   color: #ffffff55;
   margin-left: 15px;
   max-width: 500px;
-  overflow: hidden;
   text-overflow: ellipsis;
   animation: ${floatIn} 0.5s;
   animation-fill-mode: forwards;

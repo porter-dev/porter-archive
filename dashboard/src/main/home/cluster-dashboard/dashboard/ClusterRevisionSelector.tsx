@@ -8,13 +8,13 @@ import warning from "assets/warning.png";
 import { readableDate } from "shared/string_utils";
 import { Context } from "shared/Context";
 import ExpandableSection from "components/porter/ExpandableSection";
-import { 
-  Contract, 
-  Cluster, 
-  EKS, 
-  NodeGroupType, 
-  EnumKubernetesKind, 
-  EnumCloudProvider 
+import {
+  Contract,
+  Cluster,
+  EKS,
+  NodeGroupType,
+  EnumKubernetesKind,
+  EnumCloudProvider
 } from "@porter-dev/api-contracts";
 import Spacer from "components/porter/Spacer";
 
@@ -51,7 +51,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
 
       if (data[0].condition !== "") {
         setFailedContractId(data[0].id);
-        setProvisionFailureReason(data[0].condition);
+        setProvisionFailureReason(data[0].condition_metadata?.message || data[0].condition);
       }
     }
 
@@ -97,7 +97,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
   useEffect(() => {
     updateContracts();
   }, [currentCluster]);
-  
+
   const createContract = () => {
     if (false) {
       api.createContract(
@@ -113,11 +113,11 @@ const ClusterRevisionSelector: React.FC<Props> = ({
     }
   };
 
-const deleteContract = () => {
+  const deleteContract = () => {
     api.deleteContract(
       "<token>",
       {},
-      { 
+      {
         project_id: currentProject.id,
         revision_id: failedContractId,
       }
@@ -182,7 +182,7 @@ const deleteContract = () => {
         {
           failedContractId && (
             <DeleteButton>
-              <i 
+              <i
                 className="material-icons-outlined"
                 onClick={deleteContract}
               >
@@ -337,7 +337,7 @@ const RollbackButton = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled: boolean }) =>
-      props.disabled ? "" : "#405eddbb"};
+    props.disabled ? "" : "#405eddbb"};
   }
 `;
 
@@ -351,7 +351,7 @@ const Tr = styled.tr`
     props.selected ? "#ffffff11" : ""};
   :hover {
     background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-      props.disableHover ? "" : "#ffffff22"};
+    props.disableHover ? "" : "#ffffff22"};
   }
 `;
 

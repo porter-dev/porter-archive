@@ -53,6 +53,7 @@ const clusterVersionOptions = [
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   credentialId: string;
+  AWSAccountID: string;
   clusterId?: number;
 };
 
@@ -75,6 +76,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
   const [cidrRange, setCidrRange] = useState("172.0.0.0/16");
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>(undefined);
 
   const markProvisioningStarted = async () => {
     try {
@@ -137,6 +139,20 @@ const ProvisionerSettings: React.FC<Props> = props => {
     }
 
     try {
+      setIsReadOnly(true)
+      setErrorMessage(undefined)
+      await api
+        .preflightCheckAWSUsage(
+          "<token>",
+          {
+            target_arn: `arn:aws:iam::${props.AWSAccountID}:role/porter-role`,
+            region: awsRegion
+          },
+          {
+            id: currentProject.id,
+          }
+        );
+
       const res = await api.createContract(
         "<token>",
         data,
@@ -167,8 +183,11 @@ const ProvisionerSettings: React.FC<Props> = props => {
             console.error(err);
           });
       }
+      setErrorMessage(undefined);
     } catch (err) {
-      console.log(err);
+      setErrorMessage(err.response.data.error.replace('unknown: ', ''));
+    } finally {
+      setIsReadOnly(false)
     }
   }
 
@@ -200,7 +219,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
   }, [props.selectedClusterVersion]);
 
   const renderForm = () => {
-    
+
     // Render simplified form if initial create
     if (!props.clusterId) {
       return (
@@ -331,6 +350,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
         statusPosition="right"
         status={isReadOnly && "Provisioning is still in progress"}
       />
+      {errorMessage && <ErrorContainer>{errorMessage} Please correct the issue and try to provision again.</ErrorContainer>}
     </>
   );
 };
@@ -357,3 +377,15 @@ const StyledForm = styled.div`
   font-size: 13px;
   margin-bottom: 30px;
 `;
+
+const ErrorContainer = styled.div`
+  position: relative;
+  margin-top: 20px;
+  padding: 30px 30px 25px;
+  border-radius: 5px;
+  background: #26292e;
+  border: 1px solid #494b4f;
+  font-size: 13px;
+  margin-bottom: 30px;
+  color: red;
+`

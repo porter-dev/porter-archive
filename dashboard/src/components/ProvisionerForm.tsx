@@ -10,11 +10,13 @@ import ProvisionerSettings from "./ProvisionerSettings";
 type Props = {
   goBack: () => void;
   credentialId: string;
+  AWSAccountID: string;
 };
 
 const ProvisionerForm: React.FC<Props> = ({
   goBack,
   credentialId,
+  AWSAccountID
 }) => {
   return (
     <>
@@ -30,7 +32,7 @@ const ProvisionerForm: React.FC<Props> = ({
       <Helper>
         Configure settings for your new cluster.
       </Helper>
-      <ProvisionerSettings credentialId={credentialId} />
+      <ProvisionerSettings credentialId={credentialId} AWSAccountID={AWSAccountID} />
     </>
   );
 };

@@ -6,6 +6,7 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 
 import ProvisionerForm from "components/ProvisionerForm";
+import CloudFormationForm from "components/CloudFormationForm";
 import CredentialsForm from "components/CredentialsForm";
 import Helper from "components/form-components/Helper";
 import Modal from "./porter/Modal";
@@ -29,6 +30,7 @@ const ProvisionerFlow: React.FC<Props> = ({
   const [credentialId, setCredentialId] = useState("");
   const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
   const [confirmCost, setConfirmCost] = useState("");
+  const [AWSAccountID, setAWSAccountID] = useState("");
 
   const isUsageExceeded = useMemo(() => {
     if (!hasBillingEnabled) {
@@ -110,17 +112,15 @@ const ProvisionerFlow: React.FC<Props> = ({
                 <>
                   <Spacer height="15px" />
                   <Fieldset background="#1b1d2688">
-                    <Text>
-                      • Amazon Elastic Kubernetes Service (EKS) = $73/mo
-                      <Spacer height="15px" />
-                      • Amazon EC2:
-                      <Spacer height="15px" />
-                      <Tab />+ System workloads: t3.medium instance (2) = $60.74/mo
-                      <Spacer height="15px" />
-                      <Tab />+ Monitoring workloads: t3.large instance (1) = $60.74/mo
-                      <Spacer height="15px" />
-                      <Tab />+ Application workloads: t3.xlarge instance (1) = $121.47/mo
-                    </Text>
+                    • Amazon Elastic Kubernetes Service (EKS) = $73/mo
+                    <Spacer height="15px" />
+                    • Amazon EC2:
+                    <Spacer height="15px" />
+                    <Tab />+ System workloads: t3.medium instance (2) = $60.74/mo
+                    <Spacer height="15px" />
+                    <Tab />+ Monitoring workloads: t3.large instance (1) = $60.74/mo
+                    <Spacer height="15px" />
+                    <Tab />+ Application workloads: t3.xlarge instance (1) = $121.47/mo
                   </Fieldset>
                 </>
               }
@@ -129,7 +129,7 @@ const ProvisionerFlow: React.FC<Props> = ({
             <Text color="helper">
               Separate from the AWS cost, Porter charges based on the amount of resources that are being used. Porter pricing is as follows, prorated to the minute:
             </Text>
-            <Spacer y={1}/>
+            <Spacer y={1} />
             <Cost>$0.019/hr/vCPU + $0.009/hr/GB RAM</Cost>
             <Spacer y={1} />
             <Text color="helper">
@@ -155,12 +155,14 @@ const ProvisionerFlow: React.FC<Props> = ({
     );
   } else if (currentStep === "credentials") {
     return (
-      <CredentialsForm 
+      <CloudFormationForm
         goBack={() => setCurrentStep("cloud")}
         proceed={(id) => {
           setCredentialId(id);
           setCurrentStep("cluster");
         }}
+        AWSAccountID={AWSAccountID}
+        setAWSAccountID={setAWSAccountID}
       />
     );
   } else if (currentStep === "cluster") {
@@ -168,6 +170,7 @@ const ProvisionerFlow: React.FC<Props> = ({
       <ProvisionerForm
         goBack={() => setCurrentStep("credentials")}
         credentialId={credentialId}
+        AWSAccountID={AWSAccountID}
       />
     );
   }

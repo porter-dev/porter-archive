@@ -489,20 +489,7 @@ func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, c
 	// create new release
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", d.source.Name, resource.Name)
 
-	regList, err := client.ListRegistries(context.Background(), d.target.Project)
-	if err != nil {
-		return nil, fmt.Errorf("for resource %s, error listing registries: %w", resource.Name, err)
-	}
-
-	var registryURL string
-
-	if len(*regList) == 0 {
-		return nil, fmt.Errorf("no registry found")
-	} else {
-		registryURL = (*regList)[0].URL
-	}
-
-	color.New(color.FgBlue).Printf("for resource %s, using registry %s\n", resource.Name, registryURL)
+	color.New(color.FgBlue).Printf("for resource %s, using registry %s\n", resource.Name, d.target.RegistryURL)
 
 	// attempt to get repo suffix from environment variables
 	var repoSuffix string
@@ -534,6 +521,7 @@ func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, c
 	}
 
 	var subdomain string
+	var err error
 
 	if appConf.Build.Method == "registry" {
 		subdomain, err = createAgent.CreateFromRegistry(appConf.Build.Image, appConf.Values)

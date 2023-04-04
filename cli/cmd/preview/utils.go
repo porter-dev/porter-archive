@@ -168,6 +168,14 @@ func GetTarget(resourceName string, input map[string]interface{}) (*preview.Targ
 		}
 	}
 
+	if registryURL, ok := input["registry_url"]; ok {
+		registryURLVal, ok := registryURL.(string)
+		if !ok {
+			return nil, fmt.Errorf("error parsing target for resource '%s': invalid registry_url provided", resourceName)
+		}
+		output.RegistryURL = registryURLVal
+	}
+
 	if appName, ok := input["app_name"]; ok {
 		appNameVal, ok := appName.(string)
 		if !ok {
@@ -177,14 +185,43 @@ func GetTarget(resourceName string, input map[string]interface{}) (*preview.Targ
 	}
 
 	// lastly, just put in the defaults
+
 	if output.Project == 0 {
 		output.Project = config.GetCLIConfig().Project
 	}
+
 	if output.Cluster == 0 {
 		output.Cluster = config.GetCLIConfig().Cluster
 	}
+
 	if output.Namespace == "" {
 		output.Namespace = "default"
+	}
+
+	if output.RegistryURL == "" {
+		apiClient := config.GetAPIClient()
+
+		if config.GetCLIConfig().Registry == 0 {
+			regList, err := apiClient.ListRegistries(context.Background(), output.Project)
+
+			if err != nil {
+				return nil, fmt.Errorf("for resource '%s', error listing registries in project: %w", resourceName, err)
+			}
+
+			if len(*regList) == 0 {
+				return nil, fmt.Errorf("for resource '%s', no registries found in project", resourceName)
+			}
+
+			output.RegistryURL = (*regList)[0].URL
+		} else {
+			reg, err := apiClient.GetRegistry(context.Background(), output.Project, config.GetCLIConfig().Registry)
+
+			if err != nil {
+				return nil, fmt.Errorf("for resource '%s', error getting registry from CLI config: %w", resourceName, err)
+			}
+
+			output.RegistryURL = reg.URL
+		}
 	}
 
 	return output, nil

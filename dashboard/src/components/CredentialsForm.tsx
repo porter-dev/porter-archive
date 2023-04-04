@@ -12,7 +12,12 @@ import Heading from "components/form-components/Heading";
 import Helper from "./form-components/Helper";
 import InputRow from "./form-components/InputRow";
 import SaveButton from "./SaveButton";
+import Button from "components/porter/Button";
 import Loading from "./Loading";
+import Error from "./porter/Error";
+import Modal from "./porter/Modal";
+import Text from "./porter/Text";
+import Spacer from "./porter/Spacer";
 
 type Props = {
   goBack: () => void;
@@ -162,14 +167,13 @@ const CredentialsForm: React.FC<Props> = ({
             isRequired
           />
         </StyledForm>
-        <SaveButton
+        <Button
           disabled={awsAccessKeyID === "" || awsSecretAccessKey === ""}
           onClick={createCreds}
           status={createStatus}
-          statusPosition="right"
-          clearPosition
-          text="Continue"
-        />
+        >
+          Continue
+        </Button>
       </>
     );
   }
@@ -181,9 +185,12 @@ const CredentialsForm: React.FC<Props> = ({
           <i className="material-icons">first_page</i>
           Select cloud
         </BackButton>
-        <Spacer />
+        <HSpacer />
         <Img src={aws} />
         Set AWS credentials
+        <HelperButton onClick={() => window.open("https://docs.porter.run/getting-started/provisioning-on-aws/", "_blank")}>
+          <i className="material-icons">help_outline</i>
+        </HelperButton>
       </Heading>
       <Helper>
         Select your credentials from the list below, or add a new set of credentials:
@@ -200,6 +207,21 @@ const CredentialsForm: React.FC<Props> = ({
 };
 
 export default CredentialsForm;
+
+const HelperButton = styled.div`
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+  justify-content: center;
+  > i {
+    color: #aaaabb;
+    width: 24px;
+    height: 24px;
+    font-size: 20px;
+    border-radius: 20px;
+  }
+`;
 
 const CloseButton = styled.div`
   position: absolute;
@@ -224,7 +246,7 @@ const CloseButton = styled.div`
   }
 `;
 
-const Spacer = styled.div`
+const HSpacer = styled.div`
   height: 1px;
   width: 17px;
 `;

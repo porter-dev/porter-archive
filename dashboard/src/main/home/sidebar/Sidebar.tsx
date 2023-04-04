@@ -102,7 +102,7 @@ class Sidebar extends Component<PropsType, StateType> {
 
   renderProjectContents = () => {
     let { currentView } = this.props;
-    let { currentProject, user } = this.context;
+    let { currentProject, user, currentCluster, hasFinishedOnboarding } = this.context;
     if (currentProject) {
       return (
         <ScrollWrapper>
@@ -148,7 +148,7 @@ class Sidebar extends Component<PropsType, StateType> {
 
           <br />
 
-          {this.context.hasFinishedOnboarding && (
+          {currentCluster && (
             <>
               <SidebarLabel>
                 {currentProject.capi_provisioner_enabled ? (

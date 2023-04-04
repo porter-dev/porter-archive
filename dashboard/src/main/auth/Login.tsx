@@ -122,7 +122,9 @@ const Login: React.FC<Props> = ({
     <StyledLogin>
       {windowDimensions.width > windowDimensions.height && (
         <Wrapper>
-          <Logo src={logo} />
+          <a href="https://porter.run">
+            <Logo src={logo} />
+          </a>
           <Spacer y={2} />
           <Jumbotron>
             <Shiny>Welcome back to Porter</Shiny>
@@ -144,7 +146,9 @@ const Login: React.FC<Props> = ({
       <Wrapper>
         {windowDimensions.width <= windowDimensions.height && (
           <Flex>
-            <Logo src={logo} />
+            <a href="https://porter.run">
+              <Logo src={logo} />
+            </a>
             <Spacer y={2} />
           </Flex>
         )}

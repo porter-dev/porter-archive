@@ -103,7 +103,7 @@ class SourcePage extends Component<PropsType, StateType> {
               setImageTag("");
             }}
           >
-            <CloseButtonImg src={close} />
+            <i className="material-icons">close</i>
           </CloseButton>
           <Subtitle>
             Specify the container image you would like to connect to this
@@ -164,7 +164,7 @@ class SourcePage extends Component<PropsType, StateType> {
             setProcfileProcess("");
           }}
         >
-          <CloseButtonImg src={close} />
+          <i className="material-icons">close</i>
         </CloseButton>
         <Subtitle>
           Provide a repo folder to use as source.
@@ -352,15 +352,21 @@ const CloseButton = styled.div`
   display: block;
   width: 40px;
   height: 40px;
-  padding: 13px 0 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 1;
-  text-align: center;
   border-radius: 50%;
-  right: 15px;
-  top: 12px;
+  right: 12px;
+  top: 10px;
   cursor: pointer;
   :hover {
     background-color: #ffffff11;
+  }
+
+  > i {
+    font-size: 20px;
+    color: #aaaabb;
   }
 `;
 

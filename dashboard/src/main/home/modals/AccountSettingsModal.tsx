@@ -128,7 +128,7 @@ const User = styled.div`
 
 const ListWrapper = styled.div`
   width: 100%;
-  height: 250px;
+  height: 240px;
   background: #ffffff11;
   display: flex;
   align-items: center;

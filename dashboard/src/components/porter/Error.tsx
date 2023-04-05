@@ -24,8 +24,9 @@ const Error: React.FC<Props> = ({
     <>
       <StyledError>
         <i className="material-icons">error_outline</i>
+        <Block>
         <Bold>Error:</Bold>
-        {message}
+        <Text>{message}</Text>
         {ctaText && (
           <Cta onClick={() => {
             errorModalContents ? setErrorModalOpen(true) : ctaOnClick();
@@ -34,6 +35,7 @@ const Error: React.FC<Props> = ({
             <i className="material-icons">open_in_new</i>
           </Cta>
         )}
+        </Block>
       </StyledError>
       {errorModalOpen && createPortal(
         <Modal closeModal={() => setErrorModalOpen(false)}>
@@ -47,6 +49,14 @@ const Error: React.FC<Props> = ({
 
 export default Error;
 
+const Text = styled.span`
+  display: inline;
+`;
+
+const Block = styled.div`
+  display: block;
+`;
+
 const Underline = styled.span`
   text-decoration: underline;
 `;
@@ -54,7 +64,7 @@ const Underline = styled.span`
 const Cta = styled.span`
   margin-left: 5px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   
   > i {
@@ -65,6 +75,7 @@ const Cta = styled.span`
 
 const Bold = styled.span`
   font-weight: 600;
+  display: inline-block;
   margin-right: 5px;
 `;
 
@@ -74,11 +85,16 @@ const StyledError = styled.div`
   font-size: 13px;
   display: flex; 
   align-items: center;
+  position: relative;
+  padding-left: 25px;
   > i {
     font-size: 18px;
     margin-top: -1px;
     margin-right: 7px;
     float: left;
     font-weight: 600;
+    position: absolute;
+    top: 1px;
+    left: 0;
   }
 `;

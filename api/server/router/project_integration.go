@@ -220,6 +220,34 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/integrations/aws/preflightcheck/usage -> project_integration.NewCreatePreflightCheckAWSHandler
+	preflightCheckAWSUsageEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/aws/preflight/usage",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	preflightCheckAWSUsageHandler := project_integration.NewCreatePreflightCheckAWSUsageHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: preflightCheckAWSUsageEndpoint,
+		Handler:  preflightCheckAWSUsageHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/integrations/azure -> project_integration.NewListAzureHandler
 	listAzureEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

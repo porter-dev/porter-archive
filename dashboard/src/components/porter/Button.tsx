@@ -106,7 +106,6 @@ const StatusWrapper = styled.div<{
   font-size: 13px;
   color: #ffffff55;
   margin-left: 15px;
-  max-width: 500px;
   text-overflow: ellipsis;
   animation: ${floatIn} 0.5s;
   animation-fill-mode: forwards;

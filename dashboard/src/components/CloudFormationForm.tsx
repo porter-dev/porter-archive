@@ -15,6 +15,9 @@ import Fieldset from "./porter/Fieldset";
 import Input from "./porter/Input";
 import Button from "./porter/Button";
 import DocsHelper from "./DocsHelper";
+import Error from "./porter/Error";
+import Step from "./porter/Step";
+import Link from "./porter/Link";
 
 type Props = {
   goBack: () => void;
@@ -48,6 +51,7 @@ const CloudFormationForm: React.FC<Props> = ({
   const checkIfRoleExists = async () => {
     let externalId = getExternalId();
     let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-role`
+
     setRoleStatus("loading");
     setErrorMessage(undefined)
     try {
@@ -122,8 +126,11 @@ const CloudFormationForm: React.FC<Props> = ({
                 setGrantPermissionsError("Invalid AWS account ID");
               }
             }}
-            status={grantPermissionsError}
-            errorText={grantPermissionsError}
+            status={
+              grantPermissionsError && (
+                <Error message={grantPermissionsError} />
+              )
+            }
             color="#1E2631"
             withBorder
           >
@@ -135,7 +142,47 @@ const CloudFormationForm: React.FC<Props> = ({
           onClick={() => {
             checkIfRoleExists()
           }}
-          status={roleStatus}
+          status={
+            errorMessage ? (
+              <Error 
+                message={errorMessage}
+                ctaText="Troubleshooting steps"
+                errorModalContents={
+                  <>
+                    <Text size={16} weight={500}>Granting Porter access to AWS</Text>
+                    <Spacer y={1} />
+                    <Text color="helper">
+                      Porter needs access to your AWS account in order to create infrastructure. You can grant Porter access to AWS by following these steps:
+                    </Text>
+                    <Spacer y={1} />
+                    <Step number={1}>
+                      <Link to="https://aws.amazon.com/resources/create-account/" target="_blank">
+                        Create an AWS account
+                      </Link>
+                      <Spacer inline width="5px" />
+                      if you don't already have one.
+                    </Step>
+                    <Spacer y={1} />
+                    <Step number={2}>
+                      Once you are logged in to your AWS account,
+                      <Spacer inline width="5px" />
+                      <Link to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account" target="_blank">
+                        copy your account ID
+                      </Link>.
+                    </Step>
+                    <Spacer y={1} />
+                    <Step number={3}>Fill in your account ID on Porter and select "Grant permissions".</Step>
+                    <Spacer y={1} />
+                    <Step number={4}>After being redirected to AWS, select "Create stack" on the AWS console.</Step>
+                    <Spacer y={1} />
+                    <Step number={5}>Return to Porter and select "Continue".</Step>
+                  </>
+                }
+              />
+            ) : (
+              roleStatus
+            )
+          }
         >
           Continue
         </Button>
@@ -159,7 +206,6 @@ const CloudFormationForm: React.FC<Props> = ({
         Grant Porter permissions to create infrastructure in your AWS account.
       </Text>
       {renderContent()}
-      {errorMessage && <ErrorContainer>{errorMessage}</ErrorContainer>}
     </>
   );
 };

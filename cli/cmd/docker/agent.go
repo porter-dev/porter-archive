@@ -315,7 +315,12 @@ func (a *Agent) PushImage(image string) error {
 
 	termFd, isTerm := term.GetFdInfo(os.Stderr)
 
-	return jsonmessage.DisplayJSONMessagesStream(out, os.Stderr, termFd, isTerm, nil)
+	err = jsonmessage.DisplayJSONMessagesStream(out, os.Stderr, termFd, isTerm, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {
@@ -361,13 +366,21 @@ func (a *Agent) getEncodedRegistryAuth(image string) (string, error) {
 		return "", err
 	}
 
+	serverAddress := serverURL
+	if !strings.Contains(serverURL, "https://") {
+		serverAddress = fmt.Sprintf("https://%s", serverURL)
+	}
+
 	authConfig := types.AuthConfig{
 		Username:      user,
 		Password:      secret,
-		ServerAddress: "https://" + serverURL,
+		ServerAddress: serverAddress,
 	}
 
-	authConfigBytes, _ := json.Marshal(authConfig)
+	authConfigBytes, err := json.Marshal(authConfig)
+	if err != nil {
+		return "", fmt.Errorf("unable to marshal docker auth config: %w", err)
+	}
 
 	return base64.URLEncoding.EncodeToString(authConfigBytes), nil
 }

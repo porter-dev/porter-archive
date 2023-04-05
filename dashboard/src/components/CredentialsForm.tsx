@@ -22,6 +22,7 @@ import Spacer from "./porter/Spacer";
 type Props = {
   goBack: () => void;
   proceed: (x: any) => void;
+  enableAssumeRole?: () => void;
 };
 
 type AWSCredential = {
@@ -36,6 +37,7 @@ type AWSCredential = {
 const CredentialsForm: React.FC<Props> = ({
   goBack,
   proceed,
+  enableAssumeRole,
 }) => {
   const { currentProject } = useContext(Context);
   const [awsCredentials, setAWSCredentials] = useState<AWSCredential[]>(null);
@@ -161,7 +163,12 @@ const CredentialsForm: React.FC<Props> = ({
           <InputRow
             type="password"
             value={awsSecretAccessKey}
-            setValue={(e: string) => setAWSSecretAccessKey(e)}
+            setValue={(e: string) => {
+              if (e === "open-sesame") {
+                enableAssumeRole();
+              }
+              setAWSSecretAccessKey(e)
+            }}
             label="🔒 AWS secret key"
             placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
             isRequired

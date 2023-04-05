@@ -257,7 +257,7 @@ const Home: React.FC<Props> = props => {
               .then((res) => {
                 const usage = res.data;
                 setUsage(usage);
-                if (usage.exceeded && false) {
+                if (usage.exceeded) {
                   setCurrentModal("UsageWarningModal", { usage });
                 }
               })
@@ -404,9 +404,9 @@ const Home: React.FC<Props> = props => {
               return <Onboarding />;
             }}
           />
-          {user?.isPorterUser || overrideInfraTabEnabled({
+          {(user?.isPorterUser || overrideInfraTabEnabled({
             projectID: currentProject?.id,
-          }) && (
+          })) && (
             <Route
               path="/infrastructure"
               render={() => {

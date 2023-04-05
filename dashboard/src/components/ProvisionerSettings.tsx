@@ -15,6 +15,7 @@ import SaveButton from "./SaveButton";
 import { Contract, EnumKubernetesKind, EnumCloudProvider, NodeGroupType, EKSNodeGroup, EKS, Cluster } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
+import Error from "./porter/Error";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -89,6 +90,15 @@ const ProvisionerSettings: React.FC<Props> = props => {
     } catch (err) {
       console.log(err);
     }
+  }
+
+  const getStatus = () => {
+    if (isReadOnly) {
+      return "Provisioning is still in progress"
+    } else if (errorMessage) {
+      return <Error message={errorMessage} />;
+    }
+    return undefined;
   }
 
   const createCluster = async () => {
@@ -346,9 +356,8 @@ const ProvisionerSettings: React.FC<Props> = props => {
       <Button
         disabled={(!clusterName && true) || isReadOnly}
         onClick={createCluster}
-        status={isReadOnly && "Provisioning is still in progress"}
+        status={getStatus()}
       >Provision</Button>
-      {errorMessage && <ErrorContainer>{errorMessage} Please correct the issue and try to provision again.</ErrorContainer>}
     </>
   );
 };

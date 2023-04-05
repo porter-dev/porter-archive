@@ -14,6 +14,7 @@ import SaveButton from "./SaveButton";
 import Fieldset from "./porter/Fieldset";
 import Input from "./porter/Input";
 import Button from "./porter/Button";
+import Error from "./porter/Error";
 import DocsHelper from "./DocsHelper";
 
 type Props = {
@@ -123,7 +124,6 @@ const CloudFormationForm: React.FC<Props> = ({
               }
             }}
             status={grantPermissionsError}
-            errorText={grantPermissionsError}
             color="#1E2631"
             withBorder
           >
@@ -135,7 +135,7 @@ const CloudFormationForm: React.FC<Props> = ({
           onClick={() => {
             checkIfRoleExists()
           }}
-          status={roleStatus}
+          status={errorMessage ? <Error message={errorMessage} /> : roleStatus}
         >
           Continue
         </Button>
@@ -159,7 +159,6 @@ const CloudFormationForm: React.FC<Props> = ({
         Grant Porter permissions to create infrastructure in your AWS account.
       </Text>
       {renderContent()}
-      {errorMessage && <ErrorContainer>{errorMessage}</ErrorContainer>}
     </>
   );
 };

@@ -10,7 +10,6 @@ type Props = {
   status?: React.ReactNode;
   helperText?: string;
   loadingText?: string;
-  errorText?: string;
   successText?: string;
   width?: string;
   height?: string;
@@ -25,7 +24,6 @@ const Button: React.FC<Props> = ({
   status,
   helperText,
   loadingText,
-  errorText,
   successText,
   width,
   height,
@@ -106,7 +104,6 @@ const StatusWrapper = styled.div<{
   font-size: 13px;
   color: #ffffff55;
   margin-left: 15px;
-  max-width: 500px;
   text-overflow: ellipsis;
   animation: ${floatIn} 0.5s;
   animation-fill-mode: forwards;

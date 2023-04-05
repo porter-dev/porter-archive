@@ -199,6 +199,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
         currentCluster.status === "UPDATING_UNAVAILABLE"
       )
     );
+    setClusterName(`${currentProject.name}-cluster`);
   }, []);
 
   useEffect(() => {
@@ -225,20 +226,10 @@ const ProvisionerSettings: React.FC<Props> = props => {
     if (!props.clusterId) {
       return (
         <>
-          <Heading isAtTop>Cluster configuration</Heading>
+          <Heading isAtTop>Select an AWS region</Heading>
           <Helper>
-            Porter will create a new cluster for your applications in the specified region.
+            Porter will automatically provision your infrastructure in the specified region.
           </Helper>
-          <InputRow
-            width="350px"
-            isRequired
-            disabled={isReadOnly}
-            type="string"
-            value={clusterName}
-            setValue={(x: string) => setClusterName(x)}
-            label="🏷️ Cluster name"
-            placeholder="ex: total-perspective-vortex"
-          />
           <SelectRow
             options={regionOptions}
             width="350px"
@@ -247,7 +238,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
             scrollBuffer={true}
             dropdownMaxHeight="240px"
             setActiveValue={setAwsRegion}
-            label="📍 Select an AWS region"
+            label="📍 AWS region"
           />
         </>
       )
@@ -257,16 +248,6 @@ const ProvisionerSettings: React.FC<Props> = props => {
     return (
       <>
         <Heading isAtTop>EKS configuration</Heading>
-        <InputRow
-          width="350px"
-          isRequired
-          disabled={isReadOnly || true}
-          type="string"
-          value={clusterName}
-          setValue={(x: string) => setClusterName(x)}
-          label="🏷️ Cluster name"
-          placeholder="ex: total-perspective-vortex"
-        />
         <SelectRow
           options={regionOptions}
           width="350px"

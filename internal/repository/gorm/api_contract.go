@@ -39,13 +39,13 @@ func (cr APIContractRepository) List(ctx context.Context, projectID uint, cluste
 	var confs []*models.APIContractRevision
 
 	if clusterID == 0 {
-		tx := cr.db.Where("project_id = ?", projectID).Find(&confs)
+		tx := cr.db.Where("project_id = ?", projectID).Find(&confs).Order("created_at desc")
 		if tx.Error != nil {
 			return nil, tx.Error
 		}
 		return confs, nil
 	}
-	tx := cr.db.Where("project_id = ? and cluster_id = ?", projectID, clusterID).Find(&confs)
+	tx := cr.db.Where("project_id = ? and cluster_id = ?", projectID, clusterID).Find(&confs).Order("created_at desc")
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

@@ -404,9 +404,9 @@ const Home: React.FC<Props> = props => {
               return <Onboarding />;
             }}
           />
-          {user?.isPorterUser || overrideInfraTabEnabled({
+          {(user?.isPorterUser || overrideInfraTabEnabled({
             projectID: currentProject?.id,
-          }) && (
+          })) && (
             <Route
               path="/infrastructure"
               render={() => {

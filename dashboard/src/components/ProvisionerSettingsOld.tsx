@@ -11,14 +11,9 @@ import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import InputRow from "./form-components/InputRow";
+import SaveButton from "./SaveButton";
 import { Contract, EnumKubernetesKind, EnumCloudProvider, NodeGroupType, EKSNodeGroup, EKS, Cluster } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
-import Button from "./porter/Button";
-import Error from "./porter/Error";
-import Spacer from "./porter/Spacer";
-import Step from "./porter/Step";
-import Link from "./porter/Link";
-import Text from "./porter/Text";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -58,11 +53,10 @@ const clusterVersionOptions = [
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   credentialId: string;
-  AWSAccountID: string;
   clusterId?: number;
 };
 
-const ProvisionerSettings: React.FC<Props> = props => {
+const ProvisionerSettingsOld: React.FC<Props> = props => {
   const {
     user,
     currentProject,
@@ -81,13 +75,12 @@ const ProvisionerSettings: React.FC<Props> = props => {
   const [cidrRange, setCidrRange] = useState("172.0.0.0/16");
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
   const [isReadOnly, setIsReadOnly] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>(undefined);
 
   const markProvisioningStarted = async () => {
     try {
       const res = await api.updateOnboardingStep(
-        "<token>",
-        { step: "provisioning-started" },
+        "<token>", 
+        { step: "provisioning-started" }, 
         {}
       );
     } catch (err) {
@@ -95,22 +88,9 @@ const ProvisionerSettings: React.FC<Props> = props => {
     }
   }
 
-  const getStatus = () => {
-    if (isReadOnly) {
-      return "Provisioning is still in progress"
-    } else if (errorMessage) {
-      return <Error
-        message={errorMessage}
-        ctaText={errorMessage !== DEFAULT_ERROR_MESSAGE ? "Troubleshooting steps" : null}
-        errorModalContents={errorMessageToModal(errorMessage)}
-      />;
-    }
-    return undefined;
-  }
-
   const createCluster = async () => {
     markProvisioningStarted();
-
+    
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -157,20 +137,6 @@ const ProvisionerSettings: React.FC<Props> = props => {
     }
 
     try {
-      setIsReadOnly(true)
-      setErrorMessage(undefined)
-      await api
-        .preflightCheckAWSUsage(
-          "<token>",
-          {
-            target_arn: `arn:aws:iam::${props.AWSAccountID}:role/porter-role`,
-            region: awsRegion
-          },
-          {
-            id: currentProject.id,
-          }
-        );
-
       const res = await api.createContract(
         "<token>",
         data,
@@ -201,23 +167,8 @@ const ProvisionerSettings: React.FC<Props> = props => {
             console.error(err);
           });
       }
-      setErrorMessage(undefined);
     } catch (err) {
-      const errMessage = err.response.data.error.replace('unknown: ', '');
-      // hacky, need to standardize error contract with backend
-      if (errMessage.includes('limit of elastic IPs')) {
-        setErrorMessage(AWS_EIP_QUOTA_ERROR_MESSAGE)
-      } else if (errMessage.includes('limit of VPCs')) {
-        setErrorMessage(AWS_VPC_QUOTA_ERROR_MESSAGE)
-      } else if (errMessage.includes('limit of NAT Gateways')) {
-        setErrorMessage(AWS_NAT_GATEWAY_QUOTA_ERROR_MESSAGE)
-      } else if (errMessage.includes('AWS account')) {
-        setErrorMessage(AWS_LOGIN_ERROR_MESSAGE)
-      } else {
-        setErrorMessage(DEFAULT_ERROR_MESSAGE)
-      }
-    } finally {
-      setIsReadOnly(false)
+      console.log(err);
     }
   }
 
@@ -250,7 +201,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
   }, [props.selectedClusterVersion]);
 
   const renderForm = () => {
-
+    
     // Render simplified form if initial create
     if (!props.clusterId) {
       return (
@@ -353,16 +304,19 @@ const ProvisionerSettings: React.FC<Props> = props => {
       <StyledForm>
         {renderForm()}
       </StyledForm>
-      <Button
+      <SaveButton
         disabled={(!clusterName && true) || isReadOnly}
         onClick={createCluster}
-        status={getStatus()}
-      >Provision</Button>
+        clearPosition
+        text="Provision"
+        statusPosition="right"
+        status={isReadOnly && "Provisioning is still in progress"}
+      />
     </>
   );
 };
 
-export default withRouter(ProvisionerSettings);
+export default withRouter(ProvisionerSettingsOld);
 
 const ExpandHeader = styled.div<{ isExpanded: boolean }>`
   display: flex;
@@ -384,150 +338,3 @@ const StyledForm = styled.div`
   font-size: 13px;
   margin-bottom: 30px;
 `;
-
-const ErrorContainer = styled.div`
-  position: relative;
-  margin-top: 20px;
-  padding: 30px 30px 25px;
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
-  font-size: 13px;
-  margin-bottom: 30px;
-  color: red;
-`
-
-const AWS_LOGIN_ERROR_MESSAGE = "Porter could not access your AWS account. Please make sure you have granted permissions and try again."
-const AWS_EIP_QUOTA_ERROR_MESSAGE = "Your AWS account has reached the limit of elastic IPs allowed in the region. Additional addresses must be requested in order to provision."
-const AWS_VPC_QUOTA_ERROR_MESSAGE = "Your AWS account has reached the limit of VPCs allowed in the region. Additional VPCs must be requested in order to provision."
-const AWS_NAT_GATEWAY_QUOTA_ERROR_MESSAGE = "Your AWS account has reached the limit of NAT Gateways allowed in the region. Additional NAT Gateways must be requested in order to provision."
-const DEFAULT_ERROR_MESSAGE = "An error occurred while provisioning your infrastructure. Please try again."
-
-const errorMessageToModal = (errorMessage: string) => {
-  switch (errorMessage) {
-    case AWS_LOGIN_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>Granting Porter access to AWS</Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            Porter needs access to your AWS account in order to create infrastructure. You can grant Porter access to AWS by following these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            <Link to="https://aws.amazon.com/resources/create-account/" target="_blank">
-              Create an AWS account
-            </Link>
-            <Spacer inline width="5px" />
-            if you don't already have one.
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Once you are logged in to your AWS account,
-            <Spacer inline width="5px" />
-            <Link to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account" target="_blank">
-              copy your account ID
-            </Link>.
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>Fill in your account ID on Porter and select "Grant permissions".</Step>
-          <Spacer y={1} />
-          <Step number={4}>After being redirected to AWS, select "Create stack" on the AWS console.</Step>
-          <Spacer y={1} />
-          <Step number={5}>Return to Porter and select "Continue".</Step>
-        </>
-      )
-    case AWS_EIP_QUOTA_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>Requesting more EIP Adresses</Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            You will need to either request more EIP addresses or delete existing ones in order to provision in the region specified. You can request more addresses by following these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            Log into
-            <Spacer inline width="5px" />
-            <Link to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account" target="_blank">your AWS account
-            </Link>.
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Navigate to
-            <Spacer inline width="5px" />
-            <Link to="https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas" target="_blank">the Amazon Elastic Compute Cloud (Amazon EC2) Service Quotas portal
-            </Link>.
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>Search for "EC2-VPC Elastic IPs" in the search box and click on the search result.</Step>
-          <Spacer y={1} />
-          <Step number={4}>Click on "Request quota increase". In order to provision with Porter, you will need to request at least 3 addresses above your current quota limit.</Step>
-          <Spacer y={1} />
-          <Step number={5}>Once that request is approved, return to Porter and retry the provision.</Step>
-        </>
-      )
-    case AWS_VPC_QUOTA_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>Requesting more VPCs</Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            You will need to either request more VPCs or delete existing ones in order to provision in the region specified. You can request more VPCs by following these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            Log into
-            <Spacer inline width="5px" />
-            <Link to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account" target="_blank">your AWS account
-            </Link>.
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Navigate to
-            <Spacer inline width="5px" />
-            <Link to="https://us-east-1.console.aws.amazon.com/servicequotas/home/services/vpc/quotas" target="_blank">the Amazon Virtual Private Cloud (Amazon VPC) Service Quotas portal
-            </Link>.
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>Search for "VPCs per Region" in the search box and click on the search result.</Step>
-          <Spacer y={1} />
-          <Step number={4}>Click on "Request quota increase". In order to provision with Porter, you will need to request at least 1 VPCs above your current quota limit.</Step>
-          <Spacer y={1} />
-          <Step number={5}>Once that request is approved, return to Porter and retry the provision.</Step>
-        </>
-      )
-    case AWS_NAT_GATEWAY_QUOTA_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>Requesting more NAT Gateways</Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            You will need to either request more NAT Gateways or delete existing ones in order to provision in the region specified. You can request more NAT Gateways by following these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            Log into
-            <Spacer inline width="5px" />
-            <Link to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account" target="_blank">your AWS account
-            </Link>.
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Navigate to
-            <Spacer inline width="5px" />
-            <Link to="https://us-east-1.console.aws.amazon.com/servicequotas/home/services/vpc/quotas" target="_blank">the Amazon Virtual Private Cloud (Amazon VPC) Service Quotas portal
-            </Link>.
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>Search for "NAT gateways per Availability Zone" in the search box and click on the search result.</Step>
-          <Spacer y={1} />
-          <Step number={4}>Click on "Request quota increase". In order to provision with Porter, you will need to request at least 3 NAT Gateways above your current quota limit.</Step>
-          <Spacer y={1} />
-          <Step number={5}>Once that request is approved, return to Porter and retry the provision.</Step>
-        </>
-      )
-    default:
-      return null
-  }
-}

@@ -262,9 +262,9 @@ const NavButton = styled(SidebarLink)`
   }
 
   > i {
-    font-size: 20px;
-    padding-top: 4px;
+    font-size: 18px;
     border-radius: 3px;
+    margin-left: 2px;
     margin-right: 10px;
   }
 `;

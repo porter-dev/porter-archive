@@ -31,6 +31,7 @@ const ProvisionerFlow: React.FC<Props> = ({
   const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
   const [confirmCost, setConfirmCost] = useState("");
   const [AWSAccountID, setAWSAccountID] = useState("");
+  const [useAssumeRole, setUseAssumeRole] = useState(false);
 
   const isUsageExceeded = useMemo(() => {
     if (!hasBillingEnabled) {
@@ -153,7 +154,7 @@ const ProvisionerFlow: React.FC<Props> = ({
         )}
       </>
     );
-  } else if (currentStep === "credentials") {
+  } else if (currentStep === "credentials" && useAssumeRole) {
     return (
       <CloudFormationForm
         goBack={() => setCurrentStep("cloud")}
@@ -165,12 +166,24 @@ const ProvisionerFlow: React.FC<Props> = ({
         setAWSAccountID={setAWSAccountID}
       />
     );
+  } else if (currentStep === "credentials" && !useAssumeRole) {
+    return (
+      <CredentialsForm
+        enableAssumeRole={() => setUseAssumeRole(true)}
+        goBack={() => setCurrentStep("cloud")}
+        proceed={(id) => {
+          setCredentialId(id);
+          setCurrentStep("cluster");
+        }}
+      />
+    );
   } else if (currentStep === "cluster") {
     return (
       <ProvisionerForm
         goBack={() => setCurrentStep("credentials")}
         credentialId={credentialId}
         AWSAccountID={AWSAccountID}
+        useAssumeRole={useAssumeRole}
       />
     );
   }

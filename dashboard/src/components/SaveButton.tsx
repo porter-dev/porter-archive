@@ -6,7 +6,7 @@ type Props = {
   text?: string;
   onClick: () => void;
   disabled?: boolean;
-  status?: React.ReactNode | null;
+  status?: string | null;
   color?: string;
   rounded?: boolean;
   helper?: string | null;

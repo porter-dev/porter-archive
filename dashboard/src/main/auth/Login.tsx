@@ -230,7 +230,7 @@ const Login: React.FC<Props> = ({
           size={13}
           color="helper"
         >
-          Don't have an account? <Link to="/register">Sign up</Link>
+          Don't have an account?<Spacer width="5px" inline /><Link to="/register">Sign up</Link>
         </Text>
       </Wrapper>
     </StyledLogin>

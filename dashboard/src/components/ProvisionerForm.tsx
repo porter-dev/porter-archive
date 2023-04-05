@@ -6,15 +6,20 @@ import aws from "assets/aws.png";
 import Heading from "components/form-components/Heading";
 import Helper from "./form-components/Helper";
 import ProvisionerSettings from "./ProvisionerSettings";
+import ProvisionerSettingsOld from "./ProvisionerSettingsOld";
 
 type Props = {
   goBack: () => void;
   credentialId: string;
+  AWSAccountID: string;
+  useAssumeRole?: boolean;
 };
 
 const ProvisionerForm: React.FC<Props> = ({
   goBack,
   credentialId,
+  AWSAccountID,
+  useAssumeRole,
 }) => {
   return (
     <>
@@ -30,7 +35,11 @@ const ProvisionerForm: React.FC<Props> = ({
       <Helper>
         Configure settings for your AWS environment.
       </Helper>
-      <ProvisionerSettings credentialId={credentialId} />
+      {useAssumeRole ? (
+        <ProvisionerSettings credentialId={credentialId} AWSAccountID={AWSAccountID} />
+      ) : (
+        <ProvisionerSettingsOld credentialId={credentialId} />
+      )}
     </>
   );
 };

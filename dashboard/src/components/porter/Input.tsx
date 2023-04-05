@@ -6,7 +6,7 @@ type Props = {
   width?: string;
   value: string;
   setValue: (value: string) => void;
-  label?: string;
+  label?: string | React.ReactNode;
   height?: string;
   type?: string;
   error?: string;
@@ -96,6 +96,7 @@ const StyledInput = styled.input<{
   outline: none;
   border-radius: 5px;
   background: #26292e;
+
   border: 1px solid ${props => props.hasError ? "#ff3b62" : "#494b4f"};
   :hover {
     border: 1px solid ${props => props.hasError ? "#ff3b62" : "#7a7b80"};

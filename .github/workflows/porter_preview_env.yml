@@ -32,10 +32,6 @@ jobs:
           repository: porter-dev/cluster-control-plane
           token: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
           path: external/ccp
-      - name: Substitute github secrets with porter.yaml
-        run: envsubst < porter.yaml > porter2.yaml && rm porter.yaml && mv porter2.yaml porter.yaml
-        env:
-          HONEYCOMB_PASSWORD: ${{ secrets.HONEYCOMB_PASSWORD_PREVIEW_ENVIRONMENTS }}
       - name: Create Porter preview env
         id: preview
         timeout-minutes: 30
@@ -54,6 +50,8 @@ jobs:
           repo_name: porter
           repo_owner: porter-dev
           token: ${{ secrets.PORTER_PREVIEW_6680_2489 }}
+        env:
+          PORTER_APPLY_HONEYCOMB_PASSWORD: ${{ secrets.HONEYCOMB_PASSWORD_PREVIEW_ENVIRONMENTS }}
       - name: Attach vcluster
         run: |
           sudo apt-get update

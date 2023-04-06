@@ -92,7 +92,7 @@ addons:
         otlp/honeycomb:
           endpoint: "api.honeycomb.io:443"
           headers:
-            "x-honeycomb-team": "${HONEYCOMB_PASSWORD}"
+            "x-honeycomb-team": "${{ porter.env.HONEYCOMB_PASSWORD }}"
       service:
         pipelines:
           traces:

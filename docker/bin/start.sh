@@ -1,7 +1,7 @@
 #!/bin/sh
 <<<<<<< Updated upstream
 echo 'Running migrations...'
-/porter/bin/migrate
+# /porter/bin/migrate
 
 =======
 >>>>>>> Stashed changes

@@ -32,6 +32,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
     branch,
     dockerfilePath,
     folderPath,
+    procfilePath,
     selectedRegistry,
     setDockerfilePath,
     setFolderPath,
@@ -137,14 +138,26 @@ const ActionDetails: React.FC<PropsType> = (props) => {
         />
       )}
       <InputRow
-        // Currently there is a bug which is failing to detect the correct application folder root path. As a hotfix, we are enabling the user to manually set the application folder path.
         disabled={false}
         label={dockerfilePath ? "Docker build context" : "Application folder"}
         type="text"
         width="100%"
-        setValue={(value) => typeof value === "string" && setFolderPath(value)}
-        value={folderPath}
+        setValue={(value) =>
+          typeof value === "string" && dockerfilePath
+            ? setFolderPath(value)
+            : typeof value === "string" && setProcfilePath(value)
+        }
+        value={
+          dockerfilePath
+            ? folderPath
+            : procfilePath
+            ? procfilePath.replace(/\/Procfile.*$/, "") === "."
+              ? "./"
+              : procfilePath.replace(/\/Procfile.*$/, "")
+            : folderPath
+        }
       />
+
       {renderRegistrySection()}
       {!dockerfilePath && (
         <>

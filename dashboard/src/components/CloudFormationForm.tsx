@@ -113,7 +113,7 @@ const CloudFormationForm: React.FC<Props> = ({
             value={AWSAccountID}
             setValue={(e) => {
               setGrantPermissionsError("");
-              setAWSAccountID(e);
+              setAWSAccountID(e.trim());
             }}
             placeholder="ex: 915037676314"
           />

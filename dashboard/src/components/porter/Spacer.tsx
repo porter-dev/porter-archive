@@ -34,6 +34,7 @@ const Spacer: React.FC<Props> = ({
     <StyledSpacer
       height={height || getCalcHeight()}
       width={inline && (width || getCalcWidth())}
+      inline={inline}
     />
   );
 };
@@ -43,7 +44,9 @@ export default Spacer;
 const StyledSpacer = styled.div<{ 
   height: string;
   width: string;
+  inline: boolean;
 }>`
+  display: ${props => props.inline ? "inline-block" : "block"};
   height: ${props => props.height || "100%"};
   width: ${props => props.height ? "100%" : props.width};
 `;

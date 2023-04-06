@@ -32,16 +32,10 @@ jobs:
           repository: porter-dev/cluster-control-plane
           token: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
           path: external/ccp
-      - name: Stefan test - delete later
-        run: cat porter.yaml
       - name: Substitute github secrets with porter.yaml
         run: envsubst < porter.yaml > porter2.yaml && rm porter.yaml && mv porter2.yaml porter.yaml
         env:
-          HONEYCOMB_PASSWORD: "test-stefan"
-      - name: Stefan test - delete later
-        run: cat porter.yaml
-      - name: Stefan test - delete later2
-        run: cat porter2.yaml
+          HONEYCOMB_PASSWORD: ${{ secrets.HONEYCOMB_PASSWORD_PREVIEW_ENVIRONMENTS }}
       - name: Create Porter preview env
         id: preview
         timeout-minutes: 30

@@ -30,8 +30,8 @@ type PreviewApplier struct {
 
 func NewApplier(client *api.Client, raw []byte, namespace string) (*PreviewApplier, error) {
 	// replace all instances of ${{ porter.env.FOO }} with { .get-env.FOO }
-	re := regexp.MustCompile(`\$\{\{\s*porter\.env\.([A-Z]+)\s*\}\}`)
-	raw = re.ReplaceAll(raw, []byte("{ .get-env.$1 }"))
+	re := regexp.MustCompile(`\$\{\{\s*porter\.env\.(.*)\s*\}\}`)
+	raw = re.ReplaceAll(raw, []byte("{.get-env.$1}"))
 
 	parsed := &PorterYAML{}
 

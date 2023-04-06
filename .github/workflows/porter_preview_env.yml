@@ -32,13 +32,15 @@ jobs:
           repository: porter-dev/cluster-control-plane
           token: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
           path: external/ccp
+      - name: Checkout Porter code
+        run: ls
       - name: Substitute github secrets with porter.yaml
         uses: danielr1996/envsubst-action@1.0.0
         env:
           HONEYCOMB_PASSWORD: "test-stefan"
         with:
-          input: porter.yaml
-          output: porter.yaml
+          input: ./porter.yaml
+          output: ./porter.yaml
       - name: Create Porter preview env
         id: preview
         timeout-minutes: 30

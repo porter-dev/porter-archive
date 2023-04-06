@@ -34,13 +34,13 @@ jobs:
           path: external/ccp
       - name: Stefan test - delete later
         run: cat porter.yaml
-        - name: Substitute github secrets with porter.yaml
+      - name: Substitute github secrets with porter.yaml
         uses: danielr1996/envsubst-action@1.0.0
         env:
           HONEYCOMB_PASSWORD: "test-stefan"
-          with:
-            input: ./porter.yaml
-            output: ./porter.yaml
+        with:
+          input: ./porter.yaml
+          output: ./porter.yaml
       - name: Stefan test - delete later
         run: cat porter.yaml
       - name: Create Porter preview env

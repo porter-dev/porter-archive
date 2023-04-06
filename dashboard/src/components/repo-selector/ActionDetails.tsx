@@ -32,6 +32,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
     branch,
     dockerfilePath,
     folderPath,
+    procfilePath,
     selectedRegistry,
     setDockerfilePath,
     setFolderPath,
@@ -142,8 +143,18 @@ const ActionDetails: React.FC<PropsType> = (props) => {
         label={dockerfilePath ? "Docker build context" : "Application folder"}
         type="text"
         width="100%"
-        setValue={(value) => typeof value === "string" && setFolderPath(value)}
-        value={folderPath}
+        setValue={(value) =>
+          typeof value === "string" && dockerfilePath
+            ? setFolderPath(value)
+            : typeof value === "string" && setProcfilePath(value)
+        }
+        value={
+          dockerfilePath
+            ? folderPath
+            : procfilePath
+            ? procfilePath.replace(/Procfile.*$/, "")
+            : folderPath
+        }
       />
       {renderRegistrySection()}
       {!dockerfilePath && (

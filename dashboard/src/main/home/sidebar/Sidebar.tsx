@@ -148,7 +148,6 @@ class Sidebar extends Component<PropsType, StateType> {
 
           <br />
 
-          {currentCluster && (
             <>
               <SidebarLabel>
                 {currentProject.capi_provisioner_enabled ? (
@@ -165,7 +164,6 @@ class Sidebar extends Component<PropsType, StateType> {
                 setRefreshClusters={this.props.setRefreshClusters}
               />
             </>
-          )}
         </ScrollWrapper>
       );
     }

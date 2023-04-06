@@ -352,7 +352,6 @@ const Title = styled.div`
   padding: 12px 35px 12px 45px;
   font-size: 14px;
   font-family: "Work Sans", sans-serif;
-  font-weight: 500;
   color: #ffffff;
   width: 80%;
   overflow: hidden;

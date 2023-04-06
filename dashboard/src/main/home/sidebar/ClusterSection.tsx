@@ -5,8 +5,8 @@ import { ClusterType, ProjectType } from "shared/types";
 import { Tooltip } from "@material-ui/core";
 
 import settings from "assets/settings.svg";
-import monojob from "assets/monojob.png";
-import monoweb from "assets/monoweb.png";
+import job from "assets/job.png";
+import web from "assets/web-bold.png";
 import sliders from "assets/sliders.svg";
 
 import SidebarLink from "./SidebarLink";
@@ -53,7 +53,7 @@ export const ClusterSection: React.FC<Props> = ({
               window.location.pathname.startsWith("/applications")
             }
           >
-            <Img src={monoweb} />
+            <Img src={web} />
             Applications
           </NavButton>
           <NavButton
@@ -64,7 +64,7 @@ export const ClusterSection: React.FC<Props> = ({
               window.location.pathname.startsWith("/jobs")
             }
           >
-            <Img src={monojob} />
+            <Img src={job} />
             Jobs
           </NavButton>
           <NavButton

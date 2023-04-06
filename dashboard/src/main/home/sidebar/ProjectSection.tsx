@@ -263,7 +263,6 @@ const MainSelector = styled.div`
   margin: 10px 0 0;
   font-size: 14px;
   font-family: "Work Sans", sans-serif;
-  font-weight: 600;
   cursor: pointer;
   padding: 10px 0;
   padding-left: 20px;

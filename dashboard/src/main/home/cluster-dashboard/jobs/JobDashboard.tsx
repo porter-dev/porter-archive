@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import styled from "styled-components";
 import { RouteComponentProps, withRouter } from "react-router";
 
-import monojob from "assets/monojob.png";
+import job from "assets/job.png";
 
 import { Context } from "shared/Context";
 import { JobStatusType } from "shared/types";
@@ -44,7 +44,7 @@ const JobDashboard: React.FC<Props> = ({
   return (
     <StyledJobDashboard>
       <DashboardHeader
-        image={monojob}
+        image={job}
         title={currentView}
         description="Scripts and tasks that run once or on a repeating interval."
         disableLineBreak

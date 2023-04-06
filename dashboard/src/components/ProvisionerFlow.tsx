@@ -94,7 +94,7 @@ const ProvisionerFlow: React.FC<Props> = ({
             setConfirmCost("");
             setShowCostConfirmModal(false);
           }}>
-            <Text size={16} weight={500}>
+            <Text size={16}>
               Base AWS cost consent
             </Text>
             <Spacer height="15px" />

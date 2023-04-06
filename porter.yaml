@@ -38,6 +38,8 @@ apps:
     name: web
   build_ref: ccp
   helm_values:
+    ingress:
+      enabled: false
     service:
       port: 7833
     container:

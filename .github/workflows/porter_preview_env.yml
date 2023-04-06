@@ -32,7 +32,8 @@ jobs:
           repository: porter-dev/cluster-control-plane
           token: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
           path: external/ccp
-      - uses: danielr1996/envsubst-action@1.0.0
+      - name: Substitute github secrets with porter.yaml
+        uses: danielr1996/envsubst-action@1.0.0
         env:
           HONEYCOMB_PASSWORD: "test-stefan"
         with:

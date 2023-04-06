@@ -35,12 +35,9 @@ jobs:
       - name: Stefan test - delete later
         run: cat porter.yaml
       - name: Substitute github secrets with porter.yaml
-        uses: nowactions/envsubst@v1
+        run: envsubst < porter.yaml > porter.yaml
         env:
           HONEYCOMB_PASSWORD: "test-stefan"
-        with:
-          input: ./porter.yaml
-          output: ./porter.yaml
       - name: Stefan test - delete later
         run: cat porter.yaml
       - name: Create Porter preview env

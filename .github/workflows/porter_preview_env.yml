@@ -22,9 +22,16 @@ jobs:
   porter-preview:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      id: checkout-code
+    - name: Checkout monorepo code
+      id: checkout-monorepo-code
       uses: actions/checkout@v3
+    - name: Checkout CCP code
+      id: checkout-ccp-code
+      uses: actions/checkout@v3
+      with:
+        repository: porter-dev/cluster-control-plane
+        token: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
+        path: external/ccp
     - name: Create Porter preview env
       id: preview
       timeout-minutes: 30

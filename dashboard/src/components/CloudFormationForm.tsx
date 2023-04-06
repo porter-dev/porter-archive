@@ -93,7 +93,7 @@ const CloudFormationForm: React.FC<Props> = ({
           </Text>
           <Spacer height="15px" />
           <Text color="helper">
-            Provide your AWS account ID to log in and grant Porter access to AWS. You will need to select "Create stack" after being redirected to the AWS console below.
+            Provide your AWS account ID to log in and grant Porter access to AWS. You will need to select "Create stack" after being redirected to the AWS console below. Make sure that the stack status has changed from "CREATE_IN_PROGRESS" to "CREATE_COMPLETE" before clicking Continue.
           </Text>
           <Spacer y={1} />
           <Input
@@ -120,7 +120,7 @@ const CloudFormationForm: React.FC<Props> = ({
           <Spacer y={1} />
           <Button
             onClick={() => {
-              if (AWSAccountID.length === 12) {
+              if (AWSAccountID.length === 12 && !isNaN(Number(AWSAccountID))) {
                 directToCloudFormation();
               } else {
                 setGrantPermissionsError("Invalid AWS account ID");
@@ -144,7 +144,7 @@ const CloudFormationForm: React.FC<Props> = ({
           }}
           status={
             errorMessage ? (
-              <Error 
+              <Error
                 message={errorMessage}
                 ctaText="Troubleshooting steps"
                 errorModalContents={
@@ -175,7 +175,9 @@ const CloudFormationForm: React.FC<Props> = ({
                     <Spacer y={1} />
                     <Step number={4}>After being redirected to AWS, select "Create stack" on the AWS console.</Step>
                     <Spacer y={1} />
-                    <Step number={5}>Return to Porter and select "Continue".</Step>
+                    <Step number={5}>Wait until the stack status has changed from "CREATE_IN_PROGRESS" to "CREATE_COMPLETE".</Step>
+                    <Spacer y={1} />
+                    <Step number={6}>Return to Porter and select "Continue".</Step>
                   </>
                 }
               />

@@ -205,12 +205,14 @@ const ProvisionerSettings: React.FC<Props> = props => {
     } catch (err) {
       const errMessage = err.response.data.error.replace('unknown: ', '');
       // hacky, need to standardize error contract with backend
-      if (errMessage.includes('limit of elastic IPs')) {
+      if (errMessage.includes('elastic IP')) {
         setErrorMessage(AWS_EIP_QUOTA_ERROR_MESSAGE)
-      } else if (errMessage.includes('limit of VPCs')) {
+      } else if (errMessage.includes('VPC')) {
         setErrorMessage(AWS_VPC_QUOTA_ERROR_MESSAGE)
-      } else if (errMessage.includes('limit of NAT Gateways')) {
+      } else if (errMessage.includes('NAT Gateway')) {
         setErrorMessage(AWS_NAT_GATEWAY_QUOTA_ERROR_MESSAGE)
+      } else if (errMessage.includes('vCPU')) {
+        setErrorMessage(AWS_VCPU_QUOTA_ERROR_MESSAGE)
       } else if (errMessage.includes('AWS account')) {
         setErrorMessage(AWS_LOGIN_ERROR_MESSAGE)
       } else {
@@ -401,6 +403,7 @@ const AWS_LOGIN_ERROR_MESSAGE = "Porter could not access your AWS account. Pleas
 const AWS_EIP_QUOTA_ERROR_MESSAGE = "Your AWS account has reached the limit of elastic IPs allowed in the region. Additional addresses must be requested in order to provision."
 const AWS_VPC_QUOTA_ERROR_MESSAGE = "Your AWS account has reached the limit of VPCs allowed in the region. Additional VPCs must be requested in order to provision."
 const AWS_NAT_GATEWAY_QUOTA_ERROR_MESSAGE = "Your AWS account has reached the limit of NAT Gateways allowed in the region. Additional NAT Gateways must be requested in order to provision."
+const AWS_VCPU_QUOTA_ERROR_MESSAGE = "Your AWS account has reached the limit of vCPUs allowed in the region. Additional vCPUs must be requested in order to provision."
 const DEFAULT_ERROR_MESSAGE = "An error occurred while provisioning your infrastructure. Please try again."
 
 const errorMessageToModal = (errorMessage: string) => {
@@ -523,6 +526,36 @@ const errorMessageToModal = (errorMessage: string) => {
           <Step number={3}>Search for "NAT gateways per Availability Zone" in the search box and click on the search result.</Step>
           <Spacer y={1} />
           <Step number={4}>Click on "Request quota increase". In order to provision with Porter, you will need to request at least 3 NAT Gateways above your current quota limit.</Step>
+          <Spacer y={1} />
+          <Step number={5}>Once that request is approved, return to Porter and retry the provision.</Step>
+        </>
+      )
+    case AWS_VCPU_QUOTA_ERROR_MESSAGE:
+      return (
+        <>
+          <Text size={16} weight={500}>Requesting more vCPUs</Text>
+          <Spacer y={1} />
+          <Text color="helper">
+            You will need to either request more vCPUs or delete existing instances in order to provision in the region specified. You can request more vCPUs by following these steps:
+          </Text>
+          <Spacer y={1} />
+          <Step number={1}>
+            Log into
+            <Spacer inline width="5px" />
+            <Link to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account" target="_blank">your AWS account
+            </Link>.
+          </Step>
+          <Spacer y={1} />
+          <Step number={2}>
+            Navigate to
+            <Spacer inline width="5px" />
+            <Link to="https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas" target="_blank">the Amazon Elastic Compute Cloud (Amazon EC2) Service Quotas portal
+            </Link>.
+          </Step>
+          <Spacer y={1} />
+          <Step number={3}>Search for "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances" in the search box and click on the search result.</Step>
+          <Spacer y={1} />
+          <Step number={4}>Click on "Request quota increase". In order to provision with Porter, you will need to request at least 10 vCPUs above your current quota limit.</Step>
           <Spacer y={1} />
           <Step number={5}>Once that request is approved, return to Porter and retry the provision.</Step>
         </>

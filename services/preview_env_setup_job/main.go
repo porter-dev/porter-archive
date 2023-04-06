@@ -33,12 +33,6 @@ func main() {
 		log.Fatalf("Failed to create DB adapter: %v", err)
 	}
 
-	err = pgorm.AutoMigrate(db, false)
-
-	if err != nil {
-		log.Fatalf("Failed to auto migrate DB: %v", err)
-	}
-
 	var credBackend rcreds.CredentialStorage
 
 	var key [32]byte

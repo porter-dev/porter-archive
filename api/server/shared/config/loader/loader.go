@@ -79,12 +79,6 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	res.Metadata = config.MetadataFromConf(envConf.ServerConf, e.version)
 	res.DB = InstanceDB
 
-	err = gorm.AutoMigrate(InstanceDB, sc.Debug)
-
-	if err != nil {
-		return nil, err
-	}
-
 	var key [32]byte
 
 	for i, b := range []byte(envConf.DBConf.EncryptionKey) {

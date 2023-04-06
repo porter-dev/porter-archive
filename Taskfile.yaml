@@ -1,0 +1,11 @@
+version: '3'
+
+tasks:
+  new-migration:
+    desc: Create a new migration
+    dir: zarf/db/migrations
+    cmds:
+    - cmd: goose create my_migration sql
+      ignore_error: false
+    - cmd: goose fix
+      ignore_error: false

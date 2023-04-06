@@ -13,11 +13,6 @@ import (
 func init() {
 	sharedInit()
 
-	InstanceDB.AutoMigrate(
-		&models.ProjectBilling{},
-		&models.UserBilling{},
-	)
-
 	var key [32]byte
 
 	for i, b := range []byte(InstanceEnvConf.DBConf.EncryptionKey) {

@@ -1,10 +1,13 @@
 FROM golang:1.20.1 as installer
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 RUN chmod +x /go/bin/dlv
+RUN chmod +x /go/bin/goose
 
 FROM debian:bullseye-slim as runner
 WORKDIR /app
 COPY --from=installer /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=installer /go/bin/dlv /
+COPY --from=installer /go/bin/goose /
 COPY ./bin/porter /app

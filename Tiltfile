@@ -44,7 +44,6 @@ docker_build_with_restart(
     ],
     live_update=[
         sync('./bin/porter', '/app/'),
-        sync('./bin/migrate', '/app/'),
     ], 
 ) 
 
@@ -67,14 +66,11 @@ local_resource(
 
 # Migrations
 local_resource(
-    name="migrations-binary",
-    cmd='''GOWORK=off CGO_ENABLED=0 %s go build -mod vendor -gcflags '-N -l' -tags ee -o ./bin/migrate ./cmd/migrate/main.go ./cmd/migrate/migrate_ee.go''' % build_args,
-    resource_deps=["postgresql"],
-    labels=["porter"],
-)
-local_resource(
     name="run-migrations",
-    cmd='''kubectl exec -it deploy/porter-server-web -- /app/migrate''',
+    cmd='''
+    kubectl exec -it deploy/porter-server-web -- \
+    sh -c 'GOOSE_DRIVER=postgres GOOSE_DBSTRING="user=$DB_USER password=$DB_PASSWORD dbname=$DB_NAME sslmode=disable host=$DB_HOST" /goose -dir /app/zarf/db/migrations up'
+    ''',
     resource_deps=["migrations-binary", "porter-binary"],
     labels=["porter"],
     trigger_mode=TRIGGER_MODE_MANUAL,

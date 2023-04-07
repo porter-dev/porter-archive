@@ -79,32 +79,29 @@ addons:
   helm_values:
     mode: daemonset
     config:
-      receivers:
-        otlp:
-          protocols:
-            grpc: 
-            http: 
-        jaeger: null
-        prometheus: null
-        zipkin: null
-      processors:
-        batch:
       exporters:
         otlp/honeycomb:
-          endpoint: "api.honeycomb.io:443"
+          endpoint: api.honeycomb.io:443
           headers:
-            "x-honeycomb-team": "${{ porter.env.HONEYCOMB_PASSWORD }}"
+            x-honeycomb-team: p4Xkp5DeAOoDvwDCM7uJNH
+      receivers:
+        jaeger: null
+        otlp:
+          protocols:
+            http: null
+        prometheus: null
+        zipkin: null
       service:
         pipelines:
+          logs: null
+          metrics: null
           traces:
-            receivers:
-              - otlp
-            processors:
-              - batch
             exporters:
               - otlp/honeycomb
-          metrics: null
-          logs: null
+            processors:
+              - batch
+            receivers:
+              - otlp
 - name: nats
   helm_chart:
     name: nats

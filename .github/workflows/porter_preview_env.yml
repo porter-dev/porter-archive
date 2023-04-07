@@ -65,16 +65,12 @@ jobs:
           dashboard_domain=$(sed -e 's/^"//' -e 's/"$//' <<<"$dashboard_domain")
 
           if [ -z "$dashboard_domain" ]; then
-            exit 1
+            exit
           fi
 
           export PORTER_HOST="https://${dashboard_domain}"
 
-          regs=$(porter cluster list | wc -l)
-
-          if [ "$regs" -eq "1" ]; then
-            porter connect kubeconfig --kubeconfig /tmp/vcluster_kubeconfig
-          fi
+          porter connect kubeconfig --kubeconfig /tmp/vcluster_kubeconfig
         env:
           PORTER_TOKEN: ${{ secrets.PREVIEW_DEPLOYMENT_PORTER_KEY }}
           PORTER_PROJECT: 1

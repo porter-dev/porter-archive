@@ -22,50 +22,59 @@ jobs:
   porter-preview:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      id: checkout-code
-      uses: actions/checkout@v3
-    - name: Create Porter preview env
-      id: preview
-      timeout-minutes: 30
-      uses: porter-dev/porter-preview-action@dev
-      with:
-        action_id: ${{ github.run_id }}
-        cluster: "2489"
-        host: https://dashboard.getporter.dev
-        installation_id: "18533943"
-        namespace: pr-${{ github.event.inputs.pr_number }}-porter
-        pr_branch_from: ${{ github.event.inputs.pr_branch_from }}
-        pr_branch_into: ${{ github.event.inputs.pr_branch_into }}
-        pr_id: ${{ github.event.inputs.pr_number }}
-        pr_name: ${{ github.event.inputs.pr_title }}
-        project: "6680"
-        repo_name: porter
-        repo_owner: porter-dev
-        token: ${{ secrets.PORTER_PREVIEW_6680_2489 }}
-    - name: Attach vcluster
-      run: |
-        sudo apt-get update
-        sudo apt-get install bash curl jq unzip
+      - name: Checkout monorepo code
+        id: checkout-monorepo-code
+        uses: actions/checkout@v3
+      - name: Checkout CCP code
+        id: checkout-ccp-code
+        uses: actions/checkout@v3
+        with:
+          repository: porter-dev/cluster-control-plane
+          token: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
+          path: external/ccp
+      - name: Create Porter preview env
+        id: preview
+        timeout-minutes: 30
+        uses: porter-dev/porter-preview-action@dev
+        with:
+          action_id: ${{ github.run_id }}
+          cluster: "2489"
+          host: https://dashboard.getporter.dev
+          installation_id: "18533943"
+          namespace: pr-${{ github.event.inputs.pr_number }}-porter
+          pr_branch_from: ${{ github.event.inputs.pr_branch_from }}
+          pr_branch_into: ${{ github.event.inputs.pr_branch_into }}
+          pr_id: ${{ github.event.inputs.pr_number }}
+          pr_name: ${{ github.event.inputs.pr_title }}
+          project: "6680"
+          repo_name: porter
+          repo_owner: porter-dev
+          token: ${{ secrets.PORTER_PREVIEW_6680_2489 }}
+        env:
+          PORTER_APPLY_HONEYCOMB_PASSWORD: ${{ secrets.HONEYCOMB_PASSWORD_PREVIEW_ENVIRONMENTS }}
+      - name: Attach vcluster
+        run: |
+          sudo apt-get update
+          sudo apt-get install bash curl jq unzip
 
-        /bin/bash -c "$(curl -fsSL https://install.porter.run)"
+          /bin/bash -c "$(curl -fsSL https://install.porter.run)"
 
-        echo "$VCLUSTER_KUBECONFIG" > /tmp/vcluster_kubeconfig
+          echo "$VCLUSTER_KUBECONFIG" > /tmp/vcluster_kubeconfig
 
-        dashboard_domain=$(echo "$DOMAINS" | jq '.subdomains[] | select(test("porter-dashboard*"))')
-        dashboard_domain=$(sed -e 's/^"//' -e 's/"$//' <<<"$dashboard_domain")
+          dashboard_domain=$(echo "$DOMAINS" | jq '.subdomains[] | select(test("porter-dashboard*"))')
+          dashboard_domain=$(sed -e 's/^"//' -e 's/"$//' <<<"$dashboard_domain")
 
-        if [ -z "$dashboard_domain" ]; then
-          exit 1
-        fi
+          if [ -z "$dashboard_domain" ]; then
+            exit
+          fi
 
-        export PORTER_HOST="https://${dashboard_domain}"
+          export PORTER_HOST="https://${dashboard_domain}"
 
-        porter connect kubeconfig --kubeconfig /tmp/vcluster_kubeconfig
-      env:
-        PORTER_TOKEN: ${{ secrets.PREVIEW_DEPLOYMENT_PORTER_KEY }}
-        PORTER_PROJECT: 1
-        VCLUSTER_KUBECONFIG: ${{ secrets.VCLUSTER_KUBECONFIG }}
-        DOMAINS: ${{ steps.preview.outputs.domains  }}
+          porter connect kubeconfig --kubeconfig /tmp/vcluster_kubeconfig
+        env:
+          PORTER_TOKEN: ${{ secrets.PREVIEW_DEPLOYMENT_PORTER_KEY }}
+          PORTER_PROJECT: 1
+          VCLUSTER_KUBECONFIG: ${{ secrets.VCLUSTER_KUBECONFIG }}
+          DOMAINS: ${{ steps.preview.outputs.domains  }}
     concurrency:
       group: ${{ github.workflow }}-${{ github.event.inputs.pr_number }}

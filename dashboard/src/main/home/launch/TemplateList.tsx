@@ -181,9 +181,9 @@ const NewIcon = styled.img`
 
 const Polymer = styled.div`
   > i {
-    font-size: 34px;
-    margin-top: 38px;
-    margin-bottom: 20px;
+    font-size: 25px;
+    margin-top: 30px;
+    margin-bottom: 5px;
   }
 `;
 
@@ -248,5 +248,5 @@ const TemplateListWrapper = styled.div`
   display: grid;
   grid-column-gap: 25px;
   grid-row-gap: 25px;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 `;

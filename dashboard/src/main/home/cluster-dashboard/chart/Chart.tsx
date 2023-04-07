@@ -393,7 +393,7 @@ const StyledChart = styled.div`
   width: calc(100% + 2px);
   height: calc(100% + 2px);
   border-radius: 5px;
-  background: #26292e;
+  background: linear-gradient(180deg, #26292e, #24272c);
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

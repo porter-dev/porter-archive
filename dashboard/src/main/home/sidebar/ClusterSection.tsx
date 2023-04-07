@@ -5,7 +5,7 @@ import { ClusterType, ProjectType } from "shared/types";
 import { Tooltip } from "@material-ui/core";
 
 import settings from "assets/settings.svg";
-import job from "assets/job.png";
+import job from "assets/job-bold.png";
 import web from "assets/web-bold.png";
 import sliders from "assets/sliders.svg";
 

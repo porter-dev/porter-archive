@@ -71,14 +71,14 @@ export const Dashboard: React.FunctionComponent = () => {
     if (
       context.currentCluster.status !== "UPDATING_UNAVAILABLE" &&
       !tabOptions.find((tab) => tab.value === "nodes")
-    ) {  
+    ) {
       if (!context.currentProject.capi_provisioner_enabled) {
         tabOptions.unshift({ label: "Namespaces", value: "namespaces" });
       }
       tabOptions.unshift({ label: "Metrics", value: "metrics" });
-      tabOptions.unshift({ label: "Nodes", value: "nodes" }); 
+      tabOptions.unshift({ label: "Nodes", value: "nodes" });
     }
-    
+
     if (
       context.currentProject.capi_provisioner_enabled &&
       !tabOptions.find((tab) => tab.value === "configuration")
@@ -147,16 +147,16 @@ export const Dashboard: React.FunctionComponent = () => {
 
     return (
       <>
-      <Bolded>To configure custom domains for your apps, add a CNAME record pointing to the following Ingress IP:</Bolded>
-      <br /><br />
-      <CopyToClipboard
-        as={Url}
-        text={ingressIp}
-        wrapperProps={{ onClick: (e: any) => e.stopPropagation() }}
-      >
-        <span>{ingressIp}</span>
-        <i className="material-icons-outlined">content_copy</i>
-      </CopyToClipboard>
+        <Bolded>To configure custom domains for your apps, add a CNAME record pointing to the following Ingress IP:</Bolded>
+        <br /><br />
+        <CopyToClipboard
+          as={Url}
+          text={ingressIp}
+          wrapperProps={{ onClick: (e: any) => e.stopPropagation() }}
+        >
+          <span>{ingressIp}</span>
+          <i className="material-icons-outlined">content_copy</i>
+        </CopyToClipboard>
       </>
     );
   };
@@ -176,7 +176,7 @@ export const Dashboard: React.FunctionComponent = () => {
         setIngressIp(ingress_ip);
         setIngressError(ingress_error);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -199,13 +199,13 @@ export const Dashboard: React.FunctionComponent = () => {
               context.currentCluster.status === "UPDATING_UNAVAILABLE"
             )
           ) && (
-            <>
-              <ProvisionerStatus
-                provisionFailureReason={provisionFailureReason}
-              />
-              <Spacer y={1} />
-            </>
-          )}
+              <>
+                <ProvisionerStatus
+                  provisionFailureReason={provisionFailureReason}
+                />
+                <Spacer y={1} />
+              </>
+            )}
           <TabSelector
             options={currentTabOptions}
             currentTab={currentTab}
@@ -246,14 +246,14 @@ export const Dashboard: React.FunctionComponent = () => {
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  stroke-linejoin="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   d="M3.90217 12.4403C2.29983 12.4403 1 11.1414 1 9.53907C1 7.93673 2.29983 6.63782 3.90217 6.63782"
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  stroke-linejoin="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   fillRule="evenodd"
@@ -262,21 +262,21 @@ export const Dashboard: React.FunctionComponent = () => {
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  stroke-linejoin="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   d="M6.66895 15.207C6.66895 16.8094 7.96787 18.1092 9.5702 18.1092C11.1725 18.1092 12.4715 16.8094 12.4715 15.207"
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  stroke-linejoin="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   d="M6.66895 3.90217C6.66895 2.29983 7.96787 1 9.5702 1C11.1725 1 12.4715 2.29983 12.4715 3.90217"
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  stroke-linejoin="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   fillRule="evenodd"
@@ -285,7 +285,7 @@ export const Dashboard: React.FunctionComponent = () => {
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  stroke-linejoin="round"
+                  strokeLinejoin="round"
                 />
               </svg>
               <Spacer inline />
@@ -374,9 +374,9 @@ const RevisionHeader = styled.div`
     cursor: pointer;
     border-radius: 20px;
     background: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-      props.showRevisions ? "#ffffff18" : ""};
+    props.showRevisions ? "#ffffff18" : ""};
     transform: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-      props.showRevisions ? "rotate(180deg)" : ""};
+    props.showRevisions ? "rotate(180deg)" : ""};
   }
 `;
 

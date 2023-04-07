@@ -90,7 +90,6 @@ const StyledTitle = styled.div<{
   onClick?: any;
 }>`
   font-size: 21px;
-  font-weight: 600;
   user-select: text;
   text-transform: ${(props) => (props.capitalize ? "capitalize" : "")};
   display: flex;

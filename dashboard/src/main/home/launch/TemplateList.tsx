@@ -8,6 +8,10 @@ import { hardcodedNames } from "shared/hardcodedNameDict";
 import { PorterTemplate } from "shared/types";
 import semver from "semver";
 
+import web from "assets/web.png";
+import worker from "assets/worker.png";
+import job from "assets/job.png";
+
 type Props = {
   helm_repo_id?: number;
   templates?: PorterTemplate[];
@@ -99,7 +103,16 @@ const TemplateList: React.FC<Props> = ({
     );
   }
 
-  const renderIcon = (icon: string) => {
+  const renderIcon = (icon: string, name?: string) => {
+    if (name === "web") {
+      return <NewIcon src={web} />;
+    }
+    if (name === "worker") {
+      return <NewIcon src={worker} />;
+    }
+    if (name === "job") {
+      return <NewIcon src={job} />;
+    }
     if (icon) {
       return <Icon src={icon} />;
     }
@@ -123,7 +136,7 @@ const TemplateList: React.FC<Props> = ({
             key={name}
             onClick={() => setCurrentTemplate(template)}
           >
-            {renderIcon(icon)}
+            {renderIcon(icon, template.name)}
             <TemplateTitle>{name}</TemplateTitle>
             <TemplateDescription>{description}</TemplateDescription>
           </TemplateBlock>
@@ -155,16 +168,22 @@ const LoadingWrapper = styled.div`
 `;
 
 const Icon = styled.img`
-  height: 42px;
-  margin-top: 35px;
-  margin-bottom: 13px;
+  height: 25px;
+  margin-top: 30px;
+  margin-bottom: 5px;
+`;
+
+const NewIcon = styled.img`
+  height: 25px;
+  margin-top: 30px;
+  margin-bottom: 5px;
 `;
 
 const Polymer = styled.div`
   > i {
-    font-size: 34px;
-    margin-top: 38px;
-    margin-bottom: 20px;
+    font-size: 25px;
+    margin-top: 30px;
+    margin-bottom: 5px;
   }
 `;
 
@@ -174,7 +193,7 @@ const TemplateDescription = styled.div`
   text-align: center;
   font-weight: default;
   padding: 0px 25px;
-  height: 2.4em;
+  line-height: 1.4;
   font-size: 12px;
   display: -webkit-box;
   overflow: hidden;
@@ -183,7 +202,6 @@ const TemplateDescription = styled.div`
 `;
 
 const TemplateTitle = styled.div`
-  margin-bottom: 12px;
   width: 80%;
   text-align: center;
   font-size: 14px;
@@ -197,17 +215,16 @@ const TemplateBlock = styled.div`
   user-select: none;
   display: flex;
   font-size: 13px;
-  font-weight: 500;
   padding: 3px 0px 5px;
   flex-direction: column;
   align-item: center;
   justify-content: space-between;
-  height: 200px;
+  height: 170px;
   cursor: pointer;
   color: #ffffff;
   position: relative;
   border-radius: 5px;
-  background: #26292e;
+  background: linear-gradient(160deg, #26292e, #1e2023);
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;
@@ -231,5 +248,5 @@ const TemplateListWrapper = styled.div`
   display: grid;
   grid-column-gap: 25px;
   grid-row-gap: 25px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 `;

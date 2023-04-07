@@ -94,7 +94,7 @@ const ProvisionerFlow: React.FC<Props> = ({
             setConfirmCost("");
             setShowCostConfirmModal(false);
           }}>
-            <Text size={16} weight={500}>
+            <Text size={16}>
               Base AWS cost consent
             </Text>
             <Spacer height="15px" />
@@ -212,7 +212,7 @@ const BlockList = styled.div`
 `;
 
 const Icon = styled.img<{ bw?: boolean }>`
-  height: 42px;
+  height: 30px;
   margin-top: 30px;
   margin-bottom: 15px;
   filter: ${(props) => (props.bw ? "grayscale(1)" : "")};
@@ -260,7 +260,7 @@ const Block = styled.div<{ disabled?: boolean }>`
   color: #ffffff;
   position: relative;
   border-radius: 5px;
-  background: #26292e;
+  background: linear-gradient(160deg, #26292e, #26292e);
   border: 1px solid #494b4f;
   :hover {
     border: ${(props) => (props.disabled ? "" : "1px solid #7a7b80")};

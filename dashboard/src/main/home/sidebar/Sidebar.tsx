@@ -148,24 +148,20 @@ class Sidebar extends Component<PropsType, StateType> {
 
           <br />
 
-          {currentCluster && (
-            <>
-              <SidebarLabel>
-                {currentProject.capi_provisioner_enabled ? (
-                  "Your team"
-                ) : (
-                  "Clusters"
-                )}
-              </SidebarLabel>
-              <Clusters
-                setWelcome={this.props.setWelcome}
-                currentView={currentView}
-                isSelected={false}
-                forceRefreshClusters={this.props.forceRefreshClusters}
-                setRefreshClusters={this.props.setRefreshClusters}
-              />
-            </>
-          )}
+          <SidebarLabel>
+            {currentProject.capi_provisioner_enabled ? (
+              "Your team"
+            ) : (
+              "Clusters"
+            )}
+          </SidebarLabel>
+          <Clusters
+            setWelcome={this.props.setWelcome}
+            currentView={currentView}
+            isSelected={false}
+            forceRefreshClusters={this.props.forceRefreshClusters}
+            setRefreshClusters={this.props.setRefreshClusters}
+          />
         </ScrollWrapper>
       );
     }
@@ -295,7 +291,6 @@ const SidebarLabel = styled.div`
   margin-bottom: 5px;
   font-size: 13px;
   z-index: 1;
-  font-weight: 500;
 `;
 
 const PullTab = styled.div`

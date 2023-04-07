@@ -82,7 +82,8 @@ addons:
       receivers:
         otlp:
           protocols:
-            grpc: 4317
+            grpc: 
+            http: 
         jaeger: null
         prometheus: null
         zipkin: null

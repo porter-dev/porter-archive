@@ -14,6 +14,13 @@ builds:
   env:
     import_from:
       - default/base-env
+- name: ccp
+  method: docker
+  dockerfile: ./external/ccp/zarf/docker/Dockerfile
+  context: ./external/ccp
+  env:
+    import_from:
+      - default/ccp-base-env
 
 apps:
 - name: setup-job
@@ -23,6 +30,22 @@ apps:
   helm_chart:
     name: job
   build_ref: job
+- name: porter-ccp
+  depends_on:
+    - postgres
+    - nats
+  helm_chart:
+    name: web
+  build_ref: ccp
+  helm_values:
+    ingress:
+      enabled: false
+    service:
+      port: 7833
+    container:
+      port: 7833
+      command: ccp
+      args: "start --server --all-consumers"
 - name: porter-dashboard
   depends_on:
     - postgres
@@ -49,3 +72,55 @@ addons:
     postgresqlUsername: postgres
     postgresqlPassword: postgres
     postgresqlDatabase: postgres
+- name: opentelemetry-collector
+  helm_chart:
+    name: opentelemetry-collector
+    url: https://open-telemetry.github.io/opentelemetry-helm-charts
+  helm_values:
+    mode: daemonset
+    config:
+      exporters:
+        otlp/honeycomb:
+          endpoint: api.honeycomb.io:443
+          headers:
+            x-honeycomb-team: p4Xkp5DeAOoDvwDCM7uJNH
+      receivers:
+        jaeger: null
+        otlp:
+          protocols:
+            http: null
+        prometheus: null
+        zipkin: null
+      service:
+        pipelines:
+          logs: null
+          metrics: null
+          traces:
+            exporters:
+              - otlp/honeycomb
+            processors:
+              - batch
+            receivers:
+              - otlp
+- name: nats
+  helm_chart:
+    name: nats
+    url: https://nats-io.github.io/k8s/helm/charts
+  helm_values:
+    cluster:
+      enabled: true
+      replicas: 3
+    nats:
+      jetstream:
+        enabled: true
+        memStorage:
+          enabled: true
+          size: 2Gi
+        fileStorage:
+          enabled: false
+    websocket:
+      enabled: true
+      port: 4223
+      noTLS: true
+    natsbox:
+      enabled: true

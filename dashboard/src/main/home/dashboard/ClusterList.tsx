@@ -13,10 +13,10 @@ import Helper from "components/form-components/Helper";
 
 type Props = {};
 
-const ClusterList: React.FC<Props> = ({}) => {
+const ClusterList: React.FC<Props> = ({ }) => {
   const { currentProject, setCurrentCluster } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
-  const [clusters, setClusters] = useState(null);
+  const [clusters, setClusters] = useState([]);
   const location = useLocation();
   const history = useHistory();
 

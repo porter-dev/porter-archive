@@ -74,7 +74,7 @@ func (a *AppResource) getV1Resource(b *Build) (*types.Resource, error) {
 
 	return &types.Resource{
 		Name:      a.GetName(),
-		DependsOn: append([]string{b.GetName()}, a.GetDependsOn()...),
+		DependsOn: append([]string{"get-env", b.GetName()}, a.GetDependsOn()...),
 		Source: map[string]any{
 			"name":    a.Chart.GetName(),
 			"repo":    a.Chart.GetURL(),

@@ -3,18 +3,18 @@ import styled from "styled-components";
 
 import aws from "assets/aws.png";
 import api from "shared/api";
-import loading from "assets/loading.gif";
 
 import { Context } from "shared/Context";
-import ExpandableSection from "components/porter/ExpandableSection";
 import LoadingBar from "components/porter/LoadingBar";
 import Spacer from "components/porter/Spacer";
-import Helper from "components/form-components/Helper";
 import Text from "components/porter/Text";
+import Button from "components/porter/Button";
 
 type Props = {
   provisionFailureReason: string;
 };
+
+const PROVISIONING_STATUS_POLL_INTERVAL = 60 * 1000; // poll every minute
 
 const ProvisionerStatus: React.FC<Props> = ({
   provisionFailureReason,
@@ -33,27 +33,26 @@ const ProvisionerStatus: React.FC<Props> = ({
           cluster_id: currentCluster.id,
         }
       );
-      const { status } = res.data;
-      switch (status) {
-        case status["BOOTSTRAP_READY"]:
-          setProgress(2);
-          break;
-        case status["CONTROL_PLANE_READY"]:
-          setProgress(3);
-          break;
-        case status["INFRASTRUCTURE_READY"]:
-          setProgress(4);
-          break;
-        default:
-          setProgress(1);
+      const { is_control_plane_ready, is_infrastructure_ready, status } = res.data;
+      let progress = 1;
+      if (is_control_plane_ready) {
+        progress += 1
       }
+      if (is_infrastructure_ready) {
+        progress += 1
+      }
+      if (status === 'Provisioned') {
+        progress += 1
+      }
+      setProgress(progress);
     } catch (err) {
       console.log(err);
     }
   };
 
   useEffect(() => {
-    pollProvisioningStatus(); 
+    const intervalId = setInterval(pollProvisioningStatus, PROVISIONING_STATUS_POLL_INTERVAL);
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
@@ -65,7 +64,7 @@ const ProvisionerStatus: React.FC<Props> = ({
         </Flex>
         <Spacer height="18px" />
         <LoadingBar
-          color={provisionFailureReason && "failed"}
+          color={provisionFailureReason ? "failed" : undefined}
           completed={progress} 
           total={5} 
         />
@@ -79,6 +78,9 @@ const ProvisionerStatus: React.FC<Props> = ({
           <DummyLogs>Error: {provisionFailureReason}</DummyLogs>
         )
       }
+      <Button onClick={() => setProgress((progress+1)%5)}>
+        click me
+      </Button>
     </StyledProvisionerStatus>
   );
 };
@@ -108,18 +110,6 @@ const Icon = styled.img`
   height: 16px;
   margin-right: 10px;
   margin-bottom: -1px;
-`;
-
-const Img = styled.img`
-  height: 15px;
-  margin-right: 7px;
-`;
-
-const Status = styled.div`
-  color: #aaaabb;
-  display: flex;
-  align-items: center;
-  margin-left: 15px;
 `;
 
 const StyledProvisionerStatus = styled.div`

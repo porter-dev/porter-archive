@@ -10,6 +10,7 @@ type PropsType = {
   onError?: (e: ClipboardJS.Event) => void;
   wrapperProps?: any;
   as?: any;
+  children: JSX.Element[];
 };
 
 type StateType = {

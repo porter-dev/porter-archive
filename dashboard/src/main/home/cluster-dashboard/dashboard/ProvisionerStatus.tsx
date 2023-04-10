@@ -20,7 +20,7 @@ const ProvisionerStatus: React.FC<Props> = ({
   provisionFailureReason,
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
-  const [progress, setProgress] = useState(1);
+  const [progress, setProgress] = useState(0);
 
   // Continuously poll provisioning status
   const pollProvisioningStatus = async () => {
@@ -52,6 +52,7 @@ const ProvisionerStatus: React.FC<Props> = ({
 
   useEffect(() => {
     const intervalId = setInterval(pollProvisioningStatus, PROVISIONING_STATUS_POLL_INTERVAL);
+    pollProvisioningStatus();
     return () => clearInterval(intervalId);
   }, []);
 
@@ -66,7 +67,7 @@ const ProvisionerStatus: React.FC<Props> = ({
         <LoadingBar
           color={provisionFailureReason ? "failed" : undefined}
           completed={progress} 
-          total={5} 
+          total={4} 
         />
         <Spacer height="18px" />
         <Text color="#aaaabb">
@@ -78,9 +79,6 @@ const ProvisionerStatus: React.FC<Props> = ({
           <DummyLogs>Error: {provisionFailureReason}</DummyLogs>
         )
       }
-      <Button onClick={() => setProgress((progress+1)%5)}>
-        click me
-      </Button>
     </StyledProvisionerStatus>
   );
 };

@@ -56,7 +56,7 @@ const clusterVersionOptions = [
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   credentialId: string;
-  AWSAccountID: string;
+  AWSAccountID?: string;
   clusterId?: number;
 };
 

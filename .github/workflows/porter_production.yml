@@ -17,6 +17,8 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
+      - name: Download Go Modules
+        run: go mod download
       - name: Build Server Binary
         run: go build -ldflags="-w -s -X 'main.Version=production'" -o ./bin/app ./cmd/app
       - name: Build Migration Binary

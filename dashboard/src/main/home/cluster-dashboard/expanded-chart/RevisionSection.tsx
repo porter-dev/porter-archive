@@ -12,6 +12,7 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import Modal from "main/home/modals/Modal";
 import UpgradeChartModal from "main/home/modals/UpgradeChartModal";
 import { readableDate } from "shared/string_utils";
+import { createPortal } from "react-dom";
 
 type PropsType = WithAuthProps & {
   chart: ChartType;
@@ -352,12 +353,15 @@ class RevisionSection extends Component<PropsType, StateType> {
     return (
       <StyledRevisionSection showRevisions={this.state.expandRevisions}>
         {this.renderContents()}
-        <ConfirmOverlay
-          show={this.state.rollbackRevision && true}
-          message={`Are you sure you want to revert to version ${this.state.rollbackRevision}?`}
-          onYes={this.handleRollback}
-          onNo={() => this.setState({ rollbackRevision: null })}
-        />
+        {createPortal(
+          <ConfirmOverlay
+            show={this.state.rollbackRevision && true}
+            message={`Are you sure you want to revert to version ${this.state.rollbackRevision}?`}
+            onYes={this.handleRollback}
+            onNo={() => this.setState({ rollbackRevision: null })}
+          />,
+          document.body
+        )}
       </StyledRevisionSection>
     );
   }
@@ -473,7 +477,7 @@ const RevisionHeader = styled.div`
   padding-left: 10px;
   cursor: pointer;
   :hover {
-    background: ${props => props.showRevisions && "#ffffff18"};
+    background: ${(props) => props.showRevisions && "#ffffff18"};
   }
 
   > div > i {

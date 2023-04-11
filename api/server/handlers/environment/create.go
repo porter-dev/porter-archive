@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -64,18 +65,29 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	if request.DeploymentInactiveTTL != "" {
+		_, err := time.ParseDuration(request.DeploymentInactiveTTL)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("malformed deployment_inactive_ttl: %s", request.DeploymentInactiveTTL), http.StatusBadRequest))
+			return
+		}
+	}
+
 	env := &models.Environment{
-		ProjectID:           project.ID,
-		ClusterID:           cluster.ID,
-		GitInstallationID:   uint(ga.InstallationID),
-		Name:                request.Name,
-		GitRepoOwner:        owner,
-		GitRepoName:         name,
-		GitRepoBranches:     strings.Join(request.GitRepoBranches, ","),
-		Mode:                request.Mode,
-		WebhookID:           string(webhookUID),
-		NewCommentsDisabled: request.DisableNewComments,
-		GitDeployBranches:   strings.Join(request.GitDeployBranches, ","),
+		ProjectID:             project.ID,
+		ClusterID:             cluster.ID,
+		GitInstallationID:     uint(ga.InstallationID),
+		Name:                  request.Name,
+		GitRepoOwner:          owner,
+		GitRepoName:           name,
+		GitRepoBranches:       strings.Join(request.GitRepoBranches, ","),
+		Mode:                  request.Mode,
+		WebhookID:             string(webhookUID),
+		NewCommentsDisabled:   request.DisableNewComments,
+		GitDeployBranches:     strings.Join(request.GitDeployBranches, ","),
+		DeploymentInactiveTTL: request.DeploymentInactiveTTL,
 	}
 
 	if len(request.NamespaceLabels) > 0 {

@@ -22,10 +22,11 @@ type Environment struct {
 	Name string
 	Mode string
 
-	NewCommentsDisabled  bool
-	NamespaceLabels      []byte
-	NamespaceAnnotations []byte
-	GitDeployBranches    string
+	NewCommentsDisabled   bool
+	NamespaceLabels       []byte
+	NamespaceAnnotations  []byte
+	GitDeployBranches     string
+	DeploymentInactiveTTL string
 
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
 	// aren't present
@@ -61,8 +62,9 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
 
-		NewCommentsDisabled: e.NewCommentsDisabled,
-		NamespaceLabels:     make(map[string]string),
+		NewCommentsDisabled:   e.NewCommentsDisabled,
+		NamespaceLabels:       make(map[string]string),
+		DeploymentInactiveTTL: e.DeploymentInactiveTTL,
 
 		Name: e.Name,
 		Mode: e.Mode,

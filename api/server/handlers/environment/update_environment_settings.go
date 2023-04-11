@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -150,6 +151,20 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 	if request.DisableNewComments != env.NewCommentsDisabled {
 		env.NewCommentsDisabled = request.DisableNewComments
+		changed = true
+	}
+
+	if request.DeploymentInactiveTTL != env.DeploymentInactiveTTL {
+		_, err := time.ParseDuration(request.DeploymentInactiveTTL)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("malformed deployment_inactive_ttl: %s", request.DeploymentInactiveTTL), http.StatusBadRequest),
+			)
+			return
+		}
+
+		env.DeploymentInactiveTTL = request.DeploymentInactiveTTL
 		changed = true
 	}
 

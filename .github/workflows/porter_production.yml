@@ -13,32 +13,14 @@ jobs:
       - name: Set Github tag
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-      # - name: Setup Go Cache
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: |
-      #       ~/go/pkg/mod
-      #       ~/.cache/go-build
-      #     key: porter-go-${{ hashFiles('**/go.sum') }}
-      #     restore-keys: |
-      #       porter-go-
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-          check-latest: true
-          cache-dependency-path: go.sum
       - name: Build Server Binary
-        run: go build -ldflags="-w -s -X 'main.Version=production'" -a -o ./bin/app ./cmd/app
+        run: go build -ldflags="-w -s -X 'main.Version=production'" -o ./bin/app ./cmd/app
       - name: Build Migration Binary
-        run: go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v2
-      # - name: Build and push
-      #   uses: docker/build-push-action@v4
-      #   with:
-      #     push: false
-      #     tags: user/app:latest
+        run: go build -ldflags '-w -s' -o ./bin/migrate ./cmd/migrate
       - name: Update Porter App
         timeout-minutes: 20
         uses: porter-dev/porter-update-action@v0.1.0

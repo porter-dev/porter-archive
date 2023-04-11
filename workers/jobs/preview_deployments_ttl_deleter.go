@@ -11,9 +11,11 @@ import (
 	"github.com/porter-dev/porter/ee/integrations/vault"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	rcreds "github.com/porter-dev/porter/internal/repository/credentials"
 	rgorm "github.com/porter-dev/porter/internal/repository/gorm"
+	"golang.org/x/oauth2"
 	"gorm.io/gorm"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
@@ -34,12 +36,17 @@ const (
 type previewDeploymentsTTLDeleter struct {
 	enqueueTime time.Time
 	db          *gorm.DB
+	doConf      *oauth2.Config
 	repo        repository.Repository
 }
 
 // PreviewDeploymentsTTLDeleterOpts holds the options required to run this job
 type PreviewDeploymentsTTLDeleterOpts struct {
-	DBConf *env.DBConf
+	DBConf         *env.DBConf
+	ServerURL      string
+	DOClientID     string
+	DOClientSecret string
+	DOScopes       []string
 }
 
 func NewPreviewDeploymentsTTLDeleter(
@@ -57,6 +64,13 @@ func NewPreviewDeploymentsTTLDeleter(
 		)
 	}
 
+	doConf := oauth.NewDigitalOceanClient(&oauth.Config{
+		ClientID:     opts.DOClientID,
+		ClientSecret: opts.DOClientSecret,
+		Scopes:       opts.DOScopes,
+		BaseURL:      opts.ServerURL,
+	})
+
 	var key [32]byte
 
 	for i, b := range []byte(opts.DBConf.EncryptionKey) {
@@ -65,9 +79,7 @@ func NewPreviewDeploymentsTTLDeleter(
 
 	repo := rgorm.NewRepository(db, &key, credBackend)
 
-	return &previewDeploymentsTTLDeleter{
-		enqueueTime, db, repo,
-	}, nil
+	return &previewDeploymentsTTLDeleter{enqueueTime, db, doConf, repo}, nil
 }
 
 func (n *previewDeploymentsTTLDeleter) ID() string {
@@ -138,6 +150,7 @@ func (n *previewDeploymentsTTLDeleter) Run() error {
 					k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(&kubernetes.OutOfClusterConfig{
 						Cluster:                   cluster,
 						Repo:                      n.repo,
+						DigitalOceanOAuth:         n.doConf,
 						AllowInClusterConnections: false,
 						Timeout:                   10 * time.Second,
 					})

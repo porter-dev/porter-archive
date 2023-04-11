@@ -39,25 +39,36 @@ var (
 
 // EnvConf holds the environment variables for this binary
 type EnvConf struct {
-	ServerURL          string `env:"SERVER_URL,default=http://localhost:8080"`
-	DOClientID         string `env:"DO_CLIENT_ID"`
-	DOClientSecret     string `env:"DO_CLIENT_SECRET"`
-	DBConf             env.DBConf
-	MaxWorkers         uint   `env:"MAX_WORKERS,default=10"`
-	MaxQueue           uint   `env:"MAX_QUEUE,default=100"`
+	// ServerURL is the URL of the Porter server
+	ServerURL string `env:"SERVER_URL,default=http://localhost:8080"`
+
+	// Porter instance's database configuration
+	DBConf env.DBConf
+
+	// DigitalOcean OAuth2 credentials
+	DOClientID     string `env:"DO_CLIENT_ID"`
+	DOClientSecret string `env:"DO_CLIENT_SECRET"`
+
+	// Worker pool configuration
+	MaxWorkers uint `env:"MAX_WORKERS,default=10"`
+	MaxQueue   uint `env:"MAX_QUEUE,default=100"`
+	Port       uint `env:"PORT,default=3000"`
+
+	/**
+	 * Job-specific configuration
+	 */
+
+	// "helm-revisions-count-tracker"
 	AWSAccessKeyID     string `env:"AWS_ACCESS_KEY_ID"`
 	AWSSecretAccessKey string `env:"AWS_SECRET_ACCESS_KEY"`
 	AWSRegion          string `env:"AWS_REGION"`
 	S3BucketName       string `env:"S3_BUCKET_NAME"`
 	EncryptionKey      string `env:"S3_ENCRYPTION_KEY"`
+	RevisionsCount     int    `env:"REVISIONS_COUNT,default=20"`
 
+	// "recommender"
 	OPAConfigFileDir string `env:"OPA_CONFIG_FILE_DIR,default=./internal/opa"`
-
 	LegacyProjectIDs []uint `env:"LEGACY_PROJECT_IDS"`
-
-	Port uint `env:"PORT,default=3000"`
-
-	RevisionsCount int `env:"REVISIONS_COUNT,default=20"`
 }
 
 func main() {

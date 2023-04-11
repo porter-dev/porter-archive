@@ -1,10 +1,11 @@
 import React, { Component } from "react";
 import { BrowserRouter } from "react-router-dom";
 import PorterErrorBoundary from "shared/error_handling/PorterErrorBoundary";
-import styled, { createGlobalStyle } from "styled-components";
+import styled, { ThemeProvider, createGlobalStyle } from "styled-components";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import MainWrapper from "./main/MainWrapper";
+import theme from "shared/themes/midnight";
 
 const queryClient = new QueryClient();
 
@@ -12,14 +13,16 @@ export default class App extends Component {
   render() {
     return (
       <QueryClientProvider client={queryClient}>
-        <StyledMain>
-          <GlobalStyle />
-          <PorterErrorBoundary errorBoundaryLocation="globalErrorBoundary">
-            <BrowserRouter>
-              <MainWrapper />
-            </BrowserRouter>
-          </PorterErrorBoundary>
-        </StyledMain>
+        <ThemeProvider theme={theme}>
+          <StyledMain>
+            <GlobalStyle />
+            <PorterErrorBoundary errorBoundaryLocation="globalErrorBoundary">
+              <BrowserRouter>
+                <MainWrapper />
+              </BrowserRouter>
+            </PorterErrorBoundary>
+          </StyledMain>
+        </ThemeProvider>
       </QueryClientProvider>
     );
   }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
 import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
-import styled from "styled-components";
+import styled, { ThemeProps } from "styled-components";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -498,7 +498,7 @@ const ViewWrapper = styled.div`
   display: flex;
   flex: 1;
   justify-content: center;
-  background: #202227;
+  background: ${props => props.theme.bg};
   position: relative;
 `;
 

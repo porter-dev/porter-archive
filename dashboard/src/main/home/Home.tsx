@@ -490,6 +490,7 @@ const ViewWrapper = styled.div`
   padding: 45px;
   display: flex;
   flex: 1;
+  overflow-y: auto;
   justify-content: center;
   background: #202227;
   position: relative;

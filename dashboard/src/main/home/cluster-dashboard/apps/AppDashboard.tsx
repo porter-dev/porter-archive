@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import styled from "styled-components";
 import { RouteComponentProps, withRouter } from "react-router";
 
-import monoweb from "assets/monoweb.png";
+import web from "assets/web.png";
 
 import { Context } from "shared/Context";
 import { JobStatusType } from "shared/types";
@@ -44,7 +44,7 @@ const AppDashboard: React.FC<Props> = ({
   return (
     <StyledAppDashboard>
       <DashboardHeader
-        image={monoweb}
+        image={web}
         title={currentView}
         description="Continuously running web services, workers, and add-ons."
         disableLineBreak

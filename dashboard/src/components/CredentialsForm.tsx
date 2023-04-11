@@ -187,7 +187,7 @@ const CredentialsForm: React.FC<Props> = ({
 
   return (
     <>
-      <Heading isAtTop>
+      <Text size={16}>
         <BackButton width="140px" onClick={goBack}>
           <i className="material-icons">first_page</i>
           Select cloud
@@ -198,10 +198,12 @@ const CredentialsForm: React.FC<Props> = ({
         <HelperButton onClick={() => window.open("https://docs.porter.run/getting-started/provisioning-on-aws/", "_blank")}>
           <i className="material-icons">help_outline</i>
         </HelperButton>
-      </Heading>
-      <Helper>
+      </Text>
+      <Spacer y={1} />
+      <Text color="helper">
         Select your credentials from the list below, or add a new set of credentials:
-      </Helper>
+      </Text>
+      <Spacer y={1} />
       {
         isLoading ? (
           <Loading height="150px" />

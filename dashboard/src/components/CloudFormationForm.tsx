@@ -88,7 +88,7 @@ const CloudFormationForm: React.FC<Props> = ({
       <>
         <Spacer y={1} />
         <Fieldset>
-          <Text size={16} weight={500}>
+          <Text size={16}>
             Log in to AWS and "Create stack"
           </Text>
           <Spacer height="15px" />
@@ -149,7 +149,7 @@ const CloudFormationForm: React.FC<Props> = ({
                 ctaText="Troubleshooting steps"
                 errorModalContents={
                   <>
-                    <Text size={16} weight={500}>Granting Porter access to AWS</Text>
+                    <Text size={16}>Granting Porter access to AWS</Text>
                     <Spacer y={1} />
                     <Text color="helper">
                       Porter needs access to your AWS account in order to create infrastructure. You can grant Porter access to AWS by following these steps:
@@ -192,7 +192,7 @@ const CloudFormationForm: React.FC<Props> = ({
 
   return (
     <>
-      <Text size={16} weight={500}>
+      <Text size={16}>
         <BackButton width="140px" onClick={goBack}>
           <i className="material-icons">first_page</i>
           Select cloud

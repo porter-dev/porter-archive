@@ -308,7 +308,7 @@ const RepoList: React.FC<Props> = ({
 
     return (
       <>
-                <Text size={16} weight={500}>
+                <Text size={16}>
                   No connected repositories were found.
                 </Text>
                 <ConnectToGithubButton

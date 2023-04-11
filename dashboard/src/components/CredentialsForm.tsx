@@ -21,7 +21,7 @@ import Spacer from "./porter/Spacer";
 
 type Props = {
   goBack: () => void;
-  proceed: (x: any) => void;
+  proceed: (cloud_provider_credentials_id: string, aws_account_id: string) => void;
   enableAssumeRole?: () => void;
 };
 
@@ -80,10 +80,8 @@ const CredentialsForm: React.FC<Props> = ({
           // Hardcoded for backward-compatibility
           // TODO: remove
           aws_region: "us-east-f",
-
           aws_access_key_id: awsAccessKeyID,
           aws_secret_access_key: awsSecretAccessKey,
-          aws_assume_role_arn: "",
         },
         {
           id: currentProject.id,
@@ -91,7 +89,7 @@ const CredentialsForm: React.FC<Props> = ({
       )
       .then(({ data }) => {
         setCreateStatus("successful");
-        proceed(data.cloud_provider_credentials_id);
+        proceed(data.cloud_provider_credentials_id, awsAccessKeyID);
       })
       .catch((err) => {
         console.error(err);
@@ -135,7 +133,7 @@ const CredentialsForm: React.FC<Props> = ({
           <Br height="34px" />
           <SaveButton
             disabled={!selectedCredentials && true}
-            onClick={() => proceed(selectedCredentials.aws_arn)}
+            onClick={() => checkCreds(selectedCredentials.acc, selectedCredentials.user_id)}
             clearPosition
             text="Continue"
           />

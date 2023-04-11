@@ -171,8 +171,8 @@ const ProvisionerFlow: React.FC<Props> = ({
       <CredentialsForm
         enableAssumeRole={() => setUseAssumeRole(true)}
         goBack={() => setCurrentStep("cloud")}
-        proceed={(id) => {
-          setCredentialId(id);
+        proceed={(credentialId) => {
+          setCredentialId(credentialId);
           setCurrentStep("cluster");
         }}
       />
@@ -182,7 +182,6 @@ const ProvisionerFlow: React.FC<Props> = ({
       <ProvisionerForm
         goBack={() => setCurrentStep("credentials")}
         credentialId={credentialId}
-        AWSAccountID={AWSAccountID}
         useAssumeRole={useAssumeRole}
       />
     );

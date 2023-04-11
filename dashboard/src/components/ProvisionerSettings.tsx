@@ -146,7 +146,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
         .preflightCheckAWSUsage(
           "<token>",
           {
-            target_arn: `arn:aws:iam::${props.AWSAccountID}:role/porter-role`,
+            target_arn: `arn:aws:iam::${props.AWSAccountID}:role/porter-manager`,
             region: awsRegion
           },
           {

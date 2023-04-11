@@ -1,25 +1,53 @@
 "on":
   push:
     branches:
-    - master
+      - master
+      - rename-porter-role
 name: Deploy to Porter
 jobs:
   porter-deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Set Github tag
-      id: vars
-      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-    - name: Update Porter App
-      timeout-minutes: 20
-      uses: porter-dev/porter-update-action@v0.1.0
-      with:
-        app: production
-        cluster: "8"
-        host: https://dashboard.internal-tools.getporter.dev
-        namespace: default
-        project: "1"
-        tag: ${{ steps.vars.outputs.sha_short }}
-        token: ${{ secrets.PORTER_TOKEN_1 }}
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set Github tag
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      # - name: Setup Go Cache
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       ~/go/pkg/mod
+      #       ~/.cache/go-build
+      #     key: porter-go-${{ hashFiles('**/go.sum') }}
+      #     restore-keys: |
+      #       porter-go-
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+          go-version-file: go.mod
+          check-latest: true
+          cache-dependency-path: go.sum
+      - name: Build Migration Binary
+        run: go build -ldflags="-w -s -X 'main.Version=production'" -a -o ./bin/app ./cmd/app
+      - name: Build Migration Binary
+        run: go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v2
+      # - name: Build and push
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     push: false
+      #     tags: user/app:latest
+      - name: Update Porter App
+        timeout-minutes: 20
+        uses: porter-dev/porter-update-action@v0.1.0
+        with:
+          app: production
+          cluster: "8"
+          host: https://dashboard.internal-tools.getporter.dev
+          namespace: default
+          project: "1"
+          tag: ${{ steps.vars.outputs.sha_short }}
+          token: ${{ secrets.PORTER_TOKEN_1 }}

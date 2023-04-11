@@ -72,15 +72,15 @@ const ProvisionerSettingsOld: React.FC<Props> = props => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
-  const [cidrRange, setCidrRange] = useState("172.0.0.0/16");
+  const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
   const [isReadOnly, setIsReadOnly] = useState(false);
 
   const markProvisioningStarted = async () => {
     try {
       const res = await api.updateOnboardingStep(
-        "<token>", 
-        { step: "provisioning-started" }, 
+        "<token>",
+        { step: "provisioning-started" },
         {}
       );
     } catch (err) {
@@ -90,7 +90,7 @@ const ProvisionerSettingsOld: React.FC<Props> = props => {
 
   const createCluster = async () => {
     markProvisioningStarted();
-    
+
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -102,7 +102,7 @@ const ProvisionerSettingsOld: React.FC<Props> = props => {
           value: new EKS({
             clusterName,
             clusterVersion: clusterVersion || "v1.24.0",
-            cidrRange: cidrRange || "172.0.0.0/16",
+            cidrRange: cidrRange || "10.78.0.0/16",
             region: awsRegion,
             nodeGroups: [
               new EKSNodeGroup({
@@ -201,7 +201,7 @@ const ProvisionerSettingsOld: React.FC<Props> = props => {
   }, [props.selectedClusterVersion]);
 
   const renderForm = () => {
-    
+
     // Render simplified form if initial create
     if (!props.clusterId) {
       return (
@@ -290,7 +290,7 @@ const ProvisionerSettingsOld: React.FC<Props> = props => {
                 value={cidrRange}
                 setValue={(x: string) => setCidrRange(x)}
                 label="VPC CIDR range"
-                placeholder="ex: 172.0.0.0/16"
+                placeholder="ex: 10.78.0.0/16"
               />
             </>
           )

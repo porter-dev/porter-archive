@@ -3,6 +3,7 @@ package v2beta1
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/config"
@@ -28,6 +29,10 @@ type PreviewApplier struct {
 }
 
 func NewApplier(client *api.Client, raw []byte, namespace string) (*PreviewApplier, error) {
+	// replace all instances of ${{ porter.env.FOO }} with { .get-env.FOO }
+	re := regexp.MustCompile(`\$\{\{\s*porter\.env\.(.*)\s*\}\}`)
+	raw = re.ReplaceAll(raw, []byte("{.get-env.$1}"))
+
 	parsed := &PorterYAML{}
 
 	err := yaml.Unmarshal(raw, parsed)
@@ -147,6 +152,12 @@ func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
 
 	v1File := &types.ResourceGroup{
 		Version: "v1",
+		Resources: []*types.Resource{
+			{
+				Name:   "get-env",
+				Driver: "os-env",
+			},
+		},
 	}
 
 	buildRefs := make(map[string]*Build)

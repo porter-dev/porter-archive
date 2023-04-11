@@ -13,14 +13,12 @@ import Spacer from "./porter/Spacer";
 type Props = {
   goBack: () => void;
   credentialId: string;
-  AWSAccountID: string;
   useAssumeRole?: boolean;
 };
 
 const ProvisionerForm: React.FC<Props> = ({
   goBack,
   credentialId,
-  AWSAccountID,
   useAssumeRole,
 }) => {
   return (
@@ -40,7 +38,7 @@ const ProvisionerForm: React.FC<Props> = ({
       </Text>
       <Spacer y={1} />
       {useAssumeRole ? (
-        <ProvisionerSettings credentialId={credentialId} AWSAccountID={AWSAccountID} />
+        <ProvisionerSettings credentialId={credentialId} />
       ) : (
         <ProvisionerSettingsOld credentialId={credentialId} />
       )}

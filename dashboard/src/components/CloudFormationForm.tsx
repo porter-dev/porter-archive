@@ -21,20 +21,17 @@ import Link from "./porter/Link";
 
 type Props = {
   goBack: () => void;
-  AWSAccountID: string;
-  setAWSAccountID: (id: string) => void;
   proceed: (id: string) => void;
 };
 
 const CloudFormationForm: React.FC<Props> = ({
   goBack,
   proceed,
-  AWSAccountID,
-  setAWSAccountID
 }) => {
   const [grantPermissionsError, setGrantPermissionsError] = useState("");
   const [roleStatus, setRoleStatus] = useState("");
   const [errorMessage, setErrorMessage] = useState(undefined);
+  const [AWSAccountID, setAWSAccountID] = useState("");
   const { currentProject } = useContext(Context);
 
   const getExternalId = () => {

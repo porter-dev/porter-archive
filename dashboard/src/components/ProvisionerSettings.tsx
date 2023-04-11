@@ -15,6 +15,8 @@ import SaveButton from "./SaveButton";
 import { Contract, EnumKubernetesKind, EnumCloudProvider, NodeGroupType, EKSNodeGroup, EKS, Cluster } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
+import Text from "./porter/Text";
+import Spacer from "./porter/Spacer";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -54,7 +56,7 @@ const clusterVersionOptions = [
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   credentialId: string;
-  AWSAccountID: string;
+  AWSAccountID?: string;
   clusterId?: number;
 };
 
@@ -226,10 +228,12 @@ const ProvisionerSettings: React.FC<Props> = props => {
     if (!props.clusterId) {
       return (
         <>
-          <Heading isAtTop>Select an AWS region</Heading>
-          <Helper>
+          <Text size={16}>Select an AWS region</Text>
+          <Spacer y={1} />
+          <Text color="helper">
             Porter will automatically provision your infrastructure in the specified region.
-          </Helper>
+          </Text>
+          <Spacer height="10px" />
           <SelectRow
             options={regionOptions}
             width="350px"

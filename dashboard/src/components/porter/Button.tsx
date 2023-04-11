@@ -142,7 +142,6 @@ const StyledButton = styled.button<{
   padding: 15px;
   border: none;
   outline: none;
-  font-weight: 500;
   color: white;
   background: ${props => (props.disabled && !props.color) ? "#aaaabb" : (props.color || "#5561C0")};
   display: flex;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import styled, { keyframes } from "styled-components";
 
 type Props = {
@@ -22,7 +22,7 @@ const LoadingBar: React.FC<Props> = ({
         return color;
     }
   };
-  
+
   return (
     <StyledLoadingBar>
       <LoadingFill
@@ -52,15 +52,17 @@ const movingGradient = keyframes`
   }
 `;
 
-const LoadingFill = styled.div<{ 
+const LoadingFill = styled.div<{
   percent: string;
   color?: string;
 }>`
   width: ${props => props.percent};
-  background: ${props => props.color || "linear-gradient(to right, #8ce1ff, #616FEE)"};
+  background: ${props =>
+    props.color || "linear-gradient(to right, #8ce1ff, #616FEE)"};
   height: 100%;
   background-size: 250% 100%;
   animation: ${movingGradient} 2s infinite;
   animation-timing-function: ease-in-out;
   animation-direction: alternate;
+  transition: width 0.5s ease-in-out;
 `;

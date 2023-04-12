@@ -5,14 +5,11 @@
       - rename-porter-role
 name: Deploy to Porter
 jobs:
-  porter-deploy:
+  build-go:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Set Github tag
-        id: vars
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Setup Go Cache
         uses: actions/cache@v3
         with:
@@ -20,8 +17,7 @@ jobs:
             ~/.cache/go-build
             ~/go/pkg/mod
           key: porter-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            porter-go-`
+          restore-keys: porter-go-`
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -32,6 +28,47 @@ jobs:
         run: go build -ldflags="-w -s -X 'main.Version=production'" -o ./bin/app ./cmd/app
       - name: Build Migration Binary
         run: go build -ldflags '-w -s' -o ./bin/migrate ./cmd/migrate
+      - name: Store Binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: go-binaries
+          path: bin/
+  build-npm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install NPM Dependencies
+        run: npm i --legacy-peer-deps
+      - name: Run NPM Build
+        run: npm run build
+      - name: Store NPM Static Files
+        uses: actions/upload-artifact@v3
+        with:
+          name: npm-static-files
+          path: build/
+  porter-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Get Go Binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: go-binaries
+          path: bin/
+      - name: Get NPM static files
+        uses: actions/download-artifact@v3
+        with:
+          name: npm-static-files
+          path: build/
+      - name: Set Github tag
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Update Porter App
         timeout-minutes: 20
         uses: porter-dev/porter-update-action@v0.1.0

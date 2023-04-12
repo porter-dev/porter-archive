@@ -60,7 +60,7 @@ const StyledPlaceholder = styled.div<{
   justify-content: center;
   font-size: 13px;
   border-radius: 5px;
-  background: #26292e;
+  background: ${props => props.theme.fg};
   border: 1px solid #494b4f;
   padding-bottom: 60px;
 

@@ -204,8 +204,6 @@ const MainRow = styled.div`
   padding: 15px;
   border-radius: 5px;
   :hover {
-    background: ${(props: { disabled: boolean }) =>
-      props.disabled ? "" : "#ffffff11"};
     > i {
       background: ${(props: { disabled: boolean }) =>
         props.disabled ? "" : "#ffffff11"};
@@ -233,7 +231,7 @@ const Integration = styled.div`
     props.disabled ? "not-allowed" : "pointer"};
   margin-bottom: 20px;
   border-radius: 5px;
-  background: linear-gradient(180deg, #26292e, #24272c);
+  background: ${props => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

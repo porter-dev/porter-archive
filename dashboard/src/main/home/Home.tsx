@@ -492,7 +492,7 @@ const ViewWrapper = styled.div`
   flex: 1;
   overflow-y: auto;
   justify-content: center;
-  background: #202227;
+  background: ${props => props.theme.bg};
   position: relative;
 `;
 

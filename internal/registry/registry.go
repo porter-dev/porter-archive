@@ -883,13 +883,21 @@ func (r *Registry) createGARRepository(
 
 // ListImages lists the images for an image repository
 func (r *Registry) ListImages(
+	ctx context.Context,
 	repoName string,
 	repo repository.Repository,
-	doAuth *oauth2.Config, // only required if using DOCR
+	conf *config.Config,
 ) ([]*ptypes.Image, error) {
 	// switch on the auth mechanism to get a token
 	if r.AWSIntegrationID != 0 {
-		return r.listECRImages(repoName, repo)
+		aws, err := repo.AWSIntegration().ReadAWSIntegration(
+			r.ProjectID,
+			r.AWSIntegrationID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		return r.listECRImages(aws, repoName, repo)
 	}
 
 	if r.AzureIntegrationID != 0 {
@@ -905,11 +913,38 @@ func (r *Registry) ListImages(
 	}
 
 	if r.DOIntegrationID != 0 {
-		return r.listDOCRImages(repoName, repo, doAuth)
+		return r.listDOCRImages(repoName, repo, conf.DOConf)
 	}
 
 	if r.BasicIntegrationID != 0 {
 		return r.listPrivateRegistryImages(repoName, repo)
+	}
+
+	project, err := conf.Repo.Project().ReadProject(r.ProjectID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting project for repository: %w", err)
+	}
+
+	if project.CapiProvisionerEnabled {
+		uri := strings.TrimPrefix(r.URL, "https://")
+		splits := strings.Split(uri, ".")
+		accountID := splits[0]
+		region := splits[3]
+		req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{
+			ProjectId:    int64(r.ProjectID),
+			AwsAccountId: accountID,
+		})
+		creds, err := conf.ClusterControlPlaneClient.AssumeRoleCredentials(ctx, req)
+		if err != nil {
+			return nil, fmt.Errorf("error getting capi credentials for repository: %w", err)
+		}
+		aws := &ints.AWSIntegration{
+			AWSAccessKeyID:     []byte(creds.Msg.AwsAccessId),
+			AWSSecretAccessKey: []byte(creds.Msg.AwsSecretKey),
+			AWSSessionToken:    []byte(creds.Msg.AwsSessionToken),
+			AWSRegion:          region,
+		}
+		return r.listECRImages(aws, repoName, repo)
 	}
 
 	return nil, fmt.Errorf("error listing images")
@@ -1025,15 +1060,7 @@ func (r *Registry) GetECRPaginatedImages(
 	return res, resp.NextToken, nil
 }
 
-func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
-	aws, err := repo.AWSIntegration().ReadAWSIntegration(
-		r.ProjectID,
-		r.AWSIntegrationID,
-	)
-	if err != nil {
-		return nil, err
-	}
-
+func (r *Registry) listECRImages(aws *ints.AWSIntegration, repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
 	sess, err := aws.GetSession()
 	if err != nil {
 		return nil, err

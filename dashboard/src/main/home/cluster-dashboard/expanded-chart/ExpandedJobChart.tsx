@@ -752,7 +752,7 @@ const TabButton = styled.div`
   position: absolute;
   right: 0px;
   height: 30px;
-  background: linear-gradient(to right, #20222700, #202227 20%);
+  background: linear-gradient(to right, #00000000, ${props => props.theme.bg} 20%);
   padding-left: 30px;
   display: flex;
   align-items: center;

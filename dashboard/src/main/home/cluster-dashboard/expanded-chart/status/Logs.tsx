@@ -318,7 +318,7 @@ const LogStream = styled.div`
   float: right;
   height: 100%;
   font-size: 13px;
-  background: #121318;
+  background: #000000;
   user-select: text;
   max-width: 65%;
   overflow-y: auto;

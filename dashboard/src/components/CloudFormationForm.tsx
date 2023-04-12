@@ -47,7 +47,7 @@ const CloudFormationForm: React.FC<Props> = ({
 
   const checkIfRoleExists = async () => {
     let externalId = getExternalId();
-    let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-role`
+    let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-manager`
 
     setRoleStatus("loading");
     setErrorMessage(undefined)
@@ -141,7 +141,7 @@ const CloudFormationForm: React.FC<Props> = ({
           }}
           status={
             errorMessage ? (
-              <Error 
+              <Error
                 message={errorMessage}
                 ctaText="Troubleshooting steps"
                 errorModalContents={

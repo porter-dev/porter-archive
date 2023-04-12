@@ -1,0 +1,8 @@
+# All build artifacts are built in github actions, and copied in
+# Ubuntu is used to match Github action, and use github action caching instead of docker caching
+FROM ubuntu as runner
+WORKDIR /porter
+COPY bin/app /porter/
+COPY bin/migrate /porter/
+COPY build/ /porter/static
+RUN chmod +x /porter/app /porter/migrate

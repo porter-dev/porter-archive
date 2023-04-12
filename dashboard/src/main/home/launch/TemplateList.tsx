@@ -224,7 +224,7 @@ const TemplateBlock = styled.div`
   color: #ffffff;
   position: relative;
   border-radius: 5px;
-  background: linear-gradient(160deg, #26292e, #1e2023);
+  background: ${props => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

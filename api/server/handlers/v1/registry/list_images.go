@@ -29,7 +29,8 @@ func NewRegistryListImagesHandler(
 }
 
 func (c *RegistryListImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	reg, _ := r.Context().Value(types.RegistryScope).(*models.Registry)
+	ctx := r.Context()
+	reg, _ := ctx.Value(types.RegistryScope).(*models.Registry)
 
 	repoName, reqErr := requestutils.GetURLParamString(r, types.URLParamWildcard)
 
@@ -79,7 +80,7 @@ func (c *RegistryListImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 		res.Images = append(res.Images, imgs...)
 	} else {
-		imgs, err := regAPI.ListImages(repoName, c.Repo(), c.Config().DOConf)
+		imgs, err := regAPI.ListImages(ctx, repoName, c.Repo(), c.Config())
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return

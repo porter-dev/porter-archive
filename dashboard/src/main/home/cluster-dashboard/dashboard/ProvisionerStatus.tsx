@@ -33,7 +33,7 @@ const ProvisionerStatus: React.FC<Props> = ({
           cluster_id: currentCluster.id,
         }
       );
-      const { is_control_plane_ready, is_infrastructure_ready, status } = res.data;
+      const { is_control_plane_ready, is_infrastructure_ready, phase } = res.data;
       let progress = 1;
       if (is_control_plane_ready) {
         progress += 1
@@ -41,7 +41,7 @@ const ProvisionerStatus: React.FC<Props> = ({
       if (is_infrastructure_ready) {
         progress += 1
       }
-      if (status === 'Provisioned') {
+      if (phase === 'Provisioned') {
         progress += 1
       }
       setProgress(progress);

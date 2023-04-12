@@ -133,7 +133,7 @@ const StyledCurrentError = styled.div`
   border-radius: 3px;
   background: #272731cc;
   border: 1px solid #ffffff55;
-  display: flex;
+  display: none;
   align-items: center;
   color: #ffffff;
 

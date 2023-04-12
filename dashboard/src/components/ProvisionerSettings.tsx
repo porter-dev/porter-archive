@@ -12,7 +12,15 @@ import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import InputRow from "./form-components/InputRow";
 import SaveButton from "./SaveButton";
-import { Contract, EnumKubernetesKind, EnumCloudProvider, NodeGroupType, EKSNodeGroup, EKS, Cluster } from "@porter-dev/api-contracts";
+import {
+  Contract,
+  EnumKubernetesKind,
+  EnumCloudProvider,
+  NodeGroupType,
+  EKSNodeGroup,
+  EKS,
+  Cluster,
+} from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
 import Text from "./porter/Text";
@@ -55,11 +63,12 @@ const clusterVersionOptions = [
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
+  provisionerError?: string;
   credentialId: string;
   clusterId?: number;
 };
 
-const ProvisionerSettings: React.FC<Props> = props => {
+const ProvisionerSettings: React.FC<Props> = (props) => {
   const {
     user,
     currentProject,
@@ -90,7 +99,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
     } catch (err) {
       console.log(err);
     }
-  }
+  };
 
   const createCluster = async () => {
     markProvisioningStarted();
@@ -129,11 +138,11 @@ const ProvisionerSettings: React.FC<Props> = props => {
                 maxInstances: maxInstances || 10,
                 nodeGroupType: NodeGroupType.APPLICATION,
                 isStateful: false,
-              })
-            ]
-          })
+              }),
+            ],
+          }),
         },
-      })
+      }),
     });
 
     if (props.clusterId) {
@@ -141,34 +150,28 @@ const ProvisionerSettings: React.FC<Props> = props => {
     }
 
     try {
-      setIsReadOnly(true)
-      setErrorMessage(undefined)
-      await api
-        .preflightCheckAWSUsage(
-          "<token>",
-          {
-            target_arn: props.credentialId,
-            region: awsRegion
-          },
-          {
-            id: currentProject.id,
-          }
-        );
-
-      const res = await api.createContract(
+      setIsReadOnly(true);
+      setErrorMessage(undefined);
+      await api.preflightCheckAWSUsage(
         "<token>",
-        data,
-        { project_id: currentProject.id }
+        {
+          target_arn: props.credentialId,
+          region: awsRegion,
+        },
+        {
+          id: currentProject.id,
+        }
       );
+
+      const res = await api.createContract("<token>", data, {
+        project_id: currentProject.id,
+      });
 
       // Only refresh and set clusters on initial create
       if (!props.clusterId) {
         setShouldRefreshClusters(true);
-        api.getClusters(
-          "<token>",
-          {},
-          { id: currentProject.id },
-        )
+        api
+          .getClusters("<token>", {}, { id: currentProject.id })
           .then(({ data }) => {
             data.forEach((cluster: ClusterType) => {
               if (cluster.id === res.data.contract_revision?.cluster_id) {
@@ -187,18 +190,17 @@ const ProvisionerSettings: React.FC<Props> = props => {
       }
       setErrorMessage(undefined);
     } catch (err) {
-      setErrorMessage(err.response.data.error.replace('unknown: ', ''));
+      setErrorMessage(err.response.data.error.replace("unknown: ", ""));
     } finally {
-      setIsReadOnly(false)
+      setIsReadOnly(false);
     }
-  }
+  };
 
   useEffect(() => {
     setIsReadOnly(
-      props.clusterId && (
-        currentCluster.status === "UPDATING" ||
-        currentCluster.status === "UPDATING_UNAVAILABLE"
-      )
+      props.clusterId &&
+        (currentCluster.status === "UPDATING" ||
+          currentCluster.status === "UPDATING_UNAVAILABLE")
     );
     setClusterName(`${currentProject.name}-cluster`);
   }, []);
@@ -222,7 +224,6 @@ const ProvisionerSettings: React.FC<Props> = props => {
   }, [props.selectedClusterVersion]);
 
   const renderForm = () => {
-
     // Render simplified form if initial create
     if (!props.clusterId) {
       return (
@@ -230,7 +231,8 @@ const ProvisionerSettings: React.FC<Props> = props => {
           <Text size={16}>Select an AWS region</Text>
           <Spacer y={1} />
           <Text color="helper">
-            Porter will automatically provision your infrastructure in the specified region.
+            Porter will automatically provision your infrastructure in the
+            specified region.
           </Text>
           <Spacer height="10px" />
           <SelectRow
@@ -244,7 +246,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
             label="📍 AWS region"
           />
         </>
-      )
+      );
     }
 
     // If settings, update full form
@@ -261,78 +263,80 @@ const ProvisionerSettings: React.FC<Props> = props => {
           setActiveValue={setAwsRegion}
           label="📍 AWS region"
         />
-        {
-          user?.isPorterUser && (
-            <Heading>
-              <ExpandHeader
-                onClick={() => setIsExpanded(!isExpanded)}
-                isExpanded={isExpanded}
-              >
-                <i className="material-icons">arrow_drop_down</i>
-                Advanced settings
-              </ExpandHeader>
-            </Heading>
-          )
-        }
-        {
-          isExpanded && (
-            <>
-              <SelectRow
-                options={clusterVersionOptions}
-                width="350px"
-                disabled={isReadOnly}
-                value={clusterVersion}
-                scrollBuffer={true}
-                dropdownMaxHeight="240px"
-                setActiveValue={setClusterVersion}
-                label="Cluster version"
-              />
-              <SelectRow
-                options={machineTypeOptions}
-                width="350px"
-                disabled={isReadOnly}
-                value={machineType}
-                scrollBuffer={true}
-                dropdownMaxHeight="240px"
-                setActiveValue={setMachineType}
-                label="Machine type"
-              />
-              <InputRow
-                width="350px"
-                type="number"
-                disabled={isReadOnly}
-                value={maxInstances}
-                setValue={(x: number) => setMaxInstances(x)}
-                label="Maximum number of application EC2 instances"
-                placeholder="ex: 1"
-              />
-              <InputRow
-                width="350px"
-                type="string"
-                disabled={isReadOnly}
-                value={cidrRange}
-                setValue={(x: string) => setCidrRange(x)}
-                label="VPC CIDR range"
-                placeholder="ex: 172.0.0.0/16"
-              />
-            </>
-          )
-        }
+        {user?.isPorterUser && (
+          <Heading>
+            <ExpandHeader
+              onClick={() => setIsExpanded(!isExpanded)}
+              isExpanded={isExpanded}
+            >
+              <i className="material-icons">arrow_drop_down</i>
+              Advanced settings
+            </ExpandHeader>
+          </Heading>
+        )}
+        {isExpanded && (
+          <>
+            <SelectRow
+              options={clusterVersionOptions}
+              width="350px"
+              disabled={isReadOnly}
+              value={clusterVersion}
+              scrollBuffer={true}
+              dropdownMaxHeight="240px"
+              setActiveValue={setClusterVersion}
+              label="Cluster version"
+            />
+            <SelectRow
+              options={machineTypeOptions}
+              width="350px"
+              disabled={isReadOnly}
+              value={machineType}
+              scrollBuffer={true}
+              dropdownMaxHeight="240px"
+              setActiveValue={setMachineType}
+              label="Machine type"
+            />
+            <InputRow
+              width="350px"
+              type="number"
+              disabled={isReadOnly}
+              value={maxInstances}
+              setValue={(x: number) => setMaxInstances(x)}
+              label="Maximum number of application EC2 instances"
+              placeholder="ex: 1"
+            />
+            <InputRow
+              width="350px"
+              type="string"
+              disabled={isReadOnly}
+              value={cidrRange}
+              setValue={(x: string) => setCidrRange(x)}
+              label="VPC CIDR range"
+              placeholder="ex: 172.0.0.0/16"
+            />
+          </>
+        )}
       </>
-    )
-  }
+    );
+  };
 
   return (
     <>
-      <StyledForm>
-        {renderForm()}
-      </StyledForm>
+      <StyledForm>{renderForm()}</StyledForm>
       <Button
-        disabled={(!clusterName && true) || isReadOnly}
+        disabled={
+          (!clusterName && true) || isReadOnly || props.provisionerError == ""
+        }
         onClick={createCluster}
         status={isReadOnly && "Provisioning is still in progress"}
-      >Provision</Button>
-      {errorMessage && <ErrorContainer>{errorMessage} Please correct the issue and try to provision again.</ErrorContainer>}
+      >
+        Provision
+      </Button>
+      {errorMessage && (
+        <ErrorContainer>
+          {errorMessage} Please correct the issue and try to provision again.
+        </ErrorContainer>
+      )}
     </>
   );
 };
@@ -346,7 +350,8 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
   > i {
     margin-right: 7px;
     margin-left: -7px;
-    transform: ${(props) => props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+    transform: ${(props) =>
+      props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
   }
 `;
 
@@ -370,4 +375,4 @@ const ErrorContainer = styled.div`
   font-size: 13px;
   margin-bottom: 30px;
   color: red;
-`
+`;

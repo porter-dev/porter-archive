@@ -176,11 +176,7 @@ func (n *previewDeploymentsTTLDeleter) Run() error {
 
 								_, err := k8sAgent.GetNamespace(depl.Namespace)
 
-								if err != nil && !errors.IsNotFound(err) {
-									log.Printf("error getting k8s namespace for deployment '%s': %v. skipping ...",
-										depl.PRName, err)
-									continue
-								} else if err == nil {
+								if err == nil {
 									err := k8sAgent.DeleteNamespace(depl.Namespace)
 
 									if err != nil {
@@ -188,6 +184,10 @@ func (n *previewDeploymentsTTLDeleter) Run() error {
 											depl.PRName, err)
 										continue
 									}
+								} else if !errors.IsNotFound(err) {
+									log.Printf("error getting k8s namespace for deployment '%s': %v. skipping ...",
+										depl.PRName, err)
+									continue
 								}
 							}
 

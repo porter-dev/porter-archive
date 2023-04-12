@@ -143,7 +143,7 @@ const StyledResourceTab = styled.div`
   width: 100%;
   margin-bottom: 2px;
   font-size: 13px;
-  background: #ffffff11;
+  background: ${props => props.theme.fg};
   border-bottom-left-radius: ${(props: {
     isLast: boolean;
     roundAllCorners: boolean;

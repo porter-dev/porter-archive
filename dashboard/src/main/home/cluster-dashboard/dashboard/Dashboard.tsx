@@ -345,99 +345,6 @@ const Br = styled.div`
   height: 35px;
 `;
 
-const RevisionHeader = styled.div`
-  color: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-    props.isCurrent ? "#ffffff66" : "#f5cb42"};
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 40px;
-  font-size: 13px;
-  width: 100%;
-  padding-left: 15px;
-  cursor: pointer;
-  :hover {
-    background: ${props => props.showRevisions && "#ffffff18"};
-    > div > i {
-      background: ${props => props.showRevisions && "#ffffff22"};
-    }
-  }
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
-  margin-top: 25px;
-  margin-bottom: 22px;
-
-  > div > i {
-    margin-left: 12px;
-    font-size: 20px;
-    cursor: pointer;
-    border-radius: 20px;
-    background: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-    props.showRevisions ? "#ffffff18" : ""};
-    transform: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-    props.showRevisions ? "rotate(180deg)" : ""};
-  }
-`;
-
-const Revision = styled.div`
-  color: #ffffff;
-  margin-left: 5px;
-`;
-
-const RevisionPreview = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const DashboardIcon = styled.div`
-  height: 35px;
-  min-width: 35px;
-  width: 35px;
-  border-radius: 5px;
-  margin-right: 17px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #676c7c;
-  border: 2px solid #8e94aa;
-  > i {
-    font-size: 18px;
-  }
-`;
-
-const TopRow = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const Description = styled.div`
-  color: #8b949f;
-  margin-top: 13px;
-  margin-left: 2px;
-  font-size: 13px;
-`;
-
-const InfoLabel = styled.div`
-  width: 72px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  color: #8b949f;
-  font-size: 13px;
-  > i {
-    color: #8b949f;
-    font-size: 18px;
-    margin-right: 5px;
-  }
-`;
-
-const InfoSection = styled.div`
-  margin-top: -20px;
-  font-size: 13px;
-  margin-bottom: 25px;
-`;
-
 const Url = styled.a`
   font-size: 13px;
   user-select: text;
@@ -461,13 +368,4 @@ const Bolded = styled.span`
   color: #aaaabb;
   margin-right: 6px;
   white-space: nowrap;
-`;
-
-const FormWrapper = styled.div<{ showSave?: boolean }>`
-  width: 100%;
-  margin-top: 35px;
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
-  padding: 30px;
 `;

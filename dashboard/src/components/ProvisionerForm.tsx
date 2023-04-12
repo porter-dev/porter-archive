@@ -7,36 +7,38 @@ import Heading from "components/form-components/Heading";
 import Helper from "./form-components/Helper";
 import ProvisionerSettings from "./ProvisionerSettings";
 import ProvisionerSettingsOld from "./ProvisionerSettingsOld";
+import Text from "./porter/Text";
+import Spacer from "./porter/Spacer";
 
 type Props = {
   goBack: () => void;
   credentialId: string;
-  AWSAccountID: string;
   useAssumeRole?: boolean;
 };
 
 const ProvisionerForm: React.FC<Props> = ({
   goBack,
   credentialId,
-  AWSAccountID,
   useAssumeRole,
 }) => {
   return (
     <>
-      <Heading isAtTop>
+      <Text size={16}>
         <BackButton width="155px" onClick={goBack}>
           <i className="material-icons">first_page</i>
           Set credentials
         </BackButton>
-        <Spacer />
+        <Spacer inline width="17px" />
         <Img src={aws} />
         Configure settings
-      </Heading>
-      <Helper>
+      </Text>
+      <Spacer y={1} />
+      <Text color="helper">
         Configure settings for your AWS environment.
-      </Helper>
+      </Text>
+      <Spacer y={1} />
       {useAssumeRole ? (
-        <ProvisionerSettings credentialId={credentialId} AWSAccountID={AWSAccountID} />
+        <ProvisionerSettings credentialId={credentialId} />
       ) : (
         <ProvisionerSettingsOld credentialId={credentialId} />
       )}
@@ -45,11 +47,6 @@ const ProvisionerForm: React.FC<Props> = ({
 };
 
 export default ProvisionerForm;
-
-const Spacer = styled.div`
-  height: 1px;
-  width: 17px;
-`;
 
 const Img = styled.img`
   height: 18px;

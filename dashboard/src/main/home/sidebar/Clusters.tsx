@@ -9,8 +9,8 @@ import { ClusterSection } from "./ClusterSection";
 import SidebarLink from "./SidebarLink";
 
 import settings from "assets/settings.svg";
-import monojob from "assets/monojob.png";
-import monoweb from "assets/monoweb.png";
+import job from "assets/job-bold.png";
+import web from "assets/web-bold.png";
 import sliders from "assets/sliders.svg";
 
 import { RouteComponentProps, withRouter } from "react-router";
@@ -180,7 +180,7 @@ class Clusters extends Component<PropsType, StateType> {
               window.location.pathname.startsWith("/applications")
             }
           >
-            <Img src={monoweb} />
+            <Img src={web} />
             Applications
           </NavButton>
           <NavButton
@@ -191,7 +191,7 @@ class Clusters extends Component<PropsType, StateType> {
               window.location.pathname.startsWith("/jobs")
             }
           >
-            <Img src={monojob} />
+            <Img src={job} />
             Jobs
           </NavButton>
           <NavButton
@@ -317,7 +317,7 @@ const NavButton = styled(SidebarLink)`
   padding: 0 30px 2px 8px;
   font-size: 13px;
   font-family: "Work Sans", sans-serif;
-  color: #ffffff;
+  color: ${props => props.theme.text.primary};
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 

@@ -427,10 +427,10 @@ class Templates extends Component<PropsType, StateType> {
       return (
         <TemplatesWrapper>
           <DashboardHeader
-            image={rocket}
-            title="Launch"
+            title="Launch a new service"
             description="Deploy applications and add-ons to your environment."
             disableLineBreak
+            capitalize={false}
           />
           {this.renderContents()}
         </TemplatesWrapper>

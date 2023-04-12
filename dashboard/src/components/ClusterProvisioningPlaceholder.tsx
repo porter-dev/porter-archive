@@ -8,6 +8,8 @@ import loading from "assets/loading.gif";
 import { Context } from "shared/Context";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
+import Text from "./porter/Text";
+import Spacer from "./porter/Spacer";
 
 type Props = {};
 
@@ -16,11 +18,13 @@ const ClusterProvisioningPlaceholder: React.FC<RouteComponentProps> = (props) =>
 
   return (
     <ClusterPlaceholder>
-      <Heading isAtTop>
+      <Text size={16}>
         <Img src={loading} /> Your cluster is being created
-      </Heading>
-      <Helper>
-        You can view the status of your cluster creation{" "}
+      </Text>
+      <Spacer height="15px" />
+      <Text color="helper">
+        You can view the status of your cluster creation
+        <Spacer inline width="5px" />
         <Link onClick={() => {
           pushFiltered(props, "/cluster-dashboard", ["project_id"], {
             cluster: currentCluster.name,
@@ -29,7 +33,7 @@ const ClusterProvisioningPlaceholder: React.FC<RouteComponentProps> = (props) =>
           here
           <i className="material-icons">arrow_forward</i> 
         </Link>
-      </Helper>
+      </Text>
     </ClusterPlaceholder>
   );
 };
@@ -57,7 +61,7 @@ const Img = styled.img`
 const ClusterPlaceholder = styled.div`
   padding: 25px;
   border-radius: 5px;
-  background: #26292e;
+  background: ${props => props.theme.fg};
   border: 1px solid #494b4f;
-  padding-bottom: 10px;
+  padding-bottom: 35px;
 `;

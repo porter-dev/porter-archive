@@ -157,7 +157,7 @@ const InitializeButton = styled.div`
   font-size: 13px;
   font-weight: 500;
   border-radius: 3px;
-  color: #ffffff;
+  color: ${props => props.theme.text.primary};
   padding-bottom: 1px;
   cursor: pointer;
   background: #ffffff11;
@@ -255,6 +255,7 @@ const ProjectIconAlt = styled(ProjectIcon)`
 const StyledProjectSection = styled.div`
   position: relative;
   margin-left: 3px;
+  color: ${props => props.theme.text.primary};
 `;
 
 const MainSelector = styled.div`
@@ -263,7 +264,6 @@ const MainSelector = styled.div`
   margin: 10px 0 0;
   font-size: 14px;
   font-family: "Work Sans", sans-serif;
-  font-weight: 600;
   cursor: pointer;
   padding: 10px 0;
   padding-left: 20px;

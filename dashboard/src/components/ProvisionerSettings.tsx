@@ -58,7 +58,6 @@ const clusterVersionOptions = [
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   credentialId: string;
-  AWSAccountID: string;
   clusterId?: number;
 };
 
@@ -78,7 +77,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
-  const [cidrRange, setCidrRange] = useState("172.0.0.0/16");
+  const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
@@ -97,7 +96,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
 
   const getStatus = () => {
     if (isReadOnly) {
-      return "Provisioning is still in progress"
+      return "Provisioning is still in progress..."
     } else if (errorMessage) {
       return <Error
         message={errorMessage}
@@ -122,7 +121,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
           value: new EKS({
             clusterName,
             clusterVersion: clusterVersion || "v1.24.0",
-            cidrRange: cidrRange || "172.0.0.0/16",
+            cidrRange: cidrRange || "10.78.0.0/16",
             region: awsRegion,
             nodeGroups: [
               new EKSNodeGroup({
@@ -163,7 +162,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
         .preflightCheckAWSUsage(
           "<token>",
           {
-            target_arn: `arn:aws:iam::${props.AWSAccountID}:role/porter-role`,
+            target_arn: props.credentialId,
             region: awsRegion
           },
           {
@@ -257,10 +256,12 @@ const ProvisionerSettings: React.FC<Props> = props => {
     if (!props.clusterId) {
       return (
         <>
-          <Heading isAtTop>Select an AWS region</Heading>
-          <Helper>
+          <Text size={16}>Select an AWS region</Text>
+          <Spacer y={1} />
+          <Text color="helper">
             Porter will automatically provision your infrastructure in the specified region.
-          </Helper>
+          </Text>
+          <Spacer height="10px" />
           <SelectRow
             options={regionOptions}
             width="350px"
@@ -341,7 +342,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
                 value={cidrRange}
                 setValue={(x: string) => setCidrRange(x)}
                 label="VPC CIDR range"
-                placeholder="ex: 172.0.0.0/16"
+                placeholder="ex: 10.78.0.0/16"
               />
             </>
           )

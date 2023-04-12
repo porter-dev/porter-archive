@@ -482,7 +482,7 @@ const StyledSettingsSection = styled.div`
   overflow: auto;
   height: calc(100% - 55px);
   border-radius: 5px;
-  background: #26292e;
+  background: ${props => props.theme.fg};
   border: 1px solid #494b4f;
 `;
 

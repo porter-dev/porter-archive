@@ -241,7 +241,7 @@ const TemplateBlock = styled.div`
   color: #ffffff;
   position: relative;
   border-radius: 5px;
-  background: #26292e;
+  background: ${props => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

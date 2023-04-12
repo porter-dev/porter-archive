@@ -346,7 +346,7 @@ const BackButton = styled.div`
   border-radius: 100px;
   width: ${(props: { width: string }) => props.width};
   color: white;
-  background: #ffffff11;
+  background: ${props => props.theme.fg};
 
   :hover {
     background: #ffffff22;

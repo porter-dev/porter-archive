@@ -5,7 +5,8 @@ import styled, { ThemeProvider, createGlobalStyle } from "styled-components";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import MainWrapper from "./main/MainWrapper";
-import theme from "shared/themes/midnight";
+import midnight from "shared/themes/midnight";
+import standard from "shared/themes/standard";
 
 const queryClient = new QueryClient();
 
@@ -13,7 +14,7 @@ export default class App extends Component {
   render() {
     return (
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={theme}>
+        <ThemeProvider theme={standard}>
           <StyledMain>
             <GlobalStyle />
             <PorterErrorBoundary errorBoundaryLocation="globalErrorBoundary">

@@ -1,11 +1,11 @@
 const theme = {
-  bg: "#121212",
-  fg: "#171B21",
+  bg: "#202227",
+  fg: "#27292e",
   clickable: {
-    bg: "linear-gradient(180deg, #171B21, #171B21)",
+    bg: "#27292e",
   },
   text: {
-    primary: "#DFDFE1",
+    primary: "#ffffff",
   },
 }
 

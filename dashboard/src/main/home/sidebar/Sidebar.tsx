@@ -287,7 +287,7 @@ const SidebarBg = styled.div`
 `;
 
 const SidebarLabel = styled.div`
-  color: #ffffff99;
+  color: ${props => props.theme.text.primary};
   padding: 5px 23px;
   margin-bottom: 5px;
   font-size: 13px;

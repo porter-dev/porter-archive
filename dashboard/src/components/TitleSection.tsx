@@ -91,6 +91,7 @@ const StyledTitle = styled.div<{
 }>`
   font-size: 21px;
   user-select: text;
+  color: ${props => props.theme.text.primary};
   text-transform: ${(props) => (props.capitalize ? "capitalize" : "")};
   display: flex;
   align-items: center;

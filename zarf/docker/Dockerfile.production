@@ -1,14 +1,7 @@
-# FROM node:16 as ui-build
-# WORKDIR /webpack
-# COPY ./dashboard ./
-# RUN npm install -g npm@8.1
-# RUN npm i --legacy-peer-deps
-# ENV NODE_ENV=production
-# RUN npm run build
-
-FROM debian:bullseye-slim as runner
+# All build artifacts are built in github actions, and copied in
+FROM ubuntu as runner
 WORKDIR /porter
 COPY bin/app /porter/
 COPY bin/migrate /porter/
 COPY build/ /porter/static
-# COPY --from=ui-build /webpack/build /porter/static
+RUN chmod +x /porter/app /porter/migrate

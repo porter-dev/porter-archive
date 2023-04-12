@@ -56,7 +56,6 @@ const clusterVersionOptions = [
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   credentialId: string;
-  AWSAccountID: string;
   clusterId?: number;
 };
 
@@ -148,7 +147,7 @@ const ProvisionerSettings: React.FC<Props> = props => {
         .preflightCheckAWSUsage(
           "<token>",
           {
-            target_arn: `arn:aws:iam::${props.AWSAccountID}:role/porter-role`,
+            target_arn: props.credentialId,
             region: awsRegion
           },
           {

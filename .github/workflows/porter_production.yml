@@ -2,7 +2,6 @@
   push:
     branches:
       - master
-      - rename-porter-role
 name: Deploy to Porter
 jobs:
   build-go:

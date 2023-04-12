@@ -56,7 +56,6 @@ const AppDashboard: React.FC<Props> = ({
         <div>x/o</div>
       </Container>
       <Spacer y={1} />
-
       <GridList>
         {apps.map((app: any) => {
           return (

@@ -267,6 +267,7 @@ export interface ProjectType {
   capi_provisioner_enabled: boolean;
   api_tokens_enabled: boolean;
   stacks_enabled: boolean;
+  simplified_view_enabled: boolean;
   roles: {
     id: number;
     kind: string;

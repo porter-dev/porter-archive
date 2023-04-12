@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
 import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
-import styled from "styled-components";
+import styled, { ThemeProvider } from "styled-components";
 import { createPortal } from "react-dom";
 
 import api from "shared/api";
+import midnight from "shared/themes/midnight";
+import standard from "shared/themes/standard";
 import { Context } from "shared/Context";
 import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
 import { ClusterType, ProjectType } from "shared/types";
@@ -77,12 +79,10 @@ const Home: React.FC<Props> = (props) => {
   } = useContext(Context);
 
   const [showWelcome, setShowWelcome] = useState(false);
-  const [prevProjectId, setPrevProjectId] = useState<number | null>(null);
   const [forceRefreshClusters, setForceRefreshClusters] = useState(false);
-  const [sidebarReady, setSidebarReady] = useState(false);
-  const [handleDO, setHandleDO] = useState(false);
   const [ghRedirect, setGhRedirect] = useState(false);
   const [forceSidebar, setForceSidebar] = useState(true);
+  const [theme, setTheme] = useState(standard);
 
   const redirectToNewProject = () => {
     pushFiltered(props, "/new-project", ["project_id"]);
@@ -255,7 +255,7 @@ const Home: React.FC<Props> = (props) => {
               .then((res) => {
                 const usage = res.data;
                 setUsage(usage);
-                if (usage.exceeded) {
+                if (usage.exceeded && false) {
                   setCurrentModal("UsageWarningModal", { usage });
                 }
               })
@@ -346,139 +346,141 @@ const Home: React.FC<Props> = (props) => {
   };
 
   const { cluster, baseRoute } = props.match.params as any;
+  console.log(currentProject)
   return (
-    <StyledHome>
-      <ModalHandler setRefreshClusters={setForceRefreshClusters} />
-      {currentOverlay &&
-        createPortal(
-          <ConfirmOverlay
-            show={true}
-            message={currentOverlay.message}
-            onYes={currentOverlay.onYes}
-            onNo={currentOverlay.onNo}
-          />,
-          document.body
-        )}
-      {/* Render sidebar when there's at least one project */}
-      {projects?.length > 0 && baseRoute !== "new-project" ? (
-        <Sidebar
-          key="sidebar"
-          forceSidebar={forceSidebar}
-          setWelcome={setShowWelcome}
-          currentView={props.currentRoute}
-          forceRefreshClusters={forceRefreshClusters}
-          setRefreshClusters={setForceRefreshClusters}
-        />
-      ) : (
-        <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
-          <Icon src={discordLogo} />
-          Join Our Discord
-        </DiscordButton>
-      )}
-      <ViewWrapper id="HomeViewWrapper">
-        <Navbar
-          logOut={props.logOut}
-          currentView={props.currentRoute} // For form feedback
-        />
-
-        <Switch>
-          <Route
-            path="/new-project"
-            render={() => {
-              return <NewProjectFC />;
-            }}
-          ></Route>
-          <Route
-            path="/onboarding"
-            render={() => {
-              return <Onboarding />;
-            }}
+    <ThemeProvider theme={currentProject?.simplified_view_enabled ? midnight : standard}>
+      <StyledHome>
+        <ModalHandler setRefreshClusters={setForceRefreshClusters} />
+        {currentOverlay &&
+          createPortal(
+            <ConfirmOverlay
+              show={true}
+              message={currentOverlay.message}
+              onYes={currentOverlay.onYes}
+              onNo={currentOverlay.onNo}
+            />,
+            document.body
+          )}
+        {/* Render sidebar when there's at least one project */}
+        {projects?.length > 0 && baseRoute !== "new-project" ? (
+          <Sidebar
+            key="sidebar"
+            forceSidebar={forceSidebar}
+            setWelcome={setShowWelcome}
+            currentView={props.currentRoute}
+            forceRefreshClusters={forceRefreshClusters}
+            setRefreshClusters={setForceRefreshClusters}
           />
-          {(user?.isPorterUser ||
-            overrideInfraTabEnabled({
-              projectID: currentProject?.id,
-            })) && (
+        ) : (
+          <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
+            <Icon src={discordLogo} />
+            Join Our Discord
+          </DiscordButton>
+        )}
+        <ViewWrapper id="HomeViewWrapper">
+          <Navbar
+            logOut={props.logOut}
+            currentView={props.currentRoute} // For form feedback
+          />
+
+          <Switch>
             <Route
-              path="/infrastructure"
+              path="/new-project"
+              render={() => {
+                return <NewProjectFC />;
+              }}
+            ></Route>
+            <Route
+              path="/onboarding"
+              render={() => {
+                return <Onboarding />;
+              }}
+            />
+            {(user?.isPorterUser ||
+              overrideInfraTabEnabled({
+                projectID: currentProject?.id,
+              })) && (
+              <Route
+                path="/infrastructure"
+                render={() => {
+                  return (
+                    <DashboardWrapper>
+                      <InfrastructureRouter />
+                    </DashboardWrapper>
+                  );
+                }}
+              />
+            )}
+            <Route
+              path="/dashboard"
               render={() => {
                 return (
                   <DashboardWrapper>
-                    <InfrastructureRouter />
+                    <Dashboard
+                      projectId={currentProject?.id}
+                      setRefreshClusters={setForceRefreshClusters}
+                    />
                   </DashboardWrapper>
                 );
               }}
             />
-          )}
-          <Route
-            path="/dashboard"
-            render={() => {
-              return (
-                <DashboardWrapper>
-                  <Dashboard
-                    projectId={currentProject?.id}
-                    setRefreshClusters={setForceRefreshClusters}
-                  />
-                </DashboardWrapper>
-              );
-            }}
-          />
-          <Route
-            path={[
-              "/cluster-dashboard",
-              "/applications",
-              "/jobs",
-              "/env-groups",
-              "/databases",
-              "/preview-environments",
-              "/stacks",
-            ]}
-            render={() => {
-              if (currentCluster?.id === -1) {
-                return <Loading />;
-              } else if (!currentCluster || !currentCluster.name) {
+            <Route
+              path={[
+                "/cluster-dashboard",
+                "/applications",
+                "/jobs",
+                "/env-groups",
+                "/databases",
+                "/preview-environments",
+                "/stacks",
+              ]}
+              render={() => {
+                if (currentCluster?.id === -1) {
+                  return <Loading />;
+                } else if (!currentCluster || !currentCluster.name) {
+                  return (
+                    <DashboardWrapper>
+                      <PageNotFound />
+                    </DashboardWrapper>
+                  );
+                }
                 return (
                   <DashboardWrapper>
-                    <PageNotFound />
+                    <DashboardRouter
+                      currentCluster={currentCluster}
+                      setSidebar={setForceSidebar}
+                      currentView={props.currentRoute}
+                    />
                   </DashboardWrapper>
                 );
-              }
-              return (
-                <DashboardWrapper>
-                  <DashboardRouter
-                    currentCluster={currentCluster}
-                    setSidebar={setForceSidebar}
-                    currentView={props.currentRoute}
-                  />
-                </DashboardWrapper>
-              );
-            }}
-          />
-          <Route
-            path={"/integrations"}
-            render={() => <GuardedIntegrations />}
-          />
-          <Route
-            path={"/project-settings"}
-            render={() => <GuardedProjectSettings />}
-          />
-          <Route path={"*"} render={() => <LaunchWrapper />} />
-        </Switch>
-      </ViewWrapper>
-      {createPortal(
-        <ConfirmOverlay
-          show={currentModal === "UpdateProjectModal"}
-          message={
-            currentProject
-              ? `Are you sure you want to delete ${currentProject.name}?`
-              : ""
-          }
-          onYes={handleDelete}
-          onNo={() => setCurrentModal(null, null)}
-        />,
-        document.body
-      )}
-      ,
-    </StyledHome>
+              }}
+            />
+            <Route
+              path={"/integrations"}
+              render={() => <GuardedIntegrations />}
+            />
+            <Route
+              path={"/project-settings"}
+              render={() => <GuardedProjectSettings />}
+            />
+            <Route path={"*"} render={() => <LaunchWrapper />} />
+          </Switch>
+        </ViewWrapper>
+        {createPortal(
+          <ConfirmOverlay
+            show={currentModal === "UpdateProjectModal"}
+            message={
+              currentProject
+                ? `Are you sure you want to delete ${currentProject.name}?`
+                : ""
+            }
+            onYes={handleDelete}
+            onNo={() => setCurrentModal(null, null)}
+          />,
+          document.body
+        )}
+      </StyledHome>
+    </ThemeProvider>
   );
 };
 

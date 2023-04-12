@@ -20,7 +20,7 @@ const ProvisionerStatus: React.FC<Props> = ({
   provisionFailureReason,
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(1);
 
   // Continuously poll provisioning status
   const pollProvisioningStatus = async () => {

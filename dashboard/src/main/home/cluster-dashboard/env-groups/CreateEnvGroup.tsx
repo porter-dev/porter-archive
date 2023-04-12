@@ -234,7 +234,7 @@ const Wrapper = styled.div`
   padding-bottom: 25px;
   border-radius: 5px;
   margin-top: -15px;
-  background: #26292e;
+  background: ${props => props.theme.fg};
   border: 1px solid #494b4f;
   margin-bottom: 30px;
 `;

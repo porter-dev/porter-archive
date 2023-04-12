@@ -346,7 +346,7 @@ const MainSelector = styled.div<{
   justify-content: space-between;
   align-items: center;
   cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
-  background: ${props => props.expanded ? "#ffffff33" : "#ffffff11"};
+  background: ${props => props.expanded ? "#ffffff33" : props.theme.fg};
   :hover {
     background: ${props => props.expanded ? "#ffffff33" : (
       props.disabled ? "#ffffff11" : "#ffffff22"

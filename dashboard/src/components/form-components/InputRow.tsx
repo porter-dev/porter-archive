@@ -104,10 +104,11 @@ const InputWrapper = styled.div`
   display: flex;
   margin-bottom: -1px;
   align-items: center;
+  overflow: hidden;
   border: 1px solid
     ${(props: { width: string; hasError: boolean }) =>
       props.hasError ? "red" : "#ffffff55"};
-  border-radius: 3px;
+  border-radius: 5px;
   ${(props: { width: string; hasError: boolean }) => {
     if (props.width) {
       return `width:${props.width};`;
@@ -119,7 +120,7 @@ const Input = styled.input<{ disabled: boolean; width: string }>`
   outline: none;
   border: none;
   font-size: 13px;
-  background: #ffffff11;
+  background: ${props => props.theme.fg};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "")};
   width: ${(props) => (props.width ? props.width : "100%")};
   color: ${(props) => (props.disabled ? "#ffffff44" : "white")};

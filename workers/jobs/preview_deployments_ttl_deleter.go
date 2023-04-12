@@ -99,7 +99,6 @@ func (n *previewDeploymentsTTLDeleter) Run() error {
 	}
 
 	ttlDuration, err := time.ParseDuration(n.previewDeploymentsTTL)
-
 	if err != nil {
 		log.Printf("error parsing preview deployments TTL: %v. skipping job altogether", err)
 		return err
@@ -129,7 +128,6 @@ func (n *previewDeploymentsTTLDeleter) Run() error {
 			}
 
 			envs, err := n.repo.Environment().ListEnvironments(cluster.ProjectID, cluster.ID)
-
 			if err != nil {
 				log.Printf("error listing environments for cluster %s: %v", cluster.Name, err)
 				continue
@@ -144,7 +142,6 @@ func (n *previewDeploymentsTTLDeleter) Run() error {
 					defer wg.Done()
 
 					depls, err := n.repo.Environment().ListDeployments(env.ID)
-
 					if err != nil {
 						log.Printf("error listing deployments for %s/%s: %v", env.GitRepoOwner, env.GitRepoName, err)
 						return
@@ -162,7 +159,6 @@ func (n *previewDeploymentsTTLDeleter) Run() error {
 						AllowInClusterConnections: false,
 						Timeout:                   10 * time.Second,
 					})
-
 					if err != nil {
 						log.Printf("error getting k8s agent for cluster %s: %v", cluster.Name, err)
 						return
@@ -178,7 +174,6 @@ func (n *previewDeploymentsTTLDeleter) Run() error {
 
 								if err == nil {
 									err := k8sAgent.DeleteNamespace(depl.Namespace)
-
 									if err != nil {
 										log.Printf("error deleting namespace for deployment '%s': %v. skipping ...",
 											depl.PRName, err)
@@ -194,7 +189,6 @@ func (n *previewDeploymentsTTLDeleter) Run() error {
 							log.Printf("deleting deployment '%s'", depl.PRName)
 
 							_, err := n.repo.Environment().DeleteDeployment(depl)
-
 							if err != nil {
 								log.Printf("error deleting deployment '%s': %v", depl.PRName, err)
 							}

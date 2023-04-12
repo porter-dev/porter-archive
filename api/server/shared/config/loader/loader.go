@@ -1,10 +1,12 @@
 package loader
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 
 	gorillaws "github.com/gorilla/websocket"
@@ -153,6 +155,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		})
 	}
 
+	// TODO: remove this as part of POR-1055
 	if sc.GithubClientID != "" && sc.GithubClientSecret != "" {
 		res.GithubConf = oauth.NewGithubClient(&oauth.Config{
 			ClientID:     sc.GithubClientID,
@@ -160,6 +163,26 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			Scopes:       []string{"read:user", "user:email"},
 			BaseURL:      sc.ServerURL,
 		})
+	}
+
+	if sc.GithubAppSecretBase64 != "" {
+		if sc.GithubAppSecretPath == "" {
+			sc.GithubAppSecretPath = "github-app-secret-key"
+		}
+		_, err := os.Stat(sc.GithubAppSecretPath)
+		if err != nil {
+			if !errors.Is(err, os.ErrNotExist) {
+				return nil, fmt.Errorf("GITHUB_APP_SECRET_BASE64 provided, but error checking if GITHUB_APP_SECRET_PATH exists: %w", err)
+			}
+			secret, err := base64.StdEncoding.DecodeString(sc.GithubAppSecretBase64)
+			if err != nil {
+				return nil, fmt.Errorf("GITHUB_APP_SECRET_BASE64 provided, but error decoding: %w", err)
+			}
+			err = ioutil.WriteFile(sc.GithubAppSecretPath, secret, 0o600)
+			if err != nil {
+				return nil, fmt.Errorf("GITHUB_APP_SECRET_BASE64 provided, but error writing to GITHUB_APP_SECRET_PATH: %w", err)
+			}
+		}
 	}
 
 	if sc.GithubAppClientID != "" &&

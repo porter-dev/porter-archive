@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	gorillaws "github.com/gorilla/websocket"
@@ -178,7 +179,11 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			if err != nil {
 				return nil, fmt.Errorf("GITHUB_APP_SECRET_BASE64 provided, but error decoding: %w", err)
 			}
-			err = ioutil.WriteFile(sc.GithubAppSecretPath, secret, 0o600)
+			_, err = createDirectoryRecursively(sc.GithubAppSecretPath)
+			if err != nil {
+				return nil, fmt.Errorf("GITHUB_APP_SECRET_BASE64 provided, but error creating directory for GITHUB_APP_SECRET_PATH: %w", err)
+			}
+			err = os.WriteFile(sc.GithubAppSecretPath, secret, os.ModePerm)
 			if err != nil {
 				return nil, fmt.Errorf("GITHUB_APP_SECRET_BASE64 provided, but error writing to GITHUB_APP_SECRET_PATH: %w", err)
 			}
@@ -308,4 +313,12 @@ func getProvisionerServiceClient(sc *env.ServerConf) (*client.Client, error) {
 	}
 
 	return nil, fmt.Errorf("required env vars not set for provisioner")
+}
+
+// createDirectoryRecursively creates a directory and all its parents if they don't exist
+func createDirectoryRecursively(p string) (*os.File, error) {
+	if err := os.MkdirAll(filepath.Dir(p), 0o770); err != nil {
+		return nil, err
+	}
+	return os.Create(p)
 }

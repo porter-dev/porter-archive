@@ -77,14 +77,14 @@ class Templates extends Component<PropsType, StateType> {
             stroke="white"
             strokeWidth="1.5"
             strokeLinecap="round"
-            stroke-linejoin="round"
+            strokeLinejoin="round"
           />
           <path
             d="M3.90217 12.4403C2.29983 12.4403 1 11.1414 1 9.53907C1 7.93673 2.29983 6.63782 3.90217 6.63782"
             stroke="white"
             strokeWidth="1.5"
             strokeLinecap="round"
-            stroke-linejoin="round"
+            strokeLinejoin="round"
           />
           <path
             fillRule="evenodd"
@@ -93,21 +93,21 @@ class Templates extends Component<PropsType, StateType> {
             stroke="white"
             strokeWidth="1.5"
             strokeLinecap="round"
-            stroke-linejoin="round"
+            strokeLinejoin="round"
           />
           <path
             d="M6.66895 15.207C6.66895 16.8094 7.96787 18.1092 9.5702 18.1092C11.1725 18.1092 12.4715 16.8094 12.4715 15.207"
             stroke="white"
             strokeWidth="1.5"
             strokeLinecap="round"
-            stroke-linejoin="round"
+            strokeLinejoin="round"
           />
           <path
             d="M6.66895 3.90217C6.66895 2.29983 7.96787 1 9.5702 1C11.1725 1 12.4715 2.29983 12.4715 3.90217"
             stroke="white"
             strokeWidth="1.5"
             strokeLinecap="round"
-            stroke-linejoin="round"
+            strokeLinejoin="round"
           />
           <path
             fillRule="evenodd"
@@ -116,7 +116,7 @@ class Templates extends Component<PropsType, StateType> {
             stroke="white"
             strokeWidth="1.5"
             strokeLinecap="round"
-            stroke-linejoin="round"
+            strokeLinejoin="round"
           />
         </svg>
       </DashboardIcon>

@@ -19,8 +19,7 @@ COPY /pkg ./pkg
 RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
 RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1
 
-RUN --mount=type=cache,target=$GOPATH/pkg/mod \
-    go mod download
+RUN go mod download
 
 # Go build environment
 # --------------------
@@ -29,17 +28,13 @@ FROM base AS build-go
 # build proto files
 RUN sh ./scripts/build/proto.sh
 
-RUN --mount=type=cache,target=/root/.cache/go-build \
-    --mount=type=cache,target=$GOPATH/pkg/mod \
-    go build -ldflags '-w -s' -a -tags ee -o ./bin/provisioner ./cmd/provisioner
+RUN go build -ldflags '-w -s' -a -tags ee -o ./bin/provisioner ./cmd/provisioner
 
 # Go test environment
 # -------------------
 FROM base AS porter-test
 
-RUN --mount=type=cache,target=/root/.cache/go-build \
-    --mount=type=cache,target=$GOPATH/pkg/mod \
-    go test ./...
+RUN go test ./...
 
 # Deployment environment
 # ----------------------

@@ -29,7 +29,8 @@ func NewRegistryListImagesHandler(
 }
 
 func (c *RegistryListImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	reg, _ := r.Context().Value(types.RegistryScope).(*models.Registry)
+	ctx := r.Context()
+	reg, _ := ctx.Value(types.RegistryScope).(*models.Registry)
 
 	repoName, _ := requestutils.GetURLParamString(r, types.URLParamWildcard)
 
@@ -37,12 +38,12 @@ func (c *RegistryListImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	_reg := registry.Registry(*reg)
 	regAPI := &_reg
 
-	imgs, err := regAPI.ListImages(repoName, c.Repo(), c.Config().DOConf)
-
-	if err != nil && strings.Contains(err.Error(), "RepositoryNotFoundException") {
-		c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such repository: %s", repoName)))
-		return
-	} else if err != nil {
+	imgs, err := regAPI.ListImages(ctx, repoName, c.Repo(), c.Config())
+	if err != nil {
+		if strings.Contains(err.Error(), "RepositoryNotFoundException") {
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such repository: %s", repoName)))
+			return
+		}
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

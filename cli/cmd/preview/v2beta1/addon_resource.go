@@ -11,7 +11,9 @@ func (a *AddonResource) GetName() string {
 }
 
 func (a *AddonResource) GetDependsOn() []string {
-	var dependsOn []string
+	dependsOn := []string{
+		"get-env",
+	}
 
 	if a == nil || a.DependsOn == nil {
 		return dependsOn

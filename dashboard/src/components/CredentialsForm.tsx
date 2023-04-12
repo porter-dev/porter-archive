@@ -21,7 +21,7 @@ import Spacer from "./porter/Spacer";
 
 type Props = {
   goBack: () => void;
-  proceed: (x: any) => void;
+  proceed: (cloud_provider_credentials_id: string) => void;
   enableAssumeRole?: () => void;
 };
 
@@ -80,10 +80,8 @@ const CredentialsForm: React.FC<Props> = ({
           // Hardcoded for backward-compatibility
           // TODO: remove
           aws_region: "us-east-f",
-
           aws_access_key_id: awsAccessKeyID,
           aws_secret_access_key: awsSecretAccessKey,
-          aws_assume_role_arn: "",
         },
         {
           id: currentProject.id,

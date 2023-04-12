@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
 import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 import styled from "styled-components";
+import { createPortal } from "react-dom";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -45,14 +46,15 @@ const GuardedIntegrations = fakeGuardedRoute("integrations", "", [
   "delete",
 ])(Integrations);
 
-type Props = RouteComponentProps & WithAuthProps & {
-  logOut: () => void;
-  currentProject: ProjectType;
-  currentCluster: ClusterType;
-  currentRoute: PorterUrl;
-};
+type Props = RouteComponentProps &
+  WithAuthProps & {
+    logOut: () => void;
+    currentProject: ProjectType;
+    currentCluster: ClusterType;
+    currentRoute: PorterUrl;
+  };
 
-const Home: React.FC<Props> = props => {
+const Home: React.FC<Props> = (props) => {
   const {
     user,
     projects,
@@ -93,7 +95,7 @@ const Home: React.FC<Props> = props => {
   const getMetadata = () => {
     api
       .getMetadata("<token>", {}, {})
-      .then(res => {
+      .then((res) => {
         setCapabilities(res.data);
       })
       .catch((err) => {
@@ -112,7 +114,7 @@ const Home: React.FC<Props> = props => {
 
     api
       .getProjects("<token>", {}, { id: user.userId })
-      .then(res => {
+      .then((res) => {
         if (res.data) {
           if (res.data.length === 0) {
             redirectToNewProject();
@@ -180,7 +182,7 @@ const Home: React.FC<Props> = props => {
         setHasFinishedOnboarding(true);
       }
     } catch (error) {}
-  }
+  };
 
   useEffect(() => {
     checkOnboarding();
@@ -213,7 +215,7 @@ const Home: React.FC<Props> = props => {
 
     return () => {
       setCanCreateProject(false);
-    }
+    };
   }, []);
 
   // Hacky legacy shim for remote cluster refresh until Context is properly split
@@ -239,7 +241,7 @@ const Home: React.FC<Props> = props => {
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   useEffect(() => {
     getMetadata();
@@ -249,11 +251,7 @@ const Home: React.FC<Props> = props => {
         .then((isBillingEnabled) => {
           if (isBillingEnabled) {
             api
-              .getUsage(
-                "<token>",
-                {},
-                { project_id: currentProject?.id }
-              )
+              .getUsage("<token>", {}, { project_id: currentProject?.id })
               .then((res) => {
                 const usage = res.data;
                 setUsage(usage);
@@ -266,7 +264,7 @@ const Home: React.FC<Props> = props => {
         })
         .catch(console.log);
     }
-  }, [props.currentProject?.id])
+  }, [props.currentProject?.id]);
 
   useEffect(() => {
     if (
@@ -292,11 +290,7 @@ const Home: React.FC<Props> = props => {
 
   const projectOverlayCall = async () => {
     try {
-      const res = await api.getProjects(
-        "<token>",
-        {},
-        { id: user.userId }
-      );
+      const res = await api.getProjects("<token>", {}, { id: user.userId });
       if (!res.data) {
         setCurrentModal(null, null);
         return;
@@ -317,11 +311,7 @@ const Home: React.FC<Props> = props => {
   const handleDelete = async () => {
     localStorage.removeItem(currentProject.id + "-cluster");
     try {
-      await api.deleteProject(
-        "<token>",
-        {},
-        { id: currentProject?.id }
-      );
+      await api.deleteProject("<token>", {}, { id: currentProject?.id });
       projectOverlayCall();
     } catch (error) {
       console.log(error);
@@ -359,15 +349,16 @@ const Home: React.FC<Props> = props => {
   return (
     <StyledHome>
       <ModalHandler setRefreshClusters={setForceRefreshClusters} />
-      {currentOverlay && (
-        <ConfirmOverlay
-          show={true}
-          message={currentOverlay.message}
-          onYes={currentOverlay.onYes}
-          onNo={currentOverlay.onNo}
-        />
-      )}
-
+      {currentOverlay &&
+        createPortal(
+          <ConfirmOverlay
+            show={true}
+            message={currentOverlay.message}
+            onYes={currentOverlay.onYes}
+            onNo={currentOverlay.onNo}
+          />,
+          document.body
+        )}
       {/* Render sidebar when there's at least one project */}
       {projects?.length > 0 && baseRoute !== "new-project" ? (
         <Sidebar
@@ -384,7 +375,6 @@ const Home: React.FC<Props> = props => {
           Join Our Discord
         </DiscordButton>
       )}
-
       <ViewWrapper id="HomeViewWrapper">
         <Navbar
           logOut={props.logOut}
@@ -404,9 +394,10 @@ const Home: React.FC<Props> = props => {
               return <Onboarding />;
             }}
           />
-          {(user?.isPorterUser || overrideInfraTabEnabled({
-            projectID: currentProject?.id,
-          })) && (
+          {(user?.isPorterUser ||
+            overrideInfraTabEnabled({
+              projectID: currentProject?.id,
+            })) && (
             <Route
               path="/infrastructure"
               render={() => {
@@ -473,20 +464,23 @@ const Home: React.FC<Props> = props => {
           <Route path={"*"} render={() => <LaunchWrapper />} />
         </Switch>
       </ViewWrapper>
-
-      <ConfirmOverlay
-        show={currentModal === "UpdateProjectModal"}
-        message={
-          currentProject
-            ? `Are you sure you want to delete ${currentProject.name}?`
-            : ""
-        }
-        onYes={handleDelete}
-        onNo={() => setCurrentModal(null, null)}
-      />
+      {createPortal(
+        <ConfirmOverlay
+          show={currentModal === "UpdateProjectModal"}
+          message={
+            currentProject
+              ? `Are you sure you want to delete ${currentProject.name}?`
+              : ""
+          }
+          onYes={handleDelete}
+          onNo={() => setCurrentModal(null, null)}
+        />,
+        document.body
+      )}
+      ,
     </StyledHome>
   );
-}
+};
 
 export default withRouter(withAuth(Home));
 
@@ -494,9 +488,9 @@ const ViewWrapper = styled.div`
   height: 100%;
   width: 100vw;
   padding: 45px;
-  overflow-y: auto;
   display: flex;
   flex: 1;
+  overflow-y: auto;
   justify-content: center;
   background: ${props => props.theme.bg};
   position: relative;

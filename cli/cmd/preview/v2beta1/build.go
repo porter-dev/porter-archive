@@ -164,6 +164,9 @@ func (b *Build) getV1BuildImage() (*types.Resource, error) {
 		Target: map[string]any{
 			"app_name": b.GetName(),
 		},
+		DependsOn: []string{
+			"get-env",
+		},
 		Config: rawConfig,
 	}, nil
 }
@@ -184,6 +187,7 @@ func (b *Build) getV1PushImage() (*types.Resource, error) {
 		Name:   b.GetName(),
 		Driver: "push-image",
 		DependsOn: []string{
+			"get-env",
 			fmt.Sprintf("%s-build-image", b.GetName()),
 		},
 		Target: map[string]any{

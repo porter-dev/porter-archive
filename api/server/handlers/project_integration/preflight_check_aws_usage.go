@@ -2,6 +2,7 @@ package project_integration
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/bufbuild/connect-go"
@@ -32,10 +33,16 @@ func (p *CreatePreflightCheckAWSUsageHandler) ServeHTTP(w http.ResponseWriter, r
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	ctx := r.Context()
 
+	log.Println("got here")
+
 	request := &types.QuotaPreflightCheckRequest{}
 	if ok := p.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
+
+	log.Println("project id: ", project.ID)
+	log.Println("target arn: ", request.TargetARN)
+	log.Println("region: ", request.Region)
 
 	checkReq := porterv1.QuotaPreflightCheckRequest{
 		ProjectId: int64(project.ID),

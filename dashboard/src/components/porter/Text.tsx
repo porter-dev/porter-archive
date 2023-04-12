@@ -43,7 +43,7 @@ const StyledText = styled.div<{
 }>`
   line-height: 1.5;
   font-weight: ${props => props.weight || 400};
-  color: ${props => props.color || "#ffffff"};
+  color: ${props => props.color || props.theme.text.primary};
   font-size: ${props => props.size || 13}px;
   display: flex;
   align-items: center;

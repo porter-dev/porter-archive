@@ -207,7 +207,7 @@ const StyledRadioFilter = styled.div<{ noMargin?: boolean }>`
   font-size: 13px;
   position: relative;
   padding: 10px;
-  background: #26292e;
+  background: ${props => props.theme.fg};
   border-radius: 5px;
   display: flex;
   align-items: center;

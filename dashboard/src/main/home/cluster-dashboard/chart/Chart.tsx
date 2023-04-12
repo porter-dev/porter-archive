@@ -352,7 +352,7 @@ const Title = styled.div`
   padding: 12px 35px 12px 45px;
   font-size: 14px;
   font-family: "Work Sans", sans-serif;
-  color: #ffffff;
+  color: ${props => props.theme.text.primary};
   width: 80%;
   overflow: hidden;
   white-space: nowrap;
@@ -393,7 +393,7 @@ const StyledChart = styled.div`
   width: calc(100% + 2px);
   height: calc(100% + 2px);
   border-radius: 5px;
-  background: linear-gradient(180deg, #26292e, #24272c);
+  background: ${props => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

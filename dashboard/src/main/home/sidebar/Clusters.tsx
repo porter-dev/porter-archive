@@ -317,7 +317,7 @@ const NavButton = styled(SidebarLink)`
   padding: 0 30px 2px 8px;
   font-size: 13px;
   font-family: "Work Sans", sans-serif;
-  color: #ffffff;
+  color: ${props => props.theme.text.primary};
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 

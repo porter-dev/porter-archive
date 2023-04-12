@@ -308,7 +308,7 @@ const NavButton = styled(SidebarLink)`
   padding: 0 30px 2px 8px;
   font-size: 13px;
   font-family: "Work Sans", sans-serif;
-  color: #ffffff;
+  color: ${props => props.theme.text.primary};
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 
@@ -333,6 +333,7 @@ const Img = styled.img<{ enlarge?: boolean }>`
   padding-top: 4px;
   border-radius: 3px;
   margin-right: 8px;
+  opacity: 85%;
 `;
 
 const ClusterName = styled.div`

@@ -194,7 +194,7 @@ class Dashboard extends Component<PropsType, StateType> {
                   </Description>
                 </InfoSection>
                 {
-                  currentProject.capi_provisioner_enabled ? (
+                  currentProject?.capi_provisioner_enabled ? (
                     <ClusterSection />
                   ) : (
                     <TabRegion

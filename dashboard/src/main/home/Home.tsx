@@ -21,6 +21,7 @@ import Navbar from "./navbar/Navbar";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
 import PageNotFound from "components/PageNotFound";
+import AppDashboard from "./app-dashboard/AppDashboard";
 
 import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -346,7 +347,6 @@ const Home: React.FC<Props> = (props) => {
   };
 
   const { cluster, baseRoute } = props.match.params as any;
-  console.log(currentProject)
   return (
     <ThemeProvider theme={currentProject?.simplified_view_enabled ? midnight : standard}>
       <StyledHome>
@@ -384,6 +384,16 @@ const Home: React.FC<Props> = (props) => {
           />
 
           <Switch>
+            <Route
+              path="/apps"
+            >
+              <AppDashboard />
+            </Route>
+            <Route
+              path="/addons"
+            >
+              test
+            </Route>
             <Route
               path="/new-project"
               render={() => {

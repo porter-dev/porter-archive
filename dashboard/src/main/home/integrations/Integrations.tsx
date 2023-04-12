@@ -4,7 +4,7 @@ import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 import { integrationList } from "shared/common";
 import styled from "styled-components";
 import { pushFiltered } from "shared/routing";
-import integrations from "assets/integrations.svg";
+import integrations from "assets/integrations.png";
 
 import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 import IntegrationCategories from "./IntegrationCategories";

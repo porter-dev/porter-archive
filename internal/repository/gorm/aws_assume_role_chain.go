@@ -3,6 +3,7 @@ package gorm
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -27,7 +28,19 @@ func (cr AWSAssumeRoleChain) List(ctx context.Context, projectID uint) ([]*model
 	if projectID == 0 {
 		return nil, errors.New("must provide a project ID")
 	}
-	tx := cr.db.Where("project_id = ? and target_arn not like '%arn:aws:iam::108458755588%'", projectID).Find(&confs)
+	// porterInternalAccounts are accounts which should be hidden from users, such as bastion or production accounts
+	porterInternalAccounts := []string{
+		"108458755588", // CAPI Bastion
+		"813111008191", // Internal Tooling Cluster
+		"975032674314", // Old production account
+	}
+
+	query := "project_id = ?"
+	for _, account := range porterInternalAccounts {
+		query += fmt.Sprintf(" and target_arn not like '%%arn:aws:iam::%s%%'", account)
+	}
+
+	tx := cr.db.Where(query, projectID).Find(&confs)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

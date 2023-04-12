@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
 import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
-import styled, { ThemeProps } from "styled-components";
+import styled from "styled-components";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -257,7 +257,7 @@ const Home: React.FC<Props> = props => {
               .then((res) => {
                 const usage = res.data;
                 setUsage(usage);
-                if (usage.exceeded) {
+                if (usage.exceeded && false) {
                   setCurrentModal("UsageWarningModal", { usage });
                 }
               })

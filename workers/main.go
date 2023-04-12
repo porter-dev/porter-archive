@@ -69,6 +69,9 @@ type EnvConf struct {
 	// "recommender"
 	OPAConfigFileDir string `env:"OPA_CONFIG_FILE_DIR,default=./internal/opa"`
 	LegacyProjectIDs []uint `env:"LEGACY_PROJECT_IDS"`
+
+	// "preview-deployments-ttl-deleter"
+	PreviewDeploymentsTTL string `env:"PREVIEW_DEPLOYMENTS_TTL"`
 }
 
 func main() {

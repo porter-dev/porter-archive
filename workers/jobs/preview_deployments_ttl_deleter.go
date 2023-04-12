@@ -34,19 +34,21 @@ const (
 )
 
 type previewDeploymentsTTLDeleter struct {
-	enqueueTime time.Time
-	db          *gorm.DB
-	doConf      *oauth2.Config
-	repo        repository.Repository
+	enqueueTime           time.Time
+	db                    *gorm.DB
+	doConf                *oauth2.Config
+	repo                  repository.Repository
+	previewDeploymentsTTL string
 }
 
 // PreviewDeploymentsTTLDeleterOpts holds the options required to run this job
 type PreviewDeploymentsTTLDeleterOpts struct {
-	DBConf         *env.DBConf
-	ServerURL      string
-	DOClientID     string
-	DOClientSecret string
-	DOScopes       []string
+	DBConf                *env.DBConf
+	ServerURL             string
+	DOClientID            string
+	DOClientSecret        string
+	DOScopes              []string
+	PreviewDeploymentsTTL string
 }
 
 func NewPreviewDeploymentsTTLDeleter(
@@ -79,7 +81,7 @@ func NewPreviewDeploymentsTTLDeleter(
 
 	repo := rgorm.NewRepository(db, &key, credBackend)
 
-	return &previewDeploymentsTTLDeleter{enqueueTime, db, doConf, repo}, nil
+	return &previewDeploymentsTTLDeleter{enqueueTime, db, doConf, repo, opts.PreviewDeploymentsTTL}, nil
 }
 
 func (n *previewDeploymentsTTLDeleter) ID() string {
@@ -91,6 +93,18 @@ func (n *previewDeploymentsTTLDeleter) EnqueueTime() time.Time {
 }
 
 func (n *previewDeploymentsTTLDeleter) Run() error {
+	if n.previewDeploymentsTTL == "" {
+		log.Println("no TTL set for preview deployments, skipping job altogether")
+		return nil
+	}
+
+	ttlDuration, err := time.ParseDuration(n.previewDeploymentsTTL)
+
+	if err != nil {
+		log.Printf("error parsing preview deployments TTL: %v. skipping job altogether", err)
+		return err
+	}
+
 	var count int64
 
 	if err := n.db.Model(&models.Cluster{}).Count(&count).Error; err != nil {
@@ -128,12 +142,6 @@ func (n *previewDeploymentsTTLDeleter) Run() error {
 
 				go func(env *models.Environment, cluster *models.Cluster) {
 					defer wg.Done()
-
-					ttlDuration, _ := time.ParseDuration(env.DeploymentInactiveTTL)
-
-					if env.DeploymentInactiveTTL == "" {
-						return
-					}
 
 					depls, err := n.repo.Environment().ListDeployments(env.ID)
 

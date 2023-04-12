@@ -62,9 +62,8 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
 
-		NewCommentsDisabled:   e.NewCommentsDisabled,
-		NamespaceLabels:       make(map[string]string),
-		DeploymentInactiveTTL: e.DeploymentInactiveTTL,
+		NewCommentsDisabled: e.NewCommentsDisabled,
+		NamespaceLabels:     make(map[string]string),
 
 		Name: e.Name,
 		Mode: e.Mode,

@@ -56,16 +56,57 @@ const AppDashboard: React.FC<Props> = ({
         <div>x/o</div>
       </Container>
       <Spacer y={1} />
-      {apps.map((app: any) => {
-        return (
-          <div>{app.name}</div>
-        );
-      })}
+
+      <GridList>
+        {apps.map((app: any) => {
+          return (
+            <Block></Block>
+          );
+        })}
+      </GridList>
     </StyledAppDashboard>
   );
 };
 
 export default AppDashboard;
+
+const Block = styled.div`
+  align-items: center;
+  user-select: none;
+  display: flex;
+  font-size: 13px;
+  padding: 3px 0px 5px;
+  flex-direction: column;
+  align-item: center;
+  justify-content: space-between;
+  height: 170px;
+  cursor: pointer;
+  color: ${props => props.theme.text.primary};
+  position: relative;
+  border-radius: 5px;
+  background: ${props => props.theme.clickable.bg};
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
+  }
+
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const GridList = styled.div`
+  display: grid;
+  grid-column-gap: 25px;
+  grid-row-gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+`;
 
 const I = styled.i`
   color: white;

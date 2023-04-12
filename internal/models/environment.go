@@ -22,11 +22,10 @@ type Environment struct {
 	Name string
 	Mode string
 
-	NewCommentsDisabled   bool
-	NamespaceLabels       []byte
-	NamespaceAnnotations  []byte
-	GitDeployBranches     string
-	DeploymentInactiveTTL string
+	NewCommentsDisabled  bool
+	NamespaceLabels      []byte
+	NamespaceAnnotations []byte
+	GitDeployBranches    string
 
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
 	// aren't present

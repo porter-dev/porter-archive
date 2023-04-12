@@ -153,7 +153,7 @@ func (n *previewDeploymentsTTLDeleter) Run() error {
 					log.Printf("found %d deployments for %s/%s", len(depls), env.GitRepoOwner, env.GitRepoName)
 
 					log.Printf("deleting preview deployments based on TTL %s for %s/%s",
-						env.DeploymentInactiveTTL, env.GitRepoOwner, env.GitRepoName)
+						n.previewDeploymentsTTL, env.GitRepoOwner, env.GitRepoName)
 
 					k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(&kubernetes.OutOfClusterConfig{
 						Cluster:                   cluster,

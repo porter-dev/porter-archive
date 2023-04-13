@@ -5,6 +5,8 @@ import web from "assets/web.png";
 import github from "assets/github.png";
 import time from "assets/time.png";
 import healthy from "assets/status-healthy.png";
+import grid from "assets/grid.png";
+import list from "assets/list.png";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -15,6 +17,7 @@ import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import SearchBar from "components/porter/SearchBar";
+import Toggle from "components/porter/Toggle";
 
 type Props = {
 };
@@ -42,6 +45,7 @@ const AppDashboard: React.FC<Props> = ({
   const { currentProject, currentCluster } = useContext(Context);
   const [apps, setApps] = useState([]);
   const [searchValue, setSearchValue] = useState("");
+  const [view, setView] = useState("grid");
   const [isLoading, setIsLoading] = useState(true);
 
   const getApps = async () => {
@@ -81,40 +85,97 @@ const AppDashboard: React.FC<Props> = ({
           width="100%"
         />
         <Spacer inline x={2} />
+        <Toggle
+          items={[
+            { label: <ToggleIcon src={grid} />, value: "grid" },
+            { label: <ToggleIcon src={list} />, value: "list" },
+          ]}
+          active={view}
+          setActive={setView}
+        />
+        <Spacer inline x={2} />
         <Button onClick={() => console.log("cool")} height="30px" width="150px">
           <I className="material-icons">add</I> Add application
         </Button>
       </Container>
       <Spacer y={1} />
-      <GridList>
-        {apps.map((app: any, i: number) => {
-          if (!namespaceBlacklist.includes(app.name)) {
-            return (
-              <Block>
-                <Text size={14}>
-                  <Icon src={icons[i % icons.length]} />
-                  {app.name}
-                </Text>
-                <StatusIcon src={healthy} />
-                <Text size={13} color="#ffffff44">
-                  <SmallIcon opacity="0.6" src={github} />
-                  porter-dev/porter
-                </Text>
-                <Text size={13} color="#ffffff44">
-                  <SmallIcon opacity="0.4" src={time} />
-                  Updated 6:35 PM on 4/23/2023
-                </Text>
-              </Block>
-            );
-          }
-        })}
-      </GridList>
+      {view === "grid" ? (
+        <GridList>
+         {apps.map((app: any, i: number) => {
+           if (!namespaceBlacklist.includes(app.name)) {
+             return (
+               <Block>
+                 <Text size={14}>
+                   <Icon src={icons[i % icons.length]} />
+                   {app.name}
+                 </Text>
+                 <StatusIcon src={healthy} />
+                 <Text size={13} color="#ffffff44">
+                   <SmallIcon opacity="0.6" src={github} />
+                   porter-dev/porter
+                 </Text>
+                 <Text size={13} color="#ffffff44">
+                   <SmallIcon opacity="0.4" src={time} />
+                   Updated 6:35 PM on 4/23/2023
+                 </Text>
+               </Block>
+             );
+           }
+         })}
+       </GridList>
+      ) : (
+        <List>
+          {apps.map((app: any, i: number) => {
+            if (!namespaceBlacklist.includes(app.name)) {
+              return (
+                <Row isAtBottom={i === apps.length - 1}>
+                  <Text size={14}>
+                    <Icon src={icons[i % icons.length]} />
+                    {app.name}
+                    <Spacer inline x={1} />
+                    <SmallIcon src={healthy} />
+                  </Text>
+                  <Spacer height="15px" />
+                  <Text size={13} color="#ffffff44">
+                    <SmallIcon opacity="0.6" src={github} />
+                    porter-dev/porter
+                    <Spacer inline x={1} />
+                    <SmallIcon opacity="0.4" src={time} />
+                    Updated 6:35 PM on 4/23/2023
+                  </Text>
+                </Row>
+              );
+            }
+          })}
+        </List>
+      )}
       <Spacer y={5} />
     </StyledAppDashboard>
   );
 };
 
 export default AppDashboard;
+
+const Row = styled.div<{ isAtBottom?: boolean }>`
+  cursor: pointer;
+  padding: 20px;
+  border-bottom: ${props => props.isAtBottom ? "none" : "1px solid #494b4f"};
+  background: ${props => props.theme.clickable.bg};
+  position: relative;
+  border: 1px solid #494b4f;
+  border-radius: 5px;
+  margin-bottom: 25px;
+`;
+
+const List = styled.div`
+  overflow: hidden;
+`;
+
+const ToggleIcon = styled.img`
+  height: 12px;
+  margin: 0 5px;
+  min-width: 12px;
+`;
 
 const StatusIcon = styled.img`
   position: absolute;

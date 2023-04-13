@@ -5,6 +5,7 @@ import { Context } from "shared/Context";
 
 import TitleSection from "components/TitleSection";
 import Spacer from "components/porter/Spacer";
+import Tooltip from "components/porter/Tooltip";
 
 type PropsType = {
   image?: any;
@@ -22,7 +23,9 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
     return (
       <>
         <TitleSection
-          capitalize={this.props.capitalize === undefined || this.props.capitalize}
+          capitalize={
+            this.props.capitalize === undefined || this.props.capitalize
+          }
           icon={this.props.image}
           materialIconClass={this.props.materialIconClass}
         >
@@ -34,9 +37,11 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
             <Spacer height="35px" />
             <InfoSection>
               <TopRow>
-                <InfoLabel>
-                  <i className="material-icons">info</i> Info
-                </InfoLabel>
+                <Tooltip content="TestInfo" position="bottom" hidden={true}>
+                  <InfoLabel>
+                    <i className="material-icons">info</i> Info
+                  </InfoLabel>
+                </Tooltip>
               </TopRow>
               <Description>{this.props.description}</Description>
             </InfoSection>
@@ -85,7 +90,6 @@ const InfoLabel = styled.div`
 `;
 
 const InfoSection = styled.div`
-
   font-family: "Work Sans", sans-serif;
   margin-left: 0px;
 `;

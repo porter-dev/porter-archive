@@ -31,6 +31,7 @@ import ModalHandler from "./ModalHandler";
 import { NewProjectFC } from "./new-project/NewProject";
 import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
+import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -422,49 +423,36 @@ const Home: React.FC<Props> = (props) => {
               />
             )}
             <Route
-              path="/dashboard"
-              render={() => {
+            path={[
+              "/cluster-dashboard",
+              "/applications",
+              "/jobs",
+              "/env-groups",
+              "/databases",
+              "/preview-environments",
+              "/stacks",
+            ]}
+            render={() => {
+              if (currentCluster?.id === -1) {
+                return <Loading />;
+              } else if (!currentCluster || !currentCluster.name) {
                 return (
                   <DashboardWrapper>
-                    <Dashboard
-                      projectId={currentProject?.id}
-                      setRefreshClusters={setForceRefreshClusters}
-                    />
+                    <NoClusterPlaceHolder></NoClusterPlaceHolder>
                   </DashboardWrapper>
                 );
-              }}
-            />
-            <Route
-              path={[
-                "/cluster-dashboard",
-                "/applications",
-                "/jobs",
-                "/env-groups",
-                "/databases",
-                "/preview-environments",
-                "/stacks",
-              ]}
-              render={() => {
-                if (currentCluster?.id === -1) {
-                  return <Loading />;
-                } else if (!currentCluster || !currentCluster.name) {
-                  return (
-                    <DashboardWrapper>
-                      <PageNotFound />
-                    </DashboardWrapper>
-                  );
-                }
-                return (
-                  <DashboardWrapper>
-                    <DashboardRouter
-                      currentCluster={currentCluster}
-                      setSidebar={setForceSidebar}
-                      currentView={props.currentRoute}
-                    />
-                  </DashboardWrapper>
-                );
-              }}
-            />
+              }
+              return (
+                <DashboardWrapper>
+                  <DashboardRouter
+                    currentCluster={currentCluster}
+                    setSidebar={setForceSidebar}
+                    currentView={props.currentRoute}
+                  />
+                </DashboardWrapper>
+              );
+            }}
+          />
             <Route
               path={"/integrations"}
               render={() => <GuardedIntegrations />}
@@ -504,7 +492,7 @@ const ViewWrapper = styled.div`
   flex: 1;
   overflow-y: auto;
   justify-content: center;
-  background: ${props => props.theme.bg};
+  background: ${(props) => props.theme.bg};
   position: relative;
 `;
 

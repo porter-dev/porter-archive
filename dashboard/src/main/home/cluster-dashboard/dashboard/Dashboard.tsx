@@ -1,10 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import { useLocation } from "react-router";
-import settings from "assets/settings.svg";
+import editIcon from "assets/edit-button.svg";
 
 import api from "shared/api";
-import { DetailedIngressError } from "shared/types";
 import { getQueryParam } from "shared/routing";
 import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
@@ -20,11 +19,16 @@ import ClusterSettings from "./ClusterSettings";
 import Metrics from "./Metrics";
 import ClusterSettingsModal from "./ClusterSettingsModal";
 
-import CopyToClipboard from "components/CopyToClipboard";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 
-type TabEnum = "nodes" | "settings" | "namespaces" | "metrics" | "incidents" | "configuration";
+type TabEnum =
+  | "nodes"
+  | "settings"
+  | "namespaces"
+  | "metrics"
+  | "incidents"
+  | "configuration";
 
 var tabOptions: {
   label: string;
@@ -46,7 +50,15 @@ export const Dashboard: React.FunctionComponent = () => {
   const renderTab = () => {
     switch (currentTab) {
       case "settings":
-        return <ClusterSettings />;
+        return (
+          <ClusterSettings
+            ingressIp={ingressIp}
+            ingressError={ingressError}
+            history={undefined}
+            location={undefined}
+            match={undefined}
+          />
+        );
       case "metrics":
         return <Metrics />;
       case "namespaces":
@@ -57,8 +69,11 @@ export const Dashboard: React.FunctionComponent = () => {
             <Br />
             <ProvisionerSettings
               selectedClusterVersion={selectedClusterVersion}
+              provisionerError={provisionFailureReason}
               clusterId={context.currentCluster.id}
-              credentialId={context.currentCluster.cloud_provider_credential_identifier}
+              credentialId={
+                context.currentCluster.cloud_provider_credential_identifier
+              }
             />
           </>
         );
@@ -74,9 +89,11 @@ export const Dashboard: React.FunctionComponent = () => {
     ) {  
       if (!context.currentProject?.capi_provisioner_enabled) {
         tabOptions.unshift({ label: "Namespaces", value: "namespaces" });
+        tabOptions.unshift({ label: "Metrics", value: "metrics" });
+        tabOptions.unshift({ label: "Nodes", value: "nodes" });
       }
-      tabOptions.unshift({ label: "Metrics", value: "metrics" });
-      tabOptions.unshift({ label: "Nodes", value: "nodes" });
+      // tabOptions.unshift({ label: "Metrics", value: "metrics" });
+      // tabOptions.unshift({ label: "Nodes", value: "nodes" });
     }
 
     if (
@@ -115,52 +132,6 @@ export const Dashboard: React.FunctionComponent = () => {
     }
   }, [context.currentCluster]);
 
-  const renderIngressIp = (
-    ingressIp: string | undefined,
-    ingressError: DetailedIngressError
-  ) => {
-    if (typeof ingressIp !== "string") {
-      return (
-        <Url onClick={(e) => e.preventDefault()}>
-          <Loading />
-        </Url>
-      );
-    }
-
-    if (!ingressIp.length && ingressError) {
-      return (
-        <>
-          <Bolded>Ingress IP:</Bolded>
-          <span>{ingressError.message}</span>
-        </>
-      );
-    }
-
-    if (!ingressIp.length) {
-      return (
-        <>
-          <Bolded>Ingress IP:</Bolded>
-          <span>Ingress IP not available</span>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <Bolded>To configure custom domains for your apps, add a CNAME record pointing to the following Ingress IP:</Bolded>
-        <br /><br />
-        <CopyToClipboard
-          as={Url}
-          text={ingressIp}
-          wrapperProps={{ onClick: (e: any) => e.stopPropagation() }}
-        >
-          <span>{ingressIp}</span>
-          <i className="material-icons-outlined">content_copy</i>
-        </CopyToClipboard>
-      </>
-    );
-  };
-
   const updateClusterWithDetailedData = async () => {
     try {
       const res = await api.getCluster(
@@ -176,7 +147,7 @@ export const Dashboard: React.FunctionComponent = () => {
         setIngressIp(ingress_ip);
         setIngressError(ingress_error);
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -193,12 +164,9 @@ export const Dashboard: React.FunctionComponent = () => {
             setShowProvisionerStatus={setShowProvisionerStatus}
             setProvisionFailureReason={setProvisionFailureReason}
           />
-          {(
-            showProvisionerStatus && (
-              context.currentCluster.status === "UPDATING" ||
-              context.currentCluster.status === "UPDATING_UNAVAILABLE"
-            )
-          ) && (
+          {showProvisionerStatus &&
+            (context.currentCluster.status === "UPDATING" ||
+              context.currentCluster.status === "UPDATING_UNAVAILABLE") && (
               <>
                 <ProvisionerStatus
                   provisionFailureReason={provisionFailureReason}
@@ -253,7 +221,7 @@ export const Dashboard: React.FunctionComponent = () => {
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  strokeLinejoin="round"
+                  stroke-linejoin="round"
                 />
                 <path
                   fillRule="evenodd"
@@ -289,23 +257,22 @@ export const Dashboard: React.FunctionComponent = () => {
                 />
               </svg>
               <Spacer inline />
-              {context.currentCluster.vanity_name || context.currentCluster.name}
+              {context.currentCluster.vanity_name ||
+                context.currentCluster.name}
               <Spacer inline />
             </Flex>
-            <SettingsIcon onClick={() => {
-              context.setCurrentModal(<ClusterSettingsModal />);
-            }}>
-              <img src={settings} />
-            </SettingsIcon>
+            <EditIconStyle
+              onClick={() => {
+                context.setCurrentModal(<ClusterSettingsModal />);
+              }}
+            >
+              <img src={editIcon} />
+            </EditIconStyle>
           </Flex>
         }
-        description={
-          ingressIp ? (
-            <>{renderIngressIp(ingressIp, ingressError)}</>
-          ) : (
-            `Cluster settings and status for ${context.currentCluster.vanity_name || context.currentCluster.name}.`
-          )
-        }
+        description={`Cluster settings and status for ${
+          context.currentCluster.vanity_name || context.currentCluster.name
+        }.`}
         disableLineBreak
         capitalize={false}
       />
@@ -315,16 +282,16 @@ export const Dashboard: React.FunctionComponent = () => {
   );
 };
 
-const SettingsIcon = styled.div`
-  width: 30px;
-  height: 30px;
-  margin-left: 3px;
+const EditIconStyle = styled.div`
+  width: 20px;
+  height: 20px;
+  margin-left: -5px;
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 40px;
-  margin-bottom: -2px;
+  margin-bottom: 3px;
   :hover {
     background: #ffffff18;
   }
@@ -343,29 +310,4 @@ const Flex = styled.div`
 const Br = styled.div`
   width: 100%;
   height: 35px;
-`;
-
-const Url = styled.a`
-  font-size: 13px;
-  user-select: text;
-  font-weight: 400;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  > i {
-    margin-left: 10px;
-    font-size: 15px;
-  }
-
-  > span {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-`;
-
-const Bolded = styled.span`
-  color: #aaaabb;
-  margin-right: 6px;
-  white-space: nowrap;
 `;

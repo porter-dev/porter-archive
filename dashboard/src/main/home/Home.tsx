@@ -32,6 +32,7 @@ import { NewProjectFC } from "./new-project/NewProject";
 import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
 import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
+import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -389,6 +390,11 @@ const Home: React.FC<Props> = (props) => {
               path="/apps"
             >
               <AppDashboard />
+            </Route>
+            <Route
+              path="/addons/new"
+            >
+              <NewAddOnFlow />
             </Route>
             <Route
               path="/addons"

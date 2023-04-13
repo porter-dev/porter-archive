@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useContext, useMemo } from "react";
+import React, { 
+  useEffect, 
+  useState, 
+  useContext, 
+  useMemo, 
+  useCallback 
+} from "react";
 import styled from "styled-components";
 import _ from "lodash";
 
@@ -14,6 +20,7 @@ import { search } from "shared/search";
 import api from "shared/api";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
+
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
@@ -22,6 +29,7 @@ import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
 import { readableDate } from "shared/string_utils";
 import Loading from "components/Loading";
+import { Link } from "react-router-dom";
 
 type Props = {
 };
@@ -70,7 +78,6 @@ const AppDashboard: React.FC<Props> = ({
   }, [addOns, searchValue]);
 
   const getAddOns = async () => {
-
     try {
       setIsLoading(true);
       const res = await api.getCharts(
@@ -107,6 +114,23 @@ const AppDashboard: React.FC<Props> = ({
     getAddOns();
   }, [currentCluster, currentProject]);
 
+  const getExpandedChartLinkURL = useCallback((x: any) => {
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+      get: (searchParams, prop: string) => searchParams.get(prop),
+    });
+    const cluster = currentCluster?.name;
+    const route = `/applications/${cluster}/${x.namespace}/${x.name}`;
+    const newParams = {
+      // @ts-ignore
+      project_id: params.project_id,
+      closeChartRedirectUrl: '/addons',
+    };
+    const newURLSearchParams = new URLSearchParams(
+      _.omitBy(newParams, _.isNil)
+    );
+    return `${route}?${newURLSearchParams.toString()}`;
+  }, [currentCluster]);
+
   return (
     <StyledAppDashboard>
       <DashboardHeader
@@ -133,9 +157,11 @@ const AppDashboard: React.FC<Props> = ({
           setActive={setView}
         />
         <Spacer inline x={2} />
-        <Button onClick={() => console.log("cool")} height="30px" width="130px">
-          <I className="material-icons">add</I> New add-on
-        </Button>
+        <Link to="/addons/new">
+          <Button onClick={() => {}} height="30px" width="130px">
+            <I className="material-icons">add</I> New add-on
+          </Button>
+        </Link>
       </Container>
       <Spacer y={1} />
       {isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
@@ -146,7 +172,7 @@ const AppDashboard: React.FC<Props> = ({
               !templateBlacklist.includes(app.chart.metadata.name)
             ) {
               return (
-                <Block>
+                <Block to={getExpandedChartLinkURL(app)}>
                   <Text size={14}>
                     <Icon src={app.chart.metadata.icon} />
                     {app.name}
@@ -169,7 +195,7 @@ const AppDashboard: React.FC<Props> = ({
               !templateBlacklist.includes(app.chart.metadata.name)
             ) {
               return (
-                <Row>
+                <Row to={getExpandedChartLinkURL(app)}>
                   <Text size={14}>
                     <MidIcon src={app.chart.metadata.icon} />
                     {app.name}
@@ -194,8 +220,9 @@ const AppDashboard: React.FC<Props> = ({
 
 export default AppDashboard;
 
-const Row = styled.div<{ isAtBottom?: boolean }>`
+const Row = styled(Link)<{ isAtBottom?: boolean }>`
   cursor: pointer;
+  display: block;
   padding: 15px;
   border-bottom: ${props => props.isAtBottom ? "none" : "1px solid #494b4f"};
   background: ${props => props.theme.clickable.bg};
@@ -240,7 +267,7 @@ const SmallIcon = styled.img<{ opacity?: string }>`
   margin-right: 10px;
 `;
 
-const Block = styled.div`
+const Block = styled(Link)`
   height: 110px;
   flex-direction: column;
   display: flex;

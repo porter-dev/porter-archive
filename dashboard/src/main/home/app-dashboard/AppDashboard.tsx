@@ -109,7 +109,7 @@ const AppDashboard: React.FC<Props> = ({
           setActive={setView}
         />
         <Spacer inline x={2} />
-        <Button onClick={() => console.log("cool")} height="30px" width="160px">
+        <Button onClick={() => {}} height="30px" width="160px">
           <I className="material-icons">add</I> New application
         </Button>
       </Container>

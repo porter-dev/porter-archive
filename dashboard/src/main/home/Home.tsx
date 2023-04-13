@@ -28,6 +28,7 @@ import ModalHandler from "./ModalHandler";
 import { NewProjectFC } from "./new-project/NewProject";
 import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
+import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -438,7 +439,7 @@ const Home: React.FC<Props> = (props) => {
               } else if (!currentCluster || !currentCluster.name) {
                 return (
                   <DashboardWrapper>
-                    <PageNotFound />
+                    <NoClusterPlaceHolder></NoClusterPlaceHolder>
                   </DashboardWrapper>
                 );
               }
@@ -492,7 +493,7 @@ const ViewWrapper = styled.div`
   flex: 1;
   overflow-y: auto;
   justify-content: center;
-  background: ${props => props.theme.bg};
+  background: ${(props) => props.theme.bg};
   position: relative;
 `;
 

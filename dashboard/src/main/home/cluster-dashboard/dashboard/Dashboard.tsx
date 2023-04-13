@@ -4,7 +4,6 @@ import { useLocation } from "react-router";
 import editIcon from "assets/edit-button.svg";
 
 import api from "shared/api";
-import { DetailedIngressError } from "shared/types";
 import { getQueryParam } from "shared/routing";
 import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
@@ -20,7 +19,6 @@ import ClusterSettings from "./ClusterSettings";
 import Metrics from "./Metrics";
 import ClusterSettingsModal from "./ClusterSettingsModal";
 
-import CopyToClipboard from "components/CopyToClipboard";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 
@@ -216,7 +214,7 @@ export const Dashboard: React.FunctionComponent = () => {
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  stroke-linejoin="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   d="M3.90217 12.4403C2.29983 12.4403 1 11.1414 1 9.53907C1 7.93673 2.29983 6.63782 3.90217 6.63782"
@@ -232,21 +230,21 @@ export const Dashboard: React.FunctionComponent = () => {
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  stroke-linejoin="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   d="M6.66895 15.207C6.66895 16.8094 7.96787 18.1092 9.5702 18.1092C11.1725 18.1092 12.4715 16.8094 12.4715 15.207"
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  stroke-linejoin="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   d="M6.66895 3.90217C6.66895 2.29983 7.96787 1 9.5702 1C11.1725 1 12.4715 2.29983 12.4715 3.90217"
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  stroke-linejoin="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   fillRule="evenodd"
@@ -255,7 +253,7 @@ export const Dashboard: React.FunctionComponent = () => {
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  stroke-linejoin="round"
+                  strokeLinejoin="round"
                 />
               </svg>
               <Spacer inline />

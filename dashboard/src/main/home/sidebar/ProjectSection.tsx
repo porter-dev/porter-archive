@@ -45,7 +45,7 @@ class ProjectSection extends Component<PropsType, StateType> {
   };
 
   renderOptionList = () => {
-    let { setCurrentProject, setCurrentCluster } = this.context;
+    let { setCurrentProject, setCurrentCluster, currentProject } = this.context;
     return this.props.projects.map((project: ProjectType, i: number) => {
       return (
         <Option
@@ -53,7 +53,9 @@ class ProjectSection extends Component<PropsType, StateType> {
           selected={project.name === this.props.currentProject.name}
           onClick={() => {
             this.setState({ expanded: false });
-            setCurrentCluster(null);
+            if (project.id !== currentProject.id) {
+              setCurrentCluster(null);
+            }
             setCurrentProject(project, () => {
               pushFiltered(this.props, "/dashboard", ["project_id"]);
             });

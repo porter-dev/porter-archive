@@ -37,7 +37,7 @@ export default class CurrentError extends Component<PropsType, StateType> {
       currentError = String(currentError);
     }
 
-    if (currentError) {
+    if (currentError && currentError !== "" && currentError !== "{}" && currentError !== undefined && currentError.length > 3) {
       if (!this.state.expanded) {
         return (
           <StyledCurrentError>
@@ -133,7 +133,7 @@ const StyledCurrentError = styled.div`
   border-radius: 3px;
   background: #272731cc;
   border: 1px solid #ffffff55;
-  display: flex;
+  display: none;
   align-items: center;
   color: #ffffff;
 

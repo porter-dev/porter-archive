@@ -245,7 +245,12 @@ func getJob(id string, input map[string]interface{}) worker.Job {
 		return newJob
 	} else if id == "preview-deployments-ttl-deleter" {
 		newJob, err := jobs.NewPreviewDeploymentsTTLDeleter(dbConn, time.Now().UTC(), &jobs.PreviewDeploymentsTTLDeleterOpts{
-			DBConf: &envDecoder.DBConf,
+			DBConf:                &envDecoder.DBConf,
+			ServerURL:             envDecoder.ServerURL,
+			DOClientID:            envDecoder.DOClientID,
+			DOClientSecret:        envDecoder.DOClientSecret,
+			DOScopes:              []string{"read", "write"},
+			PreviewDeploymentsTTL: envDecoder.PreviewDeploymentsTTL,
 		})
 		if err != nil {
 			log.Printf("error creating job with ID: preview-deployments-ttl-deleter. Error: %v", err)

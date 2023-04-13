@@ -21,6 +21,7 @@ import Text from "components/porter/Text";
 import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
 import { readableDate } from "shared/string_utils";
+import Loading from "components/Loading";
 
 type Props = {
 };
@@ -41,6 +42,12 @@ const namespaceBlacklist = [
   "monitoring",
 ];
 
+const templateBlacklist = [
+  "web",
+  "worker",
+  "job",
+];
+
 const AppDashboard: React.FC<Props> = ({
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -54,7 +61,7 @@ const AppDashboard: React.FC<Props> = ({
       addOns ?? [],
       searchValue,
       {
-        keys: ["name"],
+        keys: ["name", "chart.metadata.name"],
         isCaseSensitive: false,
       }
     );
@@ -88,20 +95,24 @@ const AppDashboard: React.FC<Props> = ({
           namespace: "all",
         }
       );
+      setIsLoading(false);
       const charts = res.data || [];
       setAddOns(charts);
-    } catch (err) {};
+    } catch (err) {
+      setIsLoading(false);
+    };
   };
 
   useEffect(() => {
     getAddOns();
-  }, []);
+  }, [currentCluster, currentProject]);
 
   return (
     <StyledAppDashboard>
       <DashboardHeader
         image={addOn}
         title="Add-ons"
+        capitalize={false}
         description="Add-ons and supporting workloads for this project."
         disableLineBreak
       />
@@ -127,11 +138,13 @@ const AppDashboard: React.FC<Props> = ({
         </Button>
       </Container>
       <Spacer y={1} />
-      {view === "grid" ? (
+      {isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
         <GridList>
           {(filteredAddOns ?? []).map((app: any, i: number) => {
-            console.log(app);
-            if (!namespaceBlacklist.includes(app.namespace)) {
+            if (
+              !namespaceBlacklist.includes(app.namespace) && 
+              !templateBlacklist.includes(app.chart.metadata.name)
+            ) {
               return (
                 <Block>
                   <Text size={14}>
@@ -151,7 +164,10 @@ const AppDashboard: React.FC<Props> = ({
       ) : (
         <List>
           {(filteredAddOns ?? []).map((app: any, i: number) => {
-            if (!namespaceBlacklist.includes(app.namespace)) {
+            if (
+              !namespaceBlacklist.includes(app.namespace) &&
+              !templateBlacklist.includes(app.chart.metadata.name)
+            ) {
               return (
                 <Row>
                   <Text size={14}>

@@ -101,7 +101,12 @@ func (n *previewDeploymentsTTLDeleter) Run() error {
 	ttlDuration, err := time.ParseDuration(n.previewDeploymentsTTL)
 	if err != nil {
 		log.Printf("error parsing preview deployments TTL: %v. skipping job altogether", err)
-		return err
+		return nil
+	}
+
+	if ttlDuration.Hours() < 24 || ttlDuration.Hours() > 720 {
+		log.Printf("preview deployments TTL must be between 24 (1 day) and 720 hours (30 days). skipping job altogether")
+		return nil
 	}
 
 	var count int64

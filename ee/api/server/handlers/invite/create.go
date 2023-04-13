@@ -80,7 +80,7 @@ func (c *InviteCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 func CreateInviteWithProject(invite *types.CreateInviteRequest, projectID uint) (*models.Invite, error) {
 	// generate a token and an expiry time
-	expiry := time.Now().Add(24 * time.Hour)
+	expiry := time.Now().Add(7 * 24 * time.Hour)
 
 	return &models.Invite{
 		Email:     invite.Email,

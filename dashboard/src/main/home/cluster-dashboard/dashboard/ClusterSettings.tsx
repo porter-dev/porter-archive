@@ -255,11 +255,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
     ingressError: DetailedIngressError
   ) => {
     if (typeof ingressIp !== "string") {
-      return (
-        <Url onClick={(e) => e.preventDefault()}>
-          <Loading />
-        </Url>
-      );
+      return <></>;
     }
 
     if (!ingressIp.length && ingressError) {
@@ -347,7 +343,9 @@ const ClusterSettings: React.FC<Props> = (props) => {
     <div>
       <StyledSettingsSection>
         <DarkMatter />
-        <>{configureUrl(props.ingressIp, props.ingressError)}</>
+        {props.ingressIp && (
+          <>{configureUrl(props.ingressIp, props.ingressError)}</>
+        )}
 
         <DarkMatter />
         {enableAgentIntegration}
@@ -390,7 +388,7 @@ const StyledSettingsSection = styled.div`
   overflow: auto;
   height: 100%;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
 `;
 

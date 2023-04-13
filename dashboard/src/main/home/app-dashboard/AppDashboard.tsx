@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useMemo } from "react";
 import styled from "styled-components";
+import _ from "lodash";
 
 import web from "assets/web.png";
 import github from "assets/github.png";
@@ -9,6 +10,7 @@ import grid from "assets/grid.png";
 import list from "assets/list.png";
 
 import { Context } from "shared/Context";
+import { search } from "shared/search";
 import api from "shared/api";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
@@ -47,6 +49,19 @@ const AppDashboard: React.FC<Props> = ({
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("grid");
   const [isLoading, setIsLoading] = useState(true);
+
+  const filteredApps = useMemo(() => {
+    const filteredBySearch = search(
+      apps ?? [],
+      searchValue,
+      {
+        keys: ["name"],
+        isCaseSensitive: false,
+      }
+    );
+
+    return _.sortBy(filteredBySearch);
+  }, [apps, searchValue]);
 
   const getApps = async () => {
     
@@ -101,7 +116,7 @@ const AppDashboard: React.FC<Props> = ({
       <Spacer y={1} />
       {view === "grid" ? (
         <GridList>
-         {apps.map((app: any, i: number) => {
+         {(filteredApps ?? []).map((app: any, i: number) => {
            if (!namespaceBlacklist.includes(app.name)) {
              return (
                <Block>
@@ -125,7 +140,7 @@ const AppDashboard: React.FC<Props> = ({
        </GridList>
       ) : (
         <List>
-          {apps.map((app: any, i: number) => {
+          {(filteredApps ?? []).map((app: any, i: number) => {
             if (!namespaceBlacklist.includes(app.name)) {
               return (
                 <Row isAtBottom={i === apps.length - 1}>

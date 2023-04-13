@@ -158,13 +158,13 @@ export default AppDashboard;
 
 const Row = styled.div<{ isAtBottom?: boolean }>`
   cursor: pointer;
-  padding: 20px;
+  padding: 15px;
   border-bottom: ${props => props.isAtBottom ? "none" : "1px solid #494b4f"};
   background: ${props => props.theme.clickable.bg};
   position: relative;
   border: 1px solid #494b4f;
   border-radius: 5px;
-  margin-bottom: 25px;
+  margin-bottom: 15px;
 `;
 
 const List = styled.div`

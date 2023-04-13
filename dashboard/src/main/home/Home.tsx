@@ -20,8 +20,8 @@ import LaunchWrapper from "./launch/LaunchWrapper";
 import Navbar from "./navbar/Navbar";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
-import PageNotFound from "components/PageNotFound";
 import AppDashboard from "./app-dashboard/AppDashboard";
+import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
 
 import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -393,7 +393,7 @@ const Home: React.FC<Props> = (props) => {
             <Route
               path="/addons"
             >
-              test
+              <AddOnDashboard />
             </Route>
             <Route
               path="/new-project"
@@ -422,6 +422,19 @@ const Home: React.FC<Props> = (props) => {
                 }}
               />
             )}
+            <Route
+              path="/dashboard"
+              render={() => {
+                return (
+                  <DashboardWrapper>
+                    <Dashboard
+                      projectId={currentProject?.id}
+                      setRefreshClusters={setForceRefreshClusters}
+                    />
+                  </DashboardWrapper>
+                );
+              }}
+            />
             <Route
             path={[
               "/cluster-dashboard",

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext, useMemo } from "react";
 import styled from "styled-components";
 import _ from "lodash";
 
-import web from "assets/web.png";
+import addOn from "assets/add-ons.png";
 import github from "assets/github.png";
 import time from "assets/time.png";
 import healthy from "assets/status-healthy.png";
@@ -20,6 +20,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
+import { readableDate } from "shared/string_utils";
 
 type Props = {
 };
@@ -29,12 +30,10 @@ const icons = [
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg",
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-plain.svg",
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg",
-  web,
 ];
 
 const namespaceBlacklist = [
   "cert-manager",
-  "default",
   "ingress-nginx",
   "kube-node-lease",
   "kube-public",
@@ -45,14 +44,14 @@ const namespaceBlacklist = [
 const AppDashboard: React.FC<Props> = ({
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
-  const [apps, setApps] = useState([]);
+  const [addOns, setAddOns] = useState([]);
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("grid");
   const [isLoading, setIsLoading] = useState(true);
 
-  const filteredApps = useMemo(() => {
+  const filteredAddOns = useMemo(() => {
     const filteredBySearch = search(
-      apps ?? [],
+      addOns ?? [],
       searchValue,
       {
         keys: ["name"],
@@ -61,42 +60,56 @@ const AppDashboard: React.FC<Props> = ({
     );
 
     return _.sortBy(filteredBySearch);
-  }, [apps, searchValue]);
+  }, [addOns, searchValue]);
 
-  const getApps = async () => {
-    
-    // TODO: Currently using namespaces as placeholder (replace with apps)
+  const getAddOns = async () => {
+
     try {
-      const res = await api.getNamespaces(
+      setIsLoading(true);
+      const res = await api.getCharts(
         "<token>",
-        {},
+        {
+          limit: 50,
+          skip: 0,
+          byDate: false,
+          statusFilter: [
+            "deployed",
+            "uninstalled",
+            "pending",
+            "pending-install",
+            "pending-upgrade",
+            "pending-rollback",
+            "failed",
+          ],
+        },
         {
           id: currentProject.id,
           cluster_id: currentCluster.id,
+          namespace: "all",
         }
-      )
-      setApps(res.data);
-    }
-    catch (err) {}
+      );
+      const charts = res.data || [];
+      setAddOns(charts);
+    } catch (err) {};
   };
 
   useEffect(() => {
-    getApps();
+    getAddOns();
   }, []);
 
   return (
     <StyledAppDashboard>
       <DashboardHeader
-        image={web}
-        title="Applications"
-        description="Web services, workers, and jobs for this project."
+        image={addOn}
+        title="Add-ons"
+        description="Add-ons and supporting workloads for this project."
         disableLineBreak
       />
       <Container row spaced>
         <SearchBar 
           value={searchValue}
           setValue={setSearchValue}
-          placeholder="Search applications . . ."
+          placeholder="Search add-ons . . ."
           width="100%"
         />
         <Spacer inline x={2} />
@@ -109,54 +122,48 @@ const AppDashboard: React.FC<Props> = ({
           setActive={setView}
         />
         <Spacer inline x={2} />
-        <Button onClick={() => console.log("cool")} height="30px" width="160px">
-          <I className="material-icons">add</I> New application
+        <Button onClick={() => console.log("cool")} height="30px" width="130px">
+          <I className="material-icons">add</I> New add-on
         </Button>
       </Container>
       <Spacer y={1} />
       {view === "grid" ? (
         <GridList>
-         {(filteredApps ?? []).map((app: any, i: number) => {
-           if (!namespaceBlacklist.includes(app.name)) {
-             return (
-               <Block>
-                 <Text size={14}>
-                   <Icon src={icons[i % icons.length]} />
-                   {app.name}
-                 </Text>
-                 <StatusIcon src={healthy} />
-                 <Text size={13} color="#ffffff44">
-                   <SmallIcon opacity="0.6" src={github} />
-                   porter-dev/porter
-                 </Text>
-                 <Text size={13} color="#ffffff44">
-                   <SmallIcon opacity="0.4" src={time} />
-                   Updated 6:35 PM on 4/23/2023
-                 </Text>
-               </Block>
-             );
-           }
-         })}
+          {(filteredAddOns ?? []).map((app: any, i: number) => {
+            console.log(app);
+            if (!namespaceBlacklist.includes(app.namespace)) {
+              return (
+                <Block>
+                  <Text size={14}>
+                    <Icon src={app.chart.metadata.icon} />
+                    {app.name}
+                  </Text>
+                  <StatusIcon src={healthy} />
+                  <Text size={13} color="#ffffff44">
+                    <SmallIcon opacity="0.4" src={time} />
+                    {readableDate(app.info.last_deployed)}
+                  </Text>
+                </Block>
+              );
+            }
+          })}
        </GridList>
       ) : (
         <List>
-          {(filteredApps ?? []).map((app: any, i: number) => {
-            if (!namespaceBlacklist.includes(app.name)) {
+          {(filteredAddOns ?? []).map((app: any, i: number) => {
+            if (!namespaceBlacklist.includes(app.namespace)) {
               return (
                 <Row>
                   <Text size={14}>
-                    <MidIcon src={icons[i % icons.length]} />
+                    <MidIcon src={app.chart.metadata.icon} />
                     {app.name}
                     <Spacer inline x={1} />
-                    <MidIcon src={healthy} />
+                    <MidIcon src={healthy} height="16px" />
                   </Text>
                   <Spacer height="15px" />
                   <Text size={13} color="#ffffff44">
-                    <SmallIcon opacity="0.6" src={github} />
-                    porter-dev/porter
-                    <Spacer inline x={1} />
                     <SmallIcon opacity="0.4" src={time} />
-                    Updated 6:35 PM on 4/23/2023
+                    {readableDate(app.info.last_deployed)}
                   </Text>
                 </Row>
               );
@@ -201,13 +208,13 @@ const StatusIcon = styled.img`
 `;
 
 const Icon = styled.img`
-  height: 18px;
-  margin-right: 15px;
+  height: 20px;
+  margin-right: 13px;
 `;
 
-const MidIcon = styled.img`
-  height: 16px;
-  margin-right: 13px;
+const MidIcon = styled.img<{ height?: string }>`
+  height: ${props => props.height || "18px"};
+  margin-right: 11px;
 `;
 
 const SmallIcon = styled.img<{ opacity?: string }>`
@@ -218,7 +225,7 @@ const SmallIcon = styled.img<{ opacity?: string }>`
 `;
 
 const Block = styled.div`
-  height: 150px;
+  height: 110px;
   flex-direction: column;
   display: flex;
   justify-content: space-between;

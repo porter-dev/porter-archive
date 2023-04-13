@@ -49,26 +49,27 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	existingClusters, err := c.Config().Repo.Cluster().ListClustersByProjectID(uint(apiContract.Cluster.ProjectId))
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			e := fmt.Errorf("error listing clusters for given project ID: %w", err)
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			return
+		}
+	}
+	for _, cluster := range existingClusters {
+		if cluster.Name == apiContract.Cluster.GetEksKind().ClusterName {
+			e := fmt.Errorf("cluster already exists in project %d called %s", cluster.ProjectID, cluster.Name)
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			return
+		}
+	}
+
 	if !project.CapiProvisionerEnabled && !c.Config().EnableCAPIProvisioner {
 		// return dummy data if capi provisioner disabled in project settings, and as env var
 		// TODO: remove this stub when we can spin up all services locally, easily
 		clusterID := apiContract.Cluster.ClusterId
 		if apiContract.Cluster.ClusterId == 0 {
-			existingClusters, err := c.Config().Repo.Cluster().ListClustersByProjectID(uint(apiContract.Cluster.ProjectId))
-			if err != nil {
-				if !errors.Is(err, sql.ErrNoRows) {
-					e := fmt.Errorf("error listing clusters for given project ID: %w", err)
-					c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
-					return
-				}
-			}
-			for _, cluster := range existingClusters {
-				if cluster.Name == apiContract.Cluster.GetEksKind().ClusterName {
-					e := fmt.Errorf("cluster already exists in project %d called %s", cluster.ProjectID, cluster.Name)
-					c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
-					return
-				}
-			}
 			dbcli := models.Cluster{
 				ProjectID:                         uint(apiContract.Cluster.ProjectId),
 				Status:                            "UPDATING_UNAVAILABLE",

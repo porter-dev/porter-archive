@@ -233,7 +233,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 				var err error
 				defer func() {
 					// TODO: this is only used to collect data for removing the `request origin not allowed by Upgrader.CheckOrigin` error
-					res.Logger.Info().Msgf("error: %w, host: %s, origin: %s, serverURL: %s", err, r.Host, r.Header.Get("Origin"), sc.ServerURL)
+					res.Logger.Info().Msgf("error: %s, host: %s, origin: %s, serverURL: %s", err.Error(), r.Host, r.Header.Get("Origin"), sc.ServerURL)
 				}()
 				origin := r.Header.Get("Origin")
 

@@ -13,32 +13,19 @@ import Spacer from "./porter/Spacer";
 
 type Props = {};
 
-const ClusterProvisioningPlaceholder: React.FC<RouteComponentProps> = (props) => {
+const NoClusterPlaceholder: React.FC<RouteComponentProps> = (props) => {
   const { currentCluster } = useContext(Context);
 
   return (
     <ClusterPlaceholder>
-      <Text size={16}>
-        <Img src={loading} /> Your cluster is being created
-      </Text>
+      <Text size={16}>No Cluster Provisioned</Text>
       <Spacer height="15px" />
-      <Text color="helper">
-        You can view the status of your cluster creation
-        <Spacer inline width="5px" />
-        <Link onClick={() => {
-          pushFiltered(props, "/cluster-dashboard", ["project_id"], {
-            cluster: currentCluster.name,
-          });
-        }}>
-          here
-          <i className="material-icons">arrow_forward</i> 
-        </Link>
-      </Text>
+      <Text color="helper">Finish provisioning a cluster to continue</Text>
     </ClusterPlaceholder>
   );
 };
 
-export default withRouter(ClusterProvisioningPlaceholder);
+export default withRouter(NoClusterPlaceholder);
 
 const Link = styled.a`
   text-decoration: underline;
@@ -61,7 +48,7 @@ const Img = styled.img`
 const ClusterPlaceholder = styled.div`
   padding: 25px;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
   padding-bottom: 35px;
 `;

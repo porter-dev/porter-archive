@@ -20,7 +20,7 @@ const Onboarding = () => {
   useSteps(isLoading);
 
   useEffect(() => {
-    let unsub = devtools(OFState, "Onboarding flow state");
+    let unsub = devtools(OFState, { name: "Onboarding flow state" });
     return () => {
       if (typeof unsub === "function") {
         unsub();

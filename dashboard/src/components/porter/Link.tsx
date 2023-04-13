@@ -31,9 +31,11 @@ export default Link;
 const Div = styled.span`
   color: #8590ff;
   cursor: pointer;
+  display: inline;
 `;
 
 const StyledLink = styled(DynamicLink)`
   color: #8590ff;
+  display: inline;
   cursor: pointer;
 `;

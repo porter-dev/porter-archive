@@ -189,7 +189,7 @@ const StyledMultiSelectFilter = styled.div`
   font-size: 13px;
   position: relative;
   padding: 10px;
-  background: #26292e;
+  background: ${props => props.theme.fg};
   border-radius: 5px;
   border: 1px solid #aaaabb33;
   display: flex;

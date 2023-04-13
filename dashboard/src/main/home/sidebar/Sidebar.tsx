@@ -241,7 +241,7 @@ const NavButton = styled(SidebarLink)`
   padding: 0 30px 2px 6px;
   font-size: 13px;
   font-family: "Work Sans", sans-serif;
-  color: #ffffff;
+  color: ${props => props.theme.text.primary};
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 
@@ -272,6 +272,7 @@ const Img = styled.img<{ enlarge?: boolean }>`
   padding-top: 4px;
   border-radius: 3px;
   margin-right: 8px;
+  opacity: 0.8;
 `;
 
 const SidebarBg = styled.div`
@@ -279,14 +280,14 @@ const SidebarBg = styled.div`
   top: 0;
   left: 0;
   width: 100%;
-  background-color: #202227;
+  background-color: ${props => props.theme.bg};
   height: 100%;
   z-index: -1;
   border-right: 1px solid #383a3f;
 `;
 
 const SidebarLabel = styled.div`
-  color: #ffffff99;
+  color: ${props => props.theme.text.primary};
   padding: 5px 23px;
   margin-bottom: 5px;
   font-size: 13px;

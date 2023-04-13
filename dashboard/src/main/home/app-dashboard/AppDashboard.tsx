@@ -130,10 +130,10 @@ const AppDashboard: React.FC<Props> = ({
               return (
                 <Row isAtBottom={i === apps.length - 1}>
                   <Text size={14}>
-                    <Icon src={icons[i % icons.length]} />
+                    <MidIcon src={icons[i % icons.length]} />
                     {app.name}
                     <Spacer inline x={1} />
-                    <SmallIcon src={healthy} />
+                    <MidIcon src={healthy} />
                   </Text>
                   <Spacer height="15px" />
                   <Text size={13} color="#ffffff44">
@@ -165,6 +165,7 @@ const Row = styled.div<{ isAtBottom?: boolean }>`
   border: 1px solid #494b4f;
   border-radius: 5px;
   margin-bottom: 15px;
+  animation: fadeIn 0.3s 0s;
 `;
 
 const List = styled.div`
@@ -187,6 +188,11 @@ const StatusIcon = styled.img`
 const Icon = styled.img`
   height: 18px;
   margin-right: 15px;
+`;
+
+const MidIcon = styled.img`
+  height: 16px;
+  margin-right: 13px;
 `;
 
 const SmallIcon = styled.img<{ opacity?: string }>`

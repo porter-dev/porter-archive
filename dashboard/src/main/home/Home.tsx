@@ -33,6 +33,10 @@ import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
 import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
 import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
+import Modal from "components/porter/Modal";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
+import Button from "components/porter/Button";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -86,6 +90,7 @@ const Home: React.FC<Props> = (props) => {
   const [ghRedirect, setGhRedirect] = useState(false);
   const [forceSidebar, setForceSidebar] = useState(true);
   const [theme, setTheme] = useState(standard);
+  const [showWrongEmailModal, setShowWrongEmailModal] = useState(false);
 
   const redirectToNewProject = () => {
     pushFiltered(props, "/new-project", ["project_id"]);
@@ -208,7 +213,9 @@ const Home: React.FC<Props> = (props) => {
     getProjects(defaultProjectId);
     getMetadata();
 
-    if (
+    if (err === "Wrong email for invite") {
+      setShowWrongEmailModal(true);
+    } else if (
       !hasFinishedOnboarding &&
       props.history.location.pathname &&
       !props.history.location.pathname.includes("onboarding")
@@ -258,9 +265,11 @@ const Home: React.FC<Props> = (props) => {
               .then((res) => {
                 const usage = res.data;
                 setUsage(usage);
-                if (usage.exceeded && false) {
+                /*
+                if (usage.exceeded) {
                   setCurrentModal("UsageWarningModal", { usage });
                 }
+                */
               })
               .catch(console.log);
           }
@@ -270,12 +279,16 @@ const Home: React.FC<Props> = (props) => {
   }, [props.currentProject?.id]);
 
   useEffect(() => {
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+    let err = urlParams.get("error");
     if (
       !hasFinishedOnboarding &&
       props.history.location.pathname &&
       !props.history.location.pathname.includes("onboarding") &&
       !props.history.location.pathname.includes("new-project") &&
-      !props.history.location.pathname.includes("project-settings")
+      !props.history.location.pathname.includes("project-settings") &&
+      err !== "Wrong email for invite"
     ) {
       setCurrentModal("RedirectToOnboardingModal");
     }
@@ -442,36 +455,36 @@ const Home: React.FC<Props> = (props) => {
               }}
             />
             <Route
-            path={[
-              "/cluster-dashboard",
-              "/applications",
-              "/jobs",
-              "/env-groups",
-              "/databases",
-              "/preview-environments",
-              "/stacks",
-            ]}
-            render={() => {
-              if (currentCluster?.id === -1) {
-                return <Loading />;
-              } else if (!currentCluster || !currentCluster.name) {
+              path={[
+                "/cluster-dashboard",
+                "/applications",
+                "/jobs",
+                "/env-groups",
+                "/databases",
+                "/preview-environments",
+                "/stacks",
+              ]}
+              render={() => {
+                if (currentCluster?.id === -1) {
+                  return <Loading />;
+                } else if (!currentCluster || !currentCluster.name) {
+                  return (
+                    <DashboardWrapper>
+                      <NoClusterPlaceHolder></NoClusterPlaceHolder>
+                    </DashboardWrapper>
+                  );
+                }
                 return (
                   <DashboardWrapper>
-                    <NoClusterPlaceHolder></NoClusterPlaceHolder>
+                    <DashboardRouter
+                      currentCluster={currentCluster}
+                      setSidebar={setForceSidebar}
+                      currentView={props.currentRoute}
+                    />
                   </DashboardWrapper>
                 );
-              }
-              return (
-                <DashboardWrapper>
-                  <DashboardRouter
-                    currentCluster={currentCluster}
-                    setSidebar={setForceSidebar}
-                    currentView={props.currentRoute}
-                  />
-                </DashboardWrapper>
-              );
-            }}
-          />
+              }}
+            />
             <Route
               path={"/integrations"}
               render={() => <GuardedIntegrations />}
@@ -496,6 +509,26 @@ const Home: React.FC<Props> = (props) => {
           />,
           document.body
         )}
+        {showWrongEmailModal && 
+          <Modal>
+            <Text size={16}>
+              Oops! This invite link wasn't for {user?.email}
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              Your account email does not match the email associated with this project invite. 
+              Please log out and sign up again with the correct email using the invite link.
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              You should reach out to the person who sent you the invite link to get the correct email.
+            </Text>
+            <Spacer y={1} />
+            <Button onClick={props.logOut}>
+              Log out
+            </Button>
+          </Modal>
+        }
       </StyledHome>
     </ThemeProvider>
   );

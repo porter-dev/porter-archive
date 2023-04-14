@@ -360,6 +360,10 @@ const ClusterSettings: React.FC<Props> = (props) => {
         <Heading>Delete cluster</Heading>
         {helperText}
         <Button
+          disabled={
+            currentCluster.status == "UPDATING_UNAVAILABLE" ||
+            currentCluster.status == "UPDATING"
+          }
           color="#b91133"
           onClick={() => setCurrentModal("UpdateClusterModal")}
         >

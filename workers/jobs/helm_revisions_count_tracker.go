@@ -46,15 +46,11 @@ import (
 	"gorm.io/gorm"
 )
 
-var stepSize int = 20
-
 type helmRevisionsCountTracker struct {
 	enqueueTime        time.Time
 	db                 *gorm.DB
 	repo               repository.Repository
 	doConf             *oauth2.Config
-	dbConf             *env.DBConf
-	credBackend        rcreds.CredentialStorage
 	awsAccessKeyID     string
 	awsSecretAccessKey string
 	awsRegion          string
@@ -115,8 +111,7 @@ func NewHelmRevisionsCountTracker(
 	}
 
 	return &helmRevisionsCountTracker{
-		enqueueTime, db, repo, doConf, opts.DBConf, credBackend,
-		opts.AWSAccessKeyID, opts.AWSSecretAccessKey, opts.AWSRegion,
+		enqueueTime, db, repo, doConf, opts.AWSAccessKeyID, opts.AWSSecretAccessKey, opts.AWSRegion,
 		opts.S3BucketName, &s3Key, opts.RevisionsCount,
 	}, nil
 }

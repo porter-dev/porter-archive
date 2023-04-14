@@ -37,7 +37,7 @@ export default class CurrentError extends Component<PropsType, StateType> {
       currentError = String(currentError);
     }
 
-    if (currentError) {
+    if (currentError && currentError !== "" && currentError !== "{}" && currentError !== undefined && currentError.length > 3) {
       if (!this.state.expanded) {
         return (
           <StyledCurrentError>

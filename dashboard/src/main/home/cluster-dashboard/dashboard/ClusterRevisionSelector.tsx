@@ -14,9 +14,11 @@ import {
   EKS,
   NodeGroupType,
   EnumKubernetesKind,
-  EnumCloudProvider
+  EnumCloudProvider,
 } from "@porter-dev/api-contracts";
 import Spacer from "components/porter/Spacer";
+import { createPortal } from "react-dom";
+import ConfirmOverlay from "components/ConfirmOverlay";
 
 type Props = {
   selectedClusterVersion: any;
@@ -31,6 +33,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
   setShowProvisionerStatus,
   setProvisionFailureReason,
 }) => {
+  const [showConfirmOverlay, setShowConfirmOverlay] = useState(false);
   const { currentProject, currentCluster } = useContext(Context);
   const [versions, setVersions] = useState<any[]>(null);
   const [selectedId, setSelectedId] = useState(null);
@@ -51,7 +54,9 @@ const ClusterRevisionSelector: React.FC<Props> = ({
 
       if (data[0].condition !== "") {
         setFailedContractId(data[0].id);
-        setProvisionFailureReason(data[0].condition_metadata?.message || data[0].condition);
+        setProvisionFailureReason(
+          data[0].condition_metadata?.message || data[0].condition
+        );
       }
     }
 
@@ -61,7 +66,9 @@ const ClusterRevisionSelector: React.FC<Props> = ({
 
     // Handle active provisioning attempt
     if (activeCandidate) {
-      setSelectedClusterVersion(JSON.parse(atob(activeCandidate.base64_contract)));
+      setSelectedClusterVersion(
+        JSON.parse(atob(activeCandidate.base64_contract))
+      );
       setSelectedId(-1);
       setShowProvisionerStatus(true);
     } else {
@@ -70,14 +77,11 @@ const ClusterRevisionSelector: React.FC<Props> = ({
       setShowProvisionerStatus(false);
     }
     setVersions(successes);
-  }
+  };
 
   const updateContracts = () => {
-    api.getContracts(
-      "<token>",
-      {},
-      { project_id: currentProject.id },
-    )
+    api
+      .getContracts("<token>", {}, { project_id: currentProject.id })
       .then(({ data }) => {
         const filtered_data = data.filter((x: any) => {
           return x.cluster_id === currentCluster.id;
@@ -100,13 +104,11 @@ const ClusterRevisionSelector: React.FC<Props> = ({
 
   const createContract = () => {
     if (false) {
-      api.createContract(
-        "<token>",
-        selectedClusterVersion,
-        { project_id: currentProject.id }
-      )
-        .then(() => {
+      api
+        .createContract("<token>", selectedClusterVersion, {
+          project_id: currentProject.id,
         })
+        .then(() => {})
         .catch((err) => {
           console.log(err);
         });
@@ -114,14 +116,15 @@ const ClusterRevisionSelector: React.FC<Props> = ({
   };
 
   const deleteContract = () => {
-    api.deleteContract(
-      "<token>",
-      {},
-      {
-        project_id: currentProject.id,
-        revision_id: failedContractId,
-      }
-    )
+    api
+      .deleteContract(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          revision_id: failedContractId,
+        }
+      )
       .then(() => {
         updateContracts();
       })
@@ -136,7 +139,9 @@ const ClusterRevisionSelector: React.FC<Props> = ({
         <Tr
           key={i}
           onClick={() => {
-            setSelectedClusterVersion(JSON.parse(atob(version.base64_contract)));
+            setSelectedClusterVersion(
+              JSON.parse(atob(version.base64_contract))
+            );
             setSelectedId(i);
             setShowProvisionerStatus(false);
           }}
@@ -163,34 +168,31 @@ const ClusterRevisionSelector: React.FC<Props> = ({
     return (
       <Tr
         onClick={() => {
-          setSelectedClusterVersion(JSON.parse(atob(pendingContract.base64_contract)));
+          setSelectedClusterVersion(
+            JSON.parse(atob(pendingContract.base64_contract))
+          );
           setSelectedId(-1);
           setShowProvisionerStatus(true);
         }}
         selected={selectedId === -1}
       >
         <Td>
-          {
-            failedContractId ? (
-              <Failed>Update failed</Failed>
-            ) : (
-              <Flex><Img src={loading} /> Updating</Flex>
-            )
-          }
+          {failedContractId ? (
+            <Failed>Update failed</Failed>
+          ) : (
+            <Flex>
+              <Img src={loading} /> Updating
+            </Flex>
+          )}
         </Td>
         <Td>{readableDate(pendingContract.CreatedAt)}</Td>
-        {
-          failedContractId && (
-            <DeleteButton>
-              <i
-                className="material-icons-outlined"
-                onClick={deleteContract}
-              >
-                close
-              </i>
-            </DeleteButton>
-          )
-        }
+        {failedContractId && (
+          <DeleteButton>
+            <div onClick={() => setShowConfirmOverlay(true)}>
+              Clear Revision
+            </div>
+          </DeleteButton>
+        )}
         {/*
         <Td>
           <RollbackButton
@@ -207,68 +209,74 @@ const ClusterRevisionSelector: React.FC<Props> = ({
 
   return (
     <>
-      {
-        hideSelector ? (
-          <></>
-        ) : (
-          <>
-            <StyledClusterRevisionSelector>
-              <ExpandableSection
-                isInitiallyExpanded={false}
-                color={selectedId <= 0 ? "#ffffff66" : "#f5cb42"}
-                Header={(
-                  <>
-                    <Label isCurrent={selectedId <= 0}>
-                      {
-                        selectedId === 0 ? (
-                          "Current version -"
-                        ) : (
-                          selectedId === -1 ? (
-                            failedContractId ? (
-                              ""
-                            ) : (
-                              "In progress -"
-                            )
-                          ) : (
-                            "Previewing version (not deployed) -"
-                          )
-                        )
-                      }
-                    </Label>
-                    {
-                      selectedId === -1 ? (
-                        failedContractId ? (
-                          <><WarningIcon src={warning} /> Last update failed</>
-                        ) : (
-                          <><Img src={loading} /> Updating</>
-                        )
-                      ) : (
-                        `No. ${versions?.length - selectedId}`
-                      )
-                    }
-                  </>
-                )}
-                ExpandedSection={(
-                  <TableWrapper>
-                    <RevisionsTable>
-                      <tbody>
-                        <Tr disableHover={true}>
-                          <Th>Version no.</Th>
-                          <Th>Created</Th>
-                          {/* <Th>Rollback</Th> */}
-                        </Tr>
-                        {(pendingContract || failedContractId) && renderActiveAttempt()}
-                        {renderVersionList()}
-                      </tbody>
-                    </RevisionsTable>
-                  </TableWrapper>
-                )}
-              />
-            </StyledClusterRevisionSelector>
-            <Spacer y={1} />
-          </>
-        )
-      }
+      {hideSelector ? (
+        <></>
+      ) : (
+        <>
+          <StyledClusterRevisionSelector>
+            <ExpandableSection
+              isInitiallyExpanded={false}
+              color={selectedId <= 0 ? "#ffffff66" : "#f5cb42"}
+              Header={
+                <>
+                  <Label isCurrent={selectedId <= 0}>
+                    {selectedId === 0
+                      ? "Current version -"
+                      : selectedId === -1
+                      ? failedContractId
+                        ? ""
+                        : "In progress -"
+                      : "Previewing version (not deployed) -"}
+                  </Label>
+                  {selectedId === -1 ? (
+                    failedContractId ? (
+                      <>
+                        <WarningIcon src={warning} /> Last update failed
+                      </>
+                    ) : (
+                      <>
+                        <Img src={loading} /> Updating
+                      </>
+                    )
+                  ) : (
+                    `No. ${versions?.length - selectedId}`
+                  )}
+                </>
+              }
+              ExpandedSection={
+                <TableWrapper>
+                  <RevisionsTable>
+                    <tbody>
+                      <Tr disableHover={true}>
+                        <Th>Version no.</Th>
+                        <Th>Created</Th>
+                        {/* <Th>Rollback</Th> */}
+                      </Tr>
+                      {(pendingContract || failedContractId) &&
+                        renderActiveAttempt()}
+                      {renderVersionList()}
+                    </tbody>
+                  </RevisionsTable>
+                </TableWrapper>
+              }
+            />
+          </StyledClusterRevisionSelector>
+          <Spacer y={1} />
+        </>
+      )}
+      {showConfirmOverlay &&
+        createPortal(
+          <ConfirmOverlay
+            show={true}
+            message={`Clear the failed revision?`}
+            onYes={() => {
+              deleteContract();
+              setShowConfirmOverlay(false);
+            }}
+            onNo={() => setShowConfirmOverlay(false)}
+          />,
+          document.body
+        )}
     </>
   );
 };
@@ -277,18 +285,26 @@ export default ClusterRevisionSelector;
 
 const DeleteButton = styled.div`
   position: absolute;
-  right: 10px;
+  right: 40px;
   top: 0px;
   height: 100%;
   display: flex;
   align-items: center;
+  justify-content: center;
 
-  > i {
-    font-size: 16px;
+  > div {
+    font-size: 13px;
     padding: 5px;
+    background: #cc3d42;
+    color: white;
+    border-radius: 3px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
     :hover {
-      background: #ffffff22;
-      border-radius: 40px;
+      background: #990205;
     }
   }
 `;
@@ -337,7 +353,7 @@ const RollbackButton = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled: boolean }) =>
-    props.disabled ? "" : "#405eddbb"};
+      props.disabled ? "" : "#405eddbb"};
   }
 `;
 
@@ -351,7 +367,7 @@ const Tr = styled.tr`
     props.selected ? "#ffffff11" : ""};
   :hover {
     background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-    props.disableHover ? "" : "#ffffff22"};
+      props.disableHover ? "" : "#ffffff22"};
   }
 `;
 
@@ -386,9 +402,8 @@ const TableWrapper = styled.div`
 `;
 
 const Label = styled.div<{ isCurrent?: boolean }>`
-  color: ${props => props.isCurrent ? "#ffffff66" : "#f5cb42"};
+  color: ${(props) => (props.isCurrent ? "#ffffff66" : "#f5cb42")};
   margin-right: 5px;
 `;
 
-const StyledClusterRevisionSelector = styled.div`
-`;
+const StyledClusterRevisionSelector = styled.div``;

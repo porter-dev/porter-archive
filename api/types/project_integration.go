@@ -69,7 +69,7 @@ type AWSIntegration struct {
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
 
-	// The AWS arn this is integration is linked to
+	// The AWS arn this integration is linked to
 	AWSArn string `json:"aws_arn"`
 }
 

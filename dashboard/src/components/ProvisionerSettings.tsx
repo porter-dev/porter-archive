@@ -90,21 +90,18 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
+  const [isClicked, setIsClicked] = useState(false);
 
-  const markProvisioningStarted = async () => {
+  const markStepStarted = async (step: string) => {
     try {
-      const res = await api.updateOnboardingStep(
-        "<token>",
-        { step: "provisioning-started" },
-        {}
-      );
+      await api.updateOnboardingStep("<token>", { step }, {});
     } catch (err) {
       console.log(err);
     }
   };
 
   const getStatus = () => {
-    if (isReadOnly) {
+    if (isReadOnly && props.provisionerError == "") {
       return "Provisioning is still in progress...";
     } else if (errorMessage) {
       return (
@@ -121,10 +118,16 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
     return undefined;
   };
-
+  const isDisabled = () => {
+    return (
+      (!clusterName && true) ||
+      (isReadOnly && props.provisionerError === "") ||
+      props.provisionerError === "" ||
+      isClicked
+    );
+  };
   const createCluster = async () => {
-    markProvisioningStarted();
-
+    setIsClicked(true);
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -173,6 +176,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     try {
       setIsReadOnly(true);
       setErrorMessage(undefined);
+      markStepStarted("pre-provisioning-check-started");
+
       await api.preflightCheckAWSUsage(
         "<token>",
         {
@@ -183,6 +188,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           id: currentProject.id,
         }
       );
+
+      markStepStarted("provisioning-started");
 
       const res = await api.createContract("<token>", data, {
         project_id: currentProject.id,
@@ -213,6 +220,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     } catch (err) {
       const errMessage = err.response.data.error.replace("unknown: ", "");
       // hacky, need to standardize error contract with backend
+      setIsClicked(false);
       if (errMessage.includes("elastic IP")) {
         setErrorMessage(AWS_EIP_QUOTA_ERROR_MESSAGE);
       } else if (errMessage.includes("VPC")) {
@@ -228,6 +236,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       }
     } finally {
       setIsReadOnly(false);
+      setIsClicked(false);
     }
   };
 
@@ -237,7 +246,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         (currentCluster.status === "UPDATING" ||
           currentCluster.status === "UPDATING_UNAVAILABLE")
     );
-    setClusterName(`${currentProject.name}-cluster`);
+    setClusterName(
+      `${currentProject.name}-cluster-${Math.random()
+        .toString(36)
+        .substring(2, 8)}`
+    );
   }, []);
 
   useEffect(() => {
@@ -359,9 +372,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     <>
       <StyledForm>{renderForm()}</StyledForm>
       <Button
-        disabled={
-          (!clusterName && true) || isReadOnly || props.provisionerError == ""
-        }
+        disabled={isDisabled()}
         onClick={createCluster}
         status={getStatus()}
       >

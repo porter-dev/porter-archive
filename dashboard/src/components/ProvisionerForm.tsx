@@ -37,11 +37,7 @@ const ProvisionerForm: React.FC<Props> = ({
         Configure settings for your AWS environment.
       </Text>
       <Spacer y={1} />
-      {useAssumeRole ? (
-        <ProvisionerSettings credentialId={credentialId} />
-      ) : (
-        <ProvisionerSettingsOld credentialId={credentialId} />
-      )}
+      <ProvisionerSettings credentialId={credentialId} />
     </>
   );
 };

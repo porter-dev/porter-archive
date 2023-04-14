@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import { createPortal } from "react-dom";
 
 type Props = {
   closeModal?: () => void;
@@ -11,17 +12,24 @@ const Modal: React.FC<Props> = ({
   children,
 }) => {
   return (
-    <ModalWrapper>
-      <ModalBg onClick={closeModal} />
-      <StyledModal> 
-        {closeModal && (
-          <CloseButton onClick={closeModal}>
-            <i className="material-icons">close</i>
-          </CloseButton>
-        )}
-        {children}
-      </StyledModal>
-    </ModalWrapper>
+    <>
+      {
+        createPortal(
+          <ModalWrapper>
+            <ModalBg onClick={closeModal} />
+            <StyledModal> 
+              {closeModal && (
+                <CloseButton onClick={closeModal}>
+                  <i className="material-icons">close</i>
+                </CloseButton>
+              )}
+              {children}
+            </StyledModal>
+          </ModalWrapper>,
+          document.body
+        )
+      }
+    </>
   );
 };
 

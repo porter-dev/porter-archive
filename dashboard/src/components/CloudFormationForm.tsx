@@ -22,11 +22,13 @@ import Link from "./porter/Link";
 type Props = {
   goBack: () => void;
   proceed: (id: string) => void;
+  switchToCredentialFlow: () => void;
 };
 
 const CloudFormationForm: React.FC<Props> = ({
   goBack,
   proceed,
+  switchToCredentialFlow
 }) => {
   const [grantPermissionsError, setGrantPermissionsError] = useState("");
   const [roleStatus, setRoleStatus] = useState("");
@@ -90,7 +92,10 @@ const CloudFormationForm: React.FC<Props> = ({
           </Text>
           <Spacer height="15px" />
           <Text color="helper">
-            Provide your AWS account ID to log in and grant Porter access to AWS. You will need to select "Create stack" after being redirected to the AWS console below. Make sure that the stack status has changed from "CREATE_IN_PROGRESS" to "CREATE_COMPLETE" before clicking Continue.
+            Provide your AWS account ID to log in and grant Porter access to AWS by clicking 'Grant permissions' below.
+          </Text>
+          <Text color="helper">
+            You will need to select "Create stack" after being redirected to the AWS console.
           </Text>
           <Spacer y={1} />
           <Input
@@ -109,6 +114,9 @@ const CloudFormationForm: React.FC<Props> = ({
             }
             value={AWSAccountID}
             setValue={(e) => {
+              if (e === "open-sesame") {
+                switchToCredentialFlow();
+              }
               setGrantPermissionsError("");
               setAWSAccountID(e.trim());
             }}
@@ -133,6 +141,10 @@ const CloudFormationForm: React.FC<Props> = ({
           >
             <ButtonImg src={aws} /> Grant permissions
           </Button>
+          <Spacer y={1} />
+          <Text color="helper">
+            Make sure that the stack status has changed from "CREATE_IN_PROGRESS" to "CREATE_COMPLETE" before clicking Continue below.
+          </Text>
         </Fieldset>
         <Spacer y={1} />
         <Button
@@ -257,25 +269,3 @@ const BackButton = styled.div`
     margin-left: -2px;
   }
 `;
-
-const StyledForm = styled.div`
-  position: relative;
-  padding: 15px 30px 25px;
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
-  font-size: 13px;
-  margin-bottom: 30px;
-`;
-
-const ErrorContainer = styled.div`
-  position: relative;
-  margin-top: 20px;
-  padding: 30px 30px 25px;
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
-  font-size: 13px;
-  margin-bottom: 30px;
-  color: red;
-`

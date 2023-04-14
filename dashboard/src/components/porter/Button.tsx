@@ -16,6 +16,8 @@ type Props = {
   height?: string;
   color?: string;
   withBorder?: boolean;
+  rounded?: boolean;
+  alt?: boolean;
 };
 
 const Button: React.FC<Props> = ({
@@ -31,6 +33,8 @@ const Button: React.FC<Props> = ({
   height,
   color,
   withBorder,
+  rounded,
+  alt,
 }) => {
   const renderStatus = () => {
     switch (status) {
@@ -67,7 +71,9 @@ const Button: React.FC<Props> = ({
         width={width}
         height={height}
         color={color}
-        withBorder={withBorder}
+        withBorder={withBorder || alt}
+        rounded={rounded || alt}
+        alt={alt}
       >
         <Text>{children}</Text>
       </StyledButton>
@@ -134,6 +140,8 @@ const StyledButton = styled.button<{
   height: string;
   color: string;
   withBorder: boolean;
+  rounded: boolean;
+  alt: boolean;
 }>`
   height: ${props => props.height || "35px"};
   width: ${props => props.width || "auto"};
@@ -143,11 +151,16 @@ const StyledButton = styled.button<{
   border: none;
   outline: none;
   color: white;
-  background: ${props => (props.disabled && !props.color) ? "#aaaabb" : (props.color || "#5561C0")};
+  background: ${props => {
+    if (props.alt) {
+      return props.theme.fg;
+    }
+    return (props.disabled && !props.color) ? "#aaaabb" : (props.color || "#5561C0");
+  }};
   display: flex;
   ailgn-items: center;
   justify-content: center;
-  border-radius: 5px;
+  border-radius: ${props => props.rounded ? "50px" : "5px"};
   border: ${props => props.withBorder ? "1px solid #494b4f" : "none"};
 
   :hover {

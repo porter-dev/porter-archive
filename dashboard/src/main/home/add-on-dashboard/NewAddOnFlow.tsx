@@ -15,6 +15,7 @@ import TemplateList from "../launch/TemplateList";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
 import Loading from "components/Loading";
+import ExpandedTemplate from "./ExpandedTemplate";
 
 type Props = {
 };
@@ -23,7 +24,7 @@ const HIDDEN_CHARTS = ["porter-agent", "loki"];
 
 const NewAddOnFlow: React.FC<Props> = ({
 }) => {
-  const { capabilities, currentProject } = useContext(Context);
+  const { capabilities, currentProject, currentCluster } = useContext(Context);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchValue, setSearchValue] = useState("");
   const [addOnTemplates, setAddOnTemplates] = useState<any[]>([]);
@@ -77,7 +78,7 @@ const NewAddOnFlow: React.FC<Props> = ({
 
   useEffect(() => {
     getTemplates();
-  }, []);
+  }, [currentProject, currentCluster]);
 
   return (
     <StyledTemplateComponent>
@@ -103,13 +104,20 @@ const NewAddOnFlow: React.FC<Props> = ({
 
       {/* Temporary space reducer for legacy template list */}
       {isLoading ? <Loading offset="-150px" /> : (
-        <>
-          <DarkMatter />
-          <TemplateList
-            templates={filteredTemplates}
-            setCurrentTemplate={(x) => setCurrentTemplate(x)}
+        currentTemplate ? (
+          <ExpandedTemplate 
+            currentTemplate={currentTemplate}
+            goBack={() => setCurrentTemplate(null)}
           />
-        </>
+        ) : (
+          <>
+            <DarkMatter />
+            <TemplateList
+              templates={filteredTemplates}
+              setCurrentTemplate={(x) => setCurrentTemplate(x)}
+            />
+          </>
+        )
       )}
     </StyledTemplateComponent>
   );

@@ -15,55 +15,42 @@ import TemplateList from "../launch/TemplateList";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
 import Loading from "components/Loading";
+import Button from "components/porter/Button";
 
 type Props = {
+  currentTemplate: any;
+  goBack: () => void;
 };
 
 const ExpandedTemplate: React.FC<Props> = ({
+  currentTemplate,
+  goBack,
 }) => {
   const { capabilities, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchValue, setSearchValue] = useState("");
   const [addOnTemplates, setAddOnTemplates] = useState<any[]>([]);
-  const [currentTemplate, setCurrentTemplate] = useState<any>(null);
 
   return (
     <StyledExpandedTemplate>
-      <DashboardHeader
-        prefix={(
-          <Link to="/addons">
-            <I className="material-icons">keyboard_backspace</I>
-          </Link>
-        )}
-        image={addOn}
-        title="Deploy a new add-on"
-        capitalize={false}
-        description="Create a new add-ons for this project."
-        disableLineBreak
-      />
-      <SearchBar 
-        value={searchValue}
-        setValue={setSearchValue}
-        placeholder="Search available add-ons . . ."
-        width="100%"
-      />
-      <Spacer y={1} />
-
-      {/* Temporary space reducer for legacy template list */}
-      {isLoading ? <Loading offset="-150px" /> : (
-        <>
-          <DarkMatter />
-          <TemplateList
-            templates={filteredTemplates}
-            setCurrentTemplate={(x) => setCurrentTemplate(x)}
-          />
-        </>
-      )}
+      <Button 
+        onClick={goBack}
+        alt
+      >
+        <I className="material-icons">first_page</I>
+        <Spacer inline x={1} />
+        Select template
+      </Button>
     </StyledExpandedTemplate>
   );
 };
 
 export default ExpandedTemplate;
+
+const I = styled.i`
+  color: white;
+  font-size: 16px;
+`;
 
 const StyledExpandedTemplate = styled.div`
   width: 100%;

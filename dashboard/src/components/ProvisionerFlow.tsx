@@ -30,7 +30,7 @@ const ProvisionerFlow: React.FC<Props> = ({
   const [credentialId, setCredentialId] = useState("");
   const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
   const [confirmCost, setConfirmCost] = useState("");
-  const [useAssumeRole, setUseAssumeRole] = useState(false);
+  const [useCloudFormationForm, setUseCloudFormationForm] = useState(true);
 
   const isUsageExceeded = useMemo(() => {
     if (!hasBillingEnabled) {
@@ -42,8 +42,8 @@ const ProvisionerFlow: React.FC<Props> = ({
   const markStepCostConsent = async () => {
     try {
       const res = await api.updateOnboardingStep(
-        "<token>", 
-        { step: "cost-consent-complete" }, 
+        "<token>",
+        { step: "cost-consent-complete" },
         {}
       );
     } catch (err) {
@@ -51,8 +51,8 @@ const ProvisionerFlow: React.FC<Props> = ({
     }
     try {
       const res = await api.inviteAdmin(
-        "<token>", 
-        {}, 
+        "<token>",
+        {},
         { project_id: currentProject.id }
       );
     } catch (err) {
@@ -153,7 +153,7 @@ const ProvisionerFlow: React.FC<Props> = ({
         )}
       </>
     );
-  } else if (currentStep === "credentials" && useAssumeRole) {
+  } else if (currentStep === "credentials" && useCloudFormationForm) {
     return (
       <CloudFormationForm
         goBack={() => setCurrentStep("cloud")}
@@ -161,12 +161,12 @@ const ProvisionerFlow: React.FC<Props> = ({
           setCredentialId(id);
           setCurrentStep("cluster");
         }}
+        switchToCredentialFlow={() => setUseCloudFormationForm(false)}
       />
     );
-  } else if (currentStep === "credentials" && !useAssumeRole) {
+  } else if (currentStep === "credentials" && !useCloudFormationForm) {
     return (
       <CredentialsForm
-        enableAssumeRole={() => setUseAssumeRole(true)}
         goBack={() => setCurrentStep("cloud")}
         proceed={(id) => {
           setCredentialId(id);
@@ -179,7 +179,7 @@ const ProvisionerFlow: React.FC<Props> = ({
       <ProvisionerForm
         goBack={() => setCurrentStep("credentials")}
         credentialId={credentialId}
-        useAssumeRole={useAssumeRole}
+        useAssumeRole={useCloudFormationForm}
       />
     );
   }

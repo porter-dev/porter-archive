@@ -46,8 +46,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var stepSize int = 20
-
 type helmRevisionsCountTracker struct {
 	enqueueTime        time.Time
 	db                 *gorm.DB

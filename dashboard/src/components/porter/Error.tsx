@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import styled from "styled-components";
 
 import expand from "assets/expand.png";
@@ -37,12 +36,11 @@ const Error: React.FC<Props> = ({
         )}
         </Block>
       </StyledError>
-      {errorModalOpen && createPortal(
+      {errorModalOpen &&
         <Modal closeModal={() => setErrorModalOpen(false)}>
           {errorModalContents}
-        </Modal>,
-        document.body
-      )}
+        </Modal>
+      }
     </>
   );
 };

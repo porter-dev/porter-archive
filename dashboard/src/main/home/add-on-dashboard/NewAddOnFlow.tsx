@@ -34,7 +34,7 @@ const NewAddOnFlow: React.FC<Props> = ({
       addOnTemplates ?? [],
       searchValue,
       {
-        keys: ["name", "chart.metadata.name"],
+        keys: ["name"],
         isCaseSensitive: false,
       }
     );
@@ -106,7 +106,7 @@ const NewAddOnFlow: React.FC<Props> = ({
         <>
           <DarkMatter />
           <TemplateList
-            templates={addOnTemplates}
+            templates={filteredTemplates}
             setCurrentTemplate={(x) => setCurrentTemplate(x)}
           />
         </>

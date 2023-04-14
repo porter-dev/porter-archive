@@ -91,11 +91,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
 
-  const markProvisioningStarted = async () => {
+  const markStepStarted = async (step: string) => {
     try {
-      const res = await api.updateOnboardingStep(
+      await api.updateOnboardingStep(
         "<token>",
-        { step: "provisioning-started" },
+        { step },
         {}
       );
     } catch (err) {
@@ -123,8 +123,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   };
 
   const createCluster = async () => {
-    markProvisioningStarted();
-
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -173,6 +171,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     try {
       setIsReadOnly(true);
       setErrorMessage(undefined);
+      markStepStarted("pre-provisioning-check-started");
+
       await api.preflightCheckAWSUsage(
         "<token>",
         {
@@ -183,6 +183,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           id: currentProject.id,
         }
       );
+
+      markStepStarted("provisioning-started");
 
       const res = await api.createContract("<token>", data, {
         project_id: currentProject.id,

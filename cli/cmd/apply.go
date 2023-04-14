@@ -149,6 +149,10 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		if err != nil {
 			return fmt.Errorf("error parsing porter.yaml: %w", err)
 		}
+	} else if previewVersion.Version == "stack" {
+		si := os.Getenv("PORTER_STACK_ID")
+
+		resGroup, err = stack.
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
 	}

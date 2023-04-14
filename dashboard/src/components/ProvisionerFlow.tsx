@@ -153,8 +153,8 @@ const ProvisionerFlow: React.FC<Props> = ({
         )}
       </>
     );
-  } else if (currentStep === "credentials" && useCloudFormationForm) {
-    return (
+  } else if (currentStep === "credentials") {
+    return useCloudFormationForm ? (
       <CloudFormationForm
         goBack={() => setCurrentStep("cloud")}
         proceed={(id) => {
@@ -163,9 +163,7 @@ const ProvisionerFlow: React.FC<Props> = ({
         }}
         switchToCredentialFlow={() => setUseCloudFormationForm(false)}
       />
-    );
-  } else if (currentStep === "credentials" && !useCloudFormationForm) {
-    return (
+    ) : (
       <CredentialsForm
         goBack={() => setCurrentStep("cloud")}
         proceed={(id) => {

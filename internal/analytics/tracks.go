@@ -162,6 +162,29 @@ func CredentialStepTrack(opts *CredentialStepTrackOpts) segmentTrack {
 	)
 }
 
+// PreProvisionCheckTrackOpts are the options for creating a track when a user checks if they can provision
+type PreProvisionCheckTrackOpts struct {
+	*UserScopedTrackOpts
+
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
+}
+
+// PreProvisionCheckTrack returns a track for when a user attempts provisioning
+func PreProvisionCheckTrack(opts *PreProvisionCheckTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, PreProvisionCheck),
+	)
+}
+
 // ProvisioningAttemptedTrackOpts are the options for creating a track when a user attempts provisioning
 type ProvisioningAttemptTrackOpts struct {
 	*UserScopedTrackOpts

@@ -48,8 +48,6 @@ const ProvisionerStatus: React.FC<Props> = ({ provisionFailureReason }) => {
         phase,
       } = resState.data;
       const status = resStatus.data.status;
-      console.log("getClusterStatus response data:", resStatus.data);
-      console.log("getClusterStatus response data:", status);
       let progress = 1;
       if (is_control_plane_ready) {
         progress += 1;

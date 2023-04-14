@@ -93,11 +93,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   const markStepStarted = async (step: string) => {
     try {
-      await api.updateOnboardingStep(
-        "<token>",
-        { step },
-        {}
-      );
+      await api.updateOnboardingStep("<token>", { step }, {});
     } catch (err) {
       console.log(err);
     }
@@ -240,7 +236,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           currentCluster.status === "UPDATING_UNAVAILABLE")
     );
     setClusterName(
-      ` ${currentProject.name}-cluster-${Math.random()
+      `${currentProject.name}-cluster-${Math.random()
         .toString(36)
         .substring(2, 8)}`
     );

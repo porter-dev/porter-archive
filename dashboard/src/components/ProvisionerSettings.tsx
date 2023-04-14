@@ -104,7 +104,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   };
 
   const getStatus = () => {
-    if (isReadOnly) {
+    if (isReadOnly && props.provisionerError == "") {
       return "Provisioning is still in progress...";
     } else if (errorMessage) {
       return (
@@ -237,7 +237,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         (currentCluster.status === "UPDATING" ||
           currentCluster.status === "UPDATING_UNAVAILABLE")
     );
-    setClusterName(`${currentProject.name}-cluster`);
+    setClusterName(
+      ` ${currentProject.name}-cluster-${Math.random()
+        .toString(36)
+        .substring(2, 8)}`
+    );
   }, []);
 
   useEffect(() => {
@@ -360,7 +364,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       <StyledForm>{renderForm()}</StyledForm>
       <Button
         disabled={
-          (!clusterName && true) || isReadOnly || props.provisionerError == ""
+          (!clusterName && true) ||
+          (isReadOnly && props.provisionerError == "") ||
+          props.provisionerError == ""
         }
         onClick={createCluster}
         status={getStatus()}

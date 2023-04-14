@@ -16,33 +16,52 @@ type Props = {
 
 const PROVISIONING_STATUS_POLL_INTERVAL = 60 * 1000; // poll every minute
 
-const ProvisionerStatus: React.FC<Props> = ({
-  provisionFailureReason,
-}) => {
+const ProvisionerStatus: React.FC<Props> = ({ provisionFailureReason }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [progress, setProgress] = useState(1);
 
-  // Continuously poll provisioning status
-  const pollProvisioningStatus = async () => {
+  // Continuously poll provisioning status and cluster status
+  const pollProvisioningAndClusterStatus = async () => {
     try {
-      const res = await api.getClusterState(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
-      const { is_control_plane_ready, is_infrastructure_ready, phase } = res.data;
+      const [resState, resStatus] = await Promise.all([
+        api.getClusterState(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        ),
+        api.getCluster(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        ),
+      ]);
+
+      const {
+        is_control_plane_ready,
+        is_infrastructure_ready,
+        phase,
+      } = resState.data;
+      const status = resStatus.data.status;
+      console.log("getClusterStatus response data:", resStatus.data);
+      console.log("getClusterStatus response data:", status);
       let progress = 1;
       if (is_control_plane_ready) {
-        progress += 1
+        progress += 1;
       }
       if (is_infrastructure_ready) {
-        progress += 1
+        progress += 1;
       }
-      if (phase === 'Provisioned') {
-        progress += 1
+      if (phase === "Provisioned") {
+        progress += 1;
+      }
+      if (status === "READY") {
+        window.location.reload();
       }
       setProgress(progress);
     } catch (err) {
@@ -51,8 +70,11 @@ const ProvisionerStatus: React.FC<Props> = ({
   };
 
   useEffect(() => {
-    const intervalId = setInterval(pollProvisioningStatus, PROVISIONING_STATUS_POLL_INTERVAL);
-    pollProvisioningStatus();
+    const intervalId = setInterval(
+      pollProvisioningAndClusterStatus,
+      PROVISIONING_STATUS_POLL_INTERVAL
+    );
+    pollProvisioningAndClusterStatus();
     return () => clearInterval(intervalId);
   }, []);
 
@@ -66,19 +88,18 @@ const ProvisionerStatus: React.FC<Props> = ({
         <Spacer height="18px" />
         <LoadingBar
           color={provisionFailureReason ? "failed" : undefined}
-          completed={progress} 
-          total={4} 
+          completed={progress}
+          total={4}
         />
         <Spacer height="18px" />
         <Text color="#aaaabb">
-          Setup can take up to 20 minutes. You can close this window and come back later. 
+          Setup can take up to 20 minutes. You can close this window and come
+          back later.
         </Text>
       </HeaderSection>
-      {
-        provisionFailureReason && (
-          <DummyLogs>Error: {provisionFailureReason}</DummyLogs>
-        )
-      }
+      {provisionFailureReason && (
+        <DummyLogs>Error: {provisionFailureReason}</DummyLogs>
+      )}
     </StyledProvisionerStatus>
   );
 };

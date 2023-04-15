@@ -1,4 +1,4 @@
-name: Backend CI
+name: Frontend CI
 on:
   - pull_request
 jobs:

@@ -2,14 +2,14 @@ name: Frontend CI
 on:
   - pull_request
 jobs:
-  name: Running Frontend Tests
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: "16"
-    - name: Install Dependencies
-      run: npm install --prefix dashboard
-    - name: Run tests
-      run: npm test --prefix dashboard
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+      - name: Install Dependencies
+        run: npm install --prefix dashboard
+      - name: Run tests
+        run: npm test --prefix dashboard

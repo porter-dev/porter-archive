@@ -7,8 +7,32 @@ on:
         required: true
         type: string
 jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          apt-get update
+          apt-get install jq
+
+          gh release view "${{ github.event.inputs.tag }}" > /dev/null 2>&1
+
+          if [ $? -eq 0 ]; then
+            gh release view "${{ github.event.inputs.tag }}" --json isDraft,isPrerelease | jq -e 'select(.isDraft == false and .isPrerelease == false)' > /dev/null 2>&1
+
+            if [ $? -ne 0 ]; then
+              echo "release for tag ${{ github.event.inputs.tag }} is not marked as latest"
+              exit 1
+            fi
+          else
+            echo "no release found for tag ${{ github.event.inputs.tag }}"
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   deploy:
     runs-on: ubuntu-latest
+    needs:
+      - check-release
     steps:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v0
@@ -73,6 +97,8 @@ jobs:
       cancel-in-progress: true
   deploy-provisioner:
     runs-on: ubuntu-latest
+    needs:
+      - check-release
     steps:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v0

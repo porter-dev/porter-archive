@@ -1,9 +1,7 @@
 package api_contract
 
 import (
-	"database/sql"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -47,22 +45,6 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		e := fmt.Errorf("error parsing api contract: %w", err)
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
 		return
-	}
-
-	existingClusters, err := c.Config().Repo.Cluster().ListClustersByProjectID(uint(apiContract.Cluster.ProjectId))
-	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			e := fmt.Errorf("error listing clusters for given project ID: %w", err)
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
-			return
-		}
-	}
-	for _, cluster := range existingClusters {
-		if cluster.Name == apiContract.Cluster.GetEksKind().ClusterName {
-			e := fmt.Errorf("cluster already exists in project %d called %s", cluster.ProjectID, cluster.Name)
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
-			return
-		}
 	}
 
 	if !project.CapiProvisionerEnabled && !c.Config().EnableCAPIProvisioner {

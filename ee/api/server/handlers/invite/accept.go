@@ -104,5 +104,5 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/dashboard", invite.Email), 302)
+	http.Redirect(w, r, "/dashboard", 302)
 }

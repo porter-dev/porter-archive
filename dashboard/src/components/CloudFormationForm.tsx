@@ -25,6 +25,8 @@ type Props = {
   switchToCredentialFlow: () => void;
 };
 
+const PORTER_ASSUME_ROLE_ARN = "arn:aws:iam::108458755588:role/CAPIManagement";
+
 const CloudFormationForm: React.FC<Props> = ({
   goBack,
   proceed,
@@ -78,7 +80,7 @@ const CloudFormationForm: React.FC<Props> = ({
     let externalId = getExternalId();
     window.open(
       `https://console.aws.amazon.com/cloudformation/home?
-      #/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}`
+      #/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_PorterAssumeRoleParameter=${PORTER_ASSUME_ROLE_ARN}`
     )
   }
 

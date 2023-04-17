@@ -22,7 +22,6 @@ import Spacer from "./porter/Spacer";
 type Props = {
   goBack: () => void;
   proceed: (cloud_provider_credentials_id: string) => void;
-  enableAssumeRole?: () => void;
 };
 
 type AWSCredential = {
@@ -37,7 +36,6 @@ type AWSCredential = {
 const CredentialsForm: React.FC<Props> = ({
   goBack,
   proceed,
-  enableAssumeRole,
 }) => {
   const { currentProject } = useContext(Context);
   const [awsCredentials, setAWSCredentials] = useState<AWSCredential[]>(null);
@@ -162,9 +160,6 @@ const CredentialsForm: React.FC<Props> = ({
             type="password"
             value={awsSecretAccessKey}
             setValue={(e: string) => {
-              if (e === "open-sesame") {
-                enableAssumeRole();
-              }
               setAWSSecretAccessKey(e)
             }}
             label="🔒 AWS secret key"
@@ -310,29 +305,6 @@ const BackButton = styled.div`
     font-size: 16px;
     margin-right: 6px;
     margin-left: -2px;
-  }
-`;
-
-const BackArrow = styled.div`
-  width: 30px;
-  height: 30px;
-  margin-left: -5px;
-  margin-right: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-  border-radius: 50%;
-  right: 10px;
-  top: 10px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-
-  > i {
-    font-size: 20px;
-    color: #aaaabb;
   }
 `;
 

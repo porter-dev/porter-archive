@@ -1,8 +1,11 @@
 name: Deploy to production
 on:
-  push:
-    branches:
-      - production
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag"
+        required: true
+        type: string
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -27,6 +30,8 @@ jobs:
         run: gcloud auth configure-docker
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          ref: "${{ github.event.inputs.tag }}"
       - name: Write Dashboard Environment Variables
         run: |
           cat >./dashboard/.env <<EOL
@@ -86,6 +91,8 @@ jobs:
         run: gcloud auth configure-docker
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          ref: "${{ github.event.inputs.tag }}"
       - name: Build
         run: |
           DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/provisioner-service:latest -f ./ee/docker/provisioner.Dockerfile

@@ -21,6 +21,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	"github.com/porter-dev/porter/cli/cmd/preview"
 	previewV2Beta1 "github.com/porter-dev/porter/cli/cmd/preview/v2beta1"
+	stack "github.com/porter-dev/porter/cli/cmd/stack"
 	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -150,9 +151,11 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			return fmt.Errorf("error parsing porter.yaml: %w", err)
 		}
 	} else if previewVersion.Version == "stack" {
-		si := os.Getenv("PORTER_STACK_ID")
+		resGroup, err = stack.DowngradeToV1(client, fileBytes)
 
-		resGroup, err = stack.
+		if err != nil {
+			return fmt.Errorf("error parsing porter.yaml: %w", err)
+		}
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
 	}
@@ -161,6 +164,18 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	if err != nil {
 		return fmt.Errorf("error getting working directory: %w", err)
 	}
+
+	// fmt.Println("here are the resources:")
+	// for _, res := range resGroup.Resources {
+	// 	fmt.Printf("resource: %s\n", res.Name)
+	// 	fmt.Printf("driver: %s\n", res.Driver)
+	// 	fmt.Printf("source: %v\n", res.Source)
+	// 	fmt.Printf("target: %v\n", res.Target)
+	// 	fmt.Printf("config: %v\n", res.Config)
+	// 	fmt.Printf("depends_on: %v\n", res.DependsOn)
+	// 	fmt.Println()
+	// }
+	// return nil
 
 	worker := switchboardWorker.NewWorker()
 	worker.RegisterDriver("deploy", NewDeployDriver)

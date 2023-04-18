@@ -38,6 +38,7 @@ const Register: React.FC<Props> = ({
   const [companyNameError, setCompanyNameError] = useState(false);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState(false);
+  const [disabled, setDisabled] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState(false);
   const [hasBasic, setHasBasic] = useState(true);
@@ -117,6 +118,18 @@ const Register: React.FC<Props> = ({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [email, password, firstName, lastName]);
+
+  useEffect(() => {
+    let qs = window.location.search;
+    let urlParams = new URLSearchParams(qs);
+    let email = urlParams.get('email');
+    
+    if (email) {
+      setEmail(email);
+      setDisabled(true);
+    }
+    
+  }, []);
 
   useEffect(() => {
 
@@ -273,6 +286,7 @@ const Register: React.FC<Props> = ({
               width="100%"
               height="40px"
               error={(emailError && "Please enter a valid email")}
+              disabled={disabled}
             />
             <Spacer y={1} />
             <Input

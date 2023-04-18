@@ -164,6 +164,7 @@ const ExpandedInfra: React.FunctionComponent = () => {
       />
       <PorterFormContainer>
         <PorterFormWrapper
+          isCapiEnabled={currentProject.capi_provisioner_enabled}
           showStateDebugger={false}
           formData={infraForm}
           valuesToOverride={{}}

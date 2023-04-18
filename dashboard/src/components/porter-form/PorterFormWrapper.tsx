@@ -26,10 +26,12 @@ type PropsType = {
   includeMetadata?: boolean;
   injectedProps?: InjectedProps;
   overrideCurrentTab?: string;
+  isCapiEnabled?: boolean;
   onTabChange?: (newTab: string) => void;
 };
 
 const PorterFormWrapper: React.FC<PropsType> = ({
+  isCapiEnabled,
   formData,
   valuesToOverride,
   isReadOnly,
@@ -97,6 +99,7 @@ const PorterFormWrapper: React.FC<PropsType> = ({
         includeMetadata={includeMetadata}
       >
         <PorterForm
+          isCapiEnabled={isCapiEnabled}
           showStateDebugger={showStateDebugger}
           addendum={addendum}
           isReadOnly={isReadOnly}

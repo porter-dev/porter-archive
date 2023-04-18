@@ -297,6 +297,7 @@ const ExpandedOperation: React.FunctionComponent<Props> = ({
         </Description>
         <PorterFormContainer>
           <PorterFormWrapper
+            isCapiEnabled={currentProject.capi_provisioner_enabled}
             showStateDebugger={false}
             formData={operation.form}
             valuesToOverride={{}}

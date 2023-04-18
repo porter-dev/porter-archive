@@ -274,6 +274,7 @@ const NewAppResourceForm = (props: {
         <Heading>Application Settings</Heading>
         <Helper>Configure settings for this application.</Helper>
         <PorterFormWrapper
+          isCapiEnabled={currentProject.capi_provisioner_enabled}
           formData={template.form}
           onSubmit={handleSubmit}
           isLaunch

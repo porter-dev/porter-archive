@@ -16,6 +16,7 @@ type PropsType = {
   className?: string;
   maxLength?: number;
   hasError?: boolean;
+  inputProps?: boolean;
 };
 
 type StateType = {
@@ -120,7 +121,7 @@ const Input = styled.input<{ disabled: boolean; width: string }>`
   outline: none;
   border: none;
   font-size: 13px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "")};
   width: ${(props) => (props.width ? props.width : "100%")};
   color: ${(props) => (props.disabled ? "#ffffff44" : "white")};

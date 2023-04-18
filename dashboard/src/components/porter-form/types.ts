@@ -71,6 +71,21 @@ export interface InputField extends GenericInputField {
   };
 }
 
+export interface InputSliderField extends GenericInputField {
+  min: string;
+  max: string;
+  type: "input-slider";
+  label?: string;
+  placeholder?: string;
+  info?: string;
+  settings?: {
+    type?: "text" | "password" | "number";
+    unit?: string;
+    omitUnitFromValue?: boolean;
+    default: string | number;
+  };
+}
+
 export interface CheckboxField extends GenericInputField {
   type: "checkbox";
   label?: string;
@@ -157,6 +172,7 @@ export interface UrlLinkField extends GenericInputField {
 export type FormField =
   | HeadingField
   | SubtitleField
+  | InputSliderField
   | InputField
   | CheckboxField
   | KeyValueArrayField
@@ -213,7 +229,10 @@ export interface PorterFormValidationInfo {
 }
 
 // internal field state interfaces
-export interface StringInputFieldState {}
+export interface StringInputFieldState {
+  variables: any;
+  vars: any;
+}
 export interface CheckboxFieldState {}
 
 export type PartialEnvGroup = {

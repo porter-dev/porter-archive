@@ -272,6 +272,20 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
               contents: section.contents
                 ?.map((field: any, k) => {
                   const id = `${i}-${j}-${k}`;
+                  if (
+                    (field?.type == "number-input" && field?.label == "RAM") ||
+                    field?.label == "CPU"
+                  ) {
+                    return {
+                      id,
+                      ...field,
+                      type: "input-slider",
+                      settings: {
+                        ...field.settings,
+                        type: "number",
+                      },
+                    };
+                  }
                   if (field?.type == "number-input") {
                     return {
                       id,

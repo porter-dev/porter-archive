@@ -6,6 +6,7 @@ import {
   FormField,
   InjectedProps,
   InputField,
+  InputSliderField,
   KeyValueArrayField,
   ResourceListField,
   Section,
@@ -31,6 +32,7 @@ import VeleroForm from "./field-components/VeleroForm";
 import CronInput from "./field-components/CronInput";
 import TextAreaInput from "./field-components/TextAreaInput";
 import UrlLink from "./field-components/UrlLink";
+import InputSlider from "components/porter/InputSlider";
 
 interface Props {
   leftTabOptions?: TabOption[];
@@ -53,7 +55,7 @@ interface Props {
   // The tab to redirect to after saving the form
   redirectTabAfterSave?: string;
   injectedProps?: InjectedProps;
-
+  isCapiEnabled?: boolean;
   absoluteSave: boolean;
 }
 
@@ -68,7 +70,11 @@ const PorterForm: React.FC<Props> = (props) => {
 
   const { currentTab, setCurrentTab } = props;
 
-  const renderSectionField = (field: FormField, num?: number, i?: number): JSX.Element => {
+  const renderSectionField = (
+    field: FormField,
+    num?: number,
+    i?: number
+  ): JSX.Element => {
     const injected = props.injectedProps?.[field.type];
 
     const bundledProps = {
@@ -81,9 +87,27 @@ const PorterForm: React.FC<Props> = (props) => {
       case "heading":
         // Remove top margin from heading if it's the first form element in the tab
         // TODO: Handle Job form and form variables more gracefully
-        return <Heading isAtTop={num + i < 1 || (formData.name === "Job" && num + i === 1) || (formData.name === "Worker" && num + i === 1)}>{field.label}</Heading>;
+        return (
+          <Heading
+            isAtTop={
+              num + i < 1 ||
+              (formData.name === "Job" && num + i === 1) ||
+              (formData.name === "Worker" && num + i === 1)
+            }
+          >
+            {field.label}
+          </Heading>
+        );
       case "subtitle":
         return <Helper>{field.label}</Helper>;
+      case "input-slider":
+        if (props.isCapiEnabled) {
+          return (
+            <InputSlider {...(bundledProps as InputSliderField)}></InputSlider>
+          );
+        } else {
+          return <Input {...(bundledProps as InputField)} />;
+        }
       case "input":
         return <Input {...(bundledProps as InputField)} />;
       case "checkbox":
@@ -268,6 +292,6 @@ const StyledPorterForm = styled.div<{ showSave?: boolean }>`
   margin-bottom: 5px;
   font-size: 13px;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
 `;

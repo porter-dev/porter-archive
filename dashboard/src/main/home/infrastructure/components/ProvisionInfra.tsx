@@ -288,6 +288,7 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
         </Heading>
         <FormContainer>
           <PorterFormWrapper
+            isCapiEnabled={currentProject.capi_provisioner_enabled}
             showStateDebugger={false}
             formData={currentTemplate.form}
             valuesToOverride={{}}

@@ -74,7 +74,10 @@ class SettingsPage extends Component<PropsType, StateType> {
         let clusterOptions: { label: string; value: string }[] = [];
         let clusterMap: { [clusterId: string]: ClusterType } = {};
         res.data.forEach((cluster: ClusterType, i: number) => {
-          clusterOptions.push({ label: cluster.vanity_name || cluster.name, value: cluster.name });
+          clusterOptions.push({
+            label: cluster.vanity_name || cluster.name,
+            value: cluster.name,
+          });
           clusterMap[cluster.name] = cluster;
         });
         if (res.data.length > 0) {
@@ -139,6 +142,7 @@ class SettingsPage extends Component<PropsType, StateType> {
             Configure application settings for this template. (Optional)
           </Helper>
           <PorterFormWrapper
+            isCapiEnabled={this.context.currentProject.capi_provisioner_enabled}
             formData={form}
             saveValuesStatus={saveValuesStatus}
             valuesToOverride={{
@@ -262,7 +266,9 @@ class SettingsPage extends Component<PropsType, StateType> {
                 <Selector
                   activeValue={selectedCluster}
                   setActiveValue={(cluster: string) => {
-                    this.context.setCurrentCluster(this.state.clusterMap[cluster]);
+                    this.context.setCurrentCluster(
+                      this.state.clusterMap[cluster]
+                    );
                     this.updateNamespaces(this.state.clusterMap[cluster].id);
                     this.setState({
                       selectedCluster: cluster,
@@ -346,7 +352,7 @@ const BackButton = styled.div`
   border-radius: 100px;
   width: ${(props: { width: string }) => props.width};
   color: white;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
 
   :hover {
     background: #ffffff22;

@@ -31,18 +31,25 @@ func NewSentryAlerter(sentryDSN, sentryEnv string) (*SentryAlerter, error) {
 	}, nil
 }
 
-func (s *SentryAlerter) SendAlert(ctx context.Context, err error, data map[string]interface{}) {
+func (s *SentryAlerter) SendAlert(ctx context.Context, err error, data map[string]interface{}) *string {
 	scope := sentry.NewScope()
 
 	for key, val := range data {
 		scope.SetTag(key, fmt.Sprintf("%v", val))
 	}
 
-	s.client.CaptureException(
+	eventID := s.client.CaptureException(
 		err,
 		&sentry.EventHint{
 			Data: data,
 		},
 		scope,
 	)
+
+	if eventID != nil {
+		eventIDStr := string(*eventID)
+		return &eventIDStr
+	}
+
+	return nil
 }

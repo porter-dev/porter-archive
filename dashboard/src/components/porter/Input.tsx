@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import { boolean } from "zod";
 
 type Props = {
   placeholder: string;
@@ -11,6 +12,7 @@ type Props = {
   type?: string;
   error?: string;
   children?: React.ReactNode;
+  disabled?: boolean;
 };
 
 const Input: React.FC<Props> = ({
@@ -23,6 +25,7 @@ const Input: React.FC<Props> = ({
   type,
   error,
   children,
+  disabled,
 }) => {
   return (
     <Block width={width}>
@@ -39,6 +42,7 @@ const Input: React.FC<Props> = ({
         height={height}
         type={type || "text"}
         hasError={(error && true) || (error === "")}
+        disabled={disabled ? disabled : false}
       />
       {
         error && (

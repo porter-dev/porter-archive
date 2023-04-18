@@ -125,7 +125,6 @@ const StatusWrapper = styled.div<{
 
 const Wrapper = styled.div`
   display: flex;
-  align-items: center;
 `;
 
 const Text = styled.div`
@@ -145,6 +144,7 @@ const StyledButton = styled.button<{
 }>`
   height: ${props => props.height || "35px"};
   width: ${props => props.width || "auto"};
+  min-width: ${props => props.width || ""};
   font-size: 13px;
   cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
   padding: 15px;

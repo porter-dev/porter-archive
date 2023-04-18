@@ -3,28 +3,172 @@ import styled from "styled-components";
 import _ from "lodash";
 
 import { hardcodedNames, hardcodedIcons } from "shared/hardcodedNameDict";
+import { Context } from "shared/Context";
+import api from "shared/api";
+import { pushFiltered } from "shared/routing";
 
 import Back from "components/porter/Back";
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import { Context } from "shared/Context";
-import api from "shared/api";
+import Link from "components/porter/Link";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
 import VerticalSteps from "components/porter/VerticalSteps";
+import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
+import Placeholder from "components/Placeholder";
+import Button from "components/porter/Button";
+import { generateSlug } from "random-word-slugs";
+import { RouteComponentProps, withRouter } from "react-router";
+import Error from "components/porter/Error";
 
-type Props = {
-  goBack: () => void;
+type Props = RouteComponentProps & {
   currentTemplate: any;
+  currentForm?: any;
+  goBack: () => void;
 };
 
 const ConfigureTemplate: React.FC<Props> = ({
-  goBack,
   currentTemplate,
+  currentForm,
+  goBack,
+  ...props
 }) => {
+  const { currentCluster, currentProject, capabilities } = useContext(Context);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [name, setName] = useState<string>("");
+  const [buttonStatus, setButtonStatus] = useState<string>("");
+
+  const waitForHelmRelease = () => {
+    setTimeout(() => {
+      api.getChart(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          namespace: "default",
+          cluster_id: currentCluster.id,
+          name,
+          revision: 0,
+        }
+      )
+        .then((res) => {
+          if (res?.data?.version) {
+            setButtonStatus("success");
+            pushFiltered(props, "/addons", ["project_id"], {
+              cluster: currentCluster.name,
+            });
+          } else {
+            waitForHelmRelease();
+          }
+        })
+        .catch((err) => {
+          waitForHelmRelease();
+        });
+    }, 500);
+  };
+
+  const deployAddOn = async (wildcard?: any) => {
+    setButtonStatus("loading");
+    
+    let values: any = {};
+    for (let key in wildcard) {
+      _.set(values, key, wildcard[key]);
+    }
+
+    api
+      .deployAddon(
+        "<token>",
+        {
+          template_name: currentTemplate.name,
+          template_version: "latest",
+          values: values,
+          name,
+        },
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: "default",
+          repo_url: currentTemplate?.repo_url || capabilities.default_addon_helm_repo_url,
+        }
+      )
+      .then((_) => {
+        window.analytics?.track("Deployed Add-on", {
+          name: currentTemplate.name,
+          namespace: "default",
+          values: values,
+        });
+        waitForHelmRelease();
+      })
+      .catch((err) => {
+        let parsedErr = err?.response?.data?.error;
+        err = parsedErr || err.message || JSON.stringify(err);
+        setButtonStatus(err);
+        window.analytics?.track("Failed to Deploy Add-on", {
+          name: currentTemplate.name,
+          namespace: "default",
+          values: values,
+          error: err,
+        });
+        return;
+      });
+  };
+
+  const getStatus = () => {
+    if (!buttonStatus) {
+      return;
+    }
+    if (buttonStatus === "loading" || buttonStatus === "success") {
+      return buttonStatus;
+    } else {
+      return (
+        <Error message={buttonStatus} />
+      );
+    }
+  };
+  
+  const renderAddOnSettings = () => {
+    if (currentForm) {
+      return (
+        <PorterFormWrapper
+          formData={currentForm}
+          valuesToOverride={{
+            namespace: "default",
+            clusterId: currentCluster.id,
+          }}
+          buttonStatus={getStatus()}
+          isLaunch={true}
+          onSubmit={deployAddOn}
+        />
+      );
+    } else {
+      return (
+        <>
+          <Placeholder>
+            <div>
+              To configure this chart through Porter
+              <Spacer inline width="5px" />
+              <Link
+                target="_blank"
+                to="https://github.com/porter-dev/porter-charts/blob/master/docs/form-yaml-reference.md"
+              >
+                refer to our docs
+              </Link>
+              .
+            </div>
+          </Placeholder>
+          <Spacer y={1.2} />
+          <Button
+            width="150px"
+            onClick={deployAddOn}
+            status={getStatus()}
+          >
+            Deploy application
+          </Button>
+        </>
+      );
+    };
+  };
 
   return (
     <StyledConfigureTemplate>
@@ -71,15 +215,16 @@ const ConfigureTemplate: React.FC<Props> = ({
             Configure settings for this add-on.
             </Text>
             <Spacer height="20px" />
-            THIS IS WHERE THE FORM GOES
+            {renderAddOnSettings()}
           </>
         ]}
       />
+      <Spacer height="80px" />
     </StyledConfigureTemplate>
   );
 };
 
-export default ConfigureTemplate;
+export default withRouter(ConfigureTemplate);
 
 const DarkMatter = styled.div`
   width: 100%;

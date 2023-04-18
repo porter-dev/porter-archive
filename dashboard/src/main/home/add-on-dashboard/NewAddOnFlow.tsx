@@ -4,14 +4,12 @@ import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import semver from "semver";
 import _ from "lodash";
 
-import leftArrow from "assets/left-arrow.svg";
 import addOn from "assets/add-ons.png";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { search } from "shared/search";
 
-import Link from "components/porter/Link";
 import TemplateList from "../launch/TemplateList";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
@@ -90,6 +88,7 @@ const NewAddOnFlow: React.FC<Props> = ({
         (currentForm && currentTemplate) ? (
           <ConfigureTemplate
             currentTemplate={currentTemplate}
+            currentForm={currentForm}
             goBack={() => setCurrentForm(null)}
           />
         ) : (

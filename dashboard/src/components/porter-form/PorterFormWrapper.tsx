@@ -17,6 +17,7 @@ type PropsType = {
   isInModal?: boolean;
   color?: string;
   addendum?: any;
+  buttonStatus?: React.ReactNode;
   saveValuesStatus?: string;
   showStateDebugger?: boolean;
   isLaunch?: boolean;
@@ -41,6 +42,7 @@ const PorterFormWrapper: React.FC<PropsType> = ({
   isInModal,
   color,
   addendum,
+  buttonStatus,
   saveValuesStatus,
   showStateDebugger,
   isLaunch,
@@ -99,6 +101,7 @@ const PorterFormWrapper: React.FC<PropsType> = ({
         <PorterForm
           showStateDebugger={showStateDebugger}
           addendum={addendum}
+          buttonStatus={buttonStatus}
           isReadOnly={isReadOnly}
           leftTabOptions={leftTabOptions}
           rightTabOptions={rightTabOptions}

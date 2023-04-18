@@ -94,7 +94,10 @@ const ExpandedTemplate: React.FC<Props> = ({
               <Markdown>{markdown}</Markdown>
             </MarkdownWrapper>
           ) : (
-            <Text>{currentTemplate.description}</Text>
+            <>
+              <Spacer y={0.5} />
+              <Text>{currentTemplate.description}</Text>
+            </>
           )
         )
       }

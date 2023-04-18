@@ -27,6 +27,23 @@ func (c *Client) ListStacks(
 	return resp, err
 }
 
+// CreateStack creates the stack
+func (c *Client) CreateStack(
+	ctx context.Context,
+	projectID, clusterID uint,
+	namespace string,
+	req *types.CreateStackReleaseRequest,
+) error {
+	return c.postRequest(
+		fmt.Sprintf(
+			"/v1/projects/%d/clusters/%d/namespaces/%s/stacks",
+			projectID, clusterID, namespace,
+		),
+		req,
+		nil,
+	)
+}
+
 func (c *Client) AddEnvGroupToStack(
 	ctx context.Context,
 	projectID, clusterID uint,

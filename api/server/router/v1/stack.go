@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/handlers/release"
 	"github.com/porter-dev/porter/api/server/handlers/stack"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -213,7 +214,7 @@ func getV1StackRoutes(
 		},
 	)
 
-	createHandler := stack.NewStackCreateHandler(
+	createHandler := release.NewCreateStackHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

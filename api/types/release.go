@@ -218,3 +218,20 @@ type UpdateGitActionConfigRequest struct {
 type UpdateCanonicalNameRequest struct {
 	CanonicalName string `json:"canonical_name"`
 }
+
+type CreateStackReleaseRequest struct {
+	// The Helm values for this release
+	Values map[string]interface{} `json:"values"`
+	// Used to construct the Chart.yaml
+	Dependencies []Dependency
+	ProjectID    uint   `json:"project_id"`
+	ClusterID    uint   `json:"cluster_id"`
+	StackName    string `json:"stack_name"`
+}
+
+type Dependency struct {
+	Name       string
+	Alias      string
+	Version    string
+	Repository string
+}

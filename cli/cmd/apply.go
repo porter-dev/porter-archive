@@ -123,6 +123,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	}
 
 	var resGroup *switchboardTypes.ResourceGroup
+	worker := switchboardWorker.NewWorker()
 
 	if previewVersion.Version == "v2beta1" {
 		ns := os.Getenv("PORTER_NAMESPACE")
@@ -151,11 +152,27 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			return fmt.Errorf("error parsing porter.yaml: %w", err)
 		}
 	} else if previewVersion.Version == "stack" {
-		resGroup, err = stack.DowngradeToV1(client, fileBytes)
+		resGroup, err = stack.CreateV1BuildResources(client, fileBytes)
 
 		if err != nil {
-			return fmt.Errorf("error parsing porter.yaml: %w", err)
+			return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 		}
+
+		stackName := os.Getenv("PORTER_STACK_NAME")
+
+		appResGroup, err := stack.CreateV1ApplicationResources(client, fileBytes)
+		if err != nil {
+			return fmt.Errorf("error parsing porter.yaml for application resources: %w", err)
+		}
+
+		deployStackHook := &stack.DeployStackHook{
+			Client:           client,
+			StackName:        stackName,
+			ProjectID:        cliConf.Project,
+			ClusterID:        cliConf.Cluster,
+			AppResourceGroup: appResGroup,
+		}
+		worker.RegisterHook("deploy-stack", deployStackHook)
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
 	}
@@ -177,7 +194,6 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	// }
 	// return nil
 
-	worker := switchboardWorker.NewWorker()
 	worker.RegisterDriver("deploy", NewDeployDriver)
 	worker.RegisterDriver("build-image", preview.NewBuildDriver)
 	worker.RegisterDriver("push-image", preview.NewPushDriver)

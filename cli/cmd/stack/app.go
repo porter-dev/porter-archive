@@ -30,5 +30,6 @@ func (a *App) getV1Resource(name string, b *Build, env *map[*string]*string) (*t
 			"name": *a.Type,
 		},
 		Config: rawConfig,
+		Driver: "",
 	}, nil
 }

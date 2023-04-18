@@ -1,0 +1,102 @@
+name: Nightly builds
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build-push-porter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get tag name
+        id: tag_name
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TAG: ${{ github.ref }}
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup docker
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Write Dashboard Environment Variables
+        run: |
+          cat >./dashboard/.env <<EOL
+          NODE_ENV=production
+          APPLICATION_CHART_REPO_URL=https://charts.getporter.dev
+          ADDON_CHART_REPO_URL=https://chart-addons.getporter.dev
+          EOL
+
+          cat ./dashboard/.env
+      - name: Build
+        run: |
+          DOCKER_BUILDKIT=1 docker build . -t porter1/porter:${{steps.tag_name.outputs.tag}} -f ./ee/docker/ee.Dockerfile --build-arg version=${{steps.tag_name.outputs.tag}}
+      - name: Push
+        run: |
+          docker push porter1/porter:${{steps.tag_name.outputs.tag}}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-access-key-id: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Login to ECR public
+        id: login-ecr
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Push to ECR public
+        run: |
+          docker tag porter1/porter:${{steps.tag_name.outputs.tag}} public.ecr.aws/o1j4x7p4/porter:${{steps.tag_name.outputs.tag}}
+          docker push public.ecr.aws/o1j4x7p4/porter:${{steps.tag_name.outputs.tag}}
+  build-push-provisioner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get tag name
+        id: tag_name
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TAG: ${{ github.ref }}
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-access-key-id: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Login to ECR public
+        id: login-ecr
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Build
+        run: |
+          DOCKER_BUILDKIT=1 docker build . -t public.ecr.aws/o1j4x7p4/provisioner-service:${{steps.tag_name.outputs.tag}} -f ./ee/docker/provisioner.Dockerfile
+      - name: Push to ECR public
+        run: |
+          docker push public.ecr.aws/o1j4x7p4/provisioner-service:${{steps.tag_name.outputs.tag}}
+  build-push-worker-pool:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get tag name
+        id: tag_name
+        run: echo "tag=${GITHUB_TAG/refs\/tags\//}" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TAG: ${{ github.ref }}
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-access-key-id: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Login to ECR public
+        id: login-ecr
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Build
+        run: |
+          DOCKER_BUILDKIT=1 docker build . -t public.ecr.aws/o1j4x7p4/worker-pool:${{steps.tag_name.outputs.tag}} -f ./workers/Dockerfile
+      - name: Push to ECR public
+        run: |
+          docker push public.ecr.aws/o1j4x7p4/worker-pool:${{steps.tag_name.outputs.tag}}

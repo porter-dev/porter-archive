@@ -37,6 +37,7 @@ import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
+import NewAppFlow from "./app-dashboard/NewAppFlow";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -399,6 +400,11 @@ const Home: React.FC<Props> = (props) => {
           />
 
           <Switch>
+            <Route
+              path="/apps/new"
+            >
+              <NewAppFlow />
+            </Route>
             <Route
               path="/apps"
             >

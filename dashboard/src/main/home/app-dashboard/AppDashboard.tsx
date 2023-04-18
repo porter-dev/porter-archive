@@ -20,6 +20,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
+import Link from "components/porter/Link";
 
 type Props = {
 };
@@ -109,9 +110,11 @@ const AppDashboard: React.FC<Props> = ({
           setActive={setView}
         />
         <Spacer inline x={2} />
-        <Button onClick={() => {}} height="30px" width="160px">
-          <I className="material-icons">add</I> New application
-        </Button>
+        <Link to="/apps/new">
+          <Button onClick={() => {}} height="30px" width="160px">
+            <I className="material-icons">add</I> New application
+          </Button>
+        </Link>
       </Container>
       <Spacer y={1} />
       {view === "grid" ? (

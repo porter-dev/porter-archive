@@ -123,7 +123,7 @@ type ErrorOpts struct {
 
 func HandleAPIError(
 	l *logger.Logger,
-	alerter alerter.Alerter,
+	al alerter.Alerter,
 	w http.ResponseWriter,
 	r *http.Request,
 	err RequestError,
@@ -143,11 +143,15 @@ func HandleAPIError(
 	event.Send()
 
 	// if the status code is internal server error, use alerter
-	if err.GetStatusCode() == http.StatusInternalServerError && alerter != nil {
+	if err.GetStatusCode() == http.StatusInternalServerError && al != nil {
 		data["method"] = r.Method
 		data["url"] = r.URL.String()
 
-		alerter.SendAlert(r.Context(), err, data)
+		eventID := al.SendAlert(r.Context(), err, data)
+
+		if _, ok := al.(*alerter.SentryAlerter); ok && eventID != nil {
+			data["sentry_event_id"] = *eventID
+		}
 	}
 
 	if writeErr {
@@ -175,6 +179,4 @@ func HandleAPIError(
 			event.Send()
 		}
 	}
-
-	return
 }

@@ -155,7 +155,7 @@ const StyledButton = styled.button<{
     if (props.alt) {
       return props.theme.fg;
     }
-    return (props.disabled && !props.color) ? "#aaaabb" : (props.color || "#5561C0");
+    return (props.disabled && !props.color) ? "#aaaabb" : (props.color || props.theme.button);
   }};
   display: flex;
   ailgn-items: center;

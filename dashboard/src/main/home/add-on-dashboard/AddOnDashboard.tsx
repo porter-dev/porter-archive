@@ -18,6 +18,7 @@ import list from "assets/list.png";
 import { Context } from "shared/Context";
 import { search } from "shared/search";
 import api from "shared/api";
+import { hardcodedIcons } from "shared/hardcodedNameDict";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
@@ -33,13 +34,6 @@ import { Link } from "react-router-dom";
 
 type Props = {
 };
-
-const icons = [
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-plain.svg",
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg",
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-plain.svg",
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg",
-];
 
 const namespaceBlacklist = [
   "cert-manager",
@@ -174,7 +168,12 @@ const AppDashboard: React.FC<Props> = ({
               return (
                 <Block to={getExpandedChartLinkURL(app)}>
                   <Text size={14}>
-                    <Icon src={app.chart.metadata.icon} />
+                    <Icon 
+                      src={
+                        hardcodedIcons[app.chart.metadata.name] ||
+                        app.chart.metadata.icon
+                      }
+                    />
                     {app.name}
                   </Text>
                   <StatusIcon src={healthy} />
@@ -197,7 +196,12 @@ const AppDashboard: React.FC<Props> = ({
               return (
                 <Row to={getExpandedChartLinkURL(app)}>
                   <Text size={14}>
-                    <MidIcon src={app.chart.metadata.icon} />
+                    <MidIcon
+                      src={
+                        hardcodedIcons[app.chart.metadata.name] ||
+                        app.chart.metadata.icon
+                      }
+                    />
                     {app.name}
                     <Spacer inline x={1} />
                     <MidIcon src={healthy} height="16px" />

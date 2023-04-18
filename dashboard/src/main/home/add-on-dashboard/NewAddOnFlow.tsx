@@ -4,6 +4,7 @@ import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import semver from "semver";
 import _ from "lodash";
 
+import leftArrow from "assets/left-arrow.svg";
 import addOn from "assets/add-ons.png";
 
 import { Context } from "shared/Context";
@@ -16,6 +17,8 @@ import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
 import Loading from "components/Loading";
 import ExpandedTemplate from "./ExpandedTemplate";
+import ConfigureTemplate from "./ConfigureTemplate";
+import Back from "components/porter/Back";
 
 type Props = {
 };
@@ -29,6 +32,7 @@ const NewAddOnFlow: React.FC<Props> = ({
   const [searchValue, setSearchValue] = useState("");
   const [addOnTemplates, setAddOnTemplates] = useState<any[]>([]);
   const [currentTemplate, setCurrentTemplate] = useState<any>(null);
+  const [currentForm, setCurrentForm] = useState<any>(null);
 
   const filteredTemplates = useMemo(() => {
     const filteredBySearch = search(
@@ -82,43 +86,55 @@ const NewAddOnFlow: React.FC<Props> = ({
 
   return (
     <StyledTemplateComponent>
-      <DashboardHeader
-        prefix={(
-          <Link to="/addons">
-            <I className="material-icons">keyboard_backspace</I>
-          </Link>
-        )}
-        image={addOn}
-        title="Deploy a new add-on"
-        capitalize={false}
-        description="Create a new add-ons for this project."
-        disableLineBreak
-      />
-      <SearchBar 
-        value={searchValue}
-        setValue={setSearchValue}
-        placeholder="Search available add-ons . . ."
-        width="100%"
-      />
-      <Spacer y={1} />
-
-      {/* Temporary space reducer for legacy template list */}
-      {isLoading ? <Loading offset="-150px" /> : (
-        currentTemplate ? (
-          <ExpandedTemplate 
+      {
+        (currentForm && currentTemplate) ? (
+          <ConfigureTemplate
             currentTemplate={currentTemplate}
-            goBack={() => setCurrentTemplate(null)}
+            goBack={() => setCurrentForm(null)}
           />
         ) : (
           <>
-            <DarkMatter />
-            <TemplateList
-              templates={filteredTemplates}
-              setCurrentTemplate={(x) => setCurrentTemplate(x)}
+            <Back to="/addons" />
+            <DashboardHeader
+              image={addOn}
+              title="Deploy a new add-on"
+              capitalize={false}
+              description="Select an add-on to deploy to this project."
+              disableLineBreak
             />
+            {
+              currentTemplate ? (
+                <ExpandedTemplate 
+                  currentTemplate={currentTemplate}
+                  proceed={(form?: any) => setCurrentForm(form)}
+                  goBack={() => setCurrentTemplate(null)}
+                />
+              ) : (
+                <>
+                  <SearchBar 
+                    value={searchValue}
+                    setValue={setSearchValue}
+                    placeholder="Search available add-ons . . ."
+                    width="100%"
+                  />
+                  <Spacer y={1} />
+
+                  {/* Temporary space reducer for legacy template list */}
+                  {isLoading ? <Loading offset="-150px" /> : (
+                    <>
+                      <DarkMatter />
+                      <TemplateList
+                        templates={filteredTemplates}
+                        setCurrentTemplate={(x) => setCurrentTemplate(x)}
+                      />
+                    </>
+                  )}
+                </>
+              )
+            }
           </>
         )
-      )}
+      }
     </StyledTemplateComponent>
   );
 };

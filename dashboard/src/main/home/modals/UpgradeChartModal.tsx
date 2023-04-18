@@ -71,7 +71,15 @@ ${note.note}
 
         this.setState({ notes: noteArr.join("\n") });
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.log(err);
+        this.setState({
+          notes: `
+      ## Version ${this.props.currentChart.chart.metadata.version} -> ${this.props.currentChart.latest_version}
+      No upgrade notes available. This update should be backwards-compatible.
+        `,
+        });
+      });
   }
 
   renderContent() {
@@ -79,7 +87,7 @@ ${note.note}
       return <Loading />;
     }
 
-    return <Markdown>{this.state.notes}</Markdown>;
+    return <StyledContent>{this.state.notes}</StyledContent>;
   }
 
   render() {
@@ -149,4 +157,12 @@ const StyledUpgradeChartModal = styled.div`
   font-size: 13px;
   line-height: 1.8em;
   font-family: Work Sans, sans-serif;
+`;
+const StyledContent = styled.div`
+  /* Add your custom styles for the content here */
+  margin-top: 16px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #ffffff;
+  overflow: auto;
 `;

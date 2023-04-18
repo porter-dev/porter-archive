@@ -16,7 +16,7 @@ const VerticalSteps: React.FC<Props> = ({
     <StyledVerticalSteps>
       {steps.map((step, i) => {
         return (
-          <StepWrapper isActive={i <= currentStep}>
+          <StepWrapper>
             {
               (i !== steps.length - 1) && (
                 <Line isActive={i + 1 <= currentStep} />
@@ -25,12 +25,14 @@ const VerticalSteps: React.FC<Props> = ({
             <Dot 
               isActive={i <= currentStep}
             />
-            {step}
-            {
-              i > currentStep && (
-                <ReadOnlyOverlay />
-              )
-            }
+            <OpacityWrapper isActive={i <= currentStep}>
+              {step}
+              {
+                i > currentStep && (
+                  <ReadOnlyOverlay />
+                )
+              }
+            </OpacityWrapper>
           </StepWrapper>
         );
       })}
@@ -54,10 +56,11 @@ const Line = styled.div<{
 }>`
   width: 1px;
   height: calc(100% + 35px);
-  background: ${props => props.isActive ? "#fff" : "#ffffff33"};
+  background: ${props => props.isActive ? "#fff" : "#414141"};
   position: absolute;
   left: 4px;
   top: 8px;
+  opacity: 1;
 `;
 
 const Dot = styled.div<{
@@ -65,20 +68,25 @@ const Dot = styled.div<{
 }>`
   width: 9px;
   height: 9px;
-  background: ${props => props.isActive ? "#fff" : "#ffffff33"};
+  background: ${props => props.isActive ? "#fff" : "#414141"};
   border-radius: 50%;
   position: absolute;
   left: 0;
   top: 7px;
+  opacity: 1;
+`;
+
+const OpacityWrapper = styled.div<{
+  isActive: boolean;
+}>`
+  opacity: ${props => props.isActive ? 1 : 0.5};
 `;
 
 const StepWrapper = styled.div<{
-  isActive: boolean;
 }>`
   padding-left: 22px;
   position: relative;
   margin-bottom: 35px;
-  opacity: ${props => props.isActive ? 1 : 0.5};
 `;
 
 const StyledVerticalSteps = styled.div<{

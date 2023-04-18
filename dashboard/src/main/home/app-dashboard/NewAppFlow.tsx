@@ -30,7 +30,7 @@ const NewAppFlow: React.FC<Props> = ({
 }) => {
   const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [currentStep, setCurrentStep] = useState<number>(1);
 
   return (
     <StyledConfigureTemplate>
@@ -64,6 +64,35 @@ const NewAppFlow: React.FC<Props> = ({
             />
           </>,
           <>
+            <Text size={16}>Hello world</Text>
+            <Spacer y={0.5} />
+            <Text color="helper">
+            Foo bar foo bar.
+            </Text>
+            <Spacer y={0.5} />
+            <Text color="helper">
+              Randomly generated if left blank (lowercase letters, numbers, and "-" only).
+            </Text>
+            <Spacer height="20px" />
+            <Input
+              placeholder="ex: academic-sophon"
+              value=""
+              width="300px"
+              setValue={(e) => {}}
+            />
+            <Spacer y={0.5} />
+            <Text color="helper">
+              Randomly generated if left blank (lowercase letters, numbers, and "-" only).
+            </Text>
+            <Spacer height="20px" />
+            <Input
+              placeholder="ex: academic-sophon"
+              value=""
+              width="300px"
+              setValue={(e) => {}}
+            />
+          </>,
+          <>
             <Text size={16}>Some settings</Text>
             <Spacer y={0.5} />
             <Text color="helper">
@@ -80,7 +109,7 @@ const NewAppFlow: React.FC<Props> = ({
               width="300px"
               setValue={(e) => {}}
             />
-                        <Spacer y={0.5} />
+            <Spacer y={0.5} />
             <Text color="helper">
               Randomly generated if left blank (lowercase letters, numbers, and "-" only).
             </Text>
@@ -91,7 +120,7 @@ const NewAppFlow: React.FC<Props> = ({
               width="300px"
               setValue={(e) => {}}
             />
-                        <Spacer y={0.5} />
+            <Spacer y={0.5} />
             <Text color="helper">
               Randomly generated if left blank (lowercase letters, numbers, and "-" only).
             </Text>

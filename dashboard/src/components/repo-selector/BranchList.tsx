@@ -20,6 +20,13 @@ const BranchList: React.FC<Props> = ({
   actionConfig,
   currentBranch,
 }) => {
+  const sortBranches = (branches: string[]) => {
+    if (!currentBranch) return branches;
+    return [
+      currentBranch,
+      ...branches.filter((branch) => branch !== currentBranch),
+    ];
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [branches, setBranches] = useState<string[]>([]);
@@ -99,7 +106,7 @@ const BranchList: React.FC<Props> = ({
               .toLowerCase()
               .includes(searchFilter.toLowerCase() || "");
           })
-        : branches.slice(0, 10);
+        : sortBranches(branches).slice(0, 10);
 
     if (results.length == 0) {
       return <LoadingWrapper>No matching Branches found.</LoadingWrapper>;

@@ -151,7 +151,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		if err != nil {
 			return fmt.Errorf("error parsing porter.yaml: %w", err)
 		}
-	} else if previewVersion.Version == "stack" {
+	} else if previewVersion.Version == "v1stack" {
 		resGroup, err = stack.CreateV1BuildResources(client, fileBytes)
 
 		if err != nil {
@@ -181,18 +181,6 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	if err != nil {
 		return fmt.Errorf("error getting working directory: %w", err)
 	}
-
-	// fmt.Println("here are the resources:")
-	// for _, res := range resGroup.Resources {
-	// 	fmt.Printf("resource: %s\n", res.Name)
-	// 	fmt.Printf("driver: %s\n", res.Driver)
-	// 	fmt.Printf("source: %v\n", res.Source)
-	// 	fmt.Printf("target: %v\n", res.Target)
-	// 	fmt.Printf("config: %v\n", res.Config)
-	// 	fmt.Printf("depends_on: %v\n", res.DependsOn)
-	// 	fmt.Println()
-	// }
-	// return nil
 
 	worker.RegisterDriver("deploy", NewDeployDriver)
 	worker.RegisterDriver("build-image", preview.NewBuildDriver)

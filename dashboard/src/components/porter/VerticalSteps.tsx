@@ -22,7 +22,7 @@ const VerticalSteps: React.FC<Props> = ({
                 <Line isActive={i + 1 <= currentStep} />
               )
             }
-            <Dot 
+            <Dot
               isActive={i <= currentStep}
             />
             <OpacityWrapper isActive={i <= currentStep}>
@@ -91,4 +91,5 @@ const StepWrapper = styled.div<{
 
 const StyledVerticalSteps = styled.div<{
 }>`
+width: 600px;
 `;

@@ -37,7 +37,7 @@ import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
-import NewAppFlow from "./app-dashboard/NewAppFlow";
+import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -190,7 +190,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -436,17 +436,17 @@ const Home: React.FC<Props> = (props) => {
               overrideInfraTabEnabled({
                 projectID: currentProject?.id,
               })) && (
-              <Route
-                path="/infrastructure"
-                render={() => {
-                  return (
-                    <DashboardWrapper>
-                      <InfrastructureRouter />
-                    </DashboardWrapper>
-                  );
-                }}
-              />
-            )}
+                <Route
+                  path="/infrastructure"
+                  render={() => {
+                    return (
+                      <DashboardWrapper>
+                        <InfrastructureRouter />
+                      </DashboardWrapper>
+                    );
+                  }}
+                />
+              )}
             <Route
               path="/dashboard"
               render={() => {
@@ -515,14 +515,14 @@ const Home: React.FC<Props> = (props) => {
           />,
           document.body
         )}
-        {showWrongEmailModal && 
+        {showWrongEmailModal &&
           <Modal>
             <Text size={16}>
               Oops! This invite link wasn't for {user?.email}
             </Text>
             <Spacer y={1} />
             <Text color="helper">
-              Your account email does not match the email associated with this project invite. 
+              Your account email does not match the email associated with this project invite.
               Please log out and sign up again with the correct email using the invite link.
             </Text>
             <Spacer y={1} />

@@ -18,6 +18,7 @@ import BranchList from "components/repo-selector/BranchList";
 import Banner from "components/Banner";
 import { UpdateBuildconfigResponse } from "./types";
 import BuildpackConfigSection from "./_BuildpackConfigSection";
+import InputRow from "components/form-components/InputRow";
 
 type Props = {
   chart: ChartTypeWithExtendedConfig;
@@ -48,6 +49,12 @@ const BuildSettingsTab: React.FC<Props> = ({
 
   const [currentBranch, setCurrentBranch] = useState(
     () => chart?.git_action_config?.git_branch
+  );
+  const [gitHubSettingsExpanded, setGitHubSettingsExpanded] = useState(true);
+  const [envVariablesExpanded, setEnvVariablesExpanded] = useState(false);
+  const [branchSelectionExpanded, setBranchSelectionExpanded] = useState(false);
+  const [buildpackSettingsExpanded, setBuildpackSettingsExpanded] = useState(
+    false
   );
 
   const buildpackConfigRef = useRef<{
@@ -329,40 +336,126 @@ const BuildSettingsTab: React.FC<Props> = ({
           </AlertCardAction>
         </AlertCard>
       ) : null} */}
-        <Heading isAtTop>Build environment variables</Heading>
-        <KeyValueArray
-          values={envVariables}
-          envLoader
-          externalValues={{
-            namespace: chart.namespace,
-            clusterId: currentCluster.id,
-          }}
-          setValues={(values) => {
-            setEnvVariables(values);
-          }}
-        ></KeyValueArray>
+        <Heading isAtTop>
+          <ExpandHeader
+            onClick={() => setGitHubSettingsExpanded(!gitHubSettingsExpanded)}
+            isExpanded={!gitHubSettingsExpanded}
+          >
+            Github Settings
+            <i className="material-icons">arrow_drop_down</i>
+          </ExpandHeader>
+        </Heading>
+        {gitHubSettingsExpanded && (
+          <div>
+            <InputRow
+              disabled={true}
+              label="Git repository"
+              type="text"
+              width="100%"
+              value={chart.git_action_config?.git_repo}
+            />
+            <InputRow
+              disabled={true}
+              label="Branch"
+              type="text"
+              width="100%"
+              value={currentBranch}
+            />
+            {chart.git_action_config.dockerfile_path && (
+              <InputRow
+                disabled={true}
+                label="Dockerfile path"
+                type="text"
+                width="100%"
+                value={chart.git_action_config.dockerfile_path}
+              />
+            )}
+            {!chart.git_action_config.dockerfile_path && (
+              <InputRow
+                disabled={true}
+                label="Dockerfile path"
+                type="text"
+                width="100%"
+                value={chart.git_action_config.folder_path}
+              />
+            )}
+          </div>
+        )}
+        <Heading>
+          <ExpandHeader
+            onClick={() => setEnvVariablesExpanded(!envVariablesExpanded)}
+            isExpanded={!envVariablesExpanded}
+          >
+            Build environment variables
+            <i className="material-icons">arrow_drop_down</i>
+          </ExpandHeader>
+        </Heading>
 
-        <Heading>Select default branch</Heading>
-        <Helper>
-          Change the default branch the deployments will be made from.
-        </Helper>
-        <Banner>
-          You must also update the deploy branch in your GitHub Action file.
-        </Banner>
-        <BranchList
-          actionConfig={currentActionConfig}
-          setBranch={setCurrentBranch}
-          currentBranch={currentBranch}
-        />
+        {envVariablesExpanded && (
+          <div>
+            <KeyValueArray
+              values={envVariables}
+              envLoader
+              externalValues={{
+                namespace: chart.namespace,
+                clusterId: currentCluster.id,
+              }}
+              setValues={(values) => {
+                setEnvVariables(values);
+              }}
+            ></KeyValueArray>
+          </div>
+        )}
+
+        <Heading>
+          <ExpandHeader
+            onClick={() => setBranchSelectionExpanded(!branchSelectionExpanded)}
+            isExpanded={!branchSelectionExpanded}
+          >
+            Select default branch
+            <i className="material-icons">arrow_drop_down</i>
+          </ExpandHeader>
+        </Heading>
+        {branchSelectionExpanded && (
+          <div>
+            {/* Select default branch content */}
+            <Helper>
+              Change the default branch the deployments will be made from.
+            </Helper>
+            <Banner>
+              You must also update the deploy branch in your GitHub Action file.
+            </Banner>
+            <BranchList
+              actionConfig={currentActionConfig}
+              setBranch={setCurrentBranch}
+              currentBranch={currentBranch}
+            />
+          </div>
+        )}
 
         {!chart.git_action_config.dockerfile_path ? (
           <>
-            <Heading>Buildpack settings</Heading>
-            <BuildpackConfigSection
-              ref={buildpackConfigRef}
-              currentChart={chart}
-              actionConfig={currentActionConfig}
-            />
+            <Heading>
+              <ExpandHeader
+                onClick={() =>
+                  setBuildpackSettingsExpanded(!buildpackSettingsExpanded)
+                }
+                isExpanded={!buildpackSettingsExpanded}
+              >
+                Buildpacks settings
+                <i className="material-icons">arrow_drop_down</i>
+              </ExpandHeader>
+            </Heading>
+            {buildpackSettingsExpanded &&
+              !chart.git_action_config.dockerfile_path && (
+                <div>
+                  <BuildpackConfigSection
+                    ref={buildpackConfigRef}
+                    currentChart={chart}
+                    actionConfig={currentActionConfig}
+                  />
+                </div>
+              )}
           </>
         ) : null}
         <SaveButtonWrapper>
@@ -484,4 +577,18 @@ const AlertCardAction = styled.button`
   :hover {
     cursor: pointer;
   }
+`;
+
+const ExpandHeader = styled.div<{ isExpanded: boolean }>`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  > i {
+    margin-left: 10px;
+    transform: ${(props) => (props.isExpanded ? "rotate(180deg)" : "")};
+  }
+`;
+const DarkMatter = styled.div`
+  width: 100%;
+  margin-bottom: -28px;
 `;

@@ -134,67 +134,71 @@ const BuildpackConfigSection = forwardRef<
 
     detectBuildpack()
       .then(({ data }) => {
-        const builders = data;
+        {
+          console.log(data);
+          const builders = data;
 
-        const defaultBuilder = builders.find((builder) =>
-          builder.builders.find((stack) => stack === currentBuildConfig.builder)
-        );
-
-        const nonSelectedBuilder = builders.find(
-          (builder) =>
-            !builder.builders.find(
+          const defaultBuilder = builders.find((builder) =>
+            builder.builders.find(
               (stack) => stack === currentBuildConfig.builder
             )
-        );
+          );
 
-        const fullDetectedBuildpacks = [
-          ...defaultBuilder.detected,
-          ...defaultBuilder.others,
-        ];
+          const nonSelectedBuilder = builders.find(
+            (builder) =>
+              !builder.builders.find(
+                (stack) => stack === currentBuildConfig.builder
+              )
+          );
 
-        const userSelectedBuildpacks = populateBuildpacks(
-          currentBuildConfig.buildpacks,
-          fullDetectedBuildpacks
-        ).filter((b) => b.buildpack);
+          const fullDetectedBuildpacks = [
+            ...(defaultBuilder.detected ?? []),
+            ...(defaultBuilder.others ?? []),
+          ];
+          const userSelectedBuildpacks = populateBuildpacks(
+            currentBuildConfig.buildpacks,
+            fullDetectedBuildpacks
+          ).filter((b) => b.buildpack);
 
-        const availableBuildpacks = differenceBy(
-          fullDetectedBuildpacks,
-          userSelectedBuildpacks,
-          "buildpack"
-        );
+          const availableBuildpacks = differenceBy(
+            fullDetectedBuildpacks,
+            userSelectedBuildpacks,
+            "buildpack"
+          );
 
-        const defaultStack = defaultBuilder.builders.find((stack) => {
-          return stack === currentBuildConfig.builder;
-        });
+          const defaultStack = defaultBuilder.builders.find((stack) => {
+            return stack === currentBuildConfig.builder;
+          });
 
-        populateState(
-          defaultBuilder.name.toLowerCase(),
-          defaultStack,
-          userSelectedBuildpacks,
-          availableBuildpacks
-        );
+          populateState(
+            defaultBuilder.name.toLowerCase(),
+            defaultStack,
+            userSelectedBuildpacks,
+            availableBuildpacks
+          );
 
-        populateState(
-          nonSelectedBuilder.name.toLowerCase(),
-          nonSelectedBuilder.builders[0],
-          nonSelectedBuilder.others,
-          nonSelectedBuilder.detected
-        );
+          populateState(
+            nonSelectedBuilder.name.toLowerCase(),
+            nonSelectedBuilder.builders[0],
+            nonSelectedBuilder.others,
+            nonSelectedBuilder.detected
+          );
 
-        setBuilders(builders);
-        setSelectedBuilder(defaultBuilder.name.toLowerCase());
+          setBuilders(builders);
+          setSelectedBuilder(defaultBuilder.name.toLowerCase());
 
-        setStacks(defaultBuilder.builders);
-        setSelectedStack(defaultStack);
-        if (!Array.isArray(userSelectedBuildpacks)) {
-          setSelectedBuildpacks([]);
-        } else {
-          setSelectedBuildpacks(userSelectedBuildpacks);
-        }
-        if (!Array.isArray(availableBuildpacks)) {
-          setAvailableBuildpacks([]);
-        } else {
-          setAvailableBuildpacks(availableBuildpacks);
+          setStacks(defaultBuilder.builders);
+          setSelectedStack(defaultStack);
+          if (!Array.isArray(userSelectedBuildpacks)) {
+            setSelectedBuildpacks([]);
+          } else {
+            setSelectedBuildpacks(userSelectedBuildpacks);
+          }
+          if (!Array.isArray(availableBuildpacks)) {
+            setAvailableBuildpacks([]);
+          } else {
+            setAvailableBuildpacks(availableBuildpacks);
+          }
         }
       })
       .catch((err) => {

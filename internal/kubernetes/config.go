@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -125,7 +126,11 @@ func kubeConfigForCAPICluster(ctx context.Context, mgmtClusterConnection porterv
 	if kubeconfigResp.Msg.KubeConfig == "" {
 		return "", errors.New("no kubeconfig returned for capi cluster")
 	}
-	return kubeconfigResp.Msg.KubeConfig, nil
+	decodedKubeconfig, err := base64.StdEncoding.DecodeString(kubeconfigResp.Msg.KubeConfig)
+	if err != nil {
+		return "", fmt.Errorf("error decoding kubeconfig: %w", err)
+	}
+	return string(decodedKubeconfig), nil
 }
 
 // writeKubeConfigToFileAndRestClient writes a literal kubeconfig to a temporary file

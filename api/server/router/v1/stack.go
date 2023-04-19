@@ -226,6 +226,35 @@ func getV1StackRoutes(
 		Router:   r,
 	})
 
+	updateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPatch,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	updateHandler := release.NewUpdateStackHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateEndpoint,
+		Handler:  updateHandler,
+		Router:   r,
+	})
+
 	// GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks -> stack.NewStackListHandler
 	// swagger:operation GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks listStacks
 	//

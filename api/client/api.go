@@ -128,7 +128,8 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 	for i := 0; i < int(retryCount); i++ {
 		strData, err := json.Marshal(data)
 		if err != nil {
-			return nil
+			fmt.Printf("data: %#v", data)
+			return err
 		}
 
 		req, err := http.NewRequest(

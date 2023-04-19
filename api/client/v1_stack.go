@@ -44,6 +44,23 @@ func (c *Client) CreateStack(
 	)
 }
 
+// UpdateStack updates the stack
+func (c *Client) UpdateStack(
+	ctx context.Context,
+	projectID, clusterID uint,
+	namespace string,
+	req *types.CreateStackReleaseRequest,
+) error {
+	return c.patchRequest(
+		fmt.Sprintf(
+			"/v1/projects/%d/clusters/%d/namespaces/%s/stacks",
+			projectID, clusterID, namespace,
+		),
+		req,
+		nil,
+	)
+}
+
 func (c *Client) AddEnvGroupToStack(
 	ctx context.Context,
 	projectID, clusterID uint,

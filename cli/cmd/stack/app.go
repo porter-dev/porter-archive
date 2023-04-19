@@ -8,6 +8,38 @@ import (
 	"github.com/porter-dev/switchboard/pkg/types"
 )
 
+func (a *App) populateDefaults(env *map[*string]*string) error {
+	if a.Config == nil {
+		a.Config = make(map[string]interface{})
+	}
+	var defaultValues map[string]interface{}
+	if *a.Type == "web" {
+		defaultValues = map[string]interface{}{
+			"ingress": map[string]interface{}{
+				"enabled": false,
+			},
+			"container": map[string]interface{}{
+				"command": *a.Run,
+				"env": map[string]interface{}{
+					"normal": GetEnv(*env),
+				},
+			},
+		}
+	} else {
+		defaultValues = map[string]interface{}{
+			"container": map[string]interface{}{
+				"command": *a.Run,
+				"env": map[string]interface{}{
+					"normal": GetEnv(*env),
+				},
+			},
+		}
+	}
+	mergedValues := CoalesceValues(defaultValues, a.Config)
+	a.Config = mergedValues
+	return nil
+}
+
 func (a *App) getV1Resource(name string, b *Build, env *map[*string]*string) (*types.Resource, error) {
 	config := &preview.ApplicationConfig{}
 

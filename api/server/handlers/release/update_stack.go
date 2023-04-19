@@ -12,25 +12,26 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/stefanmcshane/helm/pkg/chart"
 )
 
-type CreateStackHandler struct {
+type UpdateStackHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewCreateStackHandler(
+func NewUpdateStackHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *CreateStackHandler {
-	return &CreateStackHandler{
+) *UpdateStackHandler {
+	return &UpdateStackHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
@@ -70,7 +71,7 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Registries: registries,
 	}
 
-	_, err = helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+	_, err = helmAgent.UpgradeInstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("error installing a new chart: %s", err.Error()),
@@ -80,4 +81,42 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
+}
+
+func createChartFromDependencies(deps []types.Dependency) (*chart.Chart, error) {
+	metadata := &chart.Metadata{
+		Name:        "umbrella",
+		Description: "Web application that is exposed to external traffic.",
+		Version:     "0.96.0",
+		APIVersion:  "v2",
+		Home:        "https://getporter.dev/",
+		Icon:        "https://user-images.githubusercontent.com/65516095/111255214-07d3da80-85ed-11eb-99e2-fddcbdb99bdb.png",
+		Keywords: []string{
+			"porter",
+			"application",
+			"service",
+			"umbrella",
+		},
+		Type:         "application",
+		Dependencies: createChartDependencies(deps),
+	}
+
+	// create a new chart object with the metadata
+	c := &chart.Chart{
+		Metadata: metadata,
+	}
+	return c, nil
+}
+
+func createChartDependencies(deps []types.Dependency) []*chart.Dependency {
+	var chartDependencies []*chart.Dependency
+	for _, d := range deps {
+		chartDependencies = append(chartDependencies, &chart.Dependency{
+			Name:       d.Name,
+			Alias:      d.Alias,
+			Version:    d.Version,
+			Repository: d.Repository,
+		})
+	}
+	return chartDependencies
 }

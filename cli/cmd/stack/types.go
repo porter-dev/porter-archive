@@ -18,7 +18,7 @@ type Build struct {
 }
 
 type App struct {
-	Run    *string        `yaml:"run" validate:"required"`
-	Config map[string]any `yaml:"config"`
-	Type   *string        `yaml:"type" validate:"required, oneof=web worker job"`
+	Run    *string                `yaml:"run" validate:"required"`
+	Config map[string]interface{} `yaml:"config"`
+	Type   *string                `yaml:"type" validate:"required, oneof=web worker job"`
 }

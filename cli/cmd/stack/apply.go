@@ -83,6 +83,7 @@ func CreateV1ApplicationResources(client *api.Client, raw []byte) (*types.Resour
 			continue
 		}
 
+		app.populateDefaults(stackConf.parsed.Env)
 		ai, err := app.getV1Resource(*name, stackConf.parsed.Build, stackConf.parsed.Env)
 		if err != nil {
 			return nil, err

@@ -93,6 +93,8 @@ func (t *DeployStackHook) PostApply(map[string]interface{}) error {
 
 	if err != nil {
 		color.New(color.FgYellow).Printf("Could not read release for stack %s (%s): attempting creation\n", t.StackName, err.Error())
+	} else {
+		color.New(color.FgGreen).Printf("Found release for stack %s: attempting update\n", t.StackName)
 	}
 
 	return t.applyStack(t.AppResourceGroup, client, shouldCreate)
@@ -124,24 +126,19 @@ func (t *DeployStackHook) applyStack(applications *switchboardTypes.ResourceGrou
 			return fmt.Errorf("error creating stack %s: %w", t.StackName, err)
 		}
 	} else {
-		// TODO: handle update flow
-		// _, err = t.updateStack(applications, client, sharedOpts, appConfig)
-
-		// if err != nil {
-		// 	return fmt.Errorf("error updating stack %s: %w", t.StackName, err)
-		// }
+		err := t.updateStack(client, stackConf)
+		if err != nil {
+			return fmt.Errorf("error updating stack %s: %w", t.StackName, err)
+		}
 	}
 
 	return nil
 }
 
 func (t *DeployStackHook) createStack(client *api.Client, stackConf StackConfig) error {
-	// create new release
-	color.New(color.FgGreen).Printf("Creating release for stack: %s\n", t.StackName)
-
-	fmt.Println("values and deps: ")
-	fmt.Printf("values: %v\n", stackConf.Values)
-	fmt.Printf("deps: %v\n", stackConf.Dependencies)
+	// fmt.Println("values and deps: ")
+	// fmt.Printf("values: %v\n", stackConf.Values)
+	// fmt.Printf("deps: %v\n", stackConf.Dependencies)
 
 	err := client.CreateStack(
 		context.Background(),
@@ -150,7 +147,7 @@ func (t *DeployStackHook) createStack(client *api.Client, stackConf StackConfig)
 		t.StackName,
 		&types.CreateStackReleaseRequest{
 			StackName:    t.StackName,
-			Values:       stackConf.Values,
+			Values:       convertMap(stackConf.Values).(map[string]interface{}),
 			Dependencies: stackConf.Dependencies,
 		},
 	)
@@ -159,6 +156,50 @@ func (t *DeployStackHook) createStack(client *api.Client, stackConf StackConfig)
 	}
 
 	return nil
+}
+
+func (t *DeployStackHook) updateStack(client *api.Client, stackConf StackConfig) error {
+	// fmt.Println("values and deps: ")
+	// fmt.Printf("values: %v\n", stackConf.Values)
+	// fmt.Printf("deps: %v\n", stackConf.Dependencies)
+
+	err := client.UpdateStack(
+		context.Background(),
+		t.ProjectID,
+		t.ClusterID,
+		t.StackName,
+		&types.CreateStackReleaseRequest{
+			StackName:    t.StackName,
+			Values:       convertMap(stackConf.Values).(map[string]interface{}),
+			Dependencies: stackConf.Dependencies,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// this is necessary to marshal the resulting object during the request
+func convertMap(m interface{}) interface{} {
+	switch m := m.(type) {
+	case map[string]interface{}:
+		for k, v := range m {
+			m[k] = convertMap(v)
+		}
+	case map[interface{}]interface{}:
+		result := map[string]interface{}{}
+		for k, v := range m {
+			result[k.(string)] = convertMap(v)
+		}
+		return result
+	case []interface{}:
+		for i, v := range m {
+			m[i] = convertMap(v)
+		}
+	}
+	return m
 }
 
 func (t *DeployStackHook) OnConsolidatedErrors(map[string]error) {}

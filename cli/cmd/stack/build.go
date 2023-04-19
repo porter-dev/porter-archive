@@ -137,7 +137,7 @@ func (b *Build) getV1PushImage() (*types.Resource, error) {
 			fmt.Sprintf("%s-build-image", b.GetName()),
 		},
 		Target: map[string]any{
-			"app_name": "app", // TODO: remove this?
+			"app_name": b.GetName(),
 		},
 		Config: rawConfig,
 	}, nil

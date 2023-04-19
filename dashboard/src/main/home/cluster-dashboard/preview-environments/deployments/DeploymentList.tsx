@@ -311,7 +311,7 @@ const DeploymentList = () => {
       {porterYAMLErrors.length > 0 ? (
         <PorterYAMLBannerWrapper>
           <Banner type="warning">
-            We found some errors in the porter.yaml file in the default branch.
+            No porter.yaml file in the default branch.
             <LinkButton
               onClick={() => {
                 setExpandedPorterYAMLErrors(porterYAMLErrors);
@@ -363,9 +363,6 @@ const DeploymentList = () => {
             name="Sort"
           />
           <CreatePreviewEnvironmentButton
-            disabled={porterYAMLErrors.some(
-              (err) => err === PorterYAMLErrors.FileNotFound
-            )}
             to={`/preview-environments/deployments/${environment_id}/${repo_owner}/${repo_name}/create`}
           >
             <i className="material-icons">add</i> New preview deployment

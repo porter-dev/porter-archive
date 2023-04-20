@@ -83,13 +83,13 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	res.Logger.Info().Msg("Loaded MetadataFromConf")
 	res.DB = InstanceDB
 
-	// res.Logger.Info().Msg("Starting gorm automigrate")
-	// err = gorm.AutoMigrate(InstanceDB, sc.Debug)
+	res.Logger.Info().Msg("Starting gorm automigrate")
+	err = gorm.AutoMigrate(InstanceDB, sc.Debug)
 
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// res.Logger.Info().Msg("Completed gorm automigrate")
+	if err != nil {
+		return nil, err
+	}
+	res.Logger.Info().Msg("Completed gorm automigrate")
 
 	var key [32]byte
 

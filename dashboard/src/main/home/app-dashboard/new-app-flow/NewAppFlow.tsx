@@ -21,22 +21,27 @@ import Button from "components/porter/Button";
 import { generateSlug } from "random-word-slugs";
 import { RouteComponentProps, withRouter } from "react-router";
 import Error from "components/porter/Error";
-import SourceSelector from "./SourceSelector";
+import SourceSelector, { SourceType } from "./SourceSelector";
 import SourceSettings from "./SourceSettings"
+import Services from "./Services";
+import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 
 type Props = RouteComponentProps & {
 };
 
-export type SourceType = "github" | "docker-registry";
 
 interface FormState {
   applicationName: string;
   selectedSourceType: SourceType | undefined;
+  serviceList: any[];
+  envVariables: KeyValueType[];
 }
 
 const INITIAL_STATE: FormState = {
   applicationName: "",
   selectedSourceType: undefined,
+  serviceList: [],
+  envVariables: [],
 };
 
 const Validators: {
@@ -44,6 +49,8 @@ const Validators: {
 } = {
   applicationName: (value: string) => value.trim().length > 0,
   selectedSourceType: (value: SourceType | undefined) => value !== undefined,
+  serviceList: (value: any[]) => value.length > 0,
+  envVariables: (value: KeyValueType[]) => true,
 };
 
 
@@ -55,7 +62,6 @@ const NewAppFlow: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
-
 
   return (
     <StyledConfigureTemplate>
@@ -80,11 +86,11 @@ const NewAppFlow: React.FC<Props> = ({
             <Text color="helper">
               Lowercase letters, numbers, and "-" only.
             </Text>
-            <Spacer height="20px" />
+            <Spacer y={0.5} />
             <Input
               placeholder="ex: academic-sophon"
               value={formState.applicationName}
-              width="300px"
+              width="100%"
               setValue={(e) => {
                 setFormState({ ...formState, applicationName: e })
                 if (Validators.applicationName(e)) {
@@ -119,25 +125,50 @@ const NewAppFlow: React.FC<Props> = ({
           </>,
           <>
             <Text size={16}>Services</Text>
-            <Spacer y={0.5} />
-            <Text color="helper">
-              Add services to this application.
-            </Text>
             <Spacer y={1} />
-            SOME MORE STUFF HERE
+            <Services
+              setServices={
+                (services: any[]) => {
+                  setFormState({ ...formState, serviceList: services })
+                  if (Validators.serviceList(services)) {
+                    setCurrentStep(Math.max(currentStep, 4));
+                  }
+                }}
+              services={formState.serviceList}
+            />
           </>,
           <>
-            <Text size={16}>Services</Text>
+            <Text size={16}>Environment variables</Text>
             <Spacer y={0.5} />
             <Text color="helper">
-              Add services to this application.
+              Specify environment variables shared among all services.
             </Text>
-            <Spacer y={1} />
-            SOME MORE STUFF HERE
+            <EnvGroupArray
+              values={formState.envVariables}
+              setValues={(x: any) => setFormState({ ...formState, envVariables: x })}
+              fileUpload={true}
+            />
+          </>,
+          <>
+            <Text size={16}>Release command (optional)</Text>
+            <Spacer y={0.5} />
+            <Text color="helper">
+              If specified, this command will be run before every deployment.
+            </Text>
+            <Spacer y={0.5} />
+            <Input
+              placeholder="yarn ./scripts/run-migrations.js"
+              value={""}
+              width="100%"
+              setValue={(e) => { }}
+            />
           </>
         ]}
       />
-      <Spacer height="80px" />
+      <Spacer y={1} />
+      <Button onClick={() => ({})}>
+        DEPLYOY
+      </Button>
     </StyledConfigureTemplate>
   );
 };

@@ -1,41 +1,42 @@
 import React from "react";
 import styled from "styled-components";
-import { SourceType } from "./NewAppFlow";
+
+export type SourceType = "github" | "docker-registry";
 
 interface SourceSelectorProps {
-    selectedSourceType: SourceType | undefined;
-    setSourceType: (sourceType: SourceType) => void;
+  selectedSourceType: SourceType | undefined;
+  setSourceType: (sourceType: SourceType) => void;
 }
 
 const SourceSelector: React.FC<SourceSelectorProps> = ({
-    selectedSourceType,
-    setSourceType
+  selectedSourceType,
+  setSourceType
 }) => {
-    return (
-        <BlockList>
-            <Block
-                selected={selectedSourceType === 'github'}
-                onClick={() => setSourceType('github')}
-            >
-                <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
-                <BlockTitle>Git repository</BlockTitle>
-                <BlockDescription>
-                    Deploy using source from a Git repo.
-                </BlockDescription>
-            </Block>
-            <Block
-                selected={selectedSourceType === 'docker-registry'}
-                onClick={() => setSourceType('docker-registry')}
-            >
-                <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
-                <BlockTitle>Docker registry</BlockTitle>
-                <BlockDescription>
-                    Deploy a container from an image registry.
-                </BlockDescription>
-            </Block>
+  return (
+    <BlockList>
+      <Block
+        selected={selectedSourceType === 'github'}
+        onClick={() => setSourceType('github')}
+      >
+        <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
+        <BlockTitle>Git repository</BlockTitle>
+        <BlockDescription>
+          Deploy using source from a Git repo.
+        </BlockDescription>
+      </Block>
+      <Block
+        selected={selectedSourceType === 'docker-registry'}
+        onClick={() => setSourceType('docker-registry')}
+      >
+        <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
+        <BlockTitle>Docker registry</BlockTitle>
+        <BlockDescription>
+          Deploy a container from an image registry.
+        </BlockDescription>
+      </Block>
 
-        </BlockList>
-    );
+    </BlockList>
+  );
 }
 
 export default SourceSelector;
@@ -77,7 +78,6 @@ const Block = styled.div<{ selected?: boolean }>`
 const BlockList = styled.div`
   overflow: visible;
   margin-top: 6px;
-  margin-bottom: 27px;
   display: grid;
   grid-column-gap: 25px;
   grid-row-gap: 25px;

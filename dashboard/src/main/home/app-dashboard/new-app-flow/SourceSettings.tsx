@@ -1,11 +1,11 @@
 import AnimateHeight from "react-animate-height";
-import { SourceType } from "./NewAppFlow";
 import React from "react";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
 import AdvancedBuildSettings from "./AdvancedBuildSettings";
 import styled from "styled-components";
+import { SourceType } from "./SourceSelector";
 
 interface SourceSettingsProps {
     source: SourceType | undefined;
@@ -26,7 +26,7 @@ const SourceSettings: React.FC<SourceSettingsProps> = ({
                 <Input
                     placeholder="ex: academic-sophon"
                     value=""
-                    width="300px"
+                    width="100%"
                     setValue={(e) => { }}
                 />
                 <Spacer y={0.5} />
@@ -37,7 +37,7 @@ const SourceSettings: React.FC<SourceSettingsProps> = ({
                 <Input
                     placeholder="ex: academic-sophon"
                     value=""
-                    width="300px"
+                    width="100%"
                     setValue={(e) => { }}
                 />
                 <Spacer y={0.5} />
@@ -48,7 +48,7 @@ const SourceSettings: React.FC<SourceSettingsProps> = ({
                 <Input
                     placeholder="ex: ./"
                     value=""
-                    width="300px"
+                    width="100%"
                     setValue={(e) => { }}
                 />
                 <Spacer y={0.5} />
@@ -59,7 +59,7 @@ const SourceSettings: React.FC<SourceSettingsProps> = ({
                 <Input
                     placeholder="ex: ./porter.yaml"
                     value=""
-                    width="300px"
+                    width="100%"
                     setValue={(e) => { }}
                 />
                 <Spacer y={1} />
@@ -85,7 +85,7 @@ const SourceSettings: React.FC<SourceSettingsProps> = ({
                 <Input
                     placeholder="ex: academic-sophon"
                     value=""
-                    width="300px"
+                    width="100%"
                     setValue={(e) => { }}
                 />
                 <Spacer y={0.5} />
@@ -97,18 +97,23 @@ const SourceSettings: React.FC<SourceSettingsProps> = ({
     }
 
     return (
-        <AnimateHeight
-            height={source ? 'auto' : 0}
-        >
-            <div >
-                {source === "github" ? renderGithubSettings() : renderDockerSettings()}
-            </div>
-        </AnimateHeight >
+        <SourceSettingsContainer source={source}>
+            <AnimateHeight
+                height={source ? 'auto' : 0}
+            >
+                <div >
+                    {source === "github" ? renderGithubSettings() : renderDockerSettings()}
+                </div>
+            </AnimateHeight >
+        </SourceSettingsContainer>
     )
 }
 
 export default SourceSettings;
 
+const SourceSettingsContainer = styled.div`
+    margin-top: ${(props: { source: SourceType | undefined }) => props.source && "20px"};
+`;
 const DetectedBuildMessage = styled.div`
   color: #0f872b;
   display: flex;

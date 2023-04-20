@@ -179,8 +179,13 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = ({
 export default AdvancedBuildSettings
 
 const StyledAdvancedBuildSettings = styled.div`
-  color:  "#ffffff66";
+  color: ${({ showSettings }) => showSettings ? "white" : "#aaaabb"};
   background: #26292e;
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
+    color:  white;
+  }
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -190,9 +195,6 @@ const StyledAdvancedBuildSettings = styled.div`
   width: 100%;
   padding-left: 10px;
   cursor: pointer;
-  :hover {
-    background: #7a7b80;
-  }
   border-bottom-left-radius: ${({ showSettings }) => showSettings && "0px"};
   border-bottom-right-radius: ${({ showSettings }) => showSettings && "0px"};
 

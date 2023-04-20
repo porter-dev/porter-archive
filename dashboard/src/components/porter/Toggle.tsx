@@ -5,19 +5,24 @@ type Props = {
   items: any[];
   active: string;
   setActive: (active: string) => void;
+  highlightColor?: string;
 };
 
 const Toggle: React.FC<Props> = ({
   items,
   active,
   setActive,
+  highlightColor,
 }) => {
   return (
     <StyledToggle>
       {items.map((item, index) => (
-        <Item 
+        <Item
           active={item.value === active}
-          onClick={() => setActive(item.value)}
+          onClick={() => {
+            setActive(item.value)
+          }}
+          highlightColor={highlightColor}
         >
           {item.label}
         </Item>
@@ -37,12 +42,12 @@ const StyledToggle = styled.div`
   align-items: center;
 `;
 
-const Item = styled.div<{ active: boolean }>`
+const Item = styled.div<{ active: boolean, highlightColor?: string }>`
   display: flex;
   align-items: center;
   height: 100%;
   cursor: pointer;
   justify-content: center;
   padding: 10px;
-  background: ${props => props.active ? "#ffffff11" : "transparent"};
+  background: ${props => props.active ? props.highlightColor ?? "#ffffff11" : "transparent"};
 `;

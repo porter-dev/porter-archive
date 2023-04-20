@@ -22,7 +22,7 @@ import { generateSlug } from "random-word-slugs";
 import { RouteComponentProps, withRouter } from "react-router";
 import Error from "components/porter/Error";
 import SourceSelector from "./SourceSelector";
-import AdvancedBuildSettings from "./AdvancedBuildSettings"
+import SourceSettings from "./SourceSettings"
 
 type Props = RouteComponentProps & {
 };
@@ -55,6 +55,7 @@ const NewAppFlow: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
+
 
   return (
     <StyledConfigureTemplate>
@@ -114,73 +115,22 @@ const NewAppFlow: React.FC<Props> = ({
                 }
               }}
             />
-            {formState.selectedSourceType === "github" ? (
-              <>
-                <Text size={16}>Build settings</Text>
-                <Spacer y={0.5} />
-                <Text color="helper">
-                  Select your Github repository.
-                </Text>
-                <Spacer height="20px" />
-                <Input
-                  placeholder="ex: academic-sophon"
-                  value=""
-                  width="300px"
-                  setValue={(e) => { }}
-                />
-                <Spacer y={0.5} />
-                <Text color="helper">
-                  Select your branch.
-                </Text>
-                <Spacer y={0.5} />
-                <Input
-                  placeholder="ex: academic-sophon"
-                  value=""
-                  width="300px"
-                  setValue={(e) => { }}
-                />
-                <Spacer y={0.5} />
-                <Text color="helper">
-                  Specify your application root path.
-                </Text>
-                <Spacer y={0.5} />
-                <Input
-                  placeholder="ex: academic-sophon"
-                  value="./"
-                  width="300px"
-                  setValue={(e) => { }}
-                />
-                <Spacer y={1} />
-                <AdvancedBuildSettings />
-              </>
-            ) :
-              formState.selectedSourceType === 'docker-registry' ? (
-                <>
-                  <Text size={16}>Registry settings</Text>
-                  <Spacer y={0.5} />
-                  <Text color="helper">
-                    Select your Github repository.
-                  </Text>
-                  <Spacer height="20px" />
-                  <Input
-                    placeholder="ex: academic-sophon"
-                    value=""
-                    width="300px"
-                    setValue={(e) => { }}
-                  />
-                  <Spacer y={0.5} />
-                  <Text color="helper">
-                    Select your branch.
-                  </Text>
-                </>
-              ) : undefined
-            }
+            <SourceSettings source={formState.selectedSourceType} />
           </>,
           <>
-            <Text size={16}>More configuration</Text>
+            <Text size={16}>Services</Text>
             <Spacer y={0.5} />
             <Text color="helper">
-              Configure settings for this add-on.
+              Add services to this application.
+            </Text>
+            <Spacer y={1} />
+            SOME MORE STUFF HERE
+          </>,
+          <>
+            <Text size={16}>Services</Text>
+            <Spacer y={0.5} />
+            <Text color="helper">
+              Add services to this application.
             </Text>
             <Spacer y={1} />
             SOME MORE STUFF HERE

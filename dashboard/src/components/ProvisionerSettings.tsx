@@ -120,10 +120,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   };
   const isDisabled = () => {
     return (
-      (!clusterName && true) ||
-      (isReadOnly && props.provisionerError === "") ||
-      props.provisionerError === "" ||
-      isClicked
+      !user.email.endsWith("porter.run") &&
+      ((!clusterName && true) ||
+        (isReadOnly && props.provisionerError === "") ||
+        props.provisionerError === "" ||
+        isClicked)
     );
   };
   const createCluster = async () => {

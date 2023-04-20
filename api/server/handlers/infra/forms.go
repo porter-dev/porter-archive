@@ -487,7 +487,7 @@ tabs:
       label: EKS control plane version
       variable: cluster_version
       settings:
-        default: "1.22"
+        default: "1.24"
         options:
         - label: "1.20"
           value: "1.20"
@@ -752,7 +752,7 @@ tabs:
       variable: additional_prometheus_node_group
       label: Add an additional prometheus node group to ensure monitoring stability.
       settings:
-        default: false
+        default: true
   - name: prometheus_machine_settings
     show_if: additional_prometheus_node_group
     contents:

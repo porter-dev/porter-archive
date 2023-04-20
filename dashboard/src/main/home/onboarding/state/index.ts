@@ -35,16 +35,19 @@ export const OFState = proxy({
     saveState: () => {
       const state = compressState(OFState);
 
-      api
-        .saveOnboardingState(
-          "<token>",
-          {
-            ...state,
-          },
-          { project_id: OFState.StateHandler?.project?.id }
-        )
-        .then((res) => console.log(res))
-        .catch((err) => console.log(err));
+      if (OFState.StateHandler?.project?.id) {
+        api
+          .saveOnboardingState(
+            "<token>",
+            {
+              ...state,
+            },
+            { project_id: OFState.StateHandler?.project?.id }
+          )
+          .then((res) => console.log(res))
+          .catch((err) => console.log(err));
+      }
+
     },
     restoreState: (state: any) => {
       const prevState = decompressState(state);

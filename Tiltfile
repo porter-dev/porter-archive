@@ -80,6 +80,15 @@ local_resource(
     trigger_mode=TRIGGER_MODE_MANUAL,
 )
 
+# Config
+local_resource(
+    name="reload-config",
+    cmd='''kubectl rollout restart deploy/porter-server-web''',
+    resource_deps=["zarf/helm"],
+    labels=["porter"],
+    trigger_mode=TRIGGER_MODE_MANUAL,
+)
+
 
 allow_k8s_contexts('kind-porter')
 

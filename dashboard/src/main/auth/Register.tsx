@@ -96,7 +96,12 @@ const Register: React.FC<Props> = ({
             authenticate();
           }
         })
-        .catch((err) => setCurrentError(err.response.data.error));
+        .catch((err) => {
+          console.log("registration:", err);
+          if (err.response?.data?.error) {
+            setCurrentError(err.response.data.error)
+          }
+        });
     }
   };
 

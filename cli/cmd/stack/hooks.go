@@ -66,7 +66,7 @@ func (t *DeployStackHook) DataQueries() map[string]interface{} {
 }
 
 // deploy the stack
-func (t *DeployStackHook) PostApply(map[string]interface{}) error {
+func (t *DeployStackHook) PostApply(driverOutput map[string]interface{}) error {
 	// fmt.Println("here are the resources:")
 	// for _, res := range t.AppResourceGroup.Resources {
 	// 	fmt.Printf("resource: %s\n", res.Name)
@@ -78,6 +78,8 @@ func (t *DeployStackHook) PostApply(map[string]interface{}) error {
 	// 	fmt.Println()
 	// }
 	// return nil
+
+	fmt.Printf("here is the driverOutput: %+v", driverOutput)
 
 	client := config.GetAPIClient()
 

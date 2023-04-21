@@ -41,6 +41,8 @@ func (a *App) populateDefaults(env *map[*string]*string) error {
 }
 
 func (a *App) getV1Resource(name string, b *Build, env *map[*string]*string) (*types.Resource, error) {
+	a.populateDefaults(env)
+
 	config := &preview.ApplicationConfig{}
 
 	config.Build.Method = "registry"

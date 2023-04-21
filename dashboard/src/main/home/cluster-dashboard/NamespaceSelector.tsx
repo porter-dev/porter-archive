@@ -79,6 +79,11 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
             setDefaultNamespace("default");
           }
           availableNamespaces.forEach((x: { name: string }, i: number) => {
+            // skip any preview environment
+            if (namespace.startsWith("pr-")) {
+              return;
+            }
+
             namespaceOptions.push({
               label: x.name,
               value: x.name,

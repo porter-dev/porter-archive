@@ -152,13 +152,15 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			return fmt.Errorf("error parsing porter.yaml: %w", err)
 		}
 	} else if previewVersion.Version == "v1stack" {
-		resGroup, err = stack.CreateV1BuildResources(client, fileBytes)
+		stackName := os.Getenv("PORTER_STACK_NAME")
+		if stackName == "" {
+			return fmt.Errorf("environment variable PORTER_STACK_NAME must be set")
+		}
 
+		resGroup, err = stack.CreateV1BuildResources(client, fileBytes)
 		if err != nil {
 			return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 		}
-
-		stackName := os.Getenv("PORTER_STACK_NAME")
 
 		appResGroup, err := stack.CreateV1ApplicationResources(client, fileBytes)
 		if err != nil {

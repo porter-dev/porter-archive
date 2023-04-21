@@ -74,7 +74,7 @@ func (b *Build) GetImage() string {
 	return *b.Image
 }
 
-func (b *Build) getV1BuildImage(env map[*string]*string) (*types.Resource, error) {
+func (b *Build) getV1BuildImage(env map[string]string) (*types.Resource, error) {
 	config := &preview.BuildDriverConfig{}
 
 	if b.GetMethod() == "pack" {
@@ -92,7 +92,7 @@ func (b *Build) getV1BuildImage(env map[*string]*string) (*types.Resource, error
 	}
 
 	config.Build.Context = b.GetContext()
-	config.Build.Env = GetEnv(env)
+	config.Build.Env = CopyEnv(env)
 
 	rawConfig := make(map[string]any)
 

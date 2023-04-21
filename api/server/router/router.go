@@ -28,7 +28,8 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	oauthCallbackRegisterer := NewOAuthCallbackRegisterer()
 
 	releaseRegisterer := NewReleaseScopedRegisterer()
-	namespaceRegisterer := NewNamespaceScopedRegisterer(releaseRegisterer)
+	stackRegisterer := NewStackScopedRegisterer()
+	namespaceRegisterer := NewNamespaceScopedRegisterer(releaseRegisterer, stackRegisterer)
 	clusterIntegrationRegisterer := NewClusterIntegrationScopedRegisterer()
 	clusterRegisterer := NewClusterScopedRegisterer(namespaceRegisterer, clusterIntegrationRegisterer)
 	infraRegisterer := NewInfraScopedRegisterer()

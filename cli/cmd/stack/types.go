@@ -1,11 +1,11 @@
 package stack
 
 type PorterStackYAML struct {
-	Version *string              `yaml:"version"`
-	Build   *Build               `yaml:"build"`
-	Env     *map[*string]*string `yaml:"env"`
-	Apps    *map[*string]*App    `yaml:"apps"`
-	Release *string              `yaml:"release"`
+	Version *string           `yaml:"version"`
+	Build   *Build            `yaml:"build"`
+	Env     map[string]string `yaml:"env"`
+	Apps    map[string]*App   `yaml:"apps"`
+	Release *string           `yaml:"release"`
 }
 
 type Build struct {

@@ -31,7 +31,7 @@ func CreateV1BuildResources(client *api.Client, raw []byte) (*types.ResourceGrou
 		},
 	}
 	if stackConf.parsed.Build != nil {
-		bi, err := stackConf.parsed.Build.getV1BuildImage(*stackConf.parsed.Env)
+		bi, err := stackConf.parsed.Build.getV1BuildImage(stackConf.parsed.Env)
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +56,7 @@ func createStackConf(client *api.Client, raw []byte) (*StackConf, error) {
 		return nil, fmt.Errorf("%s: %w", errMsg, err)
 	}
 
-	err = validateCLIEnvironment()
+	err = config.ValidateCLIEnvironment()
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
 		return nil, fmt.Errorf("%s: %w", errMsg, err)
@@ -77,12 +77,12 @@ func CreateV1ApplicationResources(client *api.Client, raw []byte) (*types.Resour
 
 	v1File := &types.ResourceGroup{}
 
-	for name, app := range *stackConf.parsed.Apps {
+	for name, app := range stackConf.parsed.Apps {
 		if app == nil {
 			continue
 		}
 
-		ai, err := app.getV1Resource(*name, stackConf.parsed.Build, stackConf.parsed.Env)
+		ai, err := app.getV1Resource(name, stackConf.parsed.Build, stackConf.parsed.Env)
 		if err != nil {
 			return nil, err
 		}
@@ -91,20 +91,4 @@ func CreateV1ApplicationResources(client *api.Client, raw []byte) (*types.Resour
 	}
 
 	return v1File, nil
-}
-
-func validateCLIEnvironment() error {
-	if config.GetCLIConfig().Token == "" {
-		return fmt.Errorf("no auth token present, please run 'porter auth login' to authenticate")
-	}
-
-	if config.GetCLIConfig().Project == 0 {
-		return fmt.Errorf("no project selected, please run 'porter config set-project' to select a project")
-	}
-
-	if config.GetCLIConfig().Cluster == 0 {
-		return fmt.Errorf("no cluster selected, please run 'porter config set-cluster' to select a cluster")
-	}
-
-	return nil
 }

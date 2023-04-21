@@ -52,9 +52,6 @@ func (t *DeployStackHook) PreApply() error {
 		_, err := t.Client.CreateNewK8sNamespace(context.Background(), t.ProjectID, t.ClusterID, createNS)
 
 		if err != nil && !strings.Contains(err.Error(), "namespace already exists") {
-			// ignore the error if the namespace already exists
-			//
-			// this might happen if someone creates the namespace in between this operation
 			return fmt.Errorf("error creating namespace: %w", err)
 		}
 	}
@@ -71,17 +68,6 @@ func (t *DeployStackHook) DataQueries() map[string]interface{} {
 
 // deploy the stack
 func (t *DeployStackHook) PostApply(driverOutput map[string]interface{}) error {
-	// fmt.Println("here are the resources:")
-	// for _, res := range t.AppResourceGroup.Resources {
-	// 	fmt.Printf("resource: %s\n", res.Name)
-	// 	fmt.Printf("driver: %s\n", res.Driver)
-	// 	fmt.Printf("source: %v\n", res.Source)
-	// 	fmt.Printf("target: %v\n", res.Target)
-	// 	fmt.Printf("config: %v\n", res.Config)
-	// 	fmt.Printf("depends_on: %v\n", res.DependsOn)
-	// 	fmt.Println()
-	// }
-	// return nil
 	client := config.GetAPIClient()
 
 	_, err := client.GetRelease(
@@ -107,18 +93,6 @@ func (t *DeployStackHook) applyStack(applications *switchboardTypes.ResourceGrou
 	if applications == nil {
 		return fmt.Errorf("no applications found")
 	}
-
-	// fmt.Println("here are the resources before:")
-	// for _, res := range applications.Resources {
-	// 	fmt.Printf("resource: %s\n", res.Name)
-	// 	fmt.Printf("driver: %s\n", res.Driver)
-	// 	fmt.Printf("source: %v\n", res.Source)
-	// 	fmt.Printf("target: %v\n", res.Target)
-	// 	fmt.Printf("config: %v\n", res.Config)
-	// 	fmt.Printf("depends_on: %v\n", res.DependsOn)
-	// 	fmt.Println()
-	// }
-	// return nil
 
 	err := insertImageInfoIntoApps(applications, driverOutput)
 	if err != nil {
@@ -190,10 +164,6 @@ func insertImageInfoIntoApps(applications *switchboardTypes.ResourceGroup, drive
 }
 
 func (t *DeployStackHook) createStack(client *api.Client, stackConf StackConfig) error {
-	// fmt.Println("values and deps: ")
-	// fmt.Printf("values: %v\n", stackConf.Values)
-	// fmt.Printf("deps: %v\n", stackConf.Dependencies)
-
 	err := client.CreateStack(
 		context.Background(),
 		t.ProjectID,
@@ -213,10 +183,6 @@ func (t *DeployStackHook) createStack(client *api.Client, stackConf StackConfig)
 }
 
 func (t *DeployStackHook) updateStack(client *api.Client, stackConf StackConfig) error {
-	// fmt.Println("values and deps: ")
-	// fmt.Printf("values: %v\n", stackConf.Values)
-	// fmt.Printf("deps: %v\n", stackConf.Dependencies)
-
 	err := client.UpdateStack(
 		context.Background(),
 		t.ProjectID,

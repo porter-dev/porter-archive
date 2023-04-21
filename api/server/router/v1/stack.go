@@ -2,7 +2,6 @@ package v1
 
 import (
 	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/api/server/handlers/release"
 	"github.com/porter-dev/porter/api/server/handlers/stack"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -214,7 +213,7 @@ func getV1StackRoutes(
 		},
 	)
 
-	createHandler := release.NewCreateStackHandler(
+	createHandler := stack.NewStackCreateHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -223,35 +222,6 @@ func getV1StackRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: createEndpoint,
 		Handler:  createHandler,
-		Router:   r,
-	})
-
-	updateEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPatch,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath,
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-				types.NamespaceScope,
-			},
-		},
-	)
-
-	updateHandler := release.NewUpdateStackHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: updateEndpoint,
-		Handler:  updateHandler,
 		Router:   r,
 	})
 

@@ -97,7 +97,7 @@ const Register: React.FC<Props> = ({
           }
         })
         .catch((err) => {
-          console.log(err);
+          console.log("registration:", err);
           if (err.response?.data?.error) {
             setCurrentError(err.response.data.error)
           }

@@ -97,7 +97,7 @@ const Register: React.FC<Props> = ({
           }
         })
         .catch((err) => {
-          console.log(err);
+          console.log("registration:", err);
           if (err.response?.data?.error) {
             setCurrentError(err.response.data.error)
           }
@@ -199,7 +199,7 @@ const Register: React.FC<Props> = ({
           Create your Porter account
         </Heading>
         <Spacer y={1} />
-        {(hasGithub || hasGoogle) && (
+        {((hasGithub || hasGoogle) && !disabled) && (
           <>
             <Container row>
               {hasGithub && (
@@ -310,13 +310,17 @@ const Register: React.FC<Props> = ({
             </Button>
           </>
         )}
-        <Spacer y={1} />
-        <Text 
-          size={13}
-          color="helper"
-        >
-          Already have an account?<Spacer width="5px" inline /><Link to="/login">Log in</Link>
-        </Text>
+        {!disabled && (
+          <>
+            <Spacer y={1} />
+            <Text 
+              size={13}
+              color="helper"
+            >
+              Already have an account?<Spacer width="5px" inline /><Link to="/login">Log in</Link>
+            </Text>
+          </>
+        )}
       </Wrapper>
     </StyledRegister>
   );

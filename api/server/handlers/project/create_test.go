@@ -42,7 +42,7 @@ func TestCreateProjectSuccessful(t *testing.T) {
 				ProjectID: 1,
 			},
 		},
-		CapiProvisionerEnabled: true,
+		CapiProvisionerEnabled: false,
 	}
 
 	gotProject := &types.CreateProjectResponse{}

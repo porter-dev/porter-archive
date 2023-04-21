@@ -30,7 +30,6 @@ func CreateV1BuildResources(client *api.Client, raw []byte) (*types.ResourceGrou
 			},
 		},
 	}
-
 	if stackConf.parsed.Build != nil {
 		bi, err := stackConf.parsed.Build.getV1BuildImage(*stackConf.parsed.Env)
 		if err != nil {

@@ -17,6 +17,7 @@ type DeployStackHook struct {
 	StackName            string
 	ProjectID, ClusterID uint
 	AppResourceGroup     *switchboardTypes.ResourceGroup
+	BuildImageDriverName string
 }
 
 type StackConfig struct {
@@ -62,7 +63,10 @@ func (t *DeployStackHook) PreApply() error {
 }
 
 func (t *DeployStackHook) DataQueries() map[string]interface{} {
-	return nil
+	res := map[string]interface{}{
+		"image": fmt.Sprintf("{$.%s.image}", t.BuildImageDriverName),
+	}
+	return res
 }
 
 // deploy the stack
@@ -78,9 +82,6 @@ func (t *DeployStackHook) PostApply(driverOutput map[string]interface{}) error {
 	// 	fmt.Println()
 	// }
 	// return nil
-
-	fmt.Printf("here is the driverOutput: %+v", driverOutput)
-
 	client := config.GetAPIClient()
 
 	_, err := client.GetRelease(
@@ -99,12 +100,29 @@ func (t *DeployStackHook) PostApply(driverOutput map[string]interface{}) error {
 		color.New(color.FgGreen).Printf("Found release for stack %s: attempting update\n", t.StackName)
 	}
 
-	return t.applyStack(t.AppResourceGroup, client, shouldCreate)
+	return t.applyStack(t.AppResourceGroup, client, shouldCreate, driverOutput)
 }
 
-func (t *DeployStackHook) applyStack(applications *switchboardTypes.ResourceGroup, client *api.Client, shouldCreate bool) error {
+func (t *DeployStackHook) applyStack(applications *switchboardTypes.ResourceGroup, client *api.Client, shouldCreate bool, driverOutput map[string]interface{}) error {
 	if applications == nil {
 		return fmt.Errorf("no applications found")
+	}
+
+	// fmt.Println("here are the resources before:")
+	// for _, res := range applications.Resources {
+	// 	fmt.Printf("resource: %s\n", res.Name)
+	// 	fmt.Printf("driver: %s\n", res.Driver)
+	// 	fmt.Printf("source: %v\n", res.Source)
+	// 	fmt.Printf("target: %v\n", res.Target)
+	// 	fmt.Printf("config: %v\n", res.Config)
+	// 	fmt.Printf("depends_on: %v\n", res.DependsOn)
+	// 	fmt.Println()
+	// }
+	// return nil
+
+	err := insertImageInfoIntoApps(applications, driverOutput)
+	if err != nil {
+		return fmt.Errorf("unable to insert image info into apps: %w", err)
 	}
 
 	values, err := buildStackValues(applications)
@@ -132,6 +150,40 @@ func (t *DeployStackHook) applyStack(applications *switchboardTypes.ResourceGrou
 		if err != nil {
 			return fmt.Errorf("error updating stack %s: %w", t.StackName, err)
 		}
+	}
+
+	return nil
+}
+
+func insertImageInfoIntoApps(applications *switchboardTypes.ResourceGroup, driverOutput map[string]interface{}) error {
+	image, ok := driverOutput["image"].(string)
+	if !ok || image == "" {
+		return fmt.Errorf("unable to find image in driver output")
+	}
+
+	// split image into image-path:tag format
+	imageSpl := strings.Split(image, ":")
+
+	if len(imageSpl) != 2 {
+		return fmt.Errorf("invalid image format: must be image-path:tag format")
+	}
+
+	for _, resource := range applications.Resources {
+		if resource.Config == nil {
+			resource.Config = make(map[string]interface{})
+		}
+		values, ok := resource.Config["Values"].(map[string]interface{})
+		if !ok {
+			values = make(map[string]interface{})
+			resource.Config["Values"] = values
+		}
+		image, ok := values["image"].(map[string]interface{})
+		if !ok {
+			image = make(map[string]interface{})
+			values["image"] = image
+		}
+		image["repository"] = imageSpl[0]
+		image["tag"] = imageSpl[1]
 	}
 
 	return nil

@@ -13,7 +13,7 @@ func (b *Build) GetName() string {
 		return ""
 	}
 
-	return "base-image"
+	return getBuildImageName()
 }
 
 func (b *Build) GetContext() string {
@@ -117,10 +117,18 @@ func (b *Build) getV1BuildImage(env map[*string]*string) (*types.Resource, error
 	}, nil
 }
 
+func getBuildImageName() string {
+	return "base-image"
+}
+
+func GetBuildImageDriverName() string {
+	return fmt.Sprintf("%s-build-image", getBuildImageName())
+}
+
 func (b *Build) getV1PushImage() (*types.Resource, error) {
 	config := &preview.PushDriverConfig{}
 
-	config.Push.Image = fmt.Sprintf("{ .%s-build-image.image }", b.GetName())
+	config.Push.Image = fmt.Sprintf("{ .%s.image }", GetBuildImageDriverName())
 
 	rawConfig := make(map[string]any)
 
@@ -134,7 +142,7 @@ func (b *Build) getV1PushImage() (*types.Resource, error) {
 		Driver: "push-image",
 		DependsOn: []string{
 			"get-env",
-			fmt.Sprintf("%s-build-image", b.GetName()),
+			GetBuildImageDriverName(),
 		},
 		Target: map[string]any{
 			"app_name": b.GetName(),

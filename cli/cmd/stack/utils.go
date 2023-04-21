@@ -50,22 +50,10 @@ func buildStackDependencies(apps *switchboardTypes.ResourceGroup, client *api.Cl
 		if !ok {
 			return nil, fmt.Errorf("unable to parse source name for app %s", app.Name)
 		}
-
 		selectedRepo := "https://charts.getporter.dev"
-		if repo, ok := app.Source["repo"]; ok {
-			if repoName, ok := repo.(string); ok {
-				selectedRepo = repoName
-			}
-		}
-
 		selectedVersion, err := getLatestTemplateVersion(chartName, client, projectID)
 		if err != nil {
 			return nil, err
-		}
-		if version, ok := app.Source["version"]; ok {
-			if versionName, ok := version.(string); ok {
-				selectedVersion = versionName
-			}
 		}
 		deps = append(deps, types.Dependency{
 			Name:       chartName,

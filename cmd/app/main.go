@@ -38,13 +38,16 @@ func main() {
 		log.Fatal("Config loading failed: ", err)
 	}
 
+	config.Logger.Info().Msg("Initializing data")
 	err = initData(config)
-
 	if err != nil {
 		log.Fatal("Data initialization failed: ", err)
 	}
+	config.Logger.Info().Msg("Initialed data")
 
+	config.Logger.Info().Msg("Creating API router")
 	appRouter := router.NewAPIRouter(config)
+	config.Logger.Info().Msg("Created API router")
 
 	address := fmt.Sprintf(":%d", config.ServerConf.Port)
 

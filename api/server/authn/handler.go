@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -81,19 +80,6 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	supportEmail := "support@porter.run"
-	cancelTime := time.Date(2023, 0o1, 31, 14, 30, 0, 0, time.Now().Local().Location())
-	if email, ok := session.Values["email"]; ok {
-		if email.(string) == supportEmail {
-			sess, _ := authn.config.Repo.Session().SelectSession(&models.Session{Key: session.ID})
-			if sess.CreatedAt.Before(cancelTime) {
-				_, _ = authn.config.Repo.Session().DeleteSession(sess)
-				authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
-				return
-			}
-		}
-	}
-
 	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
 		authn.handleForbiddenForSession(w, r, fmt.Errorf("stored cookie was not authenticated"), session)
 		return
@@ -126,12 +112,33 @@ func (authn *AuthN) handleForbiddenForSession(
 
 		session.Save(r, w)
 
-		http.Redirect(w, r, "/dashboard", 302)
+		// special logic for GET /api/projects/{project_id}/invites/{token}
+		if r.Method == "GET" && strings.Contains(r.URL.Path, "/invites/") &&
+			!strings.HasSuffix(r.URL.Path, "/invites/") {
+			pathSegments := strings.Split(r.URL.Path, "/")
+			inviteToken := pathSegments[len(pathSegments)-1]
+
+			invite, err := authn.config.Repo.Invite().ReadInviteByToken(inviteToken)
+			if err != nil || invite.ProjectID == 0 || invite.Email == "" {
+				apierrors.HandleAPIError(authn.config.Logger, authn.config.Alerter, w, r,
+					apierrors.NewErrPassThroughToClient(fmt.Errorf("invalid invite token"), http.StatusBadRequest), true)
+				return
+			}
+
+			if invite.IsExpired() || invite.IsAccepted() {
+				apierrors.HandleAPIError(authn.config.Logger, authn.config.Alerter, w, r,
+					apierrors.NewErrPassThroughToClient(fmt.Errorf("invite has expired"), http.StatusBadRequest), true)
+				return
+			}
+
+			http.Redirect(w, r, "/register?email="+invite.Email, http.StatusTemporaryRedirect)
+			return
+		}
+
+		http.Redirect(w, r, "/dashboard", http.StatusFound)
 	} else {
 		authn.sendForbiddenError(err, w, r)
 	}
-
-	return
 }
 
 func (authn *AuthN) verifyTokenWithNext(w http.ResponseWriter, r *http.Request, tok *token.Token) {

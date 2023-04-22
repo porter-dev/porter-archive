@@ -478,39 +478,7 @@ const EnvGroupVariablesEditor = ({
   handleUpdateValues: () => void;
 }) => {
   const [isAuthorized] = useAuth();
-  const [localVariables, setLocalVariables] = useState(variables);
 
-  const handleVisibilityChange = () => {
-    if (document.hidden) {
-      localStorage.setItem("envGroupVariables", JSON.stringify(localVariables));
-    } else {
-      const savedVariables = localStorage.getItem("envGroupVariables");
-      if (savedVariables) {
-        setLocalVariables(JSON.parse(savedVariables));
-        localStorage.removeItem("envGroupVariables");
-      }
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [localVariables]);
-
-  useEffect(() => {
-    return () => {
-      // Reset to the original state when the component is unmounted
-      localStorage.removeItem("envGroupVariables");
-    };
-  }, []);
-
-  const handleUpdate = () => {
-    handleUpdateValues();
-    localStorage.removeItem("envGroupVariables");
-  };
   return (
     <TabWrapper>
       <InnerWrapper>
@@ -520,9 +488,8 @@ const EnvGroupVariablesEditor = ({
           configuration.
         </Helper>
         <EnvGroupArray
-          values={localVariables}
-          setValues={(x) => {
-            setLocalVariables(x);
+          values={variables}
+          setValues={(x: any) => {
             onChange(x);
           }}
           fileUpload={true}
@@ -540,7 +507,7 @@ const EnvGroupVariablesEditor = ({
       {isAuthorized("env_group", "", ["get", "update"]) && (
         <SaveButton
           text="Update"
-          onClick={handleUpdate}
+          onClick={() => handleUpdateValues()}
           status={buttonStatus}
           makeFlush={true}
           clearPosition={true}
@@ -913,7 +880,7 @@ const InnerWrapper = styled.div<{ full?: boolean }>`
   overflow: auto;
   margin-bottom: 30px;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
 `;
 

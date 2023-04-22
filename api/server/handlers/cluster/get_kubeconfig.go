@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -57,13 +58,17 @@ func (c *GetTemporaryKubeconfigHandler) ServeHTTP(w http.ResponseWriter, r *http
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting temporary capi config: %w", err)))
 			return
 		}
-
 		if kubeconfigResp.Msg == nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error reading temporary capi config: %w", err)))
 			return
 		}
+		b64, err := base64.StdEncoding.DecodeString(kubeconfigResp.Msg.KubeConfig)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to decode base64 kubeconfig: %w", err)))
+			return
+		}
 		res := &types.GetTemporaryKubeconfigResponse{
-			Kubeconfig: []byte(kubeconfigResp.Msg.KubeConfig),
+			Kubeconfig: b64,
 		}
 		c.WriteResult(w, r, res)
 		return

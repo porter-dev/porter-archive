@@ -112,12 +112,33 @@ func (authn *AuthN) handleForbiddenForSession(
 
 		session.Save(r, w)
 
-		http.Redirect(w, r, "/dashboard", 302)
+		// special logic for GET /api/projects/{project_id}/invites/{token}
+		if r.Method == "GET" && strings.Contains(r.URL.Path, "/invites/") &&
+			!strings.HasSuffix(r.URL.Path, "/invites/") {
+			pathSegments := strings.Split(r.URL.Path, "/")
+			inviteToken := pathSegments[len(pathSegments)-1]
+
+			invite, err := authn.config.Repo.Invite().ReadInviteByToken(inviteToken)
+			if err != nil || invite.ProjectID == 0 || invite.Email == "" {
+				apierrors.HandleAPIError(authn.config.Logger, authn.config.Alerter, w, r,
+					apierrors.NewErrPassThroughToClient(fmt.Errorf("invalid invite token"), http.StatusBadRequest), true)
+				return
+			}
+
+			if invite.IsExpired() || invite.IsAccepted() {
+				apierrors.HandleAPIError(authn.config.Logger, authn.config.Alerter, w, r,
+					apierrors.NewErrPassThroughToClient(fmt.Errorf("invite has expired"), http.StatusBadRequest), true)
+				return
+			}
+
+			http.Redirect(w, r, "/register?email="+invite.Email, http.StatusTemporaryRedirect)
+			return
+		}
+
+		http.Redirect(w, r, "/dashboard", http.StatusFound)
 	} else {
 		authn.sendForbiddenError(err, w, r)
 	}
-
-	return
 }
 
 func (authn *AuthN) verifyTokenWithNext(w http.ResponseWriter, r *http.Request, tok *token.Token) {

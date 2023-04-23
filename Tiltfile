@@ -60,6 +60,15 @@ local_resource(
   resource_deps=["postgresql"],
   labels=["z_binaries"]
 )
+local_resource(
+  name='reload-config',
+  cmd='kubectl rollout restart deployment porter-server-web',
+  deps=[
+    "zarf/helm/.server.env"
+  ],
+  labels=["porter"],
+  resource_deps=["porter-binary"]
+)
 
 docker_build_with_restart(
     ref="porter1/porter-server",
@@ -109,4 +118,3 @@ local_resource(
     labels=["porter"],
     trigger_mode=TRIGGER_MODE_MANUAL,
 )
-

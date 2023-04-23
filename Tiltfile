@@ -61,7 +61,7 @@ local_resource(
   labels=["z_binaries"]
 )
 local_resource(
-  name='reload-config',
+  name='reload-server-config',
   cmd='kubectl rollout restart deployment porter-server-web',
   deps=[
     "zarf/helm/.server.env"

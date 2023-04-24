@@ -25,6 +25,7 @@ import SourceSelector, { SourceType } from "./SourceSelector";
 import SourceSettings from "./SourceSettings"
 import Services from "./Services";
 import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import Select from "components/porter/Select";
 
 type Props = RouteComponentProps & {
 };
@@ -65,6 +66,7 @@ const NewAppFlow: React.FC<Props> = ({
 
   return (
     <CenterWrapper>
+      <Div>
       <StyledConfigureTemplate>
         <Back to="/apps" />
         <DashboardHeader
@@ -171,11 +173,17 @@ const NewAppFlow: React.FC<Props> = ({
           DEPLYOY
         </Button>
       </StyledConfigureTemplate>
+      </Div>
     </CenterWrapper>
   );
 };
 
 export default withRouter(NewAppFlow);
+
+const Div = styled.div`
+  width: 100%;
+  max-width: 900px;
+`;
 
 const CenterWrapper = styled.div`
   width: 100%;

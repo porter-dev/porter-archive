@@ -32,6 +32,7 @@ const Select: React.FC<Props> = ({
         )
       }
       <SelectWrapper>
+        <i className="material-icons">arrow_drop_down</i>
         <StyledSelect
           onChange={e => {
             setValue(e.target.value);
@@ -46,7 +47,6 @@ const Select: React.FC<Props> = ({
             return <option value={option.value} key={i}>{option.label}</option>;
           })}
         </StyledSelect>
-        <i className="material-icons">arrow_drop_down</i>
       </SelectWrapper>
       {
         error && (
@@ -92,11 +92,14 @@ const Error = styled.div`
 
 const SelectWrapper = styled.div`
   position: relative;
+  background: #26292e;
+  z-index: 0;
   > i {
     font-size: 18px;
     position: absolute;
     right: 7px;
     top: calc(50% - 9px);
+    z-index: -1;
   }
 `;
 
@@ -112,15 +115,9 @@ const StyledSelect = styled.select<{
   font-size: 13px;
   outline: none;
   border-radius: 5px;
-  background: #26292e;
+  background: none;
   appearance: none;
-  > i {
-    font-size: 18px;
-    position: absolute;
-    right: 10px;
-    top: 10px;
-  }
-
+  z-index: 1;
   border: 1px solid ${props => props.hasError ? "#ff3b62" : "#494b4f"};
   :hover {
     border: 1px solid ${props => props.hasError ? "#ff3b62" : "#7a7b80"};

@@ -91,6 +91,4 @@ const StepWrapper = styled.div<{
 
 const StyledVerticalSteps = styled.div<{
 }>`
-  min-width: 600px;
-  max-width: 800px;
 `;

@@ -172,61 +172,68 @@ const ConfigureTemplate: React.FC<Props> = ({
 
   return (
     <CenterWrapper>
-      <StyledConfigureTemplate>
-        <Back onClick={goBack} />
-        <DashboardHeader
-          prefix={
-            <Icon 
-              src={hardcodedIcons[currentTemplate.name] || currentTemplate.icon}
-            />
-          }
-          title={`Configure new ${hardcodedNames[currentTemplate.name] || currentTemplate.name} instance`}
-          capitalize={false}
-          disableLineBreak
-        />
-        <DarkMatter />
-        <VerticalSteps
-          currentStep={currentStep}
-          steps={[
-            <>
-              <Text size={16}>Add-on name</Text>
-              <Spacer y={0.5} />
-              <Text color="helper">
-                Randomly generated if left blank (lowercase letters, numbers, and "-" only).
-              </Text>
-              <Spacer height="20px" />
-              <Input
-                placeholder="ex: academic-sophon"
-                value={name}
-                width="300px"
-                setValue={(e) => {
-                  if (e) {
-                    setCurrentStep(1);
-                  } else {
-                    setCurrentStep(0);
-                  }
-                  setName(e);
-                }}
+      <Div>
+        <StyledConfigureTemplate>
+          <Back onClick={goBack} />
+          <DashboardHeader
+            prefix={
+              <Icon 
+                src={hardcodedIcons[currentTemplate.name] || currentTemplate.icon}
               />
-            </>,
-            <>
-              <Text size={16}>Add-on settings</Text>
-              <Spacer y={0.5} />
-              <Text color="helper">
-              Configure settings for this add-on.
-              </Text>
-              <Spacer height="20px" />
-              {renderAddOnSettings()}
-            </>
-          ]}
-        />
-        <Spacer height="80px" />
-      </StyledConfigureTemplate>
+            }
+            title={`Configure new ${hardcodedNames[currentTemplate.name] || currentTemplate.name} instance`}
+            capitalize={false}
+            disableLineBreak
+          />
+          <DarkMatter />
+          <VerticalSteps
+            currentStep={currentStep}
+            steps={[
+              <>
+                <Text size={16}>Add-on name</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  Randomly generated if left blank (lowercase letters, numbers, and "-" only).
+                </Text>
+                <Spacer height="20px" />
+                <Input
+                  placeholder="ex: academic-sophon"
+                  value={name}
+                  width="300px"
+                  setValue={(e) => {
+                    if (e) {
+                      setCurrentStep(1);
+                    } else {
+                      setCurrentStep(0);
+                    }
+                    setName(e);
+                  }}
+                />
+              </>,
+              <>
+                <Text size={16}>Add-on settings</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                Configure settings for this add-on.
+                </Text>
+                <Spacer height="20px" />
+                {renderAddOnSettings()}
+              </>
+            ]}
+          />
+          <Spacer height="80px" />
+        </StyledConfigureTemplate>
+      </Div>
     </CenterWrapper>
   );
 };
 
 export default withRouter(ConfigureTemplate);
+
+const Div = styled.div`
+  width: 100%;
+  max-width: 900px;
+`;
 
 const CenterWrapper = styled.div`
   width: 100%;

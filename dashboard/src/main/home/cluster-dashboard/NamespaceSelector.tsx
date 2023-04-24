@@ -51,7 +51,7 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
       .then((res) => {
         if (_isMounted) {
           let namespaceOptions: { label: string; value: string }[] = [
-            { label: "All", value: "ALL" },
+            // { label: "All", value: "ALL" },
           ];
 
           // Set namespace from URL if specified
@@ -79,10 +79,12 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
             setDefaultNamespace("default");
           }
           availableNamespaces.forEach((x: { name: string }, i: number) => {
-            namespaceOptions.push({
-              label: x.name,
-              value: x.name,
-            });
+            if (!x.name.startsWith("pr-")) {
+              namespaceOptions.push({
+                label: x.name,
+                value: x.name,
+              });
+            }
             if (x.name === urlNamespace) {
               setDefaultNamespace(urlNamespace);
             }
@@ -92,7 +94,7 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
       })
       .catch((err) => {
         if (_isMounted) {
-          setNamespaceOptions([{ label: "All", value: "ALL" }]);
+          setNamespaceOptions([]);
         }
       });
   };
@@ -105,7 +107,7 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
       defaultNamespace === "" ||
       urlNamespace === "ALL"
     ) {
-      setNamespace("ALL");
+      setNamespace("default");
     } else if (namespace !== defaultNamespace) {
       setNamespace(defaultNamespace);
     }

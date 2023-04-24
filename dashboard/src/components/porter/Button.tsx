@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 
-import loading from "../../assets/loading.gif";
+import loading from "assets/loading.gif";
 
 type Props = {
   children: React.ReactNode;

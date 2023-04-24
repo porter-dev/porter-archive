@@ -11,11 +11,18 @@ const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
 const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = () => {
-  let env = dotenv.config().parsed;
+  let envPath = ".env";
+  if (process.env.ENV_FILE !== "") {
+    envPath = process.env.ENV_FILE;
+  }
+  console.log(`using envfile from path ${envPath}`);
 
+  let env = dotenv.config({ path: envPath }).parsed;
+  console.log(env);
   if (!env) {
     env = process.env;
   }
+
   const envKeys = Object.keys(env).reduce((prev, next) => {
     const varName = `process.env.${next}`;
     if (typeof env[next] !== "string") return prev;

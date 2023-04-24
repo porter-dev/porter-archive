@@ -206,8 +206,6 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		if err != nil {
 			return nil, fmt.Errorf("could not read github app secret: %s", err)
 		}
-
-		sc.GithubAppSecret = append(sc.GithubAppSecret, secret...)
 	}
 
 	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {

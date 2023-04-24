@@ -34,27 +34,28 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, "")
+	request := &types.CreateStackReleaseRequest{}
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding request")))
+		return
+	}
+	stackName := request.StackName
+	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+
+	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
 		return
 	}
 
-	k8sAgent, err := c.GetAgent(r, cluster, "")
+	k8sAgent, err := c.GetAgent(r, cluster, namespace)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting k8s agent: %w", err)))
 		return
 	}
 
-	request := &types.CreateStackReleaseRequest{}
-	if ok := c.DecodeAndValidate(w, r, request); !ok {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding request: %w", err)))
-		return
-	}
-	stackName := request.StackName
-
 	// create the namespace if it does not exist already
-	_, err = k8sAgent.CreateNamespace(stackName, nil)
+	_, err = k8sAgent.CreateNamespace(namespace, nil)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating namespace: %w", err)))
 		return
@@ -75,7 +76,7 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conf := &helm.InstallChartConfig{
 		Chart:      chart,
 		Name:       stackName,
-		Namespace:  stackName,
+		Namespace:  namespace,
 		Values:     request.Values,
 		Cluster:    cluster,
 		Repo:       c.Repo(),

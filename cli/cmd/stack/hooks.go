@@ -39,12 +39,13 @@ func (t *DeployStackHook) DataQueries() map[string]interface{} {
 // deploy the stack
 func (t *DeployStackHook) PostApply(driverOutput map[string]interface{}) error {
 	client := config.GetAPIClient()
+	namespace := fmt.Sprintf("porter-stack-%s", t.StackName)
 
 	_, err := client.GetRelease(
 		context.Background(),
 		t.ProjectID,
 		t.ClusterID,
-		t.StackName,
+		namespace,
 		t.StackName,
 	)
 

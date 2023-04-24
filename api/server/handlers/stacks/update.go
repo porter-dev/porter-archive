@@ -35,19 +35,19 @@ func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, "")
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
-		return
-	}
-
 	request := &types.CreateStackReleaseRequest{}
-
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding request")))
 		return
 	}
 
 	stackName := request.StackName
+	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
+		return
+	}
 
 	chart, err := createChartFromDependencies(request.Dependencies)
 	if err != nil {
@@ -64,7 +64,7 @@ func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conf := &helm.InstallChartConfig{
 		Chart:      chart,
 		Name:       stackName,
-		Namespace:  stackName,
+		Namespace:  namespace,
 		Values:     request.Values,
 		Cluster:    cluster,
 		Repo:       c.Repo(),
@@ -74,7 +74,7 @@ func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, err = helmAgent.UpgradeInstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error installing a new chart: %s", err.Error()),
+			fmt.Errorf("error updating a chart: %s", err.Error()),
 			http.StatusBadRequest,
 		))
 

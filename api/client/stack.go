@@ -11,13 +11,13 @@ import (
 func (c *Client) CreateStack(
 	ctx context.Context,
 	projectID, clusterID uint,
-	namespace string,
+	stackName string,
 	req *types.CreateStackReleaseRequest,
 ) error {
 	return c.postRequest(
 		fmt.Sprintf(
-			"/projects/%d/clusters/%d/namespaces/%s/stacks",
-			projectID, clusterID, namespace,
+			"/projects/%d/clusters/%d/stacks/%s/deployments",
+			projectID, clusterID, stackName,
 		),
 		req,
 		nil,
@@ -28,13 +28,13 @@ func (c *Client) CreateStack(
 func (c *Client) UpdateStack(
 	ctx context.Context,
 	projectID, clusterID uint,
-	namespace string,
+	stackName string,
 	req *types.CreateStackReleaseRequest,
 ) error {
 	return c.patchRequest(
 		fmt.Sprintf(
-			"/projects/%d/clusters/%d/namespaces/%s/stacks",
-			projectID, clusterID, namespace,
+			"/projects/%d/clusters/%d/stacks/%s",
+			projectID, clusterID, stackName,
 		),
 		req,
 		nil,

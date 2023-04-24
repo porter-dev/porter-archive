@@ -44,7 +44,7 @@ func getStackRoutes(
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) ([]*router.Route, *types.Path) {
-	relPath := "/stacks"
+	relPath := "/stacks/{stack}"
 
 	newPath := &types.Path{
 		Parent:       basePath,
@@ -59,13 +59,12 @@ func getStackRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath,
+				RelativePath: relPath + "/deployments",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
 				types.ClusterScope,
-				types.NamespaceScope,
 			},
 		},
 	)
@@ -94,7 +93,6 @@ func getStackRoutes(
 				types.UserScope,
 				types.ProjectScope,
 				types.ClusterScope,
-				types.NamespaceScope,
 			},
 		},
 	)

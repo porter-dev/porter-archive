@@ -223,15 +223,13 @@ type CreateStackReleaseRequest struct {
 	// The Helm values for this release
 	Values map[string]interface{} `json:"values"`
 	// Used to construct the Chart.yaml
-	Dependencies []Dependency `json:"dependencies"`
-	ProjectID    uint         `json:"project_id"`
-	ClusterID    uint         `json:"cluster_id"`
-	StackName    string       `json:"stack_name"`
+	Dependencies []Dependency `json:"dependencies form:"required"`
+	StackName    string       `json:"stack_name" form:"required,dns1123"`
 }
 
 type Dependency struct {
-	Name       string `json:"name"`
-	Alias      string `json:"alias"`
-	Version    string `json:"version"`
-	Repository string `json:"repository"`
+	Name       string `json:"name" form:"required"`
+	Alias      string `json:"alias" form:"required"`
+	Version    string `json:"version" form:"required"`
+	Repository string `json:"repository" form:"required"`
 }

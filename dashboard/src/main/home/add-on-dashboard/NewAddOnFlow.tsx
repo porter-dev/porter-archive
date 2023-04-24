@@ -5,6 +5,7 @@ import semver from "semver";
 import _ from "lodash";
 
 import addOn from "assets/add-ons.png";
+import notFound from "assets/not-found.png";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -17,6 +18,9 @@ import Loading from "components/Loading";
 import ExpandedTemplate from "./ExpandedTemplate";
 import ConfigureTemplate from "./ConfigureTemplate";
 import Back from "components/porter/Back";
+import Fieldset from "components/porter/Fieldset";
+import Text from "components/porter/Text";
+import Container from "components/porter/Container";
 
 type Props = {
 };
@@ -118,7 +122,14 @@ const NewAddOnFlow: React.FC<Props> = ({
                   />
                   <Spacer y={1} />
 
-                  {/* Temporary space reducer for legacy template list */}
+                  {filteredTemplates.length === 0 && (
+                    <Fieldset>
+                      <Container row>
+                        <PlaceholderIcon src={notFound} />
+                        <Text color="helper">No matching add-ons were found.</Text>
+                      </Container>
+                    </Fieldset>
+                  )}
                   {isLoading ? <Loading offset="-150px" /> : (
                     <>
                       <DarkMatter />
@@ -139,6 +150,12 @@ const NewAddOnFlow: React.FC<Props> = ({
 };
 
 export default NewAddOnFlow;
+
+const PlaceholderIcon = styled.img`
+  height: 16px;
+  margin-right: 12px;
+  opacity: 0.65;
+`;
 
 const DarkMatter = styled.div`
   width: 100%;

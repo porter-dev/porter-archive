@@ -46,10 +46,7 @@ type ServerConf struct {
 	GithubAppWebhookSecret string `env:"GITHUB_APP_WEBHOOK_SECRET"`
 	GithubAppID            string `env:"GITHUB_APP_ID"`
 	GithubAppSecretPath    string `env:"GITHUB_APP_SECRET_PATH"`
-	// GithubAppSecretBase64 is a base64 encoded version of the GithubAppSecret. This can be used instead of GithubAppSecretPath to pass in a key, allowing for support in systems where mounting the secret is not possible.
-	// If GithubAppSecretBase64 is set, it will check for a file at GithubAppSecretPath. If a file is found, the file will NOT be overwritten. If no file it found, then GithubAppSecretBase64 will be decoded and written to GithubAppSecretPath.
-	GithubAppSecretBase64 string `env:"GITHUB_APP_SECRET_BASE64"`
-	GithubAppSecret       []byte
+	GithubAppSecret        []byte
 
 	GoogleClientID         string `env:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret     string `env:"GOOGLE_CLIENT_SECRET"`

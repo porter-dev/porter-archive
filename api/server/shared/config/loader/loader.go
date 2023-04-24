@@ -1,7 +1,6 @@
 package loader
 
 import (
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -186,44 +185,22 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		res.Logger.Info().Msg("Created Github client")
 	}
 
-	if sc.GithubAppSecretBase64 != "" {
-		if sc.GithubAppSecretPath == "" {
-			sc.GithubAppSecretPath = "github-app-secret-key"
-		}
-		_, err := os.Stat(sc.GithubAppSecretPath)
-		if err != nil {
-			if !errors.Is(err, os.ErrNotExist) {
-				return nil, fmt.Errorf("GITHUB_APP_SECRET_BASE64 provided, but error checking if GITHUB_APP_SECRET_PATH exists: %w", err)
-			}
-			secret, err := base64.StdEncoding.DecodeString(sc.GithubAppSecretBase64)
-			if err != nil {
-				return nil, fmt.Errorf("GITHUB_APP_SECRET_BASE64 provided, but error decoding: %w", err)
-			}
-			_, err = createDirectoryRecursively(sc.GithubAppSecretPath)
-			if err != nil {
-				return nil, fmt.Errorf("GITHUB_APP_SECRET_BASE64 provided, but error creating directory for GITHUB_APP_SECRET_PATH: %w", err)
-			}
-			err = os.WriteFile(sc.GithubAppSecretPath, secret, os.ModePerm)
-			if err != nil {
-				return nil, fmt.Errorf("GITHUB_APP_SECRET_BASE64 provided, but error writing to GITHUB_APP_SECRET_PATH: %w", err)
-			}
-		}
-	}
-
 	if sc.GithubAppClientID != "" &&
 		sc.GithubAppClientSecret != "" &&
 		sc.GithubAppName != "" &&
 		sc.GithubAppWebhookSecret != "" &&
 		sc.GithubAppSecretPath != "" &&
 		sc.GithubAppID != "" {
-		if AppID, err := strconv.ParseInt(sc.GithubAppID, 10, 64); err == nil {
-			res.GithubAppConf = oauth.NewGithubAppClient(&oauth.Config{
-				ClientID:     sc.GithubAppClientID,
-				ClientSecret: sc.GithubAppClientSecret,
-				Scopes:       []string{"read:user"},
-				BaseURL:      sc.ServerURL,
-			}, sc.GithubAppName, sc.GithubAppWebhookSecret, sc.GithubAppSecretPath, AppID)
+		AppID, err := strconv.Atoi(sc.GithubAppID)
+		if err != nil {
+			return nil, fmt.Errorf("could not read github App ID: %s", err)
 		}
+		res.GithubAppConf = oauth.NewGithubAppClient(&oauth.Config{
+			ClientID:     sc.GithubAppClientID,
+			ClientSecret: sc.GithubAppClientSecret,
+			Scopes:       []string{"read:user"},
+			BaseURL:      sc.ServerURL,
+		}, sc.GithubAppName, sc.GithubAppWebhookSecret, sc.GithubAppSecretPath, int64(AppID))
 
 		secret, err := ioutil.ReadFile(sc.GithubAppSecretPath)
 		if err != nil {

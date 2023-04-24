@@ -84,12 +84,13 @@ const OpacityWrapper = styled.div<{
 
 const StepWrapper = styled.div<{
 }>`
-  padding-left: 22px;
+  padding-left: 30px;
   position: relative;
   margin-bottom: 35px;
 `;
 
 const StyledVerticalSteps = styled.div<{
 }>`
-width: 600px;
+  min-width: 600px;
+  max-width: 800px;
 `;

@@ -14,6 +14,7 @@ import time from "assets/time.png";
 import healthy from "assets/status-healthy.png";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
+import notFound from "assets/not-found.png";
 
 import { Context } from "shared/Context";
 import { search } from "shared/search";
@@ -69,8 +70,14 @@ const AppDashboard: React.FC<Props> = ({
         isCaseSensitive: false,
       }
     );
+    const filtered = filteredBySearch.filter((app: any) => {
+      return (
+        !namespaceBlacklist.includes(app.namespace) && 
+        !templateBlacklist.includes(app.chart.metadata.name)
+      );
+    });
 
-    return _.sortBy(filteredBySearch);
+    return _.sortBy(filtered);
   }, [addOns, searchValue]);
 
   const getAddOns = async () => {
@@ -160,62 +167,60 @@ const AppDashboard: React.FC<Props> = ({
         </Link>
       </Container>
       <Spacer y={1} />
+      {(!isLoading && filteredAddOns.length === 0) && (
+        <Fieldset>
+          <Container row>
+            <PlaceholderIcon src={notFound} />
+            <Text color="helper">No add-ons were found.</Text>
+          </Container>
+        </Fieldset>
+      )}
       {isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
         <GridList>
           {(filteredAddOns ?? []).map((app: any, i: number) => {
-            if (
-              !namespaceBlacklist.includes(app.namespace) && 
-              !templateBlacklist.includes(app.chart.metadata.name)
-            ) {
-              return (
-                <Block to={getExpandedChartLinkURL(app)}>
-                  <Text size={14}>
-                    <Icon 
-                      src={
-                        hardcodedIcons[app.chart.metadata.name] ||
-                        app.chart.metadata.icon
-                      }
-                    />
-                    {app.name}
-                  </Text>
-                  <StatusIcon src={healthy} />
-                  <Text size={13} color="#ffffff44">
-                    <SmallIcon opacity="0.4" src={time} />
-                    {readableDate(app.info.last_deployed)}
-                  </Text>
-                </Block>
-              );
-            }
+            return (
+              <Block to={getExpandedChartLinkURL(app)}>
+                <Text size={14}>
+                  <Icon 
+                    src={
+                      hardcodedIcons[app.chart.metadata.name] ||
+                      app.chart.metadata.icon
+                    }
+                  />
+                  {app.name}
+                </Text>
+                <StatusIcon src={healthy} />
+                <Text size={13} color="#ffffff44">
+                  <SmallIcon opacity="0.4" src={time} />
+                  {readableDate(app.info.last_deployed)}
+                </Text>
+              </Block>
+            );
           })}
        </GridList>
       ) : (
         <List>
           {(filteredAddOns ?? []).map((app: any, i: number) => {
-            if (
-              !namespaceBlacklist.includes(app.namespace) &&
-              !templateBlacklist.includes(app.chart.metadata.name)
-            ) {
-              return (
-                <Row to={getExpandedChartLinkURL(app)}>
-                  <Text size={14}>
-                    <MidIcon
-                      src={
-                        hardcodedIcons[app.chart.metadata.name] ||
-                        app.chart.metadata.icon
-                      }
-                    />
-                    {app.name}
-                    <Spacer inline x={1} />
-                    <MidIcon src={healthy} height="16px" />
-                  </Text>
-                  <Spacer height="15px" />
-                  <Text size={13} color="#ffffff44">
-                    <SmallIcon opacity="0.4" src={time} />
-                    {readableDate(app.info.last_deployed)}
-                  </Text>
-                </Row>
-              );
-            }
+            return (
+              <Row to={getExpandedChartLinkURL(app)}>
+                <Text size={14}>
+                  <MidIcon
+                    src={
+                      hardcodedIcons[app.chart.metadata.name] ||
+                      app.chart.metadata.icon
+                    }
+                  />
+                  {app.name}
+                  <Spacer inline x={1} />
+                  <MidIcon src={healthy} height="16px" />
+                </Text>
+                <Spacer height="15px" />
+                <Text size={13} color="#ffffff44">
+                  <SmallIcon opacity="0.4" src={time} />
+                  {readableDate(app.info.last_deployed)}
+                </Text>
+              </Row>
+            );
           })}
         </List>
       )}
@@ -225,6 +230,12 @@ const AppDashboard: React.FC<Props> = ({
 };
 
 export default AppDashboard;
+
+const PlaceholderIcon = styled.img`
+  height: 16px;
+  margin-right: 12px;
+  opacity: 0.65;
+`;
 
 const Row = styled(Link)<{ isAtBottom?: boolean }>`
   cursor: pointer;

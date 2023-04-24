@@ -60,15 +60,6 @@ local_resource(
   resource_deps=["postgresql"],
   labels=["z_binaries"]
 )
-local_resource(
-  name='reload-server-config',
-  cmd='kubectl rollout restart deployment porter-server-web',
-  deps=[
-    "zarf/helm/.server.env"
-  ],
-  labels=["porter"],
-  resource_deps=["porter-binary"]
-)
 
 docker_build_with_restart(
     ref="porter1/porter-server",
@@ -85,6 +76,16 @@ docker_build_with_restart(
         sync('./bin/migrate', '/app/'),
     ], 
 ) 
+
+local_resource(
+  name='reload-server-config',
+  cmd='kubectl rollout restart deployment porter-server-web',
+  deps=[
+    "zarf/helm/.server.env"
+  ],
+  labels=["porter"],
+  resource_deps=["porter-server-web"]
+)
 
 # Frontend
 local_resource(
@@ -113,8 +114,9 @@ local_resource(
 local_resource(
     name="run-migrations",
     cmd='''kubectl exec -it deploy/porter-server-web -- /app/migrate''',
-    resource_deps=["migrations-binary", "porter-binary"],
+    resource_deps=["migrations-binary", "porter-binary", "porter-server-web", "postgresql"],
     deps=["postgresql"],
     labels=["porter"],
     trigger_mode=TRIGGER_MODE_MANUAL,
+    auto_init=False
 )

@@ -66,7 +66,7 @@ const NewAppFlow: React.FC<Props> = ({
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
 
   return (
-    <>
+    <CenterWrapper>
       <StyledConfigureTemplate>
         <Back to="/apps" />
         <DashboardHeader
@@ -174,11 +174,18 @@ const NewAppFlow: React.FC<Props> = ({
         </Button>
       </StyledConfigureTemplate>
       {showGHAModal && <GithubActionModal closeModal={() => setShowGHAModal(false)} />}
-    </>
+    </CenterWrapper>
   );
 };
 
 export default withRouter(NewAppFlow);
+
+const CenterWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
 
 const DarkMatter = styled.div`
   width: 100%;
@@ -204,7 +211,6 @@ const Icon = styled.img`
 `;
 
 const StyledConfigureTemplate = styled.div`
-  width: 100%;
   height: 100%;
 `;
 

@@ -40,13 +40,25 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request := &types.CreateStackReleaseRequest{}
-
-	if ok := c.DecodeAndValidate(w, r, request); !ok {
+	k8sAgent, err := c.GetAgent(r, cluster, "")
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting k8s agent: %w", err)))
 		return
 	}
 
+	request := &types.CreateStackReleaseRequest{}
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding request: %w", err)))
+		return
+	}
 	stackName := request.StackName
+
+	// create the namespace if it does not exist already
+	_, err = k8sAgent.CreateNamespace(stackName, nil)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating namespace: %w", err)))
+		return
+	}
 
 	chart, err := createChartFromDependencies(request.Dependencies)
 	if err != nil {

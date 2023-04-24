@@ -26,36 +26,6 @@ type StackConfig struct {
 }
 
 func (t *DeployStackHook) PreApply() error {
-	nsList, err := t.Client.GetK8sNamespaces(
-		context.Background(), t.ProjectID, t.ClusterID,
-	)
-	if err != nil {
-		return fmt.Errorf("error fetching namespaces: %w", err)
-	}
-
-	found := false
-
-	for _, ns := range *nsList {
-		if ns.Name == t.StackName {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		composePreviewMessage(fmt.Sprintf("namespace %s does not exist, creating it now", t.StackName), Info)
-		createNS := &types.CreateNamespaceRequest{
-			Name: t.StackName,
-		}
-
-		// create the new namespace
-		_, err := t.Client.CreateNewK8sNamespace(context.Background(), t.ProjectID, t.ClusterID, createNS)
-
-		if err != nil && !strings.Contains(err.Error(), "namespace already exists") {
-			return fmt.Errorf("error creating namespace: %w", err)
-		}
-	}
-
 	return nil
 }
 

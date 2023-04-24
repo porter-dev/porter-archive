@@ -373,7 +373,11 @@ const BuildSettingsTab: React.FC<Props> = ({
             {!chart.git_action_config.dockerfile_path && (
               <InputRow
                 disabled={true}
-                label="Dockerfile path"
+                label={
+                  chart.git_action_config.dockerfilePath
+                    ? "Docker build context"
+                    : "Application folder"
+                }
                 type="text"
                 width="100%"
                 value={chart.git_action_config.folder_path}
@@ -381,32 +385,6 @@ const BuildSettingsTab: React.FC<Props> = ({
             )}
           </div>
         )}
-        <Heading>
-          <ExpandHeader
-            onClick={() => setEnvVariablesExpanded(!envVariablesExpanded)}
-            isExpanded={!envVariablesExpanded}
-          >
-            Build environment variables
-            <i className="material-icons">arrow_drop_down</i>
-          </ExpandHeader>
-        </Heading>
-
-        {envVariablesExpanded && (
-          <div>
-            <KeyValueArray
-              values={envVariables}
-              envLoader
-              externalValues={{
-                namespace: chart.namespace,
-                clusterId: currentCluster.id,
-              }}
-              setValues={(values) => {
-                setEnvVariables(values);
-              }}
-            ></KeyValueArray>
-          </div>
-        )}
-
         <Heading>
           <ExpandHeader
             onClick={() => setBranchSelectionExpanded(!branchSelectionExpanded)}
@@ -430,6 +408,32 @@ const BuildSettingsTab: React.FC<Props> = ({
               setBranch={setCurrentBranch}
               currentBranch={currentBranch}
             />
+          </div>
+        )}
+
+        <Heading>
+          <ExpandHeader
+            onClick={() => setEnvVariablesExpanded(!envVariablesExpanded)}
+            isExpanded={!envVariablesExpanded}
+          >
+            Build environment variables
+            <i className="material-icons">arrow_drop_down</i>
+          </ExpandHeader>
+        </Heading>
+
+        {envVariablesExpanded && (
+          <div>
+            <KeyValueArray
+              values={envVariables}
+              envLoader
+              externalValues={{
+                namespace: chart.namespace,
+                clusterId: currentCluster.id,
+              }}
+              setValues={(values) => {
+                setEnvVariables(values);
+              }}
+            ></KeyValueArray>
           </div>
         )}
 

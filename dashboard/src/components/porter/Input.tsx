@@ -91,6 +91,7 @@ const StyledInput = styled.input<{
   width: string;
   height: string;
   hasError: boolean;
+  disabled: boolean;
 }>`
   height: ${props => props.height || "35px"};
   padding: 5px 10px;
@@ -100,9 +101,12 @@ const StyledInput = styled.input<{
   outline: none;
   border-radius: 5px;
   background: #26292e;
+  cursor: ${props => props.disabled ? "not-allowed" : ""};
 
   border: 1px solid ${props => props.hasError ? "#ff3b62" : "#494b4f"};
-  :hover {
-    border: 1px solid ${props => props.hasError ? "#ff3b62" : "#7a7b80"};
-  }
+  ${props => !props.disabled && `
+    :hover {
+      border: 1px solid ${props.hasError ? "#ff3b62" : "#7a7b80"};
+    }
+  `}
 `;

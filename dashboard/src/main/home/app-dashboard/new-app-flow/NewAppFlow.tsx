@@ -26,6 +26,7 @@ import SourceSettings from "./SourceSettings"
 import Services from "./Services";
 import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import Select from "components/porter/Select";
+import GithubActionModal from "./GithubActionModal";
 
 type Props = RouteComponentProps & {
 };
@@ -63,6 +64,7 @@ const NewAppFlow: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
+  const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
 
   return (
     <CenterWrapper>
@@ -169,11 +171,12 @@ const NewAppFlow: React.FC<Props> = ({
           ]}
         />
         <Spacer y={1} />
-        <Button onClick={() => ({})}>
+        <Button onClick={() => setShowGHAModal(true)}>
           DEPLYOY
         </Button>
       </StyledConfigureTemplate>
       </Div>
+      {showGHAModal && <GithubActionModal closeModal={() => setShowGHAModal(false)} />}
     </CenterWrapper>
   );
 };
@@ -218,4 +221,6 @@ const Icon = styled.img`
 const StyledConfigureTemplate = styled.div`
   height: 100%;
 `;
+
+
 

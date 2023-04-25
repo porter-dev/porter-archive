@@ -16,6 +16,36 @@ build_args = "GOOS=linux GOARCH=arm64"
 if os.getenv("PLATFORM") == "amd64":
     build_args = "GOOS=linux GOARCH=amd64"
 
+allow_k8s_contexts('kind-porter')
+cluster = str(local('kubectl config current-context')).strip()
+if (cluster.startswith("kind-")):
+    install = kustomize('zarf/helm', flags=["--enable-helm"])
+    decoded = decode_yaml_stream(install)
+    for d in decoded:
+        if d.get('kind') == 'Deployment':
+            if "securityContext" in d['spec']['template']['spec']:
+                d['spec']['template']['spec'].pop('securityContext')
+            for c in d['spec']['template']['spec']['containers']:
+                if "securityContext" in c:
+                    c.pop('securityContext')
+
+    updated_install = encode_yaml_stream(decoded)
+
+    k8s_yaml(updated_install)
+
+    k8s_resource(
+        workload='porter-server-web',
+        port_forwards="8080:8080",
+        labels=["porter"],
+        resource_deps=["porter-binary"],
+    )
+else:
+    local("echo 'Be careful that you aren't connected to a staging or prod cluster' && exit 1")
+    exit()
+
+watch_file('zarf/helm/.server.env')
+watch_file('zarf/helm/.dashboard.env')
+
 ## Build binary locally for faster devexp
 local_resource(
   name='porter-binary',
@@ -29,7 +59,7 @@ local_resource(
     "pkg",
   ],
   resource_deps=["postgresql"],
-  labels=["porter"]
+  labels=["z_binaries"]
 )
 
 docker_build_with_restart(
@@ -48,16 +78,23 @@ docker_build_with_restart(
     ], 
 ) 
 
+local_resource(
+  name='reload-server-config',
+  cmd='kubectl rollout restart deployment porter-server-web',
+  deps=[
+    "zarf/helm/.server.env"
+  ],
+  labels=["porter"],
+  resource_deps=["porter-server-web"]
+)
+
 # Frontend
 local_resource(
     name="porter-dashboard",
     serve_cmd="npm start",
     serve_dir="dashboard",
     serve_env={
-        "NODE_ENV": "development",
-        "DEV_SERVER_PORT": "8081",
-        "ENABLE_PROXY": "true",
-        "API_SERVER": "http://localhost:8080"
+        "ENV_FILE": "../zarf/helm/.dashboard.env"
     },
     resource_deps=["postgresql"],
     labels=["porter"]
@@ -70,43 +107,14 @@ local_resource(
     name="migrations-binary",
     cmd='''GOWORK=off CGO_ENABLED=0 %s go build -mod vendor -gcflags '-N -l' -tags ee -o ./bin/migrate ./cmd/migrate/main.go ./cmd/migrate/migrate_ee.go''' % build_args,
     resource_deps=["postgresql"],
-    labels=["porter"],
+    labels=["z_binaries"],
 )
 local_resource(
     name="run-migrations",
     cmd='''kubectl exec -it deploy/porter-server-web -- /app/migrate''',
-    resource_deps=["migrations-binary", "porter-binary"],
+    resource_deps=["migrations-binary", "porter-binary", "porter-server-web", "postgresql"],
+    deps=["postgresql"],
     labels=["porter"],
     trigger_mode=TRIGGER_MODE_MANUAL,
+    auto_init=False
 )
-
-# Config
-local_resource(
-    name="reload-config",
-    cmd='''kubectl rollout restart deploy/porter-server-web''',
-    resource_deps=["zarf/helm"],
-    labels=["porter"],
-    trigger_mode=TRIGGER_MODE_MANUAL,
-)
-
-
-allow_k8s_contexts('kind-porter')
-
-cluster = str(local('kubectl config current-context')).strip()
-if (cluster.startswith("kind-")):
-    install = kustomize('zarf/helm', flags=["--enable-helm"])
-    decoded = decode_yaml_stream(install)
-    for d in decoded:
-        if d.get('kind') == 'Deployment':
-            if "securityContext" in d['spec']['template']['spec']:
-                d['spec']['template']['spec'].pop('securityContext')
-            for c in d['spec']['template']['spec']['containers']:
-                if "securityContext" in c:
-                    c.pop('securityContext')
-
-    updated_install = encode_yaml_stream(decoded)
-    k8s_yaml(updated_install)
-    k8s_resource(workload='porter-server-web', port_forwards="8080:8080", labels=["porter"])
-else:
-    local("echo 'Be careful that you aren't connected to a staging or prod cluster' && exit 1")
-    exit()

@@ -30,6 +30,7 @@ type Props = {
   closeChartRedirectUrl?: string;
   selectedTag?: any;
   appFilters?: string[];
+  noPlaceholder?: boolean;
 };
 
 interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
@@ -45,6 +46,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   closeChartRedirectUrl,
   selectedTag,
   appFilters,
+  noPlaceholder,
 }) => {
   const {
     newWebsocket,
@@ -438,26 +440,28 @@ const ChartList: React.FunctionComponent<Props> = ({
   }, [charts, sortType, jobStatus, lastRunStatus, selectedTag]);
 
   const renderChartList = () => {
-    if (isLoading || (!namespace && namespace !== "")) {
-      return (
-        <LoadingWrapper>
-          <Loading />
-        </LoadingWrapper>
-      );
-    } else if (isError) {
-      return (
-        <Placeholder height="370px">
-          <i className="material-icons">error</i> Error connecting to cluster.
-        </Placeholder>
-      );
-    } else if (filteredCharts?.length === 0) {
-      return (
-        <Placeholder height="370px">
-          <i className="material-icons">category</i> No
-          {currentView === "jobs" ? ` jobs` : ` charts`} found with the given
-          filters.
-        </Placeholder>
-      );
+    if (!noPlaceholder) {
+      if (isLoading || (!namespace && namespace !== "")) {
+        return (
+          <LoadingWrapper>
+            <Loading />
+          </LoadingWrapper>
+        );
+      } else if (isError) {
+        return (
+          <Placeholder height="370px">
+            <i className="material-icons">error</i> Error connecting to cluster.
+          </Placeholder>
+        );
+      } else if (filteredCharts?.length === 0) {
+        return (
+          <Placeholder height="370px">
+            <i className="material-icons">category</i> No
+            {currentView === "jobs" ? ` jobs` : ` charts`} found with the given
+            filters.
+          </Placeholder>
+        );
+      }
     }
 
     return filteredCharts?.map((chart: ChartType, i: number) => {

@@ -50,6 +50,7 @@ const ActionConfEditorStack: React.FC<Props> = (props) => {
       </ExpandedWrapperAlt>
     );
   } else if (!branch) {
+    props.setFolderPath("./");
     return (
       <>
         <ExpandedWrapperAlt>
@@ -74,6 +75,7 @@ const ActionConfEditorStack: React.FC<Props> = (props) => {
       <BackButton
         width="145px"
         onClick={() => {
+          props.setFolderPath("");
           setBranch("");
           props.setDockerfilePath("");
         }}

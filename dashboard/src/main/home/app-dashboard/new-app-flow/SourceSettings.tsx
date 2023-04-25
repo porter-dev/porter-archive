@@ -73,17 +73,6 @@ class SourceSettings extends Component<PropsType, StateType> {
         {
           <>
             {" "}
-            {/* <CloseButton
-        onClick={() => {
-          setSourceType("");
-          setDockerfilePath("");
-          setFolderPath("");
-          setProcfilePath("");
-          setProcfileProcess("");
-        }}
-      >
-        <i className="material-icons">close</i>
-      </CloseButton> */}
             <Subtitle>
               Provide a repo folder to use as source.
               {/* <Highlight
@@ -196,12 +185,13 @@ class SourceSettings extends Component<PropsType, StateType> {
         <Text color="helper">Specify your application root path.</Text>
         <Spacer y={0.5} />
         <Input
+          disabled={!this.props.branch ? true : false}
           placeholder="ex: ./"
-          value=""
+          value={this.props.folderPath}
           width="100%"
-          setValue={(e) => {}}
+          setValue={this.props.setFolderPath}
         />
-        <Spacer y={0.5} />
+        {/* <Spacer y={0.5} />
         <Text color="helper">
           Specify your porter.yaml path. <a>&nbsp;What is this?</a>
         </Text>
@@ -212,6 +202,7 @@ class SourceSettings extends Component<PropsType, StateType> {
           width="100%"
           setValue={(e) => {}}
         />
+        */}
         <Spacer y={1} />
         <DetectedBuildMessage>
           <i className="material-icons">check</i>

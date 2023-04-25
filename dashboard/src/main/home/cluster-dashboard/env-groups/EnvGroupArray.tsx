@@ -153,11 +153,7 @@ const EnvGroupArray = ({
                   {!disabled && (
                     <DeleteButton
                       onClick={() => {
-                        let _values = values;
-                        _values = _values.filter(
-                          (val) => val.key !== entry.key
-                        );
-                        setValues(_values);
+                        setValues(values.filter((val, index) => index !== i));
                       }}
                     >
                       <i className="material-icons">cancel</i>

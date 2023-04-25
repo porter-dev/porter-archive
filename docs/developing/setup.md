@@ -28,14 +28,15 @@ First, in `/dashboard/.env`:
 
 ```
 NODE_ENV=development
-API_SERVER=localhost:8080
+API_SERVER=http://localhost:8081
+ENABLE_PROXY=true
 ```
 
 Next, in `/docker/.env`:
 
 ```
-SERVER_URL=http://localhost:8080
-SERVER_PORT=8080
+SERVER_URL=http://localhost:8081
+SERVER_PORT=8081
 DB_HOST=postgres
 DB_PORT=5432
 DB_USER=porter
@@ -44,7 +45,7 @@ DB_NAME=porter
 SQL_LITE=false
 ```
 
-Once you've done this, go to the root repository, and run `docker-compose -f docker-compose.dev.yaml up`. You should see postgres, webpack, and porter containers spin up. When the webpack and porter containers have finished compiling and have spun up successfully (this will take 5-10 minutes after the containers start), .
+Finally, run `make start-dev` from the root of the project. If you have all the dependencies set up correctly, things should just work.
 
 At this point, you can make a change to any `.go` file to trigger a backend rebuild, and any file in `/dashboard/src` to trigger a hot reload.
 

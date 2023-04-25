@@ -10,6 +10,6 @@ jobs:
         with:
           node-version: "16"
       - name: Install Dependencies
-        run: npm install --prefix dashboard
+        run: npm install --prefix dashboard --legacy-peerdeps
       - name: Run tests
         run: npm test --prefix dashboard

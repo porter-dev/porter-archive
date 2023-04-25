@@ -1,8 +1,10 @@
-package porter_app
+package stacks
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -10,6 +12,7 @@ import (
 
 type CreatePorterAppHandler struct {
 	handlers.PorterHandlerReadWriter
+	authz.KubernetesAgentGetter
 }
 
 func NewCreatePorterAppHandler(
@@ -19,14 +22,14 @@ func NewCreatePorterAppHandler(
 ) *CreatePorterAppHandler {
 	return &CreatePorterAppHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
 func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// read the project from context
-	// proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	// ctx := r.Context()
+	// cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	fmt.Println("congrats on making it!")
 
-	// request := &types.ProjectAppRequest{}
-
-	c.WriteResult(w, r, 1)
+	w.WriteHeader(http.StatusCreated)
 }

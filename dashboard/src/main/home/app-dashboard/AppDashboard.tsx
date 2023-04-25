@@ -167,6 +167,22 @@ const AppDashboard: React.FC<Props> = ({
           })}
         </List>
       )}
+      <Button 
+        onClick={async () => {
+          try {
+            const res = await api.createPorterApp("<token>", { name: "cool" }, {
+              project_id: currentProject.id,
+              cluster_id: currentCluster.id,
+            });
+            console.log(res.data);
+          }
+          catch (err) {
+            console.log(err);
+          }
+        }}
+      >
+        Diplo
+      </Button>
       <Spacer y={5} />
     </StyledAppDashboard>
   );

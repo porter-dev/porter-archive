@@ -226,10 +226,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setValue={(e) => {}}
                 />
               </>,
+              <Button onClick={() => setShowGHAModal(true)}>Deploy app</Button>
             ]}
           />
-          <Spacer y={1} />
-          <Button onClick={() => setShowGHAModal(true)}>DEPLYOY</Button>
+          <Spacer y={3} />
         </StyledConfigureTemplate>
       </Div>
       {showGHAModal && (

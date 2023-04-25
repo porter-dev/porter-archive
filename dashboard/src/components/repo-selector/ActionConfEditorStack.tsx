@@ -4,28 +4,14 @@ import styled from "styled-components";
 import { ActionConfigType } from "shared/types";
 
 import RepoList from "./RepoList";
-import BranchList from "./BranchList";
-import ContentsList from "./ContentsList";
-import ActionDetails from "./ActionDetails";
 import InputRow from "../form-components/InputRow";
 
 type Props = {
   actionConfig: ActionConfigType | null;
-  branch: string;
   setActionConfig: (x: ActionConfigType) => void;
   setBranch: (x: string) => void;
-  reset: any;
-  dockerfilePath: string;
-  procfilePath: string;
-  procfileProcess: string;
   setDockerfilePath: (x: string) => void;
-  setProcfileProcess: (x: string) => void;
-  setProcfilePath: (x: string) => void;
-  folderPath: string;
   setFolderPath: (x: string) => void;
-  setSelectedRegistry: (x: any) => void;
-  selectedRegistry: any;
-  setBuildConfig: (x: any) => void;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -36,8 +22,13 @@ const defaultActionConfig: ActionConfigType = {
   kind: "github",
 };
 
-const ActionConfEditorStack: React.FC<Props> = (props) => {
-  const { actionConfig, setBranch, setActionConfig, branch } = props;
+const ActionConfEditorStack: React.FC<Props> = ({
+  actionConfig,
+  setBranch,
+  setActionConfig,
+  setFolderPath,
+  setDockerfilePath,
+}) => {
 
   if (!actionConfig.git_repo) {
     return (
@@ -64,8 +55,8 @@ const ActionConfEditorStack: React.FC<Props> = (props) => {
           onClick={() => {
             setActionConfig({ ...defaultActionConfig });
             setBranch("");
-            props.setFolderPath("");
-            props.setDockerfilePath("");
+            setFolderPath("");
+            setDockerfilePath("");
           }}
         >
           <i className="material-icons">keyboard_backspace</i>
@@ -77,31 +68,6 @@ const ActionConfEditorStack: React.FC<Props> = (props) => {
 };
 
 export default ActionConfEditorStack;
-
-const Br = styled.div`
-  width: 100%;
-  height: 8px;
-`;
-
-const Flex = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const HeaderButton = styled.div`
-  margin-bottom: 5px;
-  padding: 5px 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 500;
-  margin-right: 10px;
-`;
-
-const RepoHeader = styled.div`
-  display: flex;
-  align-items: center;
-`;
 
 const ExpandedWrapper = styled.div`
   margin-top: 10px;

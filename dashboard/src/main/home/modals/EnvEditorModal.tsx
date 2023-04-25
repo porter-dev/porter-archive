@@ -44,10 +44,6 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledLoadEnvGroupModal>
-        <CloseButton onClick={this.props.closeModal}>
-          <CloseButtonImg src={close} />
-        </CloseButton>
-
         <ModalTitle>Load from Environment Group</ModalTitle>
         <Subtitle>Copy paste your environment file in .env format:</Subtitle>
 

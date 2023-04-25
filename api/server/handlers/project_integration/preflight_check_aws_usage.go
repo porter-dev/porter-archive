@@ -33,7 +33,7 @@ func (p *CreatePreflightCheckAWSUsageHandler) ServeHTTP(w http.ResponseWriter, r
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	if !p.Config().EnableCAPIProvisioner {
-		message := "Trying to run preflight checks but CAPI Provisioner is disabled. If you want to provision through CAPI, make sure that your environment variables are set to true"
+		message := "Trying to run preflight checks but CAPI Provisioner is disabled. If you want to provision through CAPI, make sure that the CAPI environment variable is set to true"
 		e := fmt.Errorf(message)
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusServiceUnavailable, message))
 		return

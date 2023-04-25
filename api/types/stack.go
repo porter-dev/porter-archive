@@ -14,3 +14,8 @@ type Dependency struct {
 	Version    string `json:"version" form:"required"`
 	Repository string `json:"repository" form:"required"`
 }
+
+type CreateSecretAndOpenGitHubPullRequest struct {
+	OpenPr    bool `json:"open_pr"`
+	StackName string
+}

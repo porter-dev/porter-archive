@@ -15,9 +15,32 @@ type GithubPROpts struct {
 	ApplyWorkflowYAML         string
 	StackName                 string
 	ProjectID, ClusterID      uint
+	PorterToken               string
+	ServerURL                 string
+}
+
+type GetStackApplyActionYAMLOpts struct {
+	ServerURL            string
+	StackName            string
+	ProjectID, ClusterID uint
+	DefaultBranch        string
+	SecretName           string
 }
 
 func OpenGithubPR(opts *GithubPROpts) error {
+	// create porter secret
+	secretName := fmt.Sprintf("PORTER_STACK_%d_%d", opts.ProjectID, opts.ClusterID)
+	err := createGithubSecret(
+		opts.Client,
+		secretName,
+		opts.PorterToken,
+		opts.GitRepoOwner,
+		opts.GitRepoName,
+	)
+	if err != nil {
+		return err
+	}
+
 	// get the repository to find the default branch
 	repo, _, err := opts.Client.Repositories.Get(
 		context.TODO(),
@@ -30,12 +53,23 @@ func OpenGithubPR(opts *GithubPROpts) error {
 
 	defaultBranch := repo.GetDefaultBranch()
 
+	applyWorkflowYAML, err := getStackApplyActionYAML(&GetStackApplyActionYAMLOpts{
+		ServerURL:     opts.ServerURL,
+		ClusterID:     opts.ClusterID,
+		ProjectID:     opts.ProjectID,
+		StackName:     opts.StackName,
+		DefaultBranch: defaultBranch,
+		SecretName:    secretName,
+	})
+	if err != nil {
+		return err
+	}
+
 	err = createNewBranch(opts.Client,
 		opts.GitRepoOwner,
 		opts.GitRepoName,
 		defaultBranch,
 		"porter-stack")
-
 	if err != nil {
 		return fmt.Errorf(
 			"Unable to create PR to merge workflow files into protected branch: %s.\n"+
@@ -48,7 +82,7 @@ func OpenGithubPR(opts *GithubPROpts) error {
 
 	_, err = commitWorkflowFile(
 		opts.Client,
-		fmt.Sprintf("porter_%s_env.yml", strings.ToLower(opts.EnvironmentName)),
+		fmt.Sprintf("porter_stack_%s.yml", strings.ToLower(opts.StackName)),
 		applyWorkflowYAML, opts.GitRepoOwner,
 		opts.GitRepoName, "porter-preview", false,
 	)
@@ -63,7 +97,7 @@ func OpenGithubPR(opts *GithubPROpts) error {
 		)
 	}
 
-	pr, _, err := opts.Client.PullRequests.Create(
+	_, _, err = opts.Client.PullRequests.Create(
 		context.Background(), opts.GitRepoOwner, opts.GitRepoName, &github.NewPullRequest{
 			Title: github.String("Enable Porter Preview Environment deployments"),
 			Base:  github.String(defaultBranch),
@@ -76,13 +110,13 @@ func OpenGithubPR(opts *GithubPROpts) error {
 	return nil
 }
 
-func GetStackApplyActionYAML(opts *EnvOpts) ([]byte, error) {
+func getStackApplyActionYAML(opts *GetStackApplyActionYAMLOpts) ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
 		getSetTagStep(),
 		getDeployStackStep(
 			opts.ServerURL,
-			getPreviewEnvSecretName(opts.ProjectID, opts.ClusterID, opts.InstanceName),
+			opts.SecretName,
 			opts.StackName,
 			"v0.1.0",
 			opts.ProjectID,
@@ -94,7 +128,7 @@ func GetStackApplyActionYAML(opts *EnvOpts) ([]byte, error) {
 		On: GithubActionYAMLOnPush{
 			Push: GithubActionYAMLOnPushBranches{
 				Branches: []string{
-					opts.Branch,
+					opts.DefaultBranch,
 				},
 			},
 		},

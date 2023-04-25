@@ -1,12 +1,10 @@
 package stacks
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
@@ -17,10 +15,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
-	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/models/integrations"
 )
 
 type OpenStackPRHandler struct {
@@ -38,46 +34,25 @@ func NewOpenStackPRHandler(
 }
 
 func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ga, _ := r.Context().Value(types.GitInstallationScope).(*integrations.GithubAppInstallation)
+	gaid := c.Config().GithubAppConf.AppID
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
-
 	if !ok {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to get github owner and name params")))
 		return
 	}
 
 	// create the environment
-	request := &types.CreateEnvironmentRequest{}
+	request := &types.CreateSecretAndOpenGitHubPullRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
 
-	// create a random webhook id
-	webhookUID, err := encryption.GenerateRandomBytes(32)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error generating webhook UID for new stack: %w", err)))
-		return
-	}
-
-	env := &models.Environment{
-		ProjectID:           project.ID,
-		ClusterID:           cluster.ID,
-		GitInstallationID:   uint(ga.InstallationID),
-		Name:                request.Name,
-		GitRepoOwner:        owner,
-		GitRepoName:         name,
-		GitRepoBranches:     strings.Join(request.GitRepoBranches, ","),
-		Mode:                request.Mode,
-		WebhookID:           string(webhookUID),
-		NewCommentsDisabled: request.DisableNewComments,
-		GitDeployBranches:   strings.Join(request.GitDeployBranches, ","),
-	}
-
-	client, err := getGithubClient(c.Config(), ga.InstallationID)
+	client, err := getGithubClient(c.Config(), gaid)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -86,64 +61,27 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// generate porter jwt token
 	jwt, err := token.GetTokenForAPI(user.ID, project.ID)
 	if err != nil {
-		_, deleteErr := client.Repositories.DeleteHook(context.Background(), owner, name, hook.GetID())
-
-		if deleteErr != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("%v: %w", errGithubAPI, deleteErr),
-				http.StatusConflict, "error getting token for API while creating environment"))
-			return
-		}
-
-		_, deleteErr = c.Repo().Environment().DeleteEnvironment(env)
-
-		if deleteErr != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting created preview environment: %w",
-				deleteErr)))
-			return
-		}
-
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting token for API: %w", err)))
 		return
 	}
-
 	encoded, err := jwt.EncodeToken(c.Config().TokenConf)
 	if err != nil {
-		_, deleteErr := client.Repositories.DeleteHook(context.Background(), owner, name, hook.GetID())
-
-		if deleteErr != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("%v: %w", errGithubAPI, deleteErr),
-				http.StatusConflict, "error encoding token while creating environment"))
-			return
-		}
-
-		_, deleteErr = c.Repo().Environment().DeleteEnvironment(env)
-
-		if deleteErr != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting created preview environment: %w",
-				deleteErr)))
-			return
-		}
-
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error encoding API token: %w", err)))
 		return
 	}
 
-	err = actions.SetupEnv(&actions.EnvOpts{
-		Client:            client,
-		ServerURL:         c.Config().ServerConf.ServerURL,
-		PorterToken:       encoded,
-		GitRepoOwner:      owner,
-		GitRepoName:       name,
-		ProjectID:         project.ID,
-		ClusterID:         cluster.ID,
-		GitInstallationID: uint(ga.InstallationID),
-		EnvironmentName:   request.Name,
-		InstanceName:      c.Config().ServerConf.InstanceName,
-	})
-
-	err = actions.OpenGithubPR(&actions.OpenGithubPROpts{
-		Client: client,
-	})
+	if request.OpenPr {
+		err = actions.OpenGithubPR(&actions.GithubPROpts{
+			Client:       client,
+			GitRepoOwner: owner,
+			GitRepoName:  name,
+			StackName:    request.StackName,
+			ProjectID:    project.ID,
+			ClusterID:    cluster.ID,
+			PorterToken:  encoded,
+			ServerURL:    c.Config().ServerConf.ServerURL,
+		})
+	}
 
 	if err != nil {
 		unwrappedErr := errors.Unwrap(err)

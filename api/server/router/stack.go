@@ -141,7 +141,7 @@ func getStackRoutes(
 	})
 
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack}/pr -> stacks.NewOpenStackPRHandler
-	openPREndpoint := factory.NewAPIEndpoint(
+	createSecretAndOpenGitHubPullRequestEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
@@ -153,20 +153,19 @@ func getStackRoutes(
 				types.UserScope,
 				types.ProjectScope,
 				types.ClusterScope,
-				types.GitInstallationScope,
 			},
 		},
 	)
 
-	openPRHandler := stacks.NewOpenStackPRHandler(
+	createSecretAndOpenGitHubPullRequestHandler := stacks.NewOpenStackPRHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: openPREndpoint,
-		Handler:  openPRHandler,
+		Endpoint: createSecretAndOpenGitHubPullRequestEndpoint,
+		Handler:  createSecretAndOpenGitHubPullRequestHandler,
 		Router:   r,
 	})
 

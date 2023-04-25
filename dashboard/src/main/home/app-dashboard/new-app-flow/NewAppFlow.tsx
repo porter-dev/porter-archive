@@ -22,13 +22,24 @@ import { generateSlug } from "random-word-slugs";
 import { RouteComponentProps, withRouter } from "react-router";
 import Error from "components/porter/Error";
 import SourceSelector, { SourceType } from "./SourceSelector";
-import SourceSettings from "./SourceSettings"
+import SourceSettings from "./SourceSettings";
 import Services from "./Services";
-import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import EnvGroupArray, {
+  KeyValueType,
+} from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import Select from "components/porter/Select";
+import GithubActionModal from "./GithubActionModal";
+import { ActionConfigType, FullActionConfigType } from "shared/types";
 
-type Props = RouteComponentProps & {
+type Props = RouteComponentProps & {};
+
+const defaultActionConfig: ActionConfigType = {
+  git_repo: "",
+  image_repo_uri: "",
+  git_branch: "",
+  git_repo_id: 0,
+  kind: "github",
 };
-
 
 interface FormState {
   applicationName: string;
@@ -53,127 +64,194 @@ const Validators: {
   envVariables: (value: KeyValueType[]) => true,
 };
 
+const NewAppFlow: React.FC<Props> = ({ ...props }) => {
+  const [templateName, setTemplateName] = useState("");
 
-
-const NewAppFlow: React.FC<Props> = ({
-  ...props
-}) => {
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageTag, setImageTag] = useState("");
   const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
+  const [actionConfig, setActionConfig] = useState<ActionConfigType>({
+    ...defaultActionConfig,
+  });
+  const [procfileProcess, setProcfileProcess] = useState("");
+  const [branch, setBranch] = useState("");
+  const [repoType, setRepoType] = useState("");
+  const [dockerfilePath, setDockerfilePath] = useState(null);
+  const [procfilePath, setProcfilePath] = useState(null);
+  const [folderPath, setFolderPath] = useState(null);
+  const [selectedRegistry, setSelectedRegistry] = useState(null);
+  const [shouldCreateWorkflow, setShouldCreateWorkflow] = useState(true);
+  const [buildConfig, setBuildConfig] = useState();
+  const getFullActionConfig = (): FullActionConfigType => {
+    let imageRepoURI = `${selectedRegistry?.url}/${templateName}`;
+    return {
+      kind: "github",
+      git_repo: actionConfig.git_repo,
+      git_branch: branch,
+      registry_id: selectedRegistry?.id,
+      dockerfile_path: dockerfilePath,
+      folder_path: folderPath,
+      image_repo_uri: imageRepoURI,
+      git_repo_id: actionConfig.git_repo_id,
+      should_create_workflow: shouldCreateWorkflow,
+    };
+  };
+  const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
 
   return (
-    <StyledConfigureTemplate>
-      <Back to="/apps" />
-      <DashboardHeader
-        prefix={
-          <Icon
-            src={web}
+    <CenterWrapper>
+      <Div>
+        <StyledConfigureTemplate>
+          <Back to="/apps" />
+          <DashboardHeader
+            prefix={<Icon src={web} />}
+            title="Deploy a new application"
+            capitalize={false}
+            disableLineBreak
           />
-        }
-        title="Deploy a new application"
-        capitalize={false}
-        disableLineBreak
-      />
-      <DarkMatter />
-      <VerticalSteps
-        currentStep={currentStep}
-        steps={[
-          <>
-            <Text size={16}>Application name</Text>
-            <Spacer y={0.5} />
-            <Text color="helper">
-              Lowercase letters, numbers, and "-" only.
-            </Text>
-            <Spacer y={0.5} />
-            <Input
-              placeholder="ex: academic-sophon"
-              value={formState.applicationName}
-              width="100%"
-              setValue={(e) => {
-                setFormState({ ...formState, applicationName: e })
-                if (Validators.applicationName(e)) {
-                  setCurrentStep(Math.max(currentStep, 1));
-                }
-              }}
-            />
-          </>,
-          <>
-            <Text size={16}>Deployment method</Text>
-            <Spacer y={0.5} />
-            <Text color="helper">
-              Deploy from a Git repository or a Docker registry.
-              <a
-                href="https://docs.porter.run/deploying-applications/overview"
-                target="_blank"
-              >
-                &nbsp;Learn more.
-              </a>
-            </Text>
-            <Spacer y={0.5} />
-            <SourceSelector
-              selectedSourceType={formState.selectedSourceType}
-              setSourceType={(type) => {
-                setFormState({ ...formState, selectedSourceType: type })
-                if (Validators.selectedSourceType(type)) {
-                  setCurrentStep(Math.max(currentStep, 2));
-                }
-              }}
-            />
-            <SourceSettings source={formState.selectedSourceType} />
-          </>,
-          <>
-            <Text size={16}>Services</Text>
-            <Spacer y={1} />
-            <Services
-              setServices={
-                (services: any[]) => {
-                  setFormState({ ...formState, serviceList: services })
-                  if (Validators.serviceList(services)) {
-                    setCurrentStep(Math.max(currentStep, 4));
+          <DarkMatter />
+          <VerticalSteps
+            currentStep={currentStep}
+            steps={[
+              <>
+                <Text size={16}>Application name</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  Lowercase letters, numbers, and "-" only.
+                </Text>
+                <Spacer y={0.5} />
+                <Input
+                  placeholder="ex: academic-sophon"
+                  value={formState.applicationName}
+                  width="300px"
+                  setValue={(e) => {
+                    setFormState({ ...formState, applicationName: e });
+                    if (Validators.applicationName(e)) {
+                      setCurrentStep(Math.max(currentStep, 1));
+                    }
+                  }}
+                />
+              </>,
+              <>
+                <Text size={16}>Deployment method</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  Deploy from a Git repository or a Docker registry.
+                  <a
+                    href="https://docs.porter.run/deploying-applications/overview"
+                    target="_blank"
+                  >
+                    &nbsp;Learn more.
+                  </a>
+                </Text>
+                <Spacer y={0.5} />
+                <SourceSelector
+                  selectedSourceType={formState.selectedSourceType}
+                  setSourceType={(type) => {
+                    setFormState({ ...formState, selectedSourceType: type });
+                    if (Validators.selectedSourceType(type)) {
+                      setCurrentStep(Math.max(currentStep, 2));
+                    }
+                  }}
+                />
+                <SourceSettings
+                  source={formState.selectedSourceType}
+                  templateName={templateName}
+                  setTemplateName={setTemplateName}
+                  imageUrl={imageUrl}
+                  setImageUrl={setImageUrl}
+                  imageTag={imageTag}
+                  setImageTag={setImageTag}
+                  actionConfig={actionConfig}
+                  setActionConfig={setActionConfig}
+                  branch={branch}
+                  setBranch={setBranch}
+                  procfileProcess={procfileProcess}
+                  setProcfileProcess={setProcfileProcess}
+                  repoType={repoType}
+                  setRepoType={setRepoType}
+                  dockerfilePath={dockerfilePath}
+                  setDockerfilePath={setDockerfilePath}
+                  folderPath={folderPath}
+                  setFolderPath={setFolderPath}
+                  procfilePath={procfilePath}
+                  setProcfilePath={setProcfilePath}
+                  selectedRegistry={selectedRegistry}
+                  setSelectedRegistry={setSelectedRegistry}
+                  setBuildConfig={setBuildConfig}
+                />
+              </>,
+              <>
+                <Text size={16}>Services</Text>
+                <Spacer y={1} />
+                <Services
+                  setServices={(services: any[]) => {
+                    setFormState({ ...formState, serviceList: services });
+                    if (Validators.serviceList(services)) {
+                      setCurrentStep(Math.max(currentStep, 4));
+                    }
+                  }}
+                  services={formState.serviceList}
+                />
+              </>,
+              <>
+                <Text size={16}>Environment variables</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  Specify environment variables shared among all services.
+                </Text>
+                <EnvGroupArray
+                  values={formState.envVariables}
+                  setValues={(x: any) =>
+                    setFormState({ ...formState, envVariables: x })
                   }
-                }}
-              services={formState.serviceList}
-            />
-          </>,
-          <>
-            <Text size={16}>Environment variables</Text>
-            <Spacer y={0.5} />
-            <Text color="helper">
-              Specify environment variables shared among all services.
-            </Text>
-            <EnvGroupArray
-              values={formState.envVariables}
-              setValues={(x: any) => setFormState({ ...formState, envVariables: x })}
-              fileUpload={true}
-            />
-          </>,
-          <>
-            <Text size={16}>Release command (optional)</Text>
-            <Spacer y={0.5} />
-            <Text color="helper">
-              If specified, this command will be run before every deployment.
-            </Text>
-            <Spacer y={0.5} />
-            <Input
-              placeholder="yarn ./scripts/run-migrations.js"
-              value={""}
-              width="100%"
-              setValue={(e) => { }}
-            />
-          </>
-        ]}
-      />
-      <Spacer y={1} />
-      <Button onClick={() => ({})}>
-        DEPLYOY
-      </Button>
-    </StyledConfigureTemplate>
+                  fileUpload={true}
+                />
+              </>,
+              <>
+                <Text size={16}>Release command (optional)</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  If specified, this command will be run before every
+                  deployment.
+                </Text>
+                <Spacer y={0.5} />
+                <Input
+                  placeholder="yarn ./scripts/run-migrations.js"
+                  value={""}
+                  width="300px"
+                  setValue={(e) => {}}
+                />
+              </>,
+            ]}
+          />
+          <Spacer y={1} />
+          <Button onClick={() => setShowGHAModal(true)}>DEPLYOY</Button>
+        </StyledConfigureTemplate>
+      </Div>
+      {showGHAModal && (
+        <GithubActionModal closeModal={() => setShowGHAModal(false)} />
+      )}
+    </CenterWrapper>
   );
 };
 
 export default withRouter(NewAppFlow);
+
+const Div = styled.div`
+  width: 100%;
+  max-width: 900px;
+`;
+
+const CenterWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
 
 const DarkMatter = styled.div`
   width: 100%;
@@ -199,7 +277,5 @@ const Icon = styled.img`
 `;
 
 const StyledConfigureTemplate = styled.div`
-  width: 100%;
   height: 100%;
 `;
-

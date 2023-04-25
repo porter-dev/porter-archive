@@ -44,6 +44,7 @@ else:
     exit()
 
 watch_file('zarf/helm/.server.env')
+watch_file('zarf/helm/.dashboard.env')
 
 ## Build binary locally for faster devexp
 local_resource(
@@ -93,10 +94,7 @@ local_resource(
     serve_cmd="npm start",
     serve_dir="dashboard",
     serve_env={
-        "NODE_ENV": "development",
-        "DEV_SERVER_PORT": "8081",
-        "ENABLE_PROXY": "true",
-        "API_SERVER": "http://localhost:8080"
+        "ENV_FILE": "../zarf/helm/.dashboard.env"
     },
     resource_deps=["postgresql"],
     labels=["porter"]

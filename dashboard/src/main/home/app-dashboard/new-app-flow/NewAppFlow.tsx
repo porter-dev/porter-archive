@@ -68,7 +68,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [templateName, setTemplateName] = useState("");
 
   const [imageUrl, setImageUrl] = useState("");
-  const [imageTag, setImageTag] = useState("");
+  const [imageTag, setImageTag] = useState("latest");
   const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<number>(0);
@@ -100,6 +100,81 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     };
   };
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
+
+  const deployPorterApp = async () => {
+    const dummyPorterAppConfig = {
+      "daft-web": {                        
+        image: {
+          repository: "public.ecr.aws/o1j4x7p4/hello-porter",
+          tag: "latest"
+        },  
+        ingress: {
+          enabled: false
+        },
+      },
+      "daft-worker-1": {                        
+        image: {
+          repository: "public.ecr.aws/o1j4x7p4/hello-porter",
+          tag: "latest"
+        },  
+      },
+      "daft-worker-2": {                        
+        image: {
+          repository: "public.ecr.aws/o1j4x7p4/hello-porter",
+          tag: "latest"
+        },  
+      },
+      "daft-release": {                        
+        image: {
+          repository: "public.ecr.aws/o1j4x7p4/hello-porter",
+          tag: "latest"
+        },  
+      },
+    };
+    
+    try {
+      const res = await api.updatePorterStack(
+        '<token>',
+        {
+          stack_name: formState.applicationName,
+          values: dummyPorterAppConfig,
+          dependencies: [
+            {
+              name: "web",
+              alias: "daft-web",
+              version: "0.88",
+              repository: "https://charts.getporter.dev"
+            },
+            {
+              name: "web",
+              alias: "daft-worker-1",
+              version: "0.38",
+              repository: "https://charts.getporter.dev"
+            },
+            {
+              name: "web",
+              alias: "daft-worker-2",
+              version: "0.38",
+              repository: "https://charts.getporter.dev"
+            },
+            {
+              name: "job",
+              alias: "daft-release",
+              version: "0.37",
+              repository: "https://charts.getporter.dev"
+            },
+          ],
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      );
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <CenterWrapper>
@@ -152,17 +227,15 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   selectedSourceType={formState.selectedSourceType}
                   setSourceType={(type) => {
                     setFormState({ ...formState, selectedSourceType: type });
-                    if (Validators.selectedSourceType(type)) {
-                      setCurrentStep(Math.max(currentStep, 2));
-                    }
                   }}
                 />
                 <SourceSettings
                   source={formState.selectedSourceType}
-                  templateName={templateName}
-                  setTemplateName={setTemplateName}
                   imageUrl={imageUrl}
-                  setImageUrl={setImageUrl}
+                  setImageUrl={(x) => {
+                    setImageUrl(x);
+                    setCurrentStep(Math.max(currentStep, 2));
+                  }}
                   imageTag={imageTag}
                   setImageTag={setImageTag}
                   actionConfig={actionConfig}
@@ -171,17 +244,12 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setBranch={setBranch}
                   procfileProcess={procfileProcess}
                   setProcfileProcess={setProcfileProcess}
-                  repoType={repoType}
-                  setRepoType={setRepoType}
                   dockerfilePath={dockerfilePath}
                   setDockerfilePath={setDockerfilePath}
                   folderPath={folderPath}
                   setFolderPath={setFolderPath}
                   procfilePath={procfilePath}
                   setProcfilePath={setProcfilePath}
-                  selectedRegistry={selectedRegistry}
-                  setSelectedRegistry={setSelectedRegistry}
-                  setBuildConfig={setBuildConfig}
                 />
               </>,
               <>
@@ -198,19 +266,20 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 />
               </>,
               <>
-                <Text size={16}>Environment variables</Text>
+                <Text size={16}>Environment variables (optional)</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
                   Specify environment variables shared among all services.
                 </Text>
                 <EnvGroupArray
                   values={formState.envVariables}
-                  setValues={(x: any) =>
-                    setFormState({ ...formState, envVariables: x })
-                  }
+                  setValues={(x: any) => {
+                    setFormState({ ...formState, envVariables: x });
+                  }}
                   fileUpload={true}
                 />
               </>,
+              /*
               <>
                 <Text size={16}>Release command (optional)</Text>
                 <Spacer y={0.5} />
@@ -226,7 +295,16 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setValue={(e) => {}}
                 />
               </>,
-              <Button onClick={() => setShowGHAModal(true)}>Deploy app</Button>
+              */
+              <Button onClick={() => {
+                if (imageUrl) {
+                  deployPorterApp();
+                } else {
+                  setShowGHAModal(true);
+                }
+              }}>
+                Deploy app
+              </Button>
             ]}
           />
           <Spacer y={3} />

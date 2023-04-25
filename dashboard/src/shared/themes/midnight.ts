@@ -6,6 +6,7 @@ const theme = {
   clickable: {
     bg: "linear-gradient(180deg, #171B21, #121212)",
   },
+  modalBg: "#171B2111",
   text: {
     primary: "#DFDFE1",
   },

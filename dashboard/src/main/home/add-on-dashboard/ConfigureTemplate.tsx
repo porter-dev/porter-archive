@@ -75,7 +75,8 @@ const ConfigureTemplate: React.FC<Props> = ({
     for (let key in wildcard) {
       _.set(values, key, wildcard[key]);
     }
-
+    console.log("values", values)
+    console.log("wildcard", wildcard)
     api
       .deployAddon(
         "<token>",

@@ -114,6 +114,7 @@ const StyledSelect = styled.select<{
   color: #ffffff;
   font-size: 13px;
   outline: none;
+  cursor: pointer;
   border-radius: 5px;
   background: none;
   appearance: none;

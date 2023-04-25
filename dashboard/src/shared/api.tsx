@@ -177,6 +177,21 @@ const createPorterApp = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/update_config`;
 });
 
+const updatePorterStack = baseApi<
+  {
+    stack_name: string;
+    dependencies: { name: string; alias: string; version: string; repository: string }[];
+    values: any;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  let { project_id, cluster_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks`;
+});
+
 const createEnvironment = baseApi<
   {
     name: string;
@@ -2457,6 +2472,7 @@ export default {
   createPasswordResetFinalize,
   createProject,
   createPorterApp,
+  updatePorterStack,
   createConfigMap,
   deleteCluster,
   deleteConfigMap,

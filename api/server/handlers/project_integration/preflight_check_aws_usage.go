@@ -29,8 +29,14 @@ func NewCreatePreflightCheckAWSUsageHandler(
 }
 
 func (p *CreatePreflightCheckAWSUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	ctx := r.Context()
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+
+	if !p.Config().EnableCAPIProvisioner {
+		e := fmt.Errorf("CAPI Provisioner is disabled")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusServiceUnavailable, "CAPI Provisioner is disabled"))
+		return
+	}
 
 	request := &types.QuotaPreflightCheckRequest{}
 	if ok := p.DecodeAndValidate(w, r, request); !ok {

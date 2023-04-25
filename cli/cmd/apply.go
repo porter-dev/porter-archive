@@ -21,6 +21,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	"github.com/porter-dev/porter/cli/cmd/preview"
 	previewV2Beta1 "github.com/porter-dev/porter/cli/cmd/preview/v2beta1"
+	stack "github.com/porter-dev/porter/cli/cmd/stack"
 	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -122,6 +123,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	}
 
 	var resGroup *switchboardTypes.ResourceGroup
+	worker := switchboardWorker.NewWorker()
 
 	if previewVersion.Version == "v2beta1" {
 		ns := os.Getenv("PORTER_NAMESPACE")
@@ -149,6 +151,31 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		if err != nil {
 			return fmt.Errorf("error parsing porter.yaml: %w", err)
 		}
+	} else if previewVersion.Version == "v1stack" {
+		stackName := os.Getenv("PORTER_STACK_NAME")
+		if stackName == "" {
+			return fmt.Errorf("environment variable PORTER_STACK_NAME must be set")
+		}
+
+		resGroup, err = stack.CreateV1BuildResources(client, fileBytes)
+		if err != nil {
+			return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
+		}
+
+		appResGroup, err := stack.CreateV1ApplicationResources(client, fileBytes)
+		if err != nil {
+			return fmt.Errorf("error parsing porter.yaml for application resources: %w", err)
+		}
+
+		deployStackHook := &stack.DeployStackHook{
+			Client:               client,
+			StackName:            stackName,
+			ProjectID:            cliConf.Project,
+			ClusterID:            cliConf.Cluster,
+			AppResourceGroup:     appResGroup,
+			BuildImageDriverName: stack.GetBuildImageDriverName(),
+		}
+		worker.RegisterHook("deploy-stack", deployStackHook)
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
 	}
@@ -158,7 +185,6 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		return fmt.Errorf("error getting working directory: %w", err)
 	}
 
-	worker := switchboardWorker.NewWorker()
 	worker.RegisterDriver("deploy", NewDeployDriver)
 	worker.RegisterDriver("build-image", preview.NewBuildDriver)
 	worker.RegisterDriver("push-image", preview.NewPushDriver)

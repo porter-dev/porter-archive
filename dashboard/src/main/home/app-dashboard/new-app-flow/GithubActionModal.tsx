@@ -23,7 +23,7 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
             </Text>
             <Spacer height="15px" />
             <Text color="helper">
-                In order to automatically update your services every time new code is pushed to your GitHub branch, you will need the following file in your Github repository:
+                In order to automatically update your services every time new code is pushed to your GitHub branch, the following file must exist in your Github repository:
             </Text>
             <Spacer y={1} />
             <ExpandableSection
@@ -33,6 +33,7 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
                 Header={
                     <ModalHeader>./github/workflows/porter_deploy.yml</ModalHeader>
                 }
+                isInitiallyExpanded={true}
                 ExpandedSection={
                     <>
                         <Spacer height="15px" />
@@ -52,7 +53,7 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
             />
             <Spacer y={1} />
             <Text color="helper">
-                Porter can open a PR for you to approve and merge this file into your repository, or you can add it yourself.
+                Porter can open a PR for you to approve and merge this file into your repository, or you can add it yourself. If you allow Porter to open a PR, you will be redirected to the PR in a new tab after hitting Complete below.
             </Text>
             <Spacer y={1} />
             <Select
@@ -61,9 +62,11 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
                     { label: "I will copy the file into my repository myself", value: "I will copy the file into my repository myself" },
                 ]}
                 onChange={(x: any) => console.log(x)}
+                width="100%"
             />
             <Button
                 onClick={closeModal}
+                width={"100%"}
             >
                 Complete
             </Button>

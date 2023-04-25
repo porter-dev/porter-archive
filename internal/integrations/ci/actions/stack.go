@@ -14,9 +14,10 @@ type GithubPROpts struct {
 	GitRepoOwner, GitRepoName string
 	ApplyWorkflowYAML         string
 	StackName                 string
+	ProjectID, ClusterID      uint
 }
 
-func OpenGithubPR(opts GithubPROpts) error {
+func OpenGithubPR(opts *GithubPROpts) error {
 	// get the repository to find the default branch
 	repo, _, err := opts.Client.Repositories.Get(
 		context.TODO(),
@@ -75,56 +76,33 @@ func OpenGithubPR(opts GithubPROpts) error {
 	return nil
 }
 
-func getStackApplyActionYAML(opts *EnvOpts) ([]byte, error) {
+func GetStackApplyActionYAML(opts *EnvOpts) ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
-		getCreatePreviewEnvStep(
+		getSetTagStep(),
+		getDeployStackStep(
 			opts.ServerURL,
 			getPreviewEnvSecretName(opts.ProjectID, opts.ClusterID, opts.InstanceName),
+			opts.StackName,
+			"v0.1.0",
 			opts.ProjectID,
 			opts.ClusterID,
-			opts.GitInstallationID,
-			opts.GitRepoOwner,
-			opts.GitRepoName,
-			"v0.2.1",
 		),
 	}
 
 	actionYAML := GithubActionYAML{
-		On: map[string]interface{}{
-			"workflow_dispatch": map[string]interface{}{
-				"inputs": map[string]interface{}{
-					"pr_number": map[string]interface{}{
-						"description": "Pull request number",
-						"type":        "string",
-						"required":    true,
-					},
-					"pr_title": map[string]interface{}{
-						"description": "Pull request title",
-						"type":        "string",
-						"required":    true,
-					},
-					"pr_branch_from": map[string]interface{}{
-						"description": "Pull request head branch",
-						"type":        "string",
-						"required":    true,
-					},
-					"pr_branch_into": map[string]interface{}{
-						"description": "Pull request base branch",
-						"type":        "string",
-						"required":    true,
-					},
+		On: GithubActionYAMLOnPush{
+			Push: GithubActionYAMLOnPushBranches{
+				Branches: []string{
+					opts.Branch,
 				},
 			},
 		},
-		Name: "Porter Preview Environment",
+		Name: "Deploy to Porter",
 		Jobs: map[string]GithubActionYAMLJob{
-			"porter-preview": {
+			"porter-deploy": {
 				RunsOn: "ubuntu-latest",
-				Concurrency: map[string]string{
-					"group": "${{ github.workflow }}-${{ github.event.inputs.pr_number }}",
-				},
-				Steps: gaSteps,
+				Steps:  gaSteps,
 			},
 		},
 	}

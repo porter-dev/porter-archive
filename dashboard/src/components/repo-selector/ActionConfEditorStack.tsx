@@ -64,6 +64,7 @@ const ActionConfEditorStack: React.FC<Props> = (props) => {
           onClick={() => {
             setActionConfig({ ...defaultActionConfig });
             setBranch("");
+            props.setFolderPath("");
             props.setDockerfilePath("");
           }}
         >

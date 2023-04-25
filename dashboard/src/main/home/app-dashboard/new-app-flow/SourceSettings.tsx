@@ -11,6 +11,7 @@ import { ActionConfigType } from "shared/types";
 import { RouteComponentProps } from "react-router";
 import { Context } from "shared/Context";
 import ActionConfBranchSelector from "components/repo-selector/ActionConfBranchSelector";
+import DetectContentsList from "components/repo-selector/DetectContentsList";
 
 type PropsType = RouteComponentProps & {
   source: SourceType | undefined;
@@ -73,17 +74,6 @@ class SourceSettings extends Component<PropsType, StateType> {
         {
           <>
             {" "}
-            {/* <CloseButton
-        onClick={() => {
-          setSourceType("");
-          setDockerfilePath("");
-          setFolderPath("");
-          setProcfilePath("");
-          setProcfileProcess("");
-        }}
-      >
-        <i className="material-icons">close</i>
-      </CloseButton> */}
             <Subtitle>
               Provide a repo folder to use as source.
               {/* <Highlight
@@ -196,12 +186,13 @@ class SourceSettings extends Component<PropsType, StateType> {
         <Text color="helper">Specify your application root path.</Text>
         <Spacer y={0.5} />
         <Input
+          disabled={!this.props.branch ? true : false}
           placeholder="ex: ./"
-          value=""
+          value={this.props.folderPath}
           width="100%"
-          setValue={(e) => {}}
+          setValue={this.props.setFolderPath}
         />
-        <Spacer y={0.5} />
+        {/* <Spacer y={0.5} />
         <Text color="helper">
           Specify your porter.yaml path. <a>&nbsp;What is this?</a>
         </Text>
@@ -212,13 +203,23 @@ class SourceSettings extends Component<PropsType, StateType> {
           width="100%"
           setValue={(e) => {}}
         />
-        <Spacer y={1} />
-        <DetectedBuildMessage>
-          <i className="material-icons">check</i>
-          Detected Dockerfile at ./Dockerfile
-        </DetectedBuildMessage>
-        <Spacer y={1} />
-        <AdvancedBuildSettings />
+        */}
+        {this.props.actionConfig.git_repo && this.props.branch ? (
+          <DetectContentsList
+            actionConfig={this.props.actionConfig}
+            branch={this.props.branch}
+            dockerfilePath={this.props.dockerfilePath}
+            procfilePath={this.props.procfilePath}
+            folderPath={this.props.folderPath}
+            setActionConfig={this.props.setActionConfig}
+            setDockerfilePath={(x: string) => this.props.setDockerfilePath(x)}
+            setProcfilePath={(x: string) => this.props.setProcfilePath(x)}
+            setProcfileProcess={(x: string) => this.props.setProcfileProcess(x)}
+            setFolderPath={(x: string) => this.props.setFolderPath(x)}
+          />
+        ) : (
+          <></>
+        )}
       </>
     );
   };

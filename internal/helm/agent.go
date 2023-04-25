@@ -431,13 +431,73 @@ func (a *Agent) InstallChart(
 	}
 
 	if req := conf.Chart.Metadata.Dependencies; req != nil {
-		if err := action.CheckDependencies(conf.Chart, req); err != nil {
-			// TODO: Handle dependency updates.
-			return nil, err
+		for _, dep := range req {
+			depChart, err := loader.LoadChartPublic(dep.Repository, dep.Name, dep.Version)
+			if err != nil {
+				return nil, fmt.Errorf("error retrieving chart dependency %s/%s-%s: %s", dep.Repository, dep.Name, dep.Version, err.Error())
+			}
+
+			conf.Chart.AddDependency(depChart)
 		}
 	}
 
 	return cmd.Run(conf.Chart, conf.Values)
+}
+
+// UpgradeInstallChart installs a new chart if it doesn't exist, otherwise it upgrades it
+func (a *Agent) UpgradeInstallChart(
+	conf *InstallChartConfig,
+	doAuth *oauth2.Config,
+	disablePullSecretsInjection bool,
+) (*release.Release, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
+		}
+	}()
+
+	cmd := action.NewUpgrade(a.ActionConfig)
+	cmd.Install = true
+
+	if cmd.Version == "" && cmd.Devel {
+		cmd.Version = ">0.0.0-0"
+	}
+
+	cmd.Namespace = conf.Namespace
+	cmd.Timeout = 300 * time.Second
+
+	if err := checkIfInstallable(conf.Chart); err != nil {
+		return nil, err
+	}
+
+	var err error
+
+	cmd.PostRenderer, err = NewPorterPostrenderer(
+		conf.Cluster,
+		conf.Repo,
+		a.K8sAgent,
+		conf.Namespace,
+		conf.Registries,
+		doAuth,
+		disablePullSecretsInjection,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if req := conf.Chart.Metadata.Dependencies; req != nil {
+		for _, dep := range req {
+			depChart, err := loader.LoadChartPublic(dep.Repository, dep.Name, dep.Version)
+			if err != nil {
+				return nil, fmt.Errorf("error retrieving chart dependency %s/%s-%s: %s", dep.Repository, dep.Name, dep.Version, err.Error())
+			}
+
+			conf.Chart.AddDependency(depChart)
+		}
+	}
+
+	return cmd.Run(conf.Name, conf.Chart, conf.Values)
 }
 
 // UninstallChart uninstalls a chart

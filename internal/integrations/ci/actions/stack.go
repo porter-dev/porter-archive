@@ -17,6 +17,7 @@ type GithubPROpts struct {
 	ProjectID, ClusterID      uint
 	PorterToken               string
 	ServerURL                 string
+	DefaultBranch             string
 }
 
 type GetStackApplyActionYAMLOpts struct {
@@ -41,24 +42,12 @@ func OpenGithubPR(opts *GithubPROpts) error {
 		return err
 	}
 
-	// get the repository to find the default branch
-	repo, _, err := opts.Client.Repositories.Get(
-		context.TODO(),
-		opts.GitRepoOwner,
-		opts.GitRepoName,
-	)
-	if err != nil {
-		return err
-	}
-
-	defaultBranch := repo.GetDefaultBranch()
-
 	applyWorkflowYAML, err := getStackApplyActionYAML(&GetStackApplyActionYAMLOpts{
 		ServerURL:     opts.ServerURL,
 		ClusterID:     opts.ClusterID,
 		ProjectID:     opts.ProjectID,
 		StackName:     opts.StackName,
-		DefaultBranch: defaultBranch,
+		DefaultBranch: opts.DefaultBranch,
 		SecretName:    secretName,
 	})
 	if err != nil {
@@ -68,7 +57,7 @@ func OpenGithubPR(opts *GithubPROpts) error {
 	err = createNewBranch(opts.Client,
 		opts.GitRepoOwner,
 		opts.GitRepoName,
-		defaultBranch,
+		opts.DefaultBranch,
 		"porter-stack")
 	if err != nil {
 		return fmt.Errorf(
@@ -76,7 +65,7 @@ func OpenGithubPR(opts *GithubPROpts) error {
 				"To enable Porter Preview Environment deployments, please create Github workflow "+
 				"files in this branch with the following contents:\n"+
 				"--------\n%s--------\nERROR: %w",
-			defaultBranch, string(applyWorkflowYAML), ErrCreatePRForProtectedBranch,
+			opts.DefaultBranch, string(applyWorkflowYAML), ErrCreatePRForProtectedBranch,
 		)
 	}
 
@@ -93,14 +82,14 @@ func OpenGithubPR(opts *GithubPROpts) error {
 				"To enable Porter Preview Environment deployments, please create Github workflow "+
 				"files in this branch with the following contents:\n"+
 				"--------\n%s--------\nERROR: %w",
-			defaultBranch, string(applyWorkflowYAML), ErrCreatePRForProtectedBranch,
+			opts.DefaultBranch, string(applyWorkflowYAML), ErrCreatePRForProtectedBranch,
 		)
 	}
 
 	_, _, err = opts.Client.PullRequests.Create(
 		context.Background(), opts.GitRepoOwner, opts.GitRepoName, &github.NewPullRequest{
 			Title: github.String("Enable Porter Preview Environment deployments"),
-			Base:  github.String(defaultBranch),
+			Base:  github.String(opts.DefaultBranch),
 			Head:  github.String("porter-preview"),
 		},
 	)

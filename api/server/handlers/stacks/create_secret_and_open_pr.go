@@ -11,7 +11,6 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
-	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
@@ -34,25 +33,16 @@ func NewOpenStackPRHandler(
 }
 
 func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	gaid := c.Config().GithubAppConf.AppID
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
-	if !ok {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to get github owner and name params")))
-		return
-	}
-
-	// create the environment
 	request := &types.CreateSecretAndOpenGitHubPullRequest{}
-
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
 
-	client, err := getGithubClient(c.Config(), gaid)
+	client, err := getGithubClient(c.Config(), request.GithubAppInstallationID)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -73,8 +63,8 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if request.OpenPr {
 		err = actions.OpenGithubPR(&actions.GithubPROpts{
 			Client:       client,
-			GitRepoOwner: owner,
-			GitRepoName:  name,
+			GitRepoOwner: request.GithubRepoOwner,
+			GitRepoName:  request.GithubRepoName,
 			StackName:    request.StackName,
 			ProjectID:    project.ID,
 			ClusterID:    cluster.ID,

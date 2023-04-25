@@ -78,7 +78,7 @@ const CloudFormationForm: React.FC<Props> = ({
     let externalId = getExternalId();
     let trustArn = process.env.TRUST_ARN ? process.env.TRUST_ARN : "arn:aws:iam::108458755588:role/CAPIManagement";
     window.open(
-      `https://console.aws.amazon.com/cloudformation/home?
+      `https://us-east-1.console.aws.amazon.com/cloudformation/home?
       #/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`
     )
   }

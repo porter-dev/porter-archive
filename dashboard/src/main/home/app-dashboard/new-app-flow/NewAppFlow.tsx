@@ -25,6 +25,7 @@ import SourceSelector, { SourceType } from "./SourceSelector";
 import SourceSettings from "./SourceSettings"
 import Services from "./Services";
 import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import Select from "components/porter/Select";
 import GithubActionModal from "./GithubActionModal";
 
 type Props = RouteComponentProps & {
@@ -67,6 +68,7 @@ const NewAppFlow: React.FC<Props> = ({
 
   return (
     <CenterWrapper>
+      <Div>
       <StyledConfigureTemplate>
         <Back to="/apps" />
         <DashboardHeader
@@ -93,7 +95,7 @@ const NewAppFlow: React.FC<Props> = ({
               <Input
                 placeholder="ex: academic-sophon"
                 value={formState.applicationName}
-                width="100%"
+                width="300px"
                 setValue={(e) => {
                   setFormState({ ...formState, applicationName: e })
                   if (Validators.applicationName(e)) {
@@ -162,7 +164,7 @@ const NewAppFlow: React.FC<Props> = ({
               <Input
                 placeholder="yarn ./scripts/run-migrations.js"
                 value={""}
-                width="100%"
+                width="300px"
                 setValue={(e) => { }}
               />
             </>
@@ -173,12 +175,18 @@ const NewAppFlow: React.FC<Props> = ({
           DEPLYOY
         </Button>
       </StyledConfigureTemplate>
+      </Div>
       {showGHAModal && <GithubActionModal closeModal={() => setShowGHAModal(false)} />}
     </CenterWrapper>
   );
 };
 
 export default withRouter(NewAppFlow);
+
+const Div = styled.div`
+  width: 100%;
+  max-width: 900px;
+`;
 
 const CenterWrapper = styled.div`
   width: 100%;

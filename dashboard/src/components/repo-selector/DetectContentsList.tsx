@@ -60,14 +60,13 @@ export default class DetectContentsList extends Component<
     showingBuildContextPrompt: true,
   };
 
-  componentDidMount() {
-    this.updateContents();
-  }
-
   setSubdirectory = (x: string) => {
     this.setState({ currentDir: x }, () => this.updateContents());
   };
 
+  componentDidMount() {
+    this.updateContents();
+  }
   fetchContents = () => {
     let { currentProject } = this.context;
     const { actionConfig, branch } = this.props;
@@ -145,39 +144,6 @@ export default class DetectContentsList extends Component<
     );
   };
 
-  fetchProcfileContent = (procfilePath: string) => {
-    let { currentProject } = this.context;
-    let { actionConfig, branch } = this.props;
-    if (actionConfig.kind === "github") {
-      return api.getProcfileContents(
-        "<token>",
-        {
-          path: procfilePath,
-        },
-        {
-          project_id: currentProject.id,
-          git_repo_id: actionConfig.git_repo_id,
-          kind: "github",
-          owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
-        }
-      );
-    }
-
-    return api.getGitlabProcfileContents(
-      "<token>",
-      { path: procfilePath },
-      {
-        project_id: currentProject.id,
-        integration_id: actionConfig.gitlab_integration_id,
-        owner: actionConfig.git_repo.split("/")[0],
-        name: actionConfig.git_repo.split("/")[1],
-        branch: branch,
-      }
-    );
-  };
-
   updateContents = () => {
     // Get branch contents
     this.fetchContents()
@@ -218,17 +184,6 @@ export default class DetectContentsList extends Component<
           },
         });
       });
-
-    let ppath =
-      this.props.procfilePath ||
-      `${this.state.currentDir ? this.state.currentDir : "."}/Procfile`;
-    this.fetchProcfileContent(ppath)
-      .then(({ data }) => {
-        this.setState({ processes: data });
-      })
-      .catch((err) => {
-        console.log(err);
-      });
   };
 
   renderContentList = () => {
@@ -242,10 +197,9 @@ export default class DetectContentsList extends Component<
     } else if (error || !contents) {
       return <LoadingWrapper>Error loading repo contents.</LoadingWrapper>;
     }
-    return contents.map((item: FileType, i: number) => {
+    let contentsMap = contents.map((item: FileType, i: number) => {
       let splits = item.path.split("/");
       let fileName = splits[splits.length - 1];
-      console.log(fileName);
       if (fileName.includes("Dockerfile")) {
         this.props.setDockerfilePath(item.path);
         return (
@@ -256,6 +210,26 @@ export default class DetectContentsList extends Component<
         );
       }
     });
+
+    if (this.props.dockerfilePath) {
+      return contentsMap;
+    } else {
+      this.detectBuildpacks()
+        .then(({ data }) => {
+          this.setState({
+            autoBuildpack: data,
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+          this.setState({
+            autoBuildpack: {
+              valid: false,
+            },
+          });
+        });
+      return contentsMap;
+    }
   };
 
   renderJumpToParent = () => {
@@ -446,8 +420,7 @@ export default class DetectContentsList extends Component<
     return (
       <>
         {this.renderContentList()}
-
-        {this.state.autoBuildpack && this.state.autoBuildpack.valid ? (
+        {this.state.autoBuildpack ? (
           <Banner>
             <i className="material-icons">info</i>{" "}
             <p>

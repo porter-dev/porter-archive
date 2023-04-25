@@ -109,7 +109,7 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
       searchValue,
       {
         isCaseSensitive: false,
-        keys: ["pr_title", "branch_from", "branch_into"],
+        keys: ["pr_title"],
       }
     );
 

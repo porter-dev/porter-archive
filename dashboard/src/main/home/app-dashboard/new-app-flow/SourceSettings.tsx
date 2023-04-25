@@ -11,6 +11,7 @@ import { ActionConfigType } from "shared/types";
 import { RouteComponentProps } from "react-router";
 import { Context } from "shared/Context";
 import ActionConfBranchSelector from "components/repo-selector/ActionConfBranchSelector";
+import DetectContentsList from "components/repo-selector/DetectContentsList";
 
 type PropsType = RouteComponentProps & {
   source: SourceType | undefined;
@@ -203,6 +204,22 @@ class SourceSettings extends Component<PropsType, StateType> {
           setValue={(e) => {}}
         />
         */}
+        {this.props.actionConfig.git_repo && this.props.branch ? (
+          <DetectContentsList
+            actionConfig={this.props.actionConfig}
+            branch={this.props.branch}
+            dockerfilePath={this.props.dockerfilePath}
+            procfilePath={this.props.procfilePath}
+            folderPath={this.props.folderPath}
+            setActionConfig={this.props.setActionConfig}
+            setDockerfilePath={(x: string) => this.props.setDockerfilePath(x)}
+            setProcfilePath={(x: string) => this.props.setProcfilePath(x)}
+            setProcfileProcess={(x: string) => this.props.setProcfileProcess(x)}
+            setFolderPath={(x: string) => this.props.setFolderPath(x)}
+          />
+        ) : (
+          <></>
+        )}
         <Spacer y={1} />
         <DetectedBuildMessage>
           <i className="material-icons">check</i>

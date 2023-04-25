@@ -164,6 +164,19 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
   return `/api/email/verify/initiate`;
 });
 
+const createPorterApp = baseApi<
+  {
+    name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  let { project_id, cluster_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/update_config`;
+});
+
 const createEnvironment = baseApi<
   {
     name: string;
@@ -2443,6 +2456,7 @@ export default {
   createPasswordResetVerify,
   createPasswordResetFinalize,
   createProject,
+  createPorterApp,
   createConfigMap,
   deleteCluster,
   deleteConfigMap,

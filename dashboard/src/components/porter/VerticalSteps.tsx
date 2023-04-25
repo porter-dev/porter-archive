@@ -16,7 +16,7 @@ const VerticalSteps: React.FC<Props> = ({
     <StyledVerticalSteps>
       {steps.map((step, i) => {
         return (
-          <StepWrapper>
+          <StepWrapper isLast={i === steps.length - 1}>
             {
               (i !== steps.length - 1) && (
                 <Line isActive={i + 1 <= currentStep} />
@@ -83,10 +83,11 @@ const OpacityWrapper = styled.div<{
 `;
 
 const StepWrapper = styled.div<{
+  isLast: boolean;
 }>`
   padding-left: 30px;
   position: relative;
-  margin-bottom: 35px;
+  margin-bottom: ${props => props.isLast ? "" : "35px"};
 `;
 
 const StyledVerticalSteps = styled.div<{

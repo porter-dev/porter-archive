@@ -44,7 +44,7 @@ func getStackRoutes(
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) ([]*router.Route, *types.Path) {
-	relPath := "/stacks/{stack}"
+	relPath := "/stacks"
 
 	newPath := &types.Path{
 		Parent:       basePath,
@@ -53,13 +53,14 @@ func getStackRoutes(
 
 	var routes []*router.Route
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks -> stacks.NewCreateStackHandler
 	createEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/deployments",
+				RelativePath: relPath,
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -81,13 +82,14 @@ func getStackRoutes(
 		Router:   r,
 	})
 
+	// PATCH /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack} -> stacks.NewUpdateStackHandler
 	updateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPatch,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath,
+				RelativePath: relPath + "/{stack}",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

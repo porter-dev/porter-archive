@@ -139,7 +139,6 @@ func (t *DeployStackHook) createStack(client *api.Client, stackConf StackConfig)
 		context.Background(),
 		t.ProjectID,
 		t.ClusterID,
-		t.StackName,
 		&types.CreateStackReleaseRequest{
 			StackName:    t.StackName,
 			Values:       convertMap(stackConf.Values).(map[string]interface{}),

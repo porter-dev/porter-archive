@@ -11,13 +11,12 @@ import (
 func (c *Client) CreateStack(
 	ctx context.Context,
 	projectID, clusterID uint,
-	stackName string,
 	req *types.CreateStackReleaseRequest,
 ) error {
 	return c.postRequest(
 		fmt.Sprintf(
-			"/projects/%d/clusters/%d/stacks/%s/deployments",
-			projectID, clusterID, stackName,
+			"/projects/%d/clusters/%d/stacks",
+			projectID, clusterID,
 		),
 		req,
 		nil,

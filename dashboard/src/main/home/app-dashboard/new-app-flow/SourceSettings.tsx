@@ -220,13 +220,6 @@ class SourceSettings extends Component<PropsType, StateType> {
         ) : (
           <></>
         )}
-        <Spacer y={1} />
-        <DetectedBuildMessage>
-          <i className="material-icons">check</i>
-          Detected Dockerfile at ./Dockerfile
-        </DetectedBuildMessage>
-        <Spacer y={1} />
-        <AdvancedBuildSettings />
       </>
     );
   };

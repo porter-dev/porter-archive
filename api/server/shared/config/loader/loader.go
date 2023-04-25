@@ -3,7 +3,6 @@ package loader
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -201,11 +200,6 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			Scopes:       []string{"read:user"},
 			BaseURL:      sc.ServerURL,
 		}, sc.GithubAppName, sc.GithubAppWebhookSecret, sc.GithubAppSecretPath, int64(AppID))
-
-		secret, err := ioutil.ReadFile(sc.GithubAppSecretPath)
-		if err != nil {
-			return nil, fmt.Errorf("could not read github app secret: %s", err)
-		}
 	}
 
 	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {

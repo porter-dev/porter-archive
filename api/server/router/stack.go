@@ -110,5 +110,36 @@ func getStackRoutes(
 		Handler:  updateHandler,
 		Router:   r,
 	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack}/pr -> stacks.NewOpenStackPRHandler
+	openPREndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/{stack}/pr",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.GitInstallationScope,
+			},
+		},
+	)
+
+	openPRHandler := stacks.NewOpenStackPRHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: openPREndpoint,
+		Handler:  openPRHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

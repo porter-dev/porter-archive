@@ -62,6 +62,9 @@ const machineTypeOptions = [
   { value: "t3.medium", label: "t3.medium" },
   { value: "t3.xlarge", label: "t3.xlarge" },
   { value: "t3.2xlarge", label: "t3.2xlarge" },
+  { value: "m6a.large", label: "m6a.large" },
+  { value: "m6a.xlarge", label: "m6a.xlarge" },
+  { value: "m6a.2xlarge", label: "m6a.2xlarge" },
 ];
 
 const costMapping: Record<string, number> = {

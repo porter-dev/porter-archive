@@ -19,7 +19,7 @@ export type WorkerService = SharedServiceParams & {
     targetRAMUtilizationPercentage: string;
 }
 const WorkerService = {
-    empty: (name: string): WorkerService => ({
+    default: (name: string): WorkerService => ({
         name,
         cpu: '',
         ram: '',
@@ -41,7 +41,7 @@ export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
     customDomain?: string;
 }
 const WebService = {
-    empty: (name: string): WebService => ({
+    default: (name: string): WebService => ({
         name,
         cpu: '',
         ram: '',
@@ -53,7 +53,7 @@ const WebService = {
         maxReplicas: '10',
         targetCPUUtilizationPercentage: '50',
         targetRAMUtilizationPercentage: '50',
-        port: '8080',
+        port: '80',
         generateUrlForExternalTraffic: true,
     }),
 }
@@ -64,7 +64,7 @@ export type JobService = SharedServiceParams & {
     cronSchedule: string;
 }
 const JobService = {
-    empty: (name: string): JobService => ({
+    default: (name: string): JobService => ({
         name,
         cpu: '',
         ram: '',
@@ -78,10 +78,10 @@ const JobService = {
 export const createDefaultService = (name: string, type: ServiceType) => {
     switch (type) {
         case 'web':
-            return WebService.empty(name);
+            return WebService.default(name);
         case 'worker':
-            return WorkerService.empty(name);
+            return WorkerService.default(name);
         case 'job':
-            return JobService.empty(name);
+            return JobService.default(name);
     }
 }

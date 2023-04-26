@@ -1,6 +1,7 @@
 package stacks
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 
@@ -42,15 +43,23 @@ func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	stackName := request.StackName
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
-	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
+	porterYamlBase64 := request.PorterYAMLBase64
+	porterYaml, err := base64.StdEncoding.DecodeString(porterYamlBase64)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding porter yaml: %w", err)))
 		return
 	}
 
-	chart, err := createChartFromDependencies(request.Dependencies)
+	imageInfo := request.ImageInfo
+	chart, values, err := parse(porterYaml, &imageInfo, c.Config(), cluster.ProjectID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating chart: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error with test: %w", err)))
+		return
+	}
+
+	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
 		return
 	}
 
@@ -64,7 +73,7 @@ func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Chart:      chart,
 		Name:       stackName,
 		Namespace:  namespace,
-		Values:     request.Values,
+		Values:     values,
 		Cluster:    cluster,
 		Repo:       c.Repo(),
 		Registries: registries,

@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/porter-dev/porter/api/types"
 )
@@ -11,13 +10,7 @@ import (
 func (c *Client) AuthCheck(ctx context.Context) (*types.GetAuthenticatedUserResponse, error) {
 	resp := &types.GetAuthenticatedUserResponse{}
 
-	err := c.getRequest(
-		fmt.Sprintf(
-			"/users/current",
-		),
-		nil,
-		resp,
-	)
+	err := c.getRequest("/users/current", nil, resp)
 
 	return resp, err
 }
@@ -26,26 +19,14 @@ func (c *Client) AuthCheck(ctx context.Context) (*types.GetAuthenticatedUserResp
 func (c *Client) Login(ctx context.Context, req *types.LoginUserRequest) (*types.GetAuthenticatedUserResponse, error) {
 	resp := &types.GetAuthenticatedUserResponse{}
 
-	err := c.postRequest(
-		fmt.Sprintf(
-			"/login",
-		),
-		req,
-		resp,
-	)
+	err := c.postRequest("/login", req, resp)
 
 	return resp, err
 }
 
 // Logout logs the user out and deauthorizes the cookie-based session
 func (c *Client) Logout(ctx context.Context) error {
-	err := c.postRequest(
-		fmt.Sprintf(
-			"/logout",
-		),
-		nil,
-		nil,
-	)
+	err := c.postRequest("/logout", nil, nil)
 	if err != nil {
 		return err
 	}
@@ -61,13 +42,7 @@ func (c *Client) CreateUser(
 ) (*types.CreateUserResponse, error) {
 	resp := &types.CreateUserResponse{}
 
-	err := c.postRequest(
-		fmt.Sprintf(
-			"/users",
-		),
-		req,
-		resp,
-	)
+	err := c.postRequest("/users", req, resp)
 
 	return resp, err
 }
@@ -76,13 +51,7 @@ func (c *Client) CreateUser(
 func (c *Client) ListUserProjects(ctx context.Context) (*types.ListUserProjectsResponse, error) {
 	resp := &types.ListUserProjectsResponse{}
 
-	err := c.getRequest(
-		fmt.Sprintf(
-			"/projects",
-		),
-		nil,
-		resp,
-	)
+	err := c.getRequest("/projects", nil, resp)
 
 	return resp, err
 }
@@ -91,11 +60,5 @@ func (c *Client) ListUserProjects(ctx context.Context) (*types.ListUserProjectsR
 func (c *Client) DeleteUser(
 	ctx context.Context,
 ) error {
-	return c.deleteRequest(
-		fmt.Sprintf(
-			"/users/current",
-		),
-		nil,
-		nil,
-	)
+	return c.deleteRequest("/users/current", nil, nil)
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -75,6 +74,9 @@ func NewClientWithToken(baseURL, token string) *Client {
 func (c *Client) getRequest(relPath string, data interface{}, response interface{}) error {
 	vals := make(map[string][]string)
 	err := schema.NewEncoder().Encode(data, vals)
+	if err != nil {
+		return fmt.Errorf("error encoding data for GET request: %w", err)
+	}
 
 	urlVals := url.Values(vals)
 	encodedURLVals := urlVals.Encode()
@@ -100,7 +102,7 @@ func (c *Client) getRequest(relPath string, data interface{}, response interface
 
 	if httpErr, err := c.sendRequest(req, response, true); httpErr != nil || err != nil {
 		if httpErr != nil {
-			return fmt.Errorf("%v", httpErr.Error)
+			return fmt.Errorf("%s", httpErr.Error)
 		}
 
 		return err
@@ -156,7 +158,7 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 	}
 
 	if httpErr != nil {
-		return fmt.Errorf("%v", httpErr.Error)
+		return fmt.Errorf("%s", httpErr.Error)
 	}
 
 	return err
@@ -209,7 +211,7 @@ func (c *Client) patchRequest(relPath string, data interface{}, response interfa
 	}
 
 	if httpErr != nil {
-		return fmt.Errorf("%v", httpErr.Error)
+		return fmt.Errorf("%s", httpErr.Error)
 	}
 
 	return err
@@ -232,7 +234,7 @@ func (c *Client) deleteRequest(relPath string, data interface{}, response interf
 
 	if httpErr, err := c.sendRequest(req, response, true); httpErr != nil || err != nil {
 		if httpErr != nil {
-			return fmt.Errorf("%v", httpErr.Error)
+			return fmt.Errorf("%s", httpErr.Error)
 		}
 
 		return err
@@ -299,12 +301,12 @@ func (c *Client) saveCookie(cookie *http.Cookie) error {
 		return err
 	}
 
-	return ioutil.WriteFile(c.CookieFilePath, data, 0o644)
+	return os.WriteFile(c.CookieFilePath, data, 0o644)
 }
 
 // retrieves single cookie from file
 func (c *Client) getCookie() (*http.Cookie, error) {
-	data, err := ioutil.ReadFile(c.CookieFilePath)
+	data, err := os.ReadFile(c.CookieFilePath)
 	if err != nil {
 		return nil, err
 	}

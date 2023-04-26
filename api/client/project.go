@@ -72,13 +72,7 @@ func (c *Client) CreateProject(
 ) (*types.CreateProjectResponse, error) {
 	resp := &types.CreateProjectResponse{}
 
-	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects",
-		),
-		req,
-		resp,
-	)
+	err := c.postRequest("/projects", req, resp)
 
 	return resp, err
 }

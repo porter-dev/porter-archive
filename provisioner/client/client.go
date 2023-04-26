@@ -104,7 +104,7 @@ func (c *Client) getRequest(relPath string, data interface{}, response interface
 
 	if httpErr, err := c.sendRequest(req, response); httpErr != nil || err != nil {
 		if httpErr != nil {
-			return fmt.Errorf("%v", httpErr.Error)
+			return fmt.Errorf("%s", httpErr.Error)
 		}
 
 		return err
@@ -160,7 +160,7 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 	}
 
 	if httpErr != nil {
-		return fmt.Errorf("%v", httpErr.Error)
+		return fmt.Errorf("%s", httpErr.Error)
 	}
 
 	return err
@@ -183,7 +183,7 @@ func (c *Client) deleteRequest(relPath string, data interface{}, response interf
 
 	if httpErr, err := c.sendRequest(req, response); httpErr != nil || err != nil {
 		if httpErr != nil {
-			return fmt.Errorf("%v", httpErr.Error)
+			return fmt.Errorf("%s", httpErr.Error)
 		}
 
 		return err

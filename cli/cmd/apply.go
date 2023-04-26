@@ -162,18 +162,13 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 		}
 
-		appResGroup, err := stack.CreateV1ApplicationResources(client, fileBytes)
-		if err != nil {
-			return fmt.Errorf("error parsing porter.yaml for application resources: %w", err)
-		}
-
 		deployStackHook := &stack.DeployStackHook{
 			Client:               client,
 			StackName:            stackName,
 			ProjectID:            cliConf.Project,
 			ClusterID:            cliConf.Cluster,
-			AppResourceGroup:     appResGroup,
 			BuildImageDriverName: stack.GetBuildImageDriverName(),
+			PorterYAML:           fileBytes,
 		}
 		worker.RegisterHook("deploy-stack", deployStackHook)
 	} else {

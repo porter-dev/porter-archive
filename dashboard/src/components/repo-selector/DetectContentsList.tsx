@@ -84,6 +84,8 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
     return contents.map((item: FileType, i: number) => {
       let splits = item.path.split("/");
       let fileName = splits[splits.length - 1];
+      if (fileName.includes("porter.yaml")) {
+      }
       if (fileName.includes("Dockerfile")) {
         return (
           <AdvancedBuildSettings

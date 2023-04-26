@@ -48,13 +48,11 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   const [showingBuildContextPrompt, setShowingBuildContextPrompt] = useState(
     "buildpacks"
   );
-  const [porterYaml, setPorterYaml] = useState("");
-
   const context = useContext(Context);
   const fetchAndSetPorterYaml = useCallback(async (fileName: string) => {
     try {
       const response = await fetchPorterYamlContent(fileName);
-      setPorterYaml(atob(response.data));
+      props.setPorterYaml(atob(response.data));
     } catch (error) {
       console.error("Error fetching porter.yaml content:", error);
     }
@@ -67,9 +65,8 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
 
     if (porterYamlItem) {
       fetchAndSetPorterYaml("porter.yaml");
-    } else {
-      setPorterYaml("");
     }
+
   }, [contents, fetchAndSetPorterYaml]);
 
   useEffect(() => {
@@ -460,7 +457,7 @@ const Item = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected?: boolean }) =>
-      props.lastItem ? "#00000000" : "#606166"};
+    props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;
@@ -491,7 +488,7 @@ const FileItem = styled(Item)`
     props.isADocker ? "#fff" : "#ffffff55"};
   :hover {
     background: ${(props: { isADocker?: boolean }) =>
-      props.isADocker ? "#ffffff22" : "#ffffff11"};
+    props.isADocker ? "#ffffff22" : "#ffffff11"};
   }
 `;
 

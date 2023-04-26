@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext, useMemo } from "react";
 import styled from "styled-components";
 import _ from "lodash";
+import yaml from "js-yaml";
 
 import { hardcodedNames, hardcodedIcons } from "shared/hardcodedNameDict";
 import { Context } from "shared/Context";
@@ -35,6 +36,9 @@ import {
   FullGithubActionConfigType,
   GithubActionConfigType,
 } from "shared/types";
+import { z } from "zod";
+import { PorterYamlSchema } from "./schema";
+import { createDefaultService } from "./serviceTypes";
 
 type Props = RouteComponentProps & {};
 
@@ -110,6 +114,34 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     };
   };
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
+  const [porterJson, setPorterJson] = useState<z.infer<typeof PorterYamlSchema>>(null);
+
+  const validatePorterYaml = (yamlString: string) => {
+    let parsedYaml;
+    try {
+      parsedYaml = yaml.load(yamlString);
+      const parsedData = PorterYamlSchema.parse(parsedYaml);
+      const porterYaml = parsedData as z.infer<typeof PorterYamlSchema>;
+      setPorterJson(porterYaml)
+      // go through key value pairs and create services from them
+      const newServices = [];
+      for (const [name, app] of Object.entries(porterYaml.apps)) {
+        if (app.type) {
+          newServices.push(createDefaultService(name, app.type))
+        } else if (name.includes('web')) {
+          newServices.push(createDefaultService(name, 'web'))
+        } else {
+          newServices.push(createDefaultService(name, 'worker'))
+        }
+      }
+      setFormState({ ...formState, serviceList: [...formState.serviceList, ...newServices] });
+      if (Validators.serviceList(formState.serviceList)) {
+        setCurrentStep(Math.max(currentStep, 4));
+      }
+    } catch (error) {
+      console.log("Error converting porter yaml file to input: " + error)
+    }
+  }
 
   // Deploys a Helm chart and writes build settings to the DB
   const isAppNameValid = (name: string) => {
@@ -239,12 +271,20 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setProcfilePath={setProcfilePath}
                   setBuildConfig={setBuildConfig}
                   porterYaml={porterYaml}
-                  setPorterYaml={setPorterYaml}
+                  setPorterYaml={(newYaml: string) => {
+                    validatePorterYaml(newYaml)
+                  }}
                 />
               </>,
               <>
                 <Text size={16}>Application services</Text>
-                <Spacer y={1} />
+                <Spacer y={0.5} />
+                {porterJson && porterJson.apps && Object.keys(porterJson.apps).length > 0 &&
+                  <AppearingDiv>
+                    <Text size={16} color={"green"}>Autodetected {Object.keys(porterJson.apps).length} services from porter.yml</Text>
+                    <Spacer y={1} />
+                  </AppearingDiv>
+                }
                 <Services
                   setServices={(services: any[]) => {
                     setFormState({ ...formState, serviceList: services });
@@ -349,6 +389,21 @@ const Icon = styled.img`
   animation: floatIn 0.5s;
   animation-fill-mode: forwards;
 
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;
+
+const AppearingDiv = styled.div`
+  animation: floatIn 0.5s;
+  animation-fill-mode: forwards;
   @keyframes floatIn {
     from {
       opacity: 0;

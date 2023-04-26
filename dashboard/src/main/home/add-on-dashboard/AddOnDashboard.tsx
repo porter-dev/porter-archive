@@ -51,6 +51,7 @@ const templateBlacklist = [
   "web",
   "worker",
   "job",
+  "umbrella",
 ];
 
 const AppDashboard: React.FC<Props> = ({
@@ -62,22 +63,23 @@ const AppDashboard: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   const filteredAddOns = useMemo(() => {
-    const filteredBySearch = search(
-      addOns ?? [],
-      searchValue,
-      {
-        keys: ["name", "chart.metadata.name"],
-        isCaseSensitive: false,
-      }
-    );
-    const filtered = filteredBySearch.filter((app: any) => {
+    const filtered = addOns.filter((app: any) => {
       return (
         !namespaceBlacklist.includes(app.namespace) && 
         !templateBlacklist.includes(app.chart.metadata.name)
       );
     });
 
-    return _.sortBy(filtered);
+    const filteredBySearch = search(
+      filtered ?? [],
+      searchValue,
+      {
+        keys: ["name", "chart.metadata.name"],
+        isCaseSensitive: false,
+      }
+    );
+
+    return _.sortBy(filteredBySearch);
   }, [addOns, searchValue]);
 
   const getAddOns = async () => {
@@ -232,7 +234,7 @@ const AppDashboard: React.FC<Props> = ({
 export default AppDashboard;
 
 const PlaceholderIcon = styled.img`
-  height: 16px;
+  height: 13px;
   margin-right: 12px;
   opacity: 0.65;
 `;

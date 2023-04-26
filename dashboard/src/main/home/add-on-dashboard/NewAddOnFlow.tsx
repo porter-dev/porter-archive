@@ -152,7 +152,7 @@ const NewAddOnFlow: React.FC<Props> = ({
 export default NewAddOnFlow;
 
 const PlaceholderIcon = styled.img`
-  height: 16px;
+  height: 13px;
   margin-right: 12px;
   opacity: 0.65;
 `;

@@ -165,7 +165,14 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     <CenterWrapper>
       <Div>
         <StyledConfigureTemplate>
-          {/* ... */}
+          <Back to="/apps" />
+          <DashboardHeader
+            prefix={<Icon src={web} />}
+            title="Deploy a new application"
+            capitalize={false}
+            disableLineBreak
+          />
+          <DarkMatter />
           <VerticalSteps
             currentStep={currentStep}
             steps={[

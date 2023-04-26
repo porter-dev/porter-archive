@@ -36,6 +36,9 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
   const [showSettings, setShowSettings] = useState<boolean>(props.showSettings);
   const [buildView, setBuildView] = useState<string>(props.buildView);
 
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setBuildView(e.target.value);
+  };
   const createDockerView = () => {
     return (
       <>
@@ -103,17 +106,13 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
 
       <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
         <StyledSourceBox>
-          <ToggleWrapper>
-            <Toggle
-              items={[
-                { label: "Docker", value: "docker" },
-                { label: "Buildpacks", value: "buildpacks" },
-              ]}
-              active={buildView}
-              setActive={setBuildView}
-              highlightColor="#8590ff"
-            />
-          </ToggleWrapper>
+          <SelectWrapper>
+            <SelectLabel>Select Build Context</SelectLabel>
+            <StyledSelect value={buildView} onChange={handleSelectChange}>
+              <option value="docker">Docker</option>
+              <option value="buildpacks">Buildpacks</option>
+            </StyledSelect>
+          </SelectWrapper>
           <Spacer y={0.5} />
           {buildView === "docker" ? createDockerView() : createBuildpackView()}
         </StyledSourceBox>
@@ -176,6 +175,7 @@ const StyledSourceBox = styled.div`
 const ToggleWrapper = styled.div`
   display: flex;
   justify-content: center;
+  width: 100%;
 `;
 
 const StyledCard = styled.div`
@@ -248,5 +248,35 @@ const ActionButton = styled.button`
 
   > span {
     font-size: 20px;
+  }
+`;
+const SelectWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  align-items: center;
+`;
+
+const SelectLabel = styled.label`
+  color: #ffffff;
+  font-size: 13px;
+  margin-right: 8px;
+`;
+
+const StyledSelect = styled.select`
+  background-color: #26292e;
+  border: 1px solid #494b4f;
+  border-radius: 5px;
+  color: #aaaabb;
+  cursor: pointer;
+  font-size: 13px;
+  height: 30px;
+  outline: none;
+  padding: 0 8px;
+  width: 150px;
+
+  &:hover {
+    border: 1px solid #7a7b80;
+    color: #ffffff;
   }
 `;

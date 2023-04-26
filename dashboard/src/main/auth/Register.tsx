@@ -45,6 +45,7 @@ const Register: React.FC<Props> = ({
   const [hasGithub, setHasGithub] = useState(true);
   const [hasGoogle, setHasGoogle] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
+  const [buttonDisabled, setButtonDisabled] = useState(false);
 
   const handleRegister = (): void => {
     if (!emailRegex.test(email)) {
@@ -75,6 +76,8 @@ const Register: React.FC<Props> = ({
       password !== "" &&
       companyName !== ""
     ) {
+      setButtonDisabled(true);
+      
       // Attempt user registration
       api
         .registerUser(
@@ -98,10 +101,12 @@ const Register: React.FC<Props> = ({
 
           // Temp
           location.reload();
+          setButtonDisabled(false);
         })
         .catch((err) => {
-          console.log("registration:", err)
+          console.log("registration:", err);
           location.reload();
+          setButtonDisabled(false);
           if (err.response?.data?.error) {
             setCurrentError(err.response.data.error)
           }
@@ -309,7 +314,7 @@ const Register: React.FC<Props> = ({
               error={(passwordError && "")}
             />
             <Spacer height="30px" />
-            <Button onClick={handleRegister} width="100%" height="40px">
+            <Button disabled={buttonDisabled} onClick={handleRegister} width="100%" height="40px">
               Continue
             </Button>
           </>

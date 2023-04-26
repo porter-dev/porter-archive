@@ -10,35 +10,42 @@ import Spacer from "components/porter/Spacer";
 import WebTabs from "./WebTabs";
 import WorkerTabs from "./WorkerTabs";
 import JobTabs from "./JobTabs";
+import { Service } from "./serviceTypes";
 
 interface ServiceProps {
-  serviceData: ServiceType;
-  editService: (service: ServiceType) => void;
+  service: Service;
+  editService: (service: Service) => void;
   deleteService: () => void;
 }
 
-export type ServiceType = {
-  name: string;
-  type: string;
-  runCommand: string;
-  ram: number;
-  cpu: number;
-}
-
-export const DEFAULT_SERVICE: ServiceType = {
-  name: 'new-service',
-  type: '',
-  runCommand: '',
-  ram: 512,
-  cpu: 500,
-}
-
-const Service: React.FC<ServiceProps> = ({
-  serviceData,
+const ServiceContainer: React.FC<ServiceProps> = ({
+  service,
   deleteService,
   editService,
 }) => {
   const [showExpanded, setShowExpanded] = React.useState<boolean>(true)
+
+  const renderTabs = (service: Service) => {
+    switch (service.type) {
+      case 'web':
+        return <WebTabs service={service} editService={editService} />
+      case 'worker':
+        return <WorkerTabs service={service} editService={editService} />
+      case 'job':
+        return <JobTabs service={service} editService={editService} />
+    }
+  }
+
+  const renderIcon = (service: Service) => {
+    switch (service.type) {
+      case 'web':
+        return <Icon src={web} />
+      case 'worker':
+        return <Icon src={worker} />
+      case 'job':
+        return <Icon src={job} />
+    }
+  }
 
   return (
     <>
@@ -50,10 +57,8 @@ const Service: React.FC<ServiceProps> = ({
           <ActionButton >
             <span className="material-icons dropdown">arrow_drop_down</span>
           </ActionButton>
-          {serviceData.type === 'web' && <Icon src={web} />}
-          {serviceData.type === 'worker' && <Icon src={worker} />}
-          {serviceData.type === 'job' && <Icon src={job} />}
-          {serviceData.name !== DEFAULT_SERVICE.name && serviceData.name.trim().length > 0 ? serviceData.name : "New Service"}
+          {renderIcon(service)}
+          {service.name.trim().length > 0 ? service.name : "New Service"}
         </ServiceTitle>
         <ActionButton onClick={(e) => {
           deleteService();
@@ -65,9 +70,7 @@ const Service: React.FC<ServiceProps> = ({
         height={showExpanded ? "auto" : 0}
       >
         <StyledSourceBox showExpanded={showExpanded}>
-          {serviceData.type === 'web' && <WebTabs />}
-          {serviceData.type === 'worker' && <WorkerTabs />}
-          {serviceData.type === 'job' && <JobTabs />}
+          {renderTabs(service)}
         </StyledSourceBox>
       </AnimateHeight>
       <Spacer y={0.5} />
@@ -75,7 +78,7 @@ const Service: React.FC<ServiceProps> = ({
   )
 }
 
-export default Service;
+export default ServiceContainer;
 
 const ServiceTitle = styled.div`
     display: flex;

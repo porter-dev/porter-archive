@@ -4,11 +4,16 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import Checkbox from "components/porter/Checkbox";
+import { WorkerService } from "./serviceTypes";
 
 interface Props {
+  service: WorkerService
+  editService: (service: WorkerService) => void
 }
 
 const WorkerTabs: React.FC<Props> = ({
+  service,
+  editService
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>('main');
 
@@ -16,12 +21,12 @@ const WorkerTabs: React.FC<Props> = ({
     return (
       <>
         <Spacer y={1} />
-        <Input 
+        <Input
           label="Start command"
           placeholder="ex: sh start.sh"
-          value=""
+          value={service.startCommand}
           width="300px"
-          setValue={(e) => {}}
+          setValue={(e) => { editService({ ...service, startCommand: e }) }}
         />
       </>
     )
@@ -31,67 +36,67 @@ const WorkerTabs: React.FC<Props> = ({
     return (
       <>
         <Spacer y={1} />
-        <Input 
+        <Input
           label="CPUs"
           placeholder="ex: 0.5"
-          value=""
+          value={service.cpu}
           width="300px"
-          setValue={(e) => {}}
+          setValue={(e) => { editService({ ...service, cpu: e }) }}
         />
         <Spacer y={1} />
-        <Input 
+        <Input
           label="RAM (GB)"
           placeholder="ex: 1"
-          value=""
+          value={service.ram}
           width="300px"
-          setValue={(e) => {}}
+          setValue={(e) => { editService({ ...service, ram: e }) }}
         />
         <Spacer y={1} />
-        <Input 
+        <Input
           label="Replicas"
           placeholder="ex: 1"
-          value=""
+          value={service.replicas}
           width="300px"
-          setValue={(e) => {}}
+          setValue={(e) => { editService({ ...service, replicas: e }) }}
         />
         <Spacer y={1} />
         <Checkbox
-          checked={true}
-          toggleChecked={() => {}}
+          checked={service.autoscalingOn}
+          toggleChecked={() => { editService({ ...service, autoscalingOn: !service.autoscalingOn }) }}
         >
           <Text color="helper">Enable autoscaling (overrides replicas)</Text>
         </Checkbox>
         <Spacer y={1} />
-        <Input 
+        <Input
           label="Min replicas"
           placeholder="ex: 1"
-          value=""
+          value={service.minReplicas}
           width="300px"
-          setValue={(e) => {}}
+          setValue={(e) => { editService({ ...service, minReplicas: e }) }}
         />
         <Spacer y={1} />
-        <Input 
+        <Input
           label="Max replicas"
           placeholder="ex: 10"
-          value=""
+          value={service.maxReplicas}
           width="300px"
-          setValue={(e) => {}}
+          setValue={(e) => { editService({ ...service, maxReplicas: e }) }}
         />
         <Spacer y={1} />
-        <Input 
+        <Input
           label="Target CPU utilization (%)"
           placeholder="ex: 50"
-          value=""
+          value={service.targetCPUUtilizationPercentage}
           width="300px"
-          setValue={(e) => {}}
+          setValue={(e) => { editService({ ...service, targetCPUUtilizationPercentage: e }) }}
         />
         <Spacer y={1} />
-        <Input 
+        <Input
           label="Target RAM utilization (%)"
           placeholder="ex: 50"
-          value=""
+          value={service.targetRAMUtilizationPercentage}
           width="300px"
-          setValue={(e) => {}}
+          setValue={(e) => { editService({ ...service, targetRAMUtilizationPercentage: e }) }}
         />
       </>
     )

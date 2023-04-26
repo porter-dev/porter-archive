@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import Service, { DEFAULT_SERVICE, ServiceType } from "./Service";
+import ServiceContainer from "./ServiceContainer";
 import styled from "styled-components";
 import Spacer from "components/porter/Spacer";
 import Modal from "components/porter/Modal";
@@ -12,10 +12,11 @@ import Button from "components/porter/Button";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
+import { Service, ServiceType, createDefaultService } from "./serviceTypes";
 
 interface ServicesProps {
-  services: ServiceType[];
-  setServices: (services: ServiceType[]) => void;
+  services: Service[];
+  setServices: (services: Service[]) => void;
 }
 
 const Services: React.FC<ServicesProps> = ({
@@ -24,7 +25,7 @@ const Services: React.FC<ServicesProps> = ({
 }) => {
   const [showAddServiceModal, setShowAddServiceModal] = useState<boolean>(false);
   const [serviceName, setServiceName] = useState<string>('');
-  const [serviceType, setServiceType] = useState<string>('web');
+  const [serviceType, setServiceType] = useState<ServiceType>('web');
 
   return (
     <>
@@ -33,9 +34,9 @@ const Services: React.FC<ServicesProps> = ({
           <ServicesContainer>
             {services.map((service, index) => {
               return (
-                <Service
-                  serviceData={service}
-                  editService={(newService: ServiceType) => setServices(services.map((s, i) => i === index ? newService : s))}
+                <ServiceContainer
+                  service={service}
+                  editService={(newService: Service) => setServices(services.map((s, i) => i === index ? newService : s))}
                   deleteService={() => setServices(services.filter((_, i) => i !== index))}
                 />
               )
@@ -62,7 +63,8 @@ const Services: React.FC<ServicesProps> = ({
             </ServiceIcon>
             <Select
               value={serviceType}
-              setValue={setServiceType}
+              // this is ugly
+              setValue={(value: string) => setServiceType(value as ServiceType)}
               options={[
                 { label: 'Web', value: 'web' },
                 { label: 'Worker', value: 'worker' },
@@ -81,7 +83,7 @@ const Services: React.FC<ServicesProps> = ({
           />
           <Spacer y={1} />
           <Button onClick={() => {
-            setServices([...services, { ...DEFAULT_SERVICE, name: serviceName, type: serviceType }]);
+            setServices([...services, createDefaultService(serviceName, serviceType)]);
             setShowAddServiceModal(false);
             setServiceName('');
             setServiceType('web');

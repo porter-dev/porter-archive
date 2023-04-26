@@ -4,11 +4,16 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import Checkbox from "components/porter/Checkbox";
+import { JobService } from "./serviceTypes";
 
 interface Props {
+  service: JobService
+  editService: (service: JobService) => void
 }
 
 const JobTabs: React.FC<Props> = ({
+  service,
+  editService
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>('main');
 
@@ -16,20 +21,20 @@ const JobTabs: React.FC<Props> = ({
     return (
       <>
         <Spacer y={1} />
-        <Input 
+        <Input
           label="Start command"
           placeholder="ex: sh start.sh"
-          value=""
+          value={service.startCommand}
           width="300px"
-          setValue={(e) => {}}
+          setValue={(e) => { editService({ ...service, startCommand: e }) }}
         />
         <Spacer y={1} />
-        <Input 
+        <Input
           label="Cron schedule (leave blank to run manually)"
           placeholder="ex: */5 * * * *"
-          value=""
+          value={service.cronSchedule}
           width="300px"
-          setValue={(e) => {}}
+          setValue={(e) => { editService({ ...service, cronSchedule: e }) }}
         />
       </>
     )
@@ -39,20 +44,20 @@ const JobTabs: React.FC<Props> = ({
     return (
       <>
         <Spacer y={1} />
-        <Input 
+        <Input
           label="CPUs"
           placeholder="ex: 0.5"
-          value=""
+          value={service.cpu}
           width="300px"
-          setValue={(e) => {}}
+          setValue={(e) => { editService({ ...service, cpu: e }) }}
         />
         <Spacer y={1} />
-        <Input 
+        <Input
           label="RAM (GB)"
           placeholder="ex: 1"
-          value=""
+          value={service.ram}
           width="300px"
-          setValue={(e) => {}}
+          setValue={(e) => { editService({ ...service, ram: e }) }}
         />
       </>
     )
@@ -63,8 +68,8 @@ const JobTabs: React.FC<Props> = ({
       <>
         <Spacer y={1} />
         <Checkbox
-          checked={true}
-          toggleChecked={() => {}}
+          checked={service.jobsExecuteConcurrently}
+          toggleChecked={() => { editService({ ...service, jobsExecuteConcurrently: !service.jobsExecuteConcurrently }) }}
         >
           <Text color="helper">Allow jobs to execute concurrently</Text>
         </Checkbox>

@@ -119,6 +119,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         "<token>",
         {
           name: formState.applicationName,
+          repo_name: actionConfig.git_repo,
+          git_branch: branch,
+          build_context: folderPath,
+          builder: "heroku",
+          buildpacks: "nodejs,ruby",
+          dockerfile: "",
+
         },
         {
           cluster_id: currentCluster.id,

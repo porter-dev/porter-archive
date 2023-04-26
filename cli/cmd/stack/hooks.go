@@ -9,14 +9,12 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
-	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 )
 
 type DeployStackHook struct {
 	Client               *api.Client
 	StackName            string
 	ProjectID, ClusterID uint
-	AppResourceGroup     *switchboardTypes.ResourceGroup
 	BuildImageDriverName string
 	PorterYAML           []byte
 }
@@ -58,14 +56,10 @@ func (t *DeployStackHook) PostApply(driverOutput map[string]interface{}) error {
 		color.New(color.FgGreen).Printf("Found release for stack %s: attempting update\n", t.StackName)
 	}
 
-	return t.applyStack(t.AppResourceGroup, client, shouldCreate, driverOutput)
+	return t.applyStack(client, shouldCreate, driverOutput)
 }
 
-func (t *DeployStackHook) applyStack(applications *switchboardTypes.ResourceGroup, client *api.Client, shouldCreate bool, driverOutput map[string]interface{}) error {
-	if applications == nil {
-		return fmt.Errorf("no applications found")
-	}
-
+func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driverOutput map[string]interface{}) error {
 	var imageInfo types.ImageInfo
 	image, ok := driverOutput["image"].(string)
 	if ok && image != "" {

@@ -256,7 +256,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 />
               </>,
               <>
-                <Text size={16}>Services</Text>
+                <Text size={16}>Application services</Text>
                 <Spacer y={1} />
                 <Services
                   setServices={(services: any[]) => {

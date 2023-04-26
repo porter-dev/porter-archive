@@ -1,14 +1,15 @@
-import Input from "components/porter/Input";
 import React from "react"
 import AnimateHeight from "react-animate-height";
 import styled from "styled-components";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import TabSelector from "components/TabSelector";
 
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
+
+import Spacer from "components/porter/Spacer";
+import WebTabs from "./WebTabs";
+import WorkerTabs from "./WorkerTabs";
+import JobTabs from "./JobTabs";
 
 interface ServiceProps {
   serviceData: ServiceType;
@@ -39,22 +40,6 @@ const Service: React.FC<ServiceProps> = ({
 }) => {
   const [showExpanded, setShowExpanded] = React.useState<boolean>(true)
 
-  const renderServiceSettings = () => {
-    return (
-      <>
-        <TabSelector
-          options={[
-            { label: 'Web', value: 'web' },
-            { label: 'Worker', value: 'worker' },
-            { label: 'Cron', value: 'cron' },
-          ]}
-          currentTab="web"
-          setCurrentTab={(e) => {}}
-        />
-      </>
-    )
-  }
-
   return (
     <>
       <ServiceHeader
@@ -80,7 +65,9 @@ const Service: React.FC<ServiceProps> = ({
         height={showExpanded ? "auto" : 0}
       >
         <StyledSourceBox showExpanded={showExpanded}>
-          {renderServiceSettings()}
+          {serviceData.type === 'web' && <WebTabs />}
+          {serviceData.type === 'worker' && <WorkerTabs />}
+          {serviceData.type === 'job' && <JobTabs />}
         </StyledSourceBox>
       </AnimateHeight>
       <Spacer y={0.5} />
@@ -98,7 +85,7 @@ const ServiceTitle = styled.div`
 const StyledSourceBox = styled.div<{ showExpanded: boolean }>`
   width: 100%;
   color: #ffffff;
-  padding: 14px 25px 20px;
+  padding: 14px 25px 30px;
   position: relative;
   font-size: 13px;
   border-radius: 5px;
@@ -107,7 +94,6 @@ const StyledSourceBox = styled.div<{ showExpanded: boolean }>`
   border-top: 0px;
   border-top-left-radius: 0px;
   border-top-right-radius: 0px;
-  height: 400px;
 `;
 
 const ActionButton = styled.button`

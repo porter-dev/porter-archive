@@ -6,7 +6,7 @@ import (
 
 // PorterAppRepository represents the set of queries on the PorterApp model
 type PorterAppRepository interface {
-	CreatePorterApp(token *models.PorterApp) (*models.PorterApp, error)
+	CreatePorterApp(app *models.PorterApp) (*models.PorterApp, error)
 	ListPorterAppByClusterID(clusterID uint) ([]*models.PorterApp, error)
 	ReadPorterApp(clusterID uint, name string) (*models.PorterApp, error)
 	UpdatePorterApp(app *models.PorterApp) (*models.PorterApp, error)

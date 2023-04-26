@@ -51,6 +51,7 @@ type GormRepository struct {
 	monitor                   repository.MonitorTestResultRepository
 	apiContractRevisions      repository.APIContractRevisioner
 	awsAssumeRoleChainer      repository.AWSAssumeRoleChainer
+	porterApp                 repository.PorterAppRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -217,6 +218,10 @@ func (t *GormRepository) Stack() repository.StackRepository {
 	return t.stack
 }
 
+func (t *GormRepository) PorterApp() repository.PorterAppRepository {
+	return t.porterApp
+}
+
 func (t *GormRepository) MonitorTestResult() repository.MonitorTestResultRepository {
 	return t.monitor
 }
@@ -277,5 +282,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		monitor:                   NewMonitorTestResultRepository(db),
 		apiContractRevisions:      NewAPIContractRevisioner(db),
 		awsAssumeRoleChainer:      NewAWSAssumeRoleChainer(db),
+		porterApp:                 NewPorterAppRepository(db),
 	}
 }

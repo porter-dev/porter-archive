@@ -33,7 +33,22 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 	fmt.Println("congrats on making it!", cluster.ID, project.ID)
 
-	// _, err := c.Repo().PorterApp().CreatePorterApp(project.ID, cluster.ID)
+	app := &models.PorterApp{
+		Name:      "test",
+		ClusterID: cluster.ID,
+		ProjectID: project.ID,
+		GitBranch: "main",
+
+		BuildContext: "./",
+		Builder:      "heroku/buildpacks:18",
+		Buildpacks:   "nodejs",
+		Dockerfile:   "",
+	}
+
+	_, err := c.Repo().PorterApp().CreatePorterApp(app)
+	if err != nil {
+		return
+	}
 
 	w.WriteHeader(http.StatusCreated)
 }

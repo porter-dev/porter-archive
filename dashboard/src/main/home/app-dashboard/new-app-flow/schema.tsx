@@ -28,13 +28,14 @@ const buildSchema = z.object({
         return value.image != null;
     }
     return false;
-}, { message: "Invalid build configuration" });
+},
+    { message: "Invalid build configuration" });
 
 
 export const PorterYamlSchema = z.object({
     version: z.string().optional(),
-    build: buildSchema,
-    env: envSchema,
+    build: buildSchema.optional(),
+    env: envSchema.optional(),
     apps: appsSchema,
     release: z.string().optional(),
 });

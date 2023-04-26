@@ -80,6 +80,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<number>(0);
+  const [existingStep, setExistingStep] = useState<number>(0);
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
   const [actionConfig, setActionConfig] = useState<GithubActionConfigType>({
     ...defaultActionConfig,
@@ -111,9 +112,30 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
 
   // Deploys a Helm chart and writes build settings to the DB
+  const isAppNameValid = (name: string) => {
+    const regex = /^[a-z0-9-]+$/;
+    return regex.test(name);
+  };
+
+  const handleAppNameChange = (name: string) => {
+    setCurrentStep(currentStep);
+    setFormState({ ...formState, applicationName: name });
+    if (isAppNameValid(name) && Validators.applicationName(name)) {
+      setCurrentStep(Math.max(Math.max(currentStep, 1), existingStep));
+    } else {
+      setExistingStep(Math.max(currentStep, existingStep));
+      setCurrentStep(0);
+    }
+  };
+
+  const shouldHighlightAppNameInput = () => {
+    return (
+      formState.applicationName !== "" &&
+      !isAppNameValid(formState.applicationName)
+    );
+  };
   const deployPorterApp = async () => {
     try {
-
       // Write build settings to the DB
       const res = await api.createPorterApp(
         "<token>",
@@ -132,7 +154,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           project_id: currentProject.id,
         }
       );
-      alert("ok")
+      alert("ok");
     } catch (err) {
       console.log(err);
     }
@@ -144,14 +166,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     <CenterWrapper>
       <Div>
         <StyledConfigureTemplate>
-          <Back to="/apps" />
-          <DashboardHeader
-            prefix={<Icon src={web} />}
-            title="Deploy a new application"
-            capitalize={false}
-            disableLineBreak
-          />
-          <DarkMatter />
+          {/* ... */}
           <VerticalSteps
             currentStep={currentStep}
             steps={[
@@ -166,13 +181,15 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   placeholder="ex: academic-sophon"
                   value={formState.applicationName}
                   width="300px"
+                  error={
+                    shouldHighlightAppNameInput() &&
+                    'Lowercase letters, numbers, and "-" only.'
+                  }
                   setValue={(e) => {
-                    setFormState({ ...formState, applicationName: e });
-                    if (Validators.applicationName(e)) {
-                      setCurrentStep(Math.max(currentStep, 1));
-                    }
+                    handleAppNameChange(e);
                   }}
                 />
+                {shouldHighlightAppNameInput()}
               </>,
               <>
                 <Text size={16}>Deployment method</Text>

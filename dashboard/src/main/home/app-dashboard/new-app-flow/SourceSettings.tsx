@@ -75,6 +75,7 @@ const SourceSettings: React.FC<Props> = ({
   setProcfilePath,
   folderPath,
   setFolderPath,
+  setBuildConfig,
 }) => {
   const renderGithubSettings = () => {
     return (
@@ -89,12 +90,10 @@ const SourceSettings: React.FC<Props> = ({
           <ActionConfEditorStack
             actionConfig={actionConfig}
             setActionConfig={(actionConfig: ActionConfigType) => {
-              setActionConfig(
-                (currentActionConfig: ActionConfigType) => ({
-                  ...currentActionConfig,
-                  ...actionConfig,
-                })
-              );
+              setActionConfig((currentActionConfig: ActionConfigType) => ({
+                ...currentActionConfig,
+                ...actionConfig,
+              }));
               setImageUrl(actionConfig.image_repo_uri);
             }}
             setBranch={setBranch}
@@ -112,12 +111,10 @@ const SourceSettings: React.FC<Props> = ({
               actionConfig={actionConfig}
               branch={branch}
               setActionConfig={(actionConfig: ActionConfigType) => {
-                setActionConfig(
-                  (currentActionConfig: ActionConfigType) => ({
-                    ...currentActionConfig,
-                    ...actionConfig,
-                  })
-                );
+                setActionConfig((currentActionConfig: ActionConfigType) => ({
+                  ...currentActionConfig,
+                  ...actionConfig,
+                }));
                 setImageUrl(actionConfig.image_repo_uri);
               }}
               setBranch={setBranch}
@@ -148,6 +145,7 @@ const SourceSettings: React.FC<Props> = ({
             setProcfilePath={setProcfilePath}
             setProcfileProcess={setProcfileProcess}
             setFolderPath={setFolderPath}
+            setBuildConfig={setBuildConfig}
           />
         )}
       </>
@@ -174,25 +172,22 @@ const SourceSettings: React.FC<Props> = ({
   };
 
   return (
-      <SourceSettingsContainer>
-        {source && <Spacer y={1} />}
-        <AnimateHeight height={source ? "auto" : 0}>
-          <div>
-            {source === "github" ? (
-              renderGithubSettings()
-            ) : (
-              renderDockerSettings()
-            )}
-          </div>
-        </AnimateHeight>
-      </SourceSettingsContainer>
-  )
+    <SourceSettingsContainer>
+      {source && <Spacer y={1} />}
+      <AnimateHeight height={source ? "auto" : 0}>
+        <div>
+          {source === "github"
+            ? renderGithubSettings()
+            : renderDockerSettings()}
+        </div>
+      </AnimateHeight>
+    </SourceSettingsContainer>
+  );
 };
 
 export default SourceSettings;
 
-const SourceSettingsContainer = styled.div`
-`;
+const SourceSettingsContainer = styled.div``;
 
 const DarkMatter = styled.div<{ antiHeight?: string }>`
   width: 100%;

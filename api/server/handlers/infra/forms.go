@@ -747,6 +747,13 @@ tabs:
     - type: array-input
       variable: azs
       label: Availability Zones
+  - name: net_settings_single_az_nat_gateway
+    contents:
+    - type: checkbox
+      variable: single_az_nat_gateway
+      label: "Place a NAT gateway inside a single AZ. Disabling this will place a NAT gateway in each AZ, for each subnet in your cluster's VPC."
+      settings:
+        default: true
   - name: nginx_settings
     contents:
     - type: heading

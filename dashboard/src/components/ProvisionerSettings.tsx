@@ -120,10 +120,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   };
   const isDisabled = () => {
     return (
-      (!clusterName && true) ||
-      (isReadOnly && props.provisionerError === "") ||
-      props.provisionerError === "" ||
-      isClicked
+      !user.email.endsWith("porter.run") &&
+      ((!clusterName && true) ||
+        (isReadOnly && props.provisionerError === "") ||
+        props.provisionerError === "" ||
+        isClicked)
     );
   };
   const createCluster = async () => {
@@ -176,46 +177,49 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     try {
       setIsReadOnly(true);
       setErrorMessage(undefined);
-      markStepStarted("pre-provisioning-check-started");
 
-      await api.preflightCheckAWSUsage(
-        "<token>",
-        {
-          target_arn: props.credentialId,
-          region: awsRegion,
-        },
-        {
-          id: currentProject.id,
-        }
-      );
+      if (!props.clusterId) {
+        markStepStarted("pre-provisioning-check-started");
 
-      markStepStarted("provisioning-started");
+        await api.preflightCheckAWSUsage(
+          "<token>",
+          {
+            target_arn: props.credentialId,
+            region: awsRegion,
+          },
+          {
+            id: currentProject.id,
+          }
+        );
+
+        markStepStarted("provisioning-started");
+      }
 
       const res = await api.createContract("<token>", data, {
         project_id: currentProject.id,
       });
 
       // Only refresh and set clusters on initial create
-      if (!props.clusterId) {
-        setShouldRefreshClusters(true);
-        api
-          .getClusters("<token>", {}, { id: currentProject.id })
-          .then(({ data }) => {
-            data.forEach((cluster: ClusterType) => {
-              if (cluster.id === res.data.contract_revision?.cluster_id) {
-                // setHasFinishedOnboarding(true);
-                setCurrentCluster(cluster);
-                OFState.actions.goTo("clean_up");
-                pushFiltered(props, "/cluster-dashboard", ["project_id"], {
-                  cluster: cluster.name,
-                });
-              }
-            });
-          })
-          .catch((err) => {
-            console.error(err);
+      // if (!props.clusterId) {
+      setShouldRefreshClusters(true);
+      api
+        .getClusters("<token>", {}, { id: currentProject.id })
+        .then(({ data }) => {
+          data.forEach((cluster: ClusterType) => {
+            if (cluster.id === res.data.contract_revision?.cluster_id) {
+              // setHasFinishedOnboarding(true);
+              setCurrentCluster(cluster);
+              OFState.actions.goTo("clean_up");
+              pushFiltered(props, "/cluster-dashboard", ["project_id"], {
+                cluster: cluster.name,
+              });
+            }
           });
-      }
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+      // }
       setErrorMessage(undefined);
     } catch (err) {
       const errMessage = err.response.data.error.replace("unknown: ", "");
@@ -243,8 +247,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     setIsReadOnly(
       props.clusterId &&
-        (currentCluster.status === "UPDATING" ||
-          currentCluster.status === "UPDATING_UNAVAILABLE")
+      (currentCluster.status === "UPDATING" ||
+        currentCluster.status === "UPDATING_UNAVAILABLE")
     );
     setClusterName(
       `${currentProject.name}-cluster-${Math.random()
@@ -392,7 +396,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
     margin-right: 7px;
     margin-left: -7px;
     transform: ${(props) =>
-      props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
   }
 `;
 

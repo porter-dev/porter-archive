@@ -315,3 +315,19 @@ func (c *CLIConfig) SetKubeconfig(kubeconfig string) error {
 
 	return nil
 }
+
+func ValidateCLIEnvironment() error {
+	if GetCLIConfig().Token == "" {
+		return fmt.Errorf("no auth token present, please run 'porter auth login' to authenticate")
+	}
+
+	if GetCLIConfig().Project == 0 {
+		return fmt.Errorf("no project selected, please run 'porter config set-project' to select a project")
+	}
+
+	if GetCLIConfig().Cluster == 0 {
+		return fmt.Errorf("no cluster selected, please run 'porter config set-cluster' to select a cluster")
+	}
+
+	return nil
+}

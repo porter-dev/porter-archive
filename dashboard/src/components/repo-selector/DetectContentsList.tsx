@@ -54,7 +54,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   const fetchAndSetPorterYaml = useCallback(async (fileName: string) => {
     try {
       const response = await fetchPorterYamlContent(fileName);
-      setPorterYaml(response.data);
+      setPorterYaml(atob(response.data));
     } catch (error) {
       console.error("Error fetching porter.yaml content:", error);
     }

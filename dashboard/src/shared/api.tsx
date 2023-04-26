@@ -2423,6 +2423,25 @@ const removeStackEnvGroup = baseApi<
 
 const getGithubStatus = baseApi<{}, {}>("GET", ({ }) => `/api/status/github`);
 
+const createSecretAndOpenGitHubPullRequest = baseApi<
+  {
+    github_app_installation_id: number;
+    github_repo_owner: string;
+    github_repo_name: string;
+    open_pr: boolean;
+    branch: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    stack_name: string;
+  }
+>(
+  "POST",
+  ({ project_id, cluster_id, stack_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/pr`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -2627,6 +2646,7 @@ export default {
   createContract,
   getContracts,
   deleteContract,
+  createSecretAndOpenGitHubPullRequest,
   // TRACKING
   updateOnboardingStep,
   // STACKS

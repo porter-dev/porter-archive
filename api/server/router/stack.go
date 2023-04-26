@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/stacks"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -139,5 +141,35 @@ func getStackRoutes(
 		Handler:  updateHandler,
 		Router:   r,
 	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack}/pr -> stacks.NewOpenStackPRHandler
+	createSecretAndOpenGitHubPullRequestEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/pr", relPath, types.URLParamStackName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	createSecretAndOpenGitHubPullRequestHandler := stacks.NewOpenStackPRHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createSecretAndOpenGitHubPullRequestEndpoint,
+		Handler:  createSecretAndOpenGitHubPullRequestHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

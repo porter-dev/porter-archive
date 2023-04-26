@@ -29,11 +29,11 @@ import EnvGroupArray, {
 } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import Select from "components/porter/Select";
 import GithubActionModal from "./GithubActionModal";
-import { ActionConfigType, FullActionConfigType } from "shared/types";
+import { ActionConfigType, FullActionConfigType, FullGithubActionConfigType, GithubActionConfigType } from "shared/types";
 
 type Props = RouteComponentProps & {};
 
-const defaultActionConfig: ActionConfigType = {
+const defaultActionConfig: GithubActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
   git_branch: "",
@@ -46,6 +46,7 @@ interface FormState {
   selectedSourceType: SourceType | undefined;
   serviceList: any[];
   envVariables: KeyValueType[];
+  releaseCommand: string;
 }
 
 const INITIAL_STATE: FormState = {
@@ -53,6 +54,7 @@ const INITIAL_STATE: FormState = {
   selectedSourceType: undefined,
   serviceList: [],
   envVariables: [],
+  releaseCommand: "",
 };
 
 const Validators: {
@@ -62,6 +64,7 @@ const Validators: {
   selectedSourceType: (value: SourceType | undefined) => value !== undefined,
   serviceList: (value: any[]) => value.length > 0,
   envVariables: (value: KeyValueType[]) => true,
+  releaseCommand: (value: string) => true,
 };
 
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
@@ -73,7 +76,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
-  const [actionConfig, setActionConfig] = useState<ActionConfigType>({
+  const [actionConfig, setActionConfig] = useState<GithubActionConfigType>({
     ...defaultActionConfig,
   });
   const [procfileProcess, setProcfileProcess] = useState("");
@@ -85,7 +88,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [selectedRegistry, setSelectedRegistry] = useState(null);
   const [shouldCreateWorkflow, setShouldCreateWorkflow] = useState(true);
   const [buildConfig, setBuildConfig] = useState();
-  const getFullActionConfig = (): FullActionConfigType => {
+  const getFullActionConfig = (): FullGithubActionConfigType => {
     let imageRepoURI = `${selectedRegistry?.url}/${templateName}`;
     return {
       kind: "github",
@@ -122,7 +125,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Text color="helper">
                   Lowercase letters, numbers, and "-" only.
                 </Text>
-                <Spacer y={0.5}></Spacer> 
+                <Spacer y={0.5}></Spacer>
                 <Input
                   placeholder="ex: academic-sophon"
                   value={formState.applicationName}
@@ -221,9 +224,14 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Spacer y={0.5} />
                 <Input
                   placeholder="yarn ./scripts/run-migrations.js"
-                  value={""}
+                  value={formState.releaseCommand}
                   width="300px"
-                  setValue={(e) => {}}
+                  setValue={(e) => {
+                    setFormState({ ...formState, releaseCommand: e });
+                    if (Validators.releaseCommand(e)) {
+                      setCurrentStep(Math.max(currentStep, 6));
+                    }
+                  }}
                 />
               </>,
               <Button onClick={() => setShowGHAModal(true)}>Deploy app</Button>
@@ -233,7 +241,16 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         </StyledConfigureTemplate>
       </Div>
       {showGHAModal && (
-        <GithubActionModal closeModal={() => setShowGHAModal(false)} />
+        <GithubActionModal
+          closeModal={() => setShowGHAModal(false)}
+          githubAppInstallationID={actionConfig.git_repo_id}
+          githubRepoOwner={actionConfig.git_repo.split("/")[0]}
+          githubRepoName={actionConfig.git_repo.split("/")[1]}
+          branch={branch}
+          stackName={formState.applicationName}
+          projectId={currentProject.id}
+          clusterId={currentCluster.id}
+        />
       )}
     </CenterWrapper>
   );

@@ -453,6 +453,12 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c5.large
+          value: c5.large
+        - label: c5.xlarge
+          value: c5.xlarge
+        - label: c5.2xlarge
+          value: c5.2xlarge
         - label: c6i.large
           value: c6i.large
         - label: c6i.xlarge
@@ -473,6 +479,12 @@ tabs:
           value: g5.2xlarge
         - label: g5.4xlarge
           value: g5.4xlarge
+        - label: m6a.large
+          value: m6a.large
+        - label: m6a.xlarge
+          value: m6a.xlarge
+        - label: m6a.2xlarge
+          value: m6a.2xlarge
         - label: m6i.large
           value: m6i.large
         - label: m6i.xlarge

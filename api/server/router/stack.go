@@ -55,14 +55,14 @@ func getStackRoutes(
 
 	var routes []*router.Route
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/update_config -> stacks.NewCreateStackHandler
-	createPorterAppEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> stacks.NewPorterAppGetHandler
+	getPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/update_config",
+				RelativePath: relPath + "/{name}",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -72,15 +72,14 @@ func getStackRoutes(
 		},
 	)
 
-	createPorterAppHandler := stacks.NewCreatePorterAppHandler(
+	getPorterAppHandler := stacks.NewGetPorterAppHandler(
 		config,
-		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: createPorterAppEndpoint,
-		Handler:  createPorterAppHandler,
+		Endpoint: getPorterAppEndpoint,
+		Handler:  getPorterAppHandler,
 		Router:   r,
 	})
 

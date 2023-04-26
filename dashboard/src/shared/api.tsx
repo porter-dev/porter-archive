@@ -164,6 +164,18 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
   return `/api/email/verify/initiate`;
 });
 
+const getPorterApp = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    name: string;
+  }
+>("GET", (pathParams) => {
+  let { project_id, cluster_id, name } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
+});
+
 const createPorterApp = baseApi<
   {
     name: string;
@@ -2529,6 +2541,7 @@ export default {
   createPasswordResetVerify,
   createPasswordResetFinalize,
   createProject,
+  getPorterApp,
   createPorterApp,
   updatePorterStack,
   createConfigMap,

@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/stacks"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -147,7 +149,7 @@ func getStackRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/{stack}/pr",
+				RelativePath: fmt.Sprintf("%s/{%s}/pr", relPath, types.URLParamStackName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

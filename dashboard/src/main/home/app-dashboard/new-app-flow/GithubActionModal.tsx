@@ -1,5 +1,5 @@
 import Modal from "components/porter/Modal";
-import React from "react";
+import React, { useContext } from "react";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import ExpandableSection from "components/porter/ExpandableSection";
@@ -8,14 +8,63 @@ import styled from "styled-components";
 import Button from "components/porter/Button";
 import Input from "components/porter/Input";
 import Select from "components/porter/Select";
+import api from "shared/api";
+import { Context } from "shared/Context";
 
 interface GithubActionModalProps {
     closeModal: () => void;
+    githubAppInstallationID?: number;
+    githubRepoOwner?: string;
+    githubRepoName?: string;
+    branch?: string;
+    stackName?: string;
 }
+
+type Choice = "open_pr" | "copy";
 
 const GithubActionModal: React.FC<GithubActionModalProps> = ({
     closeModal,
+    githubAppInstallationID,
+    githubRepoOwner,
+    githubRepoName,
+    branch,
+    stackName
 }) => {
+    const [choice, setChoice] = React.useState<Choice>("open_pr");
+    const [loading, setLoading] = React.useState<boolean>(false);
+    const { currentProject, currentCluster } = useContext(Context);
+
+    const submit = async () => {
+        if (githubAppInstallationID && githubRepoOwner && githubRepoName && branch && stackName) {
+            try {
+                setLoading(true)
+                const res = await api.createSecretAndOpenGitHubPullRequest(
+                    "<token>",
+                    {
+                        github_app_installation_id: githubAppInstallationID,
+                        github_repo_owner: githubRepoOwner,
+                        github_repo_name: githubRepoName,
+                        branch,
+                        open_pr: choice === "open_pr",
+                    },
+                    {
+                        project_id: currentProject.id,
+                        cluster_id: currentCluster.id,
+                        stack_name: stackName,
+                    }
+                );
+                if (res?.data?.url) {
+                    window.open(res.data.url, "_blank", "noreferrer")
+                }
+            } catch (error) {
+                console.log(error)
+            } finally {
+                setLoading(false)
+            }
+        } else {
+            console.log("missing information")
+        }
+    }
     return (
         <Modal closeModal={closeModal}>
             <Text size={16}>
@@ -58,15 +107,17 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
             <Spacer y={1} />
             <Select
                 options={[
-                    { label: "I authorize Porter to open a PR on my behalf", value: "I authorize Porter to open a PR on my behalf" },
-                    { label: "I will copy the file into my repository myself", value: "I will copy the file into my repository myself" },
+                    { label: "I authorize Porter to open a PR on my behalf", value: "open_pr" },
+                    { label: "I will copy the file into my repository myself", value: "copy" },
                 ]}
-                onChange={(x: any) => console.log(x)}
+                onChange={(x: Choice) => setChoice(x)}
                 width="100%"
             />
             <Button
-                onClick={closeModal}
+                onClick={submit}
                 width={"100%"}
+                status={loading ? "loading" : undefined}
+                loadingText="Opening PR..."
             >
                 Complete
             </Button>

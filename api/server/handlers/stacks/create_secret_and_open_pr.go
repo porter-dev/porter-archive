@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
@@ -36,6 +37,11 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	if reqErr != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
+		return
+	}
 
 	request := &types.CreateSecretAndOpenGHPRRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -80,7 +86,7 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Client:        client,
 			GitRepoOwner:  request.GithubRepoOwner,
 			GitRepoName:   request.GithubRepoName,
-			StackName:     request.StackName,
+			StackName:     stackName,
 			ProjectID:     project.ID,
 			ClusterID:     cluster.ID,
 			ServerURL:     c.Config().ServerConf.ServerURL,

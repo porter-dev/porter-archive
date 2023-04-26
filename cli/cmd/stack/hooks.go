@@ -18,14 +18,21 @@ type DeployStackHook struct {
 	ProjectID, ClusterID uint
 	AppResourceGroup     *switchboardTypes.ResourceGroup
 	BuildImageDriverName string
+	PorterYAML           []byte
 }
 
 type StackConfig struct {
 	Values       map[string]interface{}
 	Dependencies []types.Dependency
+	DriverOutput map[string]interface{}
 }
 
 func (t *DeployStackHook) PreApply() error {
+	err := config.ValidateCLIEnvironment()
+	if err != nil {
+		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
+		return fmt.Errorf("%s: %w", errMsg, err)
+	}
 	return nil
 }
 
@@ -83,6 +90,7 @@ func (t *DeployStackHook) applyStack(applications *switchboardTypes.ResourceGrou
 	stackConf := StackConfig{
 		Values:       values,
 		Dependencies: deps,
+		DriverOutput: driverOutput,
 	}
 
 	if shouldCreate {
@@ -135,6 +143,14 @@ func insertImageInfoIntoApps(applications *switchboardTypes.ResourceGroup, drive
 }
 
 func (t *DeployStackHook) createStack(client *api.Client, stackConf StackConfig) error {
+	image, ok := stackConf.DriverOutput["image"].(string)
+	if !ok || image == "" {
+		return fmt.Errorf("unable to find image in driver output")
+	}
+
+	// split image into image-path:tag format
+	imageSpl := strings.Split(image, ":")
+
 	err := client.CreateStack(
 		context.Background(),
 		t.ProjectID,
@@ -143,6 +159,11 @@ func (t *DeployStackHook) createStack(client *api.Client, stackConf StackConfig)
 			StackName:    t.StackName,
 			Values:       convertMap(stackConf.Values).(map[string]interface{}),
 			Dependencies: stackConf.Dependencies,
+			PorterYAML:   string(t.PorterYAML),
+			ImageInfo: types.ImageInfo{
+				Repository: imageSpl[0],
+				Tag:        imageSpl[1],
+			},
 		},
 	)
 	if err != nil {

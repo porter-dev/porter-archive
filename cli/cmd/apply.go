@@ -174,6 +174,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			ClusterID:            cliConf.Cluster,
 			AppResourceGroup:     appResGroup,
 			BuildImageDriverName: stack.GetBuildImageDriverName(),
+			PorterYAML:           fileBytes,
 		}
 		worker.RegisterHook("deploy-stack", deployStackHook)
 	} else {

@@ -68,27 +68,3 @@ func createStackConf(client *api.Client, raw []byte) (*StackConf, error) {
 		parsed:    parsed,
 	}, nil
 }
-
-func CreateV1ApplicationResources(client *api.Client, raw []byte) (*types.ResourceGroup, error) {
-	stackConf, err := createStackConf(client, raw)
-	if err != nil {
-		return nil, err
-	}
-
-	v1File := &types.ResourceGroup{}
-
-	for name, app := range stackConf.parsed.Apps {
-		if app == nil {
-			continue
-		}
-
-		ai, err := app.getV1Resource(name, stackConf.parsed.Build, stackConf.parsed.Env)
-		if err != nil {
-			return nil, err
-		}
-
-		v1File.Resources = append(v1File.Resources, ai)
-	}
-
-	return v1File, nil
-}

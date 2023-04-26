@@ -88,7 +88,10 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             placeholder="ex: my-service"
             width="300px"
             value={serviceName}
-            error={!isServiceNameValid(serviceName) && "Invalid Name"}
+            error={
+              !isServiceNameValid(serviceName) &&
+              'Lowercase letters, numbers, and "-" only.'
+            }
             setValue={setServiceName}
           />
           <Spacer y={1} />

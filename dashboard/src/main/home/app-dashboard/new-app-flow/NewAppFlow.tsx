@@ -174,7 +174,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   placeholder="ex: academic-sophon"
                   value={formState.applicationName}
                   width="300px"
-                  error={shouldHighlightAppNameInput() && "Invalid App Name"}
+                  error={
+                    shouldHighlightAppNameInput() &&
+                    'Lowercase letters, numbers, and "-" only.'
+                  }
                   setValue={(e) => {
                     handleAppNameChange(e);
                   }}

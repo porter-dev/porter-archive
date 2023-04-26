@@ -165,7 +165,7 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	} else if !updateConfigDriverConfig.OnlyCreate {
 		updateAgent, err := deploy.NewDeployAgent(client, d.target.AppName, &deploy.DeployOpts{
 			SharedOpts: sharedOpts,
 			Local:      false,

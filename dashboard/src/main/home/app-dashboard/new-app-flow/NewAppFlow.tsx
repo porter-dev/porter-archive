@@ -29,7 +29,12 @@ import EnvGroupArray, {
 } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import Select from "components/porter/Select";
 import GithubActionModal from "./GithubActionModal";
-import { ActionConfigType, FullActionConfigType, FullGithubActionConfigType, GithubActionConfigType } from "shared/types";
+import {
+  ActionConfigType,
+  FullActionConfigType,
+  FullGithubActionConfigType,
+  GithubActionConfigType,
+} from "shared/types";
 
 type Props = RouteComponentProps & {};
 
@@ -234,7 +239,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   }}
                 />
               </>,
-              <Button onClick={() => setShowGHAModal(true)}>Deploy app</Button>
+              <Button onClick={() => setShowGHAModal(true)}>Deploy app</Button>,
             ]}
           />
           <Spacer y={3} />

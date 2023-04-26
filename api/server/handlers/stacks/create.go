@@ -42,7 +42,6 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stackName := request.StackName
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 	porterYaml := request.PorterYAML
-	fmt.Printf("Porter yaml: %s\n", porterYaml)
 	imageInfo := request.ImageInfo
 	chart, values, err := parse(porterYaml, &imageInfo, c.Config(), cluster.ProjectID)
 	if err != nil {

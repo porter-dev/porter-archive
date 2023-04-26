@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import styled from "styled-components";
 import file from "assets/file.svg";
 import folder from "assets/folder.svg";
@@ -12,6 +12,8 @@ import { ActionConfigType, FileType } from "../../shared/types";
 import Loading from "../Loading";
 import Spacer from "components/porter/Spacer";
 import AdvancedBuildSettings from "main/home/app-dashboard/new-app-flow/AdvancedBuildSettings";
+import { render } from "react-dom";
+import BuildpackConfigSection from "main/home/cluster-dashboard/expanded-chart/build-settings/_BuildpackConfigSection";
 
 interface AutoBuildpack {
   name?: string;
@@ -29,54 +31,84 @@ type PropsType = {
   setDockerfilePath: (x: string) => void;
   setProcfilePath: (x: string) => void;
   setFolderPath: (x: string) => void;
+  setBuildConfig: (x: any) => void;
 };
 
-type StateType = {
-  loading: boolean;
-  error: boolean;
-  contents: FileType[];
-  currentDir: string;
-  dockerfiles: string[];
-  processes: Record<string, string>;
-  autoBuildpack: AutoBuildpack;
-  showingBuildContextPrompt: boolean;
-};
+const DetectContentsList: React.FC<PropsType> = (props) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [contents, setContents] = useState<FileType[]>([]);
+  const [currentDir, setCurrentDir] = useState("");
+  const [autoBuildpack, setAutoBuildpack] = useState<AutoBuildpack>({
+    valid: false,
+    name: "",
+  });
+  const [showingBuildContextPrompt, setShowingBuildContextPrompt] = useState(
+    "buildpacks"
+  );
 
-export default class DetectContentsList extends Component<
-  PropsType,
-  StateType
-> {
-  state = {
-    loading: true,
-    error: false,
-    contents: [] as FileType[],
-    currentDir: "",
-    dockerfiles: [] as string[],
-    processes: null as Record<string, string>,
-    autoBuildpack: {
-      valid: false,
-      name: "",
-    },
-    showingBuildContextPrompt: true,
+  const context = useContext(Context);
+
+  useEffect(() => {
+    updateContents();
+  }, []);
+
+  useEffect(() => {
+    const dockerFileItem = contents.find((item: FileType) =>
+      item.path.includes("Dockerfile")
+    );
+
+    if (dockerFileItem) {
+      props.setDockerfilePath(dockerFileItem.path);
+      setShowingBuildContextPrompt("docker");
+    }
+  }, [contents]);
+
+  useEffect(() => {
+    detectBuildpacks().then(({ data }) => {
+      setAutoBuildpack(data);
+    });
+  }, [contents]);
+
+  const renderContentList = () => {
+    if (loading) {
+      return (
+        <LoadingWrapper>
+          <Loading />
+        </LoadingWrapper>
+      );
+    } else if (error || !contents) {
+      return <LoadingWrapper>Error loading repo contents.</LoadingWrapper>;
+    }
+
+    return contents.map((item: FileType, i: number) => {
+      let splits = item.path.split("/");
+      let fileName = splits[splits.length - 1];
+      if (fileName.includes("Dockerfile")) {
+        return (
+          <AdvancedBuildSettings
+            setBuildConfig={props.setBuildConfig}
+            autoBuildPack={autoBuildpack}
+            showSettings={false}
+            buildView={"docker"}
+            actionConfig={props.actionConfig}
+            branch={props.branch}
+            folderPath={props.folderPath}
+          />
+        );
+      }
+    });
   };
 
-  componentDidMount() {
-    this.updateContents();
-  }
-
-  setSubdirectory = (x: string) => {
-    this.setState({ currentDir: x }, () => this.updateContents());
-  };
-
-  fetchContents = () => {
-    let { currentProject } = this.context;
-    const { actionConfig, branch } = this.props;
+  const fetchContents = () => {
+    let { currentProject } = context;
+    const { actionConfig, branch } = props;
 
     if (actionConfig.kind === "gitlab") {
       return api
         .getGitlabFolderContent(
           "<token>",
-          { dir: this.state.currentDir || "./" },
+          { dir: currentDir || "./" },
           {
             project_id: currentProject.id,
             integration_id: actionConfig.gitlab_integration_id,
@@ -98,7 +130,7 @@ export default class DetectContentsList extends Component<
     }
     return api.getBranchContents(
       "<token>",
-      { dir: this.state.currentDir || "./" },
+      { dir: currentDir || "./" },
       {
         project_id: currentProject.id,
         git_repo_id: actionConfig.git_repo_id,
@@ -110,15 +142,15 @@ export default class DetectContentsList extends Component<
     );
   };
 
-  detectBuildpacks = () => {
-    let { currentProject } = this.context;
-    let { actionConfig, branch } = this.props;
+  const detectBuildpacks = () => {
+    let { currentProject } = context;
+    let { actionConfig, branch } = props;
 
     if (actionConfig.kind === "github") {
       return api.detectBuildpack(
         "<token>",
         {
-          dir: this.state.currentDir || ".",
+          dir: currentDir || ".",
         },
         {
           project_id: currentProject.id,
@@ -133,7 +165,7 @@ export default class DetectContentsList extends Component<
 
     return api.detectGitlabBuildpack(
       "<token>",
-      { dir: this.state.currentDir || "." },
+      { dir: currentDir || "." },
       {
         project_id: currentProject.id,
         integration_id: actionConfig.gitlab_integration_id,
@@ -145,334 +177,248 @@ export default class DetectContentsList extends Component<
     );
   };
 
-  fetchProcfileContent = (procfilePath: string) => {
-    let { currentProject } = this.context;
-    let { actionConfig, branch } = this.props;
-    if (actionConfig.kind === "github") {
-      return api.getProcfileContents(
-        "<token>",
-        {
-          path: procfilePath,
-        },
-        {
-          project_id: currentProject.id,
-          git_repo_id: actionConfig.git_repo_id,
-          kind: "github",
-          owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
-        }
-      );
-    }
-
-    return api.getGitlabProcfileContents(
-      "<token>",
-      { path: procfilePath },
-      {
-        project_id: currentProject.id,
-        integration_id: actionConfig.gitlab_integration_id,
-        owner: actionConfig.git_repo.split("/")[0],
-        name: actionConfig.git_repo.split("/")[1],
-        branch: branch,
-      }
-    );
-  };
-
-  updateContents = () => {
-    // Get branch contents
-    this.fetchContents()
-      .then((res) => {
-        let files = [] as FileType[];
-        let folders = [] as FileType[];
-        res.data.map((x: FileType, i: number) => {
-          x.type === "dir" ? folders.push(x) : files.push(x);
-        });
-
-        folders.sort((a: FileType, b: FileType) => {
-          return a.path < b.path ? 1 : 0;
-        });
-        files.sort((a: FileType, b: FileType) => {
-          return a.path < b.path ? 1 : 0;
-        });
-        let contents = folders.concat(files);
-
-        this.setState({ contents, loading: false, error: false });
-      })
-      .catch((err) => {
-        console.log(err);
-
-        this.setState({ loading: false, error: true });
+  const updateContents = async () => {
+    try {
+      const res = await fetchContents();
+      let files = [] as FileType[];
+      let folders = [] as FileType[];
+      res.data.map((x: FileType, i: number) => {
+        x.type === "dir" ? folders.push(x) : files.push(x);
       });
 
-    this.detectBuildpacks()
-      .then(({ data }) => {
-        this.setState({
-          autoBuildpack: data,
-        });
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({
-          autoBuildpack: {
-            valid: false,
-          },
-        });
+      folders.sort((a: FileType, b: FileType) => {
+        return a.path < b.path ? 1 : 0;
       });
-
-    let ppath =
-      this.props.procfilePath ||
-      `${this.state.currentDir ? this.state.currentDir : "."}/Procfile`;
-    this.fetchProcfileContent(ppath)
-      .then(({ data }) => {
-        this.setState({ processes: data });
-      })
-      .catch((err) => {
-        console.log(err);
+      files.sort((a: FileType, b: FileType) => {
+        return a.path < b.path ? 1 : 0;
       });
-  };
+      let contents = folders.concat(files);
 
-  renderContentList = () => {
-    let { contents, loading, error } = this.state;
-    if (loading) {
-      return (
-        <LoadingWrapper>
-          <Loading />
-        </LoadingWrapper>
-      );
-    } else if (error || !contents) {
-      return <LoadingWrapper>Error loading repo contents.</LoadingWrapper>;
-    }
-    return contents.map((item: FileType, i: number) => {
-      let splits = item.path.split("/");
-      let fileName = splits[splits.length - 1];
-      console.log(fileName);
-      if (fileName.includes("Dockerfile")) {
-        this.props.setDockerfilePath(item.path);
-        return (
-          <DetectedBuildMessage>
-            <i className="material-icons">check</i>
-            Detected Dockerfile at ./{item.path}
-          </DetectedBuildMessage>
-        );
-      }
-    });
-  };
-
-  renderJumpToParent = () => {
-    if (this.state.currentDir !== "") {
-      let splits = this.state.currentDir.split("/");
-      let subdir = "";
-      if (splits.length !== 1) {
-        subdir = this.state.currentDir.replace(splits[splits.length - 1], "");
-        if (subdir.charAt(subdir.length - 1) === "/") {
-          subdir = subdir.slice(0, subdir.length - 1);
-        }
-      }
-
-      return (
-        <Item lastItem={false} onClick={() => this.setSubdirectory(subdir)}>
-          <BackLabel>..</BackLabel>
-        </Item>
-      );
+      setContents(contents);
+      setLoading(false);
+      setError(false);
+    } catch (err) {
+      console.log(err);
+      setLoading(false);
+      setError(true);
     }
 
-    return (
-      <FileItem lastItem={false}>
-        <img src={info} />
-        Select{" "}
-        {this.props.dockerfilePath
-          ? "Docker Build Context"
-          : "Application Folder"}
-      </FileItem>
-    );
-  };
-
-  renderOverlay = () => {
-    if (this.props.procfilePath) {
-      let processes = this.state.processes
-        ? Object.keys(this.state.processes)
-        : [];
-      if (this.state.processes == null) {
-        return (
-          <Overlay>
-            <BgOverlay>
-              <LoadingWrapper>
-                <Loading />
-              </LoadingWrapper>
-            </BgOverlay>
-          </Overlay>
-        );
-      }
-
-      if (processes.length == 0) {
-        this.props.setProcfilePath("");
-      }
-
-      return (
-        <Overlay>
-          <BgOverlay
-            onClick={() =>
-              this.setState({ dockerfiles: [] }, () => {
-                this.props.setFolderPath("");
-                this.props.setProcfilePath("");
-              })
-            }
-          />
-          <CloseButton
-            onClick={() =>
-              this.setState({ dockerfiles: [] }, () => {
-                this.props.setProcfilePath("");
-              })
-            }
-          >
-            <CloseButtonImg src={close} />
-          </CloseButton>
-          <Label>
-            Porter has detected a Procfile in this folder. Which process would
-            you like to run?
-          </Label>
-          <DockerfileList>
-            {processes.map((process: string, i: number) => {
-              return (
-                <Row
-                  key={i}
-                  onClick={() => {
-                    if (
-                      !this.props.folderPath ||
-                      this.props.folderPath === ""
-                    ) {
-                      this.props.setFolderPath("./");
-                    }
-                    this.props.setProcfileProcess(process);
-                  }}
-                  isLast={processes.length - 1 === i}
-                >
-                  <Indicator selected={false} />
-                  {process}
-                </Row>
-              );
-            })}
-          </DockerfileList>
-        </Overlay>
-      );
-    }
-    if (this.state.dockerfiles.length > 0 && !this.props.dockerfilePath) {
-      return (
-        <Overlay>
-          <BgOverlay onClick={() => this.setState({ dockerfiles: [] })} />
-          <CloseButton onClick={() => this.setState({ dockerfiles: [] })}>
-            <CloseButtonImg src={close} />
-          </CloseButton>
-          <Label>
-            Porter has detected at least one Dockerfile in this folder. Would
-            you like to use an existing Dockerfile?
-          </Label>
-          <DockerfileList>
-            {this.state.dockerfiles.map((dockerfile: string, i: number) => {
-              return (
-                <Row
-                  key={i}
-                  onClick={() =>
-                    this.props.setDockerfilePath(
-                      `${this.state.currentDir || "."}/${dockerfile}`
-                    )
-                  }
-                  isLast={this.state.dockerfiles.length - 1 === i}
-                >
-                  <Indicator selected={false}></Indicator>
-                  {dockerfile}
-                </Row>
-              );
-            })}
-          </DockerfileList>
-          <ConfirmButton
-            onClick={() => {
-              this.props.setFolderPath(this.state.currentDir || "./");
-              if (
-                this.state.processes &&
-                Object.keys(this.state.processes).length > 0
-              ) {
-                this.props.setProcfilePath("./Procfile");
-              }
-            }}
-          >
-            No, I don't want to use a Dockerfile
-          </ConfirmButton>
-        </Overlay>
-      );
-    }
-    if (
-      this.props.dockerfilePath &&
-      !this.props.folderPath &&
-      this.state.showingBuildContextPrompt
-    ) {
-      return (
-        <Overlay>
-          <BgOverlay onClick={() => this.props.setDockerfilePath("")} />
-          <CloseButton
-            onClick={() =>
-              this.props.setFolderPath(this.state.currentDir || "./")
-            }
-          >
-            <CloseButtonImg src={close} />
-          </CloseButton>
-          <Label>
-            Would you like to set the Docker build context to a different
-            directory?
-          </Label>
-          <MultiSelectRow>
-            <ConfirmButton
-              onClick={() => {
-                this.setState({ showingBuildContextPrompt: false });
-                this.setSubdirectory("");
-              }}
-            >
-              Yes
-            </ConfirmButton>
-            <ConfirmButton
-              onClick={() =>
-                this.props.setFolderPath(this.state.currentDir || "./")
-              }
-            >
-              No
-            </ConfirmButton>
-          </MultiSelectRow>
-        </Overlay>
-      );
+    try {
+      const { data } = await detectBuildpacks();
+      setAutoBuildpack(data);
+    } catch (err) {
+      console.log(err);
+      setAutoBuildpack({
+        valid: false,
+      });
     }
   };
 
-  render() {
-    return (
-      <>
-        {this.renderContentList()}
+  // const renderJumpToParent = () => {
+  //   if (this.state.currentDir !== "") {
+  //     let splits = this.state.currentDir.split("/");
+  //     let subdir = "";
+  //     if (splits.length !== 1) {
+  //       subdir = this.state.currentDir.replace(splits[splits.length - 1], "");
+  //       if (subdir.charAt(subdir.length - 1) === "/") {
+  //         subdir = subdir.slice(0, subdir.length - 1);
+  //       }
+  //     }
 
-        {this.state.autoBuildpack && this.state.autoBuildpack.valid ? (
-          <Banner>
-            <i className="material-icons">info</i>{" "}
-            <p>
-              <b>{this.state.autoBuildpack.name}</b> buildpack was{" "}
-              <a
-                href="https://docs.porter.run/deploying-applications/deploying-from-github/selecting-application-and-build-method#customizing-buildpacks"
-                target="_blank"
-              >
-                detected automatically
-              </a>
-              . Alternatively, select an application folder below:
-            </p>
-          </Banner>
-        ) : (
-          <>
-            <Spacer y={1} />
-            <AdvancedBuildSettings />
-          </>
-        )}
-      </>
-    );
-  }
-}
+  //     return (
+  //       <Item lastItem={false} onClick={() => this.setSubdirectory(subdir)}>
+  //         <BackLabel>..</BackLabel>
+  //       </Item>
+  //     );
+  //   }
 
-DetectContentsList.contextType = Context;
+  //   return (
+  //     <FileItem lastItem={false}>
+  //       <img src={info} />
+  //       Select{" "}
+  //       {this.props.dockerfilePath
+  //         ? "Docker Build Context"
+  //         : "Application Folder"}
+  //     </FileItem>
+  //   );
+  // };
+
+  // const renderOverlay = () => {
+  //   if (this.props.procfilePath) {
+  //     let processes = this.state.processes
+  //       ? Object.keys(this.state.processes)
+  //       : [];
+  //     if (this.state.processes == null) {
+  //       return (
+  //         <Overlay>
+  //           <BgOverlay>
+  //             <LoadingWrapper>
+  //               <Loading />
+  //             </LoadingWrapper>
+  //           </BgOverlay>
+  //         </Overlay>
+  //       );
+  //     }
+
+  //     if (processes.length == 0) {
+  //       this.props.setProcfilePath("");
+  //     }
+
+  //     return (
+  //       <Overlay>
+  //         <BgOverlay
+  //           onClick={() =>
+  //             this.setState({ dockerfiles: [] }, () => {
+  //               this.props.setFolderPath("");
+  //               this.props.setProcfilePath("");
+  //             })
+  //           }
+  //         />
+  //         <CloseButton
+  //           onClick={() =>
+  //             this.setState({ dockerfiles: [] }, () => {
+  //               this.props.setProcfilePath("");
+  //             })
+  //           }
+  //         >
+  //           <CloseButtonImg src={close} />
+  //         </CloseButton>
+  //         <Label>
+  //           Porter has detected a Procfile in this folder. Which process would
+  //           you like to run?
+  //         </Label>
+  //         <DockerfileList>
+  //           {processes.map((process: string, i: number) => {
+  //             return (
+  //               <Row
+  //                 key={i}
+  //                 onClick={() => {
+  //                   if (
+  //                     !this.props.folderPath ||
+  //                     this.props.folderPath === ""
+  //                   ) {
+  //                     this.props.setFolderPath("./");
+  //                   }
+  //                   this.props.setProcfileProcess(process);
+  //                 }}
+  //                 isLast={processes.length - 1 === i}
+  //               >
+  //                 <Indicator selected={false} />
+  //                 {process}
+  //               </Row>
+  //             );
+  //           })}
+  //         </DockerfileList>
+  //       </Overlay>
+  //     );
+  //   }
+  //   if (this.state.dockerfiles.length > 0 && !this.props.dockerfilePath) {
+  //     return (
+  //       <Overlay>
+  //         <BgOverlay onClick={() => this.setState({ dockerfiles: [] })} />
+  //         <CloseButton onClick={() => this.setState({ dockerfiles: [] })}>
+  //           <CloseButtonImg src={close} />
+  //         </CloseButton>
+  //         <Label>
+  //           Porter has detected at least one Dockerfile in this folder. Would
+  //           you like to use an existing Dockerfile?
+  //         </Label>
+  //         <DockerfileList>
+  //           {this.state.dockerfiles.map((dockerfile: string, i: number) => {
+  //             return (
+  //               <Row
+  //                 key={i}
+  //                 onClick={() =>
+  //                   this.props.setDockerfilePath(
+  //                     `${this.state.currentDir || "."}/${dockerfile}`
+  //                   )
+  //                 }
+  //                 isLast={this.state.dockerfiles.length - 1 === i}
+  //               >
+  //                 <Indicator selected={false}></Indicator>
+  //                 {dockerfile}
+  //               </Row>
+  //             );
+  //           })}
+  //         </DockerfileList>
+  //         <ConfirmButton
+  //           onClick={() => {
+  //             this.props.setFolderPath(this.state.currentDir || "./");
+  //             if (
+  //               this.state.processes &&
+  //               Object.keys(this.state.processes).length > 0
+  //             ) {
+  //               this.props.setProcfilePath("./Procfile");
+  //             }
+  //           }}
+  //         >
+  //           No, I don't want to use a Dockerfile
+  //         </ConfirmButton>
+  //       </Overlay>
+  //     );
+  //   }
+  //   if (
+  //     this.props.dockerfilePath &&
+  //     !this.props.folderPath &&
+  //     this.state.showingBuildContextPrompt
+  //   ) {
+  //     return (
+  //       <Overlay>
+  //         <BgOverlay onClick={() => this.props.setDockerfilePath("")} />
+  //         <CloseButton
+  //           onClick={() =>
+  //             this.props.setFolderPath(this.state.currentDir || "./")
+  //           }
+  //         >
+  //           <CloseButtonImg src={close} />
+  //         </CloseButton>
+  //         <Label>
+  //           Would you like to set the Docker build context to a different
+  //           directory?
+  //         </Label>
+  //         <MultiSelectRow>
+  //           <ConfirmButton
+  //             onClick={() => {
+  //               this.setState({ showingBuildContextPrompt: false });
+  //               this.setSubdirectory("");
+  //             }}
+  //           >
+  //             Yes
+  //           </ConfirmButton>
+  //           <ConfirmButton
+  //             onClick={() =>
+  //               this.props.setFolderPath(this.state.currentDir || "./")
+  //             }
+  //           >
+  //             No
+  //           </ConfirmButton>
+  //         </MultiSelectRow>
+  //       </Overlay>
+  //     );
+  //   }
+  // };
+
+  return (
+    <>
+      {renderContentList()}
+      {props.dockerfilePath == null || props.dockerfilePath == "" ? (
+        <AdvancedBuildSettings
+          setBuildConfig={props.setBuildConfig}
+          autoBuildPack={autoBuildpack}
+          showSettings={false}
+          buildView={"buildpacks"}
+          actionConfig={props.actionConfig}
+          branch={props.branch}
+          folderPath={props.folderPath}
+        />
+      ) : (
+        <></>
+      )}
+    </>
+  );
+};
+
+export default DetectContentsList;
 
 const FlexWrapper = styled.div`
   position: absolute;

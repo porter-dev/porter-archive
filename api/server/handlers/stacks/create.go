@@ -1,6 +1,7 @@
 package stacks
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 
@@ -41,7 +42,13 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	stackName := request.StackName
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
-	porterYaml := request.PorterYAML
+	porterYamlBase64 := request.PorterYAMLBase64
+	porterYaml, err := base64.StdEncoding.DecodeString(porterYamlBase64)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding porter yaml: %w", err)))
+		return
+	}
+
 	imageInfo := request.ImageInfo
 	chart, values, err := parse(porterYaml, &imageInfo, c.Config(), cluster.ProjectID)
 	if err != nil {

@@ -12,10 +12,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func parse(porterYaml string, imageInfo *types.ImageInfo, config *config.Config, projectID uint) (*chart.Chart, map[string]interface{}, error) {
+func parse(porterYaml []byte, imageInfo *types.ImageInfo, config *config.Config, projectID uint) (*chart.Chart, map[string]interface{}, error) {
 	parsed := &stack.PorterStackYAML{}
 
-	err := yaml.Unmarshal([]byte(porterYaml), parsed)
+	err := yaml.Unmarshal(porterYaml, parsed)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
 	}

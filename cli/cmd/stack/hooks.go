@@ -2,6 +2,7 @@ package stack
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strings"
 
@@ -77,9 +78,9 @@ func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driv
 			t.ProjectID,
 			t.ClusterID,
 			&types.CreateStackReleaseRequest{
-				StackName:  t.StackName,
-				PorterYAML: string(t.PorterYAML),
-				ImageInfo:  imageInfo,
+				StackName:        t.StackName,
+				PorterYAMLBase64: base64.StdEncoding.EncodeToString(t.PorterYAML),
+				ImageInfo:        imageInfo,
 			},
 		)
 		if err != nil {
@@ -92,9 +93,9 @@ func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driv
 			t.ClusterID,
 			t.StackName,
 			&types.CreateStackReleaseRequest{
-				StackName:  t.StackName,
-				PorterYAML: string(t.PorterYAML),
-				ImageInfo:  imageInfo,
+				StackName:        t.StackName,
+				PorterYAMLBase64: base64.StdEncoding.EncodeToString(t.PorterYAML),
+				ImageInfo:        imageInfo,
 			},
 		)
 		if err != nil {

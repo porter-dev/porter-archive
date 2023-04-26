@@ -105,11 +105,12 @@ const Register: React.FC<Props> = ({
         })
         .catch((err) => {
           console.log("registration:", err);
-          location.reload();
-          setButtonDisabled(false);
           if (err.response?.data?.error) {
             setCurrentError(err.response.data.error)
+          } else {
+            location.reload();
           }
+          setButtonDisabled(false);
         });
     }
   };

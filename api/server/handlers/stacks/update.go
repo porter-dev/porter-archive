@@ -42,15 +42,17 @@ func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	stackName := request.StackName
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
-	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
+	porterYaml := request.PorterYAML
+	imageInfo := request.ImageInfo
+	chart, values, err := parse(porterYaml, &imageInfo, c.Config(), cluster.ProjectID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error with test: %w", err)))
 		return
 	}
 
-	chart, err := createChartFromDependencies(request.Dependencies)
+	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating chart: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
 		return
 	}
 
@@ -64,7 +66,7 @@ func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Chart:      chart,
 		Name:       stackName,
 		Namespace:  namespace,
-		Values:     request.Values,
+		Values:     values,
 		Cluster:    cluster,
 		Repo:       c.Repo(),
 		Registries: registries,

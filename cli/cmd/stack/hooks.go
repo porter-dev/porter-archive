@@ -21,12 +21,6 @@ type DeployStackHook struct {
 	PorterYAML           []byte
 }
 
-type StackConfig struct {
-	Values       map[string]interface{}
-	Dependencies []types.Dependency
-	DriverOutput map[string]interface{}
-}
-
 func (t *DeployStackHook) PreApply() error {
 	err := config.ValidateCLIEnvironment()
 	if err != nil {
@@ -72,145 +66,49 @@ func (t *DeployStackHook) applyStack(applications *switchboardTypes.ResourceGrou
 		return fmt.Errorf("no applications found")
 	}
 
-	err := insertImageInfoIntoApps(applications, driverOutput)
-	if err != nil {
-		return fmt.Errorf("unable to insert image info into apps: %w", err)
-	}
-
-	values, err := buildStackValues(applications)
-	if err != nil {
-		return err
-	}
-
-	deps, err := buildStackDependencies(applications, client, t.ProjectID)
-	if err != nil {
-		return err
-	}
-
-	stackConf := StackConfig{
-		Values:       values,
-		Dependencies: deps,
-		DriverOutput: driverOutput,
+	var imageInfo types.ImageInfo
+	image, ok := driverOutput["image"].(string)
+	if ok && image != "" {
+		// split image into image-path:tag format
+		imageSpl := strings.Split(image, ":")
+		imageInfo = types.ImageInfo{
+			Repository: imageSpl[0],
+			Tag:        imageSpl[1],
+		}
 	}
 
 	if shouldCreate {
-		err := t.createStack(client, stackConf)
+		err := client.CreateStack(
+			context.Background(),
+			t.ProjectID,
+			t.ClusterID,
+			&types.CreateStackReleaseRequest{
+				StackName:  t.StackName,
+				PorterYAML: string(t.PorterYAML),
+				ImageInfo:  imageInfo,
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("error creating stack %s: %w", t.StackName, err)
 		}
 	} else {
-		err := t.updateStack(client, stackConf)
+		err := client.UpdateStack(
+			context.Background(),
+			t.ProjectID,
+			t.ClusterID,
+			t.StackName,
+			&types.CreateStackReleaseRequest{
+				StackName:  t.StackName,
+				PorterYAML: string(t.PorterYAML),
+				ImageInfo:  imageInfo,
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("error updating stack %s: %w", t.StackName, err)
 		}
 	}
 
 	return nil
-}
-
-func insertImageInfoIntoApps(applications *switchboardTypes.ResourceGroup, driverOutput map[string]interface{}) error {
-	image, ok := driverOutput["image"].(string)
-	if !ok || image == "" {
-		return fmt.Errorf("unable to find image in driver output")
-	}
-
-	// split image into image-path:tag format
-	imageSpl := strings.Split(image, ":")
-
-	if len(imageSpl) != 2 {
-		return fmt.Errorf("invalid image format: must be image-path:tag format")
-	}
-
-	for _, resource := range applications.Resources {
-		if resource.Config == nil {
-			resource.Config = make(map[string]interface{})
-		}
-		values, ok := resource.Config["Values"].(map[string]interface{})
-		if !ok {
-			values = make(map[string]interface{})
-			resource.Config["Values"] = values
-		}
-		image, ok := values["image"].(map[string]interface{})
-		if !ok {
-			image = make(map[string]interface{})
-			values["image"] = image
-		}
-		image["repository"] = imageSpl[0]
-		image["tag"] = imageSpl[1]
-	}
-
-	return nil
-}
-
-func (t *DeployStackHook) createStack(client *api.Client, stackConf StackConfig) error {
-	image, ok := stackConf.DriverOutput["image"].(string)
-	if !ok || image == "" {
-		return fmt.Errorf("unable to find image in driver output")
-	}
-
-	// split image into image-path:tag format
-	imageSpl := strings.Split(image, ":")
-
-	err := client.CreateStack(
-		context.Background(),
-		t.ProjectID,
-		t.ClusterID,
-		&types.CreateStackReleaseRequest{
-			StackName:    t.StackName,
-			Values:       convertMap(stackConf.Values).(map[string]interface{}),
-			Dependencies: stackConf.Dependencies,
-			PorterYAML:   string(t.PorterYAML),
-			ImageInfo: types.ImageInfo{
-				Repository: imageSpl[0],
-				Tag:        imageSpl[1],
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (t *DeployStackHook) updateStack(client *api.Client, stackConf StackConfig) error {
-	err := client.UpdateStack(
-		context.Background(),
-		t.ProjectID,
-		t.ClusterID,
-		t.StackName,
-		&types.CreateStackReleaseRequest{
-			StackName:    t.StackName,
-			Values:       convertMap(stackConf.Values).(map[string]interface{}),
-			Dependencies: stackConf.Dependencies,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// this is necessary to marshal the resulting object during the request
-func convertMap(m interface{}) interface{} {
-	switch m := m.(type) {
-	case map[string]interface{}:
-		for k, v := range m {
-			m[k] = convertMap(v)
-		}
-	case map[interface{}]interface{}:
-		result := map[string]interface{}{}
-		for k, v := range m {
-			result[k.(string)] = convertMap(v)
-		}
-		return result
-	case []interface{}:
-		for i, v := range m {
-			m[i] = convertMap(v)
-		}
-	}
-	return m
 }
 
 func (t *DeployStackHook) OnConsolidatedErrors(map[string]error) {}

@@ -24,13 +24,14 @@ func parse(porterYaml string, imageInfo *types.ImageInfo, config *config.Config,
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
 	}
+	convertedValues := convertMap(values)
 
 	chart, err := buildStackChart(parsed, config, projectID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %w", "error building chart from porter.yaml", err)
 	}
 
-	return chart, values, nil
+	return chart, convertedValues.(map[string]interface{}), nil
 }
 
 func buildStackValues(parsed *stack.PorterStackYAML, imageInfo *types.ImageInfo) (map[string]interface{}, error) {
@@ -95,7 +96,7 @@ func buildStackChart(parsed *stack.PorterStackYAML, config *config.Config, proje
 		})
 	}
 
-	chart, err := createChartFromDependencies2(deps)
+	chart, err := createChartFromDependencies(deps)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +104,7 @@ func buildStackChart(parsed *stack.PorterStackYAML, config *config.Config, proje
 	return chart, nil
 }
 
-func createChartFromDependencies2(deps []*chart.Dependency) (*chart.Chart, error) {
+func createChartFromDependencies(deps []*chart.Dependency) (*chart.Chart, error) {
 	metadata := &chart.Metadata{
 		Name:        "umbrella",
 		Description: "Web application that is exposed to external traffic.",
@@ -152,4 +153,24 @@ func getLatestTemplateVersion(templateName string, config *config.Config, projec
 	}
 
 	return version, nil
+}
+
+func convertMap(m interface{}) interface{} {
+	switch m := m.(type) {
+	case map[string]interface{}:
+		for k, v := range m {
+			m[k] = convertMap(v)
+		}
+	case map[interface{}]interface{}:
+		result := map[string]interface{}{}
+		for k, v := range m {
+			result[k.(string)] = convertMap(v)
+		}
+		return result
+	case []interface{}:
+		for i, v := range m {
+			m[i] = convertMap(v)
+		}
+	}
+	return m
 }

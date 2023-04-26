@@ -4,6 +4,7 @@ import DashboardHeader from "../../DashboardHeader";
 import PullRequestIcon from "assets/pull_request_icon.svg";
 import api from "shared/api";
 import Banner from "components/Banner";
+import Spacer from "components/porter/Spacer";
 
 export const PreviewEnvironmentsHeader = () => {
   const [githubStatus, setGithubStatus] = useState<string>(
@@ -31,12 +32,15 @@ export const PreviewEnvironmentsHeader = () => {
         capitalize={false}
       />
       {githubStatus != "no active incidents" ? (
-        <Banner type="error">
-          GitHub has an ongoing incident.
-          <StyledLink href={`${githubStatus}`} target="_blank">
-            View details
-          </StyledLink>
-        </Banner>
+        <>
+          <Banner type="error">
+            GitHub has an ongoing incident.
+            <StyledLink href={`${githubStatus}`} target="_blank">
+              View details
+            </StyledLink>
+          </Banner>
+          <Spacer y={1} />
+        </>
       ) : null}
     </>
   );

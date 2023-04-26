@@ -5,15 +5,37 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	stack "github.com/porter-dev/porter/cli/cmd/stack"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/stefanmcshane/helm/pkg/chart"
 	"gopkg.in/yaml.v2"
 )
 
+type PorterStackYAML struct {
+	Version *string           `yaml:"version"`
+	Build   *Build            `yaml:"build"`
+	Env     map[string]string `yaml:"env"`
+	Apps    map[string]*App   `yaml:"apps"`
+	Release *string           `yaml:"release"`
+}
+
+type Build struct {
+	Context    *string   `yaml:"context" validate:"dir"`
+	Method     *string   `yaml:"method" validate:"required,oneof=pack docker registry"`
+	Builder    *string   `yaml:"builder" validate:"required_if=Method pack"`
+	Buildpacks []*string `yaml:"buildpacks"`
+	Dockerfile *string   `yaml:"dockerfile" validate:"required_if=Method docker"`
+	Image      *string   `yaml:"image" validate:"required_if=Method registry"`
+}
+
+type App struct {
+	Run    *string                `yaml:"run" validate:"required"`
+	Config map[string]interface{} `yaml:"config"`
+	Type   *string                `yaml:"type" validate:"required, oneof=web worker job"`
+}
+
 func parse(porterYaml []byte, imageInfo *types.ImageInfo, config *config.Config, projectID uint) (*chart.Chart, map[string]interface{}, error) {
-	parsed := &stack.PorterStackYAML{}
+	parsed := &PorterStackYAML{}
 
 	err := yaml.Unmarshal(porterYaml, parsed)
 	if err != nil {
@@ -34,7 +56,7 @@ func parse(porterYaml []byte, imageInfo *types.ImageInfo, config *config.Config,
 	return chart, convertedValues.(map[string]interface{}), nil
 }
 
-func buildStackValues(parsed *stack.PorterStackYAML, imageInfo *types.ImageInfo) (map[string]interface{}, error) {
+func buildStackValues(parsed *PorterStackYAML, imageInfo *types.ImageInfo) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
 	for name, app := range parsed.Apps {
@@ -46,7 +68,7 @@ func buildStackValues(parsed *stack.PorterStackYAML, imageInfo *types.ImageInfo)
 	return values, nil
 }
 
-func getDefaultValues(app *stack.App, env map[string]string, imageInfo *types.ImageInfo) map[string]interface{} {
+func getDefaultValues(app *App, env map[string]string, imageInfo *types.ImageInfo) map[string]interface{} {
 	var defaultValues map[string]interface{}
 	if *app.Type == "web" {
 		defaultValues = map[string]interface{}{
@@ -56,7 +78,7 @@ func getDefaultValues(app *stack.App, env map[string]string, imageInfo *types.Im
 			"container": map[string]interface{}{
 				"command": *app.Run,
 				"env": map[string]interface{}{
-					"normal": stack.CopyEnv(env),
+					"normal": CopyEnv(env),
 				},
 			},
 		}
@@ -65,7 +87,7 @@ func getDefaultValues(app *stack.App, env map[string]string, imageInfo *types.Im
 			"container": map[string]interface{}{
 				"command": *app.Run,
 				"env": map[string]interface{}{
-					"normal": stack.CopyEnv(env),
+					"normal": CopyEnv(env),
 				},
 			},
 		}
@@ -79,7 +101,7 @@ func getDefaultValues(app *stack.App, env map[string]string, imageInfo *types.Im
 	return defaultValues
 }
 
-func buildStackChart(parsed *stack.PorterStackYAML, config *config.Config, projectID uint) (*chart.Chart, error) {
+func buildStackChart(parsed *PorterStackYAML, config *config.Config, projectID uint) (*chart.Chart, error) {
 	deps := make([]*chart.Dependency, 0)
 
 	for alias, app := range parsed.Apps {
@@ -173,4 +195,20 @@ func convertMap(m interface{}) interface{} {
 		}
 	}
 	return m
+}
+
+func CopyEnv(env map[string]string) map[string]string {
+	envCopy := make(map[string]string)
+	if env == nil {
+		return envCopy
+	}
+
+	for k, v := range env {
+		if k == "" || v == "" {
+			continue
+		}
+		envCopy[k] = v
+	}
+
+	return envCopy
 }

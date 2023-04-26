@@ -18,6 +18,8 @@ interface GithubActionModalProps {
     githubRepoName?: string;
     branch?: string;
     stackName?: string;
+    projectId?: number;
+    clusterId?: number;
 }
 
 type Choice = "open_pr" | "copy";
@@ -28,7 +30,9 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
     githubRepoOwner,
     githubRepoName,
     branch,
-    stackName
+    stackName,
+    projectId,
+    clusterId,
 }) => {
     const [choice, setChoice] = React.useState<Choice>("open_pr");
     const [loading, setLoading] = React.useState<boolean>(false);
@@ -48,8 +52,8 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
                         open_pr: choice === "open_pr",
                     },
                     {
-                        project_id: currentProject.id,
-                        cluster_id: currentCluster.id,
+                        project_id: projectId,
+                        cluster_id: clusterId,
                         stack_name: stackName,
                     }
                 );

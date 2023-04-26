@@ -248,6 +248,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           githubRepoName={actionConfig.git_repo.split("/")[1]}
           branch={branch}
           stackName={formState.applicationName}
+          projectId={currentProject.id}
+          clusterId={currentCluster.id}
         />
       )}
     </CenterWrapper>

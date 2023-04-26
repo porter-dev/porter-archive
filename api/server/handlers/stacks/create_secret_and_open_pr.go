@@ -11,8 +11,8 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
-	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
@@ -34,25 +34,21 @@ func NewOpenStackPRHandler(
 }
 
 func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	gaid := c.Config().GithubAppConf.AppID
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-
-	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
-	if !ok {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to get github owner and name params")))
+	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	if reqErr != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
 		return
 	}
 
-	// create the environment
-	request := &types.CreateSecretAndOpenGitHubPullRequest{}
-
+	request := &types.CreateSecretAndOpenGHPRRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
 
-	client, err := getGithubClient(c.Config(), gaid)
+	client, err := getGithubClient(c.Config(), request.GithubAppInstallationID)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -70,16 +66,32 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// create porter secret
+	secretName := fmt.Sprintf("PORTER_STACK_%d_%d", project.ID, cluster.ID)
+	err = actions.CreateGithubSecret(
+		client,
+		secretName,
+		encoded,
+		request.GithubRepoOwner,
+		request.GithubRepoName,
+	)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error generating secret: %w", err)))
+		return
+	}
+
+	var pr *github.PullRequest
 	if request.OpenPr {
-		err = actions.OpenGithubPR(&actions.GithubPROpts{
-			Client:       client,
-			GitRepoOwner: owner,
-			GitRepoName:  name,
-			StackName:    request.StackName,
-			ProjectID:    project.ID,
-			ClusterID:    cluster.ID,
-			PorterToken:  encoded,
-			ServerURL:    c.Config().ServerConf.ServerURL,
+		pr, err = actions.OpenGithubPR(&actions.GithubPROpts{
+			Client:        client,
+			GitRepoOwner:  request.GithubRepoOwner,
+			GitRepoName:   request.GithubRepoName,
+			StackName:     stackName,
+			ProjectID:     project.ID,
+			ClusterID:     cluster.ID,
+			ServerURL:     c.Config().ServerConf.ServerURL,
+			DefaultBranch: request.Branch,
+			SecretName:    secretName,
 		})
 	}
 
@@ -93,13 +105,21 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed))
 			}
 		} else {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error setting up preview environment in the github "+
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error setting up application in the github "+
 				"repo: %w", err)))
 			return
 		}
 	}
 
+	var resp types.CreateSecretAndOpenGHPRResponse
+	if pr != nil {
+		resp = types.CreateSecretAndOpenGHPRResponse{
+			URL: pr.GetHTMLURL(),
+		}
+	}
+
 	w.WriteHeader(http.StatusCreated)
+	c.WriteResult(w, r, resp)
 }
 
 func getGithubClient(config *config.Config, gitInstallationId int64) (*github.Client, error) {

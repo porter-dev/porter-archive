@@ -24,9 +24,10 @@ const JobTabs: React.FC<Props> = ({
         <Input
           label="Start command"
           placeholder="ex: sh start.sh"
-          value={service.startCommand}
+          disabled={service.startCommand.readOnly}
+          value={service.startCommand.value}
           width="300px"
-          setValue={(e) => { editService({ ...service, startCommand: e }) }}
+          setValue={(e) => { editService({ ...service, startCommand: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Input

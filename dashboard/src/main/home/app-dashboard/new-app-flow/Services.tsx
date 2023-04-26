@@ -99,7 +99,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             onClick={() => {
               setServices([
                 ...services,
-                createDefaultService(serviceName, serviceType),
+                createDefaultService(serviceName, serviceType, { readOnly: false, value: '' }),
               ]);
               setShowAddServiceModal(false);
               setServiceName("");

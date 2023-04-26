@@ -1,11 +1,16 @@
 export type Service = WorkerService | WebService | JobService;
 export type ServiceType = 'web' | 'worker' | 'job';
 
+type ServiceReadOnlyField = {
+    readOnly: boolean;
+    value: string;
+}
+
 type SharedServiceParams = {
     name: string;
     cpu: string;
     ram: string;
-    startCommand: string;
+    startCommand: ServiceReadOnlyField;
     type: ServiceType;
 }
 
@@ -19,11 +24,11 @@ export type WorkerService = SharedServiceParams & {
     targetRAMUtilizationPercentage: string;
 }
 const WorkerService = {
-    default: (name: string): WorkerService => ({
+    default: (name: string, startCommand: ServiceReadOnlyField): WorkerService => ({
         name,
         cpu: '',
         ram: '',
-        startCommand: '',
+        startCommand: startCommand,
         type: 'worker',
         replicas: '1',
         autoscalingOn: false,
@@ -41,11 +46,11 @@ export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
     customDomain?: string;
 }
 const WebService = {
-    default: (name: string): WebService => ({
+    default: (name: string, startCommand: ServiceReadOnlyField): WebService => ({
         name,
         cpu: '',
         ram: '',
-        startCommand: '',
+        startCommand: startCommand,
         type: 'web',
         replicas: '1',
         autoscalingOn: false,
@@ -64,24 +69,24 @@ export type JobService = SharedServiceParams & {
     cronSchedule: string;
 }
 const JobService = {
-    default: (name: string): JobService => ({
+    default: (name: string, startCommand: ServiceReadOnlyField): JobService => ({
         name,
         cpu: '',
         ram: '',
-        startCommand: '',
+        startCommand: startCommand,
         type: 'job',
         jobsExecuteConcurrently: false,
         cronSchedule: '',
     }),
 }
 
-export const createDefaultService = (name: string, type: ServiceType) => {
+export const createDefaultService = (name: string, type: ServiceType, startCommand: ServiceReadOnlyField) => {
     switch (type) {
         case 'web':
-            return WebService.default(name);
+            return WebService.default(name, startCommand);
         case 'worker':
-            return WorkerService.default(name);
+            return WorkerService.default(name, startCommand);
         case 'job':
-            return JobService.default(name);
+            return JobService.default(name, startCommand);
     }
 }

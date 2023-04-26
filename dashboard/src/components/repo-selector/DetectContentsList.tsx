@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import styled from "styled-components";
 import file from "assets/file.svg";
 import folder from "assets/folder.svg";
 import info from "assets/info.svg";
 import close from "assets/close.png";
-
+import Button from "components/porter/Button";
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
 import { ActionConfigType, FileType } from "../../shared/types";
@@ -26,12 +26,14 @@ type PropsType = {
   dockerfilePath?: string;
   folderPath: string;
   procfilePath?: string;
+  porterYaml?: string;
   setActionConfig: (x: ActionConfigType) => void;
   setProcfileProcess?: (x: string) => void;
   setDockerfilePath: (x: string) => void;
   setProcfilePath: (x: string) => void;
   setFolderPath: (x: string) => void;
   setBuildConfig: (x: any) => void;
+  setPorterYaml: (x: any) => void;
 };
 
 const DetectContentsList: React.FC<PropsType> = (props) => {
@@ -46,13 +48,33 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   const [showingBuildContextPrompt, setShowingBuildContextPrompt] = useState(
     "buildpacks"
   );
+  const [porterYaml, setPorterYaml] = useState("");
 
   const context = useContext(Context);
+  const fetchAndSetPorterYaml = useCallback(async (fileName: string) => {
+    try {
+      const response = await fetchPorterYamlContent(fileName);
+      setPorterYaml(atob(response.data));
+    } catch (error) {
+      console.error("Error fetching porter.yaml content:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    const porterYamlItem = contents.find((item: FileType) =>
+      item.path.includes("porter.yaml")
+    );
+
+    if (porterYamlItem) {
+      fetchAndSetPorterYaml("porter.yaml");
+    } else {
+      setPorterYaml("");
+    }
+  }, [contents, fetchAndSetPorterYaml]);
 
   useEffect(() => {
     updateContents();
   }, []);
-
   useEffect(() => {
     const dockerFileItem = contents.find((item: FileType) =>
       item.path.includes("Dockerfile")
@@ -84,8 +106,6 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
     return contents.map((item: FileType, i: number) => {
       let splits = item.path.split("/");
       let fileName = splits[splits.length - 1];
-      if (fileName.includes("porter.yaml")) {
-      }
       if (fileName.includes("Dockerfile")) {
         return (
           <AdvancedBuildSettings
@@ -144,6 +164,30 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
     );
   };
 
+  const fetchPorterYamlContent = async (porterYaml: string) => {
+    let { currentProject } = context;
+    let { actionConfig, branch } = props;
+
+    try {
+      const res = await api.getPorterYamlContents(
+        "<token>",
+        {
+          path: porterYaml,
+        },
+        {
+          project_id: currentProject.id,
+          git_repo_id: actionConfig.git_repo_id,
+          kind: "github",
+          owner: actionConfig.git_repo.split("/")[0],
+          name: actionConfig.git_repo.split("/")[1],
+          branch: branch,
+        }
+      );
+      return res;
+    } catch (err) {
+      console.log(err);
+    }
+  };
   const detectBuildpacks = () => {
     let { currentProject } = context;
     let { actionConfig, branch } = props;
@@ -215,191 +259,6 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
       });
     }
   };
-
-  // const renderJumpToParent = () => {
-  //   if (this.state.currentDir !== "") {
-  //     let splits = this.state.currentDir.split("/");
-  //     let subdir = "";
-  //     if (splits.length !== 1) {
-  //       subdir = this.state.currentDir.replace(splits[splits.length - 1], "");
-  //       if (subdir.charAt(subdir.length - 1) === "/") {
-  //         subdir = subdir.slice(0, subdir.length - 1);
-  //       }
-  //     }
-
-  //     return (
-  //       <Item lastItem={false} onClick={() => this.setSubdirectory(subdir)}>
-  //         <BackLabel>..</BackLabel>
-  //       </Item>
-  //     );
-  //   }
-
-  //   return (
-  //     <FileItem lastItem={false}>
-  //       <img src={info} />
-  //       Select{" "}
-  //       {this.props.dockerfilePath
-  //         ? "Docker Build Context"
-  //         : "Application Folder"}
-  //     </FileItem>
-  //   );
-  // };
-
-  // const renderOverlay = () => {
-  //   if (this.props.procfilePath) {
-  //     let processes = this.state.processes
-  //       ? Object.keys(this.state.processes)
-  //       : [];
-  //     if (this.state.processes == null) {
-  //       return (
-  //         <Overlay>
-  //           <BgOverlay>
-  //             <LoadingWrapper>
-  //               <Loading />
-  //             </LoadingWrapper>
-  //           </BgOverlay>
-  //         </Overlay>
-  //       );
-  //     }
-
-  //     if (processes.length == 0) {
-  //       this.props.setProcfilePath("");
-  //     }
-
-  //     return (
-  //       <Overlay>
-  //         <BgOverlay
-  //           onClick={() =>
-  //             this.setState({ dockerfiles: [] }, () => {
-  //               this.props.setFolderPath("");
-  //               this.props.setProcfilePath("");
-  //             })
-  //           }
-  //         />
-  //         <CloseButton
-  //           onClick={() =>
-  //             this.setState({ dockerfiles: [] }, () => {
-  //               this.props.setProcfilePath("");
-  //             })
-  //           }
-  //         >
-  //           <CloseButtonImg src={close} />
-  //         </CloseButton>
-  //         <Label>
-  //           Porter has detected a Procfile in this folder. Which process would
-  //           you like to run?
-  //         </Label>
-  //         <DockerfileList>
-  //           {processes.map((process: string, i: number) => {
-  //             return (
-  //               <Row
-  //                 key={i}
-  //                 onClick={() => {
-  //                   if (
-  //                     !this.props.folderPath ||
-  //                     this.props.folderPath === ""
-  //                   ) {
-  //                     this.props.setFolderPath("./");
-  //                   }
-  //                   this.props.setProcfileProcess(process);
-  //                 }}
-  //                 isLast={processes.length - 1 === i}
-  //               >
-  //                 <Indicator selected={false} />
-  //                 {process}
-  //               </Row>
-  //             );
-  //           })}
-  //         </DockerfileList>
-  //       </Overlay>
-  //     );
-  //   }
-  //   if (this.state.dockerfiles.length > 0 && !this.props.dockerfilePath) {
-  //     return (
-  //       <Overlay>
-  //         <BgOverlay onClick={() => this.setState({ dockerfiles: [] })} />
-  //         <CloseButton onClick={() => this.setState({ dockerfiles: [] })}>
-  //           <CloseButtonImg src={close} />
-  //         </CloseButton>
-  //         <Label>
-  //           Porter has detected at least one Dockerfile in this folder. Would
-  //           you like to use an existing Dockerfile?
-  //         </Label>
-  //         <DockerfileList>
-  //           {this.state.dockerfiles.map((dockerfile: string, i: number) => {
-  //             return (
-  //               <Row
-  //                 key={i}
-  //                 onClick={() =>
-  //                   this.props.setDockerfilePath(
-  //                     `${this.state.currentDir || "."}/${dockerfile}`
-  //                   )
-  //                 }
-  //                 isLast={this.state.dockerfiles.length - 1 === i}
-  //               >
-  //                 <Indicator selected={false}></Indicator>
-  //                 {dockerfile}
-  //               </Row>
-  //             );
-  //           })}
-  //         </DockerfileList>
-  //         <ConfirmButton
-  //           onClick={() => {
-  //             this.props.setFolderPath(this.state.currentDir || "./");
-  //             if (
-  //               this.state.processes &&
-  //               Object.keys(this.state.processes).length > 0
-  //             ) {
-  //               this.props.setProcfilePath("./Procfile");
-  //             }
-  //           }}
-  //         >
-  //           No, I don't want to use a Dockerfile
-  //         </ConfirmButton>
-  //       </Overlay>
-  //     );
-  //   }
-  //   if (
-  //     this.props.dockerfilePath &&
-  //     !this.props.folderPath &&
-  //     this.state.showingBuildContextPrompt
-  //   ) {
-  //     return (
-  //       <Overlay>
-  //         <BgOverlay onClick={() => this.props.setDockerfilePath("")} />
-  //         <CloseButton
-  //           onClick={() =>
-  //             this.props.setFolderPath(this.state.currentDir || "./")
-  //           }
-  //         >
-  //           <CloseButtonImg src={close} />
-  //         </CloseButton>
-  //         <Label>
-  //           Would you like to set the Docker build context to a different
-  //           directory?
-  //         </Label>
-  //         <MultiSelectRow>
-  //           <ConfirmButton
-  //             onClick={() => {
-  //               this.setState({ showingBuildContextPrompt: false });
-  //               this.setSubdirectory("");
-  //             }}
-  //           >
-  //             Yes
-  //           </ConfirmButton>
-  //           <ConfirmButton
-  //             onClick={() =>
-  //               this.props.setFolderPath(this.state.currentDir || "./")
-  //             }
-  //           >
-  //             No
-  //           </ConfirmButton>
-  //         </MultiSelectRow>
-  //       </Overlay>
-  //     );
-  //   }
-  // };
-
   return (
     <>
       {renderContentList()}

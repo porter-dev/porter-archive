@@ -34,6 +34,8 @@ type Props = {
   folderPath: string | null;
   setFolderPath: (x: string) => void;
   setBuildConfig: (x: any) => void;
+  porterYaml: string;
+  setPorterYaml: (x: any) => void;
 };
 
 const SourceSettings: React.FC<Props> = ({
@@ -54,6 +56,8 @@ const SourceSettings: React.FC<Props> = ({
   folderPath,
   setFolderPath,
   setBuildConfig,
+  porterYaml,
+  setPorterYaml,
 }) => {
   const renderGithubSettings = () => {
     return (
@@ -124,6 +128,8 @@ const SourceSettings: React.FC<Props> = ({
             setProcfileProcess={setProcfileProcess}
             setFolderPath={setFolderPath}
             setBuildConfig={setBuildConfig}
+            porterYaml={porterYaml}
+            setPorterYaml={setPorterYaml}
           />
         )}
       </>

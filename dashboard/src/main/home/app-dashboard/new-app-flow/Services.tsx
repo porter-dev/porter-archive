@@ -24,6 +24,7 @@ const Services: React.FC<ServicesProps> = ({
 }) => {
   const [showAddServiceModal, setShowAddServiceModal] = useState<boolean>(false);
   const [serviceName, setServiceName] = useState<string>('');
+  const [serviceType, setServiceType] = useState<string>('web');
 
   return (
     <>
@@ -55,9 +56,13 @@ const Services: React.FC<ServicesProps> = ({
           <Spacer y={0.5} />
           <Container row>
             <ServiceIcon>
-              <img src={web} />
+              {serviceType === 'web' && <img src={web} />}
+              {serviceType === 'worker' && <img src={worker} />}
+              {serviceType === 'job' && <img src={job} />}
             </ServiceIcon>
-            <Select 
+            <Select
+              value={serviceType}
+              setValue={setServiceType}
               options={[
                 { label: 'Web', value: 'web' },
                 { label: 'Worker', value: 'worker' },
@@ -76,7 +81,10 @@ const Services: React.FC<ServicesProps> = ({
           />
           <Spacer y={1} />
           <Button onClick={() => {
-             setServices([...services, DEFAULT_SERVICE])
+            setServices([...services, { ...DEFAULT_SERVICE, name: serviceName, type: serviceType }]);
+            setShowAddServiceModal(false);
+            setServiceName('');
+            setServiceType('web');
           }}>
             <I className="material-icons">add</I> Add service
           </Button>
@@ -90,11 +98,27 @@ export default Services
 
 const ServiceIcon = styled.div`
   border: 1px solid #494b4f;
-  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 35px;
+  width: 35px;
+  margin-right: 10px;
+  overflow: hidden;
+  border-radius: 5px;
   > img {
-    height: 20px;
-    margin-right: 15px;
-    padding-left: 10px;
+    height: 18px;
+    animation: floatIn 0.5s 0s;
+    @keyframes floatIn {
+      from {
+        opacity: 0;
+        transform: translateY(7px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0px);
+      }
+    }
   }
 `;
 

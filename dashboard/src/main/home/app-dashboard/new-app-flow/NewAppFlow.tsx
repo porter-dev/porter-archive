@@ -146,13 +146,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
               repository: "https://charts.getporter.dev"
             },
             {
-              name: "web",
+              name: "worker",
               alias: "daft-worker-1",
               version: "0.38",
               repository: "https://charts.getporter.dev"
             },
             {
-              name: "web",
+              name: "worker",
               alias: "daft-worker-2",
               version: "0.38",
               repository: "https://charts.getporter.dev"

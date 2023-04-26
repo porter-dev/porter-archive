@@ -9,7 +9,8 @@ type Props = {
   error?: string;
   children?: React.ReactNode;
   disabled?: boolean;
-  onChange?: (value: string) => void;
+  value?: string;
+  setValue?: (value: string) => void;
 };
 
 const Select: React.FC<Props> = ({
@@ -20,10 +21,9 @@ const Select: React.FC<Props> = ({
   error,
   children,
   disabled,
-  onChange,
+  value,
+  setValue,
 }) => {
-  const [value, setValue] = useState("");
-
   return (
     <Block width={width}>
       {
@@ -36,7 +36,6 @@ const Select: React.FC<Props> = ({
         <StyledSelect
           onChange={e => {
             setValue(e.target.value);
-            onChange && onChange(e.target.value);
           }}
           width={width}
           height={height}
@@ -94,6 +93,8 @@ const SelectWrapper = styled.div`
   position: relative;
   background: #26292e;
   z-index: 0;
+  border-radius: 5px;
+  overflow: hidden;
   > i {
     font-size: 18px;
     position: absolute;
@@ -118,6 +119,7 @@ const StyledSelect = styled.select<{
   border-radius: 5px;
   background: none;
   appearance: none;
+  overflow: hidden;
   z-index: 1;
   border: 1px solid ${props => props.hasError ? "#ff3b62" : "#494b4f"};
   :hover {

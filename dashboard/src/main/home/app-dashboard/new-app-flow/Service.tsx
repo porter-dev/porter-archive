@@ -4,9 +4,11 @@ import AnimateHeight from "react-animate-height";
 import styled from "styled-components";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
-import web from "assets/web.png";
 import TabSelector from "components/TabSelector";
 
+import web from "assets/web.png";
+import worker from "assets/worker.png";
+import job from "assets/job.png";
 
 interface ServiceProps {
   serviceData: ServiceType;
@@ -63,8 +65,10 @@ const Service: React.FC<ServiceProps> = ({
           <ActionButton >
             <span className="material-icons dropdown">arrow_drop_down</span>
           </ActionButton>
-          {serviceData.name !== DEFAULT_SERVICE.name && serviceData.name.trim().length > 0 ? serviceData.name : "New Service"}
           {serviceData.type === 'web' && <Icon src={web} />}
+          {serviceData.type === 'worker' && <Icon src={worker} />}
+          {serviceData.type === 'job' && <Icon src={job} />}
+          {serviceData.name !== DEFAULT_SERVICE.name && serviceData.name.trim().length > 0 ? serviceData.name : "New Service"}
         </ServiceTitle>
         <ActionButton onClick={(e) => {
           deleteService();
@@ -129,11 +133,6 @@ const ActionButton = styled.button`
   margin-right: 5px;
 `;
 
-const SliderContainer = styled.div`
-    display: flex;
-    align-items: center;
-`;
-
 const ServiceHeader = styled.div`
   flex-direction: row;
   display: flex;
@@ -175,7 +174,6 @@ const ServiceHeader = styled.div`
 const Icon = styled.img`
   height: 18px;
   margin-right: 15px;
-  margin-left: 10px;
 
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {

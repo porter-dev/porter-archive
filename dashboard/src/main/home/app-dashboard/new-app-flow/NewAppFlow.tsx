@@ -127,11 +127,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const newServices = [];
       for (const [name, app] of Object.entries(porterYaml.apps)) {
         if (app.type) {
-          newServices.push(createDefaultService(name, app.type))
+          newServices.push(createDefaultService(name, app.type, { readOnly: true, value: app.run }))
         } else if (name.includes('web')) {
-          newServices.push(createDefaultService(name, 'web'))
+          newServices.push(createDefaultService(name, 'web', { readOnly: true, value: app.run }))
         } else {
-          newServices.push(createDefaultService(name, 'worker'))
+          newServices.push(createDefaultService(name, 'worker', { readOnly: true, value: app.run }))
         }
       }
       setFormState({ ...formState, serviceList: [...formState.serviceList, ...newServices] });

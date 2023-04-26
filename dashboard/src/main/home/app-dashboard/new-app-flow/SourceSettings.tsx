@@ -15,20 +15,10 @@ import DetectContentsList from "components/repo-selector/DetectContentsList";
 
 type Props = {
   source: SourceType | undefined;
-  templateName: string;
-  setTemplateName: (x: string) => void;
-  setValuesToOverride: (x: any) => void;
-  setPage: (x: string) => void;
-  sourceType: string;
-  setSourceType: (x: string) => void;
-
   imageUrl: string;
   setImageUrl: (x: string) => void;
   imageTag: string;
   setImageTag: (x: string) => void;
-
-  hasSource?: string;
-
   actionConfig: ActionConfigType;
   setActionConfig: (
     x: ActionConfigType | ((prevState: ActionConfigType) => ActionConfigType)
@@ -37,25 +27,12 @@ type Props = {
   setProcfileProcess: (x: string) => void;
   branch: string;
   setBranch: (x: string) => void;
-  repoType: string;
-  setRepoType: (x: string) => void;
   dockerfilePath: string | null;
   setDockerfilePath: (x: string) => void;
   procfilePath: string | null;
   setProcfilePath: (x: string) => void;
   folderPath: string | null;
   setFolderPath: (x: string) => void;
-  selectedRegistry: any;
-  setSelectedRegistry: (x: string) => void;
-  setBuildConfig: (x: any) => void;
-};
-
-const defaultActionConfig: ActionConfigType = {
-  git_repo: "",
-  image_repo_uri: "",
-  git_branch: "",
-  git_repo_id: 0,
-  kind: "github",
 };
 
 const SourceSettings: React.FC<Props> = ({
@@ -164,7 +141,7 @@ const SourceSettings: React.FC<Props> = ({
         <Input
           placeholder="ex: nginx"
           value={imageUrl}
-          width="100%"
+          width="300px"
           setValue={setImageUrl}
         />
       </>

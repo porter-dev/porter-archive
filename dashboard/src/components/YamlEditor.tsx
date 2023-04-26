@@ -44,7 +44,7 @@ class YamlEditor extends Component<PropsType, StateType> {
       <Holder>
         <Editor onSubmit={this.handleSubmit} border={this.props.border}>
           <AceEditor
-            mode="yaml"
+            // mode="yaml"
             value={this.props.value}
             theme="porter"
             onChange={this.props.onChange}
@@ -79,6 +79,7 @@ const Holder = styled.div`
   }
   .ace_editor,
   .ace_editor * {
+    color: #aaaabb;
     font-family: "Monaco", "Menlo", "Ubuntu Mono", "Droid Sans Mono", "Consolas",
       monospace !important;
     font-size: 12px !important;

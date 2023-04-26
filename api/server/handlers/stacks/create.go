@@ -32,6 +32,7 @@ func NewCreateStackHandler(
 }
 
 func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("welcome to create stack handler")
 	ctx := r.Context()
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 

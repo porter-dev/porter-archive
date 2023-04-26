@@ -93,6 +93,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [selectedRegistry, setSelectedRegistry] = useState(null);
   const [shouldCreateWorkflow, setShouldCreateWorkflow] = useState(true);
   const [buildConfig, setBuildConfig] = useState();
+  const [porterYaml, setPorterYaml] = useState("");
   const getFullActionConfig = (): FullGithubActionConfigType => {
     let imageRepoURI = `${selectedRegistry?.url}/${templateName}`;
     return {
@@ -259,6 +260,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   procfilePath={procfilePath}
                   setProcfilePath={setProcfilePath}
                   setBuildConfig={setBuildConfig}
+                  porterYaml={porterYaml}
+                  setPorterYaml={setPorterYaml}
                 />
               </>,
               <>

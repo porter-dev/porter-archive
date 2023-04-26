@@ -114,7 +114,7 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
                     { label: "I authorize Porter to open a PR on my behalf", value: "open_pr" },
                     { label: "I will copy the file into my repository myself", value: "copy" },
                 ]}
-                onChange={(x: Choice) => setChoice(x)}
+                setValue={(x: Choice) => setChoice(x)}
                 width="100%"
             />
             <Button

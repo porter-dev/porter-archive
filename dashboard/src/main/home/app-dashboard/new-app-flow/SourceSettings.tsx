@@ -33,6 +33,7 @@ type Props = {
   setProcfilePath: (x: string) => void;
   folderPath: string | null;
   setFolderPath: (x: string) => void;
+  setBuildConfig: (x: any) => void;
 };
 
 const SourceSettings: React.FC<Props> = ({

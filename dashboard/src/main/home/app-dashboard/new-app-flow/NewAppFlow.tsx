@@ -258,6 +258,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setFolderPath={setFolderPath}
                   procfilePath={procfilePath}
                   setProcfilePath={setProcfilePath}
+                  setBuildConfig={setBuildConfig}
                 />
               </>,
               <>

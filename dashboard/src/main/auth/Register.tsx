@@ -95,9 +95,13 @@ const Register: React.FC<Props> = ({
             setUser(res?.data?.id, res?.data?.email);
             authenticate();
           }
+
+          // Temp
+          location.reload();
         })
         .catch((err) => {
-          console.log("registration:", err);
+          console.log("registration:", err)
+          location.reload();
           if (err.response?.data?.error) {
             setCurrentError(err.response.data.error)
           }

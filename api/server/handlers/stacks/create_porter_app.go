@@ -1,7 +1,6 @@
 package stacks
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -31,21 +30,30 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-	fmt.Println("congrats on making it!", cluster.ID, project.ID)
+
+	request := &types.CreatePorterAppRequest{}
+
+	ok := c.DecodeAndValidate(w, r, request)
+
+	if !ok {
+		return
+	}
 
 	app := &models.PorterApp{
-		Name:      "test",
+		Name:      request.Name,
 		ClusterID: cluster.ID,
 		ProjectID: project.ID,
-		GitBranch: "main",
+		RepoName:  request.RepoName,
+		GitBranch: request.GitBranch,
 
-		BuildContext: "./",
-		Builder:      "heroku/buildpacks:18",
-		Buildpacks:   "nodejs",
-		Dockerfile:   "",
+		BuildContext: request.BuildContext,
+		Builder:      request.Builder,
+		Buildpacks:   request.Buildpacks,
+		Dockerfile:   request.Dockerfile,
 	}
 
 	_, err := c.Repo().PorterApp().CreatePorterApp(app)
+
 	if err != nil {
 		return
 	}

@@ -167,6 +167,12 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
 const createPorterApp = baseApi<
   {
     name: string;
+    repo_name: string;
+    git_branch: string;
+    build_context: string;
+    builder: string;
+    buildpacks: string;
+    dockerfile: string;
   },
   {
     project_id: number;

@@ -2,6 +2,7 @@ package gitinstallation
 
 import (
 	"context"
+	b64 "encoding/base64"
 	"net/http"
 
 	"github.com/google/go-github/v41/github"
@@ -30,7 +31,7 @@ func NewGithubGetPorterYamlHandler(
 }
 
 func (c *GithubGetPorterYamlHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	request := &types.GetProcfileRequest{}
+	request := &types.GetPorterYamlRequest{}
 
 	ok := c.DecodeAndValidate(w, r, request)
 
@@ -75,6 +76,7 @@ func (c *GithubGetPorterYamlHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+	data := b64.StdEncoding.EncodeToString([]byte(fileData))
 
-	c.WriteResult(w, r, fileData)
+	c.WriteResult(w, r, data)
 }

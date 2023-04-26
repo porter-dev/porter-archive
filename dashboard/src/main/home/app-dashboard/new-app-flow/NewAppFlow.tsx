@@ -154,7 +154,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           project_id: currentProject.id,
         }
       );
-      alert("ok");
     } catch (err) {
       console.log(err);
     }

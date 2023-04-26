@@ -8,6 +8,8 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
 )
 
 type CreatePorterAppHandler struct {
@@ -22,14 +24,16 @@ func NewCreatePorterAppHandler(
 ) *CreatePorterAppHandler {
 	return &CreatePorterAppHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
-		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
 func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// ctx := r.Context()
-	// cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-	fmt.Println("congrats on making it!")
+	ctx := r.Context()
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	fmt.Println("congrats on making it!", cluster.ID, project.ID)
+
+	// _, err := c.Repo().PorterApp().CreatePorterApp(project.ID, cluster.ID)
 
 	w.WriteHeader(http.StatusCreated)
 }

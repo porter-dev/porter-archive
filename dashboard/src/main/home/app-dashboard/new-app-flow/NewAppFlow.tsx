@@ -109,79 +109,27 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   };
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
 
+  // Deploys a Helm chart and writes build settings to the DB
   const deployPorterApp = async () => {
-    const dummyPorterAppConfig = {
-      "daft-web": {
-        image: {
-          repository: "public.ecr.aws/o1j4x7p4/hello-porter",
-          tag: "latest",
-        },
-        ingress: {
-          enabled: false,
-        },
-      },
-      "daft-worker-1": {
-        image: {
-          repository: "public.ecr.aws/o1j4x7p4/hello-porter",
-          tag: "latest",
-        },
-      },
-      "daft-worker-2": {
-        image: {
-          repository: "public.ecr.aws/o1j4x7p4/hello-porter",
-          tag: "latest",
-        },
-      },
-      "daft-release": {
-        image: {
-          repository: "public.ecr.aws/o1j4x7p4/hello-porter",
-          tag: "latest",
-        },
-      },
-    };
-
     try {
-      const res = await api.updatePorterStack(
+
+      // Write build settings to the DB
+      const res = await api.createPorterApp(
         "<token>",
         {
-          stack_name: formState.applicationName,
-          values: dummyPorterAppConfig,
-          dependencies: [
-            {
-              name: "web",
-              alias: "daft-web",
-              version: "0.88",
-              repository: "https://charts.getporter.dev",
-            },
-            {
-              name: "worker",
-              alias: "daft-worker-1",
-              version: "0.38",
-              repository: "https://charts.getporter.dev",
-            },
-            {
-              name: "worker",
-              alias: "daft-worker-2",
-              version: "0.38",
-              repository: "https://charts.getporter.dev",
-            },
-            {
-              name: "job",
-              alias: "daft-release",
-              version: "0.37",
-              repository: "https://charts.getporter.dev",
-            },
-          ],
+          name: formState.applicationName,
         },
         {
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
         }
       );
-      console.log(res);
-    } catch (error) {
-      console.log(error);
+      alert("ok")
+    } catch (err) {
+      console.log(err);
     }
+
+    // TODO: update Porter stack
   };
 
   return (
@@ -336,6 +284,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           stackName={formState.applicationName}
           projectId={currentProject.id}
           clusterId={currentCluster.id}
+          deployPorterApp={deployPorterApp}
         />
       )}
     </CenterWrapper>

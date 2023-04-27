@@ -164,6 +164,17 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
   return `/api/email/verify/initiate`;
 });
 
+const getPorterApps = baseApi<
+{},
+{
+  project_id: number;
+  cluster_id: number;
+}
+>("GET", (pathParams) => {
+let { project_id, cluster_id } = pathParams;
+return `/api/projects/${project_id}/clusters/${cluster_id}/stacks`;
+});
+
 const getPorterApp = baseApi<
   {},
   {
@@ -194,6 +205,27 @@ const createPorterApp = baseApi<
 >("POST", (pathParams) => {
   let { project_id, cluster_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/update_config`;
+});
+
+const updatePorterApp = baseApi<
+  {
+    name: string;
+    repo_name: string;
+    git_branch: string;
+    build_context: string;
+    builder: string;
+    buildpacks: string;
+    dockerfile: string;
+    image_repo_uri: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    name: string;
+  }
+>("POST", (pathParams) => {
+  let { project_id, cluster_id, name } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
 });
 
 const updatePorterStack = baseApi<
@@ -2530,8 +2562,10 @@ export default {
   createPasswordResetVerify,
   createPasswordResetFinalize,
   createProject,
+  getPorterApps,
   getPorterApp,
   createPorterApp,
+  updatePorterApp,
   updatePorterStack,
   createConfigMap,
   deleteCluster,

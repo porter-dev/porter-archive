@@ -1,6 +1,7 @@
 package stacks
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -13,30 +14,44 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type GetPorterAppHandler struct {
+type UpdatePorterAppHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewGetPorterAppHandler(
+func NewUpdatePorterAppHandler(
 	config *config.Config,
+	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetPorterAppHandler {
-	return &GetPorterAppHandler{
-		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
+) *UpdatePorterAppHandler {
+	return &UpdatePorterAppHandler{
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *UpdatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("so an update was attempted...")
 	ctx := r.Context()
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
 	name, _ := requestutils.GetURLParamString(r, types.URLParamReleaseName)
 
-	app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, name)
+	porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, name)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	c.WriteResult(w, r, app.ToPorterAppType())
+	request := &types.UpdatePorterAppRequest{}
+	ok := c.DecodeAndValidate(w, r, request)
+	if !ok {
+		return
+	}
+
+	updatedPorterApp, err := c.Repo().PorterApp().UpdatePorterApp(porterApp)
+	if err != nil {
+		return
+	}
+
+	c.WriteResult(w, r, updatedPorterApp.ToPorterAppType())
 }

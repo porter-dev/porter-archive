@@ -20,3 +20,30 @@ type PorterApp struct {
 	Buildpacks   string `json:"build_packs,omitempty"`
 	Dockerfile   string `json:"dockerfile,omitempty"`
 }
+
+// swagger:model
+type CreatePorterAppRequest struct {
+	Name         string `json:"name" form:"required"`
+	ClusterID    uint   `json:"cluster_id"`
+	ProjectID    uint   `json:"project_id"`
+	RepoName     string `json:"repo_name"`
+	GitBranch    string `json:"git_branch"`
+	BuildContext string `json:"build_context"`
+	Builder      string `json:"builder"`
+	Buildpacks   string `json:"buildpacks"`
+	Dockerfile   string `json:"dockerfile"`
+	ImageRepoURI string `json:"image_repo_uri"`
+}
+
+type UpdatePorterAppRequest struct {
+	Name         string `json:"name"`
+	RepoName     string `json:"repo_name"`
+	GitBranch    string `json:"git_branch"`
+	BuildContext string `json:"build_context"`
+	Builder      string `json:"builder"`
+	Buildpacks   string `json:"buildpacks"`
+	Dockerfile   string `json:"dockerfile"`
+	ImageRepoURI string `json:"image_repo_uri"`
+}
+
+type ListPorterAppResponse []*PorterApp

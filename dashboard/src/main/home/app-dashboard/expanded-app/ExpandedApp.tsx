@@ -29,6 +29,13 @@ import BuildSettingsTabStack from "./BuildSettingsTabStack";
 type Props = RouteComponentProps & {};
 
 const ExpandedApp: React.FC<Props> = ({ ...props }) => {
+  const {
+    currentCluster,
+    currentProject,
+    setCurrentError,
+    setCurrentOverlay,
+  } = useContext(Context);
+
   const [isLoading, setIsLoading] = useState(true);
   const [appData, setAppData] = useState(null);
   const [error, setError] = useState(null);
@@ -48,12 +55,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentError,
-    setCurrentOverlay,
-  } = useContext(Context);
+
   const getPorterApp = async () => {
     setIsLoading(true);
     const { appName } = props.match.params as any;
@@ -67,7 +69,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           name: appName,
         }
       );
-      console.log(resPorterApp);
       const resChartData = await api.getChart(
         "<token>",
         {},
@@ -83,8 +84,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         app: resPorterApp?.data,
         chart: resChartData?.data,
       });
-      console.log(resChartData?.data);
-      console.log(resPorterApp?.data);
       setIsLoading(false);
     } catch (err) {
       setError(err);
@@ -231,6 +230,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     },
     [appData?.chart]
   );
+
   useEffect(() => {
     const { appName } = props.match.params as any;
     if (currentCluster && appName && currentProject) {

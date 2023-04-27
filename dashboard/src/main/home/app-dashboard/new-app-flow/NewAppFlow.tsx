@@ -21,7 +21,6 @@ import Placeholder from "components/Placeholder";
 import Button from "components/porter/Button";
 import { generateSlug } from "random-word-slugs";
 import { RouteComponentProps, withRouter } from "react-router";
-import Error from "components/porter/Error";
 import SourceSelector, { SourceType } from "./SourceSelector";
 import SourceSettings from "./SourceSettings";
 import Services from "./Services";
@@ -103,8 +102,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [porterYaml, setPorterYaml] = useState("");
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
   const [porterJson, setPorterJson] = useState<
-    z.infer<typeof PorterYamlSchema>
-  >(null);
+    z.infer<typeof PorterYamlSchema> | undefined
+  >(undefined);
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
 
   const validatePorterYaml = (yamlString: string) => {
@@ -191,8 +190,19 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       !isAppNameValid(formState.applicationName)
     );
   };
+
   const deployPorterApp = async () => {
     try {
+      if (
+        currentProject == null ||
+        currentCluster == null ||
+        currentProject.id == null ||
+        currentCluster.id == null
+      ) {
+        throw new Error("Project or cluster not found");
+      }
+
+      // validate form data
       const finalPorterYaml = createFinalPorterYaml();
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
@@ -205,7 +215,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           }
         : {};
 
-      // only deploy + write to DB if we can create a final porter yaml
+      // write to the db + deploy
       await Promise.all([
         api.createPorterApp(
           "<token>",
@@ -238,6 +248,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         ),
       ]);
     } catch (err) {
+      // TODO: better error handling
       console.log(err);
     }
   };
@@ -262,6 +273,19 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     const apps: z.infer<typeof AppsSchema> = {};
     for (const service of serviceList) {
       let config = Service.serialize(service);
+      // TODO: get rid of this block when we handle ingress on the backend
+      if (Service.isWeb(service)) {
+        const ingress = Service.handleWebIngress(
+          service,
+          formState.applicationName,
+          currentCluster?.id,
+          currentProject?.id
+        );
+        config = {
+          ...config,
+          ...ingress,
+        };
+      }
       if (
         porterJson != null &&
         porterJson.apps[service.name] != null &&

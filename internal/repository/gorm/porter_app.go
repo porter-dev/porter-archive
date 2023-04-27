@@ -34,7 +34,7 @@ func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*mo
 	return apps, nil
 }
 
-func (repo *PorterAppRepository) ReadPorterApp(clusterID uint, name string) (*models.PorterApp, error) {
+func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string) (*models.PorterApp, error) {
 	app := &models.PorterApp{}
 
 	if err := repo.db.Where("cluster_id = ? AND name = ?", clusterID, name).First(&app).Error; err != nil {

@@ -31,10 +31,9 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.CreatePorterAppRequest{}
+	request := &types.UpdatePorterAppRequest{}
 
 	ok := c.DecodeAndValidate(w, r, request)
-
 	if !ok {
 		return
 	}
@@ -53,11 +52,10 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		ImageRepoURI: request.ImageRepoURI,
 	}
 
-	_, err := c.Repo().PorterApp().CreatePorterApp(app)
-
+	porterApp, err := c.Repo().PorterApp().UpdatePorterApp(app)
 	if err != nil {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	c.WriteResult(w, r, porterApp.ToPorterAppType())
 }

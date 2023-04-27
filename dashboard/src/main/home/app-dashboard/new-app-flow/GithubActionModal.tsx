@@ -94,10 +94,11 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
         Header={
           <ModalHeader>.github/workflows/porter.yml</ModalHeader>
         }
-        isInitiallyExpanded={true}
+        isInitiallyExpanded
+        spaced
         ExpandedSection={
           <YamlEditor
-            value={getGithubAction(projectId, stackName)}
+            value={getGithubAction(projectId, clusterId, stackName)}
             readOnly={true}
             height="300px"
           />

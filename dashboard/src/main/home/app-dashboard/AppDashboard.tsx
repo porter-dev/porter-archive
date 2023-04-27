@@ -21,6 +21,7 @@ import Text from "components/porter/Text";
 import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
 import Link from "components/porter/Link";
+import Loading from "components/Loading";
 
 type Props = {
 };
@@ -47,6 +48,7 @@ const AppDashboard: React.FC<Props> = ({
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [apps, setApps] = useState([]);
+  const [error, setError] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("grid");
   const [isLoading, setIsLoading] = useState(true);
@@ -65,25 +67,32 @@ const AppDashboard: React.FC<Props> = ({
   }, [apps, searchValue]);
 
   const getApps = async () => {
-    
+    setIsLoading(true);
+
     // TODO: Currently using namespaces as placeholder (replace with apps)
     try {
-      const res = await api.getNamespaces(
+      const res = await api.getPorterApps(
         "<token>",
         {},
         {
-          id: currentProject.id,
+          project_id: currentProject.id,
           cluster_id: currentCluster.id,
         }
       )
       setApps(res.data);
+      setIsLoading(false);
     }
-    catch (err) {}
+    catch (err) {
+      setError(err);
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
-    getApps();
-  }, []);
+    if (currentProject?.id > 0 && currentCluster?.id > 0) {
+      getApps();
+    }
+  }, [currentCluster, currentProject]);
 
   return (
     <StyledAppDashboard>
@@ -117,12 +126,12 @@ const AppDashboard: React.FC<Props> = ({
         </Link>
       </Container>
       <Spacer y={1} />
-      {view === "grid" ? (
+      {isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
         <GridList>
          {(filteredApps ?? []).map((app: any, i: number) => {
            if (!namespaceBlacklist.includes(app.name)) {
              return (
-               <Block>
+               <Block key={i}>
                  <Text size={14}>
                    <Icon src={icons[i % icons.length]} />
                    {app.name}
@@ -146,7 +155,7 @@ const AppDashboard: React.FC<Props> = ({
           {(filteredApps ?? []).map((app: any, i: number) => {
             if (!namespaceBlacklist.includes(app.name)) {
               return (
-                <Row>
+                <Row key={i}>
                   <Text size={14}>
                     <MidIcon src={icons[i % icons.length]} />
                     {app.name}

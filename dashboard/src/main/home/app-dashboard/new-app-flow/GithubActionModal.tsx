@@ -8,6 +8,11 @@ import styled from "styled-components";
 import Button from "components/porter/Button";
 import Select from "components/porter/Select";
 import api from "shared/api";
+import { CopyBlock } from "react-code-blocks";
+import { getGithubAction } from "./utils";
+import AceEditor from "react-ace";
+import YamlEditor from "components/YamlEditor";
+
 
 interface GithubActionModalProps {
   closeModal: () => void;
@@ -79,7 +84,7 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
       </Text>
       <Spacer height="15px" />
       <Text color="helper">
-        In order to automatically update your services every time new code is pushed to your GitHub branch, the following file must exist in your Github repository:
+        In order to automatically update your services every time new code is pushed to your GitHub branch, the following file must exist in your GitHub repository:
       </Text>
       <Spacer y={1} />
       <ExpandableSection
@@ -87,24 +92,15 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
         expandText="[+] Show code"
         collapseText="[-] Hide code"
         Header={
-          <ModalHeader>./github/workflows/porter_deploy.yml</ModalHeader>
+          <ModalHeader>.github/workflows/porter.yml</ModalHeader>
         }
         isInitiallyExpanded={true}
         ExpandedSection={
-          <>
-            <Spacer height="15px" />
-            <Fieldset background="#1b1d2688">
-              • Amazon Elastic Kubernetes Service (EKS) = $73/mo
-              <Spacer height="15px" />
-              • Amazon EC2:
-              <Spacer height="15px" />
-              <Tab />+ System workloads: t3.medium instance (2) = $60.74/mo
-              <Spacer height="15px" />
-              <Tab />+ Monitoring workloads: t3.large instance (1) = $60.74/mo
-              <Spacer height="15px" />
-              <Tab />+ Application workloads: t3.xlarge instance (1) = $121.47/mo
-            </Fieldset>
-          </>
+          <YamlEditor
+            value={getGithubAction(projectId, stackName)}
+            readOnly={true}
+            height="300px"
+          />
         }
       />
       <Spacer y={1} />
@@ -114,7 +110,7 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
       <Spacer y={1} />
       <Select
         options={[
-          { label: "I authorize Porter to open a PR on my behalf", value: "open_pr" },
+          { label: "I authorize Porter to open a PR on my behalf (recommended)", value: "open_pr" },
           { label: "I will copy the file into my repository myself", value: "copy" },
         ]}
         setValue={(x: string) => setChoice(x as Choice)}
@@ -141,7 +137,6 @@ const Tab = styled.span`
 
 const ModalHeader = styled.div`
   font-weight: 600;
-  font-size: 20px;
+  font-size: 1.5vw;
   font-family: monospace; ;
-
 `;

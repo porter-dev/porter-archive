@@ -199,6 +199,10 @@ const updatePorterStack = baseApi<
   {
     stack_name: string;
     porter_yaml: string;
+    image_info?: {
+      repository: string;
+      tag: string;
+    }
   },
   {
     project_id: number;

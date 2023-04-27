@@ -12,7 +12,7 @@ import Button from "components/porter/Button";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
-import { Service, ServiceType, createDefaultService } from "./serviceTypes";
+import { Service, ServiceType } from "./serviceTypes";
 
 interface ServicesProps {
   services: Service[];
@@ -99,7 +99,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             onClick={() => {
               setServices([
                 ...services,
-                createDefaultService(serviceName, serviceType, { readOnly: false, value: '' }),
+                Service.default(serviceName, serviceType, { readOnly: false, value: '' }),
               ]);
               setShowAddServiceModal(false);
               setServiceName("");

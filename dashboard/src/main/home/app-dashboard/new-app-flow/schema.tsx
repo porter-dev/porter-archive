@@ -6,11 +6,11 @@ const appConfigSchema = z.object({
     type: z.enum(['web', 'worker', 'job']).optional(),
 });
 
-const appsSchema = z.record(appConfigSchema);
+export const AppsSchema = z.record(appConfigSchema);
 
-const envSchema = z.record(z.string());
+export const EnvSchema = z.record(z.string());
 
-const buildSchema = z.object({
+export const BuildSchema = z.object({
     method: z.string().refine(value => ["pack", "docker", "registry"].includes(value)),
     context: z.string().optional(),
     builder: z.string().optional(),
@@ -34,8 +34,8 @@ const buildSchema = z.object({
 
 export const PorterYamlSchema = z.object({
     version: z.string().optional(),
-    build: buildSchema.optional(),
-    env: envSchema.optional(),
-    apps: appsSchema,
+    build: BuildSchema.optional(),
+    env: EnvSchema.optional(),
+    apps: AppsSchema,
     release: z.string().optional(),
 });

@@ -37,8 +37,9 @@ import {
   GithubActionConfigType,
 } from "shared/types";
 import { z } from "zod";
-import { PorterYamlSchema } from "./schema";
-import { createDefaultService } from "./serviceTypes";
+import { AppsSchema, EnvSchema, PorterYamlSchema } from "./schema";
+import { Service } from "./serviceTypes";
+import { overrideObjectValues } from "./utils";
 
 type Props = RouteComponentProps & {};
 
@@ -53,7 +54,7 @@ const defaultActionConfig: GithubActionConfigType = {
 interface FormState {
   applicationName: string;
   selectedSourceType: SourceType | undefined;
-  serviceList: any[];
+  serviceList: Service[];
   envVariables: KeyValueType[];
   releaseCommand: string;
 }
@@ -71,7 +72,7 @@ const Validators: {
 } = {
   applicationName: (value: string) => value.trim().length > 0,
   selectedSourceType: (value: SourceType | undefined) => value !== undefined,
-  serviceList: (value: any[]) => value.length > 0,
+  serviceList: (value: Service[]) => value.length > 0,
   envVariables: (value: KeyValueType[]) => true,
   releaseCommand: (value: string) => true,
 };
@@ -95,24 +96,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [dockerfilePath, setDockerfilePath] = useState(null);
   const [procfilePath, setProcfilePath] = useState(null);
   const [folderPath, setFolderPath] = useState(null);
-  const [selectedRegistry, setSelectedRegistry] = useState(null);
-  const [shouldCreateWorkflow, setShouldCreateWorkflow] = useState(true);
   const [buildConfig, setBuildConfig] = useState();
   const [porterYaml, setPorterYaml] = useState("");
-  const getFullActionConfig = (): FullGithubActionConfigType => {
-    let imageRepoURI = `${selectedRegistry?.url}/${templateName}`;
-    return {
-      kind: "github",
-      git_repo: actionConfig.git_repo,
-      git_branch: branch,
-      registry_id: selectedRegistry?.id,
-      dockerfile_path: dockerfilePath,
-      folder_path: folderPath,
-      image_repo_uri: imageRepoURI,
-      git_repo_id: actionConfig.git_repo_id,
-      should_create_workflow: shouldCreateWorkflow,
-    };
-  };
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
   const [porterJson, setPorterJson] = useState<z.infer<typeof PorterYamlSchema>>(null);
 
@@ -121,21 +106,26 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     try {
       parsedYaml = yaml.load(yamlString);
       const parsedData = PorterYamlSchema.parse(parsedYaml);
-      const porterYaml = parsedData as z.infer<typeof PorterYamlSchema>;
-      setPorterJson(porterYaml)
-      // go through key value pairs and create services from them
+      const porterYamlToJson = parsedData as z.infer<typeof PorterYamlSchema>;
+      setPorterJson(porterYamlToJson)
+      console.log(porterYamlToJson)
+      // go through key value pairs and create services from them, if they don't already exist
       const newServices = [];
-      for (const [name, app] of Object.entries(porterYaml.apps)) {
-        if (app.type) {
-          newServices.push(createDefaultService(name, app.type, { readOnly: true, value: app.run }))
-        } else if (name.includes('web')) {
-          newServices.push(createDefaultService(name, 'web', { readOnly: true, value: app.run }))
-        } else {
-          newServices.push(createDefaultService(name, 'worker', { readOnly: true, value: app.run }))
+      const existingServices = formState.serviceList.map(s => s.name);
+      for (const [name, app] of Object.entries(porterYamlToJson.apps)) {
+        if (!existingServices.includes(name)) {
+          if (app.type) {
+            newServices.push(Service.default(name, app.type, { readOnly: true, value: app.run }))
+          } else if (name.includes('web')) {
+            newServices.push(Service.default(name, 'web', { readOnly: true, value: app.run }))
+          } else {
+            newServices.push(Service.default(name, 'worker', { readOnly: true, value: app.run }))
+          }
         }
       }
-      setFormState({ ...formState, serviceList: [...formState.serviceList, ...newServices] });
-      if (Validators.serviceList(formState.serviceList)) {
+      const newServiceList = [...formState.serviceList, ...newServices];
+      setFormState({ ...formState, serviceList: newServiceList });
+      if (Validators.serviceList(newServiceList)) {
         setCurrentStep(Math.max(currentStep, 4));
       }
     } catch (error) {
@@ -168,7 +158,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   };
   const deployPorterApp = async () => {
     try {
-      // Write build settings to the DB
+      //Write build settings to the DB
       const res = await api.createPorterApp(
         "<token>",
         {
@@ -186,12 +176,67 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           project_id: currentProject.id,
         }
       );
+
+      const finalPorterYaml = createFinalPorterYaml();
+      const yamlString = yaml.dump(finalPorterYaml);
+      const base64Encoded = btoa(yamlString);
+
+      //create dummy chart
+      await api.updatePorterStack(
+        "<token>",
+        {
+          stack_name: formState.applicationName,
+          porter_yaml: base64Encoded,
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      )
     } catch (err) {
       console.log(err);
     }
 
     // TODO: update Porter stack
   };
+
+  const combineEnv = (dashboardSetVariables: KeyValueType[], porterYamlSetVariables: Record<string, string> | undefined): z.infer<typeof EnvSchema> => {
+    const env: z.infer<typeof EnvSchema> = {};
+    for (const { key, value } of dashboardSetVariables) {
+      env[key] = value;
+    }
+    if (porterYamlSetVariables != null) {
+      for (const [key, value] of Object.entries(porterYamlSetVariables)) {
+        env[key] = value;
+      }
+    }
+    return env;
+  }
+
+  const createApps = (serviceList: Service[]): z.infer<typeof AppsSchema> => {
+    const apps: z.infer<typeof AppsSchema> = {};
+    for (const service of serviceList) {
+      let config = Service.serialize(service);
+      if (porterJson != null && porterJson.apps[service.name] != null && porterJson.apps[service.name].config != null) {
+        config = overrideObjectValues(config, porterJson.apps[service.name].config)
+      }
+      apps[service.name] = {
+        type: service.type,
+        run: service.startCommand.value,
+        config,
+      }
+    }
+
+    return apps
+  }
+
+  const createFinalPorterYaml = (): z.infer<typeof PorterYamlSchema> => {
+    return {
+      version: "v1stack",
+      env: combineEnv(formState.envVariables, porterJson.env),
+      apps: createApps(formState.serviceList),
+    }
+  }
 
   return (
     <CenterWrapper>
@@ -281,7 +326,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Spacer y={0.5} />
                 {porterJson && porterJson.apps && Object.keys(porterJson.apps).length > 0 &&
                   <AppearingDiv>
-                    <Text size={16} color={"green"}>Autodetected {Object.keys(porterJson.apps).length} services from porter.yml</Text>
+                    <Text size={16} color={"green"}>Auto-detected {Object.keys(porterJson.apps).length} services from porter.yaml!</Text>
                     <Spacer y={1} />
                   </AppearingDiv>
                 }

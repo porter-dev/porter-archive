@@ -167,8 +167,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           repo_name: actionConfig.git_repo,
           git_branch: branch,
           build_context: folderPath,
-          builder: "heroku",
-          buildpacks: "nodejs,ruby",
+          builder: buildConfig?.builder,
+          buildpacks: buildConfig?.buildPacks,
           dockerfile: dockerfilePath,
         },
         {

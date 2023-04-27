@@ -8,6 +8,7 @@ import AnimateHeight from "react-animate-height";
 import { DeviconsNameList } from "assets/devicons-name-list";
 import { BuildpackStack } from "components/repo-selector/BuildpackStack";
 import { ActionConfigType } from "shared/types";
+import SelectRow from "components/form-components/SelectRow";
 
 interface AutoBuildpack {
   name?: string;
@@ -21,6 +22,8 @@ interface AdvancedBuildSettingsProps {
   actionConfig: ActionConfigType | null;
   branch: string;
   folderPath: string;
+  dockerfilePath?: string;
+  setDockerfilePath: (x: string) => void;
   setBuildConfig: (x: any) => void;
 }
 
@@ -48,18 +51,9 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
         <Spacer y={0.5} />
         <Input
           placeholder="ex: ./Dockerfile"
-          value=""
+          value={props.dockerfilePath}
           width="300px"
-          setValue={(e) => {}}
-        />
-        <Spacer y={0.5} />
-        <Text color="helper">Specify your Docker build context.</Text>
-        <Spacer y={0.5} />
-        <Input
-          placeholder="ex: academic-sophon"
-          value="./"
-          width="300px"
-          setValue={(e) => {}}
+          setValue={props.setDockerfilePath}
         />
         <Spacer y={0.5} />
       </>
@@ -106,14 +100,17 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
 
       <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
         <StyledSourceBox>
-          <SelectWrapper>
-            <SelectLabel>Select Build Context</SelectLabel>
-            <StyledSelect value={buildView} onChange={handleSelectChange}>
-              <option value="docker">Docker</option>
-              <option value="buildpacks">Buildpacks</option>
-            </StyledSelect>
-          </SelectWrapper>
-          <Spacer y={0.5} />
+          <SelectRow
+            value={buildView}
+            width="100%"
+            options={[
+              { value: "docker", label: "Docker" },
+              { value: "buildpacks", label: "Buildpacks" },
+            ]}
+            setActiveValue={(option) => setBuildView(option)}
+            label="Select your Build Context"
+          />
+
           {buildView === "docker" ? createDockerView() : createBuildpackView()}
         </StyledSourceBox>
       </AnimateHeight>
@@ -134,6 +131,7 @@ const StyledAdvancedBuildSettings = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 15px;
   border-radius: 5px;
   height: 40px;
   font-size: 13px;

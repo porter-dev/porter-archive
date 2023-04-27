@@ -637,7 +637,11 @@ func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client
 
 	newEnvGroup := &types.CreateEnvGroupRequest{
 		Name:      envGroupResp.Name,
-		Variables: envGroupResp.Variables,
+		Variables: make(map[string]string),
+	}
+
+	for k, v := range envGroupResp.Variables {
+		newEnvGroup.Variables[k] = v
 	}
 
 	// first check for multiple variables being set using the -e or -s flags

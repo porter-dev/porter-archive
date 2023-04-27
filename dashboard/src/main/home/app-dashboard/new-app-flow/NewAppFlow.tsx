@@ -90,7 +90,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [actionConfig, setActionConfig] = useState<GithubActionConfigType>({
     ...defaultActionConfig,
   });
-  const [procfileProcess, setProcfileProcess] = useState("");
   const [branch, setBranch] = useState("");
   const [repoType, setRepoType] = useState("");
   const [dockerfilePath, setDockerfilePath] = useState(null);
@@ -99,7 +98,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [buildConfig, setBuildConfig] = useState();
   const [porterYaml, setPorterYaml] = useState("");
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
-  const [porterJson, setPorterJson] = useState<z.infer<typeof PorterYamlSchema>>(null);
+  const [porterJson, setPorterJson] = useState<
+    z.infer<typeof PorterYamlSchema>
+  >(null);
 
   const validatePorterYaml = (yamlString: string) => {
     let parsedYaml;
@@ -129,9 +130,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         setCurrentStep(Math.max(currentStep, 4));
       }
     } catch (error) {
-      console.log("Error converting porter yaml file to input: " + error)
+      console.log("Error converting porter yaml file to input: " + error);
     }
-  }
+  };
 
   // Deploys a Helm chart and writes build settings to the DB
   const isAppNameValid = (name: string) => {
@@ -169,7 +170,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           builder: "heroku",
           buildpacks: "nodejs,ruby",
           dockerfile: dockerfilePath,
-
         },
         {
           cluster_id: currentCluster.id,
@@ -306,8 +306,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setActionConfig={setActionConfig}
                   branch={branch}
                   setBranch={setBranch}
-                  procfileProcess={procfileProcess}
-                  setProcfileProcess={setProcfileProcess}
                   dockerfilePath={dockerfilePath}
                   setDockerfilePath={setDockerfilePath}
                   folderPath={folderPath}
@@ -317,7 +315,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setBuildConfig={setBuildConfig}
                   porterYaml={porterYaml}
                   setPorterYaml={(newYaml: string) => {
-                    validatePorterYaml(newYaml)
+                    validatePorterYaml(newYaml);
                   }}
                 />
               </>,
@@ -378,8 +376,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
               */
               <Button
                 onClick={() => {
+                  // TODO: remove
+                  deployPorterApp();
+
                   if (imageUrl) {
-                    deployPorterApp();
+                    // deployPorterApp();
                   } else {
                     setShowGHAModal(true);
                   }

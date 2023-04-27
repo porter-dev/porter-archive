@@ -60,15 +60,23 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo *types.ImageInfo) (map[
 	values := make(map[string]interface{})
 
 	for name, app := range parsed.Apps {
-		defaultValues := getDefaultValues(app, parsed.Env, imageInfo)
+		defaultValues := getDefaultValues(app, parsed.Env)
 		helm_values := utils.CoalesceValues(defaultValues, app.Config)
 		values[name] = helm_values
+		if imageInfo != nil {
+			values["global"] = map[string]interface{}{
+				"image": map[string]interface{}{
+					"repository": imageInfo.Repository,
+					"tag":        imageInfo.Tag,
+				},
+			}
+		}
 	}
 
 	return values, nil
 }
 
-func getDefaultValues(app *App, env map[string]string, imageInfo *types.ImageInfo) map[string]interface{} {
+func getDefaultValues(app *App, env map[string]string) map[string]interface{} {
 	var defaultValues map[string]interface{}
 	if *app.Type == "web" {
 		defaultValues = map[string]interface{}{
@@ -92,12 +100,6 @@ func getDefaultValues(app *App, env map[string]string, imageInfo *types.ImageInf
 			},
 		}
 	}
-	if imageInfo != nil {
-		defaultValues["image"] = map[string]interface{}{
-			"repository": imageInfo.Repository,
-			"tag":        imageInfo.Tag,
-		}
-	}
 	return defaultValues
 }
 
@@ -105,7 +107,7 @@ func buildStackChart(parsed *PorterStackYAML, config *config.Config, projectID u
 	deps := make([]*chart.Dependency, 0)
 
 	for alias, app := range parsed.Apps {
-		selectedRepo := "https://charts.getporter.dev"
+		selectedRepo := config.ServerConf.DefaultApplicationHelmRepoURL
 		selectedVersion, err := getLatestTemplateVersion(*app.Type, config, projectID)
 		if err != nil {
 			return nil, err

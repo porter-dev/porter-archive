@@ -26,8 +26,8 @@ export type WorkerService = SharedServiceParams & {
 const WorkerService = {
     default: (name: string, startCommand: ServiceReadOnlyField): WorkerService => ({
         name,
-        cpu: '',
-        ram: '',
+        cpu: '100',
+        ram: '256',
         startCommand: startCommand,
         type: 'worker',
         replicas: '1',
@@ -69,8 +69,8 @@ export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
 const WebService = {
     default: (name: string, startCommand: ServiceReadOnlyField): WebService => ({
         name,
-        cpu: '',
-        ram: '',
+        cpu: '100',
+        ram: '256',
         startCommand: startCommand,
         type: 'web',
         replicas: '1',
@@ -128,8 +128,8 @@ export type JobService = SharedServiceParams & {
 const JobService = {
     default: (name: string, startCommand: ServiceReadOnlyField): JobService => ({
         name,
-        cpu: '',
-        ram: '',
+        cpu: '100',
+        ram: '256',
         startCommand: startCommand,
         type: 'job',
         jobsExecuteConcurrently: false,

@@ -101,7 +101,7 @@ const StyledExpandableSection = styled.div<{
 }>`
   width: 100%;
   height: ${props => (props.isExpanded || props.noWrapper) ? "" : "40px"};
-  max-height: 300px;
+  max-height: 350px;
   overflow: hidden;
   border-radius: 5px;
   background: ${props => !props.noWrapper && (props.background || "#26292e")};

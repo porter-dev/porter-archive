@@ -77,6 +77,11 @@ const Validators: {
   releaseCommand: (value: string) => true,
 };
 
+type Detected = {
+  detected: boolean;
+  message: string;
+}
+
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [templateName, setTemplateName] = useState("");
 
@@ -101,6 +106,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [porterJson, setPorterJson] = useState<
     z.infer<typeof PorterYamlSchema>
   >(null);
+  const [detected, setDetected] = useState<Detected | undefined>(undefined);
 
   const validatePorterYaml = (yamlString: string) => {
     let parsedYaml;
@@ -109,7 +115,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const parsedData = PorterYamlSchema.parse(parsedYaml);
       const porterYamlToJson = parsedData as z.infer<typeof PorterYamlSchema>;
       setPorterJson(porterYamlToJson);
-      console.log(porterYamlToJson);
       // go through key value pairs and create services from them, if they don't already exist
       const newServices = [];
       const existingServices = formState.serviceList.map((s) => s.name);
@@ -141,6 +146,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       if (Validators.serviceList(newServiceList)) {
         setCurrentStep(Math.max(currentStep, 4));
       }
+      if (porterYamlToJson &&
+        porterYamlToJson.apps &&
+        Object.keys(porterYamlToJson.apps).length > 0) {
+        setDetected({ detected: true, message: `Detected ${Object.keys(porterYamlToJson.apps).length} apps from porter.yaml` });
+      } else {
+        setDetected({ detected: false, message: "Could not detect any apps from porter.yaml. Make sure it exists in the root of your repo." });
+      }
     } catch (error) {
       console.log("Error converting porter yaml file to input: " + error);
     }
@@ -171,46 +183,51 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   };
   const deployPorterApp = async () => {
     try {
-      // Write build settings to the DB
-      const res = await api.createPorterApp(
-        "<token>",
-        {
-          name: formState.applicationName,
-          repo_name: actionConfig.git_repo,
-          git_branch: branch,
-          build_context: folderPath,
-          builder: (buildConfig as any)?.builder,
-          buildpacks: (buildConfig as any)?.buildpacks.join(",") ?? "",
-          dockerfile: dockerfilePath,
-          image_repo_uri: imageUrl,
-        },
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-        }
-      );
-
       const finalPorterYaml = createFinalPorterYaml();
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
-
-      //create dummy chart
-      await api.updatePorterStack(
-        "<token>",
-        {
-          stack_name: formState.applicationName,
-          porter_yaml: base64Encoded,
-        },
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
+      const imageInfo = imageUrl ? {
+        image_info: {
+          repository: imageUrl,
+          tag: imageTag,
         }
-      );
+      } : {}
+
+      // only deploy + write to DB if we can create a final porter yaml
+      await Promise.all([
+        api.createPorterApp(
+          "<token>",
+          {
+            name: formState.applicationName,
+            repo_name: actionConfig.git_repo,
+            git_branch: branch,
+            build_context: folderPath,
+            builder: (buildConfig as any)?.builder,
+            buildpacks: (buildConfig as any)?.buildpacks.join(",") ?? "",
+            dockerfile: dockerfilePath,
+            image_repo_uri: imageUrl,
+          },
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+          }
+        ),
+        api.updatePorterStack(
+          "<token>",
+          {
+            stack_name: formState.applicationName,
+            porter_yaml: base64Encoded,
+            ...imageInfo,
+          },
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+          }
+        ),
+      ])
     } catch (err) {
       console.log(err);
     }
-
-    // TODO: update Porter stack
   };
 
   const combineEnv = (
@@ -343,19 +360,15 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 />
               </>,
               <>
-                <Text size={16}>Application services</Text>
+                <Text size={16}>Application services {detected && (
+                  <AppearingDiv>
+                    <Text size={16} color={detected.detected ? "green" : "red"}>
+                      {detected.detected ? <i className="material-icons">check</i> : <i className="material-icons">error</i>} {detected.message}
+                    </Text>
+                  </AppearingDiv>
+                )}</Text>
                 <Spacer y={0.5} />
-                {porterJson &&
-                  porterJson.apps &&
-                  Object.keys(porterJson.apps).length > 0 && (
-                    <AppearingDiv>
-                      <Text size={16} color={"green"}>
-                        Auto-detected {Object.keys(porterJson.apps).length}{" "}
-                        services from porter.yaml!
-                      </Text>
-                      <Spacer y={1} />
-                    </AppearingDiv>
-                  )}
+
                 <Services
                   setServices={(services: any[]) => {
                     setFormState({ ...formState, serviceList: services });
@@ -475,6 +488,9 @@ const Icon = styled.img`
 const AppearingDiv = styled.div`
   animation: floatIn 0.5s;
   animation-fill-mode: forwards;
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
   @keyframes floatIn {
     from {
       opacity: 0;

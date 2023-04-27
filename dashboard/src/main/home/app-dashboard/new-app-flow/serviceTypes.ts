@@ -37,13 +37,34 @@ const WorkerService = {
         targetCPUUtilizationPercentage: '50',
         targetRAMUtilizationPercentage: '50',
     }),
+    serialize: (service: WorkerService) => {
+        const autoscaling = service.autoscalingOn ? {
+            autoscaling: {
+                enabled: true,
+                minReplicas: service.minReplicas,
+                maxReplicas: service.maxReplicas,
+                targetCPUUtilizationPercentage: service.targetCPUUtilizationPercentage,
+                targetMemoryUtilizationPercentage: service.targetRAMUtilizationPercentage,
+            }
+        } : {};
+        return {
+            replicaCount: service.replicas,
+            resources: {
+                requests: {
+                    cpu: service.cpu + 'm',
+                    memory: service.ram + 'Mi',
+                }
+            },
+            ...autoscaling,
+        }
+    }
 }
 
 export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
     type: 'web';
     port: string;
     generateUrlForExternalTraffic: boolean;
-    customDomain?: string;
+    customDomain: string;
 }
 const WebService = {
     default: (name: string, startCommand: ServiceReadOnlyField): WebService => ({
@@ -60,7 +81,43 @@ const WebService = {
         targetRAMUtilizationPercentage: '50',
         port: '80',
         generateUrlForExternalTraffic: true,
+        customDomain: '',
     }),
+    serialize: (service: WebService) => {
+        const autoscaling = service.autoscalingOn ? {
+            autoscaling: {
+                enabled: true,
+                minReplicas: service.minReplicas,
+                maxReplicas: service.maxReplicas,
+                targetCPUUtilizationPercentage: service.targetCPUUtilizationPercentage,
+                targetMemoryUtilizationPercentage: service.targetRAMUtilizationPercentage,
+            }
+        } : {};
+        const ingress = service.generateUrlForExternalTraffic ? {
+            ingress: {
+                enabled: true,
+                custom_domain: service.customDomain ? true : false,
+                hosts: service.customDomain ? [service.customDomain] : [],
+            }
+        } : {};
+        return {
+            replicaCount: service.replicas,
+            resources: {
+                requests: {
+                    cpu: service.cpu + 'm',
+                    memory: service.ram + 'Mi',
+                }
+            },
+            container: {
+                port: service.port,
+            },
+            service: {
+                port: service.port,
+            },
+            ...autoscaling,
+            ...ingress,
+        }
+    }
 }
 
 export type JobService = SharedServiceParams & {
@@ -78,15 +135,43 @@ const JobService = {
         jobsExecuteConcurrently: false,
         cronSchedule: '',
     }),
-}
-
-export const createDefaultService = (name: string, type: ServiceType, startCommand: ServiceReadOnlyField) => {
-    switch (type) {
-        case 'web':
-            return WebService.default(name, startCommand);
-        case 'worker':
-            return WorkerService.default(name, startCommand);
-        case 'job':
-            return JobService.default(name, startCommand);
+    serialize: (service: JobService) => {
+        const schedule = service.cronSchedule ? {
+            enabled: true,
+            value: service.cronSchedule,
+        } : {};
+        return {
+            allowConcurrent: service.jobsExecuteConcurrently,
+            resources: {
+                requests: {
+                    cpu: service.cpu + 'm',
+                    memory: service.ram + 'Mi',
+                }
+            },
+            ...schedule,
+        }
     }
 }
+
+export const Service = {
+    default: (name: string, type: ServiceType, startCommand: ServiceReadOnlyField) => {
+        switch (type) {
+            case 'web':
+                return WebService.default(name, startCommand);
+            case 'worker':
+                return WorkerService.default(name, startCommand);
+            case 'job':
+                return JobService.default(name, startCommand);
+        }
+    },
+    serialize: (service: Service) => {
+        switch (service.type) {
+            case 'web':
+                return WebService.serialize(service);
+            case 'worker':
+                return WorkerService.serialize(service);
+            case 'job':
+                return JobService.serialize(service);
+        }
+    }
+} 

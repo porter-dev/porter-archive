@@ -6,10 +6,8 @@ import ExpandableSection from "components/porter/ExpandableSection";
 import Fieldset from "components/porter/Fieldset";
 import styled from "styled-components";
 import Button from "components/porter/Button";
-import Input from "components/porter/Input";
 import Select from "components/porter/Select";
 import api from "shared/api";
-import { Context } from "shared/Context";
 
 interface GithubActionModalProps {
   closeModal: () => void;
@@ -38,12 +36,15 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
 }) => {
   const [choice, setChoice] = React.useState<Choice>("open_pr");
   const [loading, setLoading] = React.useState<boolean>(false);
-  const { currentProject, currentCluster } = useContext(Context);
 
   const submit = async () => {
     if (githubAppInstallationID && githubRepoOwner && githubRepoName && branch && stackName) {
       try {
         setLoading(true)
+        // this creates the dummy chart
+        deployPorterApp();
+
+        // this creates the secret and possily the PR
         const res = await api.createSecretAndOpenGitHubPullRequest(
           "<token>",
           {
@@ -60,7 +61,7 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
           }
         );
         if (res?.data?.url) {
-            window.open(res.data.url, "_blank", "noreferrer")
+          window.open(res.data.url, "_blank", "noreferrer")
         }
       } catch (error) {
         console.log(error)
@@ -116,7 +117,7 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
           { label: "I authorize Porter to open a PR on my behalf", value: "open_pr" },
           { label: "I will copy the file into my repository myself", value: "copy" },
         ]}
-        setValue={(x: Choice) => setChoice(x)}
+        setValue={(x: string) => setChoice(x as Choice)}
         width="100%"
       />
       <Button

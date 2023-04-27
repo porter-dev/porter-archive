@@ -27,12 +27,13 @@ type CreatePorterAppRequest struct {
 	Name         string `json:"name" form:"required"`
 	ClusterID    uint   `json:"cluster_id"`
 	ProjectID    uint   `json:"project_id"`
-	RepoName     string `json:"repo_name" form:"required"`
-	GitBranch    string `json:"git_branch" form:"required"`
-	BuildContext string `json:"build_context" form:"required"`
+	RepoName     string `json:"repo_name"`
+	GitBranch    string `json:"git_branch"`
+	BuildContext string `json:"build_context"`
 	Builder      string `json:"builder"`
 	Buildpacks   string `json:"buildpacks"`
 	Dockerfile   string `json:"dockerfile"`
+	ImageRepoURI string `json:"image_repo_uri"`
 }
 
 // swagger:model

@@ -1,7 +1,6 @@
 package stacks
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -38,8 +37,6 @@ func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
-	fmt.Println("got here", app)
 
 	c.WriteResult(w, r, app.ToPorterAppType())
 }

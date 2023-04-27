@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
+import { DeviconsNameList } from "assets/devicons-name-list";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -16,13 +17,14 @@ import Link from "components/porter/Link";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import Back from "components/porter/Back";
 import TabSelector from "components/TabSelector";
+import TitleSectionStacks from "components/TitleSectionStacks";
+import DeploymentTypeStacks from "main/home/cluster-dashboard/expanded-chart/DeploymentTypeStacks";
+import DeployStatusSection from "main/home/cluster-dashboard/expanded-chart/deploy-status-section/DeployStatusSection";
+import { integrationList } from "shared/common";
 
-type Props = RouteComponentProps & {
-};
+type Props = RouteComponentProps & {};
 
-const ExpandedApp: React.FC<Props> = ({
-  ...props
-}) => {
+const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [appData, setAppData] = useState(null);
@@ -43,6 +45,7 @@ const ExpandedApp: React.FC<Props> = ({
           name: appName,
         }
       );
+      console.log(resPorterApp);
       const resChartData = await api.getChart(
         "<token>",
         {},
@@ -58,78 +61,126 @@ const ExpandedApp: React.FC<Props> = ({
         app: resPorterApp?.data,
         chart: resChartData?.data,
       });
+      console.log(resChartData?.data);
+      console.log(resPorterApp?.data);
       setIsLoading(false);
     } catch (err) {
       setError(err);
       setIsLoading(false);
     }
-  }
+  };
+  const renderIcon = (str: string) => {
+    let value = str.split(",");
+    let buildpack = value[0];
+    // console.log(value);
+    // value.forEach((buildpack) => {
+    //   console.log(buildpack);
+    const [languageName] = buildpack.split("/").reverse();
+    const devicon = DeviconsNameList.find(
+      (devicon) => languageName.toLowerCase() === devicon.name
+    );
+    if (devicon) {
+      const icon = `devicon-${devicon?.name}-plain colored`;
+      return icon;
+    }
+    // });
+    return "";
+  };
 
   useEffect(() => {
-    if (currentCluster) {
+    const { appName } = props.match.params as any;
+    if (currentCluster && appName && currentProject) {
       getPorterApp();
     }
   }, [currentCluster]);
 
+  const getReadableDate = (s: string) => {
+    const ts = new Date(s);
+    const date = ts.toLocaleDateString();
+    const time = ts.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${time} on ${date}`;
+  };
   const renderTabContents = () => {
     switch (tab) {
       case "overview":
-        return (
-          <div>TODO: service list</div>
-        );
+        return <div>TODO: service list</div>;
       case "build-settings":
-        return (
-          <div>TODO: build settings</div>
-        );
+        return <div>TODO: build settings</div>;
       case "settings":
-        return (
-          <div>TODO: stack deletion</div>
-        )
+        return <div>TODO: stack deletion</div>;
       default:
-        return (
-          <div>dream on</div>
-        )
+        return <div>dream on</div>;
     }
   };
 
   return (
     <StyledExpandedApp>
-      {isLoading && (
-        <Loading />
-      )}
+      {isLoading && <Loading />}
       {!appData && !isLoading && (
         <Placeholder>
           <Container row>
             <PlaceholderIcon src={notFound} />
             <Text color="helper">
-              No application matching "{(props.match.params as any).appName}" was found.
+              No application matching "{(props.match.params as any).appName}"
+              was found.
             </Text>
           </Container>
           <Spacer y={1} />
-          <Link to="/apps">Return to dashboard</Link> 
+          <Link to="/apps">Return to dashboard</Link>
         </Placeholder>
       )}
       {appData && (
         <>
-          <Back to="/apps" />
-          <Container row>
+          {/* <Container row>
             <Icon src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg" />
-            <Text size={21}>
-              {appData.name}
-            </Text>
+            <Text size={21}>{appData.name}</Text>
             <Spacer inline x={1} />
-            <Text size={13}>
-              repo: porter-dev/porter
-            </Text>
+            <Text size={13}>repo: porter-dev/porter</Text>
             <Spacer inline x={1} />
-            <Text size={13}>
-              branch: main
-            </Text>
-          </Container>
-          <Spacer y={1} />
-          <Text color="helper">
-            Last updated 2 days ago
-          </Text>
+            <Text size={13}>branch: main</Text>
+          </Container> */}
+          <HeaderWrapper>
+            <TitleSectionStacks
+              icon={
+                appData.app.build_packs &&
+                renderIcon(appData.app.build_packs) != ""
+                  ? renderIcon(appData.app.build_packs)
+                  : integrationList.registry.icon
+              }
+              iconWidth="33px"
+            >
+              {appData.chart.canonical_name === ""
+                ? appData.chart.name
+                : appData.chart.canonical_name}
+              <DeploymentTypeStacks appData={appData} />
+            </TitleSectionStacks>
+
+            {/* {currentChart.chart.metadata.name != "worker" &&
+              currentChart.chart.metadata.name != "job" &&
+              renderUrl()} */}
+
+            {/* //{currentChart.canonical_name !== "" && renderHelmReleaseName()} */}
+            <InfoWrapper>
+              {/*
+                  <StatusIndicator
+                    controllers={controllers}
+                    status={currentChart.info.status}
+                    margin_left={"0px"}
+                  />
+                  */}
+              {/* <DeployStatusSection
+                chart={appData.chart}
+                setLogData={test}//renderLogsAtTimestamp}
+              /> */}
+              <LastDeployed>
+                <Dot>•</Dot>Last deployed
+                {" " + getReadableDate(appData.chart.info.last_deployed)}
+              </LastDeployed>
+            </InfoWrapper>
+          </HeaderWrapper>
           <Spacer y={1} />
           <TabSelector
             options={[
@@ -177,4 +228,25 @@ const Placeholder = styled.div`
 const StyledExpandedApp = styled.div`
   width: 100%;
   height: 100%;
+`;
+
+const HeaderWrapper = styled.div`
+  position: relative;
+`;
+const LastDeployed = styled.div`
+  font-size: 13px;
+  margin-left: 8px;
+  margin-top: -1px;
+  display: flex;
+  align-items: center;
+  color: #aaaabb66;
+`;
+const Dot = styled.div`
+  margin-right: 16px;
+`;
+const InfoWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  margin-left: 3px;
+  margin-top: 22px;
 `;

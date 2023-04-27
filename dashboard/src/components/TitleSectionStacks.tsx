@@ -12,7 +12,7 @@ interface Props {
   onClick?: any;
 }
 
-const TitleSection: React.FC<Props> = ({
+const TitleSectionStacks: React.FC<Props> = ({
   children,
   icon,
   iconWidth,
@@ -32,14 +32,7 @@ const TitleSection: React.FC<Props> = ({
         </BackButton>
       )}
 
-      {icon &&
-        (materialIconClass?.length ? (
-          <MaterialIcon width={iconWidth} className={materialIconClass}>
-            {icon}
-          </MaterialIcon>
-        ) : (
-          <Icon width={iconWidth} src={icon} />
-        ))}
+      {icon && <Icon disableMarginRight={true} className={icon} />}
 
       <StyledTitle capitalize={capitalize} onClick={onClick}>
         {children}
@@ -48,7 +41,7 @@ const TitleSection: React.FC<Props> = ({
   );
 };
 
-export default TitleSection;
+export default TitleSectionStacks;
 
 const BackButton = styled.div`
   > i {
@@ -70,16 +63,14 @@ const StyledTitleSection = styled.div`
   align-items: center;
 `;
 
-const Icon = styled.img<{ width: string }>`
-  height: ${(props) => props.width || "24px"};
-  margin-right: 16px;
-  display: flex;
-  align-items: center;
-`;
-
-const MaterialIcon = styled.span<{ width: string }>`
-  height: ${(props) => props.width || "24px"};
-  margin-right: 16px;
+const Icon = styled.span<{ disableMarginRight: boolean }>`
+  font-size: 24px;
+  margin-right: 10px;
+  ${(props) => {
+    if (!props.disableMarginRight) {
+      return "margin-right: 20px";
+    }
+  }}
 `;
 
 const StyledTitle = styled.div<{

@@ -186,6 +186,12 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const finalPorterYaml = createFinalPorterYaml();
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
+      const imageInfo = imageUrl ? {
+        image_info: {
+          repository: imageUrl,
+          tag: imageTag,
+        }
+      } : {}
 
       // only deploy + write to DB if we can create a final porter yaml
       await Promise.all([
@@ -197,8 +203,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
             git_branch: branch,
             build_context: folderPath,
             builder: (buildConfig as any)?.builder,
-            buildpacks: (buildConfig as any)?.buildpacks,
+            buildpacks: (buildConfig as any)?.buildpacks.join(",") ?? "",
             dockerfile: dockerfilePath,
+            image_repo_uri: imageUrl,
           },
           {
             cluster_id: currentCluster.id,
@@ -210,6 +217,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           {
             stack_name: formState.applicationName,
             porter_yaml: base64Encoded,
+            ...imageInfo,
           },
           {
             cluster_id: currentCluster.id,

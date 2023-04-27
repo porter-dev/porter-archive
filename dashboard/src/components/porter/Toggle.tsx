@@ -16,8 +16,9 @@ const Toggle: React.FC<Props> = ({
 }) => {
   return (
     <StyledToggle>
-      {items.map((item, index) => (
+      {items.map((item, i) => (
         <Item
+          key={i}
           active={item.value === active}
           onClick={() => {
             setActive(item.value);

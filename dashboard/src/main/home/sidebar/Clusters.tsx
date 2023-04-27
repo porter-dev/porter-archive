@@ -39,6 +39,9 @@ class Clusters extends Component<PropsType, StateType> {
   };
 
   updateClusters = () => {
+    if (!this.context.currentProject) {
+      return
+    }
     let {
       user,
       currentProject,

@@ -28,6 +28,13 @@ import RevisionSection from "main/home/cluster-dashboard/expanded-chart/Revision
 type Props = RouteComponentProps & {};
 
 const ExpandedApp: React.FC<Props> = ({ ...props }) => {
+  const {
+    currentCluster,
+    currentProject,
+    setCurrentError,
+    setCurrentOverlay,
+  } = useContext(Context);
+
   const [isLoading, setIsLoading] = useState(true);
   const [appData, setAppData] = useState(null);
   const [error, setError] = useState(null);
@@ -47,12 +54,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentError,
-    setCurrentOverlay,
-  } = useContext(Context);
+  
   const getPorterApp = async () => {
     setIsLoading(true);
     const { appName } = props.match.params as any;
@@ -66,7 +68,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           name: appName,
         }
       );
-      console.log(resPorterApp);
       const resChartData = await api.getChart(
         "<token>",
         {},
@@ -82,8 +83,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         app: resPorterApp?.data,
         chart: resChartData?.data,
       });
-      console.log(resChartData?.data);
-      console.log(resPorterApp?.data);
       setIsLoading(false);
     } catch (err) {
       setError(err);
@@ -230,64 +229,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     [appData?.chart]
   );
 
-  // const updateTabs = () => {
-  //   // Collate non-form tabs
-  //   let rightTabOptions = [] as any[];
-  //   let leftTabOptions = [] as any[];
-  //   if (
-  //     appData.chart.chart.metadata.home === "https://getporter.dev/" &&
-  //     (appData.chart.chart.metadata.name === "web" ||
-  //       appData.chart.chart.metadata.name === "worker" ||
-  //       appData.chart.chart.metadata.name === "job") &&
-  //     currentCluster.agent_integration_enabled
-  //   ) {
-  //     leftTabOptions.push({ label: "Events", value: "events" });
-
-  //     if (isAgentInstalled) {
-  //       leftTabOptions.push({ label: "Logs", value: "logs" });
-  //     }
-  //   }
-  //   leftTabOptions.push({ label: "Status", value: "status" });
-  //   leftTabOptions.push({ label: "Metrics", value: "metrics" });
-  //   // if (props.isMetricsInstalled) {
-  //   //   leftTabOptions.push({ label: "Metrics", value: "metrics" });
-  //   // }
-
-  //   rightTabOptions.push({ label: "Chart Overview", value: "graph" });
-
-  //   // if (devOpsMode) {
-  //   //   rightTabOptions.push(
-  //   //     { label: "Manifests", value: "list" },
-  //   //     { label: "Helm Values", value: "values" }
-  //   //   );
-  //   // }
-
-  //   if (appData.chart?.git_action_config?.git_repo) {
-  //     rightTabOptions.push({
-  //       label: "Build Settings",
-  //       value: "build-settings",
-  //     });
-  //   }
-
-  //   // Settings tab is always last
-  //   if (isAuthorized("application", "", ["get", "delete"])) {
-  //     rightTabOptions.push({ label: "Settings", value: "settings" });
-  //   }
-
-  //   // Filter tabs if previewing an old revision or updating the chart version
-  //   if (isPreview) {
-  //     const liveTabs = ["status", "events", "settings", "deploy", "metrics"];
-  //     rightTabOptions = rightTabOptions.filter(
-  //       (tab: any) => !liveTabs.includes(tab.value)
-  //     );
-  //     leftTabOptions = leftTabOptions.filter(
-  //       (tab: any) => !liveTabs.includes(tab.value)
-  //     );
-  //   }
-
-  //   setLeftTabOptions(leftTabOptions);
-  //   setRightTabOptions(rightTabOptions);
-  // };
   useEffect(() => {
     const { appName } = props.match.params as any;
     if (currentCluster && appName && currentProject) {

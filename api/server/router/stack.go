@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/stacks"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -52,6 +54,63 @@ func getStackRoutes(
 	}
 
 	var routes []*router.Route
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> stacks.NewPorterAppGetHandler
+	getPorterAppEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/{name}",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getPorterAppHandler := stacks.NewGetPorterAppHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getPorterAppEndpoint,
+		Handler:  getPorterAppHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/update_config -> stacks.NewCreateStackHandler
+	createPorterAppEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/update_config",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	createPorterAppHandler := stacks.NewCreatePorterAppHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createPorterAppEndpoint,
+		Handler:  createPorterAppHandler,
+		Router:   r,
+	})
 
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks -> stacks.NewCreateStackHandler
 	createEndpoint := factory.NewAPIEndpoint(
@@ -110,5 +169,35 @@ func getStackRoutes(
 		Handler:  updateHandler,
 		Router:   r,
 	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack}/pr -> stacks.NewOpenStackPRHandler
+	createSecretAndOpenGitHubPullRequestEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/pr", relPath, types.URLParamStackName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	createSecretAndOpenGitHubPullRequestHandler := stacks.NewOpenStackPRHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createSecretAndOpenGitHubPullRequestEndpoint,
+		Handler:  createSecretAndOpenGitHubPullRequestHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
-import expand from "assets/expand.png";
+import Spacer from "./Spacer";
 import Modal from "./Modal";
 
 type Props = {

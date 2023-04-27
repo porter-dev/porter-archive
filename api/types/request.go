@@ -48,6 +48,7 @@ const (
 	URLParamWildcard              URLParam = "*"
 	URLParamIntegrationID         URLParam = "integration_id"
 	URLParamAPIContractRevisionID URLParam = "contract_revision_id"
+	URLParamStackName             URLParam = "stack_name"
 )
 
 type Path struct {

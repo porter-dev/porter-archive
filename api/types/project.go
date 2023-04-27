@@ -10,6 +10,7 @@ type Project struct {
 	APITokensEnabled       bool    `json:"api_tokens_enabled"`
 	StacksEnabled          bool    `json:"stacks_enabled"`
 	CapiProvisionerEnabled bool    `json:"capi_provisioner_enabled"`
+	SimplifiedViewEnabled  bool    `json:"simplified_view_enabled"`
 }
 
 type FeatureFlags struct {
@@ -18,6 +19,7 @@ type FeatureFlags struct {
 	StacksEnabled              string `json:"stacks_enabled,omitempty"`
 	ManagedDatabasesEnabled    string `json:"managed_databases_enabled,omitempty"`
 	CapiProvisionerEnabled     string `json:"capi_provisioner_enabled,omitempty"`
+	SimplifiedViewEnabled      string `json:"simplified_view_enabled,omitempty"`
 }
 
 type CreateProjectRequest struct {

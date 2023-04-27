@@ -43,7 +43,7 @@ func SetupEnv(opts *EnvOpts) error {
 	}
 
 	// create porter token secret
-	err = createGithubSecret(
+	err = CreateGithubSecret(
 		opts.Client,
 		getPreviewEnvSecretName(opts.ProjectID, opts.ClusterID, opts.InstanceName),
 		opts.PorterToken,

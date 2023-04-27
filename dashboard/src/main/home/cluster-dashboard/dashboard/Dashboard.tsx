@@ -86,8 +86,8 @@ export const Dashboard: React.FunctionComponent = () => {
     if (
       context.currentCluster.status !== "UPDATING_UNAVAILABLE" &&
       !tabOptions.find((tab) => tab.value === "nodes")
-    ) {
-      if (!context.currentProject.capi_provisioner_enabled) {
+    ) {  
+      if (!context.currentProject?.capi_provisioner_enabled) {
         tabOptions.unshift({ label: "Namespaces", value: "namespaces" });
         tabOptions.unshift({ label: "Metrics", value: "metrics" });
         tabOptions.unshift({ label: "Nodes", value: "nodes" });
@@ -97,7 +97,7 @@ export const Dashboard: React.FunctionComponent = () => {
     }
 
     if (
-      context.currentProject.capi_provisioner_enabled &&
+      context.currentProject?.capi_provisioner_enabled &&
       !tabOptions.find((tab) => tab.value === "configuration")
     ) {
       tabOptions.unshift({ value: "configuration", label: "Configuration" });
@@ -125,7 +125,7 @@ export const Dashboard: React.FunctionComponent = () => {
   // Need to reset tab to reset views that don't auto-update on cluster switch (esp namespaces + settings)
   useEffect(() => {
     setShowProvisionerStatus(false);
-    if (context.currentProject.capi_provisioner_enabled) {
+    if (context.currentProject?.capi_provisioner_enabled) {
       setCurrentTab("configuration");
     } else {
       setCurrentTab("nodes");
@@ -155,7 +155,7 @@ export const Dashboard: React.FunctionComponent = () => {
   }, []);
 
   const renderContents = () => {
-    if (context.currentProject.capi_provisioner_enabled) {
+    if (context.currentProject?.capi_provisioner_enabled) {
       return (
         <>
           <ClusterRevisionSelector

@@ -14,7 +14,6 @@ import TitleSection from "components/TitleSection";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
-import rocket from "assets/rocket.png";
 import semver from "semver";
 import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, getQueryParams, pushFiltered } from "shared/routing";

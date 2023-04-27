@@ -61,7 +61,7 @@ const AppDashboard: React.FC<Props> = ({
                 currentView={currentView}
               />
               <Spacer inline width="10px" />
-              {!currentProject.capi_provisioner_enabled && (
+              {!currentProject?.capi_provisioner_enabled && (
                 <NamespaceSelector
                   setNamespace={(x) => {
                     setNamespace(x);

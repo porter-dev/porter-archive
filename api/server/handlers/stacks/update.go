@@ -1,6 +1,7 @@
 package stacks
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/stefanmcshane/helm/pkg/chart"
 )
 
 type UpdateStackHandler struct {
@@ -43,15 +43,23 @@ func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	stackName := request.StackName
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
-	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
+	porterYamlBase64 := request.PorterYAMLBase64
+	porterYaml, err := base64.StdEncoding.DecodeString(porterYamlBase64)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding porter yaml: %w", err)))
 		return
 	}
 
-	chart, err := createChartFromDependencies(request.Dependencies)
+	imageInfo := request.ImageInfo
+	chart, values, err := parse(porterYaml, &imageInfo, c.Config(), cluster.ProjectID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating chart: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error with test: %w", err)))
+		return
+	}
+
+	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
 		return
 	}
 
@@ -65,7 +73,7 @@ func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Chart:      chart,
 		Name:       stackName,
 		Namespace:  namespace,
-		Values:     request.Values,
+		Values:     values,
 		Cluster:    cluster,
 		Repo:       c.Repo(),
 		Registries: registries,
@@ -81,42 +89,4 @@ func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-}
-
-func createChartFromDependencies(deps []types.Dependency) (*chart.Chart, error) {
-	metadata := &chart.Metadata{
-		Name:        "umbrella",
-		Description: "Web application that is exposed to external traffic.",
-		Version:     "0.96.0",
-		APIVersion:  "v2",
-		Home:        "https://getporter.dev/",
-		Icon:        "https://user-images.githubusercontent.com/65516095/111255214-07d3da80-85ed-11eb-99e2-fddcbdb99bdb.png",
-		Keywords: []string{
-			"porter",
-			"application",
-			"service",
-			"umbrella",
-		},
-		Type:         "application",
-		Dependencies: createChartDependencies(deps),
-	}
-
-	// create a new chart object with the metadata
-	c := &chart.Chart{
-		Metadata: metadata,
-	}
-	return c, nil
-}
-
-func createChartDependencies(deps []types.Dependency) []*chart.Dependency {
-	var chartDependencies []*chart.Dependency
-	for _, d := range deps {
-		chartDependencies = append(chartDependencies, &chart.Dependency{
-			Name:       d.Name,
-			Alias:      d.Alias,
-			Version:    d.Version,
-			Repository: d.Repository,
-		})
-	}
-	return chartDependencies
 }

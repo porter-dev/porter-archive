@@ -16,6 +16,8 @@ type Props = {
   height?: string;
   color?: string;
   withBorder?: boolean;
+  rounded?: boolean;
+  alt?: boolean;
 };
 
 const Button: React.FC<Props> = ({
@@ -31,6 +33,8 @@ const Button: React.FC<Props> = ({
   height,
   color,
   withBorder,
+  rounded,
+  alt,
 }) => {
   const renderStatus = () => {
     switch (status) {
@@ -67,7 +71,9 @@ const Button: React.FC<Props> = ({
         width={width}
         height={height}
         color={color}
-        withBorder={withBorder}
+        withBorder={withBorder || alt}
+        rounded={rounded || alt}
+        alt={alt}
       >
         <Text>{children}</Text>
       </StyledButton>
@@ -119,7 +125,6 @@ const StatusWrapper = styled.div<{
 
 const Wrapper = styled.div`
   display: flex;
-  align-items: center;
 `;
 
 const Text = styled.div`
@@ -134,20 +139,28 @@ const StyledButton = styled.button<{
   height: string;
   color: string;
   withBorder: boolean;
+  rounded: boolean;
+  alt: boolean;
 }>`
   height: ${props => props.height || "35px"};
   width: ${props => props.width || "auto"};
+  min-width: ${props => props.width || ""};
   font-size: 13px;
   cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
   padding: 15px;
   border: none;
   outline: none;
   color: white;
-  background: ${props => (props.disabled && !props.color) ? "#aaaabb" : (props.color || "#5561C0")};
+  background: ${props => {
+    if (props.alt) {
+      return props.theme.fg;
+    }
+    return (props.disabled && !props.color) ? "#aaaabb" : (props.color || props.theme.button);
+  }};
   display: flex;
   ailgn-items: center;
   justify-content: center;
-  border-radius: 5px;
+  border-radius: ${props => props.rounded ? "50px" : "5px"};
   border: ${props => props.withBorder ? "1px solid #494b4f" : "none"};
 
   :hover {

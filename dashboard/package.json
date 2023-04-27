@@ -46,6 +46,7 @@
     "random-word-slugs": "^0.1.6",
     "react": "^18.0.0",
     "react-ace": "^8.0.0",
+    "react-animate-height": "^3.1.1",
     "react-color": "^2.19.3",
     "react-datepicker": "^4.8.0",
     "react-dom": "^18.0.0",

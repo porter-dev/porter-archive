@@ -25,13 +25,10 @@ const ExpandableSection: React.FC<Props> = ({
   collapseText,
   maxHeight,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  useEffect(() => {
-    setIsExpanded(isInitiallyExpanded);
-  }, [isInitiallyExpanded]);
+  const [isExpanded, setIsExpanded] = useState(isInitiallyExpanded ?? false);
 
   return (
-    <StyledExpandableSection 
+    <StyledExpandableSection
       isExpanded={isExpanded}
       background={background}
       noWrapper={noWrapper}
@@ -44,7 +41,7 @@ const ExpandableSection: React.FC<Props> = ({
           </ExpandButton>
         </Container>
       ) : (
-        <HeaderRow 
+        <HeaderRow
           isExpanded={isExpanded}
           onClick={() => setIsExpanded(!isExpanded)}
           color={color}
@@ -71,7 +68,7 @@ const ExpandButton = styled.div`
   font-size: 13px;
 `;
 
-const HeaderRow = styled.div<{ 
+const HeaderRow = styled.div<{
   isExpanded: boolean;
   color?: string;
 }>`
@@ -97,7 +94,7 @@ const HeaderRow = styled.div<{
   }
 `;
 
-const StyledExpandableSection = styled.div<{ 
+const StyledExpandableSection = styled.div<{
   isExpanded: boolean;
   background?: string;
   noWrapper?: boolean;

@@ -453,6 +453,12 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c5.large
+          value: c5.large
+        - label: c5.xlarge
+          value: c5.xlarge
+        - label: c5.2xlarge
+          value: c5.2xlarge
         - label: c6i.large
           value: c6i.large
         - label: c6i.xlarge
@@ -461,6 +467,24 @@ tabs:
           value: c6i.2xlarge
         - label: c6i.4xlarge
           value: c6i.4xlarge
+        - label: g4dn.xlarge
+          value: g4dn.xlarge
+        - label: g4dn.2xlarge
+          value: g4dn.2xlarge
+        - label: g4dn.4xlarge
+          value: g4dn.4xlarge
+        - label: g5.xlarge
+          value: g5.xlarge
+        - label: g5.2xlarge
+          value: g5.2xlarge
+        - label: g5.4xlarge
+          value: g5.4xlarge
+        - label: m6a.large
+          value: m6a.large
+        - label: m6a.xlarge
+          value: m6a.xlarge
+        - label: m6a.2xlarge
+          value: m6a.2xlarge
         - label: m6i.large
           value: m6i.large
         - label: m6i.xlarge
@@ -487,7 +511,7 @@ tabs:
       label: EKS control plane version
       variable: cluster_version
       settings:
-        default: "1.22"
+        default: "1.24"
         options:
         - label: "1.20"
           value: "1.20"
@@ -759,7 +783,7 @@ tabs:
       variable: additional_prometheus_node_group
       label: Add an additional prometheus node group to ensure monitoring stability.
       settings:
-        default: false
+        default: true
   - name: prometheus_machine_settings
     show_if: additional_prometheus_node_group
     contents:

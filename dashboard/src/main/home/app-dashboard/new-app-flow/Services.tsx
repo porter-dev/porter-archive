@@ -89,6 +89,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             width="300px"
             value={serviceName}
             error={
+              serviceName != "" &&
               !isServiceNameValid(serviceName) &&
               'Lowercase letters, numbers, and "-" only.'
             }
@@ -99,7 +100,10 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             onClick={() => {
               setServices([
                 ...services,
-                createDefaultService(serviceName, serviceType, { readOnly: false, value: '' }),
+                createDefaultService(serviceName, serviceType, {
+                  readOnly: false,
+                  value: "",
+                }),
               ]);
               setShowAddServiceModal(false);
               setServiceName("");

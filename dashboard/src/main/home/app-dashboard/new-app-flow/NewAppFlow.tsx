@@ -89,7 +89,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [actionConfig, setActionConfig] = useState<GithubActionConfigType>({
     ...defaultActionConfig,
   });
-  const [procfileProcess, setProcfileProcess] = useState("");
   const [branch, setBranch] = useState("");
   const [repoType, setRepoType] = useState("");
   const [dockerfilePath, setDockerfilePath] = useState(null);
@@ -114,7 +113,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     };
   };
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
-  const [porterJson, setPorterJson] = useState<z.infer<typeof PorterYamlSchema>>(null);
+  const [porterJson, setPorterJson] = useState<
+    z.infer<typeof PorterYamlSchema>
+  >(null);
 
   const validatePorterYaml = (yamlString: string) => {
     let parsedYaml;
@@ -122,26 +123,44 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       parsedYaml = yaml.load(yamlString);
       const parsedData = PorterYamlSchema.parse(parsedYaml);
       const porterYaml = parsedData as z.infer<typeof PorterYamlSchema>;
-      setPorterJson(porterYaml)
+      setPorterJson(porterYaml);
       // go through key value pairs and create services from them
       const newServices = [];
       for (const [name, app] of Object.entries(porterYaml.apps)) {
         if (app.type) {
-          newServices.push(createDefaultService(name, app.type, { readOnly: true, value: app.run }))
-        } else if (name.includes('web')) {
-          newServices.push(createDefaultService(name, 'web', { readOnly: true, value: app.run }))
+          newServices.push(
+            createDefaultService(name, app.type, {
+              readOnly: true,
+              value: app.run,
+            })
+          );
+        } else if (name.includes("web")) {
+          newServices.push(
+            createDefaultService(name, "web", {
+              readOnly: true,
+              value: app.run,
+            })
+          );
         } else {
-          newServices.push(createDefaultService(name, 'worker', { readOnly: true, value: app.run }))
+          newServices.push(
+            createDefaultService(name, "worker", {
+              readOnly: true,
+              value: app.run,
+            })
+          );
         }
       }
-      setFormState({ ...formState, serviceList: [...formState.serviceList, ...newServices] });
+      setFormState({
+        ...formState,
+        serviceList: [...formState.serviceList, ...newServices],
+      });
       if (Validators.serviceList(formState.serviceList)) {
         setCurrentStep(Math.max(currentStep, 4));
       }
     } catch (error) {
-      console.log("Error converting porter yaml file to input: " + error)
+      console.log("Error converting porter yaml file to input: " + error);
     }
-  }
+  };
 
   // Deploys a Helm chart and writes build settings to the DB
   const isAppNameValid = (name: string) => {
@@ -179,7 +198,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           builder: "heroku",
           buildpacks: "nodejs,ruby",
           dockerfile: dockerfilePath,
-
         },
         {
           cluster_id: currentCluster.id,
@@ -261,8 +279,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setActionConfig={setActionConfig}
                   branch={branch}
                   setBranch={setBranch}
-                  procfileProcess={procfileProcess}
-                  setProcfileProcess={setProcfileProcess}
                   dockerfilePath={dockerfilePath}
                   setDockerfilePath={setDockerfilePath}
                   folderPath={folderPath}
@@ -272,19 +288,24 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setBuildConfig={setBuildConfig}
                   porterYaml={porterYaml}
                   setPorterYaml={(newYaml: string) => {
-                    validatePorterYaml(newYaml)
+                    validatePorterYaml(newYaml);
                   }}
                 />
               </>,
               <>
                 <Text size={16}>Application services</Text>
                 <Spacer y={0.5} />
-                {porterJson && porterJson.apps && Object.keys(porterJson.apps).length > 0 &&
-                  <AppearingDiv>
-                    <Text size={16} color={"green"}>Autodetected {Object.keys(porterJson.apps).length} services from porter.yml</Text>
-                    <Spacer y={1} />
-                  </AppearingDiv>
-                }
+                {porterJson &&
+                  porterJson.apps &&
+                  Object.keys(porterJson.apps).length > 0 && (
+                    <AppearingDiv>
+                      <Text size={16} color={"green"}>
+                        Autodetected {Object.keys(porterJson.apps).length}{" "}
+                        services from porter.yml
+                      </Text>
+                      <Spacer y={1} />
+                    </AppearingDiv>
+                  )}
                 <Services
                   setServices={(services: any[]) => {
                     setFormState({ ...formState, serviceList: services });

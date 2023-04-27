@@ -40,15 +40,23 @@ const ExpandableSection: React.FC<Props> = ({
       {noWrapper ? (
         <Container row spaced={spaced}>
           {Header}
-          {copy ? (<ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
-            {isExpanded ? collapseText : expandText}
-          </ExpandButton>) : (<div>          <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
-            {isExpanded ? collapseText : expandText}
-          </ExpandButton>          <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
-              {isExpanded ? collapseText : expandText}
-            </ExpandButton></div>)}
-
-
+          {copy ?
+            (
+              <div>
+                <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
+                  {isExpanded ? collapseText : expandText}
+                </ExpandButton>
+                <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
+                  {isExpanded ? collapseText : expandText}
+                </ExpandButton>
+              </div>
+            ) :
+            (
+              <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
+                {isExpanded ? collapseText : expandText}
+              </ExpandButton>
+            )
+          }
         </Container>
       ) : (
         <HeaderRow

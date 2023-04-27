@@ -50,6 +50,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Builder:      request.Builder,
 		Buildpacks:   request.Buildpacks,
 		Dockerfile:   request.Dockerfile,
+		ImageRepoURI: request.ImageRepoURI,
 	}
 
 	_, err := c.Repo().PorterApp().CreatePorterApp(app)

@@ -33,6 +33,7 @@ type CreatePorterAppRequest struct {
 	Builder      string `json:"builder"`
 	Buildpacks   string `json:"buildpacks"`
 	Dockerfile   string `json:"dockerfile"`
+	ImageRepoURI string `json:"image_repo_uri"`
 }
 
 // swagger:model

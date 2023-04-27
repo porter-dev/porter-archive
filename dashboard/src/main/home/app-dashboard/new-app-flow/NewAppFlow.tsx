@@ -170,6 +170,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           builder: (buildConfig as any)?.builder,
           buildpacks: (buildConfig as any)?.buildPacks,
           dockerfile: dockerfilePath,
+          image_repo_uri: imageUrl,
         },
         {
           cluster_id: currentCluster.id,

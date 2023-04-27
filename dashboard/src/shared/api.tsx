@@ -185,6 +185,7 @@ const createPorterApp = baseApi<
     builder: string;
     buildpacks: string;
     dockerfile: string;
+    image_repo_uri: string;
   },
   {
     project_id: number;

@@ -43,6 +43,7 @@ const ExpandedApp: React.FC<Props> = ({
           name: appName,
         }
       );
+      console.log(resPorterApp)
       const resChartData = await api.getChart(
         "<token>",
         {},
@@ -66,7 +67,8 @@ const ExpandedApp: React.FC<Props> = ({
   }
 
   useEffect(() => {
-    if (currentCluster) {
+    const { appName } = props.match.params as any;
+    if (currentCluster && appName && currentProject) {
       getPorterApp();
     }
   }, [currentCluster]);
@@ -115,7 +117,7 @@ const ExpandedApp: React.FC<Props> = ({
           <Container row>
             <Icon src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg" />
             <Text size={21}>
-              {appData.name}
+              {appData.app.name}
             </Text>
             <Spacer inline x={1} />
             <Text size={13}>

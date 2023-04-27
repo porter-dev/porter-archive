@@ -22,13 +22,12 @@ import TitleSectionStacks from "components/TitleSectionStacks";
 import DeploymentTypeStacks from "main/home/cluster-dashboard/expanded-chart/DeploymentTypeStacks";
 import DeployStatusSection from "main/home/cluster-dashboard/expanded-chart/deploy-status-section/DeployStatusSection";
 import { integrationList } from "shared/common";
-import { ChartType } from "shared/types";
+import { ChartType, ResourceType } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 
 type Props = RouteComponentProps & {};
 
 const ExpandedApp: React.FC<Props> = ({ ...props }) => {
-  const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [appData, setAppData] = useState(null);
   const [error, setError] = useState(null);
@@ -36,10 +35,24 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
     false
   );
+  const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(true);
+  const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
+
   const [tab, setTab] = useState("events");
+  const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [components, setComponents] = useState<ResourceType[]>([]);
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
+  const [newestImage, setNewestImage] = useState<string>(null);
+  const {
+    currentCluster,
+    currentProject,
+    setCurrentError,
+    setCurrentOverlay,
+  } = useContext(Context);
   const getPorterApp = async () => {
     setIsLoading(true);
     const { appName } = props.match.params as any;
@@ -94,19 +107,74 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     // });
     return "";
   };
+  const updateComponents = async (currentChart: ChartType) => {
+    setLoading(true);
+    try {
+      const res = await api.getChartComponents(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          name: currentChart.name,
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
+          revision: currentChart.version,
+        }
+      );
+      setComponents(res.data.Objects);
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+    }
+  };
+
+  const getChartData = async (chart: ChartType) => {
+    setIsLoadingChartData(true);
+    const res = await api.getChart(
+      "<token>",
+      {},
+      {
+        name: chart.name,
+        namespace: chart.namespace,
+        cluster_id: currentCluster.id,
+        revision: chart.version,
+        id: currentProject.id,
+      }
+    );
+    const image = res.data?.config?.image?.repository;
+    const tag = res.data?.config?.image?.tag?.toString();
+    const newNewestImage = tag ? image + ":" + tag : image;
+    let imageIsPlaceholder = false;
+    if (
+      (image === "porterdev/hello-porter" ||
+        image === "public.ecr.aws/o1j4x7p4/hello-porter") &&
+      !newestImage
+    ) {
+      imageIsPlaceholder = true;
+    }
+    setImageIsPlaceholer(imageIsPlaceholder);
+    setNewestImage(newNewestImage);
+
+    const updatedChart = res.data;
+
+    setAppData({ chart: updatedChart });
+
+    updateComponents(updatedChart).finally(() => setIsLoadingChartData(false));
+  };
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
-    // if we've set the revision, we also override the revision in log data
-    let newLogData = logData;
+    // // if we've set the revision, we also override the revision in log data
+    // let newLogData = logData;
 
-    newLogData.revision = `${chart.version}`;
+    // newLogData.revision = `${chart.version}`;
 
-    setLogData(newLogData);
+    // setLogData(newLogData);
 
-    setIsPreview(!isCurrent);
+    // setIsPreview(!isCurrent);
     getChartData(chart);
   };
-  const handleUpgradeVersion = useCallback(
+  const appUpgradeVersion = useCallback(
     async (version: string, cb: () => void) => {
       // convert current values to yaml
       const values = appData.chart.config;
@@ -116,7 +184,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       });
 
       setSaveValueStatus("loading");
-      getChartData(currentChart);
+      getChartData(appData.chart);
 
       try {
         await api.upgradeChartValues(
@@ -159,67 +227,67 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         });
       }
     },
-    [appData.chart]
+    [appData?.chart]
   );
 
-  const updateTabs = () => {
-    // Collate non-form tabs
-    let rightTabOptions = [] as any[];
-    let leftTabOptions = [] as any[];
-    if (
-      appData.chart.chart.metadata.home === "https://getporter.dev/" &&
-      (appData.chart.chart.metadata.name === "web" ||
-        appData.chart.chart.metadata.name === "worker" ||
-        appData.chart.chart.metadata.name === "job") &&
-      currentCluster.agent_integration_enabled
-    ) {
-      leftTabOptions.push({ label: "Events", value: "events" });
+  // const updateTabs = () => {
+  //   // Collate non-form tabs
+  //   let rightTabOptions = [] as any[];
+  //   let leftTabOptions = [] as any[];
+  //   if (
+  //     appData.chart.chart.metadata.home === "https://getporter.dev/" &&
+  //     (appData.chart.chart.metadata.name === "web" ||
+  //       appData.chart.chart.metadata.name === "worker" ||
+  //       appData.chart.chart.metadata.name === "job") &&
+  //     currentCluster.agent_integration_enabled
+  //   ) {
+  //     leftTabOptions.push({ label: "Events", value: "events" });
 
-      if (isAgentInstalled) {
-        leftTabOptions.push({ label: "Logs", value: "logs" });
-      }
-    }
-    leftTabOptions.push({ label: "Status", value: "status" });
-    leftTabOptions.push({ label: "Metrics", value: "metrics" });
-    // if (props.isMetricsInstalled) {
-    //   leftTabOptions.push({ label: "Metrics", value: "metrics" });
-    // }
+  //     if (isAgentInstalled) {
+  //       leftTabOptions.push({ label: "Logs", value: "logs" });
+  //     }
+  //   }
+  //   leftTabOptions.push({ label: "Status", value: "status" });
+  //   leftTabOptions.push({ label: "Metrics", value: "metrics" });
+  //   // if (props.isMetricsInstalled) {
+  //   //   leftTabOptions.push({ label: "Metrics", value: "metrics" });
+  //   // }
 
-    rightTabOptions.push({ label: "Chart Overview", value: "graph" });
+  //   rightTabOptions.push({ label: "Chart Overview", value: "graph" });
 
-    // if (devOpsMode) {
-    //   rightTabOptions.push(
-    //     { label: "Manifests", value: "list" },
-    //     { label: "Helm Values", value: "values" }
-    //   );
-    // }
+  //   // if (devOpsMode) {
+  //   //   rightTabOptions.push(
+  //   //     { label: "Manifests", value: "list" },
+  //   //     { label: "Helm Values", value: "values" }
+  //   //   );
+  //   // }
 
-    if (appData.chart?.git_action_config?.git_repo) {
-      rightTabOptions.push({
-        label: "Build Settings",
-        value: "build-settings",
-      });
-    }
+  //   if (appData.chart?.git_action_config?.git_repo) {
+  //     rightTabOptions.push({
+  //       label: "Build Settings",
+  //       value: "build-settings",
+  //     });
+  //   }
 
-    // Settings tab is always last
-    if (isAuthorized("application", "", ["get", "delete"])) {
-      rightTabOptions.push({ label: "Settings", value: "settings" });
-    }
+  //   // Settings tab is always last
+  //   if (isAuthorized("application", "", ["get", "delete"])) {
+  //     rightTabOptions.push({ label: "Settings", value: "settings" });
+  //   }
 
-    // Filter tabs if previewing an old revision or updating the chart version
-    if (isPreview) {
-      const liveTabs = ["status", "events", "settings", "deploy", "metrics"];
-      rightTabOptions = rightTabOptions.filter(
-        (tab: any) => !liveTabs.includes(tab.value)
-      );
-      leftTabOptions = leftTabOptions.filter(
-        (tab: any) => !liveTabs.includes(tab.value)
-      );
-    }
+  //   // Filter tabs if previewing an old revision or updating the chart version
+  //   if (isPreview) {
+  //     const liveTabs = ["status", "events", "settings", "deploy", "metrics"];
+  //     rightTabOptions = rightTabOptions.filter(
+  //       (tab: any) => !liveTabs.includes(tab.value)
+  //     );
+  //     leftTabOptions = leftTabOptions.filter(
+  //       (tab: any) => !liveTabs.includes(tab.value)
+  //     );
+  //   }
 
-    setLeftTabOptions(leftTabOptions);
-    setRightTabOptions(rightTabOptions);
-  };
+  //   setLeftTabOptions(leftTabOptions);
+  //   setRightTabOptions(rightTabOptions);
+  // };
   useEffect(() => {
     const { appName } = props.match.params as any;
     if (currentCluster && appName && currentProject) {
@@ -320,7 +388,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               setShowRevisions(!showRevisions);
             }}
             chart={appData.chart}
-            refreshChart={() => getPorterApp()}
+            refreshChart={() => getChartData(appData.chart)}
             setRevision={setRevision}
             forceRefreshRevisions={forceRefreshRevisions}
             refreshRevisionsOff={() => setForceRefreshRevisions(false)}
@@ -330,7 +398,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 appData.chart.chart.metadata.version
             }
             latestVersion={appData.chart.latest_version}
-            upgradeVersion={handleUpgradeVersion}
+            upgradeVersion={appUpgradeVersion}
           />
           <Spacer y={1} />
           <TabSelector

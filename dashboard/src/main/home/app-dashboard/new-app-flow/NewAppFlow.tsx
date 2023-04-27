@@ -108,19 +108,31 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       parsedYaml = yaml.load(yamlString);
       const parsedData = PorterYamlSchema.parse(parsedYaml);
       const porterYamlToJson = parsedData as z.infer<typeof PorterYamlSchema>;
-      setPorterJson(porterYamlToJson)
-      console.log(porterYamlToJson)
+      setPorterJson(porterYamlToJson);
+      console.log(porterYamlToJson);
       // go through key value pairs and create services from them, if they don't already exist
       const newServices = [];
-      const existingServices = formState.serviceList.map(s => s.name);
+      const existingServices = formState.serviceList.map((s) => s.name);
       for (const [name, app] of Object.entries(porterYamlToJson.apps)) {
         if (!existingServices.includes(name)) {
           if (app.type) {
-            newServices.push(Service.default(name, app.type, { readOnly: true, value: app.run }))
-          } else if (name.includes('web')) {
-            newServices.push(Service.default(name, 'web', { readOnly: true, value: app.run }))
+            newServices.push(
+              Service.default(name, app.type, {
+                readOnly: true,
+                value: app.run,
+              })
+            );
+          } else if (name.includes("web")) {
+            newServices.push(
+              Service.default(name, "web", { readOnly: true, value: app.run })
+            );
           } else {
-            newServices.push(Service.default(name, 'worker', { readOnly: true, value: app.run }))
+            newServices.push(
+              Service.default(name, "worker", {
+                readOnly: true,
+                value: app.run,
+              })
+            );
           }
         }
       }
@@ -160,6 +172,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const deployPorterApp = async () => {
     try {
       //Write build settings to the DB
+      console.log(buildConfig);
       const res = await api.createPorterApp(
         "<token>",
         {
@@ -168,7 +181,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           git_branch: branch,
           build_context: folderPath,
           builder: buildConfig?.builder,
-          buildpacks: buildConfig?.buildPacks,
+          buildpacks: buildConfig?.buildpacks,
           dockerfile: dockerfilePath,
         },
         {
@@ -192,7 +205,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
         }
-      )
+      );
     } catch (err) {
       console.log(err);
     }
@@ -200,7 +213,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     // TODO: update Porter stack
   };
 
-  const combineEnv = (dashboardSetVariables: KeyValueType[], porterYamlSetVariables: Record<string, string> | undefined): z.infer<typeof EnvSchema> => {
+  const combineEnv = (
+    dashboardSetVariables: KeyValueType[],
+    porterYamlSetVariables: Record<string, string> | undefined
+  ): z.infer<typeof EnvSchema> => {
     const env: z.infer<typeof EnvSchema> = {};
     for (const { key, value } of dashboardSetVariables) {
       env[key] = value;
@@ -211,32 +227,39 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       }
     }
     return env;
-  }
+  };
 
   const createApps = (serviceList: Service[]): z.infer<typeof AppsSchema> => {
     const apps: z.infer<typeof AppsSchema> = {};
     for (const service of serviceList) {
       let config = Service.serialize(service);
-      if (porterJson != null && porterJson.apps[service.name] != null && porterJson.apps[service.name].config != null) {
-        config = overrideObjectValues(config, porterJson.apps[service.name].config)
+      if (
+        porterJson != null &&
+        porterJson.apps[service.name] != null &&
+        porterJson.apps[service.name].config != null
+      ) {
+        config = overrideObjectValues(
+          config,
+          porterJson.apps[service.name].config
+        );
       }
       apps[service.name] = {
         type: service.type,
         run: service.startCommand.value,
         config,
-      }
+      };
     }
 
-    return apps
-  }
+    return apps;
+  };
 
   const createFinalPorterYaml = (): z.infer<typeof PorterYamlSchema> => {
     return {
       version: "v1stack",
       env: combineEnv(formState.envVariables, porterJson.env),
       apps: createApps(formState.serviceList),
-    }
-  }
+    };
+  };
 
   return (
     <CenterWrapper>
@@ -322,12 +345,17 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
               <>
                 <Text size={16}>Application services</Text>
                 <Spacer y={0.5} />
-                {porterJson && porterJson.apps && Object.keys(porterJson.apps).length > 0 &&
-                  <AppearingDiv>
-                    <Text size={16} color={"green"}>Auto-detected {Object.keys(porterJson.apps).length} services from porter.yaml!</Text>
-                    <Spacer y={1} />
-                  </AppearingDiv>
-                }
+                {porterJson &&
+                  porterJson.apps &&
+                  Object.keys(porterJson.apps).length > 0 && (
+                    <AppearingDiv>
+                      <Text size={16} color={"green"}>
+                        Auto-detected {Object.keys(porterJson.apps).length}{" "}
+                        services from porter.yaml!
+                      </Text>
+                      <Spacer y={1} />
+                    </AppearingDiv>
+                  )}
                 <Services
                   setServices={(services: any[]) => {
                     setFormState({ ...formState, serviceList: services });

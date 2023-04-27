@@ -26,6 +26,7 @@ const ExpandedApp: React.FC<Props> = ({
   const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [appData, setAppData] = useState(null);
+  const [error, setError] = useState(null);
   const [tab, setTab] = useState("events");
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -33,7 +34,7 @@ const ExpandedApp: React.FC<Props> = ({
     setIsLoading(true);
     const { appName } = props.match.params as any;
     try {
-      const res = await api.getPorterApp(
+      const resPorterApp = await api.getPorterApp(
         "<token>",
         {},
         {
@@ -42,9 +43,24 @@ const ExpandedApp: React.FC<Props> = ({
           name: appName,
         }
       );
-      setAppData(res.data);
+      const resChartData = await api.getChart(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          namespace: `porter-stack-${appName}`,
+          cluster_id: currentCluster.id,
+          name: appName,
+          revision: 0,
+        }
+      );
+      setAppData({
+        app: resPorterApp?.data,
+        chart: resChartData?.data,
+      });
       setIsLoading(false);
     } catch (err) {
+      setError(err);
       setIsLoading(false);
     }
   }

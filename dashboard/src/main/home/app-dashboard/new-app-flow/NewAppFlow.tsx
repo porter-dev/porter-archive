@@ -171,8 +171,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   };
   const deployPorterApp = async () => {
     try {
-      //Write build settings to the DB
-      console.log(buildConfig);
+      // Write build settings to the DB
       const res = await api.createPorterApp(
         "<token>",
         {
@@ -180,8 +179,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           repo_name: actionConfig.git_repo,
           git_branch: branch,
           build_context: folderPath,
-          builder: buildConfig?.builder,
-          buildpacks: buildConfig?.buildpacks,
+          builder: (buildConfig as any)?.builder,
+          buildpacks: (buildConfig as any)?.buildpacks,
           dockerfile: dockerfilePath,
         },
         {

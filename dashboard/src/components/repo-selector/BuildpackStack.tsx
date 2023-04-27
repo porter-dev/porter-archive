@@ -47,7 +47,7 @@ export const BuildpackStack: React.FC<{
   branch: string;
   hide: boolean;
   onChange: (config: BuildConfig) => void;
-}> = ({ actionConfig, folderPath, branch, hide, builder, onChange }) => {
+}> = ({ actionConfig, folderPath, branch, hide, onChange }) => {
   const { currentProject } = useContext(Context);
 
   const [builders, setBuilders] = useState<DetectedBuildpack[]>(null);
@@ -115,7 +115,7 @@ export const BuildpackStack: React.FC<{
     if (typeof onChange === "function") {
       onChange(buildConfig);
     }
-  }, [builder, selectedStack, selectedBuildpacks]);
+  }, [selectedStack, selectedBuildpacks]);
 
   const detectBuildpack = () => {
     if (actionConfig.kind === "gitlab") {

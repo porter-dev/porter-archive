@@ -69,6 +69,7 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
           folderPath={props.folderPath}
           onChange={(config) => {
             props.setBuildConfig(config);
+            props.setDockerfilePath("");
           }}
           hide={false}
         />

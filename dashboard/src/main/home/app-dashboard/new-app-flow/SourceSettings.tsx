@@ -7,13 +7,14 @@ import AdvancedBuildSettings from "./AdvancedBuildSettings";
 import styled from "styled-components";
 import { SourceType } from "./SourceSelector";
 import ActionConfEditorStack from "components/repo-selector/ActionConfEditorStack";
-import { ActionConfigType } from "shared/types";
+import { ActionConfigType, BuildConfig } from "shared/types";
 import { RouteComponentProps } from "react-router";
 import { Context } from "shared/Context";
 import ActionConfBranchSelector from "components/repo-selector/ActionConfBranchSelector";
 import DetectContentsList from "components/repo-selector/DetectContentsList";
 import { pushFiltered } from "shared/routing";
 import ImageSelector from "components/image-selector/ImageSelector";
+import SharedBuildSettings from "../expanded-app/SharedBuildSettings";
 type Props = {
   source: SourceType | undefined;
   imageUrl: string;
@@ -32,6 +33,7 @@ type Props = {
   setProcfilePath: (x: string) => void;
   folderPath: string | null;
   setFolderPath: (x: string) => void;
+  buildConfig: BuildConfig;
   setBuildConfig: (x: any) => void;
   porterYaml: string;
   setPorterYaml: (x: any) => void;
@@ -39,6 +41,7 @@ type Props = {
 
 const SourceSettings: React.FC<Props> = ({
   source,
+  buildConfig,
   imageUrl,
   setImageUrl,
   imageTag,
@@ -56,80 +59,6 @@ const SourceSettings: React.FC<Props> = ({
   setPorterYaml,
   ...props
 }) => {
-  const renderGithubSettings = () => {
-    return (
-      <>
-        <Text size={16}>Build settings</Text>
-        <Spacer y={0.5} />
-        <Text color="helper">Select your Github repository.</Text>
-        <Spacer y={0.5} />
-        <Subtitle>
-          Provide a repo folder to use as source.
-          <Required>*</Required>
-          <ActionConfEditorStack
-            actionConfig={actionConfig}
-            setActionConfig={(actionConfig: ActionConfigType) => {
-              setActionConfig((currentActionConfig: ActionConfigType) => ({
-                ...currentActionConfig,
-                ...actionConfig,
-              }));
-              setImageUrl(actionConfig.image_repo_uri);
-            }}
-            setBranch={setBranch}
-            setDockerfilePath={setDockerfilePath}
-            setFolderPath={setFolderPath}
-          />
-        </Subtitle>
-        <DarkMatter antiHeight="-4px" />
-        <br />
-        <Spacer y={0.5} />
-        {actionConfig.git_repo && (
-          <>
-            <Text color="helper">Select your branch.</Text>
-            <ActionConfBranchSelector
-              actionConfig={actionConfig}
-              branch={branch}
-              setActionConfig={(actionConfig: ActionConfigType) => {
-                setActionConfig((currentActionConfig: ActionConfigType) => ({
-                  ...currentActionConfig,
-                  ...actionConfig,
-                }));
-                setImageUrl(actionConfig.image_repo_uri);
-              }}
-              setBranch={setBranch}
-              setDockerfilePath={setDockerfilePath}
-              setFolderPath={setFolderPath}
-            />
-          </>
-        )}
-        <Spacer y={1} />
-        <Text color="helper">Specify your application root path.</Text>
-        <Spacer y={0.5} />
-        <Input
-          disabled={!branch ? true : false}
-          placeholder="ex: ./"
-          value={folderPath}
-          width="100%"
-          setValue={setFolderPath}
-        />
-        {actionConfig.git_repo && branch && (
-          <DetectContentsList
-            actionConfig={actionConfig}
-            branch={branch}
-            dockerfilePath={dockerfilePath}
-            folderPath={folderPath}
-            setActionConfig={setActionConfig}
-            setDockerfilePath={setDockerfilePath}
-            setFolderPath={setFolderPath}
-            setBuildConfig={setBuildConfig}
-            porterYaml={porterYaml}
-            setPorterYaml={setPorterYaml}
-          />
-        )}
-      </>
-    );
-  };
-
   const renderDockerSettings = () => {
     return (
       <>
@@ -187,9 +116,26 @@ const SourceSettings: React.FC<Props> = ({
       {source && <Spacer y={1} />}
       <AnimateHeight height={source ? "auto" : 0}>
         <div>
-          {source === "github"
-            ? renderGithubSettings()
-            : renderDockerSettings()}
+          {source === "github" ? (
+            <SharedBuildSettings
+              buildConfig={buildConfig}
+              actionConfig={actionConfig}
+              branch={branch}
+              dockerfilePath={dockerfilePath}
+              folderPath={folderPath}
+              setActionConfig={setActionConfig}
+              setDockerfilePath={setDockerfilePath}
+              setFolderPath={setFolderPath}
+              setBuildConfig={setBuildConfig}
+              porterYaml={porterYaml}
+              setPorterYaml={setPorterYaml}
+              setBranch={setBranch}
+              imageUrl={imageUrl}
+              setImageUrl={setImageUrl}
+            />
+          ) : (
+            renderDockerSettings()
+          )}
         </div>
       </AnimateHeight>
     </SourceSettingsContainer>

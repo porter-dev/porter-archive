@@ -7,7 +7,7 @@ import Toggle from "components/porter/Toggle";
 import AnimateHeight from "react-animate-height";
 import { DeviconsNameList } from "assets/devicons-name-list";
 import { BuildpackStack } from "components/repo-selector/BuildpackStack";
-import { ActionConfigType } from "shared/types";
+import { ActionConfigType, BuildConfig } from "shared/types";
 import SelectRow from "components/form-components/SelectRow";
 
 interface AutoBuildpack {
@@ -25,6 +25,7 @@ interface AdvancedBuildSettingsProps {
   dockerfilePath?: string;
   setDockerfilePath: (x: string) => void;
   setBuildConfig: (x: any) => void;
+  buildConfig: BuildConfig;
 }
 
 type Buildpack = {
@@ -66,6 +67,7 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
         <BuildpackStack
           actionConfig={props.actionConfig}
           branch={props.branch}
+          defaultBuildConfig={props.buildConfig}
           folderPath={props.folderPath}
           onChange={(config) => {
             props.setBuildConfig(config);

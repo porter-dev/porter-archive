@@ -7,7 +7,7 @@ import close from "assets/close.png";
 import Button from "components/porter/Button";
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
-import { ActionConfigType, FileType } from "../../shared/types";
+import { ActionConfigType, BuildConfig, FileType } from "../../shared/types";
 
 import Loading from "../Loading";
 import Spacer from "components/porter/Spacer";
@@ -26,6 +26,7 @@ type PropsType = {
   dockerfilePath?: string;
   folderPath: string;
   porterYaml?: string;
+  buildConfig: BuildConfig;
   setActionConfig: (x: ActionConfigType) => void;
   setDockerfilePath: (x: string) => void;
   setFolderPath: (x: string) => void;
@@ -105,6 +106,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
             dockerfilePath={props.dockerfilePath}
             setDockerfilePath={props.setDockerfilePath}
             setBuildConfig={props.setBuildConfig}
+            buildConfig={props.buildConfig}
             autoBuildPack={autoBuildpack}
             showSettings={false}
             buildView={"docker"}
@@ -203,19 +205,6 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
         }
       );
     }
-
-    return api.detectGitlabBuildpack(
-      "<token>",
-      { dir: currentDir || "." },
-      {
-        project_id: currentProject.id,
-        integration_id: actionConfig.gitlab_integration_id,
-
-        repo_owner: actionConfig.git_repo.split("/")[0],
-        repo_name: actionConfig.git_repo.split("/")[1],
-        branch: branch,
-      }
-    );
   };
 
   const updateContents = async () => {
@@ -268,6 +257,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
           actionConfig={props.actionConfig}
           branch={props.branch}
           folderPath={props.folderPath}
+          buildConfig={props.buildConfig}
         />
       ) : (
         <></>

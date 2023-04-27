@@ -24,6 +24,7 @@ import DeployStatusSection from "main/home/cluster-dashboard/expanded-chart/depl
 import { integrationList } from "shared/common";
 import { ChartType, ResourceType } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
+import BuildSettingsTabStack from "./BuildSettingsTabStack";
 
 type Props = RouteComponentProps & {};
 
@@ -90,6 +91,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setIsLoading(false);
     }
   };
+
   const renderIcon = (str: string) => {
     let value = str.split(",");
     let buildpack = value[0];
@@ -229,65 +231,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     },
     [appData?.chart]
   );
-
-  // const updateTabs = () => {
-  //   // Collate non-form tabs
-  //   let rightTabOptions = [] as any[];
-  //   let leftTabOptions = [] as any[];
-  //   if (
-  //     appData.chart.chart.metadata.home === "https://getporter.dev/" &&
-  //     (appData.chart.chart.metadata.name === "web" ||
-  //       appData.chart.chart.metadata.name === "worker" ||
-  //       appData.chart.chart.metadata.name === "job") &&
-  //     currentCluster.agent_integration_enabled
-  //   ) {
-  //     leftTabOptions.push({ label: "Events", value: "events" });
-
-  //     if (isAgentInstalled) {
-  //       leftTabOptions.push({ label: "Logs", value: "logs" });
-  //     }
-  //   }
-  //   leftTabOptions.push({ label: "Status", value: "status" });
-  //   leftTabOptions.push({ label: "Metrics", value: "metrics" });
-  //   // if (props.isMetricsInstalled) {
-  //   //   leftTabOptions.push({ label: "Metrics", value: "metrics" });
-  //   // }
-
-  //   rightTabOptions.push({ label: "Chart Overview", value: "graph" });
-
-  //   // if (devOpsMode) {
-  //   //   rightTabOptions.push(
-  //   //     { label: "Manifests", value: "list" },
-  //   //     { label: "Helm Values", value: "values" }
-  //   //   );
-  //   // }
-
-  //   if (appData.chart?.git_action_config?.git_repo) {
-  //     rightTabOptions.push({
-  //       label: "Build Settings",
-  //       value: "build-settings",
-  //     });
-  //   }
-
-  //   // Settings tab is always last
-  //   if (isAuthorized("application", "", ["get", "delete"])) {
-  //     rightTabOptions.push({ label: "Settings", value: "settings" });
-  //   }
-
-  //   // Filter tabs if previewing an old revision or updating the chart version
-  //   if (isPreview) {
-  //     const liveTabs = ["status", "events", "settings", "deploy", "metrics"];
-  //     rightTabOptions = rightTabOptions.filter(
-  //       (tab: any) => !liveTabs.includes(tab.value)
-  //     );
-  //     leftTabOptions = leftTabOptions.filter(
-  //       (tab: any) => !liveTabs.includes(tab.value)
-  //     );
-  //   }
-
-  //   setLeftTabOptions(leftTabOptions);
-  //   setRightTabOptions(rightTabOptions);
-  // };
   useEffect(() => {
     const { appName } = props.match.params as any;
     if (currentCluster && appName && currentProject) {
@@ -309,7 +252,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "overview":
         return <div>TODO: service list</div>;
       case "build-settings":
-        return <div>TODO: build settings</div>;
+        return (
+          <BuildSettingsTabStack appData={appData} setAppData={setAppData} />
+        );
       case "settings":
         return <div>TODO: stack deletion</div>;
       default:

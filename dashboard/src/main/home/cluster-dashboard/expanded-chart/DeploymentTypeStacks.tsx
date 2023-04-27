@@ -18,8 +18,8 @@ const DeploymentTypeStacks: React.FC<Props> = ({ appData }) => {
 
   const repository =
     githubRepository ||
-    appData.cluster.image_repo_uri ||
-    appData.cluster.config?.image?.repository;
+    appData.cluster?.image_repo_uri ||
+    appData.cluster?.config?.image?.repository;
 
   if (repository?.includes("hello-porter")) {
     return null;

@@ -346,9 +346,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <HeaderWrapper>
             <TitleSectionStacks
               icon={
-                appData.app.build_packs &&
-                renderIcon(appData.app.build_packs) != ""
-                  ? renderIcon(appData.app.build_packs)
+                appData.app?.build_packs &&
+                renderIcon(appData.app?.build_packs) != ""
+                  ? renderIcon(appData.app?.build_packs)
                   : integrationList.registry.icon
               }
               iconWidth="33px"

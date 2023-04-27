@@ -21,7 +21,6 @@ import Placeholder from "components/Placeholder";
 import Button from "components/porter/Button";
 import { generateSlug } from "random-word-slugs";
 import { RouteComponentProps, withRouter } from "react-router";
-import Error from "components/porter/Error";
 import SourceSelector, { SourceType } from "./SourceSelector";
 import SourceSettings from "./SourceSettings";
 import Services from "./Services";
@@ -104,8 +103,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [porterYaml, setPorterYaml] = useState("");
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
   const [porterJson, setPorterJson] = useState<
-    z.infer<typeof PorterYamlSchema>
-  >(null);
+    z.infer<typeof PorterYamlSchema> | undefined
+  >(undefined);
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
 
   const validatePorterYaml = (yamlString: string) => {
@@ -183,7 +182,44 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   };
   const deployPorterApp = async () => {
     try {
-      const finalPorterYaml = createFinalPorterYaml();
+      if (currentProject == null || currentCluster == null || currentProject.id == null || currentCluster.id == null) {
+        throw new Error("Project or cluster not found");
+      }
+
+      // create namespace first so we can create subdomain later if necessary
+      const res = await api
+        .getNamespaces(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        )
+      if (res == null || res.data == null) {
+        throw new Error("Namespaces not found");
+      };
+      const stackNamespace = `porter-stack-${formState.applicationName}`;
+      // TODO: clean up types
+      const namespaceExistsAlready = res.data.some((namespace: any) => {
+        return namespace.name == stackNamespace;
+      })
+      if (!namespaceExistsAlready) {
+        await api
+          .createNamespace(
+            "<token>",
+            {
+              name: stackNamespace,
+            },
+            {
+              id: currentProject.id,
+              cluster_id: currentCluster.id,
+            }
+          );
+      }
+
+      // validate form data
+      const finalPorterYaml = await createFinalPorterYaml();
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl ? {
@@ -193,7 +229,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         }
       } : {}
 
-      // only deploy + write to DB if we can create a final porter yaml
+      // write to the db + deploy
       await Promise.all([
         api.createPorterApp(
           "<token>",
@@ -226,6 +262,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         ),
       ])
     } catch (err) {
+      // TODO: better error handling
       console.log(err);
     }
   };
@@ -246,10 +283,17 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     return env;
   };
 
-  const createApps = (serviceList: Service[]): z.infer<typeof AppsSchema> => {
+  const createApps = async (serviceList: Service[]): Promise<z.infer<typeof AppsSchema>> => {
     const apps: z.infer<typeof AppsSchema> = {};
     for (const service of serviceList) {
       let config = Service.serialize(service);
+      if (Service.isWeb(service) && service.generateUrlForExternalTraffic) {
+        const ingress = await Service.handleWebIngress(service, formState.applicationName, currentCluster?.id, currentProject?.id);
+        config = {
+          ...config,
+          ...ingress,
+        };
+      }
       if (
         porterJson != null &&
         porterJson.apps[service.name] != null &&
@@ -270,11 +314,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     return apps;
   };
 
-  const createFinalPorterYaml = (): z.infer<typeof PorterYamlSchema> => {
+  const createFinalPorterYaml = async (): Promise<z.infer<typeof PorterYamlSchema>> => {
     return {
       version: "v1stack",
       env: combineEnv(formState.envVariables, porterJson?.env),
-      apps: createApps(formState.serviceList),
+      apps: await createApps(formState.serviceList),
     };
   };
 

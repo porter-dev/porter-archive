@@ -1,3 +1,5 @@
+import api from "shared/api";
+
 export type Service = WorkerService | WebService | JobService;
 export type ServiceType = 'web' | 'worker' | 'job';
 
@@ -80,10 +82,10 @@ const WebService = {
         targetCPUUtilizationPercentage: '50',
         targetRAMUtilizationPercentage: '50',
         port: '80',
-        generateUrlForExternalTraffic: true,
+        generateUrlForExternalTraffic: false,
         customDomain: '',
     }),
-    serialize: (service: WebService) => {
+    serialize: async (service: WebService) => {
         const autoscaling = service.autoscalingOn ? {
             autoscaling: {
                 enabled: true,
@@ -91,13 +93,6 @@ const WebService = {
                 maxReplicas: service.maxReplicas,
                 targetCPUUtilizationPercentage: service.targetCPUUtilizationPercentage,
                 targetMemoryUtilizationPercentage: service.targetRAMUtilizationPercentage,
-            }
-        } : {};
-        const ingress = service.generateUrlForExternalTraffic ? {
-            ingress: {
-                enabled: true,
-                custom_domain: service.customDomain ? true : false,
-                hosts: service.customDomain ? [service.customDomain] : [],
             }
         } : {};
         return {
@@ -115,7 +110,6 @@ const WebService = {
                 port: service.port,
             },
             ...autoscaling,
-            ...ingress,
         }
     }
 }
@@ -164,14 +158,57 @@ export const Service = {
                 return JobService.default(name, startCommand);
         }
     },
-    serialize: (service: Service) => {
+    serialize: async (service: Service) => {
         switch (service.type) {
             case 'web':
-                return WebService.serialize(service);
+                return await WebService.serialize(service);
             case 'worker':
                 return WorkerService.serialize(service);
             case 'job':
                 return JobService.serialize(service);
         }
+    },
+    isWeb: (service: Service): service is WebService => service.type === 'web',
+    isWorker: (service: Service): service is WorkerService => service.type === 'worker',
+    isJob: (service: Service): service is JobService => service.type === 'job',
+    handleWebIngress: async (service: WebService, stackName: string, projectId?: number, clusterId?: number) => {
+        if (projectId == null || clusterId == null) {
+            throw new Error('Project ID and Cluster ID must be provided to handle web ingress');
+        }
+        const ingress: Ingress = {
+            enabled: true,
+            hosts: [],
+            custom_domain: false,
+            porter_hosts: [],
+        };
+        if (service.customDomain) {
+            ingress.hosts.push(service.customDomain);
+            ingress.custom_domain = true;
+        } else {
+            const res = await api
+                .createSubdomain(
+                    "<token>",
+                    {},
+                    {
+                        id: projectId,
+                        cluster_id: clusterId,
+                        release_name: stackName,
+                        namespace: `porter-stack-${stackName}`,
+                    }
+                )
+            if (res == null || res.data == null || res.data.external_url == null) {
+                throw new Error('Failed to create subdomain for web service');
+            }
+            ingress.porter_hosts.push(res.data.external_url)
+        }
+
+        return ingress;
     }
-} 
+}
+
+type Ingress = {
+    enabled: boolean;
+    hosts: string[];
+    custom_domain: boolean;
+    porter_hosts: string[];
+}

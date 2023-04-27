@@ -2,6 +2,7 @@ package stacks
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -60,23 +61,46 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo *types.ImageInfo) (map[
 	values := make(map[string]interface{})
 
 	for name, app := range parsed.Apps {
-		defaultValues := getDefaultValues(app, parsed.Env, imageInfo)
+		appType := getType(name, app)
+		defaultValues := getDefaultValues(app, parsed.Env, appType)
 		helm_values := utils.CoalesceValues(defaultValues, app.Config)
 		values[name] = helm_values
+		if imageInfo != nil {
+			values["global"] = map[string]interface{}{
+				"image": map[string]interface{}{
+					"repository": imageInfo.Repository,
+					"tag":        imageInfo.Tag,
+				},
+			}
+		}
 	}
 
 	return values, nil
 }
 
-func getDefaultValues(app *App, env map[string]string, imageInfo *types.ImageInfo) map[string]interface{} {
+func getType(name string, app *App) string {
+	if app.Type != nil {
+		return *app.Type
+	}
+	if strings.Contains(name, "web") {
+		return "web"
+	}
+	return "worker"
+}
+
+func getDefaultValues(app *App, env map[string]string, appType string) map[string]interface{} {
 	var defaultValues map[string]interface{}
-	if *app.Type == "web" {
+	var runCommand string
+	if app.Run != nil {
+		runCommand = *app.Run
+	}
+	if appType == "web" {
 		defaultValues = map[string]interface{}{
 			"ingress": map[string]interface{}{
 				"enabled": false,
 			},
 			"container": map[string]interface{}{
-				"command": *app.Run,
+				"command": runCommand,
 				"env": map[string]interface{}{
 					"normal": CopyEnv(env),
 				},
@@ -85,17 +109,11 @@ func getDefaultValues(app *App, env map[string]string, imageInfo *types.ImageInf
 	} else {
 		defaultValues = map[string]interface{}{
 			"container": map[string]interface{}{
-				"command": *app.Run,
+				"command": runCommand,
 				"env": map[string]interface{}{
 					"normal": CopyEnv(env),
 				},
 			},
-		}
-	}
-	if imageInfo != nil {
-		defaultValues["image"] = map[string]interface{}{
-			"repository": imageInfo.Repository,
-			"tag":        imageInfo.Tag,
 		}
 	}
 	return defaultValues
@@ -105,13 +123,14 @@ func buildStackChart(parsed *PorterStackYAML, config *config.Config, projectID u
 	deps := make([]*chart.Dependency, 0)
 
 	for alias, app := range parsed.Apps {
-		selectedRepo := "https://charts.getporter.dev"
-		selectedVersion, err := getLatestTemplateVersion(*app.Type, config, projectID)
+		appType := getType(alias, app)
+		selectedRepo := config.ServerConf.DefaultApplicationHelmRepoURL
+		selectedVersion, err := getLatestTemplateVersion(appType, config, projectID)
 		if err != nil {
 			return nil, err
 		}
 		deps = append(deps, &chart.Dependency{
-			Name:       *app.Type,
+			Name:       appType,
 			Alias:      alias,
 			Version:    selectedVersion,
 			Repository: selectedRepo,

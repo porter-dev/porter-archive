@@ -151,7 +151,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		if err != nil {
 			return fmt.Errorf("error parsing porter.yaml: %w", err)
 		}
-	} else if previewVersion.Version == "v1stack" {
+	} else if previewVersion.Version == "v1stack" || previewVersion.Version == "" {
 		stackName := os.Getenv("PORTER_STACK_NAME")
 		if stackName == "" {
 			return fmt.Errorf("environment variable PORTER_STACK_NAME must be set")

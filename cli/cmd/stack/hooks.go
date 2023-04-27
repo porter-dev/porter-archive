@@ -63,12 +63,16 @@ func (t *DeployStackHook) PostApply(driverOutput map[string]interface{}) error {
 func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driverOutput map[string]interface{}) error {
 	var imageInfo types.ImageInfo
 	image, ok := driverOutput["image"].(string)
-	if ok && image != "" {
-		// split image into image-path:tag format
+	// if it contains a $, then it means the query didn't resolve to anything
+	if ok && !strings.Contains(image, "$") {
 		imageSpl := strings.Split(image, ":")
-		imageInfo = types.ImageInfo{
-			Repository: imageSpl[0],
-			Tag:        imageSpl[1],
+		if len(imageSpl) == 2 {
+			imageInfo = types.ImageInfo{
+				Repository: imageSpl[0],
+				Tag:        imageSpl[1],
+			}
+		} else {
+			return fmt.Errorf("could not parse image info %s", image)
 		}
 	}
 

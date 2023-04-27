@@ -76,9 +76,13 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		workflowRun, err := commonutils.GetLatestWorkflowRun(client, depl.RepoOwner, depl.RepoName,
 			fmt.Sprintf("porter_%s_env.yml", env.Name), depl.PRBranchFrom)
 		if err == nil {
-			client.Actions.CancelWorkflowRunByID(
-				context.Background(), depl.RepoOwner, depl.RepoName, workflowRun.GetID(),
-			)
+			if workflowRun.GetStatus() == "in_progress" || workflowRun.GetStatus() == "queued" ||
+				workflowRun.GetStatus() == "waiting" || workflowRun.GetStatus() == "requested" ||
+				workflowRun.GetStatus() == "pending" {
+				client.Actions.CancelWorkflowRunByID(
+					context.Background(), depl.RepoOwner, depl.RepoName, workflowRun.GetID(),
+				)
+			}
 		}
 	}
 

@@ -38,6 +38,7 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
 import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
+import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -404,6 +405,9 @@ const Home: React.FC<Props> = (props) => {
               path="/apps/new"
             >
               <NewAppFlow />
+            </Route>
+            <Route path="/apps/:appName">
+              <ExpandedApp />
             </Route>
             <Route
               path="/apps"

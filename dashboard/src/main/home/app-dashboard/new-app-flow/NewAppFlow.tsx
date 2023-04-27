@@ -178,7 +178,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           build_context: folderPath,
           builder: "heroku",
           buildpacks: "nodejs,ruby",
-          dockerfile: "",
+          dockerfile: dockerfilePath,
 
         },
         {

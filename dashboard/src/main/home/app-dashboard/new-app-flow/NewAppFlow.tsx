@@ -273,7 +273,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const createFinalPorterYaml = (): z.infer<typeof PorterYamlSchema> => {
     return {
       version: "v1stack",
-      env: combineEnv(formState.envVariables, porterJson.env),
+      env: combineEnv(formState.envVariables, porterJson?.env),
       apps: createApps(formState.serviceList),
     };
   };

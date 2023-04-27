@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
 import { DeviconsNameList } from "assets/devicons-name-list";
-
+import useAuth from "shared/auth/useAuth";
+import yaml from "js-yaml";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
@@ -21,6 +22,8 @@ import TitleSectionStacks from "components/TitleSectionStacks";
 import DeploymentTypeStacks from "main/home/cluster-dashboard/expanded-chart/DeploymentTypeStacks";
 import DeployStatusSection from "main/home/cluster-dashboard/expanded-chart/deploy-status-section/DeployStatusSection";
 import { integrationList } from "shared/common";
+import { ChartType } from "shared/types";
+import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 
 type Props = RouteComponentProps & {};
 
@@ -29,9 +32,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [appData, setAppData] = useState(null);
   const [error, setError] = useState(null);
+  const [isAuthorized] = useAuth();
+  const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
+    false
+  );
   const [tab, setTab] = useState("events");
   const [isExpanded, setIsExpanded] = useState(false);
-
+  const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
+  const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const getPorterApp = async () => {
     setIsLoading(true);
     const { appName } = props.match.params as any;
@@ -87,6 +95,131 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     return "";
   };
 
+  const setRevision = (chart: ChartType, isCurrent?: boolean) => {
+    // if we've set the revision, we also override the revision in log data
+    let newLogData = logData;
+
+    newLogData.revision = `${chart.version}`;
+
+    setLogData(newLogData);
+
+    setIsPreview(!isCurrent);
+    getChartData(chart);
+  };
+  const handleUpgradeVersion = useCallback(
+    async (version: string, cb: () => void) => {
+      // convert current values to yaml
+      const values = appData.chart.config;
+
+      const valuesYaml = yaml.dump({
+        ...values,
+      });
+
+      setSaveValueStatus("loading");
+      getChartData(currentChart);
+
+      try {
+        await api.upgradeChartValues(
+          "<token>",
+          {
+            values: valuesYaml,
+            version: version,
+            latest_revision: appData.chart.version,
+          },
+          {
+            id: currentProject.id,
+            namespace: appData.chart.namespace,
+            name: appData.chart.name,
+            cluster_id: currentCluster.id,
+          }
+        );
+        setSaveValueStatus("successful");
+        setForceRefreshRevisions(true);
+
+        window.analytics?.track("Chart Upgraded", {
+          chart: appData.chart.name,
+          values: valuesYaml,
+        });
+
+        cb && cb();
+      } catch (err) {
+        const parsedErr = err?.response?.data?.error;
+
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        setSaveValueStatus(err);
+        setCurrentError(parsedErr);
+
+        window.analytics?.track("Failed to Upgrade Chart", {
+          chart: appData.chart.name,
+          values: valuesYaml,
+          error: err,
+        });
+      }
+    },
+    [appData.chart]
+  );
+
+  const updateTabs = () => {
+    // Collate non-form tabs
+    let rightTabOptions = [] as any[];
+    let leftTabOptions = [] as any[];
+    if (
+      appData.chart.chart.metadata.home === "https://getporter.dev/" &&
+      (appData.chart.chart.metadata.name === "web" ||
+        appData.chart.chart.metadata.name === "worker" ||
+        appData.chart.chart.metadata.name === "job") &&
+      currentCluster.agent_integration_enabled
+    ) {
+      leftTabOptions.push({ label: "Events", value: "events" });
+
+      if (isAgentInstalled) {
+        leftTabOptions.push({ label: "Logs", value: "logs" });
+      }
+    }
+    leftTabOptions.push({ label: "Status", value: "status" });
+    leftTabOptions.push({ label: "Metrics", value: "metrics" });
+    // if (props.isMetricsInstalled) {
+    //   leftTabOptions.push({ label: "Metrics", value: "metrics" });
+    // }
+
+    rightTabOptions.push({ label: "Chart Overview", value: "graph" });
+
+    // if (devOpsMode) {
+    //   rightTabOptions.push(
+    //     { label: "Manifests", value: "list" },
+    //     { label: "Helm Values", value: "values" }
+    //   );
+    // }
+
+    if (appData.chart?.git_action_config?.git_repo) {
+      rightTabOptions.push({
+        label: "Build Settings",
+        value: "build-settings",
+      });
+    }
+
+    // Settings tab is always last
+    if (isAuthorized("application", "", ["get", "delete"])) {
+      rightTabOptions.push({ label: "Settings", value: "settings" });
+    }
+
+    // Filter tabs if previewing an old revision or updating the chart version
+    if (isPreview) {
+      const liveTabs = ["status", "events", "settings", "deploy", "metrics"];
+      rightTabOptions = rightTabOptions.filter(
+        (tab: any) => !liveTabs.includes(tab.value)
+      );
+      leftTabOptions = leftTabOptions.filter(
+        (tab: any) => !liveTabs.includes(tab.value)
+      );
+    }
+
+    setLeftTabOptions(leftTabOptions);
+    setRightTabOptions(rightTabOptions);
+  };
   useEffect(() => {
     const { appName } = props.match.params as any;
     if (currentCluster && appName && currentProject) {
@@ -181,6 +314,24 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               </LastDeployed>
             </InfoWrapper>
           </HeaderWrapper>
+          <RevisionSection
+            showRevisions={showRevisions}
+            toggleShowRevisions={() => {
+              setShowRevisions(!showRevisions);
+            }}
+            chart={appData.chart}
+            refreshChart={() => getPorterApp()}
+            setRevision={setRevision}
+            forceRefreshRevisions={forceRefreshRevisions}
+            refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+            shouldUpdate={
+              appData.chart.latest_version &&
+              appData.chart.latest_version !==
+                appData.chart.chart.metadata.version
+            }
+            latestVersion={appData.chart.latest_version}
+            upgradeVersion={handleUpgradeVersion}
+          />
           <Spacer y={1} />
           <TabSelector
             options={[

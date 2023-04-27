@@ -56,7 +56,7 @@ export default class ImageList extends Component<PropsType, StateType> {
 
     if (!this.props.registry) {
       api
-        .getProjectRegistries("<token>", {}, { id: currentProject.id })
+        .getProjectRegistries("<token>", {}, { id: currentProject?.id })
         .then((res) => {
           let registries = res.data;
           if (registries.length === 0) {
@@ -72,8 +72,8 @@ export default class ImageList extends Component<PropsType, StateType> {
                     "<token>",
                     {},
                     {
-                      project_id: currentProject.id,
-                      registry_id: registry.id,
+                      project_id: currentProject?.id,
+                      registry_id: registry?.id,
                     }
                   )
                   .then((res) => {
@@ -87,14 +87,14 @@ export default class ImageList extends Component<PropsType, StateType> {
                           kind: registry.service,
                           source: img.uri,
                           name: img.name,
-                          registryId: registry.id,
+                          registryId: registry?.id,
                         });
                       }
                       return {
                         kind: registry.service,
                         source: img.uri,
                         name: img.name,
-                        registryId: registry.id,
+                        registryId: registry?.id,
                       };
                     });
                     images.push(...newImg);
@@ -137,8 +137,8 @@ export default class ImageList extends Component<PropsType, StateType> {
           "<token>",
           {},
           {
-            project_id: currentProject.id,
-            registry_id: this.props.registry.id,
+            project_id: currentProject?.id,
+            registry_id: this.props.registry?.id,
           }
         )
         .then((res) => {
@@ -150,14 +150,14 @@ export default class ImageList extends Component<PropsType, StateType> {
                 kind: this.props.registry.service,
                 source: img.uri,
                 name: img.name,
-                registryId: this.props.registry.id,
+                registryId: this.props.registry?.id,
               });
             }
             return {
               kind: this.props.registry.service,
               source: img.uri,
               name: img.name,
-              registryId: this.props.registry.id,
+              registryId: this.props.registry?.id,
             };
           });
           images.push(...newImg);

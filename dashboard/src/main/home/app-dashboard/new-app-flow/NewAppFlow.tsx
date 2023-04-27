@@ -376,11 +376,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
               */
               <Button
                 onClick={() => {
-                  // TODO: remove
-                  deployPorterApp();
-
                   if (imageUrl) {
-                    // deployPorterApp();
+                    deployPorterApp();
                   } else {
                     setShowGHAModal(true);
                   }

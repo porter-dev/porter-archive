@@ -158,10 +158,10 @@ export const Service = {
                 return JobService.default(name, startCommand);
         }
     },
-    serialize: async (service: Service) => {
+    serialize: (service: Service) => {
         switch (service.type) {
             case 'web':
-                return await WebService.serialize(service);
+                return WebService.serialize(service);
             case 'worker':
                 return WorkerService.serialize(service);
             case 'job':

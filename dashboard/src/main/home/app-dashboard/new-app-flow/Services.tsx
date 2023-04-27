@@ -43,6 +43,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             {services.map((service, index) => {
               return (
                 <ServiceContainer
+                  key={service.name}
                   service={service}
                   editService={(newService: Service) =>
                     setServices(

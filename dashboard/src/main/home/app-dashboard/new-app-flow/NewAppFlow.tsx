@@ -148,9 +148,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       if (porterYamlToJson &&
         porterYamlToJson.apps &&
         Object.keys(porterYamlToJson.apps).length > 0) {
-        setDetected({ detected: true, message: `Detected ${Object.keys(porterYamlToJson.apps).length} apps from porter.yaml` });
+        setDetected({ detected: true, message: `Detected ${Object.keys(porterYamlToJson.apps).length} services from porter.yaml` });
       } else {
-        setDetected({ detected: false, message: "Could not detect any apps from porter.yaml. Make sure it exists in the root of your repo." });
+        setDetected({ detected: false, message: "Could not detect any services from porter.yaml. Make sure it exists in the root of your repo." });
       }
     } catch (error) {
       console.log("Error converting porter yaml file to input: " + error);
@@ -180,6 +180,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       !isAppNameValid(formState.applicationName)
     );
   };
+
   const deployPorterApp = async () => {
     try {
       if (currentProject == null || currentCluster == null || currentProject.id == null || currentCluster.id == null) {

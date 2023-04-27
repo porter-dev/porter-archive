@@ -1,22 +1,22 @@
 export const overrideObjectValues = (obj1: any, obj2: any) => {
-    // Iterate over the keys in obj2
-    for (const key in obj2) {
-        // Check if the key exists in obj1 and if its value is an object
-        if (key in obj1 && typeof obj1[key] === 'object' && typeof obj2[key] === 'object') {
-            // Recursively call the function to handle the nested object
-            obj1[key] = overrideObjectValues(obj1[key], obj2[key]);
-        } else {
-            // Otherwise, just assign the value from obj2 to obj1
-            obj1[key] = obj2[key];
-        }
+  // Iterate over the keys in obj2
+  for (const key in obj2) {
+    // Check if the key exists in obj1 and if its value is an object
+    if (key in obj1 && typeof obj1[key] === 'object' && typeof obj2[key] === 'object') {
+      // Recursively call the function to handle the nested object
+      obj1[key] = overrideObjectValues(obj1[key], obj2[key]);
+    } else {
+      // Otherwise, just assign the value from obj2 to obj1
+      obj1[key] = obj2[key];
     }
+  }
 
-    // Return the merged object
-    return obj1;
+  // Return the merged object
+  return obj1;
 };
 
-export const getGithubAction = (projectID?: number, stackName?: string) => {
-    return `on:
+export const getGithubAction = (projectID?: number, clusterId?: number, stackName?: string) => {
+  return `on:
   push:
     branches:
     - master
@@ -36,10 +36,10 @@ jobs:
       with:
         command: apply -f porter.yaml
       env:
-        PORTER_CLUSTER: "1"
-        PORTER_HOST: https://296e-160-72-72-58.ngrok-free.app
+        PORTER_CLUSTER: "${clusterId}"
+        PORTER_HOST: https://dashboard.getporter.dev
         PORTER_PROJECT: "${projectID}"
         PORTER_STACK_NAME: "${stackName}"
         PORTER_TAG: \${{ steps.vars.outputs.sha_short }}
-        PORTER_TOKEN: \${{ secrets.PORTER_STACK_1_1 }}`;
+        PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}`;
 }

@@ -12,6 +12,8 @@ type Props = {
   expandText?: string;
   collapseText?: string;
   maxHeight?: string;
+  spaced?: boolean;
+  copy?: string;
 };
 
 const ExpandableSection: React.FC<Props> = ({
@@ -24,6 +26,8 @@ const ExpandableSection: React.FC<Props> = ({
   expandText,
   collapseText,
   maxHeight,
+  spaced,
+  copy,
 }) => {
   const [isExpanded, setIsExpanded] = useState(isInitiallyExpanded ?? false);
 
@@ -34,11 +38,17 @@ const ExpandableSection: React.FC<Props> = ({
       noWrapper={noWrapper}
     >
       {noWrapper ? (
-        <Container row>
+        <Container row spaced={spaced}>
           {Header}
-          <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
+          {copy ? (<ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
             {isExpanded ? collapseText : expandText}
-          </ExpandButton>
+          </ExpandButton>) : (<div>          <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
+            {isExpanded ? collapseText : expandText}
+          </ExpandButton>          <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
+              {isExpanded ? collapseText : expandText}
+            </ExpandButton></div>)}
+
+
         </Container>
       ) : (
         <HeaderRow
@@ -66,6 +76,9 @@ const ExpandButton = styled.div`
   color: #aaaabb;
   cursor: pointer;
   font-size: 13px;
+  :hover {
+    color: #ffffff;
+  }
 `;
 
 const HeaderRow = styled.div<{

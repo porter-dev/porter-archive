@@ -25,6 +25,7 @@ import { integrationList } from "shared/common";
 import { ChartType, ResourceType } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTabStack from "./BuildSettingsTabStack";
+import Button from "components/porter/Button";
 
 type Props = RouteComponentProps & {};
 

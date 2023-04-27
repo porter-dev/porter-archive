@@ -33,7 +33,7 @@ const StyledFieldset = styled.div<{
   position: relative;
   padding: 25px;
   border-radius: 5px;
-  background: ${props => props.background || "#26292e"};
+  background: ${props => props.background || props.theme.fg};
   border: 1px solid #494b4f;
   font-size: 13px;
 `;

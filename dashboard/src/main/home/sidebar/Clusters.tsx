@@ -20,6 +20,7 @@ type PropsType = RouteComponentProps & {
   currentView: string;
   isSelected: boolean;
   forceRefreshClusters: boolean;
+  display?: string;
   setRefreshClusters: (x: boolean) => void;
 };
 
@@ -47,7 +48,7 @@ class Clusters extends Component<PropsType, StateType> {
 
     // TODO: query with selected filter once implemented
     api
-      .getClusters("<token>", {}, { id: currentProject.id })
+      .getClusters("<token>", {}, { id: currentProject?.id })
       .then((res) => {
         window.analytics?.identify(user.userId, {
           currentProject,
@@ -82,7 +83,7 @@ class Clusters extends Component<PropsType, StateType> {
 
             this.setState({ clusters });
             let saved = JSON.parse(
-              localStorage.getItem(currentProject.id + "-cluster")
+              localStorage.getItem(currentProject?.id + "-cluster")
             );
             if (!defaultCluster && saved && saved !== "null") {
               // Ensures currentCluster isn't prematurely set (causes issues downstream)
@@ -146,7 +147,7 @@ class Clusters extends Component<PropsType, StateType> {
     if (
       clusters.length > 0 &&
       currentCluster &&
-      !currentProject.capi_provisioner_enabled
+      !currentProject?.capi_provisioner_enabled
     ) {
       clusters.sort((a, b) => a.id - b.id);
 
@@ -168,7 +169,7 @@ class Clusters extends Component<PropsType, StateType> {
           />
         );
       });
-    } else if (currentProject.capi_provisioner_enabled) {
+    } else if (currentProject?.capi_provisioner_enabled) {
       const cluster = clusters[0];
       return (
         <>
@@ -252,13 +253,17 @@ class Clusters extends Component<PropsType, StateType> {
   };
 
   render() {
-    return <>{this.renderContents()}</>;
+    return <Wrapper display={this.props.display}>{this.renderContents()}</Wrapper>;
   }
 }
 
 Clusters.contextType = Context;
 
 export default withRouter(Clusters);
+
+const Wrapper = styled.div<{ display: string }>`
+  display: ${props => props.display || ""};
+`;
 
 const InlineSVGWrapper = styled.svg`
   width: 32px;

@@ -8,6 +8,7 @@ import (
 const (
 	updateAppActionName     = "porter-dev/porter-update-action"
 	createPreviewActionName = "porter-dev/porter-preview-action"
+	cliActionName           = "porter-dev/porter-cli-action"
 )
 
 func getCheckoutCodeStep() GithubActionYAMLStep {
@@ -65,6 +66,28 @@ func getCreatePreviewEnvStep(
 			"action_id":       "${{ github.run_id }}",
 			"repo_owner":      repoOwner,
 			"repo_name":       repoName,
+		},
+		Timeout: 30,
+	}
+}
+
+func getDeployStackStep(
+	serverURL, porterTokenSecretName, stackName, actionVersion string,
+	projectID, clusterID uint,
+) GithubActionYAMLStep {
+	return GithubActionYAMLStep{
+		Name: "Deploy stack",
+		Uses: fmt.Sprintf("%s@%s", cliActionName, actionVersion),
+		With: map[string]string{
+			"command": "apply -f porter.yaml",
+		},
+		Env: map[string]string{
+			"PORTER_CLUSTER":    fmt.Sprintf("%d", clusterID),
+			"PORTER_HOST":       serverURL,
+			"PORTER_PROJECT":    fmt.Sprintf("%d", projectID),
+			"PORTER_TOKEN":      fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),
+			"PORTER_TAG":        "${{ steps.vars.outputs.sha_short }}",
+			"PORTER_STACK_NAME": stackName,
 		},
 		Timeout: 30,
 	}

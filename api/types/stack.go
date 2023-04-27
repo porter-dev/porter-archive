@@ -10,3 +10,15 @@ type ImageInfo struct {
 	Repository string `json:"repository"`
 	Tag        string `json:"tag"`
 }
+
+type CreateSecretAndOpenGHPRRequest struct {
+	GithubAppInstallationID int64  `json:"github_app_installation_id" form:"required"`
+	GithubRepoOwner         string `json:"github_repo_owner" form:"required"`
+	GithubRepoName          string `json:"github_repo_name" form:"required"`
+	OpenPr                  bool   `json:"open_pr"`
+	Branch                  string `json:"branch"`
+}
+
+type CreateSecretAndOpenGHPRResponse struct {
+	URL string `json:"url"`
+}

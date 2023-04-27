@@ -37,7 +37,6 @@ const GlobalStyle = createGlobalStyle`
   }
   
   body {
-    background: #202227;
     overscroll-behavior-x: none;
   }
 
@@ -57,6 +56,5 @@ const StyledMain = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  background: #202227;
   color: white;
 `;

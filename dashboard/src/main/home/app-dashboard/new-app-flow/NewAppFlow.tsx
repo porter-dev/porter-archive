@@ -186,40 +186,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         throw new Error("Project or cluster not found");
       }
 
-      // create namespace first so we can create subdomain later if necessary
-      const res = await api
-        .getNamespaces(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-          }
-        )
-      if (res == null || res.data == null) {
-        throw new Error("Namespaces not found");
-      };
-      const stackNamespace = `porter-stack-${formState.applicationName}`;
-      // TODO: clean up types
-      const namespaceExistsAlready = res.data.some((namespace: any) => {
-        return namespace.name == stackNamespace;
-      })
-      if (!namespaceExistsAlready) {
-        await api
-          .createNamespace(
-            "<token>",
-            {
-              name: stackNamespace,
-            },
-            {
-              id: currentProject.id,
-              cluster_id: currentCluster.id,
-            }
-          );
-      }
-
       // validate form data
-      const finalPorterYaml = await createFinalPorterYaml();
+      const finalPorterYaml = createFinalPorterYaml();
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl ? {
@@ -283,12 +251,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     return env;
   };
 
-  const createApps = async (serviceList: Service[]): Promise<z.infer<typeof AppsSchema>> => {
+  const createApps = (serviceList: Service[]): z.infer<typeof AppsSchema> => {
     const apps: z.infer<typeof AppsSchema> = {};
     for (const service of serviceList) {
       let config = Service.serialize(service);
-      if (Service.isWeb(service) && service.generateUrlForExternalTraffic) {
-        const ingress = await Service.handleWebIngress(service, formState.applicationName, currentCluster?.id, currentProject?.id);
+      // TODO: get rid of this block when we handle ingress on the backend
+      if (Service.isWeb(service)) {
+        const ingress = Service.handleWebIngress(service, formState.applicationName, currentCluster?.id, currentProject?.id);
         config = {
           ...config,
           ...ingress,
@@ -314,11 +283,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     return apps;
   };
 
-  const createFinalPorterYaml = async (): Promise<z.infer<typeof PorterYamlSchema>> => {
+  const createFinalPorterYaml = (): z.infer<typeof PorterYamlSchema> => {
     return {
       version: "v1stack",
       env: combineEnv(formState.envVariables, porterJson?.env),
-      apps: await createApps(formState.serviceList),
+      apps: createApps(formState.serviceList),
     };
   };
 

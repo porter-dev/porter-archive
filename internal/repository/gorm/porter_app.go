@@ -27,11 +27,9 @@ func (repo *PorterAppRepository) CreatePorterApp(a *models.PorterApp) (*models.P
 func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*models.PorterApp, error) {
 	apps := []*models.PorterApp{}
 
-	/*
-		if err := repo.db.Where("project_id = ? AND NOT revoked", projectID).Find(&tokens).Error; err != nil {
-			return nil, err
-		}
-	*/
+	if err := repo.db.Where("cluster_id = ?", clusterID).Find(&apps).Error; err != nil {
+		return nil, err
+	}
 
 	return apps, nil
 }

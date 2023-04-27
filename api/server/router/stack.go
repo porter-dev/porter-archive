@@ -83,6 +83,34 @@ func getStackRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks -> stacks.NewPorterAppListHandler
+	listPorterAppEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.RegistryScope,
+			},
+		},
+	)
+
+	listPorterAppHandler := stacks.NewPorterAppListHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listPorterAppEndpoint,
+		Handler:  listPorterAppHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/update_config -> stacks.NewCreateStackHandler
 	createPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

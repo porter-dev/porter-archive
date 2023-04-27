@@ -284,6 +284,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             <Spacer inline x={1} />
             <Text size={13}>branch: main</Text>
           </Container> */}
+          <Back to="/apps" />
           <HeaderWrapper>
             <TitleSectionStacks
               icon={

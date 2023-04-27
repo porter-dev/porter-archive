@@ -209,7 +209,6 @@ const createPorterApp = baseApi<
 
 const updatePorterApp = baseApi<
   {
-    name?: string;
     repo_name?: string;
     git_branch?: string;
     build_context?: string;

@@ -225,7 +225,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
             git_branch: branch,
             build_context: folderPath,
             builder: (buildConfig as any)?.builder,
-            buildpacks: (buildConfig as any)?.buildpacks.join(",") ?? "",
+            buildpacks: (buildConfig as any)?.buildpacks?.join(",") ?? "",
             dockerfile: dockerfilePath,
             image_repo_uri: imageUrl,
           },

@@ -50,9 +50,6 @@ func (c *UpdatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if request.Name != "" {
-		porterApp.Name = request.Name
-	}
 	if request.RepoName != "" {
 		porterApp.RepoName = request.RepoName
 	}

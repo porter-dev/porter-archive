@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext, useMemo } from "react";
 import styled from "styled-components";
 import _ from "lodash";
+import { Link, LinkProps } from "react-router-dom";
 
 import web from "assets/web.png";
 import github from "assets/github.png";
@@ -20,7 +21,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
-import Link from "components/porter/Link";
+import PorterLink from "components/porter/Link";
 import Loading from "components/Loading";
 
 type Props = {
@@ -119,11 +120,11 @@ const AppDashboard: React.FC<Props> = ({
           setActive={setView}
         />
         <Spacer inline x={2} />
-        <Link to="/apps/new">
+        <PorterLink to="/apps/new">
           <Button onClick={() => {}} height="30px" width="160px">
             <I className="material-icons">add</I> New application
           </Button>
-        </Link>
+        </PorterLink>
       </Container>
       <Spacer y={1} />
       {isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
@@ -131,21 +132,23 @@ const AppDashboard: React.FC<Props> = ({
          {(filteredApps ?? []).map((app: any, i: number) => {
            if (!namespaceBlacklist.includes(app.name)) {
              return (
-               <Block key={i}>
-                 <Text size={14}>
-                   <Icon src={icons[i % icons.length]} />
-                   {app.name}
-                 </Text>
-                 <StatusIcon src={healthy} />
-                 <Text size={13} color="#ffffff44">
-                   <SmallIcon opacity="0.6" src={github} />
-                   porter-dev/porter
-                 </Text>
-                 <Text size={13} color="#ffffff44">
-                   <SmallIcon opacity="0.4" src={time} />
-                   Updated 6:35 PM on 4/23/2023
-                 </Text>
-               </Block>
+              <Link to={`/apps/${app.name}`}>
+                <Block key={i}>
+                  <Text size={14}>
+                    <Icon src={icons[i % icons.length]} />
+                    {app.name}
+                  </Text>
+                  <StatusIcon src={healthy} />
+                  <Text size={13} color="#ffffff44">
+                    <SmallIcon opacity="0.6" src={github} />
+                    porter-dev/porter
+                  </Text>
+                  <Text size={13} color="#ffffff44">
+                    <SmallIcon opacity="0.4" src={time} />
+                    6:35 PM on 4/23/2023
+                  </Text>
+                </Block>
+              </Link>
              );
            }
          })}
@@ -155,22 +158,24 @@ const AppDashboard: React.FC<Props> = ({
           {(filteredApps ?? []).map((app: any, i: number) => {
             if (!namespaceBlacklist.includes(app.name)) {
               return (
-                <Row key={i}>
-                  <Text size={14}>
-                    <MidIcon src={icons[i % icons.length]} />
-                    {app.name}
-                    <Spacer inline x={1} />
-                    <MidIcon src={healthy} />
-                  </Text>
-                  <Spacer height="15px" />
-                  <Text size={13} color="#ffffff44">
-                    <SmallIcon opacity="0.6" src={github} />
-                    porter-dev/porter
-                    <Spacer inline x={1} />
-                    <SmallIcon opacity="0.4" src={time} />
-                    Updated 6:35 PM on 4/23/2023
-                  </Text>
-                </Row>
+                <Link to={`/apps/${app.name}`}>
+                  <Row key={i}>
+                    <Text size={14}>
+                      <MidIcon src={icons[i % icons.length]} />
+                      {app.name}
+                      <Spacer inline x={1} />
+                      <MidIcon src={healthy} />
+                    </Text>
+                    <Spacer height="15px" />
+                    <Text size={13} color="#ffffff44">
+                      <SmallIcon opacity="0.6" src={github} />
+                      porter-dev/porter
+                      <Spacer inline x={1} />
+                      <SmallIcon opacity="0.4" src={time} />
+                      6:35 PM on 4/23/2023
+                    </Text>
+                  </Row>
+                </Link>
               );
             }
           })}

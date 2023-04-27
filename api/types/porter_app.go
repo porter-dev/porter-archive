@@ -36,7 +36,6 @@ type CreatePorterAppRequest struct {
 }
 
 type UpdatePorterAppRequest struct {
-	Name         string `json:"name"`
 	RepoName     string `json:"repo_name"`
 	GitBranch    string `json:"git_branch"`
 	BuildContext string `json:"build_context"`

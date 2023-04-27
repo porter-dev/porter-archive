@@ -49,6 +49,7 @@ type TestRepository struct {
 	monitor                   repository.MonitorTestResultRepository
 	apiContractRevision       repository.APIContractRevisioner
 	awsAssumeRoleChainer      repository.AWSAssumeRoleChainer
+	porterApp                 repository.PorterAppRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -227,6 +228,10 @@ func (t *TestRepository) AWSAssumeRoleChainer() repository.AWSAssumeRoleChainer 
 	return t.awsAssumeRoleChainer
 }
 
+func (t *TestRepository) PorterApp() repository.PorterAppRepository {
+	return t.porterApp
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -275,5 +280,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		monitor:                   NewMonitorTestResultRepository(canQuery),
 		apiContractRevision:       NewAPIContractRevisioner(),
 		awsAssumeRoleChainer:      NewAWSAssumeRoleChainer(),
+		porterApp:                 NewPorterAppRepository(canQuery, failingMethods...),
 	}
 }

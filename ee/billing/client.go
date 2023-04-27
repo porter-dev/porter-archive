@@ -278,5 +278,6 @@ func (c *Client) ParseProjectUsageFromWebhook(payload []byte) (*cemodels.Project
 			StacksEnabled:              usageData.StacksEnabled,
 			ManagedDatabasesEnabled:    usageData.ManagedDatabasesEnabled,
 			CapiProvisionerEnabled:     usageData.CapiProvisionerEnabled,
+			SimplifiedViewEnabled:      usageData.SimplifiedViewEnabled,
 		}, nil
 }

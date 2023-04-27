@@ -27,7 +27,12 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
   const [serviceType, setServiceType] = useState<ServiceType>("web");
   const isServiceNameValid = (name: string) => {
     const regex = /^[a-z0-9-]+$/;
+
     return regex.test(name);
+  };
+  const isServiceNameDuplicate = (name: string) => {
+    const serviceNames = services.map((service) => service.name);
+    return serviceNames.includes(name);
   };
 
   return (
@@ -89,9 +94,11 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             width="300px"
             value={serviceName}
             error={
-              serviceName != "" &&
-              !isServiceNameValid(serviceName) &&
-              'Lowercase letters, numbers, and "-" only.'
+              (serviceName != "" &&
+                !isServiceNameValid(serviceName) &&
+                'Lowercase letters, numbers, and "-" only.') ||
+              (isServiceNameDuplicate(serviceName) &&
+                "Service name is duplicate")
             }
             setValue={setServiceName}
           />
@@ -109,7 +116,10 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
               setServiceName("");
               setServiceType("web");
             }}
-            disabled={!isServiceNameValid(serviceName)}
+            disabled={
+              !isServiceNameValid(serviceName) ||
+              isServiceNameDuplicate(serviceName)
+            }
           >
             <I className="material-icons">add</I> Add service
           </Button>

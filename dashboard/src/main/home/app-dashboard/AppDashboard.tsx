@@ -4,6 +4,7 @@ import _ from "lodash";
 import { Link, LinkProps } from "react-router-dom";
 
 import web from "assets/web.png";
+import box from "assets/box.png";
 import github from "assets/github.png";
 import time from "assets/time.png";
 import healthy from "assets/status-healthy.png";
@@ -69,8 +70,6 @@ const AppDashboard: React.FC<Props> = ({
 
   const getApps = async () => {
     setIsLoading(true);
-
-    // TODO: Currently using namespaces as placeholder (replace with apps)
     try {
       const res = await api.getPorterApps(
         "<token>",
@@ -94,6 +93,57 @@ const AppDashboard: React.FC<Props> = ({
       getApps();
     }
   }, [currentCluster, currentProject]);
+
+  const renderSource = (app: any) => {
+    return(
+      <>
+        {app.repo_name ? (
+          <>
+            <SmallIcon opacity="0.6" src={github} />
+            {app.repo_name}
+          </>
+        ) : (
+          <>
+            <SmallIcon opacity="0.7" height="18px" src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
+            {app.image_repo_uri}
+          </>
+        )}
+      </>
+    );
+  };
+
+  const renderIcon = (b: string, size?: string) => {
+    var src = box;
+    if (b) {
+      const bp = b.split(",")[0]?.split("/")[1];
+      console.log(b)
+      switch (bp) {
+        case "ruby":
+          src = icons[0];
+          break;
+        case "nodejs":
+          src = icons[1];
+          break;
+        case "python":
+          src = icons[2];
+          break;
+        case "go":
+          src = icons[3];
+          break;
+        default:
+          break;
+      }
+    }
+    return (
+      <>
+        {size === "larger" ? (
+          <MidIcon src={src} />
+        ) : (
+          <Icon src={src} />
+        )}
+      </>
+    );
+  };
 
   return (
     <StyledAppDashboard>
@@ -132,16 +182,18 @@ const AppDashboard: React.FC<Props> = ({
          {(filteredApps ?? []).map((app: any, i: number) => {
            if (!namespaceBlacklist.includes(app.name)) {
              return (
-              <Link to={`/apps/${app.name}`}>
-                <Block key={i}>
-                  <Text size={14}>
-                    <Icon src={icons[i % icons.length]} />
-                    {app.name}
-                  </Text>
+              <Link to={`/apps/${app.name}`} key={i}>
+                <Block>
+                  <Container row>
+                    <Text size={14}>
+                      {renderIcon(app["build_packs"])}
+                      {app.name}
+                    </Text>
+                    <Spacer inline x={2} />
+                  </Container>
                   <StatusIcon src={healthy} />
                   <Text size={13} color="#ffffff44">
-                    <SmallIcon opacity="0.6" src={github} />
-                    porter-dev/porter
+                    {renderSource(app)}
                   </Text>
                   <Text size={13} color="#ffffff44">
                     <SmallIcon opacity="0.4" src={time} />
@@ -158,18 +210,17 @@ const AppDashboard: React.FC<Props> = ({
           {(filteredApps ?? []).map((app: any, i: number) => {
             if (!namespaceBlacklist.includes(app.name)) {
               return (
-                <Link to={`/apps/${app.name}`}>
-                  <Row key={i}>
+                <Link to={`/apps/${app.name}`} key={i}>
+                  <Row>
                     <Text size={14}>
-                      <MidIcon src={icons[i % icons.length]} />
+                      {renderIcon(app["build_packs"], "larger")}
                       {app.name}
                       <Spacer inline x={1} />
                       <MidIcon src={healthy} />
                     </Text>
                     <Spacer height="15px" />
                     <Text size={13} color="#ffffff44">
-                      <SmallIcon opacity="0.6" src={github} />
-                      porter-dev/porter
+                      {renderSource(app)}
                       <Spacer inline x={1} />
                       <SmallIcon opacity="0.4" src={time} />
                       6:35 PM on 4/23/2023
@@ -225,12 +276,14 @@ const Icon = styled.img`
 const MidIcon = styled.img`
   height: 16px;
   margin-right: 13px;
+  margin-left: 1px;
 `;
 
-const SmallIcon = styled.img<{ opacity?: string }>`
+const SmallIcon = styled.img<{ opacity?: string, height?: string }>`
   margin-left: 2px;
-  height: 14px;
+  height: ${props => props.height || "14px"};
   opacity: ${props => props.opacity || 1};
+  filter: grayscale(100%);
   margin-right: 10px;
 `;
 

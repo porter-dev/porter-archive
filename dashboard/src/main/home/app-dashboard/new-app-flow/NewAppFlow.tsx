@@ -80,7 +80,7 @@ const Validators: {
 type Detected = {
   detected: boolean;
   message: string;
-}
+};
 
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [templateName, setTemplateName] = useState("");
@@ -97,11 +97,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     ...defaultActionConfig,
   });
   const [branch, setBranch] = useState("");
-  const [repoType, setRepoType] = useState("");
   const [dockerfilePath, setDockerfilePath] = useState(null);
   const [procfilePath, setProcfilePath] = useState(null);
   const [folderPath, setFolderPath] = useState(null);
-  const [buildConfig, setBuildConfig] = useState();
+  const [buildConfig, setBuildConfig] = useState({});
   const [porterYaml, setPorterYaml] = useState("");
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
   const [porterJson, setPorterJson] = useState<
@@ -147,12 +146,22 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       if (Validators.serviceList(newServiceList)) {
         setCurrentStep(Math.max(currentStep, 4));
       }
-      if (porterYamlToJson &&
+      if (
+        porterYamlToJson &&
         porterYamlToJson.apps &&
-        Object.keys(porterYamlToJson.apps).length > 0) {
-        setDetected({ detected: true, message: `Detected ${Object.keys(porterYamlToJson.apps).length} services from porter.yaml` });
+        Object.keys(porterYamlToJson.apps).length > 0
+      ) {
+        setDetected({
+          detected: true,
+          message: `Detected ${Object.keys(porterYamlToJson.apps).length
+            } apps from porter.yaml`,
+        });
       } else {
-        setDetected({ detected: false, message: "Could not detect any services from porter.yaml. Make sure it exists in the root of your repo." });
+        setDetected({
+          detected: false,
+          message:
+            "Could not detect any apps from porter.yaml. Make sure it exists in the root of your repo.",
+        });
       }
     } catch (error) {
       console.log("Error converting porter yaml file to input: " + error);
@@ -187,7 +196,12 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     try {
       setDeploying(true);
       setDeploymentError(undefined);
-      if (currentProject == null || currentCluster == null || currentProject.id == null || currentCluster.id == null) {
+      if (
+        currentProject == null ||
+        currentCluster == null ||
+        currentProject.id == null ||
+        currentCluster.id == null
+      ) {
         throw new Error("Project or cluster not found");
       }
 
@@ -195,12 +209,14 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const finalPorterYaml = createFinalPorterYaml();
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
-      const imageInfo = imageUrl ? {
-        image_info: {
-          repository: imageUrl,
-          tag: imageTag,
+      const imageInfo = imageUrl
+        ? {
+          image_info: {
+            repository: imageUrl,
+            tag: imageTag,
+          },
         }
-      } : {}
+        : {};
 
       // write to the db
       await api.createPorterApp(
@@ -233,13 +249,15 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
         }
-      );
+      )
+
       return true;
     } catch (err) {
       // TODO: better error handling
       console.log(err);
       const errMessage = err?.response?.data?.error ?? err?.toString() ?? 'An error occurred while deploying your app. Please try again.'
       setDeploymentError(errMessage);
+
       return false;
     } finally {
       setDeploying(false);
@@ -268,7 +286,12 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       let config = Service.serialize(service);
       // TODO: get rid of this block when we handle ingress on the backend
       if (Service.isWeb(service)) {
-        const ingress = Service.handleWebIngress(service, formState.applicationName, currentCluster?.id, currentProject?.id);
+        const ingress = Service.handleWebIngress(
+          service,
+          formState.applicationName,
+          currentCluster?.id,
+          currentProject?.id
+        );
         config = {
           ...config,
           ...ingress,
@@ -377,6 +400,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   procfilePath={procfilePath}
                   setProcfilePath={setProcfilePath}
                   setBuildConfig={setBuildConfig}
+                  buildConfig={buildConfig}
                   porterYaml={porterYaml}
                   setPorterYaml={(newYaml: string) => {
                     validatePorterYaml(newYaml);
@@ -384,13 +408,24 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 />
               </>,
               <>
-                <Text size={16}>Application services {detected && (
-                  <AppearingDiv>
-                    <Text size={16} color={detected.detected ? "green" : "red"}>
-                      {detected.detected ? <i className="material-icons">check</i> : <i className="material-icons">error</i>} {detected.message}
-                    </Text>
-                  </AppearingDiv>
-                )}</Text>
+                <Text size={16}>
+                  Application services{" "}
+                  {detected && (
+                    <AppearingDiv>
+                      <Text
+                        size={16}
+                        color={detected.detected ? "green" : "red"}
+                      >
+                        {detected.detected ? (
+                          <i className="material-icons">check</i>
+                        ) : (
+                          <i className="material-icons">error</i>
+                        )}{" "}
+                        {detected.message}
+                      </Text>
+                    </AppearingDiv>
+                  )}
+                </Text>
                 <Spacer y={0.5} />
 
                 <Services

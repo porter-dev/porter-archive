@@ -209,14 +209,14 @@ const createPorterApp = baseApi<
 
 const updatePorterApp = baseApi<
   {
-    name: string;
-    repo_name: string;
-    git_branch: string;
-    build_context: string;
-    builder: string;
-    buildpacks: string;
-    dockerfile: string;
-    image_repo_uri: string;
+    name?: string;
+    repo_name?: string;
+    git_branch?: string;
+    build_context?: string;
+    builder?: string;
+    buildpacks?: string;
+    dockerfile?: string;
+    image_repo_uri?: string;
   },
   {
     project_id: number;

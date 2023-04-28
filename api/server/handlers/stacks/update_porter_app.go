@@ -36,6 +36,8 @@ func (c *UpdatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	name, _ := requestutils.GetURLParamString(r, types.URLParamReleaseName)
 
+	fmt.Println("name is", name)
+
 	porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, name)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -46,6 +48,31 @@ func (c *UpdatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	ok := c.DecodeAndValidate(w, r, request)
 	if !ok {
 		return
+	}
+
+	if request.Name != "" {
+		porterApp.Name = request.Name
+	}
+	if request.RepoName != "" {
+		porterApp.RepoName = request.RepoName
+	}
+	if request.GitBranch != "" {
+		porterApp.GitBranch = request.GitBranch
+	}
+	if request.BuildContext != "" {
+		porterApp.BuildContext = request.BuildContext
+	}
+	if request.Builder != "" {
+		porterApp.Builder = request.Builder
+	}
+	if request.Buildpacks != "" {
+		porterApp.Buildpacks = request.Buildpacks
+	}
+	if request.Dockerfile != "" {
+		porterApp.Dockerfile = request.Dockerfile
+	}
+	if request.ImageRepoURI != "" {
+		porterApp.ImageRepoURI = request.ImageRepoURI
 	}
 
 	updatedPorterApp, err := c.Repo().PorterApp().UpdatePorterApp(porterApp)

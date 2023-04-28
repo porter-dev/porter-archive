@@ -24,6 +24,8 @@ import DeployStatusSection from "main/home/cluster-dashboard/expanded-chart/depl
 import { integrationList } from "shared/common";
 import { ChartType, ResourceType } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
+import BuildSettingsTabStack from "./BuildSettingsTabStack";
+import Button from "components/porter/Button";
 
 type Props = RouteComponentProps & {};
 
@@ -54,7 +56,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
-  
+
   const getPorterApp = async () => {
     setIsLoading(true);
     const { appName } = props.match.params as any;
@@ -89,6 +91,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setIsLoading(false);
     }
   };
+
   const renderIcon = (str: string) => {
     let value = str.split(",");
     let buildpack = value[0];
@@ -250,7 +253,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "overview":
         return <div>TODO: service list</div>;
       case "build-settings":
-        return <div>TODO: build settings</div>;
+        return (
+          <BuildSettingsTabStack appData={appData} setAppData={setAppData} />
+        );
       case "settings":
         return <div>TODO: stack deletion</div>;
       default:
@@ -284,6 +289,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             <Spacer inline x={1} />
             <Text size={13}>branch: main</Text>
           </Container> */}
+          <Back to="/apps" />
           <HeaderWrapper>
             <TitleSectionStacks
               icon={

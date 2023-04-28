@@ -5,6 +5,8 @@ import { ActionConfigType } from "shared/types";
 
 import RepoList from "./RepoList";
 import BranchList from "./BranchList";
+import ContentsList from "./ContentsList";
+import ActionDetails from "./ActionDetails";
 import InputRow from "../form-components/InputRow";
 
 type Props = {
@@ -12,18 +14,15 @@ type Props = {
   branch: string;
   setActionConfig: (x: ActionConfigType) => void;
   setBranch: (x: string) => void;
+
   setDockerfilePath: (x: string) => void;
+
   setFolderPath: (x: string) => void;
 };
 
-const ActionConfEditorStack: React.FC<Props> = ({
-  actionConfig,
-  setBranch,
-  setActionConfig,
-  branch,
-  setFolderPath,
-  setDockerfilePath,
-}) => {
+const ActionConfEditorStack: React.FC<Props> = (props) => {
+  const { actionConfig, setBranch, setActionConfig, branch } = props;
+
   if (!actionConfig.git_repo) {
     return (
       <ExpandedWrapperAlt>
@@ -35,7 +34,7 @@ const ActionConfEditorStack: React.FC<Props> = ({
       </ExpandedWrapperAlt>
     );
   } else if (!branch) {
-    setFolderPath("./");
+    props.setFolderPath("./");
     return (
       <>
         <ExpandedWrapperAlt>
@@ -55,14 +54,15 @@ const ActionConfEditorStack: React.FC<Props> = ({
         label="Branch"
         type="text"
         width="100%"
-        value={branch}
+        value={props?.branch}
       />
       <BackButton
         width="145px"
         onClick={() => {
-          setFolderPath("");
           setBranch("");
-          setDockerfilePath("");
+          props.setFolderPath("");
+          props.setDockerfilePath("");
+          props.setActionConfig(actionConfig);
         }}
       >
         <i className="material-icons">keyboard_backspace</i>
@@ -77,6 +77,26 @@ export default ActionConfEditorStack;
 const Br = styled.div`
   width: 100%;
   height: 8px;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const HeaderButton = styled.div`
+  margin-bottom: 5px;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  margin-right: 10px;
+`;
+
+const RepoHeader = styled.div`
+  display: flex;
+  align-items: center;
 `;
 
 const ExpandedWrapper = styled.div`

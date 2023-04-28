@@ -218,7 +218,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         : {};
 
       // write to the db
-      console.log("what is it", actionConfig.git_repo_id)
       await api.createPorterApp(
         "<token>",
         {

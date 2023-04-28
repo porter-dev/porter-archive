@@ -9,6 +9,7 @@ import { DeviconsNameList } from "assets/devicons-name-list";
 import { BuildpackStack } from "components/repo-selector/BuildpackStack";
 import { ActionConfigType, BuildConfig } from "shared/types";
 import SelectRow from "components/form-components/SelectRow";
+import Select from "components/porter/Select";
 
 interface AutoBuildpack {
   name?: string;
@@ -46,9 +47,7 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
   const createDockerView = () => {
     return (
       <>
-        <Text size={16}>Build with a Dockerfile</Text>
-        <Spacer y={0.5} />
-        <Text color="helper">Specify your Dockerfile path.</Text>
+        <Text color="helper">Dockerfile path</Text>
         <Spacer y={0.5} />
         <Input
           placeholder="ex: ./Dockerfile"
@@ -91,29 +90,29 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
         {buildView == "docker" ? (
           <AdvancedBuildTitle>
             <i className="material-icons dropdown">arrow_drop_down</i>
-            Dockerfile Detected (configure Dockerfile Settings)
+            Configure Dockerfile settings
           </AdvancedBuildTitle>
         ) : (
           <AdvancedBuildTitle>
             <i className="material-icons dropdown">arrow_drop_down</i>
-            Configure Build Pack Settings
+            Configure buildpack settings
           </AdvancedBuildTitle>
         )}
       </StyledAdvancedBuildSettings>
 
       <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
         <StyledSourceBox>
-          <SelectRow
+          <Select
             value={buildView}
-            width="100%"
+            width="300px"
             options={[
               { value: "docker", label: "Docker" },
               { value: "buildpacks", label: "Buildpacks" },
             ]}
-            setActiveValue={(option) => setBuildView(option)}
-            label="Select your Build Context"
+            setValue={(option) => setBuildView(option)}
+            label="Build method"
           />
-
+          <Spacer y={1} />
           {buildView === "docker" ? createDockerView() : createBuildpackView()}
         </StyledSourceBox>
       </AnimateHeight>
@@ -162,7 +161,7 @@ const AdvancedBuildTitle = styled.div`
 const StyledSourceBox = styled.div`
   width: 100%;
   color: #ffffff;
-  padding: 14px 35px 20px;
+  padding: 25px 35px 25px;
   position: relative;
   font-size: 13px;
   border-radius: 5px;

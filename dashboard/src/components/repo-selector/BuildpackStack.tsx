@@ -52,15 +52,7 @@ export const BuildpackStack: React.FC<{
   branch: string;
   hide: boolean;
   onChange: (config: BuildConfig) => void;
-  defaultBuildConfig: BuildConfig;
-}> = ({
-  actionConfig,
-  folderPath,
-  branch,
-  hide,
-  onChange,
-  defaultBuildConfig,
-}) => {
+}> = ({ actionConfig, folderPath, branch, hide, onChange }) => {
   const { currentProject } = useContext(Context);
 
   const [builders, setBuilders] = useState<DetectedBuildpack[]>(null);
@@ -108,9 +100,6 @@ export const BuildpackStack: React.FC<{
   };
   useEffect(() => {
     let buildConfig: BuildConfig = {} as BuildConfig;
-    if (defaultBuildConfig) {
-      buildConfig = defaultBuildConfig;
-    }
 
     buildConfig.builder = selectedStack;
     console.log(buildConfig);

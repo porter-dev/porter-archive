@@ -22,3 +22,5 @@ type CreateSecretAndOpenGHPRRequest struct {
 type CreateSecretAndOpenGHPRResponse struct {
 	URL string `json:"url"`
 }
+
+type GetStackResponse PorterApp

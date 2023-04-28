@@ -87,36 +87,15 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   }, [contents]);
 
   const renderContentList = () => {
-    if (loading) {
-      return (
-        <LoadingWrapper>
-          <Loading />
-        </LoadingWrapper>
-      );
-    } else if (error || !contents) {
-      return <LoadingWrapper>Error loading repo contents.</LoadingWrapper>;
-    }
-
-    return contents.map((item: FileType, i: number) => {
+    contents.map((item: FileType, i: number) => {
       let splits = item.path.split("/");
       let fileName = splits[splits.length - 1];
       if (fileName.includes("Dockerfile")) {
-        return (
-          <AdvancedBuildSettings
-            dockerfilePath={props.dockerfilePath}
-            setDockerfilePath={props.setDockerfilePath}
-            setBuildConfig={props.setBuildConfig}
-            buildConfig={props.buildConfig}
-            autoBuildPack={autoBuildpack}
-            showSettings={false}
-            buildView={"docker"}
-            actionConfig={props.actionConfig}
-            branch={props.branch}
-            folderPath={props.folderPath}
-          />
-        );
+        return false;
       }
     });
+
+    return true;
   };
 
   const fetchContents = () => {
@@ -245,8 +224,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   };
   return (
     <>
-      {renderContentList()}
-      {props.dockerfilePath == null || props.dockerfilePath == "" ? (
+      {renderContentList() && props.dockerfilePath != "" ? (
         <AdvancedBuildSettings
           dockerfilePath={props.dockerfilePath}
           setDockerfilePath={props.setDockerfilePath}
@@ -260,7 +238,18 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
           buildConfig={props.buildConfig}
         />
       ) : (
-        <></>
+        <AdvancedBuildSettings
+          dockerfilePath={props.dockerfilePath}
+          setDockerfilePath={props.setDockerfilePath}
+          setBuildConfig={props.setBuildConfig}
+          autoBuildPack={autoBuildpack}
+          showSettings={false}
+          buildView={"docker"}
+          actionConfig={props.actionConfig}
+          branch={props.branch}
+          folderPath={props.folderPath}
+          buildConfig={props.buildConfig}
+        />
       )}
     </>
   );

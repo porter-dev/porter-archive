@@ -1,30 +1,25 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
-import { DeviconsNameList } from "assets/devicons-name-list";
-import useAuth from "shared/auth/useAuth";
 import yaml from "js-yaml";
-import api from "shared/api";
-import { Context } from "shared/Context";
 
 import notFound from "assets/not-found.png";
 import web from "assets/web.png";
 import box from "assets/box.png";
 import github from "assets/github.png";
+import pr_icon from "assets/pull_request_icon.svg";
 
-import Fieldset from "components/porter/Fieldset";
+import api from "shared/api";
+import { Context } from "shared/Context";
+import useAuth from "shared/auth/useAuth";
+
 import Loading from "components/Loading";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
-import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import Back from "components/porter/Back";
 import TabSelector from "components/TabSelector";
-import TitleSectionStacks from "components/TitleSectionStacks";
-import DeploymentTypeStacks from "main/home/cluster-dashboard/expanded-chart/DeploymentTypeStacks";
-import DeployStatusSection from "main/home/cluster-dashboard/expanded-chart/deploy-status-section/DeployStatusSection";
-import { integrationList } from "shared/common";
 import { ChartType, ResourceType } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTabStack from "./BuildSettingsTabStack";
@@ -305,42 +300,46 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <Container row>
             {renderIcon(appData.app.build_packs)}
             <Text size={21}>{appData.app.name}</Text>
-            <Spacer inline x={1.5} />
             {appData.app.repo_name && (
-              <Text size={13} color="helper">
-                <SmallIcon src={github} />
-                {appData.app.repo_name}
-              </Text>
+              <>
+                <Spacer inline x={1} />
+                <Text size={13} color="helper">
+                  <SmallIcon src={github} />
+                  {appData.app.repo_name}
+                </Text>
+              </>
             )}
-            
-            <Spacer inline x={1} />
-            <Text size={13}>branch: main</Text>
-          </Container>
-          <HeaderWrapper>
-
-            {/* {currentChart.chart.metadata.name != "worker" &&
-              currentChart.chart.metadata.name != "job" &&
-              renderUrl()} */}
-
-            {/* //{currentChart.canonical_name !== "" && renderHelmReleaseName()} */}
-            <InfoWrapper>
-              {/*
-                  <StatusIndicator
-                    controllers={controllers}
-                    status={currentChart.info.status}
-                    margin_left={"0px"}
+            {appData.app.git_branch && (
+              <>
+                <Spacer inline x={1} />
+                <TagWrapper>
+                  Branch
+                  <BranchTag>
+                    <BranchIcon src={pr_icon} />
+                    {appData.app.git_branch}
+                  </BranchTag>
+                </TagWrapper>
+              </>
+            )}
+            {!appData.app.repo_name && appData.app.image_repo_uri && (
+              <>
+                <Spacer inline x={1} />
+                <Text size={13} color="helper">
+                  <SmallIcon
+                    height="19px"
+                    src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
                   />
-                  */}
-              {/* <DeployStatusSection
-                chart={appData.chart}
-                setLogData={test}//renderLogsAtTimestamp}
-              /> */}
-              <LastDeployed>
-                <Dot>•</Dot>Last deployed
-                {" " + getReadableDate(appData.chart.info.last_deployed)}
-              </LastDeployed>
-            </InfoWrapper>
-          </HeaderWrapper>
+                  {appData.app.image_repo_uri}
+                </Text>
+              </>
+            )}
+          </Container>
+          <Spacer y={1} />
+          <Text color="#aaaabb66">
+            Last deployed {getReadableDate(appData.chart.info.last_deployed)}
+          </Text>
+          <Spacer y={1} />
+          <DarkMatter />
           <RevisionSection
             showRevisions={showRevisions}
             toggleShowRevisions={() => {
@@ -359,6 +358,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             latestVersion={appData.chart.latest_version}
             upgradeVersion={appUpgradeVersion}
           />
+          <DarkMatter antiHeight="-18px" />
           <Spacer y={1} />
           <TabSelector
             options={[
@@ -382,9 +382,57 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
 export default withRouter(ExpandedApp);
 
-const SmallIcon = styled.img`
-  height: 15px;
+const DarkMatter = styled.div<{ antiHeight?: string }>`
+  width: 100%;
+  margin-top: ${props => props.antiHeight || "-20px"};
+`;
+
+const TagWrapper = styled.div`
+  height: 20px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff44;
+  border: 1px solid #ffffff44;
+  border-radius: 3px;
+  padding-left: 6px;
+`;
+
+const BranchTag = styled.div`
+  height: 20px;
+  margin-left: 6px;
+  color: #aaaabb;
+  background: #ffffff22;
+  border-radius: 3px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0px 6px;
+  padding-left: 7px;
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const BranchSection = styled.div`
+  background: ${props => props.theme.fg};
+  border: 1px solid #494b4f;
+`;
+
+const SmallIcon = styled.img<{ opacity?: string, height?: string }>`
+  height: ${props => props.height || "15px"};
+  opacity: ${props => props.opacity || 1};
   margin-right: 10px;
+`;
+
+const BranchIcon = styled.img`
+  height: 14px;
+  opacity: 0.65;
+  margin-right: 5px;
 `;
 
 const Icon = styled.img`

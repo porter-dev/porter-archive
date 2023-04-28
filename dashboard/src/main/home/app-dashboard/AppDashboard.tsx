@@ -112,7 +112,7 @@ const AppDashboard: React.FC<Props> = ({
       apps.forEach((app: any, i: number) => {
         app["last_deployed"] = readableDate(timeRes[i].data[0]?.info?.last_deployed);
       });
-      setApps(apps);
+      setApps(apps.reverse());
       setIsLoading(false);
     }
     catch (err) {

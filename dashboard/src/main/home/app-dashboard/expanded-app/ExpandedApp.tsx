@@ -8,6 +8,9 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 
 import notFound from "assets/not-found.png";
+import web from "assets/web.png";
+import box from "assets/box.png";
+import github from "assets/github.png";
 
 import Fieldset from "components/porter/Fieldset";
 import Loading from "components/Loading";
@@ -28,6 +31,14 @@ import BuildSettingsTabStack from "./BuildSettingsTabStack";
 import Button from "components/porter/Button";
 
 type Props = RouteComponentProps & {};
+
+const icons = [
+  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-plain.svg",
+  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg",
+  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-plain.svg",
+  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg",
+  web,
+];
 
 const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const {
@@ -92,23 +103,32 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  const renderIcon = (str: string) => {
-    let value = str.split(",");
-    let buildpack = value[0];
-    // console.log(value);
-    // value.forEach((buildpack) => {
-    //   console.log(buildpack);
-    const [languageName] = buildpack.split("/").reverse();
-    const devicon = DeviconsNameList.find(
-      (devicon) => languageName.toLowerCase() === devicon.name
-    );
-    if (devicon) {
-      const icon = `devicon-${devicon?.name}-plain colored`;
-      return icon;
+  const renderIcon = (b: string, size?: string) => {
+    var src = box;
+    if (b) {
+      const bp = b.split(",")[0]?.split("/")[1];
+      switch (bp) {
+        case "ruby":
+          src = icons[0];
+          break;
+        case "nodejs":
+          src = icons[1];
+          break;
+        case "python":
+          src = icons[2];
+          break;
+        case "go":
+          src = icons[3];
+          break;
+        default:
+          break;
+      }
     }
-    // });
-    return "";
+    return (
+      <Icon src={src} />
+    );
   };
+
   const updateComponents = async (currentChart: ChartType) => {
     setLoading(true);
     try {
@@ -264,7 +284,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   };
 
   return (
-    <StyledExpandedApp>
+    <>
       {isLoading && <Loading />}
       {!appData && !isLoading && (
         <Placeholder>
@@ -280,31 +300,23 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         </Placeholder>
       )}
       {appData && (
-        <>
-          {/* <Container row>
-            <Icon src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg" />
-            <Text size={21}>{appData.name}</Text>
-            <Spacer inline x={1} />
-            <Text size={13}>repo: porter-dev/porter</Text>
+        <StyledExpandedApp>
+          <Back to="/apps" />
+          <Container row>
+            {renderIcon(appData.app.build_packs)}
+            <Text size={21}>{appData.app.name}</Text>
+            <Spacer inline x={1.5} />
+            {appData.app.repo_name && (
+              <Text size={13} color="helper">
+                <SmallIcon src={github} />
+                {appData.app.repo_name}
+              </Text>
+            )}
+            
             <Spacer inline x={1} />
             <Text size={13}>branch: main</Text>
-          </Container> */}
-          <Back to="/apps" />
+          </Container>
           <HeaderWrapper>
-            <TitleSectionStacks
-              icon={
-                appData.app?.build_packs &&
-                renderIcon(appData.app?.build_packs) != ""
-                  ? renderIcon(appData.app?.build_packs)
-                  : integrationList.registry.icon
-              }
-              iconWidth="33px"
-            >
-              {appData.chart.canonical_name === ""
-                ? appData.chart.name
-                : appData.chart.canonical_name}
-              <DeploymentTypeStacks appData={appData} />
-            </TitleSectionStacks>
 
             {/* {currentChart.chart.metadata.name != "worker" &&
               currentChart.chart.metadata.name != "job" &&
@@ -362,13 +374,18 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           />
           <Spacer y={1} />
           {renderTabContents()}
-        </>
+        </StyledExpandedApp>
       )}
-    </StyledExpandedApp>
+    </>
   );
 };
 
 export default withRouter(ExpandedApp);
+
+const SmallIcon = styled.img`
+  height: 15px;
+  margin-right: 10px;
+`;
 
 const Icon = styled.img`
   height: 24px;
@@ -394,6 +411,16 @@ const Placeholder = styled.div`
 const StyledExpandedApp = styled.div`
   width: 100%;
   height: 100%;
+
+  animation: fadeIn 0.5s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;
 
 const HeaderWrapper = styled.div`

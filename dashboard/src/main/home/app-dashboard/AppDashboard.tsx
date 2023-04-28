@@ -149,7 +149,6 @@ const AppDashboard: React.FC<Props> = ({
     var src = box;
     if (b) {
       const bp = b.split(",")[0]?.split("/")[1];
-      console.log(b)
       switch (bp) {
         case "ruby":
           src = icons[0];
@@ -214,7 +213,6 @@ const AppDashboard: React.FC<Props> = ({
         <GridList>
          {(filteredApps ?? []).map((app: any, i: number) => {
            if (!namespaceBlacklist.includes(app.name)) {
-            console.log(app)
              return (
               <Link to={`/apps/${app.name}`} key={i}>
                 <Block>

@@ -31,7 +31,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.UpdatePorterAppRequest{}
+	request := &types.CreatePorterAppRequest{}
 
 	ok := c.DecodeAndValidate(w, r, request)
 	if !ok {

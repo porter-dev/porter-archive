@@ -31,7 +31,7 @@ fi
 
 if [[ ! -d ./dashboard/node_modules ]]; then 
   echo "Couldn't find node_modules, installing npm packages"
-  cd ./dashboard && npm install;
+  cd ./dashboard && npm install --legacy-peer-deps;
   cd ../;  
 else
   echo "Node modules found! Proceeding to start server"

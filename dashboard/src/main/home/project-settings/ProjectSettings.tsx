@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import settings from "assets/settings-centered.svg";
+import settings from "assets/settings.png";
 
 import InvitePage from "./InviteList";
 import TabRegion from "components/TabRegion";

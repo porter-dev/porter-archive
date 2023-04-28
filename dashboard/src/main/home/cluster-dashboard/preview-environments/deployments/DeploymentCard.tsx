@@ -193,7 +193,12 @@ const DeploymentCard: React.FC<{
     },
   ];
 
-  console.error(deployment, deployment.gh_pr_branch_from, deployment.gh_pr_branch_into, deployment.gh_pr_branch_from === deployment.gh_pr_branch_into);
+  console.error(
+    deployment,
+    deployment.gh_pr_branch_from,
+    deployment.gh_pr_branch_into,
+    deployment.gh_pr_branch_from === deployment.gh_pr_branch_into
+  );
 
   return (
     <DeploymentCardWrapper
@@ -275,28 +280,22 @@ const DeploymentCard: React.FC<{
               </>
             ) : null}
 
-            {deployment.status !== DeploymentStatus.Creating && (
-              <>
-                {deployment.subdomain &&
-                deployment.status === DeploymentStatus.Created ? (
-                  <RowButton
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+            {deployment.subdomain &&
+            deployment.status === DeploymentStatus.Created ? (
+              <RowButton
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
 
-                      window.open(deployment.subdomain, "_blank");
-                    }}
-                    key={deployment.subdomain}
-                  >
-                    <i className="material-icons">open_in_new</i>
-                    View Live
-                  </RowButton>
-                ) : null}
-                <DeploymentCardActionsDropdown
-                  options={DeploymentCardActions}
-                />
-              </>
-            )}
+                  window.open(deployment.subdomain, "_blank");
+                }}
+                key={deployment.subdomain}
+              >
+                <i className="material-icons">open_in_new</i>
+                View Live
+              </RowButton>
+            ) : null}
+            <DeploymentCardActionsDropdown options={DeploymentCardActions} />
             {/* <Button
               onClick={() => {
                 setCurrentOverlay({

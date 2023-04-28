@@ -4,7 +4,7 @@ import api from "shared/api";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
-import { hardcodedNames } from "shared/hardcodedNameDict";
+import { hardcodedIcons, hardcodedNames } from "shared/hardcodedNameDict";
 import { PorterTemplate } from "shared/types";
 import semver from "semver";
 
@@ -112,6 +112,9 @@ const TemplateList: React.FC<Props> = ({
     }
     if (name === "job") {
       return <NewIcon src={job} />;
+    }
+    if (hardcodedIcons[name]) {
+      return <Icon src={hardcodedIcons[name]} />;
     }
     if (icon) {
       return <Icon src={icon} />;

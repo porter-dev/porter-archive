@@ -59,7 +59,7 @@ const JobDashboard: React.FC<Props> = ({
                 lastRunStatus={lastRunStatus}
                 setLastRunStatus={setLastRunStatus}
               />
-              {!currentProject.capi_provisioner_enabled && (
+              {!currentProject?.capi_provisioner_enabled && (
                 <NamespaceSelector
                   setNamespace={(x) => {
                     setNamespace(x);
@@ -117,7 +117,7 @@ const JobDashboard: React.FC<Props> = ({
               currentView={currentView}
               currentCluster={currentCluster}
               lastRunStatus={lastRunStatus}
-              namespace={currentProject.capi_provisioner_enabled ? "default" : namespace}
+              namespace={currentProject?.capi_provisioner_enabled ? "default" : namespace}
               sortType={sortType}
               selectedTag={selectedTag}
             />

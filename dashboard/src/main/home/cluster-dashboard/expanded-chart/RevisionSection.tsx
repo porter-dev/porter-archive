@@ -422,7 +422,7 @@ const RollbackButton = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled: boolean }) =>
-      props.disabled ? "" : "#405eddbb"};
+    props.disabled ? "" : "#405eddbb"};
   }
 `;
 
@@ -434,7 +434,7 @@ const Tr = styled.tr`
     props.selected ? "#ffffff11" : ""};
   :hover {
     background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-      props.disableHover ? "" : "#ffffff22"};
+    props.disableHover ? "" : "#ffffff22"};
   }
 `;
 
@@ -476,6 +476,7 @@ const RevisionHeader = styled.div`
   width: 100%;
   padding-left: 10px;
   cursor: pointer;
+  background: #26292e;
   :hover {
     background: ${(props) => props.showRevisions && "#ffffff18"};
   }
@@ -486,7 +487,7 @@ const RevisionHeader = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-      props.showRevisions ? "" : "rotate(-90deg)"};
+    props.showRevisions ? "" : "rotate(-90deg)"};
   }
 `;
 

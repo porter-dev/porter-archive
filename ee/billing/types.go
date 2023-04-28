@@ -28,6 +28,7 @@ type APIWebhookRequest struct {
 	StacksEnabled              string `json:"stacks_enabled,omitempty"`
 	ManagedDatabasesEnabled    string `json:"managed_databases_enabled,omitempty"`
 	CapiProvisionerEnabled     string `json:"capi_provisioner_enabled,omitempty"`
+	SimplifiedViewEnabled      string `json:"simplified_view_enabled,omitempty"`
 }
 
 type CreateBillingCookieRequest struct {

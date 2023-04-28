@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "ESNext"
-    ],
+    "lib": ["ESNext"],
     "baseUrl": "src",
     "outDir": "./build/",
     "sourceMap": true,
@@ -13,7 +11,6 @@
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "removeComments": true,
-    "moduleResolution": "node",
-    "strict": true,
+    "moduleResolution": "node"
   }
 }

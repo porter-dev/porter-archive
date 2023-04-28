@@ -67,35 +67,35 @@ export const BuildpackStack: React.FC<{
   );
   const renderModalContent = () => {
     return (
-      <Scrollable>
+      <>
         <Text size={16}>Buildpack Configuration</Text>
         <Spacer y={1} />
-        <Text color="helper">
-          Configure your buildpacks here.
-        </Text>
+        <Scrollable>
+          <Text color="helper">
+            Configure your buildpacks here.
+          </Text>
+          <Spacer y={1} />
+          {!!selectedBuildpacks?.length &&
+            renderBuildpacksList(selectedBuildpacks, "remove")}
+          <Spacer y={1} />
+          <Text color="helper">Available buildpacks:</Text>
+          <Spacer y={1} />
+          {!!availableBuildpacks?.length && (
+            <>{renderBuildpacksList(availableBuildpacks, "add")}</>
+          )}
+          <Spacer y={1} />
+          <Text color="helper">
+            You may also add buildpacks by directly providing their GitHub links
+            or links to ZIP files that contain the buildpack source code.
+          </Text>
+          <Spacer y={1} />
+          <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
+        </Scrollable>
         <Spacer y={1} />
-        {!!selectedBuildpacks?.length &&
-          renderBuildpacksList(selectedBuildpacks, "remove")}
-        <Spacer y={1} />
-        <Text color="helper">Available buildpacks:</Text>
-        <Spacer y={1} />
-        {!!availableBuildpacks?.length && (
-          <>{renderBuildpacksList(availableBuildpacks, "add")}</>
-        )}
-        <Spacer y={1} />
-        <Text color="helper">
-          You may also add buildpacks by directly providing their GitHub links
-          or links to ZIP files that contain the buildpack source code.
-        </Text>
-        <Spacer y={1} />
-        <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
-        <div style={{ marginTop: "auto" }}>
-          {/* Add Save button */}
-          <Button onClick={() => setIsModalOpen(false)}>
-            Save
-          </Button>
-        </div>
-      </Scrollable>
+        <Button onClick={() => setIsModalOpen(false)}>
+          Save
+        </Button>
+      </>
     );
   };
   useEffect(() => {
@@ -258,7 +258,7 @@ export const BuildpackStack: React.FC<{
       }
 
       return (
-        <StyledCard key={buildpack.name}>
+        <StyledCard key={buildpack.name} marginBottom="5px">
           <ContentContainer>
             <Icon disableMarginRight={disableIcon} className={icon} />
             <EventInformation>
@@ -392,7 +392,7 @@ export const AddCustomBuildpackForm: React.FC<{
   };
 
   return (
-    <StyledCard isLargeMargin>
+    <StyledCard marginBottom="0px">
       <ContentContainer>
         <EventInformation>
           <BuildpackInputContainer>
@@ -429,7 +429,10 @@ const ErrorText = styled.span`
 
 const Scrollable = styled.div`
   overflow-y: auto;
-  max-height: calc(100vh - 200px);
+  padding: 0 25px;
+  width: calc(100% + 50px);
+  margin-left: -25px;
+  max-height: calc(100vh - 300px);
 `;
 
 const fadeIn = keyframes`
@@ -454,14 +457,13 @@ const BuildpackConfigurationContainer = styled.div`
   animation: ${fadeIn} 0.75s;
 `;
 
-const StyledCard = styled.div<{ isLargeMargin?: boolean }>`
+const StyledCard = styled.div<{ marginBottom?: string }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
   border: 1px solid #494b4f;
   background: ${({ theme }) => theme.fg};
-  margin-bottom: 5px;
-  margin-bottom: ${({ isLargeMargin }) => (isLargeMargin ? "30px" : "5px")};
+  margin-bottom: ${props => props.marginBottom || "30px"};
   border-radius: 8px;
   padding: 14px;
   overflow: hidden;

@@ -80,7 +80,7 @@ const SaveButton: React.FC<Props> = (props) => {
         rounded={props.rounded}
         disabled={props.disabled}
         onClick={props.onClick}
-        color={props.color || "#5561C0"}
+        color={props.color}
       >
         {props.children || props.text}
       </Button>
@@ -199,7 +199,7 @@ const Button = styled.button<{
   text-align: left;
   border: 0;
   border-radius: ${(props) => (props.rounded ? "100px" : "5px")};
-  background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
+  background: ${(props) => (!props.disabled ? (props.color || props.theme.button) : "#aaaabb")};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   user-select: none;
   :focus {

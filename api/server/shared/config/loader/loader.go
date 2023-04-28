@@ -85,9 +85,9 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	// res.Logger.Info().Msg("Starting gorm automigrate")
 	// err = gorm.AutoMigrate(InstanceDB, sc.Debug)
-
+	//
 	// if err != nil {
-	// 	return nil, err
+	//	return nil, err
 	// }
 	// res.Logger.Info().Msg("Completed gorm automigrate")
 

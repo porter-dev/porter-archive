@@ -1,6 +1,7 @@
 package stacks
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 
@@ -41,6 +42,19 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	stackName := request.StackName
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+	porterYamlBase64 := request.PorterYAMLBase64
+	porterYaml, err := base64.StdEncoding.DecodeString(porterYamlBase64)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding porter yaml: %w", err)))
+		return
+	}
+
+	imageInfo := request.ImageInfo
+	chart, values, err := parse(porterYaml, &imageInfo, c.Config(), cluster.ProjectID)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error with test: %w", err)))
+		return
+	}
 
 	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
 	if err != nil {
@@ -61,12 +75,6 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	chart, err := createChartFromDependencies(request.Dependencies)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating chart: %w", err)))
-		return
-	}
-
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing registries: %w", err)))
@@ -77,7 +85,7 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Chart:      chart,
 		Name:       stackName,
 		Namespace:  namespace,
-		Values:     request.Values,
+		Values:     values,
 		Cluster:    cluster,
 		Repo:       c.Repo(),
 		Registries: registries,

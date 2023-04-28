@@ -588,6 +588,43 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/porteryaml ->
+	// gitinstallation.NewGithubGetProcfileHandler
+	getPorterYamlEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/repos/{%s}/{%s}/{%s}/{%s}/porteryaml",
+					relPath,
+					types.URLParamGitKind,
+					types.URLParamGitRepoOwner,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+			},
+		},
+	)
+
+	getPorterYamlHandler := gitinstallation.NewGithubGetPorterYamlHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getPorterYamlEndpoint,
+		Handler:  getPorterYamlHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/procfile ->
 	// gitinstallation.NewGithubGetProcfileHandler
 	getProcfileEndpoint := factory.NewAPIEndpoint(

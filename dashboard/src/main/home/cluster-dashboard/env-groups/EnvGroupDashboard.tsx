@@ -107,7 +107,7 @@ const EnvGroupDashboard = (props: PropsType) => {
                 sortType={state.sortType}
               />
               <Spacer inline width="10px" />
-              {!currentProject.capi_provisioner_enabled && (
+              {!currentProject?.capi_provisioner_enabled && (
                 <NamespaceSelector
                   setNamespace={setNamespace}
                   namespace={state.namespace}
@@ -125,7 +125,7 @@ const EnvGroupDashboard = (props: PropsType) => {
 
           <EnvGroupList
             currentCluster={props.currentCluster}
-            namespace={currentProject.capi_provisioner_enabled ? "default" : state.namespace}
+            namespace={currentProject?.capi_provisioner_enabled ? "default" : state.namespace}
             sortType={state.sortType}
             setExpandedEnvGroup={setExpandedEnvGroup}
           />

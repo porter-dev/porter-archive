@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Container from "./Container";
+import CopyToClipboard from "components/CopyToClipboard";
 
 type Props = {
   isInitiallyExpanded?: boolean;
@@ -42,14 +43,20 @@ const ExpandableSection: React.FC<Props> = ({
           {Header}
           {copy ?
             (
-              <div>
+              <CopyWrapper>
                 <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
                   {isExpanded ? collapseText : expandText}
                 </ExpandButton>
-                <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
-                  {isExpanded ? collapseText : expandText}
-                </ExpandButton>
-              </div>
+                <CopyToClipboard
+                  as="i"
+                  text={copy}
+                  wrapperProps={{
+                    className: "material-icons",
+                  }}
+                >
+                  content_copy
+                </CopyToClipboard>
+              </CopyWrapper>
             ) :
             (
               <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
@@ -140,4 +147,10 @@ const StyledExpandableSection = styled.div<{
       max-height: 300px;
     }
   }
+`;
+
+const CopyWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
 `;

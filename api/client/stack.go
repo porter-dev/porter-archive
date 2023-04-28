@@ -39,3 +39,22 @@ func (c *Client) UpdateStack(
 		nil,
 	)
 }
+
+func (c *Client) GetStack(
+	ctx context.Context,
+	projectID, clusterID uint,
+	stackName string,
+) (*types.PorterApp, error) {
+	resp := &types.PorterApp{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/stacks/%s",
+			projectID, clusterID, stackName,
+		),
+		nil,
+		resp,
+	)
+
+	return resp, err
+}

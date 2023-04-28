@@ -101,20 +101,8 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
       let splits = item.path.split("/");
       let fileName = splits[splits.length - 1];
       if (fileName.includes("Dockerfile")) {
-        return (
-          <AdvancedBuildSettings
-            dockerfilePath={props.dockerfilePath}
-            setDockerfilePath={props.setDockerfilePath}
-            setBuildConfig={props.setBuildConfig}
-            buildConfig={props.buildConfig}
-            autoBuildPack={autoBuildpack}
-            showSettings={false}
-            buildView={"docker"}
-            actionConfig={props.actionConfig}
-            branch={props.branch}
-            folderPath={props.folderPath}
-          />
-        );
+        props.setDockerfilePath(fileName);
+        return <></>;
       }
     });
   };
@@ -260,7 +248,18 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
           buildConfig={props.buildConfig}
         />
       ) : (
-        <></>
+        <AdvancedBuildSettings
+          dockerfilePath={props.dockerfilePath}
+          setDockerfilePath={props.setDockerfilePath}
+          setBuildConfig={props.setBuildConfig}
+          autoBuildPack={autoBuildpack}
+          showSettings={false}
+          buildView={"docker"}
+          actionConfig={props.actionConfig}
+          branch={props.branch}
+          folderPath={props.folderPath}
+          buildConfig={props.buildConfig}
+        />
       )}
     </>
   );

@@ -101,6 +101,4 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-	w.Header().Set("Keep-Alive", "timeout=40")
-	w.Write([]byte("{}"))
 }

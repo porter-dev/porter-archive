@@ -43,6 +43,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		ClusterID: cluster.ID,
 		ProjectID: project.ID,
 		RepoName:  request.RepoName,
+		GitRepoID: request.GitRepoID,
 		GitBranch: request.GitBranch,
 
 		BuildContext: request.BuildContext,

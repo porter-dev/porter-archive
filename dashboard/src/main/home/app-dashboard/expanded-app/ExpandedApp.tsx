@@ -272,7 +272,23 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <BuildSettingsTabStack appData={appData} setAppData={setAppData} />
         );
       case "settings":
-        return <div>TODO: stack deletion</div>;
+        return (
+          <>
+            <Text size={16}>
+              Delete app "{appData.app.name}"
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              Delete this application and all of its resources.
+            </Text>
+            <Spacer y={1} />
+            <Button onClick={() => {
+              // set delete overlay
+            }} color="#b91133">
+              Delete {appData.app.name}
+            </Button>
+          </>
+        );
       default:
         return <div>dream on</div>;
     }

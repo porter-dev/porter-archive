@@ -35,6 +35,7 @@ import {
   FullGithubActionConfigType,
   GithubActionConfigType,
 } from "shared/types";
+import Error from "components/porter/Error";
 import { z } from "zod";
 import { AppsSchema, EnvSchema, PorterYamlSchema } from "./schema";
 import { Service } from "./serviceTypes";
@@ -87,7 +88,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [imageUrl, setImageUrl] = useState("");
   const [imageTag, setImageTag] = useState("latest");
   const { currentCluster, currentProject } = useContext(Context);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [deploying, setDeploying] = useState<boolean>(false);
+  const [deploymentError, setDeploymentError] = useState<string | undefined>(undefined);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [existingStep, setExistingStep] = useState<number>(0);
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
@@ -151,9 +153,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       ) {
         setDetected({
           detected: true,
-          message: `Detected ${
-            Object.keys(porterYamlToJson.apps).length
-          } apps from porter.yaml`,
+          message: `Detected ${Object.keys(porterYamlToJson.apps).length
+            } apps from porter.yaml`,
         });
       } else {
         setDetected({
@@ -193,6 +194,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
   const deployPorterApp = async () => {
     try {
+      setDeploying(true);
+      setDeploymentError(undefined);
       if (
         currentProject == null ||
         currentCluster == null ||
@@ -208,48 +211,56 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl
         ? {
-            image_info: {
-              repository: imageUrl,
-              tag: imageTag,
-            },
-          }
+          image_info: {
+            repository: imageUrl,
+            tag: imageTag,
+          },
+        }
         : {};
 
-      // write to the db + deploy
-      await Promise.all([
-        api.createPorterApp(
-          "<token>",
-          {
-            name: formState.applicationName,
-            repo_name: actionConfig.git_repo,
-            git_branch: branch,
-            build_context: folderPath,
-            builder: (buildConfig as any)?.builder,
-            buildpacks: (buildConfig as any)?.buildpacks?.join(",") ?? "",
-            dockerfile: dockerfilePath,
-            image_repo_uri: imageUrl,
-          },
-          {
-            cluster_id: currentCluster.id,
-            project_id: currentProject.id,
-          }
-        ),
-        api.updatePorterStack(
-          "<token>",
-          {
-            stack_name: formState.applicationName,
-            porter_yaml: base64Encoded,
-            ...imageInfo,
-          },
-          {
-            cluster_id: currentCluster.id,
-            project_id: currentProject.id,
-          }
-        ),
-      ]);
+      // write to the db
+      await api.createPorterApp(
+        "<token>",
+        {
+          name: formState.applicationName,
+          repo_name: actionConfig.git_repo,
+          git_branch: branch,
+          build_context: folderPath,
+          builder: (buildConfig as any)?.builder,
+          buildpacks: (buildConfig as any)?.buildpacks.join(",") ?? "",
+          dockerfile: dockerfilePath,
+          image_repo_uri: imageUrl,
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      );
+
+      // deploy dummy chart
+      await api.updatePorterStack(
+        "<token>",
+        {
+          stack_name: formState.applicationName,
+          porter_yaml: base64Encoded,
+          ...imageInfo,
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      )
+
+      return true;
     } catch (err) {
       // TODO: better error handling
       console.log(err);
+      const errMessage = err?.response?.data?.error ?? err?.toString() ?? 'An error occurred while deploying your app. Please try again.'
+      setDeploymentError(errMessage);
+
+      return false;
+    } finally {
+      setDeploying(false);
     }
   };
 
@@ -468,9 +479,15 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   if (imageUrl) {
                     deployPorterApp();
                   } else {
+                    setDeploymentError(undefined)
                     setShowGHAModal(true);
                   }
                 }}
+                status={deploying ? "loading" : deploymentError ? (
+                  <Error message={deploymentError} />
+                ) : undefined}
+                loadingText={"Deploying..."}
+                width={"150px"}
               >
                 Deploy app
               </Button>,
@@ -490,6 +507,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           projectId={currentProject.id}
           clusterId={currentCluster.id}
           deployPorterApp={deployPorterApp}
+          deploymentError={deploymentError}
         />
       )}
     </CenterWrapper>

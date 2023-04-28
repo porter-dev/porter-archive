@@ -10,7 +10,7 @@ type PropsType = {
   onError?: (e: ClipboardJS.Event) => void;
   wrapperProps?: any;
   as?: any;
-  children: JSX.Element[];
+  children: JSX.Element[] | JSX.Element | string;
 };
 
 type StateType = {
@@ -108,4 +108,11 @@ export default class CopyToClipboard extends Component<PropsType, StateType> {
   }
 }
 
-const DynamicSpanComponent = styled.span``;
+const DynamicSpanComponent = styled.span`
+  :hover {
+    cursor: pointer;
+    color: #ffffff;
+  }
+  color: #aaaabb;
+  font-size: 18px;
+`;

@@ -192,6 +192,7 @@ const createPorterApp = baseApi<
     name: string;
     repo_name: string;
     git_branch: string;
+    git_repo_id: number;
     build_context: string;
     builder: string;
     buildpacks: string;

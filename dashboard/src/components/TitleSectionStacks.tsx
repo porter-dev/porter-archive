@@ -32,7 +32,7 @@ const TitleSectionStacks: React.FC<Props> = ({
         </BackButton>
       )}
 
-      {icon && <Icon disableMarginRight={true} className={icon} />}
+      {icon}
 
       <StyledTitle capitalize={capitalize} onClick={onClick}>
         {children}

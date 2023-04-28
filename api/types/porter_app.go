@@ -28,6 +28,7 @@ type CreatePorterAppRequest struct {
 	ProjectID    uint   `json:"project_id"`
 	RepoName     string `json:"repo_name"`
 	GitBranch    string `json:"git_branch"`
+	GitRepoID    uint   `json:"git_repo_id"`
 	BuildContext string `json:"build_context"`
 	Builder      string `json:"builder"`
 	Buildpacks   string `json:"buildpacks"`

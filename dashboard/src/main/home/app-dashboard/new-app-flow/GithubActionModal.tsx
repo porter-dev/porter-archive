@@ -1,21 +1,22 @@
+import { RouteComponentProps, withRouter } from "react-router";
+import styled from "styled-components";
+import React from "react";
+
 import Modal from "components/porter/Modal";
-import React, { useContext } from "react";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import ExpandableSection from "components/porter/ExpandableSection";
 import Fieldset from "components/porter/Fieldset";
-import styled from "styled-components";
 import Button from "components/porter/Button";
 import Select from "components/porter/Select";
 import api from "shared/api";
-import { CopyBlock } from "react-code-blocks";
 import { getGithubAction } from "./utils";
 import AceEditor from "react-ace";
 import YamlEditor from "components/YamlEditor";
 import Error from "components/porter/Error";
 
 
-interface GithubActionModalProps {
+type Props = RouteComponentProps & {
   closeModal: () => void;
   githubAppInstallationID?: number;
   githubRepoOwner?: string;
@@ -30,7 +31,7 @@ interface GithubActionModalProps {
 
 type Choice = "open_pr" | "copy";
 
-const GithubActionModal: React.FC<GithubActionModalProps> = ({
+const GithubActionModal: React.FC<Props> = ({
   closeModal,
   githubAppInstallationID,
   githubRepoOwner,
@@ -41,6 +42,7 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
   clusterId,
   deployPorterApp,
   deploymentError,
+  ...props
 }) => {
   const [choice, setChoice] = React.useState<Choice>("open_pr");
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -71,7 +73,8 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
             }
           );
           if (res?.data?.url) {
-            window.open(res.data.url, "_blank", "noreferrer")
+            window.open(res.data.url, "_blank", "noreferrer");
+            props.history.push(`/apps/${stackName}`);
           }
         }
       } catch (error) {
@@ -140,7 +143,7 @@ const GithubActionModal: React.FC<GithubActionModalProps> = ({
   )
 }
 
-export default GithubActionModal;
+export default withRouter(GithubActionModal);
 
 const Tab = styled.span`
   margin-left: 20px;

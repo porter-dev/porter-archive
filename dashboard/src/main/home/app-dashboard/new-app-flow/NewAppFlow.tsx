@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext, useMemo } from "react";
 import styled from "styled-components";
+import { RouteComponentProps, withRouter } from "react-router";
 import _ from "lodash";
 import yaml from "js-yaml";
 
@@ -19,8 +20,6 @@ import VerticalSteps from "components/porter/VerticalSteps";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import Placeholder from "components/Placeholder";
 import Button from "components/porter/Button";
-import { generateSlug } from "random-word-slugs";
-import { RouteComponentProps, withRouter } from "react-router";
 import SourceSelector, { SourceType } from "./SourceSelector";
 import SourceSettings from "./SourceSettings";
 import Services from "./Services";
@@ -219,15 +218,17 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         : {};
 
       // write to the db
+      console.log("what is it", actionConfig.git_repo_id)
       await api.createPorterApp(
         "<token>",
         {
           name: formState.applicationName,
           repo_name: actionConfig.git_repo,
           git_branch: branch,
+          git_repo_id: actionConfig?.git_repo_id,
           build_context: folderPath,
           builder: (buildConfig as any)?.builder,
-          buildpacks: (buildConfig as any)?.buildpacks.join(",") ?? "",
+          buildpacks: (buildConfig as any)?.buildpacks?.join(",") ?? "",
           dockerfile: dockerfilePath,
           image_repo_uri: imageUrl,
         },
@@ -237,7 +238,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         }
       );
 
-      // deploy dummy chart
       await api.updatePorterStack(
         "<token>",
         {
@@ -250,7 +250,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           project_id: currentProject.id,
         }
       )
-
+      if (!actionConfig?.git_repo) {
+        props.history.push(`/apps/${formState.applicationName}`);
+      }
       return true;
     } catch (err) {
       // TODO: better error handling

@@ -1,33 +1,39 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
-import { DeviconsNameList } from "assets/devicons-name-list";
-import useAuth from "shared/auth/useAuth";
 import yaml from "js-yaml";
-import api from "shared/api";
-import { Context } from "shared/Context";
 
 import notFound from "assets/not-found.png";
+import web from "assets/web.png";
+import box from "assets/box.png";
+import github from "assets/github.png";
+import pr_icon from "assets/pull_request_icon.svg";
 
-import Fieldset from "components/porter/Fieldset";
+import api from "shared/api";
+import { Context } from "shared/Context";
+import useAuth from "shared/auth/useAuth";
+
 import Loading from "components/Loading";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
-import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import Back from "components/porter/Back";
 import TabSelector from "components/TabSelector";
-import TitleSectionStacks from "components/TitleSectionStacks";
-import DeploymentTypeStacks from "main/home/cluster-dashboard/expanded-chart/DeploymentTypeStacks";
-import DeployStatusSection from "main/home/cluster-dashboard/expanded-chart/deploy-status-section/DeployStatusSection";
-import { integrationList } from "shared/common";
 import { ChartType, ResourceType } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTabStack from "./BuildSettingsTabStack";
 import Button from "components/porter/Button";
 
 type Props = RouteComponentProps & {};
+
+const icons = [
+  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-plain.svg",
+  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg",
+  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-plain.svg",
+  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg",
+  web,
+];
 
 const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const {
@@ -92,23 +98,32 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  const renderIcon = (str: string) => {
-    let value = str.split(",");
-    let buildpack = value[0];
-    // console.log(value);
-    // value.forEach((buildpack) => {
-    //   console.log(buildpack);
-    const [languageName] = buildpack.split("/").reverse();
-    const devicon = DeviconsNameList.find(
-      (devicon) => languageName.toLowerCase() === devicon.name
-    );
-    if (devicon) {
-      const icon = `devicon-${devicon?.name}-plain colored`;
-      return icon;
+  const renderIcon = (b: string, size?: string) => {
+    var src = box;
+    if (b) {
+      const bp = b.split(",")[0]?.split("/")[1];
+      switch (bp) {
+        case "ruby":
+          src = icons[0];
+          break;
+        case "nodejs":
+          src = icons[1];
+          break;
+        case "python":
+          src = icons[2];
+          break;
+        case "go":
+          src = icons[3];
+          break;
+        default:
+          break;
+      }
     }
-    // });
-    return "";
+    return (
+      <Icon src={src} />
+    );
   };
+
   const updateComponents = async (currentChart: ChartType) => {
     setLoading(true);
     try {
@@ -257,14 +272,30 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <BuildSettingsTabStack appData={appData} setAppData={setAppData} />
         );
       case "settings":
-        return <div>TODO: stack deletion</div>;
+        return (
+          <>
+            <Text size={16}>
+              Delete app "{appData.app.name}"
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              Delete this application and all of its resources.
+            </Text>
+            <Spacer y={1} />
+            <Button onClick={() => {
+              // set delete overlay
+            }} color="#b91133">
+              Delete {appData.app.name}
+            </Button>
+          </>
+        );
       default:
         return <div>dream on</div>;
     }
   };
 
   return (
-    <StyledExpandedApp>
+    <>
       {isLoading && <Loading />}
       {!appData && !isLoading && (
         <Placeholder>
@@ -280,55 +311,51 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         </Placeholder>
       )}
       {appData && (
-        <>
-          {/* <Container row>
-            <Icon src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg" />
-            <Text size={21}>{appData.name}</Text>
-            <Spacer inline x={1} />
-            <Text size={13}>repo: porter-dev/porter</Text>
-            <Spacer inline x={1} />
-            <Text size={13}>branch: main</Text>
-          </Container> */}
+        <StyledExpandedApp>
           <Back to="/apps" />
-          <HeaderWrapper>
-            <TitleSectionStacks
-              icon={
-                appData.app?.build_packs &&
-                renderIcon(appData.app?.build_packs) != ""
-                  ? renderIcon(appData.app?.build_packs)
-                  : integrationList.registry.icon
-              }
-              iconWidth="33px"
-            >
-              {appData.chart.canonical_name === ""
-                ? appData.chart.name
-                : appData.chart.canonical_name}
-              <DeploymentTypeStacks appData={appData} />
-            </TitleSectionStacks>
-
-            {/* {currentChart.chart.metadata.name != "worker" &&
-              currentChart.chart.metadata.name != "job" &&
-              renderUrl()} */}
-
-            {/* //{currentChart.canonical_name !== "" && renderHelmReleaseName()} */}
-            <InfoWrapper>
-              {/*
-                  <StatusIndicator
-                    controllers={controllers}
-                    status={currentChart.info.status}
-                    margin_left={"0px"}
+          <Container row>
+            {renderIcon(appData.app.build_packs)}
+            <Text size={21}>{appData.app.name}</Text>
+            {appData.app.repo_name && (
+              <>
+                <Spacer inline x={1} />
+                <Text size={13} color="helper">
+                  <SmallIcon src={github} />
+                  {appData.app.repo_name}
+                </Text>
+              </>
+            )}
+            {appData.app.git_branch && (
+              <>
+                <Spacer inline x={1} />
+                <TagWrapper>
+                  Branch
+                  <BranchTag>
+                    <BranchIcon src={pr_icon} />
+                    {appData.app.git_branch}
+                  </BranchTag>
+                </TagWrapper>
+              </>
+            )}
+            {!appData.app.repo_name && appData.app.image_repo_uri && (
+              <>
+                <Spacer inline x={1} />
+                <Text size={13} color="helper">
+                  <SmallIcon
+                    height="19px"
+                    src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
                   />
-                  */}
-              {/* <DeployStatusSection
-                chart={appData.chart}
-                setLogData={test}//renderLogsAtTimestamp}
-              /> */}
-              <LastDeployed>
-                <Dot>•</Dot>Last deployed
-                {" " + getReadableDate(appData.chart.info.last_deployed)}
-              </LastDeployed>
-            </InfoWrapper>
-          </HeaderWrapper>
+                  {appData.app.image_repo_uri}
+                </Text>
+              </>
+            )}
+          </Container>
+          <Spacer y={1} />
+          <Text color="#aaaabb66">
+            Last deployed {getReadableDate(appData.chart.info.last_deployed)}
+          </Text>
+          <Spacer y={1} />
+          <DarkMatter />
           <RevisionSection
             showRevisions={showRevisions}
             toggleShowRevisions={() => {
@@ -347,6 +374,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             latestVersion={appData.chart.latest_version}
             upgradeVersion={appUpgradeVersion}
           />
+          <DarkMatter antiHeight="-18px" />
           <Spacer y={1} />
           <TabSelector
             options={[
@@ -362,13 +390,66 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           />
           <Spacer y={1} />
           {renderTabContents()}
-        </>
+        </StyledExpandedApp>
       )}
-    </StyledExpandedApp>
+    </>
   );
 };
 
 export default withRouter(ExpandedApp);
+
+const DarkMatter = styled.div<{ antiHeight?: string }>`
+  width: 100%;
+  margin-top: ${props => props.antiHeight || "-20px"};
+`;
+
+const TagWrapper = styled.div`
+  height: 20px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff44;
+  border: 1px solid #ffffff44;
+  border-radius: 3px;
+  padding-left: 6px;
+`;
+
+const BranchTag = styled.div`
+  height: 20px;
+  margin-left: 6px;
+  color: #aaaabb;
+  background: #ffffff22;
+  border-radius: 3px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0px 6px;
+  padding-left: 7px;
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const BranchSection = styled.div`
+  background: ${props => props.theme.fg};
+  border: 1px solid #494b4f;
+`;
+
+const SmallIcon = styled.img<{ opacity?: string, height?: string }>`
+  height: ${props => props.height || "15px"};
+  opacity: ${props => props.opacity || 1};
+  margin-right: 10px;
+`;
+
+const BranchIcon = styled.img`
+  height: 14px;
+  opacity: 0.65;
+  margin-right: 5px;
+`;
 
 const Icon = styled.img`
   height: 24px;
@@ -394,6 +475,16 @@ const Placeholder = styled.div`
 const StyledExpandedApp = styled.div`
   width: 100%;
   height: 100%;
+
+  animation: fadeIn 0.5s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;
 
 const HeaderWrapper = styled.div`

@@ -101,7 +101,7 @@ const SharedBuildSettings: React.FC<Props> = ({
         width="100%"
         setValue={setFolderPath}
       />
-      {actionConfig.git_repo && branch && buildConfig.builder != "" && (
+      {actionConfig.git_repo && branch && buildConfig.builder == "" && (
         <DetectContentsList
           actionConfig={actionConfig}
           branch={branch}

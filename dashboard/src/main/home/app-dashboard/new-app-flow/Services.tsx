@@ -60,12 +60,15 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
           <Spacer y={0.5} />
         </>
       )}
-      <AddServiceButton onClick={() => setShowAddServiceModal(true)}>
+      <AddServiceButton onClick={() => {
+        setShowAddServiceModal(true);
+        setServiceType("web");
+      }}>
         <i className="material-icons add-icon">add_icon</i>
         Add a new service
       </AddServiceButton>
       {showAddServiceModal && (
-        <Modal closeModal={() => setShowAddServiceModal(false)}>
+        <Modal closeModal={() => setShowAddServiceModal(false)} width="500px">
           <Text size={16}>Add a new service</Text>
           <Spacer y={1} />
           <Text color="helper">Select a service type:</Text>
@@ -78,7 +81,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             </ServiceIcon>
             <Select
               value={serviceType}
-              // this is ugly
+              width="100%"
               setValue={(value: string) => setServiceType(value as ServiceType)}
               options={[
                 { label: "Web", value: "web" },
@@ -92,7 +95,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
           <Spacer y={0.5} />
           <Input
             placeholder="ex: my-service"
-            width="300px"
+            width="100%"
             value={serviceName}
             error={
               (serviceName != "" &&
@@ -136,6 +139,7 @@ const ServiceIcon = styled.div`
   justify-content: center;
   height: 35px;
   width: 35px;
+  min-width: 35px;
   margin-right: 10px;
   overflow: hidden;
   border-radius: 5px;

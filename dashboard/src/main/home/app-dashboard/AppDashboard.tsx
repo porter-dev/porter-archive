@@ -14,6 +14,7 @@ import list from "assets/list.png";
 import { Context } from "shared/Context";
 import { search } from "shared/search";
 import api from "shared/api";
+import { readableDate } from "shared/string_utils";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import Container from "components/porter/Container";
@@ -50,10 +51,12 @@ const AppDashboard: React.FC<Props> = ({
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [apps, setApps] = useState([]);
+  const [charts, setCharts] = useState([]);
   const [error, setError] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("grid");
   const [isLoading, setIsLoading] = useState(true);
+  const [shouldLoadTime, setShouldLoadTime] = useState(true);
 
   const filteredApps = useMemo(() => {
     const filteredBySearch = search(
@@ -79,7 +82,37 @@ const AppDashboard: React.FC<Props> = ({
           cluster_id: currentCluster.id,
         }
       )
-      setApps(res.data);
+      const apps = res.data;
+      const timeRes = await Promise.all(
+        apps.map((app: any) => {
+          return api.getCharts(
+            "<token>",
+            {
+              limit: 1, 
+              skip: 0,
+              byDate: false,
+              statusFilter: [
+                "deployed",
+                "uninstalled",
+                "pending",
+                "pending-install",
+                "pending-upgrade",
+                "pending-rollback",
+                "failed",
+              ],
+            },
+            {
+              id: currentProject.id,
+              cluster_id: currentCluster.id,
+              namespace: `porter-stack-${app.name}`,
+            }
+          )
+        })
+      );
+      apps.forEach((app: any, i: number) => {
+        app["last_deployed"] = readableDate(timeRes[i].data[0]?.info?.last_deployed);
+      });
+      setApps(apps);
       setIsLoading(false);
     }
     catch (err) {
@@ -181,6 +214,7 @@ const AppDashboard: React.FC<Props> = ({
         <GridList>
          {(filteredApps ?? []).map((app: any, i: number) => {
            if (!namespaceBlacklist.includes(app.name)) {
+            console.log(app)
              return (
               <Link to={`/apps/${app.name}`} key={i}>
                 <Block>
@@ -197,7 +231,7 @@ const AppDashboard: React.FC<Props> = ({
                   </Text>
                   <Text size={13} color="#ffffff44">
                     <SmallIcon opacity="0.4" src={time} />
-                    6:35 PM on 4/23/2023
+                    {app.last_deployed}
                   </Text>
                 </Block>
               </Link>
@@ -223,7 +257,7 @@ const AppDashboard: React.FC<Props> = ({
                       {renderSource(app)}
                       <Spacer inline x={1} />
                       <SmallIcon opacity="0.4" src={time} />
-                      6:35 PM on 4/23/2023
+                      {app.last_deployed}
                     </Text>
                   </Row>
                 </Link>

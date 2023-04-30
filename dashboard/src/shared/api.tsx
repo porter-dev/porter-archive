@@ -751,6 +751,20 @@ const getBranches = baseApi<
   return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/branches`;
 });
 
+const getBranchMetadata = baseApi<
+  {},
+  {
+    project_id: number;
+    git_repo_id: number;
+    kind: string;
+    owner: string;
+    name: string;
+    branch: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/branches/${pathParams.branch}`;
+});
+
 const getChart = baseApi<
   {},
   {
@@ -2564,6 +2578,7 @@ export default {
   detectGitlabBuildpack,
   getBranchContents,
   getBranches,
+  getBranchMetadata,
   getMetadata,
   postWelcome,
   getChart,

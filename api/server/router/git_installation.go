@@ -514,6 +514,42 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{ownner}/{name}/branches/{branch} ->
+	// gitinstallation.GithubGetBranchMetadataHandler
+	getBranchMetadataEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/repos/{%s}/{%s}/{%s}/branches/{%s}",
+					relPath,
+					types.URLParamGitKind,
+					types.URLParamGitRepoOwner,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+			},
+		},
+	)
+
+	getBranchMetadataHandler := gitinstallation.NewGithubGetBranchMetadataHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getBranchMetadataEndpoint,
+		Handler:  getBranchMetadataHandler,
+		Router:   r,
+	})
+
 	//  GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect ->
 	// gitinstallation.NewGithubGetBuildpackHandler
 	getBuildpackEndpoint := factory.NewAPIEndpoint(

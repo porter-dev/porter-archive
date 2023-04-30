@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type GitInstallation struct {
 	ID uint `json:"id"`
 
@@ -31,6 +33,13 @@ const (
 )
 
 type ListRepoBranchesResponse []string
+
+type GetGithubBranchMetadataResponse struct {
+	Name          string    `json:"name"`
+	Commit        string    `json:"commit_sha"`
+	LastUpdatedAt time.Time `json:"last_updated_at"`
+	URL           string    `json:"url"`
+}
 
 type GithubDirectoryRequest struct {
 	Dir string `schema:"dir" form:"required"`

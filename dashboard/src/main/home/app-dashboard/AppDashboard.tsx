@@ -10,6 +10,7 @@ import time from "assets/time.png";
 import healthy from "assets/status-healthy.png";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
+import notFound from "assets/not-found.png";
 
 import { Context } from "shared/Context";
 import { search } from "shared/search";
@@ -25,6 +26,7 @@ import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
 import PorterLink from "components/porter/Link";
 import Loading from "components/Loading";
+import Fieldset from "components/porter/Fieldset";
 
 type Props = {
 };
@@ -209,6 +211,14 @@ const AppDashboard: React.FC<Props> = ({
         </PorterLink>
       </Container>
       <Spacer y={1} />
+      {(!isLoading && filteredApps.length === 0) && (
+        <Fieldset>
+          <Container row>
+            <PlaceholderIcon src={notFound} />
+            <Text color="helper">No applications were found.</Text>
+          </Container>
+        </Fieldset>
+      )}
       {isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
         <GridList>
          {(filteredApps ?? []).map((app: any, i: number) => {
@@ -270,6 +280,12 @@ const AppDashboard: React.FC<Props> = ({
 };
 
 export default AppDashboard;
+
+const PlaceholderIcon = styled.img`
+  height: 13px;
+  margin-right: 12px;
+  opacity: 0.65;
+`;
 
 const Row = styled.div<{ isAtBottom?: boolean }>`
   cursor: pointer;

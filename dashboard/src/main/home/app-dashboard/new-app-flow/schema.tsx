@@ -1,4 +1,7 @@
+import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import * as z from "zod";
+import { Service } from "./serviceTypes";
+import { overrideObjectValues } from "./utils";
 
 const appConfigSchema = z.object({
     run: z.string().min(1),
@@ -39,3 +42,78 @@ export const PorterYamlSchema = z.object({
     apps: AppsSchema,
     release: z.string().optional(),
 });
+
+export const createFinalPorterYaml = (
+    services: Service[],
+    dashboardSetEnvVariables: KeyValueType[],
+    porterJson: z.infer<typeof PorterYamlSchema> | undefined,
+    stackName: string,
+    projectId: number,
+    clusterId: number,
+): z.infer<typeof PorterYamlSchema> => {
+    return {
+        version: "v1stack",
+        env: combineEnv(dashboardSetEnvVariables, porterJson?.env),
+        apps: createApps(services, porterJson, stackName, projectId, clusterId),
+    };
+};
+
+const combineEnv = (
+    dashboardSetVariables: KeyValueType[],
+    porterYamlSetVariables: Record<string, string> | undefined
+): z.infer<typeof EnvSchema> => {
+    const env: z.infer<typeof EnvSchema> = {};
+    for (const { key, value } of dashboardSetVariables) {
+        env[key] = value;
+    }
+    if (porterYamlSetVariables != null) {
+        for (const [key, value] of Object.entries(porterYamlSetVariables)) {
+            env[key] = value;
+        }
+    }
+    return env;
+};
+
+const createApps = (
+    serviceList: Service[],
+    porterJson: z.infer<typeof PorterYamlSchema> | undefined,
+    stackName: string,
+    projectId: number,
+    clusterId: number,
+): z.infer<typeof AppsSchema> => {
+    const apps: z.infer<typeof AppsSchema> = {};
+    for (const service of serviceList) {
+        let config = Service.serialize(service);
+        // TODO: get rid of this block when we handle ingress on the backend
+        if (Service.isWeb(service)) {
+            const ingress = Service.handleWebIngress(
+                service,
+                stackName,
+                clusterId,
+                projectId
+            );
+            config = {
+                ...config,
+                ...ingress,
+            };
+        }
+        if (
+            porterJson != null &&
+            porterJson.apps[service.name] != null &&
+            porterJson.apps[service.name].config != null
+        ) {
+            config = overrideObjectValues(
+                config,
+                porterJson.apps[service.name].config
+            );
+        }
+        // required because of https://github.com/helm/helm/issues/9214
+        apps[Service.toHelmName(service)] = {
+            type: service.type,
+            run: service.startCommand.value,
+            config,
+        };
+    }
+
+    return apps;
+};

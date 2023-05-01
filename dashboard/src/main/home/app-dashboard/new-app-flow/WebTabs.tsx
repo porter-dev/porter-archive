@@ -21,8 +21,6 @@ const WebTabs: React.FC<Props> = ({
   const [currentTab, setCurrentTab] = React.useState<string>('main');
 
   const renderMain = () => {
-    setHeight(300);
-
     return (
       <>
         <Spacer y={1} />
@@ -54,8 +52,6 @@ const WebTabs: React.FC<Props> = ({
   };
 
   const renderResources = () => {
-    setHeight(713.5);
-
     return (
       <>
         <Spacer y={1} />
@@ -68,7 +64,7 @@ const WebTabs: React.FC<Props> = ({
         />
         <Spacer y={1} />
         <Input
-          label="RAM (GB)"
+          label="RAM (MB)"
           placeholder="ex: 1"
           value={service.ram}
           width="300px"
@@ -126,8 +122,6 @@ const WebTabs: React.FC<Props> = ({
   };
 
   const renderAdvanced = () => {
-    setHeight(159);
-
     return (
       <>
         <Spacer y={1} />
@@ -151,7 +145,16 @@ const WebTabs: React.FC<Props> = ({
           { label: 'Advanced', value: 'advanced' },
         ]}
         currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
+        setCurrentTab={(value: string) => {
+          if (value === 'main') {
+            setHeight(300);
+          } else if (value === 'resources') {
+            setHeight(713.5);
+          } else if (value === 'advanced') {
+            setHeight(159);
+          }
+          setCurrentTab(value);
+        }}
       />
       {currentTab === 'main' && renderMain()}
       {currentTab === 'resources' && renderResources()}

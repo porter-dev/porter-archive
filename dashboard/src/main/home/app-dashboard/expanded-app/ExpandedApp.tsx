@@ -12,6 +12,7 @@ import pr_icon from "assets/pull_request_icon.svg";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import useAuth from "shared/auth/useAuth";
+import Error from "components/porter/Error";
 
 import Loading from "components/Loading";
 import Text from "components/porter/Text";
@@ -27,6 +28,8 @@ import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
 import { Service } from "../new-app-flow/serviceTypes";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
+import { createFinalPorterYaml } from "../new-app-flow/schema";
+import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 
 type Props = RouteComponentProps & {};
 
@@ -61,6 +64,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [newestImage, setNewestImage] = useState<string>(null);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
 
+  const [services, setServices] = useState<Service[]>([]);
+  const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
+  const [updating, setUpdating] = useState<boolean>(false);
+  const [updateError, setUpdateError] = useState<string>("");
+
   const getPorterApp = async () => {
     setIsLoading(true);
     const { appName } = props.match.params as any;
@@ -85,14 +93,24 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           revision: 0,
         }
       );
-      setAppData({
+
+      const newAppData = {
         app: resPorterApp?.data,
         chart: resChartData?.data,
-      });
-      console.log(appData);
-      setIsLoading(false);
+      };
+      setAppData(newAppData);
+
+      const helmValues = resChartData?.data?.config;
+      const defaultValues = resChartData?.data?.chart?.values;
+      if ((defaultValues && Object.keys(defaultValues).length > 0) || (helmValues && Object.keys(helmValues).length > 0)) {
+        const svcs = Service.deserialize(helmValues, defaultValues);
+        setServices(svcs);
+        console.log(helmValues);
+      }
+      console.log(newAppData);
     } catch (err) {
       setError(err);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -127,7 +145,51 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  const renderIcon = (b: string, size?: string) => {
+  const updatePorterApp = async () => {
+    try {
+      setUpdating(true);
+      if (
+        appData != null
+        && currentCluster != null
+        && currentProject != null
+        && appData.app != null
+      ) {
+        const finalPorterYaml = createFinalPorterYaml(
+          services,
+          [],
+          undefined,
+          appData.app.name,
+          currentProject.id,
+          currentCluster.id,
+        )
+        const yamlString = yaml.dump(finalPorterYaml);
+        const base64Encoded = btoa(yamlString);
+        await api.updatePorterStack(
+          "<token>",
+          {
+            stack_name: appData.app.name,
+            porter_yaml: base64Encoded,
+          },
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+            stack_name: appData.app.name,
+          }
+        )
+      } else {
+        setUpdateError("Unable to update app, please try again later.");
+      }
+    } catch (err) {
+      // TODO: better error handling
+      console.log(err);
+      const errMessage = err?.response?.data?.error ?? err?.toString() ?? 'An error occurred while deploying your app. Please try again.'
+      setUpdateError(errMessage);
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const renderIcon = (b?: string, size?: string) => {
     var src = box;
     if (b) {
       const bp = b.split(",")[0]?.split("/")[1];
@@ -293,18 +355,28 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const renderTabContents = () => {
     switch (tab) {
       case "overview":
-        const helmValues = appData?.chart?.config;
-        const defaultValues = appData?.chart?.chart?.values;
-        if ((defaultValues && Object.keys(defaultValues).length > 0) || (helmValues && Object.keys(helmValues).length > 0)) {
-          const svcs = Service.deserialize(helmValues, defaultValues);
-          return <Services
-            setServices={(services: any[]) => {
-            }}
-            services={svcs}
-          />;
-        } else {
-          return <Text>No services found for this application yet.</Text>
-        }
+        return (
+          <>
+            <Services
+              setServices={setServices}
+              services={services}
+            />
+            <Spacer y={0.5} />
+            <Button
+              onClick={() => {
+                updatePorterApp();
+              }}
+              status={updating ? "loading" : updateError ? (
+                <Error message={updateError} />
+              ) : undefined}
+              loadingText={"Updating..."}
+              width={"150px"}
+            >
+              Update app
+            </Button>
+            <Spacer y={0.5} />
+          </>
+        )
       case "build-settings":
         return (
           <BuildSettingsTabStack appData={appData} setAppData={setAppData} />
@@ -328,6 +400,34 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Button>
           </>
         );
+      case "environment-variables":
+        return (
+          <>
+            <Text size={16}>Environment variables</Text>
+            <Spacer y={0.5} />
+            <Text color="helper">
+              Shared among all services.
+            </Text>
+            <EnvGroupArray
+              values={envVars}
+              setValues={setEnvVars}
+              fileUpload={true}
+            />
+            <Spacer y={0.5} />
+            <Button
+              onClick={() => {
+                updatePorterApp();
+              }}
+              status={updating ? "loading" : updateError ? (
+                <Error message={updateError} />
+              ) : undefined}
+              loadingText={"Updating..."}
+              width={"150px"}
+            >
+              Update app
+            </Button>
+            <Spacer y={0.5} />
+          </>);
       default:
         return <div>dream on</div>;
     }
@@ -353,7 +453,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         <StyledExpandedApp>
           <Back to="/apps" />
           <Container row>
-            {renderIcon(appData.app.build_packs)}
+            {renderIcon(appData.app?.build_packs)}
             <Text size={21}>{appData.app.name}</Text>
             {appData.app.repo_name && (
               <>
@@ -417,12 +517,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <Spacer y={1} />
           <TabSelector
             options={
-              appData.app.build_packs
+              appData.app?.build_packs
                 ? [
                   { label: "Events", value: "events" },
                   { label: "Logs", value: "logs" },
                   { label: "Metrics", value: "metrics" },
                   { label: "Overview", value: "overview" },
+                  { label: "Environment variables", value: "environment-variables" },
                   { label: "Build settings", value: "build-settings" },
                   { label: "Settings", value: "settings" },
                 ]
@@ -431,6 +532,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   { label: "Logs", value: "logs" },
                   { label: "Metrics", value: "metrics" },
                   { label: "Overview", value: "overview" },
+                  { label: "Environment variables", value: "environment-variables" },
                   { label: "Settings", value: "settings" },
                 ]
             }

@@ -21,8 +21,6 @@ const JobTabs: React.FC<Props> = ({
   const [currentTab, setCurrentTab] = React.useState<string>('main');
 
   const renderMain = () => {
-    setHeight(244);
-
     return (
       <>
         <Spacer y={1} />
@@ -47,8 +45,6 @@ const JobTabs: React.FC<Props> = ({
   };
 
   const renderResources = () => {
-    setHeight(244);
-
     return (
       <>
         <Spacer y={1} />
@@ -61,7 +57,7 @@ const JobTabs: React.FC<Props> = ({
         />
         <Spacer y={1} />
         <Input
-          label="RAM (GB)"
+          label="RAM (MB)"
           placeholder="ex: 1"
           value={service.ram}
           width="300px"
@@ -72,8 +68,6 @@ const JobTabs: React.FC<Props> = ({
   };
 
   const renderAdvanced = () => {
-    setHeight(118.5);
-
     return (
       <>
         <Spacer y={1} />
@@ -96,7 +90,16 @@ const JobTabs: React.FC<Props> = ({
           { label: 'Advanced', value: 'advanced' },
         ]}
         currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
+        setCurrentTab={(value: string) => {
+          if (value === 'main') {
+            setHeight(244);
+          } else if (value === 'resources') {
+            setHeight(244);
+          } else if (value === 'advanced') {
+            setHeight(118.5);
+          }
+          setCurrentTab(value);
+        }}
       />
       {currentTab === 'main' && renderMain()}
       {currentTab === 'resources' && renderResources()}

@@ -165,14 +165,14 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
 });
 
 const getPorterApps = baseApi<
-{},
-{
-  project_id: number;
-  cluster_id: number;
-}
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
 >("GET", (pathParams) => {
-let { project_id, cluster_id } = pathParams;
-return `/api/projects/${project_id}/clusters/${cluster_id}/stacks`;
+  let { project_id, cluster_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks`;
 });
 
 const getPorterApp = baseApi<
@@ -240,7 +240,7 @@ const deletePorterApp = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
 });
 
-const updatePorterStack = baseApi<
+const createPorterStack = baseApi<
   {
     stack_name: string;
     porter_yaml: string;
@@ -256,6 +256,25 @@ const updatePorterStack = baseApi<
 >("POST", (pathParams) => {
   let { project_id, cluster_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/stacks`;
+});
+
+const updatePorterStack = baseApi<
+  {
+    stack_name: string;
+    porter_yaml: string;
+    image_info?: {
+      repository: string;
+      tag: string;
+    }
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    stack_name: string;
+  }
+>("PATCH", (pathParams) => {
+  let { project_id, cluster_id, stack_name } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}`;
 });
 
 const createEnvironment = baseApi<
@@ -2579,6 +2598,7 @@ export default {
   createPorterApp,
   updatePorterApp,
   deletePorterApp,
+  createPorterStack,
   updatePorterStack,
   createConfigMap,
   deleteCluster,

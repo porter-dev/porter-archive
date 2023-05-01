@@ -36,9 +36,8 @@ import {
 } from "shared/types";
 import Error from "components/porter/Error";
 import { z } from "zod";
-import { AppsSchema, EnvSchema, PorterYamlSchema } from "./schema";
+import { PorterYamlSchema, createFinalPorterYaml } from "./schema";
 import { Service } from "./serviceTypes";
-import { overrideObjectValues } from "./utils";
 
 type Props = RouteComponentProps & {};
 
@@ -205,7 +204,14 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       }
 
       // validate form data
-      const finalPorterYaml = createFinalPorterYaml();
+      const finalPorterYaml = createFinalPorterYaml(
+        formState.serviceList,
+        formState.envVariables,
+        porterJson,
+        formState.applicationName,
+        currentProject.id,
+        currentCluster.id
+      );
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl
@@ -237,7 +243,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         }
       );
 
-      await api.updatePorterStack(
+      await api.createPorterStack(
         "<token>",
         {
           stack_name: formState.applicationName,
@@ -263,68 +269,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     } finally {
       setDeploying(false);
     }
-  };
-
-  const combineEnv = (
-    dashboardSetVariables: KeyValueType[],
-    porterYamlSetVariables: Record<string, string> | undefined
-  ): z.infer<typeof EnvSchema> => {
-    const env: z.infer<typeof EnvSchema> = {};
-    for (const { key, value } of dashboardSetVariables) {
-      env[key] = value;
-    }
-    if (porterYamlSetVariables != null) {
-      for (const [key, value] of Object.entries(porterYamlSetVariables)) {
-        env[key] = value;
-      }
-    }
-    return env;
-  };
-
-  const createApps = (serviceList: Service[]): z.infer<typeof AppsSchema> => {
-    const apps: z.infer<typeof AppsSchema> = {};
-    for (const service of serviceList) {
-      let config = Service.serialize(service);
-      // TODO: get rid of this block when we handle ingress on the backend
-      if (Service.isWeb(service)) {
-        const ingress = Service.handleWebIngress(
-          service,
-          formState.applicationName,
-          currentCluster?.id,
-          currentProject?.id
-        );
-        config = {
-          ...config,
-          ...ingress,
-        };
-      }
-      if (
-        porterJson != null &&
-        porterJson.apps[service.name] != null &&
-        porterJson.apps[service.name].config != null
-      ) {
-        config = overrideObjectValues(
-          config,
-          porterJson.apps[service.name].config
-        );
-      }
-      // required because of https://github.com/helm/helm/issues/9214
-      apps[Service.toHelmName(service)] = {
-        type: service.type,
-        run: service.startCommand.value,
-        config,
-      };
-    }
-
-    return apps;
-  };
-
-  const createFinalPorterYaml = (): z.infer<typeof PorterYamlSchema> => {
-    return {
-      version: "v1stack",
-      env: combineEnv(formState.envVariables, porterJson?.env),
-      apps: createApps(formState.serviceList),
-    };
   };
 
   return (

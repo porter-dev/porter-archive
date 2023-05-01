@@ -31,12 +31,6 @@ RUN sh ./scripts/build/proto.sh
 
 RUN go build -ldflags '-w -s' -a -tags ee -o ./bin/provisioner ./cmd/provisioner
 
-# Go test environment
-# -------------------
-FROM base AS porter-test
-
-RUN go test ./...
-
 # Deployment environment
 # ----------------------
 FROM alpine

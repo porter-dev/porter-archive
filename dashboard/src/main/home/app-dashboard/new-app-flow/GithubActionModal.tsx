@@ -74,8 +74,8 @@ const GithubActionModal: React.FC<Props> = ({
           );
           if (res?.data?.url) {
             window.open(res.data.url, "_blank", "noreferrer");
-            props.history.push(`/apps/${stackName}`);
           }
+          props.history.push(`/apps/${stackName}`);
         }
       } catch (error) {
         console.log(error)

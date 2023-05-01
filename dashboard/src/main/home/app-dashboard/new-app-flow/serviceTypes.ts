@@ -1,4 +1,7 @@
+import _ from "lodash";
 import api from "shared/api";
+import { ChartType } from "shared/types";
+import { overrideObjectValues } from "./utils";
 
 export type Service = WorkerService | WebService | JobService;
 export type ServiceType = 'web' | 'worker' | 'job';
@@ -51,6 +54,9 @@ const WorkerService = {
         } : {};
         return {
             replicaCount: service.replicas,
+            container: {
+                command: service.startCommand.value,
+            },
             resources: {
                 requests: {
                     cpu: service.cpu + 'm',
@@ -58,6 +64,24 @@ const WorkerService = {
                 }
             },
             ...autoscaling,
+        }
+    },
+    deserialize: (name: string, values: any): WorkerService => {
+        return {
+            name,
+            cpu: values.resources?.requests?.cpu?.replace('m', '') ?? '',
+            ram: values.resources?.requests?.memory?.replace('Mi', '') ?? '',
+            startCommand: {
+                readOnly: false,
+                value: values.container?.command ?? '',
+            },
+            type: 'worker',
+            replicas: values.replicaCount ?? '',
+            autoscalingOn: values.autoscaling?.enabled ?? false,
+            minReplicas: values.autoscaling?.minReplicas ?? '',
+            maxReplicas: values.autoscaling?.maxReplicas ?? '',
+            targetCPUUtilizationPercentage: values.autoscaling?.targetCPUUtilizationPercentage ?? '',
+            targetRAMUtilizationPercentage: values.autoscaling?.targetMemoryUtilizationPercentage ?? '',
         }
     }
 }
@@ -104,12 +128,34 @@ const WebService = {
                 }
             },
             container: {
+                command: service.startCommand.value,
                 port: service.port,
             },
             service: {
                 port: service.port,
             },
             ...autoscaling,
+        }
+    },
+    deserialize: (name: string, values: any): WebService => {
+        return {
+            name,
+            cpu: values.resources?.requests?.cpu?.replace('m', '') ?? '',
+            ram: values.resources?.requests?.memory?.replace('Mi', '') ?? '',
+            startCommand: {
+                readOnly: false,
+                value: values.container?.command ?? ''
+            },
+            type: 'web',
+            replicas: values.replicaCount ?? '',
+            autoscalingOn: values.autoscaling?.enabled ?? false,
+            minReplicas: values.autoscaling?.minReplicas ?? '',
+            maxReplicas: values.autoscaling?.maxReplicas ?? '',
+            targetCPUUtilizationPercentage: values.autoscaling?.targetCPUUtilizationPercentage ?? '',
+            targetRAMUtilizationPercentage: values.autoscaling?.targetMemoryUtilizationPercentage ?? '',
+            port: values.container?.port ?? '',
+            generateUrlForExternalTraffic: values.ingress?.enabled ?? false,
+            customDomain: values.ingress?.hosts?.length ? values.ingress.hosts[0] : '',
         }
     }
 }
@@ -136,6 +182,9 @@ const JobService = {
         } : {};
         return {
             allowConcurrent: service.jobsExecuteConcurrently,
+            container: {
+                command: service.startCommand.value,
+            },
             resources: {
                 requests: {
                     cpu: service.cpu + 'm',
@@ -144,7 +193,32 @@ const JobService = {
             },
             ...schedule,
         }
+    },
+    deserialize: (name: string, values: any): JobService => {
+        return {
+            name,
+            cpu: values.resources?.requests?.cpu?.replace('m', '') ?? '',
+            ram: values.resources?.requests?.memory?.replace('Mi', '') ?? '',
+            startCommand: {
+                readOnly: false,
+                value: values.container?.command ?? ''
+            },
+            type: 'job',
+            jobsExecuteConcurrently: values.allowConcurrent ?? false,
+            cronSchedule: values.schedule?.value ?? '',
+        }
     }
+}
+
+const TYPE_TO_SUFFIX: Record<ServiceType, string> = {
+    'web': '-web',
+    'worker': '-wkr',
+    'job': '-job',
+}
+const SUFFIX_TO_TYPE: Record<string, ServiceType> = {
+    '-web': 'web',
+    '-wkr': 'worker',
+    '-job': 'job',
 }
 
 export const Service = {
@@ -167,6 +241,31 @@ export const Service = {
             case 'job':
                 return JobService.serialize(service);
         }
+    },
+    deserialize: (helmValues: any, defaultValues: any): Service[] => {
+        // console.log("helm values")
+        // console.log(helmValues)
+        // console.log("default values")
+        // console.log(defaultValues)
+        return Object.keys(defaultValues).map((name: string) => {
+            const suffix = name.slice(-4);
+            if (suffix in SUFFIX_TO_TYPE) {
+                const type = SUFFIX_TO_TYPE[suffix];
+                const appName = name.slice(0, -4);
+                const coalescedValues = overrideObjectValues(
+                    defaultValues[name],
+                    helmValues[name] ?? {}
+                );
+                switch (type) {
+                    case 'web':
+                        return WebService.deserialize(appName, coalescedValues);
+                    case 'worker':
+                        return WorkerService.deserialize(appName, coalescedValues);
+                    case 'job':
+                        return JobService.deserialize(appName, coalescedValues);
+                }
+            }
+        }).filter((service: Service | undefined): service is Service => service != null);
     },
     isWeb: (service: Service): service is WebService => service.type === 'web',
     isWorker: (service: Service): service is WorkerService => service.type === 'worker',
@@ -207,7 +306,11 @@ export const Service = {
         }
 
         return ingress;
-    }
+    },
+    // required because of https://github.com/helm/helm/issues/9214
+    toHelmName: (service: Service): string => {
+        return service.name + TYPE_TO_SUFFIX[service.type]
+    },
 }
 
 type Ingress = {

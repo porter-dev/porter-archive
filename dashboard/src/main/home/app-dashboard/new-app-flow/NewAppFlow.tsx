@@ -1,24 +1,19 @@
-import React, { useEffect, useState, useContext, useMemo } from "react";
+import React, { useState, useContext } from "react";
 import styled from "styled-components";
 import { RouteComponentProps, withRouter } from "react-router";
 import _ from "lodash";
 import yaml from "js-yaml";
 
-import { hardcodedNames, hardcodedIcons } from "shared/hardcodedNameDict";
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { pushFiltered } from "shared/routing";
 import web from "assets/web.png";
 
 import Back from "components/porter/Back";
 import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
-import Link from "components/porter/Link";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
 import VerticalSteps from "components/porter/VerticalSteps";
-import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
-import Placeholder from "components/Placeholder";
 import Button from "components/porter/Button";
 import SourceSelector, { SourceType } from "./SourceSelector";
 import SourceSettings from "./SourceSettings";
@@ -26,12 +21,8 @@ import Services from "./Services";
 import EnvGroupArray, {
   KeyValueType,
 } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
-import Select from "components/porter/Select";
 import GithubActionModal from "./GithubActionModal";
 import {
-  ActionConfigType,
-  FullActionConfigType,
-  FullGithubActionConfigType,
   GithubActionConfigType,
 } from "shared/types";
 import Error from "components/porter/Error";
@@ -201,7 +192,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         currentProject.id == null ||
         currentCluster.id == null
       ) {
-        throw new Error("Project or cluster not found");
+        throw ("Project or cluster not found");
       }
 
       // validate form data
@@ -308,7 +299,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           porterJson.apps[service.name].config
         );
       }
-      apps[service.name] = {
+      // required because of https://github.com/helm/helm/issues/9214
+      apps[Service.toHelmName(service)] = {
         type: service.type,
         run: service.startCommand.value,
         config,
@@ -430,7 +422,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Spacer y={0.5} />
 
                 <Services
-                  setServices={(services: any[]) => {
+                  setServices={(services: Service[]) => {
                     setFormState({ ...formState, serviceList: services });
                     if (Validators.serviceList(services)) {
                       setCurrentStep(Math.max(currentStep, 4));

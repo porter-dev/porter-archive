@@ -51,7 +51,7 @@ const Integrations: React.FC<PropsType> = (props) => {
                 >
                   {integrationList[integration].label}
                 </TitleSection>
-                <Buffer />
+                <Spacer y={1} />
                 <CreateIntegrationForm
                   integrationName={integration}
                   closeForm={() => {

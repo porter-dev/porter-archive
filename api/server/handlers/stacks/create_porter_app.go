@@ -1,11 +1,13 @@
 package stacks
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -35,6 +37,16 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	ok := c.DecodeAndValidate(w, r, request)
 	if !ok {
+		return
+	}
+
+	existing, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, request.Name)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	} else if existing.Name != "" {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("porter app with name %s already exists in this environment", existing.Name), http.StatusForbidden))
 		return
 	}
 

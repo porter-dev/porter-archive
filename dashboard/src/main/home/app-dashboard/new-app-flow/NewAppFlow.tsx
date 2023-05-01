@@ -1,24 +1,19 @@
-import React, { useEffect, useState, useContext, useMemo } from "react";
+import React, { useState, useContext } from "react";
 import styled from "styled-components";
 import { RouteComponentProps, withRouter } from "react-router";
 import _ from "lodash";
 import yaml from "js-yaml";
 
-import { hardcodedNames, hardcodedIcons } from "shared/hardcodedNameDict";
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { pushFiltered } from "shared/routing";
 import web from "assets/web.png";
 
 import Back from "components/porter/Back";
 import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
-import Link from "components/porter/Link";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
 import VerticalSteps from "components/porter/VerticalSteps";
-import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
-import Placeholder from "components/Placeholder";
 import Button from "components/porter/Button";
 import SourceSelector, { SourceType } from "./SourceSelector";
 import SourceSettings from "./SourceSettings";
@@ -26,14 +21,8 @@ import Services from "./Services";
 import EnvGroupArray, {
   KeyValueType,
 } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
-import Select from "components/porter/Select";
 import GithubActionModal from "./GithubActionModal";
-import {
-  ActionConfigType,
-  FullActionConfigType,
-  FullGithubActionConfigType,
-  GithubActionConfigType,
-} from "shared/types";
+import { GithubActionConfigType } from "shared/types";
 import Error from "components/porter/Error";
 import { z } from "zod";
 import { PorterYamlSchema, createFinalPorterYaml } from "./schema";
@@ -87,7 +76,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [imageTag, setImageTag] = useState("latest");
   const { currentCluster, currentProject } = useContext(Context);
   const [deploying, setDeploying] = useState<boolean>(false);
-  const [deploymentError, setDeploymentError] = useState<string | undefined>(undefined);
+  const [deploymentError, setDeploymentError] = useState<string | undefined>(
+    undefined
+  );
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [existingStep, setExistingStep] = useState<number>(0);
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
@@ -151,8 +142,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       ) {
         setDetected({
           detected: true,
-          message: `Detected ${Object.keys(porterYamlToJson.apps).length
-            } apps from porter.yaml`,
+          message: `Detected ${
+            Object.keys(porterYamlToJson.apps).length
+          } apps from porter.yaml`,
         });
       } else {
         setDetected({
@@ -200,7 +192,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         currentProject.id == null ||
         currentCluster.id == null
       ) {
-        throw new Error("Project or cluster not found");
+        throw "Project or cluster not found";
       }
 
       // validate form data
@@ -216,11 +208,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl
         ? {
-          image_info: {
-            repository: imageUrl,
-            tag: imageTag,
-          },
-        }
+            image_info: {
+              repository: imageUrl,
+              tag: imageTag,
+            },
+          }
         : {};
 
       // write to the db
@@ -254,7 +246,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
         }
-      )
+      );
       if (!actionConfig?.git_repo) {
         props.history.push(`/apps/${formState.applicationName}`);
       }
@@ -262,7 +254,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     } catch (err) {
       // TODO: better error handling
       console.log(err);
-      const errMessage = err?.response?.data?.error ?? err?.toString() ?? 'An error occurred while deploying your app. Please try again.'
+      const errMessage =
+        err?.response?.data?.error ??
+        err?.toString() ??
+        "An error occurred while deploying your app. Please try again.";
       setDeploymentError(errMessage);
 
       return false;
@@ -346,7 +341,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   procfilePath={procfilePath}
                   setProcfilePath={setProcfilePath}
                   setBuildConfig={setBuildConfig}
-                  buildConfig={buildConfig}
                   porterYaml={porterYaml}
                   setPorterYaml={(newYaml: string) => {
                     validatePorterYaml(newYaml);
@@ -425,13 +419,17 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   if (imageUrl) {
                     deployPorterApp();
                   } else {
-                    setDeploymentError(undefined)
+                    setDeploymentError(undefined);
                     setShowGHAModal(true);
                   }
                 }}
-                status={deploying ? "loading" : deploymentError ? (
-                  <Error message={deploymentError} />
-                ) : undefined}
+                status={
+                  deploying ? (
+                    "loading"
+                  ) : deploymentError ? (
+                    <Error message={deploymentError} />
+                  ) : undefined
+                }
                 loadingText={"Deploying..."}
                 width={"150px"}
               >

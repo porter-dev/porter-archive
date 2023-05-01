@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext, useCallback } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
+import { z } from "zod";
 
 import notFound from "assets/not-found.png";
 import web from "assets/web.png";
@@ -30,6 +31,7 @@ import { Service } from "../new-app-flow/serviceTypes";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import { createFinalPorterYaml } from "../new-app-flow/schema";
 import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import { PorterYamlSchema } from "../new-app-flow/schema";
 
 type Props = RouteComponentProps & {};
 
@@ -45,7 +47,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
-
+  const [rawYaml, setRawYaml] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [appData, setAppData] = useState(null);
   const [error, setError] = useState(null);
@@ -63,6 +65,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
+  const [porterJson, setPorterJson] = useState<
+    z.infer<typeof PorterYamlSchema> | undefined
+  >(undefined);
 
   const [services, setServices] = useState<Service[]>([]);
   const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
@@ -189,7 +194,35 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   }
 
-  const renderIcon = (b?: string, size?: string) => {
+  const fetchPorterYamlContent = async (porterYaml: string) => {
+    try {
+      const res = await api.getPorterYamlContents(
+        "<token>",
+        {
+          path: porterYaml,
+        },
+        {
+          project_id: appData.app.project_id,
+          git_repo_id: appData.app.git_repo_id,
+          owner: appData.app.repo_name?.split("/")[0],
+          name: appData.app.repo_name?.split("/")[1],
+          kind: "github",
+          branch: appData.app.git_branch,
+        }
+      );
+      setRawYaml(atob(res.data));
+      let parsedYaml;
+      parsedYaml = yaml.load(rawYaml);
+      const parsedData = PorterYamlSchema.parse(parsedYaml);
+      const porterYamlToJson = parsedData as z.infer<typeof PorterYamlSchema>;
+      setPorterJson(porterYamlToJson);
+      console.log(porterJson);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const renderIcon = (b: string, size?: string) => {
     var src = box;
     if (b) {
       const bp = b.split(",")[0]?.split("/")[1];
@@ -379,7 +412,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         )
       case "build-settings":
         return (
-          <BuildSettingsTabStack appData={appData} setAppData={setAppData} />
+          <BuildSettingsTabStack
+            appData={appData}
+            setAppData={setAppData}
+            onTabSwitch={getPorterApp}
+          />
         );
       case "settings":
         return (
@@ -517,13 +554,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <Spacer y={1} />
           <TabSelector
             options={
-              appData.app?.build_packs
+              appData.app.git_repo_id
                 ? [
                   { label: "Events", value: "events" },
                   { label: "Logs", value: "logs" },
                   { label: "Metrics", value: "metrics" },
                   { label: "Overview", value: "overview" },
-                  { label: "Environment variables", value: "environment-variables" },
                   { label: "Build settings", value: "build-settings" },
                   { label: "Settings", value: "settings" },
                 ]
@@ -532,7 +568,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   { label: "Logs", value: "logs" },
                   { label: "Metrics", value: "metrics" },
                   { label: "Overview", value: "overview" },
-                  { label: "Environment variables", value: "environment-variables" },
                   { label: "Settings", value: "settings" },
                 ]
             }

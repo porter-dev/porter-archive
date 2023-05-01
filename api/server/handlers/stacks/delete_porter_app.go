@@ -39,17 +39,6 @@ func (c *DeletePorterAppByNameHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	agent, agentErr := c.GetAgent(r, cluster, "")
-	if agentErr != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(agentErr))
-		return
-	}
-
-	if err := agent.DeleteNamespace("porter–stack–" + name); err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
 	porterApp, appErr := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, name)
 	if appErr != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(appErr))

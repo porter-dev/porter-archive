@@ -109,6 +109,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           name: appName,
         }
       );
+      const nsRes = await api.deleteNamespace(
+        "<token>",
+        {},
+        {
+          cluster_id: currentCluster.id,
+          id: currentProject.id,
+          namespace: `porter-stack-${appName}`,
+        }
+      );
       console.log(res);
       setIsLoading(false);
     } catch (err) {

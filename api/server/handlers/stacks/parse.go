@@ -35,7 +35,7 @@ type App struct {
 	Type   *string                `yaml:"type" validate:"required, oneof=web worker job"`
 }
 
-func parse(porterYaml []byte, imageInfo *types.ImageInfo, config *config.Config, projectID uint) (*chart.Chart, map[string]interface{}, error) {
+func parse(porterYaml []byte, imageInfo types.ImageInfo, config *config.Config, projectID uint) (*chart.Chart, map[string]interface{}, error) {
 	parsed := &PorterStackYAML{}
 
 	err := yaml.Unmarshal(porterYaml, parsed)
@@ -57,7 +57,7 @@ func parse(porterYaml []byte, imageInfo *types.ImageInfo, config *config.Config,
 	return chart, convertedValues.(map[string]interface{}), nil
 }
 
-func buildStackValues(parsed *PorterStackYAML, imageInfo *types.ImageInfo) (map[string]interface{}, error) {
+func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
 	for name, app := range parsed.Apps {
@@ -65,13 +65,14 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo *types.ImageInfo) (map[
 		defaultValues := getDefaultValues(app, parsed.Env, appType)
 		helm_values := utils.CoalesceValues(defaultValues, app.Config)
 		values[name] = helm_values
-		if imageInfo != nil {
-			values["global"] = map[string]interface{}{
-				"image": map[string]interface{}{
-					"repository": imageInfo.Repository,
-					"tag":        imageInfo.Tag,
-				},
-			}
+	}
+
+	if imageInfo.Repository != "" && imageInfo.Tag != "" {
+		values["global"] = map[string]interface{}{
+			"image": map[string]interface{}{
+				"repository": imageInfo.Repository,
+				"tag":        imageInfo.Tag,
+			},
 		}
 	}
 

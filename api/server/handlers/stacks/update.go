@@ -51,7 +51,7 @@ func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	imageInfo := request.ImageInfo
-	chart, values, err := parse(porterYaml, &imageInfo, c.Config(), cluster.ProjectID)
+	chart, values, err := parse(porterYaml, imageInfo, c.Config(), cluster.ProjectID)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error with test: %w", err)))
 		return

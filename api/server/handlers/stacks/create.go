@@ -40,6 +40,7 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding request")))
 		return
 	}
+
 	stackName := request.StackName
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 	porterYamlBase64 := request.PorterYAMLBase64
@@ -50,7 +51,7 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	imageInfo := request.ImageInfo
-	chart, values, err := parse(porterYaml, &imageInfo, c.Config(), cluster.ProjectID)
+	chart, values, err := parse(porterYaml, imageInfo, c.Config(), cluster.ProjectID)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error with test: %w", err)))
 		return

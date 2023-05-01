@@ -87,10 +87,13 @@ export const BuildpackStack: React.FC<{
           {!!selectedBuildpacks?.length &&
             renderBuildpacksList(selectedBuildpacks, "remove")}
           <Spacer y={1} />
-          <Text color="helper">Available buildpacks:</Text>
+
           <Spacer y={1} />
           {!!availableBuildpacks?.length && (
-            <>{renderBuildpacksList(availableBuildpacks, "add")}</>
+            <>
+              <Text color="helper">Available buildpacks:</Text>
+              <>{renderBuildpacksList(availableBuildpacks, "add")}</>
+            </>
           )}
           <Spacer y={1} />
           <Text color="helper">
@@ -166,6 +169,10 @@ export const BuildpackStack: React.FC<{
         var availableBuildpacks = defaultBuilder.others;
         var defaultStack = "";
         if (currentBuildConfig) {
+          if (!detectedBuildpacks) {
+            detectedBuildpacks = [];
+          }
+
           defaultStack = currentBuildConfig.builder;
           for (const buildpackName of currentBuildConfig.buildpacks) {
             const matchingBuildpackIndex = availableBuildpacks.findIndex(

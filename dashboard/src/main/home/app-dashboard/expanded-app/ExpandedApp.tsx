@@ -37,11 +37,9 @@ const icons = [
 ];
 
 const ExpandedApp: React.FC<Props> = ({ ...props }) => {
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentError,
-  } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
 
   const [isLoading, setIsLoading] = useState(true);
   const [appData, setAppData] = useState(null);
@@ -89,6 +87,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         app: resPorterApp?.data,
         chart: resChartData?.data,
       });
+      console.log(appData);
       setIsLoading(false);
     } catch (err) {
       setError(err);
@@ -115,7 +114,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setError(err);
       setIsLoading(false);
     }
-  }
+  };
 
   const renderIcon = (b: string, size?: string) => {
     var src = box;
@@ -138,9 +137,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           break;
       }
     }
-    return (
-      <Icon src={src} />
-    );
+    return <Icon src={src} />;
   };
 
   const updateComponents = async (currentChart: ChartType) => {
@@ -210,7 +207,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     // setIsPreview(!isCurrent);
     getChartData(chart);
   };
-
   const appUpgradeVersion = useCallback(
     async (version: string, cb: () => void) => {
       // convert current values to yaml
@@ -283,7 +279,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     });
     return `${time} on ${date}`;
   };
-  
   const renderTabContents = () => {
     switch (tab) {
       case "overview":
@@ -295,9 +290,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "settings":
         return (
           <>
-            <Text size={16}>
-              Delete "{appData.app.name}"
-            </Text>
+            <Text size={16}>Delete "{appData.app.name}"</Text>
             <Spacer y={1} />
             <Text color="helper">
               Delete this application and all of its resources.
@@ -305,7 +298,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             <Spacer y={1} />
             <Button
               onClick={() => {
-                setShowDeleteOverlay(true)
+                setShowDeleteOverlay(true);
               }}
               color="#b91133"
             >
@@ -401,14 +394,24 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <DarkMatter antiHeight="-18px" />
           <Spacer y={1} />
           <TabSelector
-            options={[
-              { label: "Events", value: "events" },
-              { label: "Logs", value: "logs" },
-              { label: "Metrics", value: "metrics" },
-              { label: "Overview", value: "overview" },
-              { label: "Build settings", value: "build-settings" },
-              { label: "Settings", value: "settings" },
-            ]}
+            options={
+              appData.app.build_packs
+                ? [
+                    { label: "Events", value: "events" },
+                    { label: "Logs", value: "logs" },
+                    { label: "Metrics", value: "metrics" },
+                    { label: "Overview", value: "overview" },
+                    { label: "Build settings", value: "build-settings" },
+                    { label: "Settings", value: "settings" },
+                  ]
+                : [
+                    { label: "Events", value: "events" },
+                    { label: "Logs", value: "logs" },
+                    { label: "Metrics", value: "metrics" },
+                    { label: "Overview", value: "overview" },
+                    { label: "Settings", value: "settings" },
+                  ]
+            }
             currentTab={tab}
             setCurrentTab={setTab}
           />
@@ -435,7 +438,7 @@ export default withRouter(ExpandedApp);
 
 const DarkMatter = styled.div<{ antiHeight?: string }>`
   width: 100%;
-  margin-top: ${props => props.antiHeight || "-20px"};
+  margin-top: ${(props) => props.antiHeight || "-20px"};
 `;
 
 const TagWrapper = styled.div`
@@ -470,13 +473,13 @@ const BranchTag = styled.div`
 `;
 
 const BranchSection = styled.div`
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
 `;
 
-const SmallIcon = styled.img<{ opacity?: string, height?: string }>`
-  height: ${props => props.height || "15px"};
-  opacity: ${props => props.opacity || 1};
+const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
+  height: ${(props) => props.height || "15px"};
+  opacity: ${(props) => props.opacity || 1};
   margin-right: 10px;
 `;
 

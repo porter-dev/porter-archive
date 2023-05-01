@@ -33,3 +33,7 @@ func (repo *PorterAppRepository) UpdatePorterApp(app *models.PorterApp) (*models
 func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*models.PorterApp, error) {
 	return nil, errors.New("cannot write database")
 }
+
+func (repo *PorterAppRepository) DeletePorterApp(app *models.PorterApp) (*models.PorterApp, error) {
+	return nil, errors.New("cannot write database")
+}

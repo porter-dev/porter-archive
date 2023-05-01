@@ -83,7 +83,7 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks -> stacks.NewPorterAppListHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> stacks.NewPorterAppListHandler
 	listPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
@@ -108,6 +108,35 @@ func getStackRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: listPorterAppEndpoint,
 		Handler:  listPorterAppHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/stacks -> release.NewDeletePorterAppByNameHandler
+	deletePorterAppByNameEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/{name}",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	deletePorterAppByNameHandler := stacks.NewDeletePorterAppByNameHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deletePorterAppByNameEndpoint,
+		Handler:  deletePorterAppByNameHandler,
 		Router:   r,
 	})
 

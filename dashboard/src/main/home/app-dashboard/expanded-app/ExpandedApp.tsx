@@ -26,6 +26,7 @@ import BuildSettingsTabStack from "./BuildSettingsTabStack";
 import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
 import { Service } from "../new-app-flow/serviceTypes";
+import ConfirmOverlay from "components/porter/ConfirmOverlay";
 
 type Props = RouteComponentProps & {};
 
@@ -38,17 +39,13 @@ const icons = [
 ];
 
 const ExpandedApp: React.FC<Props> = ({ ...props }) => {
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentError,
-    setCurrentOverlay,
-  } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
 
   const [isLoading, setIsLoading] = useState(true);
   const [appData, setAppData] = useState(null);
   const [error, setError] = useState(null);
-  const [isAuthorized] = useAuth();
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
     false
   );
@@ -60,10 +57,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [components, setComponents] = useState<ResourceType[]>([]);
 
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
+  const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
 
   const getPorterApp = async () => {
     setIsLoading(true);
@@ -93,6 +89,37 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         app: resPorterApp?.data,
         chart: resChartData?.data,
       });
+      console.log(appData);
+      setIsLoading(false);
+    } catch (err) {
+      setError(err);
+      setIsLoading(false);
+    }
+  };
+
+  const deletePorterApp = async () => {
+    setIsLoading(true);
+    const { appName } = props.match.params as any;
+    try {
+      const res = await api.deletePorterApp(
+        "<token>",
+        {},
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+          name: appName,
+        }
+      );
+      const nsRes = await api.deleteNamespace(
+        "<token>",
+        {},
+        {
+          cluster_id: currentCluster.id,
+          id: currentProject.id,
+          namespace: `porter-stack-${appName}`,
+        }
+      );
+      console.log(res);
       setIsLoading(false);
     } catch (err) {
       setError(err);
@@ -121,9 +148,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           break;
       }
     }
-    return (
-      <Icon src={src} />
-    );
+    return <Icon src={src} />;
   };
 
   const updateComponents = async (currentChart: ChartType) => {
@@ -287,18 +312,19 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "settings":
         return (
           <>
-            <Text size={16}>
-              Delete app "{appData.app.name}"
-            </Text>
+            <Text size={16}>Delete "{appData.app.name}"</Text>
             <Spacer y={1} />
             <Text color="helper">
               Delete this application and all of its resources.
             </Text>
             <Spacer y={1} />
-            <Button onClick={() => {
-              // set delete overlay
-            }} color="#b91133">
-              Delete {appData.app.name}
+            <Button
+              onClick={() => {
+                setShowDeleteOverlay(true);
+              }}
+              color="#b91133"
+            >
+              Delete
             </Button>
           </>
         );
@@ -390,20 +416,41 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <DarkMatter antiHeight="-18px" />
           <Spacer y={1} />
           <TabSelector
-            options={[
-              { label: "Events", value: "events" },
-              { label: "Logs", value: "logs" },
-              { label: "Metrics", value: "metrics" },
-              { label: "Overview", value: "overview" },
-              { label: "Build settings", value: "build-settings" },
-              { label: "Settings", value: "settings" },
-            ]}
+            options={
+              appData.app.build_packs
+                ? [
+                  { label: "Events", value: "events" },
+                  { label: "Logs", value: "logs" },
+                  { label: "Metrics", value: "metrics" },
+                  { label: "Overview", value: "overview" },
+                  { label: "Build settings", value: "build-settings" },
+                  { label: "Settings", value: "settings" },
+                ]
+                : [
+                  { label: "Events", value: "events" },
+                  { label: "Logs", value: "logs" },
+                  { label: "Metrics", value: "metrics" },
+                  { label: "Overview", value: "overview" },
+                  { label: "Settings", value: "settings" },
+                ]
+            }
             currentTab={tab}
             setCurrentTab={setTab}
           />
           <Spacer y={1} />
           {renderTabContents()}
         </StyledExpandedApp>
+      )}
+      {showDeleteOverlay && (
+        <ConfirmOverlay
+          message={`Are you sure you want to delete "${appData.app.name}"?`}
+          onYes={() => {
+            deletePorterApp();
+          }}
+          onNo={() => {
+            setShowDeleteOverlay(false);
+          }}
+        />
       )}
     </>
   );
@@ -413,7 +460,7 @@ export default withRouter(ExpandedApp);
 
 const DarkMatter = styled.div<{ antiHeight?: string }>`
   width: 100%;
-  margin-top: ${props => props.antiHeight || "-20px"};
+  margin-top: ${(props) => props.antiHeight || "-20px"};
 `;
 
 const TagWrapper = styled.div`
@@ -448,13 +495,13 @@ const BranchTag = styled.div`
 `;
 
 const BranchSection = styled.div`
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
 `;
 
-const SmallIcon = styled.img<{ opacity?: string, height?: string }>`
-  height: ${props => props.height || "15px"};
-  opacity: ${props => props.opacity || 1};
+const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
+  height: ${(props) => props.height || "15px"};
+  opacity: ${(props) => props.opacity || 1};
   margin-right: 10px;
 `;
 

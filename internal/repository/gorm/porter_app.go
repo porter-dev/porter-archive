@@ -51,3 +51,11 @@ func (repo *PorterAppRepository) UpdatePorterApp(app *models.PorterApp) (*models
 
 	return app, nil
 }
+
+func (repo *PorterAppRepository) DeletePorterApp(app *models.PorterApp) (*models.PorterApp, error) {
+	if err := repo.db.Delete(&app).Error; err != nil {
+		return nil, err
+	}
+
+	return app, nil
+}

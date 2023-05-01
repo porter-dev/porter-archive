@@ -60,7 +60,6 @@ export const BuildpackSelection: React.FC<{
 
   useEffect(() => {
     let buildConfig: BuildConfig = {} as BuildConfig;
-
     buildConfig.builder = selectedStack;
     buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
       return buildpack.buildpack;

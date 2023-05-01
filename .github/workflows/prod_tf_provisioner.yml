@@ -2,7 +2,7 @@
   push:
     branches:
       - master
-      - porter-deploy
+      - porter-setup
 name: Deploy TF-Provisioner to prod
 jobs:
   porter-deploy:

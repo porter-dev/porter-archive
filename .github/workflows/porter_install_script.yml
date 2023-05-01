@@ -23,4 +23,4 @@ jobs:
           namespace: default
           project: "5"
           tag: ${{ steps.vars.outputs.sha_short }}
-          token: ${{ secrets.PORTER_TOKEN_1 }}
+          token: ${{ secrets.PORTER_TOKEN_5 }}

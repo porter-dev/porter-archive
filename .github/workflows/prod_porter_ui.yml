@@ -79,7 +79,7 @@ jobs:
         timeout-minutes: 20
         uses: porter-dev/porter-update-action@v0.1.0
         with:
-          app: production
+          app: porter-ui
           cluster: "9"
           host: https://dashboard.internal-tools.getporter.dev
           project: "5"

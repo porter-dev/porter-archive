@@ -224,7 +224,9 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   };
   return (
     <>
-      {renderContentList() && props.dockerfilePath != "" ? (
+      {renderContentList() &&
+      props.dockerfilePath != "" &&
+      props.dockerfilePath != null ? (
         <AdvancedBuildSettings
           dockerfilePath={props.dockerfilePath}
           setDockerfilePath={props.setDockerfilePath}

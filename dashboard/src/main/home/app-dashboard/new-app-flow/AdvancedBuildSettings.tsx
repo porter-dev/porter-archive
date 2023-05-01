@@ -66,7 +66,6 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
         <BuildpackStack
           actionConfig={props.actionConfig}
           branch={props.branch}
-          defaultBuildConfig={props.buildConfig}
           folderPath={props.folderPath}
           onChange={(config) => {
             props.setBuildConfig(config);

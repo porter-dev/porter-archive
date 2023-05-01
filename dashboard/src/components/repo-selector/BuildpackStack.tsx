@@ -53,6 +53,7 @@ export const BuildpackStack: React.FC<{
   hide: boolean;
   onChange: (config: BuildConfig) => void;
   currentBuildConfig?: BuildConfig;
+  setBuildConfig?: (config: BuildConfig) => void;
 }> = ({
   actionConfig,
   folderPath,
@@ -60,6 +61,7 @@ export const BuildpackStack: React.FC<{
   hide,
   onChange,
   currentBuildConfig,
+  setBuildConfig,
 }) => {
   const { currentProject } = useContext(Context);
 
@@ -76,7 +78,6 @@ export const BuildpackStack: React.FC<{
     []
   );
   const renderModalContent = () => {
-    console.log(selectedBuildpacks);
     return (
       <>
         <Text size={16}>Buildpack Configuration</Text>
@@ -118,6 +119,10 @@ export const BuildpackStack: React.FC<{
 
     if (typeof onChange === "function") {
       onChange(buildConfig);
+
+      if (currentBuildConfig) {
+        setBuildConfig(buildConfig);
+      }
     }
   }, [selectedStack, selectedBuildpacks]);
 

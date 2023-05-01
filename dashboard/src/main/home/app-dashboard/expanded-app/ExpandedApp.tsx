@@ -294,7 +294,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         return <div>TODO: service list</div>;
       case "build-settings":
         return (
-          <BuildSettingsTabStack appData={appData} setAppData={setAppData} />
+          <BuildSettingsTabStack
+            appData={appData}
+            setAppData={setAppData}
+            onTabSwitch={getPorterApp}
+          />
         );
       case "settings":
         return (
@@ -404,7 +408,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <Spacer y={1} />
           <TabSelector
             options={
-              appData.app.build_packs
+              appData.app.git_repo_id
                 ? [
                     { label: "Events", value: "events" },
                     { label: "Logs", value: "logs" },

@@ -40,15 +40,16 @@ const StyledBanner = styled.div<{
   color?: string;
   noMargin?: boolean;
 }>`
-  height: 40px;
+  min-height: 40px;
   width: 100%;
   margin: ${(props) => (props.noMargin ? "5px 0 10px" : "")};
   font-size: 13px;
   font-family: "Work Sans", sans-serif;
   display: flex;
+  line-height: 1.5;
   border: 1px solid ${(props) => props.color || "#ffffff00"};
   border-radius: 8px;
-  padding: 14px;
+  padding: 10px 14px;
   color: ${(props) => props.color || "#ffffff"};
   align-items: center;
   background: #ffffff11;

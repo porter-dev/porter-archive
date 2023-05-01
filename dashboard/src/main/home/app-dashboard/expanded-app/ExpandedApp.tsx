@@ -29,6 +29,8 @@ import Services from "../new-app-flow/Services";
 import { Service } from "../new-app-flow/serviceTypes";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import Fieldset from "components/porter/Fieldset";
+import Banner from "components/Banner";
+import AppEvents from "./AppEvents";
 
 type Props = RouteComponentProps & {};
 
@@ -310,7 +312,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       case "build-settings":
         return (
-          <BuildSettingsTabStack appData={appData} setAppData={setAppData} />
+          <BuildSettingsTabStack
+            appData={appData}
+            setAppData={setAppData}
+            onTabSwitch={getPorterApp}
+          />
         );
       case "settings":
         return (
@@ -330,6 +336,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               Delete
             </Button>
           </>
+        );
+      case "events":
+        return (
+          <AppEvents
+            repoName={appData.app.repo_name}
+            branchName={appData.app.git_branch}
+          />
         );
       default:
         return <div>dream on</div>;
@@ -410,30 +423,38 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Fieldset>
           ) : (
             <>
-              <DarkMatter />
-              <RevisionSection
-                showRevisions={showRevisions}
-                toggleShowRevisions={() => {
-                  setShowRevisions(!showRevisions);
-                }}
-                chart={appData.chart}
-                refreshChart={() => getChartData(appData.chart)}
-                setRevision={setRevision}
-                forceRefreshRevisions={forceRefreshRevisions}
-                refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-                shouldUpdate={
-                  appData.chart.latest_version &&
-                  appData.chart.latest_version !==
-                  appData.chart.chart.metadata.version
-                }
-                latestVersion={appData.chart.latest_version}
-                upgradeVersion={appUpgradeVersion}
-              />
-              <DarkMatter antiHeight="-18px" />
+              {true ? (
+                <Banner type="warning">
+                  Your application won't be available until you approve and merge this PR in your GitHub repository.
+                </Banner>
+              ) : (
+                <>
+                  <DarkMatter />
+                  <RevisionSection
+                    showRevisions={showRevisions}
+                    toggleShowRevisions={() => {
+                      setShowRevisions(!showRevisions);
+                    }}
+                    chart={appData.chart}
+                    refreshChart={() => getChartData(appData.chart)}
+                    setRevision={setRevision}
+                    forceRefreshRevisions={forceRefreshRevisions}
+                    refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+                    shouldUpdate={
+                      appData.chart.latest_version &&
+                      appData.chart.latest_version !==
+                      appData.chart.chart.metadata.version
+                    }
+                    latestVersion={appData.chart.latest_version}
+                    upgradeVersion={appUpgradeVersion}
+                  />
+                  <DarkMatter antiHeight="-18px" />
+                </>
+              )}
               <Spacer y={1} />
               <TabSelector
                 options={
-                  appData.app.build_packs
+                  appData.app.git_repo_id
                     ? [
                       { label: "Events", value: "events" },
                       { label: "Logs", value: "logs" },

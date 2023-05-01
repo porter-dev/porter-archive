@@ -58,11 +58,12 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		GitRepoID: request.GitRepoID,
 		GitBranch: request.GitBranch,
 
-		BuildContext: request.BuildContext,
-		Builder:      request.Builder,
-		Buildpacks:   request.Buildpacks,
-		Dockerfile:   request.Dockerfile,
-		ImageRepoURI: request.ImageRepoURI,
+		BuildContext:   request.BuildContext,
+		Builder:        request.Builder,
+		Buildpacks:     request.Buildpacks,
+		Dockerfile:     request.Dockerfile,
+		ImageRepoURI:   request.ImageRepoURI,
+		PullRequestURL: request.PullRequestURL,
 	}
 
 	porterApp, err := c.Repo().PorterApp().UpdatePorterApp(app)

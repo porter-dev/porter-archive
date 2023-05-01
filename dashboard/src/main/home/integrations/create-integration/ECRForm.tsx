@@ -132,7 +132,7 @@ ECRForm.contextType = Context;
 const CredentialWrapper = styled.div`
   padding: 30px;
   border-radius: 5px;
-  background: #26292e;
+  background: ${({ theme }) => theme.fg}};
   border: 1px solid #494b4f;
   margin-bottom: 30px;
 `;

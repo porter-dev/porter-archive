@@ -78,15 +78,18 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		BillingManager:    InstanceBillingManager,
 		CredentialBackend: InstanceCredentialBackend,
 	}
-
+	res.Logger.Info().Msg("Loading MetadataFromConf")
 	res.Metadata = config.MetadataFromConf(envConf.ServerConf, e.version)
+	res.Logger.Info().Msg("Loaded MetadataFromConf")
 	res.DB = InstanceDB
 
-	err = gorm.AutoMigrate(InstanceDB, sc.Debug)
-
-	if err != nil {
-		return nil, err
-	}
+	// res.Logger.Info().Msg("Starting gorm automigrate")
+	// err = gorm.AutoMigrate(InstanceDB, sc.Debug)
+	//
+	// if err != nil {
+	//	return nil, err
+	// }
+	// res.Logger.Info().Msg("Completed gorm automigrate")
 
 	var key [32]byte
 
@@ -94,8 +97,11 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		key[i] = b
 	}
 
+	res.Logger.Info().Msg("Creating new gorm repository")
 	res.Repo = gorm.NewRepository(InstanceDB, &key, InstanceCredentialBackend)
+	res.Logger.Info().Msg("Created new gorm repository")
 
+	res.Logger.Info().Msg("Creating new session store")
 	// create the session store
 	res.Store, err = sessionstore.NewStore(
 		&sessionstore.NewStoreOpts{
@@ -108,6 +114,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	if err != nil {
 		return nil, err
 	}
+	res.Logger.Info().Msg("Created new session store")
 
 	res.TokenConf = &token.TokenGeneratorConf{
 		TokenSecret: envConf.ServerConf.TokenGeneratorSecret,
@@ -116,6 +123,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	res.UserNotifier = &notifier.EmptyUserNotifier{}
 
 	if res.Metadata.Email {
+		res.Logger.Info().Msg("Creating new user notifier")
 		res.UserNotifier = sendgrid.NewUserNotifier(&sendgrid.UserNotifierOpts{
 			SharedOpts: &sendgrid.SharedOpts{
 				APIKey:      envConf.ServerConf.SendgridAPIKey,
@@ -126,24 +134,33 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			VerifyEmailTemplateID:   envConf.ServerConf.SendgridVerifyEmailTemplateID,
 			ProjectInviteTemplateID: envConf.ServerConf.SendgridProjectInviteTemplateID,
 		})
+		res.Logger.Info().Msg("Created new user notifier")
 	}
 
 	res.Alerter = alerter.NoOpAlerter{}
 
 	if envConf.ServerConf.SentryDSN != "" {
+		res.Logger.Info().Msg("Creating Sentry Alerter")
 		res.Alerter, err = alerter.NewSentryAlerter(envConf.ServerConf.SentryDSN, envConf.ServerConf.SentryEnv)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create new sentry alerter: %w", err)
+		}
+		res.Logger.Info().Msg("Created Sentry Alerter")
 	}
 
 	if sc.DOClientID != "" && sc.DOClientSecret != "" {
+		res.Logger.Info().Msg("Creating Digital Ocean client")
 		res.DOConf = oauth.NewDigitalOceanClient(&oauth.Config{
 			ClientID:     sc.DOClientID,
 			ClientSecret: sc.DOClientSecret,
 			Scopes:       []string{"read", "write"},
 			BaseURL:      sc.ServerURL,
 		})
+		res.Logger.Info().Msg("Created Digital Ocean client")
 	}
 
 	if sc.GoogleClientID != "" && sc.GoogleClientSecret != "" {
+		res.Logger.Info().Msg("Creating Google client")
 		res.GoogleConf = oauth.NewGoogleClient(&oauth.Config{
 			ClientID:     sc.GoogleClientID,
 			ClientSecret: sc.GoogleClientSecret,
@@ -154,16 +171,19 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			},
 			BaseURL: sc.ServerURL,
 		})
+		res.Logger.Info().Msg(" Google client")
 	}
 
 	// TODO: remove this as part of POR-1055
 	if sc.GithubClientID != "" && sc.GithubClientSecret != "" {
+		res.Logger.Info().Msg("Creating Github client")
 		res.GithubConf = oauth.NewGithubClient(&oauth.Config{
 			ClientID:     sc.GithubClientID,
 			ClientSecret: sc.GithubClientSecret,
 			Scopes:       []string{"read:user", "user:email"},
 			BaseURL:      sc.ServerURL,
 		})
+		res.Logger.Info().Msg("Created Github client")
 	}
 
 	if sc.GithubAppSecretBase64 != "" {
@@ -214,6 +234,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 
 	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {
+		res.Logger.Info().Msg("Creating Slack client")
 		res.SlackConf = oauth.NewSlackClient(&oauth.Config{
 			ClientID:     sc.SlackClientID,
 			ClientSecret: sc.SlackClientSecret,
@@ -224,43 +245,21 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			BaseURL: sc.ServerURL,
 		})
 	}
+	res.Logger.Info().Msg("Created Slack client")
 
 	res.WSUpgrader = &websocket.Upgrader{
 		WSUpgrader: &gorillaws.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
 			CheckOrigin: func(r *http.Request) bool {
-				origin := r.Header.Get("Origin")
-
-				// // check if the server url is localhost, and allow all localhost origins
-				// serverParsed, err := url.Parse(sc.ServerURL)
-				// if err != nil {
-				// 	return false
-				// }
-				// host, _, err := net.SplitHostPort(serverParsed.Host)
-				// if err != nil {
-				// 	return false
-				// }
-				// if host == "localhost" {
-				// 	parsedOrigin, err := url.Parse(origin)
-				// 	if err != nil {
-				// 		return false
-				// 	}
-				// 	originHost, _, err := net.SplitHostPort(parsedOrigin.Host)
-				// 	if err != nil {
-				// 		if !strings.Contains(err.Error(), "missing port in address") {
-				// 			return false
-				// 		}
-				// 		if strings.Contains(parsedOrigin.Host, "ngrok.io") {
-				// 			return true
-				// 		}
-				// 	}
-				// 	if originHost == "localhost" {
-				// 		return true
-				// 	}
-				// }
-
-				return origin == sc.ServerURL
+				var err error
+				defer func() {
+					// TODO: this is only used to collect data for removing the `request origin not allowed by Upgrader.CheckOrigin` error
+					if err != nil {
+						res.Logger.Info().Msgf("error: %s, host: %s, origin: %s, serverURL: %s", err.Error(), r.Host, r.Header.Get("Origin"), sc.ServerURL)
+					}
+				}()
+				return true
 			},
 		},
 	}
@@ -273,16 +272,20 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 
 	res.WhitelistedUsers = wlUsers
-
+	res.Logger.Info().Msg("Creating URL Cache")
 	res.URLCache = urlcache.Init(sc.DefaultApplicationHelmRepoURL, sc.DefaultAddonHelmRepoURL)
+	res.Logger.Info().Msg("Created URL Cache")
 
+	res.Logger.Info().Msg("Creating provisioner service client")
 	provClient, err := getProvisionerServiceClient(sc)
-
 	if err == nil && provClient != nil {
 		res.ProvisionerClient = provClient
 	}
+	res.Logger.Info().Msg("Created provisioner service client")
 
+	res.Logger.Info().Msg("Creating analytics client")
 	res.AnalyticsClient = analytics.InitializeAnalyticsSegmentClient(sc.SegmentClientKey, res.Logger)
+	res.Logger.Info().Msg("Created analytics client")
 
 	if sc.PowerDNSAPIKey != "" && sc.PowerDNSAPIServerURL != "" {
 		res.PowerDNSClient = powerdns.NewClient(sc.PowerDNSAPIServerURL, sc.PowerDNSAPIKey, sc.AppRootDomain)
@@ -290,11 +293,13 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	res.EnableCAPIProvisioner = sc.EnableCAPIProvisioner
 	if sc.EnableCAPIProvisioner {
+		res.Logger.Info().Msg("Creating CCP client")
 		if sc.ClusterControlPlaneAddress == "" {
 			return res, errors.New("must provide CLUSTER_CONTROL_PLANE_ADDRESS")
 		}
 		client := porterv1connect.NewClusterControlPlaneServiceClient(http.DefaultClient, sc.ClusterControlPlaneAddress)
 		res.ClusterControlPlaneClient = client
+		res.Logger.Info().Msg("Created CCP client")
 	}
 
 	return res, nil

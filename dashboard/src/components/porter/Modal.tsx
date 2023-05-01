@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import { createPortal } from "react-dom";
 
 type Props = {
   closeModal?: () => void;
@@ -11,17 +12,24 @@ const Modal: React.FC<Props> = ({
   children,
 }) => {
   return (
-    <ModalWrapper>
-      <ModalBg onClick={closeModal} />
-      <StyledModal> 
-        {closeModal && (
-          <CloseButton onClick={closeModal}>
-            <i className="material-icons">close</i>
-          </CloseButton>
-        )}
-        {children}
-      </StyledModal>
-    </ModalWrapper>
+    <>
+      {
+        createPortal(
+          <ModalWrapper>
+            <ModalBg onClick={closeModal} />
+            <StyledModal> 
+              {closeModal && (
+                <CloseButton onClick={closeModal}>
+                  <i className="material-icons">close</i>
+                </CloseButton>
+              )}
+              {children}
+            </StyledModal>
+          </ModalWrapper>,
+          document.body
+        )
+      }
+    </>
   );
 };
 
@@ -73,18 +81,27 @@ const ModalBg = styled.div`
   width: 100vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.6);
+  animation: fadeInModal 0.5s 0s;
+  @keyframes fadeInModal {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;
 
 const StyledModal = styled.div`
   position: relative;
   padding: 25px;
-  padding-bottom: 30px;
+  padding-bottom: 35px;
   border-radius: 10px;
   border: 1px solid #494b4f;
   font-size: 13px;
   width: 600px;
-  background: #42444944;
-  backdrop-filter: saturate(150%) blur(10px);
+  background: #42444933;
+  backdrop-filter: saturate(150%) blur(8px);
 
   animation: floatInModal 0.5s 0s;
   @keyframes floatInModal {

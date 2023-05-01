@@ -31,6 +31,7 @@ import VeleroForm from "./field-components/VeleroForm";
 import CronInput from "./field-components/CronInput";
 import TextAreaInput from "./field-components/TextAreaInput";
 import UrlLink from "./field-components/UrlLink";
+import Button from "components/porter/Button";
 
 interface Props {
   leftTabOptions?: TabOption[];
@@ -44,6 +45,7 @@ interface Props {
   isInModal?: boolean;
   color?: string;
   addendum?: any;
+  buttonStatus?: React.ReactNode;
   saveValuesStatus?: string;
   showStateDebugger?: boolean;
   currentTab: string;
@@ -223,9 +225,9 @@ const PorterForm: React.FC<Props> = (props) => {
         {renderTab()}
       </TabRegion>
       <br />
-      {showSaveButton() && (
+      {(showSaveButton() && props.buttonStatus === undefined) && (
         <SaveButton
-          text={props.saveButtonText || "Deploy app"}
+          text={props.saveButtonText || "Deploy application"}
           onClick={submit}
           absoluteSave={props.absoluteSave}
           clearPosition={true}
@@ -236,6 +238,16 @@ const PorterForm: React.FC<Props> = (props) => {
           statusPosition="right"
           disabled={isDisabled()}
         />
+      )}
+      {/* TODO: change button when deploying */}
+      {(props.buttonStatus !== undefined) && (
+        <Button
+          onClick={submit}
+          status={props.buttonStatus}
+          disabled={isDisabled()}
+        >
+          Deploy application
+        </Button>
       )}
       {props.showStateDebugger && (
         <Pre>{JSON.stringify(formState, undefined, 2)}</Pre>

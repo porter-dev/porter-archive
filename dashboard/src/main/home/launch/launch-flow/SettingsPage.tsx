@@ -100,7 +100,7 @@ class SettingsPage extends Component<PropsType, StateType> {
       .then((res) => {
         if (res.data) {
           const availableNamespaces = res.data.filter((namespace: any) => {
-            return namespace.status !== "Terminating";
+            return (namespace.status !== "Terminating" && !namespace.name.startsWith("pr-"));
           });
           const namespaceOptions = availableNamespaces.map(
             (x: { name: string }) => {
@@ -248,7 +248,7 @@ class SettingsPage extends Component<PropsType, StateType> {
         <StyledSettingsPage>
           {this.renderHeaderSection()}
           {this.props.isCloning && this.getNameInput()}
-          {!currentProject.capi_provisioner_enabled && (
+          {!currentProject?.capi_provisioner_enabled && (
             <>
               <Heading>Destination</Heading>
               <Helper>

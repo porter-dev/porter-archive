@@ -8,3 +8,4 @@ WORKDIR /app
 COPY --from=installer /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=installer /go/bin/dlv /
 COPY ./bin/porter /app
+COPY ./bin/migrate /app

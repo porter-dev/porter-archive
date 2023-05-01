@@ -80,7 +80,7 @@ func (g *GithubActions) Setup() ([]byte, error) {
 
 	if !g.DryRun {
 		// create porter token secret
-		if err := createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken, g.GitRepoOwner, g.GitRepoName); err != nil {
+		if err := CreateGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken, g.GitRepoOwner, g.GitRepoName); err != nil {
 			return nil, err
 		}
 	}
@@ -310,7 +310,7 @@ func (g *GithubActions) getClient() (*github.Client, error) {
 	return github.NewClient(&http.Client{Transport: itr}), nil
 }
 
-func createGithubSecret(
+func CreateGithubSecret(
 	client *github.Client,
 	secretName,
 	secretValue,
@@ -386,7 +386,7 @@ func (g *GithubActions) createEnvSecret(client *github.Client) error {
 
 	secretName := g.getBuildEnvSecretName()
 
-	return createGithubSecret(client, secretName, strings.Join(lines, "\n"), g.GitRepoOwner, g.GitRepoName)
+	return CreateGithubSecret(client, secretName, strings.Join(lines, "\n"), g.GitRepoOwner, g.GitRepoName)
 }
 
 func (g *GithubActions) getWebhookSecretName() string {

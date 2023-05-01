@@ -5,6 +5,8 @@ import { Context } from "shared/Context";
 
 import TitleSection from "components/TitleSection";
 import Spacer from "components/porter/Spacer";
+import Tooltip from "components/porter/Tooltip";
+import Container from "components/porter/Container";
 
 type PropsType = {
   image?: any;
@@ -13,6 +15,7 @@ type PropsType = {
   materialIconClass?: string;
   disableLineBreak?: boolean;
   capitalize?: boolean;
+  prefix?: any;
 };
 
 type StateType = {};
@@ -21,22 +24,29 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
   render() {
     return (
       <>
-        <TitleSection
-          capitalize={this.props.capitalize === undefined || this.props.capitalize}
-          icon={this.props.image}
-          materialIconClass={this.props.materialIconClass}
-        >
-          {this.props.title}
-        </TitleSection>
+        <Container row>
+          {this.props.prefix}
+          <TitleSection
+            capitalize={
+              this.props.capitalize === undefined || this.props.capitalize
+            }
+            icon={this.props.image}
+            materialIconClass={this.props.materialIconClass}
+          >
+            {this.props.title}
+          </TitleSection>
+        </Container>
 
         {this.props.description && (
           <>
             <Spacer height="35px" />
             <InfoSection>
               <TopRow>
-                <InfoLabel>
-                  <i className="material-icons">info</i> Info
-                </InfoLabel>
+                <Tooltip content="TestInfo" position="bottom" hidden={true}>
+                  <InfoLabel>
+                    <i className="material-icons">info</i> Info
+                  </InfoLabel>
+                </Tooltip>
               </TopRow>
               <Description>{this.props.description}</Description>
             </InfoSection>
@@ -85,7 +95,6 @@ const InfoLabel = styled.div`
 `;
 
 const InfoSection = styled.div`
-
   font-family: "Work Sans", sans-serif;
   margin-left: 0px;
 `;

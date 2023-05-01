@@ -22,11 +22,13 @@ import Link from "./porter/Link";
 type Props = {
   goBack: () => void;
   proceed: (id: string) => void;
+  switchToCredentialFlow: () => void;
 };
 
 const CloudFormationForm: React.FC<Props> = ({
   goBack,
   proceed,
+  switchToCredentialFlow
 }) => {
   const [grantPermissionsError, setGrantPermissionsError] = useState("");
   const [roleStatus, setRoleStatus] = useState("");
@@ -74,9 +76,10 @@ const CloudFormationForm: React.FC<Props> = ({
 
   const directToCloudFormation = () => {
     let externalId = getExternalId();
+    let trustArn = process.env.TRUST_ARN ? process.env.TRUST_ARN : "arn:aws:iam::108458755588:role/CAPIManagement";
     window.open(
       `https://console.aws.amazon.com/cloudformation/home?
-      #/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}`
+      #/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`
     )
   }
 
@@ -90,7 +93,10 @@ const CloudFormationForm: React.FC<Props> = ({
           </Text>
           <Spacer height="15px" />
           <Text color="helper">
-            Provide your AWS account ID to log in and grant Porter access to AWS. You will need to select "Create stack" after being redirected to the AWS console below.
+            Provide your AWS account ID to log in and grant Porter access to AWS by clicking 'Grant permissions' below.
+          </Text>
+          <Text color="helper">
+            You will need to select "Create stack" after being redirected to the AWS console.
           </Text>
           <Spacer y={1} />
           <Input
@@ -109,15 +115,18 @@ const CloudFormationForm: React.FC<Props> = ({
             }
             value={AWSAccountID}
             setValue={(e) => {
+              if (e === "open-sesame") {
+                switchToCredentialFlow();
+              }
               setGrantPermissionsError("");
-              setAWSAccountID(e);
+              setAWSAccountID(e.trim());
             }}
             placeholder="ex: 915037676314"
           />
           <Spacer y={1} />
           <Button
             onClick={() => {
-              if (AWSAccountID.length === 12) {
+              if (AWSAccountID.length === 12 && !isNaN(Number(AWSAccountID))) {
                 directToCloudFormation();
               } else {
                 setGrantPermissionsError("Invalid AWS account ID");
@@ -133,6 +142,10 @@ const CloudFormationForm: React.FC<Props> = ({
           >
             <ButtonImg src={aws} /> Grant permissions
           </Button>
+          <Spacer y={1} />
+          <Text color="helper">
+            Make sure that the stack status has changed from "CREATE_IN_PROGRESS" to "CREATE_COMPLETE" before clicking Continue below.
+          </Text>
         </Fieldset>
         <Spacer y={1} />
         <Button
@@ -172,7 +185,9 @@ const CloudFormationForm: React.FC<Props> = ({
                     <Spacer y={1} />
                     <Step number={4}>After being redirected to AWS, select "Create stack" on the AWS console.</Step>
                     <Spacer y={1} />
-                    <Step number={5}>Return to Porter and select "Continue".</Step>
+                    <Step number={5}>Wait until the stack status has changed from "CREATE_IN_PROGRESS" to "CREATE_COMPLETE".</Step>
+                    <Spacer y={1} />
+                    <Step number={6}>Return to Porter and select "Continue".</Step>
                   </>
                 }
               />
@@ -255,25 +270,3 @@ const BackButton = styled.div`
     margin-left: -2px;
   }
 `;
-
-const StyledForm = styled.div`
-  position: relative;
-  padding: 15px 30px 25px;
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
-  font-size: 13px;
-  margin-bottom: 30px;
-`;
-
-const ErrorContainer = styled.div`
-  position: relative;
-  margin-top: 20px;
-  padding: 30px 30px 25px;
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
-  font-size: 13px;
-  margin-bottom: 30px;
-  color: red;
-`

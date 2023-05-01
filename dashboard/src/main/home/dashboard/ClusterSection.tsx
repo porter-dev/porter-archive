@@ -10,8 +10,7 @@ import ClusterList from "./ClusterList";
 import TitleSection from "components/TitleSection";
 import Spacer from "components/porter/Spacer";
 
-type Props = {
-};
+type Props = {};
 
 const ClusterSection = (props: Props) => {
   const { usage, currentCluster } = useContext(Context);
@@ -84,7 +83,8 @@ const ClusterSection = (props: Props) => {
         </TitleSection>
         <Spacer y={1} />
         <Banner>
-          You have currently provisioned {usage?.current.cluster || "0"} out of {usage?.limit.clusters || "0"} clusters for this project.
+          You have currently provisioned {usage?.current.cluster || "0"} out of{" "}
+          {usage?.limit.clusters || "0"} clusters for this project.
         </Banner>
         <Br />
         <ProvisionerFlow />
@@ -107,7 +107,7 @@ export default ClusterSection;
 
 const Br = styled.div<{ height?: string }>`
   width: 100%;
-  height: ${props => props.height || "30px"};
+  height: ${(props) => props.height || "30px"};
 `;
 
 const ClusterIcon = styled.div`

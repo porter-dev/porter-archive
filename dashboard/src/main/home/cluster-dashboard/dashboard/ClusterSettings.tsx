@@ -7,8 +7,16 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import Loading from "components/Loading";
+import CopyToClipboard from "components/CopyToClipboard";
+import { DetailedIngressError } from "shared/types";
+import { RouteComponentProps } from "react-router";
 
-const ClusterSettings: React.FC = () => {
+type Props = RouteComponentProps & {
+  ingressIp: string;
+  ingressError: DetailedIngressError;
+};
+
+const ClusterSettings: React.FC<Props> = (props) => {
   const {
     currentProject,
     currentCluster,
@@ -28,6 +36,7 @@ const ClusterSettings: React.FC = () => {
   const [secretKey, setSecretKey] = useState<string>("");
   const [startRotateCreds, setStartRotateCreds] = useState<boolean>(false);
   const [successfulRotate, setSuccessfulRotate] = useState<boolean>(false);
+
   const [enableAgent, setEnableAgent] = useState(
     currentCluster.agent_integration_enabled
   );
@@ -241,6 +250,41 @@ const ClusterSettings: React.FC = () => {
       </Button>
     </div>
   );
+  let configureUrl = (
+    ingressIp: string | undefined,
+    ingressError: DetailedIngressError
+  ) => {
+    if (typeof ingressIp !== "string") {
+      return <></>;
+    }
+
+    if (!ingressIp.length && ingressError) {
+      return <></>;
+    }
+
+    if (!ingressIp.length) {
+      return <></>;
+    }
+    return (
+      <>
+        <div>
+          <Heading>Configure Custom Domain</Heading>
+          <Helper>
+            To configure custom domains for your apps, add a CNAME record
+            pointing to the following Ingress IP:
+          </Helper>
+          <CopyToClipboard
+            as={Url}
+            text={ingressIp}
+            wrapperProps={{ onClick: (e: any) => e.stopPropagation() }}
+          >
+            <span>{ingressIp}</span>
+            <i className="material-icons-outlined">content_copy</i>
+          </CopyToClipboard>
+        </div>
+      </>
+    );
+  };
 
   let enableAgentIntegration = (
     <div>
@@ -299,6 +343,11 @@ const ClusterSettings: React.FC = () => {
     <div>
       <StyledSettingsSection>
         <DarkMatter />
+        {props.ingressIp && (
+          <>{configureUrl(props.ingressIp, props.ingressError)}</>
+        )}
+
+        <DarkMatter />
         {enableAgentIntegration}
         <DarkMatter />
         {enablePreviewEnvironments}
@@ -311,6 +360,10 @@ const ClusterSettings: React.FC = () => {
         <Heading>Delete cluster</Heading>
         {helperText}
         <Button
+          disabled={
+            currentCluster.status == "UPDATING_UNAVAILABLE" ||
+            currentCluster.status == "UPDATING"
+          }
           color="#b91133"
           onClick={() => setCurrentModal("UpdateClusterModal")}
         >
@@ -339,7 +392,7 @@ const StyledSettingsSection = styled.div`
   overflow: auto;
   height: 100%;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
 `;
 
@@ -371,4 +424,23 @@ const Warning = styled.div`
   color: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
     props.highlight ? "#f5cb42" : ""};
   margin-bottom: 20px;
+`;
+const Url = styled.a`
+  font-size: 13px;
+  user-select: text;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  margin-left: 20px;
+  cursor: pointer;
+  > i {
+    margin-left: 10px;
+    font-size: 15px;
+  }
+
+  > span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 `;

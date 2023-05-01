@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
 import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
-import styled from "styled-components";
+import styled, { ThemeProvider } from "styled-components";
 import { createPortal } from "react-dom";
 
 import api from "shared/api";
+import midnight from "shared/themes/midnight";
+import standard from "shared/themes/standard";
 import { Context } from "shared/Context";
 import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
 import { ClusterType, ProjectType } from "shared/types";
@@ -18,7 +20,8 @@ import LaunchWrapper from "./launch/LaunchWrapper";
 import Navbar from "./navbar/Navbar";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
-import PageNotFound from "components/PageNotFound";
+import AppDashboard from "./app-dashboard/AppDashboard";
+import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
 
 import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -28,6 +31,14 @@ import ModalHandler from "./ModalHandler";
 import { NewProjectFC } from "./new-project/NewProject";
 import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
+import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
+import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
+import Modal from "components/porter/Modal";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
+import Button from "components/porter/Button";
+import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
+import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -77,12 +88,11 @@ const Home: React.FC<Props> = (props) => {
   } = useContext(Context);
 
   const [showWelcome, setShowWelcome] = useState(false);
-  const [prevProjectId, setPrevProjectId] = useState<number | null>(null);
   const [forceRefreshClusters, setForceRefreshClusters] = useState(false);
-  const [sidebarReady, setSidebarReady] = useState(false);
-  const [handleDO, setHandleDO] = useState(false);
   const [ghRedirect, setGhRedirect] = useState(false);
   const [forceSidebar, setForceSidebar] = useState(true);
+  const [theme, setTheme] = useState(standard);
+  const [showWrongEmailModal, setShowWrongEmailModal] = useState(false);
 
   const redirectToNewProject = () => {
     pushFiltered(props, "/new-project", ["project_id"]);
@@ -181,7 +191,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -205,7 +215,9 @@ const Home: React.FC<Props> = (props) => {
     getProjects(defaultProjectId);
     getMetadata();
 
-    if (
+    if (err === "Wrong email for invite") {
+      setShowWrongEmailModal(true);
+    } else if (
       !hasFinishedOnboarding &&
       props.history.location.pathname &&
       !props.history.location.pathname.includes("onboarding")
@@ -255,9 +267,11 @@ const Home: React.FC<Props> = (props) => {
               .then((res) => {
                 const usage = res.data;
                 setUsage(usage);
-                if (usage.exceeded && false) {
+                /*
+                if (usage.exceeded) {
                   setCurrentModal("UsageWarningModal", { usage });
                 }
+                */
               })
               .catch(console.log);
           }
@@ -267,12 +281,16 @@ const Home: React.FC<Props> = (props) => {
   }, [props.currentProject?.id]);
 
   useEffect(() => {
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+    let err = urlParams.get("error");
     if (
       !hasFinishedOnboarding &&
       props.history.location.pathname &&
       !props.history.location.pathname.includes("onboarding") &&
       !props.history.location.pathname.includes("new-project") &&
-      !props.history.location.pathname.includes("project-settings")
+      !props.history.location.pathname.includes("project-settings") &&
+      err !== "Wrong email for invite"
     ) {
       setCurrentModal("RedirectToOnboardingModal");
     }
@@ -347,138 +365,182 @@ const Home: React.FC<Props> = (props) => {
 
   const { cluster, baseRoute } = props.match.params as any;
   return (
-    <StyledHome>
-      <ModalHandler setRefreshClusters={setForceRefreshClusters} />
-      {currentOverlay &&
-        createPortal(
-          <ConfirmOverlay
-            show={true}
-            message={currentOverlay.message}
-            onYes={currentOverlay.onYes}
-            onNo={currentOverlay.onNo}
-          />,
-          document.body
-        )}
-      {/* Render sidebar when there's at least one project */}
-      {projects?.length > 0 && baseRoute !== "new-project" ? (
-        <Sidebar
-          key="sidebar"
-          forceSidebar={forceSidebar}
-          setWelcome={setShowWelcome}
-          currentView={props.currentRoute}
-          forceRefreshClusters={forceRefreshClusters}
-          setRefreshClusters={setForceRefreshClusters}
-        />
-      ) : (
-        <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
-          <Icon src={discordLogo} />
-          Join Our Discord
-        </DiscordButton>
-      )}
-      <ViewWrapper id="HomeViewWrapper">
-        <Navbar
-          logOut={props.logOut}
-          currentView={props.currentRoute} // For form feedback
-        />
-
-        <Switch>
-          <Route
-            path="/new-project"
-            render={() => {
-              return <NewProjectFC />;
-            }}
-          ></Route>
-          <Route
-            path="/onboarding"
-            render={() => {
-              return <Onboarding />;
-            }}
+    <ThemeProvider theme={currentProject?.simplified_view_enabled ? midnight : standard}>
+      <StyledHome>
+        <ModalHandler setRefreshClusters={setForceRefreshClusters} />
+        {currentOverlay &&
+          createPortal(
+            <ConfirmOverlay
+              show={true}
+              message={currentOverlay.message}
+              onYes={currentOverlay.onYes}
+              onNo={currentOverlay.onNo}
+            />,
+            document.body
+          )}
+        {/* Render sidebar when there's at least one project */}
+        {projects?.length > 0 && baseRoute !== "new-project" ? (
+          <Sidebar
+            key="sidebar"
+            forceSidebar={forceSidebar}
+            setWelcome={setShowWelcome}
+            currentView={props.currentRoute}
+            forceRefreshClusters={forceRefreshClusters}
+            setRefreshClusters={setForceRefreshClusters}
           />
-          {(user?.isPorterUser ||
-            overrideInfraTabEnabled({
-              projectID: currentProject?.id,
-            })) && (
+        ) : (
+          <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
+            <Icon src={discordLogo} />
+            Join Our Discord
+          </DiscordButton>
+        )}
+        <ViewWrapper id="HomeViewWrapper">
+          <Navbar
+            logOut={props.logOut}
+            currentView={props.currentRoute} // For form feedback
+          />
+
+          <Switch>
             <Route
-              path="/infrastructure"
+              path="/apps/new"
+            >
+              <NewAppFlow />
+            </Route>
+            <Route path="/apps/:appName">
+              <ExpandedApp />
+            </Route>
+            <Route
+              path="/apps"
+            >
+              <AppDashboard />
+            </Route>
+            <Route
+              path="/addons/new"
+            >
+              <NewAddOnFlow />
+            </Route>
+            <Route
+              path="/addons"
+            >
+              <AddOnDashboard />
+            </Route>
+            <Route
+              path="/new-project"
+              render={() => {
+                return <NewProjectFC />;
+              }}
+            ></Route>
+            <Route
+              path="/onboarding"
+              render={() => {
+                return <Onboarding />;
+              }}
+            />
+            {(user?.isPorterUser ||
+              overrideInfraTabEnabled({
+                projectID: currentProject?.id,
+              })) && (
+                <Route
+                  path="/infrastructure"
+                  render={() => {
+                    return (
+                      <DashboardWrapper>
+                        <InfrastructureRouter />
+                      </DashboardWrapper>
+                    );
+                  }}
+                />
+              )}
+            <Route
+              path="/dashboard"
               render={() => {
                 return (
                   <DashboardWrapper>
-                    <InfrastructureRouter />
+                    <Dashboard
+                      projectId={currentProject?.id}
+                      setRefreshClusters={setForceRefreshClusters}
+                    />
                   </DashboardWrapper>
                 );
               }}
             />
-          )}
-          <Route
-            path="/dashboard"
-            render={() => {
-              return (
-                <DashboardWrapper>
-                  <Dashboard
-                    projectId={currentProject?.id}
-                    setRefreshClusters={setForceRefreshClusters}
-                  />
-                </DashboardWrapper>
-              );
-            }}
-          />
-          <Route
-            path={[
-              "/cluster-dashboard",
-              "/applications",
-              "/jobs",
-              "/env-groups",
-              "/databases",
-              "/preview-environments",
-              "/stacks",
-            ]}
-            render={() => {
-              if (currentCluster?.id === -1) {
-                return <Loading />;
-              } else if (!currentCluster || !currentCluster.name) {
+            <Route
+              path={[
+                "/cluster-dashboard",
+                "/applications",
+                "/jobs",
+                "/env-groups",
+                "/databases",
+                "/preview-environments",
+                "/stacks",
+              ]}
+              render={() => {
+                if (currentCluster?.id === -1) {
+                  return <Loading />;
+                } else if (!currentCluster || !currentCluster.name) {
+                  return (
+                    <DashboardWrapper>
+                      <NoClusterPlaceHolder></NoClusterPlaceHolder>
+                    </DashboardWrapper>
+                  );
+                }
                 return (
                   <DashboardWrapper>
-                    <PageNotFound />
+                    <DashboardRouter
+                      currentCluster={currentCluster}
+                      setSidebar={setForceSidebar}
+                      currentView={props.currentRoute}
+                    />
                   </DashboardWrapper>
                 );
-              }
-              return (
-                <DashboardWrapper>
-                  <DashboardRouter
-                    currentCluster={currentCluster}
-                    setSidebar={setForceSidebar}
-                    currentView={props.currentRoute}
-                  />
-                </DashboardWrapper>
-              );
-            }}
-          />
-          <Route
-            path={"/integrations"}
-            render={() => <GuardedIntegrations />}
-          />
-          <Route
-            path={"/project-settings"}
-            render={() => <GuardedProjectSettings />}
-          />
-          <Route path={"*"} render={() => <LaunchWrapper />} />
-        </Switch>
-      </ViewWrapper>
-      {createPortal(
-        <ConfirmOverlay
-          show={currentModal === "UpdateProjectModal"}
-          message={
-            currentProject
-              ? `Are you sure you want to delete ${currentProject.name}?`
-              : ""
-          }
-          onYes={handleDelete}
-          onNo={() => setCurrentModal(null, null)}
-        />,
-        document.body
-      )}
-      ,
-    </StyledHome>
+              }}
+            />
+            <Route
+              path={"/integrations"}
+              render={() => <GuardedIntegrations />}
+            />
+            <Route
+              path={"/project-settings"}
+              render={() => <GuardedProjectSettings />}
+            />
+            <Route path={"*"} render={() => <LaunchWrapper />} />
+          </Switch>
+        </ViewWrapper>
+        {createPortal(
+          <ConfirmOverlay
+            show={currentModal === "UpdateProjectModal"}
+            message={
+              currentProject
+                ? `Are you sure you want to delete ${currentProject.name}?`
+                : ""
+            }
+            onYes={handleDelete}
+            onNo={() => setCurrentModal(null, null)}
+          />,
+          document.body
+        )}
+        {showWrongEmailModal &&
+          <Modal>
+            <Text size={16}>
+              Oops! This invite link wasn't for {user?.email}
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              Your account email does not match the email associated with this project invite.
+              Please log out and sign up again with the correct email using the invite link.
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              You should reach out to the person who sent you the invite link to get the correct email.
+            </Text>
+            <Spacer y={1} />
+            <Button onClick={props.logOut}>
+              Log out
+            </Button>
+          </Modal>
+        }
+      </StyledHome>
+    </ThemeProvider>
   );
 };
 
@@ -492,7 +554,7 @@ const ViewWrapper = styled.div`
   flex: 1;
   overflow-y: auto;
   justify-content: center;
-  background: ${props => props.theme.bg};
+  background: ${(props) => props.theme.bg};
   position: relative;
 `;
 

@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup docker
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -234,7 +234,7 @@ jobs:
           unzip ./release/UNSIGNED_portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
           unzip ./release/UNSIGNED_docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
       - name: Import Code-Signing Certificates
-        uses: Apple-Actions/import-codesign-certs@v1
+        uses: Apple-Actions/import-codesign-certs@v2
         with:
           # The certificates in a PKCS12 file encoded as a base64 string
           p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
@@ -339,12 +339,11 @@ jobs:
           path: release/darwin
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          name: Release ${{ github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           draft: false
           prerelease: true
       - name: Upload Linux CLI Release Asset

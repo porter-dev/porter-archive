@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
@@ -57,18 +58,6 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// delete corresponding namespace
-	agent, err := c.GetAgent(r, cluster, "")
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	// make sure we do not delete any kubernetes "system" namespaces
-	if !isSystemNamespace(depl.Namespace) {
-		agent.DeleteNamespace(depl.Namespace)
-	}
-
 	// check that the environment belongs to the project and cluster IDs
 	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, depl.EnvironmentID)
 	if err != nil {
@@ -81,6 +70,34 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// try to cancel any existing github workflow for this deployment
+	client, err := getGithubClientFromEnvironment(c.Config(), env)
+	if err == nil {
+		workflowRun, err := commonutils.GetLatestWorkflowRun(client, depl.RepoOwner, depl.RepoName,
+			fmt.Sprintf("porter_%s_env.yml", env.Name), depl.PRBranchFrom)
+		if err == nil {
+			if workflowRun.GetStatus() == "in_progress" || workflowRun.GetStatus() == "queued" ||
+				workflowRun.GetStatus() == "waiting" || workflowRun.GetStatus() == "requested" ||
+				workflowRun.GetStatus() == "pending" {
+				client.Actions.CancelWorkflowRunByID(
+					context.Background(), depl.RepoOwner, depl.RepoName, workflowRun.GetID(),
+				)
+			}
+		}
+	}
+
+	// delete corresponding namespace
+	agent, err := c.GetAgent(r, cluster, "")
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// make sure we do not delete any kubernetes "system" namespaces
+	if !isSystemNamespace(depl.Namespace) {
+		agent.DeleteNamespace(depl.Namespace)
+	}
+
 	_, err = c.Repo().Environment().DeleteDeployment(depl)
 
 	if err != nil {
@@ -89,12 +106,6 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	client, err := getGithubClientFromEnvironment(c.Config(), env)
-	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

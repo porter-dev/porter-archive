@@ -26,7 +26,6 @@ interface AdvancedBuildSettingsProps {
   dockerfilePath?: string;
   setDockerfilePath: (x: string) => void;
   setBuildConfig: (x: any) => void;
-  buildConfig: BuildConfig;
 }
 
 type Buildpack = {

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext, useCallback } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
+import { z } from "zod";
 
 import notFound from "assets/not-found.png";
 import web from "assets/web.png";
@@ -27,6 +28,7 @@ import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
 import { Service } from "../new-app-flow/serviceTypes";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
+import { PorterYamlSchema } from "../new-app-flow/schema";
 
 type Props = RouteComponentProps & {};
 
@@ -42,7 +44,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
-
+  const [rawYaml, setRawYaml] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [appData, setAppData] = useState(null);
   const [error, setError] = useState(null);
@@ -60,6 +62,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
+  const [porterJson, setPorterJson] = useState<
+    z.infer<typeof PorterYamlSchema> | undefined
+  >(undefined);
 
   const getPorterApp = async () => {
     setIsLoading(true);
@@ -124,6 +129,34 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     } catch (err) {
       setError(err);
       setIsLoading(false);
+    }
+  };
+
+  const fetchPorterYamlContent = async (porterYaml: string) => {
+    try {
+      const res = await api.getPorterYamlContents(
+        "<token>",
+        {
+          path: porterYaml,
+        },
+        {
+          project_id: appData.app.project_id,
+          git_repo_id: appData.app.git_repo_id,
+          owner: appData.app.repo_name?.split("/")[0],
+          name: appData.app.repo_name?.split("/")[1],
+          kind: "github",
+          branch: appData.app.git_branch,
+        }
+      );
+      setRawYaml(atob(res.data));
+      let parsedYaml;
+      parsedYaml = yaml.load(rawYaml);
+      const parsedData = PorterYamlSchema.parse(parsedYaml);
+      const porterYamlToJson = parsedData as z.infer<typeof PorterYamlSchema>;
+      setPorterJson(porterYamlToJson);
+      console.log(porterJson);
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -295,15 +328,16 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "overview":
         const helmValues = appData?.chart?.config;
         const defaultValues = appData?.chart?.chart?.values;
-        if ((defaultValues && Object.keys(defaultValues).length > 0) || (helmValues && Object.keys(helmValues).length > 0)) {
+        if (
+          (defaultValues && Object.keys(defaultValues).length > 0) ||
+          (helmValues && Object.keys(helmValues).length > 0)
+        ) {
           const svcs = Service.deserialize(helmValues, defaultValues);
-          return <Services
-            setServices={(services: any[]) => {
-            }}
-            services={svcs}
-          />;
+          return (
+            <Services setServices={(services: any[]) => {}} services={svcs} />
+          );
         } else {
-          return <Text>No services found for this application yet.</Text>
+          return <Text>No services found for this application yet.</Text>;
         }
       case "build-settings":
         return (
@@ -412,7 +446,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             shouldUpdate={
               appData.chart.latest_version &&
               appData.chart.latest_version !==
-              appData.chart.chart.metadata.version
+                appData.chart.chart.metadata.version
             }
             latestVersion={appData.chart.latest_version}
             upgradeVersion={appUpgradeVersion}
@@ -423,20 +457,20 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             options={
               appData.app.git_repo_id
                 ? [
-                  { label: "Events", value: "events" },
-                  { label: "Logs", value: "logs" },
-                  { label: "Metrics", value: "metrics" },
-                  { label: "Overview", value: "overview" },
-                  { label: "Build settings", value: "build-settings" },
-                  { label: "Settings", value: "settings" },
-                ]
+                    { label: "Events", value: "events" },
+                    { label: "Logs", value: "logs" },
+                    { label: "Metrics", value: "metrics" },
+                    { label: "Overview", value: "overview" },
+                    { label: "Build settings", value: "build-settings" },
+                    { label: "Settings", value: "settings" },
+                  ]
                 : [
-                  { label: "Events", value: "events" },
-                  { label: "Logs", value: "logs" },
-                  { label: "Metrics", value: "metrics" },
-                  { label: "Overview", value: "overview" },
-                  { label: "Settings", value: "settings" },
-                ]
+                    { label: "Events", value: "events" },
+                    { label: "Logs", value: "logs" },
+                    { label: "Metrics", value: "metrics" },
+                    { label: "Overview", value: "overview" },
+                    { label: "Settings", value: "settings" },
+                  ]
             }
             currentTab={tab}
             setCurrentTab={setTab}

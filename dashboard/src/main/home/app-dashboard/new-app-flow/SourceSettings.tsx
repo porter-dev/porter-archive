@@ -33,7 +33,6 @@ type Props = {
   setProcfilePath: (x: string) => void;
   folderPath: string | null;
   setFolderPath: (x: string) => void;
-  buildConfig: BuildConfig;
   setBuildConfig: (x: any) => void;
   porterYaml: string;
   setPorterYaml: (x: any) => void;
@@ -41,7 +40,6 @@ type Props = {
 
 const SourceSettings: React.FC<Props> = ({
   source,
-  buildConfig,
   imageUrl,
   setImageUrl,
   imageTag,
@@ -118,7 +116,6 @@ const SourceSettings: React.FC<Props> = ({
         <div>
           {source === "github" ? (
             <SharedBuildSettings
-              buildConfig={buildConfig}
               actionConfig={actionConfig}
               branch={branch}
               dockerfilePath={dockerfilePath}

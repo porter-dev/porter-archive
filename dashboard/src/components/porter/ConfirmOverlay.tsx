@@ -49,7 +49,7 @@ const StyledConfirmOverlay = styled.div`
   font-size: 18px;
   color: white;
   flex-direction: column;
-  background: rgb(0, 0, 0, 0.73);
+  background: rgb(0, 0, 0, 0.55);
   backdrop-filter: blur(5px);
   animation: lindEnter 0.2s;
   animation-fill-mode: forwards;

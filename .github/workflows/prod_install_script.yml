@@ -3,7 +3,9 @@
     branches:
       - master
       - porter-setup
-name: Deploy TF-Provisioner to prod
+    paths:
+      - "services/cli_install_script_container/**"
+name: Deploy install.porter.run to prod
 jobs:
   porter-deploy:
     runs-on: ubuntu-latest
@@ -17,7 +19,7 @@ jobs:
         timeout-minutes: 20
         uses: porter-dev/porter-update-action@v0.1.0
         with:
-          app: tf-provisioner
+          app: install-script
           cluster: "9"
           host: https://dashboard.internal-tools.getporter.dev
           namespace: default

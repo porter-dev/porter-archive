@@ -228,6 +228,18 @@ const updatePorterApp = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
 });
 
+const deletePorterApp = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    name: string;
+  }
+>("DELETE", (pathParams) => {
+  let { project_id, cluster_id, name } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
+});
+
 const updatePorterStack = baseApi<
   {
     stack_name: string;
@@ -2566,6 +2578,7 @@ export default {
   getPorterApp,
   createPorterApp,
   updatePorterApp,
+  deletePorterApp,
   updatePorterStack,
   createConfigMap,
   deleteCluster,

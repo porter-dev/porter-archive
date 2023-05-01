@@ -96,6 +96,27 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
+  const deletePorterApp = async () => {
+    setIsLoading(true);
+    const { appName } = props.match.params as any;
+    try {
+      const res = await api.deletePorterApp(
+        "<token>",
+        {},
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+          name: appName,
+        }
+      );
+      console.log(res);
+      setIsLoading(false);
+    } catch (err) {
+      setError(err);
+      setIsLoading(false);
+    }
+  }
+
   const renderIcon = (b: string, size?: string) => {
     var src = box;
     if (b) {
@@ -189,6 +210,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     // setIsPreview(!isCurrent);
     getChartData(chart);
   };
+
   const appUpgradeVersion = useCallback(
     async (version: string, cb: () => void) => {
       // convert current values to yaml
@@ -261,6 +283,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     });
     return `${time} on ${date}`;
   };
+  
   const renderTabContents = () => {
     switch (tab) {
       case "overview":
@@ -397,7 +420,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         <ConfirmOverlay
           message={`Are you sure you want to delete "${appData.app.name}"?`}
           onYes={() => {
-            // deleteApp();
+            deletePorterApp();
           }}
           onNo={() => {
             setShowDeleteOverlay(false);

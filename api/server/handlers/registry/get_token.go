@@ -2,6 +2,7 @@ package registry
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -21,6 +22,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/arn"
 )
+
+var errNoRegistryFound = errors.New("no linked registry found")
 
 type RegistryGetECRTokenHandler struct {
 	handlers.PorterHandlerReadWriter
@@ -128,6 +131,11 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		}
 	}
 
+	if token == "" {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errNoRegistryFound, http.StatusBadRequest))
+		return
+	}
+
 	resp := &types.GetRegistryTokenResponse{
 		Token:     token,
 		ExpiresAt: expiresAt,
@@ -190,6 +198,11 @@ func (c *RegistryGetGCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		}
 	}
 
+	if token == "" {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errNoRegistryFound, http.StatusBadRequest))
+		return
+	}
+
 	resp := &types.GetRegistryTokenResponse{
 		Token:     token,
 		ExpiresAt: expiresAt,
@@ -250,6 +263,11 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			expiresAt = &oauthTok.Expiry
 			break
 		}
+	}
+
+	if token == "" {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errNoRegistryFound, http.StatusBadRequest))
+		return
 	}
 
 	resp := &types.GetRegistryTokenResponse{
@@ -317,6 +335,11 @@ func (c *RegistryGetDOCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		}
 	}
 
+	if token == "" {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errNoRegistryFound, http.StatusBadRequest))
+		return
+	}
+
 	resp := &types.GetRegistryTokenResponse{
 		Token:     token,
 		ExpiresAt: expiresAt,
@@ -361,12 +384,17 @@ func (c *RegistryGetDockerhubTokenHandler) ServeHTTP(w http.ResponseWriter, r *h
 			}
 
 			token = base64.StdEncoding.EncodeToString([]byte(string(basic.Username) + ":" + string(basic.Password)))
-
-			// we'll just set an arbitrary 30-day expiry time (this is not enforced)
-			timeExpires := time.Now().Add(30 * 24 * 3600 * time.Second)
-			expiresAt = &timeExpires
 		}
 	}
+
+	if token == "" {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errNoRegistryFound, http.StatusBadRequest))
+		return
+	}
+
+	// we'll just set an arbitrary 30-day expiry time (this is not enforced)
+	timeExpires := time.Now().Add(30 * 24 * time.Hour)
+	expiresAt = &timeExpires
 
 	resp := &types.GetRegistryTokenResponse{
 		Token:     token,
@@ -418,6 +446,11 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			timeExpires := time.Now().Add(30 * 24 * 3600 * time.Second)
 			expiresAt = &timeExpires
 		}
+	}
+
+	if token == "" {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errNoRegistryFound, http.StatusBadRequest))
+		return
 	}
 
 	resp := &types.GetRegistryTokenResponse{

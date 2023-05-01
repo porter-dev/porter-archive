@@ -5,19 +5,24 @@ import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import Checkbox from "components/porter/Checkbox";
 import { JobService } from "./serviceTypes";
+import { Height } from "react-animate-height";
 
 interface Props {
-  service: JobService
-  editService: (service: JobService) => void
+  service: JobService;
+  editService: (service: JobService) => void;
+  setHeight: (height: Height) => void;
 }
 
 const JobTabs: React.FC<Props> = ({
   service,
-  editService
+  editService,
+  setHeight,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>('main');
 
   const renderMain = () => {
+    setHeight(244);
+
     return (
       <>
         <Spacer y={1} />
@@ -42,6 +47,8 @@ const JobTabs: React.FC<Props> = ({
   };
 
   const renderResources = () => {
+    setHeight(244);
+
     return (
       <>
         <Spacer y={1} />
@@ -65,6 +72,8 @@ const JobTabs: React.FC<Props> = ({
   };
 
   const renderAdvanced = () => {
+    setHeight(118.5);
+
     return (
       <>
         <Spacer y={1} />

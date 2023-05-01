@@ -1,5 +1,5 @@
 import React from "react"
-import AnimateHeight from "react-animate-height";
+import AnimateHeight, { Height } from "react-animate-height";
 import styled from "styled-components";
 
 import web from "assets/web.png";
@@ -24,15 +24,17 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   editService,
 }) => {
   const [showExpanded, setShowExpanded] = React.useState<boolean>(true)
+  const [height, setHeight] = React.useState<Height>('auto');
 
+  // TODO: calculate heights instead of hardcoding them
   const renderTabs = (service: Service) => {
     switch (service.type) {
       case 'web':
-        return <WebTabs service={service} editService={editService} />
+        return <WebTabs service={service} editService={editService} setHeight={setHeight} />
       case 'worker':
-        return <WorkerTabs service={service} editService={editService} />
+        return <WorkerTabs service={service} editService={editService} setHeight={setHeight} />
       case 'job':
-        return <JobTabs service={service} editService={editService} />
+        return <JobTabs service={service} editService={editService} setHeight={setHeight} />
     }
   }
 
@@ -67,7 +69,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         </ActionButton>
       </ServiceHeader>
       <AnimateHeight
-        height={showExpanded ? "auto" : 0}
+        height={showExpanded ? height : 0}
       >
         <StyledSourceBox showExpanded={showExpanded}>
           {renderTabs(service)}

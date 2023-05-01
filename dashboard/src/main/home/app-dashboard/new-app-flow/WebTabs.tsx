@@ -1,23 +1,28 @@
 import Input from "components/porter/Input";
-import React from "react"
+import React, { useEffect } from "react"
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import Checkbox from "components/porter/Checkbox";
 import { WebService } from "./serviceTypes";
+import { Height } from "react-animate-height";
 
 interface Props {
   service: WebService
   editService: (service: WebService) => void
+  setHeight: (height: Height) => void
 }
 
 const WebTabs: React.FC<Props> = ({
   service,
-  editService
+  editService,
+  setHeight,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>('main');
 
   const renderMain = () => {
+    setHeight(300);
+
     return (
       <>
         <Spacer y={1} />
@@ -49,6 +54,8 @@ const WebTabs: React.FC<Props> = ({
   };
 
   const renderResources = () => {
+    setHeight(713.5);
+
     return (
       <>
         <Spacer y={1} />
@@ -119,6 +126,8 @@ const WebTabs: React.FC<Props> = ({
   };
 
   const renderAdvanced = () => {
+    setHeight(159);
+
     return (
       <>
         <Spacer y={1} />

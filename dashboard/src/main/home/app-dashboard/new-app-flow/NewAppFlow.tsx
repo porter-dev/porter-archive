@@ -308,7 +308,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           porterJson.apps[service.name].config
         );
       }
-      apps[service.name] = {
+      // required because of https://github.com/helm/helm/issues/9214
+      apps[Service.toHelmName(service)] = {
         type: service.type,
         run: service.startCommand.value,
         config,
@@ -430,7 +431,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Spacer y={0.5} />
 
                 <Services
-                  setServices={(services: any[]) => {
+                  setServices={(services: Service[]) => {
                     setFormState({ ...formState, serviceList: services });
                     if (Validators.serviceList(services)) {
                       setCurrentStep(Math.max(currentStep, 4));

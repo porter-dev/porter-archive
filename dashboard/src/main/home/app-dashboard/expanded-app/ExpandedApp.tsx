@@ -24,6 +24,8 @@ import { ChartType, ResourceType } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTabStack from "./BuildSettingsTabStack";
 import Button from "components/porter/Button";
+import Services from "../new-app-flow/Services";
+import { Service } from "../new-app-flow/serviceTypes";
 
 type Props = RouteComponentProps & {};
 
@@ -266,7 +268,18 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const renderTabContents = () => {
     switch (tab) {
       case "overview":
-        return <div>TODO: service list</div>;
+        const helmValues = appData?.chart?.config;
+        const defaultValues = appData?.chart?.chart?.values;
+        if ((defaultValues && Object.keys(defaultValues).length > 0) || (helmValues && Object.keys(helmValues).length > 0)) {
+          const svcs = Service.deserialize(helmValues, defaultValues);
+          return <Services
+            setServices={(services: any[]) => {
+            }}
+            services={svcs}
+          />;
+        } else {
+          return <Text>No services found for this application yet.</Text>
+        }
       case "build-settings":
         return (
           <BuildSettingsTabStack appData={appData} setAppData={setAppData} />
@@ -369,7 +382,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             shouldUpdate={
               appData.chart.latest_version &&
               appData.chart.latest_version !==
-                appData.chart.chart.metadata.version
+              appData.chart.chart.metadata.version
             }
             latestVersion={appData.chart.latest_version}
             upgradeVersion={appUpgradeVersion}

@@ -1,7 +1,6 @@
 package stacks
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -30,13 +29,10 @@ func NewUpdatePorterAppHandler(
 }
 
 func (c *UpdatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("so an update was attempted...")
 	ctx := r.Context()
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	name, _ := requestutils.GetURLParamString(r, types.URLParamReleaseName)
-
-	fmt.Println("name is", name)
 
 	porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, name)
 	if err != nil {

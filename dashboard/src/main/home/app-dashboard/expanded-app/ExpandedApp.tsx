@@ -24,6 +24,7 @@ import { ChartType, ResourceType } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTabStack from "./BuildSettingsTabStack";
 import Button from "components/porter/Button";
+import ConfirmOverlay from "components/porter/ConfirmOverlay";
 
 type Props = RouteComponentProps & {};
 
@@ -40,13 +41,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     currentCluster,
     currentProject,
     setCurrentError,
-    setCurrentOverlay,
   } = useContext(Context);
 
   const [isLoading, setIsLoading] = useState(true);
   const [appData, setAppData] = useState(null);
   const [error, setError] = useState(null);
-  const [isAuthorized] = useAuth();
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
     false
   );
@@ -58,10 +57,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [components, setComponents] = useState<ResourceType[]>([]);
 
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
+  const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
 
   const getPorterApp = async () => {
     setIsLoading(true);
@@ -275,17 +273,20 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         return (
           <>
             <Text size={16}>
-              Delete app "{appData.app.name}"
+              Delete "{appData.app.name}"
             </Text>
             <Spacer y={1} />
             <Text color="helper">
               Delete this application and all of its resources.
             </Text>
             <Spacer y={1} />
-            <Button onClick={() => {
-              // set delete overlay
-            }} color="#b91133">
-              Delete {appData.app.name}
+            <Button
+              onClick={() => {
+                setShowDeleteOverlay(true)
+              }}
+              color="#b91133"
+            >
+              Delete
             </Button>
           </>
         );
@@ -391,6 +392,17 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <Spacer y={1} />
           {renderTabContents()}
         </StyledExpandedApp>
+      )}
+      {showDeleteOverlay && (
+        <ConfirmOverlay
+          message={`Are you sure you want to delete "${appData.app.name}"?`}
+          onYes={() => {
+            // deleteApp();
+          }}
+          onNo={() => {
+            setShowDeleteOverlay(false);
+          }}
+        />
       )}
     </>
   );

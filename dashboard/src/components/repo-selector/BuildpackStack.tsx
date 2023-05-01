@@ -52,13 +52,23 @@ export const BuildpackStack: React.FC<{
   branch: string;
   hide: boolean;
   onChange: (config: BuildConfig) => void;
-}> = ({ actionConfig, folderPath, branch, hide, onChange }) => {
+  currentBuildConfig?: BuildConfig;
+}> = ({
+  actionConfig,
+  folderPath,
+  branch,
+  hide,
+  onChange,
+  currentBuildConfig,
+}) => {
   const { currentProject } = useContext(Context);
 
   const [builders, setBuilders] = useState<DetectedBuildpack[]>(null);
 
   const [stacks, setStacks] = useState<string[]>(null);
-  const [selectedStack, setSelectedStack] = useState<string>(null);
+  const [selectedStack, setSelectedStack] = useState<string>(
+    currentBuildConfig?.builder || null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [selectedBuildpacks, setSelectedBuildpacks] = useState<Buildpack[]>([]);
@@ -66,14 +76,13 @@ export const BuildpackStack: React.FC<{
     []
   );
   const renderModalContent = () => {
+    console.log(selectedBuildpacks);
     return (
       <>
         <Text size={16}>Buildpack Configuration</Text>
         <Spacer y={1} />
         <Scrollable>
-          <Text color="helper">
-            Configure your buildpacks here.
-          </Text>
+          <Text color="helper">Configure your buildpacks here.</Text>
           <Spacer y={1} />
           {!!selectedBuildpacks?.length &&
             renderBuildpacksList(selectedBuildpacks, "remove")}
@@ -92,9 +101,7 @@ export const BuildpackStack: React.FC<{
           <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
         </Scrollable>
         <Spacer y={1} />
-        <Button onClick={() => setIsModalOpen(false)}>
-          Save
-        </Button>
+        <Button onClick={() => setIsModalOpen(false)}>Save</Button>
       </>
     );
   };
@@ -102,10 +109,10 @@ export const BuildpackStack: React.FC<{
     let buildConfig: BuildConfig = {} as BuildConfig;
 
     buildConfig.builder = selectedStack;
-    console.log(buildConfig);
     buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
       return buildpack.buildpack;
     });
+
     if (typeof onChange === "function") {
       onChange(buildConfig);
     }
@@ -155,16 +162,52 @@ export const BuildpackStack: React.FC<{
           (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
         );
 
-        const detectedBuildpacks = defaultBuilder.detected;
-        const availableBuildpacks = defaultBuilder.others;
-        const defaultStack = builders
-          .flatMap((builder) => builder.builders)
-          .find((stack) => {
-            return (
-              stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK
+        var detectedBuildpacks = defaultBuilder.detected;
+        var availableBuildpacks = defaultBuilder.others;
+        var defaultStack = "";
+        if (currentBuildConfig) {
+          defaultStack = currentBuildConfig.builder;
+          for (const buildpackName of currentBuildConfig.buildpacks) {
+            const matchingBuildpackIndex = availableBuildpacks.findIndex(
+              (buildpack) => buildpack.buildpack === buildpackName
             );
-          });
 
+            if (matchingBuildpackIndex >= 0) {
+              const matchingBuildpack = availableBuildpacks.splice(
+                matchingBuildpackIndex,
+                1
+              )[0];
+              const existingBuildpackIndex = detectedBuildpacks.findIndex(
+                (buildpack) => buildpack.buildpack === buildpackName
+              );
+              if (existingBuildpackIndex < 0) {
+                detectedBuildpacks.push(matchingBuildpack);
+              }
+            } else {
+              const newBuildpack: Buildpack = {
+                name: buildpackName,
+                buildpack: buildpackName,
+                config: null,
+              };
+              const existingBuildpackIndex = detectedBuildpacks.findIndex(
+                (buildpack) => buildpack.buildpack === buildpackName
+              );
+              if (existingBuildpackIndex < 0) {
+                detectedBuildpacks.push(newBuildpack);
+              }
+            }
+          }
+        } else {
+          detectedBuildpacks = defaultBuilder.detected;
+          availableBuildpacks = defaultBuilder.others;
+          defaultStack = builders
+            .flatMap((builder) => builder.builders)
+            .find((stack) => {
+              return (
+                stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK
+              );
+            });
+        }
         setBuilders(builders);
         setSelectedStack(defaultStack);
 
@@ -174,6 +217,7 @@ export const BuildpackStack: React.FC<{
           setSelectedBuildpacks([]);
         } else {
           setSelectedBuildpacks(detectedBuildpacks);
+          console.log(selectedBuildpacks);
         }
         if (!Array.isArray(availableBuildpacks)) {
           setAvailableBuildpacks([]);
@@ -346,7 +390,9 @@ export const BuildpackStack: React.FC<{
           value={selectedStack}
           width="300px"
           options={stackOptions}
-          setValue={(option) => setSelectedStack(option)}
+          setValue={(option) => {
+            setSelectedStack(option);
+          }}
           label="Select your builder and stack"
         />
         {!!selectedBuildpacks?.length && (
@@ -359,14 +405,9 @@ export const BuildpackStack: React.FC<{
           <>{renderBuildpacksList(selectedBuildpacks, "remove")}</>
         )}
         <Spacer y={1} />
-        <Button onClick={() => setIsModalOpen(true)}>
-          Add build pack
-        </Button>
-
+        <Button onClick={() => setIsModalOpen(true)}>Add build pack</Button>
         {isModalOpen && (
-          <Modal
-            closeModal={() => setIsModalOpen(false)}
-          >
+          <Modal closeModal={() => setIsModalOpen(false)}>
             {renderModalContent()}
           </Modal>
         )}
@@ -463,7 +504,7 @@ const StyledCard = styled.div<{ marginBottom?: string }>`
   justify-content: space-between;
   border: 1px solid #494b4f;
   background: ${({ theme }) => theme.fg};
-  margin-bottom: ${props => props.marginBottom || "30px"};
+  margin-bottom: ${(props) => props.marginBottom || "30px"};
   border-radius: 8px;
   padding: 14px;
   overflow: hidden;

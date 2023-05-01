@@ -144,6 +144,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({ appData, setAppData }) => {
                 setDockerfilePath("");
               }}
               hide={!showSettings}
+              currentBuildConfig={buildConfig}
             />
           )}
         </StyledSourceBox>

@@ -76,6 +76,7 @@ export const BuildpackStack: React.FC<{
     []
   );
   const renderModalContent = () => {
+    console.log(selectedBuildpacks);
     return (
       <>
         <Text size={16}>Buildpack Configuration</Text>
@@ -107,7 +108,6 @@ export const BuildpackStack: React.FC<{
   useEffect(() => {
     let buildConfig: BuildConfig = {} as BuildConfig;
 
-    console.log(selectedStack);
     buildConfig.builder = selectedStack;
     buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
       return buildpack.buildpack;
@@ -162,13 +162,44 @@ export const BuildpackStack: React.FC<{
           (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
         );
 
-        const detectedBuildpacks = defaultBuilder.detected;
-        const availableBuildpacks = defaultBuilder.others;
+        var detectedBuildpacks = defaultBuilder.detected;
+        var availableBuildpacks = defaultBuilder.others;
         var defaultStack = "";
         if (currentBuildConfig) {
           defaultStack = currentBuildConfig.builder;
-          console.log(defaultStack);
+          for (const buildpackName of currentBuildConfig.buildpacks) {
+            const matchingBuildpackIndex = availableBuildpacks.findIndex(
+              (buildpack) => buildpack.buildpack === buildpackName
+            );
+
+            if (matchingBuildpackIndex >= 0) {
+              const matchingBuildpack = availableBuildpacks.splice(
+                matchingBuildpackIndex,
+                1
+              )[0];
+              const existingBuildpackIndex = detectedBuildpacks.findIndex(
+                (buildpack) => buildpack.buildpack === buildpackName
+              );
+              if (existingBuildpackIndex < 0) {
+                detectedBuildpacks.push(matchingBuildpack);
+              }
+            } else {
+              const newBuildpack: Buildpack = {
+                name: buildpackName,
+                buildpack: buildpackName,
+                config: null,
+              };
+              const existingBuildpackIndex = detectedBuildpacks.findIndex(
+                (buildpack) => buildpack.buildpack === buildpackName
+              );
+              if (existingBuildpackIndex < 0) {
+                detectedBuildpacks.push(newBuildpack);
+              }
+            }
+          }
         } else {
+          detectedBuildpacks = defaultBuilder.detected;
+          availableBuildpacks = defaultBuilder.others;
           defaultStack = builders
             .flatMap((builder) => builder.builders)
             .find((stack) => {
@@ -179,15 +210,14 @@ export const BuildpackStack: React.FC<{
         }
         setBuilders(builders);
         setSelectedStack(defaultStack);
-        console.log(selectedStack);
 
         setStacks(defaultBuilder.builders);
         setSelectedStack(defaultStack);
-        console.log(selectedStack);
         if (!Array.isArray(detectedBuildpacks)) {
           setSelectedBuildpacks([]);
         } else {
           setSelectedBuildpacks(detectedBuildpacks);
+          console.log(selectedBuildpacks);
         }
         if (!Array.isArray(availableBuildpacks)) {
           setAvailableBuildpacks([]);
@@ -361,7 +391,6 @@ export const BuildpackStack: React.FC<{
           width="300px"
           options={stackOptions}
           setValue={(option) => {
-            console.log("Here");
             setSelectedStack(option);
           }}
           label="Select your builder and stack"

@@ -384,6 +384,10 @@ func (c *RegistryGetDockerhubTokenHandler) ServeHTTP(w http.ResponseWriter, r *h
 			}
 
 			token = base64.StdEncoding.EncodeToString([]byte(string(basic.Username) + ":" + string(basic.Password)))
+
+			// we'll just set an arbitrary 30-day expiry time (this is not enforced)
+			timeExpires := time.Now().Add(30 * 24 * time.Hour)
+			expiresAt = &timeExpires
 		}
 	}
 
@@ -391,10 +395,6 @@ func (c *RegistryGetDockerhubTokenHandler) ServeHTTP(w http.ResponseWriter, r *h
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errNoRegistryFound, http.StatusBadRequest))
 		return
 	}
-
-	// we'll just set an arbitrary 30-day expiry time (this is not enforced)
-	timeExpires := time.Now().Add(30 * 24 * time.Hour)
-	expiresAt = &timeExpires
 
 	resp := &types.GetRegistryTokenResponse{
 		Token:     token,

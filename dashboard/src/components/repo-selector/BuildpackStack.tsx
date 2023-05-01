@@ -52,13 +52,23 @@ export const BuildpackStack: React.FC<{
   branch: string;
   hide: boolean;
   onChange: (config: BuildConfig) => void;
-}> = ({ actionConfig, folderPath, branch, hide, onChange }) => {
+  currentBuildConfig?: BuildConfig;
+}> = ({
+  actionConfig,
+  folderPath,
+  branch,
+  hide,
+  onChange,
+  currentBuildConfig,
+}) => {
   const { currentProject } = useContext(Context);
 
   const [builders, setBuilders] = useState<DetectedBuildpack[]>(null);
 
   const [stacks, setStacks] = useState<string[]>(null);
-  const [selectedStack, setSelectedStack] = useState<string>(null);
+  const [selectedStack, setSelectedStack] = useState<string>(
+    currentBuildConfig?.builder || null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [selectedBuildpacks, setSelectedBuildpacks] = useState<Buildpack[]>([]);
@@ -71,9 +81,7 @@ export const BuildpackStack: React.FC<{
         <Text size={16}>Buildpack Configuration</Text>
         <Spacer y={1} />
         <Scrollable>
-          <Text color="helper">
-            Configure your buildpacks here.
-          </Text>
+          <Text color="helper">Configure your buildpacks here.</Text>
           <Spacer y={1} />
           {!!selectedBuildpacks?.length &&
             renderBuildpacksList(selectedBuildpacks, "remove")}
@@ -92,20 +100,19 @@ export const BuildpackStack: React.FC<{
           <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
         </Scrollable>
         <Spacer y={1} />
-        <Button onClick={() => setIsModalOpen(false)}>
-          Save
-        </Button>
+        <Button onClick={() => setIsModalOpen(false)}>Save</Button>
       </>
     );
   };
   useEffect(() => {
     let buildConfig: BuildConfig = {} as BuildConfig;
 
+    console.log(selectedStack);
     buildConfig.builder = selectedStack;
-    console.log(buildConfig);
     buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
       return buildpack.buildpack;
     });
+
     if (typeof onChange === "function") {
       onChange(buildConfig);
     }
@@ -157,19 +164,26 @@ export const BuildpackStack: React.FC<{
 
         const detectedBuildpacks = defaultBuilder.detected;
         const availableBuildpacks = defaultBuilder.others;
-        const defaultStack = builders
-          .flatMap((builder) => builder.builders)
-          .find((stack) => {
-            return (
-              stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK
-            );
-          });
-
+        var defaultStack = "";
+        if (currentBuildConfig) {
+          defaultStack = currentBuildConfig.builder;
+          console.log(defaultStack);
+        } else {
+          defaultStack = builders
+            .flatMap((builder) => builder.builders)
+            .find((stack) => {
+              return (
+                stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK
+              );
+            });
+        }
         setBuilders(builders);
         setSelectedStack(defaultStack);
+        console.log(selectedStack);
 
         setStacks(defaultBuilder.builders);
         setSelectedStack(defaultStack);
+        console.log(selectedStack);
         if (!Array.isArray(detectedBuildpacks)) {
           setSelectedBuildpacks([]);
         } else {
@@ -346,7 +360,10 @@ export const BuildpackStack: React.FC<{
           value={selectedStack}
           width="300px"
           options={stackOptions}
-          setValue={(option) => setSelectedStack(option)}
+          setValue={(option) => {
+            console.log("Here");
+            setSelectedStack(option);
+          }}
           label="Select your builder and stack"
         />
         {!!selectedBuildpacks?.length && (
@@ -359,14 +376,9 @@ export const BuildpackStack: React.FC<{
           <>{renderBuildpacksList(selectedBuildpacks, "remove")}</>
         )}
         <Spacer y={1} />
-        <Button onClick={() => setIsModalOpen(true)}>
-          Add build pack
-        </Button>
-
+        <Button onClick={() => setIsModalOpen(true)}>Add build pack</Button>
         {isModalOpen && (
-          <Modal
-            closeModal={() => setIsModalOpen(false)}
-          >
+          <Modal closeModal={() => setIsModalOpen(false)}>
             {renderModalContent()}
           </Modal>
         )}
@@ -463,7 +475,7 @@ const StyledCard = styled.div<{ marginBottom?: string }>`
   justify-content: space-between;
   border: 1px solid #494b4f;
   background: ${({ theme }) => theme.fg};
-  margin-bottom: ${props => props.marginBottom || "30px"};
+  margin-bottom: ${(props) => props.marginBottom || "30px"};
   border-radius: 8px;
   padding: 14px;
   overflow: hidden;

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext, useCallback } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
+import { z } from "zod";
 
 import notFound from "assets/not-found.png";
 import web from "assets/web.png";
@@ -13,6 +14,7 @@ import loadingImg from "assets/loading.gif";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import useAuth from "shared/auth/useAuth";
+import Error from "components/porter/Error";
 
 import Loading from "components/Loading";
 import Text from "components/porter/Text";
@@ -31,6 +33,9 @@ import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import Fieldset from "components/porter/Fieldset";
 import Banner from "components/Banner";
 import AppEvents from "./AppEvents";
+import { createFinalPorterYaml } from "../new-app-flow/schema";
+import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import { PorterYamlSchema } from "../new-app-flow/schema";
 
 type Props = RouteComponentProps & {};
 
@@ -46,7 +51,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
-
+  const [rawYaml, setRawYaml] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [appData, setAppData] = useState(null);
@@ -65,6 +70,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
+  const [porterJson, setPorterJson] = useState<
+    z.infer<typeof PorterYamlSchema> | undefined
+  >(undefined);
+
+  const [services, setServices] = useState<Service[]>([]);
+  const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
+  const [updating, setUpdating] = useState<boolean>(false);
+  const [updateError, setUpdateError] = useState<string>("");
 
   const getPorterApp = async () => {
     setIsLoading(true);
@@ -90,14 +103,24 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           revision: 0,
         }
       );
-      setAppData({
+
+      const newAppData = {
         app: resPorterApp?.data,
         chart: resChartData?.data,
-      });
-      console.log(appData);
-      setIsLoading(false);
+      };
+      setAppData(newAppData);
+
+      const helmValues = resChartData?.data?.config;
+      const defaultValues = resChartData?.data?.chart?.values;
+      if ((defaultValues && Object.keys(defaultValues).length > 0) || (helmValues && Object.keys(helmValues).length > 0)) {
+        const svcs = Service.deserialize(helmValues, defaultValues);
+        setServices(svcs);
+        console.log(helmValues);
+      }
+      console.log(newAppData);
     } catch (err) {
       setError(err);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -129,6 +152,78 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     } catch (err) {
       setError(err);
       setDeleting(false);
+    }
+  };
+
+  const updatePorterApp = async () => {
+    try {
+      setUpdating(true);
+      if (
+        appData != null
+        && currentCluster != null
+        && currentProject != null
+        && appData.app != null
+      ) {
+        const finalPorterYaml = createFinalPorterYaml(
+          services,
+          [],
+          undefined,
+          appData.app.name,
+          currentProject.id,
+          currentCluster.id,
+        )
+        const yamlString = yaml.dump(finalPorterYaml);
+        const base64Encoded = btoa(yamlString);
+        await api.updatePorterStack(
+          "<token>",
+          {
+            stack_name: appData.app.name,
+            porter_yaml: base64Encoded,
+          },
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+            stack_name: appData.app.name,
+          }
+        )
+      } else {
+        setUpdateError("Unable to update app, please try again later.");
+      }
+    } catch (err) {
+      // TODO: better error handling
+      console.log(err);
+      const errMessage = err?.response?.data?.error ?? err?.toString() ?? 'An error occurred while deploying your app. Please try again.'
+      setUpdateError(errMessage);
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const fetchPorterYamlContent = async (porterYaml: string) => {
+    try {
+      const res = await api.getPorterYamlContents(
+        "<token>",
+        {
+          path: porterYaml,
+        },
+        {
+          project_id: appData.app.project_id,
+          git_repo_id: appData.app.git_repo_id,
+          owner: appData.app.repo_name?.split("/")[0],
+          name: appData.app.repo_name?.split("/")[1],
+          kind: "github",
+          branch: appData.app.git_branch,
+        }
+      );
+      setRawYaml(atob(res.data));
+      let parsedYaml;
+      parsedYaml = yaml.load(rawYaml);
+      const parsedData = PorterYamlSchema.parse(parsedYaml);
+      const porterYamlToJson = parsedData as z.infer<typeof PorterYamlSchema>;
+      setPorterJson(porterYamlToJson);
+      console.log(porterJson);
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -298,18 +393,28 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const renderTabContents = () => {
     switch (tab) {
       case "overview":
-        const helmValues = appData?.chart?.config;
-        const defaultValues = appData?.chart?.chart?.values;
-        if ((defaultValues && Object.keys(defaultValues).length > 0) || (helmValues && Object.keys(helmValues).length > 0)) {
-          const svcs = Service.deserialize(helmValues, defaultValues);
-          return <Services
-            setServices={(services: any[]) => {
-            }}
-            services={svcs}
-          />;
-        } else {
-          return <Text>No services found for this application yet.</Text>
-        }
+        return (
+          <>
+            <Services
+              setServices={setServices}
+              services={services}
+            />
+            <Spacer y={0.5} />
+            <Button
+              onClick={() => {
+                updatePorterApp();
+              }}
+              status={updating ? "loading" : updateError ? (
+                <Error message={updateError} />
+              ) : undefined}
+              loadingText={"Updating..."}
+              width={"150px"}
+            >
+              Update app
+            </Button>
+            <Spacer y={0.5} />
+          </>
+        )
       case "build-settings":
         return (
           <BuildSettingsTabStack
@@ -344,6 +449,34 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             branchName={appData.app.git_branch}
           />
         );
+      case "environment-variables":
+        return (
+          <>
+            <Text size={16}>Environment variables</Text>
+            <Spacer y={0.5} />
+            <Text color="helper">
+              Shared among all services.
+            </Text>
+            <EnvGroupArray
+              values={envVars}
+              setValues={setEnvVars}
+              fileUpload={true}
+            />
+            <Spacer y={0.5} />
+            <Button
+              onClick={() => {
+                updatePorterApp();
+              }}
+              status={updating ? "loading" : updateError ? (
+                <Error message={updateError} />
+              ) : undefined}
+              loadingText={"Updating..."}
+              width={"150px"}
+            >
+              Update app
+            </Button>
+            <Spacer y={0.5} />
+          </>);
       default:
         return <div>dream on</div>;
     }
@@ -369,7 +502,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         <StyledExpandedApp>
           <Back to="/apps" />
           <Container row>
-            {renderIcon(appData.app.build_packs)}
+            {renderIcon(appData.app?.build_packs)}
             <Text size={21}>{appData.app.name}</Text>
             {appData.app.repo_name && (
               <>

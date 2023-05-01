@@ -21,7 +21,6 @@ type Props = {
   folderPath: string;
   setFolderPath: (x: string) => void;
   setBuildConfig: (x: any) => void;
-  buildConfig: BuildConfig;
   porterYaml: string;
   setPorterYaml: (x: any) => void;
   imageUrl: string;
@@ -31,7 +30,6 @@ type Props = {
 const SharedBuildSettings: React.FC<Props> = ({
   actionConfig,
   setActionConfig,
-  buildConfig,
   branch,
   setBranch,
   dockerfilePath,
@@ -101,7 +99,7 @@ const SharedBuildSettings: React.FC<Props> = ({
         width="100%"
         setValue={setFolderPath}
       />
-      {actionConfig.git_repo && branch && buildConfig.builder != "" && (
+      {actionConfig.git_repo && branch && (
         <DetectContentsList
           actionConfig={actionConfig}
           branch={branch}
@@ -110,7 +108,6 @@ const SharedBuildSettings: React.FC<Props> = ({
           setActionConfig={setActionConfig}
           setDockerfilePath={setDockerfilePath}
           setFolderPath={setFolderPath}
-          buildConfig={buildConfig}
           setBuildConfig={setBuildConfig}
           porterYaml={porterYaml}
           setPorterYaml={setPorterYaml}

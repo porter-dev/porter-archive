@@ -22,14 +22,11 @@ import EnvGroupArray, {
   KeyValueType,
 } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import GithubActionModal from "./GithubActionModal";
-import {
-  GithubActionConfigType,
-} from "shared/types";
+import { GithubActionConfigType } from "shared/types";
 import Error from "components/porter/Error";
 import { z } from "zod";
-import { AppsSchema, EnvSchema, PorterYamlSchema } from "./schema";
+import { PorterYamlSchema, createFinalPorterYaml } from "./schema";
 import { Service } from "./serviceTypes";
-import { overrideObjectValues } from "./utils";
 
 type Props = RouteComponentProps & {};
 
@@ -79,7 +76,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [imageTag, setImageTag] = useState("latest");
   const { currentCluster, currentProject } = useContext(Context);
   const [deploying, setDeploying] = useState<boolean>(false);
-  const [deploymentError, setDeploymentError] = useState<string | undefined>(undefined);
+  const [deploymentError, setDeploymentError] = useState<string | undefined>(
+    undefined
+  );
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [existingStep, setExistingStep] = useState<number>(0);
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
@@ -143,8 +142,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       ) {
         setDetected({
           detected: true,
-          message: `Detected ${Object.keys(porterYamlToJson.apps).length
-            } apps from porter.yaml`,
+          message: `Detected ${
+            Object.keys(porterYamlToJson.apps).length
+          } apps from porter.yaml`,
         });
       } else {
         setDetected({
@@ -192,20 +192,27 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         currentProject.id == null ||
         currentCluster.id == null
       ) {
-        throw ("Project or cluster not found");
+        throw "Project or cluster not found";
       }
 
       // validate form data
-      const finalPorterYaml = createFinalPorterYaml();
+      const finalPorterYaml = createFinalPorterYaml(
+        formState.serviceList,
+        formState.envVariables,
+        porterJson,
+        formState.applicationName,
+        currentProject.id,
+        currentCluster.id
+      );
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl
         ? {
-          image_info: {
-            repository: imageUrl,
-            tag: imageTag,
-          },
-        }
+            image_info: {
+              repository: imageUrl,
+              tag: imageTag,
+            },
+          }
         : {};
 
       // write to the db
@@ -228,7 +235,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         }
       );
 
-      await api.updatePorterStack(
+      await api.createPorterStack(
         "<token>",
         {
           stack_name: formState.applicationName,
@@ -239,7 +246,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
         }
-      )
+      );
       if (!actionConfig?.git_repo) {
         props.history.push(`/apps/${formState.applicationName}`);
       }
@@ -247,75 +254,16 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     } catch (err) {
       // TODO: better error handling
       console.log(err);
-      const errMessage = err?.response?.data?.error ?? err?.toString() ?? 'An error occurred while deploying your app. Please try again.'
+      const errMessage =
+        err?.response?.data?.error ??
+        err?.toString() ??
+        "An error occurred while deploying your app. Please try again.";
       setDeploymentError(errMessage);
 
       return false;
     } finally {
       setDeploying(false);
     }
-  };
-
-  const combineEnv = (
-    dashboardSetVariables: KeyValueType[],
-    porterYamlSetVariables: Record<string, string> | undefined
-  ): z.infer<typeof EnvSchema> => {
-    const env: z.infer<typeof EnvSchema> = {};
-    for (const { key, value } of dashboardSetVariables) {
-      env[key] = value;
-    }
-    if (porterYamlSetVariables != null) {
-      for (const [key, value] of Object.entries(porterYamlSetVariables)) {
-        env[key] = value;
-      }
-    }
-    return env;
-  };
-
-  const createApps = (serviceList: Service[]): z.infer<typeof AppsSchema> => {
-    const apps: z.infer<typeof AppsSchema> = {};
-    for (const service of serviceList) {
-      let config = Service.serialize(service);
-      // TODO: get rid of this block when we handle ingress on the backend
-      if (Service.isWeb(service)) {
-        const ingress = Service.handleWebIngress(
-          service,
-          formState.applicationName,
-          currentCluster?.id,
-          currentProject?.id
-        );
-        config = {
-          ...config,
-          ...ingress,
-        };
-      }
-      if (
-        porterJson != null &&
-        porterJson.apps[service.name] != null &&
-        porterJson.apps[service.name].config != null
-      ) {
-        config = overrideObjectValues(
-          config,
-          porterJson.apps[service.name].config
-        );
-      }
-      // required because of https://github.com/helm/helm/issues/9214
-      apps[Service.toHelmName(service)] = {
-        type: service.type,
-        run: service.startCommand.value,
-        config,
-      };
-    }
-
-    return apps;
-  };
-
-  const createFinalPorterYaml = (): z.infer<typeof PorterYamlSchema> => {
-    return {
-      version: "v1stack",
-      env: combineEnv(formState.envVariables, porterJson?.env),
-      apps: createApps(formState.serviceList),
-    };
   };
 
   return (
@@ -393,7 +341,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   procfilePath={procfilePath}
                   setProcfilePath={setProcfilePath}
                   setBuildConfig={setBuildConfig}
-                  buildConfig={buildConfig}
                   porterYaml={porterYaml}
                   setPorterYaml={(newYaml: string) => {
                     validatePorterYaml(newYaml);
@@ -472,13 +419,17 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   if (imageUrl) {
                     deployPorterApp();
                   } else {
-                    setDeploymentError(undefined)
+                    setDeploymentError(undefined);
                     setShowGHAModal(true);
                   }
                 }}
-                status={deploying ? "loading" : deploymentError ? (
-                  <Error message={deploymentError} />
-                ) : undefined}
+                status={
+                  deploying ? (
+                    "loading"
+                  ) : deploymentError ? (
+                    <Error message={deploymentError} />
+                  ) : undefined
+                }
                 loadingText={"Deploying..."}
                 width={"150px"}
               >

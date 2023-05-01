@@ -26,7 +26,6 @@ type PropsType = {
   dockerfilePath?: string;
   folderPath: string;
   porterYaml?: string;
-  buildConfig: BuildConfig;
   setActionConfig: (x: ActionConfigType) => void;
   setDockerfilePath: (x: string) => void;
   setFolderPath: (x: string) => void;
@@ -237,7 +236,6 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
           actionConfig={props.actionConfig}
           branch={props.branch}
           folderPath={props.folderPath}
-          buildConfig={props.buildConfig}
         />
       ) : (
         <AdvancedBuildSettings
@@ -250,7 +248,6 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
           actionConfig={props.actionConfig}
           branch={props.branch}
           folderPath={props.folderPath}
-          buildConfig={props.buildConfig}
         />
       )}
     </>

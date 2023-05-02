@@ -1,7 +1,6 @@
 package gitinstallation
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/google/go-github/v41/github"
@@ -30,6 +29,7 @@ func NewGithubGetContentsHandler(
 }
 
 func (c *GithubGetContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	request := &types.GetContentsRequest{}
 
 	ok := c.DecodeAndValidate(w, r, request)
@@ -58,15 +58,16 @@ func (c *GithubGetContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	repoContentOptions := github.RepositoryContentGetOptions{}
 	repoContentOptions.Ref = branch
-	_, directoryContents, _, err := client.Repositories.GetContents(
-		context.Background(),
+	_, directoryContents, resp, err := client.Repositories.GetContents(
+		ctx,
 		owner,
 		name,
 		request.Dir,
 		&repoContentOptions,
 	)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			err, resp.StatusCode))
 		return
 	}
 

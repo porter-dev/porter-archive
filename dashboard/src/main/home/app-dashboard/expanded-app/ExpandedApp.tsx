@@ -113,20 +113,30 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           revision: 0,
         }
       );
+
+      // TODO: need to check against image placeholder as well
       if (resPorterApp?.data?.repo_name) {
-        const resBranchContents = await api.getBranchContents(
-          "<token>",
-          { dir: "./" },
-          {
-            project_id: currentProject.id,
-            git_repo_id: resPorterApp.data.git_repo_id,
-            kind: "github",
-            owner: resPorterApp.data.repo_name.split("/")[0],
-            name: resPorterApp.data.repo_name.split("/")[1],
-            branch: resPorterApp.data.git_branch,
+        try {
+          const resBranchContents = await api.getBranchContents(
+            "<token>",
+            { dir: `./.github/workflows/porter_stack_${resPorterApp.data.name}.yml` },
+            {
+              project_id: currentProject.id,
+              git_repo_id: resPorterApp.data.git_repo_id,
+              kind: "github",
+              owner: resPorterApp.data.repo_name.split("/")[0],
+              name: resPorterApp.data.repo_name.split("/")[1],
+              branch: resPorterApp.data.git_branch,
+            }
+          );
+          setWorkflowCheckPassed(true);
+        } catch (err) {
+
+          // Handle unmerged PR
+          if (err.response.status === 404) {
+            setWorkflowCheckPassed(false);
           }
-        );
-        console.log(resBranchContents);
+        }
       } else {
         setWorkflowCheckPassed(true);
       }

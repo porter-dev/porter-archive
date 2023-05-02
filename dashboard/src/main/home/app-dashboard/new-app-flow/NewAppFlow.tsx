@@ -200,7 +200,21 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         }
         : {};
 
-      // write to the db
+      // create the dummy chart
+      await api.createPorterStack(
+        "<token>",
+        {
+          stack_name: formState.applicationName,
+          porter_yaml: base64Encoded,
+          ...imageInfo,
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      );
+
+      // if success, write to the db
       await api.createPorterApp(
         "<token>",
         {
@@ -220,18 +234,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         }
       );
 
-      await api.createPorterStack(
-        "<token>",
-        {
-          stack_name: formState.applicationName,
-          porter_yaml: base64Encoded,
-          ...imageInfo,
-        },
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-        }
-      );
       if (!actionConfig?.git_repo) {
         props.history.push(`/apps/${formState.applicationName}`);
       }

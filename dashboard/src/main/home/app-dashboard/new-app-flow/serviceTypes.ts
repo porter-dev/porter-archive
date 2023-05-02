@@ -328,7 +328,7 @@ export const Service = {
             //     throw new Error('Failed to create subdomain for web service');
             // }
             // ingress.porter_hosts.push(res.data.external_url)
-            throw new Error('Generating external URLs without custom subdomains not yet supported!');
+            //throw new Error('Generating external URLs without custom subdomains not yet supported!');
         }
 
         return ingress;

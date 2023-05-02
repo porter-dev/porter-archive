@@ -5,18 +5,21 @@ type Props = {
   checked: boolean;
   toggleChecked: () => void;
   children: React.ReactNode;
+  disabled?: boolean;
 };
 
 const Checkbox: React.FC<Props> = ({
   checked,
   toggleChecked,
   children,
+  disabled,
 }) => {
   return (
     <StyledCheckbox>
       <Box 
         checked={checked}
-        onClick={toggleChecked}
+        onClick={!disabled && toggleChecked}
+        disabled={disabled}
       >
         <i className="material-icons">done</i>
       </Box>
@@ -32,10 +35,12 @@ const StyledCheckbox = styled.div`
   align-items: center;
 `;
 
-const Box = styled.div<{ checked: boolean }>`
+const Box = styled.div<{
+  checked: boolean;
+  disabled: boolean;
+}>`
   width: 12px;
   height: 12px;
-  cursor: pointer;
   border: 1px solid #ffffff55;
   margin-right: 10px;
   border-radius: 3px;
@@ -43,6 +48,7 @@ const Box = styled.div<{ checked: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 
   > i {
     font-size: 12px;

@@ -277,6 +277,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Text color="helper">
                   Lowercase letters, numbers, and "-" only.
                 </Text>
+                <Spacer y={0.5} />
                 <Input
                   placeholder="ex: academic-sophon"
                   value={formState.applicationName}

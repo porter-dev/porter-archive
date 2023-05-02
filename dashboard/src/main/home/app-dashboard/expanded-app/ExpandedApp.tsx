@@ -113,6 +113,23 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           revision: 0,
         }
       );
+      if (resPorterApp?.data?.repo_name) {
+        const resBranchContents = await api.getBranchContents(
+          "<token>",
+          { dir: "./" },
+          {
+            project_id: currentProject.id,
+            git_repo_id: resPorterApp.data.git_repo_id,
+            kind: "github",
+            owner: resPorterApp.data.repo_name.split("/")[0],
+            name: resPorterApp.data.repo_name.split("/")[1],
+            branch: resPorterApp.data.git_branch,
+          }
+        );
+        console.log(resBranchContents);
+      } else {
+        setWorkflowCheckPassed(true);
+      }
       const newAppData = {
         app: resPorterApp?.data,
         chart: resChartData?.data,

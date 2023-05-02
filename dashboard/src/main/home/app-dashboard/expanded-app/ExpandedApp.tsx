@@ -51,7 +51,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
-  const [rawYaml, setRawYaml] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [appData, setAppData] = useState(null);
@@ -163,7 +162,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         const finalPorterYaml = createFinalPorterYaml(
           services,
           envVars,
-          undefined,
+          porterJson,
           appData.app.name,
           currentProject.id,
           currentCluster.id,
@@ -211,9 +210,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           branch: appData.app.git_branch,
         }
       );
-      setRawYaml(atob(res.data));
-      let parsedYaml;
-      parsedYaml = yaml.load(rawYaml);
+      const parsedYaml = yaml.load(atob(res.data));
       const parsedData = PorterYamlSchema.parse(parsedYaml);
       const porterYamlToJson = parsedData as z.infer<typeof PorterYamlSchema>;
       setPorterJson(porterYamlToJson);
@@ -391,6 +388,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     const { appName } = props.match.params as any;
     if (currentCluster && appName && currentProject) {
       getPorterApp();
+      fetchPorterYamlContent('porter.yaml');
     }
   }, [currentCluster]);
 

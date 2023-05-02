@@ -35,6 +35,7 @@ import { BuildpackStack } from "components/repo-selector/BuildpackStack";
 import MultiSaveButton from "components/MultiSaveButton";
 import api from "shared/api";
 import { AxiosError } from "axios";
+import InputRow from "components/form-components/InputRow";
 type Props = {
   appData: any;
   setAppData: Dispatch<any>;
@@ -227,7 +228,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   return (
     <>
       <Text size={16}>Build settings</Text>
-      <ActionConfEditorStack
+      {/* <ActionConfEditorStack
         actionConfig={actionConfig}
         setActionConfig={(actionConfig: ActionConfigType) => {
           setActionConfig((currentActionConfig: ActionConfigType) => ({
@@ -239,9 +240,15 @@ const BuildSettingsTabStack: React.FC<Props> = ({
         setBranch={setBranch}
         setDockerfilePath={setDockerfilePath}
         setFolderPath={setFolderPath}
+      /> */}
+      <InputRow
+        disabled={true}
+        label="Git repository"
+        type="text"
+        width="100%"
+        value={actionConfig?.git_repo}
       />
-      <DarkMatter antiHeight="-4px" />
-      <br />
+      {/* <DarkMatter antiHeight="-1px" /> */}
       {actionConfig.git_repo && (
         <>
           <ActionConfBranchSelector
@@ -260,16 +267,21 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           />
         </>
       )}
-      <Spacer y={1} />
-      <Text color="helper">Specify your application root path.</Text>
-      <Spacer y={0.5} />
-      <Input
-        disabled={!branch ? true : false}
-        placeholder="ex: ./"
-        value={folderPath}
-        width="100%"
-        setValue={setFolderPath}
-      />
+
+      {actionConfig.git_repo && branch && (
+        <>
+          <Spacer y={1} />
+          <Text color="helper">Specify your application root path.</Text>
+          <Spacer y={0.5} />
+          <Input
+            disabled={!branch ? true : false}
+            placeholder="ex: ./"
+            value={folderPath}
+            width="100%"
+            setValue={setFolderPath}
+          />
+        </>
+      )}
       <StyledAdvancedBuildSettings
         showSettings={showSettings}
         isCurrent={true}
@@ -300,30 +312,22 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           )}
         </StyledSourceBox>
       </AnimateHeight>
+      <Spacer y={0.5} />
 
-      <MultiSaveButton
-        options={[
-          {
-            text: "Save",
-            onClick: handleSave,
-            description:
-              "Save the build settings to be used in the next workflow run",
-          },
-          {
-            text: "Save and Redeploy",
-            onClick: handleSaveAndReDeploy,
-            description:
-              "Immediately trigger a workflow run with updated build settings",
-          },
-        ]}
-        disabled={false}
-        makeFlush={true}
-        clearPosition={true}
-        statusPosition="left"
-        expandTo="left"
-        saveText=""
-        status={buttonStatus}
-      ></MultiSaveButton>
+      <StyledButtonWrapper>
+        <StyledButton
+          data-description="Save the build settings to be used in the next workflow run"
+          onClick={handleSave}
+        >
+          Save
+        </StyledButton>
+        <StyledButton
+          data-description="Immediately trigger a workflow run with updated build settings"
+          onClick={handleSaveAndReDeploy}
+        >
+          Save and Redeploy
+        </StyledButton>
+      </StyledButtonWrapper>
     </>
   );
 };
@@ -384,4 +388,51 @@ const StyledSourceBox = styled.div`
   border-top: 0px;
   border-top-left-radius: 0px;
   border-top-right-radius: 0px;
+`;
+
+const StyledButtonWrapper = styled.div`
+  display: flex;
+  gap: 10px;
+`;
+
+const StyledButton = styled.button`
+  background: #3a48ca;
+  border: 1px solid #494b4f;
+  color: #ffffffff;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 8px 12px;
+  position: relative;
+  border-radius: 5px;
+  margin-bottom: 35px;
+  text-align: center;
+  transition: border 0.3s, color 0.3s;
+
+  &:hover {
+    border: 1px solid #7a7b80;
+    color: white;
+  }
+
+  &::after {
+    content: attr(data-description);
+    background-color: #333;
+    border-radius: 4px;
+    bottom: calc(100% + 8px);
+    color: #fff;
+    font-size: 12px;
+    opacity: 0;
+    padding: 8px;
+    position: absolute;
+    left: 60%;
+    top: 100%;
+    transform: translateY(0);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  &:hover::after {
+    opacity: 1;
+    bottom: auto;
+    top: 120%;
+  }
 `;

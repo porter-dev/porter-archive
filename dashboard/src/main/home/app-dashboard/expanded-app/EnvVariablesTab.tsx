@@ -4,6 +4,7 @@ import EnvGroupArray from "main/home/cluster-dashboard/env-groups/EnvGroupArray"
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Text from "components/porter/Text";
+import Error from "components/porter/Error";
 
 interface EnvVariablesTabProps {
   envVars: any;
@@ -39,13 +40,15 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
         onClick={() => {
           updatePorterApp();
         }}
-        // status={
-        //   updating ? (
-        //     "loading"
-        //   ) : updateError ? (
-        //     <Error message={updateError} />
-        //   ) : undefined
-        // }
+        status={
+          updating ? (
+            "loading"
+          ) : updateError ? (
+            <>
+              <Error message={updateError} />
+            </>
+          ) : undefined
+        }
         loadingText={"Updating..."}
         width={"150px"}
       >

@@ -91,7 +91,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [subdomain, setSubdomain] = useState<string>("");
 
   const getPorterApp = async () => {
-    setIsLoading(true);
+    // setIsLoading(true);
     const { appName } = props.match.params as any;
     try {
       if (!currentCluster || !currentProject) {
@@ -119,7 +119,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       );
 
       // Only check GHA status if no built image is set
-      const hasBuiltImage = !!resChartData.data.config?.global?.image?.repository;
+      const hasBuiltImage = !!resChartData.data.config?.global?.image
+        ?.repository;
       if (hasBuiltImage) {
         setWorkflowCheckPassed(true);
         setHasBuiltImage(true);
@@ -127,7 +128,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         try {
           const resBranchContents = await api.getBranchContents(
             "<token>",
-            { dir: `./.github/workflows/porter_stack_${resPorterApp.data.name}.yml` },
+            {
+              dir: `./.github/workflows/porter_stack_${resPorterApp.data.name}.yml`,
+            },
             {
               project_id: currentProject.id,
               git_repo_id: resPorterApp.data.git_repo_id,
@@ -139,11 +142,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           );
           setWorkflowCheckPassed(true);
         } catch (err) {
-
           // Handle unmerged PR
           if (err.response.status === 404) {
             try {
-
               // Check for user-copied porter.yml as fallback
               const resPorterYml = await api.getBranchContents(
                 "<token>",
@@ -331,7 +332,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       if (helmValues && Object.keys(helmValues).length > 0) {
         const envs = Service.retrieveEnvFromHelmValues(helmValues);
         setEnvVars(envs);
-        const subdomain = Service.retrieveSubdomainFromHelmValues(svcs, helmValues);
+        const subdomain = Service.retrieveSubdomainFromHelmValues(
+          svcs,
+          helmValues
+        );
         setSubdomain(subdomain);
       }
     }
@@ -622,7 +626,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <Spacer y={0.5} />
           {subdomain && (
             <>
-              <Container><Text><a href={subdomain} target="_blank">{subdomain}</a></Text></Container>
+              <Container>
+                <Text>
+                  <a href={subdomain} target="_blank">
+                    {subdomain}
+                  </a>
+                </Text>
+              </Container>
               <Spacer y={0.5} />
             </>
           )}
@@ -651,7 +661,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   gitRepoId={appData.app.git_repo_id}
                 />
               ) : !hasBuiltImage ? (
-                <Banner 
+                <Banner
                   type="warning"
                   suffix={
                     <RefreshButton onClick={() => window.location.reload()}>
@@ -661,14 +671,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 >
                   Your GitHub repo has not been built yet.
                   <Spacer inline width="5px" />
-                  <Link 
+                  <Link
                     hasunderline
                     target="_blank"
                     to={`https://github.com/${appData.app.repo_name}/actions`}
                   >
                     Check status
                   </Link>
-                </Banner> 
+                </Banner>
               ) : (
                 <>
                   <DarkMatter />
@@ -697,35 +707,35 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <TabSelector
                 options={
                   appData.app.git_repo_id
-                  ? hasBuiltImage
-                    ? [
-                      { label: "Logs", value: "logs" },
-                      { label: "Overview", value: "overview" },
-                      {
-                        label: "Environment variables",
-                        value: "environment-variables",
-                      },
-                      { label: "Build settings", value: "build-settings" },
-                      { label: "Settings", value: "settings" },
-                    ]
+                    ? hasBuiltImage
+                      ? [
+                          { label: "Logs", value: "logs" },
+                          { label: "Overview", value: "overview" },
+                          {
+                            label: "Environment variables",
+                            value: "environment-variables",
+                          },
+                          { label: "Build settings", value: "build-settings" },
+                          { label: "Settings", value: "settings" },
+                        ]
+                      : [
+                          { label: "Overview", value: "overview" },
+                          {
+                            label: "Environment variables",
+                            value: "environment-variables",
+                          },
+                          { label: "Build settings", value: "build-settings" },
+                          { label: "Settings", value: "settings" },
+                        ]
                     : [
-                      { label: "Overview", value: "overview" },
-                      {
-                        label: "Environment variables",
-                        value: "environment-variables",
-                      },
-                      { label: "Build settings", value: "build-settings" },
-                      { label: "Settings", value: "settings" },
-                    ]
-                  : [
-                    { label: "Logs", value: "logs" },
-                    { label: "Overview", value: "overview" },
-                    {
-                      label: "Environment variables",
-                      value: "environment-variables",
-                    },
-                    { label: "Settings", value: "settings" },
-                  ]
+                        { label: "Logs", value: "logs" },
+                        { label: "Overview", value: "overview" },
+                        {
+                          label: "Environment variables",
+                          value: "environment-variables",
+                        },
+                        { label: "Settings", value: "settings" },
+                      ]
                 }
                 currentTab={tab}
                 setCurrentTab={setTab}

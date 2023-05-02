@@ -360,7 +360,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   )}
                 </Text>
                 <Spacer y={0.5} />
-
                 <Services
                   setServices={(services: Service[]) => {
                     setFormState({ ...formState, serviceList: services });

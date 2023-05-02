@@ -50,7 +50,6 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
           ) : undefined
         }
         loadingText={"Updating..."}
-        width={"150px"}
       >
         Update app
       </Button>

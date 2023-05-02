@@ -179,7 +179,7 @@ const ServicesContainer = styled.div``;
 
 const AddServiceButton = styled.div`
   color: #aaaabb;
-  background: #26292e;
+  background: ${({ theme }) => theme.fg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

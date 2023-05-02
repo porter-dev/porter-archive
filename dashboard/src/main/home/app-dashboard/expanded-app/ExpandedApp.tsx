@@ -33,7 +33,7 @@ import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import Fieldset from "components/porter/Fieldset";
 import Banner from "components/Banner";
 import AppEvents from "./AppEvents";
-import { createFinalPorterYaml } from "../new-app-flow/schema";
+import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
 import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterYamlSchema } from "../new-app-flow/schema";
 
@@ -105,13 +105,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           revision: 0,
         }
       );
-
       const newAppData = {
         app: resPorterApp?.data,
         chart: resChartData?.data,
       };
+      const porterJson = await fetchPorterYamlContent('porter.yaml', newAppData);
+      setPorterJson(porterJson);
       setAppData(newAppData);
-      updateServicesAndEnvVariables(resChartData?.data);
+      updateServicesAndEnvVariables(resChartData?.data, porterJson);
     } catch (err) {
       setError(err);
       console.log(err);
@@ -194,7 +195,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   }
 
-  const fetchPorterYamlContent = async (porterYaml: string) => {
+  const fetchPorterYamlContent = async (porterYaml: string, appData: any): Promise<PorterJson | undefined> => {
     try {
       const res = await api.getPorterYamlContents(
         "<token>",
@@ -210,11 +211,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           branch: appData.app.git_branch,
         }
       );
+      if (res.data == null || res.data == "") {
+        return undefined;
+      }
       const parsedYaml = yaml.load(atob(res.data));
       const parsedData = PorterYamlSchema.parse(parsedYaml);
-      const porterYamlToJson = parsedData as z.infer<typeof PorterYamlSchema>;
-      setPorterJson(porterYamlToJson);
-      console.log(porterJson);
+      const porterYamlToJson = parsedData as PorterJson;
+      return porterYamlToJson;
     } catch (err) {
       console.log(err);
     }
@@ -244,11 +247,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     return <Icon src={src} />;
   };
 
-  const updateServicesAndEnvVariables = (currentChart?: ChartType) => {
+  const updateServicesAndEnvVariables = async (currentChart?: ChartType, porterJson?: PorterJson) => {
     const helmValues = currentChart?.config;
     const defaultValues = currentChart?.chart?.values;
     if ((defaultValues && Object.keys(defaultValues).length > 0) || (helmValues && Object.keys(helmValues).length > 0)) {
-      const svcs = Service.deserialize(helmValues, defaultValues);
+      const svcs = Service.deserialize(helmValues, defaultValues, porterJson);
       setServices(svcs);
       if (helmValues && Object.keys(helmValues).length > 0) {
         const envs = Service.retrieveEnvFromHelmValues(helmValues);
@@ -272,7 +275,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       );
       setComponents(res.data.Objects);
-      updateServicesAndEnvVariables(currentChart);
+      updateServicesAndEnvVariables(currentChart, porterJson);
       setLoading(false);
     } catch (error) {
       console.log(error);
@@ -388,7 +391,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     const { appName } = props.match.params as any;
     if (currentCluster && appName && currentProject) {
       getPorterApp();
-      fetchPorterYamlContent('porter.yaml');
     }
   }, [currentCluster]);
 

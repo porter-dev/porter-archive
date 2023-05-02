@@ -36,14 +36,16 @@ const WebTabs: React.FC<Props> = ({
         <Input
           label="Container port"
           placeholder="ex: 80"
-          value={service.port}
+          value={service.port.value}
+          disabled={service.port.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, port: e }) }}
+          setValue={(e) => { editService({ ...service, port: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Checkbox
-          checked={service.generateUrlForExternalTraffic}
-          toggleChecked={() => { editService({ ...service, generateUrlForExternalTraffic: !service.generateUrlForExternalTraffic }) }}
+          checked={service.generateUrlForExternalTraffic.value}
+          // disabled={service.generateUrlForExternalTraffic.readOnly}
+          toggleChecked={() => { editService({ ...service, generateUrlForExternalTraffic: { readOnly: false, value: !service.generateUrlForExternalTraffic.value } }) }}
         >
           <Text color="helper">Generate a Porter URL for external traffic</Text>
         </Checkbox>
@@ -58,30 +60,33 @@ const WebTabs: React.FC<Props> = ({
         <Input
           label="CPUs"
           placeholder="ex: 0.5"
-          value={service.cpu}
+          value={service.cpu.value}
+          disabled={service.cpu.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, cpu: e }) }}
+          setValue={(e) => { editService({ ...service, cpu: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Input
           label="RAM (MB)"
           placeholder="ex: 1"
-          value={service.ram}
+          value={service.ram.value}
+          disabled={service.ram.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, ram: e }) }}
+          setValue={(e) => { editService({ ...service, ram: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Input
           label="Replicas"
           placeholder="ex: 1"
-          value={service.replicas}
+          value={service.replicas.value}
+          disabled={service.replicas.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, replicas: e }) }}
+          setValue={(e) => { editService({ ...service, replicas: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Checkbox
-          checked={service.autoscalingOn}
-          toggleChecked={() => { editService({ ...service, autoscalingOn: !service.autoscalingOn }) }}
+          checked={service.autoscalingOn.value}
+          toggleChecked={() => { editService({ ...service, autoscalingOn: { readOnly: false, value: !service.autoscalingOn.value } }) }}
         >
           <Text color="helper">Enable autoscaling (overrides replicas)</Text>
         </Checkbox>
@@ -89,33 +94,37 @@ const WebTabs: React.FC<Props> = ({
         <Input
           label="Min replicas"
           placeholder="ex: 1"
-          value={service.minReplicas}
+          value={service.minReplicas.value}
+          disabled={service.minReplicas.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, minReplicas: e }) }}
+          setValue={(e) => { editService({ ...service, minReplicas: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Input
           label="Max replicas"
           placeholder="ex: 10"
-          value={service.maxReplicas}
+          value={service.maxReplicas.value}
+          disabled={service.maxReplicas.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, maxReplicas: e }) }}
+          setValue={(e) => { editService({ ...service, maxReplicas: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Input
           label="Target CPU utilization (%)"
           placeholder="ex: 50"
-          value={service.targetCPUUtilizationPercentage}
+          value={service.targetCPUUtilizationPercentage.value}
+          disabled={service.targetCPUUtilizationPercentage.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, targetCPUUtilizationPercentage: e }) }}
+          setValue={(e) => { editService({ ...service, targetCPUUtilizationPercentage: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Input
           label="Target RAM utilization (%)"
           placeholder="ex: 50"
-          value={service.targetRAMUtilizationPercentage}
+          value={service.targetRAMUtilizationPercentage.value}
+          disabled={service.targetRAMUtilizationPercentage.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, targetRAMUtilizationPercentage: e }) }}
+          setValue={(e) => { editService({ ...service, targetRAMUtilizationPercentage: { readOnly: false, value: e } }) }}
         />
       </>
     )
@@ -128,9 +137,10 @@ const WebTabs: React.FC<Props> = ({
         <Input
           label="Custom domain"
           placeholder="ex: my-app.my-domain.com"
-          value={service.customDomain ?? ''}
+          value={service.customDomain.value}
+          disabled={service.customDomain.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, customDomain: e }) }}
+          setValue={(e) => { editService({ ...service, customDomain: { readOnly: false, value: e } }) }}
         />
       </>
     );

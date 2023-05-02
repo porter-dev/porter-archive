@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -1056,6 +1057,14 @@ func (r *Registry) GetECRPaginatedImages(
 	for _, v := range imageInfoMap {
 		res = append(res, v)
 	}
+
+	sort.Slice(res, func(i, j int) bool {
+		if res[i].PushedAt == nil || res[j].PushedAt == nil {
+			return false
+		}
+
+		return res[i].PushedAt.After(*res[j].PushedAt)
+	})
 
 	return res, resp.NextToken, nil
 }

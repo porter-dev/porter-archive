@@ -52,7 +52,7 @@ const WorkerService = {
     default: (name: string, porterJson?: PorterJson): WorkerService => ({
         name,
         cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
-        ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.ram ? porterJson?.apps?.[name]?.config?.resources?.requests?.ram.replace('Mi', '') : undefined),
+        ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
         type: 'worker',
         replicas: ServiceField.string('1', porterJson?.apps?.[name]?.config?.replicaCount),
@@ -91,7 +91,7 @@ const WorkerService = {
         return {
             name,
             cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
-            ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.ram ? porterJson?.apps?.[name]?.config?.resources?.requests?.ram.replace('Mi', '') : undefined),
+            ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
             type: 'worker',
             replicas: ServiceField.string(values.replicaCount ?? '', porterJson?.apps?.[name]?.config?.replicaCount),
@@ -115,7 +115,7 @@ const WebService = {
     default: (name: string, porterJson?: PorterJson): WebService => ({
         name,
         cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
-        ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.ram ? porterJson?.apps?.[name]?.config?.resources?.requests?.ram.replace('Mi', '') : undefined),
+        ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
         type: 'web',
         replicas: ServiceField.string('1', porterJson?.apps?.[name]?.config?.replicaCount),
@@ -161,7 +161,7 @@ const WebService = {
         return {
             name,
             cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
-            ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.ram ? porterJson?.apps?.[name]?.config?.resources?.requests?.ram.replace('Mi', '') : undefined),
+            ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
             type: 'web',
             replicas: ServiceField.string(values.replicaCount ?? '', porterJson?.apps?.[name]?.config?.replicaCount),
@@ -187,7 +187,7 @@ const JobService = {
     default: (name: string, porterJson?: PorterJson): JobService => ({
         name,
         cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
-        ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.ram ? porterJson?.apps?.[name]?.config?.resources?.requests?.ram.replace('Mi', '') : undefined),
+        ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
         type: 'job',
         jobsExecuteConcurrently: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.allowConcurrent),
@@ -218,8 +218,8 @@ const JobService = {
     deserialize: (name: string, values: any, porterJson?: PorterJson): JobService => {
         return {
             name,
-            cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu),
-            ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.ram),
+            cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
+            ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
             type: 'job',
             jobsExecuteConcurrently: ServiceField.boolean(values.allowConcurrent ?? false, porterJson?.apps?.[name]?.config?.allowConcurrent),

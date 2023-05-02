@@ -105,10 +105,10 @@ const GithubActionModal: React.FC<Props> = ({
         }
         isInitiallyExpanded
         spaced
-        copy={getGithubAction(projectId, clusterId, stackName)}
+        copy={getGithubAction(projectId, clusterId, stackName, branch)}
         ExpandedSection={
           <YamlEditor
-            value={getGithubAction(projectId, clusterId, stackName)}
+            value={getGithubAction(projectId, clusterId, stackName, branch)}
             readOnly={true}
             height="300px"
           />

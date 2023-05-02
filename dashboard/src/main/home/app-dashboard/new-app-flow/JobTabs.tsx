@@ -36,9 +36,10 @@ const JobTabs: React.FC<Props> = ({
         <Input
           label="Cron schedule (leave blank to run manually)"
           placeholder="ex: */5 * * * *"
-          value={service.cronSchedule}
+          value={service.cronSchedule.value}
+          disabled={service.cronSchedule.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, cronSchedule: e }) }}
+          setValue={(e) => { editService({ ...service, cronSchedule: { readOnly: false, value: e } }) }}
         />
       </>
     )
@@ -49,19 +50,21 @@ const JobTabs: React.FC<Props> = ({
       <>
         <Spacer y={1} />
         <Input
-          label="CPUs"
+          label="CPUs (Mi)"
           placeholder="ex: 0.5"
-          value={service.cpu}
+          value={service.cpu.value}
+          disabled={service.cpu.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, cpu: e }) }}
+          setValue={(e) => { editService({ ...service, cpu: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Input
           label="RAM (MB)"
           placeholder="ex: 1"
-          value={service.ram}
+          value={service.ram.value}
+          disabled={service.ram.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, ram: e }) }}
+          setValue={(e) => { editService({ ...service, ram: { readOnly: false, value: e } }) }}
         />
       </>
     )
@@ -72,8 +75,8 @@ const JobTabs: React.FC<Props> = ({
       <>
         <Spacer y={1} />
         <Checkbox
-          checked={service.jobsExecuteConcurrently}
-          toggleChecked={() => { editService({ ...service, jobsExecuteConcurrently: !service.jobsExecuteConcurrently }) }}
+          checked={service.jobsExecuteConcurrently.value}
+          toggleChecked={() => { editService({ ...service, jobsExecuteConcurrently: { readOnly: false, value: !service.jobsExecuteConcurrently.value } }) }}
         >
           <Text color="helper">Allow jobs to execute concurrently</Text>
         </Checkbox>

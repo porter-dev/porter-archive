@@ -60,10 +60,12 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
           <Spacer y={0.5} />
         </>
       )}
-      <AddServiceButton onClick={() => {
-        setShowAddServiceModal(true);
-        setServiceType("web");
-      }}>
+      <AddServiceButton
+        onClick={() => {
+          setShowAddServiceModal(true);
+          setServiceType("web");
+        }}
+      >
         <i className="material-icons add-icon">add_icon</i>
         Add a new service
       </AddServiceButton>
@@ -101,6 +103,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
               (serviceName != "" &&
                 !isServiceNameValid(serviceName) &&
                 'Lowercase letters, numbers, and "-" only.') ||
+              (serviceName.length > 61 && "Must be 61 characters or less.") ||
               (isServiceNameDuplicate(serviceName) &&
                 "Service name is duplicate")
             }
@@ -111,7 +114,10 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             onClick={() => {
               setServices([
                 ...services,
-                Service.default(serviceName, serviceType, { readOnly: false, value: '' }),
+                Service.default(serviceName, serviceType, {
+                  readOnly: false,
+                  value: "",
+                }),
               ]);
               setShowAddServiceModal(false);
               setServiceName("");
@@ -119,7 +125,8 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             }}
             disabled={
               !isServiceNameValid(serviceName) ||
-              isServiceNameDuplicate(serviceName)
+              isServiceNameDuplicate(serviceName) ||
+              serviceName?.length > 61
             }
           >
             <I className="material-icons">add</I> Add service

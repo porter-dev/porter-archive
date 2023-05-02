@@ -43,19 +43,6 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	stackName := request.StackName
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
-	porterYamlBase64 := request.PorterYAMLBase64
-	porterYaml, err := base64.StdEncoding.DecodeString(porterYamlBase64)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding porter yaml: %w", err)))
-		return
-	}
-
-	imageInfo := request.ImageInfo
-	chart, values, err := parse(porterYaml, imageInfo, c.Config(), cluster.ProjectID)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error with test: %w", err)))
-		return
-	}
 
 	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
 	if err != nil {
@@ -66,6 +53,25 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	k8sAgent, err := c.GetAgent(r, cluster, namespace)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting k8s agent: %w", err)))
+		return
+	}
+
+	porterYamlBase64 := request.PorterYAMLBase64
+	porterYaml, err := base64.StdEncoding.DecodeString(porterYamlBase64)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding porter yaml: %w", err)))
+		return
+	}
+	imageInfo := request.ImageInfo
+	chart, values, err := parse(porterYaml, imageInfo, c.Config(), cluster.ProjectID, SubdomainCreateOpts{
+		k8sAgent:       k8sAgent,
+		dnsRepo:        c.Repo().DNSRecord(),
+		powerDnsClient: c.Config().PowerDNSClient,
+		appRootDomain:  c.Config().ServerConf.AppRootDomain,
+		stackName:      stackName,
+	})
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter yaml into chart and values: %w", err)))
 		return
 	}
 
@@ -94,10 +100,12 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	_, err = helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error installing a new chart: %s", err.Error()),
-			http.StatusBadRequest,
-		))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deploying app: %s", err.Error())))
+
+		_, err = helmAgent.UninstallChart(stackName)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error uninstalling chart: %w", err)))
+		}
 
 		return
 	}

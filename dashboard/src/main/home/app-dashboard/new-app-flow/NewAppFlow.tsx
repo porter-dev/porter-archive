@@ -25,7 +25,7 @@ import GithubActionModal from "./GithubActionModal";
 import { GithubActionConfigType } from "shared/types";
 import Error from "components/porter/Error";
 import { z } from "zod";
-import { PorterYamlSchema, createFinalPorterYaml } from "./schema";
+import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
 import { Service } from "./serviceTypes";
 
 type Props = RouteComponentProps & {};
@@ -92,9 +92,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [buildConfig, setBuildConfig] = useState({});
   const [porterYaml, setPorterYaml] = useState("");
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
-  const [porterJson, setPorterJson] = useState<
-    z.infer<typeof PorterYamlSchema> | undefined
-  >(undefined);
+  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(
+    undefined
+  );
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
 
   const validatePorterYaml = (yamlString: string) => {
@@ -102,31 +102,18 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     try {
       parsedYaml = yaml.load(yamlString);
       const parsedData = PorterYamlSchema.parse(parsedYaml);
-      const porterYamlToJson = parsedData as z.infer<typeof PorterYamlSchema>;
+      const porterYamlToJson = parsedData as PorterJson;
       setPorterJson(porterYamlToJson);
-      // go through key value pairs and create services from them, if they don't already exist
       const newServices = [];
       const existingServices = formState.serviceList.map((s) => s.name);
       for (const [name, app] of Object.entries(porterYamlToJson.apps)) {
         if (!existingServices.includes(name)) {
           if (app.type) {
-            newServices.push(
-              Service.default(name, app.type, {
-                readOnly: true,
-                value: app.run,
-              })
-            );
+            newServices.push(Service.default(name, app.type, porterYamlToJson));
           } else if (name.includes("web")) {
-            newServices.push(
-              Service.default(name, "web", { readOnly: true, value: app.run })
-            );
+            newServices.push(Service.default(name, "web", porterYamlToJson));
           } else {
-            newServices.push(
-              Service.default(name, "worker", {
-                readOnly: true,
-                value: app.run,
-              })
-            );
+            newServices.push(Service.default(name, "worker", porterYamlToJson));
           }
         }
       }
@@ -160,10 +147,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
   // Deploys a Helm chart and writes build settings to the DB
   const isAppNameValid = (name: string) => {
-    const regex = /^[a-z0-9-]+$/;
+    const regex = /^[a-z0-9-]{1,61}$/;
     return regex.test(name);
   };
-
   const handleAppNameChange = (name: string) => {
     setCurrentStep(currentStep);
     setFormState({ ...formState, applicationName: name });
@@ -178,7 +164,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const shouldHighlightAppNameInput = () => {
     return (
       formState.applicationName !== "" &&
-      !isAppNameValid(formState.applicationName)
+      (!isAppNameValid(formState.applicationName) ||
+        formState.applicationName.length > 61)
     );
   };
 
@@ -204,6 +191,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         currentProject.id,
         currentCluster.id
       );
+
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl
@@ -215,7 +203,21 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           }
         : {};
 
-      // write to the db
+      // create the dummy chart
+      await api.createPorterStack(
+        "<token>",
+        {
+          stack_name: formState.applicationName,
+          porter_yaml: base64Encoded,
+          ...imageInfo,
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      );
+
+      // if success, write to the db
       await api.createPorterApp(
         "<token>",
         {
@@ -235,18 +237,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         }
       );
 
-      await api.createPorterStack(
-        "<token>",
-        {
-          stack_name: formState.applicationName,
-          porter_yaml: base64Encoded,
-          ...imageInfo,
-        },
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-        }
-      );
       if (!actionConfig?.git_repo) {
         props.history.push(`/apps/${formState.applicationName}`);
       }
@@ -287,19 +277,21 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Text color="helper">
                   Lowercase letters, numbers, and "-" only.
                 </Text>
-                <Spacer y={0.5}></Spacer>
                 <Input
                   placeholder="ex: academic-sophon"
                   value={formState.applicationName}
                   width="300px"
                   error={
                     shouldHighlightAppNameInput() &&
-                    'Lowercase letters, numbers, and "-" only.'
+                    (formState.applicationName.length > 61
+                      ? "Maximum 61 characters allowed."
+                      : 'Lowercase letters, numbers, and "-" only.')
                   }
                   setValue={(e) => {
                     handleAppNameChange(e);
                   }}
                 />
+
                 {shouldHighlightAppNameInput()}
               </>,
               <>

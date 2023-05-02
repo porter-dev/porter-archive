@@ -46,11 +46,11 @@ export const PorterYamlSchema = z.object({
 export const createFinalPorterYaml = (
     services: Service[],
     dashboardSetEnvVariables: KeyValueType[],
-    porterJson: z.infer<typeof PorterYamlSchema> | undefined,
+    porterJson: PorterJson | undefined,
     stackName: string,
     projectId: number,
     clusterId: number,
-): z.infer<typeof PorterYamlSchema> => {
+): PorterJson => {
     return {
         version: "v1stack",
         env: combineEnv(dashboardSetEnvVariables, porterJson?.env),
@@ -76,7 +76,7 @@ const combineEnv = (
 
 const createApps = (
     serviceList: Service[],
-    porterJson: z.infer<typeof PorterYamlSchema> | undefined,
+    porterJson: PorterJson | undefined,
     stackName: string,
     projectId: number,
     clusterId: number,
@@ -117,3 +117,5 @@ const createApps = (
 
     return apps;
 };
+
+export type PorterJson = z.infer<typeof PorterYamlSchema>;

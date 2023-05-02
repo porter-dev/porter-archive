@@ -31,8 +31,6 @@ import Services from "../new-app-flow/Services";
 import { Service } from "../new-app-flow/serviceTypes";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import Fieldset from "components/porter/Fieldset";
-import Banner from "components/porter/Banner";
-import AppEvents from "./AppEvents";
 import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
 import EnvGroupArray, {
   KeyValueType,
@@ -40,6 +38,8 @@ import EnvGroupArray, {
 import { PorterYamlSchema } from "../new-app-flow/schema";
 import { EnvVariablesTab } from "./EnvVariablesTab";
 import GHABanner from "./GHABanner";
+import LogSection from "./LogSection";
+import EventsTab from "./EventsTab";
 
 type Props = RouteComponentProps & {};
 
@@ -302,13 +302,20 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       (defaultValues && Object.keys(defaultValues).length > 0) ||
       (helmValues && Object.keys(helmValues).length > 0)
     ) {
+<<<<<<< HEAD
       const svcs = Service.deserialize(helmValues, defaultValues, porterJson);
+=======
+      const svcs = Service.deserialize(helmValues, defaultValues);
+>>>>>>> aa8f2fffe (adding log and events tab)
       setServices(svcs);
       if (helmValues && Object.keys(helmValues).length > 0) {
         const envs = Service.retrieveEnvFromHelmValues(helmValues);
         setEnvVars(envs);
+<<<<<<< HEAD
         const subdomain = Service.retrieveSubdomainFromHelmValues(svcs, helmValues);
         setSubdomain(subdomain);
+=======
+>>>>>>> aa8f2fffe (adding log and events tab)
       }
     }
   };
@@ -473,7 +480,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               </>
             )}
             <Services setServices={setServices} services={services} />
+<<<<<<< HEAD
             <Spacer y={0.5} />
+=======
+            <Spacer y={1} />
+>>>>>>> aa8f2fffe (adding log and events tab)
             <Button
               onClick={() => {
                 updatePorterApp();
@@ -521,14 +532,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           </>
         );
       case "events":
-        return (
-          <AppEvents
-            repoName={appData.app.repo_name}
-            branchName={appData.app.git_branch}
-          />
-        );
+        return <EventsTab currentChart={appData.chart} />;
+      case "logs":
+        return <LogSection currentChart={appData.chart} />;
       case "environment-variables":
         return (
+<<<<<<< HEAD
           <EnvVariablesTab
             envVars={envVars}
             setEnvVars={setEnvVars}
@@ -536,6 +545,36 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             updateError={updateError}
             updatePorterApp={updatePorterApp}
           />
+=======
+          <>
+            <Text size={16}>Environment variables</Text>
+            <Spacer y={0.5} />
+            <Text color="helper">Shared among all services.</Text>
+            <EnvGroupArray
+              values={envVars}
+              setValues={(x: any) => setEnvVars(x)}
+              fileUpload={true}
+            />
+            <Spacer y={0.5} />
+            <Button
+              onClick={() => {
+                updatePorterApp();
+              }}
+              status={
+                updating ? (
+                  "loading"
+                ) : updateError ? (
+                  <Error message={updateError} />
+                ) : undefined
+              }
+              loadingText={"Updating..."}
+              width={"150px"}
+            >
+              Update app
+            </Button>
+            <Spacer y={0.5} />
+          </>
+>>>>>>> aa8f2fffe (adding log and events tab)
         );
       default:
         return <div>dream on</div>;
@@ -645,7 +684,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                      appData.chart.chart.metadata.version
+                        appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}
@@ -659,6 +698,30 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? workflowCheckPassed
                       ? [
+<<<<<<< HEAD
+=======
+                          { label: "Events", value: "events" },
+                          { label: "Logs", value: "logs" },
+                          { label: "Metrics", value: "metrics" },
+                          { label: "Overview", value: "overview" },
+                          {
+                            label: "Environment variables",
+                            value: "environment-variables",
+                          },
+                          { label: "Build settings", value: "build-settings" },
+                          { label: "Settings", value: "settings" },
+                        ]
+                      : [
+                          { label: "Overview", value: "overview" },
+                          {
+                            label: "Environment variables",
+                            value: "environment-variables",
+                          },
+                          { label: "Build settings", value: "build-settings" },
+                          { label: "Settings", value: "settings" },
+                        ]
+                    : [
+>>>>>>> aa8f2fffe (adding log and events tab)
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
                         { label: "Metrics", value: "metrics" },
@@ -667,6 +730,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                           label: "Environment variables",
                           value: "environment-variables",
                         },
+<<<<<<< HEAD
                         { label: "Build settings", value: "build-settings" },
                         { label: "Settings", value: "settings" },
                       ]
@@ -690,6 +754,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       },
                       { label: "Settings", value: "settings" },
                     ]
+=======
+                        { label: "Settings", value: "settings" },
+                      ]
+>>>>>>> aa8f2fffe (adding log and events tab)
                 }
                 currentTab={tab}
                 setCurrentTab={setTab}

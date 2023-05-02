@@ -223,32 +223,20 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   };
   return (
     <>
-      {renderContentList() &&
-      props.dockerfilePath != "" &&
-      props.dockerfilePath != null ? (
-        <AdvancedBuildSettings
-          dockerfilePath={props.dockerfilePath}
-          setDockerfilePath={props.setDockerfilePath}
-          setBuildConfig={props.setBuildConfig}
-          autoBuildPack={autoBuildpack}
-          showSettings={false}
-          buildView={"buildpacks"}
-          actionConfig={props.actionConfig}
-          branch={props.branch}
-          folderPath={props.folderPath}
-        />
-      ) : (
-        <AdvancedBuildSettings
-          dockerfilePath={props.dockerfilePath}
-          setDockerfilePath={props.setDockerfilePath}
-          setBuildConfig={props.setBuildConfig}
-          autoBuildPack={autoBuildpack}
-          showSettings={false}
-          buildView={"docker"}
-          actionConfig={props.actionConfig}
-          branch={props.branch}
-          folderPath={props.folderPath}
-        />
+      {renderContentList() && (
+        <>
+          <AdvancedBuildSettings
+            dockerfilePath={props.dockerfilePath}
+            setDockerfilePath={props.setDockerfilePath}
+            setBuildConfig={props.setBuildConfig}
+            autoBuildPack={autoBuildpack}
+            showSettings={false}
+            buildView={props.dockerfilePath ? "dockerfile" : "buildpacks"}
+            actionConfig={props.actionConfig}
+            branch={props.branch}
+            folderPath={props.folderPath}
+          />
+        </>
       )}
     </>
   );

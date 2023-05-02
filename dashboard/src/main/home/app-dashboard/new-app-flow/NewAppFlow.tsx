@@ -92,7 +92,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [buildConfig, setBuildConfig] = useState({});
   const [porterYaml, setPorterYaml] = useState("");
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
-  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(undefined);
+  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(
+    undefined
+  );
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
 
   const validatePorterYaml = (yamlString: string) => {
@@ -127,8 +129,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       ) {
         setDetected({
           detected: true,
-          message: `Detected ${Object.keys(porterYamlToJson.apps).length
-            } apps from porter.yaml`,
+          message: `Detected ${
+            Object.keys(porterYamlToJson.apps).length
+          } apps from porter.yaml`,
         });
       } else {
         setDetected({
@@ -144,10 +147,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
   // Deploys a Helm chart and writes build settings to the DB
   const isAppNameValid = (name: string) => {
-    const regex = /^[a-z0-9-]+$/;
+    const regex = /^[a-z0-9-]{1,61}$/;
     return regex.test(name);
   };
-
   const handleAppNameChange = (name: string) => {
     setCurrentStep(currentStep);
     setFormState({ ...formState, applicationName: name });
@@ -162,7 +164,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const shouldHighlightAppNameInput = () => {
     return (
       formState.applicationName !== "" &&
-      !isAppNameValid(formState.applicationName)
+      (!isAppNameValid(formState.applicationName) ||
+        formState.applicationName.length > 61)
     );
   };
 
@@ -193,11 +196,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl
         ? {
-          image_info: {
-            repository: imageUrl,
-            tag: imageTag,
-          },
-        }
+            image_info: {
+              repository: imageUrl,
+              tag: imageTag,
+            },
+          }
         : {};
 
       // create the dummy chart
@@ -274,19 +277,21 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Text color="helper">
                   Lowercase letters, numbers, and "-" only.
                 </Text>
-                <Spacer y={0.5}></Spacer>
                 <Input
                   placeholder="ex: academic-sophon"
                   value={formState.applicationName}
                   width="300px"
                   error={
                     shouldHighlightAppNameInput() &&
-                    'Lowercase letters, numbers, and "-" only.'
+                    (formState.applicationName.length > 61
+                      ? "Maximum 61 characters allowed."
+                      : 'Lowercase letters, numbers, and "-" only.')
                   }
                   setValue={(e) => {
                     handleAppNameChange(e);
                   }}
                 />
+
                 {shouldHighlightAppNameInput()}
               </>,
               <>

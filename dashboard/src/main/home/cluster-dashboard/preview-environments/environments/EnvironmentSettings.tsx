@@ -14,7 +14,7 @@ import SaveButton from "components/SaveButton";
 import _ from "lodash";
 import { Context } from "shared/Context";
 import PageNotFound from "components/PageNotFound";
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 import InputRow from "components/form-components/InputRow";
 import Modal from "main/home/modals/Modal";
 import { useRouting } from "shared/routing";

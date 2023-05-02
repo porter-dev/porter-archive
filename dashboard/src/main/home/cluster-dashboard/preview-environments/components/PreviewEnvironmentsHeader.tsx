@@ -3,7 +3,7 @@ import styled from "styled-components";
 import DashboardHeader from "../../DashboardHeader";
 import PullRequestIcon from "assets/pull_request_icon.svg";
 import api from "shared/api";
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 import Spacer from "components/porter/Spacer";
 
 export const PreviewEnvironmentsHeader = () => {

@@ -13,7 +13,7 @@ import DynamicLink from "components/DynamicLink";
 import DashboardHeader from "../../DashboardHeader";
 import RadioFilter from "components/RadioFilter";
 import Placeholder from "components/Placeholder";
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 
 import pullRequestIcon from "assets/pull_request_icon.svg";
 import filterOutline from "assets/filter-outline.svg";

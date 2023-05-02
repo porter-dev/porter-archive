@@ -31,11 +31,12 @@ import Services from "../new-app-flow/Services";
 import { Service } from "../new-app-flow/serviceTypes";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import Fieldset from "components/porter/Fieldset";
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 import AppEvents from "./AppEvents";
 import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
 import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterYamlSchema } from "../new-app-flow/schema";
+import GHABanner from "./GHABanner";
 
 type Props = RouteComponentProps & {};
 
@@ -54,6 +55,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [appData, setAppData] = useState(null);
+  const [workflowCheckPassed, setWorkflowCheckPassed] = useState<boolean>(false);
+
   const [error, setError] = useState(null);
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
     false
@@ -61,7 +64,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(true);
   const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
 
-  const [tab, setTab] = useState("events");
+  const [tab, setTab] = useState("overview");
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [components, setComponents] = useState<ResourceType[]>([]);
@@ -423,7 +426,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               setServices={setServices}
               services={services}
             />
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Button
               onClick={() => {
                 updatePorterApp();
@@ -432,12 +435,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 <Error message={updateError} />
               ) : undefined}
               loadingText={"Updating..."}
-              width={"150px"}
               disabled={services.length === 0}
             >
               Update app
             </Button>
-            <Spacer y={0.5} />
+            <Spacer y={3} />
           </>
         )
       case "build-settings":
@@ -581,10 +583,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Fieldset>
           ) : (
             <>
-              {true ? (
-                <Banner type="warning">
-                  Your application won't be available until you approve and merge this PR in your GitHub repository.
-                </Banner>
+              {!workflowCheckPassed ? (
+                <GHABanner
+                  repoName={appData.app.repo_name}
+                  branchName={appData.app.git_branch}
+                  pullRequestUrl={appData.app.pull_request_url}
+                  stackName={appData.app.name}
+                  gitRepoId={appData.app.git_repo_id}
+                />
               ) : (
                 <>
                   <DarkMatter />
@@ -611,25 +617,27 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               )}
               <Spacer y={1} />
               <TabSelector
-                options={
-                  appData.app.git_repo_id
-                    ? [
-                      { label: "Events", value: "events" },
-                      { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
-                      { label: "Overview", value: "overview" },
-                      { label: "Environment variables", value: "environment-variables" },
-                      { label: "Build settings", value: "build-settings" },
-                      { label: "Settings", value: "settings" },
-                    ]
-                    : [
-                      { label: "Events", value: "events" },
-                      { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
-                      { label: "Overview", value: "overview" },
-                      { label: "Environment variables", value: "environment-variables" },
-                      { label: "Settings", value: "settings" },
-                    ]
+                options={appData.app.git_repo_id ? (workflowCheckPassed ? [
+                    { label: "Events", value: "events" },
+                    { label: "Logs", value: "logs" },
+                    { label: "Metrics", value: "metrics" },
+                    { label: "Overview", value: "overview" },
+                    { label: "Environment variables", value: "environment-variables" },
+                    { label: "Build settings", value: "build-settings" },
+                    { label: "Settings", value: "settings" },
+                  ] : [
+                    { label: "Overview", value: "overview" },
+                    { label: "Environment variables", value: "environment-variables" },
+                    { label: "Build settings", value: "build-settings" },
+                    { label: "Settings", value: "settings" },
+                  ]) : [
+                    { label: "Events", value: "events" },
+                    { label: "Logs", value: "logs" },
+                    { label: "Metrics", value: "metrics" },
+                    { label: "Overview", value: "overview" },
+                    { label: "Environment variables", value: "environment-variables" },
+                    { label: "Settings", value: "settings" },
+                  ]
                 }
                 currentTab={tab}
                 setCurrentTab={setTab}

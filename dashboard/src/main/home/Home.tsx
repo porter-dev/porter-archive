@@ -191,7 +191,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -365,7 +365,9 @@ const Home: React.FC<Props> = (props) => {
 
   const { cluster, baseRoute } = props.match.params as any;
   return (
-    <ThemeProvider theme={currentProject?.simplified_view_enabled ? midnight : standard}>
+    <ThemeProvider
+      theme={currentProject?.simplified_view_enabled ? midnight : standard}
+    >
       <StyledHome>
         <ModalHandler setRefreshClusters={setForceRefreshClusters} />
         {currentOverlay &&
@@ -401,27 +403,19 @@ const Home: React.FC<Props> = (props) => {
           />
 
           <Switch>
-            <Route
-              path="/apps/new"
-            >
+            <Route path="/apps/new/app">
               <NewAppFlow />
             </Route>
             <Route path="/apps/:appName">
               <ExpandedApp />
             </Route>
-            <Route
-              path="/apps"
-            >
+            <Route path="/apps">
               <AppDashboard />
             </Route>
-            <Route
-              path="/addons/new"
-            >
+            <Route path="/addons/new">
               <NewAddOnFlow />
             </Route>
-            <Route
-              path="/addons"
-            >
+            <Route path="/addons">
               <AddOnDashboard />
             </Route>
             <Route
@@ -440,17 +434,17 @@ const Home: React.FC<Props> = (props) => {
               overrideInfraTabEnabled({
                 projectID: currentProject?.id,
               })) && (
-                <Route
-                  path="/infrastructure"
-                  render={() => {
-                    return (
-                      <DashboardWrapper>
-                        <InfrastructureRouter />
-                      </DashboardWrapper>
-                    );
-                  }}
-                />
-              )}
+              <Route
+                path="/infrastructure"
+                render={() => {
+                  return (
+                    <DashboardWrapper>
+                      <InfrastructureRouter />
+                    </DashboardWrapper>
+                  );
+                }}
+              />
+            )}
             <Route
               path="/dashboard"
               render={() => {
@@ -519,26 +513,26 @@ const Home: React.FC<Props> = (props) => {
           />,
           document.body
         )}
-        {showWrongEmailModal &&
+        {showWrongEmailModal && (
           <Modal>
             <Text size={16}>
               Oops! This invite link wasn't for {user?.email}
             </Text>
             <Spacer y={1} />
             <Text color="helper">
-              Your account email does not match the email associated with this project invite.
-              Please log out and sign up again with the correct email using the invite link.
+              Your account email does not match the email associated with this
+              project invite. Please log out and sign up again with the correct
+              email using the invite link.
             </Text>
             <Spacer y={1} />
             <Text color="helper">
-              You should reach out to the person who sent you the invite link to get the correct email.
+              You should reach out to the person who sent you the invite link to
+              get the correct email.
             </Text>
             <Spacer y={1} />
-            <Button onClick={props.logOut}>
-              Log out
-            </Button>
+            <Button onClick={props.logOut}>Log out</Button>
           </Modal>
-        }
+        )}
       </StyledHome>
     </ThemeProvider>
   );

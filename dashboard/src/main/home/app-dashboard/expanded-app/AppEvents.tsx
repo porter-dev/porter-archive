@@ -25,16 +25,13 @@ const AppEvents: React.FC<Props> = ({
     <StyledAppEvents>
       <Fieldset>
         <Text size={16}>
-          Approval required for Porter GitHub Action
+          Dream on
         </Text>
         <Spacer y={0.5} />
         <Text color="helper">
-          We've opened a PR to add the Porter GitHub Action to the {branchName} branch of {repoName}.
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit.
         </Text>
-        <Spacer y={0.5} />
-        <Text color="helper">
-          <Link to="/">Merge Porter PR</Link>
-        </Text>
+        <Spacer height="10px" />
       </Fieldset>
     </StyledAppEvents>
   );

@@ -28,8 +28,7 @@ import PorterLink from "components/porter/Link";
 import Loading from "components/Loading";
 import Fieldset from "components/porter/Fieldset";
 
-type Props = {
-};
+type Props = {};
 
 const icons = [
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-plain.svg",
@@ -49,8 +48,7 @@ const namespaceBlacklist = [
   "monitoring",
 ];
 
-const AppDashboard: React.FC<Props> = ({
-}) => {
+const AppDashboard: React.FC<Props> = ({}) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [apps, setApps] = useState([]);
   const [charts, setCharts] = useState([]);
@@ -61,14 +59,10 @@ const AppDashboard: React.FC<Props> = ({
   const [shouldLoadTime, setShouldLoadTime] = useState(true);
 
   const filteredApps = useMemo(() => {
-    const filteredBySearch = search(
-      apps ?? [],
-      searchValue,
-      {
-        keys: ["name"],
-        isCaseSensitive: false,
-      }
-    );
+    const filteredBySearch = search(apps ?? [], searchValue, {
+      keys: ["name"],
+      isCaseSensitive: false,
+    });
 
     return _.sortBy(filteredBySearch);
   }, [apps, searchValue]);
@@ -83,14 +77,14 @@ const AppDashboard: React.FC<Props> = ({
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
         }
-      )
+      );
       const apps = res.data;
       const timeRes = await Promise.all(
         apps.map((app: any) => {
           return api.getCharts(
             "<token>",
             {
-              limit: 1, 
+              limit: 1,
               skip: 0,
               byDate: false,
               statusFilter: [
@@ -108,16 +102,17 @@ const AppDashboard: React.FC<Props> = ({
               cluster_id: currentCluster.id,
               namespace: `porter-stack-${app.name}`,
             }
-          )
+          );
         })
       );
       apps.forEach((app: any, i: number) => {
-        app["last_deployed"] = readableDate(timeRes[i].data[0]?.info?.last_deployed);
+        app["last_deployed"] = readableDate(
+          timeRes[i].data[0]?.info?.last_deployed
+        );
       });
       setApps(apps.reverse());
       setIsLoading(false);
-    }
-    catch (err) {
+    } catch (err) {
       setError(err);
       setIsLoading(false);
     }
@@ -130,7 +125,7 @@ const AppDashboard: React.FC<Props> = ({
   }, [currentCluster, currentProject]);
 
   const renderSource = (app: any) => {
-    return(
+    return (
       <>
         {app.repo_name ? (
           <>
@@ -139,7 +134,11 @@ const AppDashboard: React.FC<Props> = ({
           </>
         ) : (
           <>
-            <SmallIcon opacity="0.7" height="18px" src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
+            <SmallIcon
+              opacity="0.7"
+              height="18px"
+              src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
+            />
             {app.image_repo_uri}
           </>
         )}
@@ -169,13 +168,7 @@ const AppDashboard: React.FC<Props> = ({
       }
     }
     return (
-      <>
-        {size === "larger" ? (
-          <MidIcon src={src} />
-        ) : (
-          <Icon src={src} />
-        )}
-      </>
+      <>{size === "larger" ? <MidIcon src={src} /> : <Icon src={src} />}</>
     );
   };
 
@@ -188,7 +181,7 @@ const AppDashboard: React.FC<Props> = ({
         disableLineBreak
       />
       <Container row spaced>
-        <SearchBar 
+        <SearchBar
           value={searchValue}
           setValue={setSearchValue}
           placeholder="Search applications . . ."
@@ -204,14 +197,14 @@ const AppDashboard: React.FC<Props> = ({
           setActive={setView}
         />
         <Spacer inline x={2} />
-        <PorterLink to="/apps/new">
+        <PorterLink to="/apps/new/app">
           <Button onClick={() => {}} height="30px" width="160px">
             <I className="material-icons">add</I> New application
           </Button>
         </PorterLink>
       </Container>
       <Spacer y={1} />
-      {(!isLoading && filteredApps.length === 0) && (
+      {!isLoading && filteredApps.length === 0 && (
         <Fieldset>
           <Container row>
             <PlaceholderIcon src={notFound} />
@@ -219,34 +212,36 @@ const AppDashboard: React.FC<Props> = ({
           </Container>
         </Fieldset>
       )}
-      {isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
+      {isLoading ? (
+        <Loading offset="-150px" />
+      ) : view === "grid" ? (
         <GridList>
-         {(filteredApps ?? []).map((app: any, i: number) => {
-           if (!namespaceBlacklist.includes(app.name)) {
-             return (
-              <Link to={`/apps/${app.name}`} key={i}>
-                <Block>
-                  <Container row>
-                    <Text size={14}>
-                      {renderIcon(app["build_packs"])}
-                      {app.name}
+          {(filteredApps ?? []).map((app: any, i: number) => {
+            if (!namespaceBlacklist.includes(app.name)) {
+              return (
+                <Link to={`/apps/${app.name}`} key={i}>
+                  <Block>
+                    <Container row>
+                      <Text size={14}>
+                        {renderIcon(app["build_packs"])}
+                        {app.name}
+                      </Text>
+                      <Spacer inline x={2} />
+                    </Container>
+                    <StatusIcon src={healthy} />
+                    <Text size={13} color="#ffffff44">
+                      {renderSource(app)}
                     </Text>
-                    <Spacer inline x={2} />
-                  </Container>
-                  <StatusIcon src={healthy} />
-                  <Text size={13} color="#ffffff44">
-                    {renderSource(app)}
-                  </Text>
-                  <Text size={13} color="#ffffff44">
-                    <SmallIcon opacity="0.4" src={time} />
-                    {app.last_deployed}
-                  </Text>
-                </Block>
-              </Link>
-             );
-           }
-         })}
-       </GridList>
+                    <Text size={13} color="#ffffff44">
+                      <SmallIcon opacity="0.4" src={time} />
+                      {app.last_deployed}
+                    </Text>
+                  </Block>
+                </Link>
+              );
+            }
+          })}
+        </GridList>
       ) : (
         <List>
           {(filteredApps ?? []).map((app: any, i: number) => {
@@ -290,8 +285,9 @@ const PlaceholderIcon = styled.img`
 const Row = styled.div<{ isAtBottom?: boolean }>`
   cursor: pointer;
   padding: 15px;
-  border-bottom: ${props => props.isAtBottom ? "none" : "1px solid #494b4f"};
-  background: ${props => props.theme.clickable.bg};
+  border-bottom: ${(props) =>
+    props.isAtBottom ? "none" : "1px solid #494b4f"};
+  background: ${(props) => props.theme.clickable.bg};
   position: relative;
   border: 1px solid #494b4f;
   border-radius: 5px;
@@ -327,10 +323,10 @@ const MidIcon = styled.img`
   margin-left: 1px;
 `;
 
-const SmallIcon = styled.img<{ opacity?: string, height?: string }>`
+const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
   margin-left: 2px;
-  height: ${props => props.height || "14px"};
-  opacity: ${props => props.opacity || 1};
+  height: ${(props) => props.height || "14px"};
+  opacity: ${(props) => props.opacity || 1};
   filter: grayscale(100%);
   margin-right: 10px;
 `;
@@ -342,10 +338,10 @@ const Block = styled.div`
   justify-content: space-between;
   cursor: pointer;
   padding: 20px;
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   position: relative;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

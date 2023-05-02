@@ -196,7 +196,7 @@ const Tab = styled.span`
 
 const ModalHeader = styled.div`
   font-weight: 600;
-  font-size: 1.5vw;
+  font-size: 16px;
   font-family: monospace;
   height: 40px;
   display: flex;

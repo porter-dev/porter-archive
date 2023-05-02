@@ -17,6 +17,7 @@ import { Context } from "shared/Context";
 import useAuth from "shared/auth/useAuth";
 import Error from "components/porter/Error";
 
+import Banner from "components/porter/Banner";
 import Loading from "components/Loading";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
@@ -325,20 +326,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       (defaultValues && Object.keys(defaultValues).length > 0) ||
       (helmValues && Object.keys(helmValues).length > 0)
     ) {
-<<<<<<< HEAD
-      const svcs = Service.deserialize(helmValues, defaultValues, porterJson);
-=======
       const svcs = Service.deserialize(helmValues, defaultValues);
->>>>>>> aa8f2fffe (adding log and events tab)
       setServices(svcs);
       if (helmValues && Object.keys(helmValues).length > 0) {
         const envs = Service.retrieveEnvFromHelmValues(helmValues);
         setEnvVars(envs);
-<<<<<<< HEAD
         const subdomain = Service.retrieveSubdomainFromHelmValues(svcs, helmValues);
         setSubdomain(subdomain);
-=======
->>>>>>> aa8f2fffe (adding log and events tab)
       }
     }
   };
@@ -503,11 +497,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               </>
             )}
             <Services setServices={setServices} services={services} />
-<<<<<<< HEAD
-            <Spacer y={0.5} />
-=======
             <Spacer y={1} />
->>>>>>> aa8f2fffe (adding log and events tab)
             <Button
               onClick={() => {
                 updatePorterApp();
@@ -560,7 +550,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         return <LogSection currentChart={appData.chart} />;
       case "environment-variables":
         return (
-<<<<<<< HEAD
           <EnvVariablesTab
             envVars={envVars}
             setEnvVars={setEnvVars}
@@ -568,36 +557,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             updateError={updateError}
             updatePorterApp={updatePorterApp}
           />
-=======
-          <>
-            <Text size={16}>Environment variables</Text>
-            <Spacer y={0.5} />
-            <Text color="helper">Shared among all services.</Text>
-            <EnvGroupArray
-              values={envVars}
-              setValues={(x: any) => setEnvVars(x)}
-              fileUpload={true}
-            />
-            <Spacer y={0.5} />
-            <Button
-              onClick={() => {
-                updatePorterApp();
-              }}
-              status={
-                updating ? (
-                  "loading"
-                ) : updateError ? (
-                  <Error message={updateError} />
-                ) : undefined
-              }
-              loadingText={"Updating..."}
-              width={"150px"}
-            >
-              Update app
-            </Button>
-            <Spacer y={0.5} />
-          </>
->>>>>>> aa8f2fffe (adding log and events tab)
         );
       default:
         return <div>dream on</div>;
@@ -738,54 +697,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <TabSelector
                 options={
                   appData.app.git_repo_id
-                    ? hasBuiltImage
-                      ? [
-<<<<<<< HEAD
-=======
-                          { label: "Events", value: "events" },
-                          { label: "Logs", value: "logs" },
-                          { label: "Metrics", value: "metrics" },
-                          { label: "Overview", value: "overview" },
-                          {
-                            label: "Environment variables",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                      : [
-                          { label: "Overview", value: "overview" },
-                          {
-                            label: "Environment variables",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                    : [
->>>>>>> aa8f2fffe (adding log and events tab)
-                        { label: "Events", value: "events" },
-                        { label: "Logs", value: "logs" },
-                        { label: "Metrics", value: "metrics" },
-                        { label: "Overview", value: "overview" },
-                        {
-                          label: "Environment variables",
-                          value: "environment-variables",
-                        },
-<<<<<<< HEAD
-                        { label: "Build settings", value: "build-settings" },
-                        { label: "Settings", value: "settings" },
-                      ]
-                      : [
-                        { label: "Overview", value: "overview" },
-                        {
-                          label: "Environment variables",
-                          value: "environment-variables",
-                        },
-                        { label: "Build settings", value: "build-settings" },
-                        { label: "Settings", value: "settings" },
-                      ]
-                    : [
+                  ? hasBuiltImage
+                    ? [
                       { label: "Events", value: "events" },
                       { label: "Logs", value: "logs" },
                       { label: "Metrics", value: "metrics" },
@@ -794,12 +707,29 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                         label: "Environment variables",
                         value: "environment-variables",
                       },
+                      { label: "Build settings", value: "build-settings" },
                       { label: "Settings", value: "settings" },
                     ]
-=======
-                        { label: "Settings", value: "settings" },
-                      ]
->>>>>>> aa8f2fffe (adding log and events tab)
+                    : [
+                      { label: "Overview", value: "overview" },
+                      {
+                        label: "Environment variables",
+                        value: "environment-variables",
+                      },
+                      { label: "Build settings", value: "build-settings" },
+                      { label: "Settings", value: "settings" },
+                    ]
+                  : [
+                    { label: "Events", value: "events" },
+                    { label: "Logs", value: "logs" },
+                    { label: "Metrics", value: "metrics" },
+                    { label: "Overview", value: "overview" },
+                    {
+                      label: "Environment variables",
+                      value: "environment-variables",
+                    },
+                    { label: "Settings", value: "settings" },
+                  ]
                 }
                 currentTab={tab}
                 setCurrentTab={setTab}

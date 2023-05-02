@@ -217,6 +217,7 @@ const updatePorterApp = baseApi<
     buildpacks?: string;
     dockerfile?: string;
     image_repo_uri?: string;
+    pull_request_url?: string;
   },
   {
     project_id: number;

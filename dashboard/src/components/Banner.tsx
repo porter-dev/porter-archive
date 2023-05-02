@@ -29,7 +29,7 @@ const Banner: React.FC<Props> = ({ type, icon, children, noMargin }) => {
       noMargin={noMargin}
     >
       {renderIcon()}
-      {children}
+      <span>{children}</span>
     </StyledBanner>
   );
 };

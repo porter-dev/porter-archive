@@ -557,9 +557,33 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           ) : (
             <>
               {true ? (
-                <Banner type="warning">
-                  Your application won't be available until you approve and merge this PR in your GitHub repository.
-                </Banner>
+                <>
+                  {appData.app.pull_request_url ? (
+                    <Banner type="warning">
+                      Your application will not be available until you merge
+                      <Spacer inline width="5px" />
+                      <Link
+                        to={appData.app.pull_request_url}
+                        underline
+                      >
+                        this PR
+                      </Link>
+                      <Spacer inline width="5px" />
+                      into your <Mono>{appData.app.git_branch}</Mono> branch.
+                    </Banner>
+                  ) : (
+                    <Banner type="warning">
+                      Your application will not be available until you add the Porter GitHub Action to your <Mono>{appData.app.git_branch}</Mono> branch.
+                      <Spacer inline width="5px" />
+                      <Link
+                        to={appData.app.pull_request_url}
+                        underline
+                      >
+                        See details
+                      </Link>
+                    </Banner>
+                  )}
+                </>
               ) : (
                 <>
                   <DarkMatter />
@@ -629,6 +653,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 };
 
 export default withRouter(ExpandedApp);
+
+const Mono = styled.span`
+  font-family: monospace;
+  display: inline;
+  margin: 0 3px 0;
+`;
 
 const Spinner = styled.img`
   width: 15px;

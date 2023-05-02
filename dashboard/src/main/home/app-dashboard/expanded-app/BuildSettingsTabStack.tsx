@@ -322,7 +322,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           >
             Save
           </StyledButton>
-          {buttonStatus === "loading" && <Loading />}
         </div>
         <div>
           <StyledButton
@@ -331,7 +330,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           >
             Save and Redeploy
           </StyledButton>
-          {buttonStatus === "loading" && <Loading />}
+          {buttonStatus === "loading" && <StyledLoadingDial />}
         </div>
       </StyledButtonWrapper>
     </>
@@ -444,6 +443,7 @@ const StyledButton = styled.button`
     top: 120%;
   }
 `;
+
 const StyledLoadingDial = styled(Loading)`
   position: absolute;
   right: -45px;

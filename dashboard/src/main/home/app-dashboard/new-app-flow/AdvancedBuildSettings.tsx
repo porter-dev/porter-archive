@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
@@ -43,6 +43,13 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setBuildView(e.target.value);
   };
+  useEffect(() => {
+    if (props.dockerfilePath && props.dockerfilePath != "") {
+      setBuildView("docker");
+    } else {
+      setBuildView("buildpacks");
+    }
+  }, [props.dockerfilePath]);
   const createDockerView = () => {
     return (
       <>

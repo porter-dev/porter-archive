@@ -295,6 +295,10 @@ func createSubdomainIfRequired(
 }
 
 func createDNSRecord(opts SubdomainCreateOpts) (*types.DNSRecord, error) {
+	if opts.powerDnsClient == nil {
+		return nil, fmt.Errorf("cannot create subdomain because powerdns client is nil")
+	}
+
 	endpoint, found, err := domain.GetNGINXIngressServiceIP(opts.k8sAgent.Clientset)
 	if err != nil {
 		return nil, err

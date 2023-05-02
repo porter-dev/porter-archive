@@ -34,8 +34,11 @@ import Fieldset from "components/porter/Fieldset";
 import Banner from "components/Banner";
 import AppEvents from "./AppEvents";
 import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
-import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import EnvGroupArray, {
+  KeyValueType,
+} from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterYamlSchema } from "../new-app-flow/schema";
+import { EnvVariablesTab } from "./EnvVariablesTab";
 
 type Props = RouteComponentProps & {};
 
@@ -109,7 +112,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         app: resPorterApp?.data,
         chart: resChartData?.data,
       };
-      const porterJson = await fetchPorterYamlContent('porter.yaml', newAppData);
+      const porterJson = await fetchPorterYamlContent(
+        "porter.yaml",
+        newAppData
+      );
       setPorterJson(porterJson);
       setAppData(newAppData);
       updateServicesAndEnvVariables(resChartData?.data, porterJson);
@@ -155,10 +161,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     try {
       setUpdating(true);
       if (
-        appData != null
-        && currentCluster != null
-        && currentProject != null
-        && appData.app != null
+        appData != null &&
+        currentCluster != null &&
+        currentProject != null &&
+        appData.app != null
       ) {
         const finalPorterYaml = createFinalPorterYaml(
           services,
@@ -166,8 +172,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           porterJson,
           appData.app.name,
           currentProject.id,
-          currentCluster.id,
-        )
+          currentCluster.id
+        );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
         await api.updatePorterStack(
@@ -181,21 +187,27 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             project_id: currentProject.id,
             stack_name: appData.app.name,
           }
-        )
+        );
       } else {
         setUpdateError("Unable to update app, please try again later.");
       }
     } catch (err) {
       // TODO: better error handling
       console.log(err);
-      const errMessage = err?.response?.data?.error ?? err?.toString() ?? 'An error occurred while deploying your app. Please try again.'
+      const errMessage =
+        err?.response?.data?.error ??
+        err?.toString() ??
+        "An error occurred while deploying your app. Please try again.";
       setUpdateError(errMessage);
     } finally {
-      setUpdating(false)
+      setUpdating(false);
     }
-  }
+  };
 
-  const fetchPorterYamlContent = async (porterYaml: string, appData: any): Promise<PorterJson | undefined> => {
+  const fetchPorterYamlContent = async (
+    porterYaml: string,
+    appData: any
+  ): Promise<PorterJson | undefined> => {
     try {
       const res = await api.getPorterYamlContents(
         "<token>",
@@ -247,18 +259,24 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     return <Icon src={src} />;
   };
 
-  const updateServicesAndEnvVariables = async (currentChart?: ChartType, porterJson?: PorterJson) => {
+  const updateServicesAndEnvVariables = async (
+    currentChart?: ChartType,
+    porterJson?: PorterJson
+  ) => {
     const helmValues = currentChart?.config;
     const defaultValues = currentChart?.chart?.values;
-    if ((defaultValues && Object.keys(defaultValues).length > 0) || (helmValues && Object.keys(helmValues).length > 0)) {
+    if (
+      (defaultValues && Object.keys(defaultValues).length > 0) ||
+      (helmValues && Object.keys(helmValues).length > 0)
+    ) {
       const svcs = Service.deserialize(helmValues, defaultValues, porterJson);
       setServices(svcs);
       if (helmValues && Object.keys(helmValues).length > 0) {
         const envs = Service.retrieveEnvFromHelmValues(helmValues);
-        setEnvVars(envs)
+        setEnvVars(envs);
       }
     }
-  }
+  };
 
   const updateComponents = async (currentChart: ChartType) => {
     setLoading(true);
@@ -408,7 +426,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "overview":
         return (
           <>
-            {(!isLoading && services.length === 0) && (
+            {!isLoading && services.length === 0 && (
               <>
                 <Fieldset>
                   <Container row>
@@ -419,18 +437,19 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 <Spacer y={0.5} />
               </>
             )}
-            <Services
-              setServices={setServices}
-              services={services}
-            />
+            <Services setServices={setServices} services={services} />
             <Spacer y={0.5} />
             <Button
               onClick={() => {
                 updatePorterApp();
               }}
-              status={updating ? "loading" : updateError ? (
-                <Error message={updateError} />
-              ) : undefined}
+              status={
+                updating ? (
+                  "loading"
+                ) : updateError ? (
+                  <Error message={updateError} />
+                ) : undefined
+              }
               loadingText={"Updating..."}
               width={"150px"}
               disabled={services.length === 0}
@@ -439,7 +458,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Button>
             <Spacer y={0.5} />
           </>
-        )
+        );
       case "build-settings":
         return (
           <BuildSettingsTabStack
@@ -476,32 +495,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
       case "environment-variables":
         return (
-          <>
-            <Text size={16}>Environment variables</Text>
-            <Spacer y={0.5} />
-            <Text color="helper">
-              Shared among all services.
-            </Text>
-            <EnvGroupArray
-              values={envVars}
-              setValues={(x: any) => setEnvVars(x)}
-              fileUpload={true}
-            />
-            <Spacer y={0.5} />
-            <Button
-              onClick={() => {
-                updatePorterApp();
-              }}
-              status={updating ? "loading" : updateError ? (
-                <Error message={updateError} />
-              ) : undefined}
-              loadingText={"Updating..."}
-              width={"150px"}
-            >
-              Update app
-            </Button>
-            <Spacer y={0.5} />
-          </>);
+          <EnvVariablesTab
+            envVars={envVars}
+            setEnvVars={setEnvVars}
+            updating={updating}
+            updateError={updateError}
+            updatePorterApp={updatePorterApp}
+          />
+        );
       default:
         return <div>dream on</div>;
     }
@@ -571,8 +572,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           {deleting ? (
             <Fieldset>
               <Text size={16}>
-                <Spinner src={loadingImg} /> Deleting "
-                {appData.app.name}"
+                <Spinner src={loadingImg} /> Deleting "{appData.app.name}"
               </Text>
               <Spacer y={0.5} />
               <Text color="helper">
@@ -583,7 +583,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             <>
               {true ? (
                 <Banner type="warning">
-                  Your application won't be available until you approve and merge this PR in your GitHub repository.
+                  Your application won't be available until you approve and
+                  merge this PR in your GitHub repository.
                 </Banner>
               ) : (
                 <>
@@ -601,7 +602,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                      appData.chart.chart.metadata.version
+                        appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}
@@ -614,22 +615,28 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 options={
                   appData.app.git_repo_id
                     ? [
-                      { label: "Events", value: "events" },
-                      { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
-                      { label: "Overview", value: "overview" },
-                      { label: "Environment variables", value: "environment-variables" },
-                      { label: "Build settings", value: "build-settings" },
-                      { label: "Settings", value: "settings" },
-                    ]
+                        { label: "Events", value: "events" },
+                        { label: "Logs", value: "logs" },
+                        { label: "Metrics", value: "metrics" },
+                        { label: "Overview", value: "overview" },
+                        {
+                          label: "Environment variables",
+                          value: "environment-variables",
+                        },
+                        { label: "Build settings", value: "build-settings" },
+                        { label: "Settings", value: "settings" },
+                      ]
                     : [
-                      { label: "Events", value: "events" },
-                      { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
-                      { label: "Overview", value: "overview" },
-                      { label: "Environment variables", value: "environment-variables" },
-                      { label: "Settings", value: "settings" },
-                    ]
+                        { label: "Events", value: "events" },
+                        { label: "Logs", value: "logs" },
+                        { label: "Metrics", value: "metrics" },
+                        { label: "Overview", value: "overview" },
+                        {
+                          label: "Environment variables",
+                          value: "environment-variables",
+                        },
+                        { label: "Settings", value: "settings" },
+                      ]
                 }
                 currentTab={tab}
                 setCurrentTab={setTab}

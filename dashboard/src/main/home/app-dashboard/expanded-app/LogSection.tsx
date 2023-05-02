@@ -510,9 +510,9 @@ const StyledLogsSection = styled.div`
   flex-direction: column;
   position: relative;
   font-size: 13px;
-  border-radius: 8px ";
-  border: 1px solid #ffffff33";
-  background: #101420;
+  border-radius: 8px;
+  border: 1px solid #ffffff33;
+  background: #000000;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;

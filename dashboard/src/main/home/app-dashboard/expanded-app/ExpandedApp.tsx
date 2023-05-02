@@ -699,9 +699,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                   ? hasBuiltImage
                     ? [
-                      { label: "Events", value: "events" },
                       { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
                       { label: "Overview", value: "overview" },
                       {
                         label: "Environment variables",
@@ -720,9 +718,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       { label: "Settings", value: "settings" },
                     ]
                   : [
-                    { label: "Events", value: "events" },
                     { label: "Logs", value: "logs" },
-                    { label: "Metrics", value: "metrics" },
                     { label: "Overview", value: "overview" },
                     {
                       label: "Environment variables",

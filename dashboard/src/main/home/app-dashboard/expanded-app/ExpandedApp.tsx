@@ -120,7 +120,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
       // Only check GHA status if no built image is set
       const hasBuiltImage = !!resChartData.data.config?.global?.image?.repository;
-      if (hasBuiltImage) {
+      if (hasBuiltImage || !resPorterApp.data.repo_name) {
         setWorkflowCheckPassed(true);
         setHasBuiltImage(true);
       } else {
@@ -141,7 +141,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         } catch (err) {
 
           // Handle unmerged PR
-          if (err.response.status === 404) {
+          if (err.response?.status === 404) {
             try {
 
               // Check for user-copied porter.yml as fallback
@@ -493,7 +493,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     <Text color="helper">No services were found.</Text>
                   </Container>
                 </Fieldset>
-                <Spacer y={0.5} />
+                <Spacer y={1} />
               </>
             )}
             <Services setServices={setServices} services={services} />

@@ -128,7 +128,7 @@ const StyledInput = styled.input<{
   height: ${props => props.height || "35px"};
   padding: 5px 10px;
   width: ${props => props.width || "200px"};
-  color: #ffffff;
+  color: ${props => props.disabled ? "#aaaabb" : "#ffffff"};
   font-size: 13px;
   outline: none;
   border-radius: 5px;

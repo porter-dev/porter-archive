@@ -1,30 +1,47 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import Tooltip from "./Tooltip";
 
 type Props = {
   checked: boolean;
   toggleChecked: () => void;
   children: React.ReactNode;
   disabled?: boolean;
+  disabledTooltip?: string;
 };
 
 const Checkbox: React.FC<Props> = ({
   checked,
   toggleChecked,
   children,
-  disabled,
+  disabled = false,
+  disabledTooltip,
 }) => {
   return (
-    <StyledCheckbox>
-      <Box 
-        checked={checked}
-        onClick={!disabled && toggleChecked}
-        disabled={disabled}
-      >
-        <i className="material-icons">done</i>
-      </Box>
-      {children}
-    </StyledCheckbox>
+    disabled && disabledTooltip ?
+      <Tooltip content={disabledTooltip} position="right">
+        <StyledCheckbox>
+          <Box
+            checked={checked}
+            onClick={disabled ? () => { } : toggleChecked}
+            disabled={disabled}
+          >
+            <i className="material-icons">done</i>
+          </Box>
+          {children}
+        </StyledCheckbox>
+      </Tooltip>
+      :
+      <StyledCheckbox>
+        <Box
+          checked={checked}
+          onClick={disabled ? () => { } : toggleChecked}
+          disabled={disabled}
+        >
+          <i className="material-icons">done</i>
+        </Box>
+        {children}
+      </StyledCheckbox>
   );
 };
 
@@ -37,7 +54,7 @@ const StyledCheckbox = styled.div`
 
 const Box = styled.div<{
   checked: boolean;
-  disabled: boolean;
+  disabled?: boolean;
 }>`
   width: 12px;
   height: 12px;

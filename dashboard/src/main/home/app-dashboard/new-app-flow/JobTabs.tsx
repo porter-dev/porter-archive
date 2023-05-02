@@ -81,6 +81,8 @@ const JobTabs: React.FC<Props> = ({
         <Checkbox
           checked={service.jobsExecuteConcurrently.value}
           toggleChecked={() => { editService({ ...service, jobsExecuteConcurrently: { readOnly: false, value: !service.jobsExecuteConcurrently.value } }) }}
+          disabled={service.jobsExecuteConcurrently.readOnly}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         >
           <Text color="helper">Allow jobs to execute concurrently</Text>
         </Checkbox>

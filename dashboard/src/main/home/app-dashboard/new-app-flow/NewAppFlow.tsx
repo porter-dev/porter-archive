@@ -25,7 +25,7 @@ import GithubActionModal from "./GithubActionModal";
 import { GithubActionConfigType } from "shared/types";
 import Error from "components/porter/Error";
 import { z } from "zod";
-import { PorterYamlSchema, createFinalPorterYaml } from "./schema";
+import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
 import { Service } from "./serviceTypes";
 
 type Props = RouteComponentProps & {};
@@ -92,9 +92,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [buildConfig, setBuildConfig] = useState({});
   const [porterYaml, setPorterYaml] = useState("");
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
-  const [porterJson, setPorterJson] = useState<
-    z.infer<typeof PorterYamlSchema> | undefined
-  >(undefined);
+  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(undefined);
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
 
   const validatePorterYaml = (yamlString: string) => {
@@ -102,30 +100,18 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     try {
       parsedYaml = yaml.load(yamlString);
       const parsedData = PorterYamlSchema.parse(parsedYaml);
-      const porterYamlToJson = parsedData as z.infer<typeof PorterYamlSchema>;
+      const porterYamlToJson = parsedData as PorterJson;
       setPorterJson(porterYamlToJson);
       const newServices = [];
       const existingServices = formState.serviceList.map((s) => s.name);
       for (const [name, app] of Object.entries(porterYamlToJson.apps)) {
         if (!existingServices.includes(name)) {
           if (app.type) {
-            newServices.push(
-              Service.default(name, app.type, {
-                readOnly: true,
-                value: app.run,
-              })
-            );
+            newServices.push(Service.default(name, app.type, porterYamlToJson));
           } else if (name.includes("web")) {
-            newServices.push(
-              Service.default(name, "web", { readOnly: true, value: app.run })
-            );
+            newServices.push(Service.default(name, "web", porterYamlToJson));
           } else {
-            newServices.push(
-              Service.default(name, "worker", {
-                readOnly: true,
-                value: app.run,
-              })
-            );
+            newServices.push(Service.default(name, "worker", porterYamlToJson));
           }
         }
       }
@@ -202,6 +188,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         currentProject.id,
         currentCluster.id
       );
+
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl

@@ -43,30 +43,33 @@ const WorkerTabs: React.FC<Props> = ({
         <Input
           label="CPUs"
           placeholder="ex: 0.5"
-          value={service.cpu}
+          value={service.cpu.value}
+          disabled={service.cpu.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, cpu: e }) }}
+          setValue={(e) => { editService({ ...service, cpu: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Input
           label="RAM (MB)"
           placeholder="ex: 1"
-          value={service.ram}
+          value={service.ram.value}
+          disabled={service.ram.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, ram: e }) }}
+          setValue={(e) => { editService({ ...service, ram: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Input
           label="Replicas"
           placeholder="ex: 1"
-          value={service.replicas}
+          value={service.replicas.value}
+          disabled={service.replicas.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, replicas: e }) }}
+          setValue={(e) => { editService({ ...service, replicas: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Checkbox
-          checked={service.autoscalingOn}
-          toggleChecked={() => { editService({ ...service, autoscalingOn: !service.autoscalingOn }) }}
+          checked={service.autoscalingOn.value}
+          toggleChecked={() => { editService({ ...service, autoscalingOn: { readOnly: false, value: !service.autoscalingOn.value } }) }}
         >
           <Text color="helper">Enable autoscaling (overrides replicas)</Text>
         </Checkbox>
@@ -74,43 +77,40 @@ const WorkerTabs: React.FC<Props> = ({
         <Input
           label="Min replicas"
           placeholder="ex: 1"
-          value={service.minReplicas}
+          value={service.minReplicas.value}
+          disabled={service.minReplicas.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, minReplicas: e }) }}
+          setValue={(e) => { editService({ ...service, minReplicas: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Input
           label="Max replicas"
           placeholder="ex: 10"
-          value={service.maxReplicas}
+          value={service.maxReplicas.value}
+          disabled={service.maxReplicas.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, maxReplicas: e }) }}
+          setValue={(e) => { editService({ ...service, maxReplicas: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Input
           label="Target CPU utilization (%)"
           placeholder="ex: 50"
-          value={service.targetCPUUtilizationPercentage}
+          value={service.targetCPUUtilizationPercentage.value}
+          disabled={service.targetCPUUtilizationPercentage.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, targetCPUUtilizationPercentage: e }) }}
+          setValue={(e) => { editService({ ...service, targetCPUUtilizationPercentage: { readOnly: false, value: e } }) }}
         />
         <Spacer y={1} />
         <Input
           label="Target RAM utilization (%)"
           placeholder="ex: 50"
-          value={service.targetRAMUtilizationPercentage}
+          value={service.targetRAMUtilizationPercentage.value}
+          disabled={service.targetRAMUtilizationPercentage.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, targetRAMUtilizationPercentage: e }) }}
+          setValue={(e) => { editService({ ...service, targetRAMUtilizationPercentage: { readOnly: false, value: e } }) }}
         />
       </>
     )
-  };
-
-  const renderAdvanced = () => {
-    return (
-      <>
-      </>
-    );
   };
 
   return (
@@ -119,7 +119,6 @@ const WorkerTabs: React.FC<Props> = ({
         options={[
           { label: 'Main', value: 'main' },
           { label: 'Resources', value: 'resources' },
-          // { label: 'Advanced', value: 'advanced' },
         ]}
         currentTab={currentTab}
         setCurrentTab={(value: string) => {
@@ -133,7 +132,6 @@ const WorkerTabs: React.FC<Props> = ({
       />
       {currentTab === 'main' && renderMain()}
       {currentTab === 'resources' && renderResources()}
-      {/* currentTab === 'advanced' && renderAdvanced() */}
     </>
   )
 }

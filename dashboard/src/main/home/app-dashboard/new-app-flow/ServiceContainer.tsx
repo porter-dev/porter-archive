@@ -62,11 +62,11 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {renderIcon(service)}
           {service.name.trim().length > 0 ? service.name : "New Service"}
         </ServiceTitle>
-        <ActionButton onClick={(e) => {
+        {service.canDelete && <ActionButton onClick={(e) => {
           deleteService();
         }}>
           <span className="material-icons">delete</span>
-        </ActionButton>
+        </ActionButton>}
       </ServiceHeader>
       <AnimateHeight
         height={showExpanded ? height : 0}

@@ -18,52 +18,54 @@ const PROVISIONING_STATUS_POLL_INTERVAL = 60 * 1000; // poll every minute
 
 const ProvisionerStatus: React.FC<Props> = ({ provisionFailureReason }) => {
   const { currentProject, currentCluster } = useContext(Context);
-  const [progress, setProgress] = useState(1);
+  const [progress, setProgress] = useState<number>(1);
 
   // Continuously poll provisioning status and cluster status
-  const pollProvisioningAndClusterStatus = async (currentProgress) => {
-    try {
-      if (currentProgress < 4) {
-        const resState = await api.getClusterState(
-          "<token>",
-          {},
-          {
-            project_id: currentProject.id,
-            cluster_id: currentCluster.id,
+  const pollProvisioningAndClusterStatus = async () => {
+    if (currentProject && currentCluster) {
+      try {
+        if (progress < 4) {
+          const resState = await api.getClusterState(
+            "<token>",
+            {},
+            {
+              project_id: currentProject.id,
+              cluster_id: currentCluster.id,
+            }
+          );
+          const {
+            is_control_plane_ready,
+            is_infrastructure_ready,
+            phase,
+          } = resState.data;
+          let newProgress = 1;
+          if (is_control_plane_ready) {
+            newProgress += 1;
           }
-        );
-        const {
-          is_control_plane_ready,
-          is_infrastructure_ready,
-          phase,
-        } = resState.data;
-        let newProgress = 1;
-        if (is_control_plane_ready) {
-          newProgress += 1;
-        }
-        if (is_infrastructure_ready) {
-          newProgress += 1;
-        }
-        if (phase === "Provisioned") {
-          newProgress += 1;
-        }
-        setProgress(newProgress);
-      } else {
-        const resStatus = await api.getCluster(
-          "<token>",
-          {},
-          {
-            project_id: currentProject.id,
-            cluster_id: currentCluster.id,
+          if (is_infrastructure_ready) {
+            newProgress += 1;
           }
-        );
-        const status = resStatus.data.status;
-        if (status === "READY") {
-          window.location.reload();
+          if (phase === "Provisioned") {
+            newProgress += 1;
+          }
+          setProgress(newProgress);
+        } else {
+          const resStatus = await api.getCluster(
+            "<token>",
+            {},
+            {
+              project_id: currentProject.id,
+              cluster_id: currentCluster.id,
+            }
+          );
+          const status = resStatus.data.status;
+          if (status === "READY") {
+            window.location.reload();
+          }
         }
+      } catch (err) {
+        console.log(err);
       }
-    } catch (err) {
-      console.log(err);
     }
   };
 
@@ -72,7 +74,7 @@ const ProvisionerStatus: React.FC<Props> = ({ provisionFailureReason }) => {
       pollProvisioningAndClusterStatus,
       PROVISIONING_STATUS_POLL_INTERVAL
     );
-    pollProvisioningAndClusterStatus(progress);
+    pollProvisioningAndClusterStatus();
     return () => clearInterval(intervalId);
   }, []);
 

@@ -404,7 +404,7 @@ const StyledForm = styled.div`
   position: relative;
   padding: 30px 30px 25px;
   border-radius: 5px;
-  background: #26292e;
+  background: ${({ theme }) => theme.fg};
   border: 1px solid #494b4f;
   font-size: 13px;
   margin-bottom: 30px;

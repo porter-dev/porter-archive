@@ -357,6 +357,28 @@ export const Service = {
             // TODO: handle error
             return [];
         }
+    },
+
+    retrieveSubdomainFromHelmValues: (services: Service[], helmValues: any): string => {
+        const webServices = services.filter(Service.isWeb);
+        if (webServices.length == 0) {
+            return "";
+        }
+
+        for (const web of webServices) {
+            const values = helmValues[Service.toHelmName(web)];
+            if (values == null || values.ingress == null || !values.ingress.enabled) {
+                continue;
+            }
+            if (values.ingress.custom_domain && values.ingress.hosts?.length > 0) {
+                return values.ingress.hosts[0];
+            }
+            if (values.ingress.porter_hosts?.length > 0) {
+                return values.ingress.porter_hosts[0];
+            }
+        }
+
+        return "";
     }
 }
 

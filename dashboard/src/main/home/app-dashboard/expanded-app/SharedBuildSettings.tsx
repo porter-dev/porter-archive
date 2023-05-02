@@ -89,29 +89,32 @@ const SharedBuildSettings: React.FC<Props> = ({
           />
         </>
       )}
-      <Spacer y={1} />
-      <Text color="helper">Specify your application root path.</Text>
-      <Spacer y={0.5} />
-      <Input
-        disabled={!branch ? true : false}
-        placeholder="ex: ./"
-        value={folderPath}
-        width="100%"
-        setValue={setFolderPath}
-      />
+
       {actionConfig.git_repo && branch && (
-        <DetectContentsList
-          actionConfig={actionConfig}
-          branch={branch}
-          dockerfilePath={dockerfilePath}
-          folderPath={folderPath}
-          setActionConfig={setActionConfig}
-          setDockerfilePath={setDockerfilePath}
-          setFolderPath={setFolderPath}
-          setBuildConfig={setBuildConfig}
-          porterYaml={porterYaml}
-          setPorterYaml={setPorterYaml}
-        />
+        <>
+          <Spacer y={1} />
+          <Text color="helper">Specify your application root path.</Text>
+          <Spacer y={0.5} />
+          <Input
+            disabled={!branch ? true : false}
+            placeholder="ex: ./"
+            value={folderPath}
+            width="100%"
+            setValue={setFolderPath}
+          />
+          <DetectContentsList
+            actionConfig={actionConfig}
+            branch={branch}
+            dockerfilePath={dockerfilePath}
+            folderPath={folderPath}
+            setActionConfig={setActionConfig}
+            setDockerfilePath={setDockerfilePath}
+            setFolderPath={setFolderPath}
+            setBuildConfig={setBuildConfig}
+            porterYaml={porterYaml}
+            setPorterYaml={setPorterYaml}
+          />
+        </>
       )}
     </>
   );

@@ -9,6 +9,7 @@ import web from "assets/web.png";
 import box from "assets/box.png";
 import github from "assets/github.png";
 import pr_icon from "assets/pull_request_icon.svg";
+import loadingImg from "assets/loading.gif";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -29,10 +30,12 @@ import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
 import { Service } from "../new-app-flow/serviceTypes";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
+import Fieldset from "components/porter/Fieldset";
+import Banner from "components/Banner";
+import AppEvents from "./AppEvents";
 import { createFinalPorterYaml } from "../new-app-flow/schema";
 import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterYamlSchema } from "../new-app-flow/schema";
-import Fieldset from "components/porter/Fieldset";
 
 type Props = RouteComponentProps & {};
 
@@ -50,6 +53,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   );
   const [rawYaml, setRawYaml] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [appData, setAppData] = useState(null);
   const [error, setError] = useState(null);
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
@@ -118,7 +122,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   };
 
   const deletePorterApp = async () => {
-    setIsLoading(true);
+    setShowDeleteOverlay(false);
+    setDeleting(true);
     const { appName } = props.match.params as any;
     try {
       const res = await api.deletePorterApp(
@@ -139,11 +144,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           namespace: `porter-stack-${appName}`,
         }
       );
-      console.log(res);
-      setIsLoading(false);
+      props.history.push("/apps");
     } catch (err) {
       setError(err);
-      setIsLoading(false);
+      setDeleting(false);
     }
   };
 
@@ -463,6 +467,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Button>
           </>
         );
+      case "events":
+        return (
+          <AppEvents
+            repoName={appData.app.repo_name}
+            branchName={appData.app.git_branch}
+          />
+        );
       case "environment-variables":
         return (
           <>
@@ -557,53 +568,76 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             Last deployed {getReadableDate(appData.chart.info.last_deployed)}
           </Text>
           <Spacer y={1} />
-          <DarkMatter />
-          <RevisionSection
-            showRevisions={showRevisions}
-            toggleShowRevisions={() => {
-              setShowRevisions(!showRevisions);
-            }}
-            chart={appData.chart}
-            refreshChart={() => getChartData(appData.chart)}
-            setRevision={setRevision}
-            forceRefreshRevisions={forceRefreshRevisions}
-            refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-            shouldUpdate={
-              appData.chart.latest_version &&
-              appData.chart.latest_version !==
-              appData.chart.chart.metadata.version
-            }
-            latestVersion={appData.chart.latest_version}
-            upgradeVersion={appUpgradeVersion}
-          />
-          <DarkMatter antiHeight="-18px" />
-          <Spacer y={1} />
-          <TabSelector
-            options={
-              appData.app.git_repo_id
-                ? [
-                  { label: "Events", value: "events" },
-                  { label: "Logs", value: "logs" },
-                  { label: "Metrics", value: "metrics" },
-                  { label: "Overview", value: "overview" },
-                  { label: "Environment variables", value: "environment-variables" },
-                  { label: "Build settings", value: "build-settings" },
-                  { label: "Settings", value: "settings" },
-                ]
-                : [
-                  { label: "Events", value: "events" },
-                  { label: "Logs", value: "logs" },
-                  { label: "Metrics", value: "metrics" },
-                  { label: "Overview", value: "overview" },
-                  { label: "Environment variables", value: "environment-variables" },
-                  { label: "Settings", value: "settings" },
-                ]
-            }
-            currentTab={tab}
-            setCurrentTab={setTab}
-          />
-          <Spacer y={1} />
-          {renderTabContents()}
+          {deleting ? (
+            <Fieldset>
+              <Text size={16}>
+                <Spinner src={loadingImg} /> Deleting "
+                {appData.app.name}"
+              </Text>
+              <Spacer y={0.5} />
+              <Text color="helper">
+                You will be automatically redirected after deletion is complete.
+              </Text>
+            </Fieldset>
+          ) : (
+            <>
+              {true ? (
+                <Banner type="warning">
+                  Your application won't be available until you approve and merge this PR in your GitHub repository.
+                </Banner>
+              ) : (
+                <>
+                  <DarkMatter />
+                  <RevisionSection
+                    showRevisions={showRevisions}
+                    toggleShowRevisions={() => {
+                      setShowRevisions(!showRevisions);
+                    }}
+                    chart={appData.chart}
+                    refreshChart={() => getChartData(appData.chart)}
+                    setRevision={setRevision}
+                    forceRefreshRevisions={forceRefreshRevisions}
+                    refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+                    shouldUpdate={
+                      appData.chart.latest_version &&
+                      appData.chart.latest_version !==
+                      appData.chart.chart.metadata.version
+                    }
+                    latestVersion={appData.chart.latest_version}
+                    upgradeVersion={appUpgradeVersion}
+                  />
+                  <DarkMatter antiHeight="-18px" />
+                </>
+              )}
+              <Spacer y={1} />
+              <TabSelector
+                options={
+                  appData.app.git_repo_id
+                    ? [
+                      { label: "Events", value: "events" },
+                      { label: "Logs", value: "logs" },
+                      { label: "Metrics", value: "metrics" },
+                      { label: "Overview", value: "overview" },
+                      { label: "Environment variables", value: "environment-variables" },
+                      { label: "Build settings", value: "build-settings" },
+                      { label: "Settings", value: "settings" },
+                    ]
+                    : [
+                      { label: "Events", value: "events" },
+                      { label: "Logs", value: "logs" },
+                      { label: "Metrics", value: "metrics" },
+                      { label: "Overview", value: "overview" },
+                      { label: "Environment variables", value: "environment-variables" },
+                      { label: "Settings", value: "settings" },
+                    ]
+                }
+                currentTab={tab}
+                setCurrentTab={setTab}
+              />
+              <Spacer y={1} />
+              {renderTabContents()}
+            </>
+          )}
         </StyledExpandedApp>
       )}
       {showDeleteOverlay && (
@@ -622,6 +656,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 };
 
 export default withRouter(ExpandedApp);
+
+const Spinner = styled.img`
+  width: 15px;
+  height: 15px;
+  margin-right: 12px;
+  margin-bottom: -2px;
+`;
 
 const DarkMatter = styled.div<{ antiHeight?: string }>`
   width: 100%;

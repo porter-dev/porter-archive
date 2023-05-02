@@ -15,35 +15,38 @@ type PorterApp struct {
 	GitBranch string `json:"git_branch,omitempty"`
 
 	// Build settings (optional)
-	BuildContext string `json:"build_context,omitempty"`
-	Builder      string `json:"builder,omitempty"`
-	Buildpacks   string `json:"build_packs,omitempty"`
-	Dockerfile   string `json:"dockerfile,omitempty"`
+	BuildContext   string `json:"build_context,omitempty"`
+	Builder        string `json:"builder,omitempty"`
+	Buildpacks     string `json:"build_packs,omitempty"`
+	Dockerfile     string `json:"dockerfile,omitempty"`
+	PullRequestURL string `json:"pull_request_url,omitempty"`
 }
 
 // swagger:model
 type CreatePorterAppRequest struct {
-	Name         string `json:"name" form:"required"`
-	ClusterID    uint   `json:"cluster_id"`
-	ProjectID    uint   `json:"project_id"`
-	RepoName     string `json:"repo_name"`
-	GitBranch    string `json:"git_branch"`
-	GitRepoID    uint   `json:"git_repo_id"`
-	BuildContext string `json:"build_context"`
-	Builder      string `json:"builder"`
-	Buildpacks   string `json:"buildpacks"`
-	Dockerfile   string `json:"dockerfile"`
-	ImageRepoURI string `json:"image_repo_uri"`
+	Name           string `json:"name" form:"required"`
+	ClusterID      uint   `json:"cluster_id"`
+	ProjectID      uint   `json:"project_id"`
+	RepoName       string `json:"repo_name"`
+	GitBranch      string `json:"git_branch"`
+	GitRepoID      uint   `json:"git_repo_id"`
+	BuildContext   string `json:"build_context"`
+	Builder        string `json:"builder"`
+	Buildpacks     string `json:"buildpacks"`
+	Dockerfile     string `json:"dockerfile"`
+	ImageRepoURI   string `json:"image_repo_uri"`
+	PullRequestURL string `json:"pull_request_url"`
 }
 
 type UpdatePorterAppRequest struct {
-	RepoName     string `json:"repo_name"`
-	GitBranch    string `json:"git_branch"`
-	BuildContext string `json:"build_context"`
-	Builder      string `json:"builder"`
-	Buildpacks   string `json:"buildpacks"`
-	Dockerfile   string `json:"dockerfile"`
-	ImageRepoURI string `json:"image_repo_uri"`
+	RepoName       string `json:"repo_name"`
+	GitBranch      string `json:"git_branch"`
+	BuildContext   string `json:"build_context"`
+	Builder        string `json:"builder"`
+	Buildpacks     string `json:"buildpacks"`
+	Dockerfile     string `json:"dockerfile"`
+	ImageRepoURI   string `json:"image_repo_uri"`
+	PullRequestURL string `json:"pull_request_url"`
 }
 
 type ListPorterAppResponse []*PorterApp

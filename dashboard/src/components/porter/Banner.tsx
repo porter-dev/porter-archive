@@ -9,9 +9,16 @@ interface Props {
   icon?: React.ReactNode;
   children: React.ReactNode;
   noMargin?: boolean;
+  suffix?: React.ReactNode;
 }
 
-const Banner: React.FC<Props> = ({ type, icon, children, noMargin }) => {
+const Banner: React.FC<Props> = ({ 
+  type,
+  icon,
+  children,
+  noMargin,
+  suffix,
+}) => {
   const renderIcon = () => {
     if (icon) {
       return icon;
@@ -28,13 +35,23 @@ const Banner: React.FC<Props> = ({ type, icon, children, noMargin }) => {
       color={type === "error" ? "#ff385d" : type === "warning" && "#f5cb42"}
       noMargin={noMargin}
     >
+      <>
       {renderIcon()}
       <span>{children}</span>
+      </>
+      {suffix && (
+        <Suffix>{suffix}</Suffix>
+      )}
     </StyledBanner>
   );
 };
 
 export default Banner;
+
+const Suffix = styled.div`
+  margin-left: auto;
+  padding-left: 10px;
+`;
 
 const StyledBanner = styled.div<{
   color?: string;
@@ -52,7 +69,8 @@ const StyledBanner = styled.div<{
   padding: 10px 14px;
   color: ${(props) => props.color || "#ffffff"};
   align-items: center;
-  background: #ffffff11;
+  jusrify-content: space-between;
+  background: ${({ theme }) => theme.fg};
   > img {
     margin-right: 10px;
     width: 20px;

@@ -42,14 +42,14 @@ const Link: React.FC<Props> = ({
 export default Link;
 
 const Div = styled.span<{ underline?: boolean }>`
-  color: #8590ff;
+  color: #ffffff;
   cursor: pointer;
   display: inline;
   text-decoration: ${props => props.underline ? "underline" : ""};
 `;
 
 const StyledLink = styled(DynamicLink)<{ underline?: boolean }>`
-  color: #8590ff;
+  color: #ffffff;
   display: inline;
   cursor: pointer;
   text-decoration: ${props => props.underline ? "underline" : ""};

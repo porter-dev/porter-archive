@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 
 import ProvisionerFlow from "components/ProvisionerFlow";
 import ClusterList from "./ClusterList";

@@ -31,11 +31,12 @@ import Services from "../new-app-flow/Services";
 import { Service } from "../new-app-flow/serviceTypes";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import Fieldset from "components/porter/Fieldset";
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 import AppEvents from "./AppEvents";
 import { createFinalPorterYaml } from "../new-app-flow/schema";
 import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterYamlSchema } from "../new-app-flow/schema";
+import GHABanner from "./GHABanner";
 
 type Props = RouteComponentProps & {};
 
@@ -55,6 +56,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [appData, setAppData] = useState(null);
+  const [workflowCheckPassed, setWorkflowCheckPassed] = useState<boolean>(false);
+
   const [error, setError] = useState(null);
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
     false
@@ -399,7 +402,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               setServices={setServices}
               services={services}
             />
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <Button
               onClick={() => {
                 updatePorterApp();
@@ -408,11 +411,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 <Error message={updateError} />
               ) : undefined}
               loadingText={"Updating..."}
-              width={"150px"}
             >
               Update app
             </Button>
-            <Spacer y={0.5} />
+            <Spacer y={3} />
           </>
         )
       case "build-settings":
@@ -556,34 +558,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Fieldset>
           ) : (
             <>
-              {true ? (
-                <>
-                  {appData.app.pull_request_url ? (
-                    <Banner type="warning">
-                      Your application will not be available until you merge
-                      <Spacer inline width="5px" />
-                      <Link
-                        to={appData.app.pull_request_url}
-                        underline
-                      >
-                        this PR
-                      </Link>
-                      <Spacer inline width="5px" />
-                      into your <Mono>{appData.app.git_branch}</Mono> branch.
-                    </Banner>
-                  ) : (
-                    <Banner type="warning">
-                      Your application will not be available until you add the Porter GitHub Action to your <Mono>{appData.app.git_branch}</Mono> branch.
-                      <Spacer inline width="5px" />
-                      <Link
-                        to={appData.app.pull_request_url}
-                        underline
-                      >
-                        See details
-                      </Link>
-                    </Banner>
-                  )}
-                </>
+              {!workflowCheckPassed ? (
+                <GHABanner
+                  repoName={appData.app.repo_name}
+                  branchName={appData.app.git_branch}
+                  pullRequestUrl={appData.app.pull_request_url}
+                  stackName={appData.app.name}
+                  gitRepoId={appData.app.git_repo_id}
+                />
               ) : (
                 <>
                   <DarkMatter />
@@ -611,22 +593,24 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <Spacer y={1} />
               <TabSelector
                 options={
-                  appData.app.git_repo_id
-                    ? [
-                      { label: "Events", value: "events" },
-                      { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
-                      { label: "Overview", value: "overview" },
-                      { label: "Build settings", value: "build-settings" },
-                      { label: "Settings", value: "settings" },
-                    ]
-                    : [
-                      { label: "Events", value: "events" },
-                      { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
-                      { label: "Overview", value: "overview" },
-                      { label: "Settings", value: "settings" },
-                    ]
+                  appData.app.git_repo_id ? (workflowCheckPassed ? [
+                    { label: "Events", value: "events" },
+                    { label: "Logs", value: "logs" },
+                    { label: "Metrics", value: "metrics" },
+                    { label: "Overview", value: "overview" },
+                    { label: "Build settings", value: "build-settings" },
+                    { label: "Settings", value: "settings" },
+                  ] : [
+                    { label: "Overview", value: "overview" },
+                    { label: "Build settings", value: "build-settings" },
+                    { label: "Settings", value: "settings" },
+                  ]) : [
+                    { label: "Events", value: "events" },
+                    { label: "Logs", value: "logs" },
+                    { label: "Metrics", value: "metrics" },
+                    { label: "Overview", value: "overview" },
+                    { label: "Settings", value: "settings" },
+                  ]
                 }
                 currentTab={tab}
                 setCurrentTab={setTab}
@@ -653,12 +637,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 };
 
 export default withRouter(ExpandedApp);
-
-const Mono = styled.span`
-  font-family: monospace;
-  display: inline;
-  margin: 0 3px 0;
-`;
 
 const Spinner = styled.img`
   width: 15px;

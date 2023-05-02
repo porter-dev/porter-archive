@@ -267,6 +267,10 @@ export const Service = {
 
     // converts a helm values object and porter json (from their repo) to a service
     deserialize: (helmValues: any, defaultValues: any, porterJson?: PorterJson): Service[] => {
+        if (defaultValues == null) {
+            return [];
+        }
+
         return Object.keys(defaultValues).map((name: string) => {
             const suffix = name.slice(-4);
             if (suffix in SUFFIX_TO_TYPE) {
@@ -274,7 +278,7 @@ export const Service = {
                 const appName = name.slice(0, -4);
                 const coalescedValues = overrideObjectValues(
                     defaultValues[name],
-                    helmValues[name] ?? {}
+                    helmValues?.[name] ?? {}
                 );
                 switch (type) {
                     case 'web':

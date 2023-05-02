@@ -1,6 +1,4 @@
 import _ from "lodash";
-import api from "shared/api";
-import { ChartType } from "shared/types";
 import { overrideObjectValues } from "./utils";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 

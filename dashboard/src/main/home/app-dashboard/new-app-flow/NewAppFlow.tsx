@@ -104,7 +104,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const parsedData = PorterYamlSchema.parse(parsedYaml);
       const porterYamlToJson = parsedData as z.infer<typeof PorterYamlSchema>;
       setPorterJson(porterYamlToJson);
-      // go through key value pairs and create services from them, if they don't already exist
       const newServices = [];
       const existingServices = formState.serviceList.map((s) => s.name);
       for (const [name, app] of Object.entries(porterYamlToJson.apps)) {
@@ -142,9 +141,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       ) {
         setDetected({
           detected: true,
-          message: `Detected ${
-            Object.keys(porterYamlToJson.apps).length
-          } apps from porter.yaml`,
+          message: `Detected ${Object.keys(porterYamlToJson.apps).length
+            } apps from porter.yaml`,
         });
       } else {
         setDetected({
@@ -208,11 +206,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl
         ? {
-            image_info: {
-              repository: imageUrl,
-              tag: imageTag,
-            },
-          }
+          image_info: {
+            repository: imageUrl,
+            tag: imageTag,
+          },
+        }
         : {};
 
       // write to the db

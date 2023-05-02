@@ -31,6 +31,7 @@ const WorkerTabs: React.FC<Props> = ({
           value={service.startCommand.value}
           width="300px"
           setValue={(e) => { editService({ ...service, startCommand: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
       </>
     )
@@ -47,6 +48,7 @@ const WorkerTabs: React.FC<Props> = ({
           disabled={service.cpu.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, cpu: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -56,6 +58,7 @@ const WorkerTabs: React.FC<Props> = ({
           disabled={service.ram.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, ram: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -65,6 +68,7 @@ const WorkerTabs: React.FC<Props> = ({
           disabled={service.replicas.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, replicas: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Checkbox
@@ -81,6 +85,7 @@ const WorkerTabs: React.FC<Props> = ({
           disabled={service.minReplicas.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, minReplicas: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -90,6 +95,7 @@ const WorkerTabs: React.FC<Props> = ({
           disabled={service.maxReplicas.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, maxReplicas: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -99,6 +105,7 @@ const WorkerTabs: React.FC<Props> = ({
           disabled={service.targetCPUUtilizationPercentage.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, targetCPUUtilizationPercentage: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -108,6 +115,7 @@ const WorkerTabs: React.FC<Props> = ({
           disabled={service.targetRAMUtilizationPercentage.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, targetRAMUtilizationPercentage: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
       </>
     )

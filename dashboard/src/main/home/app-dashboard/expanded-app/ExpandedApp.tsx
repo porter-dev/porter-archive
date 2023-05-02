@@ -85,6 +85,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
   const [updating, setUpdating] = useState<boolean>(false);
   const [updateError, setUpdateError] = useState<string>("");
+  const [subdomain, setSubdomain] = useState<string>("");
 
   const getPorterApp = async () => {
     setIsLoading(true);
@@ -279,6 +280,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       if (helmValues && Object.keys(helmValues).length > 0) {
         const envs = Service.retrieveEnvFromHelmValues(helmValues);
         setEnvVars(envs);
+        const subdomain = Service.retrieveSubdomainFromHelmValues(svcs, helmValues);
+        setSubdomain(subdomain);
       }
     }
   };
@@ -568,11 +571,17 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               </>
             )}
           </Container>
-          <Spacer y={1} />
+          <Spacer y={0.5} />
+          {subdomain && (
+            <>
+              <Container><Text><a href={subdomain} target="_blank">{subdomain}</a></Text></Container>
+              <Spacer y={0.5} />
+            </>
+          )}
           <Text color="#aaaabb66">
             Last deployed {getReadableDate(appData.chart.info.last_deployed)}
           </Text>
-          <Spacer y={1} />
+          <Spacer y={0.5} />
           {deleting ? (
             <Fieldset>
               <Text size={16}>
@@ -609,7 +618,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                        appData.chart.chart.metadata.version
+                      appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}
@@ -623,27 +632,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? workflowCheckPassed
                       ? [
-                          { label: "Events", value: "events" },
-                          { label: "Logs", value: "logs" },
-                          { label: "Metrics", value: "metrics" },
-                          { label: "Overview", value: "overview" },
-                          {
-                            label: "Environment variables",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                      : [
-                          { label: "Overview", value: "overview" },
-                          {
-                            label: "Environment variables",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                    : [
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
                         { label: "Metrics", value: "metrics" },
@@ -652,8 +640,29 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                           label: "Environment variables",
                           value: "environment-variables",
                         },
+                        { label: "Build settings", value: "build-settings" },
                         { label: "Settings", value: "settings" },
                       ]
+                      : [
+                        { label: "Overview", value: "overview" },
+                        {
+                          label: "Environment variables",
+                          value: "environment-variables",
+                        },
+                        { label: "Build settings", value: "build-settings" },
+                        { label: "Settings", value: "settings" },
+                      ]
+                    : [
+                      { label: "Events", value: "events" },
+                      { label: "Logs", value: "logs" },
+                      { label: "Metrics", value: "metrics" },
+                      { label: "Overview", value: "overview" },
+                      {
+                        label: "Environment variables",
+                        value: "environment-variables",
+                      },
+                      { label: "Settings", value: "settings" },
+                    ]
                 }
                 currentTab={tab}
                 setCurrentTab={setTab}

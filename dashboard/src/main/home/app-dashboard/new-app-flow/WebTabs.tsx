@@ -6,6 +6,7 @@ import TabSelector from "components/TabSelector";
 import Checkbox from "components/porter/Checkbox";
 import { WebService } from "./serviceTypes";
 import { Height } from "react-animate-height";
+import Tooltip from "components/porter/Tooltip";
 
 interface Props {
   service: WebService
@@ -31,6 +32,7 @@ const WebTabs: React.FC<Props> = ({
           width="300px"
           disabled={service.startCommand.readOnly}
           setValue={(e) => { editService({ ...service, startCommand: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -40,6 +42,7 @@ const WebTabs: React.FC<Props> = ({
           disabled={service.port.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, port: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Checkbox
@@ -64,6 +67,7 @@ const WebTabs: React.FC<Props> = ({
           disabled={service.cpu.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, cpu: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -73,6 +77,7 @@ const WebTabs: React.FC<Props> = ({
           disabled={service.ram.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, ram: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -82,6 +87,7 @@ const WebTabs: React.FC<Props> = ({
           disabled={service.replicas.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, replicas: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Checkbox
@@ -98,6 +104,7 @@ const WebTabs: React.FC<Props> = ({
           disabled={service.minReplicas.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, minReplicas: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -107,6 +114,7 @@ const WebTabs: React.FC<Props> = ({
           disabled={service.maxReplicas.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, maxReplicas: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -116,6 +124,7 @@ const WebTabs: React.FC<Props> = ({
           disabled={service.targetCPUUtilizationPercentage.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, targetCPUUtilizationPercentage: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -125,6 +134,7 @@ const WebTabs: React.FC<Props> = ({
           disabled={service.targetRAMUtilizationPercentage.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, targetRAMUtilizationPercentage: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
       </>
     )
@@ -141,6 +151,7 @@ const WebTabs: React.FC<Props> = ({
           disabled={service.customDomain.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, customDomain: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
       </>
     );

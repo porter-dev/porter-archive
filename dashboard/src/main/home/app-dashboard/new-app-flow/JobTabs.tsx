@@ -31,6 +31,7 @@ const JobTabs: React.FC<Props> = ({
           value={service.startCommand.value}
           width="300px"
           setValue={(e) => { editService({ ...service, startCommand: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -40,6 +41,7 @@ const JobTabs: React.FC<Props> = ({
           disabled={service.cronSchedule.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, cronSchedule: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
       </>
     )
@@ -56,6 +58,7 @@ const JobTabs: React.FC<Props> = ({
           disabled={service.cpu.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, cpu: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Input
@@ -65,6 +68,7 @@ const JobTabs: React.FC<Props> = ({
           disabled={service.ram.readOnly}
           width="300px"
           setValue={(e) => { editService({ ...service, ram: { readOnly: false, value: e } }) }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
       </>
     )

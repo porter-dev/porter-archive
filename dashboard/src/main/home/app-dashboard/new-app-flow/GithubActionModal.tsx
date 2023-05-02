@@ -51,7 +51,7 @@ const GithubActionModal: React.FC<Props> = ({
   const [isChecked, setIsChecked] = React.useState<boolean>(false);
 
   const submit = async () => {
-    if (githubAppInstallationID && githubRepoOwner && githubRepoName && branch && stackName) {
+    if (githubAppInstallationID && githubRepoOwner && githubRepoName && branch && stackName && projectId && clusterId) {
       try {
         setLoading(true)
         // this creates the dummy chart

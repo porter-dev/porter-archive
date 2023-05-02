@@ -17,7 +17,7 @@ import FormDebugger from "components/porter-form/FormDebugger";
 import TitleSection from "components/TitleSection";
 import ClusterSection from "./ClusterSection";
 import { StatusPage } from "../onboarding/steps/ProvisionResources/forms/StatusPage";
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 import Spacer from "components/porter/Spacer";
 
 type Props = RouteComponentProps & WithAuthProps & {

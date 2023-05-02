@@ -7,7 +7,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { ChartType } from "shared/types";
 import Loading from "components/Loading";
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 import styled from "styled-components";
 
 const NOTIF_CATEGORIES = ["success", "fail"];

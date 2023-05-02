@@ -13,11 +13,11 @@ export const overrideObjectValues = (obj1: any, obj2: any) => {
   return obj1;
 };
 
-export const getGithubAction = (projectID?: number, clusterId?: number, stackName?: string) => {
+export const getGithubAction = (projectID?: number, clusterId?: number, stackName?: string, branchName?: string) => {
   return `on:
   push:
     branches:
-    - master
+    - ${branchName}
 name: Deploy to Porter
 jobs:
   porter-deploy:
@@ -34,10 +34,10 @@ jobs:
       with:
         command: apply -f porter.yaml
       env:
-        PORTER_CLUSTER: "${clusterId}"
+        PORTER_CLUSTER: ${clusterId}
         PORTER_HOST: https://dashboard.getporter.dev
-        PORTER_PROJECT: "${projectID}"
-        PORTER_STACK_NAME: "${stackName}"
+        PORTER_PROJECT: ${projectID}
+        PORTER_STACK_NAME: ${stackName}
         PORTER_TAG: \${{ steps.vars.outputs.sha_short }}
         PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}`;
 }

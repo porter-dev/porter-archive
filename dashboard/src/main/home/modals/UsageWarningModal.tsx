@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 
 import { Context } from "shared/Context";
 import { Usage, UsageData } from "shared/types";

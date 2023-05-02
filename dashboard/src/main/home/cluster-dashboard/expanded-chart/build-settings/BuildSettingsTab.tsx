@@ -15,7 +15,7 @@ import styled from "styled-components";
 import yaml from "js-yaml";
 import { AxiosError } from "axios";
 import BranchList from "components/repo-selector/BranchList";
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 import { UpdateBuildconfigResponse } from "./types";
 import BuildpackConfigSection from "./_BuildpackConfigSection";
 import InputRow from "components/form-components/InputRow";

@@ -67,6 +67,9 @@ func (c *UpdatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	if request.ImageRepoURI != "" {
 		porterApp.ImageRepoURI = request.ImageRepoURI
 	}
+	if request.PullRequestURL != "" {
+		porterApp.PullRequestURL = request.PullRequestURL
+	}
 
 	updatedPorterApp, err := c.Repo().PorterApp().UpdatePorterApp(porterApp)
 	if err != nil {

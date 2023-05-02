@@ -8,7 +8,7 @@ import api from "shared/api";
 import { EllipsisTextWrapper } from "../components/styled";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPRDeploymentList, validatePorterYAML } from "../utils";
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 import { useRouting } from "shared/routing";
 import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
 import Placeholder from "components/Placeholder";

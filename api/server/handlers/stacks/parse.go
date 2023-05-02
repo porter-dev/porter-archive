@@ -63,7 +63,8 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo) (map[s
 	for name, app := range parsed.Apps {
 		appType := getType(name, app)
 		defaultValues := getDefaultValues(app, parsed.Env, appType)
-		helm_values := utils.CoalesceValues(defaultValues, app.Config)
+		convertedConfig := convertMap(app.Config).(map[string]interface{})
+		helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
 		values[name] = helm_values
 	}
 

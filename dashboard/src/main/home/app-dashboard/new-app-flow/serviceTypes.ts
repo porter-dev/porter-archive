@@ -2,6 +2,7 @@ import _ from "lodash";
 import api from "shared/api";
 import { ChartType } from "shared/types";
 import { overrideObjectValues } from "./utils";
+import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 
 export type Service = WorkerService | WebService | JobService;
 export type ServiceType = 'web' | 'worker' | 'job';
@@ -222,6 +223,7 @@ const SUFFIX_TO_TYPE: Record<string, ServiceType> = {
 }
 
 export const Service = {
+    // populates an empty service
     default: (name: string, type: ServiceType, startCommand: ServiceReadOnlyField) => {
         switch (type) {
             case 'web':
@@ -232,6 +234,8 @@ export const Service = {
                 return JobService.default(name, startCommand);
         }
     },
+
+    // converts a service to a helm values object
     serialize: (service: Service) => {
         switch (service.type) {
             case 'web':
@@ -242,11 +246,9 @@ export const Service = {
                 return JobService.serialize(service);
         }
     },
+
+    // converts a helm values object to a service
     deserialize: (helmValues: any, defaultValues: any): Service[] => {
-        // console.log("helm values")
-        // console.log(helmValues)
-        // console.log("default values")
-        // console.log(defaultValues)
         return Object.keys(defaultValues).map((name: string) => {
             const suffix = name.slice(-4);
             if (suffix in SUFFIX_TO_TYPE) {
@@ -267,9 +269,13 @@ export const Service = {
             }
         }).filter((service: Service | undefined): service is Service => service != null);
     },
+
+    // standard typeguards
     isWeb: (service: Service): service is WebService => service.type === 'web',
     isWorker: (service: Service): service is WorkerService => service.type === 'worker',
     isJob: (service: Service): service is JobService => service.type === 'job',
+
+    // augments ingress of a web service, will be phased out
     handleWebIngress: (service: WebService, stackName: string, projectId?: number, clusterId?: number) => {
         if (projectId == null || clusterId == null) {
             throw new Error('Project ID and Cluster ID must be provided to handle web ingress');
@@ -307,10 +313,26 @@ export const Service = {
 
         return ingress;
     },
+
     // required because of https://github.com/helm/helm/issues/9214
     toHelmName: (service: Service): string => {
         return service.name + TYPE_TO_SUFFIX[service.type]
     },
+
+    retrieveEnvFromHelmValues: (helmValues: any): KeyValueType[] => {
+        const firstService = Object.keys(helmValues)[0];
+        const env = helmValues[firstService]?.container?.env?.normal;
+        if (env == null) {
+            return [];
+        }
+        return Object.keys(env).map((key: string) => ({
+            key,
+            value: env[key],
+            hidden: false,
+            locked: false,
+            deleted: false,
+        }));
+    }
 }
 
 type Ingress = {

@@ -32,6 +32,7 @@ import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import { createFinalPorterYaml } from "../new-app-flow/schema";
 import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterYamlSchema } from "../new-app-flow/schema";
+import Fieldset from "components/porter/Fieldset";
 
 type Props = RouteComponentProps & {};
 
@@ -78,6 +79,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     setIsLoading(true);
     const { appName } = props.match.params as any;
     try {
+      if (!currentCluster || !currentProject) {
+        return;
+      }
       const resPorterApp = await api.getPorterApp(
         "<token>",
         {},
@@ -104,17 +108,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         chart: resChartData?.data,
       };
       setAppData(newAppData);
-
-      const helmValues = resChartData?.data?.config;
-      const defaultValues = resChartData?.data?.chart?.values;
-      if ((defaultValues && Object.keys(defaultValues).length > 0) || (helmValues && Object.keys(helmValues).length > 0)) {
-        const svcs = Service.deserialize(helmValues, defaultValues);
-        setServices(svcs);
-        console.log(helmValues);
-      }
-      console.log(newAppData);
+      updateServicesAndEnvVariables(resChartData?.data);
     } catch (err) {
       setError(err);
+      console.log(err);
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +158,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       ) {
         const finalPorterYaml = createFinalPorterYaml(
           services,
-          [],
+          envVars,
           undefined,
           appData.app.name,
           currentProject.id,
@@ -246,6 +243,19 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     return <Icon src={src} />;
   };
 
+  const updateServicesAndEnvVariables = (currentChart?: ChartType) => {
+    const helmValues = currentChart?.config;
+    const defaultValues = currentChart?.chart?.values;
+    if ((defaultValues && Object.keys(defaultValues).length > 0) || (helmValues && Object.keys(helmValues).length > 0)) {
+      const svcs = Service.deserialize(helmValues, defaultValues);
+      setServices(svcs);
+      if (helmValues && Object.keys(helmValues).length > 0) {
+        const envs = Service.retrieveEnvFromHelmValues(helmValues);
+        setEnvVars(envs)
+      }
+    }
+  }
+
   const updateComponents = async (currentChart: ChartType) => {
     setLoading(true);
     try {
@@ -261,6 +271,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       );
       setComponents(res.data.Objects);
+      updateServicesAndEnvVariables(currentChart);
       setLoading(false);
     } catch (error) {
       console.log(error);
@@ -297,7 +308,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
     const updatedChart = res.data;
 
-    setAppData({ chart: updatedChart });
+    if (appData != null && updatedChart != null) {
+      setAppData({ ...appData, chart: updatedChart });
+    }
 
     updateComponents(updatedChart).finally(() => setIsLoadingChartData(false));
   };
@@ -313,6 +326,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     // setIsPreview(!isCurrent);
     getChartData(chart);
   };
+
   const appUpgradeVersion = useCallback(
     async (version: string, cb: () => void) => {
       // convert current values to yaml
@@ -390,6 +404,17 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "overview":
         return (
           <>
+            {(!isLoading && services.length === 0) && (
+              <>
+                <Fieldset>
+                  <Container row>
+                    <PlaceholderIcon src={notFound} />
+                    <Text color="helper">No services were found.</Text>
+                  </Container>
+                </Fieldset>
+                <Spacer y={0.5} />
+              </>
+            )}
             <Services
               setServices={setServices}
               services={services}
@@ -404,6 +429,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               ) : undefined}
               loadingText={"Updating..."}
               width={"150px"}
+              disabled={services.length === 0}
             >
               Update app
             </Button>
@@ -447,7 +473,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Text>
             <EnvGroupArray
               values={envVars}
-              setValues={setEnvVars}
+              setValues={(x: any) => setEnvVars(x)}
               fileUpload={true}
             />
             <Spacer y={0.5} />
@@ -486,7 +512,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <Link to="/apps">Return to dashboard</Link>
         </Placeholder>
       )}
-      {appData && (
+      {appData && appData.app && (
         <StyledExpandedApp>
           <Back to="/apps" />
           <Container row>
@@ -560,6 +586,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   { label: "Logs", value: "logs" },
                   { label: "Metrics", value: "metrics" },
                   { label: "Overview", value: "overview" },
+                  { label: "Environment variables", value: "environment-variables" },
                   { label: "Build settings", value: "build-settings" },
                   { label: "Settings", value: "settings" },
                 ]
@@ -568,6 +595,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   { label: "Logs", value: "logs" },
                   { label: "Metrics", value: "metrics" },
                   { label: "Overview", value: "overview" },
+                  { label: "Environment variables", value: "environment-variables" },
                   { label: "Settings", value: "settings" },
                 ]
             }

@@ -47,6 +47,35 @@ func CoalesceValues(base, override map[string]interface{}) map[string]interface{
 	return override
 }
 
+func DeepCoalesceValues(base, override map[string]interface{}) map[string]interface{} {
+	if base == nil && override != nil {
+		return override
+	} else if override == nil {
+		return base
+	}
+
+	for key, val := range base {
+		if oVal, ok := override[key]; ok {
+			if oVal == nil {
+				delete(override, key)
+			} else if isYAMLTable(oVal) && isYAMLTable(val) {
+				oMapVal, _ := oVal.(map[string]interface{})
+				bMapVal, _ := val.(map[string]interface{})
+
+				override[key] = mergeMaps(bMapVal, oMapVal)
+			} else if _, ok := val.(map[string]interface{}); ok {
+				override[key] = CoalesceValues(val.(map[string]interface{}), oVal.(map[string]interface{}))
+			} else {
+				override[key] = oVal
+			}
+		} else {
+			override[key] = val
+		}
+	}
+
+	return override
+}
+
 func isYAMLTable(v interface{}) bool {
 	_, ok := v.(map[string]interface{})
 	return ok

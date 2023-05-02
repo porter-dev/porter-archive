@@ -10,6 +10,7 @@ import box from "assets/box.png";
 import github from "assets/github.png";
 import pr_icon from "assets/pull_request_icon.svg";
 import loadingImg from "assets/loading.gif";
+import refresh from "assets/refresh.png";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -61,6 +62,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [workflowCheckPassed, setWorkflowCheckPassed] = useState<boolean>(
     false
   );
+  const [hasBuiltImage, setHasBuiltImage] = useState<boolean>(false);
 
   const [error, setError] = useState(null);
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
@@ -115,8 +117,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       );
 
-      // TODO: need to check against image placeholder as well
-      if (resPorterApp?.data?.repo_name) {
+      // Only check GHA status if no built image is set
+      const hasBuiltImage = !!resChartData.data.config?.global?.image?.repository;
+      if (hasBuiltImage) {
+        setWorkflowCheckPassed(true);
+        setHasBuiltImage(true);
+      } else {
         try {
           const resBranchContents = await api.getBranchContents(
             "<token>",
@@ -135,12 +141,29 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
           // Handle unmerged PR
           if (err.response.status === 404) {
-            setWorkflowCheckPassed(false);
+            try {
+
+              // Check for user-copied porter.yml as fallback
+              const resPorterYml = await api.getBranchContents(
+                "<token>",
+                { dir: `./.github/workflows/porter.yml` },
+                {
+                  project_id: currentProject.id,
+                  git_repo_id: resPorterApp.data.git_repo_id,
+                  kind: "github",
+                  owner: resPorterApp.data.repo_name.split("/")[0],
+                  name: resPorterApp.data.repo_name.split("/")[1],
+                  branch: resPorterApp.data.git_branch,
+                }
+              );
+              setWorkflowCheckPassed(true);
+            } catch (err) {
+              setWorkflowCheckPassed(false);
+            }
           }
         }
-      } else {
-        setWorkflowCheckPassed(true);
       }
+
       const newAppData = {
         app: resPorterApp?.data,
         chart: resChartData?.data,
@@ -608,7 +631,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <Text color="#aaaabb66">
             Last deployed {getReadableDate(appData.chart.info.last_deployed)}
           </Text>
-          <Spacer y={0.5} />
+          <Spacer y={1} />
           {deleting ? (
             <Fieldset>
               <Text size={16}>
@@ -629,6 +652,25 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   stackName={appData.app.name}
                   gitRepoId={appData.app.git_repo_id}
                 />
+              ) : !hasBuiltImage ? (
+                <Banner 
+                  type="warning"
+                  suffix={
+                    <RefreshButton onClick={() => window.location.reload()}>
+                      <img src={refresh} /> Refresh
+                    </RefreshButton>
+                  }
+                >
+                  Your GitHub repo has not been built yet.
+                  <Spacer inline width="5px" />
+                  <Link 
+                    hasunderline
+                    target="_blank"
+                    to={`https://github.com/${appData.app.repo_name}/actions`}
+                  >
+                    Check status
+                  </Link>
+                </Banner> 
               ) : (
                 <>
                   <DarkMatter />
@@ -657,7 +699,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <TabSelector
                 options={
                   appData.app.git_repo_id
-                    ? workflowCheckPassed
+                    ? hasBuiltImage
                       ? [
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
@@ -716,6 +758,28 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 };
 
 export default withRouter(ExpandedApp);
+
+const RefreshButton = styled.div`
+  color: #ffffff44;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  :hover {
+    color: #ffffff;
+    > img {
+      opacity: 1;
+    }
+  }
+
+  > img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 11px;
+    margin-right: 10px;
+    opacity: 0.3;
+  }
+`;
 
 const Spinner = styled.img`
   width: 15px;

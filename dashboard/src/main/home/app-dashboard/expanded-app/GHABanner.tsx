@@ -47,7 +47,8 @@ const GHABanner: React.FC<Props> = ({
                 <Spacer inline width="5px" />
                 <Link
                   to={pullRequestUrl}
-                  underline
+                  target="_blank"
+                  hasunderline
                 >
                   this PR
                 </Link>
@@ -68,7 +69,8 @@ const GHABanner: React.FC<Props> = ({
               <Spacer inline width="5px" />
               <Link
                 onClick={() => setShowGHAModal(true)}
-                underline
+                target="_blank"
+                hasunderline
               >
                 See details
               </Link>

@@ -1,6 +1,7 @@
 const theme = {
   bg: "#121212",
   fg: "#171B21",
+  fg2: "#1E232B",
   border: "#494b4f",
   button: "#3A48CA",
   clickable: {

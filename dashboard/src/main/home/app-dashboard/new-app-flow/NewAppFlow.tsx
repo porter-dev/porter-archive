@@ -101,7 +101,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [buildConfig, setBuildConfig] = useState({});
   const [porterYaml, setPorterYaml] = useState("");
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
-  const [showConnectModal, setConnectModal] = useState<boolean>(true);
+  const [showConnectModal, setConnectModal] = useState<boolean>(false);
   const [hasClickedDoNotConnect, setHasClickedDoNotConnect] = useState(() =>
     JSON.parse(localStorage.getItem("hasClickedDoNotConnect") || "false")
   );

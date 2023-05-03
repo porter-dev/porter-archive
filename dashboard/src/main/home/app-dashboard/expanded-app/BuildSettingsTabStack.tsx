@@ -28,7 +28,6 @@ import DetectContentsList from "components/repo-selector/DetectContentsList";
 import { pushFiltered } from "shared/routing";
 import ImageSelector from "components/image-selector/ImageSelector";
 import SharedBuildSettings from "./SharedBuildSettings";
-import Loading from "components/Loading";
 import { BuildpackSelection } from "components/repo-selector/BuildpackSelection";
 import BuildpackConfigSection from "main/home/cluster-dashboard/expanded-chart/build-settings/_BuildpackConfigSection";
 import { BuildpackStack } from "components/repo-selector/BuildpackStack";
@@ -36,6 +35,7 @@ import MultiSaveButton from "components/MultiSaveButton";
 import api from "shared/api";
 import { AxiosError } from "axios";
 import InputRow from "components/form-components/InputRow";
+import Loading from "components/Loading";
 type Props = {
   appData: any;
   setAppData: Dispatch<any>;
@@ -98,7 +98,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           owner: appData.app.repo_name?.split("/")[0],
           name: appData.app.repo_name?.split("/")[1],
           branch: branch,
-          release_name: "stack_" + appData.chart.name,
+          filename: "porter_stack_" + appData.chart.name + ".yml",
         }
       );
     } catch (error) {
@@ -315,18 +315,23 @@ const BuildSettingsTabStack: React.FC<Props> = ({
       <Spacer y={0.5} />
 
       <StyledButtonWrapper>
-        <StyledButton
-          data-description="Save the build settings to be used in the next workflow run"
-          onClick={handleSave}
-        >
-          Save
-        </StyledButton>
-        <StyledButton
-          data-description="Immediately trigger a workflow run with updated build settings"
-          onClick={handleSaveAndReDeploy}
-        >
-          Save and Redeploy
-        </StyledButton>
+        <div>
+          <StyledButton
+            data-description="Save the build settings to be used in the next workflow run"
+            onClick={handleSave}
+          >
+            Save
+          </StyledButton>
+        </div>
+        <div>
+          <StyledButton
+            data-description="Immediately trigger a workflow run with updated build settings"
+            onClick={handleSaveAndReDeploy}
+          >
+            Save and Redeploy
+          </StyledButton>
+          {buttonStatus === "loading" && <StyledLoadingDial />}
+        </div>
       </StyledButtonWrapper>
     </>
   );
@@ -393,6 +398,7 @@ const StyledSourceBox = styled.div`
 const StyledButtonWrapper = styled.div`
   display: flex;
   gap: 10px;
+  align-items: center;
 `;
 
 const StyledButton = styled.button`
@@ -405,6 +411,7 @@ const StyledButton = styled.button`
   position: relative;
   border-radius: 5px;
   margin-bottom: 35px;
+  position: relative;
   text-align: center;
   transition: border 0.3s, color 0.3s;
 
@@ -435,4 +442,11 @@ const StyledButton = styled.button`
     bottom: auto;
     top: 120%;
   }
+`;
+
+const StyledLoadingDial = styled(Loading)`
+  position: absolute;
+  right: -45px;
+  top: 50%;
+  transform: translateY(-50%);
 `;

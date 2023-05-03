@@ -317,48 +317,46 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   return (
     <CenterWrapper>
       <Div>
-        <>
-          {showConnectModal && (
-            <GithubConnectModal
-              closeModal={() => setConnectModal(false)}
-              hasClickedDoNotConnect={hasClickedDoNotConnect}
-              handleDoNotConnect={handleDoNotConnect}
-            />
-          )}
-          <StyledConfigureTemplate>
-            <Back to="/apps" />
-            <DashboardHeader
-              prefix={<Icon src={web} />}
-              title="Deploy a new application"
-              capitalize={false}
-              disableLineBreak
-            />
-            <DarkMatter />
-            <VerticalSteps
-              currentStep={currentStep}
-              steps={[
-                <>
-                  <Text size={16}>Application name</Text>
-                  <Spacer y={0.5} />
-                  <Text color="helper">
-                    Lowercase letters, numbers, and "-" only.
-                  </Text>
-                  <Spacer y={0.5} />
-                  <Input
-                    placeholder="ex: academic-sophon"
-                    value={formState.applicationName}
-                    width="300px"
-                    error={
-                      shouldHighlightAppNameInput() &&
-                      (formState.applicationName.length > 61
-                        ? "Maximum 61 characters allowed."
-                        : 'Lowercase letters, numbers, and "-" only.')
-                    }
-                    setValue={(e) => {
-                      handleAppNameChange(e);
-                    }}
-                  />
-
+        {showConnectModal && (
+          <GithubConnectModal
+            closeModal={() => setConnectModal(false)}
+            hasClickedDoNotConnect={hasClickedDoNotConnect}
+            handleDoNotConnect={handleDoNotConnect}
+          />
+        )}
+        <StyledConfigureTemplate>
+          <Back to="/apps" />
+          <DashboardHeader
+            prefix={<Icon src={web} />}
+            title="Deploy a new application"
+            capitalize={false}
+            disableLineBreak
+          />
+          <DarkMatter />
+          <VerticalSteps
+            currentStep={currentStep}
+            steps={[
+              <>
+                <Text size={16}>Application name</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  Lowercase letters, numbers, and "-" only.
+                </Text>
+                <Spacer y={0.5} />
+                <Input
+                  placeholder="ex: academic-sophon"
+                  value={formState.applicationName}
+                  width="300px"
+                  error={
+                    shouldHighlightAppNameInput() &&
+                    (formState.applicationName.length > 61
+                      ? "Maximum 61 characters allowed."
+                      : 'Lowercase letters, numbers, and "-" only.')
+                  }
+                  setValue={(e) => {
+                    handleAppNameChange(e);
+                  }}
+                />
                 {shouldHighlightAppNameInput()}
               </>,
               <>

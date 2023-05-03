@@ -1,0 +1,20 @@
+version: '3'
+
+tasks:
+  move-to-production:
+    desc: Move the current branch to production
+    cmds:
+    - cmd: git tag -d production
+      ignore_error: false
+      silent: true
+    - cmd: git push origin :production
+      ignore_error: false
+      silent: true
+    - cmd: git tag production
+      ignore_error: false
+      silent: true
+    - cmd: git push origin production
+      ignore_error: false
+      silent: true
+ 
+

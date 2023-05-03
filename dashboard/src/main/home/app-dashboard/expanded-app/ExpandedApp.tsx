@@ -86,8 +86,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   const [services, setServices] = useState<Service[]>([]);
   const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
-  const [updating, setUpdating] = useState<boolean>(false);
-  const [updateError, setUpdateError] = useState<string>("");
+  const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
   const [subdomain, setSubdomain] = useState<string>("");
 
   const getPorterApp = async () => {
@@ -217,7 +216,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   const updatePorterApp = async () => {
     try {
-      setUpdating(true);
+      setButtonStatus("loading");
       if (
         appData != null &&
         currentCluster != null &&
@@ -246,8 +245,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             stack_name: appData.app.name,
           }
         );
+        setButtonStatus("success")
       } else {
-        setUpdateError("Unable to update app, please try again later.");
+        setButtonStatus(<Error message="Unable to update app" />);
       }
     } catch (err) {
       // TODO: better error handling
@@ -256,9 +256,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         err?.response?.data?.error ??
         err?.toString() ??
         "An error occurred while deploying your app. Please try again.";
-      setUpdateError(errMessage);
-    } finally {
-      setUpdating(false);
+      setButtonStatus(<Error message={errMessage} />);
     }
   };
 
@@ -322,7 +320,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     porterJson?: PorterJson
   ) => {
     const helmValues = currentChart?.config;
-    const defaultValues = currentChart?.chart?.values;
+    const defaultValues = (currentChart?.chart as any)?.values;
     if (
       (defaultValues && Object.keys(defaultValues).length > 0) ||
       (helmValues && Object.keys(helmValues).length > 0)
@@ -497,28 +495,25 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     <Text color="helper">No services were found.</Text>
                   </Container>
                 </Fieldset>
-                <Spacer y={1} />
               </>
             )}
-            <Services setServices={setServices} services={services} />
+            <Services 
+              setServices={(x) => {
+                if (buttonStatus !== "") {
+                  setButtonStatus("");
+                }
+                setServices(x);
+              }} 
+              services={services} />
             <Spacer y={1} />
             <Button
-              onClick={() => {
-                updatePorterApp();
-              }}
-              status={
-                updating ? (
-                  "loading"
-                ) : updateError ? (
-                  <Error message={updateError} />
-                ) : undefined
-              }
+              onClick={updatePorterApp}
+              status={buttonStatus}
               loadingText={"Updating..."}
               disabled={services.length === 0}
             >
               Update app
             </Button>
-            <Spacer y={3} />
           </>
         );
       case "build-settings":
@@ -557,9 +552,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <EnvVariablesTab
             envVars={envVars}
             setEnvVars={setEnvVars}
-            updating={updating}
-            updateError={updateError}
+            status={buttonStatus}
             updatePorterApp={updatePorterApp}
+            clearStatus={() => setButtonStatus("")}
           />
         );
       default:
@@ -738,10 +733,16 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       ]
                 }
                 currentTab={tab}
-                setCurrentTab={setTab}
+                setCurrentTab={(tab: string) => {
+                  if (buttonStatus !== "") {
+                    setButtonStatus("");
+                  }
+                  setTab(tab);
+                }}
               />
               <Spacer y={1} />
               {renderTabContents()}
+              <Spacer y={2} />
             </>
           )}
         </StyledExpandedApp>

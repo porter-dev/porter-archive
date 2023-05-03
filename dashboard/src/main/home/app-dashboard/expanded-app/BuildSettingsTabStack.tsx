@@ -36,6 +36,9 @@ import api from "shared/api";
 import { AxiosError } from "axios";
 import InputRow from "components/form-components/InputRow";
 import Loading from "components/Loading";
+import Button from "components/porter/Button";
+import Container from "components/porter/Container";
+import Checkbox from "components/porter/Checkbox";
 type Props = {
   appData: any;
   setAppData: Dispatch<any>;
@@ -70,6 +73,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   const [buildConfig, setBuildConfig] = useState<BuildConfig>({
     ...defaultBuildConfig,
   });
+  const [redeployOnSave, setRedeployOnSave] = useState(true);
   const [runningWorkflowURL, setRunningWorkflowURL] = useState("");
 
   const [actionConfig, setActionConfig] = useState<ActionConfigType>({
@@ -78,14 +82,8 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   const [buttonStatus, setButtonStatus] = useState<
     "loading" | "successful" | string
   >("");
-
   const [imageUrl, setImageUrl] = useState(appData.chart.image_uri);
-
-  const clearButtonStatus = (time: number = 800) => {
-    setTimeout(() => {
-      setButtonStatus("");
-    }, time);
-  };
+  
   const triggerWorkflow = async () => {
     try {
       await api.reRunGHWorkflow(
@@ -197,12 +195,10 @@ const BuildSettingsTabStack: React.FC<Props> = ({
       setAppData(appData);
 
       onTabSwitch();
-      setButtonStatus("successful");
+      setButtonStatus("success");
     } catch (error) {
       setButtonStatus("Something went wrong");
       console.log(error);
-    } finally {
-      clearButtonStatus();
     }
   };
   const handleSaveAndReDeploy = async () => {
@@ -221,8 +217,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     } catch (error) {
       setButtonStatus("Something went wrong");
       console.log(error);
-    } finally {
-      clearButtonStatus();
     }
   };
   return (
@@ -267,7 +261,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           />
         </>
       )}
-
+      <Spacer y={0.3} />
       {actionConfig.git_repo && branch && (
         <>
           <Spacer y={1} />
@@ -291,11 +285,12 @@ const BuildSettingsTabStack: React.FC<Props> = ({
       >
         <AdvancedBuildTitle>
           <i className="material-icons dropdown">arrow_drop_down</i>
-          Configure Build Pack Settings
+          Configure buildpack settings
         </AdvancedBuildTitle>
       </StyledAdvancedBuildSettings>
       <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
         <StyledSourceBox>
+          <Spacer y={0.5} />
           {actionConfig && (
             <BuildpackStack
               actionConfig={actionConfig}
@@ -310,29 +305,29 @@ const BuildSettingsTabStack: React.FC<Props> = ({
               setBuildConfig={setBuildConfig}
             />
           )}
+          <Spacer y={0.5} />
         </StyledSourceBox>
       </AnimateHeight>
-      <Spacer y={0.5} />
-
-      <StyledButtonWrapper>
-        <div>
-          <StyledButton
-            data-description="Save the build settings to be used in the next workflow run"
-            onClick={handleSave}
-          >
-            Save
-          </StyledButton>
-        </div>
-        <div>
-          <StyledButton
-            data-description="Immediately trigger a workflow run with updated build settings"
-            onClick={handleSaveAndReDeploy}
-          >
-            Save and Redeploy
-          </StyledButton>
-          {buttonStatus === "loading" && <StyledLoadingDial />}
-        </div>
-      </StyledButtonWrapper>
+      <Spacer y={1} />
+      <Checkbox
+        checked={redeployOnSave}
+        toggleChecked={() => setRedeployOnSave(!redeployOnSave)}
+      >
+        <Text>Re-run build and deploy on save</Text>
+      </Checkbox>
+      <Spacer y={1} />
+      <Button
+        onClick={() => {
+          if (redeployOnSave) {
+            handleSaveAndReDeploy();
+          } else {
+            handleSave();
+          }
+        }}
+        status={buttonStatus}
+      >
+        Save build settings
+      </Button>
     </>
   );
 };
@@ -430,7 +425,7 @@ const StyledButton = styled.button`
     opacity: 0;
     padding: 8px;
     position: absolute;
-    left: 60%;
+    left: 0;
     top: 100%;
     transform: translateY(0);
     white-space: nowrap;

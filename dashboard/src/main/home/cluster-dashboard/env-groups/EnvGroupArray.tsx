@@ -194,7 +194,7 @@ const EnvGroupArray = ({
         <Modal
           onRequestClose={() => setShowEditorModal(false)}
           width="60%"
-          height="80%"
+          height="650px"
         >
           <EnvEditorModal
             closeModal={() => setShowEditorModal(false)}

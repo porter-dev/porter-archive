@@ -9,17 +9,17 @@ import Error from "components/porter/Error";
 interface EnvVariablesTabProps {
   envVars: any;
   setEnvVars: (x: any) => void;
-  updating: boolean;
-  updateError: string | null;
+  status: React.ReactNode;
   updatePorterApp: () => void;
+  clearStatus: () => void;
 }
 
 export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   envVars,
   setEnvVars,
-  updating,
-  updateError,
+  status,
   updatePorterApp,
+  clearStatus,
 }) => {
   useEffect(() => {
     setEnvVars(envVars);
@@ -32,7 +32,12 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       <EnvGroupArray
         key={envVars.length}
         values={envVars}
-        setValues={(x: any) => setEnvVars(x)}
+        setValues={(x: any) => {
+          if (status !== "") {
+            clearStatus();
+          }
+          setEnvVars(x)
+        }}
         fileUpload={true}
       />
       <Spacer y={0.5} />
@@ -40,15 +45,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
         onClick={() => {
           updatePorterApp();
         }}
-        status={
-          updating ? (
-            "loading"
-          ) : updateError ? (
-            <>
-              <Error message={updateError} />
-            </>
-          ) : undefined
-        }
+        status={status}
         loadingText={"Updating..."}
       >
         Update app

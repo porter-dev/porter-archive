@@ -11,7 +11,6 @@ type Props = {
   setSelected: any;
   noMargin?: boolean;
   dropdownAlignRight?: boolean;
-  onRadioClick?: () => void;
 };
 
 const RadioFilter: React.FC<Props> = (props) => {
@@ -87,7 +86,6 @@ const RadioFilter: React.FC<Props> = (props) => {
     <Relative>
       <StyledRadioFilter
         onClick={() => {
-          props.onRadioClick();
           setExpanded(!expanded);
         }}
         ref={parentRef}

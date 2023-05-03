@@ -359,98 +359,97 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                     }}
                   />
 
-                  {shouldHighlightAppNameInput()}
-                </>,
-                <>
-                  <Text size={16}>Deployment method</Text>
-                  <Spacer y={0.5} />
-                  <Text color="helper">
-                    Deploy from a Git repository or a Docker registry.
-                    <a
-                      href="https://docs.porter.run/deploying-applications/overview"
-                      target="_blank"
-                    >
-                      &nbsp;Learn more.
-                    </a>
-                  </Text>
-                  <Spacer y={0.5} />
-                  <SourceSelector
-                    selectedSourceType={formState.selectedSourceType}
-                    setSourceType={(type) => {
-                      setFormState({ ...formState, selectedSourceType: type });
-                    }}
-                  />
-                  <SourceSettings
-                    source={formState.selectedSourceType}
-                    imageUrl={imageUrl}
-                    setImageUrl={(x) => {
-                      setImageUrl(x);
-                      setCurrentStep(Math.max(currentStep, 2));
-                    }}
-                    imageTag={imageTag}
-                    setImageTag={setImageTag}
-                    actionConfig={actionConfig}
-                    setActionConfig={setActionConfig}
-                    branch={branch}
-                    setBranch={setBranch}
-                    dockerfilePath={dockerfilePath}
-                    setDockerfilePath={setDockerfilePath}
-                    folderPath={folderPath}
-                    setFolderPath={setFolderPath}
-                    procfilePath={procfilePath}
-                    setProcfilePath={setProcfilePath}
-                    setBuildConfig={setBuildConfig}
-                    porterYaml={porterYaml}
-                    setPorterYaml={(newYaml: string) => {
-                      validatePorterYaml(newYaml);
-                    }}
-                  />
-                </>,
-                <>
-                  <Text size={16}>
-                    Application services{" "}
-                    {detected && (
-                      <AppearingDiv>
-                        <Text
-                          size={16}
-                          color={detected.detected ? "green" : "red"}
-                        >
-                          {detected.detected ? (
-                            <i className="material-icons">check</i>
-                          ) : (
-                            <i className="material-icons">error</i>
-                          )}{" "}
-                          {detected.message}
-                        </Text>
-                      </AppearingDiv>
-                    )}
-                  </Text>
-                  <Spacer y={0.5} />
-                  <Services
-                    setServices={(services: Service[]) => {
-                      setFormState({ ...formState, serviceList: services });
-                      if (Validators.serviceList(services)) {
-                        setCurrentStep(Math.max(currentStep, 4));
-                      }
-                    }}
-                    services={formState.serviceList}
-                  />
-                </>,
-                <>
-                  <Text size={16}>Environment variables (optional)</Text>
-                  <Spacer y={0.5} />
-                  <Text color="helper">
-                    Specify environment variables shared among all services.
-                  </Text>
-                  <EnvGroupArray
-                    values={formState.envVariables}
-                    setValues={(x: any) => {
-                      setFormState({ ...formState, envVariables: x });
-                    }}
-                    fileUpload={true}
-                  />
-                </>,
-                /*
+                {shouldHighlightAppNameInput()}
+              </>,
+              <>
+                <Text size={16}>Deployment method</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  Deploy from a Git repository or a Docker registry.
+                  <a
+                    href="https://docs.porter.run/deploying-applications/overview"
+                    target="_blank"
+                  >
+                    &nbsp;Learn more.
+                  </a>
+                </Text>
+                <Spacer y={0.5} />
+                <SourceSelector
+                  selectedSourceType={formState.selectedSourceType}
+                  setSourceType={(type) => {
+                    setFormState({ ...formState, selectedSourceType: type });
+                  }}
+                />
+                <SourceSettings
+                  source={formState.selectedSourceType}
+                  imageUrl={imageUrl}
+                  setImageUrl={(x) => {
+                    setImageUrl(x);
+                    setCurrentStep(Math.max(currentStep, 2));
+                  }}
+                  imageTag={imageTag}
+                  setImageTag={setImageTag}
+                  actionConfig={actionConfig}
+                  setActionConfig={setActionConfig}
+                  branch={branch}
+                  setBranch={setBranch}
+                  dockerfilePath={dockerfilePath}
+                  setDockerfilePath={setDockerfilePath}
+                  folderPath={folderPath}
+                  setFolderPath={setFolderPath}
+                  procfilePath={procfilePath}
+                  setProcfilePath={setProcfilePath}
+                  setBuildConfig={setBuildConfig}
+                  porterYaml={porterYaml}
+                  setPorterYaml={(newYaml: string) => {
+                    validatePorterYaml(newYaml);
+                  }}
+                />
+              </>,
+              <>
+                <Text size={16}>
+                  Application services{" "}
+                  {detected && (
+                    <AppearingDiv>
+                      <Text
+                        color={detected.detected ? "#4797ff" : "#fcba03"}
+                      >
+                        {detected.detected ? (
+                          <I className="material-icons">check</I>
+                        ) : (
+                          <I className="material-icons">error</I>
+                        )}
+                        {detected.message}
+                      </Text>
+                    </AppearingDiv>
+                  )}
+                </Text>
+                <Spacer y={0.5} />
+                <Services
+                  setServices={(services: Service[]) => {
+                    setFormState({ ...formState, serviceList: services });
+                    if (Validators.serviceList(services)) {
+                      setCurrentStep(Math.max(currentStep, 4));
+                    }
+                  }}
+                  services={formState.serviceList}
+                />
+              </>,
+              <>
+                <Text size={16}>Environment variables (optional)</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  Specify environment variables shared among all services.
+                </Text>
+                <EnvGroupArray
+                  values={formState.envVariables}
+                  setValues={(x: any) => {
+                    setFormState({ ...formState, envVariables: x });
+                  }}
+                  fileUpload={true}
+                />
+              </>,
+              /*
               <>
                 <Text size={16}>Release command (optional)</Text>
                 <Spacer y={0.5} />
@@ -472,32 +471,31 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 />
               </>,
               */
-                <Button
-                  onClick={() => {
-                    if (imageUrl) {
-                      deployPorterApp();
-                    } else {
-                      setDeploymentError(undefined);
-                      setShowGHAModal(true);
-                    }
-                  }}
-                  status={
-                    deploying ? (
-                      "loading"
-                    ) : deploymentError ? (
-                      <Error message={deploymentError} />
-                    ) : undefined
+              <Button
+                onClick={() => {
+                  if (imageUrl) {
+                    deployPorterApp();
+                  } else {
+                    setDeploymentError(undefined);
+                    setShowGHAModal(true);
                   }
-                  loadingText={"Deploying..."}
-                  width={"150px"}
-                >
-                  Deploy app
-                </Button>,
-              ]}
-            />
-            <Spacer y={3} />
-          </StyledConfigureTemplate>
-        </>
+                }}
+                status={
+                  deploying ? (
+                    "loading"
+                  ) : deploymentError ? (
+                    <Error message={deploymentError} />
+                  ) : undefined
+                }
+                loadingText={"Deploying..."}
+                width={"120px"}
+              >
+                Deploy app
+              </Button>,
+            ]}
+          />
+          <Spacer y={3} />
+        </StyledConfigureTemplate>
       </Div>
       {showGHAModal && (
         <GithubActionModal
@@ -518,6 +516,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 };
 
 export default withRouter(NewAppFlow);
+
+const I = styled.i`
+  font-size: 18px;
+  margin-right: 5px;
+`;
 
 const Div = styled.div`
   width: 100%;

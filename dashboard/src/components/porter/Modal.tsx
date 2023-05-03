@@ -99,7 +99,7 @@ const StyledModal = styled.div<{
 }>`
   position: relative;
   padding: 25px;
-  padding-bottom: 35px;
+  padding-bottom: 30px;
   border-radius: 10px;
   border: 1px solid #494b4f;
   font-size: 13px;

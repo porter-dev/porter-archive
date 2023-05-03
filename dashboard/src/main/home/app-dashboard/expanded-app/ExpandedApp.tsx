@@ -164,7 +164,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           }
         }
       }
-
       const newAppData = {
         app: resPorterApp?.data,
         chart: resChartData?.data,
@@ -325,7 +324,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       (defaultValues && Object.keys(defaultValues).length > 0) ||
       (helmValues && Object.keys(helmValues).length > 0)
     ) {
-      const svcs = Service.deserialize(helmValues, defaultValues);
+      const svcs = Service.deserialize(helmValues, defaultValues, porterJson);
       setServices(svcs);
       if (helmValues && Object.keys(helmValues).length > 0) {
         const envs = Service.retrieveEnvFromHelmValues(helmValues);
@@ -497,13 +496,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 </Fieldset>
               </>
             )}
-            <Services 
+            <Services
               setServices={(x) => {
                 if (buttonStatus !== "") {
                   setButtonStatus("");
                 }
                 setServices(x);
-              }} 
+              }}
               services={services} />
             <Spacer y={1} />
             <Button
@@ -689,7 +688,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                        appData.chart.chart.metadata.version
+                      appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}
@@ -703,33 +702,33 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? hasBuiltImage
                       ? [
-                          { label: "Logs", value: "logs" },
-                          { label: "Overview", value: "overview" },
-                          {
-                            label: "Environment variables",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                      : [
-                          { label: "Overview", value: "overview" },
-                          {
-                            label: "Environment variables",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                    : [
                         { label: "Logs", value: "logs" },
                         { label: "Overview", value: "overview" },
                         {
                           label: "Environment variables",
                           value: "environment-variables",
                         },
+                        { label: "Build settings", value: "build-settings" },
                         { label: "Settings", value: "settings" },
                       ]
+                      : [
+                        { label: "Overview", value: "overview" },
+                        {
+                          label: "Environment variables",
+                          value: "environment-variables",
+                        },
+                        { label: "Build settings", value: "build-settings" },
+                        { label: "Settings", value: "settings" },
+                      ]
+                    : [
+                      { label: "Logs", value: "logs" },
+                      { label: "Overview", value: "overview" },
+                      {
+                        label: "Environment variables",
+                        value: "environment-variables",
+                      },
+                      { label: "Settings", value: "settings" },
+                    ]
                 }
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {

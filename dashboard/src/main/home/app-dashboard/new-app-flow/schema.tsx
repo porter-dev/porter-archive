@@ -107,8 +107,7 @@ const createApps = (
                 porterJson.apps[service.name].config
             );
         }
-        // required because of https://github.com/helm/helm/issues/9214
-        apps[Service.toHelmName(service)] = {
+        apps[service.name] = {
             type: service.type,
             run: service.startCommand.value,
             config,

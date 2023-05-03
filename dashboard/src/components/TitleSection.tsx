@@ -41,10 +41,7 @@ const TitleSection: React.FC<Props> = ({
           <Icon width={iconWidth} src={icon} />
         ))}
 
-      <StyledTitle
-        capitalize={capitalize}
-        onClick={onClick}
-      >
+      <StyledTitle capitalize={capitalize} onClick={onClick}>
         {children}
       </StyledTitle>
     </StyledTitleSection>
@@ -85,19 +82,19 @@ const MaterialIcon = styled.span<{ width: string }>`
   margin-right: 16px;
 `;
 
-const StyledTitle = styled.div<{ 
+const StyledTitle = styled.div<{
   capitalize: boolean;
   onClick?: any;
 }>`
   font-size: 21px;
   user-select: text;
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   text-transform: ${(props) => (props.capitalize ? "capitalize" : "")};
   display: flex;
   align-items: center;
-  cursor: ${props => props.onClick ? "pointer" : ""};
+  cursor: ${(props) => (props.onClick ? "pointer" : "")};
   :hover {
-    text-decoration: ${props => props.onClick ? "underline" : ""};
+    text-decoration: ${(props) => (props.onClick ? "underline" : "")};
   }
 
   > i {

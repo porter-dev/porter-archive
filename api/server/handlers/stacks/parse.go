@@ -7,8 +7,13 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm/loader"
+	"github.com/porter-dev/porter/internal/integrations/powerdns"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/domain"
+	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/stefanmcshane/helm/pkg/chart"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -35,7 +40,15 @@ type App struct {
 	Type   *string                `yaml:"type" validate:"required, oneof=web worker job"`
 }
 
-func parse(porterYaml []byte, imageInfo *types.ImageInfo, config *config.Config, projectID uint) (*chart.Chart, map[string]interface{}, error) {
+type SubdomainCreateOpts struct {
+	k8sAgent       *kubernetes.Agent
+	dnsRepo        repository.DNSRecordRepository
+	powerDnsClient *powerdns.Client
+	appRootDomain  string
+	stackName      string
+}
+
+func parse(porterYaml []byte, imageInfo types.ImageInfo, config *config.Config, projectID uint, opts SubdomainCreateOpts) (*chart.Chart, map[string]interface{}, error) {
 	parsed := &PorterStackYAML{}
 
 	err := yaml.Unmarshal(porterYaml, parsed)
@@ -43,35 +56,41 @@ func parse(porterYaml []byte, imageInfo *types.ImageInfo, config *config.Config,
 		return nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
 	}
 
-	values, err := buildStackValues(parsed, imageInfo)
+	values, err := buildStackValues(parsed, imageInfo, opts)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
 	}
-	convertedValues := convertMap(values)
+	convertedValues := convertMap(values).(map[string]interface{})
 
 	chart, err := buildStackChart(parsed, config, projectID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %w", "error building chart from porter.yaml", err)
 	}
 
-	return chart, convertedValues.(map[string]interface{}), nil
+	return chart, convertedValues, nil
 }
 
-func buildStackValues(parsed *PorterStackYAML, imageInfo *types.ImageInfo) (map[string]interface{}, error) {
+func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, opts SubdomainCreateOpts) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
 	for name, app := range parsed.Apps {
 		appType := getType(name, app)
 		defaultValues := getDefaultValues(app, parsed.Env, appType)
-		helm_values := utils.CoalesceValues(defaultValues, app.Config)
+		convertedConfig := convertMap(app.Config).(map[string]interface{})
+		helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
+		err := createSubdomainIfRequired(helm_values, opts) // modifies helm_values to add subdomains if necessary
+		if err != nil {
+			return nil, err
+		}
 		values[name] = helm_values
-		if imageInfo != nil {
-			values["global"] = map[string]interface{}{
-				"image": map[string]interface{}{
-					"repository": imageInfo.Repository,
-					"tag":        imageInfo.Tag,
-				},
-			}
+	}
+
+	if imageInfo.Repository != "" && imageInfo.Tag != "" {
+		values["global"] = map[string]interface{}{
+			"image": map[string]interface{}{
+				"repository": imageInfo.Repository,
+				"tag":        imageInfo.Tag,
+			},
 		}
 	}
 
@@ -230,4 +249,108 @@ func CopyEnv(env map[string]string) map[string]string {
 	}
 
 	return envCopy
+}
+
+func createSubdomainIfRequired(
+	mergedValues map[string]interface{},
+	opts SubdomainCreateOpts,
+) error {
+	// look for ingress.enabled and no custom domains set
+	ingressMap, err := getNestedMap(mergedValues, "ingress")
+	if err == nil {
+		enabledVal, enabledExists := ingressMap["enabled"]
+		customDomVal, customDomExists := ingressMap["custom_domain"]
+
+		if enabledExists && customDomExists {
+			enabled, eOK := enabledVal.(bool)
+			customDomain, cOK := customDomVal.(bool)
+
+			if eOK && cOK && enabled && !customDomain {
+				// in the case of ingress enabled but no custom domain, create subdomain
+				dnsRecord, err := createDNSRecord(opts)
+				if err != nil {
+					return fmt.Errorf("error creating subdomain: %s", err.Error())
+				}
+
+				subdomain := dnsRecord.ExternalURL
+
+				if ingressVal, ok := mergedValues["ingress"]; !ok {
+					mergedValues["ingress"] = map[string]interface{}{
+						"porter_hosts": []string{
+							subdomain,
+						},
+					}
+				} else {
+					ingressValMap := ingressVal.(map[string]interface{})
+
+					ingressValMap["porter_hosts"] = []string{
+						subdomain,
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func createDNSRecord(opts SubdomainCreateOpts) (*types.DNSRecord, error) {
+	if opts.powerDnsClient == nil {
+		return nil, fmt.Errorf("cannot create subdomain because powerdns client is nil")
+	}
+
+	endpoint, found, err := domain.GetNGINXIngressServiceIP(opts.k8sAgent.Clientset)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, fmt.Errorf("target cluster does not have nginx ingress")
+	}
+
+	createDomain := domain.CreateDNSRecordConfig{
+		ReleaseName: opts.stackName,
+		RootDomain:  opts.appRootDomain,
+		Endpoint:    endpoint,
+	}
+
+	record := createDomain.NewDNSRecordForEndpoint()
+
+	record, err = opts.dnsRepo.CreateDNSRecord(record)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_record := domain.DNSRecord(*record)
+
+	err = _record.CreateDomain(opts.powerDnsClient)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return record.ToDNSRecordType(), nil
+}
+
+func getNestedMap(obj map[string]interface{}, fields ...string) (map[string]interface{}, error) {
+	var res map[string]interface{}
+	curr := obj
+
+	for _, field := range fields {
+		objField, ok := curr[field]
+
+		if !ok {
+			return nil, fmt.Errorf("%s not found", field)
+		}
+
+		res, ok = objField.(map[string]interface{})
+
+		if !ok {
+			return nil, fmt.Errorf("%s is not a nested object", field)
+		}
+
+		curr = res
+	}
+
+	return res, nil
 }

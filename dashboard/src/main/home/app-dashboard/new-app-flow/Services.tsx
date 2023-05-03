@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ServiceContainer from "./ServiceContainer";
 import styled from "styled-components";
 import Spacer from "components/porter/Spacer";
@@ -12,7 +12,7 @@ import Button from "components/porter/Button";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
-import { Service, ServiceType, createDefaultService } from "./serviceTypes";
+import { Service, ServiceType } from "./serviceTypes";
 
 interface ServicesProps {
   services: Service[];
@@ -27,7 +27,12 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
   const [serviceType, setServiceType] = useState<ServiceType>("web");
   const isServiceNameValid = (name: string) => {
     const regex = /^[a-z0-9-]+$/;
+
     return regex.test(name);
+  };
+  const isServiceNameDuplicate = (name: string) => {
+    const serviceNames = services.map((service) => service.name);
+    return serviceNames.includes(name);
   };
 
   return (
@@ -38,6 +43,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             {services.map((service, index) => {
               return (
                 <ServiceContainer
+                  key={service.name}
                   service={service}
                   editService={(newService: Service) =>
                     setServices(
@@ -54,12 +60,17 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
           <Spacer y={0.5} />
         </>
       )}
-      <AddServiceButton onClick={() => setShowAddServiceModal(true)}>
+      <AddServiceButton
+        onClick={() => {
+          setShowAddServiceModal(true);
+          setServiceType("web");
+        }}
+      >
         <i className="material-icons add-icon">add_icon</i>
         Add a new service
       </AddServiceButton>
       {showAddServiceModal && (
-        <Modal closeModal={() => setShowAddServiceModal(false)}>
+        <Modal closeModal={() => setShowAddServiceModal(false)} width="500px">
           <Text size={16}>Add a new service</Text>
           <Spacer y={1} />
           <Text color="helper">Select a service type:</Text>
@@ -72,7 +83,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             </ServiceIcon>
             <Select
               value={serviceType}
-              // this is ugly
+              width="100%"
               setValue={(value: string) => setServiceType(value as ServiceType)}
               options={[
                 { label: "Web", value: "web" },
@@ -86,11 +97,15 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
           <Spacer y={0.5} />
           <Input
             placeholder="ex: my-service"
-            width="300px"
+            width="100%"
             value={serviceName}
             error={
-              !isServiceNameValid(serviceName) &&
-              'Lowercase letters, numbers, and "-" only.'
+              (serviceName != "" &&
+                !isServiceNameValid(serviceName) &&
+                'Lowercase letters, numbers, and "-" only.') ||
+              (serviceName.length > 61 && "Must be 61 characters or less.") ||
+              (isServiceNameDuplicate(serviceName) &&
+                "Service name is duplicate")
             }
             setValue={setServiceName}
           />
@@ -99,13 +114,20 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
             onClick={() => {
               setServices([
                 ...services,
-                createDefaultService(serviceName, serviceType, { readOnly: false, value: '' }),
+                Service.default(serviceName, serviceType, {
+                  readOnly: false,
+                  value: "",
+                }),
               ]);
               setShowAddServiceModal(false);
               setServiceName("");
               setServiceType("web");
             }}
-            disabled={!isServiceNameValid(serviceName)}
+            disabled={
+              !isServiceNameValid(serviceName) ||
+              isServiceNameDuplicate(serviceName) ||
+              serviceName?.length > 61
+            }
           >
             <I className="material-icons">add</I> Add service
           </Button>
@@ -124,6 +146,7 @@ const ServiceIcon = styled.div`
   justify-content: center;
   height: 35px;
   width: 35px;
+  min-width: 35px;
   margin-right: 10px;
   overflow: hidden;
   border-radius: 5px;
@@ -156,7 +179,7 @@ const ServicesContainer = styled.div``;
 
 const AddServiceButton = styled.div`
   color: #aaaabb;
-  background: #26292e;
+  background: ${({ theme }) => theme.fg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

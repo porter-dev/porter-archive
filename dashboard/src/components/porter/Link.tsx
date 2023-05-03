@@ -7,6 +7,7 @@ type Props = {
   onClick?: () => void;
   children: React.ReactNode;
   target?: string;
+  hasunderline?: boolean;
 };
 
 const Link: React.FC<Props> = ({
@@ -14,13 +15,25 @@ const Link: React.FC<Props> = ({
   onClick,
   children,
   target,
+  hasunderline,
 }) => {
   return (
     <>
       {to ? (
-        <StyledLink to={to} target={target}>{children}</StyledLink>
+        <StyledLink 
+          to={to} 
+          target={target}
+          hasunderline={hasunderline}
+        >
+          {children}
+        </StyledLink>
       ) : (
-        <Div onClick={onClick}>{children}</Div>
+        <Div 
+          onClick={onClick}
+          hasunderline={hasunderline}
+        >
+          {children}
+        </Div>
       )}
     </>
   );
@@ -28,14 +41,16 @@ const Link: React.FC<Props> = ({
 
 export default Link;
 
-const Div = styled.span`
-  color: #8590ff;
+const Div = styled.span<{ hasunderline?: boolean }>`
+  color: #ffffff;
   cursor: pointer;
   display: inline;
+  text-decoration: ${props => props.hasunderline ? "underline" : ""};
 `;
 
-const StyledLink = styled(DynamicLink)`
-  color: #8590ff;
+const StyledLink = styled(DynamicLink)<{ hasunderline?: boolean }>`
+  color: #ffffff;
   display: inline;
   cursor: pointer;
+  text-decoration: ${props => props.hasunderline ? "underline" : ""};
 `;

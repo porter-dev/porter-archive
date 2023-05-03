@@ -1,17 +1,21 @@
 import React, { useEffect, useState, useContext, useMemo } from "react";
 import styled from "styled-components";
 import _ from "lodash";
+import { Link, LinkProps } from "react-router-dom";
 
 import web from "assets/web.png";
+import box from "assets/box.png";
 import github from "assets/github.png";
 import time from "assets/time.png";
 import healthy from "assets/status-healthy.png";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
+import notFound from "assets/not-found.png";
 
 import { Context } from "shared/Context";
 import { search } from "shared/search";
 import api from "shared/api";
+import { readableDate } from "shared/string_utils";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import Container from "components/porter/Container";
@@ -20,10 +24,11 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
-import Link from "components/porter/Link";
+import PorterLink from "components/porter/Link";
+import Loading from "components/Loading";
+import Fieldset from "components/porter/Fieldset";
 
-type Props = {
-};
+type Props = {};
 
 const icons = [
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-plain.svg",
@@ -43,47 +48,129 @@ const namespaceBlacklist = [
   "monitoring",
 ];
 
-const AppDashboard: React.FC<Props> = ({
-}) => {
+const AppDashboard: React.FC<Props> = ({}) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [apps, setApps] = useState([]);
+  const [charts, setCharts] = useState([]);
+  const [error, setError] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("grid");
   const [isLoading, setIsLoading] = useState(true);
+  const [shouldLoadTime, setShouldLoadTime] = useState(true);
 
   const filteredApps = useMemo(() => {
-    const filteredBySearch = search(
-      apps ?? [],
-      searchValue,
-      {
-        keys: ["name"],
-        isCaseSensitive: false,
-      }
-    );
+    const filteredBySearch = search(apps ?? [], searchValue, {
+      keys: ["name"],
+      isCaseSensitive: false,
+    });
 
     return _.sortBy(filteredBySearch);
   }, [apps, searchValue]);
 
   const getApps = async () => {
-    
-    // TODO: Currently using namespaces as placeholder (replace with apps)
+    setIsLoading(true);
     try {
-      const res = await api.getNamespaces(
+      const res = await api.getPorterApps(
         "<token>",
         {},
         {
-          id: currentProject.id,
+          project_id: currentProject.id,
           cluster_id: currentCluster.id,
         }
-      )
-      setApps(res.data);
+      );
+      const apps = res.data;
+      const timeRes = await Promise.all(
+        apps.map((app: any) => {
+          return api.getCharts(
+            "<token>",
+            {
+              limit: 1,
+              skip: 0,
+              byDate: false,
+              statusFilter: [
+                "deployed",
+                "uninstalled",
+                "pending",
+                "pending-install",
+                "pending-upgrade",
+                "pending-rollback",
+                "failed",
+              ],
+            },
+            {
+              id: currentProject.id,
+              cluster_id: currentCluster.id,
+              namespace: `porter-stack-${app.name}`,
+            }
+          );
+        })
+      );
+      apps.forEach((app: any, i: number) => {
+        app["last_deployed"] = readableDate(
+          timeRes[i].data[0]?.info?.last_deployed
+        );
+      });
+      setApps(apps.reverse());
+      setIsLoading(false);
+    } catch (err) {
+      setError(err);
+      setIsLoading(false);
     }
-    catch (err) {}
   };
 
   useEffect(() => {
-    getApps();
-  }, []);
+    if (currentProject?.id > 0 && currentCluster?.id > 0) {
+      getApps();
+    }
+  }, [currentCluster, currentProject]);
+
+  const renderSource = (app: any) => {
+    return (
+      <>
+        {app.repo_name ? (
+          <>
+            <SmallIcon opacity="0.6" src={github} />
+            {app.repo_name}
+          </>
+        ) : (
+          <>
+            <SmallIcon
+              opacity="0.7"
+              height="18px"
+              src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
+            />
+            {app.image_repo_uri}
+          </>
+        )}
+      </>
+    );
+  };
+
+  const renderIcon = (b: string, size?: string) => {
+    var src = box;
+    if (b) {
+      const bp = b.split(",")[0]?.split("/")[1];
+      switch (bp) {
+        case "ruby":
+          src = icons[0];
+          break;
+        case "nodejs":
+          src = icons[1];
+          break;
+        case "python":
+          src = icons[2];
+          break;
+        case "go":
+          src = icons[3];
+          break;
+        default:
+          break;
+      }
+    }
+    return (
+      <>{size === "larger" ? <MidIcon src={src} /> : <Icon src={src} />}</>
+    );
+  };
 
   return (
     <StyledAppDashboard>
@@ -94,7 +181,7 @@ const AppDashboard: React.FC<Props> = ({
         disableLineBreak
       />
       <Container row spaced>
-        <SearchBar 
+        <SearchBar
           value={searchValue}
           setValue={setSearchValue}
           placeholder="Search applications . . ."
@@ -110,58 +197,73 @@ const AppDashboard: React.FC<Props> = ({
           setActive={setView}
         />
         <Spacer inline x={2} />
-        <Link to="/apps/new">
+        <PorterLink to="/apps/new/app">
           <Button onClick={() => {}} height="30px" width="160px">
             <I className="material-icons">add</I> New application
           </Button>
-        </Link>
+        </PorterLink>
       </Container>
       <Spacer y={1} />
-      {view === "grid" ? (
+      {!isLoading && filteredApps.length === 0 && (
+        <Fieldset>
+          <Container row>
+            <PlaceholderIcon src={notFound} />
+            <Text color="helper">No applications were found.</Text>
+          </Container>
+        </Fieldset>
+      )}
+      {isLoading ? (
+        <Loading offset="-150px" />
+      ) : view === "grid" ? (
         <GridList>
-         {(filteredApps ?? []).map((app: any, i: number) => {
-           if (!namespaceBlacklist.includes(app.name)) {
-             return (
-               <Block>
-                 <Text size={14}>
-                   <Icon src={icons[i % icons.length]} />
-                   {app.name}
-                 </Text>
-                 <StatusIcon src={healthy} />
-                 <Text size={13} color="#ffffff44">
-                   <SmallIcon opacity="0.6" src={github} />
-                   porter-dev/porter
-                 </Text>
-                 <Text size={13} color="#ffffff44">
-                   <SmallIcon opacity="0.4" src={time} />
-                   Updated 6:35 PM on 4/23/2023
-                 </Text>
-               </Block>
-             );
-           }
-         })}
-       </GridList>
+          {(filteredApps ?? []).map((app: any, i: number) => {
+            if (!namespaceBlacklist.includes(app.name)) {
+              return (
+                <Link to={`/apps/${app.name}`} key={i}>
+                  <Block>
+                    <Container row>
+                      <Text size={14}>
+                        {renderIcon(app["build_packs"])}
+                        {app.name}
+                      </Text>
+                      <Spacer inline x={2} />
+                    </Container>
+                    <StatusIcon src={healthy} />
+                    <Text size={13} color="#ffffff44">
+                      {renderSource(app)}
+                    </Text>
+                    <Text size={13} color="#ffffff44">
+                      <SmallIcon opacity="0.4" src={time} />
+                      {app.last_deployed}
+                    </Text>
+                  </Block>
+                </Link>
+              );
+            }
+          })}
+        </GridList>
       ) : (
         <List>
           {(filteredApps ?? []).map((app: any, i: number) => {
             if (!namespaceBlacklist.includes(app.name)) {
               return (
-                <Row>
-                  <Text size={14}>
-                    <MidIcon src={icons[i % icons.length]} />
-                    {app.name}
-                    <Spacer inline x={1} />
-                    <MidIcon src={healthy} />
-                  </Text>
-                  <Spacer height="15px" />
-                  <Text size={13} color="#ffffff44">
-                    <SmallIcon opacity="0.6" src={github} />
-                    porter-dev/porter
-                    <Spacer inline x={1} />
-                    <SmallIcon opacity="0.4" src={time} />
-                    Updated 6:35 PM on 4/23/2023
-                  </Text>
-                </Row>
+                <Link to={`/apps/${app.name}`} key={i}>
+                  <Row>
+                    <Text size={14}>
+                      {renderIcon(app["build_packs"], "larger")}
+                      {app.name}
+                      <Spacer inline x={1} />
+                      <MidIcon src={healthy} />
+                    </Text>
+                    <Spacer height="15px" />
+                    <Text size={13} color="#ffffff44">
+                      {renderSource(app)}
+                      <Spacer inline x={1} />
+                      <SmallIcon opacity="0.4" src={time} />
+                      {app.last_deployed}
+                    </Text>
+                  </Row>
+                </Link>
               );
             }
           })}
@@ -174,11 +276,18 @@ const AppDashboard: React.FC<Props> = ({
 
 export default AppDashboard;
 
+const PlaceholderIcon = styled.img`
+  height: 13px;
+  margin-right: 12px;
+  opacity: 0.65;
+`;
+
 const Row = styled.div<{ isAtBottom?: boolean }>`
   cursor: pointer;
   padding: 15px;
-  border-bottom: ${props => props.isAtBottom ? "none" : "1px solid #494b4f"};
-  background: ${props => props.theme.clickable.bg};
+  border-bottom: ${(props) =>
+    props.isAtBottom ? "none" : "1px solid #494b4f"};
+  background: ${(props) => props.theme.clickable.bg};
   position: relative;
   border: 1px solid #494b4f;
   border-radius: 5px;
@@ -211,12 +320,14 @@ const Icon = styled.img`
 const MidIcon = styled.img`
   height: 16px;
   margin-right: 13px;
+  margin-left: 1px;
 `;
 
-const SmallIcon = styled.img<{ opacity?: string }>`
+const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
   margin-left: 2px;
-  height: 14px;
-  opacity: ${props => props.opacity || 1};
+  height: ${(props) => props.height || "14px"};
+  opacity: ${(props) => props.opacity || 1};
+  filter: grayscale(100%);
   margin-right: 10px;
 `;
 
@@ -227,10 +338,10 @@ const Block = styled.div`
   justify-content: space-between;
   cursor: pointer;
   padding: 20px;
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   position: relative;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

@@ -6,7 +6,7 @@ import Helper from "components/form-components/Helper";
 import api from "shared/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { validatePorterYAML } from "../utils";
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 import { useRouting } from "shared/routing";
 import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
 import Placeholder from "components/Placeholder";

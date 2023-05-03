@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Container from "./Container";
+import CopyToClipboard from "components/CopyToClipboard";
 
 type Props = {
   isInitiallyExpanded?: boolean;
@@ -12,6 +13,8 @@ type Props = {
   expandText?: string;
   collapseText?: string;
   maxHeight?: string;
+  spaced?: boolean;
+  copy?: string;
 };
 
 const ExpandableSection: React.FC<Props> = ({
@@ -24,6 +27,8 @@ const ExpandableSection: React.FC<Props> = ({
   expandText,
   collapseText,
   maxHeight,
+  spaced,
+  copy,
 }) => {
   const [isExpanded, setIsExpanded] = useState(isInitiallyExpanded ?? false);
 
@@ -34,11 +39,31 @@ const ExpandableSection: React.FC<Props> = ({
       noWrapper={noWrapper}
     >
       {noWrapper ? (
-        <Container row>
+        <Container row spaced={spaced}>
           {Header}
-          <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
-            {isExpanded ? collapseText : expandText}
-          </ExpandButton>
+          {copy ?
+            (
+              <CopyWrapper>
+                <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
+                  {isExpanded ? collapseText : expandText}
+                </ExpandButton>
+                <CopyToClipboard
+                  as="i"
+                  text={copy}
+                  wrapperProps={{
+                    className: "material-icons",
+                  }}
+                >
+                  content_copy
+                </CopyToClipboard>
+              </CopyWrapper>
+            ) :
+            (
+              <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
+                {isExpanded ? collapseText : expandText}
+              </ExpandButton>
+            )
+          }
         </Container>
       ) : (
         <HeaderRow
@@ -66,6 +91,9 @@ const ExpandButton = styled.div`
   color: #aaaabb;
   cursor: pointer;
   font-size: 13px;
+  :hover {
+    color: #ffffff;
+  }
 `;
 
 const HeaderRow = styled.div<{
@@ -101,7 +129,7 @@ const StyledExpandableSection = styled.div<{
 }>`
   width: 100%;
   height: ${props => (props.isExpanded || props.noWrapper) ? "" : "40px"};
-  max-height: 300px;
+  max-height: 350px;
   overflow: hidden;
   border-radius: 5px;
   background: ${props => !props.noWrapper && (props.background || "#26292e")};
@@ -119,4 +147,10 @@ const StyledExpandableSection = styled.div<{
       max-height: 300px;
     }
   }
+`;
+
+const CopyWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
 `;

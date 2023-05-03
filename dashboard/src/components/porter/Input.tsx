@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { boolean } from "zod";
+import Tooltip from "./Tooltip";
 
 type Props = {
   placeholder: string;
@@ -13,6 +14,7 @@ type Props = {
   error?: string;
   children?: React.ReactNode;
   disabled?: boolean;
+  disabledTooltip?: string;
 };
 
 const Input: React.FC<Props> = ({
@@ -26,34 +28,64 @@ const Input: React.FC<Props> = ({
   error,
   children,
   disabled,
+  disabledTooltip,
 }) => {
   return (
-    <Block width={width}>
-      {
-        label && (
-          <Label>{label}</Label>
-        )
-      }
-      <StyledInput
-        value={value}
-        onChange={e => setValue(e.target.value)}
-        placeholder={placeholder}
-        width={width}
-        height={height}
-        type={type || "text"}
-        hasError={(error && true) || (error === "")}
-        disabled={disabled ? disabled : false}
-      />
-      {
-        error && (
-          <Error>
-            <i className="material-icons">error</i>
-            {error}
-          </Error>
-        )
-      }
-      {children}
-    </Block>
+    disabled && disabledTooltip ?
+      <Tooltip content={disabledTooltip} position="right">
+        <Block width={width}>
+          {
+            label && (
+              <Label>{label}</Label>
+            )
+          }
+          <StyledInput
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            placeholder={placeholder}
+            width={width}
+            height={height}
+            type={type || "text"}
+            hasError={(error && true) || (error === "")}
+            disabled={disabled ? disabled : false}
+          />
+          {
+            error && (
+              <Error>
+                <i className="material-icons">error</i>
+                {error}
+              </Error>
+            )
+          }
+          {children}
+        </Block>
+      </Tooltip> :
+      <Block width={width} >
+        {
+          label && (
+            <Label>{label}</Label>
+          )
+        }
+        <StyledInput
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          placeholder={placeholder}
+          width={width}
+          height={height}
+          type={type || "text"}
+          hasError={(error && true) || (error === "")}
+          disabled={disabled ? disabled : false}
+        />
+        {
+          error && (
+            <Error>
+              <i className="material-icons">error</i>
+              {error}
+            </Error>
+          )
+        }
+        {children}
+      </Block >
   );
 };
 
@@ -96,7 +128,7 @@ const StyledInput = styled.input<{
   height: ${props => props.height || "35px"};
   padding: 5px 10px;
   width: ${props => props.width || "200px"};
-  color: #ffffff;
+  color: ${props => props.disabled ? "#aaaabb" : "#ffffff"};
   font-size: 13px;
   outline: none;
   border-radius: 5px;

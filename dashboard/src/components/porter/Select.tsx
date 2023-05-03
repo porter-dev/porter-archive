@@ -26,35 +26,34 @@ const Select: React.FC<Props> = ({
 }) => {
   return (
     <Block width={width}>
-      {
-        label && (
-          <Label>{label}</Label>
-        )
-      }
+      {label && <Label>{label}</Label>}
       <SelectWrapper>
         <i className="material-icons">arrow_drop_down</i>
         <StyledSelect
-          onChange={e => {
+          onChange={(e) => {
             setValue(e.target.value);
           }}
           width={width}
           height={height}
-          hasError={(error && true) || (error === "")}
+          hasError={(error && true) || error === ""}
           disabled={disabled ? disabled : false}
+          value={value}
         >
           {options.map((option, i) => {
-            return <option value={option.value} key={i}>{option.label}</option>;
+            return (
+              <option value={option.value} key={i}>
+                {option.label}
+              </option>
+            );
           })}
         </StyledSelect>
       </SelectWrapper>
-      {
-        error && (
-          <Error>
-            <i className="material-icons">error</i>
-            {error}
-          </Error>
-        )
-      }
+      {error && (
+        <Error>
+          <i className="material-icons">error</i>
+          {error}
+        </Error>
+      )}
       {children}
     </Block>
   );
@@ -67,7 +66,7 @@ const Block = styled.div<{
 }>`
   display: block;
   position: relative;
-  width: ${props => props.width || "200px"};
+  width: ${(props) => props.width || "200px"};
 `;
 
 const Label = styled.div`
@@ -109,9 +108,9 @@ const StyledSelect = styled.select<{
   height: string;
   hasError: boolean;
 }>`
-  height: ${props => props.height || "35px"};
+  height: ${(props) => props.height || "35px"};
   padding: 5px 10px;
-  width: ${props => props.width || "200px"};
+  width: ${(props) => props.width || "200px"};
   color: #ffffff;
   font-size: 13px;
   outline: none;
@@ -121,8 +120,8 @@ const StyledSelect = styled.select<{
   appearance: none;
   overflow: hidden;
   z-index: 1;
-  border: 1px solid ${props => props.hasError ? "#ff3b62" : "#494b4f"};
+  border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#494b4f")};
   :hover {
-    border: 1px solid ${props => props.hasError ? "#ff3b62" : "#7a7b80"};
+    border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#7a7b80")};
   }
 `;

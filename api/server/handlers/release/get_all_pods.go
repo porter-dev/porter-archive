@@ -39,6 +39,7 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
+		err = fmt.Errorf("error getting agent: %w", err)
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -52,6 +53,7 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		controller.Namespace = helmRelease.Namespace
 		_, selector, err := getController(controller, agent)
 		if err != nil {
+			err = fmt.Errorf("error getting controller %s: %w", controller.Name, err)
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
@@ -74,6 +76,7 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			jobPods, err := getPodsForJobs(agent, helmRelease.Namespace, jobLabels)
 			if err != nil {
+				err = fmt.Errorf("error getting cronjob pods in namespace %s with labels %+v : %w", helmRelease.Namespace, jobLabels, err)
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
@@ -93,6 +96,16 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		podList, err := agent.GetPodsByLabel(strings.Join(selectors, ","), helmRelease.Namespace)
 		if err != nil {
+			err = fmt.Errorf("error getting pods in namespace %s with labels %+v : %w", helmRelease.Namespace, strings.Join(selectors, ","), err)
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		pods = append(pods, podList.Items...)
+
+		podList, err = agent.GetPodsByLabel(strings.Join(selectors, ","), "default")
+		if err != nil {
+			err = fmt.Errorf("error getting pods in namespace %s with labels %+v : %w", helmRelease.Namespace, strings.Join(selectors, ","), err)
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
@@ -110,6 +123,7 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	jobPods, err := getPodsForJobs(agent, helmRelease.Namespace, labels)
 	if err != nil {
+		err = fmt.Errorf("error getting cronjob pods in namespace %s with labels %+v : %w", helmRelease.Namespace, labels, err)
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

@@ -20,7 +20,7 @@ import dayjs from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
 import { ChartType } from "shared/types";
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 
 export type InitLogData = Partial<{
   podName: string;

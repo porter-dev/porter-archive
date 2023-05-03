@@ -1,11 +1,13 @@
 import React, { Component } from "react";
 import styled from "styled-components";
+
 import category from "assets/category.svg";
 import integrations from "assets/integrations-bold.png";
 import rocket from "assets/rocket.png";
 import settings from "assets/settings-bold.png";
 import web from "assets/web-bold.png";
 import addOns from "assets/add-ons-bold.png";
+import infra from "assets/infra.png";
 
 import { Context } from "shared/Context";
 
@@ -192,6 +194,22 @@ class Sidebar extends Component<PropsType, StateType> {
             <NavButton path={"/integrations"}>
               <Img src={integrations} />
               Integrations
+            </NavButton>
+          )}
+          {this.props.isAuthorized("settings", "", [
+            "get",
+            "update",
+            "delete",
+          ]) && (
+            <NavButton
+              path={"/cluster-dashboard"}
+              targetClusterName={currentCluster?.name}
+              active={
+                window.location.pathname.startsWith("/cluster-dashboard")
+              }
+            >
+              <Img src={infra} />
+              Infrastructure
             </NavButton>
           )}
           {this.props.isAuthorized("settings", "", [

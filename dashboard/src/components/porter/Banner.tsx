@@ -9,9 +9,16 @@ interface Props {
   icon?: React.ReactNode;
   children: React.ReactNode;
   noMargin?: boolean;
+  suffix?: React.ReactNode;
 }
 
-const Banner: React.FC<Props> = ({ type, icon, children, noMargin }) => {
+const Banner: React.FC<Props> = ({ 
+  type,
+  icon,
+  children,
+  noMargin,
+  suffix,
+}) => {
   const renderIcon = () => {
     if (icon) {
       return icon;
@@ -28,30 +35,42 @@ const Banner: React.FC<Props> = ({ type, icon, children, noMargin }) => {
       color={type === "error" ? "#ff385d" : type === "warning" && "#f5cb42"}
       noMargin={noMargin}
     >
+      <>
       {renderIcon()}
-      {children}
+      <span>{children}</span>
+      </>
+      {suffix && (
+        <Suffix>{suffix}</Suffix>
+      )}
     </StyledBanner>
   );
 };
 
 export default Banner;
 
+const Suffix = styled.div`
+  margin-left: auto;
+  padding-left: 10px;
+`;
+
 const StyledBanner = styled.div<{
   color?: string;
   noMargin?: boolean;
 }>`
-  height: 40px;
+  min-height: 40px;
   width: 100%;
   margin: ${(props) => (props.noMargin ? "5px 0 10px" : "")};
   font-size: 13px;
   font-family: "Work Sans", sans-serif;
   display: flex;
-  border: 1px solid ${(props) => props.color || "#ffffff00"};
+  line-height: 1.5;
+  border: 1px solid ${(props) => props.color || "#aaaabb"};
   border-radius: 8px;
-  padding: 14px;
-  color: ${(props) => props.color || "#ffffff"};
+  padding: 10px 14px;
+  color: ${(props) => props.color || "#aaaabb"};
   align-items: center;
-  background: #ffffff11;
+  jusrify-content: space-between;
+  background: ${({ theme }) => theme.fg};
   > img {
     margin-right: 10px;
     width: 20px;

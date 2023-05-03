@@ -1,11 +1,13 @@
 package stacks
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -34,8 +36,17 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	request := &types.CreatePorterAppRequest{}
 
 	ok := c.DecodeAndValidate(w, r, request)
-
 	if !ok {
+		return
+	}
+
+	existing, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, request.Name)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	} else if existing.Name != "" {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("porter app with name %s already exists in this environment", existing.Name), http.StatusForbidden))
 		return
 	}
 
@@ -44,19 +55,21 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		ClusterID: cluster.ID,
 		ProjectID: project.ID,
 		RepoName:  request.RepoName,
+		GitRepoID: request.GitRepoID,
 		GitBranch: request.GitBranch,
 
-		BuildContext: request.BuildContext,
-		Builder:      request.Builder,
-		Buildpacks:   request.Buildpacks,
-		Dockerfile:   request.Dockerfile,
+		BuildContext:   request.BuildContext,
+		Builder:        request.Builder,
+		Buildpacks:     request.Buildpacks,
+		Dockerfile:     request.Dockerfile,
+		ImageRepoURI:   request.ImageRepoURI,
+		PullRequestURL: request.PullRequestURL,
 	}
 
-	_, err := c.Repo().PorterApp().CreatePorterApp(app)
-
+	porterApp, err := c.Repo().PorterApp().UpdatePorterApp(app)
 	if err != nil {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	c.WriteResult(w, r, porterApp.ToPorterAppType())
 }

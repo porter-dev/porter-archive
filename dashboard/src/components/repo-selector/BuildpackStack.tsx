@@ -1,7 +1,7 @@
 import { DeviconsNameList } from "assets/devicons-name-list";
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
-import SelectRow from "components/form-components/SelectRow";
+import Select from "components/porter/Select";
 import Loading from "components/Loading";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
@@ -11,6 +11,10 @@ import styled, { keyframes } from "styled-components";
 // Add the following imports
 import { Button as MuiButton, Modal as MuiModal } from "@material-ui/core";
 import { makeStyles, withStyles } from "@material-ui/core/styles";
+import Button from "components/porter/Button";
+import Modal from "components/porter/Modal";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 
 const DEFAULT_BUILDER_NAME = "heroku";
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
@@ -37,6 +41,7 @@ type DetectedBuildpack = {
   builders: string[];
   detected: Buildpack[];
   others: Buildpack[];
+  buildConfig: BuildConfig;
 };
 
 type DetectBuildpackResponse = DetectedBuildpack[];
@@ -47,14 +52,25 @@ export const BuildpackStack: React.FC<{
   branch: string;
   hide: boolean;
   onChange: (config: BuildConfig) => void;
-}> = ({ actionConfig, folderPath, branch, hide, onChange }) => {
+  currentBuildConfig?: BuildConfig;
+  setBuildConfig?: (config: BuildConfig) => void;
+}> = ({
+  actionConfig,
+  folderPath,
+  branch,
+  hide,
+  onChange,
+  currentBuildConfig,
+  setBuildConfig,
+}) => {
   const { currentProject } = useContext(Context);
 
   const [builders, setBuilders] = useState<DetectedBuildpack[]>(null);
-  const [selectedBuilder, setSelectedBuilder] = useState<string>(null);
 
   const [stacks, setStacks] = useState<string[]>(null);
-  const [selectedStack, setSelectedStack] = useState<string>(null);
+  const [selectedStack, setSelectedStack] = useState<string>(
+    currentBuildConfig?.builder || null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [selectedBuildpacks, setSelectedBuildpacks] = useState<Buildpack[]>([]);
@@ -63,46 +79,38 @@ export const BuildpackStack: React.FC<{
   );
   const renderModalContent = () => {
     return (
-      <div
-        className="modal-content"
-        style={{
-          backgroundColor: "black",
-          color: "white",
-          outline: "none",
-          padding: "32px",
-          borderRadius: "8px",
-          width: "80%",
-          maxWidth: "600px",
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <h2 id="buildpack-configuration-title">Buildpack Configuration</h2>
-        <p id="buildpack-configuration-description">
-          Configure your buildpacks here.
-        </p>
+      <>
+        <Text size={16}>Buildpack Configuration</Text>
+        <Spacer y={1} />
+        <Scrollable>
+          <Text color="helper">Selected buildpacks:</Text>
+          <Spacer y={1} />
+          {!!selectedBuildpacks?.length &&
+            renderBuildpacksList(selectedBuildpacks, "remove")}
 
-        {!!selectedBuildpacks?.length &&
-          renderBuildpacksList(selectedBuildpacks, "remove")}
-
-        <Helper>Available buildpacks:</Helper>
-        {!!availableBuildpacks?.length && (
-          <>{renderBuildpacksList(availableBuildpacks, "add")}</>
-        )}
-        <Helper>
-          You may also add buildpacks by directly providing their GitHub links
-          or links to ZIP files that contain the buildpack source code.
-        </Helper>
-        <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
-
-        <div style={{ marginTop: "auto" }}>
-          {/* Add Save button */}
-          <SaveButton variant="contained" onClick={() => setIsModalOpen(false)}>
-            Save
-          </SaveButton>
-        </div>
-      </div>
+          <Spacer y={1} />
+          {!!availableBuildpacks?.length && (
+            <>
+              <Text color="helper">Available buildpacks:</Text>
+              <Spacer y={1} />
+              <>{renderBuildpacksList(availableBuildpacks, "add")}</>
+            </>
+          )}
+          <Spacer y={1} />
+          <Text color="helper">
+            You may also add buildpacks by directly providing their GitHub links
+            or links to ZIP files that contain the buildpack source code.
+          </Text>
+          <Spacer y={1} />
+          <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
+          <Spacer y={2} />
+        </Scrollable>
+        <Footer>
+          <Shade />
+          <Spacer y={1} />
+          <Button onClick={() => setIsModalOpen(false)}>Save buildpacks</Button>
+        </Footer>
+      </>
     );
   };
   useEffect(() => {
@@ -112,10 +120,15 @@ export const BuildpackStack: React.FC<{
     buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
       return buildpack.buildpack;
     });
+
     if (typeof onChange === "function") {
       onChange(buildConfig);
+
+      if (currentBuildConfig) {
+        setBuildConfig(buildConfig);
+      }
     }
-  }, [selectedBuilder, selectedStack, selectedBuildpacks]);
+  }, [selectedStack, selectedBuildpacks]);
 
   const detectBuildpack = () => {
     if (actionConfig.kind === "gitlab") {
@@ -161,16 +174,56 @@ export const BuildpackStack: React.FC<{
           (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
         );
 
-        const detectedBuildpacks = defaultBuilder.detected;
-        const availableBuildpacks = defaultBuilder.others;
-        const defaultStack = builders
-          .flatMap((builder) => builder.builders)
-          .find((stack) => {
-            return (
-              stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK
-            );
-          });
+        var detectedBuildpacks = defaultBuilder.detected;
+        var availableBuildpacks = defaultBuilder.others;
+        var defaultStack = "";
+        if (currentBuildConfig) {
+          if (!detectedBuildpacks) {
+            detectedBuildpacks = [];
+          }
 
+          defaultStack = currentBuildConfig.builder;
+          for (const buildpackName of currentBuildConfig.buildpacks) {
+            const matchingBuildpackIndex = availableBuildpacks.findIndex(
+              (buildpack) => buildpack.buildpack === buildpackName
+            );
+
+            if (matchingBuildpackIndex >= 0) {
+              const matchingBuildpack = availableBuildpacks.splice(
+                matchingBuildpackIndex,
+                1
+              )[0];
+              const existingBuildpackIndex = detectedBuildpacks.findIndex(
+                (buildpack) => buildpack.buildpack === buildpackName
+              );
+              if (existingBuildpackIndex < 0) {
+                detectedBuildpacks.push(matchingBuildpack);
+              }
+            } else {
+              const newBuildpack: Buildpack = {
+                name: buildpackName,
+                buildpack: buildpackName,
+                config: null,
+              };
+              const existingBuildpackIndex = detectedBuildpacks.findIndex(
+                (buildpack) => buildpack.buildpack === buildpackName
+              );
+              if (existingBuildpackIndex < 0) {
+                detectedBuildpacks.push(newBuildpack);
+              }
+            }
+          }
+        } else {
+          detectedBuildpacks = defaultBuilder.detected;
+          availableBuildpacks = defaultBuilder.others;
+          defaultStack = builders
+            .flatMap((builder) => builder.builders)
+            .find((stack) => {
+              return (
+                stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK
+              );
+            });
+        }
         setBuilders(builders);
         setSelectedStack(defaultStack);
 
@@ -264,7 +317,7 @@ export const BuildpackStack: React.FC<{
       }
 
       return (
-        <StyledCard key={buildpack.name}>
+        <StyledCard key={buildpack.name} marginBottom="5px">
           <ContentContainer>
             <Icon disableMarginRight={disableIcon} className={icon} />
             <EventInformation>
@@ -348,12 +401,14 @@ export const BuildpackStack: React.FC<{
   return (
     <BuildpackConfigurationContainer>
       <>
-        <SelectRow
+        <Select
           value={selectedStack}
-          width="100%"
+          width="300px"
           options={stackOptions}
-          setActiveValue={(option) => setSelectedStack(option)}
-          label="Select your builder and stack"
+          setValue={(option) => {
+            setSelectedStack(option);
+          }}
+          label="Builder and stack"
         />
         {!!selectedBuildpacks?.length && (
           <Helper>
@@ -361,27 +416,18 @@ export const BuildpackStack: React.FC<{
             manually add/remove buildpacks.
           </Helper>
         )}
-
-        {!!selectedBuildpacks?.length &&
-          renderBuildpacksList(selectedBuildpacks, "remove")}
-        {/* Add the "Add Build Pack" button */}
-        <AddBuildPackButton
-          variant="contained"
-          onClick={() => setIsModalOpen(true)}
-        >
-          Add Build Pack
-        </AddBuildPackButton>
-
-        {/* Add the styled Material-UI modal */}
-        <StyledModal
-          open={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          aria-labelledby="buildpack-configuration-title"
-          aria-describedby="buildpack-configuration-description"
-          className={classes.modal} // Apply the custom styles
-        >
-          {renderModalContent()}
-        </StyledModal>
+        {!!selectedBuildpacks?.length && (
+          <>{renderBuildpacksList(selectedBuildpacks, "remove")}</>
+        )}
+        <Spacer y={1} />
+        <Button onClick={() => setIsModalOpen(true)}>
+          <I className="material-icons">add</I> Add buildpack
+        </Button>
+        {isModalOpen && (
+          <Modal closeModal={() => setIsModalOpen(false)}>
+            {renderModalContent()}
+          </Modal>
+        )}
       </>
     </BuildpackConfigurationContainer>
   );
@@ -404,7 +450,7 @@ export const AddCustomBuildpackForm: React.FC<{
   };
 
   return (
-    <StyledCard isLargeMargin>
+    <StyledCard marginBottom="0px">
       <ContentContainer>
         <EventInformation>
           <BuildpackInputContainer>
@@ -432,11 +478,50 @@ export const AddCustomBuildpackForm: React.FC<{
   );
 };
 
+const Shade = styled.div`
+  position: absolute;
+  top: -50px;
+  left: 0;
+  height: 50px;
+  width: 100%;
+  background: linear-gradient(to bottom, #00000000, ${({ theme }) => theme.fg});
+`;
+
+const Footer = styled.div` 
+  position: relative;
+  width: calc(100% + 50px);
+  margin-left: -25px;
+  padding: 0 25px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  background: ${({ theme }) => theme.fg};
+  margin-bottom: -30px;
+  padding-bottom: 30px
+
+`;
+
+const I = styled.i`
+  color: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin-right: 5px;
+  justify-content: center;
+`;
+
 const ErrorText = styled.span`
   color: red;
   margin-left: 10px;
   display: ${(props: { hasError: boolean }) =>
     props.hasError ? "inline-block" : "none"};
+`;
+
+const Scrollable = styled.div`
+  overflow-y: auto;
+  padding: 0 25px;
+  width: calc(100% + 50px);
+  margin-left: -25px;
+  max-height: calc(100vh - 300px);
 `;
 
 const fadeIn = keyframes`
@@ -461,14 +546,13 @@ const BuildpackConfigurationContainer = styled.div`
   animation: ${fadeIn} 0.75s;
 `;
 
-const StyledCard = styled.div`
+const StyledCard = styled.div<{ marginBottom?: string }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid #ffffff00;
-  background: #000010;
-  margin-bottom: 5px;
-  margin-bottom: ${({ isLargeMargin }) => (isLargeMargin ? "30px" : "5px")};
+  border: 1px solid #494b4f;
+  background: ${({ theme }) => theme.fg};
+  margin-bottom: ${(props) => props.marginBottom || "30px"};
   border-radius: 8px;
   padding: 14px;
   overflow: hidden;
@@ -540,15 +624,6 @@ const ActionButton = styled.button`
     font-size: 20px;
   }
 `;
-
-const AddBuildPackButton = withStyles({
-  root: {
-    backgroundColor: "#8590ff",
-    color: "white",
-    marginBottom: "15px",
-    marginTop: "10px",
-  },
-})(MuiButton);
 
 const SaveButton = withStyles({
   root: {

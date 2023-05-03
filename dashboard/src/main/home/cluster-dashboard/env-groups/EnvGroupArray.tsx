@@ -24,10 +24,6 @@ type PropsType = {
   secretOption?: boolean;
 };
 
-type StateType = {
-  showEditorModal: boolean;
-};
-
 const EnvGroupArray = ({
   label,
   values,
@@ -46,7 +42,7 @@ const EnvGroupArray = ({
 
   const readFile = (env: string) => {
     const envObj = dotenv_parse(env);
-    const _values = values;
+    const _values = [...values];
 
     for (const key in envObj) {
       let push = true;
@@ -92,7 +88,7 @@ const EnvGroupArray = ({
                     width="270px"
                     value={entry.key}
                     onChange={(e: any) => {
-                      let _values = values;
+                      const _values = [...values];
                       _values[i].key = e.target.value;
                       setValues(_values);
                     }}
@@ -107,7 +103,7 @@ const EnvGroupArray = ({
                       width="270px"
                       value={entry.value}
                       onChange={(e: any) => {
-                        let _values = values;
+                        const _values = [...values];
                         _values[i].value = e.target.value;
                         setValues(_values);
                       }}
@@ -121,7 +117,7 @@ const EnvGroupArray = ({
                       width="270px"
                       value={entry.value}
                       onChange={(e: any) => {
-                        let _values = values;
+                        const _values = [...values];
                         _values[i].value = e.target.value;
                         setValues(_values);
                       }}
@@ -130,12 +126,11 @@ const EnvGroupArray = ({
                       spellCheck={false}
                     />
                   )}
-
                   {secretOption && (
                     <HideButton
                       onClick={() => {
                         if (!entry.locked) {
-                          let _values = values;
+                          const _values = [...values];
                           _values[i].hidden = !_values[i].hidden;
                           setValues(_values);
                         }
@@ -167,14 +162,16 @@ const EnvGroupArray = ({
           <InputWrapper>
             <AddRowButton
               onClick={() => {
-                let _values = values;
-                _values.push({
-                  key: "",
-                  value: "",
-                  hidden: false,
-                  locked: false,
-                  deleted: false,
-                });
+                const _values = [
+                  ...values,
+                  {
+                    key: "",
+                    value: "",
+                    hidden: false,
+                    locked: false,
+                    deleted: false,
+                  },
+                ];
                 setValues(_values);
               }}
             >
@@ -197,7 +194,7 @@ const EnvGroupArray = ({
         <Modal
           onRequestClose={() => setShowEditorModal(false)}
           width="60%"
-          height="80%"
+          height="650px"
         >
           <EnvEditorModal
             closeModal={() => setShowEditorModal(false)}
@@ -210,7 +207,6 @@ const EnvGroupArray = ({
 };
 
 export default EnvGroupArray;
-
 const Spacer = styled.div`
   width: 10px;
   height: 20px;

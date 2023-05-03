@@ -259,7 +259,7 @@ const Placeholder = styled.div`
   justify-content: center;
   color: #aaaabb;
   border-radius: 5px;
-  background: #26292e;
+  background: ${({ theme }) => theme.fg};
   border: 1px solid #494b4f;
 `;
 

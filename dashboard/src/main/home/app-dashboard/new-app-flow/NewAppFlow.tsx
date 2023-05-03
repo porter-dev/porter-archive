@@ -306,13 +306,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   return (
     <CenterWrapper>
       <Div>
-        {showConnectModal && (
+        {/* {showConnectModal && (
           <GithubConnectModal
             closeModal={() => setConnectModal(false)}
             hasClickedDoNotConnect={hasClickedDoNotConnect}
             handleDoNotConnect={handleDoNotConnect}
           />
-        )}
+        )} */}
         <StyledConfigureTemplate>
           <Back to="/apps" />
           <DashboardHeader

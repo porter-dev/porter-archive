@@ -231,7 +231,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
             setBuildConfig={props.setBuildConfig}
             autoBuildPack={autoBuildpack}
             showSettings={false}
-            buildView={props.dockerfilePath ? "dockerfile" : "buildpacks"}
+            buildView={props.dockerfilePath ? "docker" : "buildpacks"}
             actionConfig={props.actionConfig}
             branch={props.branch}
             folderPath={props.folderPath}

@@ -25,7 +25,8 @@ interface AdvancedBuildSettingsProps {
   folderPath: string;
   dockerfilePath?: string;
   setDockerfilePath: (x: string) => void;
-  setBuildConfig: (x: any) => void;
+  setBuildConfig?: (x: any) => void;
+  currentBuildConfig?: BuildConfig;
 }
 
 type Buildpack = {
@@ -78,6 +79,8 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
             props.setDockerfilePath("");
           }}
           hide={false}
+          currentBuildConfig={props.currentBuildConfig}
+          setBuildConfig={props.setBuildConfig}
         />
       </>
     );

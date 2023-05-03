@@ -44,6 +44,10 @@ type Props = {
   setAppData: Dispatch<any>;
   onTabSwitch: () => void;
 };
+interface AutoBuildpack {
+  name?: string;
+  valid: boolean;
+}
 
 const BuildSettingsTabStack: React.FC<Props> = ({
   appData,
@@ -54,9 +58,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   const [updated, setUpdated] = useState(null);
   const [branch, setBranch] = useState(appData.app.git_branch);
   const [showSettings, setShowSettings] = useState(false);
-  const [dockerfilePath, setDockerfilePath] = useState(
-    appData.app.dockerfilePath
-  );
+  const [dockerfilePath, setDockerfilePath] = useState(appData.app.dockerfile);
   const [folderPath, setFolderPath] = useState("./");
   const defaultActionConfig: ActionConfigType = {
     git_repo: appData.app.repo_name,
@@ -75,6 +77,10 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   });
   const [redeployOnSave, setRedeployOnSave] = useState(true);
   const [runningWorkflowURL, setRunningWorkflowURL] = useState("");
+  const [autoBuildpack, setAutoBuildpack] = useState<AutoBuildpack>({
+    valid: false,
+    name: "",
+  });
 
   const [actionConfig, setActionConfig] = useState<ActionConfigType>({
     ...defaultActionConfig,
@@ -83,7 +89,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     "loading" | "successful" | string
   >("");
   const [imageUrl, setImageUrl] = useState(appData.chart.image_uri);
-  
+
   const triggerWorkflow = async () => {
     try {
       await api.reRunGHWorkflow(
@@ -276,7 +282,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           />
         </>
       )}
-      <StyledAdvancedBuildSettings
+      {/* <StyledAdvancedBuildSettings
         showSettings={showSettings}
         isCurrent={true}
         onClick={() => {
@@ -307,7 +313,20 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           )}
           <Spacer y={0.5} />
         </StyledSourceBox>
-      </AnimateHeight>
+      </AnimateHeight> */}
+
+      <AdvancedBuildSettings
+        dockerfilePath={dockerfilePath}
+        setDockerfilePath={setDockerfilePath}
+        setBuildConfig={setBuildConfig}
+        autoBuildPack={autoBuildpack}
+        showSettings={false}
+        buildView={dockerfilePath != "" ? "docker" : "buildpack"}
+        actionConfig={actionConfig}
+        branch={branch}
+        folderPath={folderPath}
+        currentBuildConfig={buildConfig}
+      />
       <Spacer y={1} />
       <Checkbox
         checked={redeployOnSave}

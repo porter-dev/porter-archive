@@ -77,6 +77,10 @@ type Detected = {
   detected: boolean;
   message: string;
 };
+interface GithubAppAccessData {
+  username?: string;
+  accounts?: string[];
+}
 
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [templateName, setTemplateName] = useState("");
@@ -105,6 +109,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [hasClickedDoNotConnect, setHasClickedDoNotConnect] = useState(() =>
     JSON.parse(localStorage.getItem("hasClickedDoNotConnect") || "false")
   );
+  const [accessLoading, setAccessLoading] = useState(true);
+  const [accessError, setAccessError] = useState(false);
+  const [accessData, setAccessData] = useState<GithubAppAccessData>({});
+  const [hasProviders, setHasProviders] = useState(false);
 
   const [porterJson, setPorterJson] = useState<PorterJson | undefined>(
     undefined
@@ -159,35 +167,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  // const renderGithubConnect = () => {
-  //   const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
-  //   const encoded_redirect_uri = encodeURIComponent(url);
-
-  //   if (accessError) {
-  //     return (
-  //       <ListWrapper>
-  //         <Helper>
-  //           No connected repositories found.
-  //           <A href={"/api/integrations/github-app/oauth"}>
-  //             Authorize Porter to view your repositories.
-  //           </A>
-  //         </Helper>
-  //       </ListWrapper>
-  //     );
-  //   } else if (!accessData.accounts || accessData.accounts?.length == 0) {
-  //     return (
-  //       <>
-  //         <Text size={16}>No connected repositories were found.</Text>
-  //         <ConnectToGithubButton
-  //           href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
-  //         >
-  //           <GitHubIcon src={github} /> Connect to GitHub
-  //         </ConnectToGithubButton>
-  //       </>
-  //     );
-  //   }
-  // };
-  // Deploys a Helm chart and writes build settings to the DB
   const isAppNameValid = (name: string) => {
     const regex = /^[a-z0-9-]{1,61}$/;
     return regex.test(name);
@@ -302,18 +281,28 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  // useEffect(() => {
-  //   api
-  //     .getGithubAccounts("<token>", {}, {})
-  //     .then(({ data }) => {
-  //       setAccessData(data);
-  //       setAccessLoading(false);
-  //     })
-  //     .catch(() => {
-  //       setAccessError(true);
-  //       setAccessLoading(false);
-  //     });
-  // }, []);
+  useEffect(() => {
+    const fetchGithubAccounts = async () => {
+      try {
+        const { data } = await api.getGithubAccounts("<token>", {}, {});
+        setAccessData(data);
+        if (data) {
+          setHasProviders(false);
+        }
+      } catch (error) {
+        setAccessError(true);
+      } finally {
+        setAccessLoading(false);
+      }
+
+      setConnectModal(
+        !hasClickedDoNotConnect && (!hasProviders || accessError)
+      );
+    };
+
+    fetchGithubAccounts();
+  }, [hasClickedDoNotConnect, accessData.accounts, accessError]);
+
   return (
     <CenterWrapper>
       <Div>
@@ -409,9 +398,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   Application services{" "}
                   {detected && (
                     <AppearingDiv>
-                      <Text
-                        color={detected.detected ? "#4797ff" : "#fcba03"}
-                      >
+                      <Text color={detected.detected ? "#4797ff" : "#fcba03"}>
                         {detected.detected ? (
                           <I className="material-icons">check</I>
                         ) : (

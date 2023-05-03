@@ -74,8 +74,12 @@ const GithubConnectModal: React.FC<Props> = ({
           <ButtonWrapper>
             <ConnectToGithubButton
               href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={closeModal}
             >
-              <GitHubIcon src={github} /> Connect to GitHub
+              <GitHubIcon src={github} />
+              Connect to GitHub
             </ConnectToGithubButton>
 
             <Button
@@ -189,6 +193,14 @@ const ConnectToGithubButton = styled.a`
     align-items: center;
     margin-right: 5px;
     justify-content: center;
+  }
+  &:hover {
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#353a3e"};
+  }
+
+  &:not([disabled]) {
+    cursor: pointer;
   }
 `;
 

@@ -27,16 +27,6 @@ patchesStrategicMerge:
           envFrom:
           - configMapRef: 
               name: porter-server-env
-- |-
-  apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    name: porter-server-web
-  spec:
-    template:
-      spec:
-        containers:
-        - name: web
           volumeMounts:
           - mountPath: /app/ssh
             name: ssh-keys

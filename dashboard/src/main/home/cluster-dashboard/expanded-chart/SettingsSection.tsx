@@ -190,7 +190,7 @@ const SettingsSection: React.FC<PropsType> = ({
 
   const renderWebhookSection = () => {
     if (!currentChart?.form?.hasSource) {
-      return;
+      return <DarkMatter />;
     }
 
     const protocol = window.location.protocol == "https:" ? "https" : "http";
@@ -371,7 +371,7 @@ export default SettingsSection;
 const DarkMatter = styled.div`
   width: 100%;
   height: 0;
-  margin-top: -10px;
+  margin-top: -40px;
 `;
 
 const Br = styled.div`

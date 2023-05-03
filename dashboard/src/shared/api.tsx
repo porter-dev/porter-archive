@@ -164,6 +164,57 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
   return `/api/email/verify/initiate`;
 });
 
+const getPorterApp = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    name: string;
+  }
+>("GET", (pathParams) => {
+  let { project_id, cluster_id, name } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
+});
+
+const createPorterApp = baseApi<
+  {
+    name: string;
+    repo_name: string;
+    git_branch: string;
+    build_context: string;
+    builder: string;
+    buildpacks: string;
+    dockerfile: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  let { project_id, cluster_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/update_config`;
+});
+
+const updatePorterStack = baseApi<
+  {
+    stack_name: string;
+    dependencies: {
+      name: string;
+      alias: string;
+      version: string;
+      repository: string;
+    }[];
+    values: any;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  let { project_id, cluster_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks`;
+});
+
 const createEnvironment = baseApi<
   {
     name: string;
@@ -329,12 +380,12 @@ const createInvite = baseApi<
   return `/api/projects/${pathParams.id}/invites`;
 });
 
-const inviteAdmin = baseApi<
-  {},
-  { project_id: number }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/invite_admin`;
-});
+const inviteAdmin = baseApi<{}, { project_id: number }>(
+  "POST",
+  (pathParams) => {
+    return `/api/projects/${pathParams.project_id}/invite_admin`;
+  }
+);
 
 const createPasswordReset = baseApi<
   {
@@ -586,9 +637,11 @@ const detectBuildpack = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
 });
 
 const detectGitlabBuildpack = baseApi<
@@ -619,9 +672,11 @@ const getBranchContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/contents`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/contents`;
 });
 
 const getProcfileContents = baseApi<
@@ -637,9 +692,31 @@ const getProcfileContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/procfile`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/procfile`;
+});
+
+const getPorterYamlContents = baseApi<
+  {
+    path: string;
+  },
+  {
+    project_id: number;
+    git_repo_id: number;
+    kind: string;
+    owner: string;
+    name: string;
+    branch: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/porteryaml`;
 });
 
 const getGitlabProcfileContents = baseApi<
@@ -869,30 +946,30 @@ const getInfraTemplate = baseApi<
 
 const provisionCluster = baseApi<
   {
-    project_id: number,
-    cluster_id?: number,
-    cloud_provider: string,
-    cloud_provider_credentials_id: string,
+    project_id: number;
+    cluster_id?: number;
+    cloud_provider: string;
+    cloud_provider_credentials_id: string;
     cluster_settings: {
-      cluster_name: string,
-      cluster_version: string,
-      cidr_range: string,
-      region: string,
+      cluster_name: string;
+      cluster_version: string;
+      cidr_range: string;
+      region: string;
       node_groups: [
         {
-          instance_type: string,
-          min_instances: number,
-          max_instances: number,
-          node_group_type: number
+          instance_type: string;
+          min_instances: number;
+          max_instances: number;
+          node_group_type: number;
         },
         {
-          instance_type: string,
-          min_instances: number,
-          max_instances: number,
-          node_group_type: number
+          instance_type: string;
+          min_instances: number;
+          max_instances: number;
+          node_group_type: number;
         }
-      ]
-    }
+      ];
+    };
   },
   {
     project_id: number;
@@ -901,33 +978,33 @@ const provisionCluster = baseApi<
   return `/api/projects/${project_id}/provision/cluster`;
 });
 
-const createContract = baseApi<
-  Contract,
-  { project_id: number }
->("POST", ({ project_id }) => {
-  return `/api/projects/${project_id}/contract`;
-});
+const createContract = baseApi<Contract, { project_id: number }>(
+  "POST",
+  ({ project_id }) => {
+    return `/api/projects/${project_id}/contract`;
+  }
+);
 
-const getContracts = baseApi<
-  { cluster_id?: number },
-  { project_id: number }
->("GET", ({ project_id }) => {
-  return `/api/projects/${project_id}/contracts`;
-});
+const getContracts = baseApi<{ cluster_id?: number }, { project_id: number }>(
+  "GET",
+  ({ project_id }) => {
+    return `/api/projects/${project_id}/contracts`;
+  }
+);
 
-const deleteContract = baseApi<
-  {},
-  { project_id: number, revision_id: string }
->("DELETE", ({ project_id, revision_id }) => {
-  return `/api/projects/${project_id}/contracts/${revision_id}`;
-});
+const deleteContract = baseApi<{}, { project_id: number; revision_id: string }>(
+  "DELETE",
+  ({ project_id, revision_id }) => {
+    return `/api/projects/${project_id}/contracts/${revision_id}`;
+  }
+);
 
-const getClusterState = baseApi<
-  {},
-  { project_id: number, cluster_id: number }
->("GET", ({ project_id, cluster_id }) => {
-  return `/api/projects/${project_id}/clusters/${cluster_id}/state`;
-});
+const getClusterState = baseApi<{}, { project_id: number; cluster_id: number }>(
+  "GET",
+  ({ project_id, cluster_id }) => {
+    return `/api/projects/${project_id}/clusters/${cluster_id}/state`;
+  }
+);
 
 const provisionInfra = baseApi<
   {
@@ -1493,9 +1570,11 @@ const getEnvGroup = baseApi<
     version?: number;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id
-    }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${pathParams.version ? "&version=" + pathParams.version : ""
-    }`;
+  return `/api/projects/${pathParams.id}/clusters/${
+    pathParams.cluster_id
+  }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${
+    pathParams.version ? "&version=" + pathParams.version : ""
+  }`;
 });
 
 const getConfigMap = baseApi<
@@ -2408,7 +2487,26 @@ const removeStackEnvGroup = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/remove_env_group/${env_group_name}`
 );
 
-const getGithubStatus = baseApi<{}, {}>("GET", ({ }) => `/api/status/github`);
+const getGithubStatus = baseApi<{}, {}>("GET", ({}) => `/api/status/github`);
+
+const createSecretAndOpenGitHubPullRequest = baseApi<
+  {
+    github_app_installation_id: number;
+    github_repo_owner: string;
+    github_repo_name: string;
+    open_pr: boolean;
+    branch: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    stack_name: string;
+  }
+>(
+  "POST",
+  ({ project_id, cluster_id, stack_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/pr`
+);
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
@@ -2443,6 +2541,9 @@ export default {
   createPasswordResetVerify,
   createPasswordResetFinalize,
   createProject,
+  getPorterApp,
+  createPorterApp,
+  updatePorterStack,
   createConfigMap,
   deleteCluster,
   deleteConfigMap,
@@ -2516,6 +2617,7 @@ export default {
   getOAuthIds,
   getPodEvents,
   getProcfileContents,
+  getPorterYamlContents,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,
@@ -2613,6 +2715,7 @@ export default {
   createContract,
   getContracts,
   deleteContract,
+  createSecretAndOpenGitHubPullRequest,
   // TRACKING
   updateOnboardingStep,
   // STACKS

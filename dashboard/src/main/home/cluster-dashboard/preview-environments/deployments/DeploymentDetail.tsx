@@ -337,6 +337,14 @@ const DeploymentDetail = () => {
             disableBottomPadding
             closeChartRedirectUrl={`${window.location.pathname}${window.location.search}`}
           />
+          <ChartList
+            currentView="jobs"
+            noPlaceholder={true}
+            lastRunStatus="all"
+            currentCluster={currentCluster}
+            namespace={prDeployment.namespace}
+            sortType="Newest"
+          />
         </ChartListWrapper>
       </StyledExpandedChart>
     </>

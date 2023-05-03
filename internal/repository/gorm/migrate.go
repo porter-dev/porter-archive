@@ -60,6 +60,7 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.MonitorTestResult{},
 		&models.APIContractRevision{},
 		&models.AWSAssumeRoleChain{},
+		&models.PorterApp{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

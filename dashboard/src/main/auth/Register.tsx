@@ -45,6 +45,7 @@ const Register: React.FC<Props> = ({
   const [hasGithub, setHasGithub] = useState(true);
   const [hasGoogle, setHasGoogle] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
+  const [buttonDisabled, setButtonDisabled] = useState(false);
 
   const handleRegister = (): void => {
     if (!emailRegex.test(email)) {
@@ -75,6 +76,8 @@ const Register: React.FC<Props> = ({
       password !== "" &&
       companyName !== ""
     ) {
+      setButtonDisabled(true);
+      
       // Attempt user registration
       api
         .registerUser(
@@ -95,8 +98,20 @@ const Register: React.FC<Props> = ({
             setUser(res?.data?.id, res?.data?.email);
             authenticate();
           }
+
+          // Temp
+          location.reload();
+          setButtonDisabled(false);
         })
-        .catch((err) => setCurrentError(err.response.data.error));
+        .catch((err) => {
+          console.log("registration:", err);
+          if (err.response?.data?.error) {
+            setCurrentError(err.response.data.error)
+          } else {
+            location.reload();
+          }
+          setButtonDisabled(false);
+        });
     }
   };
 
@@ -194,7 +209,7 @@ const Register: React.FC<Props> = ({
           Create your Porter account
         </Heading>
         <Spacer y={1} />
-        {(hasGithub || hasGoogle) && (
+        {((hasGithub || hasGoogle) && !disabled) && (
           <>
             <Container row>
               {hasGithub && (
@@ -300,18 +315,22 @@ const Register: React.FC<Props> = ({
               error={(passwordError && "")}
             />
             <Spacer height="30px" />
-            <Button onClick={handleRegister} width="100%" height="40px">
+            <Button disabled={buttonDisabled} onClick={handleRegister} width="100%" height="40px">
               Continue
             </Button>
           </>
         )}
-        <Spacer y={1} />
-        <Text 
-          size={13}
-          color="helper"
-        >
-          Already have an account?<Spacer width="5px" inline /><Link to="/login">Log in</Link>
-        </Text>
+        {!disabled && (
+          <>
+            <Spacer y={1} />
+            <Text 
+              size={13}
+              color="helper"
+            >
+              Already have an account?<Spacer width="5px" inline /><Link to="/login">Log in</Link>
+            </Text>
+          </>
+        )}
       </Wrapper>
     </StyledRegister>
   );

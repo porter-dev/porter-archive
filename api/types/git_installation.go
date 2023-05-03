@@ -51,6 +51,10 @@ type GithubDirectoryItem struct {
 
 type GetContentsResponse []GithubDirectoryItem
 
+type GetPorterYamlRequest struct {
+	Path string `schema:"path" form:"required"`
+}
+
 type GetProcfileRequest struct {
 	Path string `schema:"path" form:"required"`
 }

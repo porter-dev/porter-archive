@@ -47,7 +47,7 @@ func NewApplier(client *api.Client, raw []byte, namespace string) (*PreviewAppli
 	// 	return nil, err
 	// }
 
-	err = validateCLIEnvironment(namespace)
+	err = config.ValidateCLIEnvironment()
 
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
@@ -60,26 +60,6 @@ func NewApplier(client *api.Client, raw []byte, namespace string) (*PreviewAppli
 		namespace: namespace,
 		parsed:    parsed,
 	}, nil
-}
-
-func validateCLIEnvironment(namespace string) error {
-	if config.GetCLIConfig().Token == "" {
-		return fmt.Errorf("no auth token present, please run 'porter auth login' to authenticate")
-	}
-
-	if config.GetCLIConfig().Project == 0 {
-		return fmt.Errorf("no project selected, please run 'porter config set-project' to select a project")
-	}
-
-	if config.GetCLIConfig().Cluster == 0 {
-		return fmt.Errorf("no cluster selected, please run 'porter config set-cluster' to select a cluster")
-	}
-
-	// if namespace == "" {
-	// 	printInfoMessage("no namespace provided, falling back to namespace 'default'")
-	// }
-
-	return nil
 }
 
 func (a *PreviewApplier) Apply() error {

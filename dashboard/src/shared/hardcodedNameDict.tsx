@@ -9,6 +9,7 @@ const hardcodedNames: { [key: string]: string } = {
   mysql: "MySQL",
   postgresql: "PostgreSQL",
   redis: "Redis",
+  "node-local": "Node Local DNS",
   ubuntu: "Ubuntu",
   web: "Web Service",
   worker: "Worker",
@@ -19,6 +20,11 @@ const hardcodedNames: { [key: string]: string } = {
   rabbitmq: "RabbitMQ",
   logdna: "LogDNA",
   "tailscale-relay": "Tailscale",
+  questdb: "QuestDB",
+  "postgres-toolbox": "PostgreSQL Toolbox",
+  keda: "KEDA",
+  "grafana-agent": "Grafana Agent",
+  "ecr-secrets-updater": "ECR Secrets Updater",
 };
 
 const hardcodedIcons: { [key: string]: string } = {
@@ -27,14 +33,14 @@ const hardcodedIcons: { [key: string]: string } = {
   metabase:
     "https://pbs.twimg.com/profile_images/961380992727465985/4unoiuHt.jpg",
   mongodb:
-    "https://bitnami.com/assets/stacks/mongodb/img/mongodb-stack-220x234.png",
+    "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg",
   datadog: "https://datadog-live.imgix.net/img/dd_logo_70x75.png",
   wallarm:
     "https://assets.website-files.com/5fe3434623c64c793987363d/6006cb97f71f76f8a5e85a32_Frame%201923.png",
   agones: "https://avatars.githubusercontent.com/u/36940055?v=4",
   mysql: "https://www.mysql.com/common/logos/logo-mysql-170x115.png",
   postgresql:
-    "https://bitnami.com/assets/stacks/postgresql/img/postgresql-stack-110x117.png",
+    "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg",
   redis:
     "https://cdn4.iconfinder.com/data/icons/redis-2/1451/Untitled-2-512.png",
   ubuntu: "Ubuntu",
@@ -51,10 +57,13 @@ const hardcodedIcons: { [key: string]: string } = {
   prometheus:
     "https://raw.githubusercontent.com/prometheus/prometheus.github.io/master/assets/prometheus_logo-cb55bb5c346.png",
   rabbitmq:
-    "https://bitnami.com/assets/stacks/rabbitmq/img/rabbitmq-stack-220x234.png",
+    "https://static-00.iconduck.com/assets.00/rabbitmq-icon-484x512-s9lfaapn.png",
   logdna:
     "https://user-images.githubusercontent.com/65516095/118185526-a2447480-b40a-11eb-9bdb-82aa0a306f26.png",
-  "tailscale-relay": "Tailscale",
+  "node-local": "https://hostingdata.co.uk/wp-content/uploads/2020/06/dns-png-6.png",
+  "tailscale-relay": "https://play-lh.googleusercontent.com/wczDL05-AOb39FcL58L32h6j_TrzzGTXDLlOrOmJ-aNsnoGsT1Gkk2vU4qyTb7tGxRw=w240-h480-rw",
+  "postgres-toolbox": "https://cdn-icons-png.flaticon.com/512/5133/5133626.png",
+  "ecr-secrets-updater": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original.svg",
 };
 
 export { hardcodedNames, hardcodedIcons };

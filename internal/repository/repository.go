@@ -45,4 +45,5 @@ type Repository interface {
 	MonitorTestResult() MonitorTestResultRepository
 	APIContractRevisioner() APIContractRevisioner
 	AWSAssumeRoleChainer() AWSAssumeRoleChainer
+	PorterApp() PorterAppRepository
 }

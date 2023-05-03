@@ -30,8 +30,9 @@ func NewInfraDeleteHandler(
 }
 
 func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
+	ctx := r.Context()
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	infra, _ := ctx.Value(types.InfraScope).(*models.Infra)
 
 	req := &types.DeleteInfraRequest{}
 

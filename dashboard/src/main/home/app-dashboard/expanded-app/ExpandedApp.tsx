@@ -117,6 +117,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       );
 
+      console.log(resChartData);
+
       // Only check GHA status if no built image is set
       const hasBuiltImage = !!resChartData.data.config?.global?.image
         ?.repository;
@@ -159,12 +161,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               );
               setWorkflowCheckPassed(true);
             } catch (err) {
+              console.log(err);
               setWorkflowCheckPassed(false);
             }
           }
         }
       }
-
+      console.log('also made it here')
       const newAppData = {
         app: resPorterApp?.data,
         chart: resChartData?.data,
@@ -175,6 +178,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       );
       setPorterJson(porterJson);
       setAppData(newAppData);
+      console.log(resChartData?.data)
       updateServicesAndEnvVariables(resChartData?.data, porterJson);
     } catch (err) {
       setError(err);
@@ -325,7 +329,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       (defaultValues && Object.keys(defaultValues).length > 0) ||
       (helmValues && Object.keys(helmValues).length > 0)
     ) {
-      const svcs = Service.deserialize(helmValues, defaultValues);
+      console.log('going to set services')
+      const svcs = Service.deserialize(helmValues, defaultValues, porterJson);
+      console.log(svcs);
       setServices(svcs);
       if (helmValues && Object.keys(helmValues).length > 0) {
         const envs = Service.retrieveEnvFromHelmValues(helmValues);
@@ -497,13 +503,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 </Fieldset>
               </>
             )}
-            <Services 
+            <Services
               setServices={(x) => {
                 if (buttonStatus !== "") {
                   setButtonStatus("");
                 }
                 setServices(x);
-              }} 
+              }}
               services={services} />
             <Spacer y={1} />
             <Button
@@ -657,6 +663,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 />
               ) : !hasBuiltImage ? (
                 <Banner
+                  type="warning"
                   suffix={
                     <RefreshButton onClick={() => window.location.reload()}>
                       <img src={refresh} /> Refresh
@@ -689,7 +696,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                        appData.chart.chart.metadata.version
+                      appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}
@@ -703,33 +710,37 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? hasBuiltImage
                       ? [
-                          { label: "Logs", value: "logs" },
-                          { label: "Overview", value: "overview" },
-                          {
-                            label: "Environment variables",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                      : [
-                          { label: "Overview", value: "overview" },
-                          {
-                            label: "Environment variables",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                    : [
+                        { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
+                        { label: "Metrics", value: "metrics" },
                         { label: "Overview", value: "overview" },
                         {
                           label: "Environment variables",
                           value: "environment-variables",
                         },
+                        { label: "Build settings", value: "build-settings" },
                         { label: "Settings", value: "settings" },
                       ]
+                      : [
+                        { label: "Overview", value: "overview" },
+                        {
+                          label: "Environment variables",
+                          value: "environment-variables",
+                        },
+                        { label: "Build settings", value: "build-settings" },
+                        { label: "Settings", value: "settings" },
+                      ]
+                    : [
+                      { label: "Events", value: "events" },
+                      { label: "Logs", value: "logs" },
+                      { label: "Metrics", value: "metrics" },
+                      { label: "Overview", value: "overview" },
+                      {
+                        label: "Environment variables",
+                        value: "environment-variables",
+                      },
+                      { label: "Settings", value: "settings" },
+                    ]
                 }
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {

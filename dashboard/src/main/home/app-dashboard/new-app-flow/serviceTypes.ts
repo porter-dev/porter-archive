@@ -267,6 +267,10 @@ export const Service = {
 
     // converts a helm values object and porter json (from their repo) to a service
     deserialize: (helmValues: any, defaultValues: any, porterJson?: PorterJson): Service[] => {
+        console.log('here are the helmvalues')
+        console.log(helmValues)
+        console.log('here are the default values')
+        console.log(defaultValues)
         if (defaultValues == null) {
             return [];
         }

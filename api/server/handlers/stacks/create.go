@@ -81,11 +81,6 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, dep := range chart.Metadata.Dependencies {
-		fmt.Printf("dep: %v\n", dep)
-	}
-	fmt.Printf("values: %v\n", values)
-
 	// create the namespace if it does not exist already
 	_, err = k8sAgent.CreateNamespace(namespace, nil)
 	if err != nil {

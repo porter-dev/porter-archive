@@ -83,9 +83,8 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     "loading" | "successful" | string
   >("");
   const [imageUrl, setImageUrl] = useState(appData.chart.image_uri);
-  
+
   const triggerWorkflow = async () => {
-    console.log(appData.chart.name)
     try {
       await api.reRunGHWorkflow(
         "",
@@ -146,7 +145,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
         let description = "No action file matching this deployment was found.";
         if (typeof tmpError.response.data === "string") {
           const filename = tmpError.response.data;
-          console.log("filename", filename);
           description = description.concat(
             `Please check that the file "${filename}" exists in your repository.`
           );

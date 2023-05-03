@@ -7,7 +7,7 @@ import close from "assets/close.png";
 import Button from "components/porter/Button";
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
-import { ActionConfigType, FileType } from "../../shared/types";
+import { ActionConfigType, BuildConfig, FileType } from "../../shared/types";
 
 import Loading from "../Loading";
 import Spacer from "components/porter/Spacer";
@@ -25,12 +25,9 @@ type PropsType = {
   branch: string;
   dockerfilePath?: string;
   folderPath: string;
-  procfilePath?: string;
   porterYaml?: string;
   setActionConfig: (x: ActionConfigType) => void;
-  setProcfileProcess?: (x: string) => void;
   setDockerfilePath: (x: string) => void;
-  setProcfilePath: (x: string) => void;
   setFolderPath: (x: string) => void;
   setBuildConfig: (x: any) => void;
   setPorterYaml: (x: any) => void;
@@ -66,7 +63,6 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
     if (porterYamlItem) {
       fetchAndSetPorterYaml("porter.yaml");
     }
-
   }, [contents, fetchAndSetPorterYaml]);
 
   useEffect(() => {
@@ -90,33 +86,15 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   }, [contents]);
 
   const renderContentList = () => {
-    if (loading) {
-      return (
-        <LoadingWrapper>
-          <Loading />
-        </LoadingWrapper>
-      );
-    } else if (error || !contents) {
-      return <LoadingWrapper>Error loading repo contents.</LoadingWrapper>;
-    }
-
-    return contents.map((item: FileType, i: number) => {
+    contents.map((item: FileType, i: number) => {
       let splits = item.path.split("/");
       let fileName = splits[splits.length - 1];
       if (fileName.includes("Dockerfile")) {
-        return (
-          <AdvancedBuildSettings
-            setBuildConfig={props.setBuildConfig}
-            autoBuildPack={autoBuildpack}
-            showSettings={false}
-            buildView={"docker"}
-            actionConfig={props.actionConfig}
-            branch={props.branch}
-            folderPath={props.folderPath}
-          />
-        );
+        return false;
       }
     });
+
+    return true;
   };
 
   const fetchContents = () => {
@@ -205,19 +183,6 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
         }
       );
     }
-
-    return api.detectGitlabBuildpack(
-      "<token>",
-      { dir: currentDir || "." },
-      {
-        project_id: currentProject.id,
-        integration_id: actionConfig.gitlab_integration_id,
-
-        repo_owner: actionConfig.git_repo.split("/")[0],
-        repo_name: actionConfig.git_repo.split("/")[1],
-        branch: branch,
-      }
-    );
   };
 
   const updateContents = async () => {
@@ -258,19 +223,20 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   };
   return (
     <>
-      {renderContentList()}
-      {props.dockerfilePath == null || props.dockerfilePath == "" ? (
-        <AdvancedBuildSettings
-          setBuildConfig={props.setBuildConfig}
-          autoBuildPack={autoBuildpack}
-          showSettings={false}
-          buildView={"buildpacks"}
-          actionConfig={props.actionConfig}
-          branch={props.branch}
-          folderPath={props.folderPath}
-        />
-      ) : (
-        <></>
+      {renderContentList() && (
+        <>
+          <AdvancedBuildSettings
+            dockerfilePath={props.dockerfilePath}
+            setDockerfilePath={props.setDockerfilePath}
+            setBuildConfig={props.setBuildConfig}
+            autoBuildPack={autoBuildpack}
+            showSettings={false}
+            buildView={props.dockerfilePath ? "dockerfile" : "buildpacks"}
+            actionConfig={props.actionConfig}
+            branch={props.branch}
+            folderPath={props.folderPath}
+          />
+        </>
       )}
     </>
   );
@@ -457,7 +423,7 @@ const Item = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected?: boolean }) =>
-    props.lastItem ? "#00000000" : "#606166"};
+      props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;
@@ -488,7 +454,7 @@ const FileItem = styled(Item)`
     props.isADocker ? "#fff" : "#ffffff55"};
   :hover {
     background: ${(props: { isADocker?: boolean }) =>
-    props.isADocker ? "#ffffff22" : "#ffffff11"};
+      props.isADocker ? "#ffffff22" : "#ffffff11"};
   }
 `;
 

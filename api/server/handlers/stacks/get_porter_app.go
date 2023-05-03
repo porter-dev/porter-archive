@@ -32,7 +32,7 @@ func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 	name, _ := requestutils.GetURLParamString(r, types.URLParamReleaseName)
 
-	app, err := c.Repo().PorterApp().ReadPorterApp(cluster.ID, name)
+	app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, name)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

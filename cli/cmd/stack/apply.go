@@ -22,11 +22,6 @@ type StackConf struct {
 }
 
 func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, projectID uint, clusterID uint) (*switchboardTypes.ResourceGroup, error) {
-	stackConf, err := createStackConf(client, raw, stackName, projectID, clusterID)
-	if err != nil {
-		return nil, err
-	}
-
 	v1File := &switchboardTypes.ResourceGroup{
 		Version: "v1",
 		Resources: []*switchboardTypes.Resource{
@@ -35,6 +30,11 @@ func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, pr
 				Driver: "os-env",
 			},
 		},
+	}
+
+	stackConf, err := createStackConf(client, raw, stackName, projectID, clusterID)
+	if err != nil {
+		return nil, err
 	}
 
 	var bi, pi *switchboardTypes.Resource

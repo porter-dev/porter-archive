@@ -7,8 +7,13 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm/loader"
+	"github.com/porter-dev/porter/internal/integrations/powerdns"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/domain"
+	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/stefanmcshane/helm/pkg/chart"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -35,7 +40,23 @@ type App struct {
 	Type   *string                `yaml:"type" validate:"required, oneof=web worker job"`
 }
 
-func parse(porterYaml []byte, imageInfo *types.ImageInfo, config *config.Config, projectID uint) (*chart.Chart, map[string]interface{}, error) {
+type SubdomainCreateOpts struct {
+	k8sAgent       *kubernetes.Agent
+	dnsRepo        repository.DNSRecordRepository
+	powerDnsClient *powerdns.Client
+	appRootDomain  string
+	stackName      string
+}
+
+func parse(
+	porterYaml []byte,
+	imageInfo types.ImageInfo,
+	config *config.Config,
+	projectID uint,
+	existingValues map[string]interface{},
+	existingDependencies []*chart.Dependency,
+	opts SubdomainCreateOpts,
+) (*chart.Chart, map[string]interface{}, error) {
 	parsed := &PorterStackYAML{}
 
 	err := yaml.Unmarshal(porterYaml, parsed)
@@ -43,35 +64,58 @@ func parse(porterYaml []byte, imageInfo *types.ImageInfo, config *config.Config,
 		return nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
 	}
 
-	values, err := buildStackValues(parsed, imageInfo)
+	values, err := buildStackValues(parsed, imageInfo, existingValues, opts)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
 	}
-	convertedValues := convertMap(values)
+	convertedValues := convertMap(values).(map[string]interface{})
 
-	chart, err := buildStackChart(parsed, config, projectID)
+	chart, err := buildStackChart(parsed, config, projectID, existingDependencies)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %w", "error building chart from porter.yaml", err)
 	}
 
-	return chart, convertedValues.(map[string]interface{}), nil
+	return chart, convertedValues, nil
 }
 
-func buildStackValues(parsed *PorterStackYAML, imageInfo *types.ImageInfo) (map[string]interface{}, error) {
+func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existingValues map[string]interface{}, opts SubdomainCreateOpts) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
 	for name, app := range parsed.Apps {
 		appType := getType(name, app)
 		defaultValues := getDefaultValues(app, parsed.Env, appType)
-		helm_values := utils.CoalesceValues(defaultValues, app.Config)
-		values[name] = helm_values
-		if imageInfo != nil {
-			values["global"] = map[string]interface{}{
-				"image": map[string]interface{}{
-					"repository": imageInfo.Repository,
-					"tag":        imageInfo.Tag,
-				},
+		convertedConfig := convertMap(app.Config).(map[string]interface{})
+		helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
+		err := createSubdomainIfRequired(helm_values, opts) // modifies helm_values to add subdomains if necessary
+		if err != nil {
+			return nil, err
+		}
+
+		// required to identify the chart type because of https://github.com/helm/helm/issues/9214
+		helmName := getHelmName(name, appType)
+		if existingValues != nil {
+			if existingValues[helmName] != nil {
+				existingValuesMap := existingValues[helmName].(map[string]interface{})
+				helm_values = utils.DeepCoalesceValues(existingValuesMap, helm_values)
 			}
+		}
+
+		values[helmName] = helm_values
+	}
+
+	// add back in the existing values that were not overwritten
+	for k, v := range existingValues {
+		if values[k] == nil {
+			values[k] = v
+		}
+	}
+
+	if imageInfo.Repository != "" && imageInfo.Tag != "" {
+		values["global"] = map[string]interface{}{
+			"image": map[string]interface{}{
+				"repository": imageInfo.Repository,
+				"tag":        imageInfo.Tag,
+			},
 		}
 	}
 
@@ -119,22 +163,50 @@ func getDefaultValues(app *App, env map[string]string, appType string) map[strin
 	return defaultValues
 }
 
-func buildStackChart(parsed *PorterStackYAML, config *config.Config, projectID uint) (*chart.Chart, error) {
+func buildStackChart(parsed *PorterStackYAML, config *config.Config, projectID uint, existingDependencies []*chart.Dependency) (*chart.Chart, error) {
 	deps := make([]*chart.Dependency, 0)
-
 	for alias, app := range parsed.Apps {
-		appType := getType(alias, app)
+		var appType string
+		if existingDependencies != nil {
+			for _, dep := range existingDependencies {
+				// this condition checks that the dependency is of the form <alias>-web or <alias>-wkr or <alias>-job, meaning it already exists in the chart
+				if strings.HasPrefix(dep.Alias, fmt.Sprintf("%s-", alias)) && (strings.HasSuffix(dep.Alias, "-web") || strings.HasSuffix(dep.Alias, "-wkr") || strings.HasSuffix(dep.Alias, "-job")) {
+					appType = getChartTypeFromHelmName(dep.Alias)
+					if appType == "" {
+						return nil, fmt.Errorf("unable to determine type of existing dependency")
+					}
+				}
+			}
+			// this is a new app, so we need to get the type from the app name or type
+			if appType == "" {
+				appType = getType(alias, app)
+			}
+		} else {
+			appType = getType(alias, app)
+		}
 		selectedRepo := config.ServerConf.DefaultApplicationHelmRepoURL
 		selectedVersion, err := getLatestTemplateVersion(appType, config, projectID)
 		if err != nil {
 			return nil, err
 		}
+		helmName := getHelmName(alias, appType)
 		deps = append(deps, &chart.Dependency{
 			Name:       appType,
-			Alias:      alias,
+			Alias:      helmName,
 			Version:    selectedVersion,
 			Repository: selectedRepo,
 		})
+	}
+
+	// add in the existing dependencies that were not overwritten
+	for _, dep := range existingDependencies {
+		if !dependencyExists(deps, dep) {
+			// have to repair the dependency name because of https://github.com/helm/helm/issues/9214
+			if strings.HasSuffix(dep.Name, "-web") || strings.HasSuffix(dep.Name, "-wkr") || strings.HasSuffix(dep.Name, "-job") {
+				dep.Name = getChartTypeFromHelmName(dep.Name)
+			}
+			deps = append(deps, dep)
+		}
 	}
 
 	chart, err := createChartFromDependencies(deps)
@@ -143,6 +215,15 @@ func buildStackChart(parsed *PorterStackYAML, config *config.Config, projectID u
 	}
 
 	return chart, nil
+}
+
+func dependencyExists(deps []*chart.Dependency, dep *chart.Dependency) bool {
+	for _, d := range deps {
+		if d.Alias == dep.Alias {
+			return true
+		}
+	}
+	return false
 }
 
 func createChartFromDependencies(deps []*chart.Dependency) (*chart.Chart, error) {
@@ -230,4 +311,131 @@ func CopyEnv(env map[string]string) map[string]string {
 	}
 
 	return envCopy
+}
+
+func createSubdomainIfRequired(
+	mergedValues map[string]interface{},
+	opts SubdomainCreateOpts,
+) error {
+	// look for ingress.enabled and no custom domains set
+	ingressMap, err := getNestedMap(mergedValues, "ingress")
+	if err == nil {
+		enabledVal, enabledExists := ingressMap["enabled"]
+		customDomVal, customDomExists := ingressMap["custom_domain"]
+
+		if enabledExists && customDomExists {
+			enabled, eOK := enabledVal.(bool)
+			customDomain, cOK := customDomVal.(bool)
+
+			if eOK && cOK && enabled && !customDomain {
+				// in the case of ingress enabled but no custom domain, create subdomain
+				dnsRecord, err := createDNSRecord(opts)
+				if err != nil {
+					return fmt.Errorf("error creating subdomain: %s", err.Error())
+				}
+
+				subdomain := dnsRecord.ExternalURL
+
+				if ingressVal, ok := mergedValues["ingress"]; !ok {
+					mergedValues["ingress"] = map[string]interface{}{
+						"porter_hosts": []string{
+							subdomain,
+						},
+					}
+				} else {
+					ingressValMap := ingressVal.(map[string]interface{})
+
+					ingressValMap["porter_hosts"] = []string{
+						subdomain,
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func createDNSRecord(opts SubdomainCreateOpts) (*types.DNSRecord, error) {
+	if opts.powerDnsClient == nil {
+		return nil, fmt.Errorf("cannot create subdomain because powerdns client is nil")
+	}
+
+	endpoint, found, err := domain.GetNGINXIngressServiceIP(opts.k8sAgent.Clientset)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, fmt.Errorf("target cluster does not have nginx ingress")
+	}
+
+	createDomain := domain.CreateDNSRecordConfig{
+		ReleaseName: opts.stackName,
+		RootDomain:  opts.appRootDomain,
+		Endpoint:    endpoint,
+	}
+
+	record := createDomain.NewDNSRecordForEndpoint()
+
+	record, err = opts.dnsRepo.CreateDNSRecord(record)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_record := domain.DNSRecord(*record)
+
+	err = _record.CreateDomain(opts.powerDnsClient)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return record.ToDNSRecordType(), nil
+}
+
+func getNestedMap(obj map[string]interface{}, fields ...string) (map[string]interface{}, error) {
+	var res map[string]interface{}
+	curr := obj
+
+	for _, field := range fields {
+		objField, ok := curr[field]
+
+		if !ok {
+			return nil, fmt.Errorf("%s not found", field)
+		}
+
+		res, ok = objField.(map[string]interface{})
+
+		if !ok {
+			return nil, fmt.Errorf("%s is not a nested object", field)
+		}
+
+		curr = res
+	}
+
+	return res, nil
+}
+
+func getHelmName(alias string, t string) string {
+	var suffix string
+	if t == "web" {
+		suffix = "-web"
+	} else if t == "worker" {
+		suffix = "-wkr"
+	} else if t == "job" {
+		suffix = "-job"
+	}
+	return fmt.Sprintf("%s%s", alias, suffix)
+}
+
+func getChartTypeFromHelmName(name string) string {
+	if strings.HasSuffix(name, "-web") {
+		return "web"
+	} else if strings.HasSuffix(name, "-wkr") {
+		return "worker"
+	} else if strings.HasSuffix(name, "-job") {
+		return "job"
+	}
+	return ""
 }

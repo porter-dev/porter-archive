@@ -16,7 +16,7 @@ const VerticalSteps: React.FC<Props> = ({
     <StyledVerticalSteps>
       {steps.map((step, i) => {
         return (
-          <StepWrapper isLast={i === steps.length - 1}>
+          <StepWrapper isLast={i === steps.length - 1} key={i}>
             {
               (i !== steps.length - 1) && (
                 <Line isActive={i + 1 <= currentStep} />

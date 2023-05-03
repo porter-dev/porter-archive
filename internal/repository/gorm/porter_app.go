@@ -27,19 +27,17 @@ func (repo *PorterAppRepository) CreatePorterApp(a *models.PorterApp) (*models.P
 func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*models.PorterApp, error) {
 	apps := []*models.PorterApp{}
 
-	/*
-		if err := repo.db.Where("project_id = ? AND NOT revoked", projectID).Find(&tokens).Error; err != nil {
-			return nil, err
-		}
-	*/
+	if err := repo.db.Where("cluster_id = ?", clusterID).Find(&apps).Error; err != nil {
+		return nil, err
+	}
 
 	return apps, nil
 }
 
-func (repo *PorterAppRepository) ReadPorterApp(clusterID uint, name string) (*models.PorterApp, error) {
+func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string) (*models.PorterApp, error) {
 	app := &models.PorterApp{}
 
-	if err := repo.db.Where("cluster_id = ? AND name = ?", clusterID, name).First(&app).Error; err != nil {
+	if err := repo.db.Where("cluster_id = ? AND name = ?", clusterID, name).Limit(1).Find(&app).Error; err != nil {
 		return nil, err
 	}
 
@@ -48,6 +46,14 @@ func (repo *PorterAppRepository) ReadPorterApp(clusterID uint, name string) (*mo
 
 func (repo *PorterAppRepository) UpdatePorterApp(app *models.PorterApp) (*models.PorterApp, error) {
 	if err := repo.db.Save(app).Error; err != nil {
+		return nil, err
+	}
+
+	return app, nil
+}
+
+func (repo *PorterAppRepository) DeletePorterApp(app *models.PorterApp) (*models.PorterApp, error) {
+	if err := repo.db.Delete(&app).Error; err != nil {
 		return nil, err
 	}
 

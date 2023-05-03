@@ -116,7 +116,10 @@ const AppDashboard: React.FC<Props> = ({
   };
 
   useEffect(() => {
-    getAddOns();
+    // currentCluster sometimes returns as -1 and passes null check
+    if (currentProject?.id >= 0 && currentCluster?.id >= 0) {
+      getAddOns();
+    }
   }, [currentCluster, currentProject]);
 
   const getExpandedChartLinkURL = useCallback((x: any) => {
@@ -181,7 +184,7 @@ const AppDashboard: React.FC<Props> = ({
         <GridList>
           {(filteredAddOns ?? []).map((app: any, i: number) => {
             return (
-              <Block to={getExpandedChartLinkURL(app)}>
+              <Block to={getExpandedChartLinkURL(app)} key={i}>
                 <Text size={14}>
                   <Icon 
                     src={
@@ -204,7 +207,7 @@ const AppDashboard: React.FC<Props> = ({
         <List>
           {(filteredAddOns ?? []).map((app: any, i: number) => {
             return (
-              <Row to={getExpandedChartLinkURL(app)}>
+              <Row to={getExpandedChartLinkURL(app)} key={i}>
                 <Text size={14}>
                   <MidIcon
                     src={

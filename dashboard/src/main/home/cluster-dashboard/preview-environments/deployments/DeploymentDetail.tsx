@@ -13,7 +13,7 @@ import ChartList from "../../chart/ChartList";
 import github from "assets/github-white.png";
 import { integrationList } from "shared/common";
 import { capitalize } from "shared/string_utils";
-import Banner from "components/Banner";
+import Banner from "components/porter/Banner";
 import Modal from "main/home/modals/Modal";
 import { validatePorterYAML } from "../utils";
 import Placeholder from "components/Placeholder";

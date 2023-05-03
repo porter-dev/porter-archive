@@ -476,9 +476,9 @@ const RevisionHeader = styled.div`
   width: 100%;
   padding-left: 10px;
   cursor: pointer;
-  background: #26292e;
+  background: ${({ theme }) => theme.fg};
   :hover {
-    background: ${(props) => props.showRevisions && "#ffffff18"};
+    background: ${(props) => props.showRevisions && props.theme.fg2};
   }
 
   > div > i {

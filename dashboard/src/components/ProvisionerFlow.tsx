@@ -254,7 +254,7 @@ const Block = styled.div<{ disabled?: boolean }>`
   color: #ffffff;
   position: relative;
   border-radius: 5px;
-  background: linear-gradient(160deg, #26292e, #26292e);
+  background: ${({ theme }) => theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: ${(props) => (props.disabled ? "" : "1px solid #7a7b80")};

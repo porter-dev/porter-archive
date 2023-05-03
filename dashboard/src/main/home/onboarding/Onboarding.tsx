@@ -159,7 +159,7 @@ const Onboarding = () => {
           <DashboardHeader
             image={lightning}
             title="Getting started"
-            description="Create a new cluster in your own cloud provider to get started with Porter."
+            description="Select your existing cloud provider to get started with Porter."
             disableLineBreak
             capitalize={false}
           />

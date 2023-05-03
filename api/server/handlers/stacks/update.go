@@ -43,23 +43,48 @@ func (c *UpdateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	stackName := request.StackName
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+
+	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
+		return
+	}
+
+	helmRelease, _ := helmAgent.GetRelease(stackName, 0, false)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting latest release: %w", err)))
+		return
+	}
+
+	k8sAgent, err := c.GetAgent(r, cluster, namespace)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting k8s agent: %w", err)))
+		return
+	}
+
 	porterYamlBase64 := request.PorterYAMLBase64
 	porterYaml, err := base64.StdEncoding.DecodeString(porterYamlBase64)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding porter yaml: %w", err)))
 		return
 	}
-
 	imageInfo := request.ImageInfo
-	chart, values, err := parse(porterYaml, &imageInfo, c.Config(), cluster.ProjectID)
+	chart, values, err := parse(
+		porterYaml,
+		imageInfo,
+		c.Config(),
+		cluster.ProjectID,
+		helmRelease.Config,
+		helmRelease.Chart.Metadata.Dependencies,
+		SubdomainCreateOpts{
+			k8sAgent:       k8sAgent,
+			dnsRepo:        c.Repo().DNSRecord(),
+			powerDnsClient: c.Config().PowerDNSClient,
+			appRootDomain:  c.Config().ServerConf.AppRootDomain,
+			stackName:      stackName,
+		})
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error with test: %w", err)))
-		return
-	}
-
-	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter yaml into chart and values: %w", err)))
 		return
 	}
 

@@ -7,6 +7,7 @@ interface TooltipProps {
   content: React.ReactNode;
   position?: "top" | "right" | "bottom" | "left";
   hidden?: boolean;
+  width?: string;
 }
 
 const Tooltip: React.FC<TooltipProps> = ({
@@ -14,6 +15,7 @@ const Tooltip: React.FC<TooltipProps> = ({
   content,
   position = "top",
   hidden = false,
+  width,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -27,7 +29,7 @@ const Tooltip: React.FC<TooltipProps> = ({
   return (
     <TooltipContainer onMouseEnter={showTooltip} onMouseLeave={hideTooltip}>
       {isVisible && (
-        <TooltipContent position={position}>{content}</TooltipContent>
+        <TooltipContent position={position} width={width}>{content}</TooltipContent>
       )}
       {children}
     </TooltipContainer>
@@ -41,7 +43,7 @@ const TooltipContainer = styled.div`
   display: inline-flex;
 `;
 
-const TooltipContent = styled.div<{ position: string }>`
+const TooltipContent = styled.div<{ position: string, width?: string }>`
   background-color: #333;
   color: #fff;
   padding: 8px;
@@ -49,7 +51,8 @@ const TooltipContent = styled.div<{ position: string }>`
   font-size: 14px;
   position: absolute;
   z-index: 10;
-  max-width: 200px;
+  max-width: ${({ width }) => width ?? "200px"};
+  width: ${({ width }) => width ?? "200px"};
   text-align: center;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -64,7 +67,7 @@ const TooltipContent = styled.div<{ position: string }>`
         `;
       case "right":
         return `
-          top: 50%;
+          top: 70%;
           left: 100%;
           transform: translateY(-50%) translateX(8px);
         `;

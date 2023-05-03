@@ -5,11 +5,13 @@ import { createPortal } from "react-dom";
 type Props = {
   closeModal?: () => void;
   children: React.ReactNode;
+  width?: string;
 };
 
 const Modal: React.FC<Props> = ({
   closeModal,
   children,
+  width,
 }) => {
   return (
     <>
@@ -17,7 +19,7 @@ const Modal: React.FC<Props> = ({
         createPortal(
           <ModalWrapper>
             <ModalBg onClick={closeModal} />
-            <StyledModal> 
+            <StyledModal width={width}> 
               {closeModal && (
                 <CloseButton onClick={closeModal}>
                   <i className="material-icons">close</i>
@@ -92,14 +94,16 @@ const ModalBg = styled.div`
   }
 `;
 
-const StyledModal = styled.div`
+const StyledModal = styled.div<{
+  width?: string;
+}>`
   position: relative;
   padding: 25px;
-  padding-bottom: 35px;
+  padding-bottom: 30px;
   border-radius: 10px;
   border: 1px solid #494b4f;
   font-size: 13px;
-  width: 600px;
+  width: ${props => props.width || "600px"};
   background: #42444933;
   backdrop-filter: saturate(150%) blur(8px);
 

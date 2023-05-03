@@ -9,6 +9,9 @@ import "ace-builds/src-noconflict/mode-text";
 import { Context } from "shared/Context";
 
 import SaveButton from "components/SaveButton";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
+import Button from "components/porter/Button";
 
 type PropsType = {
   closeModal: () => void;
@@ -39,13 +42,14 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
     this.setState({ envFile: e });
   };
 
-  componentDidMount() {}
-
   render() {
     return (
       <StyledLoadEnvGroupModal>
-        <ModalTitle>Load from Environment Group</ModalTitle>
-        <Subtitle>Copy paste your environment file in .env format:</Subtitle>
+        <Text size={16}>Load from Environment Group</Text>
+        <Spacer y={0.5} />
+        <Text color="helper">
+          Copy paste your environment file in .env format:
+        </Text>
 
         <Editor
           onSubmit={(e: any) => {
@@ -70,17 +74,17 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
             fontSize={14}
           />
         </Editor>
-
-        <SaveButton
+        <Button
           disabled={this.state.envFile == ""}
-          text="Submit"
           status={
             this.state.envFile == ""
               ? "No env file detected"
               : "Existing env variables will be overidden"
           }
           onClick={this.onSubmit}
-        />
+        >
+          Submit
+        </Button>
       </StyledLoadEnvGroupModal>
     );
   }
@@ -90,10 +94,11 @@ EnvEditorModal.contextType = Context;
 
 const Editor = styled.form`
   margin-top: 20px;
+  margin-bottom: 20px;
   border-radius: ${(props: { border: boolean }) => (props.border ? "5px" : "")};
   border: ${(props: { border: boolean }) =>
     props.border ? "1px solid #ffffff22" : ""};
-  height: 80%;
+  height: calc(100% - 135px);
   font-family: monospace !important;
   .ace_scrollbar {
     display: none;
@@ -105,45 +110,6 @@ const Editor = styled.form`
     font-size: 12px !important;
     font-weight: 400 !important;
     letter-spacing: 0 !important;
-  }
-`;
-
-const Subtitle = styled.div`
-  margin-top: 15px;
-  font-family: "Work Sans", sans-serif;
-  font-size: 13px;
-  color: #aaaabb;
-`;
-
-const ModalTitle = styled.div`
-  margin: 0px 0px 13px;
-  display: flex;
-  flex: 1;
-  font-family: Work Sans, sans-serif;
-  font-size: 18px;
-  color: #ffffff;
-  user-select: none;
-  font-weight: 700;
-  align-items: center;
-  position: relative;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  z-index: 1;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
   }
 `;
 
@@ -160,6 +126,5 @@ const StyledLoadEnvGroupModal = styled.div`
   height: 100%;
   padding: 25px 30px;
   overflow: hidden;
-  border-radius: 6px;
-  background: #202227;
+  border-radius: 10px;
 `;

@@ -1,48 +1,45 @@
-import React, { useEffect, useState, useContext, useMemo } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import styled from "styled-components";
+import { RouteComponentProps, withRouter } from "react-router";
 import _ from "lodash";
 import yaml from "js-yaml";
+import github from "assets/github-white.png";
 
-import { hardcodedNames, hardcodedIcons } from "shared/hardcodedNameDict";
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { pushFiltered } from "shared/routing";
 import web from "assets/web.png";
 
 import Back from "components/porter/Back";
 import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
-import Link from "components/porter/Link";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
 import VerticalSteps from "components/porter/VerticalSteps";
-import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
-import Placeholder from "components/Placeholder";
 import Button from "components/porter/Button";
-import { generateSlug } from "random-word-slugs";
-import { RouteComponentProps, withRouter } from "react-router";
-import Error from "components/porter/Error";
 import SourceSelector, { SourceType } from "./SourceSelector";
+import DynamicLink from "components/DynamicLink";
+
 import SourceSettings from "./SourceSettings";
 import Services from "./Services";
 import EnvGroupArray, {
   KeyValueType,
 } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
-import Select from "components/porter/Select";
 import GithubActionModal from "./GithubActionModal";
 import {
   ActionConfigType,
-  FullActionConfigType,
-  FullGithubActionConfigType,
   GithubActionConfigType,
+  RepoType,
 } from "shared/types";
+import Error from "components/porter/Error";
 import { z } from "zod";
-import { PorterYamlSchema } from "./schema";
-import { createDefaultService } from "./serviceTypes";
+import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
+import { Service } from "./serviceTypes";
+import { Helper } from "components/form-components/Helper";
+import GithubConnectModal from "./GithubConnectModal";
 
 type Props = RouteComponentProps & {};
 
-const defaultActionConfig: GithubActionConfigType = {
+const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
   git_branch: "",
@@ -53,7 +50,7 @@ const defaultActionConfig: GithubActionConfigType = {
 interface FormState {
   applicationName: string;
   selectedSourceType: SourceType | undefined;
-  serviceList: any[];
+  serviceList: Service[];
   envVariables: KeyValueType[];
   releaseCommand: string;
 }
@@ -71,9 +68,14 @@ const Validators: {
 } = {
   applicationName: (value: string) => value.trim().length > 0,
   selectedSourceType: (value: SourceType | undefined) => value !== undefined,
-  serviceList: (value: any[]) => value.length > 0,
+  serviceList: (value: Service[]) => value.length > 0,
   envVariables: (value: KeyValueType[]) => true,
   releaseCommand: (value: string) => true,
+};
+
+type Detected = {
+  detected: boolean;
+  message: string;
 };
 
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
@@ -82,73 +84,114 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [imageUrl, setImageUrl] = useState("");
   const [imageTag, setImageTag] = useState("latest");
   const { currentCluster, currentProject } = useContext(Context);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [deploying, setDeploying] = useState<boolean>(false);
+  const [deploymentError, setDeploymentError] = useState<string | undefined>(
+    undefined
+  );
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [existingStep, setExistingStep] = useState<number>(0);
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
-  const [actionConfig, setActionConfig] = useState<GithubActionConfigType>({
+  const [actionConfig, setActionConfig] = useState<ActionConfigType>({
     ...defaultActionConfig,
   });
-  const [procfileProcess, setProcfileProcess] = useState("");
   const [branch, setBranch] = useState("");
-  const [repoType, setRepoType] = useState("");
   const [dockerfilePath, setDockerfilePath] = useState(null);
   const [procfilePath, setProcfilePath] = useState(null);
   const [folderPath, setFolderPath] = useState(null);
-  const [selectedRegistry, setSelectedRegistry] = useState(null);
-  const [shouldCreateWorkflow, setShouldCreateWorkflow] = useState(true);
-  const [buildConfig, setBuildConfig] = useState();
+  const [buildConfig, setBuildConfig] = useState({});
   const [porterYaml, setPorterYaml] = useState("");
-  const getFullActionConfig = (): FullGithubActionConfigType => {
-    let imageRepoURI = `${selectedRegistry?.url}/${templateName}`;
-    return {
-      kind: "github",
-      git_repo: actionConfig.git_repo,
-      git_branch: branch,
-      registry_id: selectedRegistry?.id,
-      dockerfile_path: dockerfilePath,
-      folder_path: folderPath,
-      image_repo_uri: imageRepoURI,
-      git_repo_id: actionConfig.git_repo_id,
-      should_create_workflow: shouldCreateWorkflow,
-    };
-  };
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
-  const [porterJson, setPorterJson] = useState<z.infer<typeof PorterYamlSchema>>(null);
+  const [showConnectModal, setConnectModal] = useState<boolean>(false);
+  const [hasClickedDoNotConnect, setHasClickedDoNotConnect] = useState(() =>
+    JSON.parse(localStorage.getItem("hasClickedDoNotConnect") || "false")
+  );
+
+  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(
+    undefined
+  );
+  const [detected, setDetected] = useState<Detected | undefined>(undefined);
 
   const validatePorterYaml = (yamlString: string) => {
     let parsedYaml;
     try {
       parsedYaml = yaml.load(yamlString);
       const parsedData = PorterYamlSchema.parse(parsedYaml);
-      const porterYaml = parsedData as z.infer<typeof PorterYamlSchema>;
-      setPorterJson(porterYaml)
-      // go through key value pairs and create services from them
+      const porterYamlToJson = parsedData as PorterJson;
+      setPorterJson(porterYamlToJson);
       const newServices = [];
-      for (const [name, app] of Object.entries(porterYaml.apps)) {
-        if (app.type) {
-          newServices.push(createDefaultService(name, app.type, { readOnly: true, value: app.run }))
-        } else if (name.includes('web')) {
-          newServices.push(createDefaultService(name, 'web', { readOnly: true, value: app.run }))
-        } else {
-          newServices.push(createDefaultService(name, 'worker', { readOnly: true, value: app.run }))
+      const existingServices = formState.serviceList.map((s) => s.name);
+      for (const [name, app] of Object.entries(porterYamlToJson.apps)) {
+        if (!existingServices.includes(name)) {
+          if (app.type) {
+            newServices.push(Service.default(name, app.type, porterYamlToJson));
+          } else if (name.includes("web")) {
+            newServices.push(Service.default(name, "web", porterYamlToJson));
+          } else {
+            newServices.push(Service.default(name, "worker", porterYamlToJson));
+          }
         }
       }
-      setFormState({ ...formState, serviceList: [...formState.serviceList, ...newServices] });
-      if (Validators.serviceList(formState.serviceList)) {
+      const newServiceList = [...formState.serviceList, ...newServices];
+      setFormState({ ...formState, serviceList: newServiceList });
+      if (Validators.serviceList(newServiceList)) {
         setCurrentStep(Math.max(currentStep, 4));
       }
+      if (
+        porterYamlToJson &&
+        porterYamlToJson.apps &&
+        Object.keys(porterYamlToJson.apps).length > 0
+      ) {
+        setDetected({
+          detected: true,
+          message: `Detected ${
+            Object.keys(porterYamlToJson.apps).length
+          } apps from porter.yaml`,
+        });
+      } else {
+        setDetected({
+          detected: false,
+          message:
+            "Could not detect any apps from porter.yaml. Make sure it exists in the root of your repo.",
+        });
+      }
     } catch (error) {
-      console.log("Error converting porter yaml file to input: " + error)
+      console.log("Error converting porter yaml file to input: " + error);
     }
-  }
-
-  // Deploys a Helm chart and writes build settings to the DB
-  const isAppNameValid = (name: string) => {
-    const regex = /^[a-z0-9-]+$/;
-    return regex.test(name);
   };
 
+  // const renderGithubConnect = () => {
+  //   const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
+  //   const encoded_redirect_uri = encodeURIComponent(url);
+
+  //   if (accessError) {
+  //     return (
+  //       <ListWrapper>
+  //         <Helper>
+  //           No connected repositories found.
+  //           <A href={"/api/integrations/github-app/oauth"}>
+  //             Authorize Porter to view your repositories.
+  //           </A>
+  //         </Helper>
+  //       </ListWrapper>
+  //     );
+  //   } else if (!accessData.accounts || accessData.accounts?.length == 0) {
+  //     return (
+  //       <>
+  //         <Text size={16}>No connected repositories were found.</Text>
+  //         <ConnectToGithubButton
+  //           href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
+  //         >
+  //           <GitHubIcon src={github} /> Connect to GitHub
+  //         </ConnectToGithubButton>
+  //       </>
+  //     );
+  //   }
+  // };
+  // Deploys a Helm chart and writes build settings to the DB
+  const isAppNameValid = (name: string) => {
+    const regex = /^[a-z0-9-]{1,61}$/;
+    return regex.test(name);
+  };
   const handleAppNameChange = (name: string) => {
     setCurrentStep(currentStep);
     setFormState({ ...formState, applicationName: name });
@@ -163,39 +206,124 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const shouldHighlightAppNameInput = () => {
     return (
       formState.applicationName !== "" &&
-      !isAppNameValid(formState.applicationName)
+      (!isAppNameValid(formState.applicationName) ||
+        formState.applicationName.length > 61)
     );
   };
+  const handleDoNotConnect = () => {
+    setHasClickedDoNotConnect(true);
+    localStorage.setItem("hasClickedDoNotConnect", "true");
+  };
+
   const deployPorterApp = async () => {
     try {
-      // Write build settings to the DB
-      const res = await api.createPorterApp(
+      setDeploying(true);
+      setDeploymentError(undefined);
+      if (
+        currentProject == null ||
+        currentCluster == null ||
+        currentProject.id == null ||
+        currentCluster.id == null
+      ) {
+        throw "Project or cluster not found";
+      }
+
+      // validate form data
+      const finalPorterYaml = createFinalPorterYaml(
+        formState.serviceList,
+        formState.envVariables,
+        porterJson,
+        formState.applicationName,
+        currentProject.id,
+        currentCluster.id
+      );
+
+      const yamlString = yaml.dump(finalPorterYaml);
+      const base64Encoded = btoa(yamlString);
+      const imageInfo = imageUrl
+        ? {
+            image_info: {
+              repository: imageUrl,
+              tag: imageTag,
+            },
+          }
+        : {};
+
+      // create the dummy chart
+      await api.createPorterStack(
         "<token>",
         {
-          name: formState.applicationName,
-          repo_name: actionConfig.git_repo,
-          git_branch: branch,
-          build_context: folderPath,
-          builder: "heroku",
-          buildpacks: "nodejs,ruby",
-          dockerfile: dockerfilePath,
-
+          stack_name: formState.applicationName,
+          porter_yaml: base64Encoded,
+          ...imageInfo,
         },
         {
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
         }
       );
-    } catch (err) {
-      console.log(err);
-    }
 
-    // TODO: update Porter stack
+      // if success, write to the db
+      await api.createPorterApp(
+        "<token>",
+        {
+          name: formState.applicationName,
+          repo_name: actionConfig.git_repo,
+          git_branch: branch,
+          git_repo_id: actionConfig?.git_repo_id,
+          build_context: folderPath,
+          builder: (buildConfig as any)?.builder,
+          buildpacks: (buildConfig as any)?.buildpacks?.join(",") ?? "",
+          dockerfile: dockerfilePath,
+          image_repo_uri: imageUrl,
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      );
+
+      if (!actionConfig?.git_repo) {
+        props.history.push(`/apps/${formState.applicationName}`);
+      }
+      return true;
+    } catch (err) {
+      // TODO: better error handling
+      console.log(err);
+      const errMessage =
+        err?.response?.data?.error ??
+        err?.toString() ??
+        "An error occurred while deploying your app. Please try again.";
+      setDeploymentError(errMessage);
+
+      return false;
+    } finally {
+      setDeploying(false);
+    }
   };
 
+  // useEffect(() => {
+  //   api
+  //     .getGithubAccounts("<token>", {}, {})
+  //     .then(({ data }) => {
+  //       setAccessData(data);
+  //       setAccessLoading(false);
+  //     })
+  //     .catch(() => {
+  //       setAccessError(true);
+  //       setAccessLoading(false);
+  //     });
+  // }, []);
   return (
     <CenterWrapper>
       <Div>
+        {showConnectModal && (
+          <GithubConnectModal
+            closeModal={() => setConnectModal(false)}
+            hasClickedDoNotConnect={hasClickedDoNotConnect}
+            handleDoNotConnect={handleDoNotConnect}
+          />
+        )}
         <StyledConfigureTemplate>
           <Back to="/apps" />
           <DashboardHeader
@@ -214,14 +342,16 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Text color="helper">
                   Lowercase letters, numbers, and "-" only.
                 </Text>
-                <Spacer y={0.5}></Spacer>
+                <Spacer y={0.5} />
                 <Input
                   placeholder="ex: academic-sophon"
                   value={formState.applicationName}
                   width="300px"
                   error={
                     shouldHighlightAppNameInput() &&
-                    'Lowercase letters, numbers, and "-" only.'
+                    (formState.applicationName.length > 61
+                      ? "Maximum 61 characters allowed."
+                      : 'Lowercase letters, numbers, and "-" only.')
                   }
                   setValue={(e) => {
                     handleAppNameChange(e);
@@ -261,8 +391,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setActionConfig={setActionConfig}
                   branch={branch}
                   setBranch={setBranch}
-                  procfileProcess={procfileProcess}
-                  setProcfileProcess={setProcfileProcess}
                   dockerfilePath={dockerfilePath}
                   setDockerfilePath={setDockerfilePath}
                   folderPath={folderPath}
@@ -272,21 +400,31 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setBuildConfig={setBuildConfig}
                   porterYaml={porterYaml}
                   setPorterYaml={(newYaml: string) => {
-                    validatePorterYaml(newYaml)
+                    validatePorterYaml(newYaml);
                   }}
                 />
               </>,
               <>
-                <Text size={16}>Application services</Text>
+                <Text size={16}>
+                  Application services{" "}
+                  {detected && (
+                    <AppearingDiv>
+                      <Text
+                        color={detected.detected ? "#4797ff" : "#fcba03"}
+                      >
+                        {detected.detected ? (
+                          <I className="material-icons">check</I>
+                        ) : (
+                          <I className="material-icons">error</I>
+                        )}
+                        {detected.message}
+                      </Text>
+                    </AppearingDiv>
+                  )}
+                </Text>
                 <Spacer y={0.5} />
-                {porterJson && porterJson.apps && Object.keys(porterJson.apps).length > 0 &&
-                  <AppearingDiv>
-                    <Text size={16} color={"green"}>Autodetected {Object.keys(porterJson.apps).length} services from porter.yml</Text>
-                    <Spacer y={1} />
-                  </AppearingDiv>
-                }
                 <Services
-                  setServices={(services: any[]) => {
+                  setServices={(services: Service[]) => {
                     setFormState({ ...formState, serviceList: services });
                     if (Validators.serviceList(services)) {
                       setCurrentStep(Math.max(currentStep, 4));
@@ -336,9 +474,19 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   if (imageUrl) {
                     deployPorterApp();
                   } else {
+                    setDeploymentError(undefined);
                     setShowGHAModal(true);
                   }
                 }}
+                status={
+                  deploying ? (
+                    "loading"
+                  ) : deploymentError ? (
+                    <Error message={deploymentError} />
+                  ) : undefined
+                }
+                loadingText={"Deploying..."}
+                width={"120px"}
               >
                 Deploy app
               </Button>,
@@ -358,6 +506,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           projectId={currentProject.id}
           clusterId={currentCluster.id}
           deployPorterApp={deployPorterApp}
+          deploymentError={deploymentError}
         />
       )}
     </CenterWrapper>
@@ -365,6 +514,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 };
 
 export default withRouter(NewAppFlow);
+
+const I = styled.i`
+  font-size: 18px;
+  margin-right: 5px;
+`;
 
 const Div = styled.div`
   width: 100%;
@@ -404,6 +558,9 @@ const Icon = styled.img`
 const AppearingDiv = styled.div`
   animation: floatIn 0.5s;
   animation-fill-mode: forwards;
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
   @keyframes floatIn {
     from {
       opacity: 0;
@@ -418,4 +575,77 @@ const AppearingDiv = styled.div`
 
 const StyledConfigureTemplate = styled.div`
   height: 100%;
+`;
+
+const ExpandedWrapper = styled.div`
+  margin-top: 10px;
+  width: 100%;
+  border-radius: 3px;
+  border: 1px solid #ffffff44;
+  max-height: 275px;
+`;
+const ListWrapper = styled.div`
+  width: 100%;
+  height: 240px;
+  background: #ffffff11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  margin-top: 20px;
+  padding: 40px;
+`;
+const A = styled.a`
+  color: #8590ff;
+  text-decoration: underline;
+  margin-left: 5px;
+  cursor: pointer;
+`;
+
+const ConnectToGithubButton = styled.a`
+  width: 180px;
+  justify-content: center;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: "Work Sans", sans-serif;
+  color: white;
+  font-weight: 500;
+  padding: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-top: 25px;
+  border: 1px solid #494b4f;
+  text-overflow: ellipsis;
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#2E3338"};
+  :hover {
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#353a3e"};
+  }
+
+  > i {
+    color: white;
+    width: 18px;
+    height: 18px;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+    justify-content: center;
+  }
+`;
+
+const GitHubIcon = styled.img`
+  width: 20px;
+  filter: brightness(150%);
+  margin-right: 10px;
 `;

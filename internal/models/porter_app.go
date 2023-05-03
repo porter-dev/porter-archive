@@ -22,26 +22,28 @@ type PorterApp struct {
 	RepoName  string
 	GitBranch string
 
-	BuildContext string
-	Builder      string
-	Buildpacks   string
-	Dockerfile   string
+	BuildContext   string
+	Builder        string
+	Buildpacks     string
+	Dockerfile     string
+	PullRequestURL string
 }
 
 // ToPorterAppType generates an external types.PorterApp to be shared over REST
 func (a *PorterApp) ToPorterAppType() *types.PorterApp {
 	return &types.PorterApp{
-		ID:           a.ID,
-		ProjectID:    a.ProjectID,
-		ClusterID:    a.ClusterID,
-		Name:         a.Name,
-		ImageRepoURI: a.ImageRepoURI,
-		GitRepoID:    a.GitRepoID,
-		RepoName:     a.RepoName,
-		GitBranch:    a.GitBranch,
-		BuildContext: a.BuildContext,
-		Builder:      a.Builder,
-		Buildpacks:   a.Buildpacks,
-		Dockerfile:   a.Dockerfile,
+		ID:             a.ID,
+		ProjectID:      a.ProjectID,
+		ClusterID:      a.ClusterID,
+		Name:           a.Name,
+		ImageRepoURI:   a.ImageRepoURI,
+		GitRepoID:      a.GitRepoID,
+		RepoName:       a.RepoName,
+		GitBranch:      a.GitBranch,
+		BuildContext:   a.BuildContext,
+		Builder:        a.Builder,
+		Buildpacks:     a.Buildpacks,
+		Dockerfile:     a.Dockerfile,
+		PullRequestURL: a.PullRequestURL,
 	}
 }

@@ -85,7 +85,9 @@ const RadioFilter: React.FC<Props> = (props) => {
   return (
     <Relative>
       <StyledRadioFilter
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => {
+          setExpanded(!expanded);
+        }}
         ref={parentRef}
         noMargin={props.noMargin}
       >
@@ -207,7 +209,7 @@ const StyledRadioFilter = styled.div<{ noMargin?: boolean }>`
   font-size: 13px;
   position: relative;
   padding: 10px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border-radius: 5px;
   display: flex;
   align-items: center;

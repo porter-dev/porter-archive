@@ -246,7 +246,6 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
                   label: pod.podName,
                 };
               })}
-              onRadioClick={() => {}}
               name="Filter logs"
             />
           </Flex>

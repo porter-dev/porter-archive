@@ -107,7 +107,7 @@ type GetLogRequest struct {
 	SearchParam string     `schema:"search_param"`
 	Revision    string     `schema:"revision"`
 	PodSelector string     `schema:"pod_selector" form:"required"`
-	Namespace   string     `schema:"namespace" form:"required"`
+	Namespace   string     `schema:"namespace"`
 	Direction   string     `schema:"direction"`
 }
 
@@ -115,6 +115,13 @@ type GetPodValuesRequest struct {
 	StartRange  *time.Time `schema:"start_range"`
 	EndRange    *time.Time `schema:"end_range"`
 	Namespace   string     `schema:"namespace"`
+	MatchPrefix string     `schema:"match_prefix"`
+	Revision    string     `schema:"revision"`
+}
+
+type GetPodNamespaceValuesRequest struct {
+	StartRange  *time.Time `schema:"start_range"`
+	EndRange    *time.Time `schema:"end_range"`
 	MatchPrefix string     `schema:"match_prefix"`
 	Revision    string     `schema:"revision"`
 }

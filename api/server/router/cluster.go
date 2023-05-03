@@ -1430,6 +1430,35 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/logs/pod_namespace_values -> cluster.NewGetLogPodNamespaceValuesHandler
+	getLogPodNamespaceValuesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/logs/pod_namespace_values", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getLogPodNamespaceValuesHandler := cluster.NewGetLogPodNamespaceValuesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getLogPodNamespaceValuesEndpoint,
+		Handler:  getLogPodNamespaceValuesHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/logs/revision_values -> cluster.NewGetLogPodValuesHandler
 	getLogRevisionValuesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

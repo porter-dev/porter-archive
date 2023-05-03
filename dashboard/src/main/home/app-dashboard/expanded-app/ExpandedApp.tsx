@@ -657,7 +657,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 />
               ) : !hasBuiltImage ? (
                 <Banner
-                  type="warning"
                   suffix={
                     <RefreshButton onClick={() => window.location.reload()}>
                       <img src={refresh} /> Refresh

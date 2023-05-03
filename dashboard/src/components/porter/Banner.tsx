@@ -64,10 +64,10 @@ const StyledBanner = styled.div<{
   font-family: "Work Sans", sans-serif;
   display: flex;
   line-height: 1.5;
-  border: 1px solid ${(props) => props.color || "#ffffff00"};
+  border: 1px solid ${(props) => props.color || "#aaaabb"};
   border-radius: 8px;
   padding: 10px 14px;
-  color: ${(props) => props.color || "#ffffff"};
+  color: ${(props) => props.color || "#aaaabb"};
   align-items: center;
   jusrify-content: space-between;
   background: ${({ theme }) => theme.fg};

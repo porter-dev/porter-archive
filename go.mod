@@ -77,6 +77,7 @@ require (
 	github.com/porter-dev/api-contracts v0.0.60
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d
+	github.com/tabbed/pqtype v0.1.1
 	github.com/xanzy/go-gitlab v0.68.0
 	go.uber.org/goleak v1.1.12
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0

@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/database/generated/queries"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -38,6 +39,16 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	request := &types.CreateStackReleaseRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding request")))
+		return
+	}
+
+	porterAppRevision := queries.CreatePorterAppRevisionParams{
+		ProjectID:      int64(cluster.ProjectID),
+		Base64Contract: request.PorterYAMLBase64,
+	}
+	_, err := c.Config().Database.CreatePorterAppRevision(ctx, porterAppRevision)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError, "error creating porter app revision", err.Error()))
 		return
 	}
 

@@ -6,6 +6,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/api/server/shared/websocket"
+	"github.com/porter-dev/porter/database/generated/queries"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/billing"
@@ -82,6 +83,9 @@ type Config struct {
 
 	// DB is the gorm DB instance
 	DB *gorm.DB
+
+	// Database is the SQLC generated DB instance, which implements database/sql package
+	Database *queries.Queries
 
 	// AnalyticsClient if Segment analytics reporting is enabled on the API instance
 	AnalyticsClient analytics.AnalyticsSegmentClient

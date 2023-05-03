@@ -17,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/api/server/shared/websocket"
+	"github.com/porter-dev/porter/database/generated/queries"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
@@ -82,6 +83,12 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	res.Metadata = config.MetadataFromConf(envConf.ServerConf, e.version)
 	res.Logger.Info().Msg("Loaded MetadataFromConf")
 	res.DB = InstanceDB
+
+	sqlDB, err := res.DB.DB()
+	if err != nil {
+		return nil, fmt.Errorf("could not get sqlc db: %s", err.Error())
+	}
+	res.Database = queries.New(sqlDB)
 
 	// res.Logger.Info().Msg("Starting gorm automigrate")
 	// err = gorm.AutoMigrate(InstanceDB, sc.Debug)

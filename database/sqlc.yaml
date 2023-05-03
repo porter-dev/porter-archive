@@ -1,0 +1,9 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "sql_queries"
+    schema: "schema.sql"
+    gen:
+      go:
+        package: "queries"
+        out: "generated/queries"

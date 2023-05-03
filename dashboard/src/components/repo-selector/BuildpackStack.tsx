@@ -83,16 +83,16 @@ export const BuildpackStack: React.FC<{
         <Text size={16}>Buildpack Configuration</Text>
         <Spacer y={1} />
         <Scrollable>
-          <Text color="helper">Configure your buildpacks here.</Text>
+          <Text color="helper">Selected buildpacks:</Text>
           <Spacer y={1} />
           {!!selectedBuildpacks?.length &&
             renderBuildpacksList(selectedBuildpacks, "remove")}
-          <Spacer y={1} />
 
           <Spacer y={1} />
           {!!availableBuildpacks?.length && (
             <>
               <Text color="helper">Available buildpacks:</Text>
+              <Spacer y={1} />
               <>{renderBuildpacksList(availableBuildpacks, "add")}</>
             </>
           )}
@@ -103,9 +103,13 @@ export const BuildpackStack: React.FC<{
           </Text>
           <Spacer y={1} />
           <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
+          <Spacer y={2} />
         </Scrollable>
-        <Spacer y={1} />
-        <Button onClick={() => setIsModalOpen(false)}>Save</Button>
+        <Footer>
+          <Shade />
+          <Spacer y={1} />
+          <Button onClick={() => setIsModalOpen(false)}>Save buildpacks</Button>
+        </Footer>
       </>
     );
   };
@@ -229,7 +233,6 @@ export const BuildpackStack: React.FC<{
           setSelectedBuildpacks([]);
         } else {
           setSelectedBuildpacks(detectedBuildpacks);
-          console.log(selectedBuildpacks);
         }
         if (!Array.isArray(availableBuildpacks)) {
           setAvailableBuildpacks([]);
@@ -405,7 +408,7 @@ export const BuildpackStack: React.FC<{
           setValue={(option) => {
             setSelectedStack(option);
           }}
-          label="Select your builder and stack"
+          label="Builder and stack"
         />
         {!!selectedBuildpacks?.length && (
           <Helper>
@@ -417,7 +420,9 @@ export const BuildpackStack: React.FC<{
           <>{renderBuildpacksList(selectedBuildpacks, "remove")}</>
         )}
         <Spacer y={1} />
-        <Button onClick={() => setIsModalOpen(true)}>Add build pack</Button>
+        <Button onClick={() => setIsModalOpen(true)}>
+          <I className="material-icons">add</I> Add buildpack
+        </Button>
         {isModalOpen && (
           <Modal closeModal={() => setIsModalOpen(false)}>
             {renderModalContent()}
@@ -472,6 +477,37 @@ export const AddCustomBuildpackForm: React.FC<{
     </StyledCard>
   );
 };
+
+const Shade = styled.div`
+  position: absolute;
+  top: -50px;
+  left: 0;
+  height: 50px;
+  width: 100%;
+  background: linear-gradient(to bottom, #00000000, ${({ theme }) => theme.fg});
+`;
+
+const Footer = styled.div` 
+  position: relative;
+  width: calc(100% + 50px);
+  margin-left: -25px;
+  padding: 0 25px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  background: ${({ theme }) => theme.fg};
+  margin-bottom: -30px;
+  padding-bottom: 30px
+
+`;
+
+const I = styled.i`
+  color: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin-right: 5px;
+  justify-content: center;
+`;
 
 const ErrorText = styled.span`
   color: red;

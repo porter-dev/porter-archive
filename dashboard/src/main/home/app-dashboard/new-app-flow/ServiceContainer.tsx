@@ -23,7 +23,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   deleteService,
   editService,
 }) => {
-  const [showExpanded, setShowExpanded] = React.useState<boolean>(true)
+  const [showExpanded, setShowExpanded] = React.useState<boolean>(false);
   const [height, setHeight] = React.useState<Height>('auto');
 
   // TODO: calculate heights instead of hardcoding them

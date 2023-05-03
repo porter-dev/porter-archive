@@ -49,29 +49,24 @@ const SharedBuildSettings: React.FC<Props> = ({
       <Text size={16}>Build settings</Text>
       <Spacer y={0.5} />
       <Text color="helper">Select your Github repository.</Text>
-      <Spacer y={0.5} />
-      <Subtitle>
-        Provide a repo folder to use as source.
-        <Required>*</Required>
-        <ActionConfEditorStack
-          actionConfig={actionConfig}
-          setActionConfig={(actionConfig: ActionConfigType) => {
-            setActionConfig((currentActionConfig: ActionConfigType) => ({
-              ...currentActionConfig,
-              ...actionConfig,
-            }));
-            setImageUrl(actionConfig.image_repo_uri);
-          }}
-          setBranch={setBranch}
-          setDockerfilePath={setDockerfilePath}
-          setFolderPath={setFolderPath}
-        />
-      </Subtitle>
+      <ActionConfEditorStack
+        actionConfig={actionConfig}
+        setActionConfig={(actionConfig: ActionConfigType) => {
+          setActionConfig((currentActionConfig: ActionConfigType) => ({
+            ...currentActionConfig,
+            ...actionConfig,
+          }));
+          setImageUrl(actionConfig.image_repo_uri);
+        }}
+        setBranch={setBranch}
+        setDockerfilePath={setDockerfilePath}
+        setFolderPath={setFolderPath}
+      />
       <DarkMatter antiHeight="-4px" />
-      <br />
-      <Spacer y={0.5} />
+      <Spacer y={0.3} />
       {actionConfig.git_repo && (
         <>
+          <Spacer y={1} />
           <Text color="helper">Select your branch.</Text>
           <ActionConfBranchSelector
             actionConfig={actionConfig}

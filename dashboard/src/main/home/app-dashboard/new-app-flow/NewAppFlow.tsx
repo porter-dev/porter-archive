@@ -346,14 +346,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   {detected && (
                     <AppearingDiv>
                       <Text
-                        size={16}
-                        color={detected.detected ? "green" : "red"}
+                        color={detected.detected ? "#4797ff" : "#fcba03"}
                       >
                         {detected.detected ? (
-                          <i className="material-icons">check</i>
+                          <I className="material-icons">check</I>
                         ) : (
-                          <i className="material-icons">error</i>
-                        )}{" "}
+                          <I className="material-icons">error</I>
+                        )}
                         {detected.message}
                       </Text>
                     </AppearingDiv>
@@ -424,7 +423,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   ) : undefined
                 }
                 loadingText={"Deploying..."}
-                width={"150px"}
+                width={"120px"}
               >
                 Deploy app
               </Button>,
@@ -452,6 +451,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 };
 
 export default withRouter(NewAppFlow);
+
+const I = styled.i`
+  font-size: 18px;
+  margin-right: 5px;
+`;
 
 const Div = styled.div`
   width: 100%;

@@ -497,7 +497,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     <Text color="helper">No services were found.</Text>
                   </Container>
                 </Fieldset>
-                <Spacer y={1} />
               </>
             )}
             <Services setServices={setServices} services={services} />
@@ -518,7 +517,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             >
               Update app
             </Button>
-            <Spacer y={3} />
           </>
         );
       case "build-settings":
@@ -742,6 +740,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               />
               <Spacer y={1} />
               {renderTabContents()}
+              <Spacer y={2} />
             </>
           )}
         </StyledExpandedApp>

@@ -84,7 +84,7 @@ const SharedBuildSettings: React.FC<Props> = ({
           />
         </>
       )}
-
+      <Spacer y={0.3} />
       {actionConfig.git_repo && branch && (
         <>
           <Spacer y={1} />

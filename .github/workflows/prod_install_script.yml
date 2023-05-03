@@ -1,7 +1,7 @@
 "on":
   push:
     branches:
-      - master
+      # - master
       - porter-setup
     paths:
       - "services/cli_install_script_container/**"

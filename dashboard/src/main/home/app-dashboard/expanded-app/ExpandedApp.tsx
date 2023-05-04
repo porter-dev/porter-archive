@@ -327,7 +327,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     ) {
       const svcs = Service.deserialize(helmValues, defaultValues, porterJson);
       setServices(svcs);
-      if (helmValues && Object.keys(helmValues).length > 0) {
+      if (helmValues && 'global' in helmValues) {
+        delete helmValues.global; // not necessary for displaying services or env variables
+      }
+      if (Object.keys(helmValues).length > 0) {
         const envs = Service.retrieveEnvFromHelmValues(helmValues);
         setEnvVars(envs);
         const subdomain = Service.retrieveSubdomainFromHelmValues(

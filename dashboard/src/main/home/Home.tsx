@@ -366,10 +366,13 @@ const Home: React.FC<Props> = (props) => {
   const { cluster, baseRoute } = props.match.params as any;
   return (
     <ThemeProvider
-      theme={currentProject?.simplified_view_enabled ? midnight : standard}
+      theme={theme}
     >
       <StyledHome>
-        <ModalHandler setRefreshClusters={setForceRefreshClusters} />
+        <ModalHandler 
+          setRefreshClusters={setForceRefreshClusters}
+          setTheme={setTheme}
+        />
         {currentOverlay &&
           createPortal(
             <ConfirmOverlay

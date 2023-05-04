@@ -220,7 +220,7 @@ const AppDashboard: React.FC<Props> = ({
                   <MidIcon src={healthy} height="16px" />
                 </Text>
                 <Spacer height="15px" />
-                <Text size={13} color="#ffffff44">
+                <Text size={13} color="helper2">
                   <SmallIcon opacity="0.4" src={time} />
                   {readableDate(app.info.last_deployed)}
                 </Text>
@@ -300,9 +300,9 @@ const Block = styled(Link)`
   position: relative;
   border-radius: 5px;
   background: ${props => props.theme.clickable.bg};
-  border: 1px solid #494b4f;
+  border: 1px solid ${({ theme }) => theme.border};
   :hover {
-    border: 1px solid #7a7b80;
+    border: 1px solid ${({ theme }) => theme.border2};
   }
 
   animation: fadeIn 0.3s 0s;

@@ -5,7 +5,6 @@ import { Context } from "shared/Context";
 import Feedback from "./Feedback";
 import Help from "./Help";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { Select } from "@material-ui/core";
 
 type PropsType = WithAuthProps & {
   logOut: () => void;

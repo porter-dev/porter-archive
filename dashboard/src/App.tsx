@@ -5,7 +5,6 @@ import styled, { ThemeProvider, createGlobalStyle } from "styled-components";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import MainWrapper from "./main/MainWrapper";
-import midnight from "shared/themes/midnight";
 import standard from "shared/themes/standard";
 
 const queryClient = new QueryClient();

@@ -5,21 +5,33 @@ import github from "assets/github.png";
 
 import { Context } from "../../../shared/Context";
 import api from "../../../shared/api";
+import midnight from "shared/themes/midnight";
+import standard from "shared/themes/standard";
+import opal from "shared/themes/opal";
+
 import Loading from "../../../components/Loading";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
-
 import TabSelector from "components/TabSelector";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import Select from "components/porter/Select";
 
 interface GithubAppAccessData {
   username?: string;
   accounts?: string[];
 }
 
-const tabOptions = [{ label: "Integrations", value: "integrations" }];
+const tabOptions = [
+  { label: "Integrations", value: "integrations" },
+  { label: "Appearance", value: "appearance" },
+];
 
-const AccountSettingsModal = () => {
-  const { setCurrentModal } = useContext(Context);
+type Props = {
+  setTheme: (x: any) => void;
+}
+
+const AccountSettingsModal: React.FC<Props> = ({ setTheme }) => {
   const [accessLoading, setAccessLoading] = useState(true);
   const [accessError, setAccessError] = useState(false);
   const [accessData, setAccessData] = useState<GithubAppAccessData>({});
@@ -46,69 +58,98 @@ const AccountSettingsModal = () => {
         currentTab={currentTab}
         setCurrentTab={(value: string) => setCurrentTab(value)}
       />
-
-      <Heading>
-        <GitIcon src={github} /> GitHub
-      </Heading>
-      {accessLoading ? (
-        <LoadingWrapper>
-          {" "}
-          <Loading />
-        </LoadingWrapper>
-      ) : (
+      {currentTab === "integrations" && (
         <>
-          {accessError && (
-            <ListWrapper>
-              <Helper>
-                No connected repositories found.
-                <A href={"/api/integrations/github-app/oauth"}>
-                  Authorize Porter to view your repositories.
-                </A>
-              </Helper>
-            </ListWrapper>
-          )}
-
-          {/* Will be styled (and show what account is connected) later */}
-          {!accessError && accessData.username && (
-            <Placeholder>
-              <User>
-                You are currently authorized as <B>{accessData.username}</B> and
-                have access to:
-              </User>
-              {!accessData.accounts || accessData.accounts?.length == 0 ? (
+          <Heading>
+            <GitIcon src={github} /> GitHub
+          </Heading>
+          {accessLoading ? (
+            <LoadingWrapper>
+              {" "}
+              <Loading />
+            </LoadingWrapper>
+          ) : (
+            <>
+              {accessError && (
                 <ListWrapper>
                   <Helper>
                     No connected repositories found.
-                    <A href={"/api/integrations/github-app/install"}>
-                      Install Porter in your repositories
+                    <A href={"/api/integrations/github-app/oauth"}>
+                      Authorize Porter to view your repositories.
                     </A>
                   </Helper>
                 </ListWrapper>
-              ) : (
-                <>
-                  <List>
-                    {accessData.accounts.map((name, i) => {
-                      return (
-                        <React.Fragment key={i}>
-                          <Row
-                            isLastItem={i === accessData.accounts.length - 1}
-                          >
-                            <i className="material-icons">bookmark</i>
-                            {name}
-                          </Row>
-                        </React.Fragment>
-                      );
-                    })}
-                  </List>
-                  <br />
-                  Don't see the right repos?{" "}
-                  <A href={"/api/integrations/github-app/install"}>
-                    Install Porter in more repositories
-                  </A>
-                </>
               )}
-            </Placeholder>
+
+              {/* Will be styled (and show what account is connected) later */}
+              {!accessError && accessData.username && (
+                <Placeholder>
+                  <User>
+                    You are currently authorized as <B>{accessData.username}</B> and
+                    have access to:
+                  </User>
+                  {!accessData.accounts || accessData.accounts?.length == 0 ? (
+                    <ListWrapper>
+                      <Helper>
+                        No connected repositories found.
+                        <A href={"/api/integrations/github-app/install"}>
+                          Install Porter in your repositories
+                        </A>
+                      </Helper>
+                    </ListWrapper>
+                  ) : (
+                    <>
+                      <List>
+                        {accessData.accounts.map((name, i) => {
+                          return (
+                            <React.Fragment key={i}>
+                              <Row
+                                isLastItem={i === accessData.accounts.length - 1}
+                              >
+                                <i className="material-icons">bookmark</i>
+                                {name}
+                              </Row>
+                            </React.Fragment>
+                          );
+                        })}
+                      </List>
+                      <br />
+                      Don't see the right repos?{" "}
+                      <A href={"/api/integrations/github-app/install"}>
+                        Install Porter in more repositories
+                      </A>
+                    </>
+                  )}
+                </Placeholder>
+              )}
+            </>
           )}
+        </>
+      )}
+      {currentTab === "appearance" && (
+        <>
+          <Spacer y={1} />
+          <Text size={16}>Dashboard theme</Text>
+          <Spacer y={0.5} />
+          <Text color="helper">Configure the appearance of the Porter dashboard.</Text>
+          <Spacer y={0.5} />
+          <Select
+            setValue={(themeName: string) => {
+              if (themeName === "midnight") {
+                setTheme(midnight);
+              } else if (themeName === "slate") {
+                setTheme(standard);
+              } else if (themeName === "opal") {
+                setTheme(opal);
+              }
+            }}
+            options={[
+              { label: "Midnight", value: "midnight" },
+              { label: "Opal", value: "opal" },
+              { label: "Slate", value: "slate" },
+            ]}
+            width="300px"
+          />
         </>
       )}
     </>

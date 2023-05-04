@@ -21,7 +21,8 @@ import ConnectToDatabaseInstructionsModal from "./modals/ConnectToDatabaseInstru
 
 const ModalHandler: React.FC<{
   setRefreshClusters: (x: boolean) => void;
-}> = ({ setRefreshClusters }) => {
+  setTheme: (x: any) => void;
+}> = ({ setRefreshClusters, setTheme }) => {
   const [isAuth] = useAuth();
   const {
     currentModal,
@@ -181,9 +182,9 @@ const ModalHandler: React.FC<{
           onRequestClose={() => setCurrentModal(null, null)}
           width="760px"
           height="480px"
-          title="Account Settings"
+          title="Account settings"
         >
-          <AccountSettingsModal />
+          <AccountSettingsModal setTheme={setTheme} />
         </Modal>
       )}
 

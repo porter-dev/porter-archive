@@ -24,32 +24,31 @@ const ProvisionerStatus: React.FC<Props> = ({ provisionFailureReason }) => {
   const pollProvisioningAndClusterStatus = async () => {
     if (currentProject && currentCluster) {
       try {
-        if (progress < 4) {
-          const resState = await api.getClusterState(
-            "<token>",
-            {},
-            {
-              project_id: currentProject.id,
-              cluster_id: currentCluster.id,
-            }
-          );
-          const {
-            is_control_plane_ready,
-            is_infrastructure_ready,
-            phase,
-          } = resState.data;
-          let newProgress = 1;
-          if (is_control_plane_ready) {
-            newProgress += 1;
+        const resState = await api.getClusterState(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
           }
-          if (is_infrastructure_ready) {
-            newProgress += 1;
-          }
-          if (phase === "Provisioned") {
-            newProgress += 1;
-          }
-          setProgress(newProgress);
-        } else {
+        );
+        const {
+          is_control_plane_ready,
+          is_infrastructure_ready,
+          phase,
+        } = resState.data;
+        let newProgress = 1;
+        if (is_control_plane_ready) {
+          newProgress += 1;
+        }
+        if (is_infrastructure_ready) {
+          newProgress += 1;
+        }
+        if (phase === "Provisioned") {
+          newProgress += 1;
+        }
+        setProgress(newProgress);
+        if (newProgress >= 4) {
           const resStatus = await api.getCluster(
             "<token>",
             {},

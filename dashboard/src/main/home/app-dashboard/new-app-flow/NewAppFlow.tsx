@@ -143,9 +143,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       ) {
         setDetected({
           detected: true,
-          message: `Detected ${
-            Object.keys(porterYamlToJson.apps).length
-          } apps from porter.yaml`,
+          message: `Detected ${Object.keys(porterYamlToJson.apps).length
+            } apps from porter.yaml`,
         });
       } else {
         setDetected({
@@ -233,37 +232,19 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         formState.serviceList,
         formState.envVariables,
         porterJson,
-        formState.applicationName,
-        currentProject.id,
-        currentCluster.id
       );
 
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl
         ? {
-            image_info: {
-              repository: imageUrl,
-              tag: imageTag,
-            },
-          }
+          image_info: {
+            repository: imageUrl,
+            tag: imageTag,
+          },
+        }
         : {};
 
-      // create the dummy chart
-      await api.createPorterStack(
-        "<token>",
-        {
-          stack_name: formState.applicationName,
-          porter_yaml: base64Encoded,
-          ...imageInfo,
-        },
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-        }
-      );
-
-      // if success, write to the db
       await api.createPorterApp(
         "<token>",
         {
@@ -276,6 +257,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           buildpacks: (buildConfig as any)?.buildpacks?.join(",") ?? "",
           dockerfile: dockerfilePath,
           image_repo_uri: imageUrl,
+          porter_yaml: base64Encoded,
+          ...imageInfo,
         },
         {
           cluster_id: currentCluster.id,
@@ -303,17 +286,27 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   };
 
   // useEffect(() => {
-  //   api
-  //     .getGithubAccounts("<token>", {}, {})
-  //     .then(({ data }) => {
+  //   const fetchGithubAccounts = async () => {
+  //     try {
+  //       const { data } = await api.getGithubAccounts("<token>", {}, {});
   //       setAccessData(data);
-  //       setAccessLoading(false);
-  //     })
-  //     .catch(() => {
+  //       if (data) {
+  //         setHasProviders(false);
+  //       }
+  //     } catch (error) {
   //       setAccessError(true);
+  //     } finally {
   //       setAccessLoading(false);
-  //     });
-  // }, []);
+  //     }
+
+  //     setConnectModal(
+  //       !hasClickedDoNotConnect && (!hasProviders || accessError)
+  //     );
+  //   };
+
+  //   fetchGithubAccounts();
+  // }, [hasClickedDoNotConnect, accessData.accounts, accessError]);
+
   return (
     <CenterWrapper>
       <Div>
@@ -627,7 +620,7 @@ const ConnectToGithubButton = styled.a`
     props.disabled ? "#aaaabbee" : "#2E3338"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#353a3e"};
+    props.disabled ? "" : "#353a3e"};
   }
 
   > i {

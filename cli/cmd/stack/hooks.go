@@ -76,35 +76,51 @@ func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driv
 		}
 	}
 
-	if shouldCreate {
-		err := client.CreateStack(
-			context.Background(),
-			t.ProjectID,
-			t.ClusterID,
-			&types.CreateStackReleaseRequest{
-				StackName:        t.StackName,
-				PorterYAMLBase64: base64.StdEncoding.EncodeToString(t.PorterYAML),
-				ImageInfo:        imageInfo,
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("error creating stack %s: %w", t.StackName, err)
-		}
-	} else {
-		err := client.UpdateStack(
-			context.Background(),
-			t.ProjectID,
-			t.ClusterID,
-			t.StackName,
-			&types.CreateStackReleaseRequest{
-				StackName:        t.StackName,
-				PorterYAMLBase64: base64.StdEncoding.EncodeToString(t.PorterYAML),
-				ImageInfo:        imageInfo,
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("error updating stack %s: %w", t.StackName, err)
-		}
+	// if shouldCreate {
+	// 	err := client.CreateStack(
+	// 		context.Background(),
+	// 		t.ProjectID,
+	// 		t.ClusterID,
+	// 		&types.CreateStackReleaseRequest{
+	// 			StackName:        t.StackName,
+	// 			PorterYAMLBase64: base64.StdEncoding.EncodeToString(t.PorterYAML),
+	// 			ImageInfo:        imageInfo,
+	// 		},
+	// 	)
+	// 	if err != nil {
+	// 		return fmt.Errorf("error creating stack %s: %w", t.StackName, err)
+	// 	}
+	// } else {
+	// 	err := client.UpdateStack(
+	// 		context.Background(),
+	// 		t.ProjectID,
+	// 		t.ClusterID,
+	// 		t.StackName,
+	// 		&types.CreateStackReleaseRequest{
+	// 			StackName:        t.StackName,
+	// 			PorterYAMLBase64: base64.StdEncoding.EncodeToString(t.PorterYAML),
+	// 			ImageInfo:        imageInfo,
+	// 		},
+	// 	)
+	// 	if err != nil {
+	// 		return fmt.Errorf("error updating stack %s: %w", t.StackName, err)
+	// 	}
+	// }
+
+	_, err := client.CreatePorterApp(
+		context.Background(),
+		t.ProjectID,
+		t.ClusterID,
+		&types.CreatePorterAppRequest{
+			Name:             t.StackName,
+			ClusterID:        t.ClusterID,
+			ProjectID:        t.ProjectID,
+			PorterYAMLBase64: base64.StdEncoding.EncodeToString(t.PorterYAML),
+			ImageInfo:        imageInfo,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error updating stack %s: %w", t.StackName, err)
 	}
 
 	return nil

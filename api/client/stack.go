@@ -40,7 +40,7 @@ func (c *Client) UpdateStack(
 	)
 }
 
-func (c *Client) GetStack(
+func (c *Client) GetPorterApp(
 	ctx context.Context,
 	projectID, clusterID uint,
 	stackName string,
@@ -53,6 +53,25 @@ func (c *Client) GetStack(
 			projectID, clusterID, stackName,
 		),
 		nil,
+		resp,
+	)
+
+	return resp, err
+}
+
+func (c *Client) CreatePorterApp(
+	ctx context.Context,
+	projectID, clusterID uint,
+	req *types.CreatePorterAppRequest,
+) (*types.PorterApp, error) {
+	resp := &types.PorterApp{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/stacks/update_config",
+			projectID, clusterID,
+		),
+		req,
 		resp,
 	)
 

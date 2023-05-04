@@ -188,7 +188,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     setDeleting(true);
     const { appName } = props.match.params as any;
     try {
-      const res = await api.deletePorterApp(
+      await api.deletePorterApp(
         "<token>",
         {},
         {
@@ -197,7 +197,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           name: appName,
         }
       );
-      const nsRes = await api.deleteNamespace(
+      await api.deleteNamespace(
         "<token>",
         {},
         {
@@ -209,6 +209,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       props.history.push("/apps");
     } catch (err) {
       setError(err);
+    } finally {
       setDeleting(false);
     }
   };
@@ -226,9 +227,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           services,
           envVars,
           porterJson,
-          appData.app.name,
-          currentProject.id,
-          currentCluster.id
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);

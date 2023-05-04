@@ -1,7 +1,6 @@
 package stacks
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -46,7 +45,6 @@ func (c *UpdatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		return
 	}
-	fmt.Println("SOHAM")
 	if request.RepoName != "" {
 		porterApp.RepoName = request.RepoName
 	}

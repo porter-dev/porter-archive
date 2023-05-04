@@ -142,7 +142,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
         }
         setCurrentError(
           'The workflow is still running. You can "Save" the current build settings for the next workflow run and view the current status of the workflow here: ' +
-            tmpError.response.data
+          tmpError.response.data
         );
         return;
       }
@@ -392,7 +392,7 @@ const StyledAdvancedBuildSettings = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
-      props.showSettings ? "" : "rotate(-90deg)"};
+    props.showSettings ? "" : "rotate(-90deg)"};
   }
 `;
 const StyledSourceBox = styled.div`

@@ -63,13 +63,19 @@ func (c *CreateStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	imageInfo := request.ImageInfo
-	chart, values, err := parse(porterYaml, imageInfo, c.Config(), cluster.ProjectID, SubdomainCreateOpts{
-		k8sAgent:       k8sAgent,
-		dnsRepo:        c.Repo().DNSRecord(),
-		powerDnsClient: c.Config().PowerDNSClient,
-		appRootDomain:  c.Config().ServerConf.AppRootDomain,
-		stackName:      stackName,
-	})
+	chart, values, err := parse(porterYaml,
+		imageInfo,
+		c.Config(),
+		cluster.ProjectID,
+		nil,
+		nil,
+		SubdomainCreateOpts{
+			k8sAgent:       k8sAgent,
+			dnsRepo:        c.Repo().DNSRecord(),
+			powerDnsClient: c.Config().PowerDNSClient,
+			appRootDomain:  c.Config().ServerConf.AppRootDomain,
+			stackName:      stackName,
+		})
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter yaml into chart and values: %w", err)))
 		return

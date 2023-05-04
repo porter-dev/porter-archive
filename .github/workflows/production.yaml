@@ -58,15 +58,6 @@ jobs:
       - name: Push
         run: |
           docker push gcr.io/porter-dev-273614/porter:latest
-      - name: Run Migrations
-        env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASS: ${{ secrets.DB_PASS }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-        run: |
-          ./bin/migrate
       - name: Deploy to cluster
         run: |
           aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name production-2

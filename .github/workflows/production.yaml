@@ -61,16 +61,9 @@ jobs:
       #   run: |
       #     docker push gcr.io/porter-dev-273614/porter:latest
       - name: Run Migrations
-        env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASS: ${{ secrets.DB_PASS }}
-          # DB_NAME: ${{ secrets.DB_NAME }}
         run: |
-          echo -e DB_HOST=$DB_HOST ${{ secrets.DB_NAME }} | sed 's/./& /g'
           docker run \
-          -e DB_HOST=$DB_HOST -e DB_PORT=$DB_PORT -e DB_USER=$DB_USER -e DB_PASS=$DB_PASS -e DB_NAME=$DB_NAME -e DB_FORCE_SSL=true \
+          -e DB_HOST=${{ secrets.DB_HOST }} -e DB_PORT=${{ secrets.DB_PORT }} -e DB_USER=${{ secrets.DB_USER }} -e DB_PASS=${{ secrets.DB_PASS }} -e DB_NAME=${{ secrets.DB_NAME }} -e DB_FORCE_SSL=true \
           gcr.io/porter-dev-273614/porter:latest \
           /porter/migrate
       - name: Deploy to cluster

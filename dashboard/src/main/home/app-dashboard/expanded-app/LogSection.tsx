@@ -58,6 +58,8 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     }, 5000);
   };
 
+  console.log(podFilter);
+
   const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter.podName,
     podFilter.podNamespace,
@@ -68,70 +70,70 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
   );
 
   const refreshPodLogsValues = async () => {
-    // const filters = {
-    //   namespace: currentChart.namespace,
-    //   revision: currentChart.version.toString(),
-    //   match_prefix: currentChart.name,
-    // };
+    const filters = {
+      namespace: currentChart.namespace,
+      revision: currentChart.version.toString(),
+      match_prefix: currentChart.name,
+    };
 
-    // const logPodValuesResp = await api.getLogPodValues("<TOKEN>", filters, {
-    //   project_id: currentProject.id,
-    //   cluster_id: currentCluster.id,
-    // });
+    const logPodValuesResp = await api.getLogPodValues("<TOKEN>", filters, {
+      project_id: currentProject.id,
+      cluster_id: currentCluster.id,
+    });
 
-    // if (logPodValuesResp.data?.length != 0) {
-    //   setPodFilterOpts(
-    //     _.uniq(logPodValuesResp.data ?? []).map((podName: any) => {
-    //       return { podName: podName, podNamespace: currentChart.namespace };
-    //     })
-    //   );
+    if (logPodValuesResp.data?.length != 0) {
+      setPodFilterOpts(
+        _.uniq(logPodValuesResp.data ?? []).map((podName: any) => {
+          return { podName: podName, podNamespace: currentChart.namespace };
+        })
+      );
 
-    //   // only set pod filter if the current pod is not found in the resulting data
-    //   if (!podFilter || !logPodValuesResp.data?.includes(podFilter)) {
-    //     setPodFilter({
-    //       podName: logPodValuesResp.data[0],
-    //       podNamespace: currentChart.namespace,
-    //     });
-    //   }
-    //   console.log("pod values set chart namespace", podFilter, podFilterOpts);
-    //   return;
-    // }
+      // only set pod filter if the current pod is not found in the resulting data
+      if (!podFilter || !logPodValuesResp.data?.includes(podFilter)) {
+        setPodFilter({
+          podName: logPodValuesResp.data[0],
+          podNamespace: currentChart.namespace,
+        });
+      }
+      console.log("pod values set chart namespace", podFilter, podFilterOpts);
+      return;
+    }
 
-    // // check if pods are in default namespace
-    // const filters_default = {
-    //   namespace: "default",
-    //   revision: currentChart.version.toString(),
-    //   match_prefix: currentChart.name,
-    // };
+    // check if pods are in default namespace
+    const filters_default = {
+      namespace: "default",
+      revision: currentChart.version.toString(),
+      match_prefix: currentChart.name,
+    };
 
-    // const logPodValuesResp_default = await api.getLogPodValues(
-    //   "<TOKEN>",
-    //   filters_default,
-    //   {
-    //     project_id: currentProject.id,
-    //     cluster_id: currentCluster.id,
-    //   }
-    // );
+    const logPodValuesResp_default = await api.getLogPodValues(
+      "<TOKEN>",
+      filters_default,
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+      }
+    );
 
-    // if (logPodValuesResp_default.data?.length != 0) {
-    //   setPodFilterOpts(
-    //     _.uniq(logPodValuesResp_default.data ?? []).map((podName: any) => {
-    //       return { podName: podName, podNamespace: "default" };
-    //     })
-    //   );
+    if (logPodValuesResp_default.data?.length != 0) {
+      setPodFilterOpts(
+        _.uniq(logPodValuesResp_default.data ?? []).map((podName: any) => {
+          return { podName: podName, podNamespace: "default" };
+        })
+      );
 
-    //   // only set pod filter if the current pod is not found in the resulting data
-    //   if (!podFilter || !logPodValuesResp_default.data?.includes(podFilter)) {
-    //     setPodFilter({
-    //       podName: logPodValuesResp_default.data[0],
-    //       podNamespace: "default",
-    //     });
-    //   }
-    //   console.log("pod values set default", podFilter, podFilterOpts);
-    //   return;
-    // }
+      // only set pod filter if the current pod is not found in the resulting data
+      if (!podFilter || !logPodValuesResp_default.data?.includes(podFilter)) {
+        setPodFilter({
+          podName: logPodValuesResp_default.data[0],
+          podNamespace: "default",
+        });
+      }
+      console.log("pod values set default", podFilter, podFilterOpts);
+      return;
+    }
 
-    // console.log("pod values empty");
+    console.log("pod values empty");
 
     // if we're on the latest revision and no pod values were returned, query for all release pods
     if (currentChart.info.status == "deployed") {
@@ -161,10 +163,6 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
       }
     }
   };
-
-  useEffect(() => {
-    refreshPodLogsValues();
-  }, []);
 
   useEffect(() => {
     if (!loading && scrollToBottomRef.current && scrollToBottomEnabled) {
@@ -261,7 +259,12 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
               Scroll to bottom
             </Button>
             <Spacer />
-            <Button onClick={() => refresh()}>
+            <Button
+              onClick={() => {
+                refreshPodLogsValues;
+                refresh();
+              }}
+            >
               <i className="material-icons">autorenew</i>
               Refresh
             </Button>
@@ -338,8 +341,11 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
         if (res.data?.version != "v3") {
           setHasPorterAgent(false);
         } else {
-          // next, check whether events can be queried - if they can, we're good to go
-          let filters: any = getFilters();
+          // next, check whether logs can be queried - if they can, we're good to go
+          const filters = {
+            revision: currentChart.version.toString(),
+            match_prefix: currentChart.name,
+          };
 
           api
             .getLogPodValues("<TOKEN>", filters, {
@@ -354,7 +360,7 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
               // do nothing - this is expected while installing
             });
         }
-
+        refreshPodLogsValues();
         setIsLoading(false);
       })
       .catch((err) => {

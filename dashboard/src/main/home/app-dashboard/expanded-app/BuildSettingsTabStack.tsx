@@ -60,7 +60,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   const [showSettings, setShowSettings] = useState(false);
   const [dockerfilePath, setDockerfilePath] = useState(appData.app.dockerfile);
   const [buildView, setBuildView] = useState<string>(
-    appData.app.dockerfile != "" ? "docker" : "buildpack"
+    appData.app.dockerfile ? "docker" : "buildpacks"
   );
 
   const [folderPath, setFolderPath] = useState("./");
@@ -176,6 +176,8 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   };
   const saveConfig = async () => {
     console.log(appData);
+    console.log(appData.app.dockerfile);
+    console.log(buildView);
     try {
       await api.updatePorterApp(
         "<token>",
@@ -183,9 +185,12 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           repo_name: appData.app.repo_name,
           git_branch: branch,
           build_context: appData.app.build_context,
-          builder: buildConfig.builder,
-          buildpacks: buildConfig.buildpacks?.join(","),
-          dockerfile: appData.app.dockerfile,
+          builder: buildConfig?.builder,
+          buildpacks:
+            buildView === "buildpacks"
+              ? buildConfig?.buildpacks?.join(",")
+              : "null",
+          dockerfile: buildView === "buildpacks" ? "null" : dockerfilePath,
           image_repo_uri: appData.chart.image_repo_uri,
         },
         {
@@ -255,6 +260,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
             setBranch={setBranch}
             setDockerfilePath={setDockerfilePath}
             setFolderPath={setFolderPath}
+            setBuildView={setBuildView}
           />
         </>
       )}
@@ -273,7 +279,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           />
         </>
       )}
-      {console.log(buildConfig.builder)}
       <AdvancedBuildSettings
         dockerfilePath={dockerfilePath}
         setDockerfilePath={setDockerfilePath}

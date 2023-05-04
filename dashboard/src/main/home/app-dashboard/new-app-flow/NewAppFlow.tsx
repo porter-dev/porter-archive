@@ -98,6 +98,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [actionConfig, setActionConfig] = useState<ActionConfigType>({
     ...defaultActionConfig,
   });
+  const [buildView, setBuildView] = useState<string>("buildpacks");
   const [branch, setBranch] = useState("");
   const [dockerfilePath, setDockerfilePath] = useState(null);
   const [procfilePath, setProcfilePath] = useState(null);
@@ -252,8 +253,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           git_repo_id: actionConfig?.git_repo_id,
           build_context: folderPath,
           builder: (buildConfig as any)?.builder,
-          buildpacks: (buildConfig as any)?.buildpacks?.join(",") ?? "",
-          dockerfile: dockerfilePath,
+          buildpacks:
+            buildView === "buildpacks"
+              ? (buildConfig as any)?.buildpacks?.join(",") ?? ""
+              : "",
+          dockerfile: buildView === "docker" ? dockerfilePath : "",
           image_repo_uri: imageUrl,
         },
         {
@@ -391,6 +395,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setPorterYaml={(newYaml: string) => {
                     validatePorterYaml(newYaml);
                   }}
+                  buildView={buildView}
+                  setBuildView={setBuildView}
                 />
               </>,
               <>

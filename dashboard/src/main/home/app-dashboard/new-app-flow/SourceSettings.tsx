@@ -36,6 +36,8 @@ type Props = {
   setBuildConfig: (x: any) => void;
   porterYaml: string;
   setPorterYaml: (x: any) => void;
+  buildView: string;
+  setBuildView: (x: string) => void;
 };
 
 const SourceSettings: React.FC<Props> = ({
@@ -55,6 +57,8 @@ const SourceSettings: React.FC<Props> = ({
   setBuildConfig,
   porterYaml,
   setPorterYaml,
+  buildView,
+  setBuildView,
   ...props
 }) => {
   const renderDockerSettings = () => {
@@ -129,6 +133,8 @@ const SourceSettings: React.FC<Props> = ({
               setBranch={setBranch}
               imageUrl={imageUrl}
               setImageUrl={setImageUrl}
+              buildView={buildView}
+              setBuildView={setBuildView}
             />
           ) : (
             renderDockerSettings()

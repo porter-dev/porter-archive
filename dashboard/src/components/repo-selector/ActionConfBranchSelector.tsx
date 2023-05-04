@@ -18,6 +18,7 @@ type Props = {
   setDockerfilePath: (x: string) => void;
 
   setFolderPath: (x: string) => void;
+  setBuildView?: (x: string) => void;
 };
 
 const ActionConfEditorStack: React.FC<Props> = (props) => {
@@ -63,6 +64,7 @@ const ActionConfEditorStack: React.FC<Props> = (props) => {
           props.setFolderPath("");
           props.setDockerfilePath("");
           props.setActionConfig(actionConfig);
+          props.setBuildView("buildpacks");
         }}
       >
         <i className="material-icons">keyboard_backspace</i>

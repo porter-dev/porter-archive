@@ -40,16 +40,11 @@ type Buildpack = {
 
 const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
   const [showSettings, setShowSettings] = useState<boolean>(props.showSettings);
+  const buildView = props.setBuildView(props.buildView || "buildpacks");
 
-  useEffect(() => {
-    if (props.dockerfilePath && props.dockerfilePath != "") {
-      props.setBuildView("docker");
-    } else {
-      props.setBuildView("buildpacks");
-    }
-  }, [props.dockerfilePath]);
+  useEffect(() => {}, [props.buildView]);
   const createDockerView = () => {
-    props.setBuildConfig({});
+    // props.setBuildConfig({});
     return (
       <>
         <Text color="helper">Dockerfile path</Text>
@@ -74,7 +69,6 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
           folderPath={props.folderPath}
           onChange={(config) => {
             props.setBuildConfig(config);
-            props.setDockerfilePath("");
           }}
           hide={false}
           currentBuildConfig={props.currentBuildConfig}

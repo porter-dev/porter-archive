@@ -1,6 +1,7 @@
 package stacks
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -45,7 +46,7 @@ func (c *UpdatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		return
 	}
-
+	fmt.Println("SOHAM")
 	if request.RepoName != "" {
 		porterApp.RepoName = request.RepoName
 	}
@@ -59,10 +60,18 @@ func (c *UpdatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		porterApp.Builder = request.Builder
 	}
 	if request.Buildpacks != "" {
-		porterApp.Buildpacks = request.Buildpacks
+		if request.Buildpacks == "null" {
+			porterApp.Buildpacks = ""
+		} else {
+			porterApp.Buildpacks = request.Buildpacks
+		}
 	}
 	if request.Dockerfile != "" {
-		porterApp.Dockerfile = request.Dockerfile
+		if request.Dockerfile == "null" {
+			porterApp.Dockerfile = ""
+		} else {
+			porterApp.Dockerfile = request.Dockerfile
+		}
 	}
 	if request.ImageRepoURI != "" {
 		porterApp.ImageRepoURI = request.ImageRepoURI

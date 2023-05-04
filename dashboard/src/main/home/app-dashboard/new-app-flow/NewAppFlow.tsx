@@ -232,6 +232,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         formState.serviceList,
         formState.envVariables,
         porterJson,
+        formState.applicationName,
+        currentProject.id,
+        currentCluster.id
       );
 
       const yamlString = yaml.dump(finalPorterYaml);
@@ -248,7 +251,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       await api.createPorterApp(
         "<token>",
         {
-          name: formState.applicationName,
           repo_name: actionConfig.git_repo,
           git_branch: branch,
           git_repo_id: actionConfig?.git_repo_id,
@@ -263,6 +265,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         {
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
+          stack_name: formState.applicationName,
         }
       );
 

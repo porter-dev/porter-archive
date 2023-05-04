@@ -25,7 +25,7 @@ import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import Back from "components/porter/Back";
 import TabSelector from "components/TabSelector";
-import { ChartType, ResourceType } from "shared/types";
+import { ChartType, PorterAppOptions, ResourceType } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTabStack from "./BuildSettingsTabStack";
 import Button from "components/porter/Button";
@@ -214,7 +214,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  const updatePorterApp = async () => {
+  const updatePorterApp = async (options: Partial<PorterAppOptions>) => {
     try {
       setButtonStatus("loading");
       if (
@@ -227,14 +227,17 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           services,
           envVars,
           porterJson,
+          appData.app.name,
+          currentProject.id,
+          currentCluster.id
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
-        await api.updatePorterStack(
+        await api.createPorterApp(
           "<token>",
           {
-            stack_name: appData.app.name,
             porter_yaml: base64Encoded,
+            ...options,
           },
           {
             cluster_id: currentCluster.id,
@@ -519,6 +522,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             appData={appData}
             setAppData={setAppData}
             onTabSwitch={getPorterApp}
+            updatePorterApp={updatePorterApp}
           />
         );
       case "settings":

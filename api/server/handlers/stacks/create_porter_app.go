@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/models"
@@ -42,7 +43,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	stackName := request.Name
+	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	if reqErr != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
+		return
+	}
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 
 	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)

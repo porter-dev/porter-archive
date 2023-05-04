@@ -33,13 +33,13 @@ func (c *DeletePorterAppByNameHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	ctx := r.Context()
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
-	name, reqErr := requestutils.GetURLParamString(r, types.URLParamReleaseName)
+	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
 	if reqErr != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
 		return
 	}
 
-	porterApp, appErr := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, name)
+	porterApp, appErr := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
 	if appErr != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(appErr))
 		return

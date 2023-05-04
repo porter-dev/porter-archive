@@ -77,18 +77,7 @@ const GithubActionModal: React.FC<Props> = ({
               stack_name: stackName,
             }
           );
-          if (res?.data?.url) {
-            const updateRes = await api.updatePorterApp(
-              "<token>",
-              {
-                pull_request_url: res.data.url,
-              },
-              {
-                project_id: projectId,
-                cluster_id: clusterId,
-                name: stackName,
-              }
-            )
+          if (res.data?.url) {
             window.open(res.data.url, "_blank", "noreferrer");
             if (!deployPorterApp) {
               window.location.reload();

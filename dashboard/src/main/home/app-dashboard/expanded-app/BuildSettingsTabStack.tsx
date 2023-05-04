@@ -20,6 +20,7 @@ import {
   BuildConfig,
   FullActionConfigType,
   GithubActionConfigType,
+  PorterAppOptions,
 } from "shared/types";
 import { RouteComponentProps } from "react-router";
 import { Context } from "shared/Context";
@@ -43,12 +44,14 @@ type Props = {
   appData: any;
   setAppData: Dispatch<any>;
   onTabSwitch: () => void;
+  updatePorterApp: (options: Partial<PorterAppOptions>) => Promise<void>;
 };
 
 const BuildSettingsTabStack: React.FC<Props> = ({
   appData,
   setAppData,
   onTabSwitch,
+  updatePorterApp,
 }) => {
   const { setCurrentError } = useContext(Context);
   const [updated, setUpdated] = useState(null);
@@ -163,23 +166,15 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   const saveConfig = async () => {
     console.log(appData);
     try {
-      await api.updatePorterApp(
-        "<token>",
-        {
-          repo_name: appData.app.repo_name,
-          git_branch: branch,
-          build_context: appData.app.build_context,
-          builder: buildConfig.builder,
-          buildpacks: buildConfig.buildpacks?.join(","),
-          dockerfile: appData.app.dockerfile,
-          image_repo_uri: appData.chart.image_repo_uri,
-        },
-        {
-          project_id: appData.app.project_id,
-          cluster_id: appData.app.cluster_id,
-          name: appData.app.name,
-        }
-      );
+      await updatePorterApp({
+        repo_name: appData.app.repo_name,
+        git_branch: branch,
+        build_context: appData.app.build_context,
+        builder: buildConfig.builder,
+        buildpacks: buildConfig.buildpacks?.join(","),
+        dockerfile: appData.app.dockerfile,
+        image_repo_uri: appData.chart.image_repo_uri,
+      });
       onTabSwitch();
     } catch (err) {
       throw err;

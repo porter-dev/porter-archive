@@ -24,7 +24,6 @@ type PorterApp struct {
 
 // swagger:model
 type CreatePorterAppRequest struct {
-	Name             string    `json:"name" form:"required"`
 	ClusterID        uint      `json:"cluster_id"`
 	ProjectID        uint      `json:"project_id"`
 	RepoName         string    `json:"repo_name"`

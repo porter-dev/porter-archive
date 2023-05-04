@@ -116,6 +116,21 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		resp = types.CreateSecretAndOpenGHPRResponse{
 			URL: pr.GetHTMLURL(),
 		}
+
+		// update DB with the PR url
+		porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to get porter app db: %w", err)))
+			return
+		}
+
+		porterApp.PullRequestURL = pr.GetHTMLURL()
+
+		_, err = c.Repo().PorterApp().UpdatePorterApp(porterApp)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to write pr url to porter app db: %w", err)))
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusCreated)

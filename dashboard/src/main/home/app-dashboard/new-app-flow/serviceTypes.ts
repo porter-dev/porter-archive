@@ -124,12 +124,38 @@ const WebService = {
         maxReplicas: ServiceField.string('10', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
         targetCPUUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
         targetRAMUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
-        port: ServiceField.string('8080', porterJson?.apps?.[name]?.config?.container?.port),
+        port: ServiceField.string('80', porterJson?.apps?.[name]?.config?.container?.port),
         generateUrlForExternalTraffic: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
         customDomain: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
         canDelete: porterJson?.apps?.[name] == null,
     }),
     serialize: (service: WebService) => {
+        const getIngress = (service: WebService): Ingress => {
+            if (!service.generateUrlForExternalTraffic.value) {
+                return {
+                    ingress: {
+                        enabled: false,
+                        hosts: [],
+                        custom_domain: false,
+                        porter_hosts: [],
+                    }
+                }
+            }
+            const ingress: Ingress = {
+                ingress: {
+                    enabled: true,
+                    hosts: [],
+                    custom_domain: false,
+                    porter_hosts: [],
+                }
+            };
+            if (service.customDomain.value) {
+                ingress.ingress.hosts.push(service.customDomain.value);
+                ingress.ingress.custom_domain = true;
+            }
+            return ingress;
+        }
+
         const autoscaling = service.autoscalingOn.value ? {
             autoscaling: {
                 enabled: true,
@@ -139,6 +165,7 @@ const WebService = {
                 targetMemoryUtilizationPercentage: service.targetRAMUtilizationPercentage.value,
             }
         } : {};
+
         return {
             replicaCount: service.replicas.value,
             resources: {
@@ -155,6 +182,7 @@ const WebService = {
                 port: service.port.value,
             },
             ...autoscaling,
+            ...getIngress(service),
         }
     },
     deserialize: (name: string, values: any, porterJson?: PorterJson): WebService => {
@@ -296,47 +324,6 @@ export const Service = {
     isWeb: (service: Service): service is WebService => service.type === 'web',
     isWorker: (service: Service): service is WorkerService => service.type === 'worker',
     isJob: (service: Service): service is JobService => service.type === 'job',
-
-    // augments ingress of a web service, will be phased out
-    handleWebIngress: (service: WebService, stackName: string, projectId?: number, clusterId?: number) => {
-        if (projectId == null || clusterId == null) {
-            throw new Error('Project ID and Cluster ID must be provided to handle web ingress');
-        }
-        if (!service.generateUrlForExternalTraffic.value) {
-            return {}
-        }
-        const ingress: Ingress = {
-            ingress: {
-                enabled: true,
-                hosts: [],
-                custom_domain: false,
-                porter_hosts: [],
-            }
-        };
-        if (service.customDomain.value) {
-            ingress.ingress.hosts.push(service.customDomain.value);
-            ingress.ingress.custom_domain = true;
-        } else {
-            // const res = await api
-            //     .createSubdomain(
-            //         "<token>",
-            //         {},
-            //         {
-            //             id: projectId,
-            //             cluster_id: clusterId,
-            //             release_name: stackName,
-            //             namespace: `porter-stack-${stackName}`,
-            //         }
-            //     )
-            // if (res == null || res.data == null || res.data.external_url == null) {
-            //     throw new Error('Failed to create subdomain for web service');
-            // }
-            // ingress.porter_hosts.push(res.data.external_url)
-            //throw new Error('Generating external URLs without custom subdomains not yet supported!');
-        }
-
-        return ingress;
-    },
 
     // required because of https://github.com/helm/helm/issues/9214
     toHelmName: (service: Service): string => {

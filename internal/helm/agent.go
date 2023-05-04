@@ -497,11 +497,7 @@ func (a *Agent) UpgradeInstallChart(
 		}
 	}
 
-	start := time.Now()
-	temp, err := cmd.Run(conf.Name, conf.Chart, conf.Values)
-	latency := time.Since(start)
-	fmt.Printf("the latency was %s\n", latency.String())
-	return temp, err
+	return cmd.Run(conf.Name, conf.Chart, conf.Values)
 }
 
 // UninstallChart uninstalls a chart

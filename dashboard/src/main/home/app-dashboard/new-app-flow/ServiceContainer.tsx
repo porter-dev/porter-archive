@@ -11,6 +11,9 @@ import WebTabs from "./WebTabs";
 import WorkerTabs from "./WorkerTabs";
 import JobTabs from "./JobTabs";
 import { Service } from "./serviceTypes";
+import Text from "components/porter/Text";
+import Container from "components/porter/Container";
+import Button from "components/porter/Button";
 
 interface ServiceProps {
   service: Service;
@@ -68,19 +71,87 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           <span className="material-icons">delete</span>
         </ActionButton>}
       </ServiceHeader>
-      <AnimateHeight
-        height={showExpanded ? height : 0}
-      >
+      {showExpanded && (
         <StyledSourceBox showExpanded={showExpanded}>
           {renderTabs(service)}
         </StyledSourceBox>
-      </AnimateHeight>
+      )}
+      <StatusFooter showExpanded={showExpanded}>
+        {service.type === "job" && (
+          <Container row>
+            <Mi className="material-icons">check</Mi>
+            <Text color="helper">Last run succeeded at 12:39 PM on 4/13/23</Text>
+            <Spacer inline x={1} />
+            <Button
+              onClick={() => console.log("redirect to runs")}
+              height="30px"
+              width="87px"
+              color="#ffffff11"
+              withBorder
+            >
+              <I className="material-icons">open_in_new</I>
+              History
+            </Button>
+          </Container>
+        )}
+        {service.type !== "job" && (
+          <Container row>
+            <StatusCircle percentage="33%" />
+            <Text color="helper">Running 2/3 instances</Text>
+            <Spacer inline x={1} />
+            <Button
+              onClick={() => console.log("redirect to logs")}
+              height="30px"
+              width="70px"
+              color="#ffffff11"
+              withBorder
+            >
+              <I className="material-icons">open_in_new</I>
+              Logs
+            </Button>
+          </Container>
+        )}
+      </StatusFooter>
       <Spacer y={0.5} />
     </>
   )
 }
 
 export default ServiceContainer;
+
+const Mi = styled.i`
+  font-size: 16px;
+  margin-right: 7px;
+  margin-top: -1px;
+  color: rgb(56, 168, 138);
+`;
+
+const I = styled.i`
+  font-size: 14px;
+  margin-right: 5px;
+`;
+
+const StatusCircle = styled.div<{ percentage?: any }>`
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 10px;
+  background: conic-gradient(
+    from 0deg,
+    #ffffff33 ${(props) => props.percentage},
+    #ffffffaa 0% ${(props) => props.percentage}
+  );
+`;
+
+const StatusFooter = styled.div<{ showExpanded: boolean }>`
+  width: 100%;
+  padding: 15px;
+  background: ${props => props.theme.fg2};
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+  border: 1px solid #494b4f;
+  border-top: 0;
+`;
 
 const ServiceTitle = styled.div`
     display: flex;
@@ -93,12 +164,12 @@ const StyledSourceBox = styled.div<{ showExpanded: boolean }>`
   padding: 14px 25px 30px;
   position: relative;
   font-size: 13px;
-  border-radius: 5px;
   background: ${props => props.theme.fg};
   border: 1px solid #494b4f;
-  border-top: 0px;
-  border-top-left-radius: 0px;
-  border-top-right-radius: 0px;
+  border-top: 0;
+  border-bottom: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 `;
 
 const ActionButton = styled.button`
@@ -140,8 +211,8 @@ const ServiceHeader = styled.div`
     border: 1px solid #7a7b80;
   }
 
-  border-bottom-left-radius: ${({ showExpanded }) => showExpanded && "0px"};
-  border-bottom-right-radius: ${({ showExpanded }) => showExpanded && "0px"};
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 
   .dropdown {
     font-size: 30px;

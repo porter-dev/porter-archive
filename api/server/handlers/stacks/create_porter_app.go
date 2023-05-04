@@ -1,6 +1,7 @@
 package stacks
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 
@@ -9,7 +10,9 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -25,6 +28,7 @@ func NewCreatePorterAppHandler(
 ) *CreatePorterAppHandler {
 	return &CreatePorterAppHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
@@ -34,42 +38,171 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	request := &types.CreatePorterAppRequest{}
-
-	ok := c.DecodeAndValidate(w, r, request)
-	if !ok {
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding request")))
 		return
 	}
 
-	existing, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, request.Name)
+	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	if reqErr != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
+		return
+	}
+	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+
+	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	} else if existing.Name != "" {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("porter app with name %s already exists in this environment", existing.Name), http.StatusForbidden))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
 		return
 	}
 
-	app := &models.PorterApp{
-		Name:      request.Name,
-		ClusterID: cluster.ID,
-		ProjectID: project.ID,
-		RepoName:  request.RepoName,
-		GitRepoID: request.GitRepoID,
-		GitBranch: request.GitBranch,
-
-		BuildContext:   request.BuildContext,
-		Builder:        request.Builder,
-		Buildpacks:     request.Buildpacks,
-		Dockerfile:     request.Dockerfile,
-		ImageRepoURI:   request.ImageRepoURI,
-		PullRequestURL: request.PullRequestURL,
-	}
-
-	porterApp, err := c.Repo().PorterApp().UpdatePorterApp(app)
+	k8sAgent, err := c.GetAgent(r, cluster, namespace)
 	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting k8s agent: %w", err)))
 		return
 	}
 
-	c.WriteResult(w, r, porterApp.ToPorterAppType())
+	helmRelease, err := helmAgent.GetRelease(stackName, 0, false)
+	shouldCreate := err != nil
+
+	porterYamlBase64 := request.PorterYAMLBase64
+	porterYaml, err := base64.StdEncoding.DecodeString(porterYamlBase64)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding porter yaml: %w", err)))
+		return
+	}
+	imageInfo := request.ImageInfo
+	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing registries: %w", err)))
+		return
+	}
+
+	if shouldCreate {
+		chart, values, err := parse(
+			porterYaml,
+			imageInfo,
+			c.Config(),
+			cluster.ProjectID,
+			nil,
+			nil,
+			SubdomainCreateOpts{
+				k8sAgent:       k8sAgent,
+				dnsRepo:        c.Repo().DNSRecord(),
+				powerDnsClient: c.Config().PowerDNSClient,
+				appRootDomain:  c.Config().ServerConf.AppRootDomain,
+				stackName:      stackName,
+			})
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter yaml into chart and values: %w", err)))
+			return
+		}
+
+		// create the namespace if it does not exist already
+		_, err = k8sAgent.CreateNamespace(namespace, nil)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating namespace: %w", err)))
+			return
+		}
+
+		conf := &helm.InstallChartConfig{
+			Chart:      chart,
+			Name:       stackName,
+			Namespace:  namespace,
+			Values:     values,
+			Cluster:    cluster,
+			Repo:       c.Repo(),
+			Registries: registries,
+		}
+
+		_, err = helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deploying app: %s", err.Error())))
+
+			_, err = helmAgent.UninstallChart(stackName)
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error uninstalling chart: %w", err)))
+			}
+
+			return
+		}
+
+		existing, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		} else if existing.Name != "" {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("porter app with name %s already exists in this environment", existing.Name), http.StatusForbidden))
+			return
+		}
+
+		app := &models.PorterApp{
+			Name:      stackName,
+			ClusterID: cluster.ID,
+			ProjectID: project.ID,
+			RepoName:  request.RepoName,
+			GitRepoID: request.GitRepoID,
+			GitBranch: request.GitBranch,
+
+			BuildContext:   request.BuildContext,
+			Builder:        request.Builder,
+			Buildpacks:     request.Buildpacks,
+			Dockerfile:     request.Dockerfile,
+			ImageRepoURI:   request.ImageRepoURI,
+			PullRequestURL: request.PullRequestURL,
+		}
+
+		porterApp, err := c.Repo().PorterApp().UpdatePorterApp(app)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error writing app to DB: %s", err.Error())))
+			return
+		}
+
+		c.WriteResult(w, r, porterApp.ToPorterAppType())
+	} else {
+		chart, values, err := parse(
+			porterYaml,
+			imageInfo,
+			c.Config(),
+			cluster.ProjectID,
+			helmRelease.Config,
+			helmRelease.Chart.Metadata.Dependencies,
+			SubdomainCreateOpts{
+				k8sAgent:       k8sAgent,
+				dnsRepo:        c.Repo().DNSRecord(),
+				powerDnsClient: c.Config().PowerDNSClient,
+				appRootDomain:  c.Config().ServerConf.AppRootDomain,
+				stackName:      stackName,
+			})
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter yaml into chart and values: %w", err)))
+			return
+		}
+
+		conf := &helm.InstallChartConfig{
+			Chart:      chart,
+			Name:       stackName,
+			Namespace:  namespace,
+			Values:     values,
+			Cluster:    cluster,
+			Repo:       c.Repo(),
+			Registries: registries,
+		}
+
+		_, err = helmAgent.UpgradeInstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deploying app: %s", err.Error())))
+
+			return
+		}
+
+		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		c.WriteResult(w, r, app.ToPorterAppType())
+	}
 }

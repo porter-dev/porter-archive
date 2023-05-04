@@ -2,7 +2,7 @@ import { PolicyDocType } from "./auth/types";
 import { PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
 import { baseApi } from "./baseApi";
 
-import { BuildConfig, FullActionConfigType } from "./types";
+import { BuildConfig, FullActionConfigType, PorterAppOptions } from "./types";
 import {
   CreateStackBody,
   SourceConfig,
@@ -188,45 +188,15 @@ const getPorterApp = baseApi<
 });
 
 const createPorterApp = baseApi<
-  {
-    name: string;
-    repo_name: string;
-    git_branch: string;
-    git_repo_id: number;
-    build_context: string;
-    builder: string;
-    buildpacks: string;
-    dockerfile: string;
-    image_repo_uri: string;
-  },
+  PorterAppOptions,
   {
     project_id: number;
     cluster_id: number;
+    stack_name: string;
   }
 >("POST", (pathParams) => {
-  let { project_id, cluster_id } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/update_config`;
-});
-
-const updatePorterApp = baseApi<
-  {
-    repo_name?: string;
-    git_branch?: string;
-    build_context?: string;
-    builder?: string;
-    buildpacks?: string;
-    dockerfile?: string;
-    image_repo_uri?: string;
-    pull_request_url?: string;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-    name: string;
-  }
->("POST", (pathParams) => {
-  let { project_id, cluster_id, name } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
+  let { project_id, cluster_id, stack_name } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}`;
 });
 
 const deletePorterApp = baseApi<
@@ -239,43 +209,6 @@ const deletePorterApp = baseApi<
 >("DELETE", (pathParams) => {
   let { project_id, cluster_id, name } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
-});
-
-const createPorterStack = baseApi<
-  {
-    stack_name: string;
-    porter_yaml: string;
-    image_info?: {
-      repository: string;
-      tag: string;
-    }
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->("POST", (pathParams) => {
-  let { project_id, cluster_id } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks`;
-});
-
-const updatePorterStack = baseApi<
-  {
-    stack_name: string;
-    porter_yaml: string;
-    image_info?: {
-      repository: string;
-      tag: string;
-    }
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-    stack_name: string;
-  }
->("PATCH", (pathParams) => {
-  let { project_id, cluster_id, stack_name } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}`;
 });
 
 const createEnvironment = baseApi<
@@ -2597,10 +2530,7 @@ export default {
   getPorterApps,
   getPorterApp,
   createPorterApp,
-  updatePorterApp,
   deletePorterApp,
-  createPorterStack,
-  updatePorterStack,
   createConfigMap,
   deleteCluster,
   deleteConfigMap,

@@ -25,7 +25,7 @@ import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import Back from "components/porter/Back";
 import TabSelector from "components/TabSelector";
-import { ChartType, ResourceType } from "shared/types";
+import { ChartType, PorterAppOptions, ResourceType } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTabStack from "./BuildSettingsTabStack";
 import Button from "components/porter/Button";
@@ -188,7 +188,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     setDeleting(true);
     const { appName } = props.match.params as any;
     try {
-      const res = await api.deletePorterApp(
+      await api.deletePorterApp(
         "<token>",
         {},
         {
@@ -197,7 +197,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           name: appName,
         }
       );
-      const nsRes = await api.deleteNamespace(
+      await api.deleteNamespace(
         "<token>",
         {},
         {
@@ -209,11 +209,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       props.history.push("/apps");
     } catch (err) {
       setError(err);
+    } finally {
       setDeleting(false);
     }
   };
 
-  const updatePorterApp = async () => {
+  const updatePorterApp = async (options: Partial<PorterAppOptions>) => {
     try {
       setButtonStatus("loading");
       if (
@@ -232,11 +233,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
-        await api.updatePorterStack(
+        await api.createPorterApp(
           "<token>",
           {
-            stack_name: appData.app.name,
             porter_yaml: base64Encoded,
+            ...options,
           },
           {
             cluster_id: currentCluster.id,
@@ -326,7 +327,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     ) {
       const svcs = Service.deserialize(helmValues, defaultValues, porterJson);
       setServices(svcs);
-      if (helmValues && Object.keys(helmValues).length > 0) {
+      if (helmValues && 'global' in helmValues) {
+        delete helmValues.global; // not necessary for displaying services or env variables
+      }
+      if (Object.keys(helmValues).length > 0) {
         const envs = Service.retrieveEnvFromHelmValues(helmValues);
         setEnvVars(envs);
         const subdomain = Service.retrieveSubdomainFromHelmValues(
@@ -521,6 +525,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             appData={appData}
             setAppData={setAppData}
             onTabSwitch={getPorterApp}
+            updatePorterApp={updatePorterApp}
           />
         );
       case "settings":

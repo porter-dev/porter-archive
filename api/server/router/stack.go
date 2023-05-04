@@ -62,7 +62,7 @@ func getStackRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/{name}",
+				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamStackName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -118,7 +118,7 @@ func getStackRoutes(
 			Method: types.HTTPVerbDelete,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/{name}",
+				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamStackName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -140,14 +140,14 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/update_config -> stacks.NewCreatePorterAppHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack} -> stacks.NewCreatePorterAppHandler
 	createPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/update_config",
+				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamStackName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -166,93 +166,6 @@ func getStackRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: createPorterAppEndpoint,
 		Handler:  createPorterAppHandler,
-		Router:   r,
-	})
-
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> stacks.NewCreatePorterAppHandler
-	updatePorterAppEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbUpdate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/{name}",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	updatePorterAppHandler := stacks.NewUpdatePorterAppHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: updatePorterAppEndpoint,
-		Handler:  updatePorterAppHandler,
-		Router:   r,
-	})
-
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks -> stacks.NewCreateStackHandler
-	createEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath,
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	createHandler := stacks.NewCreateStackHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: createEndpoint,
-		Handler:  createHandler,
-		Router:   r,
-	})
-
-	// PATCH /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack} -> stacks.NewUpdateStackHandler
-	updateEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPatch,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/{stack}",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	updateHandler := stacks.NewUpdateStackHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: updateEndpoint,
-		Handler:  updateHandler,
 		Router:   r,
 	})
 

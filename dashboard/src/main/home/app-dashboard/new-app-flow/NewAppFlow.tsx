@@ -143,9 +143,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       ) {
         setDetected({
           detected: true,
-          message: `Detected ${
-            Object.keys(porterYamlToJson.apps).length
-          } apps from porter.yaml`,
+          message: `Detected ${Object.keys(porterYamlToJson.apps).length
+            } apps from porter.yaml`,
         });
       } else {
         setDetected({
@@ -242,32 +241,16 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl
         ? {
-            image_info: {
-              repository: imageUrl,
-              tag: imageTag,
-            },
-          }
+          image_info: {
+            repository: imageUrl,
+            tag: imageTag,
+          },
+        }
         : {};
 
-      // create the dummy chart
-      await api.createPorterStack(
-        "<token>",
-        {
-          stack_name: formState.applicationName,
-          porter_yaml: base64Encoded,
-          ...imageInfo,
-        },
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-        }
-      );
-
-      // if success, write to the db
       await api.createPorterApp(
         "<token>",
         {
-          name: formState.applicationName,
           repo_name: actionConfig.git_repo,
           git_branch: branch,
           git_repo_id: actionConfig?.git_repo_id,
@@ -276,10 +259,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           buildpacks: (buildConfig as any)?.buildpacks?.join(",") ?? "",
           dockerfile: dockerfilePath,
           image_repo_uri: imageUrl,
+          porter_yaml: base64Encoded,
+          ...imageInfo,
         },
         {
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
+          stack_name: formState.applicationName,
         }
       );
 
@@ -314,6 +300,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   //       setAccessLoading(false);
   //     });
   // }, []);
+
   return (
     <CenterWrapper>
       <Div>
@@ -627,7 +614,7 @@ const ConnectToGithubButton = styled.a`
     props.disabled ? "#aaaabbee" : "#2E3338"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#353a3e"};
+    props.disabled ? "" : "#353a3e"};
   }
 
   > i {

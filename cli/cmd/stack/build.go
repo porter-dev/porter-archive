@@ -87,8 +87,10 @@ func (b *Build) getV1BuildImage(env map[string]string) (*types.Resource, error) 
 	} else if b.GetMethod() == "registry" {
 		config.Build.Method = "registry"
 		config.Build.Image = b.GetImage()
-	} else {
-		return nil, fmt.Errorf("invalid build method: %s", b.GetMethod())
+	} else { // default to pack
+		config.Build.Method = "pack"
+		config.Build.Builder = b.GetBuilder()
+		config.Build.Buildpacks = b.GetBuildpacks()
 	}
 
 	config.Build.Context = b.GetContext()

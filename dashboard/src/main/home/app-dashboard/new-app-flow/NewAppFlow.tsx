@@ -284,6 +284,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       setDeploying(false);
     }
   };
+  useEffect(() => {
+    setFormState({ ...formState, serviceList: [] });
+  }, [actionConfig, branch]);
 
   // useEffect(() => {
   //   const fetchGithubAccounts = async () => {
@@ -402,7 +405,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
               <>
                 <Text size={16}>
                   Application services{" "}
-                  {detected && (
+                  {detected && formState.serviceList.length > 0 && (
                     <AppearingDiv>
                       <Text color={detected.detected ? "#4797ff" : "#fcba03"}>
                         {detected.detected ? (

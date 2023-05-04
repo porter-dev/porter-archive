@@ -115,7 +115,6 @@ export const BuildpackStack: React.FC<{
   };
   useEffect(() => {
     let buildConfig: BuildConfig = {} as BuildConfig;
-
     buildConfig.builder = selectedStack;
     buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
       return buildpack.buildpack;
@@ -268,8 +267,6 @@ export const BuildpackStack: React.FC<{
       }));
     });
   }, [builders]);
-
-  // const handleSelectBuilder = (builderName: string) => {
   //   const builder = builders.find(
   //     (b) => b.name.toLowerCase() === builderName.toLowerCase()
   //   );

@@ -38,6 +38,9 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   const [error, setError] = useState(false);
   const [contents, setContents] = useState<FileType[]>([]);
   const [currentDir, setCurrentDir] = useState("");
+  const [buildView, setBuildView] = useState<string>(
+    props.dockerfilePath ? "docker" : "buildpack"
+  );
   const [autoBuildpack, setAutoBuildpack] = useState<AutoBuildpack>({
     valid: false,
     name: "",
@@ -231,10 +234,11 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
             setBuildConfig={props.setBuildConfig}
             autoBuildPack={autoBuildpack}
             showSettings={false}
-            buildView={props.dockerfilePath ? "docker" : "buildpacks"}
+            buildView={buildView}
             actionConfig={props.actionConfig}
             branch={props.branch}
             folderPath={props.folderPath}
+            setBuildView={setBuildView}
           />
         </>
       )}

@@ -281,27 +281,27 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  useEffect(() => {
-    const fetchGithubAccounts = async () => {
-      try {
-        const { data } = await api.getGithubAccounts("<token>", {}, {});
-        setAccessData(data);
-        if (data) {
-          setHasProviders(false);
-        }
-      } catch (error) {
-        setAccessError(true);
-      } finally {
-        setAccessLoading(false);
-      }
+  // useEffect(() => {
+  //   const fetchGithubAccounts = async () => {
+  //     try {
+  //       const { data } = await api.getGithubAccounts("<token>", {}, {});
+  //       setAccessData(data);
+  //       if (data) {
+  //         setHasProviders(false);
+  //       }
+  //     } catch (error) {
+  //       setAccessError(true);
+  //     } finally {
+  //       setAccessLoading(false);
+  //     }
 
-      setConnectModal(
-        !hasClickedDoNotConnect && (!hasProviders || accessError)
-      );
-    };
+  //     setConnectModal(
+  //       !hasClickedDoNotConnect && (!hasProviders || accessError)
+  //     );
+  //   };
 
-    fetchGithubAccounts();
-  }, [hasClickedDoNotConnect, accessData.accounts, accessError]);
+  //   fetchGithubAccounts();
+  // }, [hasClickedDoNotConnect, accessData.accounts, accessError]);
 
   return (
     <CenterWrapper>

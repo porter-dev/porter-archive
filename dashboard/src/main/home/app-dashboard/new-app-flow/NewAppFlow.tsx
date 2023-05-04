@@ -345,8 +345,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   width="300px"
                   error={
                     shouldHighlightAppNameInput() &&
-                    (formState.applicationName.length > 61
-                      ? "Maximum 61 characters allowed."
+                    (formState.applicationName.length > 30
+                      ? "Maximum 30 characters allowed."
                       : 'Lowercase letters, numbers, and "-" only.')
                   }
                   setValue={(e) => {

@@ -30,7 +30,7 @@ const Dashboard: React.FC<Props> = ({
   setRefreshClusters,
   ...props
 }) => {
-  const { currentProject, user, capabilities } = useContext(Context);
+  const { currentProject, user, capabilities, usage } = useContext(Context);
   const [infras, setInfras] = useState<InfraType[]>([]);
   const [pressingCtrl, setPressingCtrl] = useState(false);
   const [pressingK, setPressingK] = useState(false);
@@ -88,10 +88,10 @@ const Dashboard: React.FC<Props> = ({
     }
   }, [currentProject]);
 
-  const currentTab = () => new URLSearchParams(props.location.search).get("tab");
+  const currentTab = () => new URLSearchParams(props.location.search).get("tab") || "overview";
 
   useEffect(() => {
-    if (props.isAuthorized("cluster", "", ["get", "create"])) {
+    if (usage && usage?.current?.clusters < usage?.limit?.clusters) {
       tabOptions.push({ label: "Create a cluster", value: "create-cluster" });
     }
 

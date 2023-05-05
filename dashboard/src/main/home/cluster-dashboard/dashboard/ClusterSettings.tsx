@@ -147,7 +147,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
         {" "}
         here
       </a>
-      .
+      . Contact support@porter.run if you need guidance.
     </Helper>
   );
 
@@ -157,7 +157,8 @@ const ClusterSettings: React.FC<Props> = (props) => {
         Remove this cluster from Porter. Since this cluster was not provisioned
         by Porter, deleting the cluster will only detach this cluster from your
         project. To delete the cluster itself, you must do so manually. This
-        operation cannot be undone.
+        operation cannot be undone. Contact support@porter.run if you need
+        guidance.
       </Helper>
     );
   }
@@ -361,8 +362,9 @@ const ClusterSettings: React.FC<Props> = (props) => {
         {helperText}
         <Button
           disabled={
-            currentCluster.status == "UPDATING_UNAVAILABLE" ||
-            currentCluster.status == "UPDATING"
+            currentProject.capi_provisioner_enabled
+              ? currentCluster.status != "READY"
+              : currentCluster.status == "UPDATING"
           }
           color="#b91133"
           onClick={() => setCurrentModal("UpdateClusterModal")}

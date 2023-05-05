@@ -69,11 +69,9 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 
 	if tag == "" {
 		commit, err := git.LastCommit()
-		if err != nil {
-			return nil, fmt.Errorf("could not get last commit to be used as the image tag: %s", err.Error())
-		}
-
-		tag = commit.Sha[:7]
+		if err == nil {
+			tag = commit.Sha[:7]
+		} 
 	}
 
 	// if the method is registry and a tag is defined, we use the provided tag

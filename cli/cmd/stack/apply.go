@@ -100,9 +100,9 @@ func createV1BuildResourcesFromPorterYaml(stackConf *StackConf) (*switchboardTyp
 }
 
 func createV1BuildResourcesFromDB(client *api.Client, stackConf *StackConf) (*switchboardTypes.Resource, *switchboardTypes.Resource, error) {
-	res, err := client.GetStack(context.Background(), stackConf.projectID, stackConf.clusterID, stackConf.stackName)
+	res, err := client.GetPorterApp(context.Background(), stackConf.projectID, stackConf.clusterID, stackConf.stackName)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("unable to read build info from DB: %w", err)
 	}
 
 	if res == nil {

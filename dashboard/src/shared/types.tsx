@@ -642,3 +642,19 @@ export type BuildConfig = {
     [key: string]: string;
   };
 };
+
+export interface PorterAppOptions {
+  porter_yaml: string;
+  repo_name?: string;
+  git_branch?: string;
+  git_repo_id?: number;
+  build_context?: string;
+  builder?: string;
+  buildpacks?: string;
+  dockerfile?: string;
+  image_repo_uri?: string;
+  image_info?: {
+    repository: string;
+    tag: string;
+  };
+}

@@ -356,16 +356,23 @@ export const Service = {
             return "";
         }
 
+        const prefixSubdomain = (subdomain: string) => {
+            if (subdomain.startsWith('https://') || subdomain.startsWith('http://')) {
+                return subdomain;
+            }
+            return 'https://' + subdomain;
+        }
+
         for (const web of webServices) {
             const values = helmValues[Service.toHelmName(web)];
             if (values == null || values.ingress == null || !values.ingress.enabled) {
                 continue;
             }
             if (values.ingress.custom_domain && values.ingress.hosts?.length > 0) {
-                return values.ingress.hosts[0];
+                return prefixSubdomain(values.ingress.hosts[0]);
             }
             if (values.ingress.porter_hosts?.length > 0) {
-                return values.ingress.porter_hosts[0];
+                return prefixSubdomain(values.ingress.porter_hosts[0]);
             }
         }
 

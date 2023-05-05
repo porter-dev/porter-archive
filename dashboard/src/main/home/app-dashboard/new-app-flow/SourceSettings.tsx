@@ -1,5 +1,5 @@
 import AnimateHeight from "react-animate-height";
-import React, { Component } from "react";
+import React, { Component, useEffect } from "react";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
@@ -38,6 +38,8 @@ type Props = {
   setPorterYaml: (x: any) => void;
   buildView: string;
   setBuildView: (x: string) => void;
+  setCurrentStep: (x: number) => void;
+  currentStep: number;
 };
 
 const SourceSettings: React.FC<Props> = ({
@@ -59,6 +61,8 @@ const SourceSettings: React.FC<Props> = ({
   setPorterYaml,
   buildView,
   setBuildView,
+  setCurrentStep,
+  currentStep,
   ...props
 }) => {
   const renderDockerSettings = () => {

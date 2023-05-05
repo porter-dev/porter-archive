@@ -707,6 +707,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     ? hasBuiltImage
                       ? [
                         { label: "Overview", value: "overview" },
+                        { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
                         {
                           label: "Environment variables",
@@ -726,6 +727,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       ]
                     : [
                       { label: "Overview", value: "overview" },
+                      { label: "Events", value: "events" },
                       { label: "Logs", value: "logs" },
                       {
                         label: "Environment variables",

@@ -9,6 +9,7 @@ import React, {
 import styled from "styled-components";
 import RadioFilter from "components/RadioFilter";
 
+import spinner from "assets/loading.gif";
 import filterOutline from "assets/filter-outline.svg";
 import time from "assets/time.svg";
 import { Context } from "shared/Context";
@@ -23,6 +24,11 @@ import { ChartType } from "shared/types";
 import Banner from "components/porter/Banner";
 import LogSearchBar from "components/LogSearchBar";
 import LogQueryModeSelectionToggle from "components/LogQueryModeSelectionToggle";
+import Fieldset from "components/porter/Fieldset";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
+import Container from "components/porter/Container";
+import Button from "components/porter/Button";
 
 type Props = {
   currentChart?: ChartType;
@@ -49,6 +55,7 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
   const [hasPorterAgent, setHasPorterAgent] = useState(true);
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [logsError, setLogsError] = useState<string | undefined>(undefined);
 
   const notify = (message: string) => {
     setNotification(message);
@@ -252,22 +259,22 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
             />
           </Flex>
           <Flex>
-            <Button onClick={() => setScrollToBottomEnabled((s) => !s)}>
+            <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
               <Checkbox checked={scrollToBottomEnabled}>
                 <i className="material-icons">done</i>
               </Checkbox>
               Scroll to bottom
-            </Button>
-            <Spacer />
-            <Button
+            </ScrollButton>
+            <Spacer inline width="10px" />
+            <ScrollButton
               onClick={() => {
-                refreshPodLogsValues;
+                refreshPodLogsValues();
                 refresh();
               }}
             >
               <i className="material-icons">autorenew</i>
               Refresh
-            </Button>
+            </ScrollButton>
           </Flex>
         </FlexRow>
         <LogsSectionWrapper>
@@ -354,14 +361,16 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
             })
             .then((res) => {
               setHasPorterAgent(true);
+              refreshPodLogsValues();
               setIsPorterAgentInstalling(false);
+              setIsLoading(false);
             })
             .catch((err) => {
               // do nothing - this is expected while installing
+              setLogsError(err);
+              setIsLoading(false);
             });
         }
-        refreshPodLogsValues();
-        setIsLoading(false);
       })
       .catch((err) => {
         if (err.response?.status === 404) {
@@ -397,40 +406,65 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     };
   };
 
-  if (isPorterAgentInstalling) {
-    return (
-      <Placeholder>
-        <Header>Installing agent...</Header>
-      </Placeholder>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <Placeholder>
+  return (
+    isPorterAgentInstalling ? (
+      <Fieldset>
+        <Container row>
+          <Spinner src={spinner} />
+          <Spacer inline x={1} />
+          <Text color="helper">The Porter agent is being installed . . .</Text>
+        </Container>
+      </Fieldset>
+    ) : isLoading ? (
+      <Fieldset>
         <Loading />
-      </Placeholder>
-    );
-  }
-
-  if (!hasPorterAgent) {
-    return (
-      <Placeholder>
-        <div>
-          <Header>We couldn't detect the Porter agent on your cluster</Header>
-          In order to use the events tab, you need to install the Porter agent.
-          <InstallPorterAgentButton onClick={() => triggerInstall()}>
-            <i className="material-icons">add</i> Install Porter agent
-          </InstallPorterAgentButton>
-        </div>
-      </Placeholder>
-    );
-  }
-
-  return <>{renderContents()}</>;
+      </Fieldset>
+    ) : !hasPorterAgent ? (
+      <Fieldset>
+        <Text size={16}>We couldn't detect the Porter agent on your cluster</Text>
+        <Spacer y={0.5} />
+        <Text color="helper">In order to use the events tab, you need to install the Porter agent.</Text>
+        <Spacer y={1} />
+        <Button onClick={() => triggerInstall()}>
+          <I className="material-icons">add</I> Install Porter agent
+        </Button>
+      </Fieldset>
+    ) : logsError ? (
+      <Fieldset>
+        <Container row>
+          <WarnI className="material-icons">warning</WarnI> 
+          <Text color="helper">Porter encountered an error retrieving logs for this application.</Text>
+        </Container>
+      </Fieldset>
+    ) : (
+      renderContents()
+    )
+  );
 };
 
 export default LogSection;
+
+const I = styled.i`
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin-right: 5px;
+  justify-content: center;
+`;
+
+const WarnI = styled.i`
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  justify-content: center;
+  opacity: 0.6;
+`;
+
+const Spinner = styled.img`
+  width: 15px;
+  height: 15px;
+`;
 
 const BackButton = styled.div`
   display: flex;
@@ -517,12 +551,7 @@ const Checkbox = styled.div<{ checked: boolean }>`
   }
 `;
 
-const Spacer = styled.div<{ width?: string }>`
-  height: 100%;
-  width: ${(props) => props.width || "10px"};
-`;
-
-const Button = styled.div`
+const ScrollButton = styled.div`
   background: #26292e;
   border-radius: 5px;
   height: 30px;

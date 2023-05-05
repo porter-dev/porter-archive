@@ -115,6 +115,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			Registries: registries,
 		}
 
+		// create the chart
 		_, err = helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deploying app: %s", err.Error())))
@@ -153,6 +154,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			PullRequestURL: request.PullRequestURL,
 		}
 
+		// create the db entry
 		porterApp, err := c.Repo().PorterApp().UpdatePorterApp(app)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error writing app to DB: %s", err.Error())))
@@ -190,6 +192,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			Registries: registries,
 		}
 
+		// update the chart
 		_, err = helmAgent.UpgradeInstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deploying app: %s", err.Error())))
@@ -197,12 +200,51 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
+		// update the DB entry
 		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
 
-		c.WriteResult(w, r, app.ToPorterAppType())
+		if request.RepoName != "" {
+			app.RepoName = request.RepoName
+		}
+		if request.GitBranch != "" {
+			app.GitBranch = request.GitBranch
+		}
+		if request.BuildContext != "" {
+			app.BuildContext = request.BuildContext
+		}
+		if request.Builder != "" {
+			app.Builder = request.Builder
+		}
+		if request.Buildpacks != "" {
+			if request.Buildpacks == "null" {
+				app.Buildpacks = ""
+			} else {
+				app.Buildpacks = request.Buildpacks
+			}
+		}
+		if request.Dockerfile != "" {
+			if request.Dockerfile == "null" {
+				app.Dockerfile = ""
+			} else {
+				app.Dockerfile = request.Dockerfile
+			}
+		}
+		if request.ImageRepoURI != "" {
+			app.ImageRepoURI = request.ImageRepoURI
+		}
+		if request.PullRequestURL != "" {
+			app.PullRequestURL = request.PullRequestURL
+		}
+
+		updatedPorterApp, err := c.Repo().PorterApp().UpdatePorterApp(app)
+		if err != nil {
+			return
+		}
+
+		c.WriteResult(w, r, updatedPorterApp.ToPorterAppType())
 	}
 }

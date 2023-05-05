@@ -13,7 +13,6 @@ import Loading from "../Loading";
 import Spacer from "components/porter/Spacer";
 import AdvancedBuildSettings from "main/home/app-dashboard/new-app-flow/AdvancedBuildSettings";
 import { render } from "react-dom";
-import BuildpackConfigSection from "main/home/cluster-dashboard/expanded-chart/build-settings/_BuildpackConfigSection";
 
 interface AutoBuildpack {
   name?: string;
@@ -31,6 +30,8 @@ type PropsType = {
   setFolderPath: (x: string) => void;
   setBuildConfig: (x: any) => void;
   setPorterYaml: (x: any) => void;
+  buildView: string;
+  setBuildView: (x: string) => void;
 };
 
 const DetectContentsList: React.FC<PropsType> = (props) => {
@@ -38,6 +39,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   const [error, setError] = useState(false);
   const [contents, setContents] = useState<FileType[]>([]);
   const [currentDir, setCurrentDir] = useState("");
+
   const [autoBuildpack, setAutoBuildpack] = useState<AutoBuildpack>({
     valid: false,
     name: "",
@@ -75,7 +77,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
 
     if (dockerFileItem) {
       props.setDockerfilePath(dockerFileItem.path);
-      setShowingBuildContextPrompt("docker");
+      props.setBuildView("docker");
     }
   }, [contents]);
 
@@ -231,10 +233,11 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
             setBuildConfig={props.setBuildConfig}
             autoBuildPack={autoBuildpack}
             showSettings={false}
-            buildView={props.dockerfilePath ? "dockerfile" : "buildpacks"}
             actionConfig={props.actionConfig}
             branch={props.branch}
             folderPath={props.folderPath}
+            buildView={props.buildView}
+            setBuildView={props.setBuildView}
           />
         </>
       )}

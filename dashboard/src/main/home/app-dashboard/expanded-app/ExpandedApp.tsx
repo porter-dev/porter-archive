@@ -173,6 +173,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         newAppData
       );
       setPorterJson(porterJson);
+      console.log(newAppData);
       setAppData(newAppData);
       updateServicesAndEnvVariables(resChartData?.data, porterJson);
     } catch (err) {
@@ -226,10 +227,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         const finalPorterYaml = createFinalPorterYaml(
           services,
           envVars,
-          porterJson,
-          appData.app.name,
-          currentProject.id,
-          currentCluster.id
+          porterJson
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
@@ -507,6 +505,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 }
                 setServices(x);
               }}
+              chart={appData.chart}
               services={services}
             />
             <Spacer y={1} />
@@ -728,8 +727,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                           { label: "Settings", value: "settings" },
                         ]
                     : [
-                        { label: "Logs", value: "logs" },
                         { label: "Overview", value: "overview" },
+                        { label: "Events", value: "events" },
+                        { label: "Logs", value: "logs" },
                         {
                           label: "Environment variables",
                           value: "environment-variables",

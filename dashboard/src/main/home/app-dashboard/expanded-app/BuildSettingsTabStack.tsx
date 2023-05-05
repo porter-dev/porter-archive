@@ -41,6 +41,10 @@ type Props = {
   updatePorterApp: (options: Partial<PorterAppOptions>) => Promise<void>;
   clearStatus: () => void;
 };
+interface AutoBuildpack {
+  name?: string;
+  valid: boolean;
+}
 
 const BuildSettingsTabStack: React.FC<Props> = ({
   appData,
@@ -53,9 +57,11 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   const [updated, setUpdated] = useState(null);
   const [branch, setBranch] = useState(appData.app.git_branch);
   const [showSettings, setShowSettings] = useState(false);
-  const [dockerfilePath, setDockerfilePath] = useState(
-    appData.app.dockerfilePath
+  const [dockerfilePath, setDockerfilePath] = useState(appData.app.dockerfile);
+  const [buildView, setBuildView] = useState<string>(
+    appData.app.dockerfile ? "docker" : "buildpacks"
   );
+
   const [folderPath, setFolderPath] = useState("./");
   const defaultActionConfig: ActionConfigType = {
     git_repo: appData.app.repo_name,
@@ -65,8 +71,12 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     kind: "github",
   };
   const defaultBuildConfig: BuildConfig = {
-    builder: appData.app.builder,
-    buildpacks: appData.app.build_packs?.split(","),
+    builder: appData.app.builder
+      ? appData.app.builder
+      : "paketobuildpacks/builder:full",
+    buildpacks: appData.app.build_packs
+      ? appData.app.build_packs.split(",")
+      : [],
     config: appData.chart.config,
   };
   const [buildConfig, setBuildConfig] = useState<BuildConfig>({
@@ -74,6 +84,10 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   });
   const [redeployOnSave, setRedeployOnSave] = useState(true);
   const [runningWorkflowURL, setRunningWorkflowURL] = useState("");
+  const [autoBuildpack, setAutoBuildpack] = useState<AutoBuildpack>({
+    valid: false,
+    name: "",
+  });
 
   const [actionConfig, setActionConfig] = useState<ActionConfigType>({
     ...defaultActionConfig,
@@ -161,14 +175,19 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   };
   const saveConfig = async () => {
     console.log(appData);
+    console.log(appData.app.dockerfile);
+    console.log(buildView);
     try {
       await updatePorterApp({
         repo_name: appData.app.repo_name,
         git_branch: branch,
         build_context: appData.app.build_context,
         builder: buildConfig.builder,
-        buildpacks: buildConfig.buildpacks?.join(","),
-        dockerfile: appData.app.dockerfile,
+        buildpacks:
+          buildView === "buildpacks"
+            ? buildConfig?.buildpacks?.join(",")
+            : "null",
+        dockerfile: buildView === "buildpacks" ? "null" : dockerfilePath,
         image_repo_uri: appData.chart.image_repo_uri,
       });
       onTabSwitch();
@@ -180,8 +199,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     setButtonStatus("loading");
 
     try {
-      console.log(buildConfig.builder);
-
       await saveConfig();
       setAppData(appData);
 
@@ -196,8 +213,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     setButtonStatus("loading");
 
     try {
-      console.log(buildConfig.builder);
-
       await saveConfig();
       setAppData(appData);
 
@@ -214,19 +229,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   return (
     <>
       <Text size={16}>Build settings</Text>
-      {/* <ActionConfEditorStack
-        actionConfig={actionConfig}
-        setActionConfig={(actionConfig: ActionConfigType) => {
-          setActionConfig((currentActionConfig: ActionConfigType) => ({
-            ...currentActionConfig,
-            ...actionConfig,
-          }));
-          setImageUrl(actionConfig.image_repo_uri);
-        }}
-        setBranch={setBranch}
-        setDockerfilePath={setDockerfilePath}
-        setFolderPath={setFolderPath}
-      /> */}
       <InputRow
         disabled={true}
         label="Git repository"
@@ -250,6 +252,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
             setBranch={setBranch}
             setDockerfilePath={setDockerfilePath}
             setFolderPath={setFolderPath}
+            setBuildView={setBuildView}
           />
         </>
       )}
@@ -268,38 +271,19 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           />
         </>
       )}
-      <StyledAdvancedBuildSettings
-        showSettings={showSettings}
-        isCurrent={true}
-        onClick={() => {
-          setShowSettings(!showSettings);
-        }}
-      >
-        <AdvancedBuildTitle>
-          <i className="material-icons dropdown">arrow_drop_down</i>
-          Configure buildpack settings
-        </AdvancedBuildTitle>
-      </StyledAdvancedBuildSettings>
-      <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
-        <StyledSourceBox>
-          <Spacer y={0.5} />
-          {actionConfig && (
-            <BuildpackStack
-              actionConfig={actionConfig}
-              branch={branch}
-              folderPath={folderPath}
-              onChange={(config) => {
-                setBuildConfig(config);
-                setDockerfilePath("");
-              }}
-              hide={!showSettings}
-              currentBuildConfig={buildConfig}
-              setBuildConfig={setBuildConfig}
-            />
-          )}
-          <Spacer y={0.5} />
-        </StyledSourceBox>
-      </AnimateHeight>
+      <AdvancedBuildSettings
+        dockerfilePath={dockerfilePath}
+        setDockerfilePath={setDockerfilePath}
+        setBuildConfig={setBuildConfig}
+        autoBuildPack={autoBuildpack}
+        showSettings={false}
+        buildView={buildView}
+        setBuildView={setBuildView}
+        actionConfig={actionConfig}
+        branch={branch}
+        folderPath={folderPath}
+        currentBuildConfig={buildConfig}
+      />
       <Spacer y={1} />
       <Checkbox
         checked={redeployOnSave}

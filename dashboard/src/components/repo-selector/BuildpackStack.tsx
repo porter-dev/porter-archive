@@ -115,7 +115,6 @@ export const BuildpackStack: React.FC<{
   };
   useEffect(() => {
     let buildConfig: BuildConfig = {} as BuildConfig;
-
     buildConfig.builder = selectedStack;
     buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
       return buildpack.buildpack;
@@ -177,7 +176,7 @@ export const BuildpackStack: React.FC<{
         var detectedBuildpacks = defaultBuilder.detected;
         var availableBuildpacks = defaultBuilder.others;
         var defaultStack = "";
-        if (currentBuildConfig) {
+        if (currentBuildConfig && currentBuildConfig.buildpacks.length != 0) {
           if (!detectedBuildpacks) {
             detectedBuildpacks = [];
           }
@@ -268,8 +267,6 @@ export const BuildpackStack: React.FC<{
       }));
     });
   }, [builders]);
-
-  // const handleSelectBuilder = (builderName: string) => {
   //   const builder = builders.find(
   //     (b) => b.name.toLowerCase() === builderName.toLowerCase()
   //   );
@@ -487,7 +484,7 @@ const Shade = styled.div`
   background: linear-gradient(to bottom, #00000000, ${({ theme }) => theme.fg});
 `;
 
-const Footer = styled.div` 
+const Footer = styled.div`
   position: relative;
   width: calc(100% + 50px);
   margin-left: -25px;
@@ -496,8 +493,7 @@ const Footer = styled.div`
   border-bottom-right-radius: 10px;
   background: ${({ theme }) => theme.fg};
   margin-bottom: -30px;
-  padding-bottom: 30px
-
+  padding-bottom: 30px;
 `;
 
 const I = styled.i`

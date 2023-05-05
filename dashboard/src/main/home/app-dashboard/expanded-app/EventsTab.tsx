@@ -4,6 +4,10 @@ import styled from "styled-components";
 import EventList from "./EventList";
 import Loading from "components/Loading";
 import { Context } from "shared/Context";
+import Fieldset from "components/porter/Fieldset";
+import Button from "components/porter/Button";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
 
 type Props = {
   currentChart: any;
@@ -108,23 +112,23 @@ const EventsTab: React.FC<Props> = ({ currentChart }) => {
 
   if (isLoading) {
     return (
-      <Placeholder>
+      <Fieldset>
         <Loading />
-      </Placeholder>
+      </Fieldset>
     );
   }
 
   if (!hasPorterAgent) {
     return (
-      <Placeholder>
-        <div>
-          <Header>We couldn't detect the Porter agent on your cluster</Header>
-          In order to use the events tab, you need to install the Porter agent.
-          <InstallPorterAgentButton onClick={() => triggerInstall()}>
-            <i className="material-icons">add</i> Install Porter agent
-          </InstallPorterAgentButton>
-        </div>
-      </Placeholder>
+      <Fieldset>
+        <Text size={16}>We couldn't detect the Porter agent on your cluster</Text>
+        <Spacer y={0.5} />
+        <Text color="helper">In order to use the Events tab, you need to install the Porter agent.</Text>
+        <Spacer y={1} />
+        <Button onClick={() => triggerInstall()}>
+          <I className="material-icons">add</I> Install Porter agent
+        </Button>
+      </Fieldset>
     );
   }
 
@@ -221,4 +225,12 @@ const Header = styled.div`
   color: #aaaabb;
   font-size: 16px;
   margin-bottom: 15px;
+`;
+
+const I = styled.i`
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin-right: 5px;
+  justify-content: center;
 `;

@@ -77,6 +77,10 @@ type Detected = {
   detected: boolean;
   message: string;
 };
+interface GithubAppAccessData {
+  username?: string;
+  accounts?: string[];
+}
 
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [templateName, setTemplateName] = useState("");
@@ -94,6 +98,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [actionConfig, setActionConfig] = useState<ActionConfigType>({
     ...defaultActionConfig,
   });
+  const [buildView, setBuildView] = useState<string>("buildpacks");
   const [branch, setBranch] = useState("");
   const [dockerfilePath, setDockerfilePath] = useState(null);
   const [procfilePath, setProcfilePath] = useState(null);
@@ -101,16 +106,40 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [buildConfig, setBuildConfig] = useState({});
   const [porterYaml, setPorterYaml] = useState("");
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
-  const [showConnectModal, setConnectModal] = useState<boolean>(false);
+  const [showGithubConnectModal, setShowGithubConnectModal] = useState<boolean>(
+    false
+  );
+
+  const [showConnectModal, setConnectModal] = useState<boolean>(true);
   const [hasClickedDoNotConnect, setHasClickedDoNotConnect] = useState(() =>
     JSON.parse(localStorage.getItem("hasClickedDoNotConnect") || "false")
   );
+  const [accessLoading, setAccessLoading] = useState(true);
+  const [accessError, setAccessError] = useState(false);
+  const [accessData, setAccessData] = useState<GithubAppAccessData>({});
+  const [providers, setProviders] = useState([]);
+  const [currentProvider, setCurrentProvider] = useState(null);
+  const [hasProviders, setHasProviders] = useState(true);
 
   const [porterJson, setPorterJson] = useState<PorterJson | undefined>(
     undefined
   );
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
+  const handleSetAccessData = (data: GithubAppAccessData) => {
+    setAccessData(data);
+    setShowGithubConnectModal(
+      !hasClickedDoNotConnect &&
+      (accessError || !data.accounts || data.accounts?.length === 0)
+    );
+  };
 
+  const handleSetAccessError = (error: boolean) => {
+    setAccessError(error);
+    setShowGithubConnectModal(
+      !hasClickedDoNotConnect &&
+      (error || !accessData.accounts || accessData.accounts?.length === 0)
+    );
+  };
   const validatePorterYaml = (yamlString: string) => {
     let parsedYaml;
     try {
@@ -157,36 +186,57 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       console.log("Error converting porter yaml file to input: " + error);
     }
   };
+  const sortProviders = (providers: Provider[]) => {
+    const githubProviders = providers.filter(
+      (provider) => provider.provider === "github"
+    );
 
-  // const renderGithubConnect = () => {
-  //   const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
-  //   const encoded_redirect_uri = encodeURIComponent(url);
+    const gitlabProviders = providers.filter(
+      (provider) => provider.provider === "gitlab"
+    );
 
-  //   if (accessError) {
-  //     return (
-  //       <ListWrapper>
-  //         <Helper>
-  //           No connected repositories found.
-  //           <A href={"/api/integrations/github-app/oauth"}>
-  //             Authorize Porter to view your repositories.
-  //           </A>
-  //         </Helper>
-  //       </ListWrapper>
-  //     );
-  //   } else if (!accessData.accounts || accessData.accounts?.length == 0) {
-  //     return (
-  //       <>
-  //         <Text size={16}>No connected repositories were found.</Text>
-  //         <ConnectToGithubButton
-  //           href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
-  //         >
-  //           <GitHubIcon src={github} /> Connect to GitHub
-  //         </ConnectToGithubButton>
-  //       </>
-  //     );
-  //   }
-  // };
-  // Deploys a Helm chart and writes build settings to the DB
+    const githubSortedProviders = githubProviders.sort((a, b) => {
+      if (a.provider === "github" && b.provider === "github") {
+        return a.name.localeCompare(b.name);
+      }
+    });
+
+    const gitlabSortedProviders = gitlabProviders.sort((a, b) => {
+      if (a.provider === "gitlab" && b.provider === "gitlab") {
+        return a.instance_url.localeCompare(b.instance_url);
+      }
+    });
+    return [...gitlabSortedProviders, ...githubSortedProviders];
+  };
+  useEffect(() => {
+    let isSubscribed = true;
+
+    api
+      .getGitProviders("<token>", {}, { project_id: currentProject?.id })
+      .then((res) => {
+        const data = res.data;
+        if (!isSubscribed) {
+          return;
+        }
+
+        if (!Array.isArray(data)) {
+          setHasProviders(false);
+          return;
+        }
+
+        const sortedProviders = sortProviders(data);
+        setProviders(sortedProviders);
+        setCurrentProvider(sortedProviders[0]);
+      })
+      .catch((err) => {
+        setHasProviders(false);
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [currentProject]);
+
   const isAppNameValid = (name: string) => {
     const regex = /^[a-z0-9-]{1,61}$/;
     return regex.test(name);
@@ -202,16 +252,17 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     }
   };
 
+  const handleDoNotConnect = () => {
+    setHasClickedDoNotConnect(true);
+    localStorage.setItem("hasClickedDoNotConnect", "true");
+  };
+
   const shouldHighlightAppNameInput = () => {
     return (
       formState.applicationName !== "" &&
       (!isAppNameValid(formState.applicationName) ||
         formState.applicationName.length > 61)
     );
-  };
-  const handleDoNotConnect = () => {
-    setHasClickedDoNotConnect(true);
-    localStorage.setItem("hasClickedDoNotConnect", "true");
   };
 
   const deployPorterApp = async () => {
@@ -232,9 +283,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         formState.serviceList,
         formState.envVariables,
         porterJson,
-        formState.applicationName,
-        currentProject.id,
-        currentCluster.id
       );
 
       const yamlString = yaml.dump(finalPorterYaml);
@@ -256,8 +304,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           git_repo_id: actionConfig?.git_repo_id,
           build_context: folderPath,
           builder: (buildConfig as any)?.builder,
-          buildpacks: (buildConfig as any)?.buildpacks?.join(",") ?? "",
-          dockerfile: dockerfilePath,
+          buildpacks:
+            buildView === "buildpacks"
+              ? (buildConfig as any)?.buildpacks?.join(",") ?? ""
+              : "",
+          dockerfile: buildView === "docker" ? dockerfilePath : "",
           image_repo_uri: imageUrl,
           porter_yaml: base64Encoded,
           ...imageInfo,
@@ -287,28 +338,45 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       setDeploying(false);
     }
   };
+  useEffect(() => {
+    setFormState({ ...formState, serviceList: [] });
+  }, [actionConfig, branch]);
 
   // useEffect(() => {
-  //   api
-  //     .getGithubAccounts("<token>", {}, {})
-  //     .then(({ data }) => {
+  //   const fetchGithubAccounts = async () => {
+  //     try {
+  //       const { data } = await api.getGithubAccounts("<token>", {}, {});
   //       setAccessData(data);
-  //       setAccessLoading(false);
-  //     })
-  //     .catch(() => {
+  //       if (data) {
+  //         setHasProviders(false);
+  //       }
+  //     } catch (error) {
   //       setAccessError(true);
+  //     } finally {
   //       setAccessLoading(false);
-  //     });
-  // }, []);
+  //     }
+
+  //     setConnectModal(
+  //       !hasClickedDoNotConnect && (!hasProviders || accessError)
+  //     );
+  //   };
+
+  //   fetchGithubAccounts();
+  // }, [hasClickedDoNotConnect, accessData.accounts, accessError]);
 
   return (
     <CenterWrapper>
       <Div>
-        {showConnectModal && (
+        {showConnectModal && !hasProviders && (
           <GithubConnectModal
             closeModal={() => setConnectModal(false)}
             hasClickedDoNotConnect={hasClickedDoNotConnect}
             handleDoNotConnect={handleDoNotConnect}
+            accessData={accessData}
+            setAccessLoading={setAccessLoading}
+            accessError={accessError}
+            setAccessData={handleSetAccessData}
+            setAccessError={handleSetAccessError}
           />
         )}
         <StyledConfigureTemplate>
@@ -336,8 +404,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   width="300px"
                   error={
                     shouldHighlightAppNameInput() &&
-                    (formState.applicationName.length > 61
-                      ? "Maximum 61 characters allowed."
+                    (formState.applicationName.length > 30
+                      ? "Maximum 30 characters allowed."
                       : 'Lowercase letters, numbers, and "-" only.')
                   }
                   setValue={(e) => {
@@ -389,16 +457,16 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setPorterYaml={(newYaml: string) => {
                     validatePorterYaml(newYaml);
                   }}
+                  buildView={buildView}
+                  setBuildView={setBuildView}
                 />
               </>,
               <>
                 <Text size={16}>
                   Application services{" "}
-                  {detected && (
+                  {detected && formState.serviceList.length > 0 && (
                     <AppearingDiv>
-                      <Text
-                        color={detected.detected ? "#4797ff" : "#fcba03"}
-                      >
+                      <Text color={detected.detected ? "#4797ff" : "#fcba03"}>
                         {detected.detected ? (
                           <I className="material-icons">check</I>
                         ) : (

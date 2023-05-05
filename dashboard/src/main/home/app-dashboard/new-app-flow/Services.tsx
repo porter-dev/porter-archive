@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, {useContext, useEffect, useState} from "react";
 import ServiceContainer from "./ServiceContainer";
 import styled from "styled-components";
 import Spacer from "components/porter/Spacer";
@@ -13,13 +13,16 @@ import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
 import { Service, ServiceType } from "./serviceTypes";
+import api from "../../../../shared/api";
+import {Context} from "../../../../shared/Context";
 
 interface ServicesProps {
   services: Service[];
   setServices: (services: Service[]) => void;
+  chart: any
 }
 
-const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
+const Services: React.FC<ServicesProps> = ({ services, setServices, chart }) => {
   const [showAddServiceModal, setShowAddServiceModal] = useState<boolean>(
     false
   );
@@ -45,6 +48,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
                 <ServiceContainer
                   key={service.name}
                   service={service}
+                  chart={chart}
                   editService={(newService: Service) =>
                     setServices(
                       services.map((s, i) => (i === index ? newService : s))

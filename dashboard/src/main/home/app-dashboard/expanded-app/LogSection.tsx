@@ -423,7 +423,7 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
       <Fieldset>
         <Text size={16}>We couldn't detect the Porter agent on your cluster</Text>
         <Spacer y={0.5} />
-        <Text color="helper">In order to use the events tab, you need to install the Porter agent.</Text>
+        <Text color="helper">In order to use the logs tab, you need to install the Porter agent.</Text>
         <Spacer y={1} />
         <Button onClick={() => triggerInstall()}>
           <I className="material-icons">add</I> Install Porter agent
@@ -432,7 +432,7 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     ) : logsError ? (
       <Fieldset>
         <Container row>
-          <WarnI className="material-icons">warning</WarnI> 
+          <WarnI className="material-icons">warning</WarnI>
           <Text color="helper">Porter encountered an error retrieving logs for this application.</Text>
         </Container>
       </Fieldset>

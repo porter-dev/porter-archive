@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from "react";
+import React, { useContext, useEffect, useState } from "react";
 import ServiceContainer from "./ServiceContainer";
 import styled from "styled-components";
 import Spacer from "components/porter/Spacer";
@@ -14,12 +14,12 @@ import worker from "assets/worker.png";
 import job from "assets/job.png";
 import { Service, ServiceType } from "./serviceTypes";
 import api from "../../../../shared/api";
-import {Context} from "../../../../shared/Context";
+import { Context } from "../../../../shared/Context";
 
 interface ServicesProps {
   services: Service[];
   setServices: (services: Service[]) => void;
-  chart: any
+  chart?: any
 }
 
 const Services: React.FC<ServicesProps> = ({ services, setServices, chart }) => {

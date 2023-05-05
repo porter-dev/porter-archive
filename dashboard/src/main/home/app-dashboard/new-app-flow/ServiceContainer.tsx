@@ -99,9 +99,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         </ServiceTitle>
         {service.canDelete && (
           <ActionButton
-            onClick={(e) => {
-              deleteService();
-            }}
+            onClick={deleteService}
           >
             <span className="material-icons">delete</span>
           </ActionButton>
@@ -110,7 +108,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       <AnimateHeight
         height={showExpanded ? height : 0}
       >
-        <StyledSourceBox 
+        <StyledSourceBox
           showExpanded={showExpanded}
           chart={chart}
           hasFooter={getHasBuiltImage()}
@@ -124,11 +122,11 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         // Check if has built image
         getHasBuiltImage()
       ) && (
-        <StatusFooter
-          chart={chart}
-          service={service}
-        />
-      )}
+          <StatusFooter
+            chart={chart}
+            service={service}
+          />
+        )}
       <Spacer y={0.5} />
     </>
   );
@@ -141,7 +139,7 @@ const ServiceTitle = styled.div`
   align-items: center;
 `;
 
-const StyledSourceBox = styled.div<{ 
+const StyledSourceBox = styled.div<{
   showExpanded: boolean,
   chart: any,
   hasFooter?: boolean,

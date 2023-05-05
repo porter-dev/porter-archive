@@ -173,7 +173,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         newAppData
       );
       setPorterJson(porterJson);
-      console.log(newAppData)
       setAppData(newAppData);
       updateServicesAndEnvVariables(resChartData?.data, porterJson);
     } catch (err) {

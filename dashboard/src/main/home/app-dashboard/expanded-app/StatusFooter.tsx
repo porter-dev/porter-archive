@@ -200,6 +200,7 @@ const StatusFooter: React.FC<Props> = ({
           <Text color="helper">
             Last run succeeded at 12:39 PM on 4/13/23
           </Text>
+          {/*
           <Spacer inline x={1} />
           <Button
             onClick={() => { }}
@@ -211,6 +212,7 @@ const StatusFooter: React.FC<Props> = ({
             <I className="material-icons">open_in_new</I>
             History
           </Button>
+          */}
         </Container>
       )}
       {service.type !== "job" && (
@@ -225,6 +227,7 @@ const StatusFooter: React.FC<Props> = ({
             {stale == 1 ? `(${stale} old instance)` : ""}
             {stale > 1 ? `(${stale} old instances)` : ""}
           </Text>
+          {/*
           <Spacer inline x={1} />
           <Button
             onClick={() => { }}
@@ -236,6 +239,7 @@ const StatusFooter: React.FC<Props> = ({
             <I className="material-icons">open_in_new</I>
             Logs
           </Button>
+          */}
         </Container>
       )}
     </StyledStatusFooter>

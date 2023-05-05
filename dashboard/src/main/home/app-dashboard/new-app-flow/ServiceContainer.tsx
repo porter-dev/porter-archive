@@ -72,6 +72,9 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   };
 
   const getHasBuiltImage = () => {
+    if (!chart) {
+      return false;
+    }
     return (
       !_.isEmpty((
         Object.values(chart?.chart?.values)[0] as any

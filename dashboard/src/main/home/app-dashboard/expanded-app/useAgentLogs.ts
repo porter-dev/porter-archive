@@ -79,7 +79,6 @@ export const useLogs = (
   // if setDate is set, results are not live
   setDate?: Date
 ) => {
-  console.log("calling useLogs", currentPod, namespace, searchParam);
   const isLive = !setDate;
   const logsBufferRef = useRef<Log[]>([]);
   const { currentCluster, currentProject, setCurrentError } = useContext(
@@ -190,7 +189,8 @@ export const useLogs = (
 
     const q = new URLSearchParams({
       pod_selector: currentPod,
-      namespace,
+      // TODO: re-enable namespace when we properly install stack apps to namespace
+      // namespace,
       search_param: searchParam,
       revision: currentChart.version.toString(),
     }).toString();
@@ -237,7 +237,8 @@ export const useLogs = (
         "<token>",
         {
           pod_selector: currentPod,
-          namespace,
+          // TODO: re-enable namespace when we properly install stack apps to namespace
+          // namespace,
           revision: currentChart.version.toString(),
           search_param: searchParam,
           start_range: startDate,

@@ -47,14 +47,11 @@ export const createFinalPorterYaml = (
     services: Service[],
     dashboardSetEnvVariables: KeyValueType[],
     porterJson: PorterJson | undefined,
-    stackName: string,
-    projectId: number,
-    clusterId: number,
 ): PorterJson => {
     return {
         version: "v1stack",
         env: combineEnv(dashboardSetEnvVariables, porterJson?.env),
-        apps: createApps(services, porterJson, stackName, projectId, clusterId),
+        apps: createApps(services, porterJson),
     };
 };
 
@@ -77,28 +74,14 @@ const combineEnv = (
 const createApps = (
     serviceList: Service[],
     porterJson: PorterJson | undefined,
-    stackName: string,
-    projectId: number,
-    clusterId: number,
 ): z.infer<typeof AppsSchema> => {
     const apps: z.infer<typeof AppsSchema> = {};
     for (const service of serviceList) {
         let config = Service.serialize(service);
-        // TODO: get rid of this block when we handle ingress on the backend
-        if (Service.isWeb(service)) {
-            const ingress = Service.handleWebIngress(
-                service,
-                stackName,
-                clusterId,
-                projectId
-            );
-            config = {
-                ...config,
-                ...ingress,
-            };
-        }
+
         if (
             porterJson != null &&
+            porterJson.apps != null &&
             porterJson.apps[service.name] != null &&
             porterJson.apps[service.name].config != null
         ) {
@@ -107,6 +90,7 @@ const createApps = (
                 porterJson.apps[service.name].config
             );
         }
+
         apps[service.name] = {
             type: service.type,
             run: service.startCommand.value,

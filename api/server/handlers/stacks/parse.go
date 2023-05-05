@@ -328,6 +328,11 @@ func createSubdomainIfRequired(
 			customDomain, cOK := customDomVal.(bool)
 
 			if eOK && cOK && enabled && !customDomain {
+				// subdomain already exists, no need to create one
+				if porterHosts, ok := ingressMap["porter_hosts"].([]interface{}); ok && len(porterHosts) > 0 {
+					return nil
+				}
+
 				// in the case of ingress enabled but no custom domain, create subdomain
 				dnsRecord, err := createDNSRecord(opts)
 				if err != nil {

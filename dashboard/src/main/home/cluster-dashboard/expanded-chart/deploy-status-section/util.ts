@@ -51,3 +51,29 @@ export const getAvailability = (kind: string, c: any) => {
       return [1, 1];
   }
 };
+
+export const getAvailabilityStacks = (kind: string, c: any) => {
+  switch (kind?.toLowerCase()) {
+    case "deployment":
+    case "replicaset":
+      const available =
+        c.status?.updatedReplicas ||
+        c.status?.updatedReplicas ||
+        c.status?.replicas - c.status?.unavailableReplicas ||
+        0;
+      const total = c.spec.replicas;
+      const stale =
+        c.status?.availableReplicas - c.status?.updatedReplicas || 0;
+      return [available, total, stale];
+    case "statefulset":
+      return [c.status?.readyReplicas || 0, c.status?.replicas || 0, 0];
+    case "daemonset":
+      return [
+        c.status?.numberAvailable || 0,
+        c.status?.desiredNumberScheduled || 0,
+        0,
+      ];
+    case "job":
+      return [1, 1, 0];
+  }
+};

@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useMemo} from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import AnimateHeight, { Height } from "react-animate-height";
 import styled from "styled-components";
 
@@ -14,10 +14,16 @@ import { Service } from "./serviceTypes";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
-import {NewWebsocketOptions, useWebsockets} from "../../../../shared/hooks/useWebsockets";
+import {
+  NewWebsocketOptions,
+  useWebsockets,
+} from "../../../../shared/hooks/useWebsockets";
 import { Context } from "../../../../shared/Context";
 import api from "../../../../shared/api";
-import {getAvailability} from "../../cluster-dashboard/expanded-chart/deploy-status-section/util";
+import {
+  getAvailability,
+  getAvailabilityStacks,
+} from "../../cluster-dashboard/expanded-chart/deploy-status-section/util";
 
 interface ServiceProps {
   service: Service;
@@ -35,12 +41,13 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   const [showExpanded, setShowExpanded] = React.useState<boolean>(false);
   const [height, setHeight] = React.useState<Height>("auto");
   const [controller, setController] = React.useState<any>(null);
-  const [available, setAvailable] = React.useState<number>(0)
-  const [total, setTotal] = React.useState<number>(0)
+  const [available, setAvailable] = React.useState<number>(0);
+  const [total, setTotal] = React.useState<number>(0);
+  const [stale, setStale] = React.useState<number>(0);
 
-  console.log("initial controller", controller)
-  console.log("initial available", available)
-  console.log("initial total", total)
+  console.log("initial controller", controller);
+  console.log("initial available", available);
+  console.log("initial total", total);
   const {
     newWebsocket,
     openWebsocket,
@@ -50,7 +57,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
 
   const getSelectors = () => {
     let ml =
-        controller?.spec?.selector?.matchLabels || controller?.spec?.selector;
+      controller?.spec?.selector?.matchLabels || controller?.spec?.selector;
     let i = 1;
     let selector = "";
     for (var key in ml) {
@@ -60,18 +67,18 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       }
       i += 1;
     }
-    return selector
-  }
+    return selector;
+  };
 
   useEffect(() => {
-    const selectors = getSelectors()
+    const selectors = getSelectors();
 
-    console.log("effect selectors", selectors)
+    console.log("effect selectors", selectors);
 
     if (selectors.length > 0) {
       console.log("initial webby", selectors);
-    // updatePods();
-      [controller?.kind, "pod"].forEach((kind) => {
+      // updatePods();
+      [controller?.kind].forEach((kind) => {
         setupWebsocket(kind, controller?.metadata?.uid, selectors);
       });
       return () => closeAllWebsockets();
@@ -94,20 +101,45 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         }
       )
       .then((res: any) => {
-        let controllers =
+        const controllers =
           chart.chart.metadata.name == "job"
             ? res.data[0]?.status.active
             : res.data;
         console.log("testing input", controllers);
-        setController(controllers[0]);
+        const filteredControllers = controllers.filter((controller: any) => {
+          const name = getName(service);
+          console.log("filter name", name);
+          return name == controller.metadata.name;
+        });
+        console.log("filtered controllers", filteredControllers);
+        if (filteredControllers.length == 1) {
+          setController(filteredControllers[0]);
+        }
       })
       .catch((err) => {
         console.log(err);
       });
   }, []);
 
-  const setupWebsocket = (kind: string, controllerUid: string, selectors: string) => {
-    console.log("called with", kind, controllerUid, selectors)
+  const getName = (service: any) => {
+    const name = chart.name + "-" + service.name;
+
+    switch (service.type) {
+      case "web":
+        return name + "-web";
+      case "worker":
+        return name + "-wkr";
+      case "job":
+        return name + "job";
+    }
+  };
+
+  const setupWebsocket = (
+    kind: string,
+    controllerUid: string,
+    selectors: string
+  ) => {
+    console.log("called with", kind, controllerUid, selectors);
     let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status?`;
     if (kind == "pod" && selectors) {
       apiEndpoint += `selectors=${selectors}`;
@@ -131,21 +163,40 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         return;
       }
 
-      console.log("event object", object)
+      console.log("event object", event);
+
+      if (event.event_type == "ADD" && total == 0) {
+        let [available, total, stale] = getAvailabilityStacks(
+          object.metadata.kind,
+          object
+        );
+        console.log("response from object", object);
+        console.log("available response", available, total, stale);
+
+        setAvailable(available);
+        setTotal(total);
+        setStale(stale);
+        return;
+      }
 
       // Make a new API call to update pods only when the event type is UPDATE
       if (event.event_type !== "UPDATE") {
         return;
       }
 
-
       // testing hot reload
 
       if (event.Kind != "pod") {
+        let [available, total, stale] = getAvailabilityStacks(
+          object.metadata.kind,
+          object
+        );
+        console.log("response from object", object);
+        console.log("available response", available, total, stale);
 
-        let [available, total] = getAvailability(object.metadata.kind, object);
         setAvailable(available);
         setTotal(total);
+        setStale(stale);
         return;
       }
       // updatePods();
@@ -205,8 +256,11 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     }
   };
 
-  const percentage = Number(1 - available/total).toLocaleString(undefined,{style: 'percent', minimumFractionDigits:2});
-  console.log(percentage)
+  const percentage = Number(1 - available / total).toLocaleString(undefined, {
+    style: "percent",
+    minimumFractionDigits: 2,
+  });
+  console.log(percentage);
 
   return (
     <>
@@ -259,7 +313,11 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         {service.type !== "job" && (
           <Container row>
             <StatusCircle percentage={percentage} />
-            <Text color="helper">Running {available}/{total} instances</Text>
+            <Text color="helper">
+              Running {available}/{total} instances{" "}
+              {stale == 1 ? `(${stale} old instance)` : ""}
+              {stale > 1 ? `(${stale} old instances)` : ""}
+            </Text>
             <Spacer inline x={1} />
             <Button
               onClick={() => console.log("redirect to logs")}

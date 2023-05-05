@@ -226,7 +226,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         const finalPorterYaml = createFinalPorterYaml(
           services,
           envVars,
-          porterJson,
+          porterJson
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
@@ -242,7 +242,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             stack_name: appData.app.name,
           }
         );
-        setButtonStatus("success")
+        setButtonStatus("success");
       } else {
         setButtonStatus(<Error message="Unable to update app" />);
       }
@@ -324,7 +324,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     ) {
       const svcs = Service.deserialize(helmValues, defaultValues, porterJson);
       setServices(svcs);
-      if (helmValues && 'global' in helmValues) {
+      if (helmValues && "global" in helmValues) {
         delete helmValues.global; // not necessary for displaying services or env variables
       }
       if (Object.keys(helmValues).length > 0) {
@@ -505,7 +505,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 setServices(x);
               }}
               chart={appData.chart}
-              services={services} />
+              services={services}
+            />
             <Spacer y={1} />
             <Button
               onClick={updatePorterApp}
@@ -523,6 +524,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             appData={appData}
             setAppData={setAppData}
             onTabSwitch={getPorterApp}
+            clearStatus={() => setButtonStatus("")}
             updatePorterApp={updatePorterApp}
           />
         );
@@ -691,7 +693,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                      appData.chart.chart.metadata.version
+                        appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}
@@ -705,6 +707,25 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? hasBuiltImage
                       ? [
+                          { label: "Logs", value: "logs" },
+                          { label: "Overview", value: "overview" },
+                          {
+                            label: "Environment variables",
+                            value: "environment-variables",
+                          },
+                          { label: "Build settings", value: "build-settings" },
+                          { label: "Settings", value: "settings" },
+                        ]
+                      : [
+                          { label: "Overview", value: "overview" },
+                          {
+                            label: "Environment variables",
+                            value: "environment-variables",
+                          },
+                          { label: "Build settings", value: "build-settings" },
+                          { label: "Settings", value: "settings" },
+                        ]
+                    : [
                         { label: "Overview", value: "overview" },
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
@@ -712,28 +733,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                           label: "Environment variables",
                           value: "environment-variables",
                         },
-                        { label: "Build settings", value: "build-settings" },
                         { label: "Settings", value: "settings" },
                       ]
-                      : [
-                        { label: "Overview", value: "overview" },
-                        {
-                          label: "Environment variables",
-                          value: "environment-variables",
-                        },
-                        { label: "Build settings", value: "build-settings" },
-                        { label: "Settings", value: "settings" },
-                      ]
-                    : [
-                      { label: "Overview", value: "overview" },
-                      { label: "Events", value: "events" },
-                      { label: "Logs", value: "logs" },
-                      {
-                        label: "Environment variables",
-                        value: "environment-variables",
-                      },
-                      { label: "Settings", value: "settings" },
-                    ]
                 }
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {

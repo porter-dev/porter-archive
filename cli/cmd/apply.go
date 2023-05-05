@@ -107,9 +107,18 @@ func init() {
 }
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
-	fileBytes, err := ioutil.ReadFile(porterYAML)
-	if err != nil {
-		return fmt.Errorf("error reading porter.yaml: %w", err)
+	var fileBytes []byte
+	var err error
+	if porterYAML == "" {
+		stackName := os.Getenv("PORTER_STACK_NAME")
+		if stackName == "" {
+			return fmt.Errorf("a valid porter.yaml file must be specified. Run porter apply --help for more information")
+		}
+	} else {
+		fileBytes, err = ioutil.ReadFile(porterYAML)
+		if err != nil {
+			return fmt.Errorf("error reading porter.yaml: %w", err)
+		}
 	}
 
 	var previewVersion struct {

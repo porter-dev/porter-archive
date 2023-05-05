@@ -657,4 +657,5 @@ export interface PorterAppOptions {
     repository: string;
     tag: string;
   };
+  override_release?: boolean;
 }

@@ -35,8 +35,9 @@ type CreatePorterAppRequest struct {
 	Dockerfile       string    `json:"dockerfile"`
 	ImageRepoURI     string    `json:"image_repo_uri"`
 	PullRequestURL   string    `json:"pull_request_url"`
-	PorterYAMLBase64 string    `json:"porter_yaml" form:"required"`
+	PorterYAMLBase64 string    `json:"porter_yaml"`
 	ImageInfo        ImageInfo `json:"image_info" form:"omitempty"`
+	OverrideRelease  bool      `json:"override_release"`
 }
 
 type UpdatePorterAppRequest struct {

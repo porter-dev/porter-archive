@@ -12,6 +12,7 @@ type Props = {
   setBranch: (x: string) => void;
   setDockerfilePath: (x: string) => void;
   setFolderPath: (x: string) => void;
+  setBuildView?: (x: string) => void;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -28,8 +29,8 @@ const ActionConfEditorStack: React.FC<Props> = ({
   setActionConfig,
   setFolderPath,
   setDockerfilePath,
+  setBuildView,
 }) => {
-
   if (!actionConfig.git_repo) {
     return (
       <ExpandedWrapperAlt>
@@ -57,6 +58,7 @@ const ActionConfEditorStack: React.FC<Props> = ({
             setBranch("");
             setFolderPath("");
             setDockerfilePath("");
+            setBuildView("buildpacks");
           }}
         >
           <i className="material-icons">keyboard_backspace</i>

@@ -107,7 +107,7 @@ type GetLogRequest struct {
 	SearchParam string     `schema:"search_param"`
 	Revision    string     `schema:"revision"`
 	PodSelector string     `schema:"pod_selector" form:"required"`
-	Namespace   string     `schema:"namespace" form:"required"`
+	Namespace   string     `schema:"namespace"`
 	Direction   string     `schema:"direction"`
 }
 

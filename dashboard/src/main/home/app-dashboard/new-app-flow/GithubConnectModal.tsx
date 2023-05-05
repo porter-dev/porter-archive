@@ -19,21 +19,29 @@ type Props = RouteComponentProps & {
   closeModal: () => void;
   hasClickedDoNotConnect: boolean;
   handleDoNotConnect: () => void;
+  setAccessError: (error: boolean) => void;
+  setAccessLoading: (loading: boolean) => void;
+  setAccessData: (data: GithubAppAccessData) => void;
+  accessData: GithubAppAccessData;
+  accessError: boolean;
 };
 
 interface GithubAppAccessData {
   username?: string;
   accounts?: string[];
+  accessError?: boolean;
 }
 
 const GithubConnectModal: React.FC<Props> = ({
   closeModal,
   hasClickedDoNotConnect,
   handleDoNotConnect,
+  accessError,
+  setAccessError,
+  setAccessLoading,
+  setAccessData,
+  accessData,
 }) => {
-  const [accessLoading, setAccessLoading] = useState(true);
-  const [accessError, setAccessError] = useState(false);
-  const [accessData, setAccessData] = useState<GithubAppAccessData>({});
   const [loading, setLoading] = React.useState<boolean>(false);
   const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
   const encoded_redirect_uri = encodeURIComponent(url);
@@ -74,8 +82,12 @@ const GithubConnectModal: React.FC<Props> = ({
           <ButtonWrapper>
             <ConnectToGithubButton
               href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={closeModal}
             >
-              <GitHubIcon src={github} /> Connect to GitHub
+              <GitHubIcon src={github} />
+              Connect to GitHub
             </ConnectToGithubButton>
 
             <Button
@@ -189,6 +201,14 @@ const ConnectToGithubButton = styled.a`
     align-items: center;
     margin-right: 5px;
     justify-content: center;
+  }
+  &:hover {
+    background: ${(props: { disabled?: boolean }) =>
+      props.disabled ? "" : "#353a3e"};
+  }
+
+  &:not([disabled]) {
+    cursor: pointer;
   }
 `;
 

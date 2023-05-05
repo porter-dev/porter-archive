@@ -25,6 +25,8 @@ type Props = {
   setPorterYaml: (x: any) => void;
   imageUrl: string;
   setImageUrl: (x: string) => void;
+  buildView: string;
+  setBuildView: (x: string) => void;
 };
 
 const SharedBuildSettings: React.FC<Props> = ({
@@ -41,6 +43,8 @@ const SharedBuildSettings: React.FC<Props> = ({
   setPorterYaml,
   imageUrl,
   setImageUrl,
+  buildView,
+  setBuildView,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -61,6 +65,7 @@ const SharedBuildSettings: React.FC<Props> = ({
         setBranch={setBranch}
         setDockerfilePath={setDockerfilePath}
         setFolderPath={setFolderPath}
+        setBuildView={setBuildView}
       />
       <DarkMatter antiHeight="-4px" />
       <Spacer y={0.3} />
@@ -81,6 +86,7 @@ const SharedBuildSettings: React.FC<Props> = ({
             setBranch={setBranch}
             setDockerfilePath={setDockerfilePath}
             setFolderPath={setFolderPath}
+            setBuildView={setBuildView}
           />
         </>
       )}
@@ -108,6 +114,8 @@ const SharedBuildSettings: React.FC<Props> = ({
             setBuildConfig={setBuildConfig}
             porterYaml={porterYaml}
             setPorterYaml={setPorterYaml}
+            buildView={buildView}
+            setBuildView={setBuildView}
           />
         </>
       )}

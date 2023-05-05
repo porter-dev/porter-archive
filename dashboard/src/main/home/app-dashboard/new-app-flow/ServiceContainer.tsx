@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useMemo } from "react";
 import AnimateHeight, { Height } from "react-animate-height";
 import styled from "styled-components";
+import _ from "lodash";
 
 import web from "assets/web.png";
 import worker from "assets/worker.png";
@@ -70,12 +71,21 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     }
   };
 
+  const getHasBuiltImage = () => {
+    return (
+      !_.isEmpty((
+        Object.values(chart?.chart?.values)[0] as any
+      )?.global)
+    );
+  }
+
   return (
     <>
       <ServiceHeader
         showExpanded={showExpanded}
         onClick={() => setShowExpanded(!showExpanded)}
         chart={chart}
+        bordersRounded={!getHasBuiltImage() && !showExpanded}
       >
         <ServiceTitle>
           <ActionButton>
@@ -97,11 +107,20 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       <AnimateHeight
         height={showExpanded ? height : 0}
       >
-        <StyledSourceBox showExpanded={showExpanded} chart={chart}>
+        <StyledSourceBox 
+          showExpanded={showExpanded}
+          chart={chart}
+          hasFooter={getHasBuiltImage()}
+        >
           {renderTabs(service)}
         </StyledSourceBox>
       </AnimateHeight>
-      {chart && service && (
+      {(
+        chart &&
+        service &&
+        // Check if has built image
+        getHasBuiltImage()
+      ) && (
         <StatusFooter
           chart={chart}
           service={service}
@@ -119,7 +138,11 @@ const ServiceTitle = styled.div`
   align-items: center;
 `;
 
-const StyledSourceBox = styled.div<{ showExpanded: boolean, chart: any }>`
+const StyledSourceBox = styled.div<{ 
+  showExpanded: boolean,
+  chart: any,
+  hasFooter?: boolean,
+}>`
   width: 100%;
   color: #ffffff;
   padding: 14px 25px 30px;
@@ -128,11 +151,8 @@ const StyledSourceBox = styled.div<{ showExpanded: boolean, chart: any }>`
   background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
   border-top: 0;
-  border-bottom: ${(props) => props.chart != null ? "0" : "1px solid #494b4f"};
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-  border-bottom-left-radius: ${(props) => props.chart != null ? "0" : "5px"};
-  border-bottom-right-radius: ${(props) => props.chart != null ? "0" : "5px"};
+  border-bottom-left-radius: ${props => props.hasFooter ? "0" : "5px"};
+  border-bottom-right-radius: ${props => props.hasFooter ? "0" : "5px"};
 `;
 
 const ActionButton = styled.button`
@@ -158,7 +178,11 @@ const ActionButton = styled.button`
   margin-right: 5px;
 `;
 
-const ServiceHeader = styled.div`
+const ServiceHeader = styled.div<{
+  showExpanded: boolean,
+  chart: any,
+  bordersRounded?: boolean,
+}>`
   flex-direction: row;
   display: flex;
   height: 60px;
@@ -174,8 +198,8 @@ const ServiceHeader = styled.div`
     border: 1px solid #7a7b80;
   }
 
-  border-bottom-left-radius: ${(props) => props.chart != null ? "0" : props.showExpanded ? "0" : "5px"};
-  border-bottom-right-radius: ${(props) => props.chart != null ? "0" : props.showExpanded ? "0" : "5px"};
+  border-bottom-left-radius: ${props => props.bordersRounded ? "" : "0"};
+  border-bottom-right-radius: ${props => props.bordersRounded ? "" : "0"};
 
   .dropdown {
     font-size: 30px;

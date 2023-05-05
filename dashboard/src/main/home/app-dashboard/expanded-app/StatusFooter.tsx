@@ -215,7 +215,11 @@ const StatusFooter: React.FC<Props> = ({
       )}
       {service.type !== "job" && (
         <Container row>
-          <StatusCircle percentage={percentage} />
+          {percentage === "0.00%" ? (
+            <StatusDot />
+          ) : (
+            <StatusCircle percentage={percentage} />
+          )}
           <Text color="helper">
             Running {available}/{total} instances{" "}
             {stale == 1 ? `(${stale} old instance)` : ""}
@@ -239,6 +243,15 @@ const StatusFooter: React.FC<Props> = ({
 };
 
 export default StatusFooter;
+
+const StatusDot = styled.div`
+  min-width: 7px;
+  max-width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 10px;
+  background: #38a88a;
+`;
 
 const Mi = styled.i`
   font-size: 16px;
@@ -266,7 +279,7 @@ const StatusCircle = styled.div<{ percentage?: any }>`
 
 const StyledStatusFooter = styled.div`
   width: 100%;
-  padding: 10px;
+  padding: 10px 15px;
   background: ${(props) => props.theme.fg2};
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;

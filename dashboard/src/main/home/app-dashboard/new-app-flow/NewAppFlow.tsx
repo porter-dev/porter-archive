@@ -106,20 +106,40 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [buildConfig, setBuildConfig] = useState({});
   const [porterYaml, setPorterYaml] = useState("");
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
-  const [showConnectModal, setConnectModal] = useState<boolean>(false);
+  const [showGithubConnectModal, setShowGithubConnectModal] = useState<boolean>(
+    false
+  );
+
+  const [showConnectModal, setConnectModal] = useState<boolean>(true);
   const [hasClickedDoNotConnect, setHasClickedDoNotConnect] = useState(() =>
     JSON.parse(localStorage.getItem("hasClickedDoNotConnect") || "false")
   );
   const [accessLoading, setAccessLoading] = useState(true);
   const [accessError, setAccessError] = useState(false);
   const [accessData, setAccessData] = useState<GithubAppAccessData>({});
-  const [hasProviders, setHasProviders] = useState(false);
+  const [providers, setProviders] = useState([]);
+  const [currentProvider, setCurrentProvider] = useState(null);
+  const [hasProviders, setHasProviders] = useState(true);
 
   const [porterJson, setPorterJson] = useState<PorterJson | undefined>(
     undefined
   );
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
+  const handleSetAccessData = (data: GithubAppAccessData) => {
+    setAccessData(data);
+    setShowGithubConnectModal(
+      !hasClickedDoNotConnect &&
+        (accessError || !data.accounts || data.accounts?.length === 0)
+    );
+  };
 
+  const handleSetAccessError = (error: boolean) => {
+    setAccessError(error);
+    setShowGithubConnectModal(
+      !hasClickedDoNotConnect &&
+        (error || !accessData.accounts || accessData.accounts?.length === 0)
+    );
+  };
   const validatePorterYaml = (yamlString: string) => {
     let parsedYaml;
     try {
@@ -167,6 +187,56 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       console.log("Error converting porter yaml file to input: " + error);
     }
   };
+  const sortProviders = (providers: Provider[]) => {
+    const githubProviders = providers.filter(
+      (provider) => provider.provider === "github"
+    );
+
+    const gitlabProviders = providers.filter(
+      (provider) => provider.provider === "gitlab"
+    );
+
+    const githubSortedProviders = githubProviders.sort((a, b) => {
+      if (a.provider === "github" && b.provider === "github") {
+        return a.name.localeCompare(b.name);
+      }
+    });
+
+    const gitlabSortedProviders = gitlabProviders.sort((a, b) => {
+      if (a.provider === "gitlab" && b.provider === "gitlab") {
+        return a.instance_url.localeCompare(b.instance_url);
+      }
+    });
+    return [...gitlabSortedProviders, ...githubSortedProviders];
+  };
+  useEffect(() => {
+    let isSubscribed = true;
+
+    api
+      .getGitProviders("<token>", {}, { project_id: currentProject?.id })
+      .then((res) => {
+        const data = res.data;
+        if (!isSubscribed) {
+          return;
+        }
+
+        if (!Array.isArray(data)) {
+          setHasProviders(false);
+          return;
+        }
+
+        const sortedProviders = sortProviders(data);
+        setProviders(sortedProviders);
+        setCurrentProvider(sortedProviders[0]);
+      })
+      .catch((err) => {
+        setHasProviders(false);
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [currentProject]);
 
   const isAppNameValid = (name: string) => {
     const regex = /^[a-z0-9-]{1,61}$/;
@@ -313,13 +383,18 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   return (
     <CenterWrapper>
       <Div>
-        {/* {showConnectModal && (
+        {showConnectModal && !hasProviders && (
           <GithubConnectModal
             closeModal={() => setConnectModal(false)}
             hasClickedDoNotConnect={hasClickedDoNotConnect}
             handleDoNotConnect={handleDoNotConnect}
+            accessData={accessData}
+            setAccessLoading={setAccessLoading}
+            accessError={accessError}
+            setAccessData={handleSetAccessData}
+            setAccessError={handleSetAccessError}
           />
-        )} */}
+        )}
         <StyledConfigureTemplate>
           <Back to="/apps" />
           <DashboardHeader

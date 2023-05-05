@@ -27,7 +27,7 @@ import {
 
 interface ServiceProps {
   service: Service;
-  chart: any;
+  chart?: any;
   editService: (service: Service) => void;
   deleteService: () => void;
 }
@@ -45,9 +45,6 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   const [total, setTotal] = React.useState<number>(0);
   const [stale, setStale] = React.useState<number>(0);
 
-  console.log("initial controller", controller);
-  console.log("initial available", available);
-  console.log("initial total", total);
   const {
     newWebsocket,
     openWebsocket,
@@ -73,10 +70,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   useEffect(() => {
     const selectors = getSelectors();
 
-    console.log("effect selectors", selectors);
-
     if (selectors.length > 0) {
-      console.log("initial webby", selectors);
       // updatePods();
       [controller?.kind].forEach((kind) => {
         setupWebsocket(kind, controller?.metadata?.uid, selectors);
@@ -88,38 +82,37 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   const { currentProject, currentCluster } = useContext(Context);
 
   useEffect(() => {
-    api
-      .getChartControllers(
-        "<token>",
-        {},
-        {
-          namespace: chart.namespace,
-          cluster_id: currentCluster.id,
-          id: currentProject.id,
-          name: chart.name,
-          revision: chart.version,
-        }
-      )
-      .then((res: any) => {
-        const controllers =
-          chart.chart.metadata.name == "job"
-            ? res.data[0]?.status.active
-            : res.data;
-        console.log("testing input", controllers);
-        const filteredControllers = controllers.filter((controller: any) => {
-          const name = getName(service);
-          console.log("filter name", name);
-          return name == controller.metadata.name;
+    if (chart != null) {
+      api
+        .getChartControllers(
+          "<token>",
+          {},
+          {
+            namespace: chart.namespace,
+            cluster_id: currentCluster.id,
+            id: currentProject.id,
+            name: chart.name,
+            revision: chart.version,
+          }
+        )
+        .then((res: any) => {
+          const controllers =
+            chart.chart.metadata.name == "job"
+              ? res.data[0]?.status.active
+              : res.data;
+          const filteredControllers = controllers.filter((controller: any) => {
+            const name = getName(service);
+            return name == controller.metadata.name;
+          });
+          if (filteredControllers.length == 1) {
+            setController(filteredControllers[0]);
+          }
+        })
+        .catch((err) => {
+          console.log(err);
         });
-        console.log("filtered controllers", filteredControllers);
-        if (filteredControllers.length == 1) {
-          setController(filteredControllers[0]);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, []);
+    }
+  }, [chart]);
 
   const getName = (service: any) => {
     const name = chart.name + "-" + service.name;
@@ -139,17 +132,14 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     controllerUid: string,
     selectors: string
   ) => {
-    console.log("called with", kind, controllerUid, selectors);
     let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status?`;
     if (kind == "pod" && selectors) {
       apiEndpoint += `selectors=${selectors}`;
     }
 
-    console.log("api end", apiEndpoint);
 
     const options: NewWebsocketOptions = {};
     options.onopen = () => {
-      console.log("connected to websocket");
     };
 
     options.onmessage = (evt: MessageEvent) => {
@@ -163,15 +153,11 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         return;
       }
 
-      console.log("event object", event);
-
       if (event.event_type == "ADD" && total == 0) {
         let [available, total, stale] = getAvailabilityStacks(
           object.metadata.kind,
           object
         );
-        console.log("response from object", object);
-        console.log("available response", available, total, stale);
 
         setAvailable(available);
         setTotal(total);
@@ -191,8 +177,6 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           object.metadata.kind,
           object
         );
-        console.log("response from object", object);
-        console.log("available response", available, total, stale);
 
         setAvailable(available);
         setTotal(total);
@@ -203,7 +187,6 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     };
 
     options.onclose = () => {
-      console.log("closing websocket");
     };
 
     options.onerror = (err: ErrorEvent) => {
@@ -260,13 +243,13 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     style: "percent",
     minimumFractionDigits: 2,
   });
-  console.log(percentage);
 
   return (
     <>
       <ServiceHeader
         showExpanded={showExpanded}
         onClick={() => setShowExpanded(!showExpanded)}
+        chart={chart}
       >
         <ServiceTitle>
           <ActionButton>
@@ -285,12 +268,14 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           </ActionButton>
         )}
       </ServiceHeader>
-      {showExpanded && (
-        <StyledSourceBox showExpanded={showExpanded}>
+      <AnimateHeight
+        height={showExpanded ? height : 0}
+      >
+        <StyledSourceBox showExpanded={showExpanded} chart={chart}>
           {renderTabs(service)}
         </StyledSourceBox>
-      )}
-      <StatusFooter showExpanded={showExpanded}>
+      </AnimateHeight>
+      {chart != null && <StatusFooter showExpanded={showExpanded}>
         {service.type === "job" && (
           <Container row>
             <Mi className="material-icons">check</Mi>
@@ -299,7 +284,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             </Text>
             <Spacer inline x={1} />
             <Button
-              onClick={() => console.log("redirect to runs")}
+              onClick={() => { }}
               height="30px"
               width="87px"
               color="#ffffff11"
@@ -320,7 +305,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             </Text>
             <Spacer inline x={1} />
             <Button
-              onClick={() => console.log("redirect to logs")}
+              onClick={() => { }}
               height="30px"
               width="70px"
               color="#ffffff11"
@@ -331,7 +316,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             </Button>
           </Container>
         )}
-      </StatusFooter>
+      </StatusFooter>}
       <Spacer y={0.5} />
     </>
   );
@@ -365,7 +350,7 @@ const StatusCircle = styled.div<{ percentage?: any }>`
 
 const StatusFooter = styled.div<{ showExpanded: boolean }>`
   width: 100%;
-  padding: 15px;
+  padding: 10px;
   background: ${(props) => props.theme.fg2};
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
@@ -378,7 +363,7 @@ const ServiceTitle = styled.div`
   align-items: center;
 `;
 
-const StyledSourceBox = styled.div<{ showExpanded: boolean }>`
+const StyledSourceBox = styled.div<{ showExpanded: boolean, chart: any }>`
   width: 100%;
   color: #ffffff;
   padding: 14px 25px 30px;
@@ -387,9 +372,11 @@ const StyledSourceBox = styled.div<{ showExpanded: boolean }>`
   background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
   border-top: 0;
-  border-bottom: 0;
+  border-bottom: ${(props) => props.chart != null ? "0" : "1px solid #494b4f"};
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+  border-bottom-left-radius: ${(props) => props.chart != null ? "0" : "5px"};
+  border-bottom-right-radius: ${(props) => props.chart != null ? "0" : "5px"};
 `;
 
 const ActionButton = styled.button`
@@ -431,16 +418,16 @@ const ServiceHeader = styled.div`
     border: 1px solid #7a7b80;
   }
 
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
+  border-bottom-left-radius: ${(props) => props.chart != null ? "0" : props.showExpanded ? "0" : "5px"};
+  border-bottom-right-radius: ${(props) => props.chart != null ? "0" : props.showExpanded ? "0" : "5px"};
 
   .dropdown {
     font-size: 30px;
     cursor: pointer;
     border-radius: 20px;
     margin-left: -10px;
-    transform: ${(props: { showExpanded: boolean }) =>
-      props.showExpanded ? "" : "rotate(-90deg)"};
+    transform: ${(props: { showExpanded: boolean, chart: any }) =>
+    props.showExpanded ? "" : "rotate(-90deg)"};
   }
 
   animation: fadeIn 0.3s 0s;

@@ -129,7 +129,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     setAccessData(data);
     setShowGithubConnectModal(
       !hasClickedDoNotConnect &&
-        (accessError || !data.accounts || data.accounts?.length === 0)
+      (accessError || !data.accounts || data.accounts?.length === 0)
     );
   };
 
@@ -137,7 +137,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     setAccessError(error);
     setShowGithubConnectModal(
       !hasClickedDoNotConnect &&
-        (error || !accessData.accounts || accessData.accounts?.length === 0)
+      (error || !accessData.accounts || accessData.accounts?.length === 0)
     );
   };
   const validatePorterYaml = (yamlString: string) => {
@@ -250,6 +250,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       setExistingStep(Math.max(currentStep, existingStep));
       setCurrentStep(0);
     }
+  };
+
+  const handleDoNotConnect = () => {
+    setHasClickedDoNotConnect(true);
+    localStorage.setItem("hasClickedDoNotConnect", "true");
   };
 
   const shouldHighlightAppNameInput = () => {

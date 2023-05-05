@@ -53,20 +53,20 @@ const GithubConnectModal: React.FC<Props> = ({
     if (accessError) {
       return (
         <>
+          <Text color="helper">To deploy from GitHub, authorize Porter to view your repos.</Text> 
           <ListWrapper>
             <Helper>
-              No connected repositories found.
+              No connected repos found.
               <A href={"/api/integrations/github-app/oauth"}>
-                Authorize Porter to view your repositories.
+                Authorize Porter to view your repos.
               </A>
             </Helper>
           </ListWrapper>
-          <Spacer y={0.5} />
-
+          <Spacer y={1} />
           <Button
             onClick={handleDoNotConnect}
-            width={"110px"}
-            loadingText={"Submitting..."}
+            loadingText="Submitting..."
+            color="#ffffff11"
             status={loading ? "loading" : undefined}
           >
             Dismiss
@@ -76,29 +76,29 @@ const GithubConnectModal: React.FC<Props> = ({
     } else if (!accessData.accounts || accessData.accounts?.length == 0) {
       return (
         <>
-          <Text size={16}>No connected repositories were found.</Text>
-          <Spacer y={0.5} />
-
-          <ButtonWrapper>
-            <ConnectToGithubButton
-              href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={closeModal}
-            >
-              <GitHubIcon src={github} />
-              Connect to GitHub
-            </ConnectToGithubButton>
-
-            <Button
-              onClick={handleDoNotConnect}
-              width={"110px"}
-              loadingText={"Submitting..."}
-              status={loading ? "loading" : undefined}
-            >
-              Dismiss
-            </Button>
-          </ButtonWrapper>
+          <Text color="helper">
+            You are currently authorized as <B>{accessData.username}</B>.
+          </Text>
+          <Spacer y={1} />
+          <ConnectToGithubButton
+            href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={closeModal}
+          >
+            <GitHubIcon src={github} />
+            Install the Porter GitHub app
+          </ConnectToGithubButton>
+          <Spacer y={1} />
+          <Button
+            onClick={handleDoNotConnect}
+            loadingText="Submitting..."
+            color="#ffffff11"
+            withBorder
+            status={loading ? "loading" : undefined}
+          >
+            Dismiss
+          </Button>
         </>
       );
     }
@@ -122,7 +122,12 @@ const GithubConnectModal: React.FC<Props> = ({
       accessData.accounts?.length === 0) && (
       <>
         <Modal closeModal={closeModal}>
-          <>{renderGithubConnect()}</>
+          <Text size={16}>
+            <GitIcon src={github} />
+            Configure GitHub
+          </Text>
+          <Spacer y={0.5} />
+          {renderGithubConnect()}
         </Modal>
       </>
     )
@@ -130,6 +135,20 @@ const GithubConnectModal: React.FC<Props> = ({
 };
 
 export default withRouter(GithubConnectModal);
+
+const B = styled.b`
+  display: inline;
+  color: #ffffff;
+  margin-left: 5px;
+`;
+
+const GitIcon = styled.img`
+  width: 15px;
+  height: 15px;
+  opacity: 0.9;
+  margin-right: 10px;
+  filter: brightness(120%);
+`;
 
 const Tab = styled.span`
   margin-left: 20px;
@@ -164,7 +183,7 @@ const A = styled.a`
 `;
 
 const ConnectToGithubButton = styled.a`
-  width: 180px;
+  width: 240px;
   justify-content: center;
   border-radius: 5px;
   display: flex;
@@ -220,5 +239,4 @@ const GitHubIcon = styled.img`
 const ButtonWrapper = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-top: 20px;
 `;

@@ -25,14 +25,8 @@ import {
 import { RouteComponentProps } from "react-router";
 import { Context } from "shared/Context";
 import ActionConfBranchSelector from "components/repo-selector/ActionConfBranchSelector";
-import DetectContentsList from "components/repo-selector/DetectContentsList";
-import { pushFiltered } from "shared/routing";
-import ImageSelector from "components/image-selector/ImageSelector";
-import SharedBuildSettings from "./SharedBuildSettings";
-import { BuildpackSelection } from "components/repo-selector/BuildpackSelection";
-import BuildpackConfigSection from "main/home/cluster-dashboard/expanded-chart/build-settings/_BuildpackConfigSection";
+
 import { BuildpackStack } from "components/repo-selector/BuildpackStack";
-import MultiSaveButton from "components/MultiSaveButton";
 import api from "shared/api";
 import { AxiosError } from "axios";
 import InputRow from "components/form-components/InputRow";
@@ -45,6 +39,7 @@ type Props = {
   setAppData: Dispatch<any>;
   onTabSwitch: () => void;
   updatePorterApp: (options: Partial<PorterAppOptions>) => Promise<void>;
+  clearStatus: () => void;
 };
 interface AutoBuildpack {
   name?: string;
@@ -55,6 +50,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   appData,
   setAppData,
   onTabSwitch,
+  clearStatus,
   updatePorterApp,
 }) => {
   const { setCurrentError } = useContext(Context);
@@ -97,7 +93,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     ...defaultActionConfig,
   });
   const [buttonStatus, setButtonStatus] = useState<
-    "loading" | "successful" | string
+    "loading" | "success" | string
   >("");
   const [imageUrl, setImageUrl] = useState(appData.chart.image_uri);
 
@@ -153,7 +149,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
         }
         setCurrentError(
           'The workflow is still running. You can "Save" the current build settings for the next workflow run and view the current status of the workflow here: ' +
-          tmpError.response.data
+            tmpError.response.data
         );
         return;
       }
@@ -223,7 +219,8 @@ const BuildSettingsTabStack: React.FC<Props> = ({
       await triggerWorkflow();
 
       onTabSwitch();
-      setButtonStatus("successful");
+      setButtonStatus("success");
+      clearStatus();
     } catch (error) {
       setButtonStatus("Something went wrong");
       console.log(error);
@@ -352,7 +349,7 @@ const StyledAdvancedBuildSettings = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
-    props.showSettings ? "" : "rotate(-90deg)"};
+      props.showSettings ? "" : "rotate(-90deg)"};
   }
 `;
 const StyledSourceBox = styled.div`

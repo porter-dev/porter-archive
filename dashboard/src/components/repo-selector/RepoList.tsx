@@ -308,14 +308,11 @@ const RepoList: React.FC<Props> = ({
 
     return (
       <>
-                <Text size={16}>
-                  No connected repositories were found.
-                </Text>
-                <ConnectToGithubButton
-                  href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
-                >
-                  <GitHubIcon src={github} /> Connect to GitHub
-                </ConnectToGithubButton>
+        <ConnectToGithubButton
+          href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
+        >
+          <GitHubIcon src={github} /> Install the Porter GitHub app
+        </ConnectToGithubButton>
       </>
     );
   }
@@ -332,7 +329,7 @@ const GitHubIcon = styled.img`
 `;
 
 const ConnectToGithubButton = styled.a`
-  width: 180px;
+  width: 240px;
   justify-content: center;
   border-radius: 5px;
   display: flex;

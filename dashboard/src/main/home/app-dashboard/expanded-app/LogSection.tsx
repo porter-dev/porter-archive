@@ -9,6 +9,7 @@ import React, {
 import styled from "styled-components";
 import RadioFilter from "components/RadioFilter";
 
+import spinner from "assets/loading.gif";
 import filterOutline from "assets/filter-outline.svg";
 import time from "assets/time.svg";
 import { Context } from "shared/Context";
@@ -23,6 +24,11 @@ import { ChartType } from "shared/types";
 import Banner from "components/porter/Banner";
 import LogSearchBar from "components/LogSearchBar";
 import LogQueryModeSelectionToggle from "components/LogQueryModeSelectionToggle";
+import Fieldset from "components/porter/Fieldset";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
+import Container from "components/porter/Container";
+import Button from "components/porter/Button";
 
 type Props = {
   currentChart?: ChartType;
@@ -46,6 +52,11 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [notification, setNotification] = useState<string>();
 
+  const [hasPorterAgent, setHasPorterAgent] = useState(true);
+  const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [logsError, setLogsError] = useState<string | undefined>(undefined);
+
   const notify = (message: string) => {
     setNotification(message);
 
@@ -53,6 +64,8 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
       setNotification(undefined);
     }, 5000);
   };
+
+  console.log(podFilter);
 
   const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter.podName,
@@ -64,70 +77,70 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
   );
 
   const refreshPodLogsValues = async () => {
-    // const filters = {
-    //   namespace: currentChart.namespace,
-    //   revision: currentChart.version.toString(),
-    //   match_prefix: currentChart.name,
-    // };
+    const filters = {
+      namespace: currentChart.namespace,
+      revision: currentChart.version.toString(),
+      match_prefix: currentChart.name,
+    };
 
-    // const logPodValuesResp = await api.getLogPodValues("<TOKEN>", filters, {
-    //   project_id: currentProject.id,
-    //   cluster_id: currentCluster.id,
-    // });
+    const logPodValuesResp = await api.getLogPodValues("<TOKEN>", filters, {
+      project_id: currentProject.id,
+      cluster_id: currentCluster.id,
+    });
 
-    // if (logPodValuesResp.data?.length != 0) {
-    //   setPodFilterOpts(
-    //     _.uniq(logPodValuesResp.data ?? []).map((podName: any) => {
-    //       return { podName: podName, podNamespace: currentChart.namespace };
-    //     })
-    //   );
+    if (logPodValuesResp.data?.length != 0) {
+      setPodFilterOpts(
+        _.uniq(logPodValuesResp.data ?? []).map((podName: any) => {
+          return { podName: podName, podNamespace: currentChart.namespace };
+        })
+      );
 
-    //   // only set pod filter if the current pod is not found in the resulting data
-    //   if (!podFilter || !logPodValuesResp.data?.includes(podFilter)) {
-    //     setPodFilter({
-    //       podName: logPodValuesResp.data[0],
-    //       podNamespace: currentChart.namespace,
-    //     });
-    //   }
-    //   console.log("pod values set chart namespace", podFilter, podFilterOpts);
-    //   return;
-    // }
+      // only set pod filter if the current pod is not found in the resulting data
+      if (!podFilter || !logPodValuesResp.data?.includes(podFilter)) {
+        setPodFilter({
+          podName: logPodValuesResp.data[0],
+          podNamespace: currentChart.namespace,
+        });
+      }
+      console.log("pod values set chart namespace", podFilter, podFilterOpts);
+      return;
+    }
 
-    // // check if pods are in default namespace
-    // const filters_default = {
-    //   namespace: "default",
-    //   revision: currentChart.version.toString(),
-    //   match_prefix: currentChart.name,
-    // };
+    // check if pods are in default namespace
+    const filters_default = {
+      namespace: "default",
+      revision: currentChart.version.toString(),
+      match_prefix: currentChart.name,
+    };
 
-    // const logPodValuesResp_default = await api.getLogPodValues(
-    //   "<TOKEN>",
-    //   filters_default,
-    //   {
-    //     project_id: currentProject.id,
-    //     cluster_id: currentCluster.id,
-    //   }
-    // );
+    const logPodValuesResp_default = await api.getLogPodValues(
+      "<TOKEN>",
+      filters_default,
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+      }
+    );
 
-    // if (logPodValuesResp_default.data?.length != 0) {
-    //   setPodFilterOpts(
-    //     _.uniq(logPodValuesResp_default.data ?? []).map((podName: any) => {
-    //       return { podName: podName, podNamespace: "default" };
-    //     })
-    //   );
+    if (logPodValuesResp_default.data?.length != 0) {
+      setPodFilterOpts(
+        _.uniq(logPodValuesResp_default.data ?? []).map((podName: any) => {
+          return { podName: podName, podNamespace: "default" };
+        })
+      );
 
-    //   // only set pod filter if the current pod is not found in the resulting data
-    //   if (!podFilter || !logPodValuesResp_default.data?.includes(podFilter)) {
-    //     setPodFilter({
-    //       podName: logPodValuesResp_default.data[0],
-    //       podNamespace: "default",
-    //     });
-    //   }
-    //   console.log("pod values set default", podFilter, podFilterOpts);
-    //   return;
-    // }
+      // only set pod filter if the current pod is not found in the resulting data
+      if (!podFilter || !logPodValuesResp_default.data?.includes(podFilter)) {
+        setPodFilter({
+          podName: logPodValuesResp_default.data[0],
+          podNamespace: "default",
+        });
+      }
+      console.log("pod values set default", podFilter, podFilterOpts);
+      return;
+    }
 
-    // console.log("pod values empty");
+    console.log("pod values empty");
 
     // if we're on the latest revision and no pod values were returned, query for all release pods
     if (currentChart.info.status == "deployed") {
@@ -157,10 +170,6 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
       }
     }
   };
-
-  useEffect(() => {
-    refreshPodLogsValues();
-  }, []);
 
   useEffect(() => {
     if (!loading && scrollToBottomRef.current && scrollToBottomEnabled) {
@@ -250,17 +259,22 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
             />
           </Flex>
           <Flex>
-            <Button onClick={() => setScrollToBottomEnabled((s) => !s)}>
+            <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
               <Checkbox checked={scrollToBottomEnabled}>
                 <i className="material-icons">done</i>
               </Checkbox>
               Scroll to bottom
-            </Button>
-            <Spacer />
-            <Button onClick={() => refresh()}>
+            </ScrollButton>
+            <Spacer inline width="10px" />
+            <ScrollButton
+              onClick={() => {
+                refreshPodLogsValues();
+                refresh();
+              }}
+            >
               <i className="material-icons">autorenew</i>
               Refresh
-            </Button>
+            </ScrollButton>
           </Flex>
         </FlexRow>
         <LogsSectionWrapper>
@@ -309,10 +323,148 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     );
   };
 
-  return <>{renderContents()}</>;
+  useEffect(() => {
+    // determine if the agent is installed properly - if not, start by render upgrade screen
+    checkForAgent();
+  }, []);
+
+  useEffect(() => {
+    if (!isPorterAgentInstalling) {
+      return;
+    }
+
+    const checkForAgentInterval = setInterval(checkForAgent, 3000);
+
+    return () => clearInterval(checkForAgentInterval);
+  }, [isPorterAgentInstalling]);
+
+  const checkForAgent = () => {
+    const project_id = currentProject?.id;
+    const cluster_id = currentCluster?.id;
+
+    api
+      .detectPorterAgent("<token>", {}, { project_id, cluster_id })
+      .then((res) => {
+        if (res.data?.version != "v3") {
+          setHasPorterAgent(false);
+        } else {
+          // next, check whether logs can be queried - if they can, we're good to go
+          const filters = {
+            revision: currentChart.version.toString(),
+            match_prefix: currentChart.name,
+          };
+
+          api
+            .getLogPodValues("<TOKEN>", filters, {
+              project_id: currentProject.id,
+              cluster_id: currentCluster.id,
+            })
+            .then((res) => {
+              setHasPorterAgent(true);
+              refreshPodLogsValues();
+              setIsPorterAgentInstalling(false);
+              setIsLoading(false);
+            })
+            .catch((err) => {
+              // do nothing - this is expected while installing
+              setLogsError(err);
+              setIsLoading(false);
+            });
+        }
+      })
+      .catch((err) => {
+        if (err.response?.status === 404) {
+          setHasPorterAgent(false);
+          setIsLoading(false);
+        }
+      });
+  };
+
+  const installAgent = async () => {
+    const project_id = currentProject?.id;
+    const cluster_id = currentCluster?.id;
+
+    setIsPorterAgentInstalling(true);
+
+    api
+      .installPorterAgent("<token>", {}, { project_id, cluster_id })
+      .then()
+      .catch((err) => {
+        setIsPorterAgentInstalling(false);
+        console.log(err);
+      });
+  };
+
+  const triggerInstall = () => {
+    installAgent();
+  };
+
+  const getFilters = () => {
+    return {
+      release_name: currentChart.name,
+      release_namespace: currentChart.namespace,
+    };
+  };
+
+  return (
+    isPorterAgentInstalling ? (
+      <Fieldset>
+        <Container row>
+          <Spinner src={spinner} />
+          <Spacer inline x={1} />
+          <Text color="helper">The Porter agent is being installed . . .</Text>
+        </Container>
+      </Fieldset>
+    ) : isLoading ? (
+      <Fieldset>
+        <Loading />
+      </Fieldset>
+    ) : !hasPorterAgent ? (
+      <Fieldset>
+        <Text size={16}>We couldn't detect the Porter agent on your cluster</Text>
+        <Spacer y={0.5} />
+        <Text color="helper">In order to use the events tab, you need to install the Porter agent.</Text>
+        <Spacer y={1} />
+        <Button onClick={() => triggerInstall()}>
+          <I className="material-icons">add</I> Install Porter agent
+        </Button>
+      </Fieldset>
+    ) : logsError ? (
+      <Fieldset>
+        <Container row>
+          <WarnI className="material-icons">warning</WarnI> 
+          <Text color="helper">Porter encountered an error retrieving logs for this application.</Text>
+        </Container>
+      </Fieldset>
+    ) : (
+      renderContents()
+    )
+  );
 };
 
 export default LogSection;
+
+const I = styled.i`
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin-right: 5px;
+  justify-content: center;
+`;
+
+const WarnI = styled.i`
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  justify-content: center;
+  opacity: 0.6;
+`;
+
+const Spinner = styled.img`
+  width: 15px;
+  height: 15px;
+`;
 
 const BackButton = styled.div`
   display: flex;
@@ -399,12 +551,7 @@ const Checkbox = styled.div<{ checked: boolean }>`
   }
 `;
 
-const Spacer = styled.div<{ width?: string }>`
-  height: 100%;
-  width: ${(props) => props.width || "10px"};
-`;
-
-const Button = styled.div`
+const ScrollButton = styled.div`
   background: #26292e;
   border-radius: 5px;
   height: 30px;
@@ -649,4 +796,72 @@ const NotificationWrapper = styled.div<{ active?: boolean }>`
 
 const LogsSectionWrapper = styled.div`
   position: relative;
+`;
+
+const InstallPorterAgentButton = styled.button`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: "Work Sans", sans-serif;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  height: 35px;
+  padding: 0px 8px;
+  padding-bottom: 1px;
+  margin-top: 20px;
+  font-weight: 500;
+  padding-right: 15px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#5561C0"};
+  :hover {
+    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
+  }
+  > i {
+    color: white;
+    width: 18px;
+    height: 18px;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+    justify-content: center;
+  }
+`;
+
+const Placeholder = styled.div`
+  padding: 30px;
+  padding-bottom: 40px;
+  font-size: 13px;
+  color: #ffffff44;
+  min-height: 400px;
+  height: 50vh;
+  background: #ffffff08;
+  border-radius: 8px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  > i {
+    font-size: 18px;
+    margin-right: 8px;
+  }
+`;
+
+const Header = styled.div`
+  font-weight: 500;
+  color: #aaaabb;
+  font-size: 16px;
+  margin-bottom: 15px;
 `;

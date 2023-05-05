@@ -98,6 +98,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [actionConfig, setActionConfig] = useState<ActionConfigType>({
     ...defaultActionConfig,
   });
+  const [buildView, setBuildView] = useState<string>("buildpacks");
   const [branch, setBranch] = useState("");
   const [dockerfilePath, setDockerfilePath] = useState(null);
   const [procfilePath, setProcfilePath] = useState(null);
@@ -252,8 +253,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           git_repo_id: actionConfig?.git_repo_id,
           build_context: folderPath,
           builder: (buildConfig as any)?.builder,
-          buildpacks: (buildConfig as any)?.buildpacks?.join(",") ?? "",
-          dockerfile: dockerfilePath,
+          buildpacks:
+            buildView === "buildpacks"
+              ? (buildConfig as any)?.buildpacks?.join(",") ?? ""
+              : "",
+          dockerfile: buildView === "docker" ? dockerfilePath : "",
           image_repo_uri: imageUrl,
         },
         {
@@ -280,28 +284,31 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       setDeploying(false);
     }
   };
-
   useEffect(() => {
-    const fetchGithubAccounts = async () => {
-      try {
-        const { data } = await api.getGithubAccounts("<token>", {}, {});
-        setAccessData(data);
-        if (data) {
-          setHasProviders(false);
-        }
-      } catch (error) {
-        setAccessError(true);
-      } finally {
-        setAccessLoading(false);
-      }
+    setFormState({ ...formState, serviceList: [] });
+  }, [actionConfig, branch]);
 
-      setConnectModal(
-        !hasClickedDoNotConnect && (!hasProviders || accessError)
-      );
-    };
+  // useEffect(() => {
+  //   const fetchGithubAccounts = async () => {
+  //     try {
+  //       const { data } = await api.getGithubAccounts("<token>", {}, {});
+  //       setAccessData(data);
+  //       if (data) {
+  //         setHasProviders(false);
+  //       }
+  //     } catch (error) {
+  //       setAccessError(true);
+  //     } finally {
+  //       setAccessLoading(false);
+  //     }
 
-    fetchGithubAccounts();
-  }, [hasClickedDoNotConnect, accessData.accounts, accessError]);
+  //     setConnectModal(
+  //       !hasClickedDoNotConnect && (!hasProviders || accessError)
+  //     );
+  //   };
+
+  //   fetchGithubAccounts();
+  // }, [hasClickedDoNotConnect, accessData.accounts, accessError]);
 
   return (
     <CenterWrapper>
@@ -338,8 +345,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   width="300px"
                   error={
                     shouldHighlightAppNameInput() &&
-                    (formState.applicationName.length > 61
-                      ? "Maximum 61 characters allowed."
+                    (formState.applicationName.length > 30
+                      ? "Maximum 30 characters allowed."
                       : 'Lowercase letters, numbers, and "-" only.')
                   }
                   setValue={(e) => {
@@ -391,12 +398,14 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setPorterYaml={(newYaml: string) => {
                     validatePorterYaml(newYaml);
                   }}
+                  buildView={buildView}
+                  setBuildView={setBuildView}
                 />
               </>,
               <>
                 <Text size={16}>
                   Application services{" "}
-                  {detected && (
+                  {detected && formState.serviceList.length > 0 && (
                     <AppearingDiv>
                       <Text color={detected.detected ? "#4797ff" : "#fcba03"}>
                         {detected.detected ? (

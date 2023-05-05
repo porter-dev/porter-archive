@@ -2265,7 +2265,7 @@ const getLogs = baseApi<
     end_range?: string;
     revision?: string;
     pod_selector: string;
-    namespace: string;
+    namespace?: string;
     search_param?: string;
     direction?: string;
   },

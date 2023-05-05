@@ -271,7 +271,11 @@ func GetHistoricalLogs(
 	}
 
 	vals["pod_selector"] = req.PodSelector
-	vals["namespace"] = req.Namespace
+
+	if req.Namespace != "" {
+		vals["namespace"] = req.Namespace
+	}
+
 	vals["revision"] = req.Revision
 
 	if req.SearchParam != "" {

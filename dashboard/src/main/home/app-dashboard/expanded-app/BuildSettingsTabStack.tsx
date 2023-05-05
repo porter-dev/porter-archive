@@ -59,6 +59,10 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   const [branch, setBranch] = useState(appData.app.git_branch);
   const [showSettings, setShowSettings] = useState(false);
   const [dockerfilePath, setDockerfilePath] = useState(appData.app.dockerfile);
+  const [buildView, setBuildView] = useState<string>(
+    appData.app.dockerfile ? "docker" : "buildpacks"
+  );
+
   const [folderPath, setFolderPath] = useState("./");
   const defaultActionConfig: ActionConfigType = {
     git_repo: appData.app.repo_name,
@@ -68,8 +72,12 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     kind: "github",
   };
   const defaultBuildConfig: BuildConfig = {
-    builder: appData.app.builder,
-    buildpacks: appData.app.build_packs?.split(","),
+    builder: appData.app.builder
+      ? appData.app.builder
+      : "paketobuildpacks/builder:full",
+    buildpacks: appData.app.build_packs
+      ? appData.app.build_packs.split(",")
+      : [],
     config: appData.chart.config,
   };
   const [buildConfig, setBuildConfig] = useState<BuildConfig>({
@@ -142,7 +150,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
         }
         setCurrentError(
           'The workflow is still running. You can "Save" the current build settings for the next workflow run and view the current status of the workflow here: ' +
-          tmpError.response.data
+            tmpError.response.data
         );
         return;
       }
@@ -168,6 +176,8 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   };
   const saveConfig = async () => {
     console.log(appData);
+    console.log(appData.app.dockerfile);
+    console.log(buildView);
     try {
       await api.updatePorterApp(
         "<token>",
@@ -175,9 +185,12 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           repo_name: appData.app.repo_name,
           git_branch: branch,
           build_context: appData.app.build_context,
-          builder: buildConfig.builder,
-          buildpacks: buildConfig.buildpacks?.join(","),
-          dockerfile: appData.app.dockerfile,
+          builder: buildConfig?.builder,
+          buildpacks:
+            buildView === "buildpacks"
+              ? buildConfig?.buildpacks?.join(",")
+              : "null",
+          dockerfile: buildView === "buildpacks" ? "null" : dockerfilePath,
           image_repo_uri: appData.chart.image_repo_uri,
         },
         {
@@ -195,8 +208,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     setButtonStatus("loading");
 
     try {
-      console.log(buildConfig.builder);
-
       await saveConfig();
       setAppData(appData);
 
@@ -211,8 +222,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     setButtonStatus("loading");
 
     try {
-      console.log(buildConfig.builder);
-
       await saveConfig();
       setAppData(appData);
 
@@ -228,19 +237,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   return (
     <>
       <Text size={16}>Build settings</Text>
-      {/* <ActionConfEditorStack
-        actionConfig={actionConfig}
-        setActionConfig={(actionConfig: ActionConfigType) => {
-          setActionConfig((currentActionConfig: ActionConfigType) => ({
-            ...currentActionConfig,
-            ...actionConfig,
-          }));
-          setImageUrl(actionConfig.image_repo_uri);
-        }}
-        setBranch={setBranch}
-        setDockerfilePath={setDockerfilePath}
-        setFolderPath={setFolderPath}
-      /> */}
       <InputRow
         disabled={true}
         label="Git repository"
@@ -264,6 +260,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
             setBranch={setBranch}
             setDockerfilePath={setDockerfilePath}
             setFolderPath={setFolderPath}
+            setBuildView={setBuildView}
           />
         </>
       )}
@@ -282,46 +279,14 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           />
         </>
       )}
-      {/* <StyledAdvancedBuildSettings
-        showSettings={showSettings}
-        isCurrent={true}
-        onClick={() => {
-          setShowSettings(!showSettings);
-        }}
-      >
-        <AdvancedBuildTitle>
-          <i className="material-icons dropdown">arrow_drop_down</i>
-          Configure buildpack settings
-        </AdvancedBuildTitle>
-      </StyledAdvancedBuildSettings>
-      <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
-        <StyledSourceBox>
-          <Spacer y={0.5} />
-          {actionConfig && (
-            <BuildpackStack
-              actionConfig={actionConfig}
-              branch={branch}
-              folderPath={folderPath}
-              onChange={(config) => {
-                setBuildConfig(config);
-                setDockerfilePath("");
-              }}
-              hide={!showSettings}
-              currentBuildConfig={buildConfig}
-              setBuildConfig={setBuildConfig}
-            />
-          )}
-          <Spacer y={0.5} />
-        </StyledSourceBox>
-      </AnimateHeight> */}
-
       <AdvancedBuildSettings
         dockerfilePath={dockerfilePath}
         setDockerfilePath={setDockerfilePath}
         setBuildConfig={setBuildConfig}
         autoBuildPack={autoBuildpack}
         showSettings={false}
-        buildView={dockerfilePath != "" ? "docker" : "buildpack"}
+        buildView={buildView}
+        setBuildView={setBuildView}
         actionConfig={actionConfig}
         branch={branch}
         folderPath={folderPath}
@@ -392,7 +357,7 @@ const StyledAdvancedBuildSettings = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
-    props.showSettings ? "" : "rotate(-90deg)"};
+      props.showSettings ? "" : "rotate(-90deg)"};
   }
 `;
 const StyledSourceBox = styled.div`

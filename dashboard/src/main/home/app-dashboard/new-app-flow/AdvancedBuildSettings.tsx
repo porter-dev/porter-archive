@@ -27,6 +27,7 @@ interface AdvancedBuildSettingsProps {
   setDockerfilePath: (x: string) => void;
   setBuildConfig?: (x: any) => void;
   currentBuildConfig?: BuildConfig;
+  setBuildView: (x: string) => void;
 }
 
 type Buildpack = {
@@ -39,19 +40,11 @@ type Buildpack = {
 
 const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
   const [showSettings, setShowSettings] = useState<boolean>(props.showSettings);
-  const [buildView, setBuildView] = useState<string>(props.buildView);
+  const buildView = props.setBuildView(props.buildView || "buildpacks");
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setBuildView(e.target.value);
-  };
-  useEffect(() => {
-    if (props.dockerfilePath && props.dockerfilePath != "") {
-      setBuildView("docker");
-    } else {
-      setBuildView("buildpacks");
-    }
-  }, [props.dockerfilePath]);
+  useEffect(() => {}, [props.buildView]);
   const createDockerView = () => {
+    // props.setBuildConfig({});
     return (
       <>
         <Text color="helper">Dockerfile path</Text>
@@ -76,7 +69,6 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
           folderPath={props.folderPath}
           onChange={(config) => {
             props.setBuildConfig(config);
-            props.setDockerfilePath("");
           }}
           hide={false}
           currentBuildConfig={props.currentBuildConfig}
@@ -95,7 +87,7 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
           setShowSettings(!showSettings);
         }}
       >
-        {buildView == "docker" ? (
+        {props.buildView == "docker" ? (
           <AdvancedBuildTitle>
             <i className="material-icons dropdown">arrow_drop_down</i>
             Configure Dockerfile settings
@@ -111,17 +103,19 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
       <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
         <StyledSourceBox>
           <Select
-            value={buildView}
+            value={props.buildView}
             width="300px"
             options={[
               { value: "docker", label: "Docker" },
               { value: "buildpacks", label: "Buildpacks" },
             ]}
-            setValue={(option) => setBuildView(option)}
+            setValue={(option) => props.setBuildView(option)}
             label="Build method"
           />
           <Spacer y={1} />
-          {buildView === "docker" ? createDockerView() : createBuildpackView()}
+          {props.buildView === "docker"
+            ? createDockerView()
+            : createBuildpackView()}
         </StyledSourceBox>
       </AnimateHeight>
     </>

@@ -103,7 +103,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices }) => {
               (serviceName != "" &&
                 !isServiceNameValid(serviceName) &&
                 'Lowercase letters, numbers, and "-" only.') ||
-              (serviceName.length > 61 && "Must be 61 characters or less.") ||
+              (serviceName.length > 30 && "Must be 30 characters or less.") ||
               (isServiceNameDuplicate(serviceName) &&
                 "Service name is duplicate")
             }

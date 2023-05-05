@@ -86,6 +86,7 @@ func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driv
 			ProjectID:        t.ProjectID,
 			PorterYAMLBase64: base64.StdEncoding.EncodeToString(t.PorterYAML),
 			ImageInfo:        imageInfo,
+			OverrideRelease:  false, // deploying from the cli will never delete release resources, only append or override
 		},
 	)
 	if err != nil {

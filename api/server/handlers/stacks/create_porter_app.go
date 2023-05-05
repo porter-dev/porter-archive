@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/stefanmcshane/helm/pkg/chart"
 )
 
 type CreatePorterAppHandler struct {
@@ -68,7 +69,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	porterYamlBase64 := request.PorterYAMLBase64
 	porterYaml, err := base64.StdEncoding.DecodeString(porterYamlBase64)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding porter yaml: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error decoding porter.yaml: %w", err)))
 		return
 	}
 	imageInfo := request.ImageInfo
@@ -78,26 +79,36 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if shouldCreate {
-		chart, values, err := parse(
-			porterYaml,
-			imageInfo,
-			c.Config(),
-			cluster.ProjectID,
-			nil,
-			nil,
-			SubdomainCreateOpts{
-				k8sAgent:       k8sAgent,
-				dnsRepo:        c.Repo().DNSRecord(),
-				powerDnsClient: c.Config().PowerDNSClient,
-				appRootDomain:  c.Config().ServerConf.AppRootDomain,
-				stackName:      stackName,
-			})
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter yaml into chart and values: %w", err)))
-			return
-		}
+	var releaseValues map[string]interface{}
+	var releaseDependencies []*chart.Dependency
+	if shouldCreate || request.OverrideRelease {
+		releaseValues = nil
+		releaseDependencies = nil
+	} else {
+		releaseValues = helmRelease.Config
+		releaseDependencies = helmRelease.Chart.Metadata.Dependencies
+	}
 
+	chart, values, err := parse(
+		porterYaml,
+		imageInfo,
+		c.Config(),
+		cluster.ProjectID,
+		releaseValues,
+		releaseDependencies,
+		SubdomainCreateOpts{
+			k8sAgent:       k8sAgent,
+			dnsRepo:        c.Repo().DNSRecord(),
+			powerDnsClient: c.Config().PowerDNSClient,
+			appRootDomain:  c.Config().ServerConf.AppRootDomain,
+			stackName:      stackName,
+		})
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter yaml into chart and values: %w", err)))
+		return
+	}
+
+	if shouldCreate {
 		// create the namespace if it does not exist already
 		_, err = k8sAgent.CreateNamespace(namespace, nil)
 		if err != nil {
@@ -163,25 +174,6 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		c.WriteResult(w, r, porterApp.ToPorterAppType())
 	} else {
-		chart, values, err := parse(
-			porterYaml,
-			imageInfo,
-			c.Config(),
-			cluster.ProjectID,
-			helmRelease.Config,
-			helmRelease.Chart.Metadata.Dependencies,
-			SubdomainCreateOpts{
-				k8sAgent:       k8sAgent,
-				dnsRepo:        c.Repo().DNSRecord(),
-				powerDnsClient: c.Config().PowerDNSClient,
-				appRootDomain:  c.Config().ServerConf.AppRootDomain,
-				stackName:      stackName,
-			})
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter yaml into chart and values: %w", err)))
-			return
-		}
-
 		conf := &helm.InstallChartConfig{
 			Chart:      chart,
 			Name:       stackName,

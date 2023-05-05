@@ -81,15 +81,17 @@ func parse(
 func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existingValues map[string]interface{}, opts SubdomainCreateOpts) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
+	if parsed.Apps == nil {
+		if existingValues == nil {
+			return nil, fmt.Errorf("porter.yaml must contain at least one app, or release must exist and have values")
+		}
+	}
+
 	for name, app := range parsed.Apps {
 		appType := getType(name, app)
 		defaultValues := getDefaultValues(app, parsed.Env, appType)
 		convertedConfig := convertMap(app.Config).(map[string]interface{})
 		helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
-		err := createSubdomainIfRequired(helm_values, opts) // modifies helm_values to add subdomains if necessary
-		if err != nil {
-			return nil, err
-		}
 
 		// required to identify the chart type because of https://github.com/helm/helm/issues/9214
 		helmName := getHelmName(name, appType)
@@ -98,6 +100,11 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 				existingValuesMap := existingValues[helmName].(map[string]interface{})
 				helm_values = utils.DeepCoalesceValues(existingValuesMap, helm_values)
 			}
+		}
+
+		err := createSubdomainIfRequired(helm_values, opts) // modifies helm_values to add subdomains if necessary
+		if err != nil {
+			return nil, err
 		}
 
 		values[helmName] = helm_values

@@ -42,11 +42,7 @@ type SharedServiceParams = {
 export type WorkerService = SharedServiceParams & {
     type: 'worker';
     replicas: ServiceString;
-    autoscalingOn: ServiceBoolean;
-    minReplicas: ServiceString;
-    maxReplicas: ServiceString;
-    targetCPUUtilizationPercentage: ServiceString;
-    targetRAMUtilizationPercentage: ServiceString;
+    autoscaling: Autoscaling;
 }
 const WorkerService = {
     default: (name: string, porterJson?: PorterJson): WorkerService => ({
@@ -56,23 +52,16 @@ const WorkerService = {
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
         type: 'worker',
         replicas: ServiceField.string('1', porterJson?.apps?.[name]?.config?.replicaCount),
-        autoscalingOn: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.autoscaling?.enabled),
-        minReplicas: ServiceField.string('1', porterJson?.apps?.[name]?.config?.autoscaling?.minReplicas),
-        maxReplicas: ServiceField.string('10', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
-        targetCPUUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
-        targetRAMUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
+        autoscaling: {
+            enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.autoscaling?.enabled),
+            minReplicas: ServiceField.string('1', porterJson?.apps?.[name]?.config?.autoscaling?.minReplicas),
+            maxReplicas: ServiceField.string('10', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
+            targetCPUUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
+            targetMemoryUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
+        },
         canDelete: porterJson?.apps?.[name] == null,
     }),
     serialize: (service: WorkerService) => {
-        const autoscaling = service.autoscalingOn.value ? {
-            autoscaling: {
-                enabled: true,
-                minReplicas: service.minReplicas.value,
-                maxReplicas: service.maxReplicas.value,
-                targetCPUUtilizationPercentage: service.targetCPUUtilizationPercentage.value,
-                targetMemoryUtilizationPercentage: service.targetRAMUtilizationPercentage.value,
-            }
-        } : {};
         return {
             replicaCount: service.replicas.value,
             container: {
@@ -84,7 +73,13 @@ const WorkerService = {
                     memory: service.ram.value + 'Mi',
                 }
             },
-            ...autoscaling,
+            autoscaling: {
+                enabled: service.autoscaling.enabled.value,
+                minReplicas: service.autoscaling.minReplicas.value,
+                maxReplicas: service.autoscaling.maxReplicas.value,
+                targetCPUUtilizationPercentage: service.autoscaling.targetCPUUtilizationPercentage.value,
+                targetMemoryUtilizationPercentage: service.autoscaling.targetMemoryUtilizationPercentage.value,
+            },
         }
     },
     deserialize: (name: string, values: any, porterJson?: PorterJson): WorkerService => {
@@ -95,11 +90,13 @@ const WorkerService = {
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
             type: 'worker',
             replicas: ServiceField.string(values.replicaCount ?? '', porterJson?.apps?.[name]?.config?.replicaCount),
-            autoscalingOn: ServiceField.boolean(values.autoscaling?.enabled ?? false, porterJson?.apps?.[name]?.config?.autoscaling?.enabled),
-            minReplicas: ServiceField.string(values.autoscaling?.minReplicas ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.minReplicas),
-            maxReplicas: ServiceField.string(values.autoscaling?.maxReplicas ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
-            targetCPUUtilizationPercentage: ServiceField.string(values.autoscaling?.targetCPUUtilizationPercentage ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
-            targetRAMUtilizationPercentage: ServiceField.string(values.autoscaling?.targetMemoryUtilizationPercentage ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
+            autoscaling: {
+                enabled: ServiceField.boolean(values.autoscaling?.enabled ?? false, porterJson?.apps?.[name]?.config?.autoscaling?.enabled),
+                minReplicas: ServiceField.string(values.autoscaling?.minReplicas ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.minReplicas),
+                maxReplicas: ServiceField.string(values.autoscaling?.maxReplicas ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
+                targetCPUUtilizationPercentage: ServiceField.string(values.autoscaling?.targetCPUUtilizationPercentage ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
+                targetMemoryUtilizationPercentage: ServiceField.string(values.autoscaling?.targetMemoryUtilizationPercentage ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
+            },
             canDelete: porterJson?.apps?.[name] == null,
         }
     }
@@ -110,6 +107,7 @@ export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
     port: ServiceString;
     generateUrlForExternalTraffic: ServiceBoolean;
     customDomain: ServiceString;
+    ingress: Ingress;
 }
 const WebService = {
     default: (name: string, porterJson?: PorterJson): WebService => ({
@@ -119,53 +117,24 @@ const WebService = {
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
         type: 'web',
         replicas: ServiceField.string('1', porterJson?.apps?.[name]?.config?.replicaCount),
-        autoscalingOn: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.autoscaling?.enabled),
-        minReplicas: ServiceField.string('1', porterJson?.apps?.[name]?.config?.autoscaling?.minReplicas),
-        maxReplicas: ServiceField.string('10', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
-        targetCPUUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
-        targetRAMUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
+        autoscaling: {
+            enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.autoscaling?.enabled),
+            minReplicas: ServiceField.string('1', porterJson?.apps?.[name]?.config?.autoscaling?.minReplicas),
+            maxReplicas: ServiceField.string('10', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
+            targetCPUUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
+            targetMemoryUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
+        },
+        ingress: {
+            enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
+            hosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
+            porterHosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
+        },
         port: ServiceField.string('80', porterJson?.apps?.[name]?.config?.container?.port),
         generateUrlForExternalTraffic: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
         customDomain: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
         canDelete: porterJson?.apps?.[name] == null,
     }),
     serialize: (service: WebService) => {
-        const getIngress = (service: WebService): Ingress => {
-            if (!service.generateUrlForExternalTraffic.value) {
-                return {
-                    ingress: {
-                        enabled: false,
-                        hosts: [],
-                        custom_domain: false,
-                        porter_hosts: [],
-                    }
-                }
-            }
-            const ingress: Ingress = {
-                ingress: {
-                    enabled: true,
-                    hosts: [],
-                    custom_domain: false,
-                    porter_hosts: [],
-                }
-            };
-            if (service.customDomain.value) {
-                ingress.ingress.hosts.push(service.customDomain.value);
-                ingress.ingress.custom_domain = true;
-            }
-            return ingress;
-        }
-
-        const autoscaling = service.autoscalingOn.value ? {
-            autoscaling: {
-                enabled: true,
-                minReplicas: service.minReplicas.value,
-                maxReplicas: service.maxReplicas.value,
-                targetCPUUtilizationPercentage: service.targetCPUUtilizationPercentage.value,
-                targetMemoryUtilizationPercentage: service.targetRAMUtilizationPercentage.value,
-            }
-        } : {};
-
         return {
             replicaCount: service.replicas.value,
             resources: {
@@ -181,8 +150,19 @@ const WebService = {
             service: {
                 port: service.port.value,
             },
-            ...autoscaling,
-            ...getIngress(service),
+            autoscaling: {
+                enabled: service.autoscaling.enabled.value,
+                minReplicas: service.autoscaling.minReplicas.value,
+                maxReplicas: service.autoscaling.maxReplicas.value,
+                targetCPUUtilizationPercentage: service.autoscaling.targetCPUUtilizationPercentage.value,
+                targetMemoryUtilizationPercentage: service.autoscaling.targetMemoryUtilizationPercentage.value,
+            },
+            ingress: {
+                enabled: service.ingress.enabled.value,
+                hosts: service.ingress.hosts.value ? [service.ingress.hosts.value] : [],
+                custom_domain: service.ingress.hosts.value ? true : false,
+                porter_hosts: service.ingress.porterHosts.value ? [service.ingress.porterHosts.value] : [],
+            }
         }
     },
     deserialize: (name: string, values: any, porterJson?: PorterJson): WebService => {
@@ -193,11 +173,18 @@ const WebService = {
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
             type: 'web',
             replicas: ServiceField.string(values.replicaCount ?? '', porterJson?.apps?.[name]?.config?.replicaCount),
-            autoscalingOn: ServiceField.boolean(values.autoscaling?.enabled ?? false, porterJson?.apps?.[name]?.config?.autoscaling?.enabled),
-            minReplicas: ServiceField.string(values.autoscaling?.minReplicas ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.minReplicas),
-            maxReplicas: ServiceField.string(values.autoscaling?.maxReplicas ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
-            targetCPUUtilizationPercentage: ServiceField.string(values.autoscaling?.targetCPUUtilizationPercentage ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
-            targetRAMUtilizationPercentage: ServiceField.string(values.autoscaling?.targetMemoryUtilizationPercentage ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
+            autoscaling: {
+                enabled: ServiceField.boolean(values.autoscaling?.enabled ?? false, porterJson?.apps?.[name]?.config?.autoscaling?.enabled),
+                minReplicas: ServiceField.string(values.autoscaling?.minReplicas ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.minReplicas),
+                maxReplicas: ServiceField.string(values.autoscaling?.maxReplicas ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
+                targetCPUUtilizationPercentage: ServiceField.string(values.autoscaling?.targetCPUUtilizationPercentage ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
+                targetMemoryUtilizationPercentage: ServiceField.string(values.autoscaling?.targetMemoryUtilizationPercentage ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
+            },
+            ingress: {
+                enabled: ServiceField.boolean(values.ingress?.enabled ?? false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
+                hosts: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
+                porterHosts: ServiceField.string(values.ingress?.porter_hosts?.length ? values.ingress.porter_hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
+            },
             port: ServiceField.string(values.container?.port ?? '', porterJson?.apps?.[name]?.config?.container?.port),
             generateUrlForExternalTraffic: ServiceField.boolean(values.ingress?.enabled ?? false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
             customDomain: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
@@ -381,10 +368,15 @@ export const Service = {
 }
 
 type Ingress = {
-    ingress: {
-        enabled: boolean;
-        hosts: string[];
-        custom_domain: boolean;
-        porter_hosts: string[];
-    }
+    enabled: ServiceBoolean;
+    hosts: ServiceString;
+    porterHosts: ServiceString;
+}
+
+type Autoscaling = {
+    enabled: ServiceBoolean,
+    minReplicas: ServiceString,
+    maxReplicas: ServiceString,
+    targetCPUUtilizationPercentage: ServiceString,
+    targetMemoryUtilizationPercentage: ServiceString,
 }

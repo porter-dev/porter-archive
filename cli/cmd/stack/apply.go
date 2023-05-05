@@ -49,6 +49,7 @@ func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, pr
 			}
 		}
 	} else {
+		color.New(color.FgYellow).Printf("No build values specified in porter.yaml, attempting to load stack build settings instead \n")
 		bi, pi, err = createV1BuildResourcesFromDB(client, stackConf)
 		if err != nil {
 			return nil, err
@@ -61,20 +62,23 @@ func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, pr
 }
 
 func createStackConf(client *api.Client, raw []byte, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
-	parsed := &PorterStackYAML{}
-
-	err := yaml.Unmarshal(raw, parsed)
-	if err != nil {
-		errMsg := composePreviewMessage("error parsing porter.yaml", Error)
-		return nil, fmt.Errorf("%s: %w", errMsg, err)
+	var parsed *PorterStackYAML
+	if raw == nil {
+		parsed = createDefaultPorterYaml()
+	} else {
+		parsed = &PorterStackYAML{}
+		err := yaml.Unmarshal(raw, parsed)
+		if err != nil {
+			errMsg := composePreviewMessage("error parsing porter.yaml", Error)
+			return nil, fmt.Errorf("%s: %w", errMsg, err)
+		}
 	}
 
-	err = config.ValidateCLIEnvironment()
+	err := config.ValidateCLIEnvironment()
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
 		return nil, fmt.Errorf("%s: %w", errMsg, err)
 	}
-
 	return &StackConf{
 		apiClient: client,
 		rawBytes:  raw,
@@ -174,5 +178,11 @@ func convertToBuild(porterApp *types.PorterApp) Build {
 		Buildpacks: buildpacks,
 		Dockerfile: dockerfile,
 		Image:      image,
+	}
+}
+
+func createDefaultPorterYaml() *PorterStackYAML {
+	return &PorterStackYAML{
+		Apps: nil,
 	}
 }

@@ -105,7 +105,7 @@ const JobTabs: React.FC<Props> = ({
           } else if (value === 'resources') {
             setHeight(244);
           } else if (value === 'advanced') {
-            setHeight(118.5);
+            setHeight(118);
           }
           setCurrentTab(value);
         }}

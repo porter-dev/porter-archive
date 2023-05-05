@@ -236,6 +236,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           {
             porter_yaml: base64Encoded,
             ...options,
+            override_release: true,
           },
           {
             cluster_id: currentCluster.id,

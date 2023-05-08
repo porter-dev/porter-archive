@@ -401,7 +401,6 @@ export const BuildpackStack: React.FC<{
       return 1;
     }
     return 0;
-    console.log("Here");
   });
 
   return (

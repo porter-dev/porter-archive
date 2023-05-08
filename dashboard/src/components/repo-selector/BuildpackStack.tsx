@@ -218,9 +218,7 @@ export const BuildpackStack: React.FC<{
           defaultStack = builders
             .flatMap((builder) => builder.builders)
             .find((stack) => {
-              return (
-                stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK
-              );
+              return stack === DEFAULT_HEROKU_STACK;
             });
         }
         setBuilders(builders);
@@ -395,13 +393,23 @@ export const BuildpackStack: React.FC<{
     return <Loading />;
   }
 
+  const sortedStackOptions = stackOptions.sort((a, b) => {
+    if (a.label < b.label) {
+      return -1;
+    }
+    if (a.label > b.label) {
+      return 1;
+    }
+    return 0;
+  });
+
   return (
     <BuildpackConfigurationContainer>
       <>
         <Select
           value={selectedStack}
           width="300px"
-          options={stackOptions}
+          options={sortedStackOptions}
           setValue={(option) => {
             setSelectedStack(option);
           }}

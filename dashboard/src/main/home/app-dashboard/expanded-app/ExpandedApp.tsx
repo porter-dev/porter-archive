@@ -285,7 +285,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       const porterYamlToJson = parsedData as PorterJson;
       return porterYamlToJson;
     } catch (err) {
-      console.log(err);
+      // TODO: handle error
     }
   };
 
@@ -694,7 +694,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                        appData.chart.chart.metadata.version
+                      appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}
@@ -708,34 +708,34 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? hasBuiltImage
                       ? [
-                          { label: "Logs", value: "logs" },
-                          { label: "Overview", value: "overview" },
-                          {
-                            label: "Environment variables",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                      : [
-                          { label: "Overview", value: "overview" },
-                          {
-                            label: "Environment variables",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                    : [
                         { label: "Overview", value: "overview" },
-                        { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
                         {
                           label: "Environment variables",
                           value: "environment-variables",
                         },
+                        { label: "Build settings", value: "build-settings" },
                         { label: "Settings", value: "settings" },
                       ]
+                      : [
+                        { label: "Overview", value: "overview" },
+                        {
+                          label: "Environment variables",
+                          value: "environment-variables",
+                        },
+                        { label: "Build settings", value: "build-settings" },
+                        { label: "Settings", value: "settings" },
+                      ]
+                    : [
+                      { label: "Overview", value: "overview" },
+                      { label: "Events", value: "events" },
+                      { label: "Logs", value: "logs" },
+                      {
+                        label: "Environment variables",
+                        value: "environment-variables",
+                      },
+                      { label: "Settings", value: "settings" },
+                    ]
                 }
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {

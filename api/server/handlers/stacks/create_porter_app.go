@@ -84,6 +84,13 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	if shouldCreate || request.OverrideRelease {
 		releaseValues = nil
 		releaseDependencies = nil
+
+		// this is required because when the front-end sends an update request with overrideRelease=true, it is unable to
+		// get the image info from the release. unless it is explicitly provided in the request, we avoid overwriting it
+		// by attempting to get the image info from the release
+		if imageInfo.Repository == "" || imageInfo.Tag == "" {
+			imageInfo = attemptToGetImageInfoFromRelease(helmRelease.Config)
+		}
 	} else {
 		releaseValues = helmRelease.Config
 		releaseDependencies = helmRelease.Chart.Metadata.Dependencies

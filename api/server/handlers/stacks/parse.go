@@ -454,14 +454,22 @@ func getChartTypeFromHelmName(name string) string {
 
 func attemptToGetImageInfoFromRelease(values map[string]interface{}) types.ImageInfo {
 	imageInfo := types.ImageInfo{}
-	if imageVal, ok := values["global"].(map[string]interface{})["image"]; ok {
-		imageMap := imageVal.(map[string]interface{})
-		if repo, ok := imageMap["repository"]; ok {
-			imageInfo.Repository = repo.(string)
-		}
-		if tag, ok := imageMap["tag"]; ok {
-			imageInfo.Tag = tag.(string)
-		}
+
+	if values == nil {
+		return imageInfo
 	}
+
+	globalImage, err := getNestedMap(values, "global", "image")
+	if err != nil {
+		return imageInfo
+	}
+
+	repoVal, okRepo := globalImage["repository"]
+	tagVal, okTag := globalImage["tag"]
+	if okRepo && okTag {
+		imageInfo.Repository = repoVal.(string)
+		imageInfo.Tag = tagVal.(string)
+	}
+
 	return imageInfo
 }

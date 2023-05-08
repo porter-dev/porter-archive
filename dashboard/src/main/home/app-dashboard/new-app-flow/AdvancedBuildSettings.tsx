@@ -42,7 +42,7 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
   const [showSettings, setShowSettings] = useState<boolean>(props.showSettings);
   const buildView = props.setBuildView(props.buildView || "buildpacks");
 
-  useEffect(() => {}, [props.buildView]);
+  useEffect(() => { }, [props.buildView]);
   const createDockerView = () => {
     // props.setBuildConfig({});
     return (
@@ -126,7 +126,7 @@ export default AdvancedBuildSettings;
 
 const StyledAdvancedBuildSettings = styled.div`
   color: ${({ showSettings }) => (showSettings ? "white" : "#aaaabb")};
-  background: #26292e;
+  background: ${({ theme }) => theme.fg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;
@@ -151,7 +151,7 @@ const StyledAdvancedBuildSettings = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
-      props.showSettings ? "" : "rotate(-90deg)"};
+    props.showSettings ? "" : "rotate(-90deg)"};
   }
 `;
 

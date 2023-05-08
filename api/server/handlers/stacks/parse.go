@@ -304,8 +304,8 @@ func convertMap(m interface{}) interface{} {
 	return m
 }
 
-func CopyEnv(env map[string]string) map[string]string {
-	envCopy := make(map[string]string)
+func CopyEnv(env map[string]string) map[string]interface{} {
+	envCopy := make(map[string]interface{})
 	if env == nil {
 		return envCopy
 	}
@@ -450,4 +450,18 @@ func getChartTypeFromHelmName(name string) string {
 		return "job"
 	}
 	return ""
+}
+
+func attemptToGetImageInfoFromRelease(values map[string]interface{}) types.ImageInfo {
+	imageInfo := types.ImageInfo{}
+	if imageVal, ok := values["global"].(map[string]interface{})["image"]; ok {
+		imageMap := imageVal.(map[string]interface{})
+		if repo, ok := imageMap["repository"]; ok {
+			imageInfo.Repository = repo.(string)
+		}
+		if tag, ok := imageMap["tag"]; ok {
+			imageInfo.Tag = tag.(string)
+		}
+	}
+	return imageInfo
 }

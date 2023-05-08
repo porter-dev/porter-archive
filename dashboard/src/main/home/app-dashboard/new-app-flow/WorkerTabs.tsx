@@ -133,7 +133,7 @@ const WorkerTabs: React.FC<Props> = ({
         currentTab={currentTab}
         setCurrentTab={(value: string) => {
           if (value === 'main') {
-            setHeight(158);
+            setHeight(159);
           } else if (value === 'resources') {
             setHeight(713);
           }

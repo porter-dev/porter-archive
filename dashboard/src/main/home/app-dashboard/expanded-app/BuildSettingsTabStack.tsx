@@ -226,13 +226,16 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   return (
     <>
       <Text size={16}>Build settings</Text>
-      <InputRow
+      <Spacer y={0.5} />
+      <Input
         disabled={true}
-        label="Git repository"
-        type="text"
+        label="Specify your Git repository."
         width="100%"
         value={actionConfig?.git_repo}
+        setValue={() => { }}
+        placeholder=""
       />
+      <Spacer y={0.5} />
       {/* <DarkMatter antiHeight="-1px" /> */}
       {actionConfig.git_repo && (
         <>
@@ -253,7 +256,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           />
         </>
       )}
-      <Spacer y={0.3} />
       {actionConfig.git_repo && branch && (
         <>
           <Spacer y={1} />

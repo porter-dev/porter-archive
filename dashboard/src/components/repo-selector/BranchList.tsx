@@ -37,7 +37,7 @@ const BranchList: React.FC<Props> = ({
   useEffect(() => {
     // Get branches
     if (!actionConfig) {
-      return () => {};
+      return () => { };
     }
 
     if (actionConfig?.kind === "github") {
@@ -99,14 +99,19 @@ const BranchList: React.FC<Props> = ({
       return <LoadingWrapper>Error loading branches</LoadingWrapper>;
     }
 
-    let results =
-      searchFilter != null
-        ? branches.filter((branch) => {
-            return branch
-              .toLowerCase()
-              .includes(searchFilter.toLowerCase() || "");
-          })
-        : sortBranches(branches).slice(0, 10);
+    let results = searchFilter != null
+      ? branches
+        .filter((branch) => {
+          return branch.toLowerCase().includes(
+            searchFilter.toLowerCase()
+          );
+        })
+        .sort((a: string, b: string) => {
+          const aIndex = a.toLowerCase().indexOf(searchFilter.toLowerCase());
+          const bIndex = b.toLowerCase().indexOf(searchFilter.toLowerCase());
+          return aIndex - bIndex;
+        })
+      : sortBranches(branches).slice(0, 10);
 
     if (results.length == 0) {
       return <LoadingWrapper>No matching Branches found.</LoadingWrapper>;

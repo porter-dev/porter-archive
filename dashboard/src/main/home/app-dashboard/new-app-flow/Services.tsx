@@ -19,10 +19,11 @@ import { Context } from "../../../../shared/Context";
 interface ServicesProps {
   services: Service[];
   setServices: (services: Service[]) => void;
+  defaultExpanded?: boolean;
   chart?: any
 }
 
-const Services: React.FC<ServicesProps> = ({ services, setServices, chart }) => {
+const Services: React.FC<ServicesProps> = ({ services, setServices, chart, defaultExpanded = false }) => {
   const [showAddServiceModal, setShowAddServiceModal] = useState<boolean>(
     false
   );
@@ -57,6 +58,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices, chart }) => 
                   deleteService={() =>
                     setServices(services.filter((_, i) => i !== index))
                   }
+                  defaultExpanded={defaultExpanded}
                 />
               );
             })}

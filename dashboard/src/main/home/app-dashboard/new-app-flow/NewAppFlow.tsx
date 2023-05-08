@@ -502,6 +502,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                     }
                   }}
                   services={formState.serviceList}
+                  defaultExpanded={true}
                 />
               </>,
               <>

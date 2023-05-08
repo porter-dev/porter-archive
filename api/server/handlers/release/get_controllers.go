@@ -77,61 +77,40 @@ func getController(controller grapher.Object, agent *kubernetes.Agent) (rc inter
 	case "deployment":
 		obj, err := agent.GetDeployment(controller)
 		if err != nil {
-			controller.Namespace = "default"
-			obj, err = agent.GetDeployment(controller)
-			if err != nil {
-				err = fmt.Errorf("error getting deployment: %w", err)
-				return nil, nil, err
-			}
+			err = fmt.Errorf("error getting deployment: %w", err)
+			return nil, nil, err
 		}
 
 		return obj, obj.Spec.Selector, nil
 	case "statefulset":
-
 		obj, err := agent.GetStatefulSet(controller)
 		if err != nil {
-			controller.Namespace = "default"
-			obj, err = agent.GetStatefulSet(controller)
-			if err != nil {
-				err = fmt.Errorf("error getting stateful set: %w", err)
-				return nil, nil, err
-			}
+			err = fmt.Errorf("error getting stateful set: %w", err)
+			return nil, nil, err
 		}
 
 		return obj, obj.Spec.Selector, nil
 	case "daemonset":
 		obj, err := agent.GetDaemonSet(controller)
 		if err != nil {
-			controller.Namespace = "default"
-			obj, err = agent.GetDaemonSet(controller)
-			if err != nil {
-				err = fmt.Errorf("error getting daemon set: %w", err)
-				return nil, nil, err
-			}
+			err = fmt.Errorf("error getting daemon set: %w", err)
+			return nil, nil, err
 		}
 
 		return obj, obj.Spec.Selector, nil
 	case "replicaset":
 		obj, err := agent.GetReplicaSet(controller)
 		if err != nil {
-			controller.Namespace = "default"
-			obj, err = agent.GetReplicaSet(controller)
-			if err != nil {
-				err = fmt.Errorf("error getting replica set: %w", err)
-				return nil, nil, err
-			}
+			err = fmt.Errorf("error getting replica set: %w", err)
+			return nil, nil, err
 		}
 
 		return obj, obj.Spec.Selector, nil
 	case "cronjob":
 		obj, err := agent.GetCronJob(controller)
 		if err != nil {
-			controller.Namespace = "default"
-			obj, err = agent.GetCronJob(controller)
-			if err != nil {
-				err = fmt.Errorf("error getting cron job %w", err)
-				return nil, nil, err
-			}
+			err = fmt.Errorf("error getting cron job %w", err)
+			return nil, nil, err
 		}
 
 		res := &metav1.LabelSelector{
@@ -146,12 +125,8 @@ func getController(controller grapher.Object, agent *kubernetes.Agent) (rc inter
 	case "job":
 		obj, err := agent.GetJob(controller)
 		if err != nil {
-			controller.Namespace = "default"
-			obj, err = agent.GetJob(controller)
-			if err != nil {
-				err = fmt.Errorf("error getting job: %w", err)
-				return nil, nil, err
-			}
+			err = fmt.Errorf("error getting job: %w", err)
+			return nil, nil, err
 		}
 
 		return obj, obj.Spec.Selector, nil

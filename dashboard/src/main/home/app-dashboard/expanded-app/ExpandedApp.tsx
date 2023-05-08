@@ -594,7 +594,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 <Spacer inline x={1} />
                 <Text size={13} color="helper">
                   <SmallIcon src={github} />
-                  {appData.app.repo_name}
+                  <Link
+                    target="_blank"
+                    to={`https://github.com/${appData.app.repo_name}`}
+                  >
+                    {appData.app.repo_name}
+                  </Link>
                 </Text>
               </>
             )}

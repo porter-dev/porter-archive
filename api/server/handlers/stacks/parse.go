@@ -147,9 +147,6 @@ func getDefaultValues(app *App, env map[string]string, appType string) map[strin
 	}
 	if appType == "web" {
 		defaultValues = map[string]interface{}{
-			"ingress": map[string]interface{}{
-				"enabled": false,
-			},
 			"container": map[string]interface{}{
 				"command": runCommand,
 				"env": map[string]interface{}{
@@ -328,13 +325,18 @@ func createSubdomainIfRequired(
 	ingressMap, err := getNestedMap(mergedValues, "ingress")
 	if err == nil {
 		enabledVal, enabledExists := ingressMap["enabled"]
-		customDomVal, customDomExists := ingressMap["custom_domain"]
-
-		if enabledExists && customDomExists {
+		if enabledExists {
 			enabled, eOK := enabledVal.(bool)
-			customDomain, cOK := customDomVal.(bool)
+			if eOK && enabled {
+				// if custom domain, we don't need to create a subdomain
+				customDomVal, customDomExists := ingressMap["custom_domain"]
+				if customDomExists {
+					customDomain, cOK := customDomVal.(bool)
+					if cOK && customDomain {
+						return nil
+					}
+				}
 
-			if eOK && cOK && enabled && !customDomain {
 				// subdomain already exists, no need to create one
 				if porterHosts, ok := ingressMap["porter_hosts"].([]interface{}); ok && len(porterHosts) > 0 {
 					return nil

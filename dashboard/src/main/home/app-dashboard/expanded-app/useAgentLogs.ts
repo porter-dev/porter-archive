@@ -237,8 +237,7 @@ export const useLogs = (
         "<token>",
         {
           pod_selector: currentPod,
-          // TODO: re-enable namespace when we properly install stack apps to namespace
-          // namespace,
+          namespace,
           revision: currentChart.version.toString(),
           search_param: searchParam,
           start_range: startDate,

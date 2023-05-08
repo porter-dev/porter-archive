@@ -19,6 +19,7 @@ interface ServiceProps {
   chart?: any;
   editService: (service: Service) => void;
   deleteService: () => void;
+  defaultExpanded: boolean;
 }
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -26,8 +27,9 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   chart,
   deleteService,
   editService,
+  defaultExpanded,
 }) => {
-  const [showExpanded, setShowExpanded] = React.useState<boolean>(false);
+  const [showExpanded, setShowExpanded] = React.useState<boolean>(defaultExpanded);
   const [height, setHeight] = React.useState<Height>("auto");
 
   // TODO: calculate heights instead of hardcoding them
@@ -72,12 +74,12 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   };
 
   const getHasBuiltImage = () => {
-    if (!chart) {
+    if (chart?.chart?.values == null) {
       return false;
     }
     return (
       !_.isEmpty((
-        Object.values(chart?.chart?.values)[0] as any
+        Object.values(chart.chart.values)[0] as any
       )?.global)
     );
   }

@@ -65,8 +65,6 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     }, 5000);
   };
 
-  console.log(podFilter);
-
   const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter.podName,
     podFilter.podNamespace,
@@ -83,91 +81,57 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
       match_prefix: currentChart.name,
     };
 
-    const logPodValuesResp = await api.getLogPodValues("<TOKEN>", filters, {
-      project_id: currentProject.id,
-      cluster_id: currentCluster.id,
-    });
-
-    if (logPodValuesResp.data?.length != 0) {
-      setPodFilterOpts(
-        _.uniq(logPodValuesResp.data ?? []).map((podName: any) => {
-          return { podName: podName, podNamespace: currentChart.namespace };
-        })
-      );
-
-      // only set pod filter if the current pod is not found in the resulting data
-      if (!podFilter || !logPodValuesResp.data?.includes(podFilter)) {
-        setPodFilter({
-          podName: logPodValuesResp.data[0],
-          podNamespace: currentChart.namespace,
-        });
-      }
-      console.log("pod values set chart namespace", podFilter, podFilterOpts);
-      return;
-    }
-
-    // check if pods are in default namespace
-    const filters_default = {
-      namespace: "default",
-      revision: currentChart.version.toString(),
-      match_prefix: currentChart.name,
-    };
-
-    const logPodValuesResp_default = await api.getLogPodValues(
-      "<TOKEN>",
-      filters_default,
-      {
+    try {
+      const logPodValuesResp = await api.getLogPodValues("<TOKEN>", filters, {
         project_id: currentProject.id,
         cluster_id: currentCluster.id,
-      }
-    );
-
-    if (logPodValuesResp_default.data?.length != 0) {
-      setPodFilterOpts(
-        _.uniq(logPodValuesResp_default.data ?? []).map((podName: any) => {
-          return { podName: podName, podNamespace: "default" };
-        })
-      );
-
-      // only set pod filter if the current pod is not found in the resulting data
-      if (!podFilter || !logPodValuesResp_default.data?.includes(podFilter)) {
-        setPodFilter({
-          podName: logPodValuesResp_default.data[0],
-          podNamespace: "default",
-        });
-      }
-      console.log("pod values set default", podFilter, podFilterOpts);
-      return;
-    }
-
-    console.log("pod values empty");
-
-    // if we're on the latest revision and no pod values were returned, query for all release pods
-    if (currentChart.info.status == "deployed") {
-      console.log("search all releast pods");
-      const allReleasePodsResp = await api.getAllReleasePods(
-        "<TOKEN>",
-        {},
-        {
-          id: currentProject.id,
-          name: currentChart.name,
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-        }
-      );
-
-      let podList = allReleasePodsResp.data.map((pod: any) => {
-        return {
-          podName: pod.metadata.name,
-          podNamespace: pod.metadata.namespace,
-        };
       });
 
-      setPodFilterOpts(podList);
+      if (logPodValuesResp.data?.length != 0) {
+        setPodFilterOpts(
+          _.uniq(logPodValuesResp.data ?? []).map((podName: any) => {
+            return { podName: podName, podNamespace: currentChart.namespace };
+          })
+        );
 
-      if (!podFilter || !podList.includes(podFilter)) {
-        setPodFilter(podList[0]);
+        // only set pod filter if the current pod is not found in the resulting data
+        if (!podFilter || !logPodValuesResp.data?.includes(podFilter)) {
+          setPodFilter({
+            podName: logPodValuesResp.data[0],
+            podNamespace: currentChart.namespace,
+          });
+        }
+        return;
       }
+
+      // if we're on the latest revision and no pod values were returned, query for all release pods
+      if (currentChart.info.status == "deployed") {
+        const allReleasePodsResp = await api.getAllReleasePods(
+          "<TOKEN>",
+          {},
+          {
+            id: currentProject.id,
+            name: currentChart.name,
+            namespace: currentChart.namespace,
+            cluster_id: currentCluster.id,
+          }
+        );
+
+        let podList = allReleasePodsResp.data.map((pod: any) => {
+          return {
+            podName: pod.metadata.name,
+            podNamespace: pod.metadata.namespace,
+          };
+        });
+
+        setPodFilterOpts(podList);
+
+        if (!podFilter || !podList.includes(podFilter)) {
+          setPodFilter(podList[0]);
+        }
+      }
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -214,10 +178,8 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
   const setPodFilterWithPodName = (podName: string) => {
     const filtered = podFilterOpts.filter((pod) => pod.podName == podName);
     if (filtered.length > 0) {
-      console.log("setting filter");
       setPodFilter(filtered[0]);
     } else {
-      console.log("erroring filter");
       setPodFilter({ podName: "", podNamespace: "" });
     }
   };
@@ -327,6 +289,7 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     // determine if the agent is installed properly - if not, start by render upgrade screen
     checkForAgent();
   }, []);
+
 
   useEffect(() => {
     if (!isPorterAgentInstalling) {

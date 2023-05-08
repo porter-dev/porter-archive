@@ -287,7 +287,22 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientCo
 		if err != nil {
 			return nil, err
 		}
-		return clientcmd.NewClientConfigFromBytes([]byte(rc))
+		clientConfig, err := clientcmd.NewClientConfigFromBytes([]byte(rc))
+		if err != nil {
+			return nil, err
+		}
+		rawConfig, err := clientConfig.RawConfig()
+		if err != nil {
+			return nil, err
+		}
+
+		overrides := &clientcmd.ConfigOverrides{}
+
+		overrides.Context = api.Context{
+			Namespace: conf.DefaultNamespace,
+		}
+
+		return clientcmd.NewDefaultClientConfig(rawConfig, overrides), nil
 	}
 
 	if conf.Cluster.AuthMechanism == models.Local {

@@ -105,8 +105,6 @@ const WorkerService = {
 export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
     type: 'web';
     port: ServiceString;
-    generateUrlForExternalTraffic: ServiceBoolean;
-    customDomain: ServiceString;
     ingress: Ingress;
 }
 const WebService = {
@@ -130,8 +128,6 @@ const WebService = {
             porterHosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
         },
         port: ServiceField.string('80', porterJson?.apps?.[name]?.config?.container?.port),
-        generateUrlForExternalTraffic: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
-        customDomain: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
         canDelete: porterJson?.apps?.[name] == null,
     }),
     serialize: (service: WebService) => {
@@ -186,8 +182,6 @@ const WebService = {
                 porterHosts: ServiceField.string(values.ingress?.porter_hosts?.length ? values.ingress.porter_hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
             },
             port: ServiceField.string(values.container?.port ?? '', porterJson?.apps?.[name]?.config?.container?.port),
-            generateUrlForExternalTraffic: ServiceField.boolean(values.ingress?.enabled ?? false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
-            customDomain: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
             canDelete: porterJson?.apps?.[name] == null,
         }
     }

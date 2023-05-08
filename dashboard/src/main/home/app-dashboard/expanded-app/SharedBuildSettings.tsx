@@ -52,6 +52,8 @@ const SharedBuildSettings: React.FC<Props> = ({
     <>
       <Text size={16}>Build settings</Text>
       <Spacer y={0.5} />
+      <Text color="helper">Specify your GitHub repository.</Text>
+      <Spacer y={0.5} />
       <ActionConfEditorStack
         actionConfig={actionConfig}
         setActionConfig={(actionConfig: ActionConfigType) => {
@@ -70,7 +72,9 @@ const SharedBuildSettings: React.FC<Props> = ({
       <Spacer y={0.3} />
       {actionConfig.git_repo && (
         <>
-          <Spacer y={1} />
+          <Spacer y={0.5} />
+          <Text color="helper">Specify your GitHub branch.</Text>
+          <Spacer y={0.5} />
           <ActionConfBranchSelector
             actionConfig={actionConfig}
             branch={branch}

@@ -45,9 +45,9 @@ const WebTabs: React.FC<Props> = ({
         />
         <Spacer y={1} />
         <Checkbox
-          checked={service.generateUrlForExternalTraffic.value}
-          disabled={service.generateUrlForExternalTraffic.readOnly}
-          toggleChecked={() => { editService({ ...service, generateUrlForExternalTraffic: { readOnly: false, value: !service.generateUrlForExternalTraffic.value } }) }}
+          checked={service.ingress.enabled.value}
+          disabled={service.ingress.enabled.readOnly}
+          toggleChecked={() => { editService({ ...service, ingress: { ...service.ingress, enabled: { readOnly: false, value: !service.ingress.enabled.value } } }) }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         >
           <Text color="helper">Generate a Porter URL for external traffic</Text>
@@ -149,10 +149,10 @@ const WebTabs: React.FC<Props> = ({
         <Input
           label="Custom domain"
           placeholder="ex: my-app.my-domain.com"
-          value={service.customDomain.value}
-          disabled={service.customDomain.readOnly}
+          value={service.ingress.hosts.value}
+          disabled={service.ingress.hosts.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, customDomain: { readOnly: false, value: e } }) }}
+          setValue={(e) => { editService({ ...service, ingress: { ...service.ingress, hosts: { readOnly: false, value: e } } }) }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
       </>

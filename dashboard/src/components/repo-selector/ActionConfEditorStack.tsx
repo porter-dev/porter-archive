@@ -47,7 +47,7 @@ const ActionConfEditorStack: React.FC<Props> = ({
       <>
         <Input
           disabled={true}
-          label="Specify your Git repository."
+          label="GitHub repository:"
           width="100%"
           value={actionConfig?.git_repo}
           setValue={() => { }}

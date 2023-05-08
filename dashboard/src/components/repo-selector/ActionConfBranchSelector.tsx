@@ -53,7 +53,7 @@ const ActionConfEditorStack: React.FC<Props> = (props) => {
     <>
       <Input
         disabled={true}
-        label="Specify your branch."
+        label="GitHub branch:"
         type="text"
         width="100%"
         value={props?.branch}

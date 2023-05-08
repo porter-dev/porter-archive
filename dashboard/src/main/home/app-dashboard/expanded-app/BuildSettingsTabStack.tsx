@@ -229,7 +229,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
       <Spacer y={0.5} />
       <Input
         disabled={true}
-        label="Specify your Git repository."
+        label="GitHub repository:"
         width="100%"
         value={actionConfig?.git_repo}
         setValue={() => { }}
@@ -259,7 +259,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
       {actionConfig.git_repo && branch && (
         <>
           <Spacer y={1} />
-          <Text color="helper">Specify your application root path.</Text>
+          <Text color="helper">Application root path:</Text>
           <Spacer y={0.5} />
           <Input
             disabled={!branch ? true : false}

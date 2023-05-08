@@ -33,7 +33,7 @@ import Services from "../new-app-flow/Services";
 import { Service } from "../new-app-flow/serviceTypes";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import Fieldset from "components/porter/Fieldset";
-import { PorterJson, createFinalPorterYaml, createImageInfo } from "../new-app-flow/schema";
+import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
 import EnvGroupArray, {
   KeyValueType,
 } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";

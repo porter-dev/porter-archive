@@ -83,15 +83,15 @@ interface GithubAppAccessData {
 }
 type Provider =
   | {
-      provider: "github";
-      name: string;
-      installation_id: number;
-    }
+    provider: "github";
+    name: string;
+    installation_id: number;
+  }
   | {
-      provider: "gitlab";
-      instance_url: string;
-      integration_id: number;
-    };
+    provider: "gitlab";
+    instance_url: string;
+    integration_id: number;
+  };
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [templateName, setTemplateName] = useState("");
 
@@ -139,7 +139,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     setAccessData(data);
     setShowGithubConnectModal(
       !hasClickedDoNotConnect &&
-        (accessError || !data.accounts || data.accounts?.length === 0)
+      (accessError || !data.accounts || data.accounts?.length === 0)
     );
   };
 
@@ -147,7 +147,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     setAccessError(error);
     setShowGithubConnectModal(
       !hasClickedDoNotConnect &&
-        (error || !accessData.accounts || accessData.accounts?.length === 0)
+      (error || !accessData.accounts || accessData.accounts?.length === 0)
     );
   };
   const validatePorterYaml = (yamlString: string) => {
@@ -182,9 +182,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       ) {
         setDetected({
           detected: true,
-          message: `Detected ${
-            Object.keys(porterYamlToJson.apps).length
-          } apps from porter.yaml`,
+          message: `Detected ${Object.keys(porterYamlToJson.apps).length
+            } apps from porter.yaml`,
         });
       } else {
         setDetected({
@@ -300,11 +299,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const base64Encoded = btoa(yamlString);
       const imageInfo = imageUrl
         ? {
-            image_info: {
-              repository: imageUrl,
-              tag: imageTag,
-            },
-          }
+          image_info: {
+            repository: imageUrl,
+            tag: imageTag,
+          },
+        }
         : {};
 
       await api.createPorterApp(
@@ -483,7 +482,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   Application services{" "}
                   {detected && formState.serviceList.length > 0 && (
                     <AppearingDiv>
-                      <Text color={detected.detected ? "#4797ff" : "#fcba03"}>
+                      <Text color={detected.detected ? "#8590ff" : "#fcba03"}>
                         {detected.detected ? (
                           <I className="material-icons">check</I>
                         ) : (
@@ -699,7 +698,7 @@ const ConnectToGithubButton = styled.a`
     props.disabled ? "#aaaabbee" : "#2E3338"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#353a3e"};
+    props.disabled ? "" : "#353a3e"};
   }
 
   > i {

@@ -25,6 +25,7 @@ const SearchBar: React.FC<Props> = ({
           value={searchInput}
           onChange={(e: any) => {
             setSearchInput(e.target.value);
+            setSearchFilter(e.target.value);
           }}
           onKeyPress={({ key }) => {
             if (key === "Enter") {
@@ -73,7 +74,7 @@ const ButtonWrapper = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
+    props.disabled ? "" : "#505edddd"};
   }
   height: 40px;
   display: flex;

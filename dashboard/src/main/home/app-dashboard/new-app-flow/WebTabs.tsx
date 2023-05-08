@@ -170,11 +170,11 @@ const WebTabs: React.FC<Props> = ({
         currentTab={currentTab}
         setCurrentTab={(value: string) => {
           if (value === 'main') {
-            setHeight(287);
+            setHeight(288);
           } else if (value === 'resources') {
             setHeight(713);
           } else if (value === 'advanced') {
-            setHeight(158);
+            setHeight(159);
           }
           setCurrentTab(value);
         }}

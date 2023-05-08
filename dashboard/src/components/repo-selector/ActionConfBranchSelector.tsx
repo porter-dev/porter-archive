@@ -8,6 +8,7 @@ import BranchList from "./BranchList";
 import ContentsList from "./ContentsList";
 import ActionDetails from "./ActionDetails";
 import InputRow from "../form-components/InputRow";
+import Input from "components/porter/Input";
 
 type Props = {
   actionConfig: ActionConfigType | null;
@@ -50,12 +51,14 @@ const ActionConfEditorStack: React.FC<Props> = (props) => {
   }
   return (
     <>
-      <InputRow
+      <Input
         disabled={true}
-        label="Branch"
+        label="Specify your branch."
         type="text"
         width="100%"
         value={props?.branch}
+        setValue={() => { }}
+        placeholder=""
       />
       <BackButton
         width="145px"

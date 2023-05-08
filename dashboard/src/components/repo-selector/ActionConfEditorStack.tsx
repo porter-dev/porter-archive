@@ -5,6 +5,7 @@ import { ActionConfigType } from "shared/types";
 
 import RepoList from "./RepoList";
 import InputRow from "../form-components/InputRow";
+import Input from "components/porter/Input";
 
 type Props = {
   actionConfig: ActionConfigType | null;
@@ -44,12 +45,13 @@ const ActionConfEditorStack: React.FC<Props> = ({
   } else {
     return (
       <>
-        <InputRow
+        <Input
           disabled={true}
-          label="Git repository"
-          type="text"
+          label="Specify your Git repository."
           width="100%"
           value={actionConfig?.git_repo}
+          setValue={() => { }}
+          placeholder=""
         />
         <BackButton
           width="135px"

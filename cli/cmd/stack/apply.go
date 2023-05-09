@@ -79,6 +79,13 @@ func createStackConf(client *api.Client, raw []byte, stackName string, projectID
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
 		return nil, fmt.Errorf("%s: %w", errMsg, err)
 	}
+
+	releaseEnvVars := getEnvFromRelease(client, stackName, projectID, clusterID)
+	if releaseEnvVars != nil {
+		color.New(color.FgYellow).Printf("Reading build env from release\n")
+		parsed.Env = mergeStringMaps(parsed.Env, releaseEnvVars)
+	}
+
 	return &StackConf{
 		apiClient: client,
 		rawBytes:  raw,
@@ -185,4 +192,80 @@ func createDefaultPorterYaml() *PorterStackYAML {
 	return &PorterStackYAML{
 		Apps: nil,
 	}
+}
+
+func getEnvFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) map[string]string {
+	var envVarsStringMap map[string]string
+	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+	release, err := client.GetRelease(
+		context.Background(),
+		projectID,
+		clusterID,
+		namespace,
+		stackName,
+	)
+
+	if err == nil && release != nil {
+		for key, val := range release.Config {
+			if key != "global" && isMapStringInterface(val) {
+				appConfig := val.(map[string]interface{})
+				if appConfig != nil {
+					if container, ok := appConfig["container"]; ok {
+						if containerMap, ok := container.(map[string]interface{}); ok {
+							if env, ok := containerMap["env"]; ok {
+								if envMap, ok := env.(map[string]interface{}); ok {
+									if normal, ok := envMap["normal"]; ok {
+										if normalMap, ok := normal.(map[string]interface{}); ok {
+											convertedMap, err := toStringMap(normalMap)
+											if err == nil {
+												envVarsStringMap = convertedMap
+												break
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return envVarsStringMap
+}
+
+func isMapStringInterface(val interface{}) bool {
+	_, ok := val.(map[string]interface{})
+	return ok
+}
+
+func toStringMap(m map[string]interface{}) (map[string]string, error) {
+	result := make(map[string]string)
+	for k, v := range m {
+		strVal, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("value for key %q is not a string", k)
+		}
+		result[k] = strVal
+	}
+	return result, nil
+}
+
+func mergeStringMaps(base, override map[string]string) map[string]string {
+	result := make(map[string]string)
+
+	if base == nil && override == nil {
+		return result
+	}
+
+	for k, v := range base {
+		result[k] = v
+	}
+
+	for k, v := range override {
+		result[k] = v
+	}
+
+	return result
 }

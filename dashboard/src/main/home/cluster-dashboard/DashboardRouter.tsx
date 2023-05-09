@@ -8,11 +8,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { WithAuthProps, withAuth } from "shared/auth/AuthorizationHoc";
 import { ClusterType } from "shared/types";
-import { 
-  getQueryParam,
-  PorterUrl,
-  pushQueryParams,
-} from "shared/routing";
+import { getQueryParam, PorterUrl, pushQueryParams } from "shared/routing";
 
 import Loading from "components/Loading";
 import ExpandedChartWrapper from "./expanded-chart/ExpandedChartWrapper";
@@ -22,6 +18,7 @@ import AppDashboard from "./apps/AppDashboard";
 import JobDashboard from "./jobs/JobDashboard";
 import ExpandedEnvGroupDashboard from "./env-groups/ExpandedEnvGroupDashboard";
 import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
+import { EnvContextProvider } from "./env-groups/EnvGroupContext";
 
 const LazyDatabasesRoutes = loadable(
   // @ts-ignore
@@ -47,11 +44,12 @@ const LazyStackRoutes = loadable(
   }
 );
 
-type Props = RouteComponentProps & WithAuthProps & {
-  currentCluster: ClusterType;
-  setSidebar: (x: boolean) => void;
-  currentView: PorterUrl;
-};
+type Props = RouteComponentProps &
+  WithAuthProps & {
+    currentCluster: ClusterType;
+    setSidebar: (x: boolean) => void;
+    currentView: PorterUrl;
+  };
 
 // TODO: should try to maintain single source of truth b/w router and context/state (ex: namespace -> being managed in parallel right now so highly inextensible and routing is fragile)
 const DashboardRouter: React.FC<Props> = ({
@@ -73,14 +71,15 @@ const DashboardRouter: React.FC<Props> = ({
     if (!cluster) {
       pushQueryParams(props, { cluster: currentCluster.name });
     }
-    api.getPrometheusIsInstalled(
-      "<token>",
-      {},
-      {
-        id: currentProject.id,
-        cluster_id: currentCluster.id,
-      }
-    )
+    api
+      .getPrometheusIsInstalled(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      )
       .then((res) => {
         setIsMetricsInstalled(true);
       })
@@ -119,7 +118,9 @@ const DashboardRouter: React.FC<Props> = ({
 
   return (
     <Switch>
-      <Route path={"/stacks"}><LazyStackRoutes /></Route>
+      <Route path={"/stacks"}>
+        <LazyStackRoutes />
+      </Route>
       <Route path={"/preview-environments"}>
         <LazyPreviewEnvironmentsRoutes />
       </Route>
@@ -162,9 +163,9 @@ const DashboardRouter: React.FC<Props> = ({
         resource=""
         verb={["get", "list"]}
       >
-        <ExpandedEnvGroupDashboard
-          currentCluster={currentCluster}
-        />
+        <EnvContextProvider>
+          <ExpandedEnvGroupDashboard currentCluster={currentCluster} />
+        </EnvContextProvider>
       </GuardedRoute>
       <GuardedRoute
         path={"/env-groups"}
@@ -186,5 +187,4 @@ const DashboardRouter: React.FC<Props> = ({
 
 export default withRouter(withAuth(DashboardRouter));
 
-const StyledTemplateComponent = styled.div`
-`;
+const StyledTemplateComponent = styled.div``;

@@ -14,7 +14,8 @@ import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
 import Loading from "components/Loading";
 import Placeholder from "components/Placeholder";
-
+import { EnvContext } from "./EnvGroupContext";
+import { cmp } from "semver";
 type PropsType = RouteComponentProps &
   WithAuthProps & {
     currentCluster: ClusterType;
@@ -25,6 +26,12 @@ const EnvGroupDashboard = (props: PropsType) => {
   const params = useParams<{ name: string }>();
   const { currentProject } = useContext(Context);
   const [expandedEnvGroup, setExpandedEnvGroup] = useState<any>();
+  const {
+    currentEnvGroup,
+    setCurrentEnvGroup,
+    envGrouping,
+    setEnvGroups,
+  } = useContext(EnvContext);
 
   const {
     data: envGroups,
@@ -47,7 +54,8 @@ const EnvGroupDashboard = (props: PropsType) => {
             cluster_id: props.currentCluster.id,
           }
         );
-
+        setEnvGroups(res.data);
+        console.log(envGrouping);
         return res.data;
       } catch (err) {
         throw err;

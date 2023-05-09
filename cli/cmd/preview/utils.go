@@ -203,7 +203,6 @@ func GetTarget(resourceName string, input map[string]interface{}) (*preview.Targ
 
 		if config.GetCLIConfig().Registry == 0 {
 			regList, err := apiClient.ListRegistries(context.Background(), output.Project)
-
 			if err != nil {
 				return nil, fmt.Errorf("for resource '%s', error listing registries in project: %w", resourceName, err)
 			}
@@ -215,7 +214,6 @@ func GetTarget(resourceName string, input map[string]interface{}) (*preview.Targ
 			output.RegistryURL = (*regList)[0].URL
 		} else {
 			reg, err := apiClient.GetRegistry(context.Background(), output.Project, config.GetCLIConfig().Registry)
-
 			if err != nil {
 				return nil, fmt.Errorf("for resource '%s', error getting registry from CLI config: %w", resourceName, err)
 			}

@@ -17,7 +17,7 @@ type StackConf struct {
 	apiClient            *api.Client
 	rawBytes             []byte
 	parsed               *PorterStackYAML
-	stackName            string
+	stackName, namespace string
 	projectID, clusterID uint
 }
 
@@ -93,16 +93,17 @@ func createStackConf(client *api.Client, raw []byte, stackName string, projectID
 		stackName: stackName,
 		projectID: projectID,
 		clusterID: clusterID,
+		namespace: fmt.Sprintf("porter-stack-%s", stackName),
 	}, nil
 }
 
 func createV1BuildResourcesFromPorterYaml(stackConf *StackConf) (*switchboardTypes.Resource, *switchboardTypes.Resource, error) {
-	bi, err := stackConf.parsed.Build.getV1BuildImage(stackConf.parsed.Env)
+	bi, err := stackConf.parsed.Build.getV1BuildImage(stackConf.parsed.Env, stackConf.namespace)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	pi, err := stackConf.parsed.Build.getV1PushImage()
+	pi, err := stackConf.parsed.Build.getV1PushImage(stackConf.namespace)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -122,12 +123,12 @@ func createV1BuildResourcesFromDB(client *api.Client, stackConf *StackConf) (*sw
 
 	build := convertToBuild(res)
 
-	bi, err := build.getV1BuildImage(stackConf.parsed.Env)
+	bi, err := build.getV1BuildImage(stackConf.parsed.Env, stackConf.namespace)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	pi, err := build.getV1PushImage()
+	pi, err := build.getV1PushImage(stackConf.namespace)
 	if err != nil {
 		return nil, nil, err
 	}

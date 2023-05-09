@@ -62,7 +62,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     appData.app.dockerfile ? "docker" : "buildpacks"
   );
 
-  const [folderPath, setFolderPath] = useState("./");
+  const [folderPath, setFolderPath] = useState(appData.app.build_context);
   const defaultActionConfig: ActionConfigType = {
     git_repo: appData.app.repo_name,
     image_repo_uri: appData.chart.image_repo_uri,
@@ -149,7 +149,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
         }
         setCurrentError(
           'The workflow is still running. You can "Save" the current build settings for the next workflow run and view the current status of the workflow here: ' +
-          tmpError.response.data
+            tmpError.response.data
         );
         return;
       }
@@ -178,7 +178,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
       await updatePorterApp({
         repo_name: appData.app.repo_name,
         git_branch: branch,
-        build_context: appData.app.build_context,
+        build_context: folderPath,
         builder: buildConfig.builder,
         buildpacks:
           buildView === "buildpacks"
@@ -232,7 +232,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
         label="GitHub repository:"
         width="100%"
         value={actionConfig?.git_repo}
-        setValue={() => { }}
+        setValue={() => {}}
         placeholder=""
       />
       <Spacer y={0.5} />
@@ -348,7 +348,7 @@ const StyledAdvancedBuildSettings = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
-    props.showSettings ? "" : "rotate(-90deg)"};
+      props.showSettings ? "" : "rotate(-90deg)"};
   }
 `;
 const StyledSourceBox = styled.div`

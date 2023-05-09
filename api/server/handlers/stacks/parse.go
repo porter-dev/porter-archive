@@ -107,6 +107,15 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 			return nil, err
 		}
 
+		// just in case this slips by
+		if appType == "web" {
+			if helm_values["ingress"] == nil {
+				helm_values["ingress"] = map[string]interface{}{
+					"enabled": false,
+				}
+			}
+		}
+
 		values[helmName] = helm_values
 	}
 

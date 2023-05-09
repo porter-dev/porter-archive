@@ -71,7 +71,7 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 		commit, err := git.LastCommit()
 		if err == nil {
 			tag = commit.Sha[:7]
-		} 
+		}
 	}
 
 	// if the method is registry and a tag is defined, we use the provided tag

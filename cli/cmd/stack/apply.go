@@ -58,6 +58,23 @@ func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, pr
 
 	v1File.Resources = append(v1File.Resources, bi, pi)
 
+	release, err := createReleaseResource(client,
+		stackConf.parsed.Release,
+		stackConf.stackName,
+		bi.Name,
+		pi.Name,
+		stackConf.projectID,
+		stackConf.clusterID,
+		stackConf.parsed.Env,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if release != nil {
+		v1File.Resources = append(v1File.Resources, release)
+	}
+
 	return v1File, nil
 }
 

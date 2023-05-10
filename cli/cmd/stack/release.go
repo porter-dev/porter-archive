@@ -12,13 +12,13 @@ import (
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 )
 
-func createReleaseResource(client *api.Client, cmd *string, stackName, buildResourceName, pushResourceName string, projectID, clusterID uint, env map[string]string) (*switchboardTypes.Resource, error) {
+func createReleaseResource(client *api.Client, release *App, stackName, buildResourceName, pushResourceName string, projectID, clusterID uint, env map[string]string) (*switchboardTypes.Resource, string, error) {
 	var finalCmd string
 	releaseCmd := getReleaseCommandFromRelease(client, stackName, projectID, clusterID)
-	if cmd == nil && releaseCmd == "" {
-		return nil, nil
-	} else if cmd != nil {
-		finalCmd = *cmd
+	if release == nil && releaseCmd == "" {
+		return nil, "", nil
+	} else if release != nil && release.Run != nil {
+		finalCmd = *release.Run
 	} else {
 		finalCmd = releaseCmd
 	}
@@ -29,18 +29,22 @@ func createReleaseResource(client *api.Client, cmd *string, stackName, buildReso
 	config.Build.Image = fmt.Sprintf("{ .%s.image }", buildResourceName)
 	config.Build.Env = CopyEnv(env)
 	config.WaitForJob = true
-	config.Values = map[string]interface{}{
-		"container": map[string]interface{}{
-			"command": finalCmd,
-			"env":     CopyEnv(env),
-		},
+
+	helm_values := make(map[string]interface{})
+	if release != nil && release.Config != nil {
+		helm_values = release.Config
 	}
+	helm_values["container"] = map[string]interface{}{
+		"command": finalCmd,
+		"env":     CopyEnv(env),
+	}
+	helm_values["paused"] = false
+	config.Values = convertMap(helm_values).(map[string]interface{})
 
 	rawConfig := make(map[string]any)
-
 	err := mapstructure.Decode(config, &rawConfig)
 	if err != nil {
-		return nil, fmt.Errorf("could not decode config for release: %w", err)
+		return nil, "", fmt.Errorf("could not decode config for release: %w", err)
 	}
 
 	return &switchboardTypes.Resource{
@@ -54,7 +58,7 @@ func createReleaseResource(client *api.Client, cmd *string, stackName, buildReso
 			"namespace": fmt.Sprintf("porter-stack-%s", stackName),
 		},
 		Config: rawConfig,
-	}, nil
+	}, finalCmd, nil
 }
 
 func getReleaseCommandFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) string {
@@ -82,4 +86,24 @@ func getReleaseCommandFromRelease(client *api.Client, stackName string, projectI
 	}
 
 	return ""
+}
+
+func convertMap(m interface{}) interface{} {
+	switch m := m.(type) {
+	case map[string]interface{}:
+		for k, v := range m {
+			m[k] = convertMap(v)
+		}
+	case map[interface{}]interface{}:
+		result := map[string]interface{}{}
+		for k, v := range m {
+			result[k.(string)] = convertMap(v)
+		}
+		return result
+	case []interface{}:
+		for i, v := range m {
+			m[i] = convertMap(v)
+		}
+	}
+	return m
 }

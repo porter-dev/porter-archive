@@ -22,7 +22,7 @@ type PorterStackYAML struct {
 	Build   *Build            `yaml:"build"`
 	Env     map[string]string `yaml:"env"`
 	Apps    map[string]*App   `yaml:"apps"`
-	Release *string           `yaml:"release"`
+	Release *App              `yaml:"release"`
 }
 
 type Build struct {
@@ -37,7 +37,7 @@ type Build struct {
 type App struct {
 	Run    *string                `yaml:"run" validate:"required"`
 	Config map[string]interface{} `yaml:"config"`
-	Type   *string                `yaml:"type" validate:"required, oneof=web worker job"`
+	Type   *string                `yaml:"type" validate:"oneof=web worker job"`
 }
 
 type SubdomainCreateOpts struct {

@@ -343,9 +343,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     releaseChart?: ChartType,
     porterJson?: PorterJson
   ) => {
-    const newServices = [];
-    const newReleaseJob = [];
-
     // handle normal chart
     const helmValues = currentChart?.config;
     const defaultValues = (currentChart?.chart as any)?.values;
@@ -353,8 +350,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       (defaultValues && Object.keys(defaultValues).length > 0) ||
       (helmValues && Object.keys(helmValues).length > 0)
     ) {
-      const appServices = Service.deserialize(helmValues, defaultValues, porterJson);
-      newServices.push(...appServices);
+      const svcs = Service.deserialize(helmValues, defaultValues, porterJson);
+      setServices(svcs);
       if (helmValues && "global" in helmValues) {
         delete helmValues.global; // not necessary for displaying services or env variables
       }
@@ -362,19 +359,16 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         const envs = Service.retrieveEnvFromHelmValues(helmValues);
         setEnvVars(envs);
         const subdomain = Service.retrieveSubdomainFromHelmValues(
-          appServices,
+          svcs,
           helmValues
         );
         setSubdomain(subdomain);
       }
-      setServices(newServices);
     }
 
     // handle release chart
     if (releaseChart?.config || porterJson?.release) {
-      console.log(releaseChart.config)
-      newReleaseJob.push(Service.deserializeRelease(releaseChart?.config, porterJson));
-      setReleaseJob(newReleaseJob);
+      setReleaseJob([Service.deserializeRelease(releaseChart?.config, porterJson)]);
     }
   };
 
@@ -526,7 +520,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "overview":
         return (
           <>
-            {!isLoading && services.filter(Service.isNonRelease).length === 0 && (
+            {!isLoading && services.length === 0 && (
               <>
                 <Fieldset>
                   <Container row>
@@ -607,6 +601,17 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "pre-deploy":
         return (
           <>
+            {!isLoading && releaseJob.length === 0 && (
+              <>
+                <Fieldset>
+                  <Container row>
+                    <PlaceholderIcon src={notFound} />
+                    <Text color="helper">No pre-deploy jobs were found.</Text>
+                  </Container>
+                </Fieldset>
+                <Spacer y={0.5} />
+              </>
+            )}
             <Services
               setServices={(x) => {
                 if (buttonStatus !== "") {
@@ -631,16 +636,17 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               onClick={async () => await updatePorterApp({})}
               status={buttonStatus}
               loadingText={"Updating..."}
-              disabled={services.length === 0}
+              disabled={releaseJob.length === 0}
             >
               Update pre-deploy job
             </Button>
             <Spacer y={0.5} />
-            <JobRuns
+            {releaseJob.length > 0 && <JobRuns
               lastRunStatus="all"
               namespace={appData.chart?.namespace}
               sortType="Newest"
             />
+            }
           </>
         );
       default:

@@ -77,7 +77,7 @@ func parse(
 
 	// return the parsed release values for the release job chart, if they exist
 	var releaseJobValues map[string]interface{}
-	if parsed.Release != nil {
+	if parsed.Release != nil && parsed.Release.Run != nil {
 		releaseJobValues = buildReleaseValues(parsed.Release, parsed.Env, imageInfo)
 	}
 

@@ -372,7 +372,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
     // handle release chart
     if (releaseChart?.config || porterJson?.release) {
-      newReleaseJob.push(Service.deserializeRelease(releaseChart?.config ?? {}, porterJson));
+      console.log(releaseChart.config)
+      newReleaseJob.push(Service.deserializeRelease(releaseChart?.config, porterJson));
       setReleaseJob(newReleaseJob);
     }
   };

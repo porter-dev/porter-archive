@@ -219,13 +219,21 @@ const StatusFooter: React.FC<Props> = ({
         <Container row>
           {percentage === "0.00%" ? (
             <StatusDot />
+          ) : total === 0 ? (
+            <StatusDot color="#ffffff33" />
           ) : (
             <StatusCircle percentage={percentage} />
           )}
           <Text color="helper">
-            Running {available}/{total} instances{" "}
-            {stale == 1 ? `(${stale} old instance)` : ""}
-            {stale > 1 ? `(${stale} old instances)` : ""}
+            {total > 0 ? (
+              <>
+                Running {available}/{total} instances{" "}
+                {stale == 1 ? `(${stale} old instance)` : ""}
+                {stale > 1 ? `(${stale} old instances)` : ""}
+              </>
+            ) : (
+              "Loading . . ."
+            )}
           </Text>
           {/*
           <Spacer inline x={1} />
@@ -248,13 +256,13 @@ const StatusFooter: React.FC<Props> = ({
 
 export default StatusFooter;
 
-const StatusDot = styled.div`
+const StatusDot = styled.div<{ color?: string }>`
   min-width: 7px;
   max-width: 7px;
   height: 7px;
   border-radius: 50%;
   margin-right: 10px;
-  background: #38a88a;
+  background: ${props => props.color || "#38a88a"};
 `;
 
 const Mi = styled.i`
@@ -269,7 +277,10 @@ const I = styled.i`
   margin-right: 5px;
 `;
 
-const StatusCircle = styled.div<{ percentage?: any }>`
+const StatusCircle = styled.div<{ 
+  percentage?: any;
+  dashed?: boolean;
+}>`
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -279,6 +290,7 @@ const StatusCircle = styled.div<{ percentage?: any }>`
     #ffffff33 ${(props) => props.percentage},
     #ffffffaa 0% ${(props) => props.percentage}
   );
+  border: ${(props) => (props.dashed ? "1px dashed #ffffff55" : "none")};
 `;
 
 const StyledStatusFooter = styled.div`

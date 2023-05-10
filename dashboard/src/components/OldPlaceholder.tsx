@@ -31,4 +31,5 @@ const StyledPlaceholder = styled.div<{
   color: #ffffff44;
   border-radius: 5px;
   background: ${props => props.theme.fg};
+  border: 1px solid ${props => props.theme.border};
 `;

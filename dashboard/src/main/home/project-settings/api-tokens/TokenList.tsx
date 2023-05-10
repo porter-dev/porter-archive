@@ -149,10 +149,11 @@ export default TokenList;
 const TokenWrapper = styled.div`
   color: #ffffff55;
   background: #ffffff01;
-  border: 1px solid #aaaabbaa;
+  border: 1px solid ${({ theme }) => theme.border};
   font-size: 13px;
   border-radius: 5px;
   cursor: pointer;
+  background: ${({ theme }) => theme.fg};
   margin: 8px 0;
   :hover {
     border: 1px solid #aaaabb;

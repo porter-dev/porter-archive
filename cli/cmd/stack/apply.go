@@ -58,6 +58,26 @@ func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, pr
 
 	v1File.Resources = append(v1File.Resources, bi, pi)
 
+	release, cmd, err := createReleaseResource(client,
+		stackConf.parsed.Release,
+		stackConf.stackName,
+		bi.Name,
+		pi.Name,
+		stackConf.projectID,
+		stackConf.clusterID,
+		stackConf.parsed.Env,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if release != nil {
+		color.New(color.FgYellow).Printf("Found release command to run before deploying apps: %s \n", cmd)
+		v1File.Resources = append(v1File.Resources, release)
+	} else {
+		color.New(color.FgYellow).Printf("No release command found in porter.yaml or helm. \n")
+	}
+
 	return v1File, nil
 }
 
@@ -218,7 +238,7 @@ func getEnvFromRelease(client *api.Client, stackName string, projectID uint, clu
 									if normal, ok := envMap["normal"]; ok {
 										if normalMap, ok := normal.(map[string]interface{}); ok {
 											convertedMap, err := toStringMap(normalMap)
-											if err == nil {
+											if err == nil && len(convertedMap) > 0 {
 												envVarsStringMap = convertedMap
 												break
 											}

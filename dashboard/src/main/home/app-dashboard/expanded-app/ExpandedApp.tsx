@@ -42,6 +42,8 @@ import { EnvVariablesTab } from "./EnvVariablesTab";
 import GHABanner from "./GHABanner";
 import LogSection from "./LogSection";
 import EventsTab from "./EventsTab";
+import ActivityFeed from "./ActivityFeed";
+import JobRuns from "./JobRuns";
 
 type Props = RouteComponentProps & {};
 
@@ -550,6 +552,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
       case "events":
         return <EventsTab currentChart={appData.chart} />;
+      case "activity":
+        return <ActivityFeed chart={appData.chart} />;
       case "logs":
         return <LogSection currentChart={appData.chart} />;
       case "environment-variables":
@@ -562,8 +566,16 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             clearStatus={() => setButtonStatus("")}
           />
         );
+      case "pre-deploy":
+        return (
+          <JobRuns
+            lastRunStatus="all"
+            namespace={appData.chart?.namespace}
+            sortType="Newest"
+          />
+        );
       default:
-        return <div>dream on</div>;
+        return <div>Tab not found</div>;
     }
   };
 
@@ -714,7 +726,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     ? hasBuiltImage
                       ? [
                         { label: "Overview", value: "overview" },
+                        { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
+                        { label: "Pre-deploy", value: "pre-deploy" },
                         {
                           label: "Environment variables",
                           value: "environment-variables",
@@ -724,6 +738,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       ]
                       : [
                         { label: "Overview", value: "overview" },
+                        { label: "Pre-deploy", value: "pre-deploy" },
                         {
                           label: "Environment variables",
                           value: "environment-variables",
@@ -735,6 +750,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       { label: "Overview", value: "overview" },
                       { label: "Events", value: "events" },
                       { label: "Logs", value: "logs" },
+                      { label: "Pre-deploy", value: "pre-deploy" },
                       {
                         label: "Environment variables",
                         value: "environment-variables",

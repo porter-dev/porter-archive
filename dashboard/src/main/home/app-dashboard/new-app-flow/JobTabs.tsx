@@ -52,7 +52,7 @@ const JobTabs: React.FC<Props> = ({
       <>
         <Spacer y={1} />
         <Input
-          label="CPUs (Mi)"
+          label="CPUs (Millicores)"
           placeholder="ex: 0.5"
           value={service.cpu.value}
           disabled={service.cpu.readOnly}

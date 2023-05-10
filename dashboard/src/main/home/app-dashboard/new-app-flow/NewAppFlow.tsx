@@ -51,6 +51,7 @@ interface FormState {
   applicationName: string;
   selectedSourceType: SourceType | undefined;
   serviceList: Service[];
+  releaseJob: ReleaseService[];
   envVariables: KeyValueType[];
   releaseCommand: string;
 }
@@ -59,6 +60,7 @@ const INITIAL_STATE: FormState = {
   applicationName: "",
   selectedSourceType: undefined,
   serviceList: [],
+  releaseJob: [],
   envVariables: [],
   releaseCommand: "",
 };
@@ -71,6 +73,7 @@ const Validators: {
   serviceList: (value: Service[]) => value.length > 0,
   envVariables: (value: KeyValueType[]) => true,
   releaseCommand: (value: string) => true,
+  releaseJob: (value: ReleaseService[]) => true,
 };
 
 type Detected = {
@@ -158,7 +161,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const porterYamlToJson = parsedData as PorterJson;
       setPorterJson(porterYamlToJson);
       const newServices = [];
-      const existingServices = formState.serviceList.filter(Service.isNonRelease).map((s) => s.name);
+      const newReleaseJob = [];
+      const existingServices = formState.serviceList.map((s) => s.name);
       for (const [name, app] of Object.entries(porterYamlToJson.apps)) {
         if (!existingServices.includes(name)) {
           if (app.type) {
@@ -170,11 +174,12 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           }
         }
       }
-      if (!formState.serviceList.some(Service.isRelease)) {
-        newServices.push(Service.default("release", "release", porterYamlToJson));
+      if (!formState.releaseJob.length && porterYamlToJson.release != null) {
+        newReleaseJob.push(Service.default("pre-deploy", "release", porterYamlToJson) as ReleaseService);
       }
       const newServiceList = [...formState.serviceList, ...newServices];
-      setFormState({ ...formState, serviceList: newServiceList });
+      const newReleaseJobList = [...formState.releaseJob, ...newReleaseJob];
+      setFormState({ ...formState, serviceList: newServiceList, releaseJob: newReleaseJobList });
       if (Validators.serviceList(newServiceList)) {
         setCurrentStep(Math.max(currentStep, 5));
       }
@@ -294,6 +299,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       // validate form data
       const finalPorterYaml = createFinalPorterYaml(
         formState.serviceList,
+        formState.releaseJob,
         formState.envVariables,
         porterJson
       );
@@ -324,6 +330,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           dockerfile: buildView === "docker" ? dockerfilePath : "",
           image_repo_uri: imageUrl,
           porter_yaml: base64Encoded,
+          override_release: true,
           ...imageInfo,
         },
         {
@@ -501,11 +508,12 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setServices={(services: Service[]) => {
                     setFormState({ ...formState, serviceList: services });
                     if (Validators.serviceList(services)) {
-                      setCurrentStep(Math.max(currentStep, 4));
+                      setCurrentStep(Math.max(currentStep, 5));
                     }
                   }}
-                  services={formState.serviceList.filter(Service.isNonRelease)}
+                  services={formState.serviceList}
                   defaultExpanded={true}
+                  addNewText={"Add a new service"}
                 />
               </>,
               <>
@@ -523,7 +531,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 />
               </>,
               <>
-                <Text size={16}>Release (optional)</Text>
+                <Text size={16}>Pre-deploy job (optional)</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
                   If specified, this is a job that will be run before every
@@ -531,23 +539,22 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 </Text>
                 <Spacer y={0.5} />
                 <Services
-                  setServices={(services: Service[]) => {
-                    setFormState({ ...formState, serviceList: services });
-                    if (Validators.serviceList(services)) {
-                      setCurrentStep(Math.max(currentStep, 4));
-                    }
+                  setServices={(releaseJob: ReleaseService[]) => {
+                    setFormState({ ...formState, releaseJob });
                   }}
-                  services={formState.serviceList.filter(Service.isRelease)}
+                  services={formState.releaseJob}
                   defaultExpanded={true}
                   limitOne={true}
                   customOnClick={() => {
-                    const newServices = [...formState.serviceList, Service.default(
-                      "release",
-                      "release",
-                      porterJson
-                    )];
-                    setFormState({ ...formState, serviceList: newServices })
+                    setFormState({
+                      ...formState, releaseJob: [Service.default(
+                        "release",
+                        "release",
+                        porterJson
+                      ) as ReleaseService],
+                    })
                   }}
+                  addNewText={"Add a new pre-deploy job"}
                 />
               </>,
               <Button

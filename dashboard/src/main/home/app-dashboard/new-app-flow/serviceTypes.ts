@@ -285,7 +285,7 @@ const ReleaseService = {
             ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.release?.run),
             type: 'release',
-            canDelete: true,
+            canDelete: porterJson?.release == null,
         }
     }
 }
@@ -357,6 +357,10 @@ export const Service = {
                 }
             }
         }).filter((service: Service | undefined): service is Service => service != null);
+    },
+    // TODO: consolidate these
+    deserializeRelease: (helmValues: any, porterJson?: PorterJson): ReleaseService => {
+        return ReleaseService.deserialize('pre-deploy', helmValues, porterJson);
     },
 
     // standard typeguards

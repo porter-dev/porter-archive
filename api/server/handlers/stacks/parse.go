@@ -56,26 +56,32 @@ func parse(
 	existingValues map[string]interface{},
 	existingDependencies []*chart.Dependency,
 	opts SubdomainCreateOpts,
-) (*chart.Chart, map[string]interface{}, error) {
+) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
 	parsed := &PorterStackYAML{}
 
 	err := yaml.Unmarshal(porterYaml, parsed)
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
+		return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
 	}
 
 	values, err := buildStackValues(parsed, imageInfo, existingValues, opts)
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
+		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
 	}
 	convertedValues := convertMap(values).(map[string]interface{})
 
 	chart, err := buildStackChart(parsed, config, projectID, existingDependencies)
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s: %w", "error building chart from porter.yaml", err)
+		return nil, nil, nil, fmt.Errorf("%s: %w", "error building chart from porter.yaml", err)
 	}
 
-	return chart, convertedValues, nil
+	// return the parsed release values for the release job chart, if they exist
+	var releaseJobValues map[string]interface{}
+	if parsed.Release != nil {
+		releaseJobValues = buildReleaseValues(parsed.Release, parsed.Env, imageInfo)
+	}
+
+	return chart, convertedValues, releaseJobValues, nil
 }
 
 func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existingValues map[string]interface{}, opts SubdomainCreateOpts) (map[string]interface{}, error) {
@@ -136,6 +142,21 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 	}
 
 	return values, nil
+}
+
+func buildReleaseValues(release *App, env map[string]string, imageInfo types.ImageInfo) map[string]interface{} {
+	defaultValues := getDefaultValues(release, env, "job")
+	convertedConfig := convertMap(release.Config).(map[string]interface{})
+	helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
+
+	if imageInfo.Repository != "" && imageInfo.Tag != "" {
+		helm_values["image"] = map[string]interface{}{
+			"repository": imageInfo.Repository,
+			"tag":        imageInfo.Tag,
+		}
+	}
+
+	return helm_values
 }
 
 func getType(name string, app *App) string {

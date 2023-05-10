@@ -40,11 +40,12 @@ export const PorterYamlSchema = z.object({
     build: BuildSchema.optional(),
     env: EnvSchema.optional(),
     apps: AppsSchema,
-    release: appConfigSchema,
+    release: appConfigSchema.optional(),
 });
 
 export const createFinalPorterYaml = (
     services: Service[],
+    releaseJob: Service[],
     dashboardSetEnvVariables: KeyValueType[],
     porterJson: PorterJson | undefined,
 ): PorterJson => {
@@ -52,7 +53,7 @@ export const createFinalPorterYaml = (
         version: "v1stack",
         env: combineEnv(dashboardSetEnvVariables, porterJson?.env),
         apps: createApps(services.filter(Service.isNonRelease), porterJson),
-        release: createRelease(services.find(Service.isRelease)),
+        release: createRelease(releaseJob.find(Service.isRelease)),
     };
 };
 

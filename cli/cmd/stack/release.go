@@ -14,13 +14,13 @@ import (
 
 func createReleaseResource(client *api.Client, release *App, stackName, buildResourceName, pushResourceName string, projectID, clusterID uint, env map[string]string) (*switchboardTypes.Resource, string, error) {
 	var finalCmd string
-	releaseCmd := getReleaseCommandFromRelease(client, stackName, projectID, clusterID)
-	if release == nil && releaseCmd == "" {
-		return nil, "", nil
-	} else if release != nil && release.Run != nil {
+	if release != nil && release.Run != nil {
 		finalCmd = *release.Run
 	} else {
-		finalCmd = releaseCmd
+		finalCmd = getReleaseCommandFromRelease(client, stackName, projectID, clusterID)
+		if finalCmd == "" {
+			return nil, "", nil
+		}
 	}
 
 	config := &preview.ApplicationConfig{}
@@ -36,7 +36,9 @@ func createReleaseResource(client *api.Client, release *App, stackName, buildRes
 	}
 	helm_values["container"] = map[string]interface{}{
 		"command": finalCmd,
-		"env":     CopyEnv(env),
+		"env": map[string]interface{}{
+			"normal": CopyEnv(env),
+		},
 	}
 	helm_values["paused"] = false
 	config.Values = convertMap(helm_values).(map[string]interface{})

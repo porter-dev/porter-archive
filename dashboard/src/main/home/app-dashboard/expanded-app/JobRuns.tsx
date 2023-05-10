@@ -101,27 +101,7 @@ const JobRuns: React.FC<Props> = ({
   const columns = useMemo<Column<JobRun>[]>(
     () => [
       {
-        Header: "Namespace / Name",
-        accessor: (originalRow) => {
-          const owners = originalRow.metadata.ownerReferences;
-          let name = "N/A";
-          if (Array.isArray(owners)) {
-            name = owners[0]?.name;
-          }
-          if (originalRow?.metadata?.labels["meta.helm.sh/release-name"]) {
-            name = originalRow.metadata.labels["meta.helm.sh/release-name"];
-          }
-
-          if (name !== "N/A") {
-            return originalRow.metadata?.namespace + "/" + name;
-          }
-
-          return name;
-        },
-        width: "max-content",
-      },
-      {
-        Header: "Run at",
+        Header: "Started",
         accessor: (originalRow) => relativeDate(originalRow.status.startTime),
       },
       {
@@ -138,7 +118,7 @@ const JobRuns: React.FC<Props> = ({
             return "Still running...";
           }
         },
-        Cell: ({ row }: CellProps<JobRun>) => {
+        Cell: ({ row }) => {
           if (row.original.status?.completionTime) {
             return runnedFor(
               row.original.status?.startTime,
@@ -176,34 +156,17 @@ const JobRuns: React.FC<Props> = ({
         },
       },
       {
-        Header: "Image tag",
+        Header: "Commit tag",
         id: "commit_or_image_tag",
         accessor: (originalRow) => {
           const container = originalRow.spec?.template?.spec?.containers[0];
           return container?.image?.split(":")[1] || "N/A";
         },
-        Cell: ({ row }: CellProps<JobRun>) => {
+        Cell: ({ row }: any) => {
           const container = row.original.spec?.template?.spec?.containers[0];
 
           const tag = container?.image?.split(":")[1];
           return tag;
-        },
-      },
-      {
-        Header: "Command",
-        id: "command",
-        accessor: (originalRow) => {
-          const container = originalRow.spec?.template?.spec?.containers[0];
-          return container?.command?.join(" ") || "N/A";
-        },
-        Cell: ({ row }: CellProps<JobRun>) => {
-          const container = row.original.spec?.template?.spec?.containers[0];
-
-          return (
-            <CommandString>
-              {container?.command?.join(" ") || "N/A"}
-            </CommandString>
-          );
         },
       },
       {
@@ -223,7 +186,7 @@ const JobRuns: React.FC<Props> = ({
             <RedirectButton
               to={{
                 pathname: `/jobs/${currentCluster.name}/${row.original?.metadata?.namespace}/${row.original?.metadata?.labels["meta.helm.sh/release-name"]}`,
-                search: urlParams.toString(),
+                search: `app=${row.original?.metadata?.namespace.split("porter-stack-")[1]}&` + urlParams.toString(),
               }}
             >
               <i className="material-icons">open_in_new</i>
@@ -295,6 +258,7 @@ const JobRuns: React.FC<Props> = ({
   return (
     <Table
       columns={columns}
+      disableGlobalFilter
       data={data}
       isLoading={jobRuns === null}
       enablePagination

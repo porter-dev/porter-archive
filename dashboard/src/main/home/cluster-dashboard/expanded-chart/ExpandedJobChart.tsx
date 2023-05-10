@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
+import { RouteComponentProps, withRouter } from "react-router";
 
 import leftArrow from "assets/left-arrow.svg";
 import { cloneDeep, set } from "lodash";
@@ -29,6 +30,8 @@ import CronPrettifier from "cronstrue";
 import BuildSettingsTab from "./build-settings/BuildSettingsTab";
 import { useStackEnvGroups } from "./useStackEnvGroups";
 import api from "shared/api";
+import { getQueryParam, pushFiltered } from "shared/routing";
+import { useLocation } from "react-router";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -40,13 +43,15 @@ const readableDate = (s: string) => {
   return `${time} on ${date}`;
 };
 
-export const ExpandedJobChartFC: React.FC<{
+type PropsType = RouteComponentProps & {
   namespace: string;
   currentChart: ChartType;
   currentCluster: ClusterType;
   closeChart: () => void;
   setSidebar: (x: boolean) => void;
-}> = ({ currentChart: oldChart, closeChart, currentCluster }) => {
+}
+
+const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeChart, currentCluster, ...props }) => {
   const { currentProject, setCurrentOverlay } = useContext(Context);
   const [isAuthorized] = useAuth();
   const {
@@ -59,6 +64,8 @@ export const ExpandedJobChartFC: React.FC<{
     upgradeChart,
     loadChartWithSpecificRevision,
   } = useChart(oldChart, closeChart);
+
+  const location = useLocation();
 
   const {
     jobs,
@@ -331,7 +338,14 @@ export const ExpandedJobChartFC: React.FC<{
       <ExpandedJobRun
         currentChart={chart}
         jobRun={selectedJob}
-        onClose={() => setSelectedJob(null)}
+        onClose={() => {
+          const app = getQueryParam({ location }, "app");
+          if (app) {
+            window.location.href = `/apps/${app}`;
+          } else {
+            setSelectedJob(null);
+          }
+        }}
       />
     );
   }
@@ -407,6 +421,8 @@ export const ExpandedJobChartFC: React.FC<{
     </>
   );
 };
+
+export default withRouter(ExpandedJobChart);
 
 const ExpandedJobHeader: React.FC<{
   chart: ChartType;

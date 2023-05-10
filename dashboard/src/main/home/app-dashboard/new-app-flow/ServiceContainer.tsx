@@ -13,6 +13,7 @@ import WorkerTabs from "./WorkerTabs";
 import JobTabs from "./JobTabs";
 import { Service } from "./serviceTypes";
 import StatusFooter from "../expanded-app/StatusFooter";
+import ReleaseTabs from "./ReleaseTabs";
 
 interface ServiceProps {
   service: Service;
@@ -59,6 +60,14 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             setHeight={setHeight}
           />
         );
+      case "release":
+        return (
+          <ReleaseTabs
+            service={service}
+            editService={editService}
+            setHeight={setHeight}
+          />
+        );
     }
   };
 
@@ -69,6 +78,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       case "worker":
         return <Icon src={worker} />;
       case "job":
+        return <Icon src={job} />;
+      case "release":
         return <Icon src={job} />;
     }
   };

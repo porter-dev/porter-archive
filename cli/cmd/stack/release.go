@@ -8,14 +8,13 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/internal/integrations/preview"
-	"github.com/porter-dev/porter/internal/templater/utils"
 
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 )
 
 func createReleaseResource(client *api.Client, release *App, stackName, buildResourceName, pushResourceName string, projectID, clusterID uint, env map[string]string) (*switchboardTypes.Resource, string, error) {
 	var finalCmd string
-	releaseCmd, releaseConfig := getCommandAndConfigFromRelease(client, stackName, projectID, clusterID)
+	releaseCmd := getReleaseCommandFromRelease(client, stackName, projectID, clusterID)
 	if release == nil && releaseCmd == "" {
 		return nil, "", nil
 	} else if release != nil && release.Run != nil {
@@ -42,15 +41,7 @@ func createReleaseResource(client *api.Client, release *App, stackName, buildRes
 		},
 	}
 	helm_values["paused"] = false
-
-	// attempt to 'merge' with the helm values in the release, if they exist.
-	// however, we will override with the values in the porter.yaml if they exist
-	convertedMap := convertMap(helm_values).(map[string]interface{})
-	if releaseConfig != nil {
-		config.Values = utils.DeepCoalesceValues(releaseConfig, convertedMap)
-	} else {
-		config.Values = convertedMap
-	}
+	config.Values = convertMap(helm_values).(map[string]interface{})
 
 	rawConfig := make(map[string]any)
 	err := mapstructure.Decode(config, &rawConfig)
@@ -72,7 +63,7 @@ func createReleaseResource(client *api.Client, release *App, stackName, buildRes
 	}, finalCmd, nil
 }
 
-func getCommandAndConfigFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) (string, map[string]interface{}) {
+func getReleaseCommandFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) string {
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 	releaseName := fmt.Sprintf("%s-r", stackName)
 	release, err := client.GetRelease(
@@ -84,19 +75,19 @@ func getCommandAndConfigFromRelease(client *api.Client, stackName string, projec
 	)
 
 	if err != nil || release == nil || release.Config == nil {
-		return "", nil
+		return ""
 	}
 
 	containerMap, err := deploy.GetNestedMap(release.Config, "container")
 	if err == nil {
 		if command, ok := containerMap["command"]; ok {
 			if commandString, ok := command.(string); ok {
-				return commandString, release.Config
+				return commandString
 			}
 		}
 	}
 
-	return "", release.Config
+	return ""
 }
 
 func convertMap(m interface{}) interface{} {

@@ -40,6 +40,8 @@ type Props = {
   setBuildView: (x: string) => void;
   setCurrentStep: (x: number) => void;
   currentStep: number;
+  porterYamlPath: string;
+  setPorterYamlPath: (x: string) => void;
 };
 
 const SourceSettings: React.FC<Props> = ({
@@ -63,6 +65,8 @@ const SourceSettings: React.FC<Props> = ({
   setBuildView,
   setCurrentStep,
   currentStep,
+  setPorterYamlPath,
+  porterYamlPath,
   ...props
 }) => {
   const renderDockerSettings = () => {
@@ -139,6 +143,8 @@ const SourceSettings: React.FC<Props> = ({
               setImageUrl={setImageUrl}
               buildView={buildView}
               setBuildView={setBuildView}
+              porterYamlPath={porterYamlPath}
+              setPorterYamlPath={setPorterYamlPath}
             />
           ) : (
             renderDockerSettings()

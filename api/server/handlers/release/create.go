@@ -115,6 +115,19 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	k8sAgent, err := c.GetAgent(r, cluster, "")
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting k8s agent: %w", err)))
+		return
+	}
+
+	// create the namespace if it does not exist already
+	_, err = k8sAgent.CreateNamespace(namespace, nil)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating namespace: %w", err)))
+		return
+	}
+
 	conf := &helm.InstallChartConfig{
 		Chart:      chart,
 		Name:       request.Name,
@@ -132,12 +145,6 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			http.StatusBadRequest,
 		))
 
-		return
-	}
-
-	k8sAgent, err := c.GetAgent(r, cluster, "")
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting k8s agent: %w", err)))
 		return
 	}
 

@@ -23,7 +23,7 @@ type ServerConf struct {
 	CookieInsecure       bool          `env:"COOKIE_INSECURE,default=false"`
 	TokenGeneratorSecret string        `env:"TOKEN_GENERATOR_SECRET,default=secret"`
 	TimeoutRead          time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
-	TimeoutWrite         time.Duration `env:"SERVER_TIMEOUT_WRITE,default=30s"`
+	TimeoutWrite         time.Duration `env:"SERVER_TIMEOUT_WRITE,default=60s"`
 	TimeoutIdle          time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
 	IsLocal              bool          `env:"IS_LOCAL,default=false"`
 	IsTesting            bool          `env:"IS_TESTING,default=false"`

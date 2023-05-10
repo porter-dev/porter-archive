@@ -33,7 +33,7 @@ import {
 import Error from "components/porter/Error";
 import { z } from "zod";
 import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
-import { Service } from "./serviceTypes";
+import { ReleaseService, Service } from "./serviceTypes";
 import { Helper } from "components/form-components/Helper";
 import GithubConnectModal from "./GithubConnectModal";
 
@@ -158,7 +158,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const porterYamlToJson = parsedData as PorterJson;
       setPorterJson(porterYamlToJson);
       const newServices = [];
-      const existingServices = formState.serviceList.map((s) => s.name);
+      const existingServices = formState.serviceList.filter(Service.isNonRelease).map((s) => s.name);
       for (const [name, app] of Object.entries(porterYamlToJson.apps)) {
         if (!existingServices.includes(name)) {
           if (app.type) {
@@ -170,10 +170,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           }
         }
       }
+      if (!formState.serviceList.some(Service.isRelease)) {
+        newServices.push(Service.default("release", "release", porterYamlToJson));
+      }
       const newServiceList = [...formState.serviceList, ...newServices];
       setFormState({ ...formState, serviceList: newServiceList });
       if (Validators.serviceList(newServiceList)) {
-        setCurrentStep(Math.max(currentStep, 4));
+        setCurrentStep(Math.max(currentStep, 5));
       }
       if (
         porterYamlToJson &&
@@ -183,13 +186,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         setDetected({
           detected: true,
           message: `Detected ${Object.keys(porterYamlToJson.apps).length
-            } apps from porter.yaml`,
+            } services from porter.yaml`,
         });
       } else {
         setDetected({
           detected: false,
           message:
-            "Could not detect any apps from porter.yaml. Make sure it exists in the root of your repo.",
+            "Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.",
         });
       }
     } catch (error) {
@@ -501,7 +504,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                       setCurrentStep(Math.max(currentStep, 4));
                     }
                   }}
-                  services={formState.serviceList}
+                  services={formState.serviceList.filter(Service.isNonRelease)}
                   defaultExpanded={true}
                 />
               </>,
@@ -519,28 +522,34 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   fileUpload={true}
                 />
               </>,
-              /*
               <>
-                <Text size={16}>Release command (optional)</Text>
+                <Text size={16}>Release (optional)</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
-                  If specified, this command will be run before every
+                  If specified, this is a job that will be run before every
                   deployment.
                 </Text>
                 <Spacer y={0.5} />
-                <Input
-                  placeholder="yarn ./scripts/run-migrations.js"
-                  value={formState.releaseCommand}
-                  width="300px"
-                  setValue={(e) => {
-                    setFormState({ ...formState, releaseCommand: e });
-                    if (Validators.releaseCommand(e)) {
-                      setCurrentStep(Math.max(currentStep, 6));
+                <Services
+                  setServices={(services: Service[]) => {
+                    setFormState({ ...formState, serviceList: services });
+                    if (Validators.serviceList(services)) {
+                      setCurrentStep(Math.max(currentStep, 4));
                     }
+                  }}
+                  services={formState.serviceList.filter(Service.isRelease)}
+                  defaultExpanded={true}
+                  limitOne={true}
+                  customOnClick={() => {
+                    const newServices = [...formState.serviceList, Service.default(
+                      "release",
+                      "release",
+                      porterJson
+                    )];
+                    setFormState({ ...formState, serviceList: newServices })
                   }}
                 />
               </>,
-              */
               <Button
                 onClick={() => {
                   if (imageUrl) {

@@ -3,8 +3,8 @@ import { overrideObjectValues } from "./utils";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterJson } from "./schema";
 
-export type Service = WorkerService | WebService | JobService;
-export type ServiceType = 'web' | 'worker' | 'job';
+export type Service = WorkerService | WebService | JobService | ReleaseService;
+export type ServiceType = 'web' | 'worker' | 'job' | 'release';
 
 type ServiceString = {
     readOnly: boolean;
@@ -13,6 +13,19 @@ type ServiceString = {
 type ServiceBoolean = {
     readOnly: boolean;
     value: boolean;
+}
+type Ingress = {
+    enabled: ServiceBoolean;
+    hosts: ServiceString;
+    porterHosts: ServiceString;
+}
+
+type Autoscaling = {
+    enabled: ServiceBoolean,
+    minReplicas: ServiceString,
+    maxReplicas: ServiceString,
+    targetCPUUtilizationPercentage: ServiceString,
+    targetMemoryUtilizationPercentage: ServiceString,
 }
 
 const ServiceField = {
@@ -238,10 +251,51 @@ const JobService = {
     }
 }
 
+export type ReleaseService = SharedServiceParams & {
+    type: 'release';
+};
+const ReleaseService = {
+    default: (porterJson?: PorterJson): ReleaseService => ({
+        name: 'release',
+        cpu: ServiceField.string('100', porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
+        ram: ServiceField.string('256', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
+        startCommand: ServiceField.string('', porterJson?.release?.run),
+        type: 'release',
+        canDelete: true,
+    }),
+
+    serialize: (service: ReleaseService) => {
+        return {
+            container: {
+                command: service.startCommand.value,
+            },
+            resources: {
+                requests: {
+                    cpu: service.cpu.value + 'm',
+                    memory: service.ram.value + 'Mi',
+                }
+            },
+        }
+    },
+
+    deserialize: (name: string, values: any, porterJson?: PorterJson): ReleaseService => {
+        return {
+            name,
+            cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
+            ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
+            startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.release?.run),
+            type: 'release',
+            canDelete: true,
+        }
+    }
+}
+
+
 const TYPE_TO_SUFFIX: Record<ServiceType, string> = {
     'web': '-web',
     'worker': '-wkr',
     'job': '-job',
+    'release': '',
 }
 const SUFFIX_TO_TYPE: Record<string, ServiceType> = {
     '-web': 'web',
@@ -259,6 +313,8 @@ export const Service = {
                 return WorkerService.default(name, porterJson);
             case 'job':
                 return JobService.default(name, porterJson);
+            case 'release':
+                return ReleaseService.default(porterJson);
         }
     },
 
@@ -271,6 +327,8 @@ export const Service = {
                 return WorkerService.serialize(service);
             case 'job':
                 return JobService.serialize(service);
+            case 'release':
+                return ReleaseService.serialize(service);
         }
     },
 
@@ -305,6 +363,8 @@ export const Service = {
     isWeb: (service: Service): service is WebService => service.type === 'web',
     isWorker: (service: Service): service is WorkerService => service.type === 'worker',
     isJob: (service: Service): service is JobService => service.type === 'job',
+    isRelease: (service: Service): service is ReleaseService => service.type === 'release',
+    isNonRelease: (service: Service): service is Exclude<Service, ReleaseService> => service.type !== 'release',
 
     // required because of https://github.com/helm/helm/issues/9214
     toHelmName: (service: Service): string => {
@@ -361,16 +421,3 @@ export const Service = {
     }
 }
 
-type Ingress = {
-    enabled: ServiceBoolean;
-    hosts: ServiceString;
-    porterHosts: ServiceString;
-}
-
-type Autoscaling = {
-    enabled: ServiceBoolean,
-    minReplicas: ServiceString,
-    maxReplicas: ServiceString,
-    targetCPUUtilizationPercentage: ServiceString,
-    targetMemoryUtilizationPercentage: ServiceString,
-}

@@ -78,7 +78,7 @@ func GetAgentOutOfClusterConfig(conf *OutOfClusterConfig) (*Agent, error) {
 	} else {
 		rc, err := conf.ToRESTConfig()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to convert ooc config to rest config: %w", err)
 		}
 		restConf = rc
 	}
@@ -89,7 +89,7 @@ func GetAgentOutOfClusterConfig(conf *OutOfClusterConfig) (*Agent, error) {
 
 	clientset, err := kubernetes.NewForConfig(restConf)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get new clientset from rest config: %w", err)
 	}
 
 	return &Agent{conf, clientset}, nil
@@ -217,12 +217,12 @@ func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
 
 	cmdConf, err := conf.GetClientConfigFromCluster()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get cmdConf from cluster: %w", err)
 	}
 
 	restConf, err := cmdConf.ClientConfig()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get client config from cmdConf: %w", err)
 	}
 
 	restConf.Timeout = conf.Timeout
@@ -319,7 +319,7 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientCo
 
 	apiConfig, err := conf.CreateRawConfigFromCluster()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create raw config from cluster: %w", err)
 	}
 
 	overrides := &clientcmd.ConfigOverrides{}
@@ -342,12 +342,28 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 
 	clusterMap := make(map[string]*api.Cluster)
 
+	req2 := connect.NewRequest(&porterv1.EKSBearerTokenRequest{
+		ProjectId: int64(cluster.ProjectID),
+		ClusterId: int64(cluster.ID),
+	})
+	cert, err := conf.CAPIManagementClusterClient.EKSBearerToken(context.Background(), req2)
+	if err != nil {
+		return nil, fmt.Errorf("error getting certificate authority data: %w", err)
+	}
+
+	decodedCert, err := b64.DecodeString(cert.Msg.Token)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding certificate authority data: %w", err)
+	}
+
+	// fmt.Printf("certificate authority data: %s\n", string(decodedCert))
+
 	clusterMap[cluster.Name] = &api.Cluster{
 		Server:                   cluster.Server,
 		LocationOfOrigin:         cluster.ClusterLocationOfOrigin,
 		TLSServerName:            cluster.TLSServerName,
 		InsecureSkipTLSVerify:    cluster.InsecureSkipTLSVerify,
-		CertificateAuthorityData: cluster.CertificateAuthorityData,
+		CertificateAuthorityData: decodedCert,
 	}
 
 	// construct the auth infos
@@ -439,14 +455,27 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		// add this as a bearer token
 		authInfoMap[authInfoName].Token = tok.AccessToken
 	case models.AWS:
-		awsAuth, err := conf.Repo.AWSIntegration().ReadAWSIntegration(
-			cluster.ProjectID,
-			cluster.AWSIntegrationID,
-		)
-		if err != nil {
-			return nil, err
-		}
 
+		req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{
+			ProjectId: int64(cluster.ProjectID),
+		})
+		creds, err := conf.CAPIManagementClusterClient.AssumeRoleCredentials(context.Background(), req)
+		if err != nil {
+			return nil, fmt.Errorf("error getting capi credentials for repository: %w", err)
+		}
+		awsAuth := &ints.AWSIntegration{
+			AWSAccessKeyID:     []byte(creds.Msg.AwsAccessId),
+			AWSSecretAccessKey: []byte(creds.Msg.AwsSecretKey),
+			AWSSessionToken:    []byte(creds.Msg.AwsSessionToken),
+		}
+		//awsAuth, err := conf.Repo.AWSIntegration().ReadAWSIntegration(
+		//	cluster.ProjectID,
+		//	cluster.AWSIntegrationID,
+		//)
+		//if err != nil {
+		//	return nil, err
+		//}
+		//
 		awsClusterID := cluster.Name
 		shouldOverride := false
 
@@ -457,8 +486,10 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 
 		tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error getting bearer token for repository: %w", err)
 		}
+
+		// fmt.Printf("DGT token: %s\n", tok)
 
 		// add this as a bearer token
 		authInfoMap[authInfoName].Token = tok

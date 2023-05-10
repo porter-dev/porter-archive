@@ -1,6 +1,8 @@
 package integrations
 
 import (
+	"fmt"
+
 	"gorm.io/gorm"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -138,6 +140,8 @@ func (a *AWSIntegration) GetBearerToken(
 			validClusterId = clusterID
 		}
 	}
+
+	fmt.Printf("assumerolearn: %s\n", a.AWSAssumeRoleArn)
 
 	tok, err := generator.GetWithOptions(&token.GetTokenOptions{
 		AssumeRoleARN: a.AWSAssumeRoleArn,

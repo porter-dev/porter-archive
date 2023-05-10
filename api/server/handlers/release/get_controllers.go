@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -36,6 +37,8 @@ func NewGetControllersHandler(
 }
 
 func (c *GetControllersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
@@ -44,6 +47,9 @@ func (c *GetControllersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	check1 := time.Now()
+	fmt.Printf("time to get agent: %f\n", check1.Sub(start).Seconds())
 
 	yamlArr := grapher.ImportMultiDocYAML([]byte(helmRelease.Manifest))
 	controllers := grapher.ParseControllers(yamlArr)
@@ -68,6 +74,9 @@ func (c *GetControllersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 		retrievedControllers = append(retrievedControllers, rc)
 	}
+
+	check2 := time.Now()
+	fmt.Printf("time to get controllers: %f\n", check2.Sub(check1).Seconds())
 
 	c.WriteResult(w, r, retrievedControllers)
 }

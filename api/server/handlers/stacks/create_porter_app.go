@@ -130,11 +130,10 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			conf, err := createReleaseJobChart(
 				stackName,
 				releaseJobValues,
+				c.Config().ServerConf.DefaultApplicationHelmRepoURL,
 				registries,
 				cluster,
 				c.Repo(),
-				c.Config(),
-				project.ID,
 			)
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error making config for release job chart: %w", err)))
@@ -218,11 +217,10 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 				conf, err := createReleaseJobChart(
 					stackName,
 					releaseJobValues,
+					c.Config().ServerConf.DefaultApplicationHelmRepoURL,
 					registries,
 					cluster,
 					c.Repo(),
-					c.Config(),
-					project.ID,
 				)
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error making config for release job chart: %w", err)))
@@ -324,13 +322,12 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 func createReleaseJobChart(
 	stackName string,
 	values map[string]interface{},
+	repoUrl string,
 	registries []*models.Registry,
 	cluster *models.Cluster,
 	repo repository.Repository,
-	config *config.Config,
-	projectID uint,
 ) (*helm.InstallChartConfig, error) {
-	chart, err := loader.LoadChartPublic(config.ServerConf.DefaultApplicationHelmRepoURL, "job", "")
+	chart, err := loader.LoadChartPublic(repoUrl, "job", "")
 	if err != nil {
 		return nil, err
 	}

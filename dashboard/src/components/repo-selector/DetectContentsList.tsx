@@ -71,6 +71,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
       );
       if (porterYamlItem) {
         fetchAndSetPorterYaml(props.porterYamlPath + "porter.yaml");
+        props.setPorterYamlPath("porter.yaml");
         return;
       }
     }
@@ -284,7 +285,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
 
           <Input
             disabled={false}
-            placeholder="ex: ./"
+            placeholder="ex: ./subdirectory/porter.yaml"
             value={props.porterYamlPath}
             width="100%"
             setValue={props.setPorterYamlPath}

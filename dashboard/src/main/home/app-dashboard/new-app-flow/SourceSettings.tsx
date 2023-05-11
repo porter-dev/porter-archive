@@ -70,6 +70,11 @@ const SourceSettings: React.FC<Props> = ({
   ...props
 }) => {
   const renderDockerSettings = () => {
+    setFolderPath("");
+    setDockerfilePath("");
+    setBuildView("buildpacks");
+    setPorterYamlPath("");
+    setBranch("");
     return (
       <>
         {/* /* <Text size={16}>Registry settings</Text>

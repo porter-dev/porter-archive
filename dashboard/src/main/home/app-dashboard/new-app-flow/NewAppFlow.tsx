@@ -324,6 +324,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           image_repo_uri: imageUrl,
           porter_yaml: base64Encoded,
           ...imageInfo,
+          porter_yaml_path: porterYamlPath,
         },
         {
           cluster_id: currentCluster.id,
@@ -425,6 +426,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <SourceSelector
                   selectedSourceType={formState.selectedSourceType}
                   setSourceType={(type) => {
+                    setPorterYaml("");
                     setFormState({ ...formState, selectedSourceType: type });
                   }}
                 />

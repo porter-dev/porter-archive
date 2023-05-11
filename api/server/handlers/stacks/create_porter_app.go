@@ -170,6 +170,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			Dockerfile:     request.Dockerfile,
 			ImageRepoURI:   request.ImageRepoURI,
 			PullRequestURL: request.PullRequestURL,
+			PorterYamlPath: request.PorterYamlPath,
 		}
 
 		// create the db entry

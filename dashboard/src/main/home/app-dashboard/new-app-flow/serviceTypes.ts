@@ -261,7 +261,7 @@ const ReleaseService = {
         ram: ServiceField.string('256', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.release?.run),
         type: 'release',
-        canDelete: true,
+        canDelete: porterJson?.release == null,
     }),
 
     serialize: (service: ReleaseService) => {
@@ -275,6 +275,7 @@ const ReleaseService = {
                     memory: service.ram.value + 'Mi',
                 }
             },
+            paused: true, // this makes sure the release isn't run immediately. it is flipped when the porter apply runs the release in the GHA
         }
     },
 

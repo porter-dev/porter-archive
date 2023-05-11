@@ -195,7 +195,7 @@ class RevisionSection extends Component<PropsType, StateType> {
     return this.state.revisions.map((revision: ChartType, i: number) => {
       let isCurrent = revision.version === this.state.maxVersion;
       const isGithubApp = !!this.props.chart.git_action_config;
-      const imageTag = revision.config?.image?.tag;
+      const imageTag = revision.config?.image?.tag || revision.config?.global?.image?.tag;
 
       const parsedImageTag = isGithubApp
         ? String(imageTag).slice(0, 7)

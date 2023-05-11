@@ -73,7 +73,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     false
   );
   const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(true);
-  const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
 
   const [tab, setTab] = useState("overview");
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
@@ -81,7 +80,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [components, setComponents] = useState<ResourceType[]>([]);
 
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
-  const [newestImage, setNewestImage] = useState<string>(null);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
   const [porterJson, setPorterJson] = useState<
     z.infer<typeof PorterYamlSchema> | undefined
@@ -409,19 +407,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         id: currentProject.id,
       }
     );
-    const image = res.data?.config?.image?.repository;
-    const tag = res.data?.config?.image?.tag?.toString();
-    const newNewestImage = tag ? image + ":" + tag : image;
-    let imageIsPlaceholder = false;
-    if (
-      (image === "porterdev/hello-porter" ||
-        image === "public.ecr.aws/o1j4x7p4/hello-porter") &&
-      !newestImage
-    ) {
-      imageIsPlaceholder = true;
-    }
-    setImageIsPlaceholer(imageIsPlaceholder);
-    setNewestImage(newNewestImage);
 
     const updatedChart = res.data;
 
@@ -656,7 +641,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               limitOne={true}
               customOnClick={() => {
                 setReleaseJob([Service.default(
-                  "release",
+                  "pre-deploy",
                   "release",
                   porterJson
                 ) as ReleaseService]);

@@ -282,9 +282,9 @@ const ReleaseService = {
     deserialize: (name: string, values: any, porterJson?: PorterJson): ReleaseService => {
         return {
             name,
-            cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
-            ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
-            startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.release?.run),
+            cpu: ServiceField.string(values?.resources?.requests?.cpu?.replace('m', ''), porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
+            ram: ServiceField.string(values?.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
+            startCommand: ServiceField.string(values?.container?.command ?? '', porterJson?.release?.run),
             type: 'release',
             canDelete: porterJson?.release == null,
         }

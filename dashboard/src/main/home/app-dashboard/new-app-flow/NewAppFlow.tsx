@@ -575,7 +575,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   customOnClick={() => {
                     setFormState({
                       ...formState, releaseJob: [Service.default(
-                        "release",
+                        "pre-deploy",
                         "release",
                         porterJson
                       ) as ReleaseService],

@@ -567,3 +567,52 @@ func ClusterDestroyingSuccessTrack(opts *ClusterDestroyingSuccessTrackOpts) segm
 		getDefaultSegmentTrack(additionalProps, ClusterDestroyingSuccess),
 	)
 }
+
+// StackLaunchStartOpts are the options for creating a track when a user starts creating a stack
+type StackLaunchStartOpts struct {
+	*ProjectScopedTrackOpts
+}
+
+// StackLaunchStartTrack returns a track for when a user starts creating a stack
+func StackLaunchStartTrack(opts *StackLaunchStartOpts) segmentTrack {
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(nil, StackLaunchStart),
+	)
+}
+
+// StackLaunchCompleteOpts are the options for creating a track when a user completes creating a stack
+type StackLaunchCompleteOpts struct {
+	*ProjectScopedTrackOpts
+
+	StackName string
+}
+
+// StackLaunchCompleteTrack returns a track for when a user completes creating a stack
+func StackLaunchCompleteTrack(opts *StackLaunchCompleteOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(nil, StackLaunchComplete),
+	)
+}
+
+// StackLaunchSuccessOpts are the options for creating a track when a user succeeds in creating a stack
+type StackLaunchSuccessOpts struct {
+	*ProjectScopedTrackOpts
+
+	StackName string
+}
+
+// StackLaunchCompleteTrack returns a track for when a user completes creating a stack
+func StackLaunchSuccessTrack(opts *StackLaunchSuccessOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(nil, StackLaunchSuccess),
+	)
+}

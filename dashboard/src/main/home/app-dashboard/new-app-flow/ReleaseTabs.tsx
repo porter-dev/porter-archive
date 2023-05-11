@@ -40,7 +40,7 @@ const ReleaseTabs: React.FC<Props> = ({
             <>
                 <Spacer y={1} />
                 <Input
-                    label="CPUs (Mi)"
+                    label="CPU (Millicores)"
                     placeholder="ex: 0.5"
                     value={service.cpu.value}
                     disabled={service.cpu.readOnly}

@@ -198,5 +198,34 @@ func getStackRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/analytics -> stacks.NewPorterAppAnalyticsHandler
+	porterAppAnalyticsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/analytics", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	porterAppAnalyticsHandler := stacks.NewPorterAppAnalyticsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: porterAppAnalyticsEndpoint,
+		Handler:  porterAppAnalyticsHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

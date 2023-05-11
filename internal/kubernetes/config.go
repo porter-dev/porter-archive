@@ -402,8 +402,6 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 
 		authInfoMap[authInfoName].Token = tok
 
-		fmt.Printf("I successfully ran!")
-
 	} else {
 		switch cluster.AuthMechanism {
 		case models.X509:

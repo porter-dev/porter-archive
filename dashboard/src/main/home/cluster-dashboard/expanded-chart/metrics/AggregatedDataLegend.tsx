@@ -35,9 +35,7 @@ const AggregatedDataLegend = ({ data }: AggregatedDataLegendProps) => {
 export default AggregatedDataLegend;
 
 const AggregatedDataContainer = styled.div`
-  width: 200px;
   display: flex;
-  flex-direction: column;
   margin-block: 8px;
 `;
 
@@ -50,8 +48,9 @@ const AggregatedDataItem = styled.div`
 `;
 
 const DataBar = styled.div<{ color: string }>`
-  height: 100%;
-  width: 5px;
+  height: 10px;
+  width: 10px;
+  margin-left: 10px;
   border: 1px solid ${(props) => props.color};
   background-color: ${(props) => chroma(props.color).alpha(0.6).css()};
 `;

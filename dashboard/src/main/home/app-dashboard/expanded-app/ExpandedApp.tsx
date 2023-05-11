@@ -407,8 +407,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         id: currentProject.id,
       }
     );
-    const image = res.data?.global?.config?.image?.repository;
-    const tag = res.data?.global?.config?.image?.tag?.toString();
 
     const updatedChart = res.data;
 
@@ -643,7 +641,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               limitOne={true}
               customOnClick={() => {
                 setReleaseJob([Service.default(
-                  "release",
+                  "pre-deploy",
                   "release",
                   porterJson
                 ) as ReleaseService]);

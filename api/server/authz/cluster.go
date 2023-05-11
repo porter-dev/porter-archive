@@ -118,7 +118,7 @@ func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Clus
 
 	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get agent: %s", err.Error())
+		return nil, fmt.Errorf("failed to get agent: %w", err)
 	}
 
 	newCtx := context.WithValue(r.Context(), KubernetesAgentCtxKey, agent)

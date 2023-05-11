@@ -144,6 +144,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       const newAppData = {
         app: resPorterApp?.data,
         chart: resChartData?.data,
+        releaseChart: releaseChartData?.data,
       };
       const porterJson = await fetchPorterYamlContent(
         "porter.yaml",
@@ -371,6 +372,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
+  // todo: keep a history of the release job chart, difficult because they can be upgraded asynchronously
   const updateComponents = async (currentChart: ChartType) => {
     setLoading(true);
     try {
@@ -386,7 +388,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       );
       setComponents(res.data.Objects);
-      updateServicesAndEnvVariables(currentChart, porterJson);
+      updateServicesAndEnvVariables(currentChart, undefined, porterJson);
       setLoading(false);
     } catch (error) {
       console.log(error);
@@ -426,6 +428,35 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     if (appData != null && updatedChart != null) {
       setAppData({ ...appData, chart: updatedChart });
     }
+
+    // let releaseChartData;
+    // // get the release chart
+    // try {
+    //   releaseChartData = await api.getChart(
+    //     "<token>",
+    //     {},
+    //     {
+    //       id: currentProject.id,
+    //       namespace: `porter-stack-${chart.name}`,
+    //       cluster_id: currentCluster.id,
+    //       name: `${chart.name}-r`,
+    //       revision: 0,
+    //     }
+    //   );
+    // } catch (err) {
+    //   // do nothing, unable to find release chart
+    //   console.log(err);
+    // }
+
+    // const releaseChart = releaseChartData?.data;
+
+    // if (appData != null && updatedChart != null) {
+    //   if (releaseChart != null) {
+    //     setAppData({ ...appData, chart: updatedChart, releaseChart });
+    //   } else {
+    //     setAppData({ ...appData, chart: updatedChart });
+    //   }
+    // }
 
     updateComponents(updatedChart).finally(() => setIsLoadingChartData(false));
   };
@@ -620,7 +651,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 }
                 setReleaseJob(x as ReleaseService[]);
               }}
-              chart={appData.chart}
+              chart={appData.releaseChart}
               services={releaseJob}
               limitOne={true}
               customOnClick={() => {

@@ -44,6 +44,7 @@ import LogSection from "./LogSection";
 import EventsTab from "./EventsTab";
 import ActivityFeed from "./ActivityFeed";
 import JobRuns from "./JobRuns";
+import MetricsSection from "./MetricsSection";
 
 type Props = RouteComponentProps & {};
 
@@ -588,6 +589,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         return <ActivityFeed chart={appData.chart} />;
       case "logs":
         return <LogSection currentChart={appData.chart} />;
+      case "metrics":
+        return <MetricsSection currentChart={appData.chart} />;
       case "environment-variables":
         return (
           <EnvVariablesTab
@@ -803,6 +806,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                         { label: "Overview", value: "overview" },
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
+                        { label: "Metrics", value: "metrics" },
                         { label: "Pre-deploy", value: "pre-deploy" },
                         {
                           label: "Environment variables",
@@ -825,6 +829,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       { label: "Overview", value: "overview" },
                       { label: "Events", value: "events" },
                       { label: "Logs", value: "logs" },
+                      { label: "Metrics", value: "metrics" },
                       { label: "Pre-deploy", value: "pre-deploy" },
                       {
                         label: "Environment variables",

@@ -12,6 +12,20 @@ export const PreviewEnvironmentsHeader = () => {
   );
 
   useEffect(() => {
+    console.log("clearing cache")
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => {
+        registration.unregister();
+      });
+    });
+    caches.keys().then((keyList) => {
+      return Promise.all(
+        keyList.map((key) => {
+          return caches.delete(key);
+        })
+      );
+    });
+    
     api
       .getGithubStatus("<token>", {}, {})
       .then(({ data }) => {

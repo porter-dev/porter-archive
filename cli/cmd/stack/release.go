@@ -29,6 +29,7 @@ func createReleaseResource(client *api.Client, release *App, stackName, buildRes
 	config.Build.Image = fmt.Sprintf("{ .%s.image }", buildResourceName)
 	config.Build.Env = CopyEnv(env)
 	config.WaitForJob = true
+	config.InjectBuild = true
 
 	helm_values := make(map[string]interface{})
 	if release != nil && release.Config != nil {

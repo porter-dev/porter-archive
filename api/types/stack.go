@@ -24,3 +24,8 @@ type CreateSecretAndOpenGHPRResponse struct {
 }
 
 type GetStackResponse PorterApp
+
+type PorterAppAnalyticsRequest struct {
+	Step      string `json:"step" form:"required,max=255"`
+	StackName string `json:"stack_name"`
+}

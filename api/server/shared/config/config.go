@@ -16,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/credentials"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/porter-dev/porter/pkg/logger"
 	"github.com/porter-dev/porter/provisioner/client"
 	"golang.org/x/oauth2"
@@ -107,6 +108,10 @@ type Config struct {
 
 	// EnableCAPIProvisioner enables CAPI Provisioner, which requires config for ClusterControlPlaneClient and NATS, if set to true
 	EnableCAPIProvisioner bool
+
+	TelemetryConfig telemetry.TracerConfig
+
+	TelemetryTracer telemetry.Tracer
 }
 
 type ConfigLoader interface {

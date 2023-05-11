@@ -111,6 +111,22 @@ const SharedBuildSettings: React.FC<Props> = ({
             width="100%"
             setValue={setFolderPath}
           />
+          <Spacer y={1} />
+
+          {porterYamlPath != "porter.yaml" && porterYamlPath && (
+            <>
+              <Text color="helper">Porter.yaml path:</Text>
+              <Spacer y={0.5} />
+              <Input
+                disabled={true}
+                placeholder="ex: ./"
+                value={porterYamlPath}
+                width="100%"
+                setValue={setPorterYamlPath}
+              />
+              <Spacer y={1} />
+            </>
+          )}
           <DetectContentsList
             actionConfig={actionConfig}
             branch={branch}

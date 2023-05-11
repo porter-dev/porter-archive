@@ -463,19 +463,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 />
               </>,
               <>
-                {porterYamlPath != "porter.yaml" && porterYamlPath && (
-                  <>
-                    <Text color="helper">Porter.yaml path:</Text>
-                    <Input
-                      disabled={true}
-                      placeholder="ex: ./"
-                      value={porterYamlPath}
-                      width="100%"
-                      setValue={setPorterYamlPath}
-                    />
-                    <Spacer y={1} />
-                  </>
-                )}
                 <Text size={16}>
                   Application services{" "}
                   {detected && formState.serviceList.length > 0 && (

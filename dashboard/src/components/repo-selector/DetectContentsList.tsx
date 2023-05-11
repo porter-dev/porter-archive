@@ -282,7 +282,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
           <NoPorterYamlContent />
           <Spacer y={0.5} />
           <Text color="helper">Porter.yaml path:</Text>
-
+          <Spacer y={0.5} />
           <Input
             disabled={false}
             placeholder="ex: ./subdirectory/porter.yaml"

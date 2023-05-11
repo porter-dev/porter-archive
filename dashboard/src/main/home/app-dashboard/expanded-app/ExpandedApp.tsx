@@ -806,7 +806,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                         { label: "Overview", value: "overview" },
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
-                        { label: "Metrics", value: "metrics" },
                         { label: "Pre-deploy", value: "pre-deploy" },
                         {
                           label: "Environment variables",
@@ -829,7 +828,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       { label: "Overview", value: "overview" },
                       { label: "Events", value: "events" },
                       { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
                       { label: "Pre-deploy", value: "pre-deploy" },
                       {
                         label: "Environment variables",

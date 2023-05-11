@@ -657,7 +657,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   return (
     <>
-      {isLoading && <Loading />}
+      {isLoading && !appData && <Loading />}
       {!appData && !isLoading && (
         <Placeholder>
           <Container row>

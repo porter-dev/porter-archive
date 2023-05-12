@@ -406,7 +406,6 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 				awsClusterID = cluster.AWSClusterID
 				shouldOverride = true
 			}
-
 			tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
 			if err != nil {
 				return nil, fmt.Errorf("error getting bearer token for repository: %w", err)
@@ -414,7 +413,6 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 
 			authInfoMap[authInfoName].Token = tok
 		}
-
 	} else {
 		switch cluster.AuthMechanism {
 		case models.X509:

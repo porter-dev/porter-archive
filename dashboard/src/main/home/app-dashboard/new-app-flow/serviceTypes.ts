@@ -136,11 +136,11 @@ const WebService = {
             targetMemoryUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
         },
         ingress: {
-            enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
+            enabled: ServiceField.boolean(true, porterJson?.apps?.[name]?.config?.ingress?.enabled),
             hosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
             porterHosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
         },
-        port: ServiceField.string('80', porterJson?.apps?.[name]?.config?.container?.port),
+        port: ServiceField.string('3000', porterJson?.apps?.[name]?.config?.container?.port),
         canDelete: porterJson?.apps?.[name] == null,
     }),
     serialize: (service: WebService) => {

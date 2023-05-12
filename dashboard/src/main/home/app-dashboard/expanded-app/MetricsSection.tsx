@@ -527,7 +527,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       )}
       {data.length > 0 && isLoading === 0 && (
         <>
-          <AggregatedDataLegend data={data} />
           {currentChart?.config?.autoscaling?.enabled &&
             ["cpu", "memory"].includes(selectedMetric) && (
               <CheckboxRow
@@ -553,6 +552,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               />
             )}
           </ParentSize>
+          <RowWrapper>
+            <AggregatedDataLegend data={data} />
+          </RowWrapper>
         </>
       )}
     </StyledMetricsSection>
@@ -560,6 +562,12 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 };
 
 export default MetricsSection;
+
+const RowWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+`;
 
 const Highlight = styled.div`
   display: flex;
@@ -725,15 +733,12 @@ const MetricsLabel = styled.div`
 
 const StyledMetricsSection = styled.div`
   width: 100%;
-  min-height: 400px;
-  height: calc(100vh - 400px);
+  min-height: 480px;
+  height: calc(100vh - 350px);
   display: flex;
   flex-direction: column;
   position: relative;
   font-size: 13px;
-  border-radius: 8px;
-  border: 1px solid #ffffff33;
-  padding: 18px 22px;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;

@@ -39,4 +39,9 @@ const (
 	// delete events
 	ClusterDestroyingStart   SegmentEvent = "Cluster Destroying Start"
 	ClusterDestroyingSuccess SegmentEvent = "Cluster Destroying Success"
+
+	// stacks
+	StackLaunchStart    SegmentEvent = "Stack Launch Started"
+	StackLaunchComplete SegmentEvent = "Stack Launch Complete"
+	StackLaunchSuccess  SegmentEvent = "Stack Launch Success"
 )

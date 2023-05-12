@@ -153,6 +153,25 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       (error || !accessData.accounts || accessData.accounts?.length === 0)
     );
   };
+
+  const updateStackStep = async (step: string) => {
+    try {
+      await api.updateStackStep(
+        "<token>",
+        {
+          step,
+          stack_name: formState.applicationName,
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      );
+    } catch (err) {
+      // TODO: handle analytics error
+    }
+  }
+
   const validatePorterYaml = (yamlString: string) => {
     let parsedYaml;
     try {
@@ -287,6 +306,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     try {
       setDeploying(true);
       setDeploymentError(undefined);
+
+      // log analytics event that we started form submission
+      await updateStackStep('stack-launch-complete');
+
       if (
         currentProject == null ||
         currentCluster == null ||
@@ -343,6 +366,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       if (!actionConfig?.git_repo) {
         props.history.push(`/apps/${formState.applicationName}`);
       }
+
+      // log analytics event that we successfully deployed
+      await updateStackStep('stack-launch-success');
+
       return true;
     } catch (err) {
       // TODO: better error handling

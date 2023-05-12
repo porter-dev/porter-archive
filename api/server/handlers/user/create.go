@@ -34,8 +34,8 @@ func NewUserCreateHandler(
 }
 
 func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	u.Config().TelemetryTracer = telemetry.SetupTracer(u.Config().TelemetryConfig)
-	defer u.Config().TelemetryTracer.Shutdown()
+	tracer, err := telemetry.InitTracer(context.Background(), u.Config().TelemetryConfig)
+	defer tracer.Shutdown()
 
 	// just for demonstration purposes
 	_, span := telemetry.NewSpan(context.Background(), "create-new-user")

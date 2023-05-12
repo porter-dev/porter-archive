@@ -2,7 +2,7 @@ package telemetry
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/honeycombio/otel-launcher-go/launcher"
 )
@@ -29,6 +29,10 @@ type Tracer struct {
 // Make sure to run `defer tp.Shutdown(ctx)` after calling this function
 // to ensure that no traces are lost on exit
 func InitTracer(ctx context.Context, conf TracerConfig) (Tracer, error) {
+	if conf.CollectorURL == "" {
+		return Tracer{}, errors.New("expected non-empty CollectorURL")
+	}
+
 	tracer := Tracer{
 		config: conf,
 	}
@@ -50,17 +54,4 @@ func InitTracer(ctx context.Context, conf TracerConfig) (Tracer, error) {
 
 	tracer.Shutdown = lnchr
 	return tracer, nil
-}
-
-func SetupTracer(conf TracerConfig) Tracer {
-	tp := Tracer{}
-	var err error
-	if conf.CollectorURL != "" {
-		tp, err = InitTracer(context.Background(), conf)
-		if err != nil {
-			fmt.Errorf("could not initialize tracer: %w", err)
-			return Tracer{}
-		}
-	}
-	return tp
 }

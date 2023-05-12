@@ -110,8 +110,6 @@ type Config struct {
 	EnableCAPIProvisioner bool
 
 	TelemetryConfig telemetry.TracerConfig
-
-	TelemetryTracer telemetry.Tracer
 }
 
 type ConfigLoader interface {

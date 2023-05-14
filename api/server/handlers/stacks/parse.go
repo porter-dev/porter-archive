@@ -124,11 +124,14 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 		}
 
 		// prepend launcher if we need to
-		if injectLauncher && app.Run != nil && !strings.HasPrefix(*app.Run, "launcher") && !strings.HasPrefix(*app.Run, "/cnb/lifecycle/launcher") {
-			if helm_values["container"] == nil {
-				helm_values["container"] = map[string]interface{}{}
+		if helm_values["container"] != nil {
+			containerMap := helm_values["container"].(map[string]interface{})
+			if containerMap["command"] != nil {
+				command := containerMap["command"].(string)
+				if injectLauncher && !strings.HasPrefix(command, "launcher") && !strings.HasPrefix(command, "/cnb/lifecycle/launcher") {
+					containerMap["command"] = fmt.Sprintf("/cnb/lifecycle/launcher %s", command)
+				}
 			}
-			helm_values["container"].(map[string]interface{})["command"] = fmt.Sprintf("/cnb/lifecycle/launcher %s", *app.Run)
 		}
 
 		values[helmName] = helm_values

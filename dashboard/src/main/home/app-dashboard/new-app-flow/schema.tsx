@@ -48,11 +48,20 @@ export const createFinalPorterYaml = (
     releaseJob: Service[],
     dashboardSetEnvVariables: KeyValueType[],
     porterJson: PorterJson | undefined,
+    injectPortEnvVariable: boolean = false,
 ): PorterJson => {
+    const [apps, port] = createApps(services.filter(Service.isNonRelease), porterJson, injectPortEnvVariable);
+    const env = combineEnv(dashboardSetEnvVariables, porterJson?.env);
+
+    // inject a port env variable if necessary
+    if (port != null) {
+        env.PORT = port;
+    }
+
     return {
         version: "v1stack",
-        env: combineEnv(dashboardSetEnvVariables, porterJson?.env),
-        apps: createApps(services.filter(Service.isNonRelease), porterJson),
+        env,
+        apps,
         release: createRelease(releaseJob.find(Service.isRelease)),
     };
 };
@@ -76,8 +85,10 @@ const combineEnv = (
 const createApps = (
     serviceList: (WorkerService | WebService | JobService)[],
     porterJson: PorterJson | undefined,
-): z.infer<typeof AppsSchema> => {
+    injectPortEnvVariable: boolean,
+): [z.infer<typeof AppsSchema>, string | undefined] => {
     const apps: z.infer<typeof AppsSchema> = {};
+    let port: string | undefined = undefined;
     for (const service of serviceList) {
         let config = Service.serialize(service);
 
@@ -93,6 +104,10 @@ const createApps = (
             );
         }
 
+        if (injectPortEnvVariable && service.type === "web") {
+            port = service.port.value;
+        }
+
         apps[service.name] = {
             type: service.type,
             run: service.startCommand.value,
@@ -100,7 +115,7 @@ const createApps = (
         };
     }
 
-    return apps;
+    return [apps, port];
 };
 
 const createRelease = (

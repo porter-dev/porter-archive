@@ -32,3 +32,6 @@ HELM_ADD_ON_REPO_URL=https://charts.getporter.dev
 
 # SERVER_URL must be set to your ngrok url, If you are using ngrok for your github app setup on the backend
 # SERVER_URL=
+
+TELEMETRY_NAME=porter
+TELEMETRY_COLLECTOR_URL=otel-collector:4317

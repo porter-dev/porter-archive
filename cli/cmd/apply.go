@@ -160,7 +160,9 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			return fmt.Errorf("environment variable PORTER_STACK_NAME must be set")
 		}
 
-		resGroup, err = stack.CreateV1BuildResources(client, fileBytes, stackName, cliConf.Project, cliConf.Cluster)
+		// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
+		var builder string
+		resGroup, builder, err = stack.CreateV1BuildResources(client, fileBytes, stackName, cliConf.Project, cliConf.Cluster)
 		if err != nil {
 			return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 		}
@@ -172,6 +174,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			ClusterID:            cliConf.Cluster,
 			BuildImageDriverName: stack.GetBuildImageDriverName(),
 			PorterYAML:           fileBytes,
+			Builder:              builder,
 		}
 		worker.RegisterHook("deploy-stack", deployStackHook)
 	} else {

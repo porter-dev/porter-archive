@@ -338,7 +338,6 @@ export const Service = {
         if (defaultValues == null) {
             return [];
         }
-
         return Object.keys(defaultValues).map((name: string) => {
             const suffix = name.slice(-4);
             if (suffix in SUFFIX_TO_TYPE) {
@@ -357,7 +356,7 @@ export const Service = {
                         return JobService.deserialize(appName, coalescedValues, porterJson);
                 }
             }
-        }).filter((service: Service | undefined): service is Service => service != null);
+        }).filter((service: Service | undefined): service is Service => service != null) as Service[];
     },
     // TODO: consolidate these
     deserializeRelease: (helmValues: any, porterJson?: PorterJson): ReleaseService => {

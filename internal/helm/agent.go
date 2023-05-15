@@ -179,6 +179,7 @@ func (a *Agent) UpgradeRelease(
 	values string,
 	doAuth *oauth2.Config,
 	disablePullSecretsInjection bool,
+	ignoreDependencies bool,
 ) (*release.Release, error) {
 	valuesYaml, err := chartutil.ReadValues([]byte(values))
 	if err != nil {
@@ -187,7 +188,7 @@ func (a *Agent) UpgradeRelease(
 
 	conf.Values = valuesYaml
 
-	return a.UpgradeReleaseByValues(conf, doAuth, disablePullSecretsInjection)
+	return a.UpgradeReleaseByValues(conf, doAuth, disablePullSecretsInjection, ignoreDependencies)
 }
 
 // UpgradeReleaseByValues upgrades a release by unmarshaled yaml values
@@ -195,9 +196,10 @@ func (a *Agent) UpgradeReleaseByValues(
 	conf *UpgradeReleaseConfig,
 	doAuth *oauth2.Config,
 	disablePullSecretsInjection bool,
+	ignoreDependencies bool,
 ) (*release.Release, error) {
 	// grab the latest release
-	rel, err := a.GetRelease(conf.Name, 0, true)
+	rel, err := a.GetRelease(conf.Name, 0, !ignoreDependencies)
 	if err != nil {
 		return nil, fmt.Errorf("Could not get release to be upgraded: %v", err)
 	}

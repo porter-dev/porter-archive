@@ -2,7 +2,6 @@ package telemetry
 
 import (
 	"context"
-	"errors"
 
 	"github.com/honeycombio/otel-launcher-go/launcher"
 )
@@ -30,7 +29,7 @@ type Tracer struct {
 // to ensure that no traces are lost on exit
 func InitTracer(ctx context.Context, conf TracerConfig) (Tracer, error) {
 	if conf.CollectorURL == "" {
-		return Tracer{}, errors.New("expected non-empty CollectorURL")
+		return Tracer{}, nil
 	}
 
 	tracer := Tracer{

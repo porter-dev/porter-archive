@@ -21,7 +21,7 @@ type StackConf struct {
 	projectID, clusterID uint
 }
 
-func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, projectID uint, clusterID uint) (*switchboardTypes.ResourceGroup, error) {
+func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, projectID uint, clusterID uint) (*switchboardTypes.ResourceGroup, string, error) {
 	v1File := &switchboardTypes.ResourceGroup{
 		Version: "v1",
 		Resources: []*switchboardTypes.Resource{
@@ -31,28 +31,29 @@ func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, pr
 			},
 		},
 	}
+	var builder string
 
 	stackConf, err := createStackConf(client, raw, stackName, projectID, clusterID)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	var bi, pi *switchboardTypes.Resource
 
 	if stackConf.parsed.Build != nil {
-		bi, pi, err = createV1BuildResourcesFromPorterYaml(stackConf)
+		bi, pi, builder, err = createV1BuildResourcesFromPorterYaml(stackConf)
 		if err != nil {
 			color.New(color.FgRed).Printf("Could not build using values specified in porter.yaml (%s), attempting to load stack build settings instead \n", err.Error())
-			bi, pi, err = createV1BuildResourcesFromDB(client, stackConf)
+			bi, pi, builder, err = createV1BuildResourcesFromDB(client, stackConf)
 			if err != nil {
-				return nil, err
+				return nil, "", err
 			}
 		}
 	} else {
 		color.New(color.FgYellow).Printf("No build values specified in porter.yaml, attempting to load stack build settings instead \n")
-		bi, pi, err = createV1BuildResourcesFromDB(client, stackConf)
+		bi, pi, builder, err = createV1BuildResourcesFromDB(client, stackConf)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 	}
 
@@ -68,7 +69,7 @@ func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, pr
 		stackConf.parsed.Env,
 	)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if release != nil {
@@ -78,7 +79,7 @@ func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, pr
 		color.New(color.FgYellow).Printf("No release command found in porter.yaml or helm. \n")
 	}
 
-	return v1File, nil
+	return v1File, builder, nil
 }
 
 func createStackConf(client *api.Client, raw []byte, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
@@ -117,43 +118,43 @@ func createStackConf(client *api.Client, raw []byte, stackName string, projectID
 	}, nil
 }
 
-func createV1BuildResourcesFromPorterYaml(stackConf *StackConf) (*switchboardTypes.Resource, *switchboardTypes.Resource, error) {
+func createV1BuildResourcesFromPorterYaml(stackConf *StackConf) (*switchboardTypes.Resource, *switchboardTypes.Resource, string, error) {
 	bi, err := stackConf.parsed.Build.getV1BuildImage(stackConf.parsed.Env, stackConf.namespace)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 
 	pi, err := stackConf.parsed.Build.getV1PushImage(stackConf.namespace)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 
-	return bi, pi, nil
+	return bi, pi, stackConf.parsed.Build.GetBuilder(), nil
 }
 
-func createV1BuildResourcesFromDB(client *api.Client, stackConf *StackConf) (*switchboardTypes.Resource, *switchboardTypes.Resource, error) {
+func createV1BuildResourcesFromDB(client *api.Client, stackConf *StackConf) (*switchboardTypes.Resource, *switchboardTypes.Resource, string, error) {
 	res, err := client.GetPorterApp(context.Background(), stackConf.projectID, stackConf.clusterID, stackConf.stackName)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read build info from DB: %w", err)
+		return nil, nil, "", fmt.Errorf("unable to read build info from DB: %w", err)
 	}
 
 	if res == nil {
-		return nil, nil, fmt.Errorf("stack %s not found", stackConf.stackName)
+		return nil, nil, "", fmt.Errorf("stack %s not found", stackConf.stackName)
 	}
 
 	build := convertToBuild(res)
 
 	bi, err := build.getV1BuildImage(stackConf.parsed.Env, stackConf.namespace)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 
 	pi, err := build.getV1PushImage(stackConf.namespace)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 
-	return bi, pi, nil
+	return bi, pi, build.GetBuilder(), nil
 }
 
 func convertToBuild(porterApp *types.PorterApp) Build {

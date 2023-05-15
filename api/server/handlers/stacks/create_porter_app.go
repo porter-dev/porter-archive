@@ -119,7 +119,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		injectLauncher,
 	)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter yaml into chart and values: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter.yaml into chart and values: %w", err)))
 		return
 	}
 

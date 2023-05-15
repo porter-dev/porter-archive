@@ -235,30 +235,7 @@ const ConnectNewRepo: React.FC = () => {
           link="https://docs.porter.run/preview-environments/porter-yaml-reference"
         />
       </HelperContainer>
-      <Heading>Deploy from branches</Heading>
-      <Helper>
-        Choose the list of branches that you want to deploy changes from.
-      </Helper>
-      <BranchFilterSelector
-        onChange={setDeployBranches}
-        options={availableBranches}
-        value={deployBranches}
-        showLoading={isLoadingBranches}
-      />
 
-      <Heading>Select allowed branches</Heading>
-      <Helper>
-        If the pull request has a base branch included in this list, it will be
-        allowed to be deployed.
-        <br />
-        (Leave empty to allow all branches)
-      </Helper>
-      <BranchFilterSelector
-        onChange={setBaseBranches}
-        options={availableBranches}
-        value={baseBranches}
-        showLoading={isLoadingBranches}
-      />
       {/* <StyledAdvancedBuildSettings
         showSettings={showSettings}
         isCurrent={true}
@@ -280,6 +257,32 @@ const ConnectNewRepo: React.FC = () => {
       </StyledAdvancedBuildSettings>
       <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
         <StyledSourceBox>
+          <Text size={16}>Deploy from branches</Text>
+          <Helper style={{ marginTop: "10px", marginBottom: "10px" }}>
+            {" "}
+            Choose the list of branches that you want to deploy changes from.
+          </Helper>
+          <BranchFilterSelector
+            onChange={setDeployBranches}
+            options={availableBranches}
+            value={deployBranches}
+            showLoading={isLoadingBranches}
+          />
+
+          <Text size={16}>Select allowed branches</Text>
+          <Helper style={{ marginTop: "10px", marginBottom: "10px" }}>
+            {" "}
+            If the pull request has a base branch included in this list, it will
+            be allowed to be deployed.
+            <br />
+            (Leave empty to allow all branches)
+          </Helper>
+          <BranchFilterSelector
+            onChange={setBaseBranches}
+            options={availableBranches}
+            value={baseBranches}
+            showLoading={isLoadingBranches}
+          />
           <Text size={16}>Automatic pull request deployments</Text>
           <Helper style={{ marginTop: "10px", marginBottom: "10px" }}>
             If you enable this option, the new pull requests will be

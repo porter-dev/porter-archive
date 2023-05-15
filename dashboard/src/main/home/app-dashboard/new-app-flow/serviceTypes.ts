@@ -136,11 +136,11 @@ const WebService = {
             targetMemoryUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
         },
         ingress: {
-            enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
+            enabled: ServiceField.boolean(true, porterJson?.apps?.[name]?.config?.ingress?.enabled),
             hosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
             porterHosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
         },
-        port: ServiceField.string('80', porterJson?.apps?.[name]?.config?.container?.port),
+        port: ServiceField.string('3000', porterJson?.apps?.[name]?.config?.container?.port),
         canDelete: porterJson?.apps?.[name] == null,
     }),
     serialize: (service: WebService) => {
@@ -261,7 +261,7 @@ const ReleaseService = {
         ram: ServiceField.string('256', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.release?.run),
         type: 'release',
-        canDelete: true,
+        canDelete: porterJson?.release == null,
     }),
 
     serialize: (service: ReleaseService) => {
@@ -275,15 +275,16 @@ const ReleaseService = {
                     memory: service.ram.value + 'Mi',
                 }
             },
+            paused: true, // this makes sure the release isn't run immediately. it is flipped when the porter apply runs the release in the GHA
         }
     },
 
     deserialize: (name: string, values: any, porterJson?: PorterJson): ReleaseService => {
         return {
             name,
-            cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
-            ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
-            startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.release?.run),
+            cpu: ServiceField.string(values?.resources?.requests?.cpu?.replace('m', ''), porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
+            ram: ServiceField.string(values?.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
+            startCommand: ServiceField.string(values?.container?.command ?? '', porterJson?.release?.run),
             type: 'release',
             canDelete: porterJson?.release == null,
         }
@@ -337,7 +338,6 @@ export const Service = {
         if (defaultValues == null) {
             return [];
         }
-
         return Object.keys(defaultValues).map((name: string) => {
             const suffix = name.slice(-4);
             if (suffix in SUFFIX_TO_TYPE) {
@@ -356,7 +356,7 @@ export const Service = {
                         return JobService.deserialize(appName, coalescedValues, porterJson);
                 }
             }
-        }).filter((service: Service | undefined): service is Service => service != null);
+        }).filter((service: Service | undefined): service is Service => service != null) as Service[];
     },
     // TODO: consolidate these
     deserializeRelease: (helmValues: any, porterJson?: PorterJson): ReleaseService => {

@@ -2300,6 +2300,20 @@ const updateOnboardingStep = baseApi<
   return `/api/onboarding_step`;
 });
 
+const updateStackStep = baseApi<
+  {
+    step: string;
+    stack_name?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  let { project_id, cluster_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/analytics`;
+});
+
 // STACKS
 
 const createStack = baseApi<
@@ -2705,6 +2719,7 @@ export default {
   createSecretAndOpenGitHubPullRequest,
   // TRACKING
   updateOnboardingStep,
+  updateStackStep,
   // STACKS
   listStacks,
   getStack,

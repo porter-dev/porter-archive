@@ -26,6 +26,19 @@ const WebTabs: React.FC<Props> = ({
         <Spacer y={1} />
         <Input
           label="Start command"
+          // TODO: uncomment the below once we have docs on what /cnb/lifecycle/launcher is
+          // label={
+          //   <>
+          //     <span>Start command</span>
+          //     {!service.startCommand.readOnly && service.startCommand.value.includes("/cnb/lifecycle/launcher") &&
+          //       <a
+          //         href="https://docs.porter.run/deploying-applications/https-and-domains/custom-domains"
+          //         target="_blank"
+          //       >
+          //         &nbsp;(?)
+          //       </a>
+          //     }
+          //   </>}
           placeholder="ex: sh start.sh"
           value={service.startCommand.value}
           width="300px"
@@ -147,7 +160,16 @@ const WebTabs: React.FC<Props> = ({
       <>
         <Spacer y={1} />
         <Input
-          label="Custom domain"
+          label={
+            <>
+              <span>Custom domain</span>
+              <a
+                href="https://docs.porter.run/deploying-applications/https-and-domains/custom-domains"
+                target="_blank"
+              >
+                &nbsp;(?)
+              </a>
+            </>}
           placeholder="ex: my-app.my-domain.com"
           value={service.ingress.hosts.value}
           disabled={service.ingress.hosts.readOnly}

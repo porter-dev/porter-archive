@@ -44,6 +44,8 @@ import LogSection from "./LogSection";
 import EventsTab from "./EventsTab";
 import ActivityFeed from "./ActivityFeed";
 import JobRuns from "./JobRuns";
+import MetricsSection from "./MetricsSection";
+import StatusSectionFC from "./status/StatusSection";
 
 type Props = RouteComponentProps & {};
 
@@ -72,7 +74,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     false
   );
   const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(true);
-  const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
 
   const [tab, setTab] = useState("overview");
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
@@ -80,7 +81,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [components, setComponents] = useState<ResourceType[]>([]);
 
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
-  const [newestImage, setNewestImage] = useState<string>(null);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
   const [porterJson, setPorterJson] = useState<
     z.infer<typeof PorterYamlSchema> | undefined
@@ -143,6 +143,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       const newAppData = {
         app: resPorterApp?.data,
         chart: resChartData?.data,
+        releaseChart: releaseChartData?.data,
       };
       const porterJson = await fetchPorterYamlContent(
         "porter.yaml",
@@ -251,7 +252,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           services,
           releaseJob,
           envVars,
-          porterJson
+          porterJson,
+          // if we are using a heroku buildpack, inject a PORT env variable
+          appData.app.builder != null && appData.app.builder.includes("heroku")
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
@@ -352,15 +355,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     ) {
       const svcs = Service.deserialize(helmValues, defaultValues, porterJson);
       setServices(svcs);
-      if (helmValues && "global" in helmValues) {
-        delete helmValues.global; // not necessary for displaying services or env variables
-      }
-      if (Object.keys(helmValues).length > 0) {
-        const envs = Service.retrieveEnvFromHelmValues(helmValues);
+      const { global, ...helmValuesWithoutGlobal } = helmValues;
+      if (Object.keys(helmValuesWithoutGlobal).length > 0) {
+        const envs = Service.retrieveEnvFromHelmValues(helmValuesWithoutGlobal);
         setEnvVars(envs);
         const subdomain = Service.retrieveSubdomainFromHelmValues(
           svcs,
-          helmValues
+          helmValuesWithoutGlobal
         );
         setSubdomain(subdomain);
       }
@@ -372,6 +373,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
+  // todo: keep a history of the release job chart, difficult because they can be upgraded asynchronously
   const updateComponents = async (currentChart: ChartType) => {
     setLoading(true);
     try {
@@ -387,7 +389,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       );
       setComponents(res.data.Objects);
-      updateServicesAndEnvVariables(currentChart, porterJson);
+      updateServicesAndEnvVariables(currentChart, undefined, porterJson);
       setLoading(false);
     } catch (error) {
       console.log(error);
@@ -408,25 +410,41 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         id: currentProject.id,
       }
     );
-    const image = res.data?.config?.image?.repository;
-    const tag = res.data?.config?.image?.tag?.toString();
-    const newNewestImage = tag ? image + ":" + tag : image;
-    let imageIsPlaceholder = false;
-    if (
-      (image === "porterdev/hello-porter" ||
-        image === "public.ecr.aws/o1j4x7p4/hello-porter") &&
-      !newestImage
-    ) {
-      imageIsPlaceholder = true;
-    }
-    setImageIsPlaceholer(imageIsPlaceholder);
-    setNewestImage(newNewestImage);
 
     const updatedChart = res.data;
 
     if (appData != null && updatedChart != null) {
       setAppData({ ...appData, chart: updatedChart });
     }
+
+    // let releaseChartData;
+    // // get the release chart
+    // try {
+    //   releaseChartData = await api.getChart(
+    //     "<token>",
+    //     {},
+    //     {
+    //       id: currentProject.id,
+    //       namespace: `porter-stack-${chart.name}`,
+    //       cluster_id: currentCluster.id,
+    //       name: `${chart.name}-r`,
+    //       revision: 0,
+    //     }
+    //   );
+    // } catch (err) {
+    //   // do nothing, unable to find release chart
+    //   console.log(err);
+    // }
+
+    // const releaseChart = releaseChartData?.data;
+
+    // if (appData != null && updatedChart != null) {
+    //   if (releaseChart != null) {
+    //     setAppData({ ...appData, chart: updatedChart, releaseChart });
+    //   } else {
+    //     setAppData({ ...appData, chart: updatedChart });
+    //   }
+    // }
 
     updateComponents(updatedChart).finally(() => setIsLoadingChartData(false));
   };
@@ -588,6 +606,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         return <ActivityFeed chart={appData.chart} />;
       case "logs":
         return <LogSection currentChart={appData.chart} />;
+      case "metrics":
+        return <MetricsSection currentChart={appData.chart} />;
+      case "status":
+        return <StatusSectionFC currentChart={appData.chart} />;
       case "environment-variables":
         return (
           <EnvVariablesTab
@@ -606,7 +628,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 <Fieldset>
                   <Container row>
                     <PlaceholderIcon src={notFound} />
-                    <Text color="helper">No pre-deploy jobs were found.</Text>
+                    <Text color="helper">No pre-deploy jobs were found. Add a pre-deploy job to perform an operation before your application services deploy, like a database migration.</Text>
                   </Container>
                 </Fieldset>
                 <Spacer y={0.5} />
@@ -619,12 +641,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 }
                 setReleaseJob(x as ReleaseService[]);
               }}
-              chart={appData.chart}
+              chart={appData.releaseChart}
               services={releaseJob}
               limitOne={true}
               customOnClick={() => {
                 setReleaseJob([Service.default(
-                  "release",
+                  "pre-deploy",
                   "release",
                   porterJson
                 ) as ReleaseService]);
@@ -656,7 +678,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   return (
     <>
-      {isLoading && <Loading />}
+      {isLoading && !appData && <Loading />}
       {!appData && !isLoading && (
         <Placeholder>
           <Container row>
@@ -803,6 +825,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                         { label: "Overview", value: "overview" },
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
+                        { label: "Metrics", value: "metrics" },
+                        { label: "Debug", value: "status" },
                         { label: "Pre-deploy", value: "pre-deploy" },
                         {
                           label: "Environment variables",
@@ -825,6 +849,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       { label: "Overview", value: "overview" },
                       { label: "Events", value: "events" },
                       { label: "Logs", value: "logs" },
+                      { label: "Metrics", value: "metrics" },
+                      { label: "Debug", value: "status" },
                       { label: "Pre-deploy", value: "pre-deploy" },
                       {
                         label: "Environment variables",

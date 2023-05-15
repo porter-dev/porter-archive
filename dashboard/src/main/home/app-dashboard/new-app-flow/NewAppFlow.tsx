@@ -153,6 +153,28 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       (error || !accessData.accounts || accessData.accounts?.length === 0)
     );
   };
+
+  const updateStackStep = async (step: string) => {
+    try {
+      if (currentCluster?.id == null || currentProject?.id == null) {
+        throw "Unable to capture analytics, project or cluster not found";
+      }
+      await api.updateStackStep(
+        "<token>",
+        {
+          step,
+          stack_name: formState.applicationName,
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      );
+    } catch (err) {
+      // TODO: handle analytics error
+    }
+  }
+
   const validatePorterYaml = (yamlString: string) => {
     let parsedYaml;
     try {
@@ -190,8 +212,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       ) {
         setDetected({
           detected: true,
-          message: `Detected ${Object.keys(porterYamlToJson.apps).length
-            } services from porter.yaml`,
+          message: `Detected ${Object.keys(porterYamlToJson.apps).length} service${Object.keys(porterYamlToJson.apps).length === 1 ? "" : "s"} from porter.yaml`,
         });
       } else {
         setDetected({
@@ -287,11 +308,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     try {
       setDeploying(true);
       setDeploymentError(undefined);
+
+      // log analytics event that we started form submission
+      await updateStackStep('stack-launch-complete');
+
       if (
-        currentProject == null ||
-        currentCluster == null ||
-        currentProject.id == null ||
-        currentCluster.id == null
+        currentProject?.id == null ||
+        currentCluster?.id == null
       ) {
         throw "Project or cluster not found";
       }
@@ -301,7 +324,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         formState.serviceList,
         formState.releaseJob,
         formState.envVariables,
-        porterJson
+        porterJson,
+        // if we are using a heroku buildpack, inject a PORT env variable
+        (buildConfig as any)?.builder != null && (buildConfig as any)?.builder.includes("heroku")
       );
 
       const yamlString = yaml.dump(finalPorterYaml);
@@ -343,6 +368,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       if (!actionConfig?.git_repo) {
         props.history.push(`/apps/${formState.applicationName}`);
       }
+
+      // log analytics event that we successfully deployed
+      await updateStackStep('stack-launch-success');
+
       return true;
     } catch (err) {
       // TODO: better error handling
@@ -548,7 +577,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   customOnClick={() => {
                     setFormState({
                       ...formState, releaseJob: [Service.default(
-                        "release",
+                        "pre-deploy",
                         "release",
                         porterJson
                       ) as ReleaseService],

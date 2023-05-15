@@ -99,7 +99,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
 
   const triggerWorkflow = async () => {
     try {
-      await api.reRunGHWorkflow(
+      const res = await api.reRunGHWorkflow(
         "",
         {},
         {
@@ -112,6 +112,9 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           filename: "porter_stack_" + appData.chart.name + ".yml",
         }
       );
+      if (res.data != null) {
+        window.open(res.data, "_blank", "noreferrer")
+      }
     } catch (error) {
       if (!error?.response) {
         throw error;
@@ -149,7 +152,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
         }
         setCurrentError(
           'The workflow is still running. You can "Save" the current build settings for the next workflow run and view the current status of the workflow here: ' +
-            tmpError.response.data
+          tmpError.response.data
         );
         return;
       }
@@ -232,7 +235,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
         label="GitHub repository:"
         width="100%"
         value={actionConfig?.git_repo}
-        setValue={() => {}}
+        setValue={() => { }}
         placeholder=""
       />
       <Spacer y={0.5} />
@@ -348,7 +351,7 @@ const StyledAdvancedBuildSettings = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
-      props.showSettings ? "" : "rotate(-90deg)"};
+    props.showSettings ? "" : "rotate(-90deg)"};
   }
 `;
 const StyledSourceBox = styled.div`

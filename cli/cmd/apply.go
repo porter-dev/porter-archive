@@ -636,8 +636,23 @@ func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, c
 		}
 	}
 
-	err = updateAgent.UpdateImageAndValues(appConf.Values)
+	if appConf.InjectBuild {
+		// use the built image in the values if it is set
+		// if it contains a $, then the query did not resolve
+		if appConf.Build.Image != "" && !strings.Contains(appConf.Build.Image, "$") {
+			imageSpl := strings.Split(appConf.Build.Image, ":")
+			if len(imageSpl) == 2 {
+				appConf.Values["image"] = map[string]interface{}{
+					"repository": imageSpl[0],
+					"tag":        imageSpl[1],
+				}
+			} else {
+				return nil, fmt.Errorf("could not parse image info %s", appConf.Build.Image)
+			}
+		}
+	}
 
+	err = updateAgent.UpdateImageAndValues(appConf.Values)
 	if err != nil {
 		return nil, err
 	}

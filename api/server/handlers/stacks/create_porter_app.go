@@ -249,7 +249,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					Registries: registries,
 					Values:     releaseJobValues,
 				}
-				_, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+				_, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error upgrading release job chart: %w", err)))
 					return

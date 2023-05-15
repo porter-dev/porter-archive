@@ -131,6 +131,11 @@ type ServerConf struct {
 	EnableCAPIProvisioner bool `env:"ENABLE_CAPI_PROVISIONER"`
 	// NATSUrl is the URL of the NATS cluster. This is required if ENABLE_CAPI_PROVISIONER is true
 	NATSUrl string `env:"NATS_URL"`
+
+	// TelemetryName is the name that will group this service during collection
+	TelemetryName string `env:"TELEMETRY_NAME"`
+	// TelemetryCollectorURL is the URL (host:port) for collecting spans
+	TelemetryCollectorURL string `env:"TELEMETRY_COLLECTOR_URL,default=localhost:4317"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

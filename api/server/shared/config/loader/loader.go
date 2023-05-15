@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	gorillaws "github.com/gorilla/websocket"
 	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
@@ -300,6 +302,11 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		client := porterv1connect.NewClusterControlPlaneServiceClient(http.DefaultClient, sc.ClusterControlPlaneAddress)
 		res.ClusterControlPlaneClient = client
 		res.Logger.Info().Msg("Created CCP client")
+	}
+
+	res.TelemetryConfig = telemetry.TracerConfig{
+		ServiceName:  sc.TelemetryName,
+		CollectorURL: sc.TelemetryCollectorURL,
 	}
 
 	return res, nil

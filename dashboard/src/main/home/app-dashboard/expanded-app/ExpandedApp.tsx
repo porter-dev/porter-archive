@@ -252,7 +252,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           services,
           releaseJob,
           envVars,
-          porterJson
+          porterJson,
+          // if we are using a heroku buildpack, inject a PORT env variable
+          appData.app.builder != null && appData.app.builder.includes("heroku")
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
@@ -626,7 +628,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 <Fieldset>
                   <Container row>
                     <PlaceholderIcon src={notFound} />
-                    <Text color="helper">No pre-deploy jobs were found.</Text>
+                    <Text color="helper">No pre-deploy jobs were found. Add a pre-deploy job to perform an operation before your application services deploy, like a database migration.</Text>
                   </Container>
                 </Fieldset>
                 <Spacer y={0.5} />

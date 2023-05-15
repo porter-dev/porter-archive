@@ -168,7 +168,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		),
 	}
 
-	rel, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+	rel, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 
 	if err != nil {
 		notifyOpts.Status = notifier.StatusHelmFailed

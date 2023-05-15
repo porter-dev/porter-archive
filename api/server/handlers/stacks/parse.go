@@ -137,9 +137,21 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 		values[helmName] = helm_values
 	}
 
-	// add back in the existing values that were not overwritten
+	// add back in the existing services that were not overwritten
 	for k, v := range existingValues {
 		if values[k] == nil {
+			// make sure we prepend launcher to services that aren't specified in porter.yaml as well
+			if existingServiceValues, ok := v.(map[string]interface{}); ok {
+				if existingServiceValues["container"] != nil {
+					containerMap := existingServiceValues["container"].(map[string]interface{})
+					if containerMap["command"] != nil {
+						command := containerMap["command"].(string)
+						if injectLauncher && !strings.HasPrefix(command, "launcher") && !strings.HasPrefix(command, "/cnb/lifecycle/launcher") {
+							containerMap["command"] = fmt.Sprintf("/cnb/lifecycle/launcher %s", command)
+						}
+					}
+				}
+			}
 			values[k] = v
 		}
 	}

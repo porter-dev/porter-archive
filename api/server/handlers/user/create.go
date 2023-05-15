@@ -34,7 +34,7 @@ func NewUserCreateHandler(
 }
 
 func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tracer, err := telemetry.InitTracer(context.Background(), u.Config().TelemetryConfig)
+	tracer, _ := telemetry.InitTracer(context.Background(), u.Config().TelemetryConfig)
 	defer tracer.Shutdown()
 
 	// just for demonstration purposes

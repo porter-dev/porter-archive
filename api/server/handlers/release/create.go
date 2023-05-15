@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -49,11 +51,23 @@ func NewCreateReleaseHandler(
 }
 
 func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	user, _ := ctx.Value(types.UserScope).(*models.User)
-	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-	namespace := ctx.Value(types.NamespaceScope).(string)
+	tracer, _ := telemetry.InitTracer(r.Context(), c.Config().TelemetryConfig)
+	defer tracer.Shutdown()
+
+	user, _ := r.Context().Value(types.UserScope).(*models.User)
+	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	namespace := r.Context().Value(types.NamespaceScope).(string)
 	operationID := oauth.CreateRandomState()
+
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-release")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: cluster.ProjectID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
+		telemetry.AttributeKV{Key: "user-email", Value: user.Email},
+		telemetry.AttributeKV{Key: "namespace", Value: namespace},
+	)
 
 	c.Config().AnalyticsClient.Track(analytics.ApplicationLaunchStartTrack(
 		&analytics.ApplicationLaunchStartTrackOpts{
@@ -62,9 +76,9 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		},
 	))
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, "")
+	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error getting helm agent")))
 		return
 	}
 
@@ -78,12 +92,14 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		request.RepoURL = c.Config().ServerConf.DefaultApplicationHelmRepoURL
 	}
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "repo-url", Value: request.RepoURL})
+
 	// if the repo url is not an addon or application url, validate against the helm repos
 	if request.RepoURL != c.Config().ServerConf.DefaultAddonHelmRepoURL && request.RepoURL != c.Config().ServerConf.DefaultApplicationHelmRepoURL {
 		// load the helm repos in the project
 		hrs, err := c.Repo().HelmRepo().ListHelmReposByProjectID(cluster.ProjectID)
 		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing helm repos for project : %w", err)))
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error listing helm repos for project")))
 			return
 		}
 
@@ -91,7 +107,7 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 		if !isValid {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("invalid repo_url parameter"),
+				telemetry.Error(ctx, span, err, "invalid repo_url parameter"),
 				http.StatusBadRequest,
 			))
 
@@ -105,26 +121,26 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	chart, err := loader.LoadChartPublic(request.RepoURL, request.TemplateName, request.TemplateVersion)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error loading public chart: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error loading public chart")))
 		return
 	}
 
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing registries: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error listing registries")))
 		return
 	}
 
 	k8sAgent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting k8s agent: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error getting k8s agent")))
 		return
 	}
 
 	// create the namespace if it does not exist already
 	_, err = k8sAgent.CreateNamespace(namespace, nil)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating namespace: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error creating namespace")))
 		return
 	}
 
@@ -141,7 +157,7 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	helmRelease, err := helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error installing a new chart: %s", err.Error()),
+			telemetry.Error(ctx, span, err, "error installing a new chart"),
 			http.StatusBadRequest,
 		))
 
@@ -155,7 +171,7 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			// read the attached configmap
 			cm, _, err := k8sAgent.GetLatestVersionedConfigMap(envGroupName, namespace)
 			if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Couldn't find the env group"), http.StatusNotFound))
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(telemetry.Error(ctx, span, err, "Couldn't find the env group"), http.StatusNotFound))
 				return
 			}
 
@@ -163,9 +179,9 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	release, err := CreateAppReleaseFromHelmRelease(c.Config(), cluster.ProjectID, cluster.ID, 0, helmRelease)
+	release, err := CreateAppReleaseFromHelmRelease(ctx, c.Config(), cluster.ProjectID, cluster.ID, 0, helmRelease)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error creating app release from helm release")))
 		return
 	}
 
@@ -175,7 +191,9 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			_, err = k8sAgent.AddApplicationToVersionedConfigMap(cm, release.Name)
 
 			if err != nil {
-				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(fmt.Errorf("Couldn't add %s to the config map %s", release.Name, cm.Name)))
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "release-name", Value: release.Name})
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "config-map-name", Value: cm.Name})
+				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "Couldn't add release to the config map")))
 			}
 		}
 	}
@@ -189,11 +207,11 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	if request.BuildConfig != nil {
-		_, err = createBuildConfig(c.Config(), release, request.BuildConfig)
+		_, err = createBuildConfig(ctx, c.Config(), release, request.BuildConfig)
 	}
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error building config")))
 		return
 	}
 
@@ -214,12 +232,12 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 			if unwrappedErr != nil {
 				if errors.Is(unwrappedErr, actions.ErrProtectedBranch) {
-					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(telemetry.Error(ctx, span, err, "error creating git action on protected branch"), http.StatusConflict))
 				} else if errors.Is(unwrappedErr, actions.ErrCreatePRForProtectedBranch) {
-					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed))
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(telemetry.Error(ctx, span, err, "error creating PR on protected branch"), http.StatusPreconditionFailed))
 				}
 			} else {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error creating git action")))
 				return
 			}
 		}
@@ -243,10 +261,21 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 func CreateAppReleaseFromHelmRelease(
+	ctx context.Context,
 	config *config.Config,
 	projectID, clusterID, stackResourceID uint,
 	helmRelease *release.Release,
 ) (*models.Release, error) {
+	ctx, span := telemetry.NewSpan(ctx, "create-app-release-from-helm-release")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: projectID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: clusterID},
+		telemetry.AttributeKV{Key: "stack-resource-id", Value: stackResourceID},
+		telemetry.AttributeKV{Key: "helm-release-name", Value: helmRelease.Name},
+	)
+
 	token, err := encryption.GenerateRandomBytes(16)
 	if err != nil {
 		return nil, err
@@ -256,15 +285,17 @@ func CreateAppReleaseFromHelmRelease(
 	image, ok := helmRelease.Config["image"].(map[string]interface{})
 
 	if !ok {
-		return nil, fmt.Errorf("Could not find field image in config")
+		return nil, telemetry.Error(ctx, span, nil, "Could not find field image in config")
 	}
 
 	repository := image["repository"]
 	repoStr, ok := repository.(string)
 
 	if !ok {
-		return nil, fmt.Errorf("Could not find field repository in config")
+		return nil, telemetry.Error(ctx, span, nil, "Could not find field repository in config")
 	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "repo-uri", Value: repoStr})
 
 	release := &models.Release{
 		ClusterID:       clusterID,
@@ -303,12 +334,23 @@ func createGitAction(
 	name, namespace string,
 	release *models.Release,
 ) (*types.GitActionConfig, []byte, error) {
+	ctx, span := telemetry.NewSpan(ctx, "create-git-action")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: projectID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: clusterID},
+		telemetry.AttributeKV{Key: "user-id", Value: userID},
+		telemetry.AttributeKV{Key: "name", Value: name},
+		telemetry.AttributeKV{Key: "namespace", Value: namespace},
+	)
+
 	// if the registry was provisioned through Porter, create a repository if necessary
 	if release != nil && request.RegistryID != 0 {
 		// read the registry
 		reg, err := config.Repo.Registry().ReadRegistry(projectID, request.RegistryID)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, telemetry.Error(ctx, span, err, "could not read repo registry")
 		}
 
 		_reg := registry.Registry(*reg)
@@ -318,14 +360,18 @@ func createGitAction(
 		nameSpl := strings.Split(request.ImageRepoURI, "/")
 		repoName := nameSpl[len(nameSpl)-1]
 
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "repo-name", Value: repoName})
+
 		err = regAPI.CreateRepository(ctx, config, repoName)
 
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, telemetry.Error(ctx, span, err, "could not create repo")
 		}
 	}
 
 	isDryRun := release == nil
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "is-dry-run", Value: isDryRun})
 
 	repoSplit := strings.Split(request.GitRepo, "/")
 
@@ -338,10 +384,10 @@ func createGitAction(
 
 	// if this isn't a dry run, generate the token
 	if !isDryRun {
-		encoded, err = getToken(config, userID, projectID, clusterID, request)
+		encoded, err = getToken(ctx, config, userID, projectID, clusterID, request)
 
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, telemetry.Error(ctx, span, err, "error getting token")
 		}
 	}
 
@@ -401,7 +447,7 @@ func createGitAction(
 
 		if gaRunner.DryRun {
 			if gitErr != nil {
-				return nil, nil, gitErr
+				return nil, nil, telemetry.Error(ctx, span, gitErr, "error setting up git")
 			}
 
 			return nil, workflowYAML, nil
@@ -422,26 +468,35 @@ func createGitAction(
 		Version:             "v0.1.0",
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, telemetry.Error(ctx, span, err, "error creating git action config")
 	}
 
 	// update the release in the db with the image repo uri
 	release.ImageRepoURI = ga.ImageRepoURI
 
 	_, err = config.Repo.Release().UpdateRelease(release)
-
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, telemetry.Error(ctx, span, err, "error updating release")
 	}
 
 	return ga.ToGitActionConfigType(), workflowYAML, gitErr
 }
 
 func getToken(
+	ctx context.Context,
 	config *config.Config,
 	userID, projectID, clusterID uint,
 	request *types.CreateGitActionConfigRequest,
 ) (string, error) {
+	ctx, span := telemetry.NewSpan(ctx, "get-git-action-token")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: projectID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: clusterID},
+		telemetry.AttributeKV{Key: "user-id", Value: userID},
+	)
+
 	// create a policy for the token
 	policy := []*types.PolicyDocument{
 		{
@@ -466,12 +521,12 @@ func getToken(
 
 	uid, err := encryption.GenerateRandomBytes(16)
 	if err != nil {
-		return "", err
+		return "", telemetry.Error(ctx, span, err, "error generating uid")
 	}
 
 	policyBytes, err := json.Marshal(policy)
 	if err != nil {
-		return "", err
+		return "", telemetry.Error(ctx, span, err, "error marshalling policy into json")
 	}
 
 	policyModel := &models.Policy{
@@ -485,24 +540,24 @@ func getToken(
 	policyModel, err = config.Repo.Policy().CreatePolicy(policyModel)
 
 	if err != nil {
-		return "", err
+		return "", telemetry.Error(ctx, span, err, "error creating policy")
 	}
 
 	// create the token in the database
 	tokenUID, err := encryption.GenerateRandomBytes(16)
 	if err != nil {
-		return "", err
+		return "", telemetry.Error(ctx, span, err, "error generating tokenUID")
 	}
 
 	secretKey, err := encryption.GenerateRandomBytes(16)
 	if err != nil {
-		return "", err
+		return "", telemetry.Error(ctx, span, err, "error generating secret key")
 	}
 
 	// hash the secret key for storage in the db
 	hashedToken, err := bcrypt.GenerateFromPassword([]byte(secretKey), 8)
 	if err != nil {
-		return "", err
+		return "", telemetry.Error(ctx, span, err, "error generating hashedToken")
 	}
 
 	expiresAt := time.Now().Add(time.Hour * 24 * 365)
@@ -522,26 +577,30 @@ func getToken(
 	apiToken, err = config.Repo.APIToken().CreateAPIToken(apiToken)
 
 	if err != nil {
-		return "", err
+		return "", telemetry.Error(ctx, span, err, "error creating api token")
 	}
 
 	// generate porter jwt token
 	jwt, err := token.GetStoredTokenForAPI(userID, projectID, apiToken.UniqueID, secretKey)
 	if err != nil {
-		return "", err
+		return "", telemetry.Error(ctx, span, err, "error getting stored token for api")
 	}
 
 	return jwt.EncodeToken(config.TokenConf)
 }
 
 func createBuildConfig(
+	ctx context.Context,
 	config *config.Config,
 	release *models.Release,
 	bcRequest *types.CreateBuildConfigRequest,
 ) (*types.BuildConfig, error) {
+	ctx, span := telemetry.NewSpan(ctx, "create-build-config")
+	defer span.End()
+
 	data, err := json.Marshal(bcRequest.Config)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error marshalling build config request")
 	}
 
 	// handle write to the database
@@ -551,14 +610,14 @@ func createBuildConfig(
 		Config:     data,
 	})
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error creating build config")
 	}
 
 	release.BuildConfig = bc.ID
 
 	_, err = config.Repo.Release().UpdateRelease(release)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error updating release")
 	}
 
 	return bc.ToBuildConfigType(), nil
@@ -573,6 +632,7 @@ type containerEnvConfig struct {
 }
 
 func GetGARunner(
+	ctx context.Context,
 	config *config.Config,
 	userID, projectID, clusterID uint,
 	ga *models.GitActionConfig,
@@ -580,10 +640,12 @@ func GetGARunner(
 	release *models.Release,
 	helmRelease *release.Release,
 ) (*actions.GithubActions, error) {
+	ctx, span := telemetry.NewSpan(ctx, "get-ga-runner")
+	defer span.End()
+
 	cEnv := &containerEnvConfig{}
 
 	rawValues, err := yaml.Marshal(helmRelease.Config)
-
 	if err == nil {
 		err = yaml.Unmarshal(rawValues, cEnv)
 
@@ -596,7 +658,7 @@ func GetGARunner(
 	repoSplit := strings.Split(ga.GitRepo, "/")
 
 	if len(repoSplit) != 2 {
-		return nil, fmt.Errorf("invalid formatting of repo name")
+		return nil, telemetry.Error(ctx, span, nil, "invalid formatting of repo name")
 	}
 
 	// create the commit in the git repo

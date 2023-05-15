@@ -37,7 +37,7 @@ func (c *DeleteReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, "")
+	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "")
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -88,6 +88,7 @@ func (c *DeleteReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 					}
 				} else {
 					gaRunner, err := GetGARunner(
+						r.Context(),
 						c.Config(),
 						user.ID,
 						cluster.ProjectID,

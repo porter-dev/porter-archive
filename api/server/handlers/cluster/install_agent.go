@@ -52,7 +52,7 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, "porter-agent-system")
+	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "porter-agent-system")
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

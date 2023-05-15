@@ -42,7 +42,7 @@ func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	namespace := r.Context().Value(types.NamespaceScope).(string)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, "")
+	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "")
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

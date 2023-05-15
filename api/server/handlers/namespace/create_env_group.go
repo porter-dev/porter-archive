@@ -67,7 +67,7 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
+	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, namespace)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

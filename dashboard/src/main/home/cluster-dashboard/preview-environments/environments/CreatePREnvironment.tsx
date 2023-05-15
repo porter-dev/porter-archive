@@ -121,6 +121,8 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
       searchValue,
       {
         isCaseSensitive: false,
+        threshold: 0.2, // Adjust this value to fine-tune the matching
+        distance: 50,
         keys: ["pr_title"],
       }
     );

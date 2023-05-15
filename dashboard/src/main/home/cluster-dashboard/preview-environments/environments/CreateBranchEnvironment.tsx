@@ -17,6 +17,10 @@ import pr_icon from "assets/pull_request_icon.svg";
 import { search } from "shared/search";
 import RadioFilter from "components/RadioFilter";
 import sort from "assets/sort.svg";
+import Modal from "components/porter/Modal";
+import Text from "components/porter/Text";
+import Button from "components/porter/Button";
+import Spacer from "components/porter/Spacer";
 
 interface Props {
   environmentID: string;
@@ -29,11 +33,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
   const [sortOrder, setSortOrder] = useState("Newest");
   const [loading, setLoading] = useState<boolean>(false);
   const [showErrorsModal, setShowErrorsModal] = useState<boolean>(false);
-  const {
-    currentProject,
-    currentCluster,
-    setCurrentError,
-  } = useContext(Context);
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
 
   const {
     data: environment,
@@ -82,7 +84,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
       enabled: !!environment,
     }
   );
-
+  const [showCreatePreviewModal, setShowCreatePreviewModal] = useState<boolean>(
+    false
+  );
   const environmentGitDeployBranches = environment?.git_deploy_branches ?? [];
   const [selectedBranch, setSelectedBranch] = useState<string>(null);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
@@ -90,6 +94,7 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
   const handleRowItemClick = async (branch: string) => {
     setSelectedBranch(branch);
     setLoading(true);
+    setShowCreatePreviewModal(true);
 
     const res = await validatePorterYAML({
       projectID: currentProject.id,
@@ -110,13 +115,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
   };
 
   const filteredBranches = useMemo(() => {
-    const filteredBySearch = search<string>(
-      branches ?? [],
-      searchValue,
-      {
-        isCaseSensitive: false,
-      }
-    );
+    const filteredBySearch = search<string>(branches ?? [], searchValue, {
+      isCaseSensitive: false,
+    });
 
     switch (sortOrder) {
       case "Alphabetical":
@@ -124,7 +125,10 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
         return _.sortBy(filteredBySearch);
     }
   }, [branches, searchValue, sortOrder]);
-
+  const handleModalSubmit = () => {
+    updateDeployBranchesMutation.mutate();
+    setShowCreatePreviewModal(false);
+  };
   const updateDeployBranchesMutation = useMutation({
     mutationFn: () => {
       return api.updateEnvironment(
@@ -132,12 +136,10 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
         {
           disable_new_comments: environment.new_comments_disabled,
           ...environment,
-          git_deploy_branches: _.uniq(
-            [
-              ...environmentGitDeployBranches,
-              selectedBranch,
-            ]
-          ),
+          git_deploy_branches: _.uniq([
+            ...environmentGitDeployBranches,
+            selectedBranch,
+          ]),
         },
         {
           project_id: currentProject.id,
@@ -206,17 +208,14 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
             icon={sort}
             selected={sortOrder}
             setSelected={setSortOrder}
-            options={[
-              { label: "Alphabetical", value: "Alphabetical" },
-            ]}
+            options={[{ label: "Alphabetical", value: "Alphabetical" }]}
             name="Sort"
           />
         </Flex>
       </FlexRow>
       <Br height="10px" />
       <BranchList>
-      {
-        (filteredBranches ?? []).map((branch, i) => (
+        {(filteredBranches ?? []).map((branch, i) => (
           <BranchRow
             onClick={() => handleRowItemClick(branch)}
             isLast={i === filteredBranches.length - 1}
@@ -224,13 +223,12 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
           >
             <BranchName>
               <BranchIcon src={pr_icon} alt="branch icon" />
-                <EllipsisTextWrapper tooltipText={branch}>
-                  {branch}
-                </EllipsisTextWrapper>
+              <EllipsisTextWrapper tooltipText={branch}>
+                {branch}
+              </EllipsisTextWrapper>
             </BranchName>
           </BranchRow>
-        ))
-      }
+        ))}
       </BranchList>
       {showErrorsModal && selectedBranch ? (
         <PorterYAMLErrorsModal
@@ -252,17 +250,36 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
         </ValidationErrorBannerWrapper>
       ) : null}
       <CreatePreviewDeploymentWrapper>
-        <SubmitButton
-          onClick={() => updateDeployBranchesMutation.mutate()}
-          disabled={
-            updateDeployBranchesMutation.isLoading || loading
-            || porterYAMLErrors.length > 0 || !selectedBranch
-          }
-        >
-          {
-            updateDeployBranchesMutation.isLoading ? 'Creating...' : 'Create Preview Deployment'
-          }
-        </SubmitButton>
+        {showCreatePreviewModal &&
+          selectedBranch &&
+          porterYAMLErrors.length == 0 && (
+            <Modal
+              title="Create Preview Environment"
+              closeModal={() => setShowCreatePreviewModal(false)}
+            >
+              <>
+                <Text color="helper">
+                  Create Preview Deployment for branch: {selectedBranch}?
+                </Text>
+                <Spacer y={1} />
+                <Button
+                  onClick={() => handleModalSubmit}
+                  loadingText="Submitting..."
+                  withBorder
+                  status={loading ? "loading" : undefined}
+                  disabled={
+                    updateDeployBranchesMutation.isLoading ||
+                    loading ||
+                    porterYAMLErrors.length > 0
+                  }
+                >
+                  {updateDeployBranchesMutation.isLoading
+                    ? "Creating..."
+                    : "Create Preview Deployment"}
+                </Button>
+              </>
+            </Modal>
+          )}
         {selectedBranch && porterYAMLErrors.length ? (
           <RevalidatePorterYAMLSpanWrapper>
             Please fix your porter.yaml file to continue.{" "}

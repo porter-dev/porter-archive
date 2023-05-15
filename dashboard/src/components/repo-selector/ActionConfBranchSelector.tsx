@@ -57,17 +57,18 @@ const ActionConfEditorStack: React.FC<Props> = (props) => {
         type="text"
         width="100%"
         value={props?.branch}
-        setValue={() => { }}
+        setValue={() => {}}
         placeholder=""
       />
       <BackButton
         width="145px"
         onClick={() => {
-          setBranch("");
-          props.setFolderPath("");
-          props.setDockerfilePath("");
-          props.setActionConfig(actionConfig);
-          props.setBuildView("buildpacks");
+          setBranch ? setBranch("") : null;
+          props.setFolderPath ? props.setFolderPath("") : null;
+          props.setDockerfilePath ? props.setDockerfilePath("") : null;
+          props.setActionConfig ? props.setActionConfig(actionConfig) : null;
+          props.setBuildView ? props.setBuildView("buildpacks") : null;
+          props.setPorterYaml ? props.setPorterYamlPath("") : null;
         }}
       >
         <i className="material-icons">keyboard_backspace</i>

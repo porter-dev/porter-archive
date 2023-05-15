@@ -117,6 +117,8 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
   const filteredBranches = useMemo(() => {
     const filteredBySearch = search<string>(branches ?? [], searchValue, {
       isCaseSensitive: false,
+      threshold: 0.2, // Adjust this value to fine-tune the matching
+      distance: 50,
     });
 
     switch (sortOrder) {

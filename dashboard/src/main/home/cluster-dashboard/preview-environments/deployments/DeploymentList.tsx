@@ -300,7 +300,7 @@ const DeploymentList = () => {
             <DynamicLink
               to={`/preview-environments/deployments/${environment_id}/${repo_owner}/${repo_name}/settings`}
             >
-              <I className="material-icons">more_vert</I>
+              <I className="material-icons">settings</I>
             </DynamicLink>
           </Flex>
         }

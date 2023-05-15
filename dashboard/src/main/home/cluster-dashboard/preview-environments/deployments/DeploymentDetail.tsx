@@ -18,8 +18,11 @@ import Modal from "main/home/modals/Modal";
 import { validatePorterYAML } from "../utils";
 import Placeholder from "components/Placeholder";
 import GithubIcon from "assets/GithubIcon";
+import Dropdown from "components/Dropdown";
+import { useHistory } from "react-router-dom";
 
 const DeploymentDetail = () => {
+  const [showDropdown, setShowDropdown] = useState(false);
   const { params } = useRouteMatch<{ id: string }>();
   const context = useContext(Context);
   const [prDeployment, setPRDeployment] = useState<PRDeployment>(null);
@@ -38,6 +41,7 @@ const DeploymentDetail = () => {
 
   const { search } = useLocation();
   let searchParams = new URLSearchParams(search);
+  const history = useHistory();
 
   useEffect(() => {
     let isSubscribed = true;
@@ -103,6 +107,26 @@ const DeploymentDetail = () => {
   }
 
   const repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
+  const deleteDeployment = () => {
+    //setIsDeleting(true);
+
+    api
+      .deletePRDeployment(
+        "<token>",
+        {},
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+          deployment_id: prDeployment.id,
+        }
+      )
+      .then(() => {
+        //setIsDeleting(false);
+        history.push(
+          `/preview-environments/deployments/${currentProject.id}/${repository}`
+        ); // Navigate to deployments page
+      });
+  };
 
   if (
     !prDeployment.namespace &&
@@ -125,18 +149,33 @@ const DeploymentDetail = () => {
         </BreadcrumbRow>
         <StyledExpandedChart>
           <HeaderWrapper>
-            <Title
-              icon={pr_icon}
-              iconWidth="25px"
-              onClick={() =>
-                window.open(
-                  `https://github.com/${repository}/pull/${prDeployment.pull_request_id}`,
-                  "_blank"
-                )
-              }
-            >
-              {prDeployment.gh_pr_name}
-            </Title>
+            <Flex>
+              <Title
+                icon={pr_icon}
+                iconWidth="25px"
+                onClick={() =>
+                  window.open(
+                    `https://github.com/${repository}/pull/${prDeployment.pull_request_id}`,
+                    "_blank"
+                  )
+                }
+              >
+                {prDeployment.gh_pr_name}
+              </Title>
+              <span
+                onClick={() => setShowDropdown(!showDropdown)}
+                style={{ cursor: "pointer" }}
+              >
+                <I className="material-icons">settings</I>
+                {showDropdown && (
+                  <DeleteDropdown>
+                    <DeleteButton onClick={deleteDeployment}>
+                      Delete
+                    </DeleteButton>
+                  </DeleteDropdown>
+                )}
+              </span>
+            </Flex>
             <InfoWrapper>
               {prDeployment.subdomain && (
                 <PRLink to={prDeployment.subdomain} target="_blank">
@@ -145,6 +184,7 @@ const DeploymentDetail = () => {
                 </PRLink>
               )}
             </InfoWrapper>
+
             <Flex>
               <Status>
                 <StatusDot status={prDeployment.status} />
@@ -684,5 +724,44 @@ const Tooltip = styled.div`
     to {
       opacity: 1;
     }
+  }
+`;
+const I = styled.i`
+  font-size: 18px;
+  user-select: none;
+  margin-left: 15px;
+  color: #aaaabb;
+  margin-bottom: -3px;
+  cursor: pointer;
+  width: 30px;
+  border-radius: 40px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  :hover {
+    background: #26292e;
+    border: 1px solid #494b4f;
+  }
+`;
+const DeleteDropdown = styled.div`
+  position: absolute;
+  border-radius: 3px;
+  padding: 10px;
+  min-width: 150px;
+  z-index: 999;
+`;
+
+const DeleteButton = styled.button`
+  background-color: #f44336;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background-color: #d32f2f;
   }
 `;

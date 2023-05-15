@@ -284,7 +284,7 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
                 Create Preview Deployment for {selectedPR.pr_title}?
               </Text>
               <Spacer y={1} />
-              <Button
+              {/* <Button
                 onClick={() => handleModalSubmit}
                 loadingText="Submitting..."
                 withBorder
@@ -298,7 +298,20 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
                 {createPreviewDeploymentMutation.isLoading
                   ? "Creating..."
                   : "Create Preview Deployment"}
-              </Button>
+              </Button> */}
+              <SubmitButton
+                onClick={() => createPreviewDeploymentMutation.mutate()}
+                disabled={
+                  loading ||
+                  !selectedPR ||
+                  porterYAMLErrors.length > 0 ||
+                  createPreviewDeploymentMutation.isLoading
+                }
+              >
+                {createPreviewDeploymentMutation.isLoading
+                  ? "Creating..."
+                  : "Create preview deployment"}
+              </SubmitButton>
             </>
           </Modal>
         )}

@@ -131,7 +131,7 @@ func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Clus
 }
 
 func (d *OutOfClusterAgentGetter) GetHelmAgent(ctx context.Context, r *http.Request, cluster *models.Cluster, namespace string) (*helm.Agent, error) {
-	ctx, span := telemetry.NewSpan(r.Context(), "get-helm-agent")
+	ctx, span := telemetry.NewSpan(ctx, "get-helm-agent")
 	defer span.End()
 
 	telemetry.WithAttributes(span,

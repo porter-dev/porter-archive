@@ -628,7 +628,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 <Fieldset>
                   <Container row>
                     <PlaceholderIcon src={notFound} />
-                    <Text color="helper">No pre-deploy jobs were found. Add a pre-deploy job to perform an operation like a database migration before your application services deploy.</Text>
+                    <Text color="helper">No pre-deploy jobs were found. Add a pre-deploy job to perform an operation before your application services deploy, like a database migration.</Text>
                   </Container>
                 </Fieldset>
                 <Spacer y={0.5} />

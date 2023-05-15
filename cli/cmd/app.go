@@ -33,12 +33,12 @@ import (
 )
 
 var (
-	appNamespace      string
-	appVerbose        bool
-	appExistingPod    bool
-	appNonInteractive bool
-	appContainerName  string
-	appTag            string
+	appNamespace     string
+	appVerbose       bool
+	appExistingPod   bool
+	appInteractive   bool
+	appContainerName string
+	appTag           string
 )
 
 // appCmd represents the "porter app" base command when called
@@ -95,7 +95,7 @@ func init() {
 		"existing_pod",
 		"e",
 		false,
-		"whether to connect to an existing pod",
+		"whether to connect to an existing pod (default false)",
 	)
 
 	appRunCmd.PersistentFlags().BoolVarP(
@@ -107,10 +107,10 @@ func init() {
 	)
 
 	appRunCmd.PersistentFlags().BoolVar(
-		&appNonInteractive,
-		"non-interactive",
-		true,
-		"whether to run in non-interactive mode",
+		&appInteractive,
+		"interactive",
+		false,
+		"whether to run in interactive mode (default false)",
 	)
 
 	appRunCmd.PersistentFlags().StringVarP(
@@ -168,7 +168,7 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 
 	if len(podsSimple) == 0 {
 		return fmt.Errorf("At least one pod must exist in this deployment.")
-	} else if appNonInteractive || len(podsSimple) == 1 {
+	} else if !appInteractive || len(podsSimple) == 1 {
 		selectedPod = podsSimple[0]
 	} else {
 		podNames := make([]string, 0)
@@ -217,8 +217,8 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 	}
 
 	if selectedContainerName == "" {
-		if appNonInteractive {
-			return fmt.Errorf("container name must be specified using the --container flag when using non-interactive mode")
+		if !appInteractive {
+			return fmt.Errorf("container name must be specified using the --container flag when not using interactive mode")
 		}
 
 		selectedContainer, err := utils.PromptSelect("Select the container:", selectedPod.ContainerNames)

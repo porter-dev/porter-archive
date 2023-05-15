@@ -262,21 +262,19 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
                   Create Preview Deployment for branch: {selectedBranch}?
                 </Text>
                 <Spacer y={1} />
-                <Button
-                  onClick={() => handleModalSubmit}
-                  loadingText="Submitting..."
-                  withBorder
-                  status={loading ? "loading" : undefined}
+                <SubmitButton
+                  onClick={() => updateDeployBranchesMutation.mutate()}
                   disabled={
                     updateDeployBranchesMutation.isLoading ||
                     loading ||
-                    porterYAMLErrors.length > 0
+                    porterYAMLErrors.length > 0 ||
+                    !selectedBranch
                   }
                 >
                   {updateDeployBranchesMutation.isLoading
                     ? "Creating..."
                     : "Create Preview Deployment"}
-                </Button>
+                </SubmitButton>
               </>
             </Modal>
           )}

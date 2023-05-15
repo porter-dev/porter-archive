@@ -156,6 +156,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
   const updateStackStep = async (step: string) => {
     try {
+      if (currentCluster?.id == null || currentProject?.id == null) {
+        throw "Unable to capture analytics, project or cluster not found";
+      }
       await api.updateStackStep(
         "<token>",
         {
@@ -321,12 +324,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       // log analytics event that we started form submission
       await updateStackStep("stack-launch-complete");
 
-      if (
-        currentProject == null ||
-        currentCluster == null ||
-        currentProject.id == null ||
-        currentCluster.id == null
-      ) {
+      if (currentProject?.id == null || currentCluster?.id == null) {
         throw "Project or cluster not found";
       }
 
@@ -335,7 +333,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         formState.serviceList,
         formState.releaseJob,
         formState.envVariables,
-        porterJson
+        porterJson,
+        // if we are using a heroku buildpack, inject a PORT env variable
+        (buildConfig as any)?.builder != null &&
+          (buildConfig as any)?.builder.includes("heroku")
       );
 
       const yamlString = yaml.dump(finalPorterYaml);

@@ -105,7 +105,7 @@ func updateAppResourceTag(opts *updateAppResourceTagOpts) error {
 	}
 
 	_, err = opts.helmAgent.UpgradeReleaseByValues(conf, opts.config.DOConf,
-		opts.config.ServerConf.DisablePullSecretsInjection)
+		opts.config.ServerConf.DisablePullSecretsInjection, false)
 
 	return err
 }

@@ -56,6 +56,7 @@ func parse(
 	existingValues map[string]interface{},
 	existingDependencies []*chart.Dependency,
 	opts SubdomainCreateOpts,
+	injectLauncher bool,
 ) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
 	parsed := &PorterStackYAML{}
 
@@ -64,7 +65,7 @@ func parse(
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
 	}
 
-	values, err := buildStackValues(parsed, imageInfo, existingValues, opts)
+	values, err := buildStackValues(parsed, imageInfo, existingValues, opts, injectLauncher)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
 	}
@@ -78,13 +79,13 @@ func parse(
 	// return the parsed release values for the release job chart, if they exist
 	var releaseJobValues map[string]interface{}
 	if parsed.Release != nil && parsed.Release.Run != nil {
-		releaseJobValues = buildReleaseValues(parsed.Release, parsed.Env, imageInfo)
+		releaseJobValues = buildReleaseValues(parsed.Release, parsed.Env, imageInfo, injectLauncher)
 	}
 
 	return chart, convertedValues, releaseJobValues, nil
 }
 
-func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existingValues map[string]interface{}, opts SubdomainCreateOpts) (map[string]interface{}, error) {
+func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existingValues map[string]interface{}, opts SubdomainCreateOpts, injectLauncher bool) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
 	if parsed.Apps == nil {
@@ -122,12 +123,35 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 			}
 		}
 
+		// prepend launcher if we need to
+		if helm_values["container"] != nil {
+			containerMap := helm_values["container"].(map[string]interface{})
+			if containerMap["command"] != nil {
+				command := containerMap["command"].(string)
+				if injectLauncher && !strings.HasPrefix(command, "launcher") && !strings.HasPrefix(command, "/cnb/lifecycle/launcher") {
+					containerMap["command"] = fmt.Sprintf("/cnb/lifecycle/launcher %s", command)
+				}
+			}
+		}
+
 		values[helmName] = helm_values
 	}
 
-	// add back in the existing values that were not overwritten
+	// add back in the existing services that were not overwritten
 	for k, v := range existingValues {
 		if values[k] == nil {
+			// make sure we prepend launcher to services that aren't specified in porter.yaml as well
+			if existingServiceValues, ok := v.(map[string]interface{}); ok {
+				if existingServiceValues["container"] != nil {
+					containerMap := existingServiceValues["container"].(map[string]interface{})
+					if containerMap["command"] != nil {
+						command := containerMap["command"].(string)
+						if injectLauncher && !strings.HasPrefix(command, "launcher") && !strings.HasPrefix(command, "/cnb/lifecycle/launcher") {
+							containerMap["command"] = fmt.Sprintf("/cnb/lifecycle/launcher %s", command)
+						}
+					}
+				}
+			}
 			values[k] = v
 		}
 	}
@@ -144,7 +168,7 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 	return values, nil
 }
 
-func buildReleaseValues(release *App, env map[string]string, imageInfo types.ImageInfo) map[string]interface{} {
+func buildReleaseValues(release *App, env map[string]string, imageInfo types.ImageInfo, injectLauncher bool) map[string]interface{} {
 	defaultValues := getDefaultValues(release, env, "job")
 	convertedConfig := convertMap(release.Config).(map[string]interface{})
 	helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
@@ -154,6 +178,14 @@ func buildReleaseValues(release *App, env map[string]string, imageInfo types.Ima
 			"repository": imageInfo.Repository,
 			"tag":        imageInfo.Tag,
 		}
+	}
+
+	// prepend launcher if we need to
+	if injectLauncher && release.Run != nil && !strings.HasPrefix(*release.Run, "launcher") && !strings.HasPrefix(*release.Run, "/cnb/lifecycle/launcher") {
+		if helm_values["container"] == nil {
+			helm_values["container"] = map[string]interface{}{}
+		}
+		helm_values["container"].(map[string]interface{})["command"] = fmt.Sprintf("/cnb/lifecycle/launcher %s", *release.Run)
 	}
 
 	return helm_values
@@ -175,25 +207,15 @@ func getDefaultValues(app *App, env map[string]string, appType string) map[strin
 	if app.Run != nil {
 		runCommand = *app.Run
 	}
-	if appType == "web" {
-		defaultValues = map[string]interface{}{
-			"container": map[string]interface{}{
-				"command": runCommand,
-				"env": map[string]interface{}{
-					"normal": CopyEnv(env),
-				},
+	defaultValues = map[string]interface{}{
+		"container": map[string]interface{}{
+			"command": runCommand,
+			"env": map[string]interface{}{
+				"normal": CopyEnv(env),
 			},
-		}
-	} else {
-		defaultValues = map[string]interface{}{
-			"container": map[string]interface{}{
-				"command": runCommand,
-				"env": map[string]interface{}{
-					"normal": CopyEnv(env),
-				},
-			},
-		}
+		},
 	}
+
 	return defaultValues
 }
 

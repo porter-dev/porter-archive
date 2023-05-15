@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -98,6 +99,9 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		releaseDependencies = helmRelease.Chart.Metadata.Dependencies
 	}
 
+	injectLauncher := strings.Contains(request.Builder, "heroku") ||
+		strings.Contains(request.Builder, "paketo")
+
 	chart, values, releaseJobValues, err := parse(
 		porterYaml,
 		imageInfo,
@@ -111,9 +115,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			powerDnsClient: c.Config().PowerDNSClient,
 			appRootDomain:  c.Config().ServerConf.AppRootDomain,
 			stackName:      stackName,
-		})
+		},
+		injectLauncher,
+	)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter yaml into chart and values: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter.yaml into chart and values: %w", err)))
 		return
 	}
 
@@ -243,7 +249,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					Registries: registries,
 					Values:     releaseJobValues,
 				}
-				_, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+				_, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error upgrading release job chart: %w", err)))
 					return

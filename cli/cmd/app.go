@@ -141,16 +141,14 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 	appNamespace = fmt.Sprintf("porter-stack-%s", args[0])
 
 	if len(execArgs) > 0 {
-		release, err := client.GetRelease(
-			context.Background(), cliConf.Project, cliConf.Cluster, appNamespace, args[0],
-		)
+		res, err := client.GetPorterApp(context.Background(), cliConf.Project, cliConf.Cluster, args[0])
 		if err != nil {
-			return fmt.Errorf("error fetching release %s: %w", args[0], err)
+			return fmt.Errorf("Unable to run command - application not found: %w", err)
 		}
 
-		if release.BuildConfig != nil &&
-			(strings.Contains(release.BuildConfig.Builder, "heroku") ||
-				strings.Contains(release.BuildConfig.Builder, "paketo")) &&
+		if res.Builder != "" &&
+			(strings.Contains(res.Builder, "heroku") ||
+				strings.Contains(res.Builder, "paketo")) &&
 			execArgs[0] != "/cnb/lifecycle/launcher" &&
 			execArgs[0] != "launcher" {
 			// this is a buildpacks release using a heroku builder, prepend the launcher

@@ -21,6 +21,7 @@ import GithubIcon from "assets/GithubIcon";
 import Dropdown from "components/Dropdown";
 import { useHistory } from "react-router-dom";
 import PreviewEnvDeleted from "./PreviewEnvDeleted";
+import Button from "components/porter/Button";
 
 const DeploymentDetail = () => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -170,9 +171,7 @@ const DeploymentDetail = () => {
                 <I className="material-icons">settings</I>
                 {showDropdown && (
                   <DeleteDropdown>
-                    <DeleteButton onClick={deleteDeployment}>
-                      Delete
-                    </DeleteButton>
+                    <Button onClick={deleteDeployment}>Delete</Button>
                   </DeleteDropdown>
                 )}
               </span>

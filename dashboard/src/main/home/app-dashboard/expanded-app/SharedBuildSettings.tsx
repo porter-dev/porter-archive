@@ -27,6 +27,8 @@ type Props = {
   setImageUrl: (x: string) => void;
   buildView: string;
   setBuildView: (x: string) => void;
+  porterYamlPath: string;
+  setPorterYamlPath: (x: string) => void;
 };
 
 const SharedBuildSettings: React.FC<Props> = ({
@@ -45,6 +47,8 @@ const SharedBuildSettings: React.FC<Props> = ({
   setImageUrl,
   buildView,
   setBuildView,
+  porterYamlPath,
+  setPorterYamlPath,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -67,6 +71,7 @@ const SharedBuildSettings: React.FC<Props> = ({
         setDockerfilePath={setDockerfilePath}
         setFolderPath={setFolderPath}
         setBuildView={setBuildView}
+        setPorterYamlPath={setPorterYamlPath}
       />
       <DarkMatter antiHeight="-4px" />
       <Spacer y={0.3} />
@@ -89,6 +94,7 @@ const SharedBuildSettings: React.FC<Props> = ({
             setDockerfilePath={setDockerfilePath}
             setFolderPath={setFolderPath}
             setBuildView={setBuildView}
+            setPorterYamlPath={setPorterYamlPath}
           />
         </>
       )}
@@ -105,6 +111,22 @@ const SharedBuildSettings: React.FC<Props> = ({
             width="100%"
             setValue={setFolderPath}
           />
+          <Spacer y={1} />
+
+          {porterYamlPath != "porter.yaml" && porterYamlPath && (
+            <>
+              <Text color="helper">Porter.yaml path:</Text>
+              <Spacer y={0.5} />
+              <Input
+                disabled={true}
+                placeholder="ex: ./"
+                value={porterYamlPath}
+                width="100%"
+                setValue={setPorterYamlPath}
+              />
+              <Spacer y={1} />
+            </>
+          )}
           <DetectContentsList
             actionConfig={actionConfig}
             branch={branch}
@@ -118,6 +140,8 @@ const SharedBuildSettings: React.FC<Props> = ({
             setPorterYaml={setPorterYaml}
             buildView={buildView}
             setBuildView={setBuildView}
+            porterYamlPath={porterYamlPath}
+            setPorterYamlPath={setPorterYamlPath}
           />
         </>
       )}

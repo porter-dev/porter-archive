@@ -18,6 +18,8 @@ type GithubPROpts struct {
 	ServerURL                 string
 	DefaultBranch             string
 	SecretName                string
+	PorterYamlPath            string
+	Body                      string
 }
 
 type GetStackApplyActionYAMLOpts struct {
@@ -26,17 +28,19 @@ type GetStackApplyActionYAMLOpts struct {
 	ProjectID, ClusterID uint
 	DefaultBranch        string
 	SecretName           string
+	PorterYamlPath       string
 }
 
 func OpenGithubPR(opts *GithubPROpts) (*github.PullRequest, error) {
 	var pr *github.PullRequest
 	applyWorkflowYAML, err := getStackApplyActionYAML(&GetStackApplyActionYAMLOpts{
-		ServerURL:     opts.ServerURL,
-		ClusterID:     opts.ClusterID,
-		ProjectID:     opts.ProjectID,
-		StackName:     opts.StackName,
-		DefaultBranch: opts.DefaultBranch,
-		SecretName:    opts.SecretName,
+		ServerURL:      opts.ServerURL,
+		ClusterID:      opts.ClusterID,
+		ProjectID:      opts.ProjectID,
+		StackName:      opts.StackName,
+		DefaultBranch:  opts.DefaultBranch,
+		SecretName:     opts.SecretName,
+		PorterYamlPath: opts.PorterYamlPath,
 	})
 	if err != nil {
 		return pr, err
@@ -75,6 +79,7 @@ func OpenGithubPR(opts *GithubPROpts) (*github.PullRequest, error) {
 			Title: github.String("Enable Porter Application"),
 			Base:  github.String(opts.DefaultBranch),
 			Head:  github.String(prBranchName),
+			Body:  github.String(opts.Body),
 		},
 	)
 	if err != nil {
@@ -95,6 +100,7 @@ func getStackApplyActionYAML(opts *GetStackApplyActionYAMLOpts) ([]byte, error) 
 			opts.SecretName,
 			opts.StackName,
 			"v0.1.0",
+			opts.PorterYamlPath,
 			opts.ProjectID,
 			opts.ClusterID,
 		),

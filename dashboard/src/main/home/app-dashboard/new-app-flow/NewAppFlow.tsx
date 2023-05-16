@@ -97,6 +97,7 @@ type Provider =
   };
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [templateName, setTemplateName] = useState("");
+  const [porterYamlPath, setPorterYamlPath] = useState("");
 
   const [imageUrl, setImageUrl] = useState("");
   const [imageTag, setImageTag] = useState("latest");
@@ -331,14 +332,16 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
-      const imageInfo = imageUrl
-        ? {
-          image_info: {
-            repository: imageUrl,
-            tag: imageTag,
-          },
-        }
-        : {};
+      let imageInfo = {
+        repository: "",
+        tag: "",
+      };
+      if (imageUrl && imageTag) {
+        imageInfo = {
+          repository: imageUrl,
+          tag: imageTag,
+        };
+      };
 
       await api.createPorterApp(
         "<token>",
@@ -356,7 +359,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           image_repo_uri: imageUrl,
           porter_yaml: base64Encoded,
           override_release: true,
-          ...imageInfo,
+          image_info: imageInfo,
+          porter_yaml_path: porterYamlPath,
         },
         {
           cluster_id: currentCluster.id,
@@ -395,27 +399,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       setCurrentStep(Math.max(currentStep, 2));
     }
   }, [imageUrl, buildConfig, dockerfilePath, setCurrentStep, currentStep]);
-  // useEffect(() => {
-  //   const fetchGithubAccounts = async () => {
-  //     try {
-  //       const { data } = await api.getGithubAccounts("<token>", {}, {});
-  //       setAccessData(data);
-  //       if (data) {
-  //         setHasProviders(false);
-  //       }
-  //     } catch (error) {
-  //       setAccessError(true);
-  //     } finally {
-  //       setAccessLoading(false);
-  //     }
-
-  //     setConnectModal(
-  //       !hasClickedDoNotConnect && (!hasProviders || accessError)
-  //     );
-  //   };
-
-  //   fetchGithubAccounts();
-  // }, [hasClickedDoNotConnect, accessData.accounts, accessError]);
 
   return (
     <CenterWrapper>
@@ -483,6 +466,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <SourceSelector
                   selectedSourceType={formState.selectedSourceType}
                   setSourceType={(type) => {
+                    setPorterYaml("");
                     setFormState({ ...formState, selectedSourceType: type });
                   }}
                 />
@@ -514,6 +498,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setBuildView={setBuildView}
                   setCurrentStep={setCurrentStep}
                   currentStep={currentStep}
+                  porterYamlPath={porterYamlPath}
+                  setPorterYamlPath={setPorterYamlPath}
                 />
               </>,
               <>
@@ -624,6 +610,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           clusterId={currentCluster.id}
           deployPorterApp={deployPorterApp}
           deploymentError={deploymentError}
+          porterYamlPath={porterYamlPath}
         />
       )}
     </CenterWrapper>

@@ -13,6 +13,10 @@ import Loading from "../Loading";
 import Spacer from "components/porter/Spacer";
 import AdvancedBuildSettings from "main/home/app-dashboard/new-app-flow/AdvancedBuildSettings";
 import { render } from "react-dom";
+import Modal from "components/porter/Modal";
+import Input from "components/porter/Input";
+import Text from "components/porter/Text";
+import { set } from "lodash";
 
 interface AutoBuildpack {
   name?: string;
@@ -32,9 +36,12 @@ type PropsType = {
   setPorterYaml: (x: any) => void;
   buildView: string;
   setBuildView: (x: string) => void;
+  porterYamlPath: string;
+  setPorterYamlPath: (x: string) => void;
 };
 
 const DetectContentsList: React.FC<PropsType> = (props) => {
+  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [contents, setContents] = useState<FileType[]>([]);
@@ -57,15 +64,25 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
     }
   }, []);
 
-  useEffect(() => {
-    const porterYamlItem = contents.find((item: FileType) =>
-      item.path.includes("porter.yaml")
-    );
-
-    if (porterYamlItem) {
-      fetchAndSetPorterYaml("porter.yaml");
+  const toggleModal = async () => {
+    if (!showModal) {
+      const porterYamlItem = contents.find((item: FileType) =>
+        item.path.includes(props.porterYamlPath + "porter.yaml")
+      );
+      if (porterYamlItem) {
+        fetchAndSetPorterYaml(props.porterYamlPath + "porter.yaml");
+        props.setPorterYamlPath("porter.yaml");
+        return;
+      }
     }
-  }, [contents, fetchAndSetPorterYaml]);
+    setShowModal(!showModal);
+  };
+
+  useEffect(() => {
+    if (!loading) {
+      toggleModal();
+    }
+  }, [loading]);
 
   useEffect(() => {
     updateContents();
@@ -223,8 +240,77 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
       });
     }
   };
+  const updatePorterYamlPath = () => {
+    toggleModal();
+
+    fetchAndSetPorterYaml(props.porterYamlPath);
+  };
+  const ignoreModal = () => {
+    toggleModal();
+
+    props.setPorterYamlPath("");
+  };
+
+  const NoPorterYamlContent = () => (
+    <div>
+      <h3>No porter.yaml detected</h3>
+      <p>
+        We were unable to find{" "}
+        <a
+          href="https://docs.porter.run/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          porter.yaml
+        </a>{" "}
+        in your root directory. We recommend that you add{" "}
+        <a
+          href="https://docs.porter.run/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          porter.yaml
+        </a>{" "}
+        to your root directory or specify the subdirectory path here.
+      </p>
+    </div>
+  );
   return (
     <>
+      {showModal && (
+        <Modal closeModal={toggleModal}>
+          <NoPorterYamlContent />
+          <Spacer y={0.5} />
+          <Text color="helper">Porter.yaml path:</Text>
+          <Spacer y={0.5} />
+          <Input
+            disabled={false}
+            placeholder="ex: ./subdirectory/porter.yaml"
+            value={props.porterYamlPath}
+            width="100%"
+            setValue={props.setPorterYamlPath}
+          />
+          <Spacer y={1} />
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <Button
+              onClick={ignoreModal}
+              loadingText="Submitting..."
+              color="#ffffff11"
+              status={loading ? "loading" : undefined}
+            >
+              Ignore
+            </Button>
+            <Button
+              onClick={updatePorterYamlPath}
+              loadingText="Submitting..."
+              color="#616fee"
+              status={loading ? "loading" : undefined}
+            >
+              Update Path
+            </Button>
+          </div>
+        </Modal>
+      )}
       {renderContentList() && (
         <>
           <AdvancedBuildSettings

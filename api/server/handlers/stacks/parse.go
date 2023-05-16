@@ -123,36 +123,28 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 			}
 		}
 
-		// prepend launcher if we need to
-		if helm_values["container"] != nil {
-			containerMap := helm_values["container"].(map[string]interface{})
-			if containerMap["command"] != nil {
-				command := containerMap["command"].(string)
-				if injectLauncher && !strings.HasPrefix(command, "launcher") && !strings.HasPrefix(command, "/cnb/lifecycle/launcher") {
-					containerMap["command"] = fmt.Sprintf("/cnb/lifecycle/launcher %s", command)
-				}
-			}
-		}
-
 		values[helmName] = helm_values
 	}
 
 	// add back in the existing services that were not overwritten
 	for k, v := range existingValues {
 		if values[k] == nil {
-			// make sure we prepend launcher to services that aren't specified in porter.yaml as well
-			if existingServiceValues, ok := v.(map[string]interface{}); ok {
-				if existingServiceValues["container"] != nil {
-					containerMap := existingServiceValues["container"].(map[string]interface{})
-					if containerMap["command"] != nil {
-						command := containerMap["command"].(string)
-						if injectLauncher && !strings.HasPrefix(command, "launcher") && !strings.HasPrefix(command, "/cnb/lifecycle/launcher") {
-							containerMap["command"] = fmt.Sprintf("/cnb/lifecycle/launcher %s", command)
-						}
+			values[k] = v
+		}
+	}
+
+	// prepend launcher to all start commands if we need to
+	for _, v := range values {
+		if serviceValues, ok := v.(map[string]interface{}); ok {
+			if serviceValues["container"] != nil {
+				containerMap := serviceValues["container"].(map[string]interface{})
+				if containerMap["command"] != nil {
+					command := containerMap["command"].(string)
+					if injectLauncher && !strings.HasPrefix(command, "launcher") && !strings.HasPrefix(command, "/cnb/lifecycle/launcher") {
+						containerMap["command"] = fmt.Sprintf("/cnb/lifecycle/launcher %s", command)
 					}
 				}
 			}
-			values[k] = v
 		}
 	}
 

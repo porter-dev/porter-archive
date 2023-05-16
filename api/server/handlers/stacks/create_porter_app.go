@@ -99,6 +99,13 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		releaseDependencies = helmRelease.Chart.Metadata.Dependencies
 	}
 
+	if request.Builder == "" {
+		// attempt to get builder from db
+		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+		if err == nil {
+			request.Builder = app.Builder
+		}
+	}
 	injectLauncher := strings.Contains(request.Builder, "heroku") ||
 		strings.Contains(request.Builder, "paketo")
 
@@ -185,7 +192,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		} else if existing.Name != "" {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("porter app with name %s already exists in this environment", existing.Name), http.StatusForbidden))
+				fmt.Errorf("app with name %s already exists in your project", existing.Name), http.StatusForbidden))
 			return
 		}
 
@@ -203,6 +210,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			Dockerfile:     request.Dockerfile,
 			ImageRepoURI:   request.ImageRepoURI,
 			PullRequestURL: request.PullRequestURL,
+			PorterYamlPath: request.PorterYamlPath,
 		}
 
 		// create the db entry

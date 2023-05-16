@@ -20,6 +20,10 @@ type PorterApp struct {
 	Buildpacks     string `json:"build_packs,omitempty"`
 	Dockerfile     string `json:"dockerfile,omitempty"`
 	PullRequestURL string `json:"pull_request_url,omitempty"`
+
+	// Porter YAML
+	PorterYAMLBase64 string `json:"porter_yaml,omitempty"`
+	PorterYamlPath   string `json:"porter_yaml_path,omitempty"`
 }
 
 // swagger:model
@@ -36,6 +40,7 @@ type CreatePorterAppRequest struct {
 	ImageRepoURI     string    `json:"image_repo_uri"`
 	PullRequestURL   string    `json:"pull_request_url"`
 	PorterYAMLBase64 string    `json:"porter_yaml"`
+	PorterYamlPath   string    `json:"porter_yaml_path"`
 	ImageInfo        ImageInfo `json:"image_info" form:"omitempty"`
 	OverrideRelease  bool      `json:"override_release"`
 }

@@ -236,7 +236,7 @@ func (c *CLIConfig) SetProject(projectID uint) error {
 
 	client := GetAPIClient()
 	if client != nil {
-		resp, err := GetAPIClient().ListProjectClusters(context.Background(), projectID)
+		resp, err := client.ListProjectClusters(context.Background(), projectID)
 		if err == nil {
 			clusters := *resp
 			if len(clusters) == 1 {

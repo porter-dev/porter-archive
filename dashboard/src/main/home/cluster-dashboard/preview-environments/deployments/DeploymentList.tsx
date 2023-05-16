@@ -200,6 +200,8 @@ const DeploymentList = () => {
       filteredByStatus,
       searchValue,
       {
+        threshold: 0.2,
+        distance: 50,
         isCaseSensitive: false,
         keys: ["gh_pr_name", "gh_repo_name", "gh_repo_owner"],
       }

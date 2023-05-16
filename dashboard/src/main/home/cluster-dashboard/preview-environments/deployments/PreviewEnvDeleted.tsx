@@ -1,8 +1,11 @@
 import React from "react";
 import styled from "styled-components";
-import DynamicLink from "components/DynamicLink";
 import { ProjectType } from "shared/types";
 import { useHistory } from "react-router-dom";
+import Button from "components/porter/Button";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
+
 interface PreviewEnvDeletedProps {
   repository?: string;
   currentProject?: ProjectType;
@@ -17,16 +20,12 @@ const PreviewEnvDeleted: React.FC<PreviewEnvDeletedProps> = ({}) => {
 
   return (
     <DeletedContainer>
-      <ClusterPlaceholder>
-        <DeletedMessage>
-          This preview environment has been deleted.
-        </DeletedMessage>
-
-        <BackButton width="75px" onClick={handleBackButtonClick}>
-          <i className="material-icons">keyboard_backspace</i>
-          Back
-        </BackButton>
-      </ClusterPlaceholder>
+      <Text size={16}>This preview environment has been deleted.</Text>
+      <Spacer y={0.5} />
+      <Button width="75px" onClick={handleBackButtonClick}>
+        <i className="material-icons">keyboard_backspace</i>
+        Back
+      </Button>
     </DeletedContainer>
   );
 };
@@ -40,19 +39,6 @@ const DeletedContainer = styled.div`
   width: 100%;
 `;
 
-const DeletedMessage = styled.h3`
-  margin-bottom: 20px;
-`;
-
-const GoBackLink = styled(DynamicLink)`
-  color: #327bff;
-  text-decoration: underline;
-  cursor: pointer;
-
-  &:hover {
-    color: #2666d9;
-  }
-`;
 const ClusterPlaceholder = styled.div`
   padding: 25px;
   border-radius: 5px;

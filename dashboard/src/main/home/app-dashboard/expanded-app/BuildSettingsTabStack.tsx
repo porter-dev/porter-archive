@@ -182,7 +182,9 @@ const BuildSettingsTabStack: React.FC<Props> = ({
         repo_name: appData.app.repo_name,
         git_branch: branch,
         build_context: folderPath,
-        builder: buildConfig.builder,
+        builder: buildView === "buildpacks"
+          ? buildConfig.builder
+          : "null",
         buildpacks:
           buildView === "buildpacks"
             ? buildConfig?.buildpacks?.join(",")

@@ -18,6 +18,7 @@ type Props = {
   repoName: string;
   stackName: string;
   gitRepoId: number;
+  porterYamlPath?: string;
 };
 
 const GHABanner: React.FC<Props> = ({
@@ -26,6 +27,7 @@ const GHABanner: React.FC<Props> = ({
   repoName,
   stackName,
   gitRepoId,
+  porterYamlPath = "porter.yaml",
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [showGHAModal, setShowGHAModal] = useState(false);
@@ -34,7 +36,7 @@ const GHABanner: React.FC<Props> = ({
       <StyledGHABanner>
         <>
           {pullRequestUrl ? (
-            <Banner 
+            <Banner
               type="warning"
               suffix={
                 <RefreshButton onClick={() => window.location.reload()}>
@@ -57,7 +59,7 @@ const GHABanner: React.FC<Props> = ({
               </Container>
             </Banner>
           ) : (
-            <Banner   
+            <Banner
               type="warning"
               suffix={
                 <RefreshButton onClick={() => window.location.reload()}>
@@ -88,6 +90,7 @@ const GHABanner: React.FC<Props> = ({
           stackName={stackName}
           projectId={currentProject.id}
           clusterId={currentCluster.id}
+          porterYamlPath={porterYamlPath}
         />
       )}
     </>

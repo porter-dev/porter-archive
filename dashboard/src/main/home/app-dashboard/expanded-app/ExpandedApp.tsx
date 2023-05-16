@@ -136,7 +136,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
       } catch (err) {
         // do nothing, unable to find release chart
-        console.log(err);
+        // console.log(err);
       }
 
       // update apps and release
@@ -146,7 +146,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         releaseChart: releaseChartData?.data,
       };
       const porterJson = await fetchPorterYamlContent(
-        "porter.yaml",
+        resPorterApp?.data?.porter_yaml_path ?? "porter.yaml",
         newAppData
       );
 
@@ -773,6 +773,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   pullRequestUrl={appData.app.pull_request_url}
                   stackName={appData.app.name}
                   gitRepoId={appData.app.git_repo_id}
+                  porterYamlPath={appData.app.porter_yaml_path}
                 />
               ) : !hasBuiltImage ? (
                 <Banner

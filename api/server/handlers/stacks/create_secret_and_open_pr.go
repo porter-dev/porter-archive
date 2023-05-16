@@ -83,15 +83,17 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var pr *github.PullRequest
 	if request.OpenPr {
 		pr, err = actions.OpenGithubPR(&actions.GithubPROpts{
-			Client:        client,
-			GitRepoOwner:  request.GithubRepoOwner,
-			GitRepoName:   request.GithubRepoName,
-			StackName:     stackName,
-			ProjectID:     project.ID,
-			ClusterID:     cluster.ID,
-			ServerURL:     c.Config().ServerConf.ServerURL,
-			DefaultBranch: request.Branch,
-			SecretName:    secretName,
+			Client:         client,
+			GitRepoOwner:   request.GithubRepoOwner,
+			GitRepoName:    request.GithubRepoName,
+			StackName:      stackName,
+			ProjectID:      project.ID,
+			ClusterID:      cluster.ID,
+			ServerURL:      c.Config().ServerConf.ServerURL,
+			DefaultBranch:  request.Branch,
+			SecretName:     secretName,
+			PorterYamlPath: request.PorterYamlPath,
+			Body:           "Hello 👋 from Porter! Please merge this PR to finish setting up your application.",
 		})
 	}
 

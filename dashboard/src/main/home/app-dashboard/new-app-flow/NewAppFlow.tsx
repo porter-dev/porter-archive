@@ -350,7 +350,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           git_branch: branch,
           git_repo_id: actionConfig?.git_repo_id,
           build_context: folderPath,
-          builder: (buildConfig as any)?.builder,
+          builder: buildView === "buildpacks" ? (buildConfig as any)?.builder : "",
           buildpacks:
             buildView === "buildpacks"
               ? (buildConfig as any)?.buildpacks?.join(",") ?? ""

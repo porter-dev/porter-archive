@@ -6,6 +6,8 @@ import info from "assets/info.svg";
 import close from "assets/close.png";
 import Button from "components/porter/Button";
 import api from "../../shared/api";
+import Error from "components/porter/Error";
+
 import { Context } from "../../shared/Context";
 import { ActionConfigType, BuildConfig, FileType } from "../../shared/types";
 
@@ -46,6 +48,9 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   const [error, setError] = useState(false);
   const [contents, setContents] = useState<FileType[]>([]);
   const [currentDir, setCurrentDir] = useState("");
+  const [changedPorterYaml, setChangedPorterYaml] = useState(true);
+  const [displayInput, setDisplayInput] = useState(false);
+  const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
 
   const [autoBuildpack, setAutoBuildpack] = useState<AutoBuildpack>({
     valid: false,
@@ -57,9 +62,12 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   const context = useContext(Context);
   const fetchAndSetPorterYaml = useCallback(async (fileName: string) => {
     try {
+      setButtonStatus("loading");
       const response = await fetchPorterYamlContent(fileName);
       props.setPorterYaml(atob(response.data));
+      setButtonStatus("success");
     } catch (error) {
+      setButtonStatus(<Error message="Unable to detect porter.yaml" />);
       console.error("Error fetching porter.yaml content:", error);
     }
   }, []);
@@ -203,7 +211,18 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
       );
     }
   };
-
+  const handleInputChange = (newValue: string) => {
+    props.setPorterYamlPath(newValue);
+    setChangedPorterYaml(newValue === "");
+    if (!displayInput && newValue !== "") {
+      setDisplayInput(true);
+    }
+  };
+  const handleUpdatePorterYamlPath = () => {
+    props.setPorterYamlPath(props.porterYamlPath);
+    fetchAndSetPorterYaml(props.porterYamlPath);
+    set;
+  };
   const updateContents = async () => {
     try {
       const res = await fetchContents();
@@ -257,14 +276,17 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
       <Spacer y={1} />
       <span>
         <Text color="helper">
-          We were unable to find porter.yaml in your root directory. We recommend that you
-        </Text>{" "}<a
+          We were unable to find porter.yaml in your root directory. We
+          recommend that you
+        </Text>{" "}
+        <a
           href="https://docs.porter.run/deploying-applications/application-porter-yaml-reference"
           target="_blank"
           rel="noopener noreferrer"
         >
           add porter.yaml
-        </a>{" "}<Text color="helper">
+        </a>{" "}
+        <Text color="helper">
           to your root directory or specify the subdirectory path here.
         </Text>
       </span>
@@ -308,6 +330,31 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
       )}
       {renderContentList() && (
         <>
+          {props.porterYamlPath != "porter.yaml" &&
+            (displayInput || props.porterYamlPath) && (
+              <>
+                <Text color="helper">Porter.yaml path:</Text>
+                <Spacer y={0.5} />
+                <Input
+                  disabled={false}
+                  placeholder="ex: ./"
+                  value={props.porterYamlPath}
+                  width="100%"
+                  onValueChange={handleInputChange}
+                />
+                <Spacer y={0.5} />
+                <Button
+                  onClick={handleUpdatePorterYamlPath}
+                  loadingText="Submitting..."
+                  color={changedPorterYaml ? "#ffffff11" : "#616fee"}
+                  status={buttonStatus}
+                  disabled={changedPorterYaml}
+                >
+                  Update Path
+                </Button>
+                <Spacer y={1} />
+              </>
+            )}
           <AdvancedBuildSettings
             dockerfilePath={props.dockerfilePath}
             setDockerfilePath={props.setDockerfilePath}

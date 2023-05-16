@@ -300,7 +300,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			app.BuildContext = request.BuildContext
 		}
 		if request.Builder != "" {
-			app.Builder = request.Builder
+			if request.Builder == "null" {
+				app.Builder = ""
+			} else {
+				app.Builder = request.Builder
+			}
 		}
 		if request.Buildpacks != "" {
 			if request.Buildpacks == "null" {

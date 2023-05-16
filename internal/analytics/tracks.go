@@ -567,3 +567,76 @@ func ClusterDestroyingSuccessTrack(opts *ClusterDestroyingSuccessTrackOpts) segm
 		getDefaultSegmentTrack(additionalProps, ClusterDestroyingSuccess),
 	)
 }
+
+// StackLaunchStartOpts are the options for creating a track when a user starts creating a stack
+type StackLaunchStartOpts struct {
+	*ProjectScopedTrackOpts
+
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
+}
+
+// StackLaunchStartTrack returns a track for when a user starts creating a stack
+func StackLaunchStartTrack(opts *StackLaunchStartOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, StackLaunchStart),
+	)
+}
+
+// StackLaunchCompleteOpts are the options for creating a track when a user completes creating a stack
+type StackLaunchCompleteOpts struct {
+	*ProjectScopedTrackOpts
+
+	StackName   string
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
+}
+
+// StackLaunchCompleteTrack returns a track for when a user completes creating a stack
+func StackLaunchCompleteTrack(opts *StackLaunchCompleteOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, StackLaunchComplete),
+	)
+}
+
+// StackLaunchSuccessOpts are the options for creating a track when a user succeeds in creating a stack
+type StackLaunchSuccessOpts struct {
+	*ProjectScopedTrackOpts
+
+	StackName   string
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
+}
+
+// StackLaunchCompleteTrack returns a track for when a user completes creating a stack
+func StackLaunchSuccessTrack(opts *StackLaunchSuccessOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, StackLaunchSuccess),
+	)
+}

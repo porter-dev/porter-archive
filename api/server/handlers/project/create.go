@@ -42,6 +42,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	proj := &models.Project{
 		Name:                   request.Name,
 		CapiProvisionerEnabled: true,
+		SimplifiedViewEnabled:  true,
 	}
 
 	var err error

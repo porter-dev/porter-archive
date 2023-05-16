@@ -48,5 +48,6 @@ func (a *PorterApp) ToPorterAppType() *types.PorterApp {
 		Buildpacks:     a.Buildpacks,
 		Dockerfile:     a.Dockerfile,
 		PullRequestURL: a.PullRequestURL,
+		PorterYamlPath: a.PorterYamlPath,
 	}
 }

@@ -69,19 +69,19 @@ func GetAgentOutOfClusterConfig(conf *OutOfClusterConfig) (*Agent, error) {
 
 	var restConf *rest.Config
 
-	if conf.Cluster.ProvisionedBy == "CAPI" {
-		rc, err := restConfigForCAPICluster(context.Background(), conf.CAPIManagementClusterClient, *conf.Cluster)
-		if err != nil {
-			return nil, err
-		}
-		restConf = rc
-	} else {
-		rc, err := conf.ToRESTConfig()
-		if err != nil {
-			return nil, err
-		}
-		restConf = rc
+	//if conf.Cluster.ProvisionedBy == "CAPI" {
+	//	rc, err := restConfigForCAPICluster(context.Background(), conf.CAPIManagementClusterClient, *conf.Cluster)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	restConf = rc
+	//} else {
+	rc, err := conf.ToRESTConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert ooc config to rest config: %w", err)
 	}
+	restConf = rc
+	//}
 
 	if restConf == nil {
 		return nil, fmt.Errorf("error getting rest config for cluster %s", conf.Cluster.ProvisionedBy)
@@ -89,7 +89,7 @@ func GetAgentOutOfClusterConfig(conf *OutOfClusterConfig) (*Agent, error) {
 
 	clientset, err := kubernetes.NewForConfig(restConf)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get new clientset from rest config: %w", err)
 	}
 
 	return &Agent{conf, clientset}, nil
@@ -207,22 +207,22 @@ type OutOfClusterConfig struct {
 // the result of ToRawKubeConfigLoader, and also adds a custom http transport layer
 // if necessary (required for GCP auth)
 func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
-	if conf.Cluster.ProvisionedBy == "CAPI" {
-		rc, err := restConfigForCAPICluster(context.Background(), conf.CAPIManagementClusterClient, *conf.Cluster)
-		if err != nil {
-			return nil, err
-		}
-		return rc, nil
-	}
+	//if conf.Cluster.ProvisionedBy == "CAPI" {
+	//	rc, err := restConfigForCAPICluster(context.Background(), conf.CAPIManagementClusterClient, *conf.Cluster)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	return rc, nil
+	//}
 
 	cmdConf, err := conf.GetClientConfigFromCluster()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get cmdConf from cluster: %w", err)
 	}
 
 	restConf, err := cmdConf.ClientConfig()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get client config from cmdConf: %w", err)
 	}
 
 	restConf.Timeout = conf.Timeout
@@ -282,28 +282,28 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientCo
 		return nil, fmt.Errorf("cluster cannot be nil")
 	}
 
-	if conf.Cluster.ProvisionedBy == "CAPI" {
-		rc, err := kubeConfigForCAPICluster(context.Background(), conf.CAPIManagementClusterClient, *conf.Cluster)
-		if err != nil {
-			return nil, err
-		}
-		clientConfig, err := clientcmd.NewClientConfigFromBytes([]byte(rc))
-		if err != nil {
-			return nil, err
-		}
-		rawConfig, err := clientConfig.RawConfig()
-		if err != nil {
-			return nil, err
-		}
-
-		overrides := &clientcmd.ConfigOverrides{}
-
-		overrides.Context = api.Context{
-			Namespace: conf.DefaultNamespace,
-		}
-
-		return clientcmd.NewDefaultClientConfig(rawConfig, overrides), nil
-	}
+	//if conf.Cluster.ProvisionedBy == "CAPI" {
+	//	rc, err := kubeConfigForCAPICluster(context.Background(), conf.CAPIManagementClusterClient, *conf.Cluster)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	clientConfig, err := clientcmd.NewClientConfigFromBytes([]byte(rc))
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	rawConfig, err := clientConfig.RawConfig()
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//
+	//	overrides := &clientcmd.ConfigOverrides{}
+	//
+	//	overrides.Context = api.Context{
+	//		Namespace: conf.DefaultNamespace,
+	//	}
+	//
+	//	return clientcmd.NewDefaultClientConfig(rawConfig, overrides), nil
+	//}
 
 	if conf.Cluster.AuthMechanism == models.Local {
 		kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
@@ -319,7 +319,7 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientCo
 
 	apiConfig, err := conf.CreateRawConfigFromCluster()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create raw config from cluster: %w", err)
 	}
 
 	overrides := &clientcmd.ConfigOverrides{}
@@ -364,132 +364,183 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		authInfoMap[authInfoName].ImpersonateGroups = groups
 	}
 
-	switch cluster.AuthMechanism {
-	case models.X509:
-		kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
-			cluster.ProjectID,
-			cluster.KubeIntegrationID,
-		)
+	if conf.Cluster.ProvisionedBy == "CAPI" {
+
+		decodedCert, err := capiCertAuthData(conf.CAPIManagementClusterClient, int(cluster.ID), int(cluster.ProjectID))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error retrieving capi certificate authority data: %w", err)
 		}
 
-		authInfoMap[authInfoName].ClientCertificateData = kubeAuth.ClientCertificateData
-		authInfoMap[authInfoName].ClientKeyData = kubeAuth.ClientKeyData
-	case models.Basic:
-		kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
-			cluster.ProjectID,
-			cluster.KubeIntegrationID,
-		)
-		if err != nil {
-			return nil, err
+		clusterMap[cluster.Name].CertificateAuthorityData = decodedCert
+
+		// check cache here so that we don't unnecessarily assume role
+		cache, err := conf.getTokenCache()
+		if cache != nil {
+			if tok := cache.Token; err == nil && !cache.IsExpired() && len(tok) > 0 {
+				authInfoMap[authInfoName].Token = string(tok)
+			}
 		}
 
-		authInfoMap[authInfoName].Username = string(kubeAuth.Username)
-		authInfoMap[authInfoName].Password = string(kubeAuth.Password)
-	case models.Bearer:
-		kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
-			cluster.ProjectID,
-			cluster.KubeIntegrationID,
-		)
-		if err != nil {
-			return nil, err
+		// if we didn't get a valid token from cache, generate a new one
+		if authInfoMap[authInfoName].Token == "" {
+
+			req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{
+				ProjectId: int64(cluster.ProjectID),
+			})
+
+			creds, err := conf.CAPIManagementClusterClient.AssumeRoleCredentials(context.Background(), req)
+			if err != nil {
+				return nil, fmt.Errorf("error getting capi credentials for repository: %w", err)
+			}
+
+			awsAuth := &ints.AWSIntegration{
+				AWSAccessKeyID:     []byte(creds.Msg.AwsAccessId),
+				AWSSecretAccessKey: []byte(creds.Msg.AwsSecretKey),
+				AWSSessionToken:    []byte(creds.Msg.AwsSessionToken),
+			}
+
+			awsClusterID := cluster.Name
+			shouldOverride := false
+
+			if cluster.AWSClusterID != "" {
+				awsClusterID = cluster.AWSClusterID
+				shouldOverride = true
+			}
+			tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
+			if err != nil {
+				return nil, fmt.Errorf("error getting bearer token for repository: %w", err)
+			}
+
+			authInfoMap[authInfoName].Token = tok
 		}
+	} else {
+		switch cluster.AuthMechanism {
+		case models.X509:
+			kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
+				cluster.ProjectID,
+				cluster.KubeIntegrationID,
+			)
+			if err != nil {
+				return nil, err
+			}
 
-		authInfoMap[authInfoName].Token = string(kubeAuth.Token)
-	case models.OIDC:
-		oidcAuth, err := conf.Repo.OIDCIntegration().ReadOIDCIntegration(
-			cluster.ProjectID,
-			cluster.OIDCIntegrationID,
-		)
-		if err != nil {
-			return nil, err
+			authInfoMap[authInfoName].ClientCertificateData = kubeAuth.ClientCertificateData
+			authInfoMap[authInfoName].ClientKeyData = kubeAuth.ClientKeyData
+		case models.Basic:
+			kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
+				cluster.ProjectID,
+				cluster.KubeIntegrationID,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			authInfoMap[authInfoName].Username = string(kubeAuth.Username)
+			authInfoMap[authInfoName].Password = string(kubeAuth.Password)
+		case models.Bearer:
+			kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
+				cluster.ProjectID,
+				cluster.KubeIntegrationID,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			authInfoMap[authInfoName].Token = string(kubeAuth.Token)
+		case models.OIDC:
+			oidcAuth, err := conf.Repo.OIDCIntegration().ReadOIDCIntegration(
+				cluster.ProjectID,
+				cluster.OIDCIntegrationID,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			authInfoMap[authInfoName].AuthProvider = &api.AuthProviderConfig{
+				Name: "oidc",
+				Config: map[string]string{
+					"idp-issuer-url":                 string(oidcAuth.IssuerURL),
+					"client-id":                      string(oidcAuth.ClientID),
+					"client-secret":                  string(oidcAuth.ClientSecret),
+					"idp-certificate-authority-data": string(oidcAuth.CertificateAuthorityData),
+					"id-token":                       string(oidcAuth.IDToken),
+					"refresh-token":                  string(oidcAuth.RefreshToken),
+				},
+			}
+		case models.GCP:
+			gcpAuth, err := conf.Repo.GCPIntegration().ReadGCPIntegration(
+				cluster.ProjectID,
+				cluster.GCPIntegrationID,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			tok, err := gcpAuth.GetBearerToken(
+				conf.getTokenCache,
+				conf.setTokenCache,
+				"https://www.googleapis.com/auth/cloud-platform",
+			)
+
+			if tok == nil && err != nil {
+				return nil, err
+			}
+
+			// add this as a bearer token
+			authInfoMap[authInfoName].Token = tok.AccessToken
+		case models.AWS:
+			awsAuth, err := conf.Repo.AWSIntegration().ReadAWSIntegration(
+				cluster.ProjectID,
+				cluster.AWSIntegrationID,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			awsClusterID := cluster.Name
+			shouldOverride := false
+
+			if cluster.AWSClusterID != "" {
+				awsClusterID = cluster.AWSClusterID
+				shouldOverride = true
+			}
+
+			tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
+			if err != nil {
+				return nil, err
+			}
+
+			// add this as a bearer token
+			authInfoMap[authInfoName].Token = tok
+		case models.DO:
+			oauthInt, err := conf.Repo.OAuthIntegration().ReadOAuthIntegration(
+				cluster.ProjectID,
+				cluster.DOIntegrationID,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, conf.DigitalOceanOAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, conf.Repo))
+			if err != nil {
+				return nil, err
+			}
+
+			// add this as a bearer token
+			authInfoMap[authInfoName].Token = tok
+		case models.Azure:
+			azInt, err := conf.Repo.AzureIntegration().ReadAzureIntegration(
+				cluster.ProjectID,
+				cluster.AzureIntegrationID,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			authInfoMap[authInfoName].Token = string(azInt.AKSPassword)
+		default:
+			return nil, errors.New("not a supported auth mechanism")
 		}
-
-		authInfoMap[authInfoName].AuthProvider = &api.AuthProviderConfig{
-			Name: "oidc",
-			Config: map[string]string{
-				"idp-issuer-url":                 string(oidcAuth.IssuerURL),
-				"client-id":                      string(oidcAuth.ClientID),
-				"client-secret":                  string(oidcAuth.ClientSecret),
-				"idp-certificate-authority-data": string(oidcAuth.CertificateAuthorityData),
-				"id-token":                       string(oidcAuth.IDToken),
-				"refresh-token":                  string(oidcAuth.RefreshToken),
-			},
-		}
-	case models.GCP:
-		gcpAuth, err := conf.Repo.GCPIntegration().ReadGCPIntegration(
-			cluster.ProjectID,
-			cluster.GCPIntegrationID,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		tok, err := gcpAuth.GetBearerToken(
-			conf.getTokenCache,
-			conf.setTokenCache,
-			"https://www.googleapis.com/auth/cloud-platform",
-		)
-
-		if tok == nil && err != nil {
-			return nil, err
-		}
-
-		// add this as a bearer token
-		authInfoMap[authInfoName].Token = tok.AccessToken
-	case models.AWS:
-		awsAuth, err := conf.Repo.AWSIntegration().ReadAWSIntegration(
-			cluster.ProjectID,
-			cluster.AWSIntegrationID,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		awsClusterID := cluster.Name
-		shouldOverride := false
-
-		if cluster.AWSClusterID != "" {
-			awsClusterID = cluster.AWSClusterID
-			shouldOverride = true
-		}
-
-		tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
-		if err != nil {
-			return nil, err
-		}
-
-		// add this as a bearer token
-		authInfoMap[authInfoName].Token = tok
-	case models.DO:
-		oauthInt, err := conf.Repo.OAuthIntegration().ReadOAuthIntegration(
-			cluster.ProjectID,
-			cluster.DOIntegrationID,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, conf.DigitalOceanOAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, conf.Repo))
-		if err != nil {
-			return nil, err
-		}
-
-		// add this as a bearer token
-		authInfoMap[authInfoName].Token = tok
-	case models.Azure:
-		azInt, err := conf.Repo.AzureIntegration().ReadAzureIntegration(
-			cluster.ProjectID,
-			cluster.AzureIntegrationID,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		authInfoMap[authInfoName].Token = string(azInt.AKSPassword)
-	default:
-		return nil, errors.New("not a supported auth mechanism")
 	}
 
 	// create a context of the cluster name
@@ -525,6 +576,24 @@ func (conf *OutOfClusterConfig) setTokenCache(token string, expiry time.Time) er
 	)
 
 	return err
+}
+
+func capiCertAuthData(ccpClient porterv1connect.ClusterControlPlaneServiceClient, clusterId, projectId int) ([]byte, error) {
+	req := connect.NewRequest(&porterv1.CertificateAuthorityDataRequest{
+		ProjectId: int64(projectId),
+		ClusterId: int64(clusterId),
+	})
+	cert, err := ccpClient.CertificateAuthorityData(context.Background(), req)
+	if err != nil {
+		return []byte(""), fmt.Errorf("error getting certificate authority data: %w", err)
+	}
+
+	decodedCert, err := b64.DecodeString(cert.Msg.CertificateAuthorityData)
+	if err != nil {
+		return []byte(""), fmt.Errorf("error decoding certificate authority data: %w", err)
+	}
+
+	return decodedCert, nil
 }
 
 // NewRESTClientGetterFromInClusterConfig returns a RESTClientGetter using

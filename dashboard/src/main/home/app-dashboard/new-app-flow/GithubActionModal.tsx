@@ -29,6 +29,7 @@ type Props = RouteComponentProps & {
   clusterId?: number;
   deployPorterApp?: () => Promise<boolean>;
   deploymentError?: string;
+  porterYamlPath?: string;
 }
 
 type Choice = "open_pr" | "copy";
@@ -44,6 +45,7 @@ const GithubActionModal: React.FC<Props> = ({
   clusterId,
   deployPorterApp,
   deploymentError,
+  porterYamlPath,
   ...props
 }) => {
   const [choice, setChoice] = React.useState<Choice>("open_pr");
@@ -70,6 +72,7 @@ const GithubActionModal: React.FC<Props> = ({
               github_repo_name: githubRepoName,
               branch,
               open_pr: (choice === "open_pr" || isChecked),
+              porter_yaml_path: porterYamlPath,
             },
             {
               project_id: projectId,
@@ -113,10 +116,10 @@ const GithubActionModal: React.FC<Props> = ({
         }
         isInitiallyExpanded
         spaced
-        copy={getGithubAction(projectId, clusterId, stackName, branch)}
+        copy={getGithubAction(projectId, clusterId, stackName, branch, porterYamlPath)}
         ExpandedSection={
           <YamlEditor
-            value={getGithubAction(projectId, clusterId, stackName, branch)}
+            value={getGithubAction(projectId, clusterId, stackName, branch, porterYamlPath)}
             readOnly={true}
             height="300px"
           />

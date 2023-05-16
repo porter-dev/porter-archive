@@ -33,7 +33,7 @@ import {
 import Error from "components/porter/Error";
 import { z } from "zod";
 import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
-import { Service } from "./serviceTypes";
+import { ReleaseService, Service } from "./serviceTypes";
 import { Helper } from "components/form-components/Helper";
 import GithubConnectModal from "./GithubConnectModal";
 
@@ -51,6 +51,7 @@ interface FormState {
   applicationName: string;
   selectedSourceType: SourceType | undefined;
   serviceList: Service[];
+  releaseJob: ReleaseService[];
   envVariables: KeyValueType[];
   releaseCommand: string;
 }
@@ -59,6 +60,7 @@ const INITIAL_STATE: FormState = {
   applicationName: "",
   selectedSourceType: undefined,
   serviceList: [],
+  releaseJob: [],
   envVariables: [],
   releaseCommand: "",
 };
@@ -71,6 +73,7 @@ const Validators: {
   serviceList: (value: Service[]) => value.length > 0,
   envVariables: (value: KeyValueType[]) => true,
   releaseCommand: (value: string) => true,
+  releaseJob: (value: ReleaseService[]) => true,
 };
 
 type Detected = {
@@ -83,15 +86,15 @@ interface GithubAppAccessData {
 }
 type Provider =
   | {
-      provider: "github";
-      name: string;
-      installation_id: number;
-    }
+    provider: "github";
+    name: string;
+    installation_id: number;
+  }
   | {
-      provider: "gitlab";
-      instance_url: string;
-      integration_id: number;
-    };
+    provider: "gitlab";
+    instance_url: string;
+    integration_id: number;
+  };
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [templateName, setTemplateName] = useState("");
   const [porterYamlPath, setPorterYamlPath] = useState("");
@@ -140,7 +143,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     setAccessData(data);
     setShowGithubConnectModal(
       !hasClickedDoNotConnect &&
-        (accessError || !data.accounts || data.accounts?.length === 0)
+      (accessError || !data.accounts || data.accounts?.length === 0)
     );
   };
 
@@ -148,9 +151,31 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     setAccessError(error);
     setShowGithubConnectModal(
       !hasClickedDoNotConnect &&
-        (error || !accessData.accounts || accessData.accounts?.length === 0)
+      (error || !accessData.accounts || accessData.accounts?.length === 0)
     );
   };
+
+  const updateStackStep = async (step: string) => {
+    try {
+      if (currentCluster?.id == null || currentProject?.id == null) {
+        throw "Unable to capture analytics, project or cluster not found";
+      }
+      await api.updateStackStep(
+        "<token>",
+        {
+          step,
+          stack_name: formState.applicationName,
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      );
+    } catch (err) {
+      // TODO: handle analytics error
+    }
+  }
+
   const validatePorterYaml = (yamlString: string) => {
     let parsedYaml;
     try {
@@ -159,6 +184,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const porterYamlToJson = parsedData as PorterJson;
       setPorterJson(porterYamlToJson);
       const newServices = [];
+      const newReleaseJob = [];
       const existingServices = formState.serviceList.map((s) => s.name);
       for (const [name, app] of Object.entries(porterYamlToJson.apps)) {
         if (!existingServices.includes(name)) {
@@ -171,10 +197,14 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           }
         }
       }
+      if (!formState.releaseJob.length && porterYamlToJson.release != null) {
+        newReleaseJob.push(Service.default("pre-deploy", "release", porterYamlToJson) as ReleaseService);
+      }
       const newServiceList = [...formState.serviceList, ...newServices];
-      setFormState({ ...formState, serviceList: newServiceList });
+      const newReleaseJobList = [...formState.releaseJob, ...newReleaseJob];
+      setFormState({ ...formState, serviceList: newServiceList, releaseJob: newReleaseJobList });
       if (Validators.serviceList(newServiceList)) {
-        setCurrentStep(Math.max(currentStep, 4));
+        setCurrentStep(Math.max(currentStep, 5));
       }
       if (
         porterYamlToJson &&
@@ -183,15 +213,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       ) {
         setDetected({
           detected: true,
-          message: `Detected ${
-            Object.keys(porterYamlToJson.apps).length
-          } apps from porter.yaml`,
+          message: `Detected ${Object.keys(porterYamlToJson.apps).length} service${Object.keys(porterYamlToJson.apps).length === 1 ? "" : "s"} from porter.yaml`,
         });
       } else {
         setDetected({
           detected: false,
           message:
-            "Could not detect any apps from porter.yaml. Make sure it exists in the root of your repo.",
+            "Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.",
         });
       }
     } catch (error) {
@@ -281,11 +309,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     try {
       setDeploying(true);
       setDeploymentError(undefined);
+
+      // log analytics event that we started form submission
+      await updateStackStep('stack-launch-complete');
+
       if (
-        currentProject == null ||
-        currentCluster == null ||
-        currentProject.id == null ||
-        currentCluster.id == null
+        currentProject?.id == null ||
+        currentCluster?.id == null
       ) {
         throw "Project or cluster not found";
       }
@@ -293,20 +323,25 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       // validate form data
       const finalPorterYaml = createFinalPorterYaml(
         formState.serviceList,
+        formState.releaseJob,
         formState.envVariables,
-        porterJson
+        porterJson,
+        // if we are using a heroku buildpack, inject a PORT env variable
+        (buildConfig as any)?.builder != null && (buildConfig as any)?.builder.includes("heroku")
       );
 
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
-      const imageInfo = imageUrl
-        ? {
-            image_info: {
-              repository: imageUrl,
-              tag: imageTag,
-            },
-          }
-        : {};
+      let imageInfo = {
+        repository: "",
+        tag: "",
+      };
+      if (imageUrl && imageTag) {
+        imageInfo = {
+          repository: imageUrl,
+          tag: imageTag,
+        };
+      };
 
       await api.createPorterApp(
         "<token>",
@@ -323,7 +358,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           dockerfile: buildView === "docker" ? dockerfilePath : "",
           image_repo_uri: imageUrl,
           porter_yaml: base64Encoded,
-          ...imageInfo,
+          override_release: true,
+          image_info: imageInfo,
           porter_yaml_path: porterYamlPath,
         },
         {
@@ -336,6 +372,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       if (!actionConfig?.git_repo) {
         props.history.push(`/apps/${formState.applicationName}`);
       }
+
+      // log analytics event that we successfully deployed
+      await updateStackStep('stack-launch-success');
+
       return true;
     } catch (err) {
       // TODO: better error handling
@@ -483,11 +523,12 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setServices={(services: Service[]) => {
                     setFormState({ ...formState, serviceList: services });
                     if (Validators.serviceList(services)) {
-                      setCurrentStep(Math.max(currentStep, 4));
+                      setCurrentStep(Math.max(currentStep, 5));
                     }
                   }}
                   services={formState.serviceList}
                   defaultExpanded={true}
+                  addNewText={"Add a new service"}
                 />
               </>,
               <>
@@ -504,28 +545,33 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   fileUpload={true}
                 />
               </>,
-              /*
               <>
-                <Text size={16}>Release command (optional)</Text>
+                <Text size={16}>Pre-deploy job (optional)</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
-                  If specified, this command will be run before every
+                  If specified, this is a job that will be run before every
                   deployment.
                 </Text>
                 <Spacer y={0.5} />
-                <Input
-                  placeholder="yarn ./scripts/run-migrations.js"
-                  value={formState.releaseCommand}
-                  width="300px"
-                  setValue={(e) => {
-                    setFormState({ ...formState, releaseCommand: e });
-                    if (Validators.releaseCommand(e)) {
-                      setCurrentStep(Math.max(currentStep, 6));
-                    }
+                <Services
+                  setServices={(releaseJob: ReleaseService[]) => {
+                    setFormState({ ...formState, releaseJob });
                   }}
+                  services={formState.releaseJob}
+                  defaultExpanded={true}
+                  limitOne={true}
+                  customOnClick={() => {
+                    setFormState({
+                      ...formState, releaseJob: [Service.default(
+                        "pre-deploy",
+                        "release",
+                        porterJson
+                      ) as ReleaseService],
+                    })
+                  }}
+                  addNewText={"Add a new pre-deploy job"}
                 />
               </>,
-              */
               <Button
                 onClick={() => {
                   if (imageUrl) {
@@ -564,6 +610,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           clusterId={currentCluster.id}
           deployPorterApp={deployPorterApp}
           deploymentError={deploymentError}
+          porterYamlPath={porterYamlPath}
         />
       )}
     </CenterWrapper>
@@ -684,7 +731,7 @@ const ConnectToGithubButton = styled.a`
     props.disabled ? "#aaaabbee" : "#2E3338"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#353a3e"};
+    props.disabled ? "" : "#353a3e"};
   }
 
   > i {

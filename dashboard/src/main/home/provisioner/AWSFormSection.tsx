@@ -68,6 +68,12 @@ const machineTypeOptions = [
   { value: "m6a.large", label: "m6a.large" },
   { value: "m6a.xlarge", label: "m6a.xlarge" },
   { value: "m6a.2xlarge", label: "m6a.2xlarge" },
+  { value: "m6i.large", label: "m6i.large" },
+  { value: "m6i.xlarge", label: "m6i.xlarge" },
+  { value: "m6i.2xlarge", label: "m6i.2xlarge" },
+  { value: "m6i.4xlarge", label: "m6i.4xlarge" },
+  { value: "m6i.8xlarge", label: "m6i.8xlarge" },
+  { value: "m6i.16xlarge", label: "m6i.16xlarge" },
 ];
 
 const costMapping: Record<string, number> = {

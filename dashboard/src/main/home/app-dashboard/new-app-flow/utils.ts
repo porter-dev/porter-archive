@@ -13,7 +13,7 @@ export const overrideObjectValues = (obj1: any, obj2: any) => {
   return obj1;
 };
 
-export const getGithubAction = (projectID?: number, clusterId?: number, stackName?: string, branchName?: string) => {
+export const getGithubAction = (projectID: number, clusterId: number, stackName: string, branchName: string, porterYamlPath: string = "porter.yaml") => {
   return `on:
   push:
     branches:
@@ -32,7 +32,7 @@ jobs:
       timeout-minutes: 30
       uses: porter-dev/porter-cli-action@v0.1.0
       with:
-        command: apply -f porter.yaml
+        command: apply -f ${porterYamlPath}
       env:
         PORTER_CLUSTER: ${clusterId}
         PORTER_HOST: https://dashboard.getporter.dev

@@ -4,6 +4,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/internal/analytics"
@@ -57,6 +59,7 @@ func (t *TestConfigLoader) LoadConfig() (*config.Config, error) {
 		UserNotifier:    notifier,
 		AnalyticsClient: analytics.InitializeAnalyticsSegmentClient("", l),
 		BillingManager:  &billing.NoopBillingManager{},
+		TelemetryConfig: telemetry.TracerConfig{ServiceName: "fake", CollectorURL: "fake"},
 	}, nil
 }
 

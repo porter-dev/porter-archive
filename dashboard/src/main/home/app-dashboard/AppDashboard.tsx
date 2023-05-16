@@ -48,7 +48,7 @@ const namespaceBlacklist = [
   "monitoring",
 ];
 
-const AppDashboard: React.FC<Props> = ({}) => {
+const AppDashboard: React.FC<Props> = ({ }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [apps, setApps] = useState([]);
   const [charts, setCharts] = useState([]);
@@ -106,9 +106,11 @@ const AppDashboard: React.FC<Props> = ({}) => {
         })
       );
       apps.forEach((app: any, i: number) => {
-        app["last_deployed"] = readableDate(
-          timeRes[i].data[0]?.info?.last_deployed
-        );
+        if (timeRes?.[i]?.data?.[0]?.info?.last_deployed != null) {
+          app["last_deployed"] = readableDate(
+            timeRes[i].data[0].info.last_deployed
+          );
+        }
       });
       setApps(apps.reverse());
       setIsLoading(false);
@@ -145,6 +147,24 @@ const AppDashboard: React.FC<Props> = ({}) => {
       </>
     );
   };
+
+  const updateStackStartedStep = async () => {
+    try {
+      await api.updateStackStep(
+        "<token>",
+        {
+          step: 'stack-launch-start'
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      );
+    } catch (err) {
+      // TODO: handle error
+    }
+  }
+
 
   const renderIcon = (b: string, size?: string) => {
     var src = box;
@@ -198,7 +218,7 @@ const AppDashboard: React.FC<Props> = ({}) => {
         />
         <Spacer inline x={2} />
         <PorterLink to="/apps/new/app">
-          <Button onClick={() => {}} height="30px" width="160px">
+          <Button onClick={async () => updateStackStartedStep()} height="30px" width="160px">
             <I className="material-icons">add</I> New application
           </Button>
         </PorterLink>

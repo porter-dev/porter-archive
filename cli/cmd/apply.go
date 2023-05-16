@@ -160,7 +160,9 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			return fmt.Errorf("environment variable PORTER_STACK_NAME must be set")
 		}
 
-		resGroup, err = stack.CreateV1BuildResources(client, fileBytes, stackName, cliConf.Project, cliConf.Cluster)
+		// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
+		var builder string
+		resGroup, builder, err = stack.CreateV1BuildResources(client, fileBytes, stackName, cliConf.Project, cliConf.Cluster)
 		if err != nil {
 			return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 		}
@@ -172,6 +174,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			ClusterID:            cliConf.Cluster,
 			BuildImageDriverName: stack.GetBuildImageDriverName(),
 			PorterYAML:           fileBytes,
+			Builder:              builder,
 		}
 		worker.RegisterHook("deploy-stack", deployStackHook)
 	} else {
@@ -636,8 +639,23 @@ func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, c
 		}
 	}
 
-	err = updateAgent.UpdateImageAndValues(appConf.Values)
+	if appConf.InjectBuild {
+		// use the built image in the values if it is set
+		// if it contains a $, then the query did not resolve
+		if appConf.Build.Image != "" && !strings.Contains(appConf.Build.Image, "$") {
+			imageSpl := strings.Split(appConf.Build.Image, ":")
+			if len(imageSpl) == 2 {
+				appConf.Values["image"] = map[string]interface{}{
+					"repository": imageSpl[0],
+					"tag":        imageSpl[1],
+				}
+			} else {
+				return nil, fmt.Errorf("could not parse image info %s", appConf.Build.Image)
+			}
+		}
+	}
 
+	err = updateAgent.UpdateImageAndValues(appConf.Values)
 	if err != nil {
 		return nil, err
 	}

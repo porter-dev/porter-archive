@@ -13,17 +13,18 @@ import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
 import { Service, ServiceType } from "./serviceTypes";
-import api from "../../../../shared/api";
-import { Context } from "../../../../shared/Context";
 
 interface ServicesProps {
   services: Service[];
   setServices: (services: Service[]) => void;
+  addNewText: string;
   defaultExpanded?: boolean;
-  chart?: any
+  chart?: any;
+  limitOne?: boolean;
+  customOnClick?: () => void;
 }
 
-const Services: React.FC<ServicesProps> = ({ services, setServices, chart, defaultExpanded = false }) => {
+const Services: React.FC<ServicesProps> = ({ services, setServices, addNewText, chart, defaultExpanded = false, limitOne = false, customOnClick }) => {
   const [showAddServiceModal, setShowAddServiceModal] = useState<boolean>(
     false
   );
@@ -39,45 +40,58 @@ const Services: React.FC<ServicesProps> = ({ services, setServices, chart, defau
     return serviceNames.includes(name);
   };
 
+  const maybeRenderAddServicesButton = () => {
+    if (limitOne && services.length > 0) {
+      return null;
+    }
+    return (
+      <>
+        <AddServiceButton
+          onClick={() => {
+            if (customOnClick != null) {
+              customOnClick();
+              return;
+            }
+            setShowAddServiceModal(true);
+            setServiceType("web");
+          }}
+        >
+          <i className="material-icons add-icon">add_icon</i>
+          {addNewText}
+        </AddServiceButton>
+        <Spacer y={0.5} />
+      </>
+    )
+  }
+
   return (
     <>
       {services.length > 0 && (
-        <>
-          <ServicesContainer>
-            {services.map((service, index) => {
-              return (
-                <ServiceContainer
-                  key={service.name}
-                  service={service}
-                  chart={chart}
-                  editService={(newService: Service) =>
-                    setServices(
-                      services.map((s, i) => (i === index ? newService : s))
-                    )
-                  }
-                  deleteService={() =>
-                    setServices(services.filter((_, i) => i !== index))
-                  }
-                  defaultExpanded={defaultExpanded}
-                />
-              );
-            })}
-          </ServicesContainer>
-          <Spacer y={0.5} />
-        </>
+        <ServicesContainer>
+          {services.map((service, index) => {
+            return (
+              <ServiceContainer
+                key={service.name}
+                service={service}
+                chart={chart}
+                editService={(newService: Service) =>
+                  setServices(
+                    services.map((s, i) => (i === index ? newService : s))
+                  )
+                }
+                deleteService={() =>
+                  setServices(services.filter((_, i) => i !== index))
+                }
+                defaultExpanded={defaultExpanded}
+              />
+            );
+          })}
+        </ServicesContainer>
       )}
-      <AddServiceButton
-        onClick={() => {
-          setShowAddServiceModal(true);
-          setServiceType("web");
-        }}
-      >
-        <i className="material-icons add-icon">add_icon</i>
-        Add a new service
-      </AddServiceButton>
+      {maybeRenderAddServicesButton()}
       {showAddServiceModal && (
         <Modal closeModal={() => setShowAddServiceModal(false)} width="500px">
-          <Text size={16}>Add a new service</Text>
+          <Text size={16}>{addNewText}</Text>
           <Spacer y={1} />
           <Text color="helper">Select a service type:</Text>
           <Spacer y={0.5} />
@@ -120,10 +134,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices, chart, defau
             onClick={() => {
               setServices([
                 ...services,
-                Service.default(serviceName, serviceType, {
-                  readOnly: false,
-                  value: "",
-                }),
+                Service.default(serviceName, serviceType),
               ]);
               setShowAddServiceModal(false);
               setServiceName("");

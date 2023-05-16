@@ -71,6 +71,8 @@ type BuildDriverConfig struct {
 type ApplicationConfig struct {
 	WaitForJob bool
 
+	InjectBuild bool
+
 	// If set to true, this does not run an update, it only creates the initial application and job,
 	// skipping subsequent updates
 	OnlyCreate bool

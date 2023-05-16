@@ -17,6 +17,7 @@ type CreateSecretAndOpenGHPRRequest struct {
 	GithubRepoName          string `json:"github_repo_name" form:"required"`
 	OpenPr                  bool   `json:"open_pr"`
 	Branch                  string `json:"branch"`
+	PorterYamlPath          string `json:"porter_yaml_path"`
 }
 
 type CreateSecretAndOpenGHPRResponse struct {
@@ -24,3 +25,8 @@ type CreateSecretAndOpenGHPRResponse struct {
 }
 
 type GetStackResponse PorterApp
+
+type PorterAppAnalyticsRequest struct {
+	Step      string `json:"step" form:"required,max=255"`
+	StackName string `json:"stack_name"`
+}

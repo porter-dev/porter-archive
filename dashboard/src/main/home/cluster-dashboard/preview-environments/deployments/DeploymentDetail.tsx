@@ -20,6 +20,7 @@ import Placeholder from "components/Placeholder";
 import GithubIcon from "assets/GithubIcon";
 import Dropdown from "components/Dropdown";
 import { useHistory } from "react-router-dom";
+import PreviewEnvDeleted from "./PreviewEnvDeleted";
 
 const DeploymentDetail = () => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -103,10 +104,10 @@ const DeploymentDetail = () => {
   }, [prDeployment]);
 
   if (!prDeployment) {
-    return <Loading />;
+    return <PreviewEnvDeleted />;
   }
-
   const repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
+
   const deleteDeployment = () => {
     //setIsDeleting(true);
 

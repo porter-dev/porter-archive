@@ -68,11 +68,11 @@ const ActionConfEditorStack: React.FC<Props> = (props) => {
       <BackButton
         width="145px"
         onClick={() => {
-          setBranch("");
-          props.setFolderPath("");
-          props.setDockerfilePath("");
-          props.setActionConfig(actionConfig);
-          props.setBuildView("buildpacks");
+          setBranch ? setBranch("") : null;
+          props.setFolderPath ? props.setFolderPath("") : null;
+          props.setDockerfilePath ? props.setDockerfilePath("") : null;
+          props.setActionConfig ? props.setActionConfig(actionConfig) : null;
+          props.setBuildView ? props.setBuildView("buildpacks") : null;
           setPorterYamlPath("");
         }}
       >

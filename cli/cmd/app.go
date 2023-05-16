@@ -80,7 +80,7 @@ var appUpdateTagCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Short: "Updates the image tag for an application.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, appUpdateUpgrade)
+		err := checkLoginAndRun(args, appUpdateTag)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -984,7 +984,7 @@ func appCreateEphemeralPodFromExisting(
 	)
 }
 
-func appUpdateUpgrade(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func appUpdateTag(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	namespace := fmt.Sprintf("porter-stack-%s", args[0])
 	if appTag == "" {
 		appTag = "latest"

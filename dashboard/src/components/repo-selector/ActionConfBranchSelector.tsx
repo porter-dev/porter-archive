@@ -15,15 +15,20 @@ type Props = {
   branch: string;
   setActionConfig: (x: ActionConfigType) => void;
   setBranch: (x: string) => void;
-
   setDockerfilePath: (x: string) => void;
-
   setFolderPath: (x: string) => void;
   setBuildView?: (x: string) => void;
+  setPorterYamlPath?: (x: string) => void;
 };
 
 const ActionConfEditorStack: React.FC<Props> = (props) => {
-  const { actionConfig, setBranch, setActionConfig, branch } = props;
+  const {
+    actionConfig,
+    setBranch,
+    setActionConfig,
+    branch,
+    setPorterYamlPath,
+  } = props;
 
   if (!actionConfig.git_repo) {
     return (
@@ -68,7 +73,7 @@ const ActionConfEditorStack: React.FC<Props> = (props) => {
           props.setDockerfilePath ? props.setDockerfilePath("") : null;
           props.setActionConfig ? props.setActionConfig(actionConfig) : null;
           props.setBuildView ? props.setBuildView("buildpacks") : null;
-          props.setPorterYaml ? props.setPorterYamlPath("") : null;
+          setPorterYamlPath("");
         }}
       >
         <i className="material-icons">keyboard_backspace</i>

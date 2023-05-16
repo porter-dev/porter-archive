@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Button from "./Button";
 import styled from "styled-components";
 
@@ -16,6 +16,15 @@ const SearchBar: React.FC<Props> = ({
   fullWidth,
 }) => {
   const [searchInput, setSearchInput] = useState("");
+  const inputRef = useRef(null);
+
+  // hack for deferring the focus call to the next tick of the event loop, giving the browser enough time to render the input element before setting focus on it
+  useEffect(() => {
+    setTimeout(() => {
+      inputRef.current.focus();
+    }, 0);
+  }, []);
+
 
   return (
     <SearchRowWrapper fullWidth={fullWidth}>
@@ -33,6 +42,7 @@ const SearchBar: React.FC<Props> = ({
             }
           }}
           placeholder={prompt}
+          ref={inputRef}
         />
       </SearchBarWrapper>
       <ButtonWrapper disabled={disabled}>

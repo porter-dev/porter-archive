@@ -14,6 +14,7 @@ type Props = {
   setDockerfilePath?: (x: string) => void;
   setFolderPath?: (x: string) => void;
   setBuildView?: (x: string) => void;
+  setPorterYamlPath?: (x: string) => void;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -31,6 +32,7 @@ const ActionConfEditorStack: React.FC<Props> = ({
   setFolderPath,
   setDockerfilePath,
   setBuildView,
+  setPorterYamlPath,
 }) => {
   if (!actionConfig.git_repo) {
     return (
@@ -61,6 +63,7 @@ const ActionConfEditorStack: React.FC<Props> = ({
             setFolderPath ? setFolderPath("") : null;
             setDockerfilePath ? setDockerfilePath("") : null;
             setBuildView ? setBuildView("buildpacks") : null;
+            setPorterYamlPath("");
           }}
         >
           <i className="material-icons">keyboard_backspace</i>

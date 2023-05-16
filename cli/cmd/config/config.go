@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -232,6 +233,17 @@ func (c *CLIConfig) SetProject(projectID uint) error {
 	}
 
 	config.Project = projectID
+
+	client := GetAPIClient()
+	if client != nil {
+		resp, err := client.ListProjectClusters(context.Background(), projectID)
+		if err == nil {
+			clusters := *resp
+			if len(clusters) == 1 {
+				c.SetCluster(clusters[0].ID)
+			}
+		}
+	}
 
 	return nil
 }

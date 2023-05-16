@@ -33,12 +33,12 @@ import (
 )
 
 var (
-	appNamespace      string
-	appVerbose        bool
-	appExistingPod    bool
-	appNonInteractive bool
-	appContainerName  string
-	appTag            string
+	appNamespace     string
+	appVerbose       bool
+	appExistingPod   bool
+	appInteractive   bool
+	appContainerName string
+	appTag           string
 )
 
 // appCmd represents the "porter app" base command when called
@@ -80,7 +80,7 @@ var appUpdateTagCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Short: "Updates the image tag for an application.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, appUpdateUpgrade)
+		err := checkLoginAndRun(args, appUpdateTag)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -95,7 +95,7 @@ func init() {
 		"existing_pod",
 		"e",
 		false,
-		"whether to connect to an existing pod",
+		"whether to connect to an existing pod (default false)",
 	)
 
 	appRunCmd.PersistentFlags().BoolVarP(
@@ -107,10 +107,10 @@ func init() {
 	)
 
 	appRunCmd.PersistentFlags().BoolVar(
-		&appNonInteractive,
-		"non-interactive",
-		true,
-		"whether to run in non-interactive mode",
+		&appInteractive,
+		"interactive",
+		false,
+		"whether to run in interactive mode (default false)",
 	)
 
 	appRunCmd.PersistentFlags().StringVarP(
@@ -141,16 +141,14 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 	appNamespace = fmt.Sprintf("porter-stack-%s", args[0])
 
 	if len(execArgs) > 0 {
-		release, err := client.GetRelease(
-			context.Background(), cliConf.Project, cliConf.Cluster, appNamespace, args[0],
-		)
+		res, err := client.GetPorterApp(context.Background(), cliConf.Project, cliConf.Cluster, args[0])
 		if err != nil {
-			return fmt.Errorf("error fetching release %s: %w", args[0], err)
+			return fmt.Errorf("Unable to run command - application not found: %w", err)
 		}
 
-		if release.BuildConfig != nil &&
-			(strings.Contains(release.BuildConfig.Builder, "heroku") ||
-				strings.Contains(release.BuildConfig.Builder, "paketo")) &&
+		if res.Builder != "" &&
+			(strings.Contains(res.Builder, "heroku") ||
+				strings.Contains(res.Builder, "paketo")) &&
 			execArgs[0] != "/cnb/lifecycle/launcher" &&
 			execArgs[0] != "launcher" {
 			// this is a buildpacks release using a heroku builder, prepend the launcher
@@ -168,7 +166,7 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 
 	if len(podsSimple) == 0 {
 		return fmt.Errorf("At least one pod must exist in this deployment.")
-	} else if appNonInteractive || len(podsSimple) == 1 {
+	} else if !appInteractive || len(podsSimple) == 1 {
 		selectedPod = podsSimple[0]
 	} else {
 		podNames := make([]string, 0)
@@ -217,8 +215,8 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 	}
 
 	if selectedContainerName == "" {
-		if appNonInteractive {
-			return fmt.Errorf("container name must be specified using the --container flag when using non-interactive mode")
+		if !appInteractive {
+			return fmt.Errorf("container name must be specified using the --container flag when not using interactive mode")
 		}
 
 		selectedContainer, err := utils.PromptSelect("Select the container:", selectedPod.ContainerNames)
@@ -984,7 +982,7 @@ func appCreateEphemeralPodFromExisting(
 	)
 }
 
-func appUpdateUpgrade(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func appUpdateTag(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	namespace := fmt.Sprintf("porter-stack-%s", args[0])
 	if appTag == "" {
 		appTag = "latest"

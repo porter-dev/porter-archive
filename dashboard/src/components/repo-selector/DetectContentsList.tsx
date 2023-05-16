@@ -253,26 +253,21 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
 
   const NoPorterYamlContent = () => (
     <div>
-      <h3>No porter.yaml detected</h3>
-      <p>
-        We were unable to find{" "}
-        <a
-          href="https://docs.porter.run/"
+      <Text size={16}>No porter.yaml detected</Text>
+      <Spacer y={1} />
+      <span>
+        <Text color="helper">
+          We were unable to find porter.yaml in your root directory. We recommend that you
+        </Text>{" "}<a
+          href="https://docs.porter.run/deploying-applications/application-porter-yaml-reference"
           target="_blank"
           rel="noopener noreferrer"
         >
-          porter.yaml
-        </a>{" "}
-        in your root directory. We recommend that you add{" "}
-        <a
-          href="https://docs.porter.run/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          porter.yaml
-        </a>{" "}
-        to your root directory or specify the subdirectory path here.
-      </p>
+          add porter.yaml
+        </a>{" "}<Text color="helper">
+          to your root directory or specify the subdirectory path here.
+        </Text>
+      </span>
     </div>
   );
   return (

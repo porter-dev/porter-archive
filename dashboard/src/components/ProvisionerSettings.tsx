@@ -123,7 +123,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       !user.email.endsWith("porter.run") &&
       ((!clusterName && true) ||
         (isReadOnly && props.provisionerError === "") ||
-        props.provisionerError === "" ||
+        props.provisionerError === "" || currentCluster.status === "UPDATING"
         isClicked)
     );
   };

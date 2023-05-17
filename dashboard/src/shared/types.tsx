@@ -243,15 +243,15 @@ export interface FormElement {
 export type RepoType = {
   FullName: string;
 } & (
-    | {
+  | {
       Kind: "github";
       GHRepoID: number;
     }
-    | {
+  | {
       Kind: "gitlab";
       GitIntegrationId: number;
     }
-  );
+);
 
 export interface FileType {
   path: string;
@@ -309,15 +309,15 @@ export type ActionConfigType = {
   image_repo_uri: string;
   dockerfile_path?: string;
 } & (
-    | {
+  | {
       kind: "gitlab";
       gitlab_integration_id: number;
     }
-    | {
+  | {
       kind: "github";
       git_repo_id: number;
     }
-  );
+);
 
 export type GithubActionConfigType = ActionConfigType & {
   kind: "github";
@@ -645,6 +645,7 @@ export type BuildConfig = {
 
 export interface PorterAppOptions {
   porter_yaml: string;
+  porter_yaml_path?: string;
   repo_name?: string;
   git_branch?: string;
   git_repo_id?: number;

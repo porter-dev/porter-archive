@@ -27,6 +27,9 @@ type PorterApp struct {
 	Buildpacks     string
 	Dockerfile     string
 	PullRequestURL string
+
+	// Porter YAML
+	PorterYamlPath string
 }
 
 // ToPorterAppType generates an external types.PorterApp to be shared over REST
@@ -45,5 +48,6 @@ func (a *PorterApp) ToPorterAppType() *types.PorterApp {
 		Buildpacks:     a.Buildpacks,
 		Dockerfile:     a.Dockerfile,
 		PullRequestURL: a.PullRequestURL,
+		PorterYamlPath: a.PorterYamlPath,
 	}
 }

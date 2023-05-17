@@ -63,7 +63,7 @@ func (w *TemplateWriter) Update(
 		Values: vals,
 	}
 
-	_, err := w.Agent.UpgradeReleaseByValues(conf, nil, false)
+	_, err := w.Agent.UpgradeReleaseByValues(conf, nil, false, false)
 	if err != nil {
 		return nil, err
 	}

@@ -10,16 +10,17 @@ import Input from "components/porter/Input";
 type Props = {
   actionConfig: ActionConfigType | null;
   setActionConfig: (x: ActionConfigType) => void;
-  setBranch: (x: string) => void;
-  setDockerfilePath: (x: string) => void;
-  setFolderPath: (x: string) => void;
+  setBranch?: (x: string) => void;
+  setDockerfilePath?: (x: string) => void;
+  setFolderPath?: (x: string) => void;
   setBuildView?: (x: string) => void;
+  setPorterYamlPath?: (x: string) => void;
 };
 
 const defaultActionConfig: ActionConfigType = {
-  git_repo: "",
-  image_repo_uri: "",
-  git_branch: "",
+  git_repo: null,
+  image_repo_uri: null,
+  git_branch: null,
   git_repo_id: 0,
   kind: "github",
 };
@@ -31,6 +32,7 @@ const ActionConfEditorStack: React.FC<Props> = ({
   setFolderPath,
   setDockerfilePath,
   setBuildView,
+  setPorterYamlPath,
 }) => {
   if (!actionConfig.git_repo) {
     return (
@@ -50,17 +52,18 @@ const ActionConfEditorStack: React.FC<Props> = ({
           label="GitHub repository:"
           width="100%"
           value={actionConfig?.git_repo}
-          setValue={() => { }}
+          setValue={() => {}}
           placeholder=""
         />
         <BackButton
           width="135px"
           onClick={() => {
             setActionConfig({ ...defaultActionConfig });
-            setBranch("");
-            setFolderPath("");
-            setDockerfilePath("");
-            setBuildView("buildpacks");
+            setBranch ? setBranch("") : null;
+            setFolderPath ? setFolderPath("") : null;
+            setDockerfilePath ? setDockerfilePath("") : null;
+            setBuildView ? setBuildView("buildpacks") : null;
+            setPorterYamlPath("");
           }}
         >
           <i className="material-icons">keyboard_backspace</i>

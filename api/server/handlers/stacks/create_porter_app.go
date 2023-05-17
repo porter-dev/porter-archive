@@ -107,6 +107,13 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		releaseDependencies = helmRelease.Chart.Metadata.Dependencies
 	}
 
+	if request.Builder == "" {
+		// attempt to get builder from db
+		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+		if err == nil {
+			request.Builder = app.Builder
+		}
+	}
 	injectLauncher := strings.Contains(request.Builder, "heroku") ||
 		strings.Contains(request.Builder, "paketo")
 
@@ -127,7 +134,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		injectLauncher,
 	)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter yaml into chart and values: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing porter.yaml into chart and values: %w", err)))
 		return
 	}
 
@@ -193,7 +200,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		} else if existing.Name != "" {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("porter app with name %s already exists in this environment", existing.Name), http.StatusForbidden))
+				fmt.Errorf("app with name %s already exists in your project", existing.Name), http.StatusForbidden))
 			return
 		}
 
@@ -211,6 +218,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			Dockerfile:     request.Dockerfile,
 			ImageRepoURI:   request.ImageRepoURI,
 			PullRequestURL: request.PullRequestURL,
+			PorterYamlPath: request.PorterYamlPath,
 		}
 
 		// create the db entry
@@ -257,7 +265,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					Registries: registries,
 					Values:     releaseJobValues,
 				}
-				_, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+				_, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error upgrading release job chart: %w", err)))
 					return
@@ -300,7 +308,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			app.BuildContext = request.BuildContext
 		}
 		if request.Builder != "" {
-			app.Builder = request.Builder
+			if request.Builder == "null" {
+				app.Builder = ""
+			} else {
+				app.Builder = request.Builder
+			}
 		}
 		if request.Buildpacks != "" {
 			if request.Buildpacks == "null" {

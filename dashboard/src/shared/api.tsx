@@ -2496,6 +2496,7 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
     github_repo_name: string;
     open_pr: boolean;
     branch: string;
+    porter_yaml_path: string;
   },
   {
     project_id: number;

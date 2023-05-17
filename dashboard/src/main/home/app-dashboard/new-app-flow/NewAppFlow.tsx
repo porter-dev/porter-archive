@@ -86,17 +86,18 @@ interface GithubAppAccessData {
 }
 type Provider =
   | {
-    provider: "github";
-    name: string;
-    installation_id: number;
-  }
+      provider: "github";
+      name: string;
+      installation_id: number;
+    }
   | {
-    provider: "gitlab";
-    instance_url: string;
-    integration_id: number;
-  };
+      provider: "gitlab";
+      instance_url: string;
+      integration_id: number;
+    };
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [templateName, setTemplateName] = useState("");
+  const [porterYamlPath, setPorterYamlPath] = useState("");
 
   const [imageUrl, setImageUrl] = useState("");
   const [imageTag, setImageTag] = useState("latest");
@@ -142,7 +143,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     setAccessData(data);
     setShowGithubConnectModal(
       !hasClickedDoNotConnect &&
-      (accessError || !data.accounts || data.accounts?.length === 0)
+        (accessError || !data.accounts || data.accounts?.length === 0)
     );
   };
 
@@ -150,7 +151,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     setAccessError(error);
     setShowGithubConnectModal(
       !hasClickedDoNotConnect &&
-      (error || !accessData.accounts || accessData.accounts?.length === 0)
+        (error || !accessData.accounts || accessData.accounts?.length === 0)
     );
   };
 
@@ -173,7 +174,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     } catch (err) {
       // TODO: handle analytics error
     }
-  }
+  };
 
   const validatePorterYaml = (yamlString: string) => {
     let parsedYaml;
@@ -197,11 +198,21 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         }
       }
       if (!formState.releaseJob.length && porterYamlToJson.release != null) {
-        newReleaseJob.push(Service.default("pre-deploy", "release", porterYamlToJson) as ReleaseService);
+        newReleaseJob.push(
+          Service.default(
+            "pre-deploy",
+            "release",
+            porterYamlToJson
+          ) as ReleaseService
+        );
       }
       const newServiceList = [...formState.serviceList, ...newServices];
       const newReleaseJobList = [...formState.releaseJob, ...newReleaseJob];
-      setFormState({ ...formState, serviceList: newServiceList, releaseJob: newReleaseJobList });
+      setFormState({
+        ...formState,
+        serviceList: newServiceList,
+        releaseJob: newReleaseJobList,
+      });
       if (Validators.serviceList(newServiceList)) {
         setCurrentStep(Math.max(currentStep, 5));
       }
@@ -212,7 +223,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       ) {
         setDetected({
           detected: true,
-          message: `Detected ${Object.keys(porterYamlToJson.apps).length} service${Object.keys(porterYamlToJson.apps).length === 1 ? "" : "s"} from porter.yaml`,
+          message: `Detected ${
+            Object.keys(porterYamlToJson.apps).length
+          } services from porter.yaml`,
         });
       } else {
         setDetected({
@@ -310,12 +323,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       setDeploymentError(undefined);
 
       // log analytics event that we started form submission
-      await updateStackStep('stack-launch-complete');
+      await updateStackStep("stack-launch-complete");
 
-      if (
-        currentProject?.id == null ||
-        currentCluster?.id == null
-      ) {
+      if (currentProject?.id == null || currentCluster?.id == null) {
         throw "Project or cluster not found";
       }
 
@@ -326,19 +336,22 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         formState.envVariables,
         porterJson,
         // if we are using a heroku buildpack, inject a PORT env variable
-        (buildConfig as any)?.builder != null && (buildConfig as any)?.builder.includes("heroku")
+        (buildConfig as any)?.builder != null &&
+          (buildConfig as any)?.builder.includes("heroku")
       );
 
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
-      const imageInfo = imageUrl
-        ? {
-          image_info: {
-            repository: imageUrl,
-            tag: imageTag,
-          },
-        }
-        : {};
+      let imageInfo = {
+        repository: "",
+        tag: "",
+      };
+      if (imageUrl && imageTag) {
+        imageInfo = {
+          repository: imageUrl,
+          tag: imageTag,
+        };
+      }
 
       await api.createPorterApp(
         "<token>",
@@ -347,7 +360,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           git_branch: branch,
           git_repo_id: actionConfig?.git_repo_id,
           build_context: folderPath,
-          builder: (buildConfig as any)?.builder,
+          builder:
+            buildView === "buildpacks" ? (buildConfig as any)?.builder : "",
           buildpacks:
             buildView === "buildpacks"
               ? (buildConfig as any)?.buildpacks?.join(",") ?? ""
@@ -356,7 +370,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           image_repo_uri: imageUrl,
           porter_yaml: base64Encoded,
           override_release: true,
-          ...imageInfo,
+          image_info: imageInfo,
+          porter_yaml_path: porterYamlPath,
         },
         {
           cluster_id: currentCluster.id,
@@ -370,7 +385,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       }
 
       // log analytics event that we successfully deployed
-      await updateStackStep('stack-launch-success');
+      await updateStackStep("stack-launch-success");
 
       return true;
     } catch (err) {
@@ -395,27 +410,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       setCurrentStep(Math.max(currentStep, 2));
     }
   }, [imageUrl, buildConfig, dockerfilePath, setCurrentStep, currentStep]);
-  // useEffect(() => {
-  //   const fetchGithubAccounts = async () => {
-  //     try {
-  //       const { data } = await api.getGithubAccounts("<token>", {}, {});
-  //       setAccessData(data);
-  //       if (data) {
-  //         setHasProviders(false);
-  //       }
-  //     } catch (error) {
-  //       setAccessError(true);
-  //     } finally {
-  //       setAccessLoading(false);
-  //     }
-
-  //     setConnectModal(
-  //       !hasClickedDoNotConnect && (!hasProviders || accessError)
-  //     );
-  //   };
-
-  //   fetchGithubAccounts();
-  // }, [hasClickedDoNotConnect, accessData.accounts, accessError]);
 
   return (
     <CenterWrapper>
@@ -483,6 +477,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <SourceSelector
                   selectedSourceType={formState.selectedSourceType}
                   setSourceType={(type) => {
+                    setPorterYaml("");
                     setFormState({ ...formState, selectedSourceType: type });
                   }}
                 />
@@ -514,6 +509,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setBuildView={setBuildView}
                   setCurrentStep={setCurrentStep}
                   currentStep={currentStep}
+                  porterYamlPath={porterYamlPath}
+                  setPorterYamlPath={setPorterYamlPath}
                 />
               </>,
               <>
@@ -576,12 +573,15 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   limitOne={true}
                   customOnClick={() => {
                     setFormState({
-                      ...formState, releaseJob: [Service.default(
-                        "pre-deploy",
-                        "release",
-                        porterJson
-                      ) as ReleaseService],
-                    })
+                      ...formState,
+                      releaseJob: [
+                        Service.default(
+                          "pre-deploy",
+                          "release",
+                          porterJson
+                        ) as ReleaseService,
+                      ],
+                    });
                   }}
                   addNewText={"Add a new pre-deploy job"}
                 />
@@ -589,6 +589,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
               <Button
                 onClick={() => {
                   if (imageUrl) {
+                    console.log(porterYaml);
                     deployPorterApp();
                   } else {
                     setDeploymentError(undefined);
@@ -624,6 +625,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           clusterId={currentCluster.id}
           deployPorterApp={deployPorterApp}
           deploymentError={deploymentError}
+          porterYamlPath={porterYamlPath}
         />
       )}
     </CenterWrapper>
@@ -744,7 +746,7 @@ const ConnectToGithubButton = styled.a`
     props.disabled ? "#aaaabbee" : "#2E3338"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "#353a3e"};
+      props.disabled ? "" : "#353a3e"};
   }
 
   > i {

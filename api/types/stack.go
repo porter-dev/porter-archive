@@ -17,6 +17,7 @@ type CreateSecretAndOpenGHPRRequest struct {
 	GithubRepoName          string `json:"github_repo_name" form:"required"`
 	OpenPr                  bool   `json:"open_pr"`
 	Branch                  string `json:"branch"`
+	PorterYamlPath          string `json:"porter_yaml_path"`
 }
 
 type CreateSecretAndOpenGHPRResponse struct {

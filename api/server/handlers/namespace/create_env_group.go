@@ -185,7 +185,7 @@ func rolloutApplications(
 				Values:     newConfig,
 			}
 
-			_, err = helmAgent.UpgradeReleaseByValues(conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection)
+			_, err = helmAgent.UpgradeReleaseByValues(conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection, false)
 
 			if err != nil {
 				mu.Lock()

@@ -124,6 +124,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       ((!clusterName && true) ||
         (isReadOnly && props.provisionerError === "") ||
         props.provisionerError === "" ||
+        currentCluster.status === "UPDATING" ||
         isClicked)
     );
   };
@@ -247,8 +248,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     setIsReadOnly(
       props.clusterId &&
-      (currentCluster.status === "UPDATING" ||
-        currentCluster.status === "UPDATING_UNAVAILABLE")
+        (currentCluster.status === "UPDATING" ||
+          currentCluster.status === "UPDATING_UNAVAILABLE")
     );
     setClusterName(
       `${currentProject.name}-cluster-${Math.random()
@@ -396,7 +397,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
     margin-right: 7px;
     margin-left: -7px;
     transform: ${(props) =>
-    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+      props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
   }
 `;
 

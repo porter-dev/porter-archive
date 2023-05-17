@@ -1,6 +1,7 @@
 package env_group
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -201,7 +202,7 @@ func rolloutApplications(
 				Values:     newConfig,
 			}
 
-			_, err = helmAgent.UpgradeReleaseByValues(conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection, false)
+			_, err = helmAgent.UpgradeReleaseByValues(context.Background(), conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection, false)
 
 			if err != nil {
 				mu.Lock()

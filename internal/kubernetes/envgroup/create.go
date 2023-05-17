@@ -1,6 +1,7 @@
 package envgroup
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -190,7 +191,7 @@ func GetSyncedReleases(helmAgent *helm.Agent, configMap *v1.ConfigMap) ([]*relea
 	appStrArr := strings.Split(appStr, ",")
 
 	// list all latest helm releases and check them against app string
-	releases, err := helmAgent.ListReleases(configMap.Namespace, &types.ReleaseListFilter{
+	releases, err := helmAgent.ListReleases(context.Background(), configMap.Namespace, &types.ReleaseListFilter{
 		StatusFilter: []string{
 			"deployed",
 			"uninstalled",

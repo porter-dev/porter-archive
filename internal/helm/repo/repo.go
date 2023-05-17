@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/porter-dev/porter/api/types"
@@ -78,7 +79,7 @@ func (hr *HelmRepo) getChartBasic(
 		Password: string(basic.Password),
 	}
 
-	return loader.LoadChart(client, hr.RepoURL, chartName, chartVersion)
+	return loader.LoadChart(context.Background(), client, hr.RepoURL, chartName, chartVersion)
 }
 
 func ValidateRepoURL(

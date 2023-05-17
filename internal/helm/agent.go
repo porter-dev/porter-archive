@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/pkg/errors"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/stefanmcshane/helm/pkg/action"
@@ -34,9 +36,17 @@ type Agent struct {
 
 // ListReleases lists releases based on a ListFilter
 func (a *Agent) ListReleases(
+	ctx context.Context,
 	namespace string,
 	filter *types.ReleaseListFilter,
 ) ([]*release.Release, error) {
+	ctx, span := telemetry.NewSpan(ctx, "helm-list-releases")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "namespace", Value: namespace},
+	)
+
 	lsel := fmt.Sprintf("owner=helm,status in (%s)", strings.Join(filter.StatusFilter, ","))
 
 	// list secrets
@@ -47,7 +57,7 @@ func (a *Agent) ListReleases(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error getting secret list")
 	}
 
 	// before decoding to helm release, only keep the latest releases for each chart
@@ -95,10 +105,20 @@ func (a *Agent) ListReleases(
 
 // GetRelease returns the info of a release.
 func (a *Agent) GetRelease(
+	ctx context.Context,
 	name string,
 	version int,
 	getDeps bool,
 ) (*release.Release, error) {
+	ctx, span := telemetry.NewSpan(ctx, "helm-get-release")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "name", Value: name},
+		telemetry.AttributeKV{Key: "version", Value: version},
+		telemetry.AttributeKV{Key: "getDeps", Value: getDeps},
+	)
+
 	// Namespace is already known by the RESTClientGetter.
 	cmd := action.NewGet(a.ActionConfig)
 
@@ -106,7 +126,7 @@ func (a *Agent) GetRelease(
 
 	release, err := cmd.Run(name)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error running get release")
 	}
 
 	if getDeps && release.Chart != nil && release.Chart.Metadata != nil {
@@ -125,9 +145,9 @@ func (a *Agent) GetRelease(
 				}
 
 				if !depExists {
-					depChart, err := loader.LoadChartPublic(dep.Repository, dep.Name, dep.Version)
+					depChart, err := loader.LoadChartPublic(ctx, dep.Repository, dep.Name, dep.Version)
 					if err != nil {
-						return nil, fmt.Errorf("Error retrieving chart dependency %s/%s-%s: %s", dep.Repository, dep.Name, dep.Version, err.Error())
+						return nil, telemetry.Error(ctx, span, err, fmt.Sprintf("Error retrieving chart dependency %s/%s-%s", dep.Repository, dep.Name, dep.Version))
 					}
 
 					release.Chart.AddDependency(depChart)
@@ -141,9 +161,18 @@ func (a *Agent) GetRelease(
 
 // DeleteReleaseRevision deletes a specific revision of a release
 func (a *Agent) DeleteReleaseRevision(
+	ctx context.Context,
 	name string,
 	version int,
 ) error {
+	ctx, span := telemetry.NewSpan(ctx, "helm-delete-release-history")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "name", Value: name},
+		telemetry.AttributeKV{Key: "version", Value: version},
+	)
+
 	_, err := a.ActionConfig.Releases.Delete(name, version)
 
 	return err
@@ -151,8 +180,16 @@ func (a *Agent) DeleteReleaseRevision(
 
 // GetReleaseHistory returns a list of charts for a specific release
 func (a *Agent) GetReleaseHistory(
+	ctx context.Context,
 	name string,
 ) ([]*release.Release, error) {
+	ctx, span := telemetry.NewSpan(ctx, "helm-get-release-history")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "name", Value: name},
+	)
+
 	cmd := action.NewHistory(a.ActionConfig)
 
 	return cmd.Run(name)
@@ -175,33 +212,57 @@ type UpgradeReleaseConfig struct {
 
 // UpgradeRelease upgrades a specific release with new values.yaml
 func (a *Agent) UpgradeRelease(
+	ctx context.Context,
 	conf *UpgradeReleaseConfig,
 	values string,
 	doAuth *oauth2.Config,
 	disablePullSecretsInjection bool,
 	ignoreDependencies bool,
 ) (*release.Release, error) {
+	ctx, span := telemetry.NewSpan(ctx, "helm-upgrade-release")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: conf.Cluster.ProjectID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: conf.Cluster.ID},
+		telemetry.AttributeKV{Key: "name", Value: conf.Name},
+		telemetry.AttributeKV{Key: "stack-name", Value: conf.StackName},
+		telemetry.AttributeKV{Key: "stack-revision", Value: conf.StackRevision},
+	)
+
 	valuesYaml, err := chartutil.ReadValues([]byte(values))
 	if err != nil {
-		return nil, fmt.Errorf("Values could not be parsed: %v", err)
+		return nil, telemetry.Error(ctx, span, err, "Values could not be parsed")
 	}
 
 	conf.Values = valuesYaml
 
-	return a.UpgradeReleaseByValues(conf, doAuth, disablePullSecretsInjection, ignoreDependencies)
+	return a.UpgradeReleaseByValues(ctx, conf, doAuth, disablePullSecretsInjection, ignoreDependencies)
 }
 
 // UpgradeReleaseByValues upgrades a release by unmarshaled yaml values
 func (a *Agent) UpgradeReleaseByValues(
+	ctx context.Context,
 	conf *UpgradeReleaseConfig,
 	doAuth *oauth2.Config,
 	disablePullSecretsInjection bool,
 	ignoreDependencies bool,
 ) (*release.Release, error) {
+	ctx, span := telemetry.NewSpan(ctx, "helm-upgrade-release-by-values")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: conf.Cluster.ProjectID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: conf.Cluster.ID},
+		telemetry.AttributeKV{Key: "name", Value: conf.Name},
+		telemetry.AttributeKV{Key: "stack-name", Value: conf.StackName},
+		telemetry.AttributeKV{Key: "stack-revision", Value: conf.StackRevision},
+	)
+
 	// grab the latest release
-	rel, err := a.GetRelease(conf.Name, 0, !ignoreDependencies)
+	rel, err := a.GetRelease(ctx, conf.Name, 0, !ignoreDependencies)
 	if err != nil {
-		return nil, fmt.Errorf("Could not get release to be upgraded: %v", err)
+		return nil, telemetry.Error(ctx, span, err, "Could not get release to be upgraded")
 	}
 
 	ch := rel.Chart
@@ -224,7 +285,7 @@ func (a *Agent) UpgradeReleaseByValues(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error getting porter postrenderer")
 	}
 
 	if conf.StackName != "" && conf.StackRevision > 0 {
@@ -247,7 +308,7 @@ func (a *Agent) UpgradeReleaseByValues(
 				},
 			)
 			if err != nil {
-				return nil, fmt.Errorf("Upgrade failed: %w", err)
+				return nil, telemetry.Error(ctx, span, err, "error getting secret list")
 			}
 
 			if len(secretList.Items) > 0 {
@@ -270,20 +331,20 @@ func (a *Agent) UpgradeReleaseByValues(
 					err = helmSecrets.Update(mostRecentSecret.GetName(), rel)
 
 					if err != nil {
-						return nil, fmt.Errorf("Upgrade failed: %w", err)
+						return nil, telemetry.Error(ctx, span, err, "error updating helm secrets")
 					}
 
 					// retry upgrade
 					res, err = cmd.Run(conf.Name, ch, conf.Values)
 
 					if err != nil {
-						return nil, fmt.Errorf("Upgrade failed: %w", err)
+						return nil, telemetry.Error(ctx, span, err, "error running upgrade after updating helm secrets")
 					}
 
 					return res, nil
 				} else {
 					// ask the user to wait for about a minute before retrying for the above fix to kick in
-					return nil, fmt.Errorf("another operation (install/upgrade/rollback) is in progress. If this error persists, please wait for 60 seconds to force an upgrade")
+					return nil, telemetry.Error(ctx, span, err, "another operation (install/upgrade/rollback) is in progress. If this error persists, please wait for 60 seconds to force an upgrade")
 				}
 			}
 		} else if strings.Contains(err.Error(), "current release manifest contains removed kubernetes api(s)") || strings.Contains(err.Error(), "resource mapping not found for name") {
@@ -296,7 +357,7 @@ func (a *Agent) UpgradeReleaseByValues(
 				},
 			)
 			if err != nil {
-				return nil, fmt.Errorf("Upgrade failed: %w", err)
+				return nil, telemetry.Error(ctx, span, err, "error getting secret list")
 			}
 
 			if len(secretList.Items) > 0 {
@@ -324,7 +385,7 @@ func (a *Agent) UpgradeReleaseByValues(
 
 				newRelDryRun, err := installCmd.Run(ch, conf.Values)
 				if err != nil {
-					return nil, err
+					return nil, telemetry.Error(ctx, span, err, "error running install cmd")
 				}
 
 				oldManifestBuffer := bytes.NewBufferString(rel.Manifest)
@@ -334,7 +395,7 @@ func (a *Agent) UpgradeReleaseByValues(
 
 				updatedManifestBuffer, err := versionMapper.Run(oldManifestBuffer, newManifestBuffer)
 				if err != nil {
-					return nil, err
+					return nil, telemetry.Error(ctx, span, err, "error running version mapper")
 				}
 
 				rel.Manifest = updatedManifestBuffer.String()
@@ -344,19 +405,19 @@ func (a *Agent) UpgradeReleaseByValues(
 				err = helmSecrets.Update(mostRecentSecret.GetName(), rel)
 
 				if err != nil {
-					return nil, fmt.Errorf("Upgrade failed: %w", err)
+					return nil, telemetry.Error(ctx, span, err, "error updating helm secret")
 				}
 
 				res, err := cmd.Run(conf.Name, ch, conf.Values)
 				if err != nil {
-					return nil, fmt.Errorf("Upgrade failed: %w", err)
+					return nil, telemetry.Error(ctx, span, err, "error running upgrade after updating helm secrets")
 				}
 
 				return res, nil
 			}
 		}
 
-		return nil, fmt.Errorf("Upgrade failed: %w", err)
+		return nil, telemetry.Error(ctx, span, err, "error running upgrade")
 	}
 
 	return res, nil
@@ -375,23 +436,35 @@ type InstallChartConfig struct {
 
 // InstallChartFromValuesBytes reads the raw values and calls Agent.InstallChart
 func (a *Agent) InstallChartFromValuesBytes(
+	ctx context.Context,
 	conf *InstallChartConfig,
 	values []byte,
 	doAuth *oauth2.Config,
 	disablePullSecretsInjection bool,
 ) (*release.Release, error) {
+	ctx, span := telemetry.NewSpan(ctx, "helm-install-chart-from-values-bytes")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: conf.Cluster.ProjectID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: conf.Cluster.ID},
+		telemetry.AttributeKV{Key: "chart-name", Value: conf.Name},
+		telemetry.AttributeKV{Key: "chart-namespace", Value: conf.Namespace},
+	)
+
 	valuesYaml, err := chartutil.ReadValues(values)
 	if err != nil {
-		return nil, fmt.Errorf("Values could not be parsed: %v", err)
+		return nil, telemetry.Error(ctx, span, err, "Values could not be parsed")
 	}
 
 	conf.Values = valuesYaml
 
-	return a.InstallChart(conf, doAuth, disablePullSecretsInjection)
+	return a.InstallChart(ctx, conf, doAuth, disablePullSecretsInjection)
 }
 
 // InstallChart installs a new chart
 func (a *Agent) InstallChart(
+	ctx context.Context,
 	conf *InstallChartConfig,
 	doAuth *oauth2.Config,
 	disablePullSecretsInjection bool,
@@ -401,6 +474,16 @@ func (a *Agent) InstallChart(
 			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
+
+	ctx, span := telemetry.NewSpan(ctx, "helm-install-chart")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: conf.Cluster.ProjectID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: conf.Cluster.ID},
+		telemetry.AttributeKV{Key: "chart-name", Value: conf.Name},
+		telemetry.AttributeKV{Key: "chart-namespace", Value: conf.Namespace},
+	)
 
 	cmd := action.NewInstall(a.ActionConfig)
 
@@ -413,7 +496,7 @@ func (a *Agent) InstallChart(
 	cmd.Timeout = 300 * time.Second
 
 	if err := checkIfInstallable(conf.Chart); err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error checking if installable")
 	}
 
 	var err error
@@ -429,14 +512,14 @@ func (a *Agent) InstallChart(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error getting post renderer")
 	}
 
 	if req := conf.Chart.Metadata.Dependencies; req != nil {
 		for _, dep := range req {
-			depChart, err := loader.LoadChartPublic(dep.Repository, dep.Name, dep.Version)
+			depChart, err := loader.LoadChartPublic(ctx, dep.Repository, dep.Name, dep.Version)
 			if err != nil {
-				return nil, fmt.Errorf("error retrieving chart dependency %s/%s-%s: %s", dep.Repository, dep.Name, dep.Version, err.Error())
+				return nil, telemetry.Error(ctx, span, err, fmt.Sprintf("error retrieving chart dependency %s/%s-%s", dep.Repository, dep.Name, dep.Version))
 			}
 
 			conf.Chart.AddDependency(depChart)
@@ -448,6 +531,7 @@ func (a *Agent) InstallChart(
 
 // UpgradeInstallChart installs a new chart if it doesn't exist, otherwise it upgrades it
 func (a *Agent) UpgradeInstallChart(
+	ctx context.Context,
 	conf *InstallChartConfig,
 	doAuth *oauth2.Config,
 	disablePullSecretsInjection bool,
@@ -457,6 +541,16 @@ func (a *Agent) UpgradeInstallChart(
 			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
 		}
 	}()
+
+	ctx, span := telemetry.NewSpan(ctx, "helm-upgrade-install-chart")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: conf.Cluster.ProjectID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: conf.Cluster.ID},
+		telemetry.AttributeKV{Key: "chart-name", Value: conf.Name},
+		telemetry.AttributeKV{Key: "chart-namespace", Value: conf.Namespace},
+	)
 
 	cmd := action.NewUpgrade(a.ActionConfig)
 	cmd.Install = true
@@ -469,7 +563,7 @@ func (a *Agent) UpgradeInstallChart(
 	cmd.Timeout = 300 * time.Second
 
 	if err := checkIfInstallable(conf.Chart); err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error checking if installable")
 	}
 
 	var err error
@@ -485,14 +579,14 @@ func (a *Agent) UpgradeInstallChart(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error getting post renderer")
 	}
 
 	if req := conf.Chart.Metadata.Dependencies; req != nil {
 		for _, dep := range req {
-			depChart, err := loader.LoadChartPublic(dep.Repository, dep.Name, dep.Version)
+			depChart, err := loader.LoadChartPublic(ctx, dep.Repository, dep.Name, dep.Version)
 			if err != nil {
-				return nil, fmt.Errorf("error retrieving chart dependency %s/%s-%s: %s", dep.Repository, dep.Name, dep.Version, err.Error())
+				return nil, telemetry.Error(ctx, span, err, fmt.Sprintf("error retrieving chart dependency %s/%s-%s", dep.Repository, dep.Name, dep.Version))
 			}
 
 			conf.Chart.AddDependency(depChart)
@@ -504,17 +598,32 @@ func (a *Agent) UpgradeInstallChart(
 
 // UninstallChart uninstalls a chart
 func (a *Agent) UninstallChart(
+	ctx context.Context,
 	name string,
 ) (*release.UninstallReleaseResponse, error) {
+	ctx, span := telemetry.NewSpan(ctx, "helm-uninstall-chart")
+	defer span.End()
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "chart-name", Value: name})
+
 	cmd := action.NewUninstall(a.ActionConfig)
 	return cmd.Run(name)
 }
 
 // RollbackRelease rolls a release back to a specified revision/version
 func (a *Agent) RollbackRelease(
+	ctx context.Context,
 	name string,
 	version int,
 ) error {
+	ctx, span := telemetry.NewSpan(ctx, "helm-rollback-release")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "name", Value: name},
+		telemetry.AttributeKV{Key: "version", Value: version},
+	)
+
 	cmd := action.NewRollback(a.ActionConfig)
 	cmd.Version = version
 	return cmd.Run(name)

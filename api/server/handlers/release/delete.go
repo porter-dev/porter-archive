@@ -1,6 +1,7 @@
 package release
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -43,7 +44,7 @@ func (c *DeleteReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err = helmAgent.UninstallChart(helmRelease.Name)
+	_, err = helmAgent.UninstallChart(context.Background(), helmRelease.Name)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

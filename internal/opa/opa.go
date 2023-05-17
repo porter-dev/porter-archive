@@ -172,7 +172,7 @@ func (runner *KubernetesOPARunner) runHelmReleaseQueries(name string, collection
 	var helmReleases []*release.Release
 
 	if collection.Match.Name != "" {
-		helmRelease, err := helmAgent.GetRelease(collection.Match.Name, 0, false)
+		helmRelease, err := helmAgent.GetRelease(context.Background(), collection.Match.Name, 0, false)
 
 		if err != nil {
 			if collection.MustExist && strings.Contains(err.Error(), "not found") {
@@ -204,7 +204,7 @@ func (runner *KubernetesOPARunner) runHelmReleaseQueries(name string, collection
 
 		helmReleases = append(helmReleases, helmRelease)
 	} else if collection.Match.ChartName != "" {
-		prefilterReleases, err := helmAgent.ListReleases(collection.Match.Namespace, &types.ReleaseListFilter{
+		prefilterReleases, err := helmAgent.ListReleases(context.Background(), collection.Match.Namespace, &types.ReleaseListFilter{
 			ByDate: true,
 			StatusFilter: []string{
 				"deployed",

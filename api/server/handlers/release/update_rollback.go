@@ -1,6 +1,7 @@
 package release
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -48,7 +49,7 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = helmAgent.RollbackRelease(helmRelease.Name, request.Revision)
+	err = helmAgent.RollbackRelease(context.Background(), helmRelease.Name, request.Revision)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(

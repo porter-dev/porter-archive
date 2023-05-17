@@ -1,6 +1,7 @@
 package template
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -49,7 +50,7 @@ func (t *TemplateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		request.RepoURL = t.Config().ServerConf.DefaultApplicationHelmRepoURL
 	}
 
-	chart, err := loader.LoadChartPublic(request.RepoURL, name, version)
+	chart, err := loader.LoadChartPublic(context.Background(), request.RepoURL, name, version)
 	if err != nil {
 		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

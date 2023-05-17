@@ -1,5 +1,5 @@
 import Input from "components/porter/Input";
-import React, { useEffect } from "react"
+import React, { useEffect } from "react";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
@@ -8,17 +8,13 @@ import { WebService } from "./serviceTypes";
 import { Height } from "react-animate-height";
 
 interface Props {
-  service: WebService
-  editService: (service: WebService) => void
-  setHeight: (height: Height) => void
+  service: WebService;
+  editService: (service: WebService) => void;
+  setHeight: (height: Height) => void;
 }
 
-const WebTabs: React.FC<Props> = ({
-  service,
-  editService,
-  setHeight,
-}) => {
-  const [currentTab, setCurrentTab] = React.useState<string>('main');
+const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
+  const [currentTab, setCurrentTab] = React.useState<string>("main");
 
   const renderMain = () => {
     return (
@@ -43,7 +39,12 @@ const WebTabs: React.FC<Props> = ({
           value={service.startCommand.value}
           width="300px"
           disabled={service.startCommand.readOnly}
-          setValue={(e) => { editService({ ...service, startCommand: { readOnly: false, value: e } }) }}
+          setValue={(e) => {
+            editService({
+              ...service,
+              startCommand: { readOnly: false, value: e },
+            });
+          }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
@@ -53,20 +54,33 @@ const WebTabs: React.FC<Props> = ({
           value={service.port.value}
           disabled={service.port.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, port: { readOnly: false, value: e } }) }}
+          setValue={(e) => {
+            editService({ ...service, port: { readOnly: false, value: e } });
+          }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
         <Checkbox
           checked={service.ingress.enabled.value}
           disabled={service.ingress.enabled.readOnly}
-          toggleChecked={() => { editService({ ...service, ingress: { ...service.ingress, enabled: { readOnly: false, value: !service.ingress.enabled.value } } }) }}
+          toggleChecked={() => {
+            editService({
+              ...service,
+              ingress: {
+                ...service.ingress,
+                enabled: {
+                  readOnly: false,
+                  value: !service.ingress.enabled.value,
+                },
+              },
+            });
+          }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         >
           <Text color="helper">Generate a Porter URL for external traffic</Text>
         </Checkbox>
       </>
-    )
+    );
   };
 
   const renderResources = () => {
@@ -79,7 +93,9 @@ const WebTabs: React.FC<Props> = ({
           value={service.cpu.value}
           disabled={service.cpu.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, cpu: { readOnly: false, value: e } }) }}
+          setValue={(e) => {
+            editService({ ...service, cpu: { readOnly: false, value: e } });
+          }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
@@ -89,7 +105,9 @@ const WebTabs: React.FC<Props> = ({
           value={service.ram.value}
           disabled={service.ram.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, ram: { readOnly: false, value: e } }) }}
+          setValue={(e) => {
+            editService({ ...service, ram: { readOnly: false, value: e } });
+          }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
@@ -97,15 +115,37 @@ const WebTabs: React.FC<Props> = ({
           label="Replicas"
           placeholder="ex: 1"
           value={service.replicas.value}
-          disabled={service.replicas.readOnly || service.autoscaling.enabled.value}
+          disabled={
+            service.replicas.readOnly || service.autoscaling.enabled.value
+          }
           width="300px"
-          setValue={(e) => { editService({ ...service, replicas: { readOnly: false, value: e } }) }}
-          disabledTooltip={service.replicas.readOnly ? "You may only edit this field in your porter.yaml." : "Disable autoscaling to specify replicas."}
+          setValue={(e) => {
+            editService({
+              ...service,
+              replicas: { readOnly: false, value: e },
+            });
+          }}
+          disabledTooltip={
+            service.replicas.readOnly
+              ? "You may only edit this field in your porter.yaml."
+              : "Disable autoscaling to specify replicas."
+          }
         />
         <Spacer y={1} />
         <Checkbox
           checked={service.autoscaling.enabled.value}
-          toggleChecked={() => { editService({ ...service, autoscaling: { ...service.autoscaling, enabled: { readOnly: false, value: !service.autoscaling.enabled.value } } }) }}
+          toggleChecked={() => {
+            editService({
+              ...service,
+              autoscaling: {
+                ...service.autoscaling,
+                enabled: {
+                  readOnly: false,
+                  value: !service.autoscaling.enabled.value,
+                },
+              },
+            });
+          }}
           disabled={service.autoscaling.enabled.readOnly}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         >
@@ -116,43 +156,134 @@ const WebTabs: React.FC<Props> = ({
           label="Min replicas"
           placeholder="ex: 1"
           value={service.autoscaling.minReplicas.value}
-          disabled={service.autoscaling.minReplicas.readOnly || !service.autoscaling.enabled.value}
+          disabled={
+            service.autoscaling.minReplicas.readOnly ||
+            !service.autoscaling.enabled.value
+          }
           width="300px"
-          setValue={(e) => { editService({ ...service, autoscaling: { ...service.autoscaling, minReplicas: { readOnly: false, value: e } } }) }}
-          disabledTooltip={service.autoscaling.minReplicas.readOnly ? "You may only edit this field in your porter.yaml." : "Enable autoscaling to specify min replicas."}
+          setValue={(e) => {
+            editService({
+              ...service,
+              autoscaling: {
+                ...service.autoscaling,
+                minReplicas: { readOnly: false, value: e },
+              },
+            });
+          }}
+          disabledTooltip={
+            service.autoscaling.minReplicas.readOnly
+              ? "You may only edit this field in your porter.yaml."
+              : "Enable autoscaling to specify min replicas."
+          }
         />
         <Spacer y={1} />
         <Input
           label="Max replicas"
           placeholder="ex: 10"
           value={service.autoscaling.maxReplicas.value}
-          disabled={service.autoscaling.maxReplicas.readOnly || !service.autoscaling.enabled.value}
+          disabled={
+            service.autoscaling.maxReplicas.readOnly ||
+            !service.autoscaling.enabled.value
+          }
           width="300px"
-          setValue={(e) => { editService({ ...service, autoscaling: { ...service.autoscaling, maxReplicas: { readOnly: false, value: e } } }) }}
-          disabledTooltip={service.autoscaling.maxReplicas.readOnly ? "You may only edit this field in your porter.yaml." : "Enable autoscaling to specify max replicas."}
+          setValue={(e) => {
+            editService({
+              ...service,
+              autoscaling: {
+                ...service.autoscaling,
+                maxReplicas: { readOnly: false, value: e },
+              },
+            });
+          }}
+          disabledTooltip={
+            service.autoscaling.maxReplicas.readOnly
+              ? "You may only edit this field in your porter.yaml."
+              : "Enable autoscaling to specify max replicas."
+          }
         />
         <Spacer y={1} />
         <Input
           label="Target CPU utilization (%)"
           placeholder="ex: 50"
           value={service.autoscaling.targetCPUUtilizationPercentage.value}
-          disabled={service.autoscaling.targetCPUUtilizationPercentage.readOnly || !service.autoscaling.enabled.value}
+          disabled={
+            service.autoscaling.targetCPUUtilizationPercentage.readOnly ||
+            !service.autoscaling.enabled.value
+          }
           width="300px"
-          setValue={(e) => { editService({ ...service, autoscaling: { ...service.autoscaling, targetCPUUtilizationPercentage: { readOnly: false, value: e } } }) }}
-          disabledTooltip={service.autoscaling.targetCPUUtilizationPercentage.readOnly ? "You may only edit this field in your porter.yaml." : "Enable autoscaling to specify target CPU utilization."}
+          setValue={(e) => {
+            editService({
+              ...service,
+              autoscaling: {
+                ...service.autoscaling,
+                targetCPUUtilizationPercentage: { readOnly: false, value: e },
+              },
+            });
+          }}
+          disabledTooltip={
+            service.autoscaling.targetCPUUtilizationPercentage.readOnly
+              ? "You may only edit this field in your porter.yaml."
+              : "Enable autoscaling to specify target CPU utilization."
+          }
         />
         <Spacer y={1} />
         <Input
           label="Target RAM utilization (%)"
           placeholder="ex: 50"
           value={service.autoscaling.targetMemoryUtilizationPercentage.value}
-          disabled={service.autoscaling.targetMemoryUtilizationPercentage.readOnly || !service.autoscaling.enabled.value}
+          disabled={
+            service.autoscaling.targetMemoryUtilizationPercentage.readOnly ||
+            !service.autoscaling.enabled.value
+          }
           width="300px"
-          setValue={(e) => { editService({ ...service, autoscaling: { ...service.autoscaling, targetMemoryUtilizationPercentage: { readOnly: false, value: e } } }) }}
-          disabledTooltip={service.autoscaling.targetMemoryUtilizationPercentage.readOnly ? "You may only edit this field in your porter.yaml." : "Enable autoscaling to specify target RAM utilization."}
+          setValue={(e) => {
+            editService({
+              ...service,
+              autoscaling: {
+                ...service.autoscaling,
+                targetMemoryUtilizationPercentage: {
+                  readOnly: false,
+                  value: e,
+                },
+              },
+            });
+          }}
+          disabledTooltip={
+            service.autoscaling.targetMemoryUtilizationPercentage.readOnly
+              ? "You may only edit this field in your porter.yaml."
+              : "Enable autoscaling to specify target RAM utilization."
+          }
         />
       </>
-    )
+    );
+  };
+
+  const renderHealth = () => {
+    return (
+      <>
+        <Spacer y={1} />
+        <Checkbox
+          checked={service.health.livenessProbe.enabled.value}
+          toggleChecked={() => {
+            editService({
+              ...service,
+              health: {
+                livenessProbe: {
+                  enabled: {
+                    readOnly: false,
+                    value: !service.health.livenessProbe.enabled.value,
+                  },
+                },
+              },
+            });
+          }}
+          //disabled={service.autoscaling.enabled.readOnly}
+          //disabledTooltip={"You may only edit this field in your porter.yaml."}
+        >
+          <Text color="helper">Enable Liveness</Text>
+        </Checkbox>
+      </>
+    );
   };
 
   const renderAdvanced = () => {
@@ -169,43 +300,55 @@ const WebTabs: React.FC<Props> = ({
               >
                 &nbsp;(?)
               </a>
-            </>}
+            </>
+          }
           placeholder="ex: my-app.my-domain.com"
           value={service.ingress.hosts.value}
           disabled={service.ingress.hosts.readOnly}
           width="300px"
-          setValue={(e) => { editService({ ...service, ingress: { ...service.ingress, hosts: { readOnly: false, value: e } } }) }}
+          setValue={(e) => {
+            editService({
+              ...service,
+              ingress: {
+                ...service.ingress,
+                hosts: { readOnly: false, value: e },
+              },
+            });
+          }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
       </>
     );
   };
-
   return (
     <>
       <TabSelector
         options={[
-          { label: 'Main', value: 'main' },
-          { label: 'Resources', value: 'resources' },
-          { label: 'Advanced', value: 'advanced' },
+          { label: "Main", value: "main" },
+          { label: "Resources", value: "resources" },
+          { label: "Advanced", value: "advanced" },
+          { label: "Health", value: "health" },
         ]}
         currentTab={currentTab}
         setCurrentTab={(value: string) => {
-          if (value === 'main') {
+          if (value === "main") {
             setHeight(288);
-          } else if (value === 'resources') {
+          } else if (value === "resources") {
             setHeight(713);
-          } else if (value === 'advanced') {
+          } else if (value === "advanced") {
+            setHeight(159);
+          } else if (value === "health") {
             setHeight(159);
           }
           setCurrentTab(value);
         }}
       />
-      {currentTab === 'main' && renderMain()}
-      {currentTab === 'resources' && renderResources()}
-      {currentTab === 'advanced' && renderAdvanced()}
+      {currentTab === "main" && renderMain()}
+      {currentTab === "resources" && renderResources()}
+      {currentTab === "advanced" && renderAdvanced()}
+      {currentTab === "health" && renderHealth()}
     </>
-  )
-}
+  );
+};
 
 export default WebTabs;

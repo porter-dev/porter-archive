@@ -29,6 +29,7 @@ export type ControllerTabPodType = {
   podAge: string;
   revisionNumber?: number;
   containerStatus: any;
+  crashLoopReason?: string;
 };
 
 const formatCreationTimestamp = timeFormat("%H:%M:%S %b %d, '%y");
@@ -145,7 +146,7 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
           setPodError(newPods[0].status?.message);
         handleSelectPod(newPods[0], data);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   /**
@@ -277,8 +278,8 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       case "replicaset":
         return [
           c.status?.availableReplicas ||
-            c.status?.replicas - c.status?.unavailableReplicas ||
-            0,
+          c.status?.replicas - c.status?.unavailableReplicas ||
+          0,
           c.status?.replicas || 0,
         ];
       case "statefulset":

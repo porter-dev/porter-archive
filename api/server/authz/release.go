@@ -37,7 +37,7 @@ type ReleaseScopedMiddleware struct {
 func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	helmAgent, err := p.agentGetter.GetHelmAgent(r, cluster, "")
+	helmAgent, err := p.agentGetter.GetHelmAgent(r.Context(), r, cluster, "")
 	if err != nil {
 		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return

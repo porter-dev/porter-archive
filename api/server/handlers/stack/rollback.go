@@ -35,7 +35,7 @@ func NewStackRollbackHandler(
 func (p *StackRollbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	helmAgent, err := p.GetHelmAgent(r, cluster, "")
+	helmAgent, err := p.GetHelmAgent(r.Context(), r, cluster, "")
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

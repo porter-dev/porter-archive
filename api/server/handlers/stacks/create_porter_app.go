@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -37,9 +39,15 @@ func NewCreatePorterAppHandler(
 }
 
 func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	tracer, _ := telemetry.InitTracer(r.Context(), c.Config().TelemetryConfig)
+	defer tracer.Shutdown()
+
 	ctx := r.Context()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-porter-app")
+	defer span.End()
 
 	request := &types.CreatePorterAppRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -54,7 +62,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
+	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespace)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
 		return

@@ -72,7 +72,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// in this case, we retrieve the agent by passing in the namespace field directly, since
 	// it cannot be detected from the URL
-	helmAgent, err := c.GetHelmAgent(r, cluster, release.Namespace)
+	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, release.Namespace)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -33,7 +33,7 @@ func NewUpgradeAgentHandler(
 
 func (c *UpgradeAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	helmAgent, err := c.GetHelmAgent(r, cluster, "porter-agent-system")
+	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "porter-agent-system")
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

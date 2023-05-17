@@ -48,7 +48,7 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		},
 	))
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, "")
+	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "")
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

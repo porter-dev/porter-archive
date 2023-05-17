@@ -1,6 +1,7 @@
 package release
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -40,7 +41,7 @@ func (c *GetReleaseHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	// get the name of the application
 	name, _ := requestutils.GetURLParamString(r, types.URLParamReleaseName)
-	history, err := helmAgent.GetReleaseHistory(name)
+	history, err := helmAgent.GetReleaseHistory(context.Background(), name)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

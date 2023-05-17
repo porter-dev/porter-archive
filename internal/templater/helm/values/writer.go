@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/porter-dev/porter/internal/helm"
@@ -42,7 +43,7 @@ func (w *TemplateWriter) Create(
 		Values:    vals,
 	}
 
-	_, err := w.Agent.InstallChart(conf, nil, false)
+	_, err := w.Agent.InstallChart(context.Background(), conf, nil, false)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,7 @@ func (w *TemplateWriter) Update(
 		Values: vals,
 	}
 
-	_, err := w.Agent.UpgradeReleaseByValues(conf, nil, false, false)
+	_, err := w.Agent.UpgradeReleaseByValues(context.Background(), conf, nil, false, false)
 	if err != nil {
 		return nil, err
 	}

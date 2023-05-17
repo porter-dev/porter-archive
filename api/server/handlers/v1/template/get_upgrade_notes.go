@@ -1,6 +1,7 @@
 package template
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -83,7 +84,7 @@ func (t *TemplateGetUpgradeNotesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		prevVersion = "v0.0.0"
 	}
 
-	chart, err := loader.LoadChartPublic(request.RepoURL, name, version)
+	chart, err := loader.LoadChartPublic(context.Background(), request.RepoURL, name, version)
 	if err != nil {
 		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

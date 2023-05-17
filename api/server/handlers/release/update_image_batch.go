@@ -1,6 +1,7 @@
 package release
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -75,7 +76,7 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		go func() {
 			defer wg.Done()
 			// read release via agent
-			rel, err := helmAgent.GetRelease(releases[index].Name, 0, false)
+			rel, err := helmAgent.GetRelease(context.Background(), releases[index].Name, 0, false)
 			if err != nil {
 				// if this is a release not found error, just return - the release has likely been deleted from the underlying
 				// cluster but has not been deleted from the Porter database yet
@@ -104,7 +105,7 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 					Values:     rel.Config,
 				}
 
-				_, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
+				_, err = helmAgent.UpgradeReleaseByValues(context.Background(), conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 
 				if err != nil {
 					// if this is a release not found error, just return - the release has likely been deleted from the underlying

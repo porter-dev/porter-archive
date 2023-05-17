@@ -2,11 +2,14 @@ package loader
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	"k8s.io/helm/pkg/repo"
 	"sigs.k8s.io/yaml"
@@ -123,18 +126,27 @@ func LoadRepoIndexPublic(repoURL string) (*repo.IndexFile, error) {
 }
 
 // LoadChart uses an http request to fetch a chart from a remote Helm repo
-func LoadChart(client *BasicAuthClient, repoURL, chartName, chartVersion string) (*chart.Chart, error) {
+func LoadChart(ctx context.Context, client *BasicAuthClient, repoURL, chartName, chartVersion string) (*chart.Chart, error) {
+	ctx, span := telemetry.NewSpan(ctx, "load-chart")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "repo-url", Value: repoURL},
+		telemetry.AttributeKV{Key: "chart-name", Value: chartName},
+		telemetry.AttributeKV{Key: "chart-version", Value: chartVersion},
+	)
+
 	repoIndex, err := LoadRepoIndex(client, repoURL)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error loading repo index")
 	}
 
 	cv, err := repoIndex.Get(chartName, chartVersion)
 
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error getting repo index")
 	} else if len(cv.URLs) == 0 {
-		return nil, fmt.Errorf("%s:%s no valid download urls", chartName, chartVersion)
+		return nil, telemetry.Error(ctx, span, nil, fmt.Sprintf("%s:%s no valid download urls", chartName, chartVersion))
 	}
 
 	trimmedRepoURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/")
@@ -147,7 +159,7 @@ func LoadChart(client *BasicAuthClient, repoURL, chartName, chartVersion string)
 	// download tgz
 	req, err := http.NewRequest("GET", chartURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error creating request")
 	}
 
 	if client.Username != "" {
@@ -156,14 +168,14 @@ func LoadChart(client *BasicAuthClient, repoURL, chartName, chartVersion string)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error executing request")
 	}
 
 	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error reading response body")
 	}
 
 	return chartloader.LoadArchive(bytes.NewReader(data))
@@ -174,8 +186,8 @@ func LoadChart(client *BasicAuthClient, repoURL, chartName, chartVersion string)
 //
 // TODO: this is an expensive operation, so after retrieving the digest from the
 // repo index, this should check the digest in the cache
-func LoadChartPublic(repoURL, chartName, chartVersion string) (*chart.Chart, error) {
-	return LoadChart(&BasicAuthClient{}, repoURL, chartName, chartVersion)
+func LoadChartPublic(ctx context.Context, repoURL, chartName, chartVersion string) (*chart.Chart, error) {
+	return LoadChart(ctx, &BasicAuthClient{}, repoURL, chartName, chartVersion)
 }
 
 // Helper method to test if chart repo URL is valid, or is a path. Chartmuseum saves URLs

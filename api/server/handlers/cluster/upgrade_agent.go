@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -39,13 +40,13 @@ func (c *UpgradeAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	currRelease, err := helmAgent.GetRelease("porter-agent", 0, false)
+	currRelease, err := helmAgent.GetRelease(context.Background(), "porter-agent", 0, false)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	chart, err := loader.LoadChartPublic(c.Config().ServerConf.DefaultAddonHelmRepoURL, "porter-agent", "")
+	chart, err := loader.LoadChartPublic(context.Background(), c.Config().ServerConf.DefaultAddonHelmRepoURL, "porter-agent", "")
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -56,7 +57,7 @@ func (c *UpgradeAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	// TODO: update values
 	// newValues["redis"] =
 
-	_, err = helmAgent.UpgradeReleaseByValues(&helm.UpgradeReleaseConfig{
+	_, err = helmAgent.UpgradeReleaseByValues(context.Background(), &helm.UpgradeReleaseConfig{
 		Chart:      chart,
 		Name:       "porter-agent",
 		Values:     newValues,

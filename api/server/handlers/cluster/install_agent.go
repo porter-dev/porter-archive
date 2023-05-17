@@ -65,7 +65,7 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	chart, err := loader.LoadChartPublic(c.Config().ServerConf.DefaultAddonHelmRepoURL, "porter-agent", "")
+	chart, err := loader.LoadChartPublic(context.Background(), c.Config().ServerConf.DefaultAddonHelmRepoURL, "porter-agent", "")
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -139,7 +139,7 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Values:    porterAgentValues,
 	}
 
-	_, err = helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+	_, err = helmAgent.InstallChart(context.Background(), conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
@@ -172,13 +172,13 @@ func checkAndDeleteOlderAgent(k8sAgent *kubernetes.Agent, helmAgent *helm.Agent)
 	}
 
 	// detect if the `porter-agent` release is installed
-	helmRelease, err := helmAgent.GetRelease("porter-agent", 0, false)
+	helmRelease, err := helmAgent.GetRelease(context.Background(), "porter-agent", 0, false)
 
 	if err != nil || helmRelease == nil {
 		return nil
 	}
 
-	_, err = helmAgent.UninstallChart("porter-agent")
+	_, err = helmAgent.UninstallChart(context.Background(), "porter-agent")
 
 	if err != nil {
 		return err

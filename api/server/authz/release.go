@@ -50,7 +50,7 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	// get the version for the application
 	version, _ := requestutils.GetURLParamUint(r, types.URLParamReleaseVersion)
 
-	release, err := helmAgent.GetRelease(name, int(version), false)
+	release, err := helmAgent.GetRelease(context.Background(), name, int(version), false)
 	if err != nil {
 		// ugly casing since at the time of this commit Helm doesn't have an errors package.
 		// so we rely on the Helm error containing "not found"

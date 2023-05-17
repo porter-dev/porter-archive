@@ -7,6 +7,7 @@ import _ from "lodash";
 
 type PropsType = {
   formData: any;
+  latestData: any;
   valuesToOverride?: any;
   isReadOnly?: boolean;
   onSubmit?: (values: any, cb?: () => void) => void;
@@ -32,6 +33,7 @@ type PropsType = {
 
 const PorterFormWrapper: React.FC<PropsType> = ({
   formData,
+  latestData,
   valuesToOverride,
   isReadOnly,
   onSubmit,
@@ -92,6 +94,7 @@ const PorterFormWrapper: React.FC<PropsType> = ({
     <React.Fragment key={hashCode(JSON.stringify(formData))}>
       <PorterFormContextProvider
         rawFormData={formData as PorterFormData}
+        latestFormData={latestData as PorterFormData}
         overrideVariables={valuesToOverride}
         isReadOnly={isReadOnly}
         onSubmit={onSubmit}

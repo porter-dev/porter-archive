@@ -76,6 +76,7 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
     selectedJob,
     setSelectedJob,
   } = useJobs(chart);
+  const [latestChart, setLatestChart] = useState<ChartType>(oldChart);
 
   const {
     isStack,
@@ -257,6 +258,8 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
     if (currentTab === "values") {
       return (
         <ValuesYaml
+          latestChart={latestChart}
+          newestVersion={false}
           currentChart={chart}
           refreshChart={() => refreshChart()}
           disabled={!isAuthorized("job", "", ["get", "update"])}
@@ -302,6 +305,9 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
   };
 
   const formData = useMemo(() => cloneDeep(chart?.form || {}), [chart]);
+  const latestformData = useMemo(() => cloneDeep(latestChart?.form || {}), [
+    latestChart,
+  ]);
 
   if (status === "loading" || isLoadingStackEnvGroups) {
     return <Loading />;
@@ -373,6 +379,7 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
             rightTabOptions?.length > 0) && (
             <PorterFormWrapper
               formData={formData}
+              latestData={latestformData}
               valuesToOverride={{
                 namespace: chart?.namespace,
                 clusterId: currentCluster?.id,

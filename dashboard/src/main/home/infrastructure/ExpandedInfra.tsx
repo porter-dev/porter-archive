@@ -166,6 +166,7 @@ const ExpandedInfra: React.FunctionComponent = () => {
         <PorterFormWrapper
           showStateDebugger={false}
           formData={infraForm}
+          latestData={infraForm}
           valuesToOverride={{}}
           isReadOnly={false}
           onSubmit={update}

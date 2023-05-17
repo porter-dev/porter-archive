@@ -299,6 +299,7 @@ const ExpandedOperation: React.FunctionComponent<Props> = ({
           <PorterFormWrapper
             showStateDebugger={false}
             formData={operation.form}
+            latestData={operation.form}
             valuesToOverride={{}}
             isReadOnly={true}
             color="#f5cb42"

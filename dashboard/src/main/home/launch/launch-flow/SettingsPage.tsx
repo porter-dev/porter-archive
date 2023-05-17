@@ -140,6 +140,7 @@ class SettingsPage extends Component<PropsType, StateType> {
           </Helper>
           <PorterFormWrapper
             formData={form}
+            latestData={form}
             saveValuesStatus={saveValuesStatus}
             valuesToOverride={{
               ...valuesToOverride,

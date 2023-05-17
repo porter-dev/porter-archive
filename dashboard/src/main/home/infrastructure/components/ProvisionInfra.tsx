@@ -290,6 +290,7 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
           <PorterFormWrapper
             showStateDebugger={false}
             formData={currentTemplate.form}
+            latestData={currentTemplate.form}
             valuesToOverride={{}}
             isReadOnly={false}
             onSubmit={onSubmit}

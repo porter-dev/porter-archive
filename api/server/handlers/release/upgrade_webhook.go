@@ -1,6 +1,7 @@
 package release
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -72,7 +73,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// in this case, we retrieve the agent by passing in the namespace field directly, since
 	// it cannot be detected from the URL
-	helmAgent, err := c.GetHelmAgent(r, cluster, release.Namespace)
+	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, release.Namespace)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -84,7 +85,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rel, err := helmAgent.GetRelease(release.Name, 0, true)
+	rel, err := helmAgent.GetRelease(context.Background(), release.Name, 0, true)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -168,7 +169,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		),
 	}
 
-	rel, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
+	rel, err = helmAgent.UpgradeReleaseByValues(context.Background(), conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 
 	if err != nil {
 		notifyOpts.Status = notifier.StatusHelmFailed

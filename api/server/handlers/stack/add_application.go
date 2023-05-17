@@ -125,7 +125,7 @@ func (p *StackAddApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	helmAgent, err := p.GetHelmAgent(r, cluster, "")
+	helmAgent, err := p.GetHelmAgent(r.Context(), r, cluster, "")
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -175,7 +175,7 @@ func (p *StackAddApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	for _, resource := range revision.Resources {
 		if rel, exists := helmReleaseMap[fmt.Sprintf("%s/%s", namespace, resource.Name)]; exists {
-			_, err = release.CreateAppReleaseFromHelmRelease(p.Config(), proj.ID, cluster.ID, resource.ID, rel)
+			_, err = release.CreateAppReleaseFromHelmRelease(r.Context(), p.Config(), proj.ID, cluster.ID, resource.ID, rel)
 
 			if err != nil {
 				saveErrs = append(saveErrs, fmt.Sprintf("the resource %s/%s could not be saved right now", namespace, resource.Name))

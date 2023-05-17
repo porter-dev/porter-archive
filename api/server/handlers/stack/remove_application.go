@@ -97,7 +97,7 @@ func (p *StackRemoveApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	helmAgent, err := p.GetHelmAgent(r, cluster, namespace)
+	helmAgent, err := p.GetHelmAgent(r.Context(), r, cluster, namespace)
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

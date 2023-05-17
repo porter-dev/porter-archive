@@ -1,11 +1,8 @@
 package user
 
 import (
-	"context"
 	"fmt"
 	"net/http"
-
-	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/authn"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -34,14 +31,6 @@ func NewUserCreateHandler(
 }
 
 func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tracer, err := telemetry.InitTracer(context.Background(), u.Config().TelemetryConfig)
-	defer tracer.Shutdown()
-
-	// just for demonstration purposes
-	_, span := telemetry.NewSpan(context.Background(), "create-new-user")
-	defer span.End()
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "hello-world", Value: "hello, world!"})
-
 	request := &types.CreateUserRequest{}
 
 	ok := u.DecodeAndValidate(w, r, request)

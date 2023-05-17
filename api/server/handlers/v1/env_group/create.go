@@ -1,6 +1,7 @@
 package env_group
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -69,7 +70,7 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 	}
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
+	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, namespace)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -201,7 +202,7 @@ func rolloutApplications(
 				Values:     newConfig,
 			}
 
-			_, err = helmAgent.UpgradeReleaseByValues(conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection, false)
+			_, err = helmAgent.UpgradeReleaseByValues(context.Background(), conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection, false)
 
 			if err != nil {
 				mu.Lock()

@@ -1,10 +1,13 @@
 package stacks
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -37,9 +40,15 @@ func NewCreatePorterAppHandler(
 }
 
 func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	tracer, _ := telemetry.InitTracer(r.Context(), c.Config().TelemetryConfig)
+	defer tracer.Shutdown()
+
 	ctx := r.Context()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-porter-app")
+	defer span.End()
 
 	request := &types.CreatePorterAppRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -54,7 +63,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
+	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespace)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting helm agent: %w", err)))
 		return
@@ -66,7 +75,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	helmRelease, err := helmAgent.GetRelease(stackName, 0, false)
+	helmRelease, err := helmAgent.GetRelease(ctx, stackName, 0, false)
 	shouldCreate := err != nil
 
 	porterYamlBase64 := request.PorterYAMLBase64
@@ -141,6 +150,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		// create the release job chart if it does not exist (only done by front-end currently, where we set overrideRelease=true)
 		if request.OverrideRelease && releaseJobValues != nil {
 			conf, err := createReleaseJobChart(
+				ctx,
 				stackName,
 				releaseJobValues,
 				c.Config().ServerConf.DefaultApplicationHelmRepoURL,
@@ -152,10 +162,10 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error making config for release job chart: %w", err)))
 				return
 			}
-			_, err = helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+			_, err = helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating release job chart: %w", err)))
-				_, err = helmAgent.UninstallChart(fmt.Sprintf("%s-r", stackName))
+				_, err = helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", stackName))
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error uninstalling release job chart: %w", err)))
 				}
@@ -174,11 +184,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 
 		// create the app chart
-		_, err = helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+		_, err = helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deploying app: %s", err.Error())))
 
-			_, err = helmAgent.UninstallChart(stackName)
+			_, err = helmAgent.UninstallChart(ctx, stackName)
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error uninstalling chart: %w", err)))
 			}
@@ -225,10 +235,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		// create/update the release job chart
 		if request.OverrideRelease && releaseJobValues != nil {
 			releaseJobName := fmt.Sprintf("%s-r", stackName)
-			helmRelease, err := helmAgent.GetRelease(releaseJobName, 0, false)
+			helmRelease, err := helmAgent.GetRelease(ctx, releaseJobName, 0, false)
 			if err != nil {
 				// here the user has created a release job for an already created app, so we need to create and install  the release job chart
 				conf, err := createReleaseJobChart(
+					ctx,
 					stackName,
 					releaseJobValues,
 					c.Config().ServerConf.DefaultApplicationHelmRepoURL,
@@ -240,10 +251,10 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error making config for release job chart: %w", err)))
 					return
 				}
-				_, err = helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+				_, err = helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating release job chart: %w", err)))
-					_, err = helmAgent.UninstallChart(fmt.Sprintf("%s-r", stackName))
+					_, err = helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", stackName))
 					if err != nil {
 						c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error uninstalling release job chart: %w", err)))
 					}
@@ -257,7 +268,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					Registries: registries,
 					Values:     releaseJobValues,
 				}
-				_, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
+				_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error upgrading release job chart: %w", err)))
 					return
@@ -277,7 +288,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 
 		// update the chart
-		_, err = helmAgent.UpgradeInstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+		_, err = helmAgent.UpgradeInstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deploying app: %s", err.Error())))
 			return
@@ -338,6 +349,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 }
 
 func createReleaseJobChart(
+	ctx context.Context,
 	stackName string,
 	values map[string]interface{},
 	repoUrl string,
@@ -345,7 +357,7 @@ func createReleaseJobChart(
 	cluster *models.Cluster,
 	repo repository.Repository,
 ) (*helm.InstallChartConfig, error) {
-	chart, err := loader.LoadChartPublic(repoUrl, "job", "")
+	chart, err := loader.LoadChartPublic(ctx, repoUrl, "job", "")
 	if err != nil {
 		return nil, err
 	}

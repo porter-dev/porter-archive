@@ -4,9 +4,12 @@
 package invite
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -33,27 +36,41 @@ func NewInviteCreateHandler(
 }
 
 func (c *InviteCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	tracer, _ := telemetry.InitTracer(context.Background(), c.Config().TelemetryConfig)
+	defer tracer.Shutdown()
+
+	// just for demonstration purposes
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-invite")
+	defer span.End()
+
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	request := &types.CreateInviteRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "message", Value: "failed to decode and validate request"})
 		return
 	}
 
 	// create invite model
 	invite, err := CreateInviteWithProject(request, project.ID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error creating invite with project")))
 		return
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: invite.ProjectID},
+		telemetry.AttributeKV{Key: "user-id", Value: invite.UserID},
+		telemetry.AttributeKV{Key: "kind", Value: invite.Kind},
+	)
 
 	// write to database
 	invite, err = c.Repo().Invite().CreateInvite(invite)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error creating invite in repo")))
 		return
 	}
 
@@ -67,7 +84,7 @@ func (c *InviteCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			ProjectOwnerEmail: user.Email,
 		},
 	); err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error sending project invite email")))
 		return
 	}
 

@@ -46,7 +46,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-release")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-porter-app")
 	defer span.End()
 
 	request := &types.CreatePorterAppRequest{}

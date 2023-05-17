@@ -47,7 +47,7 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
     // props.setBuildConfig({});
     return (
       <>
-        <Text color="helper">Dockerfile path</Text>
+        <Text color="helper">Dockerfile path (absolute path)</Text>
         <Spacer y={0.5} />
         <Input
           placeholder="ex: ./Dockerfile"

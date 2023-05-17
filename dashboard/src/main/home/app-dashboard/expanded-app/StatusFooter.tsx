@@ -137,9 +137,6 @@ const StatusFooter: React.FC<Props> = ({
 
     const options: NewWebsocketOptions = {};
     options.onopen = () => {
-      if (service.name === "my-web") {
-        console.log("opening websocket")
-      }
     };
 
     options.onmessage = async (evt: MessageEvent) => {
@@ -170,9 +167,6 @@ const StatusFooter: React.FC<Props> = ({
     };
 
     options.onclose = () => {
-      if (service.name === "my-web") {
-        console.log("closing websocket")
-      }
     };
 
     options.onerror = (err: ErrorEvent) => {

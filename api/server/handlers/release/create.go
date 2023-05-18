@@ -119,7 +119,7 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		request.TemplateVersion = ""
 	}
 
-	chart, err := loader.LoadChartPublic(request.RepoURL, request.TemplateName, request.TemplateVersion)
+	chart, err := loader.LoadChartPublic(ctx, request.RepoURL, request.TemplateName, request.TemplateVersion)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error loading public chart")))
 		return
@@ -154,7 +154,7 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		Registries: registries,
 	}
 
-	helmRelease, err := helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+	helmRelease, err := helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			telemetry.Error(ctx, span, err, "error installing a new chart"),

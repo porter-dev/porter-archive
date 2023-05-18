@@ -195,7 +195,7 @@ const BuildSettingsTab: React.FC<Props> = ({
         }
         setCurrentError(
           'The workflow is still running. You can "Save" the current build settings for the next workflow run and view the current status of the workflow here: ' +
-            tmpError.response.data
+          tmpError.response.data
         );
         return;
       }
@@ -364,7 +364,7 @@ const BuildSettingsTab: React.FC<Props> = ({
             {chart.git_action_config.dockerfile_path && (
               <InputRow
                 disabled={true}
-                label="Dockerfile path"
+                label="Dockerfile path (absolute path)"
                 type="text"
                 width="100%"
                 value={chart.git_action_config.dockerfile_path}

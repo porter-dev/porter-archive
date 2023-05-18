@@ -1,6 +1,7 @@
 package namespace
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -48,7 +49,7 @@ func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	releases, err := helmAgent.ListReleases(namespace, request.ReleaseListFilter)
+	releases, err := helmAgent.ListReleases(context.Background(), namespace, request.ReleaseListFilter)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -1,6 +1,7 @@
 package release
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -116,7 +117,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// if LatestRevision is set, check that the revision matches the latest revision in the database
 	if request.LatestRevision != 0 {
-		currHelmRelease, err := helmAgent.GetRelease(helmRelease.Name, 0, false)
+		currHelmRelease, err := helmAgent.GetRelease(context.Background(), helmRelease.Name, 0, false)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("could not retrieve latest revision"),
@@ -153,7 +154,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	newHelmRelease, upgradeErr := helmAgent.UpgradeRelease(conf, request.Values, c.Config().DOConf,
+	newHelmRelease, upgradeErr := helmAgent.UpgradeRelease(context.Background(), conf, request.Values, c.Config().DOConf,
 		c.Config().ServerConf.DisablePullSecretsInjection, request.IgnoreDependencies)
 
 	if upgradeErr == nil && newHelmRelease != nil {

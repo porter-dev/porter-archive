@@ -16,21 +16,27 @@ import {
   getAvailabilityStacks,
 } from "../../cluster-dashboard/expanded-chart/deploy-status-section/util";
 import Spacer from "components/porter/Spacer";
+import { pushFiltered } from "shared/routing";
+import { RouteComponentProps, useLocation, withRouter } from "react-router";
 
-type Props = {
+type Props = RouteComponentProps & {
   chart: any;
   service: any;
+  setExpandedJob: any;
 };
 
 const StatusFooter: React.FC<Props> = ({
   chart,
   service,
+  setExpandedJob,
+  ...props
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [controller, setController] = React.useState<any>(null);
   const [available, setAvailable] = React.useState<number>(0);
   const [total, setTotal] = React.useState<number>(0);
   const [stale, setStale] = React.useState<number>(0);
+  const location = useLocation();
 
   useEffect(() => {
     // Do something
@@ -196,14 +202,14 @@ const StatusFooter: React.FC<Props> = ({
     <StyledStatusFooter>
       {service.type === "job" && (
         <Container row>
+          {/*
           <Mi className="material-icons">check</Mi>
           <Text color="helper">
             Last run succeeded at 12:39 PM on 4/13/23
           </Text>
-          {/*
-          <Spacer inline x={1} />
+          */}
           <Button
-            onClick={() => { }}
+            onClick={() => setExpandedJob(service.name)}
             height="30px"
             width="87px"
             color="#ffffff11"
@@ -212,7 +218,6 @@ const StatusFooter: React.FC<Props> = ({
             <I className="material-icons">open_in_new</I>
             History
           </Button>
-          */}
         </Container>
       )}
       {service.type !== "job" && (
@@ -254,7 +259,7 @@ const StatusFooter: React.FC<Props> = ({
   );
 };
 
-export default StatusFooter;
+export default withRouter(StatusFooter);
 
 const StatusDot = styled.div<{ color?: string }>`
   min-width: 7px;

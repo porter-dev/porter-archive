@@ -62,8 +62,7 @@ type Runtime interface {
 	DetectGitlab(
 		*gitlab.Client, // github client to pull contents of files
 		[]*gitlab.TreeNode, // the root folder structure of the git repo
-		string, // owner
-		string, // name
+		string, // repoPath
 		string, // path
 		string, // SHA, branch or tag
 		*BuilderInfo, // paketo

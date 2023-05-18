@@ -11,7 +11,6 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
-	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/integrations/buildpacks"
@@ -39,22 +38,9 @@ func (p *GetGitlabRepoBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	gi, _ := r.Context().Value(types.GitlabIntegrationScope).(*ints.GitlabIntegration)
 
-	request := &types.GetBuildpackRequest{}
+	request := &types.GetGitlabBuildpackRequest{}
 
 	ok := p.DecodeAndValidate(w, r, request)
-
-	if !ok {
-		return
-	}
-
-	owner, name, ok := commonutils.GetOwnerAndNameParams(p, w, r)
-
-	if !ok {
-		return
-	}
-
-	branch, ok := commonutils.GetBranchParam(p, w, r)
-
 	if !ok {
 		return
 	}
@@ -81,9 +67,9 @@ func (p *GetGitlabRepoBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http
 		dir = "."
 	}
 
-	tree, resp, err := client.Repositories.ListTree(fmt.Sprintf("%s/%s", owner, name), &gitlab.ListTreeOptions{
+	tree, resp, err := client.Repositories.ListTree(request.RepoPath, &gitlab.ListTreeOptions{
 		Path: gitlab.String(dir),
-		Ref:  gitlab.String(branch),
+		Ref:  gitlab.String(request.Branch),
 	})
 
 	if resp.StatusCode == http.StatusUnauthorized {
@@ -111,7 +97,7 @@ func (p *GetGitlabRepoBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http
 				}
 			}()
 			buildpacks.Runtimes[idx].DetectGitlab(
-				client, tree, owner, name, dir, branch,
+				client, tree, request.RepoPath, dir, request.Branch,
 				builderInfoMap[buildpacks.PaketoBuilder], builderInfoMap[buildpacks.HerokuBuilder],
 			)
 			wg.Done()

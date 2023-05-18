@@ -15,10 +15,9 @@ import (
 )
 
 type GitlabCI struct {
-	ServerURL    string
-	GitRepoName  string
-	GitRepoOwner string
-	GitBranch    string
+	ServerURL   string
+	GitRepoPath string
+	GitBranch   string
 
 	Repo repository.Repository
 
@@ -44,18 +43,12 @@ func (g *GitlabCI) Setup() error {
 		return err
 	}
 
-	g.pID = fmt.Sprintf("%s/%s", g.GitRepoOwner, g.GitRepoName)
+	g.pID = g.GitRepoPath
 
-	branches, _, err := client.Branches.ListBranches(g.pID, &gitlab.ListBranchesOptions{})
+	err = g.setGitlabDefaultBranch(client)
+
 	if err != nil {
-		return fmt.Errorf("error fetching list of branches: %w", err)
-	}
-
-	for _, branch := range branches {
-		if branch.Default {
-			g.defaultGitBranch = branch.Name
-			break
-		}
+		return err
 	}
 
 	err = g.createGitlabSecret(client)
@@ -194,18 +187,12 @@ func (g *GitlabCI) Cleanup() error {
 		return err
 	}
 
-	g.pID = fmt.Sprintf("%s/%s", g.GitRepoOwner, g.GitRepoName)
+	g.pID = g.GitRepoPath
 
-	branches, _, err := client.Branches.ListBranches(g.pID, &gitlab.ListBranchesOptions{})
+	err = g.setGitlabDefaultBranch(client)
+
 	if err != nil {
-		return fmt.Errorf("error fetching list of branches: %w", err)
-	}
-
-	for _, branch := range branches {
-		if branch.Default {
-			g.defaultGitBranch = branch.Name
-			break
-		}
+		return err
 	}
 
 	err = g.deleteGitlabSecret(client)
@@ -494,4 +481,35 @@ func (g *GitlabCI) getPorterTokenSecretName() string {
 
 func getGitlabStageJobName(releaseName string) string {
 	return fmt.Sprintf("porter-%s", strings.ToLower(strings.ReplaceAll(releaseName, "_", "-")))
+}
+
+func (g *GitlabCI) setGitlabDefaultBranch(client *gitlab.Client) error {
+	opt := &gitlab.ListBranchesOptions{
+		ListOptions: gitlab.ListOptions{
+			PerPage: 20,
+			Page:    1,
+		},
+	}
+
+	for {
+		branches, resp, err := client.Branches.ListBranches(g.pID, opt)
+		if err != nil {
+			return fmt.Errorf("error fetching list of branches: %w", err)
+		}
+
+		for _, branch := range branches {
+			if branch.Default {
+				g.defaultGitBranch = branch.Name
+				return nil
+			}
+		}
+		// Exit the loop when we've seen all pages.
+		if resp.NextPage == 0 {
+			break
+		}
+
+		// Update the page number to get the next page.
+		opt.Page = resp.NextPage
+	}
+	return nil
 }

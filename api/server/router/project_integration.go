@@ -481,8 +481,8 @@ func getProjectIntegrationRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent: basePath,
-				RelativePath: fmt.Sprintf("%s/gitlab/{%s}/repos/{%s}/{%s}/branches",
-					relPath, types.URLParamIntegrationID, types.URLParamGitRepoOwner, types.URLParamGitRepoName),
+				RelativePath: fmt.Sprintf("%s/gitlab/{%s}/repos/branches",
+					relPath, types.URLParamIntegrationID),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -511,9 +511,8 @@ func getProjectIntegrationRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent: basePath,
-				RelativePath: fmt.Sprintf("%s/gitlab/{%s}/repos/{%s}/{%s}/{%s}/contents", relPath,
-					types.URLParamIntegrationID, types.URLParamGitRepoOwner,
-					types.URLParamGitRepoName, types.URLParamGitBranch),
+				RelativePath: fmt.Sprintf("%s/gitlab/{%s}/repos/contents", relPath,
+					types.URLParamIntegrationID),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -542,9 +541,8 @@ func getProjectIntegrationRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent: basePath,
-				RelativePath: fmt.Sprintf("%s/gitlab/{%s}/repos/{%s}/{%s}/{%s}/buildpack/detect", relPath,
-					types.URLParamIntegrationID, types.URLParamGitRepoOwner,
-					types.URLParamGitRepoName, types.URLParamGitBranch),
+				RelativePath: fmt.Sprintf("%s/gitlab/{%s}/repos/buildpack/detect", relPath,
+					types.URLParamIntegrationID),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -573,9 +571,8 @@ func getProjectIntegrationRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent: basePath,
-				RelativePath: fmt.Sprintf("%s/gitlab/{%s}/repos/{%s}/{%s}/{%s}/procfile", relPath,
-					types.URLParamIntegrationID, types.URLParamGitRepoOwner,
-					types.URLParamGitRepoName, types.URLParamGitBranch),
+				RelativePath: fmt.Sprintf("%s/gitlab/{%s}/repos/procfile", relPath,
+					types.URLParamIntegrationID),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

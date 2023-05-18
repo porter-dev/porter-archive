@@ -633,24 +633,27 @@ const detectBuildpack = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
 });
 
 const detectGitlabBuildpack = baseApi<
-  { dir: string },
+  {
+    repo_path: string;
+    branch: string;
+    dir: string;
+  },
   {
     project_id: number;
     integration_id: number;
-    repo_owner: string;
-    repo_name: string;
-    branch: string;
   }
 >(
   "GET",
-  ({ project_id, integration_id, repo_name, repo_owner, branch }) =>
-    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/${branch}/buildpack/detect`
+  ({ project_id, integration_id }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/buildpack/detect`
 );
 
 const getBranchContents = baseApi<
@@ -666,9 +669,11 @@ const getBranchContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/contents`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/contents`;
 });
 
 const getProcfileContents = baseApi<
@@ -684,9 +689,11 @@ const getProcfileContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/procfile`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/procfile`;
 });
 
 const getPorterYamlContents = baseApi<
@@ -702,28 +709,27 @@ const getPorterYamlContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/porteryaml`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/porteryaml`;
 });
 
 const getGitlabProcfileContents = baseApi<
   {
+    repo_path: string;
+    branch: string;
     path: string;
   },
   {
     project_id: number;
     integration_id: number;
-    owner: string;
-    name: string;
-    branch: string;
   }
 >(
   "GET",
-  ({ project_id, integration_id, owner, name, branch }) =>
-    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${owner}/${name}/${encodeURIComponent(
-      branch
-    )}/procfile`
+  ({ project_id, integration_id }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/procfile`
 );
 
 const getBranches = baseApi<
@@ -1558,9 +1564,11 @@ const getEnvGroup = baseApi<
     version?: number;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id
-    }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${pathParams.version ? "&version=" + pathParams.version : ""
-    }`;
+  return `/api/projects/${pathParams.id}/clusters/${
+    pathParams.cluster_id
+  }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${
+    pathParams.version ? "&version=" + pathParams.version : ""
+  }`;
 });
 
 const getConfigMap = baseApi<
@@ -2134,7 +2142,9 @@ const getGitProviders = baseApi<{}, { project_id: number }>(
 );
 
 const getGitlabRepos = baseApi<
-  {},
+  {
+    search_term: string;
+  },
   { project_id: number; integration_id: number }
 >(
   "GET",
@@ -2143,34 +2153,34 @@ const getGitlabRepos = baseApi<
 );
 
 const getGitlabBranches = baseApi<
-  {},
+  {
+    repo_path: string;
+    search_term: string;
+  },
   {
     project_id: number;
     integration_id: number;
-    repo_owner: string;
-    repo_name: string;
   }
 >(
   "GET",
-  ({ project_id, integration_id, repo_owner, repo_name }) =>
-    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/branches`
+  ({ project_id, integration_id }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/branches`
 );
 
 const getGitlabFolderContent = baseApi<
   {
+    repo_path: string;
+    branch: string;
     dir: string;
   },
   {
     project_id: number;
     integration_id: number;
-    repo_owner: string;
-    repo_name: string;
-    branch: string;
   }
 >(
   "GET",
-  ({ project_id, integration_id, repo_owner, repo_name, branch }) =>
-    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/${branch}/contents`
+  ({ project_id, integration_id }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/contents`
 );
 
 const getLogPodValues = baseApi<
@@ -2487,7 +2497,7 @@ const removeStackEnvGroup = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/remove_env_group/${env_group_name}`
 );
 
-const getGithubStatus = baseApi<{}, {}>("GET", ({ }) => `/api/status/github`);
+const getGithubStatus = baseApi<{}, {}>("GET", ({}) => `/api/status/github`);
 
 const createSecretAndOpenGitHubPullRequest = baseApi<
   {

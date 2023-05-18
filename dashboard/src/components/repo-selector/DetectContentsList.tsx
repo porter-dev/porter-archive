@@ -132,13 +132,14 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
       return api
         .getGitlabFolderContent(
           "<token>",
-          { dir: currentDir || "./" },
+          {
+            repo_path: actionConfig.git_repo,
+            branch: branch,
+            dir: currentDir || "./",
+          },
           {
             project_id: currentProject.id,
             integration_id: actionConfig.gitlab_integration_id,
-            repo_owner: actionConfig.git_repo.split("/")[0],
-            repo_name: actionConfig.git_repo.split("/")[1],
-            branch: branch,
           }
         )
         .then((res) => {

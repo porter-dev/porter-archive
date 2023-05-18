@@ -161,13 +161,13 @@ func (runtime *rubyRuntime) detectRackupGithub(
 }
 
 func (runtime *rubyRuntime) detectRackupGitlab(
-	client *gitlab.Client, owner, name, ref string, results chan struct {
+	client *gitlab.Client, repoPath, ref string, results chan struct {
 		string
 		bool
 	},
 ) {
 	fileContent, _, err := client.RepositoryFiles.GetRawFile(
-		fmt.Sprintf("%s/%s", owner, name), "Gemfile.lock", &gitlab.GetRawFileOptions{
+		repoPath, "Gemfile.lock", &gitlab.GetRawFileOptions{
 			Ref: gitlab.String(ref),
 		})
 	if err != nil {
@@ -325,7 +325,7 @@ func (runtime *rubyRuntime) DetectGithub(
 func (runtime *rubyRuntime) DetectGitlab(
 	client *gitlab.Client,
 	tree []*gitlab.TreeNode,
-	owner, name, path, ref string,
+	repoPath, path, ref string,
 	paketo, heroku *BuilderInfo,
 ) error {
 	gemfileFound := false
@@ -361,13 +361,13 @@ func (runtime *rubyRuntime) DetectGitlab(
 	}
 
 	fileContent, _, err := client.RepositoryFiles.GetRawFile(
-		fmt.Sprintf("%s/%s", owner, name), "Gemfile", &gitlab.GetRawFileOptions{
+		repoPath, "Gemfile", &gitlab.GetRawFileOptions{
 			Ref: gitlab.String(ref),
 		})
 	if err != nil {
 		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
 		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
-		return fmt.Errorf("error fetching contents of Gemfile for %s/%s: %v", owner, name, err)
+		return fmt.Errorf("error fetching contents of Gemfile for %s: %v", repoPath, err)
 	}
 	gemfileContent := string(fileContent)
 
@@ -405,7 +405,7 @@ func (runtime *rubyRuntime) DetectGitlab(
 	}
 	go runtime.detectPassenger(gemfileContent, results)
 	if !configRuFound && gemfileLockFound {
-		go runtime.detectRackupGitlab(client, owner, name, ref, results)
+		go runtime.detectRackupGitlab(client, repoPath, ref, results)
 	}
 	if rakefileFound {
 		go runtime.detectRake(gemfileContent, results)

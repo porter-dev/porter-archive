@@ -46,6 +46,7 @@ import ActivityFeed from "./ActivityFeed";
 import JobRuns from "./JobRuns";
 import MetricsSection from "./MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
+import ExpandedJob from "./expanded-job/ExpandedJob";
 
 type Props = RouteComponentProps & {};
 
@@ -85,6 +86,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [porterJson, setPorterJson] = useState<
     z.infer<typeof PorterYamlSchema> | undefined
   >(undefined);
+  const [expandedJob, setExpandedJob] = useState(null);
 
   const [services, setServices] = useState<Service[]>([]);
   const [releaseJob, setReleaseJob] = useState<ReleaseService[]>([]);
@@ -559,6 +561,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               chart={appData.chart}
               services={services}
               addNewText={"Add a new service"}
+              setExpandedJob={(x: string) => setExpandedJob(x)}
             />
             <Spacer y={1} />
             <Button
@@ -667,6 +670,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               lastRunStatus="all"
               namespace={appData.chart?.namespace}
               sortType="Newest"
+              releaseName={appData.app.name + "-r"}
             />
             }
           </>
@@ -675,6 +679,16 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         return <div>Tab not found</div>;
     }
   };
+
+  if (expandedJob) {
+    return (
+      <ExpandedJob 
+        appName={appData.app.name}
+        jobName={expandedJob}
+        goBack={() => setExpandedJob(null)}
+      />
+    )
+  }
 
   return (
     <>

@@ -28,8 +28,6 @@ func NewDeleteGitlabIntegrationHandler(
 }
 
 func (p *DeleteGitlabIntegration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("I'm running!")
-
 	gi, _ := r.Context().Value(types.GitlabIntegrationScope).(*ints.GitlabIntegration)
 
 	metadata := p.Config().Metadata
@@ -41,7 +39,7 @@ func (p *DeleteGitlabIntegration) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	err := p.Repo().GitlabIntegration().DeleteGitlabIntegrationByID(gi.ProjectID, gi.ID)
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting gitlab integration: %w", err)))
 		return
 	}
 

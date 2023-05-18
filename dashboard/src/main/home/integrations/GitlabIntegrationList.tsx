@@ -69,11 +69,7 @@ const GitlabIntegrationList: React.FC<Props> = (props) => {
         {props.gitlabData?.length > 0 ? (
           props.gitlabData.map((inst, idx) => {
             return (
-              <Integration
-                onClick={() => {}}
-                disabled={false}
-                key={`${inst.team_id}-${inst.channel}`}
-              >
+              <Integration onClick={() => {}} disabled={false} key={inst.id}>
                 <MainRow disabled={false}>
                   <Flex>
                     <Icon src={integrationList.gitlab.icon} />
@@ -83,7 +79,6 @@ const GitlabIntegrationList: React.FC<Props> = (props) => {
                     <i
                       className="material-icons"
                       onClick={() => {
-                        console.log(inst);
                         setCurrentState({
                           isDelete: true,
                           deleteName: inst.instance_url,

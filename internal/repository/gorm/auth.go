@@ -1622,7 +1622,7 @@ func (repo *GitlabIntegrationRepository) ListGitlabIntegrationsByProjectID(proje
 }
 
 func (repo *GitlabIntegrationRepository) DeleteGitlabIntegrationByID(projectID, id uint) error {
-	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).Delete(ints.GitlabIntegration{}).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).Delete(&ints.GitlabIntegration{}).Error; err != nil {
 		return err
 	}
 

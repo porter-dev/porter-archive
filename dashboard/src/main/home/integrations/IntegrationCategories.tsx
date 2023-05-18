@@ -94,6 +94,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
             setGitlabData(res.data);
             setLoading(false);
           });
+        break;
       default:
         console.log("Unknown integration category.");
     }

@@ -427,6 +427,7 @@ func getProjectIntegrationRoutes(
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
+				types.GitlabIntegrationScope,
 			},
 		},
 	)

@@ -173,11 +173,14 @@ func buildReleaseValues(release *App, env map[string]string, imageInfo types.Ima
 	}
 
 	// prepend launcher if we need to
-	if injectLauncher && release.Run != nil && !strings.HasPrefix(*release.Run, "launcher") && !strings.HasPrefix(*release.Run, "/cnb/lifecycle/launcher") {
-		if helm_values["container"] == nil {
-			helm_values["container"] = map[string]interface{}{}
+	if helm_values["container"] != nil {
+		containerMap := helm_values["container"].(map[string]interface{})
+		if containerMap["command"] != nil {
+			command := containerMap["command"].(string)
+			if injectLauncher && !strings.HasPrefix(command, "launcher") && !strings.HasPrefix(command, "/cnb/lifecycle/launcher") {
+				containerMap["command"] = fmt.Sprintf("/cnb/lifecycle/launcher %s", command)
+			}
 		}
-		helm_values["container"].(map[string]interface{})["command"] = fmt.Sprintf("/cnb/lifecycle/launcher %s", *release.Run)
 	}
 
 	return helm_values

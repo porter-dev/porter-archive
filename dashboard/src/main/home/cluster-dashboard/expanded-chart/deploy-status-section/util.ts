@@ -36,8 +36,8 @@ export const getAvailability = (kind: string, c: any) => {
     case "replicaset":
       return [
         c.status?.availableReplicas ||
-          c.status?.replicas - c.status?.unavailableReplicas ||
-          0,
+        c.status?.replicas - c.status?.unavailableReplicas ||
+        0,
         c.status?.replicas || 0,
       ];
     case "statefulset":
@@ -52,28 +52,15 @@ export const getAvailability = (kind: string, c: any) => {
   }
 };
 
-export const getAvailabilityStacks = (kind: string, c: any) => {
-  switch (kind?.toLowerCase()) {
-    case "deployment":
-    case "replicaset":
-      const available =
-        c.status?.updatedReplicas ||
-        c.status?.updatedReplicas ||
-        c.status?.replicas - c.status?.unavailableReplicas ||
-        0;
-      const total = c.spec.replicas;
-      const stale =
-        c.status?.availableReplicas - c.status?.updatedReplicas || 0;
-      return [available, total, stale];
-    case "statefulset":
-      return [c.status?.readyReplicas || 0, c.status?.replicas || 0, 0];
-    case "daemonset":
-      return [
-        c.status?.numberAvailable || 0,
-        c.status?.desiredNumberScheduled || 0,
-        0,
-      ];
-    case "job":
-      return [1, 1, 0];
-  }
+export const getAvailabilityStacks = (c: any) => {
+
+  const available =
+    c.status?.updatedReplicas ||
+    c.status?.replicas - c.status?.unavailableReplicas ||
+    0;
+  const unavailable = c.status?.unavailableReplicas
+  const total = c.status.replicas;
+  const stale = (unavailable != null ? c.status?.updatedReplicas : c.status?.availableReplicas - c.status?.updatedReplicas) || 0;
+  return [available, total, stale, unavailable];
+
 };

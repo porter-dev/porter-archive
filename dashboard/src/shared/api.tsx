@@ -716,6 +716,20 @@ const getPorterYamlContents = baseApi<
   }/${encodeURIComponent(pathParams.branch)}/porteryaml`;
 });
 
+const getGitlabPorterYamlContents = baseApi<
+  {
+    repo_path: string;
+    branch: string;
+    path: string;
+  },
+  {
+    project_id: number;
+    integration_id: number;
+  }
+>("GET", ({ project_id, integration_id }) => {
+  return `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/porteryaml`;
+});
+
 const getGitlabProcfileContents = baseApi<
   {
     repo_path: string;
@@ -2717,6 +2731,7 @@ export default {
   getGitlabRepos,
   getGitlabBranches,
   getGitlabFolderContent,
+  getGitlabPorterYamlContents,
   getLogPodValues,
   getLogs,
   listPorterEvents,

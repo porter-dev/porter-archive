@@ -474,7 +474,7 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/{owner}/{name}/branches
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/branches
 	listGitlabRepoBranchesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -504,7 +504,7 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/{owner}/{name}/{branch}/contents
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/contents
 	getGitlabRepoContentsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -534,7 +534,7 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/{owner}/{name}/{branch}/buildpack/detect
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/buildpack/detect
 	getGitlabRepoBuildpackEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -564,7 +564,7 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/{owner}/{name}/{branch}/procfile
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/procfile
 	getGitlabRepoProcfileEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -591,6 +591,36 @@ func getProjectIntegrationRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: getGitlabRepoProcfileEndpoint,
 		Handler:  getGitlabRepoProcfileHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/porteryaml
+	getGitlabRepoPorterYamlContentsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf("%s/gitlab/{%s}/repos/porteryaml", relPath,
+					types.URLParamIntegrationID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitlabIntegrationScope,
+			},
+		},
+	)
+
+	getGitlabRepoPorterYamlContentsHandler := project_integration.NewGetGitlabRepoPorterYamlContentsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getGitlabRepoPorterYamlContentsEndpoint,
+		Handler:  getGitlabRepoPorterYamlContentsHandler,
 		Router:   r,
 	})
 

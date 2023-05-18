@@ -60,7 +60,7 @@ func (g *GitlabCI) Setup() error {
 	jobName := getGitlabStageJobName(g.ReleaseName)
 
 	ciFile, resp, err := client.RepositoryFiles.GetRawFile(g.pID, ".gitlab-ci.yml", &gitlab.GetRawFileOptions{
-		Ref: gitlab.String(g.defaultGitBranch),
+		Ref: gitlab.String(g.GitBranch),
 	})
 
 	if resp.StatusCode == http.StatusNotFound {
@@ -74,7 +74,7 @@ func (g *GitlabCI) Setup() error {
 		contentsYAML, _ := yaml.Marshal(contentsMap)
 
 		_, _, err = client.RepositoryFiles.CreateFile(g.pID, ".gitlab-ci.yml", &gitlab.CreateFileOptions{
-			Branch:        gitlab.String(g.defaultGitBranch),
+			Branch:        gitlab.String(g.GitBranch),
 			AuthorName:    gitlab.String("Porter Bot"),
 			AuthorEmail:   gitlab.String("contact@getporter.dev"),
 			Content:       gitlab.String(string(contentsYAML)),
@@ -166,7 +166,7 @@ func (g *GitlabCI) Setup() error {
 		}
 
 		_, _, err = client.RepositoryFiles.UpdateFile(g.pID, ".gitlab-ci.yml", &gitlab.UpdateFileOptions{
-			Branch:        gitlab.String(g.defaultGitBranch),
+			Branch:        gitlab.String(g.GitBranch),
 			AuthorName:    gitlab.String("Porter Bot"),
 			AuthorEmail:   gitlab.String("contact@getporter.dev"),
 			Content:       gitlab.String(string(contentsYAML)),
@@ -204,7 +204,7 @@ func (g *GitlabCI) Cleanup() error {
 	jobName := getGitlabStageJobName(g.ReleaseName)
 
 	ciFile, resp, err := client.RepositoryFiles.GetRawFile(g.pID, ".gitlab-ci.yml", &gitlab.GetRawFileOptions{
-		Ref: gitlab.String(g.defaultGitBranch),
+		Ref: gitlab.String(g.GitBranch),
 	})
 
 	if resp.StatusCode == http.StatusNotFound {
@@ -280,7 +280,7 @@ func (g *GitlabCI) Cleanup() error {
 	}
 
 	_, _, err = client.RepositoryFiles.UpdateFile(g.pID, ".gitlab-ci.yml", &gitlab.UpdateFileOptions{
-		Branch:        gitlab.String(g.defaultGitBranch),
+		Branch:        gitlab.String(g.GitBranch),
 		AuthorName:    gitlab.String("Porter Bot"),
 		AuthorEmail:   gitlab.String("contact@getporter.dev"),
 		Content:       gitlab.String(string(contentsYAML)),

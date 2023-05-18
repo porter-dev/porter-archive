@@ -70,7 +70,7 @@ const RepoList: React.FC<Props> = ({
   const [repoLoading, setRepoLoading] = useState(true);
   const [selectedRepo, setSelectedRepo] = useState(null);
   const [repoError, setRepoError] = useState(false);
-  const [searchFilter, setSearchFilter] = useState(null);
+  const [searchFilter, setSearchFilter] = useState<string>("");
   const [hasProviders, setHasProviders] = useState(true);
   const { currentProject, setCurrentError } = useContext(Context);
 

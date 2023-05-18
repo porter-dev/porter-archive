@@ -455,6 +455,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           );
         }
         if (imageIsPlaceholder) {
+          console.log(props.currentChart);
           return (
             <Placeholder>
               <TextWrap>
@@ -462,17 +463,30 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   <Spinner src={loadingSrc} /> This application is currently
                   being deployed
                 </Header>
-                Navigate to the{" "}
-                <A
-                  href={
-                    props.currentChart.git_action_config &&
-                    `https://github.com/${props.currentChart.git_action_config?.git_repo}/actions`
-                  }
-                  target={"_blank"}
-                >
-                  Actions
-                </A>{" "}
-                tab of your GitHub repo to view live build logs.
+                {props.currentChart.git_action_config &&
+                props.currentChart.git_action_config.gitlab_integration_id ? (
+                  <>
+                    Navigate to the{" "}
+                    <A
+                      href={`https://gitlab.com/${props.currentChart.git_action_config?.git_repo}/-/jobs`}
+                      target={"_blank"}
+                    >
+                      Jobs
+                    </A>{" "}
+                    tab of your Gitlab repo to view live build logs.
+                  </>
+                ) : (
+                  <>
+                    Navigate to the{" "}
+                    <A
+                      href={`https://github.com/${props.currentChart.git_action_config?.git_repo}/actions`}
+                      target={"_blank"}
+                    >
+                      Actions
+                    </A>{" "}
+                    tab of your GitHub repo to view live build logs.
+                  </>
+                )}
               </TextWrap>
             </Placeholder>
           );

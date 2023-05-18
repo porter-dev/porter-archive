@@ -55,6 +55,11 @@ type GetGitlabProcfileRequest struct {
 	GetProcfileRequest
 }
 
+type GetGitlabPorterYamlContentsRequest struct {
+	GitlabRepoBranchRequest
+	GetPorterYamlRequest
+}
+
 type GithubDirectoryRequest struct {
 	Dir string `schema:"dir" form:"required"`
 }

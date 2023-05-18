@@ -112,7 +112,7 @@ type ServerConf struct {
 	DisableAllowlist bool `env:"DISABLE_ALLOWLIST,default=true"`
 
 	// Enable gitlab integration
-	EnableGitlab bool `env:"ENABLE_GITLAB,default=true"`
+	EnableGitlab bool `env:"ENABLE_GITLAB,default=false"`
 
 	// DisableRegistrySecretsInjection is used to denote if Porter should not inject
 	// imagePullSecrets into a kubernetes deployment (Porter application)

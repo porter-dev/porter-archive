@@ -102,7 +102,3 @@ emptyDir:
 podSecurityContext: 
   runAsNonRoot: false
   runAsUser: 0
-
-server:
-  gitlab:
-    enabled: true

@@ -187,8 +187,6 @@ const JobRuns: React.FC<Props> = ({
           urlParams.append("project_id", String(currentProject.id));
           urlParams.append("chart_revision", String(0));
           urlParams.append("job", row.original.metadata.name);
-          console.log(row.original)
-
           if (!setExpandedRun) {
             return (
               <RedirectButton
@@ -479,6 +477,7 @@ class JobRunsFilter {
     this.jobRuns = newJobRuns;
   }
 
+  // TODO: to support this filter, add appName filter (see dontFilter())
   filterByFailed() {
     return this.jobRuns.filter((jobRun) => jobRun?.status?.failed);
   }

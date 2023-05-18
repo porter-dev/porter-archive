@@ -77,11 +77,11 @@ type Autoscaling = {
 type livenessCommand = {
     command: ServiceString,
     enabled: ServiceBoolean,
-    failureThreshold: ServiceNum,
-    initialDelaySeconds: ServiceNum,
-    periodSeconds: ServiceNum,
-    successThreshold: ServiceNum,
-    timeoutSeconds: ServiceNum,
+    failureThreshold: ServiceString,
+    initialDelaySeconds: ServiceString,
+    periodSeconds: ServiceString,
+    successThreshold: ServiceString,
+    timeoutSeconds: ServiceString,
 }
 type Auth ={
     enabled: ServiceBoolean,
@@ -331,8 +331,57 @@ const WebService = {
                 porter_hosts: service.ingress.porterHosts.value ? [service.ingress.porterHosts.value] : [],
             },
             health: {
+                startupProbe:{
+                    auth:{
+                        enabled: service.health.startupProbe.auth.enabled.value,
+                        password: service.health.startupProbe.auth.password.value,
+                        username: service.health.startupProbe.auth.username.value,
+                    },
+                    enabled: service.health.startupProbe.enabled.value,
+                    failureThreshold:   service.health.startupProbe.failureThreshold.value,
+                    path: service.health.startupProbe.path.value,
+                    periodSeconds: service.health.startupProbe.periodSeconds.value,
+                    scheme: service.health.startupProbe.scheme.value,
+                    timeoutSeconds: service.health.startupProbe.timeoutSeconds.value,
+                },
+                readinessProbe:{
+                    auth:{
+                        enabled: service.health.readinessProbe.auth.enabled.value,
+                        password: service.health.readinessProbe.auth.password.value,
+                        username: service.health.readinessProbe.auth.username.value,
+                    },
+                    enabled: service.health.readinessProbe.enabled.value,
+                    failureThreshold:service.health.readinessProbe.failureThreshold.value,
+                    initialDelaySeconds: service.health.readinessProbe.initialDelaySeconds.value,
+                    path: service.health.readinessProbe.path.value,
+                    periodSeconds: service.health.readinessProbe.periodSeconds.value,
+                    scheme: service.health.readinessProbe.scheme.value,
+                    timeoutSeconds: service.health.readinessProbe.timeoutSeconds.value,
+                    successThreshold: service.health.readinessProbe.successThreshold.value,
+                },
+                livenessCommand:{
+                    command: service.health.livenessCommand.command.value,
+                    enabled: service.health.livenessCommand.enabled.value,
+                    failureThreshold: service.health.livenessCommand.failureThreshold.value,
+                    initialDelaySeconds: service.health.livenessCommand.initialDelaySeconds.value,
+                    periodSeconds: service.health.livenessCommand.periodSeconds.value,
+                    timeoutSeconds:service.health.livenessCommand.timeoutSeconds.value,
+                    successThreshold: service.health.livenessCommand.successThreshold.value,
+                },
                 livenessProbe:{
-                    enabled: ServiceField.boolean(service.health?.livenessProbe?.enabled.value),
+                    auth:{
+                        enabled: service.health.livenessProbe.auth.enabled.value,
+                        password: service.health.livenessProbe.auth.password.value,
+                        username: service.health.livenessProbe.auth.username.value,
+                    },
+                    failureThreshold: service.health.livenessProbe.failureThreshold.value,
+                    initialDelaySeconds: service.health.livenessProbe.initialDelaySeconds.value,
+                    path: service.health.livenessProbe.path.value,
+                    periodSeconds: service.health.livenessProbe.periodSeconds.value,
+                    scheme: service.health.livenessProbe.scheme.value,
+                    successThreshold: service.health.livenessProbe.successThreshold.value,
+                    timeoutSeconds: service.health.livenessProbe.timeoutSeconds.value,
+                    enabled: service.health.livenessProbe.enabled.value,
                 },
             }
         }
@@ -360,8 +409,57 @@ const WebService = {
             port: ServiceField.string(values.container?.port ?? '', porterJson?.apps?.[name]?.config?.container?.port),
             canDelete: porterJson?.apps?.[name] == null,
             health: {
+                startupProbe:{
+                    auth:{
+                        enabled: ServiceField.boolean(values.health.startupProbe.auth.enabled, porterJson?.apps?.[name]?.config?.health?.startupProbe?.auth?.enabled),
+                        password: ServiceField.string('', porterJson?.apps?.[name]?.config?.health?.startupProbe?.auth?.password),
+                        username: ServiceField.string('', porterJson?.apps?.[name]?.config?.health?.startupProbe?.auth?.username)
+                    },
+                    enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.health?.startupProbe?.enabled),
+                    failureThreshold: ServiceField.string('3', porterJson?.apps?.[name]?.config?.health?.startupProbe?.failureThreshold),
+                    path: ServiceField.string('/startupz', porterJson?.apps?.[name]?.config?.health?.startupProbe?.path),
+                    periodSeconds: ServiceField.string('5', porterJson?.apps?.[name]?.config?.health?.startupProbe?.periodSeconds),
+                    scheme: ServiceField.string('HTTP', porterJson?.apps?.[name]?.config?.health?.startupProbe?.scheme),
+                    timeoutSeconds: ServiceField.string('1', porterJson?.apps?.[name]?.config?.health?.startupProbe?.timeoutSeconds),
+                },
+                readinessProbe:{
+                    auth:{
+                        enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.health?.readinessProbe?.auth?.enabled),
+                        password: ServiceField.string('', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.auth?.password),
+                        username: ServiceField.string('', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.auth?.username)
+                    },
+                    enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.health?.readinessProbe?.enabled),
+                    failureThreshold: ServiceField.string('3', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.failureThreshold),
+                    initialDelaySeconds: ServiceField.string('0', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.initialDelaySeconds),
+                    path: ServiceField.string('/readyz', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.path),
+                    periodSeconds: ServiceField.string('5', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.periodSeconds),
+                    scheme: ServiceField.string('HTTP', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.scheme),
+                    timeoutSeconds: ServiceField.string('1', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.timeoutSeconds),
+                    successThreshold: ServiceField.string('1', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.successThreshold),
+                },
+                livenessCommand:{
+                    command: ServiceField.string('ls -l', porterJson?.apps?.[name]?.config?.health?.livenessCommand?.command),
+                    enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.health?.livenessCommand?.enabled),
+                    failureThreshold: ServiceField.string('3', porterJson?.apps?.[name]?.config?.health?.livenessCommand?.failureThreshold),
+                    initialDelaySeconds: ServiceField.string('5', porterJson?.apps?.[name]?.config?.health?.livenessCommand?.initialDelaySeconds),
+                    periodSeconds: ServiceField.string('5', porterJson?.apps?.[name]?.config?.health?.livenessCommand?.periodSeconds),
+                    timeoutSeconds: ServiceField.string('1', porterJson?.apps?.[name]?.config?.health?.livenessCommand?.timeoutSeconds),
+                    successThreshold: ServiceField.string('1', porterJson?.apps?.[name]?.config?.health?.livenessCommand?.successThreshold),
+                },
                 livenessProbe:{
-                    enabled: ServiceField.boolean(values.health?.livenessProbe?.enabled ?? false, porterJson?.apps?.[name]?.config?.health.livenessProbe?.enabled),
+                    auth:{
+                        enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.health?.livenessProbe?.auth?.enabled),
+                        password: ServiceField.string('', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.auth?.password),
+                        username: ServiceField.string('', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.auth?.username)
+                    },
+                    failureThreshold: ServiceField.string('3', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.failureThreshold),
+                    initialDelaySeconds: ServiceField.string('0', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.initialDelaySeconds),
+                    path: ServiceField.string('/livez', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.path),
+                    periodSeconds: ServiceField.string('5', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.periodSeconds),
+                    scheme: ServiceField.string('HTTP', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.scheme),
+                    successThreshold: ServiceField.string('1', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.successThreshold),
+                    timeoutSeconds: ServiceField.string('1', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.timeoutSeconds),
+                    enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.health?.livenessProbe?.enabled),
                 },
             }
         }

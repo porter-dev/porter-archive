@@ -416,6 +416,32 @@ func getProjectIntegrationRoutes(
 	// PATCH /api/projects/{project_id}/integrations/gitlab/{integration_id}
 
 	// DELETE /api/projects/{project_id}/integrations/gitlab/{integration_id}
+	deleteGitlabEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/gitlab/{integration_id}",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	deleteGitlabHandler := project_integration.NewDeleteGitlabIntegrationHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteGitlabEndpoint,
+		Handler:  deleteGitlabHandler,
+		Router:   r,
+	})
 
 	// GET /api/projects/{project_id}/integrations/git
 	listGitIntegrationsEndpoint := factory.NewAPIEndpoint(

@@ -155,7 +155,12 @@ const IntegrationCategories: React.FC<Props> = (props) => {
       {loading ? (
         <Loading />
       ) : props.category === "gitlab" ? (
-        <GitlabIntegrationList gitlabData={gitlabData} />
+        <GitlabIntegrationList
+          gitlabData={gitlabData}
+          updateIntegrationList={() =>
+            getIntegrationsForCategory(props.category)
+          }
+        />
       ) : props.category == "slack" ? (
         <SlackIntegrationList slackData={slackData} />
       ) : (

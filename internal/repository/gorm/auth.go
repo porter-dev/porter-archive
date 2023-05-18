@@ -1621,6 +1621,14 @@ func (repo *GitlabIntegrationRepository) ListGitlabIntegrationsByProjectID(proje
 	return gi, nil
 }
 
+func (repo *GitlabIntegrationRepository) DeleteGitlabIntegrationByID(projectID, id uint) error {
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).Delete(ints.GitlabIntegration{}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // EncryptGitlabIntegrationData will encrypt the gitlab integration data before
 // writing to the DB
 func (repo *GitlabIntegrationRepository) EncryptGitlabIntegrationData(

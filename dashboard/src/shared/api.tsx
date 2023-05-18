@@ -480,6 +480,16 @@ const deleteRegistryIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}`;
 });
 
+const deleteGitlabIntegration = baseApi<
+  {},
+  {
+    project_id: number;
+    integration_id: number;
+  }
+>("DELETE", ({ project_id, integration_id }) => {
+  return `/api/projects/${project_id}/integrations/gitlab/${integration_id}`;
+});
+
 const deleteSlackIntegration = baseApi<
   {},
   {
@@ -2578,6 +2588,7 @@ export default {
   deletePod,
   deleteProject,
   deleteRegistryIntegration,
+  deleteGitlabIntegration,
   deleteSlackIntegration,
   updateNotificationConfig,
   getNotificationConfig,

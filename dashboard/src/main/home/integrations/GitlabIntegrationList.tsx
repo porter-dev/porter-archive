@@ -74,6 +74,11 @@ const GitlabIntegrationList: React.FC<Props> = (props) => {
                   <Flex>
                     <Icon src={integrationList.gitlab.icon} />
                     <Label>{inst.instance_url}</Label>
+                    {inst.username.includes("Unable") ? (
+                      <ErrorLabel>[{inst.username}]</ErrorLabel>
+                    ) : (
+                      <UsernameLabel>({inst.username})</UsernameLabel>
+                    )}
                   </Flex>
                   <MaterialIconTray disabled={false}>
                     <i
@@ -129,6 +134,20 @@ const Label = styled.div`
   color: #ffffff;
   font-size: 14px;
   font-weight: 500;
+`;
+
+const UsernameLabel = styled.div`
+  color: #ffffff66;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px;
+`;
+
+const ErrorLabel = styled.div`
+  color: #f6685e;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px;
 `;
 
 const StyledIntegrationList = styled.div`

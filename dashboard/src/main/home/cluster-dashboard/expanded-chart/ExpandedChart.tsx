@@ -472,7 +472,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     >
                       Jobs
                     </A>{" "}
-                    tab of your Gitlab repo to view live build logs.
+                    tab of your GitLab repo to view live build logs.
                   </>
                 ) : (
                   <>

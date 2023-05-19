@@ -55,7 +55,7 @@ const GitlabIntegrationList: React.FC<Props> = (props) => {
     <>
       <ConfirmOverlay
         show={currentState.isDelete}
-        message={`Are you sure you want to delete the Gitlab integration for instance ${currentState.deleteName}?`}
+        message={`Are you sure you want to delete the GitLab integration for instance ${currentState.deleteName}?`}
         onYes={handleDeleteIntegration}
         onNo={() =>
           setCurrentState({

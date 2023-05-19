@@ -364,6 +364,32 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
                     "You may only edit this field in your porter.yaml."
                   }
                 />
+                <Spacer y={0.5} />
+                <Input
+                  label="Retry Interval"
+                  placeholder="ex: 80"
+                  value={service.health.livenessProbe.periodSeconds.value}
+                  disabled={service.health.livenessProbe.periodSeconds.readOnly}
+                  width="300px"
+                  setValue={(e) => {
+                    editService({
+                      ...service,
+                      health: {
+                        ...service.health,
+                        livenessProbe: {
+                          ...service.health.livenessProbe,
+                          periodSeconds: {
+                            readOnly: false,
+                            value: e,
+                          },
+                        },
+                      },
+                    });
+                  }}
+                  disabledTooltip={
+                    "You may only edit this field in your porter.yaml."
+                  }
+                />
               </AnimateHeight>
             </>
           )}
@@ -453,6 +479,32 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
                         startupProbe: {
                           ...service.health.startupProbe,
                           failureThreshold: {
+                            readOnly: false,
+                            value: e,
+                          },
+                        },
+                      },
+                    });
+                  }}
+                  disabledTooltip={
+                    "You may only edit this field in your porter.yaml."
+                  }
+                />
+                <Spacer y={0.5} />
+                <Input
+                  label="Retry Interval"
+                  placeholder="ex: 80"
+                  value={service.health.startupProbe.periodSeconds.value}
+                  disabled={service.health.startupProbe.periodSeconds.readOnly}
+                  width="300px"
+                  setValue={(e) => {
+                    editService({
+                      ...service,
+                      health: {
+                        ...service.health,
+                        startupProbe: {
+                          ...service.health.startupProbe,
+                          periodSeconds: {
                             readOnly: false,
                             value: e,
                           },

@@ -677,6 +677,21 @@ func (repo *GitlabIntegrationRepository) ListGitlabIntegrationsByProjectID(proje
 	return res, nil
 }
 
+func (repo *GitlabIntegrationRepository) DeleteGitlabIntegrationByID(projectID, id uint) error {
+	if !repo.canQuery {
+		return errors.New("Cannot write database")
+	}
+
+	if int(id-1) >= len(repo.gitlabIntegrations) || repo.gitlabIntegrations[id-1] == nil || repo.gitlabIntegrations[id-1].ProjectID != projectID {
+		return gorm.ErrRecordNotFound
+	}
+
+	index := int(id - 1)
+	repo.gitlabIntegrations[index] = nil
+
+	return nil
+}
+
 type GitlabAppOAuthIntegrationRepository struct {
 	canQuery                   bool
 	gitlabAppOAuthIntegrations []*ints.GitlabAppOAuthIntegration

@@ -185,7 +185,12 @@ type GitlabIntegration struct {
 	InstanceURL string `json:"instance_url"`
 }
 
-type ListGitlabResponse []*GitlabIntegration
+type GitlabIntegrationWithUsername struct {
+	GitlabIntegration
+	Username string `json:"username"`
+}
+
+type ListGitlabResponse []*GitlabIntegrationWithUsername
 
 type CreateGitlabRequest struct {
 	InstanceURL     string `json:"instance_url"`

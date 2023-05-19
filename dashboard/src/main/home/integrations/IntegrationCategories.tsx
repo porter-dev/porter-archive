@@ -94,6 +94,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
             setGitlabData(res.data);
             setLoading(false);
           });
+        break;
       default:
         console.log("Unknown integration category.");
     }
@@ -155,7 +156,12 @@ const IntegrationCategories: React.FC<Props> = (props) => {
       {loading ? (
         <Loading />
       ) : props.category === "gitlab" ? (
-        <GitlabIntegrationList gitlabData={gitlabData} />
+        <GitlabIntegrationList
+          gitlabData={gitlabData}
+          updateIntegrationList={() =>
+            getIntegrationsForCategory(props.category)
+          }
+        />
       ) : props.category == "slack" ? (
         <SlackIntegrationList slackData={slackData} />
       ) : (

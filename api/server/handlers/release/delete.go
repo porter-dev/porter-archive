@@ -2,9 +2,7 @@ package release
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -60,17 +58,10 @@ func (c *DeleteReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 			if gitAction != nil && gitAction.ID != 0 {
 				if gitAction.GitlabIntegrationID != 0 {
-					repoSplit := strings.Split(gitAction.GitRepo, "/")
-
-					if len(repoSplit) != 2 {
-						c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("invalid formatting of repo name")))
-						return
-					}
 
 					giRunner := &gitlab.GitlabCI{
 						ServerURL:        c.Config().ServerConf.ServerURL,
-						GitRepoOwner:     repoSplit[0],
-						GitRepoName:      repoSplit[1],
+						GitRepoPath:      gitAction.GitRepo,
 						Repo:             c.Repo(),
 						ProjectID:        cluster.ProjectID,
 						ClusterID:        cluster.ID,

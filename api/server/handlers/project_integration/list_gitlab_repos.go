@@ -50,10 +50,21 @@ func (p *ListGitlabReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	giProjects, resp, err := client.Projects.ListProjects(&gitlab.ListProjectsOptions{
+	searchTerm := r.URL.Query().Get("searchTerm")
+
+	opts := &gitlab.ListProjectsOptions{
 		Simple:     gitlab.Bool(true),
 		Membership: gitlab.Bool(true),
-	})
+		ListOptions: gitlab.ListOptions{
+			PerPage: 20,
+			Page:    1,
+		},
+		Search:           gitlab.String(searchTerm),
+		SearchNamespaces: gitlab.Bool(true),
+	}
+
+	var res []string
+	giProjects, resp, err := client.Projects.ListProjects(opts)
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("unauthorized gitlab user"), http.StatusUnauthorized))
@@ -64,8 +75,6 @@ func (p *ListGitlabReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
-	var res []string
 
 	for _, giProject := range giProjects {
 		res = append(res, giProject.PathWithNamespace)

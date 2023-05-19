@@ -95,14 +95,14 @@ const BuildpackConfigSection = forwardRef<
     if (actionConfig.kind === "gitlab") {
       return api.detectGitlabBuildpack<DetectBuildpackResponse>(
         "<token>",
-        { dir: actionConfig.folder_path || "." },
+        {
+          repo_path: actionConfig.git_repo,
+          branch: actionConfig.git_branch,
+          dir: actionConfig.folder_path || ".",
+        },
         {
           project_id: currentProject.id,
           integration_id: actionConfig.gitlab_integration_id,
-
-          repo_owner: actionConfig.git_repo.split("/")[0],
-          repo_name: actionConfig.git_repo.split("/")[1],
-          branch: actionConfig.git_branch,
         }
       );
     }

@@ -8,26 +8,91 @@ import DynamicLink from "components/DynamicLink";
 
 interface Props {
   gitlabData: any[];
+  updateIntegrationList: () => void;
 }
 
+type StateType = {
+  isDelete: boolean;
+  deleteName: string;
+  deleteID: number;
+};
+
 const GitlabIntegrationList: React.FC<Props> = (props) => {
+  const [currentState, setCurrentState] = useState<StateType>({
+    isDelete: false,
+    deleteName: "",
+    deleteID: 0,
+  });
+
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
+
+  const handleDeleteIntegration = () => {
+    api
+      .deleteGitlabIntegration(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          integration_id: currentState.deleteID,
+        }
+      )
+      .then(() => {
+        setCurrentState({
+          isDelete: false,
+          deleteName: "",
+          deleteID: 0,
+        });
+        props.updateIntegrationList();
+      })
+      .catch((err) => {
+        setCurrentError(err);
+      });
+  };
+
   return (
     <>
+      <ConfirmOverlay
+        show={currentState.isDelete}
+        message={`Are you sure you want to delete the GitLab integration for instance ${currentState.deleteName}?`}
+        onYes={handleDeleteIntegration}
+        onNo={() =>
+          setCurrentState({
+            isDelete: false,
+            deleteName: "",
+            deleteID: 0,
+          })
+        }
+      />
       <StyledIntegrationList>
         {props.gitlabData?.length > 0 ? (
           props.gitlabData.map((inst, idx) => {
             return (
-              <Integration
-                onClick={() => {}}
-                disabled={false}
-                key={`${inst.team_id}-${inst.channel}`}
-              >
+              <Integration onClick={() => {}} disabled={false} key={inst.id}>
                 <MainRow disabled={false}>
                   <Flex>
                     <Icon src={integrationList.gitlab.icon} />
                     <Label>{inst.instance_url}</Label>
+                    {inst.username.includes("Unable") ? (
+                      <ErrorLabel>[{inst.username}]</ErrorLabel>
+                    ) : (
+                      <UsernameLabel>({inst.username})</UsernameLabel>
+                    )}
                   </Flex>
                   <MaterialIconTray disabled={false}>
+                    <i
+                      className="material-icons"
+                      onClick={() => {
+                        setCurrentState({
+                          isDelete: true,
+                          deleteName: inst.instance_url,
+                          deleteID: inst.id,
+                        });
+                      }}
+                    >
+                      delete
+                    </i>
                     <i
                       className="material-icons"
                       onClick={() => {
@@ -69,6 +134,20 @@ const Label = styled.div`
   color: #ffffff;
   font-size: 14px;
   font-weight: 500;
+`;
+
+const UsernameLabel = styled.div`
+  color: #ffffff66;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px;
+`;
+
+const ErrorLabel = styled.div`
+  color: #f6685e;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px;
 `;
 
 const StyledIntegrationList = styled.div`

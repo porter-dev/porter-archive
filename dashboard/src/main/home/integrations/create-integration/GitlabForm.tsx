@@ -124,7 +124,7 @@ const GitlabForm: React.FC<Props> = () => {
         <SaveButton
           onClick={submit}
           makeFlush={true}
-          text="Save Gitlab Settings"
+          text="Save GitLab Settings"
           status={buttonStatus || error?.message}
         />
       </StyledForm>

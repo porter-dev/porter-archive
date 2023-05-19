@@ -11,6 +11,7 @@ import SearchBar from "../SearchBar";
 import DynamicLink from "components/DynamicLink";
 import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
 import Text from "components/porter/Text";
+import { search } from "../../shared/search";
 
 type Props = {
   actionConfig: ActionConfigType | null;
@@ -22,15 +23,15 @@ type Props = {
 
 type Provider =
   | {
-    provider: "github";
-    name: string;
-    installation_id: number;
-  }
+      provider: "github";
+      name: string;
+      installation_id: number;
+    }
   | {
-    provider: "gitlab";
-    instance_url: string;
-    integration_id: number;
-  };
+      provider: "gitlab";
+      instance_url: string;
+      integration_id: number;
+    };
 
 // Sort provider by name if it's github or instance url if it's gitlab
 const sortProviders = (providers: Provider[]) => {
@@ -69,7 +70,7 @@ const RepoList: React.FC<Props> = ({
   const [repoLoading, setRepoLoading] = useState(true);
   const [selectedRepo, setSelectedRepo] = useState(null);
   const [repoError, setRepoError] = useState(false);
-  const [searchFilter, setSearchFilter] = useState(null);
+  const [searchFilter, setSearchFilter] = useState<string>("");
   const [hasProviders, setHasProviders] = useState(true);
   const { currentProject, setCurrentError } = useContext(Context);
 
@@ -110,14 +111,16 @@ const RepoList: React.FC<Props> = ({
 
       const repos = res.data.map((repo) => ({ ...repo, GHRepoID: repoId }));
       return repos;
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const loadGitlabRepos = async (integrationId: number) => {
     try {
       const res = await api.getGitlabRepos<string[]>(
         "<token>",
-        {},
+        {
+          searchTerm: searchFilter,
+        },
         { project_id: currentProject.id, integration_id: integrationId }
       );
       const repos: RepoType[] = res.data.map((repo) => ({
@@ -126,7 +129,7 @@ const RepoList: React.FC<Props> = ({
         GitIntegrationId: integrationId,
       }));
       return repos;
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const loadRepos = (provider: any) => {
@@ -160,7 +163,7 @@ const RepoList: React.FC<Props> = ({
       .finally(() => {
         setRepoLoading(false);
       });
-  }, [currentProvider]);
+  }, [currentProvider, searchFilter]);
 
   // clear out actionConfig and SelectedRepository if new search is performed
   useEffect(() => {
@@ -237,19 +240,24 @@ const RepoList: React.FC<Props> = ({
     }
 
     // show 10 most recently used repos if user hasn't searched anything yet
-    let results = searchFilter != null
-      ? repos
-        .filter((repo: RepoType) => {
-          return repo.FullName.toLowerCase().includes(
-            searchFilter.toLowerCase()
-          );
-        })
-        .sort((a: RepoType, b: RepoType) => {
-          const aIndex = a.FullName.toLowerCase().indexOf(searchFilter.toLowerCase());
-          const bIndex = b.FullName.toLowerCase().indexOf(searchFilter.toLowerCase());
-          return aIndex - bIndex;
-        })
-      : repos.slice(0, 10);
+    let results =
+      searchFilter != null
+        ? repos
+            .filter((repo: RepoType) => {
+              return repo.FullName.toLowerCase().includes(
+                searchFilter.toLowerCase()
+              );
+            })
+            .sort((a: RepoType, b: RepoType) => {
+              const aIndex = a.FullName.toLowerCase().indexOf(
+                searchFilter.toLowerCase()
+              );
+              const bIndex = b.FullName.toLowerCase().indexOf(
+                searchFilter.toLowerCase()
+              );
+              return aIndex - bIndex;
+            })
+        : repos.slice(0, 10);
 
     if (results.length == 0) {
       return <LoadingWrapper>No matching Github repos found.</LoadingWrapper>;
@@ -358,7 +366,7 @@ const ConnectToGithubButton = styled.a`
     props.disabled ? "#aaaabbee" : "#2E3338"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "#353a3e"};
+      props.disabled ? "" : "#353a3e"};
   }
 
   > i {

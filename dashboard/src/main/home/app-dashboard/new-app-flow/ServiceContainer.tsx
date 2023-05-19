@@ -21,6 +21,7 @@ interface ServiceProps {
   editService: (service: Service) => void;
   deleteService: () => void;
   defaultExpanded: boolean;
+  setExpandedJob: (x: string) => void;
 }
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -29,6 +30,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   deleteService,
   editService,
   defaultExpanded,
+  setExpandedJob,
 }) => {
   const [showExpanded, setShowExpanded] = React.useState<boolean>(defaultExpanded);
   const [height, setHeight] = React.useState<Height>("auto");
@@ -136,6 +138,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         getHasBuiltImage()
       ) && (
           <StatusFooter
+            setExpandedJob={setExpandedJob}
             chart={chart}
             service={service}
           />

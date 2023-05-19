@@ -132,13 +132,14 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
       return api
         .getGitlabFolderContent(
           "<token>",
-          { dir: currentDir || "./" },
+          {
+            repo_path: actionConfig.git_repo,
+            branch: branch,
+            dir: currentDir || "./",
+          },
           {
             project_id: currentProject.id,
             integration_id: actionConfig.gitlab_integration_id,
-            repo_owner: actionConfig.git_repo.split("/")[0],
-            repo_name: actionConfig.git_repo.split("/")[1],
-            branch: branch,
           }
         )
         .then((res) => {
@@ -169,25 +170,44 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
   const fetchPorterYamlContent = async (porterYaml: string) => {
     let { currentProject } = context;
     let { actionConfig, branch } = props;
-
-    try {
-      const res = await api.getPorterYamlContents(
-        "<token>",
-        {
-          path: porterYaml,
-        },
-        {
-          project_id: currentProject.id,
-          git_repo_id: actionConfig.git_repo_id,
-          kind: "github",
-          owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
-        }
-      );
-      return res;
-    } catch (err) {
-      console.log(err);
+    if (actionConfig.kind === "github") {
+      try {
+        const res = await api.getPorterYamlContents(
+          "<token>",
+          {
+            path: porterYaml,
+          },
+          {
+            project_id: currentProject.id,
+            git_repo_id: actionConfig.git_repo_id,
+            kind: "github",
+            owner: actionConfig.git_repo.split("/")[0],
+            name: actionConfig.git_repo.split("/")[1],
+            branch: branch,
+          }
+        );
+        return res;
+      } catch (err) {
+        console.log(err);
+      }
+    } else if (actionConfig.kind === "gitlab") {
+      try {
+        const res = await api.getGitlabPorterYamlContents(
+          "<token>",
+          {
+            repo_path: actionConfig.git_repo,
+            branch: branch,
+            path: porterYaml,
+          },
+          {
+            project_id: currentProject.id,
+            integration_id: actionConfig.gitlab_integration_id,
+          }
+        );
+        return res;
+      } catch (err) {
+        console.log(err);
+      }
     }
   };
   const detectBuildpacks = () => {
@@ -209,8 +229,22 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
           branch: branch,
         }
       );
+    } else if (actionConfig.kind === "gitlab") {
+      return api.detectGitlabBuildpack(
+        "<token>",
+        {
+          repo_path: actionConfig.git_repo,
+          branch: branch,
+          dir: currentDir || ".",
+        },
+        {
+          project_id: currentProject.id,
+          integration_id: actionConfig.gitlab_integration_id,
+        }
+      );
     }
   };
+
   const handleInputChange = (newValue: string) => {
     props.setPorterYamlPath(newValue);
     setChangedPorterYaml(newValue === "");

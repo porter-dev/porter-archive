@@ -373,12 +373,6 @@ func createGitAction(
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "is-dry-run", Value: isDryRun})
 
-	repoSplit := strings.Split(request.GitRepo, "/")
-
-	if len(repoSplit) != 2 {
-		return nil, nil, fmt.Errorf("invalid formatting of repo name")
-	}
-
 	encoded := ""
 	var err error
 
@@ -397,8 +391,7 @@ func createGitAction(
 	if request.GitlabIntegrationID != 0 {
 		giRunner := &gitlab.GitlabCI{
 			ServerURL:        config.ServerConf.ServerURL,
-			GitRepoOwner:     repoSplit[0],
-			GitRepoName:      repoSplit[1],
+			GitRepoPath:      request.GitRepo,
 			GitBranch:        request.GitBranch,
 			Repo:             config.Repo,
 			ProjectID:        projectID,
@@ -414,6 +407,12 @@ func createGitAction(
 
 		gitErr = giRunner.Setup()
 	} else {
+		repoSplit := strings.Split(request.GitRepo, "/")
+
+		if len(repoSplit) != 2 {
+			return nil, nil, fmt.Errorf("invalid formatting of repo name")
+		}
+
 		// create the commit in the git repo
 		gaRunner := &actions.GithubActions{
 			InstanceName:           config.ServerConf.InstanceName,

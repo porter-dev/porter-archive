@@ -93,6 +93,7 @@ type GitlabIntegrationRepository interface {
 	CreateGitlabIntegration(gi *ints.GitlabIntegration) (*ints.GitlabIntegration, error)
 	ReadGitlabIntegration(projectID, id uint) (*ints.GitlabIntegration, error)
 	ListGitlabIntegrationsByProjectID(projectID uint) ([]*ints.GitlabIntegration, error)
+	DeleteGitlabIntegrationByID(projectID, id uint) error
 }
 
 // GitlabAppOAuthIntegrationRepository represents the set of queries on the GitlabOAuthIntegration model

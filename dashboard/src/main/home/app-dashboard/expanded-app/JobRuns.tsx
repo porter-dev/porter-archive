@@ -15,6 +15,9 @@ type Props = {
   lastRunStatus: "failed" | "succeeded" | "active" | "all";
   namespace: string;
   sortType: "Newest" | "Oldest" | "Alphabetical";
+  releaseName?: string;
+  jobName?: string;
+  setExpandedRun?: any;
 };
 
 const runnedFor = (start: string | number, end?: string | number) => {
@@ -32,6 +35,9 @@ const JobRuns: React.FC<Props> = ({
   lastRunStatus,
   namespace,
   sortType,
+  releaseName,
+  jobName,
+  setExpandedRun,
 }) => {
   const { currentCluster, currentProject } = useContext(Context);
   const [jobRuns, setJobRuns] = useState<JobRun[]>(null);
@@ -102,35 +108,35 @@ const JobRuns: React.FC<Props> = ({
     () => [
       {
         Header: "Started",
-        accessor: (originalRow) => relativeDate(originalRow.status.startTime),
+        accessor: (originalRow) => relativeDate(originalRow?.status.startTime),
       },
       {
         Header: "Run for",
         accessor: (originalRow) => {
-          if (originalRow.status?.completionTime) {
-            return originalRow.status?.completionTime;
+          if (originalRow?.status?.completionTime) {
+            return originalRow?.status?.completionTime;
           } else if (
-            Array.isArray(originalRow.status?.conditions) &&
-            originalRow.status?.conditions[0]?.lastTransitionTime
+            Array.isArray(originalRow?.status?.conditions) &&
+            originalRow?.status?.conditions[0]?.lastTransitionTime
           ) {
-            return originalRow.status?.conditions[0]?.lastTransitionTime;
+            return originalRow?.status?.conditions[0]?.lastTransitionTime;
           } else {
             return "Still running...";
           }
         },
         Cell: ({ row }) => {
-          if (row.original.status?.completionTime) {
+          if (row.original?.status?.completionTime) {
             return runnedFor(
-              row.original.status?.startTime,
-              row.original.status?.completionTime
+              row.original?.status?.startTime,
+              row.original?.status?.completionTime
             );
           } else if (
-            Array.isArray(row.original.status?.conditions) &&
-            row.original.status?.conditions[0]?.lastTransitionTime
+            Array.isArray(row.original?.status?.conditions) &&
+            row.original?.status?.conditions[0]?.lastTransitionTime
           ) {
             return runnedFor(
-              row.original.status?.startTime,
-              row.original.status?.conditions[0]?.lastTransitionTime
+              row.original?.status?.startTime,
+              row.original?.status?.conditions[0]?.lastTransitionTime
             );
           } else {
             return "Still running...";
@@ -144,11 +150,11 @@ const JobRuns: React.FC<Props> = ({
         Header: "Status",
         id: "status",
         Cell: ({ row }: CellProps<JobRun>) => {
-          if (row.original.status?.succeeded >= 1) {
+          if (row.original?.status?.succeeded >= 1) {
             return <Status color="#38a88a">Succeeded</Status>;
           }
 
-          if (row.original.status?.failed >= 1) {
+          if (row.original?.status?.failed >= 1) {
             return <Status color="#cc3d42">Failed</Status>;
           }
 
@@ -181,17 +187,28 @@ const JobRuns: React.FC<Props> = ({
           urlParams.append("project_id", String(currentProject.id));
           urlParams.append("chart_revision", String(0));
           urlParams.append("job", row.original.metadata.name);
-
-          return (
-            <RedirectButton
-              to={{
-                pathname: `/jobs/${currentCluster.name}/${row.original?.metadata?.namespace}/${row.original?.metadata?.labels["meta.helm.sh/release-name"]}`,
-                search: `app=${row.original?.metadata?.namespace.split("porter-stack-")[1]}&` + urlParams.toString(),
-              }}
-            >
-              <i className="material-icons">open_in_new</i>
-            </RedirectButton>
-          );
+          if (!setExpandedRun) {
+            return (
+              <RedirectButton
+                to={{
+                  pathname: `/jobs/${currentCluster.name}/${row.original?.metadata?.namespace}/${row.original?.metadata?.labels["meta.helm.sh/release-name"]}`,
+                  search: `app=${row.original?.metadata?.namespace.split("porter-stack-")[1]}&` + urlParams.toString(),
+                }}
+              >
+                <i className="material-icons">open_in_new</i>
+              </RedirectButton>
+            );
+          } else {
+            return (
+              <ExpandButton
+                onClick={() => {
+                  setExpandedRun(row.original);
+                }}
+              >
+                <i className="material-icons">open_in_new</i>
+              </ExpandButton>
+            )
+          }
         },
         maxWidth: 40,
       },
@@ -216,7 +233,7 @@ const JobRuns: React.FC<Props> = ({
         tmp = filter.filterBySucceded();
         break;
       default:
-        tmp = filter.dontFilter();
+        tmp = filter.dontFilter(releaseName, jobName, namespace);
         break;
     }
 
@@ -252,7 +269,7 @@ const JobRuns: React.FC<Props> = ({
   }
 
   if (!jobRuns?.length) {
-    return <Placeholder>No pre-deploy job runs were found.</Placeholder>;
+    return <Placeholder>No job runs were found.</Placeholder>;
   }
 
   return (
@@ -314,6 +331,24 @@ const CommandString = styled.div`
 
 const RedirectButton = styled(DynamicLink)`
   user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  > i {
+    border-radius: 20px;
+    font-size: 18px;
+    padding: 5px;
+    margin: 0 5px;
+    color: #ffffff44;
+    :hover {
+      background: #ffffff11;
+    }
+  }
+`;
+
+const ExpandButton = styled.div`
+  user-select: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -442,6 +477,7 @@ class JobRunsFilter {
     this.jobRuns = newJobRuns;
   }
 
+  // TODO: to support this filter, add appName filter (see dontFilter())
   filterByFailed() {
     return this.jobRuns.filter((jobRun) => jobRun?.status?.failed);
   }
@@ -459,7 +495,20 @@ class JobRunsFilter {
     );
   }
 
-  dontFilter() {
+  dontFilter(releaseName?: string, jobName?: string, namespace?: string) {
+    if (releaseName) {
+      const filteredJobs = this.jobRuns.filter(x => {
+        return releaseName === x?.metadata?.labels["meta.helm.sh/release-name"];
+      });
+      return filteredJobs;
+    } else if (jobName) {
+      const filteredJobs = this.jobRuns.filter(x => {
+        let name = x?.metadata?.name;
+        let appName = namespace.split("porter-stack-")[1];
+        return name.startsWith(`${appName}-${jobName}`) && name.split(`${appName}-${jobName}-`).length > 1 && name.split(`${appName}-${jobName}-`)[1].split("-").length === 2;
+      });
+      return filteredJobs;
+    } 
     return this.jobRuns;
   }
 }

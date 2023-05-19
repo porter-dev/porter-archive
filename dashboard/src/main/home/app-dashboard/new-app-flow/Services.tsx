@@ -22,9 +22,19 @@ interface ServicesProps {
   chart?: any;
   limitOne?: boolean;
   customOnClick?: () => void;
+  setExpandedJob?: (x: string) => void;
 }
 
-const Services: React.FC<ServicesProps> = ({ services, setServices, addNewText, chart, defaultExpanded = false, limitOne = false, customOnClick }) => {
+const Services: React.FC<ServicesProps> = ({ 
+  services,
+  setServices,
+  addNewText,
+  chart,
+  defaultExpanded = false,
+  limitOne = false,
+  customOnClick,
+  setExpandedJob,
+}) => {
   const [showAddServiceModal, setShowAddServiceModal] = useState<boolean>(
     false
   );
@@ -72,6 +82,7 @@ const Services: React.FC<ServicesProps> = ({ services, setServices, addNewText, 
             return (
               <ServiceContainer
                 key={service.name}
+                setExpandedJob={setExpandedJob}
                 service={service}
                 chart={chart}
                 editService={(newService: Service) =>

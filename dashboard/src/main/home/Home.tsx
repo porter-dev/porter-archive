@@ -39,6 +39,7 @@ import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
 import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
 import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
+import ExpandedJob from "./app-dashboard/expanded-app/expanded-job/ExpandedJob";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [

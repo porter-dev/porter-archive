@@ -686,6 +686,7 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
           }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
+        {renderHealth()}
       </>
     );
   };
@@ -696,7 +697,6 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
           { label: "Main", value: "main" },
           { label: "Resources", value: "resources" },
           { label: "Advanced", value: "advanced" },
-          { label: "Health", value: "health" },
         ]}
         currentTab={currentTab}
         setCurrentTab={(value: string) => {
@@ -705,9 +705,7 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
           } else if (value === "resources") {
             setHeight(713);
           } else if (value === "advanced") {
-            setHeight(159);
-          } else if (value === "health") {
-            setHeight(425);
+            setHeight(510);
           }
           setCurrentTab(value);
         }}
@@ -715,7 +713,6 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
       {currentTab === "main" && renderMain()}
       {currentTab === "resources" && renderResources()}
       {currentTab === "advanced" && renderAdvanced()}
-      {currentTab === "health" && renderHealth()}
     </>
   );
 };

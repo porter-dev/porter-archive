@@ -5,7 +5,8 @@ import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import Checkbox from "components/porter/Checkbox";
 import { WebService } from "./serviceTypes";
-import { Height } from "react-animate-height";
+import AnimateHeight, { Height } from "react-animate-height";
+import styled from "styled-components";
 
 interface Props {
   service: WebService;
@@ -15,7 +16,15 @@ interface Props {
 
 const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
   const [currentTab, setCurrentTab] = React.useState<string>("main");
-
+  const [showSettingsLive, setShowSettingsLive] = React.useState<boolean>(
+    false
+  );
+  const [showSettingsStart, setShowSettingsStart] = React.useState<boolean>(
+    false
+  );
+  const [showSettingsReady, setShowSettingsReady] = React.useState<boolean>(
+    false
+  );
   const renderMain = () => {
     return (
       <>
@@ -260,29 +269,337 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
 
   const renderHealth = () => {
     return (
-      <>
-        <Spacer y={1} />
-        <Checkbox
-          checked={service.health.livenessProbe.enabled.value}
-          toggleChecked={() => {
-            editService({
-              ...service,
-              health: {
-                livenessProbe: {
-                  enabled: {
-                    readOnly: false,
-                    value: !service.health.livenessProbe.enabled.value,
+      <ScrollableDiv>
+        <>
+          <Spacer y={1} />
+          <Checkbox
+            checked={service.health.livenessProbe?.enabled.value}
+            toggleChecked={() => {
+              editService({
+                ...service,
+                health: {
+                  ...service.health,
+                  livenessProbe: {
+                    ...service.health.livenessProbe,
+                    enabled: {
+                      readOnly: false,
+                      value: !service.health.livenessProbe?.enabled.value,
+                    },
                   },
                 },
-              },
-            });
-          }}
-          //disabled={service.autoscaling.enabled.readOnly}
-          //disabledTooltip={"You may only edit this field in your porter.yaml."}
-        >
-          <Text color="helper">Enable Liveness</Text>
-        </Checkbox>
-      </>
+              });
+            }}
+          >
+            <Text color="helper">Enable Liveness Probe</Text>
+          </Checkbox>
+          {service.health.livenessProbe?.enabled.value && (
+            <>
+              <StyledAdvancedBuildSettings
+                showSettings={showSettingsLive}
+                isCurrent={true}
+                onClick={() => {
+                  setShowSettingsLive(!showSettingsLive);
+                }}
+              >
+                <AdvancedBuildTitle>
+                  <i className="material-icons dropdown">arrow_drop_down</i>
+                  Configure Liveness Probe Settings
+                </AdvancedBuildTitle>
+              </StyledAdvancedBuildSettings>
+              <AnimateHeight
+                height={showSettingsLive ? "auto" : 0}
+                duration={1000}
+              >
+                <Spacer y={0.5} />
+                <Input
+                  label="Liveness Check Endpoint "
+                  placeholder="ex: 80"
+                  value={service.health.livenessProbe.path.value}
+                  disabled={service.health.livenessProbe.path.readOnly}
+                  width="300px"
+                  setValue={(e) => {
+                    editService({
+                      ...service,
+                      health: {
+                        ...service.health,
+                        livenessProbe: {
+                          ...service.health.livenessProbe,
+                          path: {
+                            readOnly: false,
+                            value: e,
+                          },
+                        },
+                      },
+                    });
+                  }}
+                  disabledTooltip={
+                    "You may only edit this field in your porter.yaml."
+                  }
+                />
+                <Spacer y={0.5} />
+                <Input
+                  label="Failure Threshold"
+                  placeholder="ex: 80"
+                  value={service.health.livenessProbe.failureThreshold.value}
+                  disabled={
+                    service.health.livenessProbe.failureThreshold.readOnly
+                  }
+                  width="300px"
+                  setValue={(e) => {
+                    editService({
+                      ...service,
+                      health: {
+                        ...service.health,
+                        livenessProbe: {
+                          ...service.health.livenessProbe,
+                          failureThreshold: {
+                            readOnly: false,
+                            value: e,
+                          },
+                        },
+                      },
+                    });
+                  }}
+                  disabledTooltip={
+                    "You may only edit this field in your porter.yaml."
+                  }
+                />
+              </AnimateHeight>
+            </>
+          )}
+          <Spacer y={1} />
+          <Checkbox
+            checked={service.health.startupProbe?.enabled.value}
+            toggleChecked={() => {
+              editService({
+                ...service,
+                health: {
+                  ...service.health,
+                  startupProbe: {
+                    ...service.health.startupProbe,
+                    enabled: {
+                      readOnly: false,
+                      value: !service.health.startupProbe?.enabled.value,
+                    },
+                  },
+                },
+              });
+            }}
+            //disabled={service.autoscaling.enabled.readOnly}
+            //disabledTooltip={"You may only edit this field in your porter.yaml."}
+          >
+            <Text color="helper">Enable Start Up Probe</Text>
+          </Checkbox>
+          {service.health.startupProbe?.enabled.value && (
+            <>
+              <StyledAdvancedBuildSettings
+                showSettings={showSettingsStart}
+                isCurrent={true}
+                onClick={() => {
+                  setShowSettingsStart(!showSettingsStart);
+                }}
+              >
+                <AdvancedBuildTitle>
+                  <i className="material-icons dropdown">arrow_drop_down</i>
+                  Configure Start Up Probe Settings
+                </AdvancedBuildTitle>
+              </StyledAdvancedBuildSettings>
+              <AnimateHeight
+                height={showSettingsStart ? "auto" : 0}
+                duration={1000}
+              >
+                <Spacer y={0.5} />
+
+                <Input
+                  label="Start Up Check Endpoint "
+                  placeholder="ex: 80"
+                  value={service.health.startupProbe.path.value}
+                  disabled={service.health.startupProbe.path.readOnly}
+                  width="300px"
+                  setValue={(e) => {
+                    editService({
+                      ...service,
+                      health: {
+                        ...service.health,
+                        startupProbe: {
+                          ...service.health.startupProbe,
+                          path: {
+                            readOnly: false,
+                            value: e,
+                          },
+                        },
+                      },
+                    });
+                  }}
+                  disabledTooltip={
+                    "You may only edit this field in your porter.yaml."
+                  }
+                />
+                <Spacer y={0.5} />
+
+                <Input
+                  label="Failure Threshold"
+                  placeholder="ex: 80"
+                  value={service.health.startupProbe.failureThreshold.value}
+                  disabled={
+                    service.health.startupProbe.failureThreshold.readOnly
+                  }
+                  width="300px"
+                  setValue={(e) => {
+                    editService({
+                      ...service,
+                      health: {
+                        ...service.health,
+                        startupProbe: {
+                          ...service.health.startupProbe,
+                          failureThreshold: {
+                            readOnly: false,
+                            value: e,
+                          },
+                        },
+                      },
+                    });
+                  }}
+                  disabledTooltip={
+                    "You may only edit this field in your porter.yaml."
+                  }
+                />
+              </AnimateHeight>
+            </>
+          )}
+          <Spacer y={1} />
+          <Checkbox
+            checked={service.health.readinessProbe?.enabled.value}
+            toggleChecked={() => {
+              editService({
+                ...service,
+                health: {
+                  ...service.health,
+                  readinessProbe: {
+                    ...service.health.readinessProbe,
+                    enabled: {
+                      readOnly: false,
+                      value: !service.health.readinessProbe?.enabled.value,
+                    },
+                  },
+                },
+              });
+            }}
+            //disabled={service.autoscaling.enabled.readOnly}
+            //disabledTooltip={"You may only edit this field in your porter.yaml."}
+          >
+            <Text color="helper">Enable Readiness Probe</Text>
+          </Checkbox>
+          {service.health.readinessProbe?.enabled.value && (
+            <>
+              <StyledAdvancedBuildSettings
+                showSettings={showSettingsReady}
+                isCurrent={true}
+                onClick={() => {
+                  setShowSettingsReady(!showSettingsReady);
+                }}
+              >
+                <AdvancedBuildTitle>
+                  <i className="material-icons dropdown">arrow_drop_down</i>
+                  Configure Readiness Probe settings
+                </AdvancedBuildTitle>
+              </StyledAdvancedBuildSettings>
+              <AnimateHeight
+                height={showSettingsReady ? "auto" : 0}
+                duration={1000}
+              >
+                <Spacer y={0.5} />
+
+                <Input
+                  label="Readiness Check Endpoint "
+                  placeholder="ex: 80"
+                  value={service.health.readinessProbe.path.value}
+                  disabled={service.health.readinessProbe.path.readOnly}
+                  width="300px"
+                  setValue={(e) => {
+                    editService({
+                      ...service,
+                      health: {
+                        ...service.health,
+                        readinessProbe: {
+                          ...service.health.readinessProbe,
+                          path: {
+                            readOnly: false,
+                            value: e,
+                          },
+                        },
+                      },
+                    });
+                  }}
+                  disabledTooltip={
+                    "You may only edit this field in your porter.yaml."
+                  }
+                />
+                <Spacer y={0.5} />
+
+                <Input
+                  label="Failure Threshold"
+                  placeholder="ex: 80"
+                  value={service.health.readinessProbe.failureThreshold.value}
+                  disabled={
+                    service.health.readinessProbe.failureThreshold.readOnly
+                  }
+                  width="300px"
+                  setValue={(e) => {
+                    editService({
+                      ...service,
+                      health: {
+                        ...service.health,
+                        readinessProbe: {
+                          ...service.health.readinessProbe,
+                          failureThreshold: {
+                            readOnly: false,
+                            value: e,
+                          },
+                        },
+                      },
+                    });
+                  }}
+                  disabledTooltip={
+                    "You may only edit this field in your porter.yaml."
+                  }
+                />
+                <Spacer y={0.5} />
+
+                <Input
+                  label="Initial Delay Threshold"
+                  placeholder="ex: 80"
+                  value={
+                    service.health.readinessProbe.initialDelaySeconds.value
+                  }
+                  disabled={
+                    service.health.readinessProbe.initialDelaySeconds.readOnly
+                  }
+                  width="300px"
+                  setValue={(e) => {
+                    editService({
+                      ...service,
+                      health: {
+                        ...service.health,
+                        readinessProbe: {
+                          ...service.health.readinessProbe,
+                          initialDelaySeconds: {
+                            readOnly: false,
+                            value: e,
+                          },
+                        },
+                      },
+                    });
+                  }}
+                  disabledTooltip={
+                    "You may only edit this field in your porter.yaml."
+                  }
+                />
+              </AnimateHeight>
+            </>
+          )}
+        </>
+      </ScrollableDiv>
     );
   };
 
@@ -338,7 +655,7 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
           } else if (value === "advanced") {
             setHeight(159);
           } else if (value === "health") {
-            setHeight(159);
+            setHeight(425);
           }
           setCurrentTab(value);
         }}
@@ -352,3 +669,42 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
 };
 
 export default WebTabs;
+
+const StyledAdvancedBuildSettings = styled.div`
+  color: ${({ showSettings }) => (showSettings ? "white" : "#aaaabb")};
+  background: ${({ theme }) => theme.fg};
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
+    color: white;
+  }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  border-radius: 5px;
+  height: 40px;
+  font-size: 13px;
+  width: 100%;
+  padding-left: 10px;
+  cursor: pointer;
+  border-bottom-left-radius: ${({ showSettings }) => showSettings && "0px"};
+  border-bottom-right-radius: ${({ showSettings }) => showSettings && "0px"};
+
+  .dropdown {
+    margin-right: 8px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 20px;
+    transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
+      props.showSettings ? "" : "rotate(-90deg)"};
+  }
+`;
+const AdvancedBuildTitle = styled.div`
+  display: flex;
+  align-items: center;
+`;
+const ScrollableDiv = styled.div`
+  max-height: 350px;
+  overflow-y: auto;
+`;

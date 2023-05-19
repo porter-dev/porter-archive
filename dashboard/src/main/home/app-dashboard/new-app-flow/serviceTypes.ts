@@ -27,51 +27,7 @@ type Autoscaling = {
     targetCPUUtilizationPercentage: ServiceString,
     targetMemoryUtilizationPercentage: ServiceString,
 }
-//   livenessCommand:
-//     command: ls -l
-//     enabled: false
-//     failureThreshold: 3
-//     initialDelaySeconds: 5
-//     periodSeconds: 5
-//     successThreshold: 1
-//     timeoutSeconds: 1
-//   livenessProbe:
-//     auth:
-//       enabled: false
-//       password: ''
-//       username: ''
-//     enabled: false
-//     failureThreshold: 3
-//     initialDelaySeconds: 0
-//     path: /livez
-//     periodSeconds: 5
-//     scheme: HTTP
-//     successThreshold: 1
-//     timeoutSeconds: 1
-//   readinessProbe:
-//     auth:
-//       enabled: false
-//       password: ''
-//       username: ''
-//     enabled: false
-//     failureThreshold: 3
-//     initialDelaySeconds: 0
-//     path: /readyz
-//     periodSeconds: 5
-//     scheme: HTTP
-//     successThreshold: 1
-//     timeoutSeconds: 1
-//   startupProbe:
-//     auth:
-//       enabled: false
-//       password: ''
-//       username: ''
-//     enabled: false
-//     failureThreshold: 3
-//     path: /startupz
-//     periodSeconds: 5
-//     scheme: HTTP
-//     timeoutSeconds: 1
+
 type livenessCommand = {
     command: ServiceString,
     enabled: ServiceBoolean,

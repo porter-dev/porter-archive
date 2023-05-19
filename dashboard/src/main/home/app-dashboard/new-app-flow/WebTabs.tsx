@@ -678,46 +678,48 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
 
   const renderAdvanced = () => {
     return (
-      <ScrollableDiv>
-        <>
-          <Spacer y={1} />
-          <Input
-            label={
-              <>
-                <span>Custom domain</span>
-                <a
-                  href="https://docs.porter.run/deploying-applications/https-and-domains/custom-domains"
-                  target="_blank"
-                >
-                  &nbsp;(?)
-                </a>
-              </>
-            }
-            placeholder="ex: my-app.my-domain.com"
-            value={service.ingress.hosts.value}
-            disabled={service.ingress.hosts.readOnly}
-            width="300px"
-            setValue={(e) => {
-              editService({
-                ...service,
-                ingress: {
-                  ...service.ingress,
-                  hosts: { readOnly: false, value: e },
-                },
-              });
-            }}
-            disabledTooltip={
-              "You may only edit this field in your porter.yaml."
-            }
-          />
-          {renderHealth()}
-        </>
-      </ScrollableDiv>
+      <>
+        <ScrollableDiv>
+          <>
+            <Spacer y={1} />
+            <Input
+              label={
+                <>
+                  <span>Custom domain</span>
+                  <a
+                    href="https://docs.porter.run/deploying-applications/https-and-domains/custom-domains"
+                    target="_blank"
+                  >
+                    &nbsp;(?)
+                  </a>
+                </>
+              }
+              placeholder="ex: my-app.my-domain.com"
+              value={service.ingress.hosts.value}
+              disabled={service.ingress.hosts.readOnly}
+              width="300px"
+              setValue={(e) => {
+                editService({
+                  ...service,
+                  ingress: {
+                    ...service.ingress,
+                    hosts: { readOnly: false, value: e },
+                  },
+                });
+              }}
+              disabledTooltip={
+                "You may only edit this field in your porter.yaml."
+              }
+            />
+            {renderHealth()}
+          </>
+        </ScrollableDiv>
+      </>
     );
   };
   return (
     <>
-      <div ref={containerRef} style={{ paddingBottom: "30px" }}>
+      <div ref={containerRef} style={{ paddingBottom: "35px" }}>
         <TabSelector
           options={[
             { label: "Main", value: "main" },
@@ -776,6 +778,28 @@ const AdvancedBuildTitle = styled.div`
   align-items: center;
 `;
 const ScrollableDiv = styled.div`
-  max-height: 350px;
   overflow-y: auto;
+  padding: 0 25px;
+  width: calc(100% + 50px);
+  margin-left: -25px;
+  max-height: 375px;
+`;
+const Footer = styled.div`
+  position: relative;
+  width: calc(100% + 50px);
+  margin-left: -25px;
+  padding: 0 25px;
+  background: ${({ theme }) => theme.fg};
+  margin-bottom: -30px;
+  padding-bottom: 30px;
+`;
+
+const Shade = styled.div`
+  position: absolute;
+
+  top: -15px;
+  left: 0;
+  height: 50px;
+  width: 100%;
+  background: linear-gradient(to bottom, #00000000, ${({ theme }) => theme.fg});
 `;

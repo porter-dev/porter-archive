@@ -130,11 +130,11 @@ const Login: React.FC<Props> = ({
             <Shiny>Welcome back to Porter</Shiny>
           </Jumbotron>
           <Spacer y={2} />
-          <LinkRow to="https://docs.porter.run" target="_blank">
+          <LinkRow to="https://porter.run/docs" target="_blank">
             <img src={docs} /> Read the Porter docs
           </LinkRow>
           <Spacer y={0.5} />
-          <LinkRow to="https://blog.porter.run" target="_blank">
+          <LinkRow to="https://porter.run/blog" target="_blank">
             <img src={blog} /> See what's new with Porter
           </LinkRow>
           <Spacer y={0.5} />

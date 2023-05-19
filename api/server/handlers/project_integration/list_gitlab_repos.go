@@ -52,8 +52,6 @@ func (p *ListGitlabReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	searchTerm := r.URL.Query().Get("searchTerm")
 
-	fmt.Printf("searching: %s\n", searchTerm)
-
 	opts := &gitlab.ListProjectsOptions{
 		Simple:     gitlab.Bool(true),
 		Membership: gitlab.Bool(true),

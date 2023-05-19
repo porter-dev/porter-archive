@@ -30,8 +30,8 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
     calculateContainerHeight();
   }, [currentTab]);
   const calculateContainerHeight = () => {
-    const containerHeight = containerRef.current?.offsetHeight || 10;
-    setHeight(containerHeight + 60);
+    const containerHeight = containerRef.current?.offsetHeight || 0;
+    setHeight(containerHeight);
   };
   const renderMain = () => {
     return (
@@ -301,7 +301,9 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
         </Checkbox>
         <>
           <StyledAdvancedBuildSettings
-            showSettings={showSettingsLive}
+            showSettings={
+              showSettingsLive && service.health.livenessProbe?.enabled.value
+            }
             isCurrent={true}
             onClick={() => {
               if (service.health.livenessProbe?.enabled.value) {
@@ -315,7 +317,14 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
               Configure Liveness Probe Settings
             </AdvancedBuildTitle>
           </StyledAdvancedBuildSettings>
-          <AnimateHeight height={showSettingsLive ? "auto" : 0} duration={1000}>
+          <AnimateHeight
+            height={
+              showSettingsLive && service.health.livenessProbe?.enabled.value
+                ? "auto"
+                : 0
+            }
+            duration={1000}
+          >
             <Spacer y={0.5} />
             <Input
               label="Liveness Check Endpoint "
@@ -421,7 +430,9 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
         </Checkbox>
         <>
           <StyledAdvancedBuildSettings
-            showSettings={showSettingsStart}
+            showSettings={
+              showSettingsStart && service.health.startupProbe?.enabled.value
+            }
             isCurrent={true}
             onClick={() => {
               if (service.health.startupProbe?.enabled.value) {
@@ -436,7 +447,11 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
             </AdvancedBuildTitle>
           </StyledAdvancedBuildSettings>
           <AnimateHeight
-            height={showSettingsStart ? "auto" : 0}
+            height={
+              showSettingsStart && service.health.startupProbe?.enabled.value
+                ? "auto"
+                : 0
+            }
             duration={1000}
           >
             <Spacer y={0.5} />
@@ -548,7 +563,9 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
 
         <>
           <StyledAdvancedBuildSettings
-            showSettings={showSettingsReady}
+            showSettings={
+              showSettingsReady && service.health.readinessProbe?.enabled.value
+            }
             isCurrent={true}
             onClick={() => {
               if (service.health.readinessProbe?.enabled.value) {
@@ -563,7 +580,11 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
             </AdvancedBuildTitle>
           </StyledAdvancedBuildSettings>
           <AnimateHeight
-            height={showSettingsReady ? "auto" : 0}
+            height={
+              showSettingsReady && service.health.readinessProbe?.enabled.value
+                ? "auto"
+                : 0
+            }
             duration={1000}
           >
             <Spacer y={0.5} />
@@ -696,7 +717,7 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
   };
   return (
     <>
-      <div ref={containerRef}>
+      <div ref={containerRef} style={{ paddingBottom: "30px" }}>
         <TabSelector
           options={[
             { label: "Main", value: "main" },
@@ -704,16 +725,7 @@ const WebTabs: React.FC<Props> = ({ service, editService, setHeight }) => {
             { label: "Advanced", value: "advanced" },
           ]}
           currentTab={currentTab}
-          setCurrentTab={(value: string) => {
-            if (value === "main") {
-              setHeight(288);
-            } else if (value === "resources") {
-              setHeight(713);
-            } else if (value === "advanced") {
-              setHeight(510);
-            }
-            setCurrentTab(value);
-          }}
+          setCurrentTab={(value: string) => setCurrentTab(value)}
         />
         {currentTab === "main" && renderMain()}
         {currentTab === "resources" && renderResources()}

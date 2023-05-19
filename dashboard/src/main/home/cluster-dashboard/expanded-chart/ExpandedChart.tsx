@@ -455,7 +455,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
           );
         }
         if (imageIsPlaceholder) {
-          console.log(props.currentChart);
           return (
             <Placeholder>
               <TextWrap>

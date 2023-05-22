@@ -37,7 +37,7 @@ const WebTabs: React.FC<Props> = ({
   }, [currentTab]);
   const calculateContainerHeight = () => {
     const containerHeight = containerRef.current?.offsetHeight || 0;
-    const add = hasFooter ? 55 : 0;
+    const add = hasFooter ? 0 : 55;
     setHeight(containerHeight + add);
   };
   const renderMain = () => {

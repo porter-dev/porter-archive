@@ -453,7 +453,7 @@ const Running = styled.div`
   align-items: center;
 `;
 
-export const StyledStatusFooter = styled.div`
+const StyledStatusFooter = styled.div`
   width: 100%;
   padding: 10px 15px;
   background: ${(props) => props.theme.fg2};

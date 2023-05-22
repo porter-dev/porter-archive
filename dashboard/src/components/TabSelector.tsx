@@ -89,15 +89,12 @@ const Buffer = styled.div`
 const TabWrapper = styled.div`
   display: flex;
   overflow-x: auto;
-  overflow-y: auto;
-
   padding-bottom: 15px;
   margin-bottom: -15px;
 `;
 
 const Tab = styled.div`
   height: 30px;
-  overflow-y: auto;
   margin-right: ${(props: { lastItem: boolean; highlight: string }) =>
     props.lastItem ? "" : "30px"};
   display: flex;

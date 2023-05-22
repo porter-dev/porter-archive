@@ -125,13 +125,16 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {renderTabs(service)}
         </StyledSourceBox>
       </AnimateHeight>
-
-      <StatusFooter
-        setExpandedJob={setExpandedJob}
-        chart={chart}
-        service={service}
-      />
-
+      {chart &&
+        service &&
+        // Check if has built image
+        getHasBuiltImage() && (
+          <StatusFooter
+            setExpandedJob={setExpandedJob}
+            chart={chart}
+            service={service}
+          />
+        )}
       <Spacer y={0.5} />
     </>
   );

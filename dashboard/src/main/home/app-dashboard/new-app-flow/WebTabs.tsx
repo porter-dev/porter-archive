@@ -295,7 +295,7 @@ const WebTabs: React.FC<Props> = ({
             >
               <Text color="helper">Enable Liveness Probe</Text>
             </Checkbox>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
 
             <>
               <Input
@@ -323,7 +323,7 @@ const WebTabs: React.FC<Props> = ({
                   "You may only edit this field in your porter.yaml."
                 }
               />
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Input
                 label="Failure Threshold"
                 placeholder="ex: 80"
@@ -351,7 +351,7 @@ const WebTabs: React.FC<Props> = ({
                   "You may only edit this field in your porter.yaml."
                 }
               />
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Input
                 label="Retry Interval"
                 placeholder="ex: 80"
@@ -408,7 +408,7 @@ const WebTabs: React.FC<Props> = ({
             >
               <Text color="helper">Enable Start Up Probe</Text>
             </Checkbox>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
 
             <>
               <Input
@@ -436,7 +436,7 @@ const WebTabs: React.FC<Props> = ({
                   "You may only edit this field in your porter.yaml."
                 }
               />
-              <Spacer y={0.5} />
+              <Spacer y={1} />
 
               <Input
                 label="Failure Threshold"
@@ -463,7 +463,7 @@ const WebTabs: React.FC<Props> = ({
                   "You may only edit this field in your porter.yaml."
                 }
               />
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <Input
                 label="Retry Interval"
                 placeholder="ex: 80"
@@ -519,7 +519,7 @@ const WebTabs: React.FC<Props> = ({
             >
               <Text color="helper">Enable Readiness Probe</Text>
             </Checkbox>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
 
             <>
               <Input
@@ -667,7 +667,7 @@ const WebTabs: React.FC<Props> = ({
             } else if (value === "resources") {
               setHeight(713);
             } else if (value === "advanced") {
-              setHeight(1092);
+              setHeight(1179);
             }
             setCurrentTab(value);
           }}

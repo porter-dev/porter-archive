@@ -7,10 +7,7 @@ import { Context } from "shared/Context";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
-import {
-  NewWebsocketOptions,
-  useWebsockets,
-} from "shared/hooks/useWebsockets";
+import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import {
   getAvailability,
   getAvailabilityStacks,
@@ -140,10 +137,8 @@ const StatusFooter: React.FC<Props> = ({
       apiEndpoint += `selectors=${selectors}`;
     }
 
-
     const options: NewWebsocketOptions = {};
-    options.onopen = () => {
-    };
+    options.onopen = () => {};
 
     options.onmessage = async (evt: MessageEvent) => {
       let event = JSON.parse(evt.data);
@@ -161,7 +156,9 @@ const StatusFooter: React.FC<Props> = ({
       }
 
       if (event.Kind === "deployment") {
-        let [available, total, stale, unavailable] = getAvailabilityStacks(object);
+        let [available, total, stale, unavailable] = getAvailabilityStacks(
+          object
+        );
 
         setAvailable(available);
         setTotal(total);
@@ -172,8 +169,7 @@ const StatusFooter: React.FC<Props> = ({
       await updatePods();
     };
 
-    options.onclose = () => {
-    };
+    options.onclose = () => {};
 
     options.onerror = (err: ErrorEvent) => {
       console.log(err);
@@ -203,7 +199,7 @@ const StatusFooter: React.FC<Props> = ({
         prev[prev.length - 1].push(currentPod);
         return prev;
       },
-        []);
+      []);
 
     return podsDividedByReplicaSet;
   }, [pods]);
@@ -248,7 +244,8 @@ const StatusFooter: React.FC<Props> = ({
           );
 
           // console.log(containerStatus)
-          const crashLoopReason = containerStatus?.lastState?.terminated?.message ?? "";
+          const crashLoopReason =
+            containerStatus?.lastState?.terminated?.message ?? "";
 
           return {
             namespace: pod?.metadata?.namespace,
@@ -259,7 +256,8 @@ const StatusFooter: React.FC<Props> = ({
             restartCount,
             containerStatus,
             podAge: pod?.metadata?.creationTimestamp ? podAge : "N/A",
-            revisionNumber: pod?.metadata?.annotations?.["helm.sh/revision"] || "N/A",
+            revisionNumber:
+              pod?.metadata?.annotations?.["helm.sh/revision"] || "N/A",
             crashLoopReason,
           };
         });
@@ -293,74 +291,103 @@ const StatusFooter: React.FC<Props> = ({
             </Button>
           </Container>
         )}
-    </StyledStatusFooter>
+      </StyledStatusFooter>
     );
-  };
+  }
 
   return (
     <>
-      {replicaSetArray != null && replicaSetArray.length > 0 && replicaSetArray.map((replicaSet, i) => {
-        return (
-          <>
-            <StyledStatusFooterTop key={i} expanded={expanded}>
-              <StyledContainer row spaced>
-                {replicaSet.some(r => r.crashLoopReason != "") ?
-                  <>
-                    <Running>
-                      <StatusDot color="#ff0000" />
-                      <Text color="helper">
-                        {`${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"} failing to run Revision ${replicaSet[0].revisionNumber}`}
-                      </Text>
-                    </Running>
-                    <Button
-                      onClick={() => {
-                        expanded ? setHeight(0) : setHeight(122);
-                        setExpanded(!expanded);
-                      }}
-                      height="20px"
-                      color="#ffffff11"
-                      withBorder
-                    >
-                      {expanded ? <I className="material-icons">arrow_drop_up</I>
-                        : <I className="material-icons">arrow_drop_down</I>}
-                      <Text color="helper">
-                        See failure reason
-                      </Text>
-                    </Button>
-                  </> :
-                  // check if there are more recent replicasets and if the previous replicaset has a crashloop reason
-                  i > 0 && !replicaSetArray[i - 1].some(p => p.crashLoopReason != "") ?
+      {replicaSetArray != null &&
+        replicaSetArray.length > 0 &&
+        replicaSetArray.map((replicaSet, i) => {
+          return (
+            <>
+              <StyledStatusFooterTop key={i} expanded={expanded}>
+                <StyledContainer row spaced>
+                  {replicaSet.some((r) => r.crashLoopReason != "") ? (
+                    <>
+                      <Running>
+                        <StatusDot color="#ff0000" />
+                        <Text color="helper">
+                          {`${replicaSet.length} replica${
+                            replicaSet.length === 1 ? "" : "s"
+                          } ${
+                            replicaSet.length === 1 ? "is" : "are"
+                          } failing to run Revision ${
+                            replicaSet[0].revisionNumber
+                          }`}
+                        </Text>
+                      </Running>
+                      <Button
+                        onClick={() => {
+                          expanded ? setHeight(0) : setHeight(122);
+                          setExpanded(!expanded);
+                        }}
+                        height="20px"
+                        color="#ffffff11"
+                        withBorder
+                      >
+                        {expanded ? (
+                          <I className="material-icons">arrow_drop_up</I>
+                        ) : (
+                          <I className="material-icons">arrow_drop_down</I>
+                        )}
+                        <Text color="helper">See failure reason</Text>
+                      </Button>
+                    </>
+                  ) : // check if there are more recent replicasets and if the previous replicaset has a crashloop reason
+                  i > 0 &&
+                    !replicaSetArray[i - 1].some(
+                      (p) => p.crashLoopReason != ""
+                    ) ? (
                     <Running>
                       <StatusDot color="#FFA500" />
                       <Text color="helper">
-                        {`${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"} still running at Revision ${replicaSet[0].revisionNumber}. Spinning down...`}
-                      </Text>
-                    </Running> :
-                    <Running>
-                      {replicaSet.length ? <StatusDot /> : <StatusDot color="#ffffff33" />}
-                      <Text color="helper">
-                        {`${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"} running at Revision ${replicaSet[0].revisionNumber}`}
+                        {`${replicaSet.length} replica${
+                          replicaSet.length === 1 ? "" : "s"
+                        } ${
+                          replicaSet.length === 1 ? "is" : "are"
+                        } still running at Revision ${
+                          replicaSet[0].revisionNumber
+                        }. Spinning down...`}
                       </Text>
                     </Running>
-                }
-              </StyledContainer>
-            </StyledStatusFooterTop>
-            {replicaSet.some(r => r.crashLoopReason != "") &&
-              <AnimateHeight height={height}>
-                <StyledStatusFooter>
-                  <Message>
-                    {replicaSet.find(r => r.crashLoopReason != "")?.crashLoopReason}
-                  </Message>
-                </StyledStatusFooter>
-              </AnimateHeight>
-            }
-          </>
-        )
-      })}
+                  ) : (
+                    <Running>
+                      {replicaSet.length ? (
+                        <StatusDot />
+                      ) : (
+                        <StatusDot color="#ffffff33" />
+                      )}
+                      <Text color="helper">
+                        {`${replicaSet.length} replica${
+                          replicaSet.length === 1 ? "" : "s"
+                        } ${
+                          replicaSet.length === 1 ? "is" : "are"
+                        } running at Revision ${replicaSet[0].revisionNumber}`}
+                      </Text>
+                    </Running>
+                  )}
+                </StyledContainer>
+              </StyledStatusFooterTop>
+              {replicaSet.some((r) => r.crashLoopReason != "") && (
+                <AnimateHeight height={height}>
+                  <StyledStatusFooter>
+                    <Message>
+                      {
+                        replicaSet.find((r) => r.crashLoopReason != "")
+                          ?.crashLoopReason
+                      }
+                    </Message>
+                  </StyledStatusFooter>
+                </AnimateHeight>
+              )}
+            </>
+          );
+        })}
     </>
   );
 };
-
 
 export default withRouter(StatusFooter);
 
@@ -370,22 +397,22 @@ const StatusDot = styled.div<{ color?: string }>`
   height: 7px;
   border-radius: 50%;
   margin-right: 10px;
-  background: ${props => props.color || "#38a88a"};
+  background: ${(props) => props.color || "#38a88a"};
 
   box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
-	transform: scale(1);
-	animation: pulse 2s infinite;
+  transform: scale(1);
+  animation: pulse 2s infinite;
   @keyframes pulse {
     0% {
       transform: scale(0.95);
       box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
     }
-  
+
     70% {
       transform: scale(1);
       box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
     }
-  
+
     100% {
       transform: scale(0.95);
       box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
@@ -426,7 +453,7 @@ const Running = styled.div`
   align-items: center;
 `;
 
-const StyledStatusFooter = styled.div`
+export const StyledStatusFooter = styled.div`
   width: 100%;
   padding: 10px 15px;
   background: ${(props) => props.theme.fg2};
@@ -449,7 +476,7 @@ const StyledStatusFooter = styled.div`
   }
 `;
 
-const StyledStatusFooterTop = styled(StyledStatusFooter) <{
+const StyledStatusFooterTop = styled(StyledStatusFooter)<{
   expanded: boolean;
 }>`
   height: 40px;
@@ -481,8 +508,9 @@ const StyledContainer = styled.div<{
   row: boolean;
   spaced: boolean;
 }>`
-  display: ${props => props.row ? "flex" : "block"};
+  display: ${(props) => (props.row ? "flex" : "block")};
   align-items: center;
-  justify-content: ${props => props.spaced ? "space-between" : "flex-start"};
+  justify-content: ${(props) =>
+    props.spaced ? "space-between" : "flex-start"};
   width: 100%;
 `;

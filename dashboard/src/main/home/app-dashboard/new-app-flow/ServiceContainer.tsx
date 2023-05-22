@@ -12,6 +12,7 @@ import WebTabs from "./WebTabs";
 import WorkerTabs from "./WorkerTabs";
 import JobTabs from "./JobTabs";
 import { Service } from "./serviceTypes";
+import { StyledStatusFooter } from "../expanded-app/StatusFooter";
 import StatusFooter from "../expanded-app/StatusFooter";
 import ReleaseTabs from "./ReleaseTabs";
 
@@ -125,16 +126,16 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {renderTabs(service)}
         </StyledSourceBox>
       </AnimateHeight>
-      {chart &&
+      {/* {chart &&
         service &&
         // Check if has built image
-        getHasBuiltImage() && (
-          <StatusFooter
-            setExpandedJob={setExpandedJob}
-            chart={chart}
-            service={service}
-          />
-        )}
+        getHasBuiltImage() && ( */}
+      <StatusFooter
+        setExpandedJob={setExpandedJob}
+        chart={chart}
+        service={service}
+      />
+      {/* )} */}
       <Spacer y={0.5} />
     </>
   );
@@ -176,7 +177,6 @@ const ActionButton = styled.button`
   border-radius: 50%;
   cursor: pointer;
   color: #aaaabb;
-
   :hover {
     color: white;
   }

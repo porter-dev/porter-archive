@@ -37,7 +37,7 @@ const WebTabs: React.FC<Props> = ({
   }, [currentTab]);
   const calculateContainerHeight = () => {
     const containerHeight = containerRef.current?.offsetHeight || 0;
-    const add = hasFooter ? 0 : 55;
+    const add = hasFooter ? 55 : 0;
     setHeight(containerHeight + add);
   };
   const renderMain = () => {
@@ -732,7 +732,12 @@ const WebTabs: React.FC<Props> = ({
             { label: "Advanced", value: "advanced" },
           ]}
           currentTab={currentTab}
-          setCurrentTab={(value: string) => setCurrentTab(value)}
+          setCurrentTab={(value: string) => {
+            setShowSettingsLive(false);
+            setShowSettingsStart(false);
+            setShowSettingsReady(false);
+            setCurrentTab(value);
+          }}
         />
         {currentTab === "main" && renderMain()}
         {currentTab === "resources" && renderResources()}

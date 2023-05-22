@@ -12,6 +12,7 @@ import WebTabs from "./WebTabs";
 import WorkerTabs from "./WorkerTabs";
 import JobTabs from "./JobTabs";
 import { Service } from "./serviceTypes";
+import { StyledStatusFooter } from "../expanded-app/StatusFooter";
 import StatusFooter from "../expanded-app/StatusFooter";
 import ReleaseTabs from "./ReleaseTabs";
 
@@ -32,7 +33,9 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   defaultExpanded,
   setExpandedJob,
 }) => {
-  const [showExpanded, setShowExpanded] = React.useState<boolean>(defaultExpanded);
+  const [showExpanded, setShowExpanded] = React.useState<boolean>(
+    defaultExpanded
+  );
   const [height, setHeight] = React.useState<Height>("auto");
 
   // TODO: calculate heights instead of hardcoding them
@@ -90,12 +93,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     if (chart?.chart?.values == null) {
       return false;
     }
-    return (
-      !_.isEmpty((
-        Object.values(chart.chart.values)[0] as any
-      )?.global)
-    );
-  }
+    return !_.isEmpty((Object.values(chart.chart.values)[0] as any)?.global);
+  };
 
   return (
     <>
@@ -113,30 +112,24 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {service.name.trim().length > 0 ? service.name : "New Service"}
         </ServiceTitle>
         {service.canDelete && (
-          <ActionButton
-            onClick={deleteService}
-          >
+          <ActionButton onClick={deleteService}>
             <span className="material-icons">delete</span>
           </ActionButton>
         )}
       </ServiceHeader>
-      <AnimateHeight
-        height={showExpanded ? height : 0}
-      >
+      <AnimateHeight height={showExpanded ? height : 0}>
         <StyledSourceBox
           showExpanded={showExpanded}
           chart={chart}
-          hasFooter={getHasBuiltImage()}
+          hasFooter={chart && service && getHasBuiltImage()}
         >
           {renderTabs(service)}
         </StyledSourceBox>
       </AnimateHeight>
-      {(
-        chart &&
+      {chart &&
         service &&
         // Check if has built image
-        getHasBuiltImage()
-      ) && (
+        getHasBuiltImage() && (
           <StatusFooter
             setExpandedJob={setExpandedJob}
             chart={chart}
@@ -156,9 +149,9 @@ const ServiceTitle = styled.div`
 `;
 
 const StyledSourceBox = styled.div<{
-  showExpanded: boolean,
-  chart: any,
-  hasFooter?: boolean,
+  showExpanded: boolean;
+  chart: any;
+  hasFooter?: boolean;
 }>`
   width: 100%;
   color: #ffffff;
@@ -168,8 +161,8 @@ const StyledSourceBox = styled.div<{
   background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
   border-top: 0;
-  border-bottom-left-radius: ${props => props.hasFooter ? "0" : "5px"};
-  border-bottom-right-radius: ${props => props.hasFooter ? "0" : "5px"};
+  border-bottom-left-radius: ${(props) => (props.hasFooter ? "0" : "5px")};
+  border-bottom-right-radius: ${(props) => (props.hasFooter ? "0" : "5px")};
 `;
 
 const ActionButton = styled.button`
@@ -184,7 +177,6 @@ const ActionButton = styled.button`
   border-radius: 50%;
   cursor: pointer;
   color: #aaaabb;
-
   :hover {
     color: white;
   }
@@ -196,9 +188,9 @@ const ActionButton = styled.button`
 `;
 
 const ServiceHeader = styled.div<{
-  showExpanded: boolean,
-  chart: any,
-  bordersRounded?: boolean,
+  showExpanded: boolean;
+  chart: any;
+  bordersRounded?: boolean;
 }>`
   flex-direction: row;
   display: flex;
@@ -215,16 +207,16 @@ const ServiceHeader = styled.div<{
     border: 1px solid #7a7b80;
   }
 
-  border-bottom-left-radius: ${props => props.bordersRounded ? "" : "0"};
-  border-bottom-right-radius: ${props => props.bordersRounded ? "" : "0"};
+  border-bottom-left-radius: ${(props) => (props.bordersRounded ? "" : "0")};
+  border-bottom-right-radius: ${(props) => (props.bordersRounded ? "" : "0")};
 
   .dropdown {
     font-size: 30px;
     cursor: pointer;
     border-radius: 20px;
     margin-left: -10px;
-    transform: ${(props: { showExpanded: boolean, chart: any }) =>
-    props.showExpanded ? "" : "rotate(-90deg)"};
+    transform: ${(props: { showExpanded: boolean; chart: any }) =>
+      props.showExpanded ? "" : "rotate(-90deg)"};
   }
 
   animation: fadeIn 0.3s 0s;

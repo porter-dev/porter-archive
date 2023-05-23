@@ -97,7 +97,6 @@ const TabWrapper = styled.div`
 
 const Tab = styled.div`
   height: 30px;
-  overflow-y: auto;
   margin-right: ${(props: { lastItem: boolean; highlight: string }) =>
     props.lastItem ? "" : "30px"};
   display: flex;

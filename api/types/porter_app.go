@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type PorterApp struct {
 	ID        uint `json:"id"`
 	ProjectID uint `json:"project_id"`
@@ -57,3 +59,33 @@ type UpdatePorterAppRequest struct {
 }
 
 type ListPorterAppResponse []*PorterApp
+
+// PorterAppEvent represents an event that occurs on a Porter stack during a stacks lifecycle.
+type PorterAppEvent struct {
+	ID string `json:"id"`
+	// Status contains the accepted status' of a given event such as SUCCESS, FAILED, PROGRESSING, etc.
+	Status string `json:"status"`
+	// Type represents a supported Porter Stack Event
+	Type PorterAppEventType `json:"type"`
+	// TypeExternalSource represents an external event source such as Github, or Gitlab. This is not always required but will commonly be see in build events
+	TypeExternalSource string `json:"type_source,omitempty"`
+	// CreatedAt is the time (UTC) that a given event was created. This should not change
+	CreatedAt time.Time `json:"created_at"`
+	// UpdatedAt is the time (UTC) that an event was last updated. This can occur when an event was created as PROGRESSING, then was marked as SUCCESSFUL for example
+	UpdatedAt time.Time `json:"updated_at"`
+	// PorterAppID is the ID that the given event relates to
+	PorterAppID string         `json:"porter_app_id"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
+}
+
+// PorterAppEventType is an alias for a string that represents a Porter Stack Event Type
+type PorterAppEventType string
+
+const (
+	// PorterAppEventType_Build represents a Porter Stack Build event such as in Github or Gitlab
+	PorterAppEventType_Build PorterAppEventType = "BUILD"
+	// PorterAppEventType_Deploy represents a Porter Stack Deploy event which occurred through the Porter UI or CLI
+	PorterAppEventType_Deploy PorterAppEventType = "DEPLOY"
+	// PorterAppEventType_AppEvent represents a Porter Stack App Event which occurred whilst the application was running, such as an OutOfMemory (OOM) error
+	PorterAppEventType_AppEvent PorterAppEventType = "APP_EVENT"
+)

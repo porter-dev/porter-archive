@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
 
@@ -31,4 +32,18 @@ type PorterAppEvent struct {
 // TableName overrides the table name
 func (PorterAppEvent) TableName() string {
 	return "porter_app_events"
+}
+
+func (p PorterAppEvent) ToPorterAppEvent() types.PorterAppEvent {
+	ty := types.PorterAppEvent{
+		ID:                 p.ID.String(),
+		Status:             p.Status,
+		Type:               types.PorterAppEventType(p.Type),
+		TypeExternalSource: p.TypeExternalSource,
+		CreatedAt:          p.CreatedAt,
+		UpdatedAt:          p.UpdatedAt,
+		PorterAppID:        p.PorterAppID,
+		Metadata:           p.Metadata,
+	}
+	return ty
 }

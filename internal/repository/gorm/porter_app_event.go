@@ -1,6 +1,10 @@
 package gorm
 
 import (
+	"errors"
+	"fmt"
+
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -25,4 +29,19 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppID(porterAppID uint) 
 	}
 
 	return apps, nil
+}
+
+func (repo *PorterAppEventRepository) EventByID(eventID uuid.UUID) (*models.PorterAppEvent, error) {
+	app := &models.PorterAppEvent{}
+
+	if eventID == uuid.Nil {
+		return app, errors.New("invalid porter app event id supplied")
+	}
+
+	tx := repo.db.Find(&app, "id = ?", eventID.String())
+	if tx.Error != nil {
+		return app, fmt.Errorf("no porter app event found for id %s: %w", eventID, tx.Error)
+	}
+
+	return app, nil
 }

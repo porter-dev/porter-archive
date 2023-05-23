@@ -34,7 +34,7 @@ func (PorterAppEvent) TableName() string {
 	return "porter_app_events"
 }
 
-func (p PorterAppEvent) ToPorterAppEvent() types.PorterAppEvent {
+func (p *PorterAppEvent) ToPorterAppEvent() types.PorterAppEvent {
 	ty := types.PorterAppEvent{
 		ID:                 p.ID.String(),
 		Status:             p.Status,

@@ -124,7 +124,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       ((!clusterName && true) ||
         (isReadOnly && props.provisionerError === "") ||
         props.provisionerError === "" ||
-        currentCluster.status === "UPDATING" ||
+        currentCluster?.status === "UPDATING" ||
         isClicked)
     );
   };

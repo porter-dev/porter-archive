@@ -17,20 +17,20 @@ import Checkbox from "./porter/Checkbox";
 import Button from "./porter/Button";
 import ExpandableSection from "./porter/ExpandableSection";
 import Input from "./porter/Input";
+import AzureCredentialForm from "../main/home/infrastructure/components/credentials/AzureCredentialForm";
 
 const providers = ["aws", "gcp", "azure"];
 
-type Props = {
-};
+type Props = {};
 
-const ProvisionerFlow: React.FC<Props> = ({
-}) => {
+const ProvisionerFlow: React.FC<Props> = ({}) => {
   const { usage, hasBillingEnabled, currentProject } = useContext(Context);
   const [currentStep, setCurrentStep] = useState("cloud");
   const [credentialId, setCredentialId] = useState("");
   const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
   const [confirmCost, setConfirmCost] = useState("");
   const [useCloudFormationForm, setUseCloudFormationForm] = useState(true);
+  const [selectedProvider, setSelectedProvider] = useState("");
 
   const isUsageExceeded = useMemo(() => {
     if (!hasBillingEnabled) {
@@ -58,56 +58,57 @@ const ProvisionerFlow: React.FC<Props> = ({
     } catch (err) {
       console.log(err);
     }
-  }
+  };
 
   if (currentStep === "cloud") {
     return (
       <>
         <StyledProvisionerFlow>
-          <Helper>
-            Select your hosting backend:
-          </Helper>
+          <Helper>Select your hosting backend:</Helper>
           <BlockList>
             {providers.map((provider: string, i: number) => {
               let providerInfo = integrationList[provider];
               return (
                 <Block
                   key={i}
-                  disabled={isUsageExceeded || provider === "gcp" || provider === "azure"}
+                  disabled={isUsageExceeded || provider === "gcp"}
                   onClick={() => {
-                    if (!(isUsageExceeded || provider === "gcp" || provider === "azure")) {
+                    if (!(isUsageExceeded || provider === "gcp")) {
+                      setSelectedProvider(provider);
                       setShowCostConfirmModal(true);
                     }
                   }}
                 >
                   <Icon src={providerInfo.icon} />
                   <BlockTitle>{providerInfo.label}</BlockTitle>
-                  <BlockDescription>{providerInfo.tagline || "Hosted in your own cloud"}</BlockDescription>
+                  <BlockDescription>
+                    {providerInfo.tagline || "Hosted in your own cloud"}
+                  </BlockDescription>
                 </Block>
               );
             })}
           </BlockList>
         </StyledProvisionerFlow>
         {showCostConfirmModal && (
-          <Modal closeModal={() => {
-            setConfirmCost("");
-            setShowCostConfirmModal(false);
-          }}>
-            <Text size={16}>
-              Base AWS cost consent
-            </Text>
+          <Modal
+            closeModal={() => {
+              setConfirmCost("");
+              setShowCostConfirmModal(false);
+            }}
+          >
+            <Text size={16}>Base AWS cost consent</Text>
             <Spacer height="15px" />
             <Text color="helper">
-              Porter will create resources in your existing AWS account for hosting applications. You will be separately charged by AWS and can use your cloud credits. Base AWS cost:
+              Porter will create resources in your existing AWS account for
+              hosting applications. You will be separately charged by AWS and
+              can use your cloud credits. Base AWS cost:
             </Text>
             <Spacer y={1} />
             <ExpandableSection
               noWrapper
               expandText="[+] Show details"
               collapseText="[-] Hide details"
-              Header={
-                <Cost>$315.94 / mo</Cost>
-              }
+              Header={<Cost>$315.94 / mo</Cost>}
               ExpandedSection={
                 <>
                   <Spacer height="15px" />
@@ -116,27 +117,40 @@ const ProvisionerFlow: React.FC<Props> = ({
                     <Spacer height="15px" />
                     • Amazon EC2:
                     <Spacer height="15px" />
-                    <Tab />+ System workloads: t3.medium instance (2) = $60.74/mo
+                    <Tab />+ System workloads: t3.medium instance (2) =
+                    $60.74/mo
                     <Spacer height="15px" />
-                    <Tab />+ Monitoring workloads: t3.large instance (1) = $60.74/mo
+                    <Tab />+ Monitoring workloads: t3.large instance (1) =
+                    $60.74/mo
                     <Spacer height="15px" />
-                    <Tab />+ Application workloads: t3.xlarge instance (1) = $121.47/mo
+                    <Tab />+ Application workloads: t3.xlarge instance (1) =
+                    $121.47/mo
                   </Fieldset>
                 </>
               }
             />
             <Spacer y={1} />
             <Text color="helper">
-              Separate from the AWS cost, Porter charges based on the amount of resources that are being used. Porter pricing is as follows, prorated to the minute:
+              Separate from the AWS cost, Porter charges based on the amount of
+              resources that are being used. Porter pricing is as follows,
+              prorated to the minute:
             </Text>
             <Spacer y={1} />
             <Cost>$0.019/hr/vCPU + $0.009/hr/GB RAM</Cost>
             <Spacer y={1} />
             <Text color="helper">
-              All AWS resources will be automatically deleted when you delete your Porter project. Please enter the AWS base cost ("315.94") below to proceed:
+              All AWS resources will be automatically deleted when you delete
+              your Porter project. Please enter the AWS base cost ("315.94")
+              below to proceed:
             </Text>
             <Spacer y={1} />
-            <Input placeholder="315.94" value={confirmCost} setValue={setConfirmCost} width="100%" height="40px" />
+            <Input
+              placeholder="315.94"
+              value={confirmCost}
+              setValue={setConfirmCost}
+              width="100%"
+              height="40px"
+            />
             <Spacer y={1} />
             <Button
               disabled={confirmCost !== "315.94"}
@@ -154,20 +168,30 @@ const ProvisionerFlow: React.FC<Props> = ({
       </>
     );
   } else if (currentStep === "credentials") {
-    return useCloudFormationForm ? (
-      <CloudFormationForm
-        goBack={() => setCurrentStep("cloud")}
-        proceed={(id) => {
-          setCredentialId(id);
-          setCurrentStep("cluster");
-        }}
-        switchToCredentialFlow={() => setUseCloudFormationForm(false)}
-      />
+    return selectedProvider === "aws" ? (
+      useCloudFormationForm ? (
+        <CloudFormationForm
+          goBack={() => setCurrentStep("cloud")}
+          proceed={(id) => {
+            setCredentialId(id);
+            setCurrentStep("cluster");
+          }}
+          switchToCredentialFlow={() => setUseCloudFormationForm(false)}
+        />
+      ) : (
+        <CredentialsForm
+          goBack={() => setCurrentStep("cloud")}
+          proceed={(id) => {
+            setCredentialId(id);
+            setCurrentStep("cluster");
+          }}
+        />
+      )
     ) : (
-      <CredentialsForm
-        goBack={() => setCurrentStep("cloud")}
-        proceed={(id) => {
-          setCredentialId(id);
+      <AzureCredentialForm
+        cancel={() => setCurrentStep("cloud")}
+        setCreatedCredential={(id) => {
+          setCredentialId(String(id));
           setCurrentStep("cluster");
         }}
       />
@@ -177,7 +201,7 @@ const ProvisionerFlow: React.FC<Props> = ({
       <ProvisionerForm
         goBack={() => setCurrentStep("credentials")}
         credentialId={credentialId}
-        useAssumeRole={useCloudFormationForm}
+        provider={selectedProvider}
       />
     );
   }

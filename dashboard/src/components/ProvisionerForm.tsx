@@ -9,17 +9,18 @@ import ProvisionerSettings from "./ProvisionerSettings";
 import ProvisionerSettingsOld from "./ProvisionerSettingsOld";
 import Text from "./porter/Text";
 import Spacer from "./porter/Spacer";
+import AzureProvisionerSettings from "./AzureProvisionerSettings";
 
 type Props = {
   goBack: () => void;
   credentialId: string;
-  useAssumeRole?: boolean;
+  provider: string;
 };
 
 const ProvisionerForm: React.FC<Props> = ({
   goBack,
   credentialId,
-  useAssumeRole,
+  provider,
 }) => {
   return (
     <>
@@ -33,11 +34,14 @@ const ProvisionerForm: React.FC<Props> = ({
         Configure settings
       </Text>
       <Spacer y={1} />
-      <Text color="helper">
-        Configure settings for your AWS environment.
-      </Text>
+      <Text color="helper">Configure settings for your AWS environment.</Text>
       <Spacer y={1} />
-      <ProvisionerSettings credentialId={credentialId} />
+      {provider === "aws" && (
+        <ProvisionerSettings credentialId={credentialId} />
+      )}
+      {provider === "azure" && (
+        <AzureProvisionerSettings credentialId={credentialId} />
+      )}
     </>
   );
 };

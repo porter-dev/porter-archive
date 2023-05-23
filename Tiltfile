@@ -74,7 +74,8 @@ docker_build_with_restart(
     context=".",
     dockerfile="zarf/docker/Dockerfile.server.tilt",
     # entrypoint='dlv --listen=:40000 --api-version=2 --headless=true --log=true exec /porter/bin/app',
-    entrypoint='/app/migrate && /app/porter',
+    # entrypoint='/app/migrate && /app/porter',
+    entrypoint='sleep 5000',
     build_args={},
     only=[
         "bin",

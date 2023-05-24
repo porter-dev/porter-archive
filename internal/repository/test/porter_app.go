@@ -15,7 +15,6 @@ type PorterAppRepository struct {
 
 func NewPorterAppRepository(canQuery bool, failingMethods ...string) repository.PorterAppRepository {
 	return &PorterAppRepository{canQuery, strings.Join(failingMethods, ",")}
-
 }
 
 func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string) (*models.PorterApp, error) {

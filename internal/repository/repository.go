@@ -46,4 +46,5 @@ type Repository interface {
 	APIContractRevisioner() APIContractRevisioner
 	AWSAssumeRoleChainer() AWSAssumeRoleChainer
 	PorterApp() PorterAppRepository
+	PorterAppEvent() PorterAppEventRepository
 }

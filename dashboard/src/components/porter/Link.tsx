@@ -44,13 +44,16 @@ export default Link;
 const Div = styled.span<{ hasunderline?: boolean }>`
   color: #ffffff;
   cursor: pointer;
+  font-size: 13px;
   display: inline;
-  text-decoration: ${props => props.hasunderline ? "underline" : ""};
+  border-bottom: ${props => props.hasunderline ? "1px solid #fff" : ""};
 `;
 
 const StyledLink = styled(DynamicLink)<{ hasunderline?: boolean }>`
   color: #ffffff;
   display: inline;
+  font-size: 13px;
   cursor: pointer;
-  text-decoration: ${props => props.hasunderline ? "underline" : ""};
+  text-decoration: ;
+  border-bottom: ${props => props.hasunderline ? "1px solid #fff" : ""};
 `;

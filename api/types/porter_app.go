@@ -64,7 +64,7 @@ type ListPorterAppResponse []*PorterApp
 type PorterAppEvent struct {
 	ID string `json:"id"`
 	// Status contains the accepted status' of a given event such as SUCCESS, FAILED, PROGRESSING, etc.
-	Status string `json:"status"`
+	Status string `json:"status,omitempty"`
 	// Type represents a supported Porter Stack Event
 	Type PorterAppEventType `json:"type"`
 	// TypeExternalSource represents an external event source such as Github, or Gitlab. This is not always required but will commonly be see in build events

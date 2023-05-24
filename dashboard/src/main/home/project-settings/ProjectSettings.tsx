@@ -236,7 +236,6 @@ const DeleteButton = styled.div`
   height: 35px;
   font-size: 13px;
   font-weight: 500;
-  font-family: "Work Sans", sans-serif;
   color: white;
   display: flex;
   align-items: center;

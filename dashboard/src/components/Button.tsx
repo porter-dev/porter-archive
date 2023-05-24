@@ -30,7 +30,6 @@ const ButtonWrapper = styled.div`
   justify-content: space-between;
   font-size: 13px;
   cursor: pointer;
-  font-family: "Work Sans", sans-serif;
   color: white;
   font-weight: 500;
   padding: 10px;

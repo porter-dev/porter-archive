@@ -143,7 +143,6 @@ const BackButton = styled.div`
 `;
 
 const StyledPageNotFound = styled.div`
-  font-family: "Work Sans", sans-serif;
   color: #6f6f6f;
   font-size: 16px;
   user-select: none;

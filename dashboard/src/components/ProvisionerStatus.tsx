@@ -924,7 +924,6 @@ const DeleteAction = styled.span`
   height: 35px;
   font-size: 13px;
   font-weight: 500;
-  font-family: "Work Sans", sans-serif;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -944,7 +943,6 @@ const Button = styled.button`
   font-size: 13px;
   margin: 10px 0;
   font-weight: 500;
-  font-family: "Work Sans", sans-serif;
   color: white;
   padding: 6px 20px 7px 20px;
   text-align: left;

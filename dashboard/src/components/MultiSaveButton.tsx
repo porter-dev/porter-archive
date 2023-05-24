@@ -173,7 +173,6 @@ type StatusWrapperProps = {
 const StatusWrapper = styled.div<StatusWrapperProps>`
   display: flex;
   align-items: center;
-  font-family: "Work Sans", sans-serif;
   font-size: 13px;
   color: #ffffff55;
   ${(props) => {
@@ -249,7 +248,6 @@ const Button = styled.button<ButtonProps>`
   height: 35px;
   font-size: 13px;
   font-weight: 500;
-  font-family: "Work Sans", sans-serif;
   color: white;
   display: flex;
   align-items: center;

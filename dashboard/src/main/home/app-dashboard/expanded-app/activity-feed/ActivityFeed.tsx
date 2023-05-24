@@ -6,7 +6,8 @@ import { Context } from "shared/Context";
 
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
-import VerticalSteps from "components/porter/VerticalSteps";
+
+import EventCard from "./EventCard";
 
 type Props = {
   chart: any;
@@ -14,11 +15,53 @@ type Props = {
 
 const dummyEvents = [
   {
-    type: "build",
+    "id": 0,
+    "status": "SUCCESS",
+    "type": "BUILD",
+    "type_external_source": "GITHUB",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
   },
   {
-    type: "deploy",
-  }
+    "id": 0,
+    "status": "FAILED",
+    "type": "DEPLOY",
+    "type_external_source": "KUBERNETES",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "PROGRESSING",
+    "type": "PRE_DEPLOY",
+    "type_external_source": "KUBERNETES",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "FAILED",
+    "type": "APP_EVENT",
+    "type_external_source": "KUBERNETES",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
 ]
 
 const ActivityFeed: React.FC<Props> = ({
@@ -30,14 +73,6 @@ const ActivityFeed: React.FC<Props> = ({
     // Do something
   }, []);
 
-  const renderEvent = (event: any) => {
-    return (
-      <EventCard>
-        some event
-      </EventCard>
-    )
-  };
-
   return (
     <StyledActivityFeed>
       {dummyEvents.map((event, i) => {
@@ -48,7 +83,11 @@ const ActivityFeed: React.FC<Props> = ({
           >
             {(i !== dummyEvents.length - 1) && <Line />}
             <Dot />
-            {renderEvent(event)}
+            <Time>
+              <Text>Jun 16</Text>
+              <Text>12:00 PM</Text>
+            </Time>
+            <EventCard event={event} />
           </EventWrapper>
         );
       })}
@@ -58,21 +97,17 @@ const ActivityFeed: React.FC<Props> = ({
 
 export default ActivityFeed;
 
-const EventCard = styled.div`
-  width: 100%;
-  padding: 20px;
-  border-radius: 5px;
-  background: ${({ theme }) => theme.fg};
-  border: 1px solid ${({ theme }) => theme.border};
+const Time = styled.div`
+  margin-right: -5px;
 `;
 
 const Line = styled.div`
   width: 1px;
-  height: calc(100% + 35px);
+  height: calc(100% + 30px);
   background: #414141;
   position: absolute;
   left: 3px;
-  top: 8px;
+  top: 36px;
   opacity: 1;
 `;
 
@@ -83,7 +118,7 @@ const Dot = styled.div`
   border-radius: 50%;
   position: absolute;
   left: 0;
-  top: 7px;
+  top: 36px;
   opacity: 1;
 `;
 
@@ -91,6 +126,8 @@ const EventWrapper = styled.div<{
   isLast: boolean;
 }>`
   padding-left: 30px;
+  display: flex;
+  align-items: center;
   position: relative;
   margin-bottom: ${props => props.isLast ? "" : "25px"};
 `;

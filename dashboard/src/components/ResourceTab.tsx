@@ -165,7 +165,6 @@ const Tooltip = styled.div`
   color: white;
   text-transform: none;
   font-size: 12px;
-  font-family: "Work Sans", sans-serif;
   outline: 1px solid #ffffff55;
   opacity: 0;
   animation: faded-in 0.2s 0.15s;
@@ -229,7 +228,6 @@ const Status = styled.div`
   text-transform: capitalize;
   justify-content: flex-end;
   align-items: center;
-  font-family: 'Work Sans', sans-serif;
   color: #aaaabb;
   animation: fadeIn 0.5s;
   @keyframes fadeIn {

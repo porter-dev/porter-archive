@@ -42,7 +42,7 @@ import { EnvVariablesTab } from "./EnvVariablesTab";
 import GHABanner from "./GHABanner";
 import LogSection from "./LogSection";
 import EventsTab from "./EventsTab";
-import ActivityFeed from "./ActivityFeed";
+import ActivityFeed from "./activity-feed/ActivityFeed";
 import JobRuns from "./JobRuns";
 import MetricsSection from "./MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
@@ -838,13 +838,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     ? hasBuiltImage
                       ? [
                         { label: "Overview", value: "overview" },
+                        { label: "Activity", value: "activity" },
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
                         { label: "Metrics", value: "metrics" },
                         { label: "Debug", value: "status" },
                         { label: "Pre-deploy", value: "pre-deploy" },
                         {
-                          label: "Environment variables",
+                          label: "Environment",
                           value: "environment-variables",
                         },
                         { label: "Build settings", value: "build-settings" },
@@ -852,9 +853,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       ]
                       : [
                         { label: "Overview", value: "overview" },
+                        { label: "Activity", value: "activity" },
                         { label: "Pre-deploy", value: "pre-deploy" },
                         {
-                          label: "Environment variables",
+                          label: "Environment",
                           value: "environment-variables",
                         },
                         { label: "Build settings", value: "build-settings" },
@@ -862,13 +864,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       ]
                     : [
                       { label: "Overview", value: "overview" },
+                      { label: "Activity", value: "activity" },
                       { label: "Events", value: "events" },
                       { label: "Logs", value: "logs" },
                       { label: "Metrics", value: "metrics" },
                       { label: "Debug", value: "status" },
                       { label: "Pre-deploy", value: "pre-deploy" },
                       {
-                        label: "Environment variables",
+                        label: "Environment",
                         value: "environment-variables",
                       },
                       { label: "Settings", value: "settings" },

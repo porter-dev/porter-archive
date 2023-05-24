@@ -265,7 +265,6 @@ const MainSelector = styled.div`
   align-items: center;
   margin: 10px 0 0;
   font-size: 14px;
-  font-family: "Work Sans", sans-serif;
   cursor: pointer;
   padding: 10px 0;
   padding-left: 20px;

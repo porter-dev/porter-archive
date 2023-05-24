@@ -115,7 +115,6 @@ const Tooltip = styled.div<{ placement: TooltipPlacement }>`
 `;
 
 const StyledContent = styled.div`
-  font-family: "Work Sans", sans-serif;
   font-size: 12px;
   font-weight: normal;
   padding: 12px 14px;

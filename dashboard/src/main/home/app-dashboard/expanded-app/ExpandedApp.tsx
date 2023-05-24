@@ -11,6 +11,7 @@ import github from "assets/github.png";
 import pr_icon from "assets/pull_request_icon.svg";
 import loadingImg from "assets/loading.gif";
 import refresh from "assets/refresh.png";
+import danger from "assets/danger.svg";
 
 import api from "shared/api";
 import JSZip from "jszip";
@@ -48,9 +49,60 @@ import JobRuns from "./JobRuns";
 import MetricsSection from "./MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
+import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
+import Anser, { AnserJsonEntry } from "anser";
+import dayjs from "dayjs";
+import Modal from "components/porter/Modal";
+import TitleSection from "components/TitleSection";
 
 type Props = RouteComponentProps & {};
 
+interface ExpandedIncidentLogsProps {
+  logs: Log[];
+}
+
+const ExpandedIncidentLogs = ({ logs }: ExpandedIncidentLogsProps) => {
+  if (!logs.length) {
+    return (
+      <LogsLoadWrapper>
+        <Loading />
+      </LogsLoadWrapper>
+    );
+  }
+
+  return (
+    <LogsSectionWrapper>
+      <StyledLogsSection>
+        {logs?.map((log, i) => {
+          return (
+            <LogSpan key={[log.lineNumber, i].join(".")}>
+              <span className="line-number">{log.lineNumber}.</span>
+              <span className="line-timestamp">
+                {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
+              </span>
+              <LogOuter key={[log.lineNumber, i].join(".")}>
+                {log.line?.map((ansi, j) => {
+                  if (ansi.clearLine) {
+                    return null;
+                  }
+
+                  return (
+                    <LogInnerSpan
+                      key={[log.lineNumber, i, j].join(".")}
+                      ansi={ansi}
+                    >
+                      {ansi.content.replace(/ /g, "\u00a0")}
+                    </LogInnerSpan>
+                  );
+                })}
+              </LogOuter>
+            </LogSpan>
+          );
+        })}
+      </StyledLogsSection>
+    </LogsSectionWrapper>
+  );
+};
 const icons = [
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-plain.svg",
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg",
@@ -80,6 +132,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [tab, setTab] = useState("overview");
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [bannerLoading, setBannerLoading] = useState<boolean>(false);
+
   const [components, setComponents] = useState<ResourceType[]>([]);
 
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
@@ -88,6 +142,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     z.infer<typeof PorterYamlSchema> | undefined
   >(undefined);
   const [expandedJob, setExpandedJob] = useState(null);
+  const [logs, setLogs] = useState<Log[]>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const [services, setServices] = useState<Service[]>([]);
   const [releaseJob, setReleaseJob] = useState<ReleaseService[]>([]);
@@ -97,6 +153,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   const getPorterApp = async () => {
     // setIsLoading(true);
+    setBannerLoading(true);
     const { appName } = props.match.params as any;
     try {
       if (!currentCluster || !currentProject) {
@@ -294,7 +351,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  const getLogs = async () => {
+  useEffect(() => {
+    setBannerLoading(true);
+    getBuildLogs().then(() => {
+      setBannerLoading(false);
+    });
+  }, [appData]);
+
+  const getBuildLogs = async () => {
     try {
       const res = await api.getGHWorkflowLogs(
         "",
@@ -308,6 +372,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           filename: "porter_stack_" + appData.chart.name + ".yml",
         }
       );
+      let logs: Log[] = [];
       if (res.data != null) {
         // Fetch the logs
         const logsResponse = await fetch(res.data);
@@ -320,13 +385,42 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
           zip.forEach(async function (relativePath, zipEntry) {
             const fileData = await zip.file(relativePath)?.async("string");
-            console.log(fileData);
+
+            if (fileData) {
+              const lines = fileData.split("\n");
+
+              lines.forEach((line, index) => {
+                const anserLine: AnserJsonEntry[] = Anser.ansiToJson(line);
+                const log: Log = {
+                  line: anserLine,
+                  lineNumber: index + 1,
+                  timestamp: line.match(
+                    /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z/
+                  )?.[0],
+                };
+
+                logs.push(log);
+              });
+            }
           });
+          console.log(logs);
+          setLogs(logs);
         }
       }
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const renderExpandedEventMessage = () => {
+    if (!logs) {
+      return <Loading />;
+    }
+    return (
+      <>
+        <ExpandedIncidentLogs logs={logs} />
+      </>
+    );
   };
 
   const fetchPorterYamlContent = async (
@@ -831,40 +925,102 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           ) : (
             <>
               {!workflowCheckPassed ? (
-                <GHABanner
-                  repoName={appData.app.repo_name}
-                  branchName={appData.app.git_branch}
-                  pullRequestUrl={appData.app.pull_request_url}
-                  stackName={appData.app.name}
-                  gitRepoId={appData.app.git_repo_id}
-                  porterYamlPath={appData.app.porter_yaml_path}
-                />
+                bannerLoading ? (
+                  <Banner>
+                    <Loading />
+                  </Banner>
+                ) : (
+                  <GHABanner
+                    repoName={appData.app.repo_name}
+                    branchName={appData.app.git_branch}
+                    pullRequestUrl={appData.app.pull_request_url}
+                    stackName={appData.app.name}
+                    gitRepoId={appData.app.git_repo_id}
+                    porterYamlPath={appData.app.porter_yaml_path}
+                  />
+                )
               ) : !hasBuiltImage ? (
-                <Banner
-                  suffix={
-                    <RefreshButton onClick={() => window.location.reload()}>
-                      <img src={refresh} /> Refresh
-                    </RefreshButton>
-                  }
-                >
-                  Your GitHub repo has not been built yet.
-                  <Spacer inline width="5px" />
-                  <Link
-                    hasunderline
-                    target="_blank"
-                    to={`https://github.com/${appData.app.repo_name}/actions`}
-                  >
-                    Check status
-                  </Link>
-                  <Button
-                    onClick={async () => await getLogs()}
-                    status={buttonStatus}
-                    loadingText={"Updating..."}
-                    disabled={services.length === 0}
-                  >
-                    Get Logs
-                  </Button>
-                </Banner>
+                <>
+                  {logs ? (
+                    <Banner
+                      type="error"
+                      suffix={
+                        <>
+                          <Link
+                            hasunderline
+                            target="_blank"
+                            to={`https://github.com/${appData.app.repo_name}/actions`}
+                          >
+                            Check GitHub Actions
+                          </Link>
+                        </>
+                      }
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          marginBottom: "-20px",
+                        }}
+                      >
+                        Your Build Was Not Successful
+                        <Spacer inline width="15px" />
+                        <>
+                          <LogsButton onClick={() => setModalVisible(true)}>
+                            View Logs
+                            <i
+                              className="material-icons"
+                              style={{ fontSize: "15px", marginLeft: "3px" }}
+                            >
+                              open_in_new
+                            </i>
+                          </LogsButton>
+                          {modalVisible && (
+                            <Modal
+                              closeModal={() => setModalVisible(false)}
+                              width={"800px"}
+                            >
+                              <TitleSection icon={danger}>
+                                <Text size={16}>
+                                  Logs for {appData.app.name}
+                                </Text>
+                              </TitleSection>
+                              {renderExpandedEventMessage()}
+                            </Modal>
+                          )}
+                        </>
+                      </div>
+
+                      <Spacer inline width="5px" />
+                    </Banner>
+                  ) : bannerLoading ? (
+                    <Banner>
+                      <Loading />
+                    </Banner>
+                  ) : (
+                    <Banner
+                      suffix={
+                        <>
+                          <RefreshButton
+                            onClick={() => window.location.reload()}
+                          >
+                            <img src={refresh} /> Refresh
+                          </RefreshButton>
+                        </>
+                      }
+                    >
+                      Your GitHub repo has not been built yet.
+                      <Spacer inline width="5px" />
+                      <Link
+                        hasunderline
+                        target="_blank"
+                        to={`https://github.com/${appData.app.repo_name}/actions`}
+                      >
+                        Check status
+                      </Link>
+                    </Banner>
+                  )}
+                </>
               ) : (
                 <>
                   <DarkMatter />
@@ -986,6 +1142,28 @@ const RefreshButton = styled.div`
   }
 `;
 
+const LogsButton = styled.div`
+  color: white;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  :hover {
+    color: red;
+    > img {
+      opacity: 1;
+    }
+  }
+
+  > img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 5px;
+    margin-right: 10px;
+    opacity: 0.8;
+  }
+`;
+
 const Spinner = styled.img`
   width: 15px;
   height: 15px;
@@ -1101,4 +1279,95 @@ const InfoWrapper = styled.div`
   align-items: center;
   margin-left: 3px;
   margin-top: 22px;
+`;
+
+const LogsSectionWrapper = styled.div`
+  position: relative;
+`;
+
+const StyledLogsSection = styled.div`
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  font-size: 13px;
+  max-height: 400px;
+  border-radius: 8px;
+  border: 1px solid #ffffff33;
+  border-top: none;
+  background: #101420;
+  animation: floatIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  overflow-y: auto;
+  overflow-wrap: break-word;
+  position: relative;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;
+
+const LogSpan = styled.div`
+  font-family: monospace;
+  user-select: text;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+  & > * {
+    padding-block: 5px;
+  }
+  & > .line-timestamp {
+    height: 100%;
+    color: #949effff;
+    opacity: 0.5;
+    font-family: monospace;
+    min-width: fit-content;
+    padding-inline-end: 5px;
+  }
+  & > .line-number {
+    height: 100%;
+    background: #202538;
+    display: inline-block;
+    text-align: right;
+    min-width: 45px;
+    padding-inline-end: 5px;
+    opacity: 0.3;
+    font-family: monospace;
+  }
+`;
+
+const LogOuter = styled.div`
+  display: inline-block;
+  word-wrap: anywhere;
+  flex-grow: 1;
+  font-family: monospace, sans-serif;
+  font-size: 12px;
+`;
+
+const LogInnerSpan = styled.span`
+  font-family: monospace, sans-serif;
+  font-size: 12px;
+  font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>
+    props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
+  color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
+    props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
+  background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
+    props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
+`;
+
+export const ViewLogsWrapper = styled.div`
+  margin-bottom: -15px;
+  margin-top: 15px;
+`;
+const LogsLoadWrapper = styled.div`
+  height: 50px;
 `;

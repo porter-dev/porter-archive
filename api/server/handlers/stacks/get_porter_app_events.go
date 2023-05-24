@@ -1,6 +1,7 @@
 package stacks
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -21,14 +22,14 @@ type GetPorterAppEventHandler struct {
 func NewGetPorterAppEventHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *GetPorterAppHandler {
-	return &GetPorterAppHandler{
+) *GetPorterAppEventHandler {
+	return &GetPorterAppEventHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 
 func (p *GetPorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	eventID, reqErr := requestutils.GetURLParamString(r, types.URLParamStackID)
+	eventID, reqErr := requestutils.GetURLParamString(r, types.URLParamStackEventID)
 	if reqErr != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
 		return
@@ -36,13 +37,25 @@ func (p *GetPorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	eventIDasUUID, err := uuid.Parse(eventID)
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		e := fmt.Errorf("unable to parse porter app event id as uuid: %w", err)
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
+		return
+	}
+
+	if eventIDasUUID == uuid.Nil {
+		e := fmt.Errorf("invalid UUID passed for porter app event id")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 		return
 	}
 
 	event, err := p.Repo().PorterAppEvent().EventByID(eventIDasUUID)
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+	if event.ID == uuid.Nil {
+		e := fmt.Errorf("porter app event not found")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusNotFound))
 		return
 	}
 

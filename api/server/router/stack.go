@@ -198,6 +198,62 @@ func getStackRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/events -> stacks.NewPorterAppEventListHandler
+	listPorterAppEventsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/events", relPath, types.URLParamStackName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	listPorterAppEventsHandler := stacks.NewPorterAppEventListHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listPorterAppEventsEndpoint,
+		Handler:  listPorterAppEventsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/events/{stack_event_id} -> stacks.NewPorterAppEventGetHandler
+	getPorterAppEventEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/events/{%s}", relPath, types.URLParamStackName, types.URLParamStackEventID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getPorterAppEventHandler := stacks.NewGetPorterAppEventHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getPorterAppEventEndpoint,
+		Handler:  getPorterAppEventHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/analytics -> stacks.NewPorterAppAnalyticsHandler
 	porterAppAnalyticsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -224,62 +280,6 @@ func getStackRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: porterAppAnalyticsEndpoint,
 		Handler:  porterAppAnalyticsHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/events -> stacks.NewPorterAppEventListHandler
-	listPorterAppEventsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbList,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/events", relPath),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	listPorterAppEventsHandler := stacks.NewPorterAppListHandler(
-		config,
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: listPorterAppEventsEndpoint,
-		Handler:  listPorterAppEventsHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> stacks.NewPorterAppEventGetHandler
-	getPorterAppEventEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}/events/{%s}", relPath, types.URLParamStackName, types.URLParamStackEventID),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	getPorterAppEventHandler := stacks.NewGetPorterAppEventHandler(
-		config,
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: getPorterAppEventEndpoint,
-		Handler:  getPorterAppEventHandler,
 		Router:   r,
 	})
 

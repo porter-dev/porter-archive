@@ -35,6 +35,9 @@ func (PorterAppEvent) TableName() string {
 }
 
 func (p *PorterAppEvent) ToPorterAppEvent() types.PorterAppEvent {
+	if p == nil {
+		return types.PorterAppEvent{}
+	}
 	ty := types.PorterAppEvent{
 		ID:                 p.ID.String(),
 		Status:             p.Status,

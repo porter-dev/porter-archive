@@ -1,6 +1,7 @@
 package stacks
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -10,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 )
 
 type PorterAppEventListHandler struct {
@@ -19,8 +21,8 @@ type PorterAppEventListHandler struct {
 func NewPorterAppEventListHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *PorterAppListHandler {
-	return &PorterAppListHandler{
+) *PorterAppEventListHandler {
+	return &PorterAppEventListHandler{
 		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
@@ -43,15 +45,21 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	porterApps, err := p.Repo().PorterAppEvent().ListEventsByPorterAppID(app.ID)
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
+			return
+		}
 	}
 
 	res := struct {
 		Events []types.PorterAppEvent `json:"events"`
 	}{}
+	res.Events = make([]types.PorterAppEvent, 0)
 
 	for _, porterApp := range porterApps {
+		if porterApp == nil {
+			continue
+		}
 		pa := porterApp.ToPorterAppEvent()
 		pa.Metadata = nil
 		res.Events = append(res.Events, pa)

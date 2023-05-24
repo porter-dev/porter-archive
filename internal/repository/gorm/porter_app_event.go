@@ -3,6 +3,7 @@ package gorm
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/models"
@@ -24,8 +25,16 @@ func NewPorterAppEventRepository(db *gorm.DB) repository.PorterAppEventRepositor
 func (repo *PorterAppEventRepository) ListEventsByPorterAppID(porterAppID uint) ([]*models.PorterAppEvent, error) {
 	apps := []*models.PorterAppEvent{}
 
-	if err := repo.db.Where("porter_app_id = ?", porterAppID).Find(&apps).Error; err != nil {
-		return nil, err
+	id := strconv.Itoa(int(porterAppID))
+	if id == "" {
+		return nil, errors.New("invalid porter app id supplied")
+	}
+
+	if err := repo.db.Where("porter_app_id = ?", id).Find(&apps).Error; err != nil {
+		fmt.Println("STEFAN", err)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
 	}
 
 	return apps, nil

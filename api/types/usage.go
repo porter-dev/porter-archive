@@ -26,10 +26,10 @@ type ProjectUsage struct {
 }
 
 var BasicPlan = ProjectUsage{
-	ResourceCPU:    10,
-	ResourceMemory: 20000,
+	ResourceCPU:    40,
+	ResourceMemory: 80000,
 	Clusters:       1,
-	Users:          1,
+	Users:          20,
 }
 
 var TeamPlan = ProjectUsage{

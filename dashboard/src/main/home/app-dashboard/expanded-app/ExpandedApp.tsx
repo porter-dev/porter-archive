@@ -13,6 +13,7 @@ import loadingImg from "assets/loading.gif";
 import refresh from "assets/refresh.png";
 
 import api from "shared/api";
+import JSZip from "jszip";
 import { Context } from "shared/Context";
 import useAuth from "shared/auth/useAuth";
 import Error from "components/porter/Error";
@@ -154,10 +155,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
       setPorterJson(porterJson);
       setAppData(newAppData);
-      updateServicesAndEnvVariables(resChartData?.data, releaseChartData?.data, porterJson);
+      updateServicesAndEnvVariables(
+        resChartData?.data,
+        releaseChartData?.data,
+        porterJson
+      );
 
       // Only check GHA status if no built image is set
-      const hasBuiltImage = !!resChartData.data.config?.global?.image?.repository;
+      const hasBuiltImage = !!resChartData.data.config?.global?.image
+        ?.repository;
       if (hasBuiltImage || !resPorterApp.data.repo_name) {
         setWorkflowCheckPassed(true);
         setHasBuiltImage(true);
@@ -288,6 +294,41 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
+  const getLogs = async () => {
+    try {
+      const res = await api.getGHWorkflowLogs(
+        "",
+        {},
+        {
+          project_id: appData.app.project_id,
+          cluster_id: appData.app.cluster_id,
+          git_installation_id: appData.app.git_repo_id,
+          owner: appData.app.repo_name?.split("/")[0],
+          name: appData.app.repo_name?.split("/")[1],
+          filename: "porter_stack_" + appData.chart.name + ".yml",
+        }
+      );
+      if (res.data != null) {
+        // Fetch the logs
+        const logsResponse = await fetch(res.data);
+
+        // Ensure that the response body is only read once
+        const logsBlob = await logsResponse.blob();
+
+        if (logsResponse.headers.get("Content-Type") === "application/zip") {
+          const zip = await JSZip.loadAsync(logsBlob);
+
+          zip.forEach(async function (relativePath, zipEntry) {
+            const fileData = await zip.file(relativePath)?.async("string");
+            console.log(fileData);
+          });
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const fetchPorterYamlContent = async (
     porterYaml: string,
     appData: any
@@ -371,7 +412,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
     // handle release chart
     if (releaseChart?.config || porterJson?.release) {
-      setReleaseJob([Service.deserializeRelease(releaseChart?.config, porterJson)]);
+      setReleaseJob([
+        Service.deserializeRelease(releaseChart?.config, porterJson),
+      ]);
     }
   };
 
@@ -631,7 +674,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 <Fieldset>
                   <Container row>
                     <PlaceholderIcon src={notFound} />
-                    <Text color="helper">No pre-deploy jobs were found. Add a pre-deploy job to perform an operation before your application services deploy, like a database migration.</Text>
+                    <Text color="helper">
+                      No pre-deploy jobs were found. Add a pre-deploy job to
+                      perform an operation before your application services
+                      deploy, like a database migration.
+                    </Text>
                   </Container>
                 </Fieldset>
                 <Spacer y={0.5} />
@@ -648,11 +695,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               services={releaseJob}
               limitOne={true}
               customOnClick={() => {
-                setReleaseJob([Service.default(
-                  "pre-deploy",
-                  "release",
-                  porterJson
-                ) as ReleaseService]);
+                setReleaseJob([
+                  Service.default(
+                    "pre-deploy",
+                    "release",
+                    porterJson
+                  ) as ReleaseService,
+                ]);
               }}
               addNewText={"Add a new pre-deploy job"}
               defaultExpanded={true}
@@ -666,13 +715,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               Update pre-deploy job
             </Button>
             <Spacer y={0.5} />
-            {releaseJob.length > 0 && <JobRuns
-              lastRunStatus="all"
-              namespace={appData.chart?.namespace}
-              sortType="Newest"
-              releaseName={appData.app.name + "-r"}
-            />
-            }
+            {releaseJob.length > 0 && (
+              <JobRuns
+                lastRunStatus="all"
+                namespace={appData.chart?.namespace}
+                sortType="Newest"
+                releaseName={appData.app.name + "-r"}
+              />
+            )}
           </>
         );
       default:
@@ -682,12 +732,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   if (expandedJob) {
     return (
-      <ExpandedJob 
+      <ExpandedJob
         appName={appData.app.name}
         jobName={expandedJob}
         goBack={() => setExpandedJob(null)}
       />
-    )
+    );
   }
 
   return (
@@ -806,6 +856,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   >
                     Check status
                   </Link>
+                  <Button
+                    onClick={async () => await getLogs()}
+                    status={buttonStatus}
+                    loadingText={"Updating..."}
+                    disabled={services.length === 0}
+                  >
+                    Get Logs
+                  </Button>
                 </Banner>
               ) : (
                 <>
@@ -823,7 +881,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                      appData.chart.chart.metadata.version
+                        appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}
@@ -837,6 +895,30 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? hasBuiltImage
                       ? [
+                          { label: "Overview", value: "overview" },
+                          { label: "Events", value: "events" },
+                          { label: "Logs", value: "logs" },
+                          { label: "Metrics", value: "metrics" },
+                          { label: "Debug", value: "status" },
+                          { label: "Pre-deploy", value: "pre-deploy" },
+                          {
+                            label: "Environment variables",
+                            value: "environment-variables",
+                          },
+                          { label: "Build settings", value: "build-settings" },
+                          { label: "Settings", value: "settings" },
+                        ]
+                      : [
+                          { label: "Overview", value: "overview" },
+                          { label: "Pre-deploy", value: "pre-deploy" },
+                          {
+                            label: "Environment variables",
+                            value: "environment-variables",
+                          },
+                          { label: "Build settings", value: "build-settings" },
+                          { label: "Settings", value: "settings" },
+                        ]
+                    : [
                         { label: "Overview", value: "overview" },
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
@@ -847,32 +929,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                           label: "Environment variables",
                           value: "environment-variables",
                         },
-                        { label: "Build settings", value: "build-settings" },
                         { label: "Settings", value: "settings" },
                       ]
-                      : [
-                        { label: "Overview", value: "overview" },
-                        { label: "Pre-deploy", value: "pre-deploy" },
-                        {
-                          label: "Environment variables",
-                          value: "environment-variables",
-                        },
-                        { label: "Build settings", value: "build-settings" },
-                        { label: "Settings", value: "settings" },
-                      ]
-                    : [
-                      { label: "Overview", value: "overview" },
-                      { label: "Events", value: "events" },
-                      { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
-                      { label: "Debug", value: "status" },
-                      { label: "Pre-deploy", value: "pre-deploy" },
-                      {
-                        label: "Environment variables",
-                        value: "environment-variables",
-                      },
-                      { label: "Settings", value: "settings" },
-                    ]
                 }
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {

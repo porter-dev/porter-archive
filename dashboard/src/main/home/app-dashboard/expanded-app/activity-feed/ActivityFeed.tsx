@@ -72,6 +72,16 @@ const ActivityFeed: React.FC<Props> = ({
     );
   };
 
+  if (events?.length === 0) {
+    return (
+      <Fieldset>
+        <Text size={16}>No events found for "{stackName}"</Text>
+        <Spacer height="15px" />
+        <Text color="helper">This application currently has no associated activity.</Text>
+      </Fieldset>
+    );
+  }
+
   return (
     <StyledActivityFeed>
       {events.map((event, i) => {

@@ -28,6 +28,23 @@ export const relativeDate = (date: string | number) => {
   return rtf.format(-time.time, time.unitOfTime);
 };
 
+export const feedDate = (timestamp: string) => {
+  const date = new Date(timestamp);
+  const monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  const month = monthNames[date.getUTCMonth()];
+  const day = date.getUTCDate();
+  const hours = date.getUTCHours();
+  const minutes = date.getUTCMinutes();
+  const formattedHours = hours % 12 === 0 ? 12 : hours % 12; // Convert to 12-hour format
+  const period = hours < 12 ? 'AM' : 'PM';
+  const formattedDate = `${month} ${day}, ${formattedHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+
+  return formattedDate;
+}
+
 export const timeFrom = (
   time: string | number,
   secondTime?: string | number

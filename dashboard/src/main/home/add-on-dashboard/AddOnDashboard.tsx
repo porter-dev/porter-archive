@@ -185,15 +185,17 @@ const AppDashboard: React.FC<Props> = ({
           {(filteredAddOns ?? []).map((app: any, i: number) => {
             return (
               <Block to={getExpandedChartLinkURL(app)} key={i}>
-                <Text size={14}>
+                <Container row>
                   <Icon 
                     src={
                       hardcodedIcons[app.chart.metadata.name] ||
                       app.chart.metadata.icon
                     }
                   />
-                  {app.name}
-                </Text>
+                  <Text size={14}>
+                    {app.name}
+                  </Text>
+                </Container>
                 <StatusIcon src={healthy} />
                 <Text size={13} color="#ffffff44">
                   <SmallIcon opacity="0.4" src={time} />
@@ -208,17 +210,19 @@ const AppDashboard: React.FC<Props> = ({
           {(filteredAddOns ?? []).map((app: any, i: number) => {
             return (
               <Row to={getExpandedChartLinkURL(app)} key={i}>
-                <Text size={14}>
+                <Container row>
                   <MidIcon
                     src={
                       hardcodedIcons[app.chart.metadata.name] ||
                       app.chart.metadata.icon
                     }
                   />
-                  {app.name}
+                  <Text size={14}>
+                    {app.name}
+                  </Text>
                   <Spacer inline x={1} />
                   <MidIcon src={healthy} height="16px" />
-                </Text>
+                </Container>
                 <Spacer height="15px" />
                 <Text size={13} color="#ffffff44">
                   <SmallIcon opacity="0.4" src={time} />

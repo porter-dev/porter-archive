@@ -715,15 +715,17 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             {appData.app.repo_name && (
               <>
                 <Spacer inline x={1} />
-                <Text size={13} color="helper">
+                <Container row>
                   <SmallIcon src={github} />
-                  <Link
-                    target="_blank"
-                    to={`https://github.com/${appData.app.repo_name}`}
-                  >
-                    {appData.app.repo_name}
-                  </Link>
-                </Text>
+                  <Text size={13} color="helper">
+                    <Link
+                      target="_blank"
+                      to={`https://github.com/${appData.app.repo_name}`}
+                    >
+                      {appData.app.repo_name}
+                    </Link>
+                  </Text>
+                </Container>
               </>
             )}
             {appData.app.git_branch && (

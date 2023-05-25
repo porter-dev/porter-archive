@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 
 import app_event from "assets/app_event.png";
@@ -16,6 +16,7 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import Icon from "components/porter/Icon";
+import Modal from "components/porter/Modal";
 
 type Props = {
   event: any;
@@ -23,7 +24,11 @@ type Props = {
 
 const EventCard: React.FC<Props> = ({
   event,
+  i,
 }) => {
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalContent, setModalContent] = useState<React.ReactNode>(null);
+
   const getIcon = (eventType: string) => {
     switch (eventType) {
       case "APP_EVENT":
@@ -106,7 +111,20 @@ const EventCard: React.FC<Props> = ({
     if (event.type === "APP_EVENT") {
       return (
         <>
-          <Link hasunderline onClick={() => alert("TODO: open details modal")}>View details</Link>
+          <Link hasunderline onClick={() => {
+            setModalContent(
+              <>
+                <Container row>
+                  <Icon height="20px" src={app_event} />
+                  <Spacer inline width="10px" />
+                  <Text size={16}>Event details</Text>
+                </Container>
+                <Spacer y={1} />
+                <Text>TODO: display event logs</Text>
+              </>
+            )
+            setShowModal(true);
+          }}>View details</Link>
           <Spacer inline x={1} />
         </>
       );
@@ -205,6 +223,11 @@ const EventCard: React.FC<Props> = ({
           <Text color="helper">user@email.com</Text>
         )}
       </Container>
+      {showModal && (
+        <Modal closeModal={() => setShowModal(false)}>
+          {modalContent}
+        </Modal>
+      )}
     </StyledEventCard>
   );
 };
@@ -221,4 +244,19 @@ const StyledEventCard = styled.div`
   border-radius: 5px;
   background: ${({ theme }) => theme.fg};
   border: 1px solid ${({ theme }) => theme.border};
+  opacity: 0;
+  animation: slideIn 0.5s 0s;
+  animation-fill-mode: forwards;
+  @keyframes slideIn {
+    from {
+      margin-left: -10px;
+      opacity: 0;
+      margin-right: 10px;
+    }
+    to {
+      margin-left: 0;
+      opacity: 1;
+      margin-right: 0;
+    }
+  }
 `;

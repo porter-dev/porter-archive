@@ -606,7 +606,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "events":
         return <EventsTab currentChart={appData.chart} />;
       case "activity":
-        return <ActivityFeed chart={appData.chart} />;
+        return <ActivityFeed chart={appData.chart} stackName={appData?.app?.name}/>;
       case "logs":
         return <LogSection currentChart={appData.chart} />;
       case "metrics":
@@ -838,7 +838,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     ? hasBuiltImage
                       ? [
                         { label: "Overview", value: "overview" },
-                        // { label: "Activity", value: "activity" },
+                        { label: "Activity", value: "activity" },
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
                         { label: "Metrics", value: "metrics" },
@@ -853,7 +853,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       ]
                       : [
                         { label: "Overview", value: "overview" },
-                        // { label: "Activity", value: "activity" },
+                        { label: "Activity", value: "activity" },
                         { label: "Pre-deploy", value: "pre-deploy" },
                         {
                           label: "Environment",
@@ -864,7 +864,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       ]
                     : [
                       { label: "Overview", value: "overview" },
-                      // { label: "Activity", value: "activity" },
+                      { label: "Activity", value: "activity" },
                       { label: "Events", value: "events" },
                       { label: "Logs", value: "logs" },
                       { label: "Metrics", value: "metrics" },

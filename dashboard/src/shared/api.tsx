@@ -211,6 +211,18 @@ const deletePorterApp = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
 });
 
+const getFeedEvents = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    stack_name: string;
+  }
+>("GET", (pathParams) => {
+  let { project_id, cluster_id, stack_name } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/events`;
+});
+
 const createEnvironment = baseApi<
   {
     name: string;
@@ -2770,6 +2782,7 @@ export default {
   removeStackAppResource,
   addStackEnvGroup,
   removeStackEnvGroup,
+  getFeedEvents,
 
   // STATUS
   getGithubStatus,

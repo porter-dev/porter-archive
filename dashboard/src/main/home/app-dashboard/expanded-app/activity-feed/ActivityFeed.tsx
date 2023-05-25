@@ -8,12 +8,160 @@ import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 
 import EventCard from "./EventCard";
+import Loading from "components/Loading";
+import Spacer from "components/porter/Spacer";
+import Fieldset from "components/porter/Fieldset";
 
 type Props = {
   chart: any;
+  stackName: string;
 };
 
 const dummyEvents = [
+  {
+    "id": 0,
+    "status": "SUCCESS",
+    "type": "BUILD",
+    "type_external_source": "GITHUB",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "FAILED",
+    "type": "DEPLOY",
+    "type_external_source": "KUBERNETES",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "PROGRESSING",
+    "type": "PRE_DEPLOY",
+    "type_external_source": "KUBERNETES",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "FAILED",
+    "type": "APP_EVENT",
+    "type_external_source": "KUBERNETES",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "SUCCESS",
+    "type": "BUILD",
+    "type_external_source": "GITHUB",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "FAILED",
+    "type": "DEPLOY",
+    "type_external_source": "KUBERNETES",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "PROGRESSING",
+    "type": "PRE_DEPLOY",
+    "type_external_source": "KUBERNETES",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "FAILED",
+    "type": "APP_EVENT",
+    "type_external_source": "KUBERNETES",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "SUCCESS",
+    "type": "BUILD",
+    "type_external_source": "GITHUB",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "FAILED",
+    "type": "DEPLOY",
+    "type_external_source": "KUBERNETES",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "PROGRESSING",
+    "type": "PRE_DEPLOY",
+    "type_external_source": "KUBERNETES",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
+  {
+    "id": 0,
+    "status": "FAILED",
+    "type": "APP_EVENT",
+    "type_external_source": "KUBERNETES",
+    "created_at": "",
+    "updated_at": "",
+    "porter_app_id": 0,
+    "metadata": {
+      // keys depend on "type". See below
+    }
+  },
   {
     "id": 0,
     "status": "SUCCESS",
@@ -66,28 +214,72 @@ const dummyEvents = [
 
 const ActivityFeed: React.FC<Props> = ({
   chart,
+  stackName,
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
 
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<any>(null);
+
+  const getEvents = async () => {
+    setLoading(true);
+    try {
+      const res = await api.getFeedEvents(
+        "<token>",
+        {},
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+          stack_name: stackName,
+        }
+      );
+      setEvents(res.data.events);
+      setLoading(false);
+    } catch (err) {
+      setError(err);
+      setLoading(false);
+    }
+  }
+  
   useEffect(() => {
-    // Do something
+    getEvents();
   }, []);
+
+  if (error) {
+    return (
+      <Fieldset>
+        <Text size={16}>Error retrieving events</Text>
+        <Spacer height="15px" />
+        <Text color="helper">An unexpected error occurred.</Text>
+      </Fieldset>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div>
+        <Spacer y={2} />
+        <Loading />
+      </div>
+    );
+  };
 
   return (
     <StyledActivityFeed>
-      {dummyEvents.map((event, i) => {
+      {events.map((event, i) => {
         return (
           <EventWrapper 
-            isLast={i === dummyEvents.length - 1} 
+            isLast={i === events.length - 1} 
             key={i}
           >
-            {(i !== dummyEvents.length - 1) && <Line />}
+            {(i !== events.length - 1 && events.length > 1) && <Line />}
             <Dot />
             <Time>
               <Text>Jun 16</Text>
               <Text>12:00 PM</Text>
             </Time>
-            <EventCard event={event} />
+            <EventCard event={event} i={i} />
           </EventWrapper>
         );
       })}
@@ -99,6 +291,9 @@ export default ActivityFeed;
 
 const Time = styled.div`
   margin-right: -5px;
+  opacity: 0;
+  animation: fadeIn 0.3s 0.1s;
+  animation-fill-mode: forwards;
 `;
 
 const Line = styled.div`
@@ -108,7 +303,9 @@ const Line = styled.div`
   position: absolute;
   left: 3px;
   top: 36px;
-  opacity: 1;
+  opacity: 0;
+  animation: fadeIn 0.3s 0.1s;
+  animation-fill-mode: forwards;
 `;
 
 const Dot = styled.div`
@@ -119,7 +316,9 @@ const Dot = styled.div`
   position: absolute;
   left: 0;
   top: 36px;
-  opacity: 1;
+  opacity: 0;
+  animation: fadeIn 0.3s 0.1s;
+  animation-fill-mode: forwards;
 `;
 
 const EventWrapper = styled.div<{
@@ -134,4 +333,13 @@ const EventWrapper = styled.div<{
 
 const StyledActivityFeed = styled.div`
   width: 100%;
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;

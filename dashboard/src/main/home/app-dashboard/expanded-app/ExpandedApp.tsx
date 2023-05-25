@@ -606,7 +606,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "events":
         return <EventsTab currentChart={appData.chart} />;
       case "activity":
-        return <ActivityFeed chart={appData.chart} />;
+        return <ActivityFeed chart={appData.chart} stackName={appData?.app?.name}/>;
       case "logs":
         return <LogSection currentChart={appData.chart} />;
       case "metrics":

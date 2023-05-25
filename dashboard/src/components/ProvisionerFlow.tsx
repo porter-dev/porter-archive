@@ -127,9 +127,16 @@ const ProvisionerFlow: React.FC<Props> = ({
               }
             />
             <Spacer y={1} />
+            <span>
             <Text color="helper">
-              Separate from the AWS cost, Porter charges based on the amount of resources that are being used. You can learn more about <Link to="https://porter.run/pricing"> our pricing here </Link>. 
+              Separate from the AWS cost, Porter charges based on the amount of resources that are being used.
             </Text>
+            </span>
+            <Spacer inline width="5px" />
+            <Link hasunderline to="https://porter.run/pricing">
+              Learn more about our pricing
+            </Link>.
+            <Spacer y={1} />
             <Text color="helper">
               All AWS resources will be automatically deleted when you delete your Porter project. Please enter the AWS base cost ("315.94") below to proceed:
             </Text>

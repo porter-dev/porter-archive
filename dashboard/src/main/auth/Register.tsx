@@ -184,7 +184,7 @@ const Register: React.FC<Props> = ({
           </Jumbotron>
           <Spacer y={2} />
           <CheckRow>
-            <i className="material-icons">done</i> 14 day free trial (no credit card required.)
+            <i className="material-icons">done</i> 14 day free trial (no credit card required)
           </CheckRow>
           <Spacer y={0.5} />
           <CheckRow>

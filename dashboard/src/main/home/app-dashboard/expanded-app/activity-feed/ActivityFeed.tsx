@@ -94,6 +94,7 @@ const ActivityFeed: React.FC<Props> = ({
             <Dot />
             <Time>
               <Text>{feedDate(event.created_at).split(", ")[0]}</Text>
+              <Spacer x={0.5} />
               <Text>{feedDate(event.created_at).split(", ")[1]}</Text>
             </Time>
             <EventCard event={event} i={i} />
@@ -107,10 +108,10 @@ const ActivityFeed: React.FC<Props> = ({
 export default ActivityFeed;
 
 const Time = styled.div`
-  margin-right: -5px;
   opacity: 0;
   animation: fadeIn 0.3s 0.1s;
   animation-fill-mode: forwards;
+  width: 90px;
 `;
 
 const Line = styled.div`

@@ -12,205 +12,12 @@ import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 import Fieldset from "components/porter/Fieldset";
 
+import { feedDate } from "shared/string_utils";
+
 type Props = {
   chart: any;
   stackName: string;
 };
-
-const dummyEvents = [
-  {
-    "id": 0,
-    "status": "SUCCESS",
-    "type": "BUILD",
-    "type_external_source": "GITHUB",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "FAILED",
-    "type": "DEPLOY",
-    "type_external_source": "KUBERNETES",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "PROGRESSING",
-    "type": "PRE_DEPLOY",
-    "type_external_source": "KUBERNETES",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "FAILED",
-    "type": "APP_EVENT",
-    "type_external_source": "KUBERNETES",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "SUCCESS",
-    "type": "BUILD",
-    "type_external_source": "GITHUB",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "FAILED",
-    "type": "DEPLOY",
-    "type_external_source": "KUBERNETES",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "PROGRESSING",
-    "type": "PRE_DEPLOY",
-    "type_external_source": "KUBERNETES",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "FAILED",
-    "type": "APP_EVENT",
-    "type_external_source": "KUBERNETES",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "SUCCESS",
-    "type": "BUILD",
-    "type_external_source": "GITHUB",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "FAILED",
-    "type": "DEPLOY",
-    "type_external_source": "KUBERNETES",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "PROGRESSING",
-    "type": "PRE_DEPLOY",
-    "type_external_source": "KUBERNETES",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "FAILED",
-    "type": "APP_EVENT",
-    "type_external_source": "KUBERNETES",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "SUCCESS",
-    "type": "BUILD",
-    "type_external_source": "GITHUB",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "FAILED",
-    "type": "DEPLOY",
-    "type_external_source": "KUBERNETES",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "PROGRESSING",
-    "type": "PRE_DEPLOY",
-    "type_external_source": "KUBERNETES",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-  {
-    "id": 0,
-    "status": "FAILED",
-    "type": "APP_EVENT",
-    "type_external_source": "KUBERNETES",
-    "created_at": "",
-    "updated_at": "",
-    "porter_app_id": 0,
-    "metadata": {
-      // keys depend on "type". See below
-    }
-  },
-]
 
 const ActivityFeed: React.FC<Props> = ({
   chart,
@@ -276,8 +83,8 @@ const ActivityFeed: React.FC<Props> = ({
             {(i !== events.length - 1 && events.length > 1) && <Line />}
             <Dot />
             <Time>
-              <Text>Jun 16</Text>
-              <Text>12:00 PM</Text>
+              <Text>{feedDate(event.created_at).split(", ")[0]}</Text>
+              <Text>{feedDate(event.created_at).split(", ")[1]}</Text>
             </Time>
             <EventCard event={event} i={i} />
           </EventWrapper>

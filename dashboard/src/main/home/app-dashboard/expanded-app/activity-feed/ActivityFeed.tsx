@@ -102,7 +102,7 @@ const ActivityFeed: React.FC<Props> = ({
               <Spacer x={0.5} />
               <Text>{feedDate(event.created_at).split(", ")[1]}</Text>
             </Time>
-            <EventCard event={event} i={i} />
+            <EventCard event={event} />
           </EventWrapper>
         );
       })}

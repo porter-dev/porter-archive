@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 
+import { timeElapsed } from "shared/string_utils";
+
 import app_event from "assets/app_event.png";
 import build from "assets/build.png";
 import deploy from "assets/deploy.png";
@@ -179,6 +181,14 @@ const EventCard: React.FC<Props> = ({
     };
   };
 
+  const getElapsed = (event: any) => {
+    if (event.status === "SUCCESS" || event.status === "FAILED") {
+      return timeElapsed(event.updated_at, event.created_at);
+    } else {
+      return timeElapsed(new Date().toISOString(), event.created_at);
+    }
+  };
+
   return (
     <StyledEventCard>
       <Container row spaced>
@@ -188,9 +198,13 @@ const EventCard: React.FC<Props> = ({
           <Text size={14}>{getTitle(event.type)}</Text>
         </Container>
         <Container row>
-          <Icon height="14px" src={run_for} />
-          <Spacer inline width="6px" />
-          <Text color="helper">1h 2m</Text>
+          {getElapsed(event) !== "0s" && (
+            <>
+              <Icon height="14px" src={run_for} />
+              <Spacer inline width="6px" />
+              <Text color="helper">{getElapsed(event)}</Text>
+            </>
+          )}
         </Container>
       </Container>
       <Spacer y={1} />

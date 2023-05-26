@@ -45,6 +45,32 @@ export const feedDate = (timestamp: string) => {
   return formattedDate;
 }
 
+export const timeElapsed = (tsString1: string, tsString2: string) => {
+  const ts1 = Date.parse(tsString1);
+  const ts2 = Date.parse(tsString2);
+  if (isNaN(ts1) || isNaN(ts2)) {
+    return 'Invalid timestamps';
+  }
+
+  const timeDifference = Math.abs(ts1 - ts2);
+  const hours = Math.floor(timeDifference / (1000 * 60 * 60));
+  const minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
+
+  let formattedTime = '';
+  if (hours > 0) {
+    formattedTime += `${hours}h `;
+  }
+  if (minutes > 0) {
+    formattedTime += `${minutes}m `;
+  }
+  if (minutes === 0 || (minutes === 0 && seconds > 0)) {
+    formattedTime += `${seconds}s`;
+  }
+
+  return formattedTime;
+}
+
 export const timeFrom = (
   time: string | number,
   secondTime?: string | number

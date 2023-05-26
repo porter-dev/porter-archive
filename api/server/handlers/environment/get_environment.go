@@ -31,14 +31,11 @@ func NewGetEnvironmentHandler(
 }
 
 func (c *GetEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tracer, _ := telemetry.InitTracer(r.Context(), c.Config().TelemetryConfig)
-	defer tracer.Shutdown()
-
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-environment")
 	defer span.End()
 
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "project-id", Value: project.ID},

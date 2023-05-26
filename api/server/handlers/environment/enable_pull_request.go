@@ -35,14 +35,11 @@ func NewEnablePullRequestHandler(
 }
 
 func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tracer, _ := telemetry.InitTracer(r.Context(), c.Config().TelemetryConfig)
-	defer tracer.Shutdown()
-
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-enable-pull-request")
 	defer span.End()
 
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
@@ -69,7 +66,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	env, err := c.Repo().Environment().ReadEnvironmentByOwnerRepoName(project.ID, cluster.ID, request.RepoOwner, request.RepoName)
 	if err != nil {
-		_ = telemetry.Error(ctx, span, err, "error reading environment by owner repo name")
+		err = telemetry.Error(ctx, span, err, "error reading environment by owner repo name")
 
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("environment not found in cluster and project")))
@@ -124,14 +121,14 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 	if err != nil {
-		_ = telemetry.Error(ctx, span, err, "error getting github client from environment")
+		err = telemetry.Error(ctx, span, err, "error getting github client from environment")
 
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	// add an extra check that the installation has permission to read this pull request
-	pr, _, err := client.PullRequests.Get(r.Context(), env.GitRepoOwner, env.GitRepoName, int(request.Number))
+	pr, _, err := client.PullRequests.Get(ctx, env.GitRepoOwner, env.GitRepoName, int(request.Number))
 	if err != nil {
 		_ = telemetry.Error(ctx, span, err, "error getting pull request")
 
@@ -149,7 +146,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	ghResp, err := client.Actions.CreateWorkflowDispatchEventByFileName(
-		r.Context(), env.GitRepoOwner, env.GitRepoName, fmt.Sprintf("porter_%s_env.yml", env.Name),
+		ctx, env.GitRepoOwner, env.GitRepoName, fmt.Sprintf("porter_%s_env.yml", env.Name),
 		github.CreateWorkflowDispatchEventRequest{
 			Ref: request.BranchFrom,
 			Inputs: map[string]interface{}{
@@ -161,7 +158,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		},
 	)
 	if err != nil {
-		_ = telemetry.Error(ctx, span, err, "error creating workflow dispatch event")
+		err = telemetry.Error(ctx, span, err, "error creating workflow dispatch event")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -202,7 +199,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		PRBranchInto:  request.BranchInto,
 	})
 	if err != nil {
-		_ = telemetry.Error(ctx, span, err, "error creating deployment in repo")
+		err = telemetry.Error(ctx, span, err, "error creating deployment in repo")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

@@ -34,14 +34,11 @@ func NewCreateDeploymentByClusterHandler(
 }
 
 func (c *CreateDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tracer, _ := telemetry.InitTracer(r.Context(), c.Config().TelemetryConfig)
-	defer tracer.Shutdown()
-
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-deployment-by-cluster")
 	defer span.End()
 
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
@@ -72,7 +69,7 @@ func (c *CreateDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *h
 		project.ID, cluster.ID, request.RepoOwner, request.RepoName,
 	)
 	if err != nil {
-		_ = telemetry.Error(ctx, span, err, "error reading environment by owner repo name")
+		err = telemetry.Error(ctx, span, err, "error reading environment by owner repo name")
 
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(
@@ -88,7 +85,7 @@ func (c *CreateDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *h
 	// create deployment on GitHub API
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 	if err != nil {
-		_ = telemetry.Error(ctx, span, err, "error getting github client from environment")
+		err = telemetry.Error(ctx, span, err, "error getting github client from environment")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -96,7 +93,7 @@ func (c *CreateDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *h
 	// add a check for Github PR status
 	prClosed, err := isGithubPRClosed(client, request.RepoOwner, request.RepoName, int(request.PullRequestID))
 	if err != nil {
-		_ = telemetry.Error(ctx, span, err, "error checking if github pr is closed")
+		err = telemetry.Error(ctx, span, err, "error checking if github pr is closed")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
 		return
 	}
@@ -113,7 +110,7 @@ func (c *CreateDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 	ghDeployment, err := createGithubDeployment(client, env, request.PRBranchFrom, request.ActionID)
 	if err != nil {
-		_ = telemetry.Error(ctx, span, err, "error creating github deployment object")
+		err = telemetry.Error(ctx, span, err, "error creating github deployment object")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
 		return
 	}
@@ -133,7 +130,7 @@ func (c *CreateDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *h
 		PRBranchInto:   request.GitHubMetadata.PRBranchInto,
 	})
 	if err != nil {
-		_ = telemetry.Error(ctx, span, err, "error creating github deployment object")
+		err = telemetry.Error(ctx, span, err, "error creating github deployment object")
 		// try to delete the GitHub deployment
 		_, deleteErr := client.Repositories.DeleteDeployment(
 			ctx,

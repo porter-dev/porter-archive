@@ -85,7 +85,10 @@ func WithAttributes(span trace.Span, attrs ...AttributeKV) {
 			case bool:
 				span.SetAttributes(attribute.Bool(prefixSpanKey(string(attr.Key)), val))
 			case time.Time:
-				span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), val.UTC().String()))
+				span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), val.String()))
+				zone, offset := val.Zone()
+				span.SetAttributes(attribute.String(prefixSpanKey(fmt.Sprintf("%s-timezone", string(attr.Key))), zone))
+				span.SetAttributes(attribute.Int(prefixSpanKey(fmt.Sprintf("%s-offset", string(attr.Key))), offset))
 			}
 		}
 	}

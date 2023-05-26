@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import styled from "styled-components";
 import Container from "./Container";
 import Text from "./Text";
@@ -16,12 +16,6 @@ const Pagination: React.FC<Props> = ({
   setPage,
   totalPages,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  useEffect(() => {
-    // Do something
-  }, []);
-
   return (
     <Container row spaced>
       <Text color="helper">Viewing page {page} out of {totalPages}</Text>
@@ -51,7 +45,3 @@ const Pagination: React.FC<Props> = ({
 };
 
 export default Pagination;
-
-const StyledPagination = styled.div`
-  width: 100%;
-`;

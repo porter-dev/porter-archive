@@ -169,6 +169,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	if ghResp != nil {
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "github-status-code", Value: ghResp.StatusCode})
 		if ghResp.StatusCode == 404 {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "unsuccessful-exit-reason", Value: "bad github status code"})
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf(
 					"please make sure the preview environment workflow files are present in PR branch %s and are up to"+
@@ -177,6 +178,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			)
 			return
 		} else if ghResp.StatusCode == 422 {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "unsuccessful-exit-reason", Value: "bad github status code"})
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf(
 					"please make sure the workflow files in PR branch %s are up to date with the default branch",

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
@@ -83,6 +84,8 @@ func WithAttributes(span trace.Span, attrs ...AttributeKV) {
 				span.SetAttributes(attribute.Float64(prefixSpanKey(string(attr.Key)), val))
 			case bool:
 				span.SetAttributes(attribute.Bool(prefixSpanKey(string(attr.Key)), val))
+			case time.Time:
+				span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), val.UTC().String()))
 			}
 		}
 	}

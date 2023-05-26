@@ -743,13 +743,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             {!appData.app.repo_name && appData.app.image_repo_uri && (
               <>
                 <Spacer inline x={1} />
-                <Text size={13} color="helper">
+                <Container row>
                   <SmallIcon
                     height="19px"
                     src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
                   />
-                  {appData.app.image_repo_uri}
-                </Text>
+                  <Text size={13} color="helper">
+                    {appData.app.image_repo_uri}
+                  </Text>
+                </Container>
               </>
             )}
           </Container>

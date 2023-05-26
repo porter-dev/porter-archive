@@ -53,7 +53,7 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	porterApps, paginatedResult, err := p.Repo().PorterAppEvent().ListEventsByPorterAppID(app.ID, helpers.WithPageSize(20), helpers.WithPage(int(pr.Page)))
+	porterApps, paginatedResult, err := p.Repo().PorterAppEvent().ListEventsByPorterAppID(ctx, app.ID, helpers.WithPageSize(20), helpers.WithPage(int(pr.Page)))
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))

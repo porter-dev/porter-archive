@@ -177,6 +177,25 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			Builder:              builder,
 		}
 		worker.RegisterHook("deploy-stack", deployStackHook)
+
+		if os.Getenv("GITHUB_RUN_ID") != "" {
+			// Create app event to signfy start of build
+			req := &types.CreatePorterAppEventRequest{
+				Status:             "PROGRESSING",
+				Type:               types.PorterAppEventType_Build,
+				TypeExternalSource: "GITHUB",
+				Metadata: map[string]any{
+					"action_run_id": os.Getenv("GITHUB_RUN_ID"),
+					"repo":          os.Getenv("GITHUB_REPOSITORY"),
+					"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
+				},
+			}
+			ctx := context.Background()
+			_, err := client.CreatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
+			if err != nil {
+				return fmt.Errorf("unable to create porter app build event: %w", err)
+			}
+		}
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
 	}

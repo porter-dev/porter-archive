@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"gorm.io/gorm"
 )
 
@@ -31,7 +32,11 @@ func NewInviteAcceptHandler(
 }
 
 func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-invite-accept")
+	defer span.End()
+
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+
 	projectID, _ := requestutils.GetURLParamUint(r, types.URLParamProjectID)
 	token, _ := requestutils.GetURLParamString(r, types.URLParamInviteToken)
 

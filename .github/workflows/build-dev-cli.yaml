@@ -1,4 +1,4 @@
-name: Deploy to dev
+name: Build Dev CLI
 on:
   push:
     branches:

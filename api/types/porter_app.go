@@ -74,7 +74,7 @@ type PorterAppEvent struct {
 	// UpdatedAt is the time (UTC) that an event was last updated. This can occur when an event was created as PROGRESSING, then was marked as SUCCESSFUL for example
 	UpdatedAt time.Time `json:"updated_at"`
 	// PorterAppID is the ID that the given event relates to
-	PorterAppID string         `json:"porter_app_id"`
+	PorterAppID uint           `json:"porter_app_id"`
 	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
@@ -89,3 +89,15 @@ const (
 	// PorterAppEventType_AppEvent represents a Porter Stack App Event which occurred whilst the application was running, such as an OutOfMemory (OOM) error
 	PorterAppEventType_AppEvent PorterAppEventType = "APP_EVENT"
 )
+
+// PorterAppEvent represents a simplified event for creating a Porter stack app event
+// swagger:model
+type CreatePorterAppEventRequest struct {
+	// Status contains the accepted status' of a given event such as SUCCESS, FAILED, PROGRESSING, etc.
+	Status string `json:"status,omitempty"`
+	// Type represents a supported Porter Stack Event
+	Type PorterAppEventType `json:"type"`
+	// TypeExternalSource represents an external event source such as Github, or Gitlab. This is not always required but will commonly be see in build events
+	TypeExternalSource string         `json:"type_source,omitempty"`
+	Metadata           map[string]any `json:"metadata,omitempty"`
+}

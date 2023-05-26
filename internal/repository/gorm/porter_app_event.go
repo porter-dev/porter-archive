@@ -1,9 +1,10 @@
 package gorm
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/models"
@@ -23,7 +24,7 @@ func NewPorterAppEventRepository(db *gorm.DB) repository.PorterAppEventRepositor
 	return &PorterAppEventRepository{db}
 }
 
-func (repo *PorterAppEventRepository) ListEventsByPorterAppID(porterAppID uint, opts ...helpers.QueryOption) ([]*models.PorterAppEvent, helpers.PaginatedResult, error) {
+func (repo *PorterAppEventRepository) ListEventsByPorterAppID(ctx context.Context, porterAppID uint, opts ...helpers.QueryOption) ([]*models.PorterAppEvent, helpers.PaginatedResult, error) {
 	apps := []*models.PorterAppEvent{}
 	paginatedResult := helpers.PaginatedResult{}
 
@@ -44,17 +45,22 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppID(porterAppID uint, 
 	return apps, paginatedResult, nil
 }
 
-func (repo *PorterAppEventRepository) EventByID(eventID uuid.UUID) (*models.PorterAppEvent, error) {
-	app := &models.PorterAppEvent{}
-
-	if eventID == uuid.Nil {
-		return app, errors.New("invalid porter app event id supplied")
+func (repo *PorterAppEventRepository) CreateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error {
+	if appEvent.ID == uuid.Nil {
+		appEvent.ID = uuid.New()
+	}
+	if appEvent.CreatedAt.IsZero() {
+		appEvent.CreatedAt = time.Now().UTC()
+	}
+	if appEvent.UpdatedAt.IsZero() {
+		appEvent.UpdatedAt = time.Now().UTC()
+	}
+	if appEvent.PorterAppID == 0 {
+		return errors.New("invalid porter app id supplied")
 	}
 
-	tx := repo.db.Find(&app, "id = ?", eventID.String())
-	if tx.Error != nil {
-		return app, fmt.Errorf("no porter app event found for id %s: %w", eventID, tx.Error)
+	if err := repo.db.Create(appEvent).Error; err != nil {
+		return err
 	}
-
-	return app, nil
+	return nil
 }

@@ -45,3 +45,23 @@ func (c *Client) CreatePorterApp(
 
 	return resp, err
 }
+
+func (c *Client) CreatePorterAppEvent(
+	ctx context.Context,
+	projectID, clusterID uint,
+	name string,
+	req *types.CreatePorterAppEventRequest,
+) (*types.PorterAppEvent, error) {
+	resp := &types.PorterAppEvent{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/stacks/%s/events",
+			projectID, clusterID, name,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}

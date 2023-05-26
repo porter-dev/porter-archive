@@ -74,7 +74,6 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			continue
 		}
 		pa := porterApp.ToPorterAppEvent()
-		pa.Metadata = nil
 		res.Events = append(res.Events, pa)
 	}
 	p.WriteResult(w, r, res)

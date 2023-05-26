@@ -76,7 +76,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   );
   const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(true);
 
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("activity");
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [components, setComponents] = useState<ResourceType[]>([]);
@@ -839,8 +839,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? hasBuiltImage
                       ? [
+                        { label: "Activity", value: "activity" },
                         { label: "Overview", value: "overview" },
-                        // { label: "Activity", value: "activity" },
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
                         { label: "Metrics", value: "metrics" },
@@ -854,8 +854,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                         { label: "Settings", value: "settings" },
                       ]
                       : [
+                        { label: "Activity", value: "activity" },
                         { label: "Overview", value: "overview" },
-                        // { label: "Activity", value: "activity" },
                         { label: "Pre-deploy", value: "pre-deploy" },
                         {
                           label: "Environment",
@@ -865,8 +865,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                         { label: "Settings", value: "settings" },
                       ]
                     : [
+                      { label: "Activity", value: "activity" },
                       { label: "Overview", value: "overview" },
-                      // { label: "Activity", value: "activity" },
                       { label: "Events", value: "events" },
                       { label: "Logs", value: "logs" },
                       { label: "Metrics", value: "metrics" },

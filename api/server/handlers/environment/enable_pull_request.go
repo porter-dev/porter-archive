@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"gorm.io/gorm"
 )
 
@@ -34,17 +35,42 @@ func NewEnablePullRequestHandler(
 }
 
 func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	tracer, _ := telemetry.InitTracer(r.Context(), c.Config().TelemetryConfig)
+	defer tracer.Shutdown()
+
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-enable-pull-request")
+	defer span.End()
+
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
+	)
 
 	request := &types.PullRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		_ = telemetry.Error(ctx, span, nil, "could not decode and validate request")
 		return
 	}
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "title", Value: request.Title},
+		telemetry.AttributeKV{Key: "number", Value: request.Number},
+		telemetry.AttributeKV{Key: "repo-ower", Value: request.RepoOwner},
+		telemetry.AttributeKV{Key: "repo-name", Value: request.RepoName},
+		telemetry.AttributeKV{Key: "branch-from", Value: request.BranchFrom},
+		telemetry.AttributeKV{Key: "branch-into", Value: request.BranchInto},
+		telemetry.AttributeKV{Key: "created-at", Value: request.CreatedAt},
+		telemetry.AttributeKV{Key: "updated-at", Value: request.UpdatedAt},
+	)
+
 	env, err := c.Repo().Environment().ReadEnvironmentByOwnerRepoName(project.ID, cluster.ID, request.RepoOwner, request.RepoName)
 	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "error reading environment by owner repo name")
+
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("environment not found in cluster and project")))
 			return
@@ -67,6 +93,8 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 
 		if !found {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "unsuccessful-exit-reason", Value: "cannot find branch-into in git repo branches"})
+
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("base branch '%s' is not enabled for this preview environment, please enable it "+
 					"in the settings page to continue", request.BranchInto), http.StatusBadRequest,
@@ -84,6 +112,8 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 
 		if found {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "unsuccessful-exit-reason", Value: "cannot find branch-from in git deploy branches"})
+
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("head branch '%s' is enabled for branch deploys for this preview environment, "+
 					"please disable it in the settings page to continue", request.BranchInto), http.StatusBadRequest,
@@ -94,6 +124,8 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "error getting github client from environment")
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -101,12 +133,16 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	// add an extra check that the installation has permission to read this pull request
 	pr, _, err := client.PullRequests.Get(r.Context(), env.GitRepoOwner, env.GitRepoName, int(request.Number))
 	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "error getting pull request")
+
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("%v: %w", errGithubAPI, err),
 			http.StatusConflict))
 		return
 	}
 
 	if pr.GetState() == "closed" {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "unsuccessful-exit-reason", Value: "pr is closed"})
+
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("cannot enable deployment for closed PR"),
 			http.StatusConflict))
 		return
@@ -124,8 +160,14 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			},
 		},
 	)
+	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "error creating workflow dispatch event")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
 
 	if ghResp != nil {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "github-status-code", Value: ghResp.StatusCode})
 		if ghResp.StatusCode == 404 {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf(
@@ -145,11 +187,6 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
 	// create the deployment
 	depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
 		EnvironmentID: env.ID,
@@ -163,6 +200,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		PRBranchInto:  request.BranchInto,
 	})
 	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "error creating deployment in repo")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

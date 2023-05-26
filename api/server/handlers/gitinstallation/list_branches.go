@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -30,14 +32,27 @@ func NewGithubListBranchesHandler(
 }
 
 func (c *GithubListBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	tracer, _ := telemetry.InitTracer(r.Context(), c.Config().TelemetryConfig)
+	defer tracer.Shutdown()
+
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-github-branches")
+	defer span.End()
+
 	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
 
 	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "could not get owner and name from request")
 		return
 	}
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "owner", Value: owner},
+		telemetry.AttributeKV{Key: "name", Value: name},
+	)
+
 	client, err := GetGithubAppClientFromRequest(c.Config(), r)
 	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "could not get github app client")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -49,6 +64,7 @@ func (c *GithubListBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		},
 	})
 	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "could not list branches")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -104,6 +120,7 @@ func (c *GithubListBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	wg.Wait()
 
 	if workerErr != nil {
+		_ = telemetry.Error(ctx, span, workerErr, "worker error listing github branches")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

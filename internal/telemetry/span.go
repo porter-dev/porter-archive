@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"strings"
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
@@ -62,6 +63,8 @@ func WithAttributes(span trace.Span, attrs ...AttributeKV) {
 				span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), val.String()))
 			case string:
 				span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), val))
+			case []string:
+				span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), strings.Join(val, ", ")))
 			case sql.NullString:
 				if val.Valid {
 					span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), val.String))

@@ -1,7 +1,6 @@
 package environment
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -35,7 +34,7 @@ func NewCreateDeploymentByClusterHandler(
 }
 
 func (c *CreateDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tracer, _ := telemetry.InitTracer(context.Background(), c.Config().TelemetryConfig)
+	tracer, _ := telemetry.InitTracer(r.Context(), c.Config().TelemetryConfig)
 	defer tracer.Shutdown()
 
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-release")

@@ -46,8 +46,9 @@ type IncidentMeta struct {
 	PorterDocLink           string             `json:"porter_doc_link"`
 }
 
+// PaginationRequest allows for conveniently specifying pagination parameters. These can be parsed from a url using github.com/google/go-querystring
 type PaginationRequest struct {
-	Page int64 `schema:"page"`
+	Page int64 `schema:"page",url:"page"`
 }
 
 type PaginationResponse struct {

@@ -9,6 +9,7 @@ import ProvisionerSettings from "./ProvisionerSettings";
 import ProvisionerSettingsOld from "./ProvisionerSettingsOld";
 import Text from "./porter/Text";
 import Spacer from "./porter/Spacer";
+import Container from "./porter/Container";
 
 type Props = {
   goBack: () => void;
@@ -23,15 +24,17 @@ const ProvisionerForm: React.FC<Props> = ({
 }) => {
   return (
     <>
-      <Text size={16}>
+      <Container row>
         <BackButton width="155px" onClick={goBack}>
           <i className="material-icons">first_page</i>
           Set credentials
         </BackButton>
         <Spacer inline width="17px" />
         <Img src={aws} />
-        Configure settings
-      </Text>
+        <Text size={16}>
+          Configure settings
+        </Text>
+      </Container>
       <Spacer y={1} />
       <Text color="helper">
         Configure settings for your AWS environment.

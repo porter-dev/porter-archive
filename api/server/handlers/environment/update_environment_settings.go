@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -36,24 +38,44 @@ func NewUpdateEnvironmentSettingsHandler(
 }
 
 func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-update-environment-settings")
+	defer span.End()
+
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
+	)
 
 	envID, reqErr := requestutils.GetURLParamUint(r, "environment_id")
 
 	if reqErr != nil {
+		_ = telemetry.Error(ctx, span, reqErr, "could not get environment id from url")
 		c.HandleAPIError(w, r, reqErr)
 		return
 	}
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "environment-id", Value: envID})
+
 	request := &types.UpdateEnvironmentSettingsRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		_ = telemetry.Error(ctx, span, nil, "could not decode and validate request")
 		return
 	}
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "mode", Value: request.Mode},
+		telemetry.AttributeKV{Key: "git-repo-branches", Value: request.GitRepoBranches},
+		telemetry.AttributeKV{Key: "git-deploy-branches", Value: request.GitDeployBranches},
+	)
+
 	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, envID)
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "could not read environment by id")
+
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such environment with ID: %d", envID)))
 			return
@@ -91,10 +113,13 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 	changed = !reflect.DeepEqual(env.ToEnvironmentType().GitDeployBranches, newBranches)
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "changed", Value: changed})
+
 	if changed {
 		// let us check if the webhook has access to the "push" event
 		client, err := getGithubClientFromEnvironment(c.Config(), env)
 		if err != nil {
+			err = telemetry.Error(ctx, span, err, "could not get github client")
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
@@ -103,6 +128,7 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 			context.Background(), env.GitRepoOwner, env.GitRepoName, env.GithubWebhookID,
 		)
 		if err != nil {
+			err = telemetry.Error(ctx, span, err, "could not get hook")
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
@@ -116,6 +142,8 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 			}
 		}
 
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "found", Value: found})
+
 		if !found {
 			hook.Events = append(hook.Events, "push")
 
@@ -123,6 +151,7 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 				context.Background(), env.GitRepoOwner, env.GitRepoName, env.GithubWebhookID, hook,
 			)
 			if err != nil {
+				err = telemetry.Error(ctx, span, err, "could not edit hook")
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
@@ -140,6 +169,7 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 					errString += ": " + e.Error()
 				}
 
+				_ = telemetry.Error(ctx, span, errors.New(errString), "could not auto deploy branch")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 					fmt.Errorf("error auto deploying preview branches: %s", errString), http.StatusConflict),
 				)
@@ -178,6 +208,7 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 		env, err = c.Repo().Environment().UpdateEnvironment(env)
 
 		if err != nil {
+			err = telemetry.Error(ctx, span, err, "could not update environment")
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}

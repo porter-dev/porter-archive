@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
@@ -62,6 +64,8 @@ func WithAttributes(span trace.Span, attrs ...AttributeKV) {
 				span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), val.String()))
 			case string:
 				span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), val))
+			case []string:
+				span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), strings.Join(val, ", ")))
 			case sql.NullString:
 				if val.Valid {
 					span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), val.String))
@@ -80,6 +84,11 @@ func WithAttributes(span trace.Span, attrs ...AttributeKV) {
 				span.SetAttributes(attribute.Float64(prefixSpanKey(string(attr.Key)), val))
 			case bool:
 				span.SetAttributes(attribute.Bool(prefixSpanKey(string(attr.Key)), val))
+			case time.Time:
+				span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), val.String()))
+				zone, offset := val.Zone()
+				span.SetAttributes(attribute.String(prefixSpanKey(fmt.Sprintf("%s-timezone", string(attr.Key))), zone))
+				span.SetAttributes(attribute.Int(prefixSpanKey(fmt.Sprintf("%s-offset", string(attr.Key))), offset))
 			}
 		}
 	}

@@ -51,9 +51,6 @@ func NewCreateReleaseHandler(
 }
 
 func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tracer, _ := telemetry.InitTracer(r.Context(), c.Config().TelemetryConfig)
-	defer tracer.Shutdown()
-
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	namespace := r.Context().Value(types.NamespaceScope).(string)

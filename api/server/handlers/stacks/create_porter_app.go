@@ -40,9 +40,6 @@ func NewCreatePorterAppHandler(
 }
 
 func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tracer, _ := telemetry.InitTracer(r.Context(), c.Config().TelemetryConfig)
-	defer tracer.Shutdown()
-
 	ctx := r.Context()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)

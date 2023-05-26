@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/repository/gorm/helpers"
 )
 
 type PorterAppEventRepository struct {
@@ -16,8 +17,8 @@ func NewPorterAppEventRepository(canQuery bool, failingMethods ...string) reposi
 	return &PorterAppEventRepository{canQuery: false}
 }
 
-func (repo *PorterAppEventRepository) ListEventsByPorterAppID(porterAppID uint) ([]*models.PorterAppEvent, error) {
-	return nil, errors.New("cannot write database")
+func (repo *PorterAppEventRepository) ListEventsByPorterAppID(porterAppID uint, opts ...helpers.QueryOption) ([]*models.PorterAppEvent, helpers.PaginatedResult, error) {
+	return nil, helpers.PaginatedResult{}, errors.New("cannot write database")
 }
 
 func (repo *PorterAppEventRepository) EventByID(eventID uuid.UUID) (*models.PorterAppEvent, error) {

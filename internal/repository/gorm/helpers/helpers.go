@@ -30,8 +30,8 @@ func Paginate(db *gorm.DB, pagination *PaginatedResult, opts ...QueryOption) fun
 	pagination.NumPages = int64(math.Ceil(float64(totalRows) / float64(q.PageSize)))
 	pagination.CurrentPage = int64(q.Page)
 	pagination.NextPage = int64(q.Page + 1)
-	if pagination.CurrentPage == pagination.NumPages {
-		pagination.NextPage = pagination.CurrentPage
+	if pagination.CurrentPage >= pagination.NumPages {
+		pagination.NextPage = pagination.NumPages
 	}
 
 	return func(db *gorm.DB) *gorm.DB {

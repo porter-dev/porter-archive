@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/gorilla/schema"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -11,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository/gorm/helpers"
 	"gorm.io/gorm"
 )
 
@@ -37,13 +39,21 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	pr := types.PaginationRequest{}
+	d := schema.NewDecoder()
+	err := d.Decode(&pr, r.URL.Query())
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	app, err := p.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	porterApps, err := p.Repo().PorterAppEvent().ListEventsByPorterAppID(app.ID)
+	porterApps, paginatedResult, err := p.Repo().PorterAppEvent().ListEventsByPorterAppID(app.ID, helpers.WithPageSize(2), helpers.WithPage(int(pr.Page)))
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
@@ -53,7 +63,10 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	res := struct {
 		Events []types.PorterAppEvent `json:"events"`
-	}{}
+		types.PaginationResponse
+	}{
+		PaginationResponse: types.PaginationResponse(paginatedResult),
+	}
 	res.Events = make([]types.PorterAppEvent, 0)
 
 	for _, porterApp := range porterApps {
@@ -61,7 +74,6 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			continue
 		}
 		pa := porterApp.ToPorterAppEvent()
-		pa.Metadata = nil
 		res.Events = append(res.Events, pa)
 	}
 	p.WriteResult(w, r, res)

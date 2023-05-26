@@ -13,6 +13,7 @@ import Spacer from "components/porter/Spacer";
 import Fieldset from "components/porter/Fieldset";
 
 import { feedDate } from "shared/string_utils";
+import Pagination from "components/porter/Pagination";
 
 type Props = {
   chart: any;
@@ -28,6 +29,8 @@ const ActivityFeed: React.FC<Props> = ({
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<any>(null);
+  const [page, setPage] = useState<number>(1);
+  const [numPages, setNumPages] = useState<number>(0);
 
   const getEvents = async () => {
     setLoading(true);
@@ -39,8 +42,10 @@ const ActivityFeed: React.FC<Props> = ({
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
           stack_name: stackName,
+          page
         }
       );
+      setNumPages(res.data.num_pages);
       setEvents(res.data.events);
       setLoading(false);
     } catch (err) {
@@ -51,7 +56,7 @@ const ActivityFeed: React.FC<Props> = ({
   
   useEffect(() => {
     getEvents();
-  }, []);
+  }, [page]);
 
   if (error) {
     return (
@@ -72,6 +77,16 @@ const ActivityFeed: React.FC<Props> = ({
     );
   };
 
+  if (events?.length === 0) {
+    return (
+      <Fieldset>
+        <Text size={16}>No events found for "{stackName}"</Text>
+        <Spacer height="15px" />
+        <Text color="helper">This application currently has no associated activity.</Text>
+      </Fieldset>
+    );
+  }
+
   return (
     <StyledActivityFeed>
       {events.map((event, i) => {
@@ -84,12 +99,15 @@ const ActivityFeed: React.FC<Props> = ({
             <Dot />
             <Time>
               <Text>{feedDate(event.created_at).split(", ")[0]}</Text>
+              <Spacer x={0.5} />
               <Text>{feedDate(event.created_at).split(", ")[1]}</Text>
             </Time>
             <EventCard event={event} i={i} />
           </EventWrapper>
         );
       })}
+      <Spacer y={1} />
+      <Pagination page={page} setPage={setPage} totalPages={numPages} />
     </StyledActivityFeed>
   );
 };
@@ -97,10 +115,10 @@ const ActivityFeed: React.FC<Props> = ({
 export default ActivityFeed;
 
 const Time = styled.div`
-  margin-right: -5px;
   opacity: 0;
   animation: fadeIn 0.3s 0.1s;
   animation-fill-mode: forwards;
+  width: 90px;
 `;
 
 const Line = styled.div`

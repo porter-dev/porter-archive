@@ -37,7 +37,7 @@ func (c *CreateDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *h
 	tracer, _ := telemetry.InitTracer(r.Context(), c.Config().TelemetryConfig)
 	defer tracer.Shutdown()
 
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-release")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-deploy-preview-env")
 	defer span.End()
 
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)

@@ -24,5 +24,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: false
+      - name: Run Go vet
+        run: go vet ./...
       - name: Run Go tests
         run: go test ./${{ matrix.folder }}/...

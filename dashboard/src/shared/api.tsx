@@ -493,16 +493,6 @@ const deleteRegistryIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}`;
 });
 
-const deleteGitlabIntegration = baseApi<
-  {},
-  {
-    project_id: number;
-    integration_id: number;
-  }
->("DELETE", ({ project_id, integration_id }) => {
-  return `/api/projects/${project_id}/integrations/gitlab/${integration_id}`;
-});
-
 const deleteSlackIntegration = baseApi<
   {},
   {
@@ -664,19 +654,18 @@ const detectBuildpack = baseApi<
 });
 
 const detectGitlabBuildpack = baseApi<
-  {
-    repo_path: string;
-    branch: string;
-    dir: string;
-  },
+  { dir: string },
   {
     project_id: number;
     integration_id: number;
+    repo_owner: string;
+    repo_name: string;
+    branch: string;
   }
 >(
   "GET",
-  ({ project_id, integration_id }) =>
-    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/buildpack/detect`
+  ({ project_id, integration_id, repo_name, repo_owner, branch }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/${branch}/buildpack/detect`
 );
 
 const getBranchContents = baseApi<
@@ -739,34 +728,23 @@ const getPorterYamlContents = baseApi<
   }/${encodeURIComponent(pathParams.branch)}/porteryaml`;
 });
 
-const getGitlabPorterYamlContents = baseApi<
-  {
-    repo_path: string;
-    branch: string;
-    path: string;
-  },
-  {
-    project_id: number;
-    integration_id: number;
-  }
->("GET", ({ project_id, integration_id }) => {
-  return `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/porteryaml`;
-});
-
 const getGitlabProcfileContents = baseApi<
   {
-    repo_path: string;
-    branch: string;
     path: string;
   },
   {
     project_id: number;
     integration_id: number;
+    owner: string;
+    name: string;
+    branch: string;
   }
 >(
   "GET",
-  ({ project_id, integration_id }) =>
-    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/procfile`
+  ({ project_id, integration_id, owner, name, branch }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${owner}/${name}/${encodeURIComponent(
+      branch
+    )}/procfile`
 );
 
 const getBranches = baseApi<
@@ -2122,6 +2100,41 @@ const reRunGHWorkflow = baseApi<
   }
 );
 
+const getGHWorkflowLogs = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    git_installation_id: number;
+    owner: string;
+    name: string;
+    filename?: string;
+    release_name?: string;
+  }
+>(
+  "GET",
+  ({
+    project_id,
+    git_installation_id,
+    owner,
+    name,
+    cluster_id,
+    filename,
+    release_name,
+  }) => {
+    const queryParams = new URLSearchParams();
+
+    if (release_name) {
+      queryParams.set("release_name", release_name);
+    }
+    if (filename) {
+      queryParams.set("filename", filename);
+    }
+
+    return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/get_logs_workflow?${queryParams.toString()}`;
+  }
+);
+
 const triggerPreviewEnvWorkflow = baseApi<
   {},
   { project_id: number; cluster_id: number; deployment_id: number }
@@ -2179,9 +2192,7 @@ const getGitProviders = baseApi<{}, { project_id: number }>(
 );
 
 const getGitlabRepos = baseApi<
-  {
-    search_term: string;
-  },
+  {},
   { project_id: number; integration_id: number }
 >(
   "GET",
@@ -2190,34 +2201,34 @@ const getGitlabRepos = baseApi<
 );
 
 const getGitlabBranches = baseApi<
-  {
-    repo_path: string;
-    search_term: string;
-  },
+  {},
   {
     project_id: number;
     integration_id: number;
+    repo_owner: string;
+    repo_name: string;
   }
 >(
   "GET",
-  ({ project_id, integration_id }) =>
-    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/branches`
+  ({ project_id, integration_id, repo_owner, repo_name }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/branches`
 );
 
 const getGitlabFolderContent = baseApi<
   {
-    repo_path: string;
-    branch: string;
     dir: string;
   },
   {
     project_id: number;
     integration_id: number;
+    repo_owner: string;
+    repo_name: string;
+    branch: string;
   }
 >(
   "GET",
-  ({ project_id, integration_id }) =>
-    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/contents`
+  ({ project_id, integration_id, repo_owner, repo_name, branch }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/${branch}/contents`
 );
 
 const getLogPodValues = baseApi<
@@ -2601,7 +2612,6 @@ export default {
   deletePod,
   deleteProject,
   deleteRegistryIntegration,
-  deleteGitlabIntegration,
   deleteSlackIntegration,
   updateNotificationConfig,
   getNotificationConfig,
@@ -2746,6 +2756,7 @@ export default {
   updateBuildConfig,
   updateGitActionConfig,
   reRunGHWorkflow,
+  getGHWorkflowLogs,
   triggerPreviewEnvWorkflow,
   getTagsByProjectId,
   createTag,
@@ -2755,7 +2766,6 @@ export default {
   getGitlabRepos,
   getGitlabBranches,
   getGitlabFolderContent,
-  getGitlabPorterYamlContents,
   getLogPodValues,
   getLogs,
   listPorterEvents,

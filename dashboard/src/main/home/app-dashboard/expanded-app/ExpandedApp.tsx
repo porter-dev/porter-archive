@@ -11,8 +11,10 @@ import github from "assets/github.png";
 import pr_icon from "assets/pull_request_icon.svg";
 import loadingImg from "assets/loading.gif";
 import refresh from "assets/refresh.png";
+import danger from "assets/danger.svg";
 
 import api from "shared/api";
+import JSZip from "jszip";
 import { Context } from "shared/Context";
 import useAuth from "shared/auth/useAuth";
 import Error from "components/porter/Error";
@@ -47,6 +49,12 @@ import JobRuns from "./JobRuns";
 import MetricsSection from "./MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
+import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
+import Anser, { AnserJsonEntry } from "anser";
+import dayjs from "dayjs";
+import Modal from "components/porter/Modal";
+import TitleSection from "components/TitleSection";
+import GHALogsModal from "./status/GHALogsModal";
 
 type Props = RouteComponentProps & {};
 
@@ -79,6 +87,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [tab, setTab] = useState("overview");
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [bannerLoading, setBannerLoading] = useState<boolean>(false);
+
   const [components, setComponents] = useState<ResourceType[]>([]);
 
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
@@ -87,6 +97,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     z.infer<typeof PorterYamlSchema> | undefined
   >(undefined);
   const [expandedJob, setExpandedJob] = useState(null);
+  const [logs, setLogs] = useState<Log[]>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const [services, setServices] = useState<Service[]>([]);
   const [releaseJob, setReleaseJob] = useState<ReleaseService[]>([]);
@@ -96,6 +108,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   const getPorterApp = async () => {
     // setIsLoading(true);
+    setBannerLoading(true);
     const { appName } = props.match.params as any;
     try {
       if (!currentCluster || !currentProject) {
@@ -154,10 +167,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
       setPorterJson(porterJson);
       setAppData(newAppData);
-      updateServicesAndEnvVariables(resChartData?.data, releaseChartData?.data, porterJson);
+      updateServicesAndEnvVariables(
+        resChartData?.data,
+        releaseChartData?.data,
+        porterJson
+      );
 
       // Only check GHA status if no built image is set
-      const hasBuiltImage = !!resChartData.data.config?.global?.image?.repository;
+      const hasBuiltImage = !!resChartData.data.config?.global?.image
+        ?.repository;
       if (hasBuiltImage || !resPorterApp.data.repo_name) {
         setWorkflowCheckPassed(true);
         setHasBuiltImage(true);
@@ -288,6 +306,70 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
+  useEffect(() => {
+    setBannerLoading(true);
+    getBuildLogs().then(() => {
+      setBannerLoading(false);
+    });
+  }, [appData]);
+
+  const getBuildLogs = async () => {
+    try {
+      const res = await api.getGHWorkflowLogs(
+        "",
+        {},
+        {
+          project_id: appData.app.project_id,
+          cluster_id: appData.app.cluster_id,
+          git_installation_id: appData.app.git_repo_id,
+          owner: appData.app.repo_name?.split("/")[0],
+          name: appData.app.repo_name?.split("/")[1],
+          filename: "porter_stack_" + appData.chart.name + ".yml",
+        }
+      );
+      let logs: Log[] = [];
+      if (res.data != null) {
+        // Fetch the logs
+        const logsResponse = await fetch(res.data);
+
+        // Ensure that the response body is only read once
+        const logsBlob = await logsResponse.blob();
+
+        if (logsResponse.headers.get("Content-Type") === "application/zip") {
+          const zip = await JSZip.loadAsync(logsBlob);
+
+          zip.forEach(async function (relativePath, zipEntry) {
+            const fileData = await zip.file(relativePath)?.async("string");
+
+            if (
+              fileData &&
+              fileData.includes("Run porter-dev/porter-cli-action@v0.1.0")
+            ) {
+              const lines = fileData.split("\n");
+
+              lines.forEach((line, index) => {
+                const anserLine: AnserJsonEntry[] = Anser.ansiToJson(line);
+                const log: Log = {
+                  line: anserLine,
+                  lineNumber: index + 1,
+                  timestamp: line.match(
+                    /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z/
+                  )?.[0],
+                };
+
+                logs.push(log);
+              });
+            }
+          });
+          console.log(logs);
+          setLogs(logs);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const fetchPorterYamlContent = async (
     porterYaml: string,
     appData: any
@@ -371,7 +453,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
     // handle release chart
     if (releaseChart?.config || porterJson?.release) {
-      setReleaseJob([Service.deserializeRelease(releaseChart?.config, porterJson)]);
+      setReleaseJob([
+        Service.deserializeRelease(releaseChart?.config, porterJson),
+      ]);
     }
   };
 
@@ -631,7 +715,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 <Fieldset>
                   <Container row>
                     <PlaceholderIcon src={notFound} />
-                    <Text color="helper">No pre-deploy jobs were found. Add a pre-deploy job to perform an operation before your application services deploy, like a database migration.</Text>
+                    <Text color="helper">
+                      No pre-deploy jobs were found. Add a pre-deploy job to
+                      perform an operation before your application services
+                      deploy, like a database migration.
+                    </Text>
                   </Container>
                 </Fieldset>
                 <Spacer y={0.5} />
@@ -648,11 +736,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               services={releaseJob}
               limitOne={true}
               customOnClick={() => {
-                setReleaseJob([Service.default(
-                  "pre-deploy",
-                  "release",
-                  porterJson
-                ) as ReleaseService]);
+                setReleaseJob([
+                  Service.default(
+                    "pre-deploy",
+                    "release",
+                    porterJson
+                  ) as ReleaseService,
+                ]);
               }}
               addNewText={"Add a new pre-deploy job"}
               defaultExpanded={true}
@@ -666,13 +756,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               Update pre-deploy job
             </Button>
             <Spacer y={0.5} />
-            {releaseJob.length > 0 && <JobRuns
-              lastRunStatus="all"
-              namespace={appData.chart?.namespace}
-              sortType="Newest"
-              releaseName={appData.app.name + "-r"}
-            />
-            }
+            {releaseJob.length > 0 && (
+              <JobRuns
+                lastRunStatus="all"
+                namespace={appData.chart?.namespace}
+                sortType="Newest"
+                releaseName={appData.app.name + "-r"}
+              />
+            )}
           </>
         );
       default:
@@ -682,12 +773,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   if (expandedJob) {
     return (
-      <ExpandedJob 
+      <ExpandedJob
         appName={appData.app.name}
         jobName={expandedJob}
         goBack={() => setExpandedJob(null)}
       />
-    )
+    );
   }
 
   return (
@@ -785,32 +876,95 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           ) : (
             <>
               {!workflowCheckPassed ? (
-                <GHABanner
-                  repoName={appData.app.repo_name}
-                  branchName={appData.app.git_branch}
-                  pullRequestUrl={appData.app.pull_request_url}
-                  stackName={appData.app.name}
-                  gitRepoId={appData.app.git_repo_id}
-                  porterYamlPath={appData.app.porter_yaml_path}
-                />
+                bannerLoading ? (
+                  <Banner>
+                    <Loading />
+                  </Banner>
+                ) : (
+                  <GHABanner
+                    repoName={appData.app.repo_name}
+                    branchName={appData.app.git_branch}
+                    pullRequestUrl={appData.app.pull_request_url}
+                    stackName={appData.app.name}
+                    gitRepoId={appData.app.git_repo_id}
+                    porterYamlPath={appData.app.porter_yaml_path}
+                  />
+                )
               ) : !hasBuiltImage ? (
-                <Banner
-                  suffix={
-                    <RefreshButton onClick={() => window.location.reload()}>
-                      <img src={refresh} /> Refresh
-                    </RefreshButton>
-                  }
-                >
-                  Your GitHub repo has not been built yet.
-                  <Spacer inline width="5px" />
-                  <Link
-                    hasunderline
-                    target="_blank"
-                    to={`https://github.com/${appData.app.repo_name}/actions`}
-                  >
-                    Check status
-                  </Link>
-                </Banner>
+                <>
+                  {logs ? (
+                    <Banner
+                      type="error"
+                      suffix={
+                        <>
+                          <>
+                            <RefreshButton
+                              onClick={() => window.location.reload()}
+                            >
+                              <img src={refresh} /> Refresh
+                            </RefreshButton>
+                          </>
+                        </>
+                      }
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          marginBottom: "-20px",
+                        }}
+                      >
+                        Your build was not successful
+                        <Spacer inline width="15px" />
+                        <>
+                          <Link
+                            hasunderline
+                            target="_blank"
+                            onClick={() => setModalVisible(true)}
+                          >
+                            View Logs
+                          </Link>
+                          {modalVisible && (
+                            <GHALogsModal
+                              appData={appData}
+                              logs={logs}
+                              modalVisible={false}
+                              setModalVisible={setModalVisible}
+                            />
+                          )}
+                        </>
+                      </div>
+
+                      <Spacer inline width="5px" />
+                    </Banner>
+                  ) : bannerLoading ? (
+                    <Banner>
+                      <Loading />
+                    </Banner>
+                  ) : (
+                    <Banner
+                      suffix={
+                        <>
+                          <RefreshButton
+                            onClick={() => window.location.reload()}
+                          >
+                            <img src={refresh} /> Refresh
+                          </RefreshButton>
+                        </>
+                      }
+                    >
+                      Your GitHub repo has not been built yet.
+                      <Spacer inline width="5px" />
+                      <Link
+                        hasunderline
+                        target="_blank"
+                        to={`https://github.com/${appData.app.repo_name}/actions`}
+                      >
+                        Check status
+                      </Link>
+                    </Banner>
+                  )}
+                </>
               ) : (
                 <>
                   <DarkMatter />
@@ -827,7 +981,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                      appData.chart.chart.metadata.version
+                        appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}
@@ -841,6 +995,30 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? hasBuiltImage
                       ? [
+                          { label: "Overview", value: "overview" },
+                          { label: "Events", value: "events" },
+                          { label: "Logs", value: "logs" },
+                          { label: "Metrics", value: "metrics" },
+                          { label: "Debug", value: "status" },
+                          { label: "Pre-deploy", value: "pre-deploy" },
+                          {
+                            label: "Environment variables",
+                            value: "environment-variables",
+                          },
+                          { label: "Build settings", value: "build-settings" },
+                          { label: "Settings", value: "settings" },
+                        ]
+                      : [
+                          { label: "Overview", value: "overview" },
+                          { label: "Pre-deploy", value: "pre-deploy" },
+                          {
+                            label: "Environment variables",
+                            value: "environment-variables",
+                          },
+                          { label: "Build settings", value: "build-settings" },
+                          { label: "Settings", value: "settings" },
+                        ]
+                    : [
                         { label: "Overview", value: "overview" },
                         // { label: "Activity", value: "activity" },
                         { label: "Events", value: "events" },
@@ -935,6 +1113,28 @@ const RefreshButton = styled.div`
   }
 `;
 
+const LogsButton = styled.div`
+  color: white;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  :hover {
+    color: red;
+    > img {
+      opacity: 1;
+    }
+  }
+
+  > img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 5px;
+    margin-right: 10px;
+    opacity: 0.8;
+  }
+`;
+
 const Spinner = styled.img`
   width: 15px;
   height: 15px;
@@ -976,11 +1176,6 @@ const BranchTag = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-`;
-
-const BranchSection = styled.div`
-  background: ${(props) => props.theme.fg};
-  border: 1px solid #494b4f;
 `;
 
 const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
@@ -1029,25 +1224,4 @@ const StyledExpandedApp = styled.div`
       opacity: 1;
     }
   }
-`;
-
-const HeaderWrapper = styled.div`
-  position: relative;
-`;
-const LastDeployed = styled.div`
-  font-size: 13px;
-  margin-left: 8px;
-  margin-top: -1px;
-  display: flex;
-  align-items: center;
-  color: #aaaabb66;
-`;
-const Dot = styled.div`
-  margin-right: 16px;
-`;
-const InfoWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  margin-left: 3px;
-  margin-top: 22px;
 `;

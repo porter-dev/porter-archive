@@ -245,7 +245,8 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 
 	basePath, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("error getting working directory: %w", err)
+		err = fmt.Errorf("error getting working directory: %w", err)
+		return
 	}
 
 	worker.RegisterDriver("deploy", NewDeployDriver)
@@ -262,12 +263,14 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		deplNamespace := os.Getenv("PORTER_NAMESPACE")
 
 		if deplNamespace == "" {
-			return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
+			err = fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
+			return
 		}
 
 		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
 		if err != nil {
-			return fmt.Errorf("error creating deployment hook: %w", err)
+			err = fmt.Errorf("error creating deployment hook: %w", err)
+			return err
 		}
 
 		worker.RegisterHook("deployment", deploymentHook)
@@ -279,9 +282,10 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
 	worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
 
-	return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
+	err = worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
 		BasePath: basePath,
 	})
+	return
 }
 
 func applyValidate() error {

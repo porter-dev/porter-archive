@@ -180,7 +180,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 
 		if os.Getenv("GITHUB_RUN_ID") != "" {
 			// Create app event to signfy start of build
-			req := &types.CreatePorterAppEventRequest{
+			req := &types.CreateOrUpdatePorterAppEventRequest{
 				Status:             "PROGRESSING",
 				Type:               types.PorterAppEventType_Build,
 				TypeExternalSource: "GITHUB",
@@ -191,10 +191,21 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 				},
 			}
 			ctx := context.Background()
-			_, err := client.CreatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
+			porterAppEvent, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
 			if err != nil {
 				return fmt.Errorf("unable to create porter app build event: %w", err)
 			}
+
+			defer func(ctx context.Context, originalAppEvent types.PorterAppEvent) {
+				// Update app event to signfy end of build
+				req := &types.CreateOrUpdatePorterAppEventRequest{
+					ID: originalAppEvent.ID,
+				}
+				_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
+				if err != nil {
+					color.New(color.FgRed).Fprintf(os.Stderr, "unable to update porter app build event: %s\n", err.Error())
+				}
+			}(ctx, porterAppEvent)
 		}
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)

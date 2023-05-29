@@ -243,7 +243,7 @@ func getStackRoutes(
 		},
 	)
 
-	createPorterAppEventHandler := stacks.NewCreatePorterAppEventHandler(
+	createPorterAppEventHandler := stacks.NewCreateUpdatePorterAppEventHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

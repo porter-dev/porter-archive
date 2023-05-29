@@ -64,3 +64,39 @@ func (repo *PorterAppEventRepository) CreateEvent(ctx context.Context, appEvent 
 	}
 	return nil
 }
+
+func (repo *PorterAppEventRepository) UpdateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error {
+	if appEvent.ID == uuid.Nil {
+		appEvent.ID = uuid.New()
+	}
+	if appEvent.UpdatedAt.IsZero() {
+		appEvent.UpdatedAt = time.Now().UTC()
+	}
+	if appEvent.PorterAppID == 0 {
+		return errors.New("invalid porter app id supplied")
+	}
+	if appEvent.Status == "" {
+		return errors.New("invalid status supplied")
+	}
+
+	if err := repo.db.Model(appEvent).Updates(models.PorterAppEvent{Status: appEvent.Status}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *PorterAppEventRepository) ReadEvent(ctx context.Context, id uuid.UUID) (models.PorterAppEvent, error) {
+	appEvent := models.PorterAppEvent{}
+
+	if id == uuid.Nil {
+		return appEvent, errors.New("invalid porter app event id supplied")
+	}
+
+	strID := id.String()
+
+	if err := repo.db.Where("id = ?", strID).First(&appEvent).Error; err != nil {
+		return appEvent, err
+	}
+
+	return appEvent, nil
+}

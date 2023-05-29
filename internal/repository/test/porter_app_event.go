@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/gorm/helpers"
@@ -23,4 +24,12 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppID(ctx context.Contex
 
 func (repo *PorterAppEventRepository) CreateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error {
 	return errors.New("cannot write database")
+}
+
+func (repo *PorterAppEventRepository) UpdateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error {
+	return errors.New("cannot update database")
+}
+
+func (repo *PorterAppEventRepository) ReadEvent(ctx context.Context, id uuid.UUID) (models.PorterAppEvent, error) {
+	return models.PorterAppEvent{}, errors.New("cannot read database")
 }

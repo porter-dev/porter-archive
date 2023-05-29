@@ -92,7 +92,9 @@ const (
 
 // PorterAppEvent represents a simplified event for creating a Porter stack app event
 // swagger:model
-type CreatePorterAppEventRequest struct {
+type CreateOrUpdatePorterAppEventRequest struct {
+	// ID, if supplied, will be assumed to be an update event
+	ID string `json:"id"`
 	// Status contains the accepted status' of a given event such as SUCCESS, FAILED, PROGRESSING, etc.
 	Status string `json:"status,omitempty"`
 	// Type represents a supported Porter Stack Event

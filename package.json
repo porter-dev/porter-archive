@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "jszip": "^3.10.1",
-    "react-diff-viewer": "^3.1.1"
-  }
-}

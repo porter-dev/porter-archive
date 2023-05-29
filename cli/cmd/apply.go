@@ -106,7 +106,7 @@ func init() {
 	applyCmd.MarkFlagRequired("file")
 }
 
-func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) (err error) {
 	fileBytes, err := ioutil.ReadFile(porterYAML)
 	if err != nil {
 		stackName := os.Getenv("PORTER_STACK_NAME")
@@ -221,9 +221,17 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			}
 
 			defer func(ctx context.Context, originalAppEvent types.PorterAppEvent) {
+				var status string
+				if err == nil {
+					status = "SUCCESS"
+				} else {
+					status = "FAILED"
+				}
+				fmt.Println("STEFAN: status is", status)
 				// Update app event to signfy end of build
 				req := &types.CreateOrUpdatePorterAppEventRequest{
-					ID: originalAppEvent.ID,
+					ID:     originalAppEvent.ID,
+					Status: status,
 				}
 				_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
 				if err != nil {

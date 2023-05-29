@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"time"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
@@ -70,20 +71,25 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		p.WriteResult(w, r, event)
 		return
 	}
-	porterAppEventID, err := uuid.Parse(request.ID)
-	if err != nil {
-		e := telemetry.Error(ctx, span, nil, "invalid UUID supplied as event ID")
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
-		return
-	}
 
-	event, err := p.updateExistingAppEvent(ctx, *cluster, stackName, porterAppEventID)
-	if err != nil {
-		e := telemetry.Error(ctx, span, nil, "error updating existing app event")
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
-		return
-	}
-	p.WriteResult(w, r, event)
+	go func() {
+		// wait for the action run to complete. Lazily handle the case where the event is fired off from the action, but the action hasnt completed
+		time.Sleep(5 * time.Second)
+		porterAppEventID, err := uuid.Parse(request.ID)
+		if err != nil {
+			e := telemetry.Error(ctx, span, nil, "invalid UUID supplied as event ID")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
+			return
+		}
+
+		_, err = p.updateExistingAppEvent(ctx, *cluster, stackName, porterAppEventID)
+		if err != nil {
+			e := telemetry.Error(ctx, span, nil, "error updating existing app event")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
+			return
+		}
+	}()
+	w.WriteHeader(http.StatusOK)
 }
 
 func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Context, cluster models.Cluster, stackName string, status string, eventType string, externalSource string, requestMetadata map[string]any) (types.PorterAppEvent, error) {
@@ -137,6 +143,7 @@ func (p *CreateUpdatePorterAppEventHandler) updateExistingAppEvent(ctx context.C
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "porter-app-id", Value: event.PorterAppID},
 		telemetry.AttributeKV{Key: "porter-app-event-id", Value: event.ID.String()},
+		telemetry.AttributeKV{Key: "porter-app-event-status", Value: event.Status},
 		telemetry.AttributeKV{Key: "cluster-id", Value: int(cluster.ID)},
 		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},
 	)
@@ -194,6 +201,10 @@ func (p *CreateUpdatePorterAppEventHandler) updateExistingAppEvent(ctx context.C
 			event.Status = "FAILED"
 		}
 	}
+
+	fmt.Println("STEFAN", *actionRun.Status, actionRun.Conclusion, event.Status)
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-event-updated-status", Value: event.Status})
 
 	err = p.Repo().PorterAppEvent().UpdateEvent(ctx, &event)
 	if err != nil {

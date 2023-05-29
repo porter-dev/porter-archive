@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"log"
 
 	"github.com/google/uuid"
@@ -29,7 +30,7 @@ func NewDispatcher(maxWorkers int) *Dispatcher {
 
 // Run creates workers in the worker pool with the given
 // job queue and starts the workers
-func (d *Dispatcher) Run(jobQueue chan Job) error {
+func (d *Dispatcher) Run(ctx context.Context, jobQueue chan Job) error {
 	go func() {
 		var workers []*Worker
 
@@ -46,7 +47,7 @@ func (d *Dispatcher) Run(jobQueue chan Job) error {
 
 			log.Printf("starting worker with UUID: %v", uuid)
 
-			worker.Start()
+			worker.Start(ctx)
 		}
 
 		for {

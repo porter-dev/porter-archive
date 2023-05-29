@@ -3,6 +3,7 @@
 package jobs
 
 import (
+	"context"
 	"log"
 	"sync"
 	"time"
@@ -92,7 +93,7 @@ func (n *previewDeploymentsTTLDeleter) EnqueueTime() time.Time {
 	return n.enqueueTime
 }
 
-func (n *previewDeploymentsTTLDeleter) Run() error {
+func (n *previewDeploymentsTTLDeleter) Run(ctx context.Context) error {
 	if n.previewDeploymentsTTL == "" {
 		log.Println("no TTL set for preview deployments, skipping job altogether")
 		return nil

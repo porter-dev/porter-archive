@@ -17,6 +17,7 @@ type Props = {
   logs: Log[];
   modalVisible: boolean;
   setModalVisible: (x: boolean) => void;
+  actionRunId?: string;
 };
 
 interface ExpandedIncidentLogsProps {
@@ -28,6 +29,7 @@ const GHALogsModal: React.FC<Props> = ({
   logs,
   modalVisible,
   setModalVisible,
+  actionRunId,
 }) => {
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
@@ -104,9 +106,13 @@ const GHALogsModal: React.FC<Props> = ({
       <Link
         hasunderline
         target="_blank"
-        to={`https://github.com/${appData.app.repo_name}/actions`}
+        to={
+          actionRunId
+            ? `https://github.com/${appData.app.repo_name}/actions/runs/${actionRunId}`
+            : `https://github.com/${appData.app.repo_name}/actions`
+        }
       >
-        Check Full Build Logs
+        View full build logs
       </Link>
     </Modal>
   );

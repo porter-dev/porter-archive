@@ -18,12 +18,10 @@ import Pagination from "components/porter/Pagination";
 type Props = {
   chart: any;
   stackName: string;
+  appData: string;
 };
 
-const ActivityFeed: React.FC<Props> = ({
-  chart,
-  stackName,
-}) => {
+const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const { currentProject, currentCluster } = useContext(Context);
 
   const [events, setEvents] = useState<any[]>([]);
@@ -42,7 +40,7 @@ const ActivityFeed: React.FC<Props> = ({
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
           stack_name: stackName,
-          page
+          page,
         }
       );
       setNumPages(res.data.num_pages);
@@ -52,8 +50,8 @@ const ActivityFeed: React.FC<Props> = ({
       setError(err);
       setLoading(false);
     }
-  }
-  
+  };
+
   useEffect(() => {
     getEvents();
   }, [page]);
@@ -75,14 +73,16 @@ const ActivityFeed: React.FC<Props> = ({
         <Loading />
       </div>
     );
-  };
+  }
 
   if (events?.length === 0) {
     return (
       <Fieldset>
         <Text size={16}>No events found for "{stackName}"</Text>
         <Spacer height="15px" />
-        <Text color="helper">This application currently has no associated activity.</Text>
+        <Text color="helper">
+          This application currently has no associated activity.
+        </Text>
       </Fieldset>
     );
   }
@@ -91,18 +91,15 @@ const ActivityFeed: React.FC<Props> = ({
     <StyledActivityFeed>
       {events.map((event, i) => {
         return (
-          <EventWrapper 
-            isLast={i === events.length - 1} 
-            key={i}
-          >
-            {(i !== events.length - 1 && events.length > 1) && <Line />}
+          <EventWrapper isLast={i === events.length - 1} key={i}>
+            {i !== events.length - 1 && events.length > 1 && <Line />}
             <Dot />
             <Time>
               <Text>{feedDate(event.created_at).split(", ")[0]}</Text>
               <Spacer x={0.5} />
               <Text>{feedDate(event.created_at).split(", ")[1]}</Text>
             </Time>
-            <EventCard event={event} i={i} />
+            <EventCard appData={appData} event={event} i={i} />
           </EventWrapper>
         );
       })}
@@ -153,7 +150,7 @@ const EventWrapper = styled.div<{
   display: flex;
   align-items: center;
   position: relative;
-  margin-bottom: ${props => props.isLast ? "" : "25px"};
+  margin-bottom: ${(props) => (props.isLast ? "" : "25px")};
 `;
 
 const StyledActivityFeed = styled.div`

@@ -104,6 +104,7 @@ const StyledModal = styled.div<{
   border: 1px solid #494b4f;
   font-size: 13px;
   width: ${props => props.width || "600px"};
+  max-width: calc(100vw - 40px);
   background: #42444933;
   backdrop-filter: saturate(150%) blur(8px);
 

@@ -110,10 +110,6 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 	}
 
 	for k, v := range requestMetadata {
-		if k == "action_run_id" {
-			x, _ := strconv.Atoi(v.(string))
-			v = x
-		}
 		event.Metadata[k] = v
 	}
 

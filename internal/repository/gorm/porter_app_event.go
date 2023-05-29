@@ -36,7 +36,7 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppID(ctx context.Contex
 	db := repo.db.Model(&models.PorterAppEvent{})
 	db = db.Scopes(helpers.Paginate(db, &paginatedResult, opts...))
 
-	if err := db.Where("porter_app_id = ?", id).Find(&apps).Error; err != nil {
+	if err := db.Where("porter_app_id = ?", id).Order("updated_at DESC").Find(&apps).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, paginatedResult, err
 		}

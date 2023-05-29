@@ -215,21 +215,10 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			}
 
 			ctx := context.Background()
-			porterAppEvent, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
+			_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
 			if err != nil {
 				return fmt.Errorf("unable to create porter app build event: %w", err)
 			}
-
-			defer func(ctx context.Context, originalAppEvent types.PorterAppEvent, overallErr error) {
-				req := &types.CreateOrUpdatePorterAppEventRequest{
-					ID:     originalAppEvent.ID,
-					Status: "PROGRESSED",
-				}
-				_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
-				if err != nil {
-					color.New(color.FgRed).Fprintf(os.Stderr, "unable to update porter app build event: %s\n", err.Error())
-				}
-			}(ctx, porterAppEvent, err)
 		}
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)

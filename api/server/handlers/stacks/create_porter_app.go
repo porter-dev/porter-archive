@@ -183,7 +183,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		// create the app chart
 		_, err = helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deploying app: %s", err.Error())))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("error deploying app: %s", err.Error()), http.StatusBadRequest))
 
 			_, err = helmAgent.UninstallChart(ctx, stackName)
 			if err != nil {
@@ -287,7 +287,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		// update the chart
 		_, err = helmAgent.UpgradeInstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deploying app: %s", err.Error())))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("error deploying app: %s", err.Error()), http.StatusBadRequest))
 			return
 		}
 

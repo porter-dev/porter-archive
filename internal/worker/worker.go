@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -17,7 +18,7 @@ type Job interface {
 	EnqueueTime() time.Time
 
 	// The main logic and control of a job
-	Run() error
+	Run(ctx context.Context) error
 
 	// To set external data if a job needs it
 	SetData([]byte)
@@ -46,7 +47,7 @@ func NewWorker(uuid uuid.UUID, workerPool chan chan Job) *Worker {
 
 // Start spawns a goroutine to add itself to the global worker pool
 // and listens for incoming jobs as they come, in random order
-func (w *Worker) Start() {
+func (w *Worker) Start(ctx context.Context) {
 	go func() {
 		for {
 			w.WorkerPool <- w.JobChannel
@@ -55,7 +56,7 @@ func (w *Worker) Start() {
 			case job := <-w.JobChannel:
 				log.Printf("attempting to run job ID '%s' via worker '%s'", job.ID(), w.uuid.String())
 
-				if err := job.Run(); err != nil {
+				if err := job.Run(ctx); err != nil {
 					log.Printf("error running job %s: %s", job.ID(), err.Error())
 				}
 			case <-w.exitChan:

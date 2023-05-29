@@ -35,8 +35,11 @@ func NewInviteCreateHandler(
 }
 
 func (c *InviteCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-invite-create")
+	defer span.End()
+
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	request := &types.CreateInviteRequest{}
 

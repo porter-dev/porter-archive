@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/uuid"
@@ -9,6 +10,7 @@ import (
 
 func TestWorker(t *testing.T) {
 	defer goleak.VerifyNone(t)
+	ctx := context.Background()
 
 	uuid, err := uuid.NewUUID()
 	if err != nil {
@@ -19,6 +21,6 @@ func TestWorker(t *testing.T) {
 
 	w := NewWorker(uuid, workerPool)
 
-	w.Start()
+	w.Start(ctx)
 	w.Stop()
 }

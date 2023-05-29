@@ -75,6 +75,8 @@ type EnvConf struct {
 }
 
 func main() {
+	ctx := context.Background()
+
 	if err := envdecode.StrictDecode(&envDecoder); err != nil {
 		log.Fatalf("Failed to decode server conf: %v", err)
 	}
@@ -120,13 +122,13 @@ func main() {
 
 	log.Println("starting worker dispatcher")
 
-	err = d.Run(jobQueue)
+	err = d.Run(ctx, jobQueue)
 
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	server := &http.Server{Addr: fmt.Sprintf(":%d", envDecoder.Port), Handler: httpService()}
+	server := &http.Server{Addr: fmt.Sprintf(":%d", envDecoder.Port), Handler: httpService(ctx)}
 
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())
 
@@ -171,7 +173,7 @@ func main() {
 	d.Exit()
 }
 
-func httpService() http.Handler {
+func httpService(ctx context.Context) http.Handler {
 	log.Println("setting up HTTP router and adding middleware")
 
 	r := chi.NewRouter()
@@ -192,7 +194,7 @@ func httpService() http.Handler {
 			return
 		}
 
-		job := getJob(chi.URLParam(r, "id"), req)
+		job := getJob(ctx, chi.URLParam(r, "id"), req)
 
 		if job == nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -206,9 +208,9 @@ func httpService() http.Handler {
 	return r
 }
 
-func getJob(id string, input map[string]interface{}) worker.Job {
+func getJob(ctx context.Context, id string, input map[string]interface{}) worker.Job {
 	if id == "helm-revisions-count-tracker" {
-		newJob, err := jobs.NewHelmRevisionsCountTracker(dbConn, time.Now().UTC(), &jobs.HelmRevisionsCountTrackerOpts{
+		newJob, err := jobs.NewHelmRevisionsCountTracker(ctx, dbConn, time.Now().UTC(), &jobs.HelmRevisionsCountTrackerOpts{
 			DBConf:             &envDecoder.DBConf,
 			DOClientID:         envDecoder.DOClientID,
 			DOClientSecret:     envDecoder.DOClientSecret,

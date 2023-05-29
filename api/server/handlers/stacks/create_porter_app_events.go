@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
-	"time"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
@@ -72,23 +71,19 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		return
 	}
 
-	go func() {
-		// wait for the action run to complete. Lazily handle the case where the event is fired off from the action, but the action hasnt completed
-		time.Sleep(5 * time.Second)
-		porterAppEventID, err := uuid.Parse(request.ID)
-		if err != nil {
-			e := telemetry.Error(ctx, span, nil, "invalid UUID supplied as event ID")
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
-			return
-		}
+	porterAppEventID, err := uuid.Parse(request.ID)
+	if err != nil {
+		e := telemetry.Error(ctx, span, nil, "invalid UUID supplied as event ID")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
+		return
+	}
 
-		_, err = p.updateExistingAppEvent(ctx, *cluster, stackName, porterAppEventID)
-		if err != nil {
-			e := telemetry.Error(ctx, span, nil, "error updating existing app event")
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
-			return
-		}
-	}()
+	_, err = p.updateExistingAppEvent(ctx, *cluster, stackName, porterAppEventID)
+	if err != nil {
+		e := telemetry.Error(ctx, span, nil, "error updating existing app event")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 }
 

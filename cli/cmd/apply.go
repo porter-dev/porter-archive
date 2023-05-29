@@ -221,17 +221,9 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			}
 
 			defer func(ctx context.Context, originalAppEvent types.PorterAppEvent, overallErr error) {
-				var status string
-				if overallErr == nil {
-					status = "SUCCESS"
-				} else {
-					status = "FAILED"
-				}
-				fmt.Println("STEFAN: status is", status)
-				// Update app event to signfy end of build
 				req := &types.CreateOrUpdatePorterAppEventRequest{
 					ID:     originalAppEvent.ID,
-					Status: status,
+					Status: "PROGRESSED",
 				}
 				_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
 				if err != nil {

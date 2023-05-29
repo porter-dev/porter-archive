@@ -690,7 +690,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "events":
         return <EventsTab currentChart={appData.chart} />;
       case "activity":
-        return <ActivityFeed chart={appData.chart} stackName={appData?.app?.name}/>;
+        return (
+          <ActivityFeed
+            chart={appData.chart}
+            stackName={appData?.app?.name}
+            appData={appData}
+          />
+        );
       case "logs":
         return <LogSection currentChart={appData.chart} />;
       case "metrics":
@@ -928,7 +934,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                             <GHALogsModal
                               appData={appData}
                               logs={logs}
-                              modalVisible={false}
+                              modalVisible={modalVisible}
                               setModalVisible={setModalVisible}
                             />
                           )}
@@ -995,8 +1001,34 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? hasBuiltImage
                       ? [
+                          { label: "Overview", value: "overview" },
+                          // { label: "Activity", value: "activity" },
+                          { label: "Events", value: "events" },
+                          { label: "Logs", value: "logs" },
+                          { label: "Metrics", value: "metrics" },
+                          { label: "Debug", value: "status" },
+                          { label: "Pre-deploy", value: "pre-deploy" },
+                          {
+                            label: "Environment",
+                            value: "environment-variables",
+                          },
+                          { label: "Build settings", value: "build-settings" },
+                          { label: "Settings", value: "settings" },
+                        ]
+                      : [
+                          { label: "Overview", value: "overview" },
+                          // { label: "Activity", value: "activity" },
+                          { label: "Pre-deploy", value: "pre-deploy" },
+                          {
+                            label: "Environment",
+                            value: "environment-variables",
+                          },
+                          { label: "Build settings", value: "build-settings" },
+                          { label: "Settings", value: "settings" },
+                        ]
+                    : [
                         { label: "Overview", value: "overview" },
-                        // { label: "Activity", value: "activity" },
+                        //{ label: "Activity", value: "activity" },
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
                         { label: "Metrics", value: "metrics" },
@@ -1006,34 +1038,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                           label: "Environment",
                           value: "environment-variables",
                         },
-                        { label: "Build settings", value: "build-settings" },
                         { label: "Settings", value: "settings" },
                       ]
-                      : [
-                        { label: "Overview", value: "overview" },
-                        // { label: "Activity", value: "activity" },
-                        { label: "Pre-deploy", value: "pre-deploy" },
-                        {
-                          label: "Environment",
-                          value: "environment-variables",
-                        },
-                        { label: "Build settings", value: "build-settings" },
-                        { label: "Settings", value: "settings" },
-                      ]
-                    : [
-                      { label: "Overview", value: "overview" },
-                      // { label: "Activity", value: "activity" },
-                      { label: "Events", value: "events" },
-                      { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
-                      { label: "Debug", value: "status" },
-                      { label: "Pre-deploy", value: "pre-deploy" },
-                      {
-                        label: "Environment",
-                        value: "environment-variables",
-                      },
-                      { label: "Settings", value: "settings" },
-                    ]
                 }
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {

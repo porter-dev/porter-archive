@@ -221,7 +221,9 @@ const getFeedEvents = baseApi<
   }
 >("GET", (pathParams) => {
   let { project_id, cluster_id, stack_name, page } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/events?page=${page || 1}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/events?page=${
+    page || 1
+  }`;
 });
 
 const createEnvironment = baseApi<
@@ -2135,6 +2137,46 @@ const getGHWorkflowLogs = baseApi<
   }
 );
 
+const getGHWorkflowLogById = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    git_installation_id: number;
+    owner: string;
+    name: string;
+    filename?: string;
+    run_id: string;
+    release_name?: string;
+  }
+>(
+  "GET",
+  ({
+    project_id,
+    git_installation_id,
+    owner,
+    name,
+    cluster_id,
+    filename,
+    run_id,
+    release_name,
+  }) => {
+    const queryParams = new URLSearchParams();
+
+    if (release_name) {
+      queryParams.set("release_name", release_name);
+    }
+    if (filename) {
+      queryParams.set("filename", filename);
+    }
+    if (run_id) {
+      queryParams.set("run_id", run_id);
+    }
+
+    return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/workflow_run_id?${queryParams.toString()}`;
+  }
+);
+
 const triggerPreviewEnvWorkflow = baseApi<
   {},
   { project_id: number; cluster_id: number; deployment_id: number }
@@ -2757,6 +2799,7 @@ export default {
   updateGitActionConfig,
   reRunGHWorkflow,
   getGHWorkflowLogs,
+  getGHWorkflowLogById,
   triggerPreviewEnvWorkflow,
   getTagsByProjectId,
   createTag,

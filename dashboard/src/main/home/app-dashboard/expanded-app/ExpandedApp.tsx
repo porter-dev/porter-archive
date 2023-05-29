@@ -995,30 +995,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? hasBuiltImage
                       ? [
-                          { label: "Overview", value: "overview" },
-                          { label: "Events", value: "events" },
-                          { label: "Logs", value: "logs" },
-                          { label: "Metrics", value: "metrics" },
-                          { label: "Debug", value: "status" },
-                          { label: "Pre-deploy", value: "pre-deploy" },
-                          {
-                            label: "Environment variables",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                      : [
-                          { label: "Overview", value: "overview" },
-                          { label: "Pre-deploy", value: "pre-deploy" },
-                          {
-                            label: "Environment variables",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                    : [
                         { label: "Overview", value: "overview" },
                         // { label: "Activity", value: "activity" },
                         { label: "Events", value: "events" },

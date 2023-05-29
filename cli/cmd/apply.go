@@ -190,6 +190,25 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 					"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
 				},
 			}
+
+			actionRunID := os.Getenv("GITHUB_RUN_ID")
+			if actionRunID != "" {
+				arid, err := strconv.Atoi(actionRunID)
+				if err != nil {
+					return fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+				}
+				req.Metadata["action_run_id"] = arid
+			}
+
+			repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER")
+			if repoOwnerAccountID != "" {
+				arid, err := strconv.Atoi(repoOwnerAccountID)
+				if err != nil {
+					return fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER as int: %w", err)
+				}
+				req.Metadata["github_account_id"] = arid
+			}
+
 			ctx := context.Background()
 			porterAppEvent, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
 			if err != nil {

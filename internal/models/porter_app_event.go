@@ -46,7 +46,10 @@ func (p *PorterAppEvent) ToPorterAppEvent() types.PorterAppEvent {
 		CreatedAt:          p.CreatedAt,
 		UpdatedAt:          p.UpdatedAt,
 		PorterAppID:        p.PorterAppID,
-		Metadata:           p.Metadata,
 	}
+	if p.Metadata != nil {
+		ty.Metadata = p.Metadata
+	}
+
 	return ty
 }

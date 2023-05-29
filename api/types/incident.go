@@ -46,6 +46,7 @@ type IncidentMeta struct {
 	PorterDocLink           string             `json:"porter_doc_link"`
 }
 
+// PaginationRequest allows for conveniently specifying pagination parameters. These can be parsed from a url using gorilla/schema.
 type PaginationRequest struct {
 	Page int64 `schema:"page"`
 }

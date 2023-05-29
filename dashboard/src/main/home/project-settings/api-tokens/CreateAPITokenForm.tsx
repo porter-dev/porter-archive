@@ -503,7 +503,6 @@ const Invalid = styled.div`
   color: #f5cb42;
   margin-left: 15px;
   font-size: 13px;
-  font-family: "Work Sans", sans-serif;
 `;
 
 const Status = styled.div<{ status: "accepted" | "expired" | "pending" }>`

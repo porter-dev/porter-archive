@@ -1,10 +1,11 @@
 package environment
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -33,21 +34,43 @@ func NewCreateDeploymentByClusterHandler(
 }
 
 func (c *CreateDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-deployment-by-cluster")
+	defer span.End()
+
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
+	)
 
 	request := &types.CreateDeploymentRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "could not decode and validate request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "repo-owner", Value: request.RepoOwner},
+		telemetry.AttributeKV{Key: "repo-name", Value: request.RepoName},
+		telemetry.AttributeKV{Key: "namespace", Value: request.Namespace},
+		telemetry.AttributeKV{Key: "pull-request-id", Value: request.PullRequestID},
+		telemetry.AttributeKV{Key: "pr-name", Value: request.GitHubMetadata.PRName},
+		telemetry.AttributeKV{Key: "commit-sha", Value: request.GitHubMetadata.CommitSHA},
+		telemetry.AttributeKV{Key: "pr-branch-from", Value: request.GitHubMetadata.PRBranchFrom},
+		telemetry.AttributeKV{Key: "pr-branch-into", Value: request.GitHubMetadata.PRBranchInto},
+	)
 
 	// read the environment to get the environment id
 	env, err := c.Repo().Environment().ReadEnvironmentByOwnerRepoName(
 		project.ID, cluster.ID, request.RepoOwner, request.RepoName,
 	)
-
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error reading environment by owner repo name")
+
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(
 				fmt.Errorf("error creating deployment: %w", errEnvironmentNotFound)),
@@ -61,21 +84,24 @@ func (c *CreateDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 	// create deployment on GitHub API
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error getting github client from environment")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	// add a check for Github PR status
 	prClosed, err := isGithubPRClosed(client, request.RepoOwner, request.RepoName, int(request.PullRequestID))
-
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error checking if github pr is closed")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
 		return
 	}
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "pr-closed", Value: prClosed})
+
 	if prClosed {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "unsuccessful-exit-reason", Value: "pr is closed"})
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("attempting to create deployment for a closed github PR"), http.StatusConflict,
 		))
@@ -83,8 +109,8 @@ func (c *CreateDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 
 	ghDeployment, err := createGithubDeployment(client, env, request.PRBranchFrom, request.ActionID)
-
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error creating github deployment object")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
 		return
 	}
@@ -103,20 +129,18 @@ func (c *CreateDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *h
 		PRBranchFrom:   request.GitHubMetadata.PRBranchFrom,
 		PRBranchInto:   request.GitHubMetadata.PRBranchInto,
 	})
-
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error creating github deployment object")
 		// try to delete the GitHub deployment
-		_, err = client.Repositories.DeleteDeployment(
-			context.Background(),
+		_, deleteErr := client.Repositories.DeleteDeployment(
+			ctx,
 			env.GitRepoOwner,
 			env.GitRepoName,
 			ghDeployment.GetID(),
 		)
 
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("%v: %w", errGithubAPI, err),
-				http.StatusConflict))
-			return
+		if deleteErr != nil {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "delete-err", Value: deleteErr.Error()})
 		}
 
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating deployment: %w", err)))

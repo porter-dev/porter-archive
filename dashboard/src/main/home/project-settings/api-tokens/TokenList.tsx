@@ -208,7 +208,6 @@ const RevokeAccessButton = styled.div`
   display: inline-block;
   font-size: 13px;
   font-weight: 500;
-  font-family: "Work Sans", sans-serif;
   padding: 6px 10px;
   text-align: center;
   border: 1px solid #ffffff55;

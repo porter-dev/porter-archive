@@ -50,6 +50,7 @@ const (
 	URLParamIntegrationID         URLParam = "integration_id"
 	URLParamAPIContractRevisionID URLParam = "contract_revision_id"
 	URLParamStackName             URLParam = "stack_name"
+	URLParamStackEventID          URLParam = "stack_event_id"
 )
 
 type Path struct {

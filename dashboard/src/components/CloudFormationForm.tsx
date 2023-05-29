@@ -18,6 +18,7 @@ import DocsHelper from "./DocsHelper";
 import Error from "./porter/Error";
 import Step from "./porter/Step";
 import Link from "./porter/Link";
+import Container from "./porter/Container";
 
 type Props = {
   goBack: () => void;
@@ -204,15 +205,17 @@ const CloudFormationForm: React.FC<Props> = ({
 
   return (
     <>
-      <Text size={16}>
+      <Container row>
         <BackButton width="140px" onClick={goBack}>
           <i className="material-icons">first_page</i>
           Select cloud
         </BackButton>
         <Spacer x={1} inline />
         <Img src={aws} />
+        <Text size={16}>
         Grant AWS permissions
       </Text>
+      </Container>
       <Spacer y={1} />
       <Text color="helper">
         Grant Porter permissions to create infrastructure in your AWS account.

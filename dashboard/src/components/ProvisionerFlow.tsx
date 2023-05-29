@@ -17,6 +17,7 @@ import Checkbox from "./porter/Checkbox";
 import Button from "./porter/Button";
 import ExpandableSection from "./porter/ExpandableSection";
 import Input from "./porter/Input";
+import Link from "./porter/Link";
 
 const providers = ["aws", "gcp", "azure"];
 
@@ -127,10 +128,12 @@ const ProvisionerFlow: React.FC<Props> = ({
             />
             <Spacer y={1} />
             <Text color="helper">
-              Separate from the AWS cost, Porter charges based on the amount of resources that are being used. Porter pricing is as follows, prorated to the minute:
+              Separate from the AWS cost, Porter charges based on the amount of resources that are being used.
             </Text>
-            <Spacer y={1} />
-            <Cost>$0.019/hr/vCPU + $0.009/hr/GB RAM</Cost>
+            <Spacer inline width="5px" />
+            <Link hasunderline to="https://porter.run/pricing">
+              Learn more about our pricing
+            </Link>.
             <Spacer y={1} />
             <Text color="helper">
               All AWS resources will be automatically deleted when you delete your Porter project. Please enter the AWS base cost ("315.94") below to proceed:

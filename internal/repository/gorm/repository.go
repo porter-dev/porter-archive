@@ -52,6 +52,7 @@ type GormRepository struct {
 	apiContractRevisions      repository.APIContractRevisioner
 	awsAssumeRoleChainer      repository.AWSAssumeRoleChainer
 	porterApp                 repository.PorterAppRepository
+	porterAppEvent            repository.PorterAppEventRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -234,6 +235,10 @@ func (t *GormRepository) AWSAssumeRoleChainer() repository.AWSAssumeRoleChainer 
 	return t.awsAssumeRoleChainer
 }
 
+func (t *GormRepository) PorterAppEvent() repository.PorterAppEventRepository {
+	return t.porterAppEvent
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -283,5 +288,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		apiContractRevisions:      NewAPIContractRevisioner(db),
 		awsAssumeRoleChainer:      NewAWSAssumeRoleChainer(db),
 		porterApp:                 NewPorterAppRepository(db),
+		porterAppEvent:            NewPorterAppEventRepository(db),
 	}
 }

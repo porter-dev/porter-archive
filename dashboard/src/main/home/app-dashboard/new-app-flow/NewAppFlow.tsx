@@ -17,7 +17,7 @@ import Input from "components/porter/Input";
 import VerticalSteps from "components/porter/VerticalSteps";
 import Button from "components/porter/Button";
 import SourceSelector, { SourceType } from "./SourceSelector";
-import DynamicLink from "components/DynamicLink";
+import Container from "components/porter/Container";
 
 import SourceSettings from "./SourceSettings";
 import Services from "./Services";
@@ -31,10 +31,9 @@ import {
   RepoType,
 } from "shared/types";
 import Error from "components/porter/Error";
-import { z } from "zod";
+import { string, z } from "zod";
 import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
 import { ReleaseService, Service } from "./serviceTypes";
-import { Helper } from "components/form-components/Helper";
 import GithubConnectModal from "./GithubConnectModal";
 
 type Props = RouteComponentProps & {};
@@ -514,21 +513,23 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 />
               </>,
               <>
-                <Text size={16}>
-                  Application services{" "}
+                <Container row>
+                  <Text size={16}>
+                    Application services{" "}
+                  </Text>
                   {detected && formState.serviceList.length > 0 && (
-                    <AppearingDiv>
+                    <AppearingDiv color={detected.detected ? "#8590ff" : "#fcba03"}>
+                      {detected.detected ? (
+                        <I className="material-icons">check</I>
+                      ) : (
+                        <I className="material-icons">error</I>
+                      )}
                       <Text color={detected.detected ? "#8590ff" : "#fcba03"}>
-                        {detected.detected ? (
-                          <I className="material-icons">check</I>
-                        ) : (
-                          <I className="material-icons">error</I>
-                        )}
                         {detected.message}
                       </Text>
                     </AppearingDiv>
                   )}
-                </Text>
+                </Container>
                 <Spacer y={0.5} />
                 <Services
                   setServices={(services: Service[]) => {
@@ -674,11 +675,12 @@ const Icon = styled.img`
   }
 `;
 
-const AppearingDiv = styled.div`
+const AppearingDiv = styled.div<{ color?: string }>`
   animation: floatIn 0.5s;
   animation-fill-mode: forwards;
   display: flex;
   align-items: center;
+  color: ${(props) => props.color || "#ffffff44"};
   margin-left: 10px;
   @keyframes floatIn {
     from {

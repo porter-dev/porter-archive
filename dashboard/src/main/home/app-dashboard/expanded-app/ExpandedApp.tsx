@@ -44,7 +44,7 @@ import { EnvVariablesTab } from "./EnvVariablesTab";
 import GHABanner from "./GHABanner";
 import LogSection from "./LogSection";
 import EventsTab from "./EventsTab";
-import ActivityFeed from "./ActivityFeed";
+import ActivityFeed from "./activity-feed/ActivityFeed";
 import JobRuns from "./JobRuns";
 import MetricsSection from "./MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
@@ -690,7 +690,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "events":
         return <EventsTab currentChart={appData.chart} />;
       case "activity":
-        return <ActivityFeed chart={appData.chart} />;
+        return <ActivityFeed chart={appData.chart} stackName={appData?.app?.name}/>;
       case "logs":
         return <LogSection currentChart={appData.chart} />;
       case "metrics":
@@ -806,15 +806,17 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             {appData.app.repo_name && (
               <>
                 <Spacer inline x={1} />
-                <Text size={13} color="helper">
+                <Container row>
                   <SmallIcon src={github} />
-                  <Link
-                    target="_blank"
-                    to={`https://github.com/${appData.app.repo_name}`}
-                  >
-                    {appData.app.repo_name}
-                  </Link>
-                </Text>
+                  <Text size={13} color="helper">
+                    <Link
+                      target="_blank"
+                      to={`https://github.com/${appData.app.repo_name}`}
+                    >
+                      {appData.app.repo_name}
+                    </Link>
+                  </Text>
+                </Container>
               </>
             )}
             {appData.app.git_branch && (
@@ -832,13 +834,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             {!appData.app.repo_name && appData.app.image_repo_uri && (
               <>
                 <Spacer inline x={1} />
-                <Text size={13} color="helper">
+                <Container row>
                   <SmallIcon
                     height="19px"
                     src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
                   />
-                  {appData.app.image_repo_uri}
-                </Text>
+                  <Text size={13} color="helper">
+                    {appData.app.image_repo_uri}
+                  </Text>
+                </Container>
               </>
             )}
           </Container>
@@ -1016,17 +1020,44 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                         ]
                     : [
                         { label: "Overview", value: "overview" },
+                        // { label: "Activity", value: "activity" },
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
                         { label: "Metrics", value: "metrics" },
                         { label: "Debug", value: "status" },
                         { label: "Pre-deploy", value: "pre-deploy" },
                         {
-                          label: "Environment variables",
+                          label: "Environment",
                           value: "environment-variables",
                         },
+                        { label: "Build settings", value: "build-settings" },
                         { label: "Settings", value: "settings" },
                       ]
+                      : [
+                        { label: "Overview", value: "overview" },
+                        // { label: "Activity", value: "activity" },
+                        { label: "Pre-deploy", value: "pre-deploy" },
+                        {
+                          label: "Environment",
+                          value: "environment-variables",
+                        },
+                        { label: "Build settings", value: "build-settings" },
+                        { label: "Settings", value: "settings" },
+                      ]
+                    : [
+                      { label: "Overview", value: "overview" },
+                      // { label: "Activity", value: "activity" },
+                      { label: "Events", value: "events" },
+                      { label: "Logs", value: "logs" },
+                      { label: "Metrics", value: "metrics" },
+                      { label: "Debug", value: "status" },
+                      { label: "Pre-deploy", value: "pre-deploy" },
+                      {
+                        label: "Environment",
+                        value: "environment-variables",
+                      },
+                      { label: "Settings", value: "settings" },
+                    ]
                 }
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {

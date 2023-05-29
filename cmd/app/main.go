@@ -3,12 +3,15 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/router"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -60,6 +63,9 @@ func main() {
 		WriteTimeout: config.ServerConf.TimeoutWrite,
 		IdleTimeout:  config.ServerConf.TimeoutIdle,
 	}
+
+	tracer, _ := telemetry.InitTracer(context.Background(), config.TelemetryConfig)
+	defer tracer.Shutdown()
 
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		config.Logger.Fatal().Err(err).Msg("Server startup failed")

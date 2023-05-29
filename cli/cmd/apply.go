@@ -106,7 +106,7 @@ func init() {
 	applyCmd.MarkFlagRequired("file")
 }
 
-func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) (err error) {
 	fileBytes, err := ioutil.ReadFile(porterYAML)
 	if err != nil {
 		stackName := os.Getenv("PORTER_STACK_NAME")
@@ -177,22 +177,78 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			Builder:              builder,
 		}
 		worker.RegisterHook("deploy-stack", deployStackHook)
+
+		if os.Getenv("GITHUB_RUN_ID") != "" {
+			// Create app event to signfy start of build
+			req := &types.CreateOrUpdatePorterAppEventRequest{
+				Status:             "PROGRESSING",
+				Type:               types.PorterAppEventType_Build,
+				TypeExternalSource: "GITHUB",
+				Metadata: map[string]any{
+					"action_run_id": os.Getenv("GITHUB_RUN_ID"),
+					"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
+				},
+			}
+
+			repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+			if len(repoNameSplit) != 2 {
+				return fmt.Errorf("unable to parse GITHUB_REPOSITORY")
+			}
+			req.Metadata["repo"] = repoNameSplit[1]
+
+			actionRunID := os.Getenv("GITHUB_RUN_ID")
+			if actionRunID != "" {
+				arid, err := strconv.Atoi(actionRunID)
+				if err != nil {
+					return fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+				}
+				req.Metadata["action_run_id"] = arid
+			}
+
+			repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
+			if repoOwnerAccountID != "" {
+				arid, err := strconv.Atoi(repoOwnerAccountID)
+				if err != nil {
+					return fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+				}
+				req.Metadata["github_account_id"] = arid
+			}
+
+			ctx := context.Background()
+			_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
+			if err != nil {
+				return fmt.Errorf("unable to create porter app build event: %w", err)
+			}
+		}
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
 	}
 
 	basePath, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("error getting working directory: %w", err)
+		err = fmt.Errorf("error getting working directory: %w", err)
+		return
 	}
 
-	worker.RegisterDriver("deploy", NewDeployDriver)
-	worker.RegisterDriver("build-image", preview.NewBuildDriver)
-	worker.RegisterDriver("push-image", preview.NewPushDriver)
-	worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
-	worker.RegisterDriver("random-string", preview.NewRandomStringDriver)
-	worker.RegisterDriver("env-group", preview.NewEnvGroupDriver)
-	worker.RegisterDriver("os-env", preview.NewOSEnvDriver)
+	drivers := []struct {
+		name     string
+		funcName func(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error)
+	}{
+		{"deploy", NewDeployDriver},
+		{"build-image", preview.NewBuildDriver},
+		{"push-image", preview.NewPushDriver},
+		{"update-config", preview.NewUpdateConfigDriver},
+		{"random-string", preview.NewRandomStringDriver},
+		{"env-group", preview.NewEnvGroupDriver},
+		{"os-env", preview.NewOSEnvDriver},
+	}
+	for _, driver := range drivers {
+		err = worker.RegisterDriver(driver.name, driver.funcName)
+		if err != nil {
+			err = fmt.Errorf("error registering driver %s: %w", driver.name, err)
+			return
+		}
+	}
 
 	worker.SetDefaultDriver("deploy")
 
@@ -200,26 +256,41 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		deplNamespace := os.Getenv("PORTER_NAMESPACE")
 
 		if deplNamespace == "" {
-			return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
+			err = fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
+			return
 		}
 
 		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
 		if err != nil {
-			return fmt.Errorf("error creating deployment hook: %w", err)
+			err = fmt.Errorf("error creating deployment hook: %w", err)
+			return err
 		}
 
-		worker.RegisterHook("deployment", deploymentHook)
+		err = worker.RegisterHook("deployment", deploymentHook)
+		if err != nil {
+			err = fmt.Errorf("error registering deployment hook: %w", err)
+			return err
+		}
 	}
 
 	errorEmitterHook := NewErrorEmitterHook(client, resGroup)
-	worker.RegisterHook("erroremitter", errorEmitterHook)
+	err = worker.RegisterHook("erroremitter", errorEmitterHook)
+	if err != nil {
+		err = fmt.Errorf("error registering error emitter hook: %w", err)
+		return err
+	}
 
 	cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
-	worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
+	err = worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
+	if err != nil {
+		err = fmt.Errorf("error registering clone env group hook: %w", err)
+		return err
+	}
 
-	return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
+	err = worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
 		BasePath: basePath,
 	})
+	return
 }
 
 func applyValidate() error {

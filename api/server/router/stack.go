@@ -226,14 +226,14 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/events/{stack_event_id} -> stacks.NewPorterAppEventGetHandler
-	getPorterAppEventEndpoint := factory.NewAPIEndpoint(
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/events -> stacks.NewCreatePorterAppEventEndpoint
+	createPorterAppEventEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}/events/{%s}", relPath, types.URLParamStackName, types.URLParamStackEventID),
+				RelativePath: fmt.Sprintf("%s/{%s}/events", relPath, types.URLParamStackName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -243,14 +243,15 @@ func getStackRoutes(
 		},
 	)
 
-	getPorterAppEventHandler := stacks.NewGetPorterAppEventHandler(
+	createPorterAppEventHandler := stacks.NewCreateUpdatePorterAppEventHandler(
 		config,
+		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: getPorterAppEventEndpoint,
-		Handler:  getPorterAppEventHandler,
+		Endpoint: createPorterAppEventEndpoint,
+		Handler:  createPorterAppEventHandler,
 		Router:   r,
 	})
 

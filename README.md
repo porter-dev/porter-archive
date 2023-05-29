@@ -1,7 +1,7 @@
 # Porter
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Go Report Card](https://goreportcard.com/badge/gojp/goreportcard)](https://goreportcard.com/report/github.com/porter-dev/porter) [![Discord](https://img.shields.io/discord/542888846271184896?color=7389D8&label=community&logo=discord&logoColor=ffffff)](https://discord.gg/mmGAw5nNjr)
-[![Twitter](https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow)](https://twitter.com/getporterdev)
+[![Twitter](https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow)](https://twitter.com/porterdotrun)
 
 **Porter is a Kubernetes-powered PaaS that runs in your own cloud provider.** Porter brings the Heroku experience to your own AWS/GCP account, while upgrading your infrastructure to Kubernetes. Get started on Porter without the overhead of DevOps and customize your infrastructure later when you need to.
 

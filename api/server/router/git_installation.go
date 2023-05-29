@@ -735,5 +735,38 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
+	getWorkflowLogsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/get_logs_workflow",
+					relPath,
+					types.URLParamGitRepoOwner,
+					types.URLParamGitRepoName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getWorkflowLogsHandler := gitinstallation.NewGetWorkflowLogsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getWorkflowLogsEndpoint,
+		Handler:  getWorkflowLogsHandler,
+		Router:   r,
+	})
 	return routes, newPath
 }

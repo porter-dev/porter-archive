@@ -220,9 +220,9 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 				return fmt.Errorf("unable to create porter app build event: %w", err)
 			}
 
-			defer func(ctx context.Context, originalAppEvent types.PorterAppEvent) {
+			defer func(ctx context.Context, originalAppEvent types.PorterAppEvent, overallErr error) {
 				var status string
-				if err == nil {
+				if overallErr == nil {
 					status = "SUCCESS"
 				} else {
 					status = "FAILED"
@@ -237,7 +237,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 				if err != nil {
 					color.New(color.FgRed).Fprintf(os.Stderr, "unable to update porter app build event: %s\n", err.Error())
 				}
-			}(ctx, porterAppEvent)
+			}(ctx, porterAppEvent, err)
 		}
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
@@ -249,13 +249,25 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		return
 	}
 
-	worker.RegisterDriver("deploy", NewDeployDriver)
-	worker.RegisterDriver("build-image", preview.NewBuildDriver)
-	worker.RegisterDriver("push-image", preview.NewPushDriver)
-	worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
-	worker.RegisterDriver("random-string", preview.NewRandomStringDriver)
-	worker.RegisterDriver("env-group", preview.NewEnvGroupDriver)
-	worker.RegisterDriver("os-env", preview.NewOSEnvDriver)
+	drivers := []struct {
+		name     string
+		funcName func(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error)
+	}{
+		{"deploy", NewDeployDriver},
+		{"build-image", preview.NewBuildDriver},
+		{"push-image", preview.NewPushDriver},
+		{"update-config", preview.NewUpdateConfigDriver},
+		{"random-string", preview.NewRandomStringDriver},
+		{"env-group", preview.NewEnvGroupDriver},
+		{"os-env", preview.NewOSEnvDriver},
+	}
+	for _, driver := range drivers {
+		err = worker.RegisterDriver(driver.name, driver.funcName)
+		if err != nil {
+			err = fmt.Errorf("error registering driver %s: %w", driver.name, err)
+			return
+		}
+	}
 
 	worker.SetDefaultDriver("deploy")
 
@@ -273,14 +285,26 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			return err
 		}
 
-		worker.RegisterHook("deployment", deploymentHook)
+		err = worker.RegisterHook("deployment", deploymentHook)
+		if err != nil {
+			err = fmt.Errorf("error registering deployment hook: %w", err)
+			return err
+		}
 	}
 
 	errorEmitterHook := NewErrorEmitterHook(client, resGroup)
-	worker.RegisterHook("erroremitter", errorEmitterHook)
+	err = worker.RegisterHook("erroremitter", errorEmitterHook)
+	if err != nil {
+		err = fmt.Errorf("error registering error emitter hook: %w", err)
+		return err
+	}
 
 	cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
-	worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
+	err = worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
+	if err != nil {
+		err = fmt.Errorf("error registering clone env group hook: %w", err)
+		return err
+	}
 
 	err = worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
 		BasePath: basePath,

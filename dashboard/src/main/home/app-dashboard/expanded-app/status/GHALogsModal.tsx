@@ -112,7 +112,7 @@ const GHALogsModal: React.FC<Props> = ({
             : `https://github.com/${appData.app.repo_name}/actions`
         }
       >
-        Check Full Build Logs
+        View full build logs
       </Link>
     </Modal>
   );

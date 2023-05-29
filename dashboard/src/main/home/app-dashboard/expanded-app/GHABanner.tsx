@@ -44,19 +44,17 @@ const GHABanner: React.FC<Props> = ({
                 </RefreshButton>
               }
             >
-              <Container row spaced>
-                Your application will not be available until you merge
-                <Spacer inline width="5px" />
-                <Link
-                  to={pullRequestUrl}
-                  target="_blank"
-                  hasunderline
-                >
-                  this PR
-                </Link>
-                <Spacer inline width="5px" />
-                into your branch.
-              </Container>
+              Your application will not be available until you merge
+              <Spacer inline width="5px" />
+              <Link
+                to={pullRequestUrl}
+                target="_blank"
+                hasunderline
+              >
+                this PR
+              </Link>
+              <Spacer inline width="5px" />
+              into your branch.
             </Banner>
           ) : (
             <Banner

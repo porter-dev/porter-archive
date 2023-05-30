@@ -64,8 +64,11 @@ func main() {
 		IdleTimeout:  config.ServerConf.TimeoutIdle,
 	}
 
-	tracer, _ := telemetry.InitTracer(context.Background(), config.TelemetryConfig)
-	defer tracer.Shutdown()
+	// ignore error so that telemetry is not required
+	tracer, err := telemetry.InitTracer(context.Background(), config.TelemetryConfig)
+	if err == nil {
+		defer tracer.Shutdown()
+	}
 
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		config.Logger.Fatal().Err(err).Msg("Server startup failed")

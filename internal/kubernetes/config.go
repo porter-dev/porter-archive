@@ -365,7 +365,6 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 	}
 
 	if conf.Cluster.ProvisionedBy == "CAPI" {
-
 		decodedCert, err := capiCertAuthData(conf.CAPIManagementClusterClient, int(cluster.ID), int(cluster.ProjectID))
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving capi certificate authority data: %w", err)
@@ -373,46 +372,36 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 
 		clusterMap[cluster.Name].CertificateAuthorityData = decodedCert
 
-		// check cache here so that we don't unnecessarily assume role
-		cache, err := conf.getTokenCache()
-		if cache != nil {
-			if tok := cache.Token; err == nil && !cache.IsExpired() && len(tok) > 0 {
-				authInfoMap[authInfoName].Token = string(tok)
-			}
+		req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{
+			ProjectId: int64(cluster.ProjectID),
+		})
+
+		creds, err := conf.CAPIManagementClusterClient.AssumeRoleCredentials(context.Background(), req)
+		if err != nil {
+			return nil, fmt.Errorf("error getting capi credentials for repository: %w", err)
 		}
 
-		// if we didn't get a valid token from cache, generate a new one
-		if authInfoMap[authInfoName].Token == "" {
-
-			req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{
-				ProjectId: int64(cluster.ProjectID),
-			})
-
-			creds, err := conf.CAPIManagementClusterClient.AssumeRoleCredentials(context.Background(), req)
-			if err != nil {
-				return nil, fmt.Errorf("error getting capi credentials for repository: %w", err)
-			}
-
-			awsAuth := &ints.AWSIntegration{
-				AWSAccessKeyID:     []byte(creds.Msg.AwsAccessId),
-				AWSSecretAccessKey: []byte(creds.Msg.AwsSecretKey),
-				AWSSessionToken:    []byte(creds.Msg.AwsSessionToken),
-			}
-
-			awsClusterID := cluster.Name
-			shouldOverride := false
-
-			if cluster.AWSClusterID != "" {
-				awsClusterID = cluster.AWSClusterID
-				shouldOverride = true
-			}
-			tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
-			if err != nil {
-				return nil, fmt.Errorf("error getting bearer token for repository: %w", err)
-			}
-
-			authInfoMap[authInfoName].Token = tok
+		awsAuth := &ints.AWSIntegration{
+			AWSAccessKeyID:     []byte(creds.Msg.AwsAccessId),
+			AWSSecretAccessKey: []byte(creds.Msg.AwsSecretKey),
+			AWSSessionToken:    []byte(creds.Msg.AwsSessionToken),
 		}
+
+		awsClusterID := cluster.Name
+		shouldOverride := false
+
+		if cluster.AWSClusterID != "" {
+			awsClusterID = cluster.AWSClusterID
+			shouldOverride = true
+		}
+
+		tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
+		if err != nil {
+			return nil, fmt.Errorf("error getting bearer token for repository: %w", err)
+		}
+
+		authInfoMap[authInfoName].Token = tok
+
 	} else {
 		switch cluster.AuthMechanism {
 		case models.X509:

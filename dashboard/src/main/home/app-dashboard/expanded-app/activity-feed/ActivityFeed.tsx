@@ -81,7 +81,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         <Text size={16}>No events found for "{stackName}"</Text>
         <Spacer height="15px" />
         <Text color="helper">
-          This application currently has no associated activity.
+          This application currently has no associated events yet.
         </Text>
       </Fieldset>
     );

@@ -30,6 +30,7 @@ const WebTabs: React.FC<Props> = ({
   const [currentTab, setCurrentTab] = React.useState<string>("main");
 
   const renderMain = () => {
+    setHeight(288);
     return (
       <>
         <Spacer y={1} />
@@ -97,6 +98,7 @@ const WebTabs: React.FC<Props> = ({
   };
 
   const renderResources = () => {
+    service.autoscaling.enabled.value ? setHeight(RESOURCE_HEIGHT_WITH_AUTOSCALING) : setHeight(RESOURCE_HEIGHT_WITHOUT_AUTOSCALING);
     return (
       <>
         <Spacer y={1} />
@@ -288,6 +290,7 @@ const WebTabs: React.FC<Props> = ({
     return height;
   };
   const renderHealth = () => {
+    setHeight(calculateHealthHeight());
     return (
       <>
         <Spacer y={1} />
@@ -676,17 +679,7 @@ const WebTabs: React.FC<Props> = ({
             { label: "Advanced", value: "advanced" },
           ]}
           currentTab={currentTab}
-          setCurrentTab={(value: string) => {
-            if (value === "main") {
-              setHeight(288);
-            } else if (value === "resources") {
-              // extremely hacky
-              service.autoscaling.enabled.value ? setHeight(RESOURCE_HEIGHT_WITH_AUTOSCALING) : setHeight(RESOURCE_HEIGHT_WITHOUT_AUTOSCALING);
-            } else if (value === "advanced") {
-              setHeight(calculateHealthHeight());
-            }
-            setCurrentTab(value);
-          }}
+          setCurrentTab={setCurrentTab}
         />
         {currentTab === "main" && renderMain()}
         {currentTab === "resources" && renderResources()}

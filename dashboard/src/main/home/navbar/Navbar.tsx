@@ -27,7 +27,7 @@ class Navbar extends Component<PropsType, StateType> {
     if (this.state.showDropdown) {
       let version = this.context?.capabilities?.version;
       let userEmail = this.context.user && this.context.user.email;
-      let isLongEmail = userEmail && userEmail.length > 22;
+      let isLongEmail = userEmail && userEmail.length > 25;
       return (
         <>
           <CloseOverlay
@@ -174,7 +174,7 @@ const DropdownLabel = styled.div`
   display: flex;
   align-items: center;
   padding: 13px;
-  max-width: 180px;
+  width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

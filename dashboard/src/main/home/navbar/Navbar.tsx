@@ -26,8 +26,7 @@ class Navbar extends Component<PropsType, StateType> {
   renderSettingsDropdown = () => {
     if (this.state.showDropdown) {
       let version = this.context?.capabilities?.version;
-      let userEmail =
-        this.context.user && "sadfadsfasdfasdfasdfasdfasdfasdfadfasdf";
+      let userEmail = this.context.user && this.context.user.email;
       let isLongEmail = userEmail && userEmail.length > 22;
       return (
         <>

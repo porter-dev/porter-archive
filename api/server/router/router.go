@@ -6,8 +6,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/go-chi/chi"
 	chiMiddleware "github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
 	"github.com/porter-dev/porter/api/server/authn"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/authz/policy"
@@ -17,10 +17,16 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/riandyrn/otelchi"
 )
 
 func NewAPIRouter(config *config.Config) *chi.Mux {
 	r := chi.NewRouter()
+	r.Use(otelchi.Middleware(
+		"porter-server-middleware",
+		otelchi.WithRequestMethodInSpanName(true),
+		otelchi.WithChiRoutes(r),
+	))
 
 	endpointFactory := shared.NewAPIObjectEndpointFactory(config)
 
@@ -64,7 +70,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		// set panic middleware for all API endpoints to catch panics
 		r.Use(panicMW.Middleware)
 
-		// set the content type for all API endpoints and log all request info
+		// set the content type for all API endpoints and log all request info)
 		r.Use(middleware.ContentTypeJSON)
 
 		baseRoutes := baseRegisterer.GetRoutes(

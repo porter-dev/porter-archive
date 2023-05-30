@@ -50,14 +50,14 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 
 	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
 	if reqErr != nil {
-		e := telemetry.Error(ctx, span, nil, "error parsing stack name from url")
+		e := telemetry.Error(ctx, span, reqErr, "error parsing stack name from url")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 		return
 	}
 
 	event, err := p.createNewAppEvent(ctx, *cluster, stackName, request.Status, string(request.Type), request.TypeExternalSource, request.Metadata)
 	if err != nil {
-		e := telemetry.Error(ctx, span, nil, "error creating new app event")
+		e := telemetry.Error(ctx, span, err, "error creating new app event")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 		return
 	}

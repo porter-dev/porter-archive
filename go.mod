@@ -72,10 +72,12 @@ require (
 	github.com/briandowns/spinner v1.18.1
 	github.com/bufbuild/connect-go v1.5.2
 	github.com/glebarez/sqlite v1.6.0
+	github.com/go-chi/chi/v5 v5.0.8
 	github.com/honeycombio/otel-launcher-go v0.2.0
 	github.com/nats-io/nats.go v1.24.0
 	github.com/open-policy-agent/opa v0.44.0
 	github.com/porter-dev/api-contracts v0.0.61
+	github.com/riandyrn/otelchi v0.5.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d
 	github.com/xanzy/go-gitlab v0.68.0
@@ -119,6 +121,7 @@ require (
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
+	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/glebarez/go-sqlite v1.20.0 // indirect
 	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -147,6 +150,7 @@ require (
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/yashtewari/glob-intersection v0.1.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
+	go.opentelemetry.io/contrib v1.0.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/host v0.38.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.38.0 // indirect
 	go.opentelemetry.io/contrib/propagators/b3 v1.13.0 // indirect

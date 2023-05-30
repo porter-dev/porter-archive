@@ -3,7 +3,7 @@ package v1
 import (
 	"fmt"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/porter-dev/porter/api/server/handlers/registry"
 	v1Registry "github.com/porter-dev/porter/api/server/handlers/v1/registry"
 	"github.com/porter-dev/porter/api/server/shared"

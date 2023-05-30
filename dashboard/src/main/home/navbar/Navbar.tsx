@@ -26,15 +26,24 @@ class Navbar extends Component<PropsType, StateType> {
   renderSettingsDropdown = () => {
     if (this.state.showDropdown) {
       let version = this.context?.capabilities?.version;
+      let userEmail =
+        this.context.user && "sadfadsfasdfasdfasdfasdfasdfasdfadfasdf";
+      let isLongEmail = userEmail && userEmail.length > 22;
       return (
         <>
           <CloseOverlay
             onClick={() => this.setState({ showDropdown: false })}
           />
           <Dropdown dropdownWidth="250px" dropdownMaxHeight="200px">
-            <DropdownLabel>
-              {this.context.user && this.context.user.email}
-            </DropdownLabel>
+            {isLongEmail ? (
+              <ScrollingDropdownLabel>
+                <div>{userEmail}</div>
+              </ScrollingDropdownLabel>
+            ) : (
+              <DropdownLabel>
+                <div>{userEmail}</div>
+              </DropdownLabel>
+            )}
             <UserDropdownButton
               onClick={() =>
                 this.context.setCurrentModal("AccountSettingsModal", {})
@@ -171,7 +180,6 @@ const DropdownLabel = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
 `;
-
 const Dropdown = styled.div`
   position: absolute;
   right: 0;
@@ -242,5 +250,26 @@ const NavButton = styled.a`
     color: ${(props: { selected?: boolean }) =>
       props.selected ? "#ffffff" : "#ffffff88"};
     font-size: 20px;
+  }
+`;
+const ScrollingDropdownLabel = styled(DropdownLabel)`
+  & > div {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+
+    &:hover {
+      animation: scroll-left 5s linear infinite;
+      overflow: visible;
+    }
+  }
+
+  @keyframes scroll-left {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
   }
 `;

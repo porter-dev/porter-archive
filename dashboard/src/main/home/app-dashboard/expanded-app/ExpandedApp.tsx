@@ -346,15 +346,19 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               fileData.includes("Run porter-dev/porter-cli-action@v0.1.0")
             ) {
               const lines = fileData.split("\n");
+              const timestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z/;
 
               lines.forEach((line, index) => {
-                const anserLine: AnserJsonEntry[] = Anser.ansiToJson(line);
+                const lineWithoutTimestamp = line.replace(timestampPattern, "").trimStart();
+                const anserLine: AnserJsonEntry[] = Anser.ansiToJson(lineWithoutTimestamp);
+                if (lineWithoutTimestamp.toLowerCase().includes("error")) {
+                  anserLine[0].fg = "238,75,43";
+                }
+
                 const log: Log = {
                   line: anserLine,
                   lineNumber: index + 1,
-                  timestamp: line.match(
-                    /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z/
-                  )?.[0],
+                  timestamp: line.match(timestampPattern)?.[0],
                 };
 
                 logs.push(log);
@@ -986,7 +990,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                        appData.chart.chart.metadata.version
+                      appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}
@@ -1000,32 +1004,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? hasBuiltImage
                       ? [
-                          { label: "Overview", value: "overview" },
-                          { label: "Activity", value: "activity" },
-                          { label: "Events", value: "events" },
-                          { label: "Logs", value: "logs" },
-                          { label: "Metrics", value: "metrics" },
-                          { label: "Debug", value: "status" },
-                          { label: "Pre-deploy", value: "pre-deploy" },
-                          {
-                            label: "Environment",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                      : [
-                          { label: "Overview", value: "overview" },
-                          { label: "Activity", value: "activity" },
-                          { label: "Pre-deploy", value: "pre-deploy" },
-                          {
-                            label: "Environment",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                    : [
                         { label: "Overview", value: "overview" },
                         { label: "Activity", value: "activity" },
                         { label: "Events", value: "events" },
@@ -1037,8 +1015,34 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                           label: "Environment",
                           value: "environment-variables",
                         },
+                        { label: "Build settings", value: "build-settings" },
                         { label: "Settings", value: "settings" },
                       ]
+                      : [
+                        { label: "Overview", value: "overview" },
+                        { label: "Activity", value: "activity" },
+                        { label: "Pre-deploy", value: "pre-deploy" },
+                        {
+                          label: "Environment",
+                          value: "environment-variables",
+                        },
+                        { label: "Build settings", value: "build-settings" },
+                        { label: "Settings", value: "settings" },
+                      ]
+                    : [
+                      { label: "Overview", value: "overview" },
+                      { label: "Activity", value: "activity" },
+                      { label: "Events", value: "events" },
+                      { label: "Logs", value: "logs" },
+                      { label: "Metrics", value: "metrics" },
+                      { label: "Debug", value: "status" },
+                      { label: "Pre-deploy", value: "pre-deploy" },
+                      {
+                        label: "Environment",
+                        value: "environment-variables",
+                      },
+                      { label: "Settings", value: "settings" },
+                    ]
                 }
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {

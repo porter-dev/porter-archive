@@ -201,7 +201,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
         description="Web services, workers, and jobs for this project."
         disableLineBreak
       />
-      {currentCluster.status === "UPDATING_UNAVAILABLE" ? (
+      {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (
         <>

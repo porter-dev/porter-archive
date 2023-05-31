@@ -3,7 +3,7 @@ package router
 import (
 	"fmt"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	apiContract "github.com/porter-dev/porter/api/server/handlers/api_contract"
 	"github.com/porter-dev/porter/api/server/handlers/api_token"
 	"github.com/porter-dev/porter/api/server/handlers/billing"

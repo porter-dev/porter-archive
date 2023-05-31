@@ -7,13 +7,14 @@ import { Context } from "shared/Context";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 
-import EventCard from "./EventCard";
+import EventCard from "./events/EventCard";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 import Fieldset from "components/porter/Fieldset";
 
 import { feedDate } from "shared/string_utils";
 import Pagination from "components/porter/Pagination";
+import { PorterAppEvent, PorterAppEventType } from "shared/types";
 
 type Props = {
   chart: any;
@@ -44,7 +45,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         }
       );
       setNumPages(res.data.num_pages);
-      setEvents(res.data.events);
+      setEvents((res.data.events as PorterAppEvent[]).filter(e => e.type === PorterAppEventType.BUILD));
       setLoading(false);
     } catch (err) {
       setError(err);
@@ -81,7 +82,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         <Text size={16}>No events found for "{stackName}"</Text>
         <Spacer height="15px" />
         <Text color="helper">
-          This application currently has no associated activity.
+          This application currently has no associated events.
         </Text>
       </Fieldset>
     );

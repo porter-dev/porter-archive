@@ -158,7 +158,7 @@ const LogSpan = styled.div`
   font-family: monospace;
   user-select: text;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 8px;
   width: 100%;
   & > * {

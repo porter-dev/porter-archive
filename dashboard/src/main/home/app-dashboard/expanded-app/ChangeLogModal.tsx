@@ -218,11 +218,11 @@ const ChangeBox = styled.div<{ type: string }>`
 
   background-color: ${({ type }) =>
     type === "N"
-      ? "#13271e"
+      ? "#034a53"
       : type === "D"
-      ? "#26191c"
+      ? "#632f34"
       : type === "E"
-      ? "#131d2e"
+      ? "#272831"
       : "#fff"};
   color: "#fff";
 `;

@@ -413,39 +413,6 @@ const EventCard: React.FC<Props> = ({ event, appData }) => {
                   modalVisible={diffModalVisible}
                   setModalVisible={setDiffModalVisible}
                 />
-
-                // <DiffViewModal
-                //   serviceChild={
-                //     <>
-                //       {!isLoading && services.length === 0 && (
-                //         <>
-                //           <Fieldset>
-                //             <Container row>
-                //               <PlaceholderIcon src={notFound} />
-                //               <Text color="helper">No services were found.</Text>
-                //             </Container>
-                //           </Fieldset>
-                //           <Spacer y={0.5} />
-                //         </>
-                //       )}
-                //       <Services
-                //         setServices={(x) => {
-                //           if (buttonStatus !== "") {
-                //             setButtonStatus("");
-                //           }
-                //           setServices(x);
-                //         }}
-                //         chart={appData.chart}
-                //         services={services}
-                //         addNewText={"Add a new service"}
-                //         setExpandedJob={(x: string) => setExpandedJob(x)}
-                //         readOnly={true}
-                //       />
-                //     </>
-                //   }
-                //   modalVisible={diffModalVisible}
-                //   setModalVisible={setDiffModalVisible}
-                // />
               )}
             </>
           )}

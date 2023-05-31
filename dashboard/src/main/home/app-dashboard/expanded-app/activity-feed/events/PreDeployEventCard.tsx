@@ -13,14 +13,20 @@ import Modal from "components/porter/Modal";
 import { PorterAppEvent } from "shared/types";
 import { getDuration, getStatusIcon } from './utils';
 import { StyledEventCard } from "./EventCard";
+import Link from "components/porter/Link";
+import GHALogsModal from "../../status/GHALogsModal";
+import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
 
 type Props = {
   event: PorterAppEvent;
+  appData: any;
 };
 
-const PreDeployEventCard: React.FC<Props> = ({ event }) => {
+const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalContent, setModalContent] = useState<React.ReactNode>(null);
+  const [logModalVisible, setLogModalVisible] = useState(false);
+  const [logs, setLogs] = useState<Log[]>([]);
 
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
@@ -33,12 +39,24 @@ const PreDeployEventCard: React.FC<Props> = ({ event }) => {
     }
   };
 
+  const getPredeployLogs = async () => {
+    try {
+      setLogs([]);
+      setLogModalVisible(true);
+
+
+    } catch (error) {
+      console.log(appData);
+      console.log(error);
+    }
+  };
+
   const renderInfoCta = (event: any) => {
     switch (event.status) {
       case "SUCCESS":
         return (
           <>
-            {/* <Link hasunderline onClick={() => getBuildLogs()}>
+            <Link hasunderline onClick={() => getPredeployLogs()}>
               View logs
             </Link>
 
@@ -51,7 +69,7 @@ const PreDeployEventCard: React.FC<Props> = ({ event }) => {
                 actionRunId={event.metadata?.action_run_id}
               />
             )}
-            <Spacer inline x={1} /> */}
+            <Spacer inline x={1} />
           </>
         );
       case "FAILED":

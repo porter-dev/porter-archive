@@ -21,15 +21,17 @@ interface ServicesProps {
   defaultExpanded?: boolean;
   chart?: any;
   limitOne?: boolean;
+  readOnly?: boolean;
   customOnClick?: () => void;
   setExpandedJob?: (x: string) => void;
 }
 
-const Services: React.FC<ServicesProps> = ({ 
+const Services: React.FC<ServicesProps> = ({
   services,
   setServices,
   addNewText,
   chart,
+  readOnly,
   defaultExpanded = false,
   limitOne = false,
   customOnClick,
@@ -55,24 +57,26 @@ const Services: React.FC<ServicesProps> = ({
       return null;
     }
     return (
-      <>
-        <AddServiceButton
-          onClick={() => {
-            if (customOnClick != null) {
-              customOnClick();
-              return;
-            }
-            setShowAddServiceModal(true);
-            setServiceType("web");
-          }}
-        >
-          <i className="material-icons add-icon">add_icon</i>
-          {addNewText}
-        </AddServiceButton>
-        <Spacer y={0.5} />
-      </>
-    )
-  }
+      !readOnly && (
+        <>
+          <AddServiceButton
+            onClick={() => {
+              if (customOnClick != null) {
+                customOnClick();
+                return;
+              }
+              setShowAddServiceModal(true);
+              setServiceType("web");
+            }}
+          >
+            <i className="material-icons add-icon">add_icon</i>
+            {addNewText}
+          </AddServiceButton>
+          <Spacer y={0.5} />
+        </>
+      )
+    );
+  };
 
   return (
     <>
@@ -94,6 +98,7 @@ const Services: React.FC<ServicesProps> = ({
                   setServices(services.filter((_, i) => i !== index))
                 }
                 defaultExpanded={defaultExpanded}
+                readOnly={true}
               />
             );
           })}

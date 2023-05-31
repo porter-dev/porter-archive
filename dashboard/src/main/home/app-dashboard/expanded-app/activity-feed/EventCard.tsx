@@ -5,7 +5,7 @@ import app_event from "assets/app_event.png";
 import build from "assets/build.png";
 import deploy from "assets/deploy.png";
 import pre_deploy from "assets/pre_deploy.png";
-import loading from "assets/loading.gif";
+import loadingGif from "assets/loading.gif";
 import healthy from "assets/status-healthy.png";
 import failure from "assets/failure.png";
 import run_for from "assets/run_for.png";
@@ -23,6 +23,9 @@ import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/use
 import JSZip from "jszip";
 import Anser, { AnserJsonEntry } from "anser";
 import GHALogsModal from "../status/GHALogsModal";
+import ChangeLogModal from "../ChangeLogModal";
+import Chart from "main/home/cluster-dashboard/chart/Chart";
+import { number } from "zod";
 
 type Props = {
   event: any;
@@ -33,6 +36,7 @@ const EventCard: React.FC<Props> = ({ event, i, appData }) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalContent, setModalContent] = useState<React.ReactNode>(null);
   const [logModalVisible, setLogModalVisible] = useState(false);
+  const [diffModalVisible, setDiffModalVisible] = useState(false);
   const [logs, setLogs] = useState<Log[]>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -73,9 +77,9 @@ const EventCard: React.FC<Props> = ({ event, i, appData }) => {
       case "FAILED":
         return failure;
       case "PROGRESSING":
-        return loading;
+        return loadingGif;
       default:
-        return loading;
+        return loadingGif;
     }
   };
 
@@ -360,6 +364,58 @@ const EventCard: React.FC<Props> = ({ event, i, appData }) => {
                   Retry
                 </Container>
               </Link>
+            </>
+          )}
+          {event.status === "SUCCESS" && event.type == "DEPLOY" && (
+            <>
+              <Link
+                hasunderline
+                target="_blank"
+                onClick={() => setDiffModalVisible(true)}
+              >
+                View Diff
+              </Link>
+              {diffModalVisible && (
+                <ChangeLogModal
+                  revision={event.metadata.revision}
+                  currentChart={appData.chart}
+                  modalVisible={diffModalVisible}
+                  setModalVisible={setDiffModalVisible}
+                />
+
+                // <DiffViewModal
+                //   serviceChild={
+                //     <>
+                //       {!isLoading && services.length === 0 && (
+                //         <>
+                //           <Fieldset>
+                //             <Container row>
+                //               <PlaceholderIcon src={notFound} />
+                //               <Text color="helper">No services were found.</Text>
+                //             </Container>
+                //           </Fieldset>
+                //           <Spacer y={0.5} />
+                //         </>
+                //       )}
+                //       <Services
+                //         setServices={(x) => {
+                //           if (buttonStatus !== "") {
+                //             setButtonStatus("");
+                //           }
+                //           setServices(x);
+                //         }}
+                //         chart={appData.chart}
+                //         services={services}
+                //         addNewText={"Add a new service"}
+                //         setExpandedJob={(x: string) => setExpandedJob(x)}
+                //         readOnly={true}
+                //       />
+                //     </>
+                //   }
+                //   modalVisible={diffModalVisible}
+                //   setModalVisible={setDiffModalVisible}
+                // />
+              )}
             </>
           )}
         </Container>

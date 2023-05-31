@@ -19,6 +19,7 @@ import ReleaseTabs from "./ReleaseTabs";
 interface ServiceProps {
   service: Service;
   chart?: any;
+  readOnly?: boolean;
   editService: (service: Service) => void;
   deleteService: () => void;
   defaultExpanded: boolean;
@@ -28,6 +29,7 @@ interface ServiceProps {
 const ServiceContainer: React.FC<ServiceProps> = ({
   service,
   chart,
+  readOnly,
   deleteService,
   editService,
   defaultExpanded,
@@ -111,7 +113,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {renderIcon(service)}
           {service.name.trim().length > 0 ? service.name : "New Service"}
         </ServiceTitle>
-        {service.canDelete && (
+        {service.canDelete && !readOnly && (
           <ActionButton onClick={deleteService}>
             <span className="material-icons">delete</span>
           </ActionButton>

@@ -20,7 +20,7 @@ import api from "shared/api";
 import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
 import JSZip from "jszip";
 import Anser, { AnserJsonEntry } from "anser";
-import GHALogsModal from "../status/GHALogsModal";
+import GHALogsModal from "../../status/GHALogsModal";
 import { PorterAppEvent, PorterAppEventType } from "shared/types";
 
 type Props = {
@@ -233,17 +233,19 @@ const EventCard: React.FC<Props> = ({ event, appData }) => {
                     fileData.includes("Run porter-dev/porter-cli-action@v0.1.0")
                   ) {
                     const lines = fileData.split("\n");
+                    const timestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z/;
 
                     lines.forEach((line, index) => {
-                      const anserLine: AnserJsonEntry[] = Anser.ansiToJson(
-                        line
-                      );
+                      const lineWithoutTimestamp = line.replace(timestampPattern, "").trimStart();
+                      const anserLine: AnserJsonEntry[] = Anser.ansiToJson(lineWithoutTimestamp);
+                      if (lineWithoutTimestamp.toLowerCase().includes("error")) {
+                        anserLine[0].fg = "238,75,43";
+                      }
+
                       const log: Log = {
                         line: anserLine,
                         lineNumber: index + 1,
-                        timestamp: line.match(
-                          /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z/
-                        )?.[0],
+                        timestamp: line.match(timestampPattern)?.[0],
                       };
 
                       logs.push(log);
@@ -354,47 +356,12 @@ const EventCard: React.FC<Props> = ({ event, appData }) => {
 
   return (
     <StyledEventCard>
-      <Container row spaced>
-        <Container row>
-          <Icon height="18px" src={getIcon(event.type)} />
-          <Spacer inline width="10px" />
-          <Text size={14}>{getTitle(event.type)}</Text>
-        </Container>
-        <Container row>
-          <Icon height="14px" src={run_for} />
-          <Spacer inline width="6px" />
-          <Text color="helper">{getDuration(event)}</Text>
-        </Container>
-      </Container>
-      <Spacer y={1} />
-      <Container row spaced>
-        <Container row>
-          {event.type !== PorterAppEventType.APP_EVENT && (
-            <>
-              <Icon height="18px" src={getStatusIcon(event.status)} />
-              <Spacer inline width="10px" />
-            </>
+      {switch (event.type) {
+        case "APP_EVENT":
+      return (
+      <Container row>
+
           )}
-          {renderStatusText(event)}
-          {event.type !== PorterAppEventType.APP_EVENT && <Spacer inline x={1} />}
-          {renderInfoCta(event)}
-          {event.status === "FAILED" && event.type !== PorterAppEventType.APP_EVENT && (
-            <>
-              <Link hasunderline onClick={() => triggerWorkflow()}>
-                <Container row>
-                  <Icon height="10px" src={refresh} />
-                  <Spacer inline width="5px" />
-                  Retry
-                </Container>
-              </Link>
-            </>
-          )}
-        </Container>
-        {false && <Text color="helper">user@email.com</Text>}
-      </Container>
-      {showModal && (
-        <Modal closeModal={() => setShowModal(false)}>{modalContent}</Modal>
-      )}
     </StyledEventCard>
   );
 };

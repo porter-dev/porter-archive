@@ -7,7 +7,7 @@ import { Context } from "shared/Context";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 
-import EventCard from "./EventCard";
+import EventCard from "./events/EventCard";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 import Fieldset from "components/porter/Fieldset";

@@ -42,7 +42,6 @@ const AppDashboard: React.FC<Props> = ({
   const [selectedTag, setSelectedTag] = useState("none");
 
   useEffect(() => {
-    console.log("hello", currentProject)
     if (currentProject?.simplified_view_enabled) {
       window.location.replace("/apps");
     }

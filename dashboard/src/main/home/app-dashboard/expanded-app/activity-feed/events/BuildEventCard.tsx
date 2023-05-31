@@ -19,6 +19,7 @@ import Anser, { AnserJsonEntry } from "anser";
 import GHALogsModal from "../../status/GHALogsModal";
 import { PorterAppEvent, PorterAppEventType } from "shared/types";
 import { getDuration, getStatusIcon } from './utils';
+import { StyledEventCard } from "./EventCard";
 
 type Props = {
   event: PorterAppEvent;
@@ -30,16 +31,15 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
   const [modalContent, setModalContent] = useState<React.ReactNode>(null);
   const [logModalVisible, setLogModalVisible] = useState(false);
   const [logs, setLogs] = useState<Log[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
 
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return <Text color="#68BF8B">Build succeeded</Text>;
+        return <Text color="#68BF8B">Build succeeded.</Text>;
       case "FAILED":
-        return <Text color="#FF6060">Build failed</Text>;
+        return <Text color="#FF6060">Build failed.</Text>;
       default:
-        return <Text color="#aaaabb66">Build in progress . . </Text>;
+        return <Text color="#aaaabb66">Build in progress...</Text>;
     }
   };
   const triggerWorkflow = async () => {
@@ -138,10 +138,6 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
     }
   };
 
-  useEffect(() => {
-    getBuildLogs();
-  }, []);
-
   const renderInfoCta = (event: any) => {
     switch (event.status) {
       case "SUCCESS":
@@ -199,7 +195,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
   };
 
   return (
-    <>
+    <StyledEventCard>
       <Container row spaced>
         <Container row>
           <Icon height="18px" src={build} />
@@ -215,16 +211,12 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
       <Spacer y={1} />
       <Container row spaced>
         <Container row>
-          {event.type !== PorterAppEventType.APP_EVENT && (
-            <>
-              <Icon height="18px" src={getStatusIcon(event.status)} />
-              <Spacer inline width="10px" />
-            </>
-          )}
+          <Icon height="18px" src={getStatusIcon(event.status)} />
+          <Spacer inline width="10px" />
           {renderStatusText(event)}
-          {event.type !== PorterAppEventType.APP_EVENT && <Spacer inline x={1} />}
+          <Spacer inline x={1} />
           {renderInfoCta(event)}
-          {event.status === "FAILED" && event.type !== PorterAppEventType.APP_EVENT && (
+          {event.status === "FAILED" && (
             <>
               <Link hasunderline onClick={() => triggerWorkflow()}>
                 <Container row>
@@ -240,7 +232,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
       {showModal && (
         <Modal closeModal={() => setShowModal(false)}>{modalContent}</Modal>
       )}
-    </>
+    </StyledEventCard>
   );
 };
 

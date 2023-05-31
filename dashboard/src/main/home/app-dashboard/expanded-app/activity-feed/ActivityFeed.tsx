@@ -14,7 +14,7 @@ import Fieldset from "components/porter/Fieldset";
 
 import { feedDate } from "shared/string_utils";
 import Pagination from "components/porter/Pagination";
-import { PorterAppEvent } from "shared/types";
+import { PorterAppEvent, PorterAppEventType } from "shared/types";
 
 type Props = {
   chart: any;
@@ -45,7 +45,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         }
       );
       setNumPages(res.data.num_pages);
-      setEvents(res.data.events as PorterAppEvent[]);
+      setEvents((res.data.events as PorterAppEvent[]).filter(e => e.type === PorterAppEventType.BUILD));
       setLoading(false);
     } catch (err) {
       setError(err);

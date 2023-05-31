@@ -655,6 +655,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   addNewText={"Add a new pre-deploy job"}
                   defaultExpanded={true}
                 />
+                <Spacer y={0.5} />
               </>
             }
             <Text size={16}>Application services</Text>
@@ -682,7 +683,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               addNewText={"Add a new service"}
               setExpandedJob={(x: string) => setExpandedJob(x)}
             />
-            <Spacer y={0.5} />
+            <Spacer y={0.75} />
             <Button
               onClick={async () => await updatePorterApp({})}
               status={buttonStatus}
@@ -911,7 +912,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                             <RefreshButton
                               onClick={() => window.location.reload()}
                             >
-                              <img src={refresh} /> Refresh
+                              <img src={refresh} />
+                              <Underline>Refresh</Underline>
                             </RefreshButton>
                           </>
                         </>
@@ -958,7 +960,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                           <RefreshButton
                             onClick={() => window.location.reload()}
                           >
-                            <img src={refresh} /> Refresh
+                            <img src={refresh} />
+                            <Underline>Refresh</Underline>
                           </RefreshButton>
                         </>
                       }
@@ -1076,8 +1079,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
 export default withRouter(ExpandedApp);
 
+const Underline = styled.div`
+  border-bottom: 1px solid #ffffff;
+`;
+
 const RefreshButton = styled.div`
-  color: #ffffff44;
+  color: #ffffff;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -1094,7 +1101,6 @@ const RefreshButton = styled.div`
     justify-content: center;
     height: 11px;
     margin-right: 10px;
-    opacity: 0.3;
   }
 `;
 

@@ -130,9 +130,9 @@ const ChangeLogModal: React.FC<Props> = ({
         case "E":
           changes.push(
             <ChangeBox type="E">
-              {`${path} updated to ${JSON.stringify(
-                difference.lhs
-              )} -> ${JSON.stringify(difference.rhs)}`}
+              {`${path}: ${JSON.stringify(difference.lhs)} -> ${JSON.stringify(
+                difference.rhs
+              )}`}
             </ChangeBox>
           );
           break;

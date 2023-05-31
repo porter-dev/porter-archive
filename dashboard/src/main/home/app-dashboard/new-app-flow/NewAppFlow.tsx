@@ -85,15 +85,15 @@ interface GithubAppAccessData {
 }
 type Provider =
   | {
-      provider: "github";
-      name: string;
-      installation_id: number;
-    }
+    provider: "github";
+    name: string;
+    installation_id: number;
+  }
   | {
-      provider: "gitlab";
-      instance_url: string;
-      integration_id: number;
-    };
+    provider: "gitlab";
+    instance_url: string;
+    integration_id: number;
+  };
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [templateName, setTemplateName] = useState("");
   const [porterYamlPath, setPorterYamlPath] = useState("");
@@ -142,7 +142,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     setAccessData(data);
     setShowGithubConnectModal(
       !hasClickedDoNotConnect &&
-        (accessError || !data.accounts || data.accounts?.length === 0)
+      (accessError || !data.accounts || data.accounts?.length === 0)
     );
   };
 
@@ -150,7 +150,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     setAccessError(error);
     setShowGithubConnectModal(
       !hasClickedDoNotConnect &&
-        (error || !accessData.accounts || accessData.accounts?.length === 0)
+      (error || !accessData.accounts || accessData.accounts?.length === 0)
     );
   };
 
@@ -222,9 +222,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       ) {
         setDetected({
           detected: true,
-          message: `Detected ${
-            Object.keys(porterYamlToJson.apps).length
-          } services from porter.yaml`,
+          message: `Detected ${Object.keys(porterYamlToJson.apps).length
+            } services from porter.yaml`,
         });
       } else {
         setDetected({
@@ -336,7 +335,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         porterJson,
         // if we are using a heroku buildpack, inject a PORT env variable
         (buildConfig as any)?.builder != null &&
-          (buildConfig as any)?.builder.includes("heroku")
+        (buildConfig as any)?.builder.includes("heroku")
       );
 
       const yamlString = yaml.dump(finalPorterYaml);
@@ -557,6 +556,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   fileUpload={true}
                 />
               </>,
+              formState.selectedSourceType == "github" &&
               <>
                 <Text size={16}>Pre-deploy job (optional)</Text>
                 <Spacer y={0.5} />
@@ -748,7 +748,7 @@ const ConnectToGithubButton = styled.a`
     props.disabled ? "#aaaabbee" : "#2E3338"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#353a3e"};
+    props.disabled ? "" : "#353a3e"};
   }
 
   > i {

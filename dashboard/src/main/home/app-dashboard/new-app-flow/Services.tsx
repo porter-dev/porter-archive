@@ -23,9 +23,10 @@ interface ServicesProps {
   limitOne?: boolean;
   customOnClick?: () => void;
   setExpandedJob?: (x: string) => void;
+  onUpdate?: () => void;
 }
 
-const Services: React.FC<ServicesProps> = ({ 
+const Services: React.FC<ServicesProps> = ({
   services,
   setServices,
   addNewText,
@@ -34,6 +35,7 @@ const Services: React.FC<ServicesProps> = ({
   limitOne = false,
   customOnClick,
   setExpandedJob,
+  onUpdate = () => ({}),
 }) => {
   const [showAddServiceModal, setShowAddServiceModal] = useState<boolean>(
     false
@@ -50,6 +52,18 @@ const Services: React.FC<ServicesProps> = ({
     return serviceNames.includes(name);
   };
 
+  const maybeGetError = (): string | undefined => {
+    if (serviceName.length > 30) {
+      return "Must be 30 characters or less.";
+    } else if (serviceName != "" && !isServiceNameValid(serviceName)) {
+      return "Lowercase letters, numbers, and '-' only.";
+    } else if (isServiceNameDuplicate(serviceName)) {
+      return "Service name is duplicate";
+    } else {
+      return undefined;
+    }
+  }
+
   const maybeRenderAddServicesButton = () => {
     if (limitOne && services.length > 0) {
       return null;
@@ -64,6 +78,7 @@ const Services: React.FC<ServicesProps> = ({
             }
             setShowAddServiceModal(true);
             setServiceType("web");
+            onUpdate();
           }}
         >
           <i className="material-icons add-icon">add_icon</i>
@@ -130,14 +145,7 @@ const Services: React.FC<ServicesProps> = ({
             placeholder="ex: my-service"
             width="100%"
             value={serviceName}
-            error={
-              (serviceName != "" &&
-                !isServiceNameValid(serviceName) &&
-                'Lowercase letters, numbers, and "-" only.') ||
-              (serviceName.length > 30 && "Must be 30 characters or less.") ||
-              (isServiceNameDuplicate(serviceName) &&
-                "Service name is duplicate")
-            }
+            error={maybeGetError()}
             setValue={setServiceName}
           />
           <Spacer y={1} />

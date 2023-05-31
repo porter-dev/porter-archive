@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/porter-dev/porter/api/server/handlers/project_oauth"
 	"github.com/porter-dev/porter/api/server/shared"

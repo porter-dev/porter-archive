@@ -1,4 +1,4 @@
-package stacks
+package porter_app
 
 import (
 	"context"
@@ -38,12 +38,19 @@ func NewPorterAppEventListHandler(
 }
 
 func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-porter-app-events")
+	defer span.End()
+
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "cluster-id", Value: int(cluster.ID)},
+		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},
+	)
 
 	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
 	if reqErr != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
+		e := telemetry.Error(ctx, span, nil, "error parsing stack name from url")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 		return
 	}
 
@@ -51,7 +58,8 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	d := schema.NewDecoder()
 	err := d.Decode(&pr, r.URL.Query())
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		e := telemetry.Error(ctx, span, nil, "error decoding request")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 		return
 	}
 
@@ -64,7 +72,8 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	porterAppEvents, paginatedResult, err := p.Repo().PorterAppEvent().ListEventsByPorterAppID(ctx, app.ID, helpers.WithPageSize(20), helpers.WithPage(int(pr.Page)))
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
+			e := telemetry.Error(ctx, span, nil, "error listing porter app events by porter app id")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 			return
 		}
 	}
@@ -73,7 +82,8 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		if appEvent.Status == "PROGRESSING" {
 			pae, err := p.updateExistingAppEvent(ctx, *cluster, stackName, appEvent.ID)
 			if err != nil {
-				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
+				e := telemetry.Error(ctx, span, nil, "unable to update existing porter app event")
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 				return
 			}
 			porterAppEvents[idx] = &pae

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import styled from "styled-components";
 import { RouteComponentProps, withRouter } from "react-router";
 
@@ -40,6 +40,13 @@ const AppDashboard: React.FC<Props> = ({
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [selectedTag, setSelectedTag] = useState("none");
+
+  useEffect(() => {
+    console.log("hello", currentProject)
+    if (currentProject?.simplified_view_enabled) {
+      window.location.replace("/apps");
+    }
+  }, [currentProject]);
 
   return (
     <StyledAppDashboard>

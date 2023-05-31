@@ -45,12 +45,14 @@ const ChangeLogModal: React.FC<Props> = ({
   const [currentView, setCurrentView] = useState("overview");
   const [values, setValues] = useState("");
   const [chartEvent, setChartEvent] = useState(null);
+  const [eventValues, setEventValues] = useState("");
+  const [showRawDiff, setShowRawDiff] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
   useEffect(() => {
-    getChartData(currentChart);
     let values = "# Nothing here yet";
     if (currentChart.config) {
       values = yaml.dump(currentChart.config);
@@ -73,9 +75,26 @@ const ChangeLogModal: React.FC<Props> = ({
     );
     const updatedChart = res.data;
     //console.log(updatedChart);
-    setChartEvent(updatedChart);
     setLoading(false);
+    return updatedChart; // <- return updatedChart here
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // Fetch the chart data
+      const updatedChart = await getChartData(currentChart);
+
+      // Now that we've waited for getChartData to finish, process the result
+      let eventValues = "# Nothing here yet";
+      if (updatedChart?.config) {
+        eventValues = yaml.dump(updatedChart?.config);
+      }
+      setEventValues(eventValues);
+      setChartEvent(updatedChart);
+    };
+
+    fetchData();
+  }, [currentChart.config]);
   const parseYamlAndDisplayDifferences = (oldYaml: any, newYaml: any) => {
     const diff = Diff.diff(oldYaml, newYaml);
     const changes: JSX.Element[] = [];
@@ -146,27 +165,43 @@ const ChangeLogModal: React.FC<Props> = ({
     <>
       <Modal closeModal={() => setModalVisible(false)} width={"1100px"}>
         <Text size={18}>Change Log</Text>
-
-        {/* <DiffViewer
-            leftTitle={`Current Version`}
-            rightTitle={`Revision No. ${currentChart.version.toString()}`}
-            oldValue={values}
-            newValue={values}
-            splitView={true}
-            hideLineNumbers={false}
-            useDarkTheme={true}
-            compareMethod={DiffMethod.TRIMMED_LINES}
-          /> */}
-        {
-          loading ? (
-            <Loading /> // <-- Render loading state
-          ) : (
-            parseYamlAndDisplayDifferences(
-              chartEvent?.config,
-              currentChart.config
-            )
-          ) // <-- Render when data is ready
-        }
+        {loading ? (
+          <Loading /> // <-- Render loading state
+        ) : (
+          <>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <Checkbox
+                checked={showRawDiff}
+                toggleChecked={() => setShowRawDiff(!showRawDiff)}
+              >
+                <Text>Show Raw Diff</Text>
+              </Checkbox>
+            </div>
+            {showRawDiff ? (
+              <>
+                <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+                  <DiffViewer
+                    leftTitle={`Revision No. ${revision}`}
+                    rightTitle={`Current Version`}
+                    oldValue={eventValues}
+                    newValue={values}
+                    splitView={true}
+                    hideLineNumbers={false}
+                    useDarkTheme={true}
+                    compareMethod={DiffMethod.TRIMMED_LINES}
+                  />
+                </div>
+              </>
+            ) : (
+              <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+                {parseYamlAndDisplayDifferences(
+                  chartEvent?.config,
+                  currentChart.config
+                )}
+              </div>
+            )}
+          </>
+        )}
       </Modal>
     </>
   );

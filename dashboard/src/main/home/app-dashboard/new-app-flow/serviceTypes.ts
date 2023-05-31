@@ -339,8 +339,8 @@ export type ReleaseService = SharedServiceParams & {
     type: 'release';
 };
 const ReleaseService = {
-    default: (porterJson?: PorterJson): ReleaseService => ({
-        name: 'release',
+    default: (name: string, porterJson?: PorterJson): ReleaseService => ({
+        name,
         cpu: ServiceField.string('100', porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.release?.run),
@@ -399,7 +399,7 @@ export const Service = {
             case 'job':
                 return JobService.default(name, porterJson);
             case 'release':
-                return ReleaseService.default(porterJson);
+                return ReleaseService.default(name, porterJson);
         }
     },
 

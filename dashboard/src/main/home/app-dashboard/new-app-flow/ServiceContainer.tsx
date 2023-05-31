@@ -12,7 +12,6 @@ import WebTabs from "./WebTabs";
 import WorkerTabs from "./WorkerTabs";
 import JobTabs from "./JobTabs";
 import { Service } from "./serviceTypes";
-import { StyledStatusFooter } from "../expanded-app/StatusFooter";
 import StatusFooter from "../expanded-app/StatusFooter";
 import ReleaseTabs from "./ReleaseTabs";
 

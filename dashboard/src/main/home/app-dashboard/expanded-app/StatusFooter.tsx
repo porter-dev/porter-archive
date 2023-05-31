@@ -138,7 +138,7 @@ const StatusFooter: React.FC<Props> = ({
     }
 
     const options: NewWebsocketOptions = {};
-    options.onopen = () => {};
+    options.onopen = () => { };
 
     options.onmessage = async (evt: MessageEvent) => {
       let event = JSON.parse(evt.data);
@@ -169,7 +169,7 @@ const StatusFooter: React.FC<Props> = ({
       await updatePods();
     };
 
-    options.onclose = () => {};
+    options.onclose = () => { };
 
     options.onerror = (err: ErrorEvent) => {
       console.log(err);
@@ -199,7 +199,7 @@ const StatusFooter: React.FC<Props> = ({
         prev[prev.length - 1].push(currentPod);
         return prev;
       },
-      []);
+        []);
 
     return podsDividedByReplicaSet;
   }, [pods]);
@@ -309,13 +309,10 @@ const StatusFooter: React.FC<Props> = ({
                       <Running>
                         <StatusDot color="#ff0000" />
                         <Text color="helper">
-                          {`${replicaSet.length} replica${
-                            replicaSet.length === 1 ? "" : "s"
-                          } ${
-                            replicaSet.length === 1 ? "is" : "are"
-                          } failing to run Revision ${
-                            replicaSet[0].revisionNumber
-                          }`}
+                          {`${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"
+                            } ${replicaSet.length === 1 ? "is" : "are"
+                            } failing to run Version ${replicaSet[0].revisionNumber
+                            }`}
                         </Text>
                       </Running>
                       <Button
@@ -336,38 +333,33 @@ const StatusFooter: React.FC<Props> = ({
                       </Button>
                     </>
                   ) : // check if there are more recent replicasets and if the previous replicaset has a crashloop reason
-                  i > 0 &&
-                    !replicaSetArray[i - 1].some(
-                      (p) => p.crashLoopReason != ""
-                    ) ? (
-                    <Running>
-                      <StatusDot color="#FFA500" />
-                      <Text color="helper">
-                        {`${replicaSet.length} replica${
-                          replicaSet.length === 1 ? "" : "s"
-                        } ${
-                          replicaSet.length === 1 ? "is" : "are"
-                        } still running at Revision ${
-                          replicaSet[0].revisionNumber
-                        }. Spinning down...`}
-                      </Text>
-                    </Running>
-                  ) : (
-                    <Running>
-                      {replicaSet.length ? (
-                        <StatusDot />
-                      ) : (
-                        <StatusDot color="#ffffff33" />
-                      )}
-                      <Text color="helper">
-                        {`${replicaSet.length} replica${
-                          replicaSet.length === 1 ? "" : "s"
-                        } ${
-                          replicaSet.length === 1 ? "is" : "are"
-                        } running at Revision ${replicaSet[0].revisionNumber}`}
-                      </Text>
-                    </Running>
-                  )}
+                    i > 0 &&
+                      !replicaSetArray[i - 1].some(
+                        (p) => p.crashLoopReason != ""
+                      ) ? (
+                      <Running>
+                        <StatusDot color="#FFA500" />
+                        <Text color="helper">
+                          {`${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"
+                            } ${replicaSet.length === 1 ? "is" : "are"
+                            } still running at Version ${replicaSet[0].revisionNumber
+                            }. Spinning down...`}
+                        </Text>
+                      </Running>
+                    ) : (
+                      <Running>
+                        {replicaSet.length ? (
+                          <StatusDot />
+                        ) : (
+                          <StatusDot color="#ffffff33" />
+                        )}
+                        <Text color="helper">
+                          {`${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"
+                            } ${replicaSet.length === 1 ? "is" : "are"
+                            } running at Version ${replicaSet[0].revisionNumber}`}
+                        </Text>
+                      </Running>
+                    )}
                 </StyledContainer>
               </StyledStatusFooterTop>
               {replicaSet.some((r) => r.crashLoopReason != "") && (
@@ -476,7 +468,7 @@ const StyledStatusFooter = styled.div`
   }
 `;
 
-const StyledStatusFooterTop = styled(StyledStatusFooter)<{
+const StyledStatusFooterTop = styled(StyledStatusFooter) <{
   expanded: boolean;
 }>`
   height: 40px;

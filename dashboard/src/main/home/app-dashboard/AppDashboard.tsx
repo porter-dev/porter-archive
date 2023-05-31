@@ -27,6 +27,7 @@ import Toggle from "components/porter/Toggle";
 import PorterLink from "components/porter/Link";
 import Loading from "components/Loading";
 import Fieldset from "components/porter/Fieldset";
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 
 type Props = {};
 
@@ -200,96 +201,102 @@ const AppDashboard: React.FC<Props> = ({ }) => {
         description="Web services, workers, and jobs for this project."
         disableLineBreak
       />
-      <Container row spaced>
-        <SearchBar
-          value={searchValue}
-          setValue={setSearchValue}
-          placeholder="Search applications . . ."
-          width="100%"
-        />
-        <Spacer inline x={2} />
-        <Toggle
-          items={[
-            { label: <ToggleIcon src={grid} />, value: "grid" },
-            { label: <ToggleIcon src={list} />, value: "list" },
-          ]}
-          active={view}
-          setActive={setView}
-        />
-        <Spacer inline x={2} />
-        <PorterLink to="/apps/new/app">
-          <Button onClick={async () => updateStackStartedStep()} height="30px" width="160px">
-            <I className="material-icons">add</I> New application
-          </Button>
-        </PorterLink>
-      </Container>
-      <Spacer y={1} />
-      {!isLoading && filteredApps.length === 0 && (
-        <Fieldset>
-          <Container row>
-            <PlaceholderIcon src={notFound} />
-            <Text color="helper">No applications were found.</Text>
-          </Container>
-        </Fieldset>
-      )}
-      {isLoading ? (
-        <Loading offset="-150px" />
-      ) : view === "grid" ? (
-        <GridList>
-          {(filteredApps ?? []).map((app: any, i: number) => {
-            if (!namespaceBlacklist.includes(app.name)) {
-              return (
-                <Link to={`/apps/${app.name}`} key={i}>
-                  <Block>
-                    <Container row>
-                      {renderIcon(app["build_packs"])}
-                      <Text size={14}>
-                        {app.name}
-                      </Text>
-                      <Spacer inline x={2} />
-                    </Container>
-                    <StatusIcon src={healthy} />
-                    <Text size={13} color="#ffffff44">
-                      {renderSource(app)}
-                    </Text>
-                    <Text size={13} color="#ffffff44">
-                      <SmallIcon opacity="0.4" src={time} />
-                      {app.last_deployed}
-                    </Text>
-                  </Block>
-                </Link>
-              );
-            }
-          })}
-        </GridList>
+      {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
+        <ClusterProvisioningPlaceholder />
       ) : (
-        <List>
-          {(filteredApps ?? []).map((app: any, i: number) => {
-            if (!namespaceBlacklist.includes(app.name)) {
-              return (
-                <Link to={`/apps/${app.name}`} key={i}>
-                  <Row>
-                    <Container row>
-                      {renderIcon(app["build_packs"], "larger")}
-                      <Text size={14}>
-                        {app.name}
-                      </Text>
-                      <Spacer inline x={1} />
-                      <MidIcon src={healthy} />
-                    </Container>
-                    <Spacer height="15px" />
-                    <Text size={13} color="#ffffff44">
-                      {renderSource(app)}
-                      <Spacer inline x={1} />
-                      <SmallIcon opacity="0.4" src={time} />
-                      {app.last_deployed}
-                    </Text>
-                  </Row>
-                </Link>
-              );
-            }
-          })}
-        </List>
+        <>
+          <Container row spaced>
+            <SearchBar
+              value={searchValue}
+              setValue={setSearchValue}
+              placeholder="Search applications . . ."
+              width="100%"
+            />
+            <Spacer inline x={2} />
+            <Toggle
+              items={[
+                { label: <ToggleIcon src={grid} />, value: "grid" },
+                { label: <ToggleIcon src={list} />, value: "list" },
+              ]}
+              active={view}
+              setActive={setView}
+            />
+            <Spacer inline x={2} />
+            <PorterLink to="/apps/new/app">
+              <Button onClick={async () => updateStackStartedStep()} height="30px" width="160px">
+                <I className="material-icons">add</I> New application
+              </Button>
+            </PorterLink>
+          </Container>
+          <Spacer y={1} />
+          {!isLoading && filteredApps.length === 0 && (
+            <Fieldset>
+              <Container row>
+                <PlaceholderIcon src={notFound} />
+                <Text color="helper">No applications were found.</Text>
+              </Container>
+            </Fieldset>
+          )}
+          {isLoading ? (
+            <Loading offset="-150px" />
+          ) : view === "grid" ? (
+            <GridList>
+              {(filteredApps ?? []).map((app: any, i: number) => {
+                if (!namespaceBlacklist.includes(app.name)) {
+                  return (
+                    <Link to={`/apps/${app.name}`} key={i}>
+                      <Block>
+                        <Container row>
+                          {renderIcon(app["build_packs"])}
+                          <Text size={14}>
+                            {app.name}
+                          </Text>
+                          <Spacer inline x={2} />
+                        </Container>
+                        <StatusIcon src={healthy} />
+                        <Text size={13} color="#ffffff44">
+                          {renderSource(app)}
+                        </Text>
+                        <Text size={13} color="#ffffff44">
+                          <SmallIcon opacity="0.4" src={time} />
+                          {app.last_deployed}
+                        </Text>
+                      </Block>
+                    </Link>
+                  );
+                }
+              })}
+            </GridList>
+          ) : (
+            <List>
+              {(filteredApps ?? []).map((app: any, i: number) => {
+                if (!namespaceBlacklist.includes(app.name)) {
+                  return (
+                    <Link to={`/apps/${app.name}`} key={i}>
+                      <Row>
+                        <Container row>
+                          {renderIcon(app["build_packs"], "larger")}
+                          <Text size={14}>
+                            {app.name}
+                          </Text>
+                          <Spacer inline x={1} />
+                          <MidIcon src={healthy} />
+                        </Container>
+                        <Spacer height="15px" />
+                        <Text size={13} color="#ffffff44">
+                          {renderSource(app)}
+                          <Spacer inline x={1} />
+                          <SmallIcon opacity="0.4" src={time} />
+                          {app.last_deployed}
+                        </Text>
+                      </Row>
+                    </Link>
+                  );
+                }
+              })}
+            </List>
+          )}
+        </>
       )}
       <Spacer y={5} />
     </StyledAppDashboard>

@@ -346,15 +346,19 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               fileData.includes("Run porter-dev/porter-cli-action@v0.1.0")
             ) {
               const lines = fileData.split("\n");
+              const timestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z/;
 
               lines.forEach((line, index) => {
-                const anserLine: AnserJsonEntry[] = Anser.ansiToJson(line);
+                const lineWithoutTimestamp = line.replace(timestampPattern, "").trimStart();
+                const anserLine: AnserJsonEntry[] = Anser.ansiToJson(lineWithoutTimestamp);
+                if (lineWithoutTimestamp.toLowerCase().includes("error")) {
+                  anserLine[0].fg = "238,75,43";
+                }
+
                 const log: Log = {
                   line: anserLine,
                   lineNumber: index + 1,
-                  timestamp: line.match(
-                    /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z/
-                  )?.[0],
+                  timestamp: line.match(timestampPattern)?.[0],
                 };
 
                 logs.push(log);
@@ -618,11 +622,43 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     });
     return `${time} on ${date}`;
   };
+
   const renderTabContents = () => {
     switch (tab) {
       case "overview":
         return (
           <>
+            {/* pre-deploy stuff - only if this is from github! */}
+            {!isLoading && appData?.app?.git_repo_id != null &&
+              <>
+                <Text size={16}>Pre-deploy job</Text>
+                <Spacer y={0.5} />
+                <Services
+                  setServices={(x) => {
+                    if (buttonStatus !== "") {
+                      setButtonStatus("");
+                    }
+                    setReleaseJob(x as ReleaseService[]);
+                  }}
+                  chart={appData.releaseChart}
+                  services={releaseJob}
+                  limitOne={true}
+                  customOnClick={() => {
+                    setReleaseJob([
+                      Service.default(
+                        "pre-deploy",
+                        "release",
+                        porterJson
+                      ) as ReleaseService,
+                    ]);
+                  }}
+                  addNewText={"Add a new pre-deploy job"}
+                  defaultExpanded={true}
+                />
+              </>
+            }
+            <Text size={16}>Application services</Text>
+            <Spacer y={0.5} />
             {!isLoading && services.length === 0 && (
               <>
                 <Fieldset>
@@ -646,7 +682,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               addNewText={"Add a new service"}
               setExpandedJob={(x: string) => setExpandedJob(x)}
             />
-            <Spacer y={1} />
+            <Spacer y={0.5} />
             <Button
               onClick={async () => await updatePorterApp({})}
               status={buttonStatus}
@@ -721,7 +757,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   <Container row>
                     <PlaceholderIcon src={notFound} />
                     <Text color="helper">
-                      No pre-deploy jobs were found. Add a pre-deploy job to
+                      No pre-deploy jobs were found. You can add a pre-deploy job in the Overview tab to
                       perform an operation before your application services
                       deploy, like a database migration.
                     </Text>
@@ -730,37 +766,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 <Spacer y={0.5} />
               </>
             )}
-            <Services
-              setServices={(x) => {
-                if (buttonStatus !== "") {
-                  setButtonStatus("");
-                }
-                setReleaseJob(x as ReleaseService[]);
-              }}
-              chart={appData.releaseChart}
-              services={releaseJob}
-              limitOne={true}
-              customOnClick={() => {
-                setReleaseJob([
-                  Service.default(
-                    "pre-deploy",
-                    "release",
-                    porterJson
-                  ) as ReleaseService,
-                ]);
-              }}
-              addNewText={"Add a new pre-deploy job"}
-              defaultExpanded={true}
-            />
-            <Button
-              onClick={async () => await updatePorterApp({})}
-              status={buttonStatus}
-              loadingText={"Updating..."}
-              disabled={releaseJob.length === 0}
-            >
-              Update pre-deploy job
-            </Button>
-            <Spacer y={0.5} />
             {releaseJob.length > 0 && (
               <JobRuns
                 lastRunStatus="all"
@@ -812,15 +817,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <>
                 <Spacer inline x={1} />
                 <Container row>
-                  <SmallIcon src={github} />
-                  <Text size={13} color="helper">
-                    <Link
-                      target="_blank"
-                      to={`https://github.com/${appData.app.repo_name}`}
-                    >
+                  <Link
+                    target="_blank"
+                    to={`https://github.com/${appData.app.repo_name}`}
+                  >
+                    <SmallIcon src={github} />
+                    <Text size={13}>
                       {appData.app.repo_name}
-                    </Link>
-                  </Text>
+                    </Text>
+                  </Link>
                 </Container>
               </>
             )}
@@ -919,7 +924,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                           marginBottom: "-20px",
                         }}
                       >
-                        Your build was not successful
+                        Your build was not successful.
                         <Spacer inline width="15px" />
                         <>
                           <Link
@@ -927,7 +932,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                             target="_blank"
                             onClick={() => setModalVisible(true)}
                           >
-                            View Logs
+                            View logs
                           </Link>
                           {modalVisible && (
                             <GHALogsModal
@@ -986,7 +991,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                        appData.chart.chart.metadata.version
+                      appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}
@@ -1000,45 +1005,44 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id
                     ? hasBuiltImage
                       ? [
-                          { label: "Overview", value: "overview" },
-                          { label: "Activity", value: "activity" },
-                          { label: "Events", value: "events" },
-                          { label: "Logs", value: "logs" },
-                          { label: "Metrics", value: "metrics" },
-                          { label: "Debug", value: "status" },
-                          { label: "Pre-deploy", value: "pre-deploy" },
-                          {
-                            label: "Environment",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                      : [
-                          { label: "Overview", value: "overview" },
-                          { label: "Activity", value: "activity" },
-                          { label: "Pre-deploy", value: "pre-deploy" },
-                          {
-                            label: "Environment",
-                            value: "environment-variables",
-                          },
-                          { label: "Build settings", value: "build-settings" },
-                          { label: "Settings", value: "settings" },
-                        ]
-                    : [
                         { label: "Overview", value: "overview" },
                         { label: "Activity", value: "activity" },
                         { label: "Events", value: "events" },
                         { label: "Logs", value: "logs" },
                         { label: "Metrics", value: "metrics" },
                         { label: "Debug", value: "status" },
-                        { label: "Pre-deploy", value: "pre-deploy" },
+                        { label: "Pre-deploy logs", value: "pre-deploy" },
                         {
                           label: "Environment",
                           value: "environment-variables",
                         },
+                        { label: "Build settings", value: "build-settings" },
                         { label: "Settings", value: "settings" },
                       ]
+                      : [
+                        { label: "Overview", value: "overview" },
+                        { label: "Activity", value: "activity" },
+                        { label: "Pre-deploy logs", value: "pre-deploy" },
+                        {
+                          label: "Environment",
+                          value: "environment-variables",
+                        },
+                        { label: "Build settings", value: "build-settings" },
+                        { label: "Settings", value: "settings" },
+                      ]
+                    : [
+                      { label: "Overview", value: "overview" },
+                      { label: "Activity", value: "activity" },
+                      { label: "Events", value: "events" },
+                      { label: "Logs", value: "logs" },
+                      { label: "Metrics", value: "metrics" },
+                      { label: "Debug", value: "status" },
+                      {
+                        label: "Environment",
+                        value: "environment-variables",
+                      },
+                      { label: "Settings", value: "settings" },
+                    ]
                 }
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {

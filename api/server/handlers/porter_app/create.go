@@ -1,4 +1,4 @@
-package stacks
+package porter_app
 
 import (
 	"context"
@@ -230,11 +230,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		c.WriteResult(w, r, porterApp.ToPorterAppType())
 	} else {
 		// create/update the release job chart
-		if request.OverrideRelease && releaseJobValues != nil {
+		if request.OverrideRelease {
 			releaseJobName := fmt.Sprintf("%s-r", stackName)
 			helmRelease, err := helmAgent.GetRelease(ctx, releaseJobName, 0, false)
 			if err != nil {
-				// here the user has created a release job for an already created app, so we need to create and install  the release job chart
+				// here the user has chosen to create a release job for an already created app, so we need to create and install the release job chart
 				conf, err := createReleaseJobChart(
 					ctx,
 					stackName,
@@ -258,17 +258,28 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					return
 				}
 			} else {
-				conf := &helm.UpgradeReleaseConfig{
-					Name:       helmRelease.Name,
-					Cluster:    cluster,
-					Repo:       c.Repo(),
-					Registries: registries,
-					Values:     releaseJobValues,
-				}
-				_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
-				if err != nil {
-					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error upgrading release job chart: %w", err)))
+				// release job exists, so we need to update it or delete it
+
+				// here the release job exists, but now the user wants to delete it
+				if releaseJobValues == nil {
+					_, err = helmAgent.UninstallChart(ctx, releaseJobName)
+					if err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error uninstalling release job chart: %w", err)))
+					}
 					return
+				} else {
+					conf := &helm.UpgradeReleaseConfig{
+						Name:       helmRelease.Name,
+						Cluster:    cluster,
+						Repo:       c.Repo(),
+						Registries: registries,
+						Values:     releaseJobValues,
+					}
+					_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
+					if err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error upgrading release job chart: %w", err)))
+						return
+					}
 				}
 			}
 		}

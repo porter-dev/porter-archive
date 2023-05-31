@@ -633,21 +633,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <>
                 <Text size={16}>Pre-deploy job</Text>
                 <Spacer y={0.5} />
-                {releaseJob.length === 0 && (
-                  <>
-                    <Fieldset>
-                      <Container row>
-                        <PlaceholderIcon src={notFound} />
-                        <Text color="helper">
-                          No pre-deploy job was found. Add a pre-deploy job to
-                          perform an operation before your application services
-                          deploy, like a database migration.
-                        </Text>
-                      </Container>
-                    </Fieldset>
-                    <Spacer y={0.5} />
-                  </>
-                )}
                 <Services
                   setServices={(x) => {
                     if (buttonStatus !== "") {
@@ -668,7 +653,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     ]);
                   }}
                   addNewText={"Add a new pre-deploy job"}
-                  defaultExpanded={false}
+                  defaultExpanded={true}
                 />
               </>
             }
@@ -762,6 +747,34 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             updatePorterApp={updatePorterApp}
             clearStatus={() => setButtonStatus("")}
           />
+        );
+      case "pre-deploy":
+        return (
+          <>
+            {!isLoading && releaseJob.length === 0 && (
+              <>
+                <Fieldset>
+                  <Container row>
+                    <PlaceholderIcon src={notFound} />
+                    <Text color="helper">
+                      No pre-deploy jobs were found. You can add a pre-deploy job in the Overview tab to
+                      perform an operation before your application services
+                      deploy, like a database migration.
+                    </Text>
+                  </Container>
+                </Fieldset>
+                <Spacer y={0.5} />
+              </>
+            )}
+            {releaseJob.length > 0 && (
+              <JobRuns
+                lastRunStatus="all"
+                namespace={appData.chart?.namespace}
+                sortType="Newest"
+                releaseName={appData.app.name + "-r"}
+              />
+            )}
+          </>
         );
       default:
         return <div>Tab not found</div>;
@@ -998,6 +1011,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                         { label: "Logs", value: "logs" },
                         { label: "Metrics", value: "metrics" },
                         { label: "Debug", value: "status" },
+                        { label: "Pre-deploy logs", value: "pre-deploy" },
                         {
                           label: "Environment",
                           value: "environment-variables",
@@ -1008,6 +1022,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       : [
                         { label: "Overview", value: "overview" },
                         { label: "Activity", value: "activity" },
+                        { label: "Pre-deploy logs", value: "pre-deploy" },
                         {
                           label: "Environment",
                           value: "environment-variables",

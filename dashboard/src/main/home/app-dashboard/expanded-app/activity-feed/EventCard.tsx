@@ -5,12 +5,10 @@ import app_event from "assets/app_event.png";
 import build from "assets/build.png";
 import deploy from "assets/deploy.png";
 import pre_deploy from "assets/pre_deploy.png";
-import loading from "assets/loading.gif";
 import healthy from "assets/status-healthy.png";
 import failure from "assets/failure.png";
 import run_for from "assets/run_for.png";
 import refresh from "assets/refresh.png";
-import Loading from "components/Loading";
 
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
@@ -23,17 +21,18 @@ import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/use
 import JSZip from "jszip";
 import Anser, { AnserJsonEntry } from "anser";
 import GHALogsModal from "../status/GHALogsModal";
+import { PorterAppEvent, PorterAppEventType } from "shared/types";
 
 type Props = {
-  event: any;
+  event: PorterAppEvent;
   appData: any;
 };
 
-const EventCard: React.FC<Props> = ({ event, i, appData }) => {
+const EventCard: React.FC<Props> = ({ event, appData }) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalContent, setModalContent] = useState<React.ReactNode>(null);
   const [logModalVisible, setLogModalVisible] = useState(false);
-  const [logs, setLogs] = useState<Log[]>(null);
+  const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const getIcon = (eventType: string) => {
@@ -79,8 +78,36 @@ const EventCard: React.FC<Props> = ({ event, i, appData }) => {
     }
   };
 
-  const renderStatusText = (event: any) => {
-    if (event.type === "BUILD") {
+  const getDuration = (event: PorterAppEvent): string => {
+    const startTimeStamp = new Date(event.created_at).getTime();
+    const endTimeStamp = new Date(event.updated_at).getTime();
+
+    const timeDifferenceMilliseconds = endTimeStamp - startTimeStamp;
+
+    const seconds = Math.floor(timeDifferenceMilliseconds / 1000);
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+
+    let formattedTime = "";
+
+    if (hours > 0) {
+      formattedTime += `${hours} h `;
+    }
+
+    if (minutes > 0) {
+      formattedTime += `${minutes} m `;
+    }
+
+    if (hours === 0 && minutes === 0) {
+      formattedTime += `${remainingSeconds} s`;
+    }
+
+    return formattedTime.trim();
+  };
+
+  const renderStatusText = (event: PorterAppEvent) => {
+    if (event.type === PorterAppEventType.BUILD) {
       switch (event.status) {
         case "SUCCESS":
           return <Text color="#68BF8B">Build succeeded</Text>;
@@ -91,7 +118,7 @@ const EventCard: React.FC<Props> = ({ event, i, appData }) => {
       }
     }
 
-    if (event.type === "DEPLOY") {
+    if (event.type === PorterAppEventType.DEPLOY) {
       switch (event.status) {
         case "SUCCESS":
           return <Text color="#68BF8B">Deployed v100</Text>;
@@ -102,7 +129,7 @@ const EventCard: React.FC<Props> = ({ event, i, appData }) => {
       }
     }
 
-    if (event.type === "PRE_DEPLOY") {
+    if (event.type === PorterAppEventType.PRE_DEPLOY) {
       switch (event.status) {
         case "SUCCESS":
           return <Text color="#68BF8B">Pre-deploy succeeded . . </Text>;
@@ -137,7 +164,7 @@ const EventCard: React.FC<Props> = ({ event, i, appData }) => {
   };
 
   const renderInfoCta = (event: any) => {
-    if (event.type === "APP_EVENT") {
+    if (event.type === PorterAppEventType.APP_EVENT) {
       return (
         <>
           <Link
@@ -236,7 +263,7 @@ const EventCard: React.FC<Props> = ({ event, i, appData }) => {
       }
     };
 
-    if (event.type === "BUILD") {
+    if (event.type === PorterAppEventType.BUILD) {
       switch (event.status) {
         case "SUCCESS":
           return (
@@ -295,8 +322,8 @@ const EventCard: React.FC<Props> = ({ event, i, appData }) => {
       getBuildLogs();
     }, []);
 
-    if (event.type === "DEPLOY") {
-      if (event.type === "FAILED") {
+    if (event.type === PorterAppEventType.DEPLOY) {
+      if (event.status === "FAILED") {
         return (
           <>
             <Link
@@ -313,7 +340,7 @@ const EventCard: React.FC<Props> = ({ event, i, appData }) => {
       }
     }
 
-    if (event.type === "PRE_DEPLOY") {
+    if (event.type === PorterAppEventType.PRE_DEPLOY) {
       return (
         <>
           <Link hasunderline onClick={() => alert("TODO: open logs modal")}>
@@ -336,22 +363,22 @@ const EventCard: React.FC<Props> = ({ event, i, appData }) => {
         <Container row>
           <Icon height="14px" src={run_for} />
           <Spacer inline width="6px" />
-          <Text color="helper">1h 2m</Text>
+          <Text color="helper">{getDuration(event)}</Text>
         </Container>
       </Container>
       <Spacer y={1} />
       <Container row spaced>
         <Container row>
-          {event.type !== "APP_EVENT" && (
+          {event.type !== PorterAppEventType.APP_EVENT && (
             <>
               <Icon height="18px" src={getStatusIcon(event.status)} />
               <Spacer inline width="10px" />
             </>
           )}
           {renderStatusText(event)}
-          {event.type !== "APP_EVENT" && <Spacer inline x={1} />}
+          {event.type !== PorterAppEventType.APP_EVENT && <Spacer inline x={1} />}
           {renderInfoCta(event)}
-          {event.status === "FAILED" && event.type !== "APP_EVENT" && (
+          {event.status === "FAILED" && event.type !== PorterAppEventType.APP_EVENT && (
             <>
               <Link hasunderline onClick={() => triggerWorkflow()}>
                 <Container row>

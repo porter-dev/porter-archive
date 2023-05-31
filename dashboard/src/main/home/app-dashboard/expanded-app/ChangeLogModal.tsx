@@ -84,31 +84,37 @@ const ChangeLogModal: React.FC<Props> = ({
     const servicePattern = /^[a-zA-Z0-9\-]*-[a-zA-Z0-9]*[^\.]$/;
 
     diff?.forEach((difference: any) => {
-      let path = difference.path?.join(".");
+      let path = difference.path?.join(" ");
       switch (difference.kind) {
         case "N":
           // Check if the added item is a service by testing the path against the regex pattern
           if (servicePattern.test(path)) {
-            // If so, display a simplified message
-            const serviceName = path.split("-")[0];
-            changes.push(<Text>{`${serviceName} created`}</Text>);
+            changes.push(<ChangeBox type="N">{`${path} created`}</ChangeBox>);
           } else {
             // If not, display the full message
             changes.push(
-              <Text>{`${path} added: ${JSON.stringify(difference.rhs)}`}</Text>
+              <ChangeBox type="N">{`${path} added: ${JSON.stringify(
+                difference.rhs
+              )}`}</ChangeBox>
             );
           }
           break;
         case "D":
-          changes.push(<Text>{`${path} removed`}</Text>);
+          if (servicePattern.test(path)) {
+            // If so, display a simplified message
+
+            changes.push(<Text>{`${path} deleted`}</Text>);
+          } else {
+            changes.push(<Text>{`${path} removed`}</Text>);
+          }
           break;
         case "E":
           changes.push(
-            <Text>
-              {`${path} updated: ${JSON.stringify(
+            <ChangeBox type="E">
+              {`${path} updated to ${JSON.stringify(
                 difference.lhs
               )} -> ${JSON.stringify(difference.rhs)}`}
-            </Text>
+            </ChangeBox>
           );
           break;
         case "A":
@@ -140,8 +146,8 @@ const ChangeLogModal: React.FC<Props> = ({
     <>
       <Modal closeModal={() => setModalVisible(false)} width={"1100px"}>
         <Text size={18}>Change Log</Text>
-        <Wrapper>
-          {/* <DiffViewer
+
+        {/* <DiffViewer
             leftTitle={`Current Version`}
             rightTitle={`Revision No. ${currentChart.version.toString()}`}
             oldValue={values}
@@ -151,17 +157,16 @@ const ChangeLogModal: React.FC<Props> = ({
             useDarkTheme={true}
             compareMethod={DiffMethod.TRIMMED_LINES}
           /> */}
-          {
-            loading ? (
-              <Loading /> // <-- Render loading state
-            ) : (
-              parseYamlAndDisplayDifferences(
-                chartEvent?.config,
-                currentChart.config
-              )
-            ) // <-- Render when data is ready
-          }
-        </Wrapper>
+        {
+          loading ? (
+            <Loading /> // <-- Render loading state
+          ) : (
+            parseYamlAndDisplayDifferences(
+              chartEvent?.config,
+              currentChart.config
+            )
+          ) // <-- Render when data is ready
+        }
       </Modal>
     </>
   );
@@ -169,49 +174,20 @@ const ChangeLogModal: React.FC<Props> = ({
 
 export default ChangeLogModal;
 
-const Wrapper = styled.div`
-  overflow-y: scroll;
-  border-radius: 8px;
-  margin-bottom: 30px;
-  border: 1px solid #ffffff33;
-`;
-
-const StyledValuesYaml = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: calc(100vh - 350px);
-  font-size: 13px;
-  overflow: hidden;
-  border-radius: 8px;
-  animation: floatIn 0.3s;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
-  @keyframes floatIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0px);
-    }
-  }
-`;
 const ChangeLog = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5em;
 `;
+const ChangeBox = styled.div<{ type: string }>`
+  padding: 10px;
 
-const AddedChange = styled.div`
-  color: green;
-`;
-
-const RemovedChange = styled.div`
-  color: red;
-`;
-
-const UpdatedChange = styled.div`
-  color: blue;
+  background-color: ${({ type }) =>
+    type === "N"
+      ? "#13271e"
+      : type === "D"
+      ? "#26191c"
+      : type === "E"
+      ? "#131d2e"
+      : "#fff"};
+  color: "#fff";
 `;

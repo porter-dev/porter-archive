@@ -25,8 +25,7 @@ const EventCard: React.FC<Props> = ({ event, appData }) => {
       // TODO: implement
       // return <DeployEventCard event={event} appData={appData} />;
       case PorterAppEventType.PRE_DEPLOY:
-      // TODO: implement
-      // return <PreDeployEventCard event={event} />;
+        return <PreDeployEventCard event={event} appData={appData} />;
       default:
         return null;
     };

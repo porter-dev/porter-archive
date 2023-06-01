@@ -45,7 +45,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         }
       );
       setNumPages(res.data.num_pages);
-      setEvents((res.data.events as PorterAppEvent[]).filter(e => e.type === PorterAppEventType.BUILD));
+      setEvents((res.data.events as PorterAppEvent[]).filter(e => e.type === PorterAppEventType.BUILD || e.type === PorterAppEventType.PRE_DEPLOY));
       setLoading(false);
     } catch (err) {
       setError(err);
@@ -100,7 +100,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
               <Spacer x={0.5} />
               <Text>{feedDate(event.created_at).split(", ")[1]}</Text>
             </Time>
-            <EventCard appData={appData} event={event} i={i} />
+            <EventCard appData={appData} event={event} key={i} />
           </EventWrapper>
         );
       })}

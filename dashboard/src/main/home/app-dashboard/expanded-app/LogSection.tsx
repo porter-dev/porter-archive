@@ -65,12 +65,13 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     }, 5000);
   };
 
-  const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
+  const { logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter.podName,
     podFilter.podNamespace,
     enteredSearchText,
     notify,
     currentChart,
+    setIsLoading,
     selectedDate
   );
 
@@ -136,13 +137,13 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
   };
 
   useEffect(() => {
-    if (!loading && scrollToBottomRef.current && scrollToBottomEnabled) {
+    if (!isLoading && scrollToBottomRef.current && scrollToBottomEnabled) {
       scrollToBottomRef.current.scrollIntoView({
         behavior: "smooth",
         block: "end",
       });
     }
-  }, [loading, logs, scrollToBottomRef, scrollToBottomEnabled]);
+  }, [isLoading, logs, scrollToBottomRef, scrollToBottomEnabled]);
 
   const renderLogs = () => {
     return logs?.map((log, i) => {
@@ -241,8 +242,18 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
         </FlexRow>
         <LogsSectionWrapper>
           <StyledLogsSection>
-            {loading || !logs.length ? (
+            {isLoading || (logs.length == 0 && selectedDate == null) ? (
               <Loading message="Waiting for logs..." />
+            ) : logs.length == 0 ? (
+              <>
+                <Message>
+                  No logs found.
+                  <Highlight onClick={refresh}>
+                    <i className="material-icons">autorenew</i>
+                    Refresh
+                  </Highlight>
+                </Message>
+              </>
             ) : (
               <>
                 <LoadMoreButton
@@ -255,14 +266,6 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
                   Load Previous
                 </LoadMoreButton>
                 {renderLogs()}
-                {/* <Message>
-            
-            No matching logs found.
-            <Highlight onClick={() => {}}>
-              <i className="material-icons">autorenew</i>
-              Refresh
-            </Highlight>
-          </Message> */}
                 <LoadMoreButton
                   active={selectedDate && logs.length !== 0}
                   role="button"
@@ -289,7 +292,6 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     // determine if the agent is installed properly - if not, start by render upgrade screen
     checkForAgent();
   }, []);
-
 
   useEffect(() => {
     if (!isPorterAgentInstalling) {
@@ -369,39 +371,41 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     };
   };
 
-  return (
-    isPorterAgentInstalling ? (
-      <Fieldset>
-        <Container row>
-          <Spinner src={spinner} />
-          <Spacer inline x={1} />
-          <Text color="helper">The Porter agent is being installed . . .</Text>
-        </Container>
-      </Fieldset>
-    ) : isLoading ? (
-      <Fieldset>
-        <Loading />
-      </Fieldset>
-    ) : !hasPorterAgent ? (
-      <Fieldset>
-        <Text size={16}>We couldn't detect the Porter agent on your cluster</Text>
-        <Spacer y={0.5} />
-        <Text color="helper">In order to use the Logs tab, you need to install the Porter agent.</Text>
-        <Spacer y={1} />
-        <Button onClick={() => triggerInstall()}>
-          <I className="material-icons">add</I> Install Porter agent
-        </Button>
-      </Fieldset>
-    ) : logsError ? (
-      <Fieldset>
-        <Container row>
-          <WarnI className="material-icons">warning</WarnI>
-          <Text color="helper">Porter encountered an error retrieving logs for this application.</Text>
-        </Container>
-      </Fieldset>
-    ) : (
-      renderContents()
-    )
+  return isPorterAgentInstalling ? (
+    <Fieldset>
+      <Container row>
+        <Spinner src={spinner} />
+        <Spacer inline x={1} />
+        <Text color="helper">The Porter agent is being installed . . .</Text>
+      </Container>
+    </Fieldset>
+  ) : isLoading ? (
+    <Fieldset>
+      <Loading />
+    </Fieldset>
+  ) : !hasPorterAgent ? (
+    <Fieldset>
+      <Text size={16}>We couldn't detect the Porter agent on your cluster</Text>
+      <Spacer y={0.5} />
+      <Text color="helper">
+        In order to use the Logs tab, you need to install the Porter agent.
+      </Text>
+      <Spacer y={1} />
+      <Button onClick={() => triggerInstall()}>
+        <I className="material-icons">add</I> Install Porter agent
+      </Button>
+    </Fieldset>
+  ) : logsError ? (
+    <Fieldset>
+      <Container row>
+        <WarnI className="material-icons">warning</WarnI>
+        <Text color="helper">
+          Porter encountered an error retrieving logs for this application.
+        </Text>
+      </Container>
+    </Fieldset>
+  ) : (
+    renderContents()
   );
 };
 

@@ -120,6 +120,7 @@ const LogsSection: React.FC<Props> = ({
     initData.timestamp ? dayjs(initData.timestamp).toDate() : undefined
   );
   const [notification, setNotification] = useState<string>();
+  const [loading, setLoading] = useState(true);
 
   const notify = (message: string) => {
     setNotification(message);
@@ -129,12 +130,13 @@ const LogsSection: React.FC<Props> = ({
     }, 5000);
   };
 
-  const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
+  const { logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter,
     currentChart.namespace,
     enteredSearchText,
     notify,
     currentChart,
+    setLoading,
     selectedDate
   );
 
@@ -231,7 +233,9 @@ const LogsSection: React.FC<Props> = ({
         <Log key={[log.lineNumber, i].join(".")}>
           <span className="line-number">{log.lineNumber}.</span>
           <span className="line-timestamp">
-            {log.timestamp ? dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss") : "-"}
+            {log.timestamp
+              ? dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")
+              : "-"}
           </span>
           <LogOuter key={[log.lineNumber, i].join(".")}>
             {log.line?.map((ansi, j) => {
@@ -310,7 +314,7 @@ const LogsSection: React.FC<Props> = ({
               Scroll to bottom
             </Button>
             <Spacer />
-            <Button onClick={() => refresh()}>
+            <Button onClick={refresh}>
               <i className="material-icons">autorenew</i>
               Refresh
             </Button>
@@ -326,8 +330,18 @@ const LogsSection: React.FC<Props> = ({
         </FlexRow>
         <LogsSectionWrapper>
           <StyledLogsSection isFullscreen={isFullscreen}>
-            {loading || !logs.length ? (
+            {loading || (logs.length == 0 && selectedDate == null) ? (
               <Loading message="Waiting for logs..." />
+            ) : logs.length == 0 ? (
+              <>
+                <Message>
+                  No logs found.
+                  <Highlight onClick={refresh}>
+                    <i className="material-icons">autorenew</i>
+                    Refresh
+                  </Highlight>
+                </Message>
+              </>
             ) : (
               <>
                 <LoadMoreButton
@@ -340,14 +354,6 @@ const LogsSection: React.FC<Props> = ({
                   Load Previous
                 </LoadMoreButton>
                 {renderLogs()}
-                {/* <Message>
-            
-            No matching logs found.
-            <Highlight onClick={() => {}}>
-              <i className="material-icons">autorenew</i>
-              Refresh
-            </Highlight>
-          </Message> */}
                 <LoadMoreButton
                   active={selectedDate && logs.length !== 0}
                   role="button"

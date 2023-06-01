@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cli/cli/git"
 	"github.com/fatih/color"
@@ -387,10 +388,11 @@ func (d *DeployDriver) ShouldApply(_ *switchboardModels.Resource) bool {
 }
 
 func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboardModels.Resource, error) {
+	ctx := context.Background()
 	client := config.GetAPIClient()
 
 	_, err := client.GetRelease(
-		context.Background(),
+		ctx,
 		d.target.Project,
 		d.target.Cluster,
 		d.target.Namespace,
@@ -404,7 +406,7 @@ func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboard
 	}
 
 	if d.source.IsApplication {
-		return d.applyApplication(resource, client, shouldCreate)
+		return d.applyApplication(ctx, resource, client, shouldCreate)
 	}
 
 	return d.applyAddon(resource, client, shouldCreate)
@@ -465,7 +467,7 @@ func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client *
 	return resource, nil
 }
 
-func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
+func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
 	if resource == nil {
 		return nil, fmt.Errorf("nil resource")
 	}
@@ -555,6 +557,22 @@ func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, cl
 	if d.source.Name == "job" && appConfig.WaitForJob && (shouldCreate || !appConfig.OnlyCreate) {
 		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resourceName)
 
+		fmt.Println("STEFAN", d.target.Namespace)
+		if strings.Contains(d.target.Namespace, "porter-stack-") {
+			eventRequest := types.CreateOrUpdatePorterAppEventRequest{
+				Status: "PROGRESSING",
+				Type:   types.PorterAppEventType_PreDeploy,
+				Metadata: map[string]any{
+					"start_time": time.Now().UTC(),
+				},
+			}
+			eventResponse, err := client.CreateOrUpdatePorterAppEvent(ctx, d.target.Project, d.target.Cluster, d.target.AppName, &eventRequest)
+			if err != nil {
+				return nil, fmt.Errorf("error creating porter app event for pre-deploy job: %s", err.Error())
+			}
+			fmt.Println("STEFAN", eventRequest.ID, eventResponse)
+		}
+
 		err = wait.WaitForJob(client, &wait.WaitOpts{
 			ProjectID: d.target.Project,
 			ClusterID: d.target.Cluster,
@@ -563,18 +581,18 @@ func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, cl
 		})
 
 		if err != nil && appConfig.OnlyCreate {
-			deleteJobErr := client.DeleteRelease(
-				context.Background(),
-				d.target.Project,
-				d.target.Cluster,
-				d.target.Namespace,
-				resourceName,
-			)
+			// deleteJobErr := client.DeleteRelease(
+			// 	context.Background(),
+			// 	d.target.Project,
+			// 	d.target.Cluster,
+			// 	d.target.Namespace,
+			// 	resourceName,
+			// )
 
-			if deleteJobErr != nil {
-				return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
-					resourceName, deleteJobErr)
-			}
+			// if deleteJobErr != nil {
+			// 	return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
+			// 		resourceName, deleteJobErr)
+			// }
 		} else if err != nil {
 			return nil, fmt.Errorf("error waiting for job %s: %w", resourceName, err)
 		}

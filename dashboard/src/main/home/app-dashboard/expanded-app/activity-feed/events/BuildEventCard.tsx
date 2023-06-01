@@ -35,9 +35,9 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return <Text color="#68BF8B">Build succeeded.</Text>;
+        return <Text color="#68BF8B">Build succeeded</Text>;
       case "FAILED":
-        return <Text color="#FF6060">Build failed.</Text>;
+        return <Text color="#FF6060">Build failed</Text>;
       default:
         return <Text color="#aaaabb66">Build in progress...</Text>;
     }

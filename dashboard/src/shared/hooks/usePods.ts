@@ -101,6 +101,7 @@ export const usePods: UsePods = ({
     }
     setIsLoading(true);
     if (controller_kind == "job") {
+      console.log(controller_name);
       api
         .getJobPods(
           "<token>",

@@ -160,6 +160,8 @@ const ExpandedJobRun = ({
   }, []);
 
   const renderConfigSection = (job: any) => {
+    console.log('hi')
+    console.log(jobRun)
     let commandString = job?.spec?.template?.spec?.containers[0]?.command?.join(
       " "
     );
@@ -250,7 +252,7 @@ const ExpandedJobRun = ({
         </DeprecatedWarning>
         <LogsSection
           isFullscreen={false}
-          setIsFullscreen={() => {}}
+          setIsFullscreen={() => { }}
           overridingPodName={pods[0]?.metadata?.name || jobRun.metadata?.name}
           currentChart={currentChart}
           initData={initData}

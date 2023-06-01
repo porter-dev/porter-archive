@@ -18,7 +18,7 @@ import JSZip from "jszip";
 import Anser, { AnserJsonEntry } from "anser";
 import GHALogsModal from "../../status/GHALogsModal";
 import { PorterAppEvent, PorterAppEventType } from "shared/types";
-import { getDuration, getStatusIcon } from './utils';
+import { getDuration, getStatusIcon, triggerWorkflow } from './utils';
 import { StyledEventCard } from "./EventCard";
 
 type Props = {
@@ -42,28 +42,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
         return <Text color="#aaaabb66">Build in progress...</Text>;
     }
   };
-  const triggerWorkflow = async () => {
-    try {
-      const res = await api.reRunGHWorkflow(
-        "",
-        {},
-        {
-          project_id: appData.app.project_id,
-          cluster_id: appData.app.cluster_id,
-          git_installation_id: appData.app.git_repo_id,
-          owner: appData.app.repo_name?.split("/")[0],
-          name: appData.app.repo_name?.split("/")[1],
-          branch: appData.app.branch_name,
-          filename: "porter_stack_" + appData.chart.name + ".yml",
-        }
-      );
-      if (res.data != null) {
-        window.open(res.data, "_blank", "noreferrer");
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+
   const getBuildLogs = async () => {
     try {
       setLogs([]);
@@ -138,7 +117,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
     }
   };
 
-  const renderInfoCta = (event: any) => {
+  const renderInfoCta = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
         return (
@@ -176,6 +155,14 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
               />
             )}
             <Spacer inline x={1} />
+
+            <Link hasunderline onClick={() => triggerWorkflow(appData)}>
+              <Container row>
+                <Icon height="10px" src={refresh} />
+                <Spacer inline width="5px" />
+                Retry
+              </Container>
+            </Link>
           </>
         );
       default:
@@ -216,17 +203,6 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
           {renderStatusText(event)}
           <Spacer inline x={1} />
           {renderInfoCta(event)}
-          {event.status === "FAILED" && (
-            <>
-              <Link hasunderline onClick={() => triggerWorkflow()}>
-                <Container row>
-                  <Icon height="10px" src={refresh} />
-                  <Spacer inline width="5px" />
-                  Retry
-                </Container>
-              </Link>
-            </>
-          )}
         </Container>
       </Container>
       {showModal && (

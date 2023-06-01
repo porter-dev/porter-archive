@@ -10,6 +10,7 @@ import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 
 import TabSelector from "components/TabSelector";
+import Link from "components/porter/Link";
 
 interface GithubAppAccessData {
   username?: string;
@@ -102,9 +103,9 @@ const AccountSettingsModal = () => {
                   </List>
                   <br />
                   Don't see the right repos?{" "}
-                  <A href={"/api/integrations/github-app/install"}>
+                  <Link target="_blank" to={"/api/integrations/github-app/install"} hasunderline>
                     Install Porter in more repositories
-                  </A>
+                  </Link>
                 </>
               )}
             </Placeholder>

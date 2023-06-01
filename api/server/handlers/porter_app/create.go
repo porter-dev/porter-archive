@@ -268,12 +268,19 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					}
 					return
 				} else {
+					chart, err := loader.LoadChartPublic(ctx, c.Config().Metadata.DefaultAppHelmRepoURL, "job", "")
+					if err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("error loading release job chart: %w", err), http.StatusBadRequest))
+						return
+					}
+
 					conf := &helm.UpgradeReleaseConfig{
 						Name:       helmRelease.Name,
 						Cluster:    cluster,
 						Repo:       c.Repo(),
 						Registries: registries,
 						Values:     releaseJobValues,
+						Chart:      chart,
 					}
 					_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 					if err != nil {

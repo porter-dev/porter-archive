@@ -160,8 +160,6 @@ const ExpandedJobRun = ({
   }, []);
 
   const renderConfigSection = (job: any) => {
-    console.log('hi')
-    console.log(jobRun)
     let commandString = job?.spec?.template?.spec?.containers[0]?.command?.join(
       " "
     );

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
+
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/nodes"
@@ -14,10 +16,11 @@ import (
 )
 
 type GetUsageOpts struct {
-	Repo             repository.Repository
-	DOConf           *oauth2.Config
-	Project          *models.Project
-	WhitelistedUsers map[uint]uint
+	Repo                             repository.Repository
+	DOConf                           *oauth2.Config
+	Project                          *models.Project
+	WhitelistedUsers                 map[uint]uint
+	ClusterControlPlaneServiceClient porterv1connect.ClusterControlPlaneServiceClient
 }
 
 // GetUsage gets a project's current usage and usage limit
@@ -133,10 +136,11 @@ func getResourceUsage(opts *GetUsageOpts, clusters []*models.Cluster) (uint, uin
 
 	for _, cluster := range clusters {
 		ooc := &kubernetes.OutOfClusterConfig{
-			Cluster:                   cluster,
-			Repo:                      opts.Repo,
-			DigitalOceanOAuth:         opts.DOConf,
-			AllowInClusterConnections: false,
+			Cluster:                     cluster,
+			Repo:                        opts.Repo,
+			DigitalOceanOAuth:           opts.DOConf,
+			AllowInClusterConnections:   false,
+			CAPIManagementClusterClient: opts.ClusterControlPlaneServiceClient,
 		}
 
 		agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)

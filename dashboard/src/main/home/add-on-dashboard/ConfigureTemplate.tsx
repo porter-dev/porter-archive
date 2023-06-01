@@ -182,7 +182,7 @@ const ConfigureTemplate: React.FC<Props> = ({
                 src={hardcodedIcons[currentTemplate.name] || currentTemplate.icon}
               />
             }
-            title={`Configure new ${hardcodedNames[currentTemplate.name] || currentTemplate.name} instance`}
+            title={`Configure new "${hardcodedNames[currentTemplate.name] || currentTemplate.name}" instance`}
             capitalize={false}
             disableLineBreak
           />
@@ -194,7 +194,7 @@ const ConfigureTemplate: React.FC<Props> = ({
                 <Text size={16}>Add-on name</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
-                  Randomly generated if left blank (lowercase letters, numbers, and "-" only).
+                  Lowercase letters, numbers, and "-" only.
                 </Text>
                 <Spacer height="20px" />
                 <Input

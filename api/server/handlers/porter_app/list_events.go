@@ -179,8 +179,6 @@ func (p *PorterAppEventListHandler) updateExistingAppEvent(ctx context.Context, 
 		}
 	}
 
-	fmt.Println("STEFAN", *actionRun.Status, actionRun.Conclusion, event.Status)
-
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-event-updated-status", Value: event.Status})
 
 	err = p.Repo().PorterAppEvent().UpdateEvent(ctx, &event)

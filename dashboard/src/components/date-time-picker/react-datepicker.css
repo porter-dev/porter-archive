@@ -420,6 +420,9 @@
   border-radius: 0.3rem;
   background-color: #26292e;
 }
+.react-datepicker__month {
+  cursor: default
+}
 .react-datepicker__day-names,
 .react-datepicker__week {
   white-space: nowrap;
@@ -466,7 +469,6 @@
 .react-datepicker__month-text,
 .react-datepicker__quarter-text {
   cursor: pointer;
-  background-color: #232527;
 }
 .react-datepicker__day:hover,
 .react-datepicker__month-text:hover,
@@ -556,6 +558,7 @@
   cursor: default;
   color: #999;
   background-color: transparent;
+  cursor: not-allowed;
 }
 .react-datepicker__day--disabled:hover,
 .react-datepicker__month-text--disabled:hover,

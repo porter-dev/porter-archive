@@ -14,6 +14,8 @@ import { RouteComponentProps, withRouter, WithRouterProps } from "react-router";
 import { getQueryParam } from "shared/routing";
 import APITokensSection from "./APITokensSection";
 import _ from "lodash";
+import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 
@@ -153,16 +155,15 @@ class ProjectSettings extends Component<PropsType, StateType> {
           <Helper>
             Destruction of resources sometimes results in dangling resources. To
             ensure that everything has been properly destroyed, please visit
-            your cloud provider's console. Instructions to properly delete all
-            resources can be found
-            <a
-              target="none"
-              href="https://docs.getporter.dev/docs/deleting-dangling-resources"
+            your cloud provider's console.
+            <Spacer inline width="5px" />
+            <Link
+              target="_blank"
+              hasunderline
+              to="https://docs.porter.run/other/deleting-dangling-resources"
             >
-              {" "}
-              here
-            </a>
-            .
+              Deletion instructions
+            </Link>
           </Helper>
 
           <Warning highlight={true}>This action cannot be undone.</Warning>

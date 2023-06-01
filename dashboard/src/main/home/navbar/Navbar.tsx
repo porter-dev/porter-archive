@@ -88,7 +88,6 @@ const VersionTag = styled.div`
   right: 10px;
   top: 15px;
   color: #ffffff22;
-  font-weight: 400;
 `;
 
 const SettingsIcon = styled.div`
@@ -126,7 +125,6 @@ const UserDropdownButton = styled.button`
   position: relative;
   height: 40px;
   font-size: 13px;
-  font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: white;
   width: 100%;
@@ -168,6 +166,7 @@ const DropdownLabel = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
 `;
+
 const Dropdown = styled.div`
   position: absolute;
   right: 0;

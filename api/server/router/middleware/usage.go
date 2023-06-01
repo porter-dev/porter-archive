@@ -72,22 +72,7 @@ func (b *UsageMiddleware) Middleware(next http.Handler) http.Handler {
 
 		r = r.Clone(ctx)
 
-		// if allowed {
 		next.ServeHTTP(w, r)
-		//} else {
-		//	limit, curr := getMetricUsage(limit, currentUsage, b.metric)
-		//
-		//	apierrors.HandleAPIError(
-		//		b.config.Logger,
-		//		b.config.Alerter,
-		//		w, r,
-		//		apierrors.NewErrPassThroughToClient(
-		//			fmt.Errorf(UsageErrFmt, b.metric, limit, curr),
-		//			http.StatusBadRequest,
-		//		),
-		//		true,
-		//	)
-		//}
 	})
 }
 

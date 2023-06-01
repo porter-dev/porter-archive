@@ -40,10 +40,11 @@ func (p *ProjectGetUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	res := &types.GetProjectUsageResponse{}
 
 	currUsage, limit, usageCache, err := usage.GetUsage(&usage.GetUsageOpts{
-		Project:          proj,
-		DOConf:           p.Config().DOConf,
-		Repo:             p.Repo(),
-		WhitelistedUsers: p.Config().WhitelistedUsers,
+		Project:                          proj,
+		DOConf:                           p.Config().DOConf,
+		Repo:                             p.Repo(),
+		WhitelistedUsers:                 p.Config().WhitelistedUsers,
+		ClusterControlPlaneServiceClient: p.Config().ClusterControlPlaneClient,
 	})
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

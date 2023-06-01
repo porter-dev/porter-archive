@@ -1,3 +1,15 @@
+.react-datepicker__aria-live {
+  position: absolute;
+  clip-path: circle(0);
+  border: 0;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  width: 1px;
+  white-space: nowrap;
+}
+
 .react-datepicker__triangle {
   display: none;
 }
@@ -358,7 +370,8 @@
   ul.react-datepicker__time-list
   li.react-datepicker__time-list-item:hover {
   cursor: pointer;
-  background-color: #26292e;
+  background-color: #525882;
+  border-radius: 0.3rem
 }
 .react-datepicker__time-container
   .react-datepicker__time
@@ -368,6 +381,7 @@
   background-color: #949eff;
   color: white;
   font-weight: bold;
+  border-radius: 0.3rem
 }
 .react-datepicker__time-container
   .react-datepicker__time
@@ -452,12 +466,13 @@
 .react-datepicker__month-text,
 .react-datepicker__quarter-text {
   cursor: pointer;
+  background-color: #232527;
 }
 .react-datepicker__day:hover,
 .react-datepicker__month-text:hover,
 .react-datepicker__quarter-text:hover {
   border-radius: 0.3rem;
-  background-color: #26292e;
+  background-color: #525882;
 }
 .react-datepicker__day--today,
 .react-datepicker__month-text--today,
@@ -539,7 +554,8 @@
 .react-datepicker__month-text--disabled,
 .react-datepicker__quarter-text--disabled {
   cursor: default;
-  color: #ccc;
+  color: #999;
+  background-color: transparent;
 }
 .react-datepicker__day--disabled:hover,
 .react-datepicker__month-text--disabled:hover,

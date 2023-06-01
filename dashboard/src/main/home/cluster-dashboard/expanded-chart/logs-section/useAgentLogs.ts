@@ -76,6 +76,7 @@ export const useLogs = (
   searchParam: string,
   notify: (message: string) => void,
   currentChart: ChartType,
+  setLoading: (loading: boolean) => void,
   // if setDate is set, results are not live
   setDate?: Date
 ) => {
@@ -89,7 +90,6 @@ export const useLogs = (
     previousCursor: null,
     nextCursor: null,
   });
-  const [loading, setLoading] = useState(true);
 
   // if we are live:
   // - start date is initially set to 2 weeks ago
@@ -423,6 +423,5 @@ export const useLogs = (
     refresh,
     moveCursor,
     paginationInfo,
-    loading,
   };
 };

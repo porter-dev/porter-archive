@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -19,33 +21,29 @@ import (
 // AttributeKey helps enforce consistent naming conventions for attribute key
 type AttributeKey string
 
-const (
-	// AttributeKeyUser refers to a Porter user
-	AttributeKeyUser AttributeKey = "user"
-	// AttributeKeyProject refers to a Porter project
-	AttributeKeyProject AttributeKey = "project"
-	// AttributeKeyCluster refers to a Porter cluster
-	AttributeKeyCluster AttributeKey = "cluster"
-)
-
 // NewSpan is a convenience function for creating a new span, with a Porter-namespaced name to avoid conflicts.
 // Any commonly used variables in the context, will be added to the span such as clusterID, projectID.
 // When using this function, make sure to call `defer span.End()` immediately after, to avoid lost spans.
 func NewSpan(ctx context.Context, name string) (context.Context, trace.Span) {
 	ctx, span := otel.Tracer("").Start(ctx, prefixSpanKey(name))
-
-	// if user, ok := UserFromContext(ctx); ok {
-	// 	WithAttributes(span, AttributeKV{Key: AttributeKeyUser, Value: user.ID})
-	// }
-
-	// WithAttributes(
-	// 	span,
-	// 	// TODO: find out where these context keys are actually stored. I believe that these are scopes, not context keys
-	// 	AttributeKV{Key: AttributeKeyCluster, Value: stringFromContext(ctx, types.ClusterScope)},
-	// 	AttributeKV{Key: AttributeKeyProject, Value: stringFromContext(ctx, types.ProjectScope)},
-	// )
-
+	AddKnownContextVariablesToSpan(ctx, span)
 	return ctx, span
+}
+
+func AddKnownContextVariablesToSpan(ctx context.Context, span trace.Span) {
+	user, ok := ctx.Value(types.UserScope).(*models.User)
+	if ok {
+		WithAttributes(span, AttributeKV{Key: "user-id", Value: user.ID})
+	}
+
+	cluster, ok := ctx.Value(types.ClusterScope).(*models.Cluster)
+	if ok {
+		WithAttributes(span, AttributeKV{Key: "cluster-id", Value: cluster.ID})
+	}
+
+	if project, ok := ctx.Value(types.ProjectScope).(*models.Project); ok {
+		WithAttributes(span, AttributeKV{Key: "project-id", Value: project.ID})
+	}
 }
 
 // AttributeKV is a wrapper for otel attributes KV

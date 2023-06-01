@@ -818,15 +818,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <>
                 <Spacer inline x={1} />
                 <Container row>
-                  <Link
+                  <A
                     target="_blank"
-                    to={`https://github.com/${appData.app.repo_name}`}
+                    href={`https://github.com/${appData.app.repo_name}`}
                   >
                     <SmallIcon src={github} />
-                    <Text size={13}>
-                      {appData.app.repo_name}
-                    </Text>
-                  </Link>
+                    <Text size={13}>{appData.app.repo_name}</Text>
+                  </A>
                 </Container>
               </>
             )}
@@ -913,25 +911,17 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                               onClick={() => window.location.reload()}
                             >
                               <img src={refresh} />
-                              <Underline>Refresh</Underline>
+                              Refresh
                             </RefreshButton>
                           </>
                         </>
                       }
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          marginBottom: "-20px",
-                        }}
-                      >
                         Your build was not successful.
-                        <Spacer inline width="15px" />
+                        <Spacer inline width="5px" />
                         <>
                           <Link
                             hasunderline
-                            target="_blank"
                             onClick={() => setModalVisible(true)}
                           >
                             View logs
@@ -945,7 +935,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                             />
                           )}
                         </>
-                      </div>
 
                       <Spacer inline width="5px" />
                     </Banner>
@@ -961,7 +950,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                             onClick={() => window.location.reload()}
                           >
                             <img src={refresh} />
-                            <Underline>Refresh</Underline>
+                            Refresh
                           </RefreshButton>
                         </>
                       }
@@ -1078,6 +1067,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 };
 
 export default withRouter(ExpandedApp);
+
+const A = styled.a`
+  display: flex;
+  align-items: center;
+`;
 
 const Underline = styled.div`
   border-bottom: 1px solid #ffffff;

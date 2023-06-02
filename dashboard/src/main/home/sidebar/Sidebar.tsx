@@ -11,6 +11,9 @@ import infra from "assets/infra.png";
 
 import { Context } from "shared/Context";
 
+import Text from "components/porter/Text";
+import Container from "components/porter/Container";
+import Spacer from "components/porter/Spacer";
 import Clusters from "./Clusters";
 import ProjectSectionContainer from "./ProjectSectionContainer";
 import { RouteComponentProps, withRouter } from "react-router";
@@ -265,6 +268,12 @@ class Sidebar extends Component<PropsType, StateType> {
           <br />
 
           {this.renderProjectContents()}
+          {this.context.featurePreview && (
+            <Container row>
+              <Spacer inline width="25px" />
+              <Text color="helper">(Feature preview enabled)</Text>
+            </Container>
+          )}
         </StyledSidebar>
       </>
     );

@@ -612,7 +612,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
               >
                 Deploy app
               </Button>,
-            ]}
+            ].filter((x) => x)}
           />
           <Spacer y={3} />
         </StyledConfigureTemplate>

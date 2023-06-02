@@ -57,7 +57,7 @@ func (repo *PorterAppEventRepository) CreateEvent(ctx context.Context, appEvent 
 		appEvent.UpdatedAt = time.Now().UTC()
 	}
 	if appEvent.PorterAppID == 0 {
-		return errors.New("invalid porter app id supplied")
+		return errors.New("invalid porter app id supplied to create event")
 	}
 
 	if err := repo.db.Create(appEvent).Error; err != nil {
@@ -66,21 +66,21 @@ func (repo *PorterAppEventRepository) CreateEvent(ctx context.Context, appEvent 
 	return nil
 }
 
+// UpdateEvent will set all values in the database to the values of the passed in appEvent
 func (repo *PorterAppEventRepository) UpdateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error {
-	if appEvent.ID == uuid.Nil {
-		appEvent.ID = uuid.New()
+	if appEvent.PorterAppID == 0 {
+		return errors.New("invalid porter app id supplied to update event")
 	}
+
+	if appEvent.ID == uuid.Nil {
+		return errors.New("invalid porter app event id supplied to update event")
+	}
+
 	if appEvent.UpdatedAt.IsZero() {
 		appEvent.UpdatedAt = time.Now().UTC()
 	}
-	if appEvent.PorterAppID == 0 {
-		return errors.New("invalid porter app id supplied")
-	}
-	if appEvent.Status == "" {
-		return errors.New("invalid status supplied")
-	}
 
-	if err := repo.db.Model(appEvent).Updates(models.PorterAppEvent{Status: appEvent.Status}).Error; err != nil {
+	if err := repo.db.Model(appEvent).Updates(appEvent).Error; err != nil {
 		return err
 	}
 	return nil

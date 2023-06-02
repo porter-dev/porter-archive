@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cli/cli/git"
 	"github.com/fatih/color"
@@ -387,10 +389,11 @@ func (d *DeployDriver) ShouldApply(_ *switchboardModels.Resource) bool {
 }
 
 func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboardModels.Resource, error) {
+	ctx := context.Background()
 	client := config.GetAPIClient()
 
 	_, err := client.GetRelease(
-		context.Background(),
+		ctx,
 		d.target.Project,
 		d.target.Cluster,
 		d.target.Namespace,
@@ -404,7 +407,7 @@ func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboard
 	}
 
 	if d.source.IsApplication {
-		return d.applyApplication(resource, client, shouldCreate)
+		return d.applyApplication(ctx, resource, client, shouldCreate)
 	}
 
 	return d.applyAddon(resource, client, shouldCreate)
@@ -465,7 +468,7 @@ func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client *
 	return resource, nil
 }
 
-func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
+func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
 	if resource == nil {
 		return nil, fmt.Errorf("nil resource")
 	}
@@ -555,29 +558,87 @@ func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, cl
 	if d.source.Name == "job" && appConfig.WaitForJob && (shouldCreate || !appConfig.OnlyCreate) {
 		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resourceName)
 
+		var predeployEventResponseID string
+
+		stackNameWithoutRelease := strings.TrimSuffix(d.target.AppName, "-r")
+
+		if strings.Contains(d.target.Namespace, "porter-stack-") {
+			eventRequest := types.CreateOrUpdatePorterAppEventRequest{
+				Status: "PROGRESSING",
+				Type:   types.PorterAppEventType_PreDeploy,
+				Metadata: map[string]any{
+					"start_time": time.Now().UTC(),
+				},
+			}
+			eventResponse, err := client.CreateOrUpdatePorterAppEvent(ctx, d.target.Project, d.target.Cluster, stackNameWithoutRelease, &eventRequest)
+			if err != nil {
+				return nil, fmt.Errorf("error creating porter app event for pre-deploy job: %s", err.Error())
+			}
+			predeployEventResponseID = eventResponse.ID
+		}
+
 		err = wait.WaitForJob(client, &wait.WaitOpts{
 			ProjectID: d.target.Project,
 			ClusterID: d.target.Cluster,
 			Namespace: d.target.Namespace,
 			Name:      resourceName,
 		})
+		if err != nil {
+			if strings.Contains(d.target.Namespace, "porter-stack-") {
+				if predeployEventResponseID == "" {
+					return nil, errors.New("unable to find pre-deploy event response ID for failed pre-deploy event")
+				}
 
-		if err != nil && appConfig.OnlyCreate {
-			deleteJobErr := client.DeleteRelease(
-				context.Background(),
-				d.target.Project,
-				d.target.Cluster,
-				d.target.Namespace,
-				resourceName,
-			)
-
-			if deleteJobErr != nil {
-				return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
-					resourceName, deleteJobErr)
+				eventRequest := types.CreateOrUpdatePorterAppEventRequest{
+					ID:     predeployEventResponseID,
+					Status: "FAILED",
+					Type:   types.PorterAppEventType_PreDeploy,
+					Metadata: map[string]any{
+						"end_time": time.Now().UTC(),
+					},
+				}
+				_, err := client.CreateOrUpdatePorterAppEvent(ctx, d.target.Project, d.target.Cluster, stackNameWithoutRelease, &eventRequest)
+				if err != nil {
+					return nil, fmt.Errorf("error updating failed porter app event for pre-deploy job: %s", err.Error())
+				}
 			}
-		} else if err != nil {
+
+			if appConfig.OnlyCreate {
+				deleteJobErr := client.DeleteRelease(
+					context.Background(),
+					d.target.Project,
+					d.target.Cluster,
+					d.target.Namespace,
+					resourceName,
+				)
+
+				if deleteJobErr != nil {
+					return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
+						resourceName, deleteJobErr)
+				}
+			}
 			return nil, fmt.Errorf("error waiting for job %s: %w", resourceName, err)
 		}
+
+		if strings.Contains(d.target.Namespace, "porter-stack-") {
+			stackNameWithoutRelease := strings.TrimSuffix(d.target.AppName, "-r")
+			if predeployEventResponseID == "" {
+				return nil, errors.New("unable to find pre-deploy event response ID for successful pre-deploy event")
+			}
+			eventRequest := types.CreateOrUpdatePorterAppEventRequest{
+				ID:     predeployEventResponseID,
+				Status: "SUCCESS",
+				Type:   types.PorterAppEventType_PreDeploy,
+				Metadata: map[string]any{
+					"end_time": time.Now().UTC(),
+				},
+			}
+			_, err := client.CreateOrUpdatePorterAppEvent(ctx, d.target.Project, d.target.Cluster, stackNameWithoutRelease, &eventRequest)
+			if err != nil {
+				return nil, fmt.Errorf("error updating successful porter app event for pre-deploy job: %s", err.Error())
+			}
+		}
+
 	}
 
 	return resource, err

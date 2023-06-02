@@ -51,7 +51,7 @@ const namespaceBlacklist = [
 ];
 
 const AppDashboard: React.FC<Props> = ({ }) => {
-  const { currentProject, currentCluster } = useContext(Context);
+  const { currentProject, currentCluster, setFeaturePreview } = useContext(Context);
   const [apps, setApps] = useState([]);
   const [charts, setCharts] = useState([]);
   const [error, setError] = useState(null);
@@ -209,7 +209,12 @@ const AppDashboard: React.FC<Props> = ({ }) => {
           <Container row spaced>
             <SearchBar
               value={searchValue}
-              setValue={setSearchValue}
+              setValue={(x) => {
+                if (x === "open_sesame") {
+                  setFeaturePreview(true);
+                }
+                setSearchValue(x);
+              }}
               placeholder="Search applications . . ."
               width="100%"
             />

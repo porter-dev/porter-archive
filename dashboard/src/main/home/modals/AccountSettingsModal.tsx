@@ -11,6 +11,7 @@ import Helper from "components/form-components/Helper";
 
 import TabSelector from "components/TabSelector";
 import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
 
 interface GithubAppAccessData {
   username?: string;
@@ -62,9 +63,10 @@ const AccountSettingsModal = () => {
             <ListWrapper>
               <Helper>
                 No connected repositories found.
-                <A href={"/api/integrations/github-app/oauth"}>
-                  Authorize Porter to view your repositories.
-                </A>
+                <Spacer inline width="5px" />
+                <Link target="_blank" to={"/api/integrations/github-app/oauth"} hasunderline>
+                  Authorize Porter to view your repositories
+                </Link>
               </Helper>
             </ListWrapper>
           )}
@@ -80,9 +82,14 @@ const AccountSettingsModal = () => {
                 <ListWrapper>
                   <Helper>
                     No connected repositories found.
-                    <A href={"/api/integrations/github-app/install"}>
+                    <Spacer inline width="5px" />
+                    <Link 
+                      target="_blank"
+                      to={"/api/integrations/github-app/install"}
+                      hasunderline
+                    >
                       Install Porter in your repositories
-                    </A>
+                    </Link>
                   </Helper>
                 </ListWrapper>
               ) : (

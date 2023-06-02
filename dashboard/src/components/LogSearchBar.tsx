@@ -7,7 +7,7 @@ interface Props {
   searchText: string;
   setSearchText: (x: string) => void;
   setEnteredSearchText: (x: string) => void;
-  setSelectedDate: (x: Date | undefined) => void;
+  setSelectedDate: () => void;
 }
 
 const escapeRegExp = (str: string) => {
@@ -32,7 +32,7 @@ const LogSearchBar: React.FC<Props> = ({
           onKeyPress={(event) => {
             if (event.key === "Enter") {
               setEnteredSearchText(escapeRegExp(searchText));
-              setSelectedDate(dayjs().toDate());
+              setSelectedDate();
             }
           }}
           placeholder="Search logs..."

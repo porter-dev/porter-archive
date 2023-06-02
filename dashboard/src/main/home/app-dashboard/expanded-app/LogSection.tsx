@@ -200,6 +200,12 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     setEnteredSearchText("");
   };
 
+  const setSelectedDateIfUndefined = () => {
+    if (selectedDate == null) {
+      setSelectedDate(dayjs().toDate());
+    }
+  };
+
   const renderContents = () => {
     return (
       <>
@@ -209,7 +215,7 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
               searchText={searchText}
               setSearchText={setSearchText}
               setEnteredSearchText={setEnteredSearchText}
-              setSelectedDate={setSelectedDate}
+              setSelectedDate={setSelectedDateIfUndefined}
             />
             <LogQueryModeSelectionToggle
               selectedDate={selectedDate}

@@ -18,15 +18,15 @@ export const getDuration = (event: PorterAppEvent): string => {
     let formattedTime = "";
 
     if (hours > 0) {
-        formattedTime += `${hours} h `;
+        formattedTime += `${hours}h `;
     }
 
     if (minutes > 0) {
-        formattedTime += `${minutes} m `;
+        formattedTime += `${minutes}m `;
     }
 
     if (hours === 0 && minutes === 0) {
-        formattedTime += `${remainingSeconds} s`;
+        formattedTime += `${remainingSeconds}s`;
     }
 
     return formattedTime.trim();

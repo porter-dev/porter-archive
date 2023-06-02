@@ -34,11 +34,11 @@ const EventCard: React.FC<Props> = ({ event, appData }) => {
 
 export default EventCard;
 
-export const StyledEventCard = styled.div`
+export const StyledEventCard = styled.div<{ row?: boolean }>`
   width: 100%;
   padding: 15px;
   display: flex;
-  flex-direction: column;
+  flex-direction: ${({ row }) => row ? "row" : "column"};
   justify-content: space-between;
   height: 85px;
   border-radius: 5px;

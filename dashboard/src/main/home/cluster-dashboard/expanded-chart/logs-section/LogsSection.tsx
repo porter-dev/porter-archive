@@ -44,6 +44,7 @@ const escapeRegExp = (str: string) => {
 interface QueryModeSelectionToggleProps {
   selectedDate?: Date;
   setSelectedDate: React.Dispatch<React.SetStateAction<Date>>;
+  resetSearch: () => void;
 }
 
 const QueryModeSelectionToggle = (props: QueryModeSelectionToggleProps) => {
@@ -57,7 +58,10 @@ const QueryModeSelectionToggle = (props: QueryModeSelectionToggleProps) => {
     >
       <ToggleButton>
         <ToggleOption
-          onClick={() => props.setSelectedDate(undefined)}
+          onClick={() => {
+            props.setSelectedDate(undefined);
+            props.resetSearch();
+          }}
           selected={!props.selectedDate}
         >
           <Dot selected={!props.selectedDate} />
@@ -267,31 +271,41 @@ const LogsSection: React.FC<Props> = ({
     moveCursor(Direction.backward);
   }, [logs, selectedDate]);
 
+  const resetSearch = () => {
+    setSearchText("");
+    setEnteredSearchText("");
+  };
+
   const renderContents = () => {
     return (
       <>
         <FlexRow isFullscreen={isFullscreen}>
           <Flex>
-            {/*<SearchRowWrapper>*/}
-            {/*  <SearchBarWrapper>*/}
-            {/*    <i className="material-icons">search</i>*/}
-            {/*    <SearchInput*/}
-            {/*      value={searchText}*/}
-            {/*      onChange={(e: any) => {*/}
-            {/*        setSearchText(e.target.value);*/}
-            {/*      }}*/}
-            {/*      onKeyPress={(event) => {*/}
-            {/*        if (event.key === "Enter") {*/}
-            {/*          setEnteredSearchText(escapeRegExp(searchText));*/}
-            {/*        }*/}
-            {/*      }}*/}
-            {/*      placeholder="Search logs..."*/}
-            {/*    />*/}
-            {/*  </SearchBarWrapper>*/}
-            {/*</SearchRowWrapper>*/}
+            <SearchRowWrapper>
+              <SearchBarWrapper>
+                <i className="material-icons">search</i>
+                <SearchInput
+                  value={searchText}
+                  onChange={(e: any) => {
+                    setSearchText(e.target.value);
+                  }}
+                  onKeyPress={(event) => {
+                    if (event.key === "Enter") {
+                      setEnteredSearchText(escapeRegExp(searchText));
+                      if (selectedDate == null) {
+                        console.log(dayjs().toDate());
+                        setSelectedDate(dayjs().toDate());
+                      }
+                    }
+                  }}
+                  placeholder="Search logs..."
+                />
+              </SearchBarWrapper>
+            </SearchRowWrapper>
             <QueryModeSelectionToggle
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
+              resetSearch={resetSearch}
             />
             <RadioFilter
               icon={filterOutline}

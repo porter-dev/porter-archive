@@ -1,18 +1,25 @@
 import React, { useState } from "react";
 import Button from "./Button";
 import styled from "styled-components";
+import dayjs from "dayjs";
 
 interface Props {
+  searchText: string;
+  setSearchText: (x: string) => void;
   setEnteredSearchText: (x: string) => void;
+  setSelectedDate: (x: Date | undefined) => void;
 }
 
 const escapeRegExp = (str: string) => {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
-const LogSearchBar: React.FC<Props> = ({ setEnteredSearchText }) => {
-  const [searchText, setSearchText] = useState("");
-
+const LogSearchBar: React.FC<Props> = ({
+  searchText,
+  setSearchText,
+  setEnteredSearchText,
+  setSelectedDate,
+}) => {
   return (
     <SearchRowWrapper>
       <SearchBarWrapper>
@@ -25,6 +32,7 @@ const LogSearchBar: React.FC<Props> = ({ setEnteredSearchText }) => {
           onKeyPress={(event) => {
             if (event.key === "Enter") {
               setEnteredSearchText(escapeRegExp(searchText));
+              setSelectedDate(dayjs().toDate());
             }
           }}
           placeholder="Search logs..."

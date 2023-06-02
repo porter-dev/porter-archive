@@ -52,7 +52,6 @@ const Svg = styled.svg`
 
 const Underline = styled.div`
   position: absolute;
-  bottom: -2px;
   left: 0px;
   height: 1px;
   width: 100%;

@@ -49,7 +49,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
           cluster_id: appData.app.cluster_id,
         }
       )
-      // console.log(logResp)
+
       const updatedLogs = logResp.data.logs.map((l: { line: string; timestamp: string; }, index: number) =>
       ({
         line: Anser.ansiToJson(l.line),

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -557,7 +558,10 @@ func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboa
 	if d.source.Name == "job" && appConfig.WaitForJob && (shouldCreate || !appConfig.OnlyCreate) {
 		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resourceName)
 
-		fmt.Println("STEFAN", d.target.Namespace)
+		var predeployEventResponseID string
+
+		stackNameWithoutRelease := strings.TrimSuffix(d.target.AppName, "-r")
+
 		if strings.Contains(d.target.Namespace, "porter-stack-") {
 			eventRequest := types.CreateOrUpdatePorterAppEventRequest{
 				Status: "PROGRESSING",
@@ -566,11 +570,11 @@ func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboa
 					"start_time": time.Now().UTC(),
 				},
 			}
-			eventResponse, err := client.CreateOrUpdatePorterAppEvent(ctx, d.target.Project, d.target.Cluster, d.target.AppName, &eventRequest)
+			eventResponse, err := client.CreateOrUpdatePorterAppEvent(ctx, d.target.Project, d.target.Cluster, stackNameWithoutRelease, &eventRequest)
 			if err != nil {
 				return nil, fmt.Errorf("error creating porter app event for pre-deploy job: %s", err.Error())
 			}
-			fmt.Println("STEFAN", eventRequest.ID, eventResponse)
+			predeployEventResponseID = eventResponse.ID
 		}
 
 		err = wait.WaitForJob(client, &wait.WaitOpts{
@@ -579,23 +583,62 @@ func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboa
 			Namespace: d.target.Namespace,
 			Name:      resourceName,
 		})
+		if err != nil {
+			if strings.Contains(d.target.Namespace, "porter-stack-") {
+				if predeployEventResponseID == "" {
+					return nil, errors.New("unable to find pre-deploy event response ID for failed pre-deploy event")
+				}
 
-		if err != nil && appConfig.OnlyCreate {
-			// deleteJobErr := client.DeleteRelease(
-			// 	context.Background(),
-			// 	d.target.Project,
-			// 	d.target.Cluster,
-			// 	d.target.Namespace,
-			// 	resourceName,
-			// )
+				eventRequest := types.CreateOrUpdatePorterAppEventRequest{
+					ID:     predeployEventResponseID,
+					Status: "FAILED",
+					Type:   types.PorterAppEventType_PreDeploy,
+					Metadata: map[string]any{
+						"end_time": time.Now().UTC(),
+					},
+				}
+				_, err := client.CreateOrUpdatePorterAppEvent(ctx, d.target.Project, d.target.Cluster, stackNameWithoutRelease, &eventRequest)
+				if err != nil {
+					return nil, fmt.Errorf("error updating failed porter app event for pre-deploy job: %s", err.Error())
+				}
+			}
 
-			// if deleteJobErr != nil {
-			// 	return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
-			// 		resourceName, deleteJobErr)
-			// }
-		} else if err != nil {
+			if appConfig.OnlyCreate {
+				deleteJobErr := client.DeleteRelease(
+					context.Background(),
+					d.target.Project,
+					d.target.Cluster,
+					d.target.Namespace,
+					resourceName,
+				)
+
+				if deleteJobErr != nil {
+					return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
+						resourceName, deleteJobErr)
+				}
+			}
 			return nil, fmt.Errorf("error waiting for job %s: %w", resourceName, err)
 		}
+
+		if strings.Contains(d.target.Namespace, "porter-stack-") {
+			stackNameWithoutRelease := strings.TrimSuffix(d.target.AppName, "-r")
+			if predeployEventResponseID == "" {
+				return nil, errors.New("unable to find pre-deploy event response ID for successful pre-deploy event")
+			}
+			eventRequest := types.CreateOrUpdatePorterAppEventRequest{
+				ID:     predeployEventResponseID,
+				Status: "SUCCESS",
+				Type:   types.PorterAppEventType_PreDeploy,
+				Metadata: map[string]any{
+					"end_time": time.Now().UTC(),
+				},
+			}
+			_, err := client.CreateOrUpdatePorterAppEvent(ctx, d.target.Project, d.target.Cluster, stackNameWithoutRelease, &eventRequest)
+			if err != nil {
+				return nil, fmt.Errorf("error updating successful porter app event for pre-deploy job: %s", err.Error())
+			}
+		}
+
 	}
 
 	return resource, err

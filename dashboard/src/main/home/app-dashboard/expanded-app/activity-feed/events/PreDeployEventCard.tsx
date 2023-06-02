@@ -45,7 +45,7 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
   const getPredeployLogs = async () => {
     setLogModalVisible(true);
     try {
-      const logResp = await api.getChartLogsWithinTimeRange(
+      const logResp = await api.getLogsWithinTimeRange(
         "<token>",
         {
           chart_name: appData.releaseChart.name,

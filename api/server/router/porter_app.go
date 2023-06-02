@@ -301,7 +301,7 @@ func getStackRoutes(
 		},
 	)
 
-	getChartLogsWithinTimeRangeHandler := porter_app.NewGetChartLogsWithinTimeRangeHandler(
+	getChartLogsWithinTimeRangeHandler := porter_app.NewGetLogsWithinTimeRangeHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

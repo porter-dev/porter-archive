@@ -16,23 +16,23 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-type GetChartLogsWithinTimeRangeHandler struct {
+type GetLogsWithinTimeRangeHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewGetChartLogsWithinTimeRangeHandler(
+func NewGetLogsWithinTimeRangeHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetChartLogsWithinTimeRangeHandler {
-	return &GetChartLogsWithinTimeRangeHandler{
+) *GetLogsWithinTimeRangeHandler {
+	return &GetLogsWithinTimeRangeHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *GetChartLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	request := &types.GetChartLogsWithinTimeRangeRequest{}

@@ -211,7 +211,7 @@ const deletePorterApp = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
 });
 
-const getChartLogsWithinTimeRange = baseApi<
+const getLogsWithinTimeRange = baseApi<
   {
     chart_name: string;
     limit: number;
@@ -2657,7 +2657,7 @@ export default {
   getPorterApp,
   createPorterApp,
   deletePorterApp,
-  getChartLogsWithinTimeRange,
+  getLogsWithinTimeRange,
   createConfigMap,
   deleteCluster,
   deleteConfigMap,

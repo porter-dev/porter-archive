@@ -112,7 +112,6 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
         }
       }
     } catch (error) {
-      console.log(appData);
       console.log(error);
     }
   };

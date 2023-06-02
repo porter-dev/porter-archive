@@ -17,13 +17,11 @@ const EventCard: React.FC<Props> = ({ event, appData }) => {
   const renderEventCard = (event: PorterAppEvent) => {
     switch (event.type) {
       case PorterAppEventType.APP_EVENT:
-      // TODO: implement
-      // return <AppEventCard event={event} appData={appData} />;
+        return <AppEventCard event={event} appData={appData} />;
       case PorterAppEventType.BUILD:
         return <BuildEventCard event={event} appData={appData} />;
       case PorterAppEventType.DEPLOY:
-      // TODO: implement
-      // return <DeployEventCard event={event} appData={appData} />;
+        return <DeployEventCard event={event} appData={appData} />;
       case PorterAppEventType.PRE_DEPLOY:
         return <PreDeployEventCard event={event} appData={appData} />;
       default:

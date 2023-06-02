@@ -45,7 +45,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         }
       );
       setNumPages(res.data.num_pages);
-      setEvents((res.data.events as PorterAppEvent[]).filter(e => e.type === PorterAppEventType.BUILD || e.type === PorterAppEventType.PRE_DEPLOY));
+      setEvents(res.data.events);
       setLoading(false);
     } catch (err) {
       setError(err);
@@ -105,7 +105,9 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         );
       })}
       <Spacer y={1} />
-      <Pagination page={page} setPage={setPage} totalPages={numPages} />
+      {numPages > 1 && (
+        <Pagination page={page} setPage={setPage} totalPages={numPages} />
+      )}
     </StyledActivityFeed>
   );
 };

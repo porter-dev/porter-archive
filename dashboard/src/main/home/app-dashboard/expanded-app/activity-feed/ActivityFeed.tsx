@@ -105,7 +105,9 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         );
       })}
       <Spacer y={1} />
-      <Pagination page={page} setPage={setPage} totalPages={numPages} />
+      {numPages > 1 && (
+        <Pagination page={page} setPage={setPage} totalPages={numPages} />
+      )}
     </StyledActivityFeed>
   );
 };

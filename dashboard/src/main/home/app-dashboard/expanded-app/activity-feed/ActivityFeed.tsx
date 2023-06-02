@@ -7,14 +7,14 @@ import { Context } from "shared/Context";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 
-import EventCard from "./EventCard";
+import EventCard from "./events/EventCard";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 import Fieldset from "components/porter/Fieldset";
 
 import { feedDate } from "shared/string_utils";
 import Pagination from "components/porter/Pagination";
-import { PorterAppEvent } from "shared/types";
+import { PorterAppEvent, PorterAppEventType } from "shared/types";
 
 type Props = {
   chart: any;
@@ -45,7 +45,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         }
       );
       setNumPages(res.data.num_pages);
-      setEvents(res.data.events as PorterAppEvent[]);
+      setEvents(res.data.events);
       setLoading(false);
     } catch (err) {
       setError(err);
@@ -100,12 +100,14 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
               <Spacer x={0.5} />
               <Text>{feedDate(event.created_at).split(", ")[1]}</Text>
             </Time>
-            <EventCard appData={appData} event={event} i={i} />
+            <EventCard appData={appData} event={event} key={i} />
           </EventWrapper>
         );
       })}
       <Spacer y={1} />
-      <Pagination page={page} setPage={setPage} totalPages={numPages} />
+      {numPages > 1 && (
+        <Pagination page={page} setPage={setPage} totalPages={numPages} />
+      )}
     </StyledActivityFeed>
   );
 };

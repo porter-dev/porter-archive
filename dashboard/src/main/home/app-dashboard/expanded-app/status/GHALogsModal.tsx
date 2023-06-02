@@ -32,7 +32,7 @@ const GHALogsModal: React.FC<Props> = ({
   actionRunId,
 }) => {
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
-  const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
+  const scrollToBottomRef = useRef<HTMLDivElement>(null);
   const ExpandedIncidentLogs = ({ logs }: ExpandedIncidentLogsProps) => {
     if (!logs.length) {
       return (
@@ -88,6 +88,7 @@ const GHALogsModal: React.FC<Props> = ({
     if (!logs) {
       return <Loading />;
     }
+    console.log(logs)
     return (
       <>
         <ExpandedIncidentLogs logs={logs} />

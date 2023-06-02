@@ -35,6 +35,7 @@ import { string, z } from "zod";
 import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
 import { ReleaseService, Service } from "./serviceTypes";
 import GithubConnectModal from "./GithubConnectModal";
+import Link from "components/porter/Link";
 
 type Props = RouteComponentProps & {};
 
@@ -464,12 +465,14 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Spacer y={0.5} />
                 <Text color="helper">
                   Deploy from a Git repository or a Docker registry.
-                  <a
-                    href="https://docs.porter.run/deploying-applications/overview"
+                  <Spacer inline width="5px" />
+                  <Link
+                    hasunderline
+                    to="https://docs.porter.run/standard/deploying-applications/overview"
                     target="_blank"
                   >
-                    &nbsp;Learn more.
-                  </a>
+                    Learn more
+                  </Link>
                 </Text>
                 <Spacer y={0.5} />
                 <SourceSelector
@@ -609,7 +612,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
               >
                 Deploy app
               </Button>,
-            ]}
+            ].filter((x) => x)}
           />
           <Spacer y={3} />
         </StyledConfigureTemplate>

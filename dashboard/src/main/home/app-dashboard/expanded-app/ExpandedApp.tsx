@@ -67,7 +67,7 @@ const icons = [
 ];
 
 const ExpandedApp: React.FC<Props> = ({ ...props }) => {
-  const { currentCluster, currentProject, setCurrentError } = useContext(
+  const { currentCluster, currentProject, setCurrentError, featurePreview } = useContext(
     Context
   );
   const [isLoading, setIsLoading] = useState(true);
@@ -818,15 +818,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <>
                 <Spacer inline x={1} />
                 <Container row>
-                  <Link
+                  <A
                     target="_blank"
-                    to={`https://github.com/${appData.app.repo_name}`}
+                    href={`https://github.com/${appData.app.repo_name}`}
                   >
                     <SmallIcon src={github} />
-                    <Text size={13}>
-                      {appData.app.repo_name}
-                    </Text>
-                  </Link>
+                    <Text size={13}>{appData.app.repo_name}</Text>
+                  </A>
                 </Container>
               </>
             )}
@@ -913,39 +911,30 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                               onClick={() => window.location.reload()}
                             >
                               <img src={refresh} />
-                              <Underline>Refresh</Underline>
+                              Refresh
                             </RefreshButton>
                           </>
                         </>
                       }
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          marginBottom: "-20px",
-                        }}
-                      >
-                        Your build was not successful.
-                        <Spacer inline width="15px" />
-                        <>
-                          <Link
-                            hasunderline
-                            target="_blank"
-                            onClick={() => setModalVisible(true)}
-                          >
-                            View logs
-                          </Link>
-                          {modalVisible && (
-                            <GHALogsModal
-                              appData={appData}
-                              logs={logs}
-                              modalVisible={modalVisible}
-                              setModalVisible={setModalVisible}
-                            />
-                          )}
-                        </>
-                      </div>
+                      Your build was not successful.
+                      <Spacer inline width="5px" />
+                      <>
+                        <Link
+                          hasunderline
+                          onClick={() => setModalVisible(true)}
+                        >
+                          View logs
+                        </Link>
+                        {modalVisible && (
+                          <GHALogsModal
+                            appData={appData}
+                            logs={logs}
+                            modalVisible={modalVisible}
+                            setModalVisible={setModalVisible}
+                          />
+                        )}
+                      </>
 
                       <Spacer inline width="5px" />
                     </Banner>
@@ -961,7 +950,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                             onClick={() => window.location.reload()}
                           >
                             <img src={refresh} />
-                            <Underline>Refresh</Underline>
+                            Refresh
                           </RefreshButton>
                         </>
                       }
@@ -1005,47 +994,21 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <Spacer y={1} />
               <TabSelector
                 options={
-                  appData.app.git_repo_id
-                    ? hasBuiltImage
-                      ? [
-                        { label: "Overview", value: "overview" },
-                        { label: "Activity", value: "activity" },
-                        { label: "Events", value: "events" },
-                        { label: "Logs", value: "logs" },
-                        { label: "Metrics", value: "metrics" },
-                        { label: "Debug", value: "status" },
-                        { label: "Pre-deploy logs", value: "pre-deploy" },
-                        {
-                          label: "Environment",
-                          value: "environment-variables",
-                        },
-                        { label: "Build settings", value: "build-settings" },
-                        { label: "Settings", value: "settings" },
-                      ]
-                      : [
-                        { label: "Overview", value: "overview" },
-                        { label: "Activity", value: "activity" },
-                        { label: "Pre-deploy logs", value: "pre-deploy" },
-                        {
-                          label: "Environment",
-                          value: "environment-variables",
-                        },
-                        { label: "Build settings", value: "build-settings" },
-                        { label: "Settings", value: "settings" },
-                      ]
-                    : [
-                      { label: "Overview", value: "overview" },
-                      { label: "Activity", value: "activity" },
-                      { label: "Events", value: "events" },
-                      { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
-                      { label: "Debug", value: "status" },
-                      {
-                        label: "Environment",
-                        value: "environment-variables",
-                      },
-                      { label: "Settings", value: "settings" },
-                    ]
+                  [
+                    { label: "Overview", value: "overview" },
+                    featurePreview && { label: "Activity", value: "activity" },
+                    hasBuiltImage && { label: "Events", value: "events" },
+                    hasBuiltImage && { label: "Logs", value: "logs" },
+                    hasBuiltImage && { label: "Metrics", value: "metrics" },
+                    hasBuiltImage && { label: "Debug", value: "status" },
+                    appData.app.git_repo_id && { label: "Pre-deploy logs", value: "pre-deploy" },
+                    {
+                      label: "Environment",
+                      value: "environment-variables",
+                    },
+                    appData.app.git_repo_id && { label: "Build settings", value: "build-settings" },
+                    { label: "Settings", value: "settings" },
+                  ].filter(x => x)
                 }
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {
@@ -1078,6 +1041,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 };
 
 export default withRouter(ExpandedApp);
+
+const A = styled.a`
+  display: flex;
+  align-items: center;
+`;
 
 const Underline = styled.div`
   border-bottom: 1px solid #ffffff;

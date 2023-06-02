@@ -31,6 +31,7 @@ const StyledContainer = styled.div<{
   spaced: boolean;
 }>`
   display: ${props => props.row ? "flex" : "block"};
+  flex-direction: ${props => props.row ? "row" : "column"};
   align-items: center;
   justify-content: ${props => props.spaced ? "space-between" : "flex-start"};
 `;

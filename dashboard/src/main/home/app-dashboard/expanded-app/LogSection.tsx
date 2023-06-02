@@ -49,6 +49,7 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
   const [podFilterOpts, setPodFilterOpts] = useState<PodFilter[]>([]);
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [enteredSearchText, setEnteredSearchText] = useState("");
+  const [searchText, setSearchText] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [notification, setNotification] = useState<string>();
 
@@ -194,19 +195,32 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     moveCursor(Direction.backward);
   }, [logs, selectedDate]);
 
+  const resetSearch = () => {
+    setSearchText("");
+    setEnteredSearchText("");
+  };
+
+  const setSelectedDateIfUndefined = () => {
+    if (selectedDate == null) {
+      setSelectedDate(dayjs().toDate());
+    }
+  };
+
   const renderContents = () => {
-    const searchBarProps = {
-      // make sure all required component's inputs/Props keys&types match
-      setEnteredSearchText: setEnteredSearchText,
-    };
     return (
       <>
         <FlexRow>
           <Flex>
-            {/* <LogSearchBar setEnteredSearchText={setEnteredSearchText} /> */}
+            <LogSearchBar
+              searchText={searchText}
+              setSearchText={setSearchText}
+              setEnteredSearchText={setEnteredSearchText}
+              setSelectedDate={setSelectedDateIfUndefined}
+            />
             <LogQueryModeSelectionToggle
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
+              resetSearch={resetSearch}
             />
             <RadioFilter
               icon={filterOutline}
@@ -378,10 +392,6 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
         <Spacer inline x={1} />
         <Text color="helper">The Porter agent is being installed . . .</Text>
       </Container>
-    </Fieldset>
-  ) : isLoading ? (
-    <Fieldset>
-      <Loading />
     </Fieldset>
   ) : !hasPorterAgent ? (
     <Fieldset>

@@ -27,24 +27,11 @@ const DateTimePicker: React.FC<Props> = ({ startDate, setStartDate }) => {
     currentDate.setTime(currentDate.getTime() + 24 * 60 * 60 * 1000);
   }
 
-  console.log(availableDates);
-
-  console.log(startDate);
-
-  console.log("startDateString", startDate.toDateString());
-  console.log("minDateString", minDate.toDateString());
-
   const isMinDay = startDate.toDateString() === minDate.toDateString();
   const isMaxDay = startDate.toDateString() === maxDate.toDateString();
 
-  console.log("isMinDay", isMinDay);
-  console.log("isMaxDay", isMaxDay);
-
   const minTime = isMinDay ? minDate : isMaxDay ? minTimeMaxDay : null;
   const maxTime = isMaxDay ? maxDate : isMinDay ? maxTimeMinDay : null;
-
-  console.log("minTime", minTime);
-  console.log("maxTime", maxTime);
 
   return (
     <DateTimePickerWrapper

@@ -289,10 +289,10 @@ export const useLogs = (
     flushLogsBuffer(true);
     const websocketKey = `${currentPod}-${namespace}-websocket`;
     const endDate = dayjs(setDate);
-    const twoWeeksAgo = endDate.subtract(14, "days");
+    const oneDayAgo = endDate.subtract(1, "day");
 
     const { logs: initialLogs, previousCursor, nextCursor } = await queryLogs(
-      twoWeeksAgo.toISOString(),
+      oneDayAgo.toISOString(),
       endDate.toISOString(),
       Direction.backward
     );
@@ -326,10 +326,10 @@ export const useLogs = (
       // we query by setting the endDate equal to the previous startDate, and setting the direction
       // to "backward"
       const refDate = paginationInfo.previousCursor ?? dayjs().toISOString();
-      const twoWeeksAgo = dayjs(refDate).subtract(14, "days");
+      const oneDayAgo = dayjs(refDate).subtract(1, "day");
 
       const { logs: newLogs, previousCursor } = await queryLogs(
-        twoWeeksAgo.toISOString(),
+        oneDayAgo.toISOString(),
         refDate,
         Direction.backward
       );

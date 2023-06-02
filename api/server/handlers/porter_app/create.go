@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -227,6 +228,8 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
+		c.createPorterAppEvent(ctx, "SUCCESS", porterApp.ID, helmRelease.Version)
+
 		c.WriteResult(w, r, porterApp.ToPorterAppType())
 	} else {
 		// create/update the release job chart
@@ -359,8 +362,35 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
+		c.createPorterAppEvent(ctx, "SUCCESS", updatedPorterApp.ID, helmRelease.Version)
+
 		c.WriteResult(w, r, updatedPorterApp.ToPorterAppType())
 	}
+}
+
+// createPorterAppEvent creates an event for use in the activity feed
+func (c *CreatePorterAppHandler) createPorterAppEvent(ctx context.Context, status string, appID uint, revision int) (*models.PorterAppEvent, error) {
+	event := models.PorterAppEvent{
+		ID:                 uuid.New(),
+		Status:             status,
+		Type:               "DEPLOY",
+		TypeExternalSource: "KUBERNETES",
+		PorterAppID:        appID,
+		Metadata: map[string]any{
+			"revision": revision,
+		},
+	}
+
+	err := c.Repo().PorterAppEvent().CreateEvent(ctx, &event)
+	if err != nil {
+		return nil, err
+	}
+
+	if event.ID == uuid.Nil {
+		return nil, err
+	}
+
+	return &event, nil
 }
 
 func createReleaseJobChart(

@@ -44,7 +44,6 @@ const EventsTab: React.FC<Props> = ({ currentChart }) => {
         if (res.data?.version != "v3") {
           setHasPorterAgent(false);
         } else {
-          setHasPorterAgent(true);
           // next, check whether events can be queried - if they can, we're good to go
           let filters: any = getFilters();
 

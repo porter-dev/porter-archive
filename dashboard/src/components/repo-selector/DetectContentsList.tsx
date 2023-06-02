@@ -316,7 +316,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
           or specify the path here.
         </Text>
         <Link
-          to="https://docs.porter.run/deploying-applications/application-porter-yaml-reference"
+          to="https://docs.porter.run/standard/deploying-applications/writing-porter-yaml"
           target="_blank"
           hasunderline
         >

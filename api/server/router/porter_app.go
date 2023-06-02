@@ -284,5 +284,34 @@ func getStackRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/logs -> cluster.NewGetChartLogsWithinTimeRangeHandler
+	getChartLogsWithinTimeRangeEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/logs", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getChartLogsWithinTimeRangeHandler := porter_app.NewGetChartLogsWithinTimeRangeHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getChartLogsWithinTimeRangeEndpoint,
+		Handler:  getChartLogsWithinTimeRangeHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

@@ -272,23 +272,23 @@ const LogsSection: React.FC<Props> = ({
       <>
         <FlexRow isFullscreen={isFullscreen}>
           <Flex>
-            <SearchRowWrapper>
-              <SearchBarWrapper>
-                <i className="material-icons">search</i>
-                <SearchInput
-                  value={searchText}
-                  onChange={(e: any) => {
-                    setSearchText(e.target.value);
-                  }}
-                  onKeyPress={(event) => {
-                    if (event.key === "Enter") {
-                      setEnteredSearchText(escapeRegExp(searchText));
-                    }
-                  }}
-                  placeholder="Search logs..."
-                />
-              </SearchBarWrapper>
-            </SearchRowWrapper>
+            {/*<SearchRowWrapper>*/}
+            {/*  <SearchBarWrapper>*/}
+            {/*    <i className="material-icons">search</i>*/}
+            {/*    <SearchInput*/}
+            {/*      value={searchText}*/}
+            {/*      onChange={(e: any) => {*/}
+            {/*        setSearchText(e.target.value);*/}
+            {/*      }}*/}
+            {/*      onKeyPress={(event) => {*/}
+            {/*        if (event.key === "Enter") {*/}
+            {/*          setEnteredSearchText(escapeRegExp(searchText));*/}
+            {/*        }*/}
+            {/*      }}*/}
+            {/*      placeholder="Search logs..."*/}
+            {/*    />*/}
+            {/*  </SearchBarWrapper>*/}
+            {/*</SearchRowWrapper>*/}
             <QueryModeSelectionToggle
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}

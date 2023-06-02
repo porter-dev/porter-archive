@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import pre_deploy from "assets/pre_deploy.png";
 
 import run_for from "assets/run_for.png";
+import refresh from "assets/refresh.png";
 
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
@@ -11,16 +12,23 @@ import Icon from "components/porter/Icon";
 import Modal from "components/porter/Modal";
 
 import { PorterAppEvent } from "shared/types";
-import { getDuration, getStatusIcon } from './utils';
+import { getDuration, getStatusIcon, triggerWorkflow } from './utils';
 import { StyledEventCard } from "./EventCard";
+import Link from "components/porter/Link";
+import LogsModal from "../../status/LogsModal";
+import api from "shared/api";
+import dayjs from "dayjs";
 
 type Props = {
   event: PorterAppEvent;
+  appData: any;
 };
 
-const PreDeployEventCard: React.FC<Props> = ({ event }) => {
+const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalContent, setModalContent] = useState<React.ReactNode>(null);
+  const [logModalVisible, setLogModalVisible] = useState(false);
+  const [pods, setPods] = useState([]);
 
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
@@ -33,59 +41,66 @@ const PreDeployEventCard: React.FC<Props> = ({ event }) => {
     }
   };
 
-  const renderInfoCta = (event: any) => {
-    switch (event.status) {
-      case "SUCCESS":
+  const getPodWithCorrectTimestamp = (
+    getJobPodsResponses: any[],
+    start_range: dayjs.Dayjs,
+    end_range: dayjs.Dayjs,
+  ) => {
+    let filteredObjects = getJobPodsResponses.filter(obj =>
+      obj.data &&
+      obj.data.some((d: any) => {
         return (
-          <>
-            {/* <Link hasunderline onClick={() => getBuildLogs()}>
-              View logs
-            </Link>
+          d?.metadata?.creationTimestamp &&
+          dayjs(d.metadata.creationTimestamp) >= start_range &&
+          dayjs(d.metadata.creationTimestamp) <= end_range
+        );
+      })
+    );
 
-            {logModalVisible && (
-              <GHALogsModal
-                appData={appData}
-                logs={logs}
-                modalVisible={logModalVisible}
-                setModalVisible={setLogModalVisible}
-                actionRunId={event.metadata?.action_run_id}
-              />
-            )}
-            <Spacer inline x={1} /> */}
-          </>
-        );
-      case "FAILED":
-        return (
-          <>
-            {/* <Link hasunderline onClick={() => getBuildLogs()}>
-              View logs
-            </Link>
+    if (filteredObjects.length === 0) {
+      return undefined;
+    }
 
-            {logModalVisible && (
-              <GHALogsModal
-                appData={appData}
-                logs={logs}
-                modalVisible={logModalVisible}
-                setModalVisible={setLogModalVisible}
-                actionRunId={event.metadata?.action_run_id}
-              />
-            )}
-            <Spacer inline x={1} /> */}
-          </>
-        );
-      default:
-        return (
-          <>
-            {/* <Link
-              hasunderline
-              target="_blank"
-              to={`https://github.com/${appData.app.repo_name}/actions/runs/${event.metadata?.action_run_id}`}
-            >
-              View live logs
-            </Link>
-            <Spacer inline x={1} /> */}
-          </>
-        );
+    return filteredObjects[filteredObjects.length - 1]
+  }
+
+  const getPredeployLogs = async () => {
+    setLogModalVisible(true);
+    try {
+      // get the pod name
+      const filters = {
+        namespace: appData.releaseChart.namespace,
+        match_prefix: appData.releaseChart.name,
+        start_range: dayjs(event.metadata.start_time).toISOString(),
+        end_range: dayjs(event.metadata.end_time).toISOString(),
+      };
+      const logPodValuesResp = await api.getLogPodValues("<TOKEN>", filters, {
+        project_id: appData.app.project_id,
+        cluster_id: appData.app.cluster_id,
+      });
+      const logPodValues = logPodValuesResp.data;
+
+      if (logPodValues != null && logPodValues.length > 0) {
+        // wheeeee
+        const podNames = logPodValues.map((v: string) => v.split('-hook')[0] + '-hook');
+        const getJobPodsResponses = await Promise.all(podNames.map((podName: string) => api.getJobPods(
+          "<token>",
+          {},
+          {
+            id: appData.app.project_id,
+            name: podName,
+            cluster_id: appData.app.cluster_id,
+            namespace: appData.releaseChart.namespace,
+          },
+        )));
+        const latestPod = getPodWithCorrectTimestamp(getJobPodsResponses, dayjs(event.metadata.start_time), dayjs(event.metadata.end_time));
+        if (latestPod != null) {
+          setPods(latestPod.data);
+        }
+      }
+
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -110,10 +125,14 @@ const PreDeployEventCard: React.FC<Props> = ({ event }) => {
           <Spacer inline width="10px" />
           {renderStatusText(event)}
           <Spacer inline x={1} />
-          {renderInfoCta(event)}
-          {/* {event.status === "FAILED" && (
+          <Link hasunderline onClick={() => getPredeployLogs()}>
+            View logs
+          </Link>
+          {event.status === "FAILED" && (
             <>
-              <Link hasunderline onClick={() => triggerWorkflow()}>
+              <Spacer inline x={1} />
+
+              <Link hasunderline onClick={() => triggerWorkflow(appData)}>
                 <Container row>
                   <Icon height="10px" src={refresh} />
                   <Spacer inline width="5px" />
@@ -121,7 +140,16 @@ const PreDeployEventCard: React.FC<Props> = ({ event }) => {
                 </Container>
               </Link>
             </>
-          )} */}
+          )}
+          {logModalVisible && (
+            <LogsModal
+              selectedPod={pods[0]}
+              podError={!pods[0] ? "Pod no longer exists." : ""}
+              setModalVisible={setLogModalVisible}
+              logsName={"pre-deploy"}
+            />
+          )}
+          <Spacer inline x={1} />
         </Container>
       </Container>
       {showModal && (

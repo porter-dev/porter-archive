@@ -115,14 +115,14 @@ type GetLogRequest struct {
 // You may either provide the pod selector directly, or the chart name,
 // in which case we will attempt to find the correct pod within the timeframe.
 type GetChartLogsWithinTimeRangeRequest struct {
-	ChartName   string     `schema:"chart_name"`
-	Limit       uint       `schema:"limit"`
-	StartRange  *time.Time `schema:"start_range"`
-	EndRange    *time.Time `schema:"end_range"`
-	SearchParam string     `schema:"search_param"`
-	Revision    string     `schema:"revision"`
-	Namespace   string     `schema:"namespace"`
-	PodSelector string     `schema:"pod_selector"`
+	ChartName   string    `schema:"chart_name"`
+	Limit       uint      `schema:"limit"`
+	StartRange  time.Time `schema:"start_range,omitempty"`
+	EndRange    time.Time `schema:"end_range,omitempty"`
+	SearchParam string    `schema:"search_param"`
+	Revision    string    `schema:"revision"`
+	Namespace   string    `schema:"namespace"`
+	PodSelector string    `schema:"pod_selector"`
 }
 
 type GetPodValuesRequest struct {

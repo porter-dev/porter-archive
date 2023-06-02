@@ -88,6 +88,7 @@ const GHALogsModal: React.FC<Props> = ({
     if (!logs) {
       return <Loading />;
     }
+    console.log(logs)
     return (
       <>
         <ExpandedIncidentLogs logs={logs} />

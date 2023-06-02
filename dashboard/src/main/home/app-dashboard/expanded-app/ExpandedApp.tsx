@@ -917,24 +917,24 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                         </>
                       }
                     >
-                        Your build was not successful.
-                        <Spacer inline width="5px" />
-                        <>
-                          <Link
-                            hasunderline
-                            onClick={() => setModalVisible(true)}
-                          >
-                            View logs
-                          </Link>
-                          {modalVisible && (
-                            <GHALogsModal
-                              appData={appData}
-                              logs={logs}
-                              modalVisible={modalVisible}
-                              setModalVisible={setModalVisible}
-                            />
-                          )}
-                        </>
+                      Your build was not successful.
+                      <Spacer inline width="5px" />
+                      <>
+                        <Link
+                          hasunderline
+                          onClick={() => setModalVisible(true)}
+                        >
+                          View logs
+                        </Link>
+                        {modalVisible && (
+                          <GHALogsModal
+                            appData={appData}
+                            logs={logs}
+                            modalVisible={modalVisible}
+                            setModalVisible={setModalVisible}
+                          />
+                        )}
+                      </>
 
                       <Spacer inline width="5px" />
                     </Banner>

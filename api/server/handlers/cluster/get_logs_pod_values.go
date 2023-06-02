@@ -38,12 +38,7 @@ func (c *GetLogPodValuesHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var namespace string
-	if request.Namespace != "" {
-		namespace = request.Namespace
-	}
-
-	agent, err := c.GetAgent(r, cluster, namespace)
+	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

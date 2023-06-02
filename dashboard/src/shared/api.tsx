@@ -213,7 +213,7 @@ const deletePorterApp = baseApi<
 
 const getLogsWithinTimeRange = baseApi<
   {
-    chart_name: string;
+    chart_name?: string;
     limit: number;
     start_range?: string;
     end_range?: string;

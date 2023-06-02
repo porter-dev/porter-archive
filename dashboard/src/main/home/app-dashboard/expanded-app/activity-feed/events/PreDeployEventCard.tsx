@@ -93,7 +93,7 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
           <Spacer inline width="10px" />
           {renderStatusText(event)}
           <Spacer inline x={1} />
-          <Link hasunderline onClick={() => getPredeployLogs()}>
+          <Link hasunderline onClick={getPredeployLogs}>
             View logs
           </Link>
           {event.status === "FAILED" && (

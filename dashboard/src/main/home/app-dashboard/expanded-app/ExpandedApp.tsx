@@ -67,7 +67,7 @@ const icons = [
 ];
 
 const ExpandedApp: React.FC<Props> = ({ ...props }) => {
-  const { currentCluster, currentProject, setCurrentError } = useContext(
+  const { currentCluster, currentProject, setCurrentError, featurePreview } = useContext(
     Context
   );
   const [isLoading, setIsLoading] = useState(true);
@@ -994,47 +994,21 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <Spacer y={1} />
               <TabSelector
                 options={
-                  appData.app.git_repo_id
-                    ? hasBuiltImage
-                      ? [
-                        { label: "Overview", value: "overview" },
-                        // { label: "Activity", value: "activity" },
-                        { label: "Events", value: "events" },
-                        { label: "Logs", value: "logs" },
-                        { label: "Metrics", value: "metrics" },
-                        { label: "Debug", value: "status" },
-                        { label: "Pre-deploy logs", value: "pre-deploy" },
-                        {
-                          label: "Environment",
-                          value: "environment-variables",
-                        },
-                        { label: "Build settings", value: "build-settings" },
-                        { label: "Settings", value: "settings" },
-                      ]
-                      : [
-                        { label: "Overview", value: "overview" },
-                        // { label: "Activity", value: "activity" },
-                        { label: "Pre-deploy logs", value: "pre-deploy" },
-                        {
-                          label: "Environment",
-                          value: "environment-variables",
-                        },
-                        { label: "Build settings", value: "build-settings" },
-                        { label: "Settings", value: "settings" },
-                      ]
-                    : [
-                      { label: "Overview", value: "overview" },
-                      // { label: "Activity", value: "activity" },
-                      { label: "Events", value: "events" },
-                      { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
-                      { label: "Debug", value: "status" },
-                      {
-                        label: "Environment",
-                        value: "environment-variables",
-                      },
-                      { label: "Settings", value: "settings" },
-                    ]
+                  [
+                    { label: "Overview", value: "overview" },
+                    featurePreview && { label: "Activity", value: "activity" },
+                    hasBuiltImage && { label: "Events", value: "events" },
+                    hasBuiltImage && { label: "Logs", value: "logs" },
+                    hasBuiltImage && { label: "Metrics", value: "metrics" },
+                    hasBuiltImage && { label: "Debug", value: "status" },
+                    appData.app.git_repo_id && { label: "Pre-deploy logs", value: "pre-deploy" },
+                    {
+                      label: "Environment",
+                      value: "environment-variables",
+                    },
+                    appData.app.git_repo_id && { label: "Build settings", value: "build-settings" },
+                    { label: "Settings", value: "settings" },
+                  ].filter(x => x)
                 }
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {

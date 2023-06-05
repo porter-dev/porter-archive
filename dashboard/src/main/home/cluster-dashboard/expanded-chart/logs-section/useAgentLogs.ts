@@ -188,6 +188,10 @@ export const useLogs = (
   };
 
   const setupWebsocket = (websocketKey: string) => {
+    if (namespace == "") {
+      return;
+    }
+
     const websocketBaseURL = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki`;
 
     const q = new URLSearchParams({

@@ -8,15 +8,15 @@ import { WorkerService } from "./serviceTypes";
 import { Height } from "react-animate-height";
 
 interface Props {
-  service: WorkerService
-  editService: (service: WorkerService) => void
-  setHeight: (height: Height) => void
+  service: WorkerService;
+  editService: (service: WorkerService) => void;
+  setHeight: (height: Height) => void;
 }
 
 const WorkerTabs: React.FC<Props> = ({
   service,
   editService,
-  setHeight
+  setHeight,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>('main');
 

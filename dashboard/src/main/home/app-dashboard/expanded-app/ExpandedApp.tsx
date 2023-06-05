@@ -7,10 +7,11 @@ import { z } from "zod";
 import notFound from "assets/not-found.png";
 import web from "assets/web.png";
 import box from "assets/box.png";
-import github from "assets/github.png";
+import github from "assets/github-white.png";
 import pr_icon from "assets/pull_request_icon.svg";
 import loadingImg from "assets/loading.gif";
 import refresh from "assets/refresh.png";
+import deploy from "assets/deploy.png";
 import danger from "assets/danger.svg";
 
 import api from "shared/api";
@@ -51,10 +52,9 @@ import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
 import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
 import Anser, { AnserJsonEntry } from "anser";
-import dayjs from "dayjs";
-import Modal from "components/porter/Modal";
-import TitleSection from "components/TitleSection";
 import GHALogsModal from "./status/GHALogsModal";
+import _ from "lodash";
+import AnimateHeight from "react-animate-height";
 
 type Props = RouteComponentProps & {};
 
@@ -85,7 +85,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(true);
 
   const [tab, setTab] = useState("overview");
-  const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
+  const [saveValuesStatus, setSaveValueStatus] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [bannerLoading, setBannerLoading] = useState<boolean>(false);
 
@@ -93,21 +93,24 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
-  const [porterJson, setPorterJson] = useState<
-    z.infer<typeof PorterYamlSchema> | undefined
-  >(undefined);
+
+  // this is what we read from their porter.yaml in github
+  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(undefined);
+  // this is what we use to update the release. the above is a subset of this
+  const [porterYaml, setPorterYaml] = useState<PorterJson>({} as PorterJson);
+  const [showUnsavedChangesBanner, setShowUnsavedChangesBanner] = useState<boolean>(false);
+
   const [expandedJob, setExpandedJob] = useState(null);
-  const [logs, setLogs] = useState<Log[]>(null);
+  const [logs, setLogs] = useState<Log[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
 
   const [services, setServices] = useState<Service[]>([]);
-  const [releaseJob, setReleaseJob] = useState<ReleaseService[]>([]);
   const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
   const [subdomain, setSubdomain] = useState<string>("");
 
+
   const getPorterApp = async () => {
-    // setIsLoading(true);
     setBannerLoading(true);
     const { appName } = props.match.params as any;
     try {
@@ -170,7 +173,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       updateServicesAndEnvVariables(
         resChartData?.data,
         releaseChartData?.data,
-        porterJson
+        porterJson,
+        newAppData.app.builder != null && newAppData.app.builder.includes("heroku")
       );
 
       // Only check GHA status if no built image is set
@@ -270,7 +274,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       ) {
         const finalPorterYaml = createFinalPorterYaml(
           services,
-          releaseJob,
           envVars,
           porterJson,
           // if we are using a heroku buildpack, inject a PORT env variable
@@ -291,7 +294,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             stack_name: appData.app.name,
           }
         );
+        setPorterYaml(finalPorterYaml);
         setButtonStatus("success");
+        setShowUnsavedChangesBanner(false);
       } else {
         setButtonStatus(<Error message="Unable to update app" />);
       }
@@ -431,23 +436,26 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const updateServicesAndEnvVariables = async (
     currentChart?: ChartType,
     releaseChart?: ChartType,
-    porterJson?: PorterJson
+    porterJson?: PorterJson,
+    injectPort: boolean = false,
   ) => {
     // handle normal chart
     const helmValues = currentChart?.config;
     const defaultValues = (currentChart?.chart as any)?.values;
+    let newServices: Service[] = [];
+    let envVars: KeyValueType[] = [];
+
     if (
       (defaultValues && Object.keys(defaultValues).length > 0) ||
       (helmValues && Object.keys(helmValues).length > 0)
     ) {
-      const svcs = Service.deserialize(helmValues, defaultValues, porterJson);
-      setServices(svcs);
+      newServices = Service.deserialize(helmValues, defaultValues, porterJson);
       const { global, ...helmValuesWithoutGlobal } = helmValues;
       if (Object.keys(helmValuesWithoutGlobal).length > 0) {
-        const envs = Service.retrieveEnvFromHelmValues(helmValuesWithoutGlobal);
-        setEnvVars(envs);
+        envVars = Service.retrieveEnvFromHelmValues(helmValuesWithoutGlobal);
+        setEnvVars(envVars);
         const subdomain = Service.retrieveSubdomainFromHelmValues(
-          svcs,
+          newServices,
           helmValuesWithoutGlobal
         );
         setSubdomain(subdomain);
@@ -456,14 +464,24 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
     // handle release chart
     if (releaseChart?.config || porterJson?.release) {
-      setReleaseJob([
-        Service.deserializeRelease(releaseChart?.config, porterJson),
-      ]);
+      const release = Service.deserializeRelease(releaseChart?.config, porterJson);
+      newServices.push(release);
     }
+
+    setServices(newServices);
+
+    const finalPorterYaml = createFinalPorterYaml(
+      newServices,
+      envVars,
+      porterJson,
+      // if we are using a heroku buildpack, inject a PORT env variable
+      injectPort
+    );
+    setPorterYaml(finalPorterYaml);
   };
 
   // todo: keep a history of the release job chart, difficult because they can be upgraded asynchronously
-  const updateComponents = async (currentChart: ChartType) => {
+  const updateComponents = async (currentChart: ChartType, updatedReleaseChart?: ChartType) => {
     setLoading(true);
     try {
       const res = await api.getChartComponents(
@@ -478,7 +496,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       );
       setComponents(res.data.Objects);
-      updateServicesAndEnvVariables(currentChart, undefined, porterJson);
+      updateServicesAndEnvVariables(
+        currentChart,
+        updatedReleaseChart,
+        porterJson,
+        appData.app.builder != null && appData.app.builder.includes("heroku")
+      );
       setLoading(false);
     } catch (error) {
       console.log(error);
@@ -506,24 +529,24 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setAppData({ ...appData, chart: updatedChart });
     }
 
-    // let releaseChartData;
-    // // get the release chart
-    // try {
-    //   releaseChartData = await api.getChart(
-    //     "<token>",
-    //     {},
-    //     {
-    //       id: currentProject.id,
-    //       namespace: `porter-stack-${chart.name}`,
-    //       cluster_id: currentCluster.id,
-    //       name: `${chart.name}-r`,
-    //       revision: 0,
-    //     }
-    //   );
-    // } catch (err) {
-    //   // do nothing, unable to find release chart
-    //   console.log(err);
-    // }
+    let releaseChartData;
+    // get the release chart
+    try {
+      releaseChartData = await api.getChart(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          namespace: `porter-stack-${chart.name}`,
+          cluster_id: currentCluster.id,
+          name: `${chart.name}-r`,
+          revision: 0,
+        }
+      );
+    } catch (err) {
+      // do nothing, unable to find release chart
+      // console.log(err);
+    }
 
     // const releaseChart = releaseChartData?.data;
 
@@ -535,18 +558,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     //   }
     // }
 
-    updateComponents(updatedChart).finally(() => setIsLoadingChartData(false));
+    updateComponents(updatedChart, releaseChartData?.data).finally(() => setIsLoadingChartData(false));
   };
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
-    // // if we've set the revision, we also override the revision in log data
-    // let newLogData = logData;
-
-    // newLogData.revision = `${chart.version}`;
-
-    // setLogData(newLogData);
-
-    // setIsPreview(!isCurrent);
     getChartData(chart);
   };
 
@@ -623,6 +638,21 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     return `${time} on ${date}`;
   };
 
+  const onAppUpdate = (services: Service[], envVars: KeyValueType[]) => {
+    const newPorterYaml = createFinalPorterYaml(
+      services,
+      envVars,
+      porterJson,
+      // if we are using a heroku buildpack, inject a PORT env variable
+      appData.app.builder != null && appData.app.builder.includes("heroku")
+    );
+    if (!_.isEqual(porterYaml, newPorterYaml)) {
+      setShowUnsavedChangesBanner(true);
+    } else {
+      setShowUnsavedChangesBanner(false);
+    }
+  };
+
   const renderTabContents = () => {
     switch (tab) {
       case "overview":
@@ -634,24 +664,19 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 <Text size={16}>Pre-deploy job</Text>
                 <Spacer y={0.5} />
                 <Services
-                  setServices={(x) => {
+                  setServices={(release: Service[]) => {
                     if (buttonStatus !== "") {
                       setButtonStatus("");
                     }
-                    setReleaseJob(x as ReleaseService[]);
+                    const nonRelease = services.filter(Service.isNonRelease)
+                    const newServices = [...nonRelease, ...release]
+                    setServices(newServices)
+                    onAppUpdate(newServices, envVars)
                   }}
                   chart={appData.releaseChart}
-                  services={releaseJob}
+                  services={services.filter(Service.isRelease)}
                   limitOne={true}
-                  customOnClick={() => {
-                    setReleaseJob([
-                      Service.default(
-                        "pre-deploy",
-                        "release",
-                        porterJson
-                      ) as ReleaseService,
-                    ]);
-                  }}
+                  prePopulateService={Service.default("pre-deploy", "release", porterJson)}
                   addNewText={"Add a new pre-deploy job"}
                   defaultExpanded={true}
                 />
@@ -672,14 +697,17 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               </>
             )}
             <Services
-              setServices={(x) => {
+              setServices={(svcs: Service[]) => {
                 if (buttonStatus !== "") {
                   setButtonStatus("");
                 }
-                setServices(x);
+                const release = services.filter(Service.isRelease)
+                const newServices = [...svcs, ...release]
+                setServices(newServices);
+                onAppUpdate(newServices, envVars);
               }}
+              services={services.filter(Service.isNonRelease)}
               chart={appData.chart}
-              services={services}
               addNewText={"Add a new service"}
               setExpandedJob={(x: string) => setExpandedJob(x)}
             />
@@ -743,7 +771,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         return (
           <EnvVariablesTab
             envVars={envVars}
-            setEnvVars={setEnvVars}
+            setEnvVars={(envVars: KeyValueType[]) => {
+              setEnvVars(envVars);
+              onAppUpdate(services, envVars.filter((e) => e.key !== "" || e.value !== ""));
+            }}
             status={buttonStatus}
             updatePorterApp={updatePorterApp}
             clearStatus={() => setButtonStatus("")}
@@ -752,7 +783,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "pre-deploy":
         return (
           <>
-            {!isLoading && releaseJob.length === 0 && (
+            {!isLoading && !services.some(Service.isRelease) && (
               <>
                 <Fieldset>
                   <Container row>
@@ -760,14 +791,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     <Text color="helper">
                       No pre-deploy jobs were found. You can add a pre-deploy job in the Overview tab to
                       perform an operation before your application services
-                      deploy, like a database migration.
+                      deploy each time, like a database migration.
                     </Text>
                   </Container>
                 </Fieldset>
                 <Spacer y={0.5} />
               </>
             )}
-            {releaseJob.length > 0 && (
+            {services.some(Service.isRelease) && (
               <JobRuns
                 lastRunStatus="all"
                 namespace={appData.chart?.namespace}
@@ -992,6 +1023,26 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 </>
               )}
               <Spacer y={1} />
+              <AnimateHeight height={showUnsavedChangesBanner ? 67 : 0}>
+                <Banner
+                  type="warning"
+                  suffix={
+                    <>
+                      <Button
+                        onClick={async () => await updatePorterApp({})}
+                        status={buttonStatus}
+                        loadingText={"Updating..."}
+                      >
+                        <img src={deploy} />
+                        Save as latest version
+                      </Button>
+                    </>
+                  }
+                >
+                  Changes you are currently previewing have not been saved.
+                  <Spacer inline width="5px" />
+                </Banner>
+              </AnimateHeight>
               <TabSelector
                 options={
                   [

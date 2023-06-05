@@ -1,7 +1,6 @@
 package release
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -101,7 +100,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rel, err := helmAgent.GetRelease(context.Background(), release.Name, 0, true)
+	rel, err := helmAgent.GetRelease(ctx, release.Name, 0, true)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "uanble to get release for upgrade webhook")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -185,7 +184,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		),
 	}
 
-	rel, err = helmAgent.UpgradeReleaseByValues(context.Background(), conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
+	rel, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 	if err != nil {
 		notifyOpts.Status = notifier.StatusHelmFailed
 		notifyOpts.Info = err.Error()

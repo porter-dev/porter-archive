@@ -107,16 +107,6 @@ const LogsSection: React.FC<Props> = ({
 }) => {
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
-  const [podFilter, setPodFilter] = useState(
-    initData.podName || overridingPodName
-  );
-  const [podFilterOpts, setPodFilterOpts] = useState<string[]>(
-    initData?.podName
-      ? _.compact([initData.podName])
-      : overridingPodName
-      ? _.compact([overridingPodName])
-      : []
-  );
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [enteredSearchText, setEnteredSearchText] = useState("");
@@ -125,6 +115,8 @@ const LogsSection: React.FC<Props> = ({
   );
   const [notification, setNotification] = useState<string>();
   const [loading, setLoading] = useState(true);
+
+  console.log(currentChart);
 
   const notify = (message: string) => {
     setNotification(message);
@@ -135,82 +127,14 @@ const LogsSection: React.FC<Props> = ({
   };
 
   const { logs, refresh, moveCursor, paginationInfo } = useLogs(
-    podFilter,
-    currentChart.namespace,
+    "",
+    "",
     enteredSearchText,
     notify,
     currentChart,
     setLoading,
     selectedDate
   );
-
-  const refreshPodLogsValues = async () => {
-    if (overridingPodName) {
-      return;
-    }
-
-    const filters = {
-      namespace: currentChart.namespace,
-      revision: initData.revision ?? currentChart.version.toString(),
-      match_prefix: currentChart.name,
-    };
-
-    // if the current chart is set to a blue-green deployment, we don't set a revision, but instead
-    // we set the match prefix to the current chart and the active image tag.
-    if (currentChart.config.bluegreen?.enabled) {
-      filters.revision = null;
-
-      if (currentChart?.name.includes("web")) {
-        filters.match_prefix = `${currentChart.name}-${currentChart.config.bluegreen?.activeImageTag}`;
-      } else {
-        filters.match_prefix = `${currentChart.name}-web-${currentChart.config.bluegreen?.activeImageTag}`;
-      }
-    }
-
-    const logPodValuesResp = await api.getLogPodValues("<TOKEN>", filters, {
-      project_id: currentProject.id,
-      cluster_id: currentCluster.id,
-    });
-
-    if (logPodValuesResp.data?.length != 0) {
-      setPodFilterOpts(_.uniq(logPodValuesResp.data ?? []));
-
-      // only set pod filter if the current pod is not found in the resulting data
-      if (!logPodValuesResp.data?.includes(podFilter)) {
-        setPodFilter(logPodValuesResp.data[0]);
-      }
-
-      return;
-    }
-
-    // if we're on the latest revision and no pod values were returned, query for all release pods
-    if (currentChart.info.status == "deployed") {
-      const allReleasePodsResp = await api.getAllReleasePods(
-        "<TOKEN>",
-        {},
-        {
-          id: currentProject.id,
-          name: currentChart.name,
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-        }
-      );
-
-      let podList = allReleasePodsResp.data.map((pod: any) => {
-        return pod.metadata.name;
-      });
-
-      setPodFilterOpts(podList);
-
-      if (!podFilter || !podList.includes(podFilter)) {
-        setPodFilter(podList[0]);
-      }
-    }
-  };
-
-  useEffect(() => {
-    refreshPodLogsValues();
-  }, [initData]);
 
   useEffect(() => {
     if (!loading && scrollToBottomRef.current && scrollToBottomEnabled) {
@@ -222,10 +146,6 @@ const LogsSection: React.FC<Props> = ({
   }, [loading, logs, scrollToBottomRef, scrollToBottomEnabled]);
 
   useEffect(() => {
-    if (initData.podName) {
-      setPodFilter(initData.podName);
-    }
-
     if (initData.timestamp) {
       setSelectedDate(dayjs(initData.timestamp).toDate());
     }
@@ -305,18 +225,6 @@ const LogsSection: React.FC<Props> = ({
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
               resetSearch={resetSearch}
-            />
-            <RadioFilter
-              icon={filterOutline}
-              selected={podFilter}
-              setSelected={setPodFilter}
-              options={podFilterOpts?.map((name) => {
-                return {
-                  value: name,
-                  label: name,
-                };
-              })}
-              name="Filter logs"
             />
           </Flex>
           <Flex>

@@ -29,22 +29,24 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
+import { Service } from "../new-app-flow/serviceTypes";
 
 type Props = {
   currentChart?: ChartType;
+  services?: Service[];
 };
 
 type PodFilter = {
   podName: string;
-  podNamespace: string;
+  podType: string;
 };
 
-const LogSection: React.FC<Props> = ({ currentChart }) => {
+const LogSection: React.FC<Props> = ({ currentChart, services }) => {
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
   const [podFilter, setPodFilter] = useState<PodFilter>({
     podName: "",
-    podNamespace: "",
+    podType: "",
   });
   const [podFilterOpts, setPodFilterOpts] = useState<PodFilter[]>([]);
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
@@ -66,9 +68,12 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     }, 5000);
   };
 
+  const namespace = currentChart == null ? "" : currentChart.namespace;
+
   const { logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter.podName,
-    podFilter.podNamespace,
+    podFilter.podType,
+    namespace,
     enteredSearchText,
     notify,
     currentChart,
@@ -77,63 +82,16 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
   );
 
   const refreshPodLogsValues = async () => {
-    const filters = {
-      namespace: currentChart.namespace,
-      revision: currentChart.version.toString(),
-      match_prefix: currentChart.name,
-    };
-
-    try {
-      const logPodValuesResp = await api.getLogPodValues("<TOKEN>", filters, {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
+    if (currentChart == null || services == null) {
+      setPodFilterOpts([]);
+    } else {
+      const podList = services.map((service: Service) => {
+        return {
+          podName: service.name,
+          podType: service.type.valueOf(),
+        };
       });
-
-      if (logPodValuesResp.data?.length != 0) {
-        setPodFilterOpts(
-          _.uniq(logPodValuesResp.data ?? []).map((podName: any) => {
-            return { podName: podName, podNamespace: currentChart.namespace };
-          })
-        );
-
-        // only set pod filter if the current pod is not found in the resulting data
-        if (!podFilter || !logPodValuesResp.data?.includes(podFilter)) {
-          setPodFilter({
-            podName: logPodValuesResp.data[0],
-            podNamespace: currentChart.namespace,
-          });
-        }
-        return;
-      }
-
-      // if we're on the latest revision and no pod values were returned, query for all release pods
-      if (currentChart.info.status == "deployed") {
-        const allReleasePodsResp = await api.getAllReleasePods(
-          "<TOKEN>",
-          {},
-          {
-            id: currentProject.id,
-            name: currentChart.name,
-            namespace: currentChart.namespace,
-            cluster_id: currentCluster.id,
-          }
-        );
-
-        let podList = allReleasePodsResp.data.map((pod: any) => {
-          return {
-            podName: pod.metadata.name,
-            podNamespace: pod.metadata.namespace,
-          };
-        });
-
-        setPodFilterOpts(podList);
-
-        if (!podFilter || !podList.includes(podFilter)) {
-          setPodFilter(podList[0]);
-        }
-      }
-    } catch (err) {
-      console.log(err);
+      setPodFilterOpts(podList);
     }
   };
 
@@ -182,7 +140,7 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     if (filtered.length > 0) {
       setPodFilter(filtered[0]);
     } else {
-      setPodFilter({ podName: "", podNamespace: "" });
+      setPodFilter({ podName: "", podNamespace: "", podType: "" });
     }
   };
 
@@ -305,6 +263,7 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
   useEffect(() => {
     // determine if the agent is installed properly - if not, start by render upgrade screen
     checkForAgent();
+    resetSearch();
   }, []);
 
   useEffect(() => {

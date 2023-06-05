@@ -67,9 +67,12 @@ const icons = [
 ];
 
 const ExpandedApp: React.FC<Props> = ({ ...props }) => {
-  const { currentCluster, currentProject, setCurrentError, featurePreview } = useContext(
-    Context
-  );
+  const {
+    currentCluster,
+    currentProject,
+    setCurrentError,
+    featurePreview,
+  } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [appData, setAppData] = useState(null);
@@ -349,8 +352,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               const timestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z/;
 
               lines.forEach((line, index) => {
-                const lineWithoutTimestamp = line.replace(timestampPattern, "").trimStart();
-                const anserLine: AnserJsonEntry[] = Anser.ansiToJson(lineWithoutTimestamp);
+                const lineWithoutTimestamp = line
+                  .replace(timestampPattern, "")
+                  .trimStart();
+                const anserLine: AnserJsonEntry[] = Anser.ansiToJson(
+                  lineWithoutTimestamp
+                );
                 if (lineWithoutTimestamp.toLowerCase().includes("error")) {
                   anserLine[0].fg = "238,75,43";
                 }
@@ -629,7 +636,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         return (
           <>
             {/* pre-deploy stuff - only if this is from github! */}
-            {!isLoading && appData?.app?.git_repo_id != null &&
+            {!isLoading && appData?.app?.git_repo_id != null && (
               <>
                 <Text size={16}>Pre-deploy job</Text>
                 <Spacer y={0.5} />
@@ -657,7 +664,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 />
                 <Spacer y={0.5} />
               </>
-            }
+            )}
             <Text size={16}>Application services</Text>
             <Spacer y={0.5} />
             {!isLoading && services.length === 0 && (
@@ -734,7 +741,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           />
         );
       case "logs":
-        return <LogSection currentChart={appData.chart} />;
+        return <LogSection currentChart={appData.chart} services={services} />;
       case "metrics":
         return <MetricsSection currentChart={appData.chart} />;
       case "status":
@@ -758,9 +765,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   <Container row>
                     <PlaceholderIcon src={notFound} />
                     <Text color="helper">
-                      No pre-deploy jobs were found. You can add a pre-deploy job in the Overview tab to
-                      perform an operation before your application services
-                      deploy, like a database migration.
+                      No pre-deploy jobs were found. You can add a pre-deploy
+                      job in the Overview tab to perform an operation before
+                      your application services deploy, like a database
+                      migration.
                     </Text>
                   </Container>
                 </Fieldset>
@@ -935,7 +943,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                           />
                         )}
                       </>
-
                       <Spacer inline width="5px" />
                     </Banner>
                   ) : bannerLoading ? (
@@ -983,7 +990,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                      appData.chart.chart.metadata.version
+                        appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}
@@ -993,23 +1000,27 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               )}
               <Spacer y={1} />
               <TabSelector
-                options={
-                  [
-                    { label: "Overview", value: "overview" },
-                    featurePreview && { label: "Activity", value: "activity" },
-                    hasBuiltImage && { label: "Events", value: "events" },
-                    hasBuiltImage && { label: "Logs", value: "logs" },
-                    hasBuiltImage && { label: "Metrics", value: "metrics" },
-                    hasBuiltImage && { label: "Debug", value: "status" },
-                    appData.app.git_repo_id && { label: "Pre-deploy logs", value: "pre-deploy" },
-                    {
-                      label: "Environment",
-                      value: "environment-variables",
-                    },
-                    appData.app.git_repo_id && { label: "Build settings", value: "build-settings" },
-                    { label: "Settings", value: "settings" },
-                  ].filter(x => x)
-                }
+                options={[
+                  { label: "Overview", value: "overview" },
+                  featurePreview && { label: "Activity", value: "activity" },
+                  hasBuiltImage && { label: "Events", value: "events" },
+                  hasBuiltImage && { label: "Logs", value: "logs" },
+                  hasBuiltImage && { label: "Metrics", value: "metrics" },
+                  hasBuiltImage && { label: "Debug", value: "status" },
+                  appData.app.git_repo_id && {
+                    label: "Pre-deploy logs",
+                    value: "pre-deploy",
+                  },
+                  {
+                    label: "Environment",
+                    value: "environment-variables",
+                  },
+                  appData.app.git_repo_id && {
+                    label: "Build settings",
+                    value: "build-settings",
+                  },
+                  { label: "Settings", value: "settings" },
+                ].filter((x) => x)}
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {
                   if (buttonStatus !== "") {

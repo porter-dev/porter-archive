@@ -51,7 +51,6 @@ interface FormState {
   applicationName: string;
   selectedSourceType: SourceType | undefined;
   serviceList: Service[];
-  releaseJob: ReleaseService[];
   envVariables: KeyValueType[];
   releaseCommand: string;
 }
@@ -60,7 +59,6 @@ const INITIAL_STATE: FormState = {
   applicationName: "",
   selectedSourceType: undefined,
   serviceList: [],
-  releaseJob: [],
   envVariables: [],
   releaseCommand: "",
 };
@@ -73,7 +71,6 @@ const Validators: {
   serviceList: (value: Service[]) => value.length > 0,
   envVariables: (value: KeyValueType[]) => true,
   releaseCommand: (value: string) => true,
-  releaseJob: (value: ReleaseService[]) => true,
 };
 
 type Detected = {
@@ -135,9 +132,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [currentProvider, setCurrentProvider] = useState(null);
   const [hasProviders, setHasProviders] = useState(true);
 
-  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(
-    undefined
-  );
+  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(undefined);
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
   const handleSetAccessData = (data: GithubAppAccessData) => {
     setAccessData(data);
@@ -184,7 +179,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const porterYamlToJson = parsedData as PorterJson;
       setPorterJson(porterYamlToJson);
       const newServices = [];
-      const newReleaseJob = [];
       const existingServices = formState.serviceList.map((s) => s.name);
       for (const [name, app] of Object.entries(porterYamlToJson.apps)) {
         if (!existingServices.includes(name)) {
@@ -197,21 +191,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           }
         }
       }
-      if (!formState.releaseJob.length && porterYamlToJson.release != null) {
-        newReleaseJob.push(
-          Service.default(
-            "pre-deploy",
-            "release",
-            porterYamlToJson
-          ) as ReleaseService
-        );
+      if (porterYamlToJson.release != null && !existingServices.includes("pre-deploy")) {
+        newServices.push(Service.default("pre-deploy", "release", porterYamlToJson));
       }
       const newServiceList = [...formState.serviceList, ...newServices];
-      const newReleaseJobList = [...formState.releaseJob, ...newReleaseJob];
       setFormState({
         ...formState,
         serviceList: newServiceList,
-        releaseJob: newReleaseJobList,
       });
       if (Validators.serviceList(newServiceList)) {
         setCurrentStep(Math.max(currentStep, 5));
@@ -331,7 +317,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       // validate form data
       const finalPorterYaml = createFinalPorterYaml(
         formState.serviceList,
-        formState.releaseJob,
         formState.envVariables,
         porterJson,
         // if we are using a heroku buildpack, inject a PORT env variable
@@ -535,12 +520,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Spacer y={0.5} />
                 <Services
                   setServices={(services: Service[]) => {
-                    setFormState({ ...formState, serviceList: services });
+                    const release = formState.serviceList.filter(Service.isRelease)
+                    setFormState({ ...formState, serviceList: [...services, ...release] });
                     if (Validators.serviceList(services)) {
                       setCurrentStep(Math.max(currentStep, 5));
                     }
                   }}
-                  services={formState.serviceList}
+                  services={formState.serviceList.filter(Service.isNonRelease)}
                   defaultExpanded={true}
                   addNewText={"Add a new service"}
                 />
@@ -564,30 +550,21 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Text size={16}>Pre-deploy job (optional)</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
-                  If specified, this is a job that will be run before every
-                  deployment.
+                  You may add a pre-deploy job to
+                  perform an operation before your application services
+                  deploy each time, like a database migration.
                 </Text>
                 <Spacer y={0.5} />
                 <Services
-                  setServices={(releaseJob: ReleaseService[]) => {
-                    setFormState({ ...formState, releaseJob });
+                  setServices={(release: Service[]) => {
+                    const nonRelease = formState.serviceList.filter(Service.isNonRelease)
+                    setFormState({ ...formState, serviceList: [...nonRelease, ...release] });
                   }}
-                  services={formState.releaseJob}
+                  services={formState.serviceList.filter(Service.isRelease)}
                   defaultExpanded={true}
                   limitOne={true}
-                  customOnClick={() => {
-                    setFormState({
-                      ...formState,
-                      releaseJob: [
-                        Service.default(
-                          "pre-deploy",
-                          "release",
-                          porterJson
-                        ) as ReleaseService,
-                      ],
-                    });
-                  }}
                   addNewText={"Add a new pre-deploy job"}
+                  prePopulateService={Service.default("pre-deploy", "release", porterJson)}
                 />
               </>,
               <Button

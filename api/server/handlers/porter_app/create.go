@@ -228,7 +228,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		c.createPorterAppEvent(ctx, "SUCCESS", porterApp.ID, helmRelease.Version)
+		c.createPorterAppEvent(ctx, "SUCCESS", porterApp.ID, 1)
 
 		c.WriteResult(w, r, porterApp.ToPorterAppType())
 	} else {
@@ -362,7 +362,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		c.createPorterAppEvent(ctx, "SUCCESS", updatedPorterApp.ID, helmRelease.Version)
+		c.createPorterAppEvent(ctx, "SUCCESS", updatedPorterApp.ID, helmRelease.Version+1)
 
 		c.WriteResult(w, r, updatedPorterApp.ToPorterAppType())
 	}

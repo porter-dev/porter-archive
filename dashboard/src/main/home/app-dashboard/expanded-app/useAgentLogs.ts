@@ -290,7 +290,6 @@ export const useLogs = (
   };
 
   const refresh = async () => {
-    console.log("refreshing: ", currentPod);
     if (!currentPod) {
       return;
     }

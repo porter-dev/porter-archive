@@ -116,8 +116,6 @@ const LogsSection: React.FC<Props> = ({
   const [notification, setNotification] = useState<string>();
   const [loading, setLoading] = useState(true);
 
-  console.log(currentChart);
-
   const notify = (message: string) => {
     setNotification(message);
 

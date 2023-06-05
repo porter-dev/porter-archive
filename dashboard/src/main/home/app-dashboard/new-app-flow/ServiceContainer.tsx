@@ -12,7 +12,6 @@ import WebTabs from "./WebTabs";
 import WorkerTabs from "./WorkerTabs";
 import JobTabs from "./JobTabs";
 import { Service } from "./serviceTypes";
-import { StyledStatusFooter } from "../expanded-app/StatusFooter";
 import StatusFooter from "../expanded-app/StatusFooter";
 import ReleaseTabs from "./ReleaseTabs";
 
@@ -216,7 +215,7 @@ const ServiceHeader = styled.div<{
     border-radius: 20px;
     margin-left: -10px;
     transform: ${(props: { showExpanded: boolean; chart: any }) =>
-      props.showExpanded ? "" : "rotate(-90deg)"};
+    props.showExpanded ? "" : "rotate(-90deg)"};
   }
 
   animation: fadeIn 0.3s 0s;

@@ -29,6 +29,7 @@ import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import Back from "components/porter/Back";
 import TabSelector from "components/TabSelector";
+import Icon from "components/porter/Icon";
 import { ChartType, PorterAppOptions, ResourceType } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTabStack from "./BuildSettingsTabStack";
@@ -435,7 +436,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           break;
       }
     }
-    return <Icon src={src} />;
+    return <Icon src={src} height={"24px"} />;
   };
 
   const updateServicesAndEnvVariables = (
@@ -548,7 +549,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   };
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
-    console.log('setting revision')
     getChartData(chart, isCurrent);
   };
 
@@ -638,8 +638,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     } else {
       setShowUnsavedChangesBanner(false);
     }
-    console.log("old porter yaml", porterYaml);
-    console.log("new porter yaml", newPorterYaml);
+    // console.log("old porter yaml", porterYaml);
+    // console.log("new porter yaml", newPorterYaml);
   };
 
   const renderTabContents = () => {
@@ -833,6 +833,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <Back to="/apps" />
           <Container row>
             {renderIcon(appData.app?.build_packs)}
+            <Spacer inline x={0.5} />
             <Text size={21}>{appData.app.name}</Text>
             {appData.app.repo_name && (
               <>
@@ -1022,7 +1023,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                         loadingText={"Updating..."}
                         height={"10px"}
                       >
-                        <img src={save} />
+                        <Icon src={save} height={"13px"} />
+                        <Spacer inline x={0.5} />
                         Save as latest version
                       </Button>
                     </>
@@ -1187,11 +1189,6 @@ const BranchIcon = styled.img`
   height: 14px;
   opacity: 0.65;
   margin-right: 5px;
-`;
-
-const Icon = styled.img`
-  height: 24px;
-  margin-right: 15px;
 `;
 
 const PlaceholderIcon = styled.img`

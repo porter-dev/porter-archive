@@ -131,13 +131,6 @@ const Text = styled.div`
   display: flex;
   align-items: center;
   height: 100%;
-  > img {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 11px;
-    margin-right: 10px;
-  }
 `;
 
 const StyledButton = styled.button<{

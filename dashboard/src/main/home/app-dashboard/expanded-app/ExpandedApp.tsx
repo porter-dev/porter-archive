@@ -841,7 +841,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <Back to="/apps" />
           <Container row>
             {renderIcon(appData.app?.build_packs)}
-            <Spacer inline x={0.5} />
+            <Spacer inline x={1} />
             <Text size={21}>{appData.app.name}</Text>
             {appData.app.repo_name && (
               <>

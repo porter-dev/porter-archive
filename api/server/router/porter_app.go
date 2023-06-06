@@ -169,6 +169,35 @@ func getStackRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack}/rollback -> porter_app.NewRollbackPorterAppHandler
+	rollbackPorterAppEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/rollback", relPath, types.URLParamStackName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	rollbackPorterAppHandler := porter_app.NewRollbackPorterAppHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: rollbackPorterAppEndpoint,
+		Handler:  rollbackPorterAppHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack}/pr -> porter_app.NewOpenStackPRHandler
 	createSecretAndOpenGitHubPullRequestEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -1038,7 +1038,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 options={
                   [
                     { label: "Overview", value: "overview" },
-                    featurePreview && { label: "Activity", value: "activity" },
+                    { label: "Activity", value: "activity" },
                     hasBuiltImage && { label: "Events", value: "events" },
                     hasBuiltImage && { label: "Logs", value: "logs" },
                     hasBuiltImage && { label: "Metrics", value: "metrics" },

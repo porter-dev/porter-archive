@@ -11,6 +11,7 @@ import RadioFilter from "components/RadioFilter";
 
 import spinner from "assets/loading.gif";
 import filterOutline from "assets/filter-outline.svg";
+import filterOutlineWhite from "assets/filter-outline-white.svg";
 import time from "assets/time.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -215,7 +216,9 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
               resetSearch={resetSearch}
             />
             <RadioFilter
-              icon={filterOutline}
+              icon={
+                podFilter.podName == "" ? filterOutline : filterOutlineWhite
+              }
               selected={podFilter.podName}
               setSelected={setPodFilterWithPodName}
               options={radioOptions}

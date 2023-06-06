@@ -67,11 +67,7 @@ const RadioFilter: React.FC<Props> = (props) => {
                         key={i}
                         selected={props.selected === option.value}
                       >
-                        {option.value == "All" ? (
-                          <DimmedText>{option.label}</DimmedText>
-                        ) : (
-                          <Text>{option.label}</Text>
-                        )}
+                        <Text>{option.label}</Text>
                       </OptionRow>
                     );
                   }

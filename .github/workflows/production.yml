@@ -1,8 +1,8 @@
 "on":
   push:
-    branches:
-      - sms/prod-test
-name: Deploy to Production
+    tags:
+      - production
+name: Deploy Porter to Production
 jobs:
   build-go:
     runs-on: ubuntu-latest

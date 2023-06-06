@@ -1,8 +1,8 @@
 "on":
   push:
-    branches:
-      - master
-name: Deploy to Porter
+    tags:
+      - production
+name: Deploy TF Provisioner to Production
 jobs:
   porter-deploy:
     runs-on: ubuntu-latest
@@ -16,7 +16,7 @@ jobs:
         timeout-minutes: 20
         uses: porter-dev/porter-update-action@v0.1.0
         with:
-          app: install-script
+          app: tf-provisioner
           cluster: "9"
           host: https://dashboard.internal-tools.getporter.dev
           namespace: default

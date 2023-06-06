@@ -1,8 +1,8 @@
 "on":
   push:
-    branches:
-      - master
-name: Deploy to Porter
+    tags:
+      - production
+name: Deploy Install Scrip to Production
 jobs:
   porter-deploy:
     runs-on: ubuntu-latest
@@ -16,7 +16,7 @@ jobs:
         timeout-minutes: 20
         uses: porter-dev/porter-update-action@v0.1.0
         with:
-          app: tf-provisioner
+          app: install-script
           cluster: "9"
           host: https://dashboard.internal-tools.getporter.dev
           namespace: default

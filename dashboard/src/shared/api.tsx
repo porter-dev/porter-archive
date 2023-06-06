@@ -211,6 +211,20 @@ const deletePorterApp = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
 });
 
+const rollbackPorterApp = baseApi<
+  {
+    revision: number;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    stack_name: string;
+  }
+>("POST", (pathParams) => {
+  let { project_id, cluster_id, stack_name } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/rollback`;
+});
+
 const getLogsWithinTimeRange = baseApi<
   {
     chart_name?: string;
@@ -2657,6 +2671,7 @@ export default {
   getPorterApp,
   createPorterApp,
   deletePorterApp,
+  rollbackPorterApp,
   getLogsWithinTimeRange,
   createConfigMap,
   deleteCluster,

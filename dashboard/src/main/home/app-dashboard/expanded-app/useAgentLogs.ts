@@ -95,7 +95,7 @@ export const useLogs = (
   const currentPod =
     currentPodName == ""
       ? currentChart?.name
-      : currentChart?.name + "-" + currentPodName + "-" + currentPodType;
+      : `${currentChart?.name}-${currentPodName}-${currentPodType}`;
 
   // if we are live:
   // - start date is initially set to 2 weeks ago

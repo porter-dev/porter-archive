@@ -87,5 +87,10 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	createPorterAppEvent(ctx, "SUCCESS", porterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+	_, err = createPorterAppEvent(ctx, "SUCCESS", porterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error creating porter app event")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
 }

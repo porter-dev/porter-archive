@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import styled from "styled-components";
 
 import app_event from "assets/app_event.png";
 import build from "assets/build.png";
@@ -120,7 +121,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
     switch (event.status) {
       case "SUCCESS":
         return (
-          <>
+          <Wrapper>
             <Link hasunderline onClick={() => getBuildLogs()}>
               View logs
             </Link>
@@ -135,11 +136,11 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
               />
             )}
             <Spacer inline x={1} />
-          </>
+          </Wrapper>
         );
       case "FAILED":
         return (
-          <>
+          <Wrapper>
             <Link hasunderline onClick={() => getBuildLogs()}>
               View logs
             </Link>
@@ -162,11 +163,11 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
                 Retry
               </Container>
             </Link>
-          </>
+          </Wrapper>
         );
       default:
         return (
-          <>
+          <Wrapper>
             <Link
               hasunderline
               target="_blank"
@@ -175,7 +176,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
               View live logs
             </Link>
             <Spacer inline x={1} />
-          </>
+          </Wrapper>
         );
     }
   };
@@ -212,3 +213,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
 };
 
 export default BuildEventCard;
+
+const Wrapper = styled.div`
+  margin-top: -3px;
+`;

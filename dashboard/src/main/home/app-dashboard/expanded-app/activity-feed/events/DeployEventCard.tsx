@@ -25,9 +25,9 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return <Text color="#68BF8B">Deployment succeeded.</Text>;
+        return <Text color="#68BF8B">Deployment succeeded</Text>;
       case "FAILED":
-        return <Text color="#FF6060">Deployment failed.</Text>;
+        return <Text color="#FF6060">Deployment failed</Text>;
       default:
         return <Text color="#aaaabb66">Deployment in progress...</Text>;
     }
@@ -39,13 +39,15 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
         <Container row>
           <Icon height="18px" src={deploy} />
           <Spacer inline width="10px" />
-          <Text size={14}>Application deploy</Text>
+          <Text size={14}>Application version no. {event.metadata?.revision}</Text>
         </Container>
-        <Container row>
-          <Icon height="14px" src={run_for} />
-          <Spacer inline width="6px" />
-          <Text color="helper">{getDuration(event)}</Text>
-        </Container>
+        {getDuration(event) !== "0s" && (
+          <Container row>
+            <Icon height="14px" src={run_for} />
+            <Spacer inline width="6px" />
+            <Text color="helper">{getDuration(event)}</Text>
+          </Container>
+        )}
       </Container>
       <Spacer y={1} />
       <Container row spaced>

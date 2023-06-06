@@ -91,6 +91,9 @@ export const useLogs = (
     nextCursor: null,
   });
 
+  currentPod = currentChart.name;
+  namespace = currentChart.namespace;
+
   // if we are live:
   // - start date is initially set to 2 weeks ago
   // - the query has an end date set to current date
@@ -185,11 +188,15 @@ export const useLogs = (
   };
 
   const setupWebsocket = (websocketKey: string) => {
+    if (namespace == "") {
+      return;
+    }
+
     const websocketBaseURL = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki`;
 
     const q = new URLSearchParams({
-      pod_selector: currentPod,
-      namespace,
+      pod_selector: currentPod + "-.*",
+      namespace: namespace,
       search_param: searchParam,
       revision: currentChart.version.toString(),
     }).toString();
@@ -235,8 +242,8 @@ export const useLogs = (
       .getLogs(
         "<token>",
         {
-          pod_selector: currentPod,
-          namespace,
+          pod_selector: currentPod + "-.*",
+          namespace: namespace,
           revision: currentChart.version.toString(),
           search_param: searchParam,
           start_range: startDate,

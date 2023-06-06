@@ -1,7 +1,6 @@
 package porter_app
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -35,7 +34,6 @@ func NewRollbackPorterAppHandler(
 func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-rollback-porter-app")
 	defer span.End()
-	r = r.Clone(ctx)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	request := &types.RollbackPorterAppRequest{}
@@ -82,7 +80,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = helmAgent.RollbackRelease(context.Background(), helmRelease.Name, request.Revision)
+	err = helmAgent.RollbackRelease(ctx, helmRelease.Name, request.Revision)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error rolling back release")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

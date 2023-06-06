@@ -39,8 +39,8 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
         "<token>",
         {
           namespace: appData.chart.namespace,
-          start_range: dayjs(event.created_at).toISOString(),
-          end_range: dayjs(event.updated_at).toISOString(),
+          start_range: dayjs(event.created_at).subtract(1, 'minute').toISOString(),
+          end_range: dayjs(event.updated_at).add(1, 'minute').toISOString(),
           pod_selector: event.metadata.pod_name,
           limit: 1000,
         },
@@ -69,7 +69,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
         <Container row spaced>
           <Icon height="18px" src={app_event} />
           <Spacer inline width="10px" />
-          <Text size={14}>{event.metadata.detail}</Text>
+          <Text size={14} additionalStyles={"overflow: auto;max-height: 70px;max-width: 600px;"}>{event.metadata.detail}</Text>
         </Container>
       </Container>
       <Container row spaced>

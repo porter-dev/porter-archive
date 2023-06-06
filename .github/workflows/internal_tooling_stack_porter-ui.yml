@@ -1,0 +1,88 @@
+"on":
+  push:
+    branches:
+      - master
+name: Deploy to Internal Tooling
+jobs:
+  build-go:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Go Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: porter-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: porter-go-`
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Download Go Modules
+        run: go mod download
+      - name: Build Server Binary
+        run: go build -ldflags="-w -s -X 'main.Version=production'" -o ./bin/app ./cmd/app
+      - name: Build Migration Binary
+        run: go build -ldflags '-w -s' -o ./bin/migrate ./cmd/migrate
+      - name: Store Binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: go-binaries
+          path: bin/
+  build-npm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install NPM Dependencies
+        run: |
+          cd dashboard
+          npm i --legacy-peer-deps
+      - name: Run NPM Build
+        run: |
+          cd dashboard
+          npm run build
+      - name: Store NPM Static Files
+        uses: actions/upload-artifact@v3
+        with:
+          name: npm-static-files
+          path: dashboard/build/
+  porter-deploy:
+    runs-on: ubuntu-latest
+    needs: [build-go, build-npm]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Get Go Binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: go-binaries
+          path: bin/
+      - name: Get NPM static files
+        uses: actions/download-artifact@v3
+        with:
+          name: npm-static-files
+          path: build/
+      - name: Set Github tag
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Deploy stack
+        timeout-minutes: 30
+        uses: porter-dev/porter-cli-action@v0.1.0
+        with:
+          command: apply -f nonexistant-porter.yaml
+        env:
+          PORTER_CLUSTER: "11"
+          PORTER_HOST: https://dashboard.internal-tools.getporter.dev
+          PORTER_PROJECT: "8"
+          PORTER_STACK_NAME: porter-ui
+          PORTER_TAG: ${{ steps.vars.outputs.sha_short }}
+          PORTER_TOKEN: ${{ secrets.PORTER_STACK_8_11 }}

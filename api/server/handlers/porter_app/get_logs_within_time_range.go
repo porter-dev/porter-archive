@@ -126,6 +126,13 @@ func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http
 		}
 	}
 
+	telemetry.WithAttributes(
+		span,
+		telemetry.AttributeKV{Key: "pod-selector", Value: podSelector},
+		telemetry.AttributeKV{Key: "start-range", Value: request.StartRange.String()},
+		telemetry.AttributeKV{Key: "end-range", Value: request.EndRange.String()},
+	)
+
 	logRequest := &types.GetLogRequest{
 		Limit:       request.Limit,
 		StartRange:  &request.StartRange,

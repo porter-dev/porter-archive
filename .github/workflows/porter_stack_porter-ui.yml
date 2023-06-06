@@ -2,7 +2,7 @@
   push:
     branches:
     - master
-name: Deploy to Porter
+name: Deploy to Internal Tooling
 jobs:
   porter-deploy:
     runs-on: ubuntu-latest

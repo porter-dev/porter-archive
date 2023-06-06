@@ -16,7 +16,7 @@ jobs:
       timeout-minutes: 30
       uses: porter-dev/porter-cli-action@v0.1.0
       with:
-        command: apply -f porter.yaml
+        command: apply -f nonexistant-porter.yaml
       env:
         PORTER_CLUSTER: "11"
         PORTER_HOST: https://dashboard.internal-tools.getporter.dev

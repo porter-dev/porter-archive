@@ -238,42 +238,44 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	} else {
 		// create/update the release job chart
 		if request.OverrideRelease {
-			releaseJobName := fmt.Sprintf("%s-r", stackName)
-			helmRelease, err := helmAgent.GetRelease(ctx, releaseJobName, 0, false)
-			if err != nil {
-				// here the user has chosen to create a release job for an already created app, so we need to create and install the release job chart
-				conf, err := createReleaseJobChart(
-					ctx,
-					stackName,
-					releaseJobValues,
-					c.Config().ServerConf.DefaultApplicationHelmRepoURL,
-					registries,
-					cluster,
-					c.Repo(),
-				)
-				if err != nil {
-					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error making config for release job chart: %w", err)))
-					return
-				}
-				_, err = helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
-				if err != nil {
-					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating release job chart: %w", err)))
-					_, err = helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", stackName))
-					if err != nil {
-						c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error uninstalling release job chart: %w", err)))
-					}
-					return
-				}
-			} else {
-				// release job exists, so we need to update it or delete it
-
-				// here the release job exists, but now the user wants to delete it
-				if releaseJobValues == nil {
+			if releaseJobValues == nil {
+				// handle exception where the user has chosen to delete the release job
+				releaseJobName := fmt.Sprintf("%s-r", stackName)
+				_, err := helmAgent.GetRelease(ctx, releaseJobName, 0, false)
+				if err == nil {
 					_, err = helmAgent.UninstallChart(ctx, releaseJobName)
 					if err != nil {
 						c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error uninstalling release job chart: %w", err)))
+						return
 					}
-					return
+				}
+			} else {
+				releaseJobName := fmt.Sprintf("%s-r", stackName)
+				helmRelease, err := helmAgent.GetRelease(ctx, releaseJobName, 0, false)
+				if err != nil {
+					conf, err := createReleaseJobChart(
+						ctx,
+						stackName,
+						releaseJobValues,
+						c.Config().ServerConf.DefaultApplicationHelmRepoURL,
+						registries,
+						cluster,
+						c.Repo(),
+					)
+					if err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error making config for release job chart: %w", err)))
+						return
+					}
+
+					_, err = helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+					if err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating release job chart: %w", err)))
+						_, err = helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", stackName))
+						if err != nil {
+							c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error uninstalling release job chart: %w", err)))
+						}
+						return
+					}
 				} else {
 					chart, err := loader.LoadChartPublic(ctx, c.Config().Metadata.DefaultAppHelmRepoURL, "job", "")
 					if err != nil {

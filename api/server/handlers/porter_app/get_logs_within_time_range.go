@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -50,9 +49,6 @@ func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-
-	request.StartRange = request.StartRange.Add(-1 * time.Minute)
-	request.EndRange = request.EndRange.Add(1 * time.Minute)
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {

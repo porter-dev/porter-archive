@@ -1,4 +1,4 @@
-name: Backend CI
+name: PR Checks
 on:
   - pull_request
 jobs:

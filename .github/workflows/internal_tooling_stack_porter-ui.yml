@@ -2,7 +2,7 @@
   push:
     branches:
       - master
-name: Deploy to Internal Tooling
+name: Deploy Porter to Internal Tooling
 jobs:
   build-go:
     runs-on: ubuntu-latest

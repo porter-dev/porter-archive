@@ -55,10 +55,10 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("here is the external id: %s\n", request.ExternalID)
 		credReq := porterv1.CreateAssumeRoleChainRequest{
 			ProjectId:       int64(project.ID),
-			SourceArn:       "arn:aws:iam::975032674314:user/feroze", // hard coded as this is the final hop for a CAPI cluster
+			SourceArn:       "arn:aws:iam::108458755588:role/CAPIManagement", // hard coded as this is the final hop for a CAPI cluster
 			TargetAccessId:  request.AWSAccessKeyID,
 			TargetSecretKey: request.AWSSecretAccessKey,
-			TargetArn:       "arn:aws:iam::844966915049:role/porter-manager",
+			TargetArn:       request.TargetArn,
 			ExternalId:      request.ExternalID,
 		}
 		credResp, err := p.Config().ClusterControlPlaneClient.CreateAssumeRoleChain(ctx, connect.NewRequest(&credReq))

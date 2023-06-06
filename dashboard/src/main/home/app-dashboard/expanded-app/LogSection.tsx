@@ -11,7 +11,6 @@ import RadioFilter from "components/RadioFilter";
 
 import spinner from "assets/loading.gif";
 import filterOutline from "assets/filter-outline.svg";
-import filterOutlineWhite from "assets/filter-outline-white.svg";
 import time from "assets/time.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -158,6 +157,11 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
   };
 
   const setPodFilterWithPodName = (podName: string) => {
+    if (podName == "All") {
+      resetPodFilter();
+      return;
+    }
+
     const filtered = podFilterOpts.filter((pod) => pod.podName == podName);
     if (filtered.length > 0) {
       setPodFilter(filtered[0]);
@@ -187,6 +191,14 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
   };
 
   const renderContents = () => {
+    const radioOptions = podFilterOpts?.map((pod) => {
+      return {
+        value: pod.podName,
+        label: pod.podName,
+      };
+    });
+    radioOptions.unshift({ value: "All", label: "All" });
+
     return (
       <>
         <FlexRow>
@@ -203,20 +215,10 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
               resetSearch={resetSearch}
             />
             <RadioFilter
-              icon={
-                podFilter.podName != "" ? filterOutlineWhite : filterOutline
-              }
+              icon={filterOutline}
               selected={podFilter.podName}
               setSelected={setPodFilterWithPodName}
-              options={podFilterOpts?.map((pod) => {
-                return {
-                  value: pod.podName,
-                  label: pod.podName,
-                };
-              })}
-              iconClick={() => {
-                resetPodFilter();
-              }}
+              options={radioOptions}
               name="Filter logs"
             />
           </Flex>

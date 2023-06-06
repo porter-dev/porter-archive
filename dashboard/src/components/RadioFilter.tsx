@@ -9,7 +9,6 @@ type Props = {
   options: { value: any; label: string }[];
   selected: any;
   setSelected: any;
-  iconClick?: any;
   noMargin?: boolean;
   dropdownAlignRight?: boolean;
 };
@@ -68,7 +67,11 @@ const RadioFilter: React.FC<Props> = (props) => {
                         key={i}
                         selected={props.selected === option.value}
                       >
-                        <Text>{option.label}</Text>
+                        {option.value == "All" ? (
+                          <DimmedText>{option.label}</DimmedText>
+                        ) : (
+                          <Text>{option.label}</Text>
+                        )}
                       </OptionRow>
                     );
                   }
@@ -85,28 +88,24 @@ const RadioFilter: React.FC<Props> = (props) => {
 
   return (
     <Relative>
-      <StyledRadioFilter ref={parentRef} noMargin={props.noMargin}>
-        <Flex onClick={props.iconClick}>
-          {props.icon && <FilterIcon src={props.icon} />}
-        </Flex>
-        <Flex
-          onClick={() => {
-            setExpanded(!expanded);
-          }}
-        >
-          <TextAlt>{props.name}</TextAlt>
-
-          <Bar />
-
-          <Selected>
-            {props.selected
-              ? props.selected === ""
-                ? "All"
-                : getLabel(props.selected)
-              : ""}
-          </Selected>
-          <DropdownIcon src={arrow} />
-        </Flex>
+      <StyledRadioFilter
+        onClick={() => {
+          setExpanded(!expanded);
+        }}
+        ref={parentRef}
+        noMargin={props.noMargin}
+      >
+        {props.icon && <FilterIcon src={props.icon} />}
+        <TextAlt>{props.name}</TextAlt>
+        <Bar />
+        <Selected>
+          {props.selected != null
+            ? props.selected === ""
+              ? "All"
+              : getLabel(props.selected)
+            : ""}
+        </Selected>
+        <DropdownIcon src={arrow} />
       </StyledRadioFilter>
       {renderDropdown()}
     </Relative>
@@ -114,11 +113,6 @@ const RadioFilter: React.FC<Props> = (props) => {
 };
 
 export default RadioFilter;
-
-const Flex = styled.div`
-  display: flex;
-  align-items: center;
-`;
 
 const Bar = styled.div`
   width: 1px;
@@ -134,6 +128,15 @@ const Selected = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
   max-width: 120px;
+`;
+
+const DimmedText = styled.div`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  word-break: anywhere;
+  margin-right: 10px;
+  color: #999;
 `;
 
 const Text = styled.div`

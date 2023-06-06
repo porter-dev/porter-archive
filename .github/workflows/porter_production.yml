@@ -2,7 +2,7 @@
   push:
     branches:
       - sms/prod-test
-name: Deploy to Porter
+name: Deploy to Production
 jobs:
   build-go:
     runs-on: ubuntu-latest

@@ -52,7 +52,6 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if project.CapiProvisionerEnabled && p.Config().EnableCAPIProvisioner {
-		fmt.Printf("here is the external id: %s\n", request.ExternalID)
 		credReq := porterv1.CreateAssumeRoleChainRequest{
 			ProjectId:       int64(project.ID),
 			SourceArn:       "arn:aws:iam::108458755588:role/CAPIManagement", // hard coded as this is the final hop for a CAPI cluster

@@ -11,6 +11,7 @@ import RadioFilter from "components/RadioFilter";
 
 import spinner from "assets/loading.gif";
 import filterOutline from "assets/filter-outline.svg";
+import filterOutlineWhite from "assets/filter-outline-white.svg";
 import time from "assets/time.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -88,7 +89,8 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
       const podList = services.map((service: Service) => {
         return {
           podName: service.name,
-          podType: service.type.valueOf(),
+          podType:
+            service.type.valueOf() == "worker" ? "wkr" : service.type.valueOf(),
         };
       });
       setPodFilterOpts(podList);
@@ -103,6 +105,26 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
       });
     }
   }, [isLoading, logs, scrollToBottomRef, scrollToBottomEnabled]);
+
+  useEffect(() => {
+    if (podFilter.podName != "") {
+      setSelectedDateIfUndefined();
+      return;
+    }
+  }, [podFilter]);
+
+  useEffect(() => {
+    if (selectedDate == null) {
+      resetPodFilter();
+      return;
+    }
+  }, [selectedDate]);
+
+  const resetPodFilter = () => {
+    if (podFilter.podName != "" || podFilter.podType != "") {
+      setPodFilter({ podName: "", podType: "" });
+    }
+  };
 
   const renderLogs = () => {
     return logs?.map((log, i) => {
@@ -140,7 +162,7 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
     if (filtered.length > 0) {
       setPodFilter(filtered[0]);
     } else {
-      setPodFilter({ podName: "", podNamespace: "", podType: "" });
+      resetPodFilter();
     }
   };
 
@@ -181,7 +203,9 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
               resetSearch={resetSearch}
             />
             <RadioFilter
-              icon={filterOutline}
+              icon={
+                podFilter.podName != "" ? filterOutlineWhite : filterOutline
+              }
               selected={podFilter.podName}
               setSelected={setPodFilterWithPodName}
               options={podFilterOpts?.map((pod) => {
@@ -190,6 +214,9 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
                   label: pod.podName,
                 };
               })}
+              iconClick={() => {
+                resetPodFilter();
+              }}
               name="Filter logs"
             />
           </Flex>

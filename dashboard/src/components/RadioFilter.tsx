@@ -9,6 +9,7 @@ type Props = {
   options: { value: any; label: string }[];
   selected: any;
   setSelected: any;
+  iconClick?: any;
   noMargin?: boolean;
   dropdownAlignRight?: boolean;
 };
@@ -84,24 +85,28 @@ const RadioFilter: React.FC<Props> = (props) => {
 
   return (
     <Relative>
-      <StyledRadioFilter
-        onClick={() => {
-          setExpanded(!expanded);
-        }}
-        ref={parentRef}
-        noMargin={props.noMargin}
-      >
-        {props.icon && <FilterIcon src={props.icon} />}
-        <TextAlt>{props.name}</TextAlt>
-        <Bar />
-        <Selected>
-          {props.selected
-            ? props.selected === ""
-              ? "All"
-              : getLabel(props.selected)
-            : ""}
-        </Selected>
-        <DropdownIcon src={arrow} />
+      <StyledRadioFilter ref={parentRef} noMargin={props.noMargin}>
+        <Flex onClick={props.iconClick}>
+          {props.icon && <FilterIcon src={props.icon} />}
+        </Flex>
+        <Flex
+          onClick={() => {
+            setExpanded(!expanded);
+          }}
+        >
+          <TextAlt>{props.name}</TextAlt>
+
+          <Bar />
+
+          <Selected>
+            {props.selected
+              ? props.selected === ""
+                ? "All"
+                : getLabel(props.selected)
+              : ""}
+          </Selected>
+          <DropdownIcon src={arrow} />
+        </Flex>
       </StyledRadioFilter>
       {renderDropdown()}
     </Relative>
@@ -109,6 +114,11 @@ const RadioFilter: React.FC<Props> = (props) => {
 };
 
 export default RadioFilter;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+`;
 
 const Bar = styled.div`
   width: 1px;

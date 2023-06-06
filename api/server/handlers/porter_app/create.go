@@ -228,7 +228,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		c.createPorterAppEvent(ctx, "SUCCESS", porterApp.ID, 1)
+		_, err = createPorterAppEvent(ctx, "SUCCESS", porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating porter app event: %s", err.Error())))
+			return
+		}
 
 		c.WriteResult(w, r, porterApp.ToPorterAppType())
 	} else {
@@ -362,14 +366,18 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		c.createPorterAppEvent(ctx, "SUCCESS", updatedPorterApp.ID, helmRelease.Version+1)
+		_, err = createPorterAppEvent(ctx, "SUCCESS", updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating porter app event: %s", err.Error())))
+			return
+		}
 
 		c.WriteResult(w, r, updatedPorterApp.ToPorterAppType())
 	}
 }
 
 // createPorterAppEvent creates an event for use in the activity feed
-func (c *CreatePorterAppHandler) createPorterAppEvent(ctx context.Context, status string, appID uint, revision int) (*models.PorterAppEvent, error) {
+func createPorterAppEvent(ctx context.Context, status string, appID uint, revision int, tag string, repo repository.PorterAppEventRepository) (*models.PorterAppEvent, error) {
 	event := models.PorterAppEvent{
 		ID:                 uuid.New(),
 		Status:             status,
@@ -377,11 +385,12 @@ func (c *CreatePorterAppHandler) createPorterAppEvent(ctx context.Context, statu
 		TypeExternalSource: "KUBERNETES",
 		PorterAppID:        appID,
 		Metadata: map[string]any{
-			"revision": revision,
+			"revision":  revision,
+			"image_tag": tag,
 		},
 	}
 
-	err := c.Repo().PorterAppEvent().CreateEvent(ctx, &event)
+	err := repo.CreateEvent(ctx, &event)
 	if err != nil {
 		return nil, err
 	}

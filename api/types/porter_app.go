@@ -58,6 +58,10 @@ type UpdatePorterAppRequest struct {
 	PullRequestURL string `json:"pull_request_url"`
 }
 
+type RollbackPorterAppRequest struct {
+	Revision int `json:"revision" form:"required"`
+}
+
 type ListPorterAppResponse []*PorterApp
 
 // PorterAppEvent represents an event that occurs on a Porter stack during a stacks lifecycle.

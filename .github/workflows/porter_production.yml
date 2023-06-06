@@ -1,7 +1,7 @@
 "on":
   push:
     branches:
-      - master
+      - sms/prod-test
 name: Deploy to Porter
 jobs:
   build-go:
@@ -78,10 +78,10 @@ jobs:
         timeout-minutes: 20
         uses: porter-dev/porter-update-action@v0.1.0
         with:
-          app: production
-          cluster: "8"
+          app: porter-ui
+          cluster: "9"
           host: https://dashboard.internal-tools.getporter.dev
           namespace: default
-          project: "1"
+          project: "5"
           tag: ${{ steps.vars.outputs.sha_short }}
-          token: ${{ secrets.PORTER_TOKEN_1 }}
+          token: ${{ secrets.PORTER_TOKEN_5 }}

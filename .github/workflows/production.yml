@@ -2,8 +2,6 @@
   push:
     tags:
       - production
-    branches:
-      - sms/certs
 name: Deploy Porter to Production
 jobs:
   build-go:

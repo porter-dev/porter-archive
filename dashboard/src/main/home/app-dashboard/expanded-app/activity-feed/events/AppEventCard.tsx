@@ -39,8 +39,8 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
         "<token>",
         {
           namespace: appData.chart.namespace,
-          start_range: dayjs(event.created_at).toISOString(),
-          end_range: dayjs(event.updated_at).toISOString(),
+          start_range: dayjs(event.created_at).subtract(1, 'minute').toISOString(),
+          end_range: dayjs(event.updated_at).add(1, 'minute').toISOString(),
           pod_selector: event.metadata.pod_name,
           limit: 1000,
         },

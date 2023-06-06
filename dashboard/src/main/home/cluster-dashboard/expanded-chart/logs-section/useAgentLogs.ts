@@ -416,7 +416,7 @@ export const useLogs = (
 
   useEffect(() => {
     refresh();
-  }, [searchParam, setDate]);
+  }, [currentPod, namespace, searchParam, setDate]);
 
   useEffect(() => {
     // if the streaming is no longer live, close all websockets

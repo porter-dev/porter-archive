@@ -7,6 +7,7 @@ import styled from "styled-components";
 interface LogQueryModeSelectionToggleProps {
   selectedDate?: Date;
   setSelectedDate: React.Dispatch<React.SetStateAction<Date>>;
+  resetSearch: () => void;
 }
 
 const LogQueryModeSelectionToggle = (
@@ -22,7 +23,10 @@ const LogQueryModeSelectionToggle = (
     >
       <ToggleButton>
         <ToggleOption
-          onClick={() => props.setSelectedDate(undefined)}
+          onClick={() => {
+            props.setSelectedDate(undefined);
+            props.resetSearch();
+          }}
           selected={!props.selectedDate}
         >
           <Dot selected={!props.selectedDate} />

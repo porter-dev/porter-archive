@@ -44,6 +44,7 @@ const escapeRegExp = (str: string) => {
 interface QueryModeSelectionToggleProps {
   selectedDate?: Date;
   setSelectedDate: React.Dispatch<React.SetStateAction<Date>>;
+  resetSearch: () => void;
 }
 
 const QueryModeSelectionToggle = (props: QueryModeSelectionToggleProps) => {
@@ -57,7 +58,10 @@ const QueryModeSelectionToggle = (props: QueryModeSelectionToggleProps) => {
     >
       <ToggleButton>
         <ToggleOption
-          onClick={() => props.setSelectedDate(undefined)}
+          onClick={() => {
+            props.setSelectedDate(undefined);
+            props.resetSearch();
+          }}
           selected={!props.selectedDate}
         >
           <Dot selected={!props.selectedDate} />
@@ -103,16 +107,6 @@ const LogsSection: React.FC<Props> = ({
 }) => {
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
-  const [podFilter, setPodFilter] = useState(
-    initData.podName || overridingPodName
-  );
-  const [podFilterOpts, setPodFilterOpts] = useState<string[]>(
-    initData?.podName
-      ? _.compact([initData.podName])
-      : overridingPodName
-      ? _.compact([overridingPodName])
-      : []
-  );
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [enteredSearchText, setEnteredSearchText] = useState("");
@@ -120,6 +114,7 @@ const LogsSection: React.FC<Props> = ({
     initData.timestamp ? dayjs(initData.timestamp).toDate() : undefined
   );
   const [notification, setNotification] = useState<string>();
+  const [loading, setLoading] = useState(true);
 
   const notify = (message: string) => {
     setNotification(message);
@@ -129,82 +124,15 @@ const LogsSection: React.FC<Props> = ({
     }, 5000);
   };
 
-  const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
-    podFilter,
-    currentChart.namespace,
+  const { logs, refresh, moveCursor, paginationInfo } = useLogs(
+    "",
+    "",
     enteredSearchText,
     notify,
     currentChart,
+    setLoading,
     selectedDate
   );
-
-  const refreshPodLogsValues = async () => {
-    if (overridingPodName) {
-      return;
-    }
-
-    const filters = {
-      namespace: currentChart.namespace,
-      revision: initData.revision ?? currentChart.version.toString(),
-      match_prefix: currentChart.name,
-    };
-
-    // if the current chart is set to a blue-green deployment, we don't set a revision, but instead
-    // we set the match prefix to the current chart and the active image tag.
-    if (currentChart.config.bluegreen?.enabled) {
-      filters.revision = null;
-
-      if (currentChart?.name.includes("web")) {
-        filters.match_prefix = `${currentChart.name}-${currentChart.config.bluegreen?.activeImageTag}`;
-      } else {
-        filters.match_prefix = `${currentChart.name}-web-${currentChart.config.bluegreen?.activeImageTag}`;
-      }
-    }
-
-    const logPodValuesResp = await api.getLogPodValues("<TOKEN>", filters, {
-      project_id: currentProject.id,
-      cluster_id: currentCluster.id,
-    });
-
-    if (logPodValuesResp.data?.length != 0) {
-      setPodFilterOpts(_.uniq(logPodValuesResp.data ?? []));
-
-      // only set pod filter if the current pod is not found in the resulting data
-      if (!logPodValuesResp.data?.includes(podFilter)) {
-        setPodFilter(logPodValuesResp.data[0]);
-      }
-
-      return;
-    }
-
-    // if we're on the latest revision and no pod values were returned, query for all release pods
-    if (currentChart.info.status == "deployed") {
-      const allReleasePodsResp = await api.getAllReleasePods(
-        "<TOKEN>",
-        {},
-        {
-          id: currentProject.id,
-          name: currentChart.name,
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-        }
-      );
-
-      let podList = allReleasePodsResp.data.map((pod: any) => {
-        return pod.metadata.name;
-      });
-
-      setPodFilterOpts(podList);
-
-      if (!podFilter || !podList.includes(podFilter)) {
-        setPodFilter(podList[0]);
-      }
-    }
-  };
-
-  useEffect(() => {
-    refreshPodLogsValues();
-  }, [initData]);
 
   useEffect(() => {
     if (!loading && scrollToBottomRef.current && scrollToBottomEnabled) {
@@ -216,10 +144,6 @@ const LogsSection: React.FC<Props> = ({
   }, [loading, logs, scrollToBottomRef, scrollToBottomEnabled]);
 
   useEffect(() => {
-    if (initData.podName) {
-      setPodFilter(initData.podName);
-    }
-
     if (initData.timestamp) {
       setSelectedDate(dayjs(initData.timestamp).toDate());
     }
@@ -231,7 +155,9 @@ const LogsSection: React.FC<Props> = ({
         <Log key={[log.lineNumber, i].join(".")}>
           <span className="line-number">{log.lineNumber}.</span>
           <span className="line-timestamp">
-            {log.timestamp ? dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss") : "-"}
+            {log.timestamp
+              ? dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")
+              : "-"}
           </span>
           <LogOuter key={[log.lineNumber, i].join(".")}>
             {log.line?.map((ansi, j) => {
@@ -263,6 +189,11 @@ const LogsSection: React.FC<Props> = ({
     moveCursor(Direction.backward);
   }, [logs, selectedDate]);
 
+  const resetSearch = () => {
+    setSearchText("");
+    setEnteredSearchText("");
+  };
+
   const renderContents = () => {
     return (
       <>
@@ -279,6 +210,9 @@ const LogsSection: React.FC<Props> = ({
                   onKeyPress={(event) => {
                     if (event.key === "Enter") {
                       setEnteredSearchText(escapeRegExp(searchText));
+                      if (selectedDate == null) {
+                        setSelectedDate(dayjs().toDate());
+                      }
                     }
                   }}
                   placeholder="Search logs..."
@@ -288,18 +222,7 @@ const LogsSection: React.FC<Props> = ({
             <QueryModeSelectionToggle
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
-            />
-            <RadioFilter
-              icon={filterOutline}
-              selected={podFilter}
-              setSelected={setPodFilter}
-              options={podFilterOpts?.map((name) => {
-                return {
-                  value: name,
-                  label: name,
-                };
-              })}
-              name="Filter logs"
+              resetSearch={resetSearch}
             />
           </Flex>
           <Flex>
@@ -310,7 +233,7 @@ const LogsSection: React.FC<Props> = ({
               Scroll to bottom
             </Button>
             <Spacer />
-            <Button onClick={() => refresh()}>
+            <Button onClick={refresh}>
               <i className="material-icons">autorenew</i>
               Refresh
             </Button>
@@ -326,8 +249,18 @@ const LogsSection: React.FC<Props> = ({
         </FlexRow>
         <LogsSectionWrapper>
           <StyledLogsSection isFullscreen={isFullscreen}>
-            {loading || !logs.length ? (
+            {loading || (logs.length == 0 && selectedDate == null) ? (
               <Loading message="Waiting for logs..." />
+            ) : logs.length == 0 ? (
+              <>
+                <Message>
+                  No logs found.
+                  <Highlight onClick={refresh}>
+                    <i className="material-icons">autorenew</i>
+                    Refresh
+                  </Highlight>
+                </Message>
+              </>
             ) : (
               <>
                 <LoadMoreButton
@@ -340,14 +273,6 @@ const LogsSection: React.FC<Props> = ({
                   Load Previous
                 </LoadMoreButton>
                 {renderLogs()}
-                {/* <Message>
-            
-            No matching logs found.
-            <Highlight onClick={() => {}}>
-              <i className="material-icons">autorenew</i>
-              Refresh
-            </Highlight>
-          </Message> */}
                 <LoadMoreButton
                   active={selectedDate && logs.length !== 0}
                   role="button"

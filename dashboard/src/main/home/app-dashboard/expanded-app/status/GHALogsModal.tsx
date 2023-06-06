@@ -32,7 +32,7 @@ const GHALogsModal: React.FC<Props> = ({
   actionRunId,
 }) => {
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
-  const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
+  const scrollToBottomRef = useRef<HTMLDivElement>(null);
   const ExpandedIncidentLogs = ({ logs }: ExpandedIncidentLogsProps) => {
     if (!logs.length) {
       return (
@@ -158,7 +158,7 @@ const LogSpan = styled.div`
   font-family: monospace;
   user-select: text;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 8px;
   width: 100%;
   & > * {

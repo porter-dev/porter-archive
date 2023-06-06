@@ -1,4 +1,4 @@
-package stacks
+package porter_app
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -227,14 +228,20 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
+		_, err = createPorterAppEvent(ctx, "SUCCESS", porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating porter app event: %s", err.Error())))
+			return
+		}
+
 		c.WriteResult(w, r, porterApp.ToPorterAppType())
 	} else {
 		// create/update the release job chart
-		if request.OverrideRelease && releaseJobValues != nil {
+		if request.OverrideRelease {
 			releaseJobName := fmt.Sprintf("%s-r", stackName)
 			helmRelease, err := helmAgent.GetRelease(ctx, releaseJobName, 0, false)
 			if err != nil {
-				// here the user has created a release job for an already created app, so we need to create and install  the release job chart
+				// here the user has chosen to create a release job for an already created app, so we need to create and install the release job chart
 				conf, err := createReleaseJobChart(
 					ctx,
 					stackName,
@@ -258,17 +265,35 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					return
 				}
 			} else {
-				conf := &helm.UpgradeReleaseConfig{
-					Name:       helmRelease.Name,
-					Cluster:    cluster,
-					Repo:       c.Repo(),
-					Registries: registries,
-					Values:     releaseJobValues,
-				}
-				_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
-				if err != nil {
-					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error upgrading release job chart: %w", err)))
+				// release job exists, so we need to update it or delete it
+
+				// here the release job exists, but now the user wants to delete it
+				if releaseJobValues == nil {
+					_, err = helmAgent.UninstallChart(ctx, releaseJobName)
+					if err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error uninstalling release job chart: %w", err)))
+					}
 					return
+				} else {
+					chart, err := loader.LoadChartPublic(ctx, c.Config().Metadata.DefaultAppHelmRepoURL, "job", "")
+					if err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("error loading release job chart: %w", err), http.StatusBadRequest))
+						return
+					}
+
+					conf := &helm.UpgradeReleaseConfig{
+						Name:       helmRelease.Name,
+						Cluster:    cluster,
+						Repo:       c.Repo(),
+						Registries: registries,
+						Values:     releaseJobValues,
+						Chart:      chart,
+					}
+					_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
+					if err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error upgrading release job chart: %w", err)))
+						return
+					}
 				}
 			}
 		}
@@ -341,8 +366,40 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
+		_, err = createPorterAppEvent(ctx, "SUCCESS", updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating porter app event: %s", err.Error())))
+			return
+		}
+
 		c.WriteResult(w, r, updatedPorterApp.ToPorterAppType())
 	}
+}
+
+// createPorterAppEvent creates an event for use in the activity feed
+func createPorterAppEvent(ctx context.Context, status string, appID uint, revision int, tag string, repo repository.PorterAppEventRepository) (*models.PorterAppEvent, error) {
+	event := models.PorterAppEvent{
+		ID:                 uuid.New(),
+		Status:             status,
+		Type:               "DEPLOY",
+		TypeExternalSource: "KUBERNETES",
+		PorterAppID:        appID,
+		Metadata: map[string]any{
+			"revision":  revision,
+			"image_tag": tag,
+		},
+	}
+
+	err := repo.CreateEvent(ctx, &event)
+	if err != nil {
+		return nil, err
+	}
+
+	if event.ID == uuid.Nil {
+		return nil, err
+	}
+
+	return &event, nil
 }
 
 func createReleaseJobChart(

@@ -1,7 +1,6 @@
 package release
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/notifier/slack"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"gorm.io/gorm"
 )
 
@@ -37,57 +37,73 @@ func NewWebhookHandler(
 }
 
 func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-webhook-deploy-with-token-handler")
+	defer span.End()
+
 	token, _ := requestutils.GetURLParamString(r, types.URLParamToken)
 
 	// retrieve release by token
-	release, err := c.Repo().Release().ReadReleaseByWebhookToken(token)
+	dbRelease, err := c.Repo().Release().ReadReleaseByWebhookToken(token)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
+			err = telemetry.Error(ctx, span, err, "release not found with given webhook")
 			// throw forbidden error, since we don't want a way to verify if webhooks exist
-			c.HandleAPIError(w, r, apierrors.NewErrForbidden(
-				fmt.Errorf("release not found with given webhook"),
-			))
-
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 			return
 		}
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error with reading release by webhook token")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
+	if dbRelease == nil {
+		err = telemetry.Error(ctx, span, nil, "release is nil with given webhook")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
+		return
+	}
+	release := *dbRelease
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "release-id", Value: release.ID},
+		telemetry.AttributeKV{Key: "release-name", Value: release.Name},
+		telemetry.AttributeKV{Key: "release-namespace", Value: release.Namespace},
+		telemetry.AttributeKV{Key: "cluster-id", Value: release.ClusterID},
+		telemetry.AttributeKV{Key: "project-id", Value: release.ProjectID},
+	)
 
 	cluster, err := c.Repo().Cluster().ReadCluster(release.ProjectID, release.ClusterID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
+			err = telemetry.Error(ctx, span, err, "cluster not found for upgrade webhook")
 			// throw forbidden error, since we don't want a way to verify if the cluster and project
 			// still exist for a cluster that's been deleted
-			c.HandleAPIError(w, r, apierrors.NewErrForbidden(
-				fmt.Errorf("cluster %d in project %d not found for upgrade webhook", release.ClusterID, release.ProjectID),
-			))
-
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 			return
 		}
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error with reading cluster for upgrade webhook")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	// in this case, we retrieve the agent by passing in the namespace field directly, since
 	// it cannot be detected from the URL
-	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, release.Namespace)
+	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, release.Namespace)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "unable to get helm agent for upgrade webhook")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	request := &types.WebhookRequest{}
-
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
 
-	rel, err := helmAgent.GetRelease(context.Background(), release.Name, 0, true)
+	rel, err := helmAgent.GetRelease(ctx, release.Name, 0, true)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "uanble to get release for upgrade webhook")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -115,17 +131,15 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rel.Config["image"] = image
 
 	if rel.Config["auto_deploy"] == false {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("Deploy webhook is disabled for this deployment."),
-			http.StatusBadRequest,
-		))
-
+		err = telemetry.Error(ctx, span, err, "deploy")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(release.ProjectID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "unable to list registries for upgrade webhook")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -141,10 +155,11 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var notifConf *types.NotificationConfig
 	notifConf = nil
-	if release != nil && release.NotificationConfig != 0 {
+	if release.NotificationConfig != 0 {
 		conf, err := c.Repo().NotificationConfig().ReadNotificationConfig(release.NotificationConfig)
 		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			err = telemetry.Error(ctx, span, err, "unable to read notification config for upgrade webhook")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
@@ -169,8 +184,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		),
 	}
 
-	rel, err = helmAgent.UpgradeReleaseByValues(context.Background(), conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
-
+	rel, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 	if err != nil {
 		notifyOpts.Status = notifier.StatusHelmFailed
 		notifyOpts.Info = err.Error()
@@ -178,12 +192,8 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if !cluster.NotificationsDisabled {
 			deplNotifier.Notify(notifyOpts)
 		}
-
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			err,
-			http.StatusBadRequest,
-		))
-
+		err = telemetry.Error(ctx, span, err, "unable to upgrade release for upgrade webhook")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -211,9 +221,9 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.WriteResult(w, r, nil)
 
 	err = postUpgrade(c.Config(), cluster.ProjectID, cluster.ID, rel)
-
 	if err != nil {
-		c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error while running post upgrade hooks")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 }

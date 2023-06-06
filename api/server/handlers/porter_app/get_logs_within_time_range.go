@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -49,6 +50,9 @@ func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+
+	request.StartRange = request.StartRange.Add(-1 * time.Minute)
+	request.EndRange = request.EndRange.Add(1 * time.Minute)
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
@@ -125,6 +129,13 @@ func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http
 			podSelector = latestPod.Name
 		}
 	}
+
+	telemetry.WithAttributes(
+		span,
+		telemetry.AttributeKV{Key: "pod-selector", Value: podSelector},
+		telemetry.AttributeKV{Key: "start-range", Value: request.StartRange.String()},
+		telemetry.AttributeKV{Key: "end-range", Value: request.EndRange.String()},
+	)
 
 	logRequest := &types.GetLogRequest{
 		Limit:       request.Limit,

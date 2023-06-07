@@ -112,8 +112,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		releaseValues = helmRelease.Config
 		releaseDependencies = helmRelease.Chart.Metadata.Dependencies
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "image-repo", Value: imageInfo.Repository})
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "image-tag", Value: imageInfo.Tag})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "image-repo", Value: imageInfo.Repository}, telemetry.AttributeKV{Key: "image-tag", Value: imageInfo.Tag})
 
 	if request.Builder == "" {
 		// attempt to get builder from db

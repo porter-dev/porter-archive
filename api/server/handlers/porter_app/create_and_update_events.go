@@ -112,6 +112,9 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 					if !ok {
 						continue
 					}
+					if existingAgentEventID == 0 {
+						continue
+					}
 					if existingAgentEventID == agentEventID {
 						return existingEvent.ToPorterAppEvent(), nil
 					}

@@ -16,6 +16,7 @@ import styled from "styled-components";
 import Button from "components/porter/Button";
 import api from "shared/api";
 import Link from "components/porter/Link";
+import ConfirmOverlay from "components/porter/ConfirmOverlay";
 
 type Props = {
   event: PorterAppEvent;
@@ -23,6 +24,9 @@ type Props = {
 };
 
 const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
+  const [showOverlay, setShowOverlay] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
@@ -35,6 +39,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
   };
 
   const revertToRevision = async (revision: number) => {
+    setLoading(true);
     try {
       await api
         .rollbackPorterApp(
@@ -50,6 +55,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
         )
       window.location.reload();
     } catch (err) {
+      setLoading(false);
       console.log(err)
     }
   }
@@ -69,14 +75,26 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
           <Icon height="16px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText(event)}
-          <Spacer inline x={1} />
-          <TempWrapper>
-            <Link hasunderline onClick={() => revertToRevision(event.metadata.revision)}>
-              Revert to v{event?.metadata?.revision}
-            </Link>
-          </TempWrapper>
+          {appData?.chart?.version !== event.metadata?.revision && (
+            <>
+              <Spacer inline x={1} />
+              <TempWrapper>
+                <Link hasunderline onClick={() => setShowOverlay(true)}>
+                  Revert to v{event?.metadata?.revision}
+                </Link>
+              </TempWrapper>
+            </>
+          )}
         </Container>
       </Container>
+      {showOverlay && (
+        <ConfirmOverlay
+          loading={loading}
+          message={`Are you sure you want to revert to version no. ${event?.metadata?.revision}?`}
+          onYes={() => revertToRevision(event.metadata.revision)}
+          onNo={() => setShowOverlay(false)}
+        />
+      )}
     </StyledEventCard>
   );
 };

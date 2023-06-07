@@ -62,7 +62,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "stack-name", Value: stackName})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "application-name", Value: stackName})
 
 	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespace)
 	if err != nil {
@@ -178,11 +178,12 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			_, err = helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 			if err != nil {
 				err = telemetry.Error(ctx, span, err, "error installing pre-deploy job chart")
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "install-pre-deploy-job-error", Value: err})
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				_, err = helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", stackName))
-				if err != nil {
-					err = telemetry.Error(ctx, span, err, "error uninstalling pre-deploy job chart after failed install")
-					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				_, uninstallChartErr := helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", stackName))
+				if uninstallChartErr != nil {
+					uninstallChartErr = telemetry.Error(ctx, span, err, "error uninstalling pre-deploy job chart after failed install")
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(uninstallChartErr, http.StatusInternalServerError))
 				}
 				return
 			}
@@ -298,11 +299,12 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					_, err = helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 					if err != nil {
 						err = telemetry.Error(ctx, span, err, "error installing pre-deploy job chart")
+						telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "install-pre-deploy-job-error", Value: err})
 						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-						_, err = helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", stackName))
-						if err != nil {
-							err = telemetry.Error(ctx, span, err, "error uninstalling pre-deploy job chart after failed install")
-							c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+						_, uninstallChartErr := helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", stackName))
+						if uninstallChartErr != nil {
+							uninstallChartErr = telemetry.Error(ctx, span, err, "error uninstalling pre-deploy job chart after failed install")
+							c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(uninstallChartErr, http.StatusInternalServerError))
 						}
 						return
 					}

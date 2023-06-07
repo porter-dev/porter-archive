@@ -33,7 +33,7 @@ const ExpandedIncidentLogs: React.FC<ExpandedIncidentLogsProps> = ({ logs }: Exp
                                 {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
                             </span>}
                             <LogOuter key={[log.lineNumber, i].join(".")}>
-                                {log.line?.map((ansi, j) => {
+                                {Array.isArray(log.line) ? log.line?.map((ansi, j) => {
                                     if (ansi.clearLine) {
                                         return null;
                                     }
@@ -46,7 +46,9 @@ const ExpandedIncidentLogs: React.FC<ExpandedIncidentLogsProps> = ({ logs }: Exp
                                             {ansi.content.replace(/ /g, "\u00a0")}
                                         </LogInnerSpan>
                                     );
-                                })}
+                                }) : (
+                                    log.line
+                                )}
                             </LogOuter>
                         </LogSpan>
                     );

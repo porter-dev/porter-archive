@@ -80,7 +80,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
               <Spacer inline x={1} />
               <TempWrapper>
                 <Link hasunderline onClick={() => setShowOverlay(true)}>
-                  Revert to v{event?.metadata?.revision}
+                  Revert to version {event?.metadata?.revision}
                 </Link>
               </TempWrapper>
             </>

@@ -1010,7 +1010,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                        appData.chart.chart.metadata.version
+                      appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                     upgradeVersion={appUpgradeVersion}

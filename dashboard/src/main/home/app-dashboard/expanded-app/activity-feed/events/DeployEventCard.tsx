@@ -23,9 +23,6 @@ type Props = {
 };
 
 const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [modalContent, setModalContent] = useState<React.ReactNode>(null);
-
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":

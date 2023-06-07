@@ -60,12 +60,13 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
           cluster_id: appData.app.cluster_id,
         }
       )
-      const updatedLogs = logResp.data.logs.map((l: { line: string; timestamp: string; }, index: number) =>
-      ({
-        line: Anser.ansiToJson(l.line),
-        lineNumber: index + 1,
-        timestamp: l.timestamp,
-      }));
+      const updatedLogs = logResp.data.logs.map((l: { line: string; timestamp: string; }, index: number) => {
+        return {
+          line: JSON.parse(l.line)?.log ?? Anser.ansiToJson(l.line),
+          lineNumber: index + 1,
+          timestamp: l.timestamp,
+        }
+      });
 
       setLogs(updatedLogs);
     } catch (error) {

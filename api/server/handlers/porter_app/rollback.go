@@ -68,9 +68,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	imageInfo := attemptToGetImageInfoFromRelease(helmRelease.Config)
 	if imageInfo.Tag == "" {
-		err = telemetry.Error(ctx, span, err, "error getting image info from release")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
+		imageInfo.Tag = "latest"
 	}
 
 	porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)

@@ -82,6 +82,7 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	p.WriteResult(w, r, event)
 }
 
+// createNewAppEvent will create a new app event for the given porter app name. If the app event is an agent event, then it will be created only if there is no existing event which has the agent ID. In the case that an existing event is found, that will be returned instead
 func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Context, cluster models.Cluster, porterAppName string, status string, eventType string, externalSource string, requestMetadata map[string]any) (types.PorterAppEvent, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-porter-app-event")
 	defer span.End()
@@ -96,6 +97,32 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 		telemetry.AttributeKV{Key: "cluster-id", Value: int(cluster.ID)},
 		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},
 	)
+
+	if eventType == string(types.PorterAppEventType_AppEvent) {
+		// Agent has no way to know what the porter app event id is, so if we must dedup here
+		// TODO: create a filter to filter by only agent events. Not an issue now as app events are deduped per hour on the agent side
+		if agentEventID, ok := requestMetadata["agent_event_id"]; ok {
+			existingEvents, _, err := p.Repo().PorterAppEvent().ListEventsByPorterAppID(ctx, app.ID)
+			if err != nil {
+				return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error listing porter app events for event type")
+			}
+
+			for _, existingEvent := range existingEvents {
+				if existingEvent.Type == eventType {
+					existingAgentEventID, ok := existingEvent.Metadata["agent_event_id"]
+					if !ok {
+						continue
+					}
+					if existingAgentEventID == 0 {
+						continue
+					}
+					if existingAgentEventID == agentEventID {
+						return existingEvent.ToPorterAppEvent(), nil
+					}
+				}
+			}
+		}
+	}
 
 	event := models.PorterAppEvent{
 		ID:                 uuid.New(),

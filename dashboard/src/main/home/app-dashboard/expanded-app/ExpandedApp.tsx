@@ -776,6 +776,35 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             clearStatus={() => setButtonStatus("")}
           />
         );
+      case "pre-deploy":
+        return (
+          <>
+            {!isLoading && !services.some(Service.isRelease) && (
+              <>
+                <Fieldset>
+                  <Container row>
+                    <PlaceholderIcon src={notFound} />
+                    <Text color="helper">
+                      No pre-deploy jobs were found. You can add a pre-deploy
+                      job in the Overview tab to perform an operation before
+                      your application services deploy, like a database
+                      migration.
+                    </Text>
+                  </Container>
+                </Fieldset>
+                <Spacer y={0.5} />
+              </>
+            )}
+            {services.some(Service.isRelease) && (
+              <JobRuns
+                lastRunStatus="all"
+                namespace={appData.chart?.namespace}
+                sortType="Newest"
+                releaseName={appData.app.name + "-r"}
+              />
+            )}
+          </>
+        );
       default:
         return <div>Tab not found</div>;
     }
@@ -1016,11 +1045,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 noBuffer
                 options={[
                   { label: "Overview", value: "overview" },
-                  { label: "Activity", value: "activity" },
-                  {label: "Events", value: "events"},
+                  featurePreview && { label: "Activity", value: "activity" },
+                  hasBuiltImage && { label: "Events", value: "events" },
                   hasBuiltImage && { label: "Logs", value: "logs" },
                   hasBuiltImage && { label: "Metrics", value: "metrics" },
                   hasBuiltImage && { label: "Debug", value: "status" },
+                  appData.app.git_repo_id && {
+                    label: "Pre-deploy logs",
+                    value: "pre-deploy",
+                  },
                   {
                     label: "Environment",
                     value: "environment-variables",

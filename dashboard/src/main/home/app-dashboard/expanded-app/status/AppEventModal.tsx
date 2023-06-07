@@ -52,7 +52,9 @@ const AppEventModal: React.FC<AppEventModalProps> = ({ logs, porterAppName, setM
                 <img src={document} />
                 {expandedAppEventMessage}
             </Message>
-            <ExpandedIncidentLogs logs={logs} />
+            {logs.length > 0 &&
+                <ExpandedIncidentLogs logs={logs} />
+            }
         </Modal>
     );
 };

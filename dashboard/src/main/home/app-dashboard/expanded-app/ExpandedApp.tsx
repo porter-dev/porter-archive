@@ -88,7 +88,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     false
   );
 
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("activity");
   const [saveValuesStatus, setSaveValueStatus] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [bannerLoading, setBannerLoading] = useState<boolean>(false);
@@ -929,72 +929,34 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   />
                 )
               ) : !hasBuiltImage ? (
-                <>
-                  {logs ? (
-                    <Banner
-                      type="error"
-                      suffix={
-                        <>
-                          <>
-                            <RefreshButton
-                              onClick={() => window.location.reload()}
-                            >
-                              <img src={refresh} />
-                              Refresh
-                            </RefreshButton>
-                          </>
-                        </>
-                      }
-                    >
-                      Your build was not successful.
-                      <Spacer inline width="5px" />
+                bannerLoading ? (
+                  <Banner>
+                    <Loading />
+                  </Banner>
+                ) : (
+                  <Banner
+                    suffix={
                       <>
-                        <Link
-                          hasunderline
-                          onClick={() => setModalVisible(true)}
+                        <RefreshButton
+                          onClick={() => window.location.reload()}
                         >
-                          View logs
-                        </Link>
-                        {modalVisible && (
-                          <GHALogsModal
-                            appData={appData}
-                            logs={logs}
-                            modalVisible={modalVisible}
-                            setModalVisible={setModalVisible}
-                          />
-                        )}
+                          <img src={refresh} />
+                          Refresh
+                        </RefreshButton>
                       </>
-                      <Spacer inline width="5px" />
-                    </Banner>
-                  ) : bannerLoading ? (
-                    <Banner>
-                      <Loading />
-                    </Banner>
-                  ) : (
-                    <Banner
-                      suffix={
-                        <>
-                          <RefreshButton
-                            onClick={() => window.location.reload()}
-                          >
-                            <img src={refresh} />
-                            Refresh
-                          </RefreshButton>
-                        </>
-                      }
+                    }
+                  >
+                    Your GitHub repo has not been built yet.
+                    <Spacer inline width="5px" />
+                    <Link
+                      hasunderline
+                      target="_blank"
+                      to={`https://github.com/${appData.app.repo_name}/actions`}
                     >
-                      Your GitHub repo has not been built yet.
-                      <Spacer inline width="5px" />
-                      <Link
-                        hasunderline
-                        target="_blank"
-                        to={`https://github.com/${appData.app.repo_name}/actions`}
-                      >
-                        Check status
-                      </Link>
-                    </Banner>
-                  )}
-                </>
+                      Check status
+                    </Link>
+                  </Banner>
+                )
               ) : (
                 <>
                   <DarkMatter />
@@ -1044,16 +1006,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <TabSelector
                 noBuffer
                 options={[
+                  { label: "Activity", value: "activity" },
                   { label: "Overview", value: "overview" },
-                  featurePreview && { label: "Activity", value: "activity" },
-                  hasBuiltImage && { label: "Events", value: "events" },
                   hasBuiltImage && { label: "Logs", value: "logs" },
                   hasBuiltImage && { label: "Metrics", value: "metrics" },
                   hasBuiltImage && { label: "Debug", value: "status" },
-                  appData.app.git_repo_id && {
-                    label: "Pre-deploy logs",
-                    value: "pre-deploy",
-                  },
                   {
                     label: "Environment",
                     value: "environment-variables",

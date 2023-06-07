@@ -64,20 +64,21 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
   };
 
   return (
-    <StyledEventCard row>
+    <StyledEventCard>
       <Container row spaced>
-        <Container row spaced>
+        <Container row>
           <Icon height="16px" src={app_event} />
           <Spacer inline width="10px" />
           <Text additionalStyles={"overflow: auto;max-height: 70px;max-width: 600px;"}>{event.metadata.detail}</Text>
         </Container>
       </Container>
+      <Spacer y={1} />
       <Container row spaced>
-        <ViewDetailsButton onClick={getAppLogs}>
-          <Icon src={info} />
-          <Spacer inline width="6px" />
-          <Text>Details</Text>
-        </ViewDetailsButton>
+        <TempWrapper>
+          <Link onClick={getAppLogs} hasunderline>
+            View details
+          </Link>
+        </TempWrapper>
       </Container>
       {showModal && (
         <AppEventModal
@@ -93,6 +94,10 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
 };
 
 export default AppEventCard;
+
+const TempWrapper = styled.div`
+  margin-top: -3px;
+`;
 
 const ViewDetailsButton = styled.div<{ width?: string }>`
   border-radius: 5px;

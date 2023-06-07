@@ -56,6 +56,7 @@ import Anser, { AnserJsonEntry } from "anser";
 import GHALogsModal from "./status/GHALogsModal";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
+import EventsTab from "./EventsTab";
 
 type Props = RouteComponentProps & {};
 
@@ -746,6 +747,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Button>
           </>
         );
+      case "events":
+        return <EventsTab currentChart={appData.chart} />;
       case "activity":
         return (
           <ActivityFeed
@@ -1013,7 +1016,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 noBuffer
                 options={[
                   { label: "Overview", value: "overview" },
-                  featurePreview && { label: "Activity", value: "activity" },
+                  { label: "Activity", value: "activity" },
+                  {label: "Events", value: "events"},
                   hasBuiltImage && { label: "Logs", value: "logs" },
                   hasBuiltImage && { label: "Metrics", value: "metrics" },
                   hasBuiltImage && { label: "Debug", value: "status" },

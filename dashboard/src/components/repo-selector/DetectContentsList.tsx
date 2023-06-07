@@ -189,7 +189,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
         );
         return res;
       } catch (err) {
-        console.log(err);
+        // console.log(err);
       }
     } else if (actionConfig.kind === "gitlab") {
       try {
@@ -591,7 +591,7 @@ const Item = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected?: boolean }) =>
-      props.lastItem ? "#00000000" : "#606166"};
+    props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;
@@ -622,7 +622,7 @@ const FileItem = styled(Item)`
     props.isADocker ? "#fff" : "#ffffff55"};
   :hover {
     background: ${(props: { isADocker?: boolean }) =>
-      props.isADocker ? "#ffffff22" : "#ffffff11"};
+    props.isADocker ? "#ffffff22" : "#ffffff11"};
   }
 `;
 

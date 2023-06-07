@@ -76,9 +76,9 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
     <StyledEventCard>
       <Container row spaced>
         <Container row>
-          <Icon height="18px" src={pre_deploy} />
+          <Icon height="16px" src={pre_deploy} />
           <Spacer inline width="10px" />
-          <Text size={14}>Application pre-deploy</Text>
+          <Text>Application pre-deploy</Text>
         </Container>
         <Container row>
           <Icon height="14px" src={run_for} />
@@ -89,7 +89,7 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
       <Spacer y={1} />
       <Container row spaced>
         <Container row>
-          <Icon height="18px" src={getStatusIcon(event.status)} />
+          <Icon height="16px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText(event)}
           <Spacer inline x={1} />

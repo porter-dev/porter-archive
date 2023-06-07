@@ -15,6 +15,7 @@ import { StyledEventCard } from "./EventCard";
 import styled from "styled-components";
 import Button from "components/porter/Button";
 import api from "shared/api";
+import Link from "components/porter/Link";
 
 type Props = {
   event: PorterAppEvent;
@@ -28,7 +29,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return event.metadata.image_tag ? <Text color="#68BF8B">Deployed <Code>{event.metadata.image_tag}</Code></Text> : <Text color="#68BF8B">Deployment successful</Text>;
+        return event?.metadata?.image_tag ? <Text color="#68BF8B">Deployed <Code>{event?.metadata?.image_tag}</Code></Text> : <Text color="#68BF8B">Deployment successful</Text>;
       case "FAILED":
         return <Text color="#FF6060">Deployment failed</Text>;
       default:
@@ -57,36 +58,38 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
   }
 
   return (
-    <StyledEventCard row>
-      <Container column alignItems="flex-start">
-        <Container row spaced>
-          <Container row>
-            <Icon height="18px" src={deploy} />
-            <Spacer inline width="10px" />
-            <Text size={14}>Application version no. {event.metadata?.revision}</Text>
-          </Container>
-        </Container>
-        <Spacer y={0.5} />
-        <Container row spaced>
-          <Container row>
-            <Icon height="18px" src={getStatusIcon(event.status)} />
-            <Spacer inline width="10px" />
-            {renderStatusText(event)}
-          </Container>
+    <StyledEventCard>
+      <Container row spaced>
+        <Container row>
+          <Icon height="16px" src={deploy} />
+          <Spacer inline width="10px" />
+          <Text>Application version no. {event.metadata?.revision}</Text>
         </Container>
       </Container>
+      <Spacer y={1} />
       <Container row spaced>
-        <RevertButton onClick={() => revertToRevision(event.metadata.revision)}>
-          <Icon src={refresh} height={"13px"} />
-          <Spacer inline width="6px" />
-          <Text>Revert</Text>
-        </RevertButton>
+        <Container row>
+          <Icon height="16px" src={getStatusIcon(event.status)} />
+          <Spacer inline width="10px" />
+          {renderStatusText(event)}
+          <Spacer inline x={1} />
+          <TempWrapper>
+            <Link hasunderline onClick={() => revertToRevision(event.metadata.revision)}>
+              Revert to v{event?.metadata?.revision}
+            </Link>
+          </TempWrapper>
+        </Container>
       </Container>
     </StyledEventCard>
   );
 };
 
 export default DeployEventCard;
+
+// TODO: remove after fixing v-align
+const TempWrapper = styled.div`
+  margin-top: -3px;
+`;
 
 const Code = styled.span`
   font-family: monospace;

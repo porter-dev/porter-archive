@@ -67,9 +67,9 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
     <StyledEventCard row>
       <Container row spaced>
         <Container row spaced>
-          <Icon height="18px" src={app_event} />
+          <Icon height="16px" src={app_event} />
           <Spacer inline width="10px" />
-          <Text size={14} additionalStyles={"overflow: auto;max-height: 70px;max-width: 600px;"}>{event.metadata.detail}</Text>
+          <Text additionalStyles={"overflow: auto;max-height: 70px;max-width: 600px;"}>{event.metadata.detail}</Text>
         </Container>
       </Container>
       <Container row spaced>

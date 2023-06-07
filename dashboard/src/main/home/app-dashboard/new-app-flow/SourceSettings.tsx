@@ -8,14 +8,16 @@ import styled from "styled-components";
 import { SourceType } from "./SourceSelector";
 import ActionConfEditorStack from "components/repo-selector/ActionConfEditorStack";
 import { ActionConfigType, BuildConfig } from "shared/types";
-import { RouteComponentProps } from "react-router";
+import { RouteComponentProps, withRouter } from "react-router";
 import { Context } from "shared/Context";
 import ActionConfBranchSelector from "components/repo-selector/ActionConfBranchSelector";
 import DetectContentsList from "components/repo-selector/DetectContentsList";
 import { pushFiltered } from "shared/routing";
 import ImageSelector from "components/image-selector/ImageSelector";
 import SharedBuildSettings from "../expanded-app/SharedBuildSettings";
-type Props = {
+import Link from "components/porter/Link";
+
+type Props = RouteComponentProps & {
   source: SourceType | undefined;
   imageUrl: string;
   setImageUrl: (x: string) => void;
@@ -103,14 +105,15 @@ const SourceSettings: React.FC<Props> = ({
           <Subtitle>
             Specify the container image you would like to connect to this
             template.
-            <Highlight
+            <Spacer inline width="5px" />
+            <Link
+              hasunderline
               onClick={() =>
                 pushFiltered(props, "/integrations/registry", ["project_id"])
               }
             >
               Manage Docker registries
-            </Highlight>
-            <Required>*</Required>
+            </Link>
           </Subtitle>
           <DarkMatter antiHeight="-4px" />
           <ImageSelector
@@ -160,7 +163,7 @@ const SourceSettings: React.FC<Props> = ({
   );
 };
 
-export default SourceSettings;
+export default withRouter(SourceSettings);
 
 const SourceSettingsContainer = styled.div``;
 
@@ -175,12 +178,6 @@ const Subtitle = styled.div`
   font-size: 13px;
   color: #aaaabb;
   line-height: 1.6em;
-`;
-
-const Required = styled.div`
-  margin-left: 8px;
-  color: #fc4976;
-  display: inline-block;
 `;
 
 const CloseButton = styled.div`

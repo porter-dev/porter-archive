@@ -46,7 +46,6 @@ import { PorterYamlSchema } from "../new-app-flow/schema";
 import { EnvVariablesTab } from "./EnvVariablesTab";
 import GHABanner from "./GHABanner";
 import LogSection from "./LogSection";
-import EventsTab from "./EventsTab";
 import ActivityFeed from "./activity-feed/ActivityFeed";
 import JobRuns from "./JobRuns";
 import MetricsSection from "./MetricsSection";
@@ -747,8 +746,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Button>
           </>
         );
-      case "events":
-        return <EventsTab currentChart={appData.chart} />;
       case "activity":
         return (
           <ActivityFeed
@@ -775,35 +772,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             updatePorterApp={updatePorterApp}
             clearStatus={() => setButtonStatus("")}
           />
-        );
-      case "pre-deploy":
-        return (
-          <>
-            {!isLoading && !services.some(Service.isRelease) && (
-              <>
-                <Fieldset>
-                  <Container row>
-                    <PlaceholderIcon src={notFound} />
-                    <Text color="helper">
-                      No pre-deploy jobs were found. You can add a pre-deploy
-                      job in the Overview tab to perform an operation before
-                      your application services deploy, like a database
-                      migration.
-                    </Text>
-                  </Container>
-                </Fieldset>
-                <Spacer y={0.5} />
-              </>
-            )}
-            {services.some(Service.isRelease) && (
-              <JobRuns
-                lastRunStatus="all"
-                namespace={appData.chart?.namespace}
-                sortType="Newest"
-                releaseName={appData.app.name + "-r"}
-              />
-            )}
-          </>
         );
       default:
         return <div>Tab not found</div>;
@@ -1042,17 +1010,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 </Banner>
               </AnimateHeight>
               <TabSelector
+                noBuffer
                 options={[
                   { label: "Overview", value: "overview" },
                   featurePreview && { label: "Activity", value: "activity" },
-                  hasBuiltImage && { label: "Events", value: "events" },
                   hasBuiltImage && { label: "Logs", value: "logs" },
                   hasBuiltImage && { label: "Metrics", value: "metrics" },
                   hasBuiltImage && { label: "Debug", value: "status" },
-                  appData.app.git_repo_id && {
-                    label: "Pre-deploy logs",
-                    value: "pre-deploy",
-                  },
                   {
                     label: "Environment",
                     value: "environment-variables",

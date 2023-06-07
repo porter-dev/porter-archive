@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import styled from "styled-components";
 
 import pre_deploy from "assets/pre_deploy.png";
 
@@ -34,9 +35,9 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return <Text color="#68BF8B">Pre-deploy succeeded.</Text>;
+        return <Text color="#68BF8B">Pre-deploy succeeded</Text>;
       case "FAILED":
-        return <Text color="#FF6060">Pre-deploy failed.</Text>;
+        return <Text color="#FF6060">Pre-deploy failed</Text>;
       default:
         return <Text color="#aaaabb66">Pre-deploy in progress...</Text>;
     }
@@ -93,9 +94,11 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
           <Spacer inline width="10px" />
           {renderStatusText(event)}
           <Spacer inline x={1} />
-          <Link hasunderline onClick={getPredeployLogs}>
-            View logs
-          </Link>
+          <Wrapper>
+            <Link hasunderline onClick={getPredeployLogs}>
+              View logs
+            </Link>
+          </Wrapper>
           {event.status === "FAILED" && (
             <>
               <Spacer inline x={1} />
@@ -127,3 +130,7 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
 };
 
 export default PreDeployEventCard;
+
+const Wrapper = styled.div`
+  margin-top: -3px;
+`;

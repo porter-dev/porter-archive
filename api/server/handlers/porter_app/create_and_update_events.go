@@ -97,6 +97,7 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 		telemetry.AttributeKV{Key: "cluster-id", Value: int(cluster.ID)},
 		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},
 	)
+
 	if eventType == string(types.PorterAppEventType_AppEvent) {
 		// Agent has no way to know what the porter app event id is, so if we must dedup here
 		// TODO: create a filter to filter by only agent events. Not an issue now as app events are deduped per hour on the agent side

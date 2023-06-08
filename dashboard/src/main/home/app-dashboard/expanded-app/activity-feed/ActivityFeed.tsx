@@ -18,6 +18,7 @@ import Pagination from "components/porter/Pagination";
 import _ from "lodash";
 import Button from "components/porter/Button";
 import Icon from "components/porter/Icon";
+import Container from "components/porter/Container";
 
 type Props = {
   chart: any;
@@ -165,12 +166,6 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
 
   return (
     <StyledActivityFeed>
-      <Button onClick={getEvents}>
-        <Icon src={refresh} height={"13px"}></Icon>
-        <Spacer inline x={0.5} />
-        Refresh feed
-      </Button>
-      <Spacer y={0.5} />
       {events.map((event, i) => {
         return (
           <EventWrapper isLast={i === events.length - 1} key={i}>
@@ -185,10 +180,26 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
           </EventWrapper>
         );
       })}
-      <Spacer y={1} />
       {numPages > 1 && (
-        <Pagination page={page} setPage={setPage} totalPages={numPages} />
+        <>
+          <Spacer y={1} />
+          <Pagination page={page} setPage={setPage} totalPages={numPages} />
+        </>
       )}
+      <Spacer y={1} />
+      <Container row spaced>
+        <Spacer inline x={1} />
+        <Button
+          onClick={getEvents}
+          height="20px"
+          color="fg"
+          withBorder
+        >
+          <Icon src={refresh} height="10px"></Icon>
+          <Spacer inline x={0.5} />
+          Refresh feed
+        </Button>
+      </Container>
     </StyledActivityFeed>
   );
 };

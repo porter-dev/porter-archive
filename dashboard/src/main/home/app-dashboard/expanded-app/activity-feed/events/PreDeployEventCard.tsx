@@ -102,16 +102,19 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
           <Icon height="16px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText(event)}
-          <Spacer inline x={1} />
-          <Wrapper>
-            <Link hasunderline onClick={getPredeployLogs}>
-              View logs
-            </Link>
-          </Wrapper>
+          {(event.status === "SUCCESS" || event.status === "FAILED") &&
+            <>
+              <Spacer inline x={1} />
+              <Wrapper>
+                <Link hasunderline onClick={getPredeployLogs}>
+                  View logs
+                </Link>
+              </Wrapper>
+            </>
+          }
           {event.status === "FAILED" && (
             <>
               <Spacer inline x={1} />
-
               <Link hasunderline onClick={() => triggerWorkflow(appData)}>
                 <Container row>
                   <Icon height="10px" src={refresh} />

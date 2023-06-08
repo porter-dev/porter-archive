@@ -5,7 +5,6 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 
 import Text from "components/porter/Text";
-import Container from "components/porter/Container";
 
 import EventCard from "./events/EventCard";
 import Loading from "components/Loading";
@@ -14,7 +13,7 @@ import Fieldset from "components/porter/Fieldset";
 
 import { feedDate } from "shared/string_utils";
 import Pagination from "components/porter/Pagination";
-import { PorterAppEvent, PorterAppEventType } from "shared/types";
+import _ from "lodash";
 import Button from "components/porter/Button";
 
 type Props = {
@@ -22,6 +21,8 @@ type Props = {
   stackName: string;
   appData: string;
 };
+
+const EVENT_REFRESH_INTERVAL = 5000;
 
 const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -35,54 +36,68 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
 
   useEffect(() => {
-    checkForAgent();
-  }, []);
-
-  const checkForAgent = () => {
-    const project_id = currentProject?.id;
-    const cluster_id = currentCluster?.id;
-
-    api
-      .detectPorterAgent("<token>", {}, { project_id, cluster_id })
-      .then((res: any) => {
-        if (res.data?.version != "v3") {
-          setHasPorterAgent(false);
-        } else {
-          setHasPorterAgent(true);
-        }
-      })
-      .catch((err) => {
+    const checkForAgent = async () => {
+      const project_id = currentProject?.id;
+      const cluster_id = currentCluster?.id;
+      if (project_id == null || cluster_id == null) {
+        setError(true);
+        return;
+      }
+      try {
+        const res = await api.detectPorterAgent("<token>", {}, { project_id, cluster_id });
+        const hasAgent = res.data?.version === "v3";
+        setHasPorterAgent(hasAgent);
+      } catch (err) {
         if (err.response?.status === 404) {
           setHasPorterAgent(false);
         }
-      });
-  };
+      }
+    };
 
-  const getEvents = async () => {
-    setLoading(true);
-    try {
-      const res = await api.getFeedEvents(
-        "<token>",
-        {},
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-          stack_name: stackName,
-          page,
+    checkForAgent();
+
+    if (hasPorterAgent) {
+      setLoading(true);
+
+      const getEvents = async () => {
+        if (!currentProject || !currentCluster) {
+          setError(true);
+          return;
         }
-      );
-      setNumPages(res.data.num_pages);
-      setEvents(res.data.events);
-      setLoading(false);
-    } catch (err) {
-      setError(err);
-      setLoading(false);
-    }
-  };
+        try {
+          const res = await api.getFeedEvents(
+            "<token>",
+            {},
+            {
+              cluster_id: currentCluster.id,
+              project_id: currentProject.id,
+              stack_name: stackName,
+              page,
+            }
+          );
+          if (!_.isEqual(events, res.data.events) || res.data.num_pages !== numPages) {
+            setNumPages(res.data.num_pages);
+            setEvents(res.data.events);
+          }
+          setError(false);
+        } catch (err) {
+          setError(err);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-  useEffect(() => {
-    getEvents();
-  }, [page]);
+      getEvents();
+
+      const intervalId = setInterval(getEvents, EVENT_REFRESH_INTERVAL);
+
+      return () => {
+        // Clean up the interval on component unmount
+        clearInterval(intervalId);
+      };
+    }
+  }, [currentProject, currentCluster, page, hasPorterAgent, events, numPages]);
+
 
   const installAgent = async () => {
     const project_id = currentProject?.id;

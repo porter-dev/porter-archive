@@ -51,8 +51,8 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
         {
           chart_name: appData.releaseChart.name,
           namespace: appData.releaseChart.namespace,
-          start_range: dayjs(event.metadata.start_time).toISOString(),
-          end_range: dayjs(event.metadata.end_time).toISOString(),
+          start_range: dayjs(event.metadata.start_time).subtract(1, 'minute').toISOString(),
+          end_range: dayjs(event.metadata.end_time).add(1, 'minute').toISOString(),
           limit: 1000,
         },
         {

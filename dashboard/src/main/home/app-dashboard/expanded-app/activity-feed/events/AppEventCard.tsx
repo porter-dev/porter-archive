@@ -1,20 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import app_event from "assets/app_event.png";
-import info from "assets/info-outlined.svg";
-
-
-import run_for from "assets/run_for.png";
-
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import Icon from "components/porter/Icon";
-import Modal from "components/porter/Modal";
 
 import { PorterAppEvent } from "shared/types";
-import { getDuration } from './utils';
 import { StyledEventCard } from "./EventCard";
 import styled from "styled-components";
 import AppEventModal from "../../status/AppEventModal";
@@ -41,7 +34,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
           namespace: appData.chart.namespace,
           start_range: dayjs(event.created_at).subtract(1, 'minute').toISOString(),
           end_range: dayjs(event.updated_at).add(1, 'minute').toISOString(),
-          pod_selector: event.metadata.pod_name,
+          pod_selector: event.metadata.pod_name.endsWith(".*") ? event.metadata.pod_name : event.metadata.pod_name + ".*",
           limit: 1000,
         },
         {

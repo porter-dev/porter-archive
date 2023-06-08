@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cli/cli/git"
 	"github.com/fatih/color"
@@ -106,7 +108,7 @@ func init() {
 	applyCmd.MarkFlagRequired("file")
 }
 
-func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) (err error) {
 	fileBytes, err := ioutil.ReadFile(porterYAML)
 	if err != nil {
 		stackName := os.Getenv("PORTER_STACK_NAME")
@@ -177,22 +179,78 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			Builder:              builder,
 		}
 		worker.RegisterHook("deploy-stack", deployStackHook)
+
+		if os.Getenv("GITHUB_RUN_ID") != "" {
+			// Create app event to signfy start of build
+			req := &types.CreateOrUpdatePorterAppEventRequest{
+				Status:             "PROGRESSING",
+				Type:               types.PorterAppEventType_Build,
+				TypeExternalSource: "GITHUB",
+				Metadata: map[string]any{
+					"action_run_id": os.Getenv("GITHUB_RUN_ID"),
+					"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
+				},
+			}
+
+			repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+			if len(repoNameSplit) != 2 {
+				return fmt.Errorf("unable to parse GITHUB_REPOSITORY")
+			}
+			req.Metadata["repo"] = repoNameSplit[1]
+
+			actionRunID := os.Getenv("GITHUB_RUN_ID")
+			if actionRunID != "" {
+				arid, err := strconv.Atoi(actionRunID)
+				if err != nil {
+					return fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+				}
+				req.Metadata["action_run_id"] = arid
+			}
+
+			repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
+			if repoOwnerAccountID != "" {
+				arid, err := strconv.Atoi(repoOwnerAccountID)
+				if err != nil {
+					return fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+				}
+				req.Metadata["github_account_id"] = arid
+			}
+
+			ctx := context.Background()
+			_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
+			if err != nil {
+				return fmt.Errorf("unable to create porter app build event: %w", err)
+			}
+		}
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
 	}
 
 	basePath, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("error getting working directory: %w", err)
+		err = fmt.Errorf("error getting working directory: %w", err)
+		return
 	}
 
-	worker.RegisterDriver("deploy", NewDeployDriver)
-	worker.RegisterDriver("build-image", preview.NewBuildDriver)
-	worker.RegisterDriver("push-image", preview.NewPushDriver)
-	worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
-	worker.RegisterDriver("random-string", preview.NewRandomStringDriver)
-	worker.RegisterDriver("env-group", preview.NewEnvGroupDriver)
-	worker.RegisterDriver("os-env", preview.NewOSEnvDriver)
+	drivers := []struct {
+		name     string
+		funcName func(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error)
+	}{
+		{"deploy", NewDeployDriver},
+		{"build-image", preview.NewBuildDriver},
+		{"push-image", preview.NewPushDriver},
+		{"update-config", preview.NewUpdateConfigDriver},
+		{"random-string", preview.NewRandomStringDriver},
+		{"env-group", preview.NewEnvGroupDriver},
+		{"os-env", preview.NewOSEnvDriver},
+	}
+	for _, driver := range drivers {
+		err = worker.RegisterDriver(driver.name, driver.funcName)
+		if err != nil {
+			err = fmt.Errorf("error registering driver %s: %w", driver.name, err)
+			return
+		}
+	}
 
 	worker.SetDefaultDriver("deploy")
 
@@ -200,26 +258,41 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		deplNamespace := os.Getenv("PORTER_NAMESPACE")
 
 		if deplNamespace == "" {
-			return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
+			err = fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
+			return
 		}
 
 		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
 		if err != nil {
-			return fmt.Errorf("error creating deployment hook: %w", err)
+			err = fmt.Errorf("error creating deployment hook: %w", err)
+			return err
 		}
 
-		worker.RegisterHook("deployment", deploymentHook)
+		err = worker.RegisterHook("deployment", deploymentHook)
+		if err != nil {
+			err = fmt.Errorf("error registering deployment hook: %w", err)
+			return err
+		}
 	}
 
 	errorEmitterHook := NewErrorEmitterHook(client, resGroup)
-	worker.RegisterHook("erroremitter", errorEmitterHook)
+	err = worker.RegisterHook("erroremitter", errorEmitterHook)
+	if err != nil {
+		err = fmt.Errorf("error registering error emitter hook: %w", err)
+		return err
+	}
 
 	cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
-	worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
+	err = worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
+	if err != nil {
+		err = fmt.Errorf("error registering clone env group hook: %w", err)
+		return err
+	}
 
-	return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
+	err = worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
 		BasePath: basePath,
 	})
+	return
 }
 
 func applyValidate() error {
@@ -316,10 +389,11 @@ func (d *DeployDriver) ShouldApply(_ *switchboardModels.Resource) bool {
 }
 
 func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboardModels.Resource, error) {
+	ctx := context.Background()
 	client := config.GetAPIClient()
 
 	_, err := client.GetRelease(
-		context.Background(),
+		ctx,
 		d.target.Project,
 		d.target.Cluster,
 		d.target.Namespace,
@@ -333,7 +407,7 @@ func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboard
 	}
 
 	if d.source.IsApplication {
-		return d.applyApplication(resource, client, shouldCreate)
+		return d.applyApplication(ctx, resource, client, shouldCreate)
 	}
 
 	return d.applyAddon(resource, client, shouldCreate)
@@ -394,7 +468,7 @@ func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client *
 	return resource, nil
 }
 
-func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
+func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
 	if resource == nil {
 		return nil, fmt.Errorf("nil resource")
 	}
@@ -484,29 +558,87 @@ func (d *DeployDriver) applyApplication(resource *switchboardModels.Resource, cl
 	if d.source.Name == "job" && appConfig.WaitForJob && (shouldCreate || !appConfig.OnlyCreate) {
 		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resourceName)
 
+		var predeployEventResponseID string
+
+		stackNameWithoutRelease := strings.TrimSuffix(d.target.AppName, "-r")
+
+		if strings.Contains(d.target.Namespace, "porter-stack-") {
+			eventRequest := types.CreateOrUpdatePorterAppEventRequest{
+				Status: "PROGRESSING",
+				Type:   types.PorterAppEventType_PreDeploy,
+				Metadata: map[string]any{
+					"start_time": time.Now().UTC(),
+				},
+			}
+			eventResponse, err := client.CreateOrUpdatePorterAppEvent(ctx, d.target.Project, d.target.Cluster, stackNameWithoutRelease, &eventRequest)
+			if err != nil {
+				return nil, fmt.Errorf("error creating porter app event for pre-deploy job: %s", err.Error())
+			}
+			predeployEventResponseID = eventResponse.ID
+		}
+
 		err = wait.WaitForJob(client, &wait.WaitOpts{
 			ProjectID: d.target.Project,
 			ClusterID: d.target.Cluster,
 			Namespace: d.target.Namespace,
 			Name:      resourceName,
 		})
+		if err != nil {
+			if strings.Contains(d.target.Namespace, "porter-stack-") {
+				if predeployEventResponseID == "" {
+					return nil, errors.New("unable to find pre-deploy event response ID for failed pre-deploy event")
+				}
 
-		if err != nil && appConfig.OnlyCreate {
-			deleteJobErr := client.DeleteRelease(
-				context.Background(),
-				d.target.Project,
-				d.target.Cluster,
-				d.target.Namespace,
-				resourceName,
-			)
-
-			if deleteJobErr != nil {
-				return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
-					resourceName, deleteJobErr)
+				eventRequest := types.CreateOrUpdatePorterAppEventRequest{
+					ID:     predeployEventResponseID,
+					Status: "FAILED",
+					Type:   types.PorterAppEventType_PreDeploy,
+					Metadata: map[string]any{
+						"end_time": time.Now().UTC(),
+					},
+				}
+				_, err := client.CreateOrUpdatePorterAppEvent(ctx, d.target.Project, d.target.Cluster, stackNameWithoutRelease, &eventRequest)
+				if err != nil {
+					return nil, fmt.Errorf("error updating failed porter app event for pre-deploy job: %s", err.Error())
+				}
 			}
-		} else if err != nil {
+
+			if appConfig.OnlyCreate {
+				deleteJobErr := client.DeleteRelease(
+					context.Background(),
+					d.target.Project,
+					d.target.Cluster,
+					d.target.Namespace,
+					resourceName,
+				)
+
+				if deleteJobErr != nil {
+					return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
+						resourceName, deleteJobErr)
+				}
+			}
 			return nil, fmt.Errorf("error waiting for job %s: %w", resourceName, err)
 		}
+
+		if strings.Contains(d.target.Namespace, "porter-stack-") {
+			stackNameWithoutRelease := strings.TrimSuffix(d.target.AppName, "-r")
+			if predeployEventResponseID == "" {
+				return nil, errors.New("unable to find pre-deploy event response ID for successful pre-deploy event")
+			}
+			eventRequest := types.CreateOrUpdatePorterAppEventRequest{
+				ID:     predeployEventResponseID,
+				Status: "SUCCESS",
+				Type:   types.PorterAppEventType_PreDeploy,
+				Metadata: map[string]any{
+					"end_time": time.Now().UTC(),
+				},
+			}
+			_, err := client.CreateOrUpdatePorterAppEvent(ctx, d.target.Project, d.target.Cluster, stackNameWithoutRelease, &eventRequest)
+			if err != nil {
+				return nil, fmt.Errorf("error updating successful porter app event for pre-deploy job: %s", err.Error())
+			}
+		}
+
 	}
 
 	return resource, err

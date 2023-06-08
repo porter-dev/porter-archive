@@ -4,26 +4,29 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
-import Text from "components/porter/Text";
-import Container from "components/porter/Container";
+import refresh from "assets/refresh.png";
 
-import EventCard from "./EventCard";
+import Text from "components/porter/Text";
+
+import EventCard from "./events/EventCard";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 import Fieldset from "components/porter/Fieldset";
 
 import { feedDate } from "shared/string_utils";
 import Pagination from "components/porter/Pagination";
+import _ from "lodash";
+import Button from "components/porter/Button";
+import Icon from "components/porter/Icon";
+import Container from "components/porter/Container";
 
 type Props = {
   chart: any;
   stackName: string;
+  appData: string;
 };
 
-const ActivityFeed: React.FC<Props> = ({
-  chart,
-  stackName,
-}) => {
+const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const { currentProject, currentCluster } = useContext(Context);
 
   const [events, setEvents] = useState<any[]>([]);
@@ -31,9 +34,16 @@ const ActivityFeed: React.FC<Props> = ({
   const [error, setError] = useState<any>(null);
   const [page, setPage] = useState<number>(1);
   const [numPages, setNumPages] = useState<number>(0);
+  const [hasPorterAgent, setHasPorterAgent] = useState(false);
+  const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
 
   const getEvents = async () => {
-    setLoading(true);
+    setLoading(true)
+    if (!currentProject || !currentCluster) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
     try {
       const res = await api.getFeedEvents(
         "<token>",
@@ -42,21 +52,68 @@ const ActivityFeed: React.FC<Props> = ({
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
           stack_name: stackName,
-          page
+          page,
         }
       );
+
       setNumPages(res.data.num_pages);
       setEvents(res.data.events);
-      setLoading(false);
     } catch (err) {
       setError(err);
+    } finally {
       setLoading(false);
     }
-  }
-  
+  };
+
   useEffect(() => {
-    getEvents();
-  }, [page]);
+    const checkForAgent = async () => {
+      const project_id = currentProject?.id;
+      const cluster_id = currentCluster?.id;
+      if (project_id == null || cluster_id == null) {
+        setError(true);
+        return;
+      }
+      try {
+        const res = await api.detectPorterAgent("<token>", {}, { project_id, cluster_id });
+        const hasAgent = res.data?.version === "v3";
+        setHasPorterAgent(hasAgent);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setHasPorterAgent(false);
+        }
+      }
+    };
+
+    if (!hasPorterAgent) {
+      checkForAgent();
+    } else {
+      getEvents();
+    }
+  }, [currentProject, currentCluster, hasPorterAgent]);
+
+
+  const installAgent = async () => {
+    const project_id = currentProject?.id;
+    const cluster_id = currentCluster?.id;
+
+    setIsPorterAgentInstalling(true);
+
+    api
+      .installPorterAgent("<token>", {}, { project_id, cluster_id })
+      .then()
+      .catch((err) => {
+        setIsPorterAgentInstalling(false);
+        console.log(err);
+      });
+  };
+
+  if (isPorterAgentInstalling) {
+    return (
+      <Fieldset>
+        <Text size={16}>Installing agent...</Text>
+      </Fieldset>
+    );
+  }
 
   if (error) {
     return (
@@ -75,14 +132,34 @@ const ActivityFeed: React.FC<Props> = ({
         <Loading />
       </div>
     );
-  };
+  }
 
-  if (events?.length === 0) {
+  if (!hasPorterAgent) {
+    return (
+      <Fieldset>
+        <Text size={16}>
+          We couldn't detect the Porter agent on your cluster
+        </Text>
+        <Spacer y={0.5} />
+        <Text color="helper">
+          In order to use the events tab, you need to install the Porter agent.
+        </Text>
+        <Spacer y={1} />
+        <Button onClick={() => installAgent()}>
+          <I className="material-icons">add</I> Install Porter agent
+        </Button>
+      </Fieldset>
+    );
+  }
+
+  if (!loading && events?.length === 0) {
     return (
       <Fieldset>
         <Text size={16}>No events found for "{stackName}"</Text>
         <Spacer height="15px" />
-        <Text color="helper">This application currently has no associated activity.</Text>
+        <Text color="helper">
+          This application currently has no associated events.
+        </Text>
       </Fieldset>
     );
   }
@@ -91,28 +168,48 @@ const ActivityFeed: React.FC<Props> = ({
     <StyledActivityFeed>
       {events.map((event, i) => {
         return (
-          <EventWrapper 
-            isLast={i === events.length - 1} 
-            key={i}
-          >
-            {(i !== events.length - 1 && events.length > 1) && <Line />}
+          <EventWrapper isLast={i === events.length - 1} key={i}>
+            {i !== events.length - 1 && events.length > 1 && <Line />}
             <Dot />
             <Time>
               <Text>{feedDate(event.created_at).split(", ")[0]}</Text>
               <Spacer x={0.5} />
               <Text>{feedDate(event.created_at).split(", ")[1]}</Text>
             </Time>
-            <EventCard event={event} />
+            <EventCard appData={appData} event={event} key={i} />
           </EventWrapper>
         );
       })}
+      {numPages > 1 && (
+        <>
+          <Spacer y={1} />
+          <Pagination page={page} setPage={setPage} totalPages={numPages} />
+        </>
+      )}
       <Spacer y={1} />
-      <Pagination page={page} setPage={setPage} totalPages={numPages} />
+      <Container row spaced>
+        <Spacer inline x={1} />
+        <Button
+          onClick={getEvents}
+          height="20px"
+          color="fg"
+          withBorder
+        >
+          <Icon src={refresh} height="10px"></Icon>
+          <Spacer inline x={0.5} />
+          Refresh feed
+        </Button>
+      </Container>
     </StyledActivityFeed>
   );
 };
 
 export default ActivityFeed;
+
+const I = styled.i`
+  font-size: 14px;
+  margin-right: 5px;
+`;
 
 const Time = styled.div`
   opacity: 0;
@@ -153,7 +250,7 @@ const EventWrapper = styled.div<{
   display: flex;
   align-items: center;
   position: relative;
-  margin-bottom: ${props => props.isLast ? "" : "25px"};
+  margin-bottom: ${(props) => (props.isLast ? "" : "25px")};
 `;
 
 const StyledActivityFeed = styled.div`

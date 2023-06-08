@@ -3,7 +3,7 @@ package router
 import (
 	"fmt"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	project_integration "github.com/porter-dev/porter/api/server/handlers/project_integration"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"

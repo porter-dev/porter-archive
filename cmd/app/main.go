@@ -3,12 +3,15 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/router"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -59,6 +62,12 @@ func main() {
 		ReadTimeout:  config.ServerConf.TimeoutRead,
 		WriteTimeout: config.ServerConf.TimeoutWrite,
 		IdleTimeout:  config.ServerConf.TimeoutIdle,
+	}
+
+	// ignore error so that telemetry is not required
+	tracer, err := telemetry.InitTracer(context.Background(), config.TelemetryConfig)
+	if err == nil {
+		defer tracer.Shutdown()
 	}
 
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {

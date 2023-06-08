@@ -66,6 +66,8 @@ export interface GlobalContextType {
   setEnableGitlab: (enableGitlab: boolean) => void;
   shouldRefreshClusters: boolean;
   setShouldRefreshClusters: (shouldRefreshClusters: boolean) => void;
+  featurePreview: boolean;
+  setFeaturePreview: (featurePreview: boolean) => void;
 }
 
 /**
@@ -201,6 +203,10 @@ class ContextProvider extends Component<PropsType, StateType> {
     shouldRefreshClusters: false,
     setShouldRefreshClusters: (shouldRefreshClusters) => {
       this.setState({ shouldRefreshClusters });
+    },
+    featurePreview: false,
+    setFeaturePreview: (featurePreview) => {
+      this.setState({ featurePreview });
     },
   };
 

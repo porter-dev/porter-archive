@@ -45,3 +45,24 @@ func (c *Client) CreatePorterApp(
 
 	return resp, err
 }
+
+// CreateOrUpdatePorterAppEvent will create a porter app event if one does not exist, or else it will update the existing one if an ID is passed in the object
+func (c *Client) CreateOrUpdatePorterAppEvent(
+	ctx context.Context,
+	projectID, clusterID uint,
+	name string,
+	req *types.CreateOrUpdatePorterAppEventRequest,
+) (types.PorterAppEvent, error) {
+	resp := &types.PorterAppEvent{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/stacks/%s/events",
+			projectID, clusterID, name,
+		),
+		req,
+		resp,
+	)
+
+	return *resp, err
+}

@@ -71,11 +71,13 @@ interface PaginationInfo {
 }
 
 export const useLogs = (
-  currentPod: string,
+  currentPodName: string,
+  currentPodType: string,
   namespace: string,
   searchParam: string,
   notify: (message: string) => void,
-  currentChart: ChartType,
+  currentChart: ChartType | undefined,
+  setLoading: (isLoading: boolean) => void,
   // if setDate is set, results are not live
   setDate?: Date
 ) => {
@@ -89,7 +91,11 @@ export const useLogs = (
     previousCursor: null,
     nextCursor: null,
   });
-  const [loading, setLoading] = useState(true);
+
+  const currentPod =
+    currentPodName == ""
+      ? currentChart?.name
+      : `${currentChart?.name}-${currentPodName}-${currentPodType}`;
 
   // if we are live:
   // - start date is initially set to 2 weeks ago
@@ -185,12 +191,15 @@ export const useLogs = (
   };
 
   const setupWebsocket = (websocketKey: string) => {
+    if (namespace == "") {
+      return;
+    }
+
     const websocketBaseURL = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki`;
 
     const q = new URLSearchParams({
-      pod_selector: currentPod,
-      // TODO: re-enable namespace when we properly install stack apps to namespace
-      // namespace,
+      pod_selector: currentPod + "-.*",
+      namespace,
       search_param: searchParam,
       revision: currentChart.version.toString(),
     }).toString();
@@ -236,7 +245,7 @@ export const useLogs = (
       .getLogs(
         "<token>",
         {
-          pod_selector: currentPod,
+          pod_selector: currentPod + "-.*",
           namespace,
           revision: currentChart.version.toString(),
           search_param: searchParam,
@@ -290,10 +299,10 @@ export const useLogs = (
     flushLogsBuffer(true);
     const websocketKey = `${currentPod}-${namespace}-websocket`;
     const endDate = dayjs(setDate);
-    const twoWeeksAgo = endDate.subtract(14, "days");
+    const oneDayAgo = endDate.subtract(1, "day");
 
     const { logs: initialLogs, previousCursor, nextCursor } = await queryLogs(
-      twoWeeksAgo.toISOString(),
+      oneDayAgo.toISOString(),
       endDate.toISOString(),
       Direction.backward
     );
@@ -327,10 +336,10 @@ export const useLogs = (
       // we query by setting the endDate equal to the previous startDate, and setting the direction
       // to "backward"
       const refDate = paginationInfo.previousCursor ?? dayjs().toISOString();
-      const twoWeeksAgo = dayjs(refDate).subtract(14, "days");
+      const oneDayAgo = dayjs(refDate).subtract(1, "day");
 
       const { logs: newLogs, previousCursor } = await queryLogs(
-        twoWeeksAgo.toISOString(),
+        oneDayAgo.toISOString(),
         refDate,
         Direction.backward
       );
@@ -424,6 +433,5 @@ export const useLogs = (
     refresh,
     moveCursor,
     paginationInfo,
-    loading,
   };
 };

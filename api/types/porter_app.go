@@ -58,6 +58,10 @@ type UpdatePorterAppRequest struct {
 	PullRequestURL string `json:"pull_request_url"`
 }
 
+type RollbackPorterAppRequest struct {
+	Revision int `json:"revision" form:"required"`
+}
+
 type ListPorterAppResponse []*PorterApp
 
 // PorterAppEvent represents an event that occurs on a Porter stack during a stacks lifecycle.
@@ -74,7 +78,7 @@ type PorterAppEvent struct {
 	// UpdatedAt is the time (UTC) that an event was last updated. This can occur when an event was created as PROGRESSING, then was marked as SUCCESSFUL for example
 	UpdatedAt time.Time `json:"updated_at"`
 	// PorterAppID is the ID that the given event relates to
-	PorterAppID string         `json:"porter_app_id"`
+	PorterAppID uint           `json:"porter_app_id"`
 	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
@@ -86,6 +90,22 @@ const (
 	PorterAppEventType_Build PorterAppEventType = "BUILD"
 	// PorterAppEventType_Deploy represents a Porter Stack Deploy event which occurred through the Porter UI or CLI
 	PorterAppEventType_Deploy PorterAppEventType = "DEPLOY"
+	// PorterAppEventType_PreDeploy represents a Porter Stack Pre-deploy event which occurred through the Porter UI or CLI
+	PorterAppEventType_PreDeploy PorterAppEventType = "PRE_DEPLOY"
 	// PorterAppEventType_AppEvent represents a Porter Stack App Event which occurred whilst the application was running, such as an OutOfMemory (OOM) error
 	PorterAppEventType_AppEvent PorterAppEventType = "APP_EVENT"
 )
+
+// PorterAppEvent represents a simplified event for creating a Porter stack app event
+// swagger:model
+type CreateOrUpdatePorterAppEventRequest struct {
+	// ID, if supplied, will be assumed to be an update event
+	ID string `json:"id"`
+	// Status contains the accepted status' of a given event such as SUCCESS, FAILED, PROGRESSING, etc.
+	Status string `json:"status,omitempty"`
+	// Type represents a supported Porter Stack Event
+	Type PorterAppEventType `json:"type"`
+	// TypeExternalSource represents an external event source such as Github, or Gitlab. This is not always required but will commonly be see in build events
+	TypeExternalSource string         `json:"type_source,omitempty"`
+	Metadata           map[string]any `json:"metadata,omitempty"`
+}

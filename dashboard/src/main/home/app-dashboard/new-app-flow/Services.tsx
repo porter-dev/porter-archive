@@ -21,19 +21,19 @@ interface ServicesProps {
   defaultExpanded?: boolean;
   chart?: any;
   limitOne?: boolean;
-  customOnClick?: () => void;
+  prePopulateService?: Service;
   setExpandedJob?: (x: string) => void;
 }
 
-const Services: React.FC<ServicesProps> = ({ 
+const Services: React.FC<ServicesProps> = ({
   services,
   setServices,
   addNewText,
   chart,
   defaultExpanded = false,
   limitOne = false,
-  customOnClick,
   setExpandedJob,
+  prePopulateService,
 }) => {
   const [showAddServiceModal, setShowAddServiceModal] = useState<boolean>(
     false
@@ -50,6 +50,18 @@ const Services: React.FC<ServicesProps> = ({
     return serviceNames.includes(name);
   };
 
+  const maybeGetError = (): string | undefined => {
+    if (serviceName.length > 30) {
+      return "Must be 30 characters or less.";
+    } else if (serviceName != "" && !isServiceNameValid(serviceName)) {
+      return "Lowercase letters, numbers, and '-' only.";
+    } else if (isServiceNameDuplicate(serviceName)) {
+      return "Service name is duplicate";
+    } else {
+      return undefined;
+    }
+  }
+
   const maybeRenderAddServicesButton = () => {
     if (limitOne && services.length > 0) {
       return null;
@@ -58,12 +70,16 @@ const Services: React.FC<ServicesProps> = ({
       <>
         <AddServiceButton
           onClick={() => {
-            if (customOnClick != null) {
-              customOnClick();
-              return;
+            if (prePopulateService == null) {
+              setShowAddServiceModal(true);
+              setServiceType("web");
+            } else {
+              const newServices = [
+                ...services,
+                prePopulateService,
+              ]
+              setServices(newServices);
             }
-            setShowAddServiceModal(true);
-            setServiceType("web");
           }}
         >
           <i className="material-icons add-icon">add_icon</i>
@@ -85,14 +101,14 @@ const Services: React.FC<ServicesProps> = ({
                 setExpandedJob={setExpandedJob}
                 service={service}
                 chart={chart}
-                editService={(newService: Service) =>
-                  setServices(
-                    services.map((s, i) => (i === index ? newService : s))
-                  )
-                }
-                deleteService={() =>
-                  setServices(services.filter((_, i) => i !== index))
-                }
+                editService={(newService: Service) => {
+                  const newServices = services.map((s, i) => (i === index ? newService : s));
+                  setServices(newServices);
+                }}
+                deleteService={() => {
+                  const newServices = services.filter((_, i) => i !== index);
+                  setServices(newServices);
+                }}
                 defaultExpanded={defaultExpanded}
               />
             );
@@ -130,23 +146,17 @@ const Services: React.FC<ServicesProps> = ({
             placeholder="ex: my-service"
             width="100%"
             value={serviceName}
-            error={
-              (serviceName != "" &&
-                !isServiceNameValid(serviceName) &&
-                'Lowercase letters, numbers, and "-" only.') ||
-              (serviceName.length > 30 && "Must be 30 characters or less.") ||
-              (isServiceNameDuplicate(serviceName) &&
-                "Service name is duplicate")
-            }
+            error={maybeGetError()}
             setValue={setServiceName}
           />
           <Spacer y={1} />
           <Button
             onClick={() => {
-              setServices([
+              const newServices = [
                 ...services,
                 Service.default(serviceName, serviceType),
-              ]);
+              ]
+              setServices(newServices);
               setShowAddServiceModal(false);
               setServiceName("");
               setServiceType("web");

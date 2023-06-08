@@ -20,6 +20,7 @@ backed up to an S3 bucket.
 package jobs
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -75,6 +76,7 @@ type HelmRevisionsCountTrackerOpts struct {
 }
 
 func NewHelmRevisionsCountTracker(
+	ctx context.Context,
 	db *gorm.DB,
 	enqueueTime time.Time,
 	opts *HelmRevisionsCountTrackerOpts,
@@ -124,7 +126,7 @@ func (t *helmRevisionsCountTracker) EnqueueTime() time.Time {
 	return t.enqueueTime
 }
 
-func (t *helmRevisionsCountTracker) Run() error {
+func (t *helmRevisionsCountTracker) Run(ctx context.Context) error {
 	var count int64
 
 	if err := t.db.Model(&models.Cluster{}).Count(&count).Error; err != nil {
@@ -200,7 +202,7 @@ func (t *helmRevisionsCountTracker) Run() error {
 						continue
 					}
 
-					releases, err := agent.ListReleases(ns.GetName(), &types.ReleaseListFilter{
+					releases, err := agent.ListReleases(ctx, ns.GetName(), &types.ReleaseListFilter{
 						ByDate: true,
 						StatusFilter: []string{
 							"deployed",
@@ -220,7 +222,7 @@ func (t *helmRevisionsCountTracker) Run() error {
 					log.Printf("fetched %d releases for namespace %s in cluster ID %d", len(releases), ns.Name, cluster.ID)
 
 					for _, rel := range releases {
-						revisions, err := agent.GetReleaseHistory(rel.Name)
+						revisions, err := agent.GetReleaseHistory(ctx, rel.Name)
 						if err != nil {
 							log.Printf("error fetching release history for release %s in namespace %s of cluster ID %d: %v."+
 								" skipping release ...", rel.Name, ns.Name, cluster.ID, err)
@@ -263,7 +265,7 @@ func (t *helmRevisionsCountTracker) Run() error {
 							log.Printf("revision %d of release %s in namespace %s of cluster ID %d was successfully backed up.",
 								rev.Version, rel.Name, ns.Name, cluster.ID)
 
-							err = agent.DeleteReleaseRevision(rev.Name, rev.Version)
+							err = agent.DeleteReleaseRevision(ctx, rev.Name, rev.Version)
 
 							if err != nil {
 								log.Printf("error deleting revision %d of release %s in namespace %s of cluster ID %d: %v",

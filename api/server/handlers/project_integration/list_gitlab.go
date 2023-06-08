@@ -40,10 +40,11 @@ func (p *ListGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for _, gitlabInt := range gitlabInts {
 		username := p.getCurrentUsername(user.ID, project.ID, gitlabInt)
+		glit := gitlabInt.ToGitlabIntegrationType()
 		res = append(res,
 			&types.GitlabIntegrationWithUsername{
-				*gitlabInt.ToGitlabIntegrationType(),
-				username,
+				Username:          username,
+				GitlabIntegration: *glit,
 			},
 		)
 	}

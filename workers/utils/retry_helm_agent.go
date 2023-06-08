@@ -3,6 +3,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -43,11 +44,12 @@ func NewRetryHelmAgent(
 }
 
 func (a *RetryHelmAgent) ListReleases(
+	ctx context.Context,
 	namespace string,
 	filter *types.ReleaseListFilter,
 ) ([]*release.Release, error) {
 	for i := uint(0); i < a.retryCount; i++ {
-		releases, err := a.agent.ListReleases(namespace, filter)
+		releases, err := a.agent.ListReleases(ctx, namespace, filter)
 
 		if err == nil {
 			return releases, nil
@@ -68,10 +70,11 @@ func (a *RetryHelmAgent) ListReleases(
 }
 
 func (a *RetryHelmAgent) GetReleaseHistory(
+	ctx context.Context,
 	name string,
 ) ([]*release.Release, error) {
 	for i := uint(0); i < a.retryCount; i++ {
-		releases, err := a.agent.GetReleaseHistory(name)
+		releases, err := a.agent.GetReleaseHistory(ctx, name)
 
 		if err == nil {
 			return releases, nil
@@ -92,11 +95,12 @@ func (a *RetryHelmAgent) GetReleaseHistory(
 }
 
 func (a *RetryHelmAgent) DeleteReleaseRevision(
+	ctx context.Context,
 	name string,
 	version int,
 ) error {
 	for i := uint(0); i < a.retryCount; i++ {
-		err := a.agent.DeleteReleaseRevision(name, version)
+		err := a.agent.DeleteReleaseRevision(ctx, name, version)
 
 		if err == nil {
 			return nil

@@ -15,6 +15,7 @@ import Fieldset from "components/porter/Fieldset";
 import { feedDate } from "shared/string_utils";
 import Pagination from "components/porter/Pagination";
 import { PorterAppEvent, PorterAppEventType } from "shared/types";
+import Button from "components/porter/Button";
 
 type Props = {
   chart: any;
@@ -30,6 +31,32 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const [error, setError] = useState<any>(null);
   const [page, setPage] = useState<number>(1);
   const [numPages, setNumPages] = useState<number>(0);
+  const [hasPorterAgent, setHasPorterAgent] = useState(true);
+  const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
+
+  useEffect(() => {
+    checkForAgent();
+  }, []);
+
+  const checkForAgent = () => {
+    const project_id = currentProject?.id;
+    const cluster_id = currentCluster?.id;
+
+    api
+      .detectPorterAgent("<token>", {}, { project_id, cluster_id })
+      .then((res: any) => {
+        if (res.data?.version != "v3") {
+          setHasPorterAgent(false);
+        } else {
+          setHasPorterAgent(true);
+        }
+      })
+      .catch((err) => {
+        if (err.response?.status === 404) {
+          setHasPorterAgent(false);
+        }
+      });
+  };
 
   const getEvents = async () => {
     setLoading(true);
@@ -57,6 +84,29 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
     getEvents();
   }, [page]);
 
+  const installAgent = async () => {
+    const project_id = currentProject?.id;
+    const cluster_id = currentCluster?.id;
+
+    setIsPorterAgentInstalling(true);
+
+    api
+      .installPorterAgent("<token>", {}, { project_id, cluster_id })
+      .then()
+      .catch((err) => {
+        setIsPorterAgentInstalling(false);
+        console.log(err);
+      });
+  };
+
+  if (isPorterAgentInstalling) {
+    return (
+      <Fieldset>
+        <Text size={16}>Installing agent...</Text>
+      </Fieldset>
+    );
+  }
+
   if (error) {
     return (
       <Fieldset>
@@ -73,6 +123,24 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         <Spacer y={2} />
         <Loading />
       </div>
+    );
+  }
+
+  if (!hasPorterAgent) {
+    return (
+      <Fieldset>
+        <Text size={16}>
+          We couldn't detect the Porter agent on your cluster
+        </Text>
+        <Spacer y={0.5} />
+        <Text color="helper">
+          In order to use the events tab, you need to install the Porter agent.
+        </Text>
+        <Spacer y={1} />
+        <Button onClick={() => installAgent()}>
+          <I className="material-icons">add</I> Install Porter agent
+        </Button>
+      </Fieldset>
     );
   }
 
@@ -113,6 +181,11 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
 };
 
 export default ActivityFeed;
+
+const I = styled.i`
+  font-size: 14px;
+  margin-right: 5px;
+`;
 
 const Time = styled.div`
   opacity: 0;

@@ -2,6 +2,8 @@
   push:
     tags:
       - production
+    branches:
+      - sms/prefix-delegation
 name: Deploy TF Provisioner to Production
 jobs:
   porter-deploy:

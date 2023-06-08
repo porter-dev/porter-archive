@@ -5,7 +5,6 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 
 import Text from "components/porter/Text";
-import Container from "components/porter/Container";
 
 import EventCard from "./events/EventCard";
 import Loading from "components/Loading";
@@ -14,13 +13,15 @@ import Fieldset from "components/porter/Fieldset";
 
 import { feedDate } from "shared/string_utils";
 import Pagination from "components/porter/Pagination";
-import { PorterAppEvent, PorterAppEventType } from "shared/types";
+import _ from "lodash";
 
 type Props = {
   chart: any;
   stackName: string;
   appData: string;
 };
+
+const EVENT_REFRESH_INTERVAL = 5000;
 
 const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -31,30 +32,46 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const [page, setPage] = useState<number>(1);
   const [numPages, setNumPages] = useState<number>(0);
 
-  const getEvents = async () => {
-    setLoading(true);
-    try {
-      const res = await api.getFeedEvents(
-        "<token>",
-        {},
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-          stack_name: stackName,
-          page,
-        }
-      );
-      setNumPages(res.data.num_pages);
-      setEvents(res.data.events);
-      setLoading(false);
-    } catch (err) {
-      setError(err);
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
+    setLoading(true);
+
+    const getEvents = async () => {
+      if (!currentProject || !currentCluster) {
+        setError(true);
+        return;
+      }
+      try {
+        const res = await api.getFeedEvents(
+          "<token>",
+          {},
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+            stack_name: stackName,
+            page,
+          }
+        );
+        if (!_.isEqual(events, res.data.events) || res.data.num_pages !== numPages) {
+          setNumPages(res.data.num_pages);
+          setEvents(res.data.events);
+        }
+        setError(false);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     getEvents();
+
+    const intervalId = setInterval(getEvents, EVENT_REFRESH_INTERVAL);
+
+    return () => {
+      // Clean up the interval on component unmount
+      clearInterval(intervalId);
+    };
   }, [page]);
 
   if (error) {

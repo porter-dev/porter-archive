@@ -32,103 +32,73 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const [error, setError] = useState<any>(null);
   const [page, setPage] = useState<number>(1);
   const [numPages, setNumPages] = useState<number>(0);
-  const [hasPorterAgent, setHasPorterAgent] = useState(true);
+  const [hasPorterAgent, setHasPorterAgent] = useState(false);
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
 
   useEffect(() => {
-    getEvents();
-  }, [page])
-
-  const getEvents = async () => {
-    if (!currentProject || !currentCluster) {
-      setError(true);
-      return;
-    }
-    try {
-      const res = await api.getFeedEvents(
-        "<token>",
-        {},
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-          stack_name: stackName,
-          page,
-        }
-      );
-      if (!_.isEqual(events, res.data.events) || res.data.num_pages !== numPages) {
-        setNumPages(res.data.num_pages);
-        setEvents(res.data.events);
+    const checkForAgent = async () => {
+      const project_id = currentProject?.id;
+      const cluster_id = currentCluster?.id;
+      if (project_id == null || cluster_id == null) {
+        setError(true);
+        return;
       }
-      setError(false);
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
+      try {
+        const res = await api.detectPorterAgent("<token>", {}, { project_id, cluster_id });
+        const hasAgent = res.data?.version === "v3";
+        setHasPorterAgent(hasAgent);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setHasPorterAgent(false);
+        }
+      }
+    };
+
+    if (!hasPorterAgent) {
+      checkForAgent();
+    } else {
+      const getEvents = async () => {
+        if (!currentProject || !currentCluster) {
+          setError(true);
+          return;
+        }
+        try {
+          const res = await api.getFeedEvents(
+            "<token>",
+            {},
+            {
+              cluster_id: currentCluster.id,
+              project_id: currentProject.id,
+              stack_name: stackName,
+              page,
+            }
+          );
+          if (loading || !_.isEqual(events, res.data.events) || res.data.num_pages !== numPages) {
+            setNumPages(res.data.num_pages);
+            setEvents(res.data.events);
+            setLoading(false);
+          }
+          if (error) {
+            setError(false);
+          }
+        } catch (err) {
+          setError(err);
+          if (loading) {
+            setLoading(false);
+          }
+        }
+      };
+
+      setLoading(true);
+      getEvents();
+      const intervalId = setInterval(getEvents, EVENT_REFRESH_INTERVAL);
+
+      return () => {
+        // Clean up the interval on component unmount
+        clearInterval(intervalId);
+      };
     }
-  };
-
-  // useEffect(() => {
-  //   const checkForAgent = async () => {
-  //     const project_id = currentProject?.id;
-  //     const cluster_id = currentCluster?.id;
-  //     if (project_id == null || cluster_id == null) {
-  //       setError(true);
-  //       return;
-  //     }
-  //     try {
-  //       const res = await api.detectPorterAgent("<token>", {}, { project_id, cluster_id });
-  //       const hasAgent = res.data?.version === "v3";
-  //       setHasPorterAgent(hasAgent);
-  //     } catch (err) {
-  //       if (err.response?.status === 404) {
-  //         setHasPorterAgent(false);
-  //       }
-  //     }
-  //   };
-
-  //   checkForAgent();
-
-  //   if (hasPorterAgent) {
-  //     setLoading(true);
-
-  //     const getEvents = async () => {
-  //       if (!currentProject || !currentCluster) {
-  //         setError(true);
-  //         return;
-  //       }
-  //       try {
-  //         const res = await api.getFeedEvents(
-  //           "<token>",
-  //           {},
-  //           {
-  //             cluster_id: currentCluster.id,
-  //             project_id: currentProject.id,
-  //             stack_name: stackName,
-  //             page,
-  //           }
-  //         );
-  //         if (!_.isEqual(events, res.data.events) || res.data.num_pages !== numPages) {
-  //           setNumPages(res.data.num_pages);
-  //           setEvents(res.data.events);
-  //         }
-  //         setError(false);
-  //       } catch (err) {
-  //         setError(err);
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     };
-
-  //     getEvents();
-
-  //     const intervalId = setInterval(getEvents, EVENT_REFRESH_INTERVAL);
-
-  //     return () => {
-  //       // Clean up the interval on component unmount
-  //       clearInterval(intervalId);
-  //     };
-  //   }
-  // }, [currentProject, currentCluster, page, hasPorterAgent, events, numPages]);
+  }, [currentProject, currentCluster, page, hasPorterAgent, numPages]);
 
 
   const installAgent = async () => {
@@ -191,7 +161,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
     );
   }
 
-  if (events?.length === 0) {
+  if (!loading && events?.length === 0) {
     return (
       <Fieldset>
         <Text size={16}>No events found for "{stackName}"</Text>

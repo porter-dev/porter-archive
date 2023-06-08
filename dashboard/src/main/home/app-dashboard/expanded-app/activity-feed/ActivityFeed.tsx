@@ -39,7 +39,10 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
     const checkForAgent = async () => {
       const project_id = currentProject?.id;
       const cluster_id = currentCluster?.id;
-
+      if (project_id == null || cluster_id == null) {
+        setError(true);
+        return;
+      }
       try {
         const res = await api.detectPorterAgent("<token>", {}, { project_id, cluster_id });
         const hasAgent = res.data?.version === "v3";

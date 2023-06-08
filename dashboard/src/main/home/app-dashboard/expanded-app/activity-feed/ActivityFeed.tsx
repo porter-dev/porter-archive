@@ -4,6 +4,8 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
+import refresh from "assets/refresh.png";
+
 import Text from "components/porter/Text";
 
 import EventCard from "./events/EventCard";
@@ -15,14 +17,14 @@ import { feedDate } from "shared/string_utils";
 import Pagination from "components/porter/Pagination";
 import _ from "lodash";
 import Button from "components/porter/Button";
+import Icon from "components/porter/Icon";
+import Container from "components/porter/Container";
 
 type Props = {
   chart: any;
   stackName: string;
   appData: string;
 };
-
-const EVENT_REFRESH_INTERVAL = 5000;
 
 const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -34,6 +36,34 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [hasPorterAgent, setHasPorterAgent] = useState(false);
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
+
+  const getEvents = async () => {
+    setLoading(true)
+    if (!currentProject || !currentCluster) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+    try {
+      const res = await api.getFeedEvents(
+        "<token>",
+        {},
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+          stack_name: stackName,
+          page,
+        }
+      );
+
+      setNumPages(res.data.num_pages);
+      setEvents(res.data.events);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const checkForAgent = async () => {
@@ -57,48 +87,9 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
     if (!hasPorterAgent) {
       checkForAgent();
     } else {
-      const getEvents = async () => {
-        if (!currentProject || !currentCluster) {
-          setError(true);
-          return;
-        }
-        try {
-          const res = await api.getFeedEvents(
-            "<token>",
-            {},
-            {
-              cluster_id: currentCluster.id,
-              project_id: currentProject.id,
-              stack_name: stackName,
-              page,
-            }
-          );
-          if (loading || !_.isEqual(events, res.data.events) || res.data.num_pages !== numPages) {
-            setNumPages(res.data.num_pages);
-            setEvents(res.data.events);
-            setLoading(false);
-          }
-          if (error) {
-            setError(false);
-          }
-        } catch (err) {
-          setError(err);
-          if (loading) {
-            setLoading(false);
-          }
-        }
-      };
-
-      setLoading(true);
       getEvents();
-      const intervalId = setInterval(getEvents, EVENT_REFRESH_INTERVAL);
-
-      return () => {
-        // Clean up the interval on component unmount
-        clearInterval(intervalId);
-      };
     }
-  }, [currentProject, currentCluster, page, hasPorterAgent, numPages]);
+  }, [currentProject, currentCluster, hasPorterAgent]);
 
 
   const installAgent = async () => {
@@ -189,10 +180,26 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
           </EventWrapper>
         );
       })}
-      <Spacer y={1} />
       {numPages > 1 && (
-        <Pagination page={page} setPage={setPage} totalPages={numPages} />
+        <>
+          <Spacer y={1} />
+          <Pagination page={page} setPage={setPage} totalPages={numPages} />
+        </>
       )}
+      <Spacer y={1} />
+      <Container row spaced>
+        <Spacer inline x={1} />
+        <Button
+          onClick={getEvents}
+          height="20px"
+          color="fg"
+          withBorder
+        >
+          <Icon src={refresh} height="10px"></Icon>
+          <Spacer inline x={0.5} />
+          Refresh feed
+        </Button>
+      </Container>
     </StyledActivityFeed>
   );
 };

@@ -73,15 +73,13 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
               page,
             }
           );
-          if (!_.isEqual(events, res.data.events) || res.data.num_pages !== numPages) {
+          if (loading || !_.isEqual(events, res.data.events) || res.data.num_pages !== numPages) {
             setNumPages(res.data.num_pages);
             setEvents(res.data.events);
+            setLoading(false);
           }
           if (error) {
             setError(false);
-          }
-          if (loading) {
-            setLoading(false);
           }
         } catch (err) {
           setError(err);

@@ -57,8 +57,6 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
     if (!hasPorterAgent) {
       checkForAgent();
     } else {
-      setLoading(true);
-
       const getEvents = async () => {
         if (!currentProject || !currentCluster) {
           setError(true);
@@ -79,16 +77,22 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
             setNumPages(res.data.num_pages);
             setEvents(res.data.events);
           }
-          setError(false);
+          if (error) {
+            setError(false);
+          }
+          if (loading) {
+            setLoading(false);
+          }
         } catch (err) {
           setError(err);
-        } finally {
-          setLoading(false);
+          if (loading) {
+            setLoading(false);
+          }
         }
       };
 
+      setLoading(true);
       getEvents();
-
       const intervalId = setInterval(getEvents, EVENT_REFRESH_INTERVAL);
 
       return () => {
@@ -159,7 +163,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
     );
   }
 
-  if (events?.length === 0) {
+  if (!loading && events?.length === 0) {
     return (
       <Fieldset>
         <Text size={16}>No events found for "{stackName}"</Text>

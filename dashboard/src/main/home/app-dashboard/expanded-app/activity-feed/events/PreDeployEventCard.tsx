@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import styled from "styled-components";
 
 import pre_deploy from "assets/pre_deploy.png";
 
@@ -34,9 +35,9 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return <Text color="#68BF8B">Pre-deploy succeeded.</Text>;
+        return <Text color="#68BF8B">Pre-deploy succeeded</Text>;
       case "FAILED":
-        return <Text color="#FF6060">Pre-deploy failed.</Text>;
+        return <Text color="#FF6060">Pre-deploy failed</Text>;
       default:
         return <Text color="#aaaabb66">Pre-deploy in progress...</Text>;
     }
@@ -50,8 +51,8 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
         {
           chart_name: appData.releaseChart.name,
           namespace: appData.releaseChart.namespace,
-          start_range: dayjs(event.metadata.start_time).toISOString(),
-          end_range: dayjs(event.metadata.end_time).toISOString(),
+          start_range: dayjs(event.metadata.start_time).subtract(1, 'minute').toISOString(),
+          end_range: dayjs(event.metadata.end_time).add(1, 'minute').toISOString(),
           limit: 1000,
         },
         {
@@ -59,12 +60,21 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
           cluster_id: appData.app.cluster_id,
         }
       )
-      const updatedLogs = logResp.data.logs.map((l: { line: string; timestamp: string; }, index: number) =>
-      ({
-        line: Anser.ansiToJson(l.line),
-        lineNumber: index + 1,
-        timestamp: l.timestamp,
-      }));
+      const updatedLogs = logResp.data.logs.map((l: { line: string; timestamp: string; }, index: number) => {
+        try {
+          return {
+            line: JSON.parse(l.line)?.log ?? Anser.ansiToJson(l.line),
+            lineNumber: index + 1,
+            timestamp: l.timestamp,
+          }
+        } catch (err) {
+          return {
+            line: Anser.ansiToJson(l.line),
+            lineNumber: index + 1,
+            timestamp: l.timestamp,
+          }
+        }
+      });
 
       setLogs(updatedLogs);
     } catch (error) {
@@ -76,9 +86,9 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
     <StyledEventCard>
       <Container row spaced>
         <Container row>
-          <Icon height="18px" src={pre_deploy} />
+          <Icon height="16px" src={pre_deploy} />
           <Spacer inline width="10px" />
-          <Text size={14}>Application pre-deploy</Text>
+          <Text>Application pre-deploy</Text>
         </Container>
         <Container row>
           <Icon height="14px" src={run_for} />
@@ -89,17 +99,22 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
       <Spacer y={1} />
       <Container row spaced>
         <Container row>
-          <Icon height="18px" src={getStatusIcon(event.status)} />
+          <Icon height="16px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText(event)}
-          <Spacer inline x={1} />
-          <Link hasunderline onClick={getPredeployLogs}>
-            View logs
-          </Link>
+          {(event.status === "SUCCESS" || event.status === "FAILED") &&
+            <>
+              <Spacer inline x={1} />
+              <Wrapper>
+                <Link hasunderline onClick={getPredeployLogs}>
+                  View logs
+                </Link>
+              </Wrapper>
+            </>
+          }
           {event.status === "FAILED" && (
             <>
               <Spacer inline x={1} />
-
               <Link hasunderline onClick={() => triggerWorkflow(appData)}>
                 <Container row>
                   <Icon height="10px" src={refresh} />
@@ -127,3 +142,7 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
 };
 
 export default PreDeployEventCard;
+
+const Wrapper = styled.div`
+  margin-top: -3px;
+`;

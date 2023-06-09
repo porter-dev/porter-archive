@@ -204,11 +204,6 @@ const StatusFooter: React.FC<Props> = ({
     return podsDividedByReplicaSet;
   }, [pods]);
 
-  const percentage = Number(1 - available / total).toLocaleString(undefined, {
-    style: "percent",
-    minimumFractionDigits: 2,
-  });
-
   const formatCreationTimestamp = timeFormat("%H:%M:%S %b %d, '%y");
 
   const updatePods = async () => {
@@ -243,9 +238,8 @@ const StatusFooter: React.FC<Props> = ({
             new Date(pod?.metadata?.creationTimestamp)
           );
 
-          // console.log(containerStatus)
-          const crashLoopReason =
-            containerStatus?.lastState?.terminated?.message ?? "";
+          const failing = containerStatus?.state?.waiting?.reason === "CrashLoopBackOff" ?? false;
+          const crashLoopReason = containerStatus?.lastState?.terminated?.message ?? "";
 
           return {
             namespace: pod?.metadata?.namespace,
@@ -259,6 +253,7 @@ const StatusFooter: React.FC<Props> = ({
             revisionNumber:
               pod?.metadata?.annotations?.["helm.sh/revision"] || "N/A",
             crashLoopReason,
+            failing
           };
         });
 
@@ -304,7 +299,7 @@ const StatusFooter: React.FC<Props> = ({
             <>
               <StyledStatusFooterTop key={i} expanded={expanded}>
                 <StyledContainer row spaced>
-                  {replicaSet.some((r) => r.crashLoopReason != "") ? (
+                  {replicaSet.some((r) => r.crashLoopReason != "") || replicaSet.some((r) => r.failing) ? (
                     <>
                       <Running>
                         <StatusDot color="#ff0000" />
@@ -315,22 +310,24 @@ const StatusFooter: React.FC<Props> = ({
                             }`}
                         </Text>
                       </Running>
-                      <Button
-                        onClick={() => {
-                          expanded ? setHeight(0) : setHeight(122);
-                          setExpanded(!expanded);
-                        }}
-                        height="20px"
-                        color="#ffffff11"
-                        withBorder
-                      >
-                        {expanded ? (
-                          <I className="material-icons">arrow_drop_up</I>
-                        ) : (
-                          <I className="material-icons">arrow_drop_down</I>
-                        )}
-                        <Text color="helper">See failure reason</Text>
-                      </Button>
+                      {replicaSet.some((r) => r.crashLoopReason != "") &&
+                        <Button
+                          onClick={() => {
+                            expanded ? setHeight(0) : setHeight(122);
+                            setExpanded(!expanded);
+                          }}
+                          height="20px"
+                          color="#ffffff11"
+                          withBorder
+                        >
+                          {expanded ? (
+                            <I className="material-icons">arrow_drop_up</I>
+                          ) : (
+                            <I className="material-icons">arrow_drop_down</I>
+                          )}
+                          <Text color="helper">See failure reason</Text>
+                        </Button>
+                      }
                     </>
                   ) : // check if there are more recent replicasets and if the previous replicaset has a crashloop reason
                     i > 0 &&

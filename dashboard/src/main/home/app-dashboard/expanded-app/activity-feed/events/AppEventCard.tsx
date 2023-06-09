@@ -1,20 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import app_event from "assets/app_event.png";
-import info from "assets/info-outlined.svg";
-
-
-import run_for from "assets/run_for.png";
-
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import Icon from "components/porter/Icon";
-import Modal from "components/porter/Modal";
 
 import { PorterAppEvent } from "shared/types";
-import { getDuration } from './utils';
 import { StyledEventCard } from "./EventCard";
 import styled from "styled-components";
 import AppEventModal from "../../status/AppEventModal";
@@ -41,7 +34,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
           namespace: appData.chart.namespace,
           start_range: dayjs(event.created_at).subtract(1, 'minute').toISOString(),
           end_range: dayjs(event.updated_at).add(1, 'minute').toISOString(),
-          pod_selector: event.metadata.pod_name,
+          pod_selector: event.metadata.pod_name.endsWith(".*") ? event.metadata.pod_name : event.metadata.pod_name + ".*",
           limit: 1000,
         },
         {
@@ -50,12 +43,21 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
         }
       )
 
-      const updatedLogs = logResp.data.logs.map((l: { line: string; timestamp: string; }, index: number) =>
-      ({
-        line: Anser.ansiToJson(l.line),
-        lineNumber: index + 1,
-        timestamp: l.timestamp,
-      }));
+      const updatedLogs = logResp.data.logs.map((l: { line: string; timestamp: string; }, index: number) => {
+        try {
+          return {
+            line: JSON.parse(l.line)?.log ?? Anser.ansiToJson(l.line),
+            lineNumber: index + 1,
+            timestamp: l.timestamp,
+          }
+        } catch (err) {
+          return {
+            line: Anser.ansiToJson(l.line),
+            lineNumber: index + 1,
+            timestamp: l.timestamp,
+          }
+        }
+      });
 
       setLogs(updatedLogs);
     } catch (error) {
@@ -64,20 +66,21 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
   };
 
   return (
-    <StyledEventCard row>
+    <StyledEventCard>
       <Container row spaced>
-        <Container row spaced>
-          <Icon height="18px" src={app_event} />
+        <Container row>
+          <Icon height="16px" src={app_event} />
           <Spacer inline width="10px" />
-          <Text size={14} additionalStyles={"overflow: auto;max-height: 70px;max-width: 600px;"}>{event.metadata.detail}</Text>
+          <Text additionalStyles={"overflow: auto;max-height: 70px;max-width: 600px;"}>{event.metadata.detail}</Text>
         </Container>
       </Container>
+      <Spacer y={1} />
       <Container row spaced>
-        <ViewDetailsButton onClick={getAppLogs}>
-          <Icon src={info} />
-          <Spacer inline width="6px" />
-          <Text>Details</Text>
-        </ViewDetailsButton>
+        <TempWrapper>
+          <Link onClick={getAppLogs} hasunderline>
+            View details
+          </Link>
+        </TempWrapper>
       </Container>
       {showModal && (
         <AppEventModal
@@ -93,6 +96,10 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
 };
 
 export default AppEventCard;
+
+const TempWrapper = styled.div`
+  margin-top: -3px;
+`;
 
 const ViewDetailsButton = styled.div<{ width?: string }>`
   border-radius: 5px;

@@ -1019,6 +1019,7 @@ func appCreateEphemeralPodFromExisting(
 					}
 				}
 			}
+		}
 
 		// remove health checks and probes
 		newPod.Spec.Containers[i].LivenessProbe = nil

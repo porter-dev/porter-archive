@@ -18,6 +18,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
@@ -964,6 +965,30 @@ func appCreateEphemeralPodFromExisting(
 			newPod.Spec.Containers[i].TTY = true
 			newPod.Spec.Containers[i].Stdin = true
 			newPod.Spec.Containers[i].StdinOnce = true
+
+			if newPod.Spec.Containers[i].Resources.Requests.Cpu() != nil && newPod.Spec.Containers[i].Resources.Requests.Cpu().MilliValue() > 500 {
+				newPod.Spec.Containers[i].Resources.Limits[v1.ResourceCPU] = resource.MustParse("500m")
+				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceCPU] = resource.MustParse("500m")
+
+				for j := 0; j < len(newPod.Spec.Containers[i].Env); j++ {
+					if newPod.Spec.Containers[i].Env[j].Name == "PORTER_RESOURCES_CPU" {
+						newPod.Spec.Containers[i].Env[j].Value = "500m"
+						break
+					}
+				}
+			}
+
+			if newPod.Spec.Containers[i].Resources.Requests.Memory() != nil && newPod.Spec.Containers[i].Resources.Requests.Memory().Value() > 1000*1024*1024 {
+				newPod.Spec.Containers[i].Resources.Limits[v1.ResourceMemory] = resource.MustParse("1000Mi")
+				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceMemory] = resource.MustParse("1000Mi")
+
+				for j := 0; j < len(newPod.Spec.Containers[i].Env); j++ {
+					if newPod.Spec.Containers[i].Env[j].Name == "PORTER_RESOURCES_RAM" {
+						newPod.Spec.Containers[i].Env[j].Value = "1000Mi"
+						break
+					}
+				}
+			}
 		}
 
 		// remove health checks and probes

@@ -11,13 +11,10 @@ import github from "assets/github-white.png";
 import pr_icon from "assets/pull_request_icon.svg";
 import loadingImg from "assets/loading.gif";
 import refresh from "assets/refresh.png";
-<<<<<<< HEAD
 import history from "assets/history.png";
-=======
 import deploy from "assets/deploy.png";
 import save from "assets/save-01.svg";
 import danger from "assets/danger.svg";
->>>>>>> eff3d25f3e5dc46e0feb70c1af18b6f1d91c69e5
 
 import api from "shared/api";
 import JSZip from "jszip";
@@ -56,16 +53,13 @@ import JobRuns from "./JobRuns";
 import MetricsSection from "./MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
-<<<<<<< HEAD
 import Modal from "components/porter/Modal";
-=======
 import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
 import Anser, { AnserJsonEntry } from "anser";
 import GHALogsModal from "./status/GHALogsModal";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import EventsTab from "./EventsTab";
->>>>>>> eff3d25f3e5dc46e0feb70c1af18b6f1d91c69e5
 
 type Props = RouteComponentProps & {};
 
@@ -98,11 +92,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   );
 
   const [tab, setTab] = useState("activity");
-<<<<<<< HEAD
-  const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
-=======
   const [saveValuesStatus, setSaveValueStatus] = useState<string>("");
->>>>>>> eff3d25f3e5dc46e0feb70c1af18b6f1d91c69e5
   const [loading, setLoading] = useState<boolean>(false);
   const [bannerLoading, setBannerLoading] = useState<boolean>(false);
 
@@ -935,7 +925,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               </>
             )}
           </Container>
-          <Spacer y={1} />
           {deleting ? (
             <Fieldset>
               <Text size={16}>
@@ -949,16 +938,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           ) : (
             <>
               {!workflowCheckPassed ? (
-<<<<<<< HEAD
-                <>
-                  <GHABanner
-                    repoName={appData.app.repo_name}
-                    branchName={appData.app.git_branch}
-                    pullRequestUrl={appData.app.pull_request_url}
-                    stackName={appData.app.name}
-                    gitRepoId={appData.app.git_repo_id}
-                    porterYamlPath={appData.app.porter_yaml_path}
-=======
                 bannerLoading ? (
                   <Banner>
                     <Loading />
@@ -1002,29 +981,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     </Link>
                   </Banner>
                 )
-              ) : (
-                <>
-                  <DarkMatter />
-                  <RevisionSection
-                    showRevisions={showRevisions}
-                    toggleShowRevisions={() => {
-                      setShowRevisions(!showRevisions);
-                    }}
-                    chart={appData.chart}
-                    setRevision={setRevision}
-                    forceRefreshRevisions={forceRefreshRevisions}
-                    refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-                    shouldUpdate={
-                      appData.chart.latest_version &&
-                      appData.chart.latest_version !==
-                      appData.chart.chart.metadata.version
-                    }
-                    latestVersion={appData.chart.latest_version}
-                    upgradeVersion={appUpgradeVersion}
->>>>>>> eff3d25f3e5dc46e0feb70c1af18b6f1d91c69e5
-                  />
-                  <Spacer y={1} />
-                </>
               ) : !hasBuiltImage && (
                 <>
                   <Banner
@@ -1047,53 +1003,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   <Spacer y={1} />
                 </>
               )}
-<<<<<<< HEAD
-              <TabSelector
-                options={
-                  appData.app.git_repo_id
-                    ? hasBuiltImage
-                      ? [
-                        { label: "Activity", value: "activity" },
-                        { label: "Overview", value: "overview" },
-                        { label: "Events", value: "events" },
-                        { label: "Logs", value: "logs" },
-                        { label: "Metrics", value: "metrics" },
-                        { label: "Debug", value: "status" },
-                        { label: "Pre-deploy", value: "pre-deploy" },
-                        {
-                          label: "Environment",
-                          value: "environment-variables",
-                        },
-                        { label: "Build settings", value: "build-settings" },
-                        { label: "Settings", value: "settings" },
-                      ]
-                      : [
-                        { label: "Activity", value: "activity" },
-                        { label: "Overview", value: "overview" },
-                        { label: "Pre-deploy", value: "pre-deploy" },
-                        {
-                          label: "Environment",
-                          value: "environment-variables",
-                        },
-                        { label: "Build settings", value: "build-settings" },
-                        { label: "Settings", value: "settings" },
-                      ]
-                    : [
-                      { label: "Activity", value: "activity" },
-                      { label: "Overview", value: "overview" },
-                      { label: "Events", value: "events" },
-                      { label: "Logs", value: "logs" },
-                      { label: "Metrics", value: "metrics" },
-                      { label: "Debug", value: "status" },
-                      { label: "Pre-deploy", value: "pre-deploy" },
-                      {
-                        label: "Environment",
-                        value: "environment-variables",
-                      },
-                      { label: "Settings", value: "settings" },
-                    ]
-                }
-=======
               <Spacer y={1} />
               <AnimateHeight height={showUnsavedChangesBanner ? 67 : 0}>
                 <Banner
@@ -1135,7 +1044,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   },
                   { label: "Settings", value: "settings" },
                 ].filter((x) => x)}
->>>>>>> eff3d25f3e5dc46e0feb70c1af18b6f1d91c69e5
                 currentTab={tab}
                 setCurrentTab={(tab: string) => {
                   if (buttonStatus !== "") {

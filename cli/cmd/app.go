@@ -40,6 +40,8 @@ var (
 	appInteractive   bool
 	appContainerName string
 	appTag           string
+	appCpuMilli      int
+	appMemoryMi      int
 )
 
 // appCmd represents the "porter app" base command when called
@@ -112,6 +114,22 @@ func init() {
 		"interactive",
 		false,
 		"whether to run in interactive mode (default false)",
+	)
+
+	appRunCmd.PersistentFlags().IntVarP(
+		&appCpuMilli,
+		"cpu",
+		"",
+		0,
+		"cpu allocation in millicores (1000 millicores = 1 vCPU)",
+	)
+
+	appRunCmd.PersistentFlags().IntVarP(
+		&appMemoryMi,
+		"ram",
+		"",
+		0,
+		"ram allocation in Mi (1024 Mi = 1 GB)",
 	)
 
 	appRunCmd.PersistentFlags().StringVarP(
@@ -966,25 +984,37 @@ func appCreateEphemeralPodFromExisting(
 			newPod.Spec.Containers[i].Stdin = true
 			newPod.Spec.Containers[i].StdinOnce = true
 
-			if newPod.Spec.Containers[i].Resources.Requests.Cpu() != nil && newPod.Spec.Containers[i].Resources.Requests.Cpu().MilliValue() > 500 {
-				newPod.Spec.Containers[i].Resources.Limits[v1.ResourceCPU] = resource.MustParse("500m")
-				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceCPU] = resource.MustParse("500m")
+			var newCpu int
+			if appCpuMilli != 0 {
+				newCpu = appCpuMilli
+			} else if newPod.Spec.Containers[i].Resources.Requests.Cpu() != nil && newPod.Spec.Containers[i].Resources.Requests.Cpu().MilliValue() > 500 {
+				newCpu = 500
+			}
+			if newCpu != 0 {
+				newPod.Spec.Containers[i].Resources.Limits[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", newCpu))
+				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", newCpu))
 
 				for j := 0; j < len(newPod.Spec.Containers[i].Env); j++ {
 					if newPod.Spec.Containers[i].Env[j].Name == "PORTER_RESOURCES_CPU" {
-						newPod.Spec.Containers[i].Env[j].Value = "500m"
+						newPod.Spec.Containers[i].Env[j].Value = fmt.Sprintf("%dm", newCpu)
 						break
 					}
 				}
 			}
 
-			if newPod.Spec.Containers[i].Resources.Requests.Memory() != nil && newPod.Spec.Containers[i].Resources.Requests.Memory().Value() > 1000*1024*1024 {
-				newPod.Spec.Containers[i].Resources.Limits[v1.ResourceMemory] = resource.MustParse("1000Mi")
-				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceMemory] = resource.MustParse("1000Mi")
+			var newMemory int
+			if appMemoryMi != 0 {
+				newMemory = appMemoryMi
+			} else if newPod.Spec.Containers[i].Resources.Requests.Memory() != nil && newPod.Spec.Containers[i].Resources.Requests.Memory().Value() > 1000*1024*1024 {
+				newMemory = 1000
+			}
+			if newMemory != 0 {
+				newPod.Spec.Containers[i].Resources.Limits[v1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dMi", newMemory))
+				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dMi", newMemory))
 
 				for j := 0; j < len(newPod.Spec.Containers[i].Env); j++ {
 					if newPod.Spec.Containers[i].Env[j].Name == "PORTER_RESOURCES_RAM" {
-						newPod.Spec.Containers[i].Env[j].Value = "1000Mi"
+						newPod.Spec.Containers[i].Env[j].Value = fmt.Sprintf("%dMi", newMemory)
 						break
 					}
 				}

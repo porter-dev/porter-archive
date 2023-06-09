@@ -186,7 +186,8 @@ func convertToBuild(porterApp *types.PorterApp) Build {
 		bpSlice := strings.Split(porterApp.Buildpacks, ",")
 		buildpacks = make([]*string, len(bpSlice))
 		for i, bp := range bpSlice {
-			buildpacks[i] = &bp
+			temp := bp
+			buildpacks[i] = &temp
 		}
 	}
 

@@ -25,6 +25,7 @@ import (
 	previewV2Beta1 "github.com/porter-dev/porter/cli/cmd/preview/v2beta1"
 	stack "github.com/porter-dev/porter/cli/cmd/stack"
 	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	switchboardModels "github.com/porter-dev/switchboard/pkg/models"
@@ -109,11 +110,21 @@ func init() {
 }
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) (err error) {
+	ctx, span := telemetry.NewSpan(context.Background(), "cli-apply")
+	defer span.End()
+
+	telemetry.WithAttributes(
+		span,
+		telemetry.AttributeKV{Key: "project-id", Value: cliConf.Project},
+		telemetry.AttributeKV{Key: "cluster-id", Value: cliConf.Cluster},
+	)
+
 	fileBytes, err := ioutil.ReadFile(porterYAML)
 	if err != nil {
 		stackName := os.Getenv("PORTER_STACK_NAME")
 		if stackName == "" {
-			return fmt.Errorf("a valid porter.yaml file must be specified. Run porter apply --help for more information")
+			err = telemetry.Error(ctx, span, nil, "a valid porter.yaml file must be specified. Run porter apply --help for more information")
+			return err
 		}
 	}
 
@@ -122,10 +133,15 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	}
 
 	err = yaml.Unmarshal(fileBytes, &previewVersion)
-
 	if err != nil {
-		return fmt.Errorf("error unmarshaling porter.yaml: %w", err)
+		err = telemetry.Error(ctx, span, err, "error unmarshaling porter.yaml")
+		return err
 	}
+
+	telemetry.WithAttributes(
+		span,
+		telemetry.AttributeKV{Key: "version", Value: previewVersion.Version},
+	)
 
 	var resGroup *switchboardTypes.ResourceGroup
 	worker := switchboardWorker.NewWorker()
@@ -159,14 +175,17 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	} else if previewVersion.Version == "v1stack" || previewVersion.Version == "" {
 		stackName := os.Getenv("PORTER_STACK_NAME")
 		if stackName == "" {
-			return fmt.Errorf("environment variable PORTER_STACK_NAME must be set")
+			err = telemetry.Error(ctx, span, nil, "environment variable PORTER_STACK_NAME must be set")
+			return err
 		}
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "application-name", Value: stackName})
 
 		// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
 		var builder string
-		resGroup, builder, err = stack.CreateV1BuildResources(client, fileBytes, stackName, cliConf.Project, cliConf.Cluster)
+		resGroup, builder, err = stack.CreateV1BuildResources(ctx, client, fileBytes, stackName, cliConf.Project, cliConf.Cluster)
 		if err != nil {
-			return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
+			err = telemetry.Error(ctx, span, err, "error creating build resources")
+			return err
 		}
 
 		deployStackHook := &stack.DeployStackHook{
@@ -194,7 +213,8 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 
 			repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 			if len(repoNameSplit) != 2 {
-				return fmt.Errorf("unable to parse GITHUB_REPOSITORY")
+				err = telemetry.Error(ctx, span, nil, "unable to parse GITHUB_REPOSITORY")
+				return err
 			}
 			req.Metadata["repo"] = repoNameSplit[1]
 
@@ -202,7 +222,8 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			if actionRunID != "" {
 				arid, err := strconv.Atoi(actionRunID)
 				if err != nil {
-					return fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+					err = telemetry.Error(ctx, span, err, "unable to parse GITHUB_RUN_ID as int")
+					return err
 				}
 				req.Metadata["action_run_id"] = arid
 			}
@@ -211,15 +232,16 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			if repoOwnerAccountID != "" {
 				arid, err := strconv.Atoi(repoOwnerAccountID)
 				if err != nil {
-					return fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+					err = telemetry.Error(ctx, span, err, "unable to parse GITHUB_REPOSITORY_OWNER_ID as int")
+					return err
 				}
 				req.Metadata["github_account_id"] = arid
 			}
 
-			ctx := context.Background()
 			_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
 			if err != nil {
-				return fmt.Errorf("unable to create porter app build event: %w", err)
+				err = telemetry.Error(ctx, span, err, "unable to create porter app build event")
+				return err
 			}
 		}
 	} else {
@@ -228,8 +250,8 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 
 	basePath, err := os.Getwd()
 	if err != nil {
-		err = fmt.Errorf("error getting working directory: %w", err)
-		return
+		err = telemetry.Error(ctx, span, err, "error getting working directory")
+		return err
 	}
 
 	drivers := []struct {
@@ -247,8 +269,8 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	for _, driver := range drivers {
 		err = worker.RegisterDriver(driver.name, driver.funcName)
 		if err != nil {
-			err = fmt.Errorf("error registering driver %s: %w", driver.name, err)
-			return
+			err = telemetry.Error(ctx, span, err, "error registering driver")
+			return err
 		}
 	}
 

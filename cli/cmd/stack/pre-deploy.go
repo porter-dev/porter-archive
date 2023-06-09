@@ -8,20 +8,26 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/internal/integrations/preview"
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 )
 
-func createReleaseResource(client *api.Client, release *App, stackName, buildResourceName, pushResourceName string, projectID, clusterID uint, env map[string]string) (*switchboardTypes.Resource, string, error) {
+func maybeCreatePreDeployResource(ctx context.Context, client *api.Client, release *App, stackName, buildResourceName, pushResourceName string, projectID, clusterID uint, env map[string]string) (*switchboardTypes.Resource, string, error) {
+	ctx, span := telemetry.NewSpan(ctx, "maybe-create-pre-deploy-resource")
+	defer span.End()
+
 	var finalCmd string
 	if release != nil && release.Run != nil {
 		finalCmd = *release.Run
 	} else {
-		finalCmd = getReleaseCommandFromRelease(client, stackName, projectID, clusterID)
+		finalCmd = getPreDeployCommandFromRelease(ctx, client, stackName, projectID, clusterID)
 		if finalCmd == "" {
 			return nil, "", nil
 		}
 	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "pre-deploy-cmd", Value: finalCmd})
 
 	config := &preview.ApplicationConfig{}
 
@@ -64,11 +70,11 @@ func createReleaseResource(client *api.Client, release *App, stackName, buildRes
 	}, finalCmd, nil
 }
 
-func getReleaseCommandFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) string {
+func getPreDeployCommandFromRelease(ctx context.Context, client *api.Client, stackName string, projectID uint, clusterID uint) string {
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 	releaseName := fmt.Sprintf("%s-r", stackName)
 	release, err := client.GetRelease(
-		context.Background(),
+		ctx,
 		projectID,
 		clusterID,
 		namespace,

@@ -11,6 +11,7 @@ import github from "assets/github-white.png";
 import pr_icon from "assets/pull_request_icon.svg";
 import loadingImg from "assets/loading.gif";
 import refresh from "assets/refresh.png";
+import history from "assets/history.png";
 import deploy from "assets/deploy.png";
 import save from "assets/save-01.svg";
 import danger from "assets/danger.svg";
@@ -21,6 +22,7 @@ import { Context } from "shared/Context";
 import useAuth from "shared/auth/useAuth";
 import Error from "components/porter/Error";
 
+import PorterIcon from "components/porter/Icon";
 import Banner from "components/porter/Banner";
 import Loading from "components/Loading";
 import Text from "components/porter/Text";
@@ -51,6 +53,7 @@ import JobRuns from "./JobRuns";
 import MetricsSection from "./MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
+import Modal from "components/porter/Modal";
 import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
 import Anser, { AnserJsonEntry } from "anser";
 import GHALogsModal from "./status/GHALogsModal";
@@ -110,6 +113,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
   const [subdomain, setSubdomain] = useState<string>("");
+  const [isCurrent, setIsCurrent] = useState<boolean>(true);
+
+  const [showRevisionModal, setShowRevisionModal] = useState<boolean>(false);
 
 
   const getPorterApp = async () => {
@@ -897,10 +903,28 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <Spacer y={0.5} />
             </>
           )}
-          <Text color="#aaaabb66">
-            Last deployed {getReadableDate(appData.chart.info.last_deployed)}
-          </Text>
-          <Spacer y={1} />
+          <Spacer y={0.1} />
+          <Container row>
+            <Text color="#aaaabb66">
+              Last deployed {getReadableDate(appData.chart.info.last_deployed)}
+            </Text>
+            {hasBuiltImage && (
+              <>
+                <Spacer inline x={1} />
+                <Button onClick={() => setShowRevisionModal(true)} withBorder color="fg" height="20px">
+                  <PorterIcon height="14px" src={history} />
+                  <Spacer inline x={0.5} />
+                  History
+                  {!isCurrent && (
+                    <>
+                      <Spacer inline x={0.5} />
+                      <Text color="#f5cb42">Previewing version no. {appData.chart.version}</Text>
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
+          </Container>
           {deleting ? (
             <Fieldset>
               <Text size={16}>
@@ -957,27 +981,26 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     </Link>
                   </Banner>
                 )
-              ) : (
+              ) : !hasBuiltImage && (
                 <>
-                  <DarkMatter />
-                  <RevisionSection
-                    showRevisions={showRevisions}
-                    toggleShowRevisions={() => {
-                      setShowRevisions(!showRevisions);
-                    }}
-                    chart={appData.chart}
-                    setRevision={setRevision}
-                    forceRefreshRevisions={forceRefreshRevisions}
-                    refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-                    shouldUpdate={
-                      appData.chart.latest_version &&
-                      appData.chart.latest_version !==
-                      appData.chart.chart.metadata.version
+                  <Banner
+                    suffix={
+                      <RefreshButton onClick={() => window.location.reload()}>
+                        <img src={refresh} /> Refresh
+                      </RefreshButton>
                     }
-                    latestVersion={appData.chart.latest_version}
-                    upgradeVersion={appUpgradeVersion}
-                  />
-                  <DarkMatter antiHeight="-18px" />
+                  >
+                    Your GitHub repo has not been built yet.
+                    <Spacer inline width="5px" />
+                    <Link
+                      hasunderline
+                      target="_blank"
+                      to={`https://github.com/${appData.app.repo_name}/actions`}
+                    >
+                      Check status
+                    </Link>
+                  </Banner>
+                  <Spacer y={1} />
                 </>
               )}
               <Spacer y={1} />
@@ -1046,6 +1069,36 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             setShowDeleteOverlay(false);
           }}
         />
+      )}
+      {showRevisionModal && (
+        <Modal closeModal={() => setShowRevisionModal(false)} width="900px">
+          <Container row>
+            <PorterIcon height="18px" src={history} />
+            <Spacer inline x={1} />
+            <Text size={16}>Version history for "{appData.app.name}"</Text>
+          </Container>
+          <RevisionSection
+            forceExpanded={true}
+            showRevisions={showRevisions}
+            toggleShowRevisions={() => {
+              setShowRevisions(!showRevisions);
+            }}
+            chart={appData.chart}
+            refreshChart={() => getChartData(appData.chart)}
+            setRevision={setRevision}
+            forceRefreshRevisions={forceRefreshRevisions}
+            refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+            shouldUpdate={
+              appData.chart.latest_version &&
+              appData.chart.latest_version !==
+              appData.chart.chart.metadata.version
+            }
+            latestVersion={appData.chart.latest_version}
+            upgradeVersion={appUpgradeVersion}
+            setIsCurrent={setIsCurrent}
+          />
+          <DarkMatter antiHeight="-18px" />
+        </Modal>
       )}
     </>
   );

@@ -15,6 +15,7 @@ import { readableDate } from "shared/string_utils";
 import { createPortal } from "react-dom";
 
 type PropsType = WithAuthProps & {
+  forceExpanded?: boolean;
   chart: ChartType;
   refreshChart: () => void;
   setRevision: (x: ChartType, isCurrent?: boolean) => void;
@@ -25,6 +26,7 @@ type PropsType = WithAuthProps & {
   latestVersion: string;
   showRevisions?: boolean;
   toggleShowRevisions?: () => void;
+  setIsCurrent?: (x: boolean) => void;
 };
 
 type StateType = {
@@ -44,7 +46,7 @@ class RevisionSection extends Component<PropsType, StateType> {
     upgradeVersion: "",
     loading: false,
     maxVersion: 0, // Track most recent version even when previewing old revisions
-    expandRevisions: false,
+    expandRevisions: false || this.props.forceExpanded,
   };
 
   refreshHistory = () => {
@@ -206,7 +208,10 @@ class RevisionSection extends Component<PropsType, StateType> {
       return (
         <Tr
           key={i}
-          onClick={() => this.handleClickRevision(revision)}
+          onClick={() => {
+            this.handleClickRevision(revision);
+            this.props.setIsCurrent(isCurrent);
+          }}
           selected={this.props.chart.version === revision.version}
         >
           <Td>{revision.version}</Td>
@@ -313,18 +318,23 @@ class RevisionSection extends Component<PropsType, StateType> {
         <RevisionHeader
           showRevisions={this.props.showRevisions}
           isCurrent={isCurrent}
+          forceExpanded={this.props.forceExpanded}
           onClick={() => {
-            if (typeof this.props.toggleShowRevisions === "function") {
-              this.props.toggleShowRevisions();
+            if (!this.props.forceExpanded) {
+              if (typeof this.props.toggleShowRevisions === "function") {
+                this.props.toggleShowRevisions();
+              }
+              this.setState((prev) => ({
+                ...prev,
+                expandRevisions: !prev.expandRevisions,
+              }));
             }
-            this.setState((prev) => ({
-              ...prev,
-              expandRevisions: !prev.expandRevisions,
-            }));
           }}
         >
           <RevisionPreview>
-            <i className="material-icons">arrow_drop_down</i>
+            {!this.props.forceExpanded && (
+              <i className="material-icons">arrow_drop_down</i>
+            )}
             {isCurrent
               ? `Current version`
               : `Previewing revision (not deployed)`}{" "}
@@ -351,7 +361,10 @@ class RevisionSection extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <StyledRevisionSection showRevisions={this.state.expandRevisions}>
+      <StyledRevisionSection 
+        showRevisions={this.state.expandRevisions}
+        forceExpanded={this.props.forceExpanded}
+      >
         {this.renderContents()}
         {createPortal(
           <ConfirmOverlay
@@ -465,9 +478,12 @@ const Revision = styled.div`
   margin-left: 5px;
 `;
 
-const RevisionHeader = styled.div`
-  color: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-    props.isCurrent ? "#ffffff66" : "#f5cb42"};
+const RevisionHeader = styled.div<{
+  showRevisions: boolean;
+  isCurrent: boolean;
+  forceExpanded?: boolean;
+}>`
+  color: ${props => props.isCurrent ? "#ffffff66" : "#f5cb42"};
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -475,10 +491,10 @@ const RevisionHeader = styled.div`
   font-size: 13px;
   width: 100%;
   padding-left: 10px;
-  cursor: pointer;
+  cursor: ${props => props.forceExpanded ? "" : "pointer"};
   background: ${({ theme }) => theme.fg};
   :hover {
-    background: ${(props) => props.showRevisions && props.theme.fg2};
+    background: ${props => props.showRevisions && !props.forceExpanded && props.theme.fg2};
   }
 
   > div > i {
@@ -486,12 +502,14 @@ const RevisionHeader = styled.div`
     font-size: 20px;
     cursor: pointer;
     border-radius: 20px;
-    transform: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-    props.showRevisions ? "" : "rotate(-90deg)"};
+    transform: ${props => props.showRevisions ? "" : "rotate(-90deg)"};
   }
 `;
 
-const StyledRevisionSection = styled.div`
+const StyledRevisionSection = styled.div<{ 
+  showRevisions: boolean;
+  forceExpanded?: boolean;
+}>`
   width: 100%;
   max-height: ${(props: { showRevisions: boolean }) =>
     props.showRevisions ? "255px" : "40px"};
@@ -501,7 +519,7 @@ const StyledRevisionSection = styled.div`
   background: ${props => props.theme.fg};
   border: 1px solid #494b4f;
   :hover {
-    border: 1px solid #7a7b80;
+    border: ${props => props.forceExpanded ? "" : "1px solid #7a7b80"};
   }
   animation: ${(props: { showRevisions: boolean }) =>
     props.showRevisions ? "expandRevisions 0.3s" : ""};

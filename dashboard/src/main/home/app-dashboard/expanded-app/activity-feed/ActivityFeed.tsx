@@ -84,10 +84,12 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
       }
     };
 
-    checkForAgent();
-    if (hasPorterAgent) {
+    if (!hasPorterAgent) {
+      checkForAgent();
+    } else {
       getEvents();
     }
+
   }, [currentProject, currentCluster, hasPorterAgent]);
 
 

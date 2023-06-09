@@ -78,15 +78,14 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         const hasAgent = res.data?.version === "v3";
         setHasPorterAgent(hasAgent);
       } catch (err) {
-        if (err.response?.status === 404) {
-          setHasPorterAgent(false);
-        }
+        setHasPorterAgent(false);
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (!hasPorterAgent) {
-      checkForAgent();
-    } else {
+    checkForAgent();
+    if (hasPorterAgent) {
       getEvents();
     }
   }, [currentProject, currentCluster, hasPorterAgent]);
@@ -97,20 +96,21 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
     const cluster_id = currentCluster?.id;
 
     setIsPorterAgentInstalling(true);
-
-    api
-      .installPorterAgent("<token>", {}, { project_id, cluster_id })
-      .then()
-      .catch((err) => {
-        setIsPorterAgentInstalling(false);
-        console.log(err);
-      });
+    try {
+      await api.installPorterAgent("<token>", {}, { project_id, cluster_id });
+      window.location.reload();
+    } catch (err) {
+      setIsPorterAgentInstalling(false);
+      console.log(err);
+    }
   };
 
   if (isPorterAgentInstalling) {
     return (
       <Fieldset>
         <Text size={16}>Installing agent...</Text>
+        <Spacer y={0.5} />
+        <Text color="helper">If you are not redirected automatically after a minute, you may need to refresh this page.</Text>
       </Fieldset>
     );
   }
@@ -142,7 +142,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         </Text>
         <Spacer y={0.5} />
         <Text color="helper">
-          In order to use the events tab, you need to install the Porter agent.
+          In order to use the Activity tab, you need to install the Porter agent.
         </Text>
         <Spacer y={1} />
         <Button onClick={() => installAgent()}>

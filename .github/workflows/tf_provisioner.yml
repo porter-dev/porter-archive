@@ -39,7 +39,7 @@ jobs:
       - name: Run a Porter CLI command
         uses: porter-dev/porter-cli-action@v0.1.0
         with:
-          command: update env-group -n PROV_IMAGE_TAG=${{ steps.vars.outputs.sha_short }}
+          command: update env-group set -n PROV_IMAGE_TAG=${{ steps.vars.outputs.sha_short }}
         env:
           PORTER_HOST: https://dashboard.internal-tools.getporter.dev
           PORTER_CLUSTER: 9

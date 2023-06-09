@@ -14,7 +14,7 @@ export const AppsSchema = z.record(appConfigSchema);
 export const EnvSchema = z.record(z.string());
 
 export const BuildSchema = z.object({
-    method: z.string().refine(value => ["pack", "docker", "registry"].includes(value)),
+    method: z.string().refine((value: string) => ["pack", "docker", "registry"].includes(value)),
     context: z.string().optional(),
     builder: z.string().optional(),
     buildpacks: z.array(z.string()).optional(),

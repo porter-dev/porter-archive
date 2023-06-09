@@ -3,7 +3,6 @@ import styled from "styled-components";
 import { RouteComponentProps, withRouter } from "react-router";
 import _ from "lodash";
 import yaml from "js-yaml";
-import github from "assets/github-white.png";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -21,19 +20,12 @@ import Container from "components/porter/Container";
 
 import SourceSettings from "./SourceSettings";
 import Services from "./Services";
-import EnvGroupArray, {
-  KeyValueType,
-} from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import GithubActionModal from "./GithubActionModal";
-import {
-  ActionConfigType,
-  GithubActionConfigType,
-  RepoType,
-} from "shared/types";
+import { ActionConfigType } from "shared/types";
 import Error from "components/porter/Error";
-import { string, z } from "zod";
 import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
-import { ReleaseService, Service } from "./serviceTypes";
+import { Service } from "./serviceTypes";
 import GithubConnectModal from "./GithubConnectModal";
 import Link from "components/porter/Link";
 
@@ -52,7 +44,6 @@ interface FormState {
   selectedSourceType: SourceType | undefined;
   serviceList: Service[];
   envVariables: KeyValueType[];
-  releaseCommand: string;
 }
 
 const INITIAL_STATE: FormState = {
@@ -60,7 +51,6 @@ const INITIAL_STATE: FormState = {
   selectedSourceType: undefined,
   serviceList: [],
   envVariables: [],
-  releaseCommand: "",
 };
 
 const Validators: {
@@ -70,7 +60,6 @@ const Validators: {
   selectedSourceType: (value: SourceType | undefined) => value !== undefined,
   serviceList: (value: Service[]) => value.length > 0,
   envVariables: (value: KeyValueType[]) => true,
-  releaseCommand: (value: string) => true,
 };
 
 type Detected = {
@@ -93,22 +82,16 @@ type Provider =
     integration_id: number;
   };
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
-  const [templateName, setTemplateName] = useState("");
   const [porterYamlPath, setPorterYamlPath] = useState("");
-
   const [imageUrl, setImageUrl] = useState("");
   const [imageTag, setImageTag] = useState("latest");
   const { currentCluster, currentProject } = useContext(Context);
   const [deploying, setDeploying] = useState<boolean>(false);
-  const [deploymentError, setDeploymentError] = useState<string | undefined>(
-    undefined
-  );
+  const [deploymentError, setDeploymentError] = useState<string | undefined>(undefined);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [existingStep, setExistingStep] = useState<number>(0);
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
-  const [actionConfig, setActionConfig] = useState<ActionConfigType>({
-    ...defaultActionConfig,
-  });
+  const [actionConfig, setActionConfig] = useState<ActionConfigType>({ ...defaultActionConfig });
   const [buildView, setBuildView] = useState<string>("buildpacks");
   const [branch, setBranch] = useState("");
   const [dockerfilePath, setDockerfilePath] = useState(null);
@@ -117,9 +100,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [buildConfig, setBuildConfig] = useState({});
   const [porterYaml, setPorterYaml] = useState("");
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
-  const [showGithubConnectModal, setShowGithubConnectModal] = useState<boolean>(
-    false
-  );
+  const [showGithubConnectModal, setShowGithubConnectModal] = useState<boolean>(false);
 
   const [showConnectModal, setConnectModal] = useState<boolean>(true);
   const [hasClickedDoNotConnect, setHasClickedDoNotConnect] = useState(() =>

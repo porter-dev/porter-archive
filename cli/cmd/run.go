@@ -951,7 +951,6 @@ func createEphemeralPodFromExisting(
 				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceCPU] = resource.MustParse("500m")
 
 				for j := 0; j < len(newPod.Spec.Containers[i].Env); j++ {
-					// not sure if this env var does anything but just in case
 					if newPod.Spec.Containers[i].Env[j].Name == "PORTER_RESOURCES_CPU" {
 						newPod.Spec.Containers[i].Env[j].Value = "500m"
 						break

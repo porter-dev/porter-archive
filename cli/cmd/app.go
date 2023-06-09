@@ -966,7 +966,7 @@ func appCreateEphemeralPodFromExisting(
 			newPod.Spec.Containers[i].Stdin = true
 			newPod.Spec.Containers[i].StdinOnce = true
 
-			if newPod.Spec.Containers[i].Resources.Requests.Cpu().MilliValue() > 500 {
+			if newPod.Spec.Containers[i].Resources.Requests.Cpu() != nil && newPod.Spec.Containers[i].Resources.Requests.Cpu().MilliValue() > 500 {
 				newPod.Spec.Containers[i].Resources.Limits[v1.ResourceCPU] = resource.MustParse("500m")
 				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceCPU] = resource.MustParse("500m")
 
@@ -978,7 +978,7 @@ func appCreateEphemeralPodFromExisting(
 				}
 			}
 
-			if newPod.Spec.Containers[i].Resources.Requests.Memory().Value() > 1000*1024*1024 {
+			if newPod.Spec.Containers[i].Resources.Requests.Memory() != nil && newPod.Spec.Containers[i].Resources.Requests.Memory().Value() > 1000*1024*1024 {
 				newPod.Spec.Containers[i].Resources.Limits[v1.ResourceMemory] = resource.MustParse("1000Mi")
 				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceMemory] = resource.MustParse("1000Mi")
 

@@ -36,10 +36,11 @@ jobs:
           project: "5"
           tag: ${{ steps.vars.outputs.sha_short }}
           token: ${{ secrets.PORTER_TOKEN_5 }}
+      ## TODO: Ask how to stop the following running a build, and only update the env-group
       - name: Run a Porter CLI command
         uses: porter-dev/porter-cli-action@v0.1.0
         with:
-          command: update env-group set -n PROV_IMAGE_TAG=${{ steps.vars.outputs.sha_short }}
+          command: update env-group set -n PROV_IMAGE_TAG=${{ steps.vars.outputs.sha_short }} --name tf-provisioner-prod
         env:
           PORTER_HOST: https://dashboard.internal-tools.getporter.dev
           PORTER_CLUSTER: 9

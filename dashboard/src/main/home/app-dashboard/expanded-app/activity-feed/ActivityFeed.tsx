@@ -78,7 +78,9 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         const hasAgent = res.data?.version === "v3";
         setHasPorterAgent(hasAgent);
       } catch (err) {
-        setHasPorterAgent(false);
+        if (err.response?.status === 404) {
+          setHasPorterAgent(false);
+        }
       } finally {
         setLoading(false);
       }

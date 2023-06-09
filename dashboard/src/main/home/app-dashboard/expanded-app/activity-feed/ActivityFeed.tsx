@@ -92,7 +92,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
       getEvents();
     }
 
-  }, [currentProject, currentCluster, hasPorterAgent]);
+  }, [currentProject, currentCluster, hasPorterAgent, page]);
 
 
   const installAgent = async () => {

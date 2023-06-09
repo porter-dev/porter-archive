@@ -41,7 +41,7 @@ RUN go build -ldflags '-w -s' -a -tags ee -o ./bin/provisioner ./cmd/provisioner
 FROM alpine
 RUN apk update
 
-COPY --from=build-go /porter/bin/provisioner /usr/bin/
+COPY --from=build-go /porter/bin/provisioner /porter/
 
 EXPOSE 8080
-CMD /usr/bin/provisioner
+CMD /porter/provisioner

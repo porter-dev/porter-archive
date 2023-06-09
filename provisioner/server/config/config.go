@@ -110,6 +110,7 @@ type ProvisionerConf struct {
 	// Options to configure for the "kubernetes" provisioner method
 	ProvisionerCluster         string `env:"PROVISIONER_CLUSTER"`
 	SelfKubeconfig             string `env:"SELF_KUBECONFIG"`
+	ProvisionerCommand         string `env:"PROV_COMMAND,default=/porter/provisioner"`
 	ProvisionerImageRepo       string `env:"PROV_IMAGE_REPO,default=gcr.io/porter-dev-273614/provisioner"`
 	ProvisionerImageTag        string `env:"PROV_IMAGE_TAG,default=latest"`
 	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
@@ -212,6 +213,7 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 		}
 
 		res.Provisioner = k8s.NewKubernetesProvisioner(provAgent.Clientset, &k8s.KubernetesProvisionerConfig{
+			ProvisionerCommand:         envConf.ProvisionerCommand,
 			ProvisionerImageRepo:       envConf.ProvisionerImageRepo,
 			ProvisionerImageTag:        envConf.ProvisionerImageTag,
 			ProvisionerImagePullSecret: envConf.ProvisionerImagePullSecret,

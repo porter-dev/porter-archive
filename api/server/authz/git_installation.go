@@ -16,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/oauth"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type GitInstallationScopedFactory struct {
@@ -38,29 +39,36 @@ type GitInstallationScopedMiddleware struct {
 }
 
 func (p *GitInstallationScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "middleware-git-installation")
+	defer span.End()
+
 	// read the user to perform authorization
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
 
 	// get the registry id from the URL param context
-	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
+	reqScopes, _ := ctx.Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 	gitInstallationID := reqScopes[types.GitInstallationScope].Resource.UInt
 
-	gitInstallation, err := p.config.Repo.GithubAppInstallation().ReadGithubAppInstallationByInstallationID(gitInstallationID)
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "git-installation-id", Value: gitInstallationID})
 
+	gitInstallation, err := p.config.Repo.GithubAppInstallation().ReadGithubAppInstallationByInstallationID(gitInstallationID)
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)
+		err = telemetry.Error(ctx, span, err, "git installation not found")
+		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound), true)
 		return
 	} else if err != nil {
-		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		err = telemetry.Error(ctx, span, err, "git installation not found")
+		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound), true)
 		return
 	}
 
-	if err := p.doesUserHaveGitInstallationAccess(user.GithubAppIntegrationID, gitInstallationID); err != nil {
-		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+	if err := p.doesUserHaveGitInstallationAccess(ctx, user.GithubAppIntegrationID, gitInstallationID); err != nil {
+		err = telemetry.Error(ctx, span, err, "user does not have access to git installation")
+		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden), true)
 		return
 	}
 
-	ctx := NewGitInstallationContext(r.Context(), gitInstallation)
+	ctx = NewGitInstallationContext(ctx, gitInstallation)
 	r = r.Clone(ctx)
 	p.next.ServeHTTP(w, r)
 }
@@ -73,23 +81,26 @@ func NewGitInstallationContext(ctx context.Context, ga *integrations.GithubAppIn
 // by ensuring the installation id exists for one org or account they have access to
 // note that this makes a github API request, but the endpoint is fast so this doesn't add
 // much overhead
-func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(githubIntegrationID, gitInstallationID uint) error {
+func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(ctx context.Context, githubIntegrationID, gitInstallationID uint) error {
+	ctx, span := telemetry.NewSpan(ctx, "check-user-has-git-installation-access")
+	defer span.End()
+
 	oauthInt, err := p.config.Repo.GithubAppOAuthIntegration().ReadGithubAppOauthIntegration(githubIntegrationID)
 	if err != nil {
-		return err
+		return telemetry.Error(ctx, span, err, "unable to read github app oauth integration")
 	}
 
 	if p.config.GithubAppConf == nil {
-		return fmt.Errorf("config has invalid GithubAppConf")
+		return telemetry.Error(ctx, span, nil, "config has invalid GithubAppConf")
 	}
 
 	if _, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel,
 		&p.config.GithubAppConf.Config,
 		oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, p.config.Repo)); err != nil {
-		return err
+		return telemetry.Error(ctx, span, err, "unable to get access token")
 	}
 
-	client := github.NewClient(p.config.GithubConf.Client(oauth2.NoContext, &oauth2.Token{
+	client := github.NewClient(p.config.GithubConf.Client(ctx, &oauth2.Token{
 		AccessToken:  string(oauthInt.AccessToken),
 		RefreshToken: string(oauthInt.RefreshToken),
 		TokenType:    "Bearer",
@@ -97,9 +108,9 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(gith
 
 	accountIDs := make([]int64, 0)
 
-	AuthUser, _, err := client.Users.Get(context.Background(), "")
+	AuthUser, _, err := client.Users.Get(ctx, "")
 	if err != nil {
-		return err
+		return telemetry.Error(ctx, span, err, "unable to get authenticated user")
 	}
 
 	accountIDs = append(accountIDs, *AuthUser.ID)
@@ -110,9 +121,9 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(gith
 	}
 
 	for {
-		orgs, pages, err := client.Organizations.List(context.Background(), "", opts)
+		orgs, pages, err := client.Organizations.List(ctx, "", opts)
 		if err != nil {
-			return err
+			return telemetry.Error(ctx, span, err, "unable to list organizations")
 		}
 
 		for _, org := range orgs {
@@ -124,7 +135,19 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(gith
 		}
 	}
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "account-ids", Value: accountIDs})
+
 	installations, err := p.config.Repo.GithubAppInstallation().ReadGithubAppInstallationByAccountIDs(accountIDs)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "unable to read github app installations")
+	}
+
+	installationIds := make([]int64, 0)
+	for _, installation := range installations {
+		installationIds = append(installationIds, installation.InstallationID)
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installation-ids-for-account-ids", Value: installationIds})
 
 	for _, installation := range installations {
 		if uint(installation.InstallationID) == gitInstallationID {

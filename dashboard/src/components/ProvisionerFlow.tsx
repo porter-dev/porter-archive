@@ -131,16 +131,19 @@ const ProvisionerFlow: React.FC<Props> = ({
               The base AWS infrastructure covers up to 4 vCPU and 16GB of RAM. Separate from the AWS cost, Porter charges based on your resource usage.
             </Text>
             <Spacer inline width="5px" />
+            <Spacer y={0.5} />
             <Link hasunderline to="https://porter.run/pricing" target="_blank">
               Learn more about our pricing.
             </Link>
+            <Spacer y={0.5} />
             <Text color="helper">
               You can use your AWS credits to pay for the underlying infrastructure, and if you are a startup with less than 5M in funding, you may qualify for our startup program that gives you $10k in credits.
             </Text>
+            <Spacer y={0.5} />
             <Link hasunderline to="https://gcpjnf9adme.typeform.com/to/vUg9SDWf" target="_blank">
               You can apply here.
             </Link>
-            <Spacer y={1} />
+            <Spacer y={0.5} />
             <Text color="helper">
               All AWS resources will be automatically deleted when you delete your Porter project. Please enter the AWS base cost ("315.94") below to proceed:
             </Text>

@@ -28,6 +28,7 @@ import PorterLink from "components/porter/Link";
 import Loading from "components/Loading";
 import Fieldset from "components/porter/Fieldset";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import Icon from "components/porter/Icon";
 
 type Props = {};
 
@@ -50,7 +51,7 @@ const namespaceBlacklist = [
 ];
 
 const AppDashboard: React.FC<Props> = ({ }) => {
-  const { currentProject, currentCluster } = useContext(Context);
+  const { currentProject, currentCluster, setFeaturePreview } = useContext(Context);
   const [apps, setApps] = useState([]);
   const [charts, setCharts] = useState([]);
   const [error, setError] = useState(null);
@@ -131,19 +132,19 @@ const AppDashboard: React.FC<Props> = ({ }) => {
     return (
       <>
         {app.repo_name ? (
-          <>
+          <Container row>
             <SmallIcon opacity="0.6" src={github} />
-            {app.repo_name}
-          </>
+            <Text size={13} color="#ffffff44">{app.repo_name}</Text>
+          </Container>
         ) : (
-          <>
+          <Container row>
             <SmallIcon
               opacity="0.7"
               height="18px"
               src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
             />
-            {app.image_repo_uri}
-          </>
+            <Text size={13} color="#ffffff44">{app.image_repo_uri}</Text>
+          </Container>
         )}
       </>
     );
@@ -189,7 +190,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
       }
     }
     return (
-      <>{size === "larger" ? <MidIcon src={src} /> : <Icon src={src} />}</>
+      <>{size === "larger" ? <Icon height="16px" src={src} /> : <Icon height="18px" src={src} />}</>
     );
   };
 
@@ -201,14 +202,19 @@ const AppDashboard: React.FC<Props> = ({ }) => {
         description="Web services, workers, and jobs for this project."
         disableLineBreak
       />
-      {currentCluster.status === "UPDATING_UNAVAILABLE" ? (
+      {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (
         <>
           <Container row spaced>
             <SearchBar
               value={searchValue}
-              setValue={setSearchValue}
+              setValue={(x) => {
+                if (x === "open_sesame") {
+                  setFeaturePreview(true);
+                }
+                setSearchValue(x);
+              }}
               placeholder="Search applications . . ."
               width="100%"
             />
@@ -248,19 +254,16 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                       <Block>
                         <Container row>
                           {renderIcon(app["build_packs"])}
-                          <Text size={14}>
-                            {app.name}
-                          </Text>
+                          <Spacer inline width="12px" />
+                          <Text size={14}>{app.name}</Text>
                           <Spacer inline x={2} />
                         </Container>
                         <StatusIcon src={healthy} />
-                        <Text size={13} color="#ffffff44">
-                          {renderSource(app)}
-                        </Text>
-                        <Text size={13} color="#ffffff44">
+                        {renderSource(app)}
+                        <Container row>
                           <SmallIcon opacity="0.4" src={time} />
-                          {app.last_deployed}
-                        </Text>
+                          <Text size={13} color="#ffffff44">{app.last_deployed}</Text>
+                        </Container>
                       </Block>
                     </Link>
                   );
@@ -275,20 +278,24 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                     <Link to={`/apps/${app.name}`} key={i}>
                       <Row>
                         <Container row>
+                          <Spacer inline width="1px" />
                           {renderIcon(app["build_packs"], "larger")}
+                          <Spacer inline width="12px" />
                           <Text size={14}>
                             {app.name}
                           </Text>
                           <Spacer inline x={1} />
-                          <MidIcon src={healthy} />
+                          <Icon height="16px" src={healthy} />
                         </Container>
                         <Spacer height="15px" />
-                        <Text size={13} color="#ffffff44">
+                        <Container row>
                           {renderSource(app)}
                           <Spacer inline x={1} />
                           <SmallIcon opacity="0.4" src={time} />
-                          {app.last_deployed}
-                        </Text>
+                          <Text size={13} color="#ffffff44">
+                            {app.last_deployed}
+                          </Text>
+                        </Container>
                       </Row>
                     </Link>
                   );
@@ -339,17 +346,6 @@ const StatusIcon = styled.img`
   top: 20px;
   right: 20px;
   height: 18px;
-`;
-
-const Icon = styled.img`
-  height: 18px;
-  margin-right: 15px;
-`;
-
-const MidIcon = styled.img`
-  height: 16px;
-  margin-right: 13px;
-  margin-left: 1px;
 `;
 
 const SmallIcon = styled.img<{ opacity?: string; height?: string }>`

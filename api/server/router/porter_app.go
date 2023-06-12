@@ -3,8 +3,8 @@ package router
 import (
 	"fmt"
 
-	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/api/server/handlers/stacks"
+	"github.com/go-chi/chi/v5"
+	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
@@ -55,7 +55,7 @@ func getStackRoutes(
 
 	var routes []*router.Route
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> stacks.NewPorterAppGetHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> porter_app.NewPorterAppGetHandler
 	getPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -72,7 +72,7 @@ func getStackRoutes(
 		},
 	)
 
-	getPorterAppHandler := stacks.NewGetPorterAppHandler(
+	getPorterAppHandler := porter_app.NewGetPorterAppHandler(
 		config,
 		factory.GetResultWriter(),
 	)
@@ -83,7 +83,7 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> stacks.NewPorterAppListHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> porter_app.NewPorterAppListHandler
 	listPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
@@ -100,7 +100,7 @@ func getStackRoutes(
 		},
 	)
 
-	listPorterAppHandler := stacks.NewPorterAppListHandler(
+	listPorterAppHandler := porter_app.NewPorterAppListHandler(
 		config,
 		factory.GetResultWriter(),
 	)
@@ -128,7 +128,7 @@ func getStackRoutes(
 		},
 	)
 
-	deletePorterAppByNameHandler := stacks.NewDeletePorterAppByNameHandler(
+	deletePorterAppByNameHandler := porter_app.NewDeletePorterAppByNameHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -140,7 +140,7 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack} -> stacks.NewCreatePorterAppHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack} -> porter_app.NewCreatePorterAppHandler
 	createPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -157,7 +157,7 @@ func getStackRoutes(
 		},
 	)
 
-	createPorterAppHandler := stacks.NewCreatePorterAppHandler(
+	createPorterAppHandler := porter_app.NewCreatePorterAppHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -169,7 +169,36 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack}/pr -> stacks.NewOpenStackPRHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack}/rollback -> porter_app.NewRollbackPorterAppHandler
+	rollbackPorterAppEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/rollback", relPath, types.URLParamStackName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	rollbackPorterAppHandler := porter_app.NewRollbackPorterAppHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: rollbackPorterAppEndpoint,
+		Handler:  rollbackPorterAppHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack}/pr -> porter_app.NewOpenStackPRHandler
 	createSecretAndOpenGitHubPullRequestEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -186,7 +215,7 @@ func getStackRoutes(
 		},
 	)
 
-	createSecretAndOpenGitHubPullRequestHandler := stacks.NewOpenStackPRHandler(
+	createSecretAndOpenGitHubPullRequestHandler := porter_app.NewOpenStackPRHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -198,7 +227,7 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/events -> stacks.NewPorterAppEventListHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/events -> porter_app.NewPorterAppEventListHandler
 	listPorterAppEventsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
@@ -215,7 +244,7 @@ func getStackRoutes(
 		},
 	)
 
-	listPorterAppEventsHandler := stacks.NewPorterAppEventListHandler(
+	listPorterAppEventsHandler := porter_app.NewPorterAppEventListHandler(
 		config,
 		factory.GetResultWriter(),
 	)
@@ -226,7 +255,7 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/events -> stacks.NewCreatePorterAppEventEndpoint
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/events -> porter_app.NewCreatePorterAppEventEndpoint
 	createPorterAppEventEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -243,7 +272,7 @@ func getStackRoutes(
 		},
 	)
 
-	createPorterAppEventHandler := stacks.NewCreateUpdatePorterAppEventHandler(
+	createPorterAppEventHandler := porter_app.NewCreateUpdatePorterAppEventHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -255,7 +284,7 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/analytics -> stacks.NewPorterAppAnalyticsHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/analytics -> porter_app.NewPorterAppAnalyticsHandler
 	porterAppAnalyticsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
@@ -272,7 +301,7 @@ func getStackRoutes(
 		},
 	)
 
-	porterAppAnalyticsHandler := stacks.NewPorterAppAnalyticsHandler(
+	porterAppAnalyticsHandler := porter_app.NewPorterAppAnalyticsHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -281,6 +310,35 @@ func getStackRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: porterAppAnalyticsEndpoint,
 		Handler:  porterAppAnalyticsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/logs -> cluster.NewGetChartLogsWithinTimeRangeHandler
+	getChartLogsWithinTimeRangeEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/logs", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getChartLogsWithinTimeRangeHandler := porter_app.NewGetLogsWithinTimeRangeHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getChartLogsWithinTimeRangeEndpoint,
+		Handler:  getChartLogsWithinTimeRangeHandler,
 		Router:   r,
 	})
 

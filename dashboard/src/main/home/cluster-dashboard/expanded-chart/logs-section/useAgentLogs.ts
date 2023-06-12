@@ -76,6 +76,7 @@ export const useLogs = (
   searchParam: string,
   notify: (message: string) => void,
   currentChart: ChartType,
+  setLoading: (loading: boolean) => void,
   // if setDate is set, results are not live
   setDate?: Date
 ) => {
@@ -89,7 +90,9 @@ export const useLogs = (
     previousCursor: null,
     nextCursor: null,
   });
-  const [loading, setLoading] = useState(true);
+
+  currentPod = currentChart.name;
+  namespace = currentChart.namespace;
 
   // if we are live:
   // - start date is initially set to 2 weeks ago
@@ -185,11 +188,15 @@ export const useLogs = (
   };
 
   const setupWebsocket = (websocketKey: string) => {
+    if (namespace == "") {
+      return;
+    }
+
     const websocketBaseURL = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki`;
 
     const q = new URLSearchParams({
-      pod_selector: currentPod,
-      namespace,
+      pod_selector: currentPod + "-.*",
+      namespace: namespace,
       search_param: searchParam,
       revision: currentChart.version.toString(),
     }).toString();
@@ -235,8 +242,8 @@ export const useLogs = (
       .getLogs(
         "<token>",
         {
-          pod_selector: currentPod,
-          namespace,
+          pod_selector: currentPod + "-.*",
+          namespace: namespace,
           revision: currentChart.version.toString(),
           search_param: searchParam,
           start_range: startDate,
@@ -289,10 +296,10 @@ export const useLogs = (
     flushLogsBuffer(true);
     const websocketKey = `${currentPod}-${namespace}-websocket`;
     const endDate = dayjs(setDate);
-    const twoWeeksAgo = endDate.subtract(14, "days");
+    const oneDayAgo = endDate.subtract(1, "day");
 
     const { logs: initialLogs, previousCursor, nextCursor } = await queryLogs(
-      twoWeeksAgo.toISOString(),
+      oneDayAgo.toISOString(),
       endDate.toISOString(),
       Direction.backward
     );
@@ -326,10 +333,10 @@ export const useLogs = (
       // we query by setting the endDate equal to the previous startDate, and setting the direction
       // to "backward"
       const refDate = paginationInfo.previousCursor ?? dayjs().toISOString();
-      const twoWeeksAgo = dayjs(refDate).subtract(14, "days");
+      const oneDayAgo = dayjs(refDate).subtract(1, "day");
 
       const { logs: newLogs, previousCursor } = await queryLogs(
-        twoWeeksAgo.toISOString(),
+        oneDayAgo.toISOString(),
         refDate,
         Direction.backward
       );
@@ -423,6 +430,5 @@ export const useLogs = (
     refresh,
     moveCursor,
     paginationInfo,
-    loading,
   };
 };

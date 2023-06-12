@@ -30,6 +30,7 @@ export type ControllerTabPodType = {
   revisionNumber?: number;
   containerStatus: any;
   crashLoopReason?: string;
+  failing?: boolean;
 };
 
 const formatCreationTimestamp = timeFormat("%H:%M:%S %b %d, '%y");

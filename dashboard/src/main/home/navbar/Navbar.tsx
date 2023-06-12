@@ -26,15 +26,14 @@ class Navbar extends Component<PropsType, StateType> {
   renderSettingsDropdown = () => {
     if (this.state.showDropdown) {
       let version = this.context?.capabilities?.version;
+      let userEmail = this.context.user && this.context.user.email;
       return (
         <>
           <CloseOverlay
             onClick={() => this.setState({ showDropdown: false })}
           />
           <Dropdown dropdownWidth="250px" dropdownMaxHeight="200px">
-            <DropdownLabel>
-              {this.context.user && this.context.user.email}
-            </DropdownLabel>
+            <DropdownLabel>{userEmail}</DropdownLabel>
             <UserDropdownButton
               onClick={() =>
                 this.context.setCurrentModal("AccountSettingsModal", {})
@@ -87,7 +86,6 @@ const VersionTag = styled.div`
   right: 10px;
   top: 15px;
   color: #ffffff22;
-  font-weight: 400;
 `;
 
 const SettingsIcon = styled.div`
@@ -125,7 +123,6 @@ const UserDropdownButton = styled.button`
   position: relative;
   height: 40px;
   font-size: 13px;
-  font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: white;
   width: 100%;
@@ -162,13 +159,9 @@ const DropdownLabel = styled.div`
   font-size: 13px;
   height: 40px;
   color: #ffffff44;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
   padding: 13px;
-  max-width: 180px;
-  white-space: nowrap;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
 `;
 

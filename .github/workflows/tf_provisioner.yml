@@ -2,8 +2,6 @@
   push:
     tags:
       - production
-    branches:
-      - sms/tf-prod
 name: Deploy TF Provisioner to Production
 jobs:
   porter-deploy:

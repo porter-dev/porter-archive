@@ -3,9 +3,8 @@ package authz
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/google/go-github/v41/github"
 	"golang.org/x/oauth2"
@@ -136,23 +135,19 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(ctx 
 		}
 	}
 
-	accountIDsStr := make([]string, 0)
-	for _, accountID := range accountIDs {
-		accountIDsStr = append(accountIDsStr, strconv.FormatInt(accountID, 10))
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "account-ids", Value: strings.Join(accountIDsStr, ", ")})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "account-ids", Value: fmt.Sprintf("%v", accountIDs)})
 
 	installations, err := p.config.Repo.GithubAppInstallation().ReadGithubAppInstallationByAccountIDs(accountIDs)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "unable to read github app installations")
 	}
 
-	installationIds := make([]string, 0)
+	installationIds := make([]int64, 0)
 	for _, installation := range installations {
-		installationIds = append(installationIds, strconv.FormatInt(installation.InstallationID, 10))
+		installationIds = append(installationIds, installation.InstallationID)
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installation-ids-for-account-ids", Value: strings.Join(installationIds, ", ")})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installation-ids-for-account-ids", Value: fmt.Sprintf("%v", installationIds)})
 
 	for _, installation := range installations {
 		if uint(installation.InstallationID) == gitInstallationID {

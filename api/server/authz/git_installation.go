@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/google/go-github/v41/github"
 	"golang.org/x/oauth2"
@@ -135,19 +137,23 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(ctx 
 		}
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "account-ids", Value: accountIDs})
+	accountIDsStr := make([]string, 0)
+	for _, accountID := range accountIDs {
+		accountIDsStr = append(accountIDsStr, strconv.FormatInt(accountID, 10))
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "account-ids", Value: strings.Join(accountIDsStr, ", ")})
 
 	installations, err := p.config.Repo.GithubAppInstallation().ReadGithubAppInstallationByAccountIDs(accountIDs)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "unable to read github app installations")
 	}
 
-	installationIds := make([]int64, 0)
+	installationIds := make([]string, 0)
 	for _, installation := range installations {
-		installationIds = append(installationIds, installation.InstallationID)
+		installationIds = append(installationIds, strconv.FormatInt(installation.InstallationID, 10))
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installation-ids-for-account-ids", Value: installationIds})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installation-ids-for-account-ids", Value: strings.Join(installationIds, ", ")})
 
 	for _, installation := range installations {
 		if uint(installation.InstallationID) == gitInstallationID {
@@ -155,7 +161,6 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(ctx 
 		}
 	}
 
-	return apierrors.NewErrForbidden(
-		fmt.Errorf("user does not have access to github app installation %d", gitInstallationID),
-	)
+	err = telemetry.Error(ctx, span, nil, fmt.Sprintf("user does not have access to github app installation %d", gitInstallationID))
+	return err
 }

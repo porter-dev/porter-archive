@@ -43,10 +43,10 @@ func (p *GitInstallationScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *ht
 	defer span.End()
 
 	// read the user to perform authorization
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
 
 	// get the registry id from the URL param context
-	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
+	reqScopes, _ := ctx.Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 	gitInstallationID := reqScopes[types.GitInstallationScope].Resource.UInt
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "git-installation-id", Value: gitInstallationID})
@@ -54,17 +54,17 @@ func (p *GitInstallationScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *ht
 	gitInstallation, err := p.config.Repo.GithubAppInstallation().ReadGithubAppInstallationByInstallationID(gitInstallationID)
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		err = telemetry.Error(ctx, span, err, "git installation not found")
-		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)
+		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound), true)
 		return
 	} else if err != nil {
 		err = telemetry.Error(ctx, span, err, "git installation not found")
-		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound), true)
 		return
 	}
 
 	if err := p.doesUserHaveGitInstallationAccess(ctx, user.GithubAppIntegrationID, gitInstallationID); err != nil {
 		err = telemetry.Error(ctx, span, err, "user does not have access to git installation")
-		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden), true)
 		return
 	}
 
@@ -87,20 +87,17 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(ctx 
 
 	oauthInt, err := p.config.Repo.GithubAppOAuthIntegration().ReadGithubAppOauthIntegration(githubIntegrationID)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "unable to read github app oauth integration")
-		return err
+		return telemetry.Error(ctx, span, err, "unable to read github app oauth integration")
 	}
 
 	if p.config.GithubAppConf == nil {
-		err := telemetry.Error(ctx, span, nil, "config has invalid GithubAppConf")
-		return err
+		return telemetry.Error(ctx, span, nil, "config has invalid GithubAppConf")
 	}
 
 	if _, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel,
 		&p.config.GithubAppConf.Config,
 		oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, p.config.Repo)); err != nil {
-		err = telemetry.Error(ctx, span, err, "unable to get access token")
-		return err
+		return telemetry.Error(ctx, span, err, "unable to get access token")
 	}
 
 	client := github.NewClient(p.config.GithubConf.Client(ctx, &oauth2.Token{
@@ -113,8 +110,7 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(ctx 
 
 	AuthUser, _, err := client.Users.Get(ctx, "")
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "unable to get authenticated user")
-		return err
+		return telemetry.Error(ctx, span, err, "unable to get authenticated user")
 	}
 
 	accountIDs = append(accountIDs, *AuthUser.ID)
@@ -127,8 +123,7 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(ctx 
 	for {
 		orgs, pages, err := client.Organizations.List(ctx, "", opts)
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "unable to list organizations")
-			return err
+			return telemetry.Error(ctx, span, err, "unable to list organizations")
 		}
 
 		for _, org := range orgs {
@@ -144,8 +139,7 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(ctx 
 
 	installations, err := p.config.Repo.GithubAppInstallation().ReadGithubAppInstallationByAccountIDs(accountIDs)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "unable to read github app installations")
-		return err
+		return telemetry.Error(ctx, span, err, "unable to read github app installations")
 	}
 
 	installationIds := make([]int64, 0)

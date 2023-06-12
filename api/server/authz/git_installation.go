@@ -135,7 +135,7 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(ctx 
 		}
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "account-ids", Value: accountIDs})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "account-ids", Value: fmt.Sprintf("%v", accountIDs)})
 
 	installations, err := p.config.Repo.GithubAppInstallation().ReadGithubAppInstallationByAccountIDs(accountIDs)
 	if err != nil {
@@ -147,7 +147,7 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(ctx 
 		installationIds = append(installationIds, installation.InstallationID)
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installation-ids-for-account-ids", Value: installationIds})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installation-ids-for-account-ids", Value: fmt.Sprintf("%v", installationIds)})
 
 	for _, installation := range installations {
 		if uint(installation.InstallationID) == gitInstallationID {
@@ -155,7 +155,5 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(ctx 
 		}
 	}
 
-	return apierrors.NewErrForbidden(
-		fmt.Errorf("user does not have access to github app installation %d", gitInstallationID),
-	)
+	return telemetry.Error(ctx, span, nil, "user does not have access to github app installation")
 }

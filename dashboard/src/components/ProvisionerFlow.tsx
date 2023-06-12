@@ -99,7 +99,7 @@ const ProvisionerFlow: React.FC<Props> = ({
             </Text>
             <Spacer height="15px" />
             <Text color="helper">
-              Porter will create resources in your existing AWS account for hosting applications. You will be separately charged by AWS and can use your cloud credits. Base AWS cost:
+              Porter will create the underlying infrastructure in your own AWS account. You will be separately charged by AWS for this infrastructure. The cost for this base infrastructure is as follows:
             </Text>
             <Spacer y={1} />
             <ExpandableSection
@@ -128,13 +128,22 @@ const ProvisionerFlow: React.FC<Props> = ({
             />
             <Spacer y={1} />
             <Text color="helper">
-              Separate from the AWS cost, Porter charges based on the amount of resources that are being used.
+              The base AWS infrastructure covers up to 4 vCPU and 16GB of RAM. Separate from the AWS cost, Porter charges based on your resource usage.
             </Text>
             <Spacer inline width="5px" />
+            <Spacer y={0.5} />
             <Link hasunderline to="https://porter.run/pricing" target="_blank">
-              Learn more about our pricing
+              Learn more about our pricing.
             </Link>
-            <Spacer y={1} />
+            <Spacer y={0.5} />
+            <Text color="helper">
+              You can use your AWS credits to pay for the underlying infrastructure, and if you are a startup with less than 5M in funding, you may qualify for our startup program that gives you $10k in credits.
+            </Text>
+            <Spacer y={0.5} />
+            <Link hasunderline to="https://gcpjnf9adme.typeform.com/to/vUg9SDWf" target="_blank">
+              You can apply here.
+            </Link>
+            <Spacer y={0.5} />
             <Text color="helper">
               All AWS resources will be automatically deleted when you delete your Porter project. Please enter the AWS base cost ("315.94") below to proceed:
             </Text>

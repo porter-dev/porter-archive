@@ -742,7 +742,7 @@ tabs:
       variable: use_larger_subnets
       label: Use /21 subnets instead of /24 subnets for all subnet groups.
       settings:
-        default: true
+        default: false
     - type: checkbox
       variable: enable_prefix_delegation
       label: Use AWS Prefix delegation.

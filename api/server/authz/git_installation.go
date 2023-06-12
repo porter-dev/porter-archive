@@ -160,6 +160,5 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(ctx 
 		}
 	}
 
-	err = telemetry.Error(ctx, span, nil, "user does not have access to github app installation")
-	return err
+	return telemetry.Error(ctx, span, nil, "user does not have access to github app installation")
 }

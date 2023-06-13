@@ -35,19 +35,22 @@ func (c *GithubGetContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	request := &types.GetContentsRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
-		_ = telemetry.Error(ctx, span, nil, "request could not be decoded")
+		err := telemetry.Error(ctx, span, nil, "invalid request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
 	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
 	if !ok {
-		_ = telemetry.Error(ctx, span, nil, "owner and name params could not be decoded")
+		err := telemetry.Error(ctx, span, nil, "owner and name params not found")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
 	branch, ok := commonutils.GetBranchParam(c, w, r)
 	if !ok {
-		_ = telemetry.Error(ctx, span, nil, "branch param could not be decoded")
+		err := telemetry.Error(ctx, span, nil, "branch param not found")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type GithubGetContentsHandler struct {
@@ -29,32 +30,40 @@ func NewGithubGetContentsHandler(
 }
 
 func (c *GithubGetContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-github-get-contents")
+	defer span.End()
+
 	request := &types.GetContentsRequest{}
-
-	ok := c.DecodeAndValidate(w, r, request)
-
-	if !ok {
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		_ = telemetry.Error(ctx, span, nil, "request could not be decoded")
 		return
 	}
 
 	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
-
 	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "owner and name params could not be decoded")
 		return
 	}
 
 	branch, ok := commonutils.GetBranchParam(c, w, r)
-
 	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "branch param could not be decoded")
 		return
 	}
 
 	client, err := GetGithubAppClientFromRequest(c.Config(), r)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "could not get github app client from request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
+
+	telemetry.WithAttributes(
+		span,
+		telemetry.AttributeKV{Key: "repo-owner", Value: owner},
+		telemetry.AttributeKV{Key: "repo-name", Value: name},
+		telemetry.AttributeKV{Key: "repo-branch", Value: branch},
+	)
 
 	repoContentOptions := github.RepositoryContentGetOptions{}
 	repoContentOptions.Ref = branch
@@ -66,8 +75,8 @@ func (c *GithubGetContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		&repoContentOptions,
 	)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			err, resp.StatusCode))
+		err = telemetry.Error(ctx, span, err, "could not get contents from github")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, resp.StatusCode))
 		return
 	}
 

@@ -28,6 +28,9 @@ jobs:
         run: go build -ldflags="-w -s -X 'main.Version=production'" -o ./bin/app ./cmd/app
       - name: Build Migration Binary
         run: go build -ldflags '-w -s' -o ./bin/migrate ./cmd/migrate
+      - name: Compress binaries
+        run: |
+          upx bin/* --best --lzma
       - name: Store Binaries
         uses: actions/upload-artifact@v3
         with:

@@ -40,6 +40,16 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	var apiContract porterv1.Contract
 
+	// by, _ := io.ReadAll(r.Body)
+	// fmt.Println("by: ", string(by))
+
+	// var contract protoreflect.ProtoMessage
+	// err1 := protojson.Unmarshal(by, contract)
+	// if err1 != nil {
+	// 	fmt.Printf("unable to convert bytes into contract: %s\n", err1.Error())
+	// 	panic(err1)
+	// }
+
 	err := helpers.UnmarshalContractObjectFromReader(r.Body, &apiContract)
 	if err != nil {
 		e := fmt.Errorf("error parsing api contract: %w", err)

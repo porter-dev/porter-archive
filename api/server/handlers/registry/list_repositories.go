@@ -46,7 +46,7 @@ func (c *RegistryListRepositoriesHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	repos, err := regAPI.ListRepositories(ctx, c.Repo(), c.Config())
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing repositories")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

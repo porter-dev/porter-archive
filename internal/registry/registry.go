@@ -178,6 +178,9 @@ func (r *Registry) ListRepositories(
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "capi-aws"})
 			uri := strings.TrimPrefix(r.URL, "https://")
 			splits := strings.Split(uri, ".")
+			if len(splits) < 4 {
+				return nil, telemetry.Error(ctx, span, err, "uri not does not have enough splits")
+			}
 			accountID := splits[0]
 			region := splits[3]
 			req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{

@@ -106,6 +106,7 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
           />
           <Spacer y={1} />
           <Input
+            type="password"
             label={<Flex>Client Secret</Flex>}
             value={servicePrincipalKey}
             setValue={(e) => {

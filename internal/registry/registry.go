@@ -526,9 +526,14 @@ func (r *Registry) listACRRepositories(ctx context.Context, repo repository.Repo
 
 	client := &http.Client{}
 
+	acrURL := r.URL
+	if !strings.Contains(acrURL, "http") {
+		acrURL = fmt.Sprintf("https://%s", acrURL)
+	}
+
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/v2/_catalog", fmt.Sprintf("https://%s", r.URL)),
+		fmt.Sprintf("%s/v2/_catalog", acrURL),
 		nil,
 	)
 	if err != nil {

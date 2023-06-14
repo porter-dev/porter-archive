@@ -19,8 +19,6 @@ import {
   EKSNodeGroup,
   EKS,
   Cluster,
-  LoadBalancer,
-  LoadBalancerType,
 } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
@@ -90,7 +88,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [maxInstances, setMaxInstances] = useState(10);
   const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
-  const [loadBalancer, setLoadBalancer] = useState<LoadBalancer | undefined>();
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
@@ -133,9 +130,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   };
   const createCluster = async () => {
     setIsClicked(true);
-    console.log("STEFANVAL", loadBalancer);
-
-    let data = new Contract({
+    var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
         kind: EnumKubernetesKind.EKS,
@@ -148,7 +143,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             clusterVersion: clusterVersion || "v1.24.0",
             cidrRange: cidrRange || "10.78.0.0/16",
             region: awsRegion,
-            loadBalancer: loadBalancer,
             nodeGroups: [
               new EKSNodeGroup({
                 instanceType: "t3.medium",
@@ -254,8 +248,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     setIsReadOnly(
       props.clusterId &&
-      (currentCluster.status === "UPDATING" ||
-        currentCluster.status === "UPDATING_UNAVAILABLE")
+        (currentCluster.status === "UPDATING" ||
+          currentCluster.status === "UPDATING_UNAVAILABLE")
     );
     setClusterName(
       `${currentProject.name}-cluster-${Math.random()
@@ -267,11 +261,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
-      let eksValues: EKS = contract.cluster?.eksKind as EKS;
-      if (eksValues == undefined) {
-        return
-      }
-      eksValues.nodeGroups.map((nodeGroup: any) => {
+      contract.cluster.eksKind.nodeGroups.map((nodeGroup: any) => {
         if (nodeGroup.nodeGroupType === "NODE_GROUP_TYPE_APPLICATION") {
           setMachineType(nodeGroup.instanceType);
           setMinInstances(nodeGroup.minInstances);
@@ -279,11 +269,10 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         }
       });
       setCreateStatus("");
-      setClusterName(eksValues.clusterName);
-      setAwsRegion(eksValues.region);
-      setClusterVersion(eksValues.clusterVersion);
-      setCidrRange(eksValues.cidrRange);
-      setLoadBalancer(eksValues.loadBalancer)
+      setClusterName(contract.cluster.eksKind.clusterName);
+      setAwsRegion(contract.cluster.eksKind.region);
+      setClusterVersion(contract.cluster.eksKind.clusterVersion);
+      setCidrRange(contract.cluster.eksKind.cidrRange);
     }
   }, [props.selectedClusterVersion]);
 
@@ -408,7 +397,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
     margin-right: 7px;
     margin-left: -7px;
     transform: ${(props) =>
-    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+      props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
   }
 `;
 

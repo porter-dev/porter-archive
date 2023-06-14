@@ -118,11 +118,10 @@ func (r *Registry) ListRepositories(
 
 	if r.DOIntegrationID != 0 {
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "do"})
-		return r.listDOCRRepositories(repo, conf.DOConf)
 
-		repos, err := r.listGCRRepositories(repo)
+		repos, err := r.listDOCRRepositories(repo, conf.DOConf)
 		if err != nil {
-			return nil, telemetry.Error(ctx, span, err, "error listing gcr repositories")
+			return nil, telemetry.Error(ctx, span, err, "error listing docr repositories")
 		}
 
 		return repos, nil

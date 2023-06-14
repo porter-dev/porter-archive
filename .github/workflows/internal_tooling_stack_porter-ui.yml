@@ -2,6 +2,7 @@
   push:
     branches:
       - master
+      - sms/alb-support
 name: Deploy Porter to Internal Tooling
 jobs:
   build-go:

@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	artifactregistry "cloud.google.com/go/artifactregistry/apiv1beta2"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -72,66 +74,137 @@ func (r *Registry) ListRepositories(
 	repo repository.Repository,
 	conf *config.Config,
 ) ([]*ptypes.RegistryRepository, error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-repositories")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "registry-name", Value: r.Name},
+		telemetry.AttributeKV{Key: "registry-id", Value: r.ID},
+		telemetry.AttributeKV{Key: "project-id", Value: r.ProjectID},
+	)
+
 	// switch on the auth mechanism to get a token
 	if r.AWSIntegrationID != 0 {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "aws"})
 		aws, err := repo.AWSIntegration().ReadAWSIntegration(
 			r.ProjectID,
 			r.AWSIntegrationID,
 		)
 		if err != nil {
-			return nil, err
+			return nil, telemetry.Error(ctx, span, err, "error reading aws integration")
 		}
-		return r.listECRRepositories(aws)
+
+		repos, err := r.listECRRepositories(aws)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error listing ecr repositories")
+		}
+
+		return repos, nil
 	}
 
 	if r.GCPIntegrationID != 0 {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "gcp"})
 		if strings.Contains(r.URL, "pkg.dev") {
 			return r.listGARRepositories(repo)
 		}
 
-		return r.listGCRRepositories(repo)
+		repos, err := r.listGCRRepositories(repo)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error listing gcr repositories")
+		}
+
+		return repos, nil
 	}
 
 	if r.DOIntegrationID != 0 {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "do"})
 		return r.listDOCRRepositories(repo, conf.DOConf)
+
+		repos, err := r.listGCRRepositories(repo)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error listing gcr repositories")
+		}
+
+		return repos, nil
 	}
 
 	if r.AzureIntegrationID != 0 {
-		return r.listACRRepositories(repo)
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "azure"})
+
+		repos, err := r.listACRRepositories(ctx, repo)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error listing acr repositories")
+		}
+
+		return repos, nil
 	}
 
 	if r.BasicIntegrationID != 0 {
-		return r.listPrivateRegistryRepositories(repo)
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "basic"})
+
+		repos, err := r.listPrivateRegistryRepositories(repo)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error listing private repositories")
+		}
+
+		return repos, nil
 	}
 
 	project, err := conf.Repo.Project().ReadProject(r.ProjectID)
 	if err != nil {
-		return nil, fmt.Errorf("error getting project for repository: %w", err)
+		return nil, telemetry.Error(ctx, span, err, "error getting project for repository")
 	}
 
 	if project.CapiProvisionerEnabled {
-		uri := strings.TrimPrefix(r.URL, "https://")
-		splits := strings.Split(uri, ".")
-		accountID := splits[0]
-		region := splits[3]
-		req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{
-			ProjectId:    int64(r.ProjectID),
-			AwsAccountId: accountID,
-		})
-		creds, err := conf.ClusterControlPlaneClient.AssumeRoleCredentials(ctx, req)
-		if err != nil {
-			return nil, fmt.Errorf("error getting capi credentials for repository: %w", err)
+		if strings.Contains(r.URL, ".azurecr.") {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "capi-azure"})
+			creds, err := conf.Repo.AzureIntegration().ListAzureIntegrationsByProjectID(r.ProjectID)
+			if err != nil {
+				return nil, telemetry.Error(ctx, span, err, "error getting azure credentials for capi cluster")
+			}
+			if len(creds) == 0 {
+				return nil, telemetry.Error(ctx, span, err, "no azure credentials for capi cluster")
+			}
+			r.AzureIntegrationID = creds[0].ID
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "azure-integration-id", Value: r.AzureIntegrationID})
+
+			repos, err := r.listACRRepositories(ctx, repo)
+			if err != nil {
+				return nil, telemetry.Error(ctx, span, err, "error listing acr repositories")
+			}
+
+			return repos, nil
+		} else {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "capi-aws"})
+			uri := strings.TrimPrefix(r.URL, "https://")
+			splits := strings.Split(uri, ".")
+			accountID := splits[0]
+			region := splits[3]
+			req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{
+				ProjectId:    int64(r.ProjectID),
+				AwsAccountId: accountID,
+			})
+			creds, err := conf.ClusterControlPlaneClient.AssumeRoleCredentials(ctx, req)
+			if err != nil {
+				return nil, telemetry.Error(ctx, span, err, "error getting capi credentials for registry")
+			}
+			aws := &ints.AWSIntegration{
+				AWSAccessKeyID:     []byte(creds.Msg.AwsAccessId),
+				AWSSecretAccessKey: []byte(creds.Msg.AwsSecretKey),
+				AWSSessionToken:    []byte(creds.Msg.AwsSessionToken),
+				AWSRegion:          region,
+			}
+
+			repos, err := r.listECRRepositories(aws)
+			if err != nil {
+				return nil, telemetry.Error(ctx, span, err, "error listing ecr repositories")
+			}
+
+			return repos, nil
 		}
-		aws := &ints.AWSIntegration{
-			AWSAccessKeyID:     []byte(creds.Msg.AwsAccessId),
-			AWSSecretAccessKey: []byte(creds.Msg.AwsSecretKey),
-			AWSSessionToken:    []byte(creds.Msg.AwsSessionToken),
-			AWSRegion:          region,
-		}
-		return r.listECRRepositories(aws)
 	}
 
-	return nil, fmt.Errorf("error listing repositories")
+	return nil, telemetry.Error(ctx, span, nil, "error listing repositories")
 }
 
 type gcrJWT struct {
@@ -429,51 +502,62 @@ func (r *Registry) listECRRepositories(aws *ints.AWSIntegration) ([]*ptypes.Regi
 	return res, nil
 }
 
-func (r *Registry) listACRRepositories(repo repository.Repository) ([]*ptypes.RegistryRepository, error) {
+type acrRepositoryResp struct {
+	Repositories []string `json:"repositories"`
+}
+
+func (r *Registry) listACRRepositories(ctx context.Context, repo repository.Repository) ([]*ptypes.RegistryRepository, error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-acr-repositories")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "registry-name", Value: r.Name},
+		telemetry.AttributeKV{Key: "registry-id", Value: r.ID},
+		telemetry.AttributeKV{Key: "project-id", Value: r.ProjectID},
+	)
+
 	az, err := repo.AzureIntegration().ReadAzureIntegration(
 		r.ProjectID,
 		r.AzureIntegrationID,
 	)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error reading azure integration")
 	}
 
 	client := &http.Client{}
 
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/v2/_catalog", r.URL),
+		fmt.Sprintf("%s/v2/_catalog", fmt.Sprintf("https://%s", r.URL)),
 		nil,
 	)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error getting http request")
 	}
 
 	req.SetBasicAuth(az.AzureClientID, string(az.ServicePrincipalSecret))
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error making http call")
 	}
 
-	gcrResp := gcrRepositoryResp{}
+	acrResp := acrRepositoryResp{}
 
-	if err := json.NewDecoder(resp.Body).Decode(&gcrResp); err != nil {
-		return nil, fmt.Errorf("Could not read Azure registry repositories: %v", err)
+	if err := json.NewDecoder(resp.Body).Decode(&acrResp); err != nil {
+		return nil, telemetry.Error(ctx, span, err, "could not read Azure registry repository response")
 	}
 
 	res := make([]*ptypes.RegistryRepository, 0)
 
-	if err != nil {
-		return nil, err
-	}
-
-	for _, repo := range gcrResp.Repositories {
+	for _, repo := range acrResp.Repositories {
 		res = append(res, &ptypes.RegistryRepository{
 			Name: repo,
 			URI:  strings.TrimPrefix(r.URL, "https://") + "/" + repo,
 		})
 	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "repo-count", Value: len(acrResp.Repositories)})
 
 	return res, nil
 }

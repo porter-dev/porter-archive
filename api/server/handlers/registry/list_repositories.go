@@ -3,6 +3,8 @@ package registry
 import (
 	"net/http"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -26,15 +28,24 @@ func NewRegistryListRepositoriesHandler(
 }
 
 func (c *RegistryListRepositoriesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-registry-list-repositories")
+	defer span.End()
+
 	reg, _ := ctx.Value(types.RegistryScope).(*models.Registry)
 
 	// cast to a registry from registry package
 	_reg := registry.Registry(*reg)
 	regAPI := &_reg
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "registry-name", Value: regAPI.Name},
+		telemetry.AttributeKV{Key: "registry-id", Value: regAPI.ID},
+		telemetry.AttributeKV{Key: "project-id", Value: regAPI.ProjectID},
+	)
+
 	repos, err := regAPI.ListRepositories(ctx, c.Repo(), c.Config())
 	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error listing repositories")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

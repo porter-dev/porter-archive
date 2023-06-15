@@ -28,6 +28,7 @@ import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
 import { Service } from "./serviceTypes";
 import GithubConnectModal from "./GithubConnectModal";
 import Link from "components/porter/Link";
+import { PorterApp } from "../types/porterApp";
 
 type Props = RouteComponentProps & {};
 
@@ -82,6 +83,7 @@ type Provider =
     integration_id: number;
   };
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
+  const [porterApp, setPorterApp] = useState<PorterApp>(PorterApp.empty());
   const [porterYamlPath, setPorterYamlPath] = useState("");
 
   const [imageUrl, setImageUrl] = useState("");
@@ -96,7 +98,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [buildView, setBuildView] = useState<string>("buildpacks");
   const [branch, setBranch] = useState("");
   const [dockerfilePath, setDockerfilePath] = useState("./Dockerfile");
-  const [procfilePath, setProcfilePath] = useState(null);
   const [folderPath, setFolderPath] = useState("./");
   const [buildConfig, setBuildConfig] = useState({});
   const [porterYaml, setPorterYaml] = useState("");
@@ -263,7 +264,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     return regex.test(name);
   };
   const handleAppNameChange = (name: string) => {
-    setCurrentStep(currentStep);
     setFormState({ ...formState, applicationName: name });
     if (isAppNameValid(name) && Validators.applicationName(name)) {
       setCurrentStep(Math.max(Math.max(currentStep, 1), existingStep));
@@ -292,7 +292,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       setDeploymentError(undefined);
 
       // log analytics event that we started form submission
-      await updateStackStep("stack-launch-complete");
+      updateStackStep("stack-launch-complete");
 
       if (currentProject?.id == null || currentCluster?.id == null) {
         throw "Project or cluster not found";
@@ -353,10 +353,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       }
 
       // log analytics event that we successfully deployed
-      await updateStackStep("stack-launch-success");
+      updateStackStep("stack-launch-success");
 
       return true;
-    } catch (err) {
+    } catch (err: any) {
       // TODO: better error handling
       console.log(err);
       const errMessage =
@@ -370,14 +370,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       setDeploying(false);
     }
   };
+
   useEffect(() => {
     setFormState({ ...formState, serviceList: [] });
   }, [actionConfig, branch]);
-  useEffect(() => {
-    if (imageUrl || dockerfilePath || folderPath) {
-      setCurrentStep(Math.max(currentStep, 2));
-    }
-  }, [imageUrl, buildConfig, dockerfilePath, setCurrentStep, currentStep]);
 
   return (
     <CenterWrapper>
@@ -451,7 +447,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                     setFormState({ ...formState, selectedSourceType: type });
                   }}
                 />
-                <SourceSettings
+                {/* <SourceSettings
                   source={formState.selectedSourceType}
                   imageUrl={imageUrl}
                   setImageUrl={(x) => {
@@ -468,8 +464,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setDockerfilePath={setDockerfilePath}
                   folderPath={folderPath}
                   setFolderPath={setFolderPath}
-                  procfilePath={procfilePath}
-                  setProcfilePath={setProcfilePath}
                   setBuildConfig={setBuildConfig}
                   porterYaml={porterYaml}
                   setPorterYaml={(newYaml: string) => {
@@ -481,6 +475,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   currentStep={currentStep}
                   porterYamlPath={porterYamlPath}
                   setPorterYamlPath={setPorterYamlPath}
+                /> */}
+                <SourceSettings
+                  source={formState.selectedSourceType}
+                  buildView={buildView}
+                  setBuildView={setBuildView}
                 />
               </>,
               <>

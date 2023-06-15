@@ -18,9 +18,9 @@ type Props = {
 };
 
 const defaultActionConfig: ActionConfigType = {
-  git_repo: null,
-  image_repo_uri: null,
-  git_branch: null,
+  git_repo: "",
+  image_repo_uri: "",
+  git_branch: "",
   git_repo_id: 0,
   kind: "github",
 };
@@ -52,7 +52,7 @@ const ActionConfEditorStack: React.FC<Props> = ({
           label="GitHub repository:"
           width="100%"
           value={actionConfig?.git_repo}
-          setValue={() => {}}
+          setValue={() => { }}
           placeholder=""
         />
         <BackButton

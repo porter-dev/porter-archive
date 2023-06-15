@@ -23,7 +23,6 @@ type Props = {
   setBuildConfig: (x: any) => void;
   porterYaml: string;
   setPorterYaml: (x: any) => void;
-  imageUrl: string;
   setImageUrl: (x: string) => void;
   buildView: string;
   setBuildView: (x: string) => void;
@@ -43,15 +42,12 @@ const SharedBuildSettings: React.FC<Props> = ({
   setBuildConfig,
   porterYaml,
   setPorterYaml,
-  imageUrl,
   setImageUrl,
   buildView,
   setBuildView,
   porterYamlPath,
   setPorterYamlPath,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   return (
     <>
       <Text size={16}>Build settings</Text>
@@ -136,8 +132,6 @@ const SharedBuildSettings: React.FC<Props> = ({
 };
 
 export default SharedBuildSettings;
-
-const SourceSettingsContainer = styled.div``;
 
 const DarkMatter = styled.div<{ antiHeight?: string }>`
   width: 100%;

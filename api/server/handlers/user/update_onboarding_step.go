@@ -33,9 +33,25 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if request.Step == "cost-consent-complete" {
-		v.Config().AnalyticsClient.Track(analytics.CostConsentTrack(&analytics.CostConsentTrackOpts{
+	if request.Step == "cost-consent-opened" {
+		v.Config().AnalyticsClient.Track(analytics.CostConsentOpenedTrack(&analytics.CostConsentOpenedTrackOpts{
 			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+			Provider:            request.Provider,
+			Email:               user.Email,
+			FirstName:           user.FirstName,
+			LastName:            user.LastName,
+			CompanyName:         user.CompanyName,
+		}))
+	}
+
+	if request.Step == "cost-consent-complete" {
+		v.Config().AnalyticsClient.Track(analytics.CostConsentCompletedTrack(&analytics.CostConsentCompletedTrackOpts{
+			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+			Provider:            request.Provider,
+			Email:               user.Email,
+			FirstName:           user.FirstName,
+			LastName:            user.LastName,
+			CompanyName:         user.CompanyName,
 		}))
 	}
 

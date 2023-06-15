@@ -8,6 +8,7 @@ const (
 	UserVerifyEmail SegmentEvent = "User Verified Email"
 	ProjectCreate   SegmentEvent = "New Project Event"
 
+	CostConsentOpened      SegmentEvent = "Cost Consent Opened"
 	CostConsentComplete    SegmentEvent = "Cost Consent Complete"
 	CredentialStepComplete SegmentEvent = "Credential Step Complete"
 	PreProvisionCheck      SegmentEvent = "Pre Provision Check Started"

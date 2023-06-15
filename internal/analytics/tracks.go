@@ -132,14 +132,47 @@ func ProjectCreateTrack(opts *ProjectCreateTrackOpts) segmentTrack {
 	)
 }
 
-// CostConsentTrackOpts are the options for creating a track when a user completes the cost consent
-type CostConsentTrackOpts struct {
+// CostConsentOpenedTrackOpts are the options for creating a track when a user opens the cost consent
+type CostConsentOpenedTrackOpts struct {
 	*UserScopedTrackOpts
+	Provider string
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
 }
 
-// CostConsentTrack returns a track for when a user completes the cost consent
-func CostConsentTrack(opts *CostConsentTrackOpts) segmentTrack {
+// CostConsentCompletedTrack returns a track for when a user completes the cost consent
+func CostConsentOpenedTrack(opts *CostConsentOpenedTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
+	additionalProps["provider"] = opts.Provider
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, CostConsentOpened),
+	)
+}
+
+// CostConsentCompletedTrackOpts are the options for creating a track when a user completes the cost consent
+type CostConsentCompletedTrackOpts struct {
+	*UserScopedTrackOpts
+	Provider string
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
+}
+
+// CostConsentCompletedTrack returns a track for when a user completes the cost consent
+func CostConsentCompletedTrack(opts *CostConsentCompletedTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["provider"] = opts.Provider
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
 
 	return getSegmentUserTrack(
 		opts.UserScopedTrackOpts,

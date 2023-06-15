@@ -406,9 +406,9 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	for _, reg := range regs {
 		if reg.AzureIntegrationID != 0 && strings.Contains(reg.URL, "azurecr.io") {
 			_reg := registry.Registry(*reg)
-
 			username, pw, err := _reg.GetACRCredentials(c.Repo())
 			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				continue
 			}
 

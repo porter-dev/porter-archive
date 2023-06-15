@@ -2417,6 +2417,7 @@ const getIncidentEvents = baseApi<
 const updateOnboardingStep = baseApi<
   {
     step: string;
+    provider?: string;
   },
   {}
 >("POST", (pathParams) => {

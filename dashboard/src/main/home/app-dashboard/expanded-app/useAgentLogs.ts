@@ -25,37 +25,25 @@ export interface Log {
 }
 
 const LogSchema = z.object({
-  log: z.string(),
-  stream: z.string(),
-  time: z.string(),
+  line: z.string(),
+  timestamp: z.string(),
 });
 
 type LogLine = z.infer<typeof LogSchema>;
 
-export const parseLogs = (logs: string[] = []): Log[] => {
-  return logs.filter(Boolean).map((logLine: string, idx) => {
+export const parseLogs = (logs: any[] = []): Log[] => {
+  return logs.filter(Boolean).map((logLine: any, idx) => {
     try {
-      if (!isJSON(logLine)) {
-        return {
-          line: Anser.ansiToJson(logLine),
-          lineNumber: idx + 1,
-          timestamp: undefined,
-        };
-      }
-
-      const parsedLine: LogLine = JSON.parse(logLine);
-
-      LogSchema.parse(parsedLine);
+      const parsed: LogLine = LogSchema.parse(logLine);
 
       // TODO Move log parsing to the render method
-      const ansiLog = Anser.ansiToJson(parsedLine.log);
+      const ansiLog = Anser.ansiToJson(parsed.line);
       return {
         line: ansiLog,
         lineNumber: idx + 1,
-        timestamp: parsedLine.time,
+        timestamp: parsed.timestamp,
       };
     } catch (err) {
-      console.error(err, logLine);
       return {
         line: Anser.ansiToJson(logLine),
         lineNumber: idx + 1,
@@ -260,9 +248,7 @@ export const useLogs = (
         }
       )
       .then((res) => {
-        const newLogs = parseLogs(
-          res.data.logs?.filter(Boolean).map((logLine: any) => logLine.line)
-        );
+        const newLogs = parseLogs(res.data?.logs);
 
         if (direction === Direction.backward) {
           newLogs.reverse();

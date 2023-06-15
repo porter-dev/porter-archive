@@ -866,6 +866,11 @@ func (r *Registry) CreateRepository(
 	}
 
 	if project.CapiProvisionerEnabled {
+		// no need to create repository if pushing to ACR
+		if strings.Contains(r.URL, ".azurecr.") {
+			return nil
+		}
+
 		uri := strings.TrimPrefix(r.URL, "https://")
 		splits := strings.Split(uri, ".")
 		accountID := splits[0]

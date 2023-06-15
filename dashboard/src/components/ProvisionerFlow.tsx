@@ -9,15 +9,6 @@ import ProvisionerForm from "components/ProvisionerForm";
 import CloudFormationForm from "components/CloudFormationForm";
 import CredentialsForm from "components/CredentialsForm";
 import Helper from "components/form-components/Helper";
-import Modal from "./porter/Modal";
-import Text from "./porter/Text";
-import Spacer from "./porter/Spacer";
-import Fieldset from "./porter/Fieldset";
-import Checkbox from "./porter/Checkbox";
-import Button from "./porter/Button";
-import ExpandableSection from "./porter/ExpandableSection";
-import Input from "./porter/Input";
-import Link from "./porter/Link";
 import AzureCredentialForm from "components/AzureCredentialForm";
 import AWSCostConsent from "./AWSCostConsent";
 import AzureCostConsent from "./AzureCostConsent";
@@ -26,7 +17,7 @@ const providers = ["aws", "gcp", "azure"];
 
 type Props = {};
 
-const ProvisionerFlow: React.FC<Props> = ({}) => {
+const ProvisionerFlow: React.FC<Props> = ({ }) => {
   const {
     usage,
     hasBillingEnabled,
@@ -47,25 +38,22 @@ const ProvisionerFlow: React.FC<Props> = ({}) => {
     return usage?.current.clusters >= usage?.limit.clusters;
   }, [usage]);
 
-  const markStepCostConsent = async () => {
+  const markStepCostConsent = async (step: string, provider: string) => {
     try {
-      const res = await api.updateOnboardingStep(
+      await api.updateOnboardingStep(
         "<token>",
-        { step: "cost-consent-complete" },
+        { step, provider },
         {}
       );
     } catch (err) {
       console.log(err);
     }
-    try {
-      const res = await api.inviteAdmin(
-        "<token>",
-        {},
-        { project_id: currentProject.id }
-      );
-    } catch (err) {
-      console.log(err);
-    }
+  };
+
+  const openCostConsentModal = (provider: string) => {
+    setSelectedProvider(provider);
+    setShowCostConfirmModal(true);
+    markStepCostConsent("cost-consent-opened", provider);
   };
 
   if (currentStep === "cloud") {
@@ -92,8 +80,7 @@ const ProvisionerFlow: React.FC<Props> = ({}) => {
                         provider === "gcp"
                       )
                     ) {
-                      setSelectedProvider(provider);
-                      setShowCostConfirmModal(true);
+                      openCostConsentModal(provider)
                     }
                   }}
                 >
@@ -112,13 +99,49 @@ const ProvisionerFlow: React.FC<Props> = ({}) => {
             <AWSCostConsent
               setCurrentStep={setCurrentStep}
               setShowCostConfirmModal={setShowCostConfirmModal}
+              markCostConsentComplete={() => {
+                try {
+                  markStepCostConsent("cost-consent-complete", "aws")
+                } catch (err) {
+                  console.log(err);
+                }
+
+                if (currentProject != null) {
+                  try {
+                    api.inviteAdmin(
+                      "<token>",
+                      {},
+                      { project_id: currentProject.id }
+                    );
+                  } catch (err) {
+                    console.log(err);
+                  }
+                }
+              }}
             />
           )) ||
             (selectedProvider === "azure" && (
               <AzureCostConsent
                 setCurrentStep={setCurrentStep}
                 setShowCostConfirmModal={setShowCostConfirmModal}
-              />
+                markCostConsentComplete={() => {
+                  try {
+                    markStepCostConsent("cost-consent-complete", "azure")
+                  } catch (err) {
+                    console.log(err);
+                  }
+                  if (currentProject != null) {
+                    try {
+                      api.inviteAdmin(
+                        "<token>",
+                        {},
+                        { project_id: currentProject.id }
+                      );
+                    } catch (err) {
+                      console.log(err);
+                    }
+                  }
+                }} />
             )))}
       </>
     );

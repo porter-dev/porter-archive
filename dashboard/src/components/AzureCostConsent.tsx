@@ -23,35 +23,15 @@ import AzureCredentialForm from "components/AzureCredentialForm";
 type Props = {
   setCurrentStep: (step: string) => void;
   setShowCostConfirmModal: (show: boolean) => void;
+  markCostConsentComplete: () => void;
 };
 
 const AzureCostConsent: React.FC<Props> = ({
   setCurrentStep,
   setShowCostConfirmModal,
+  markCostConsentComplete,
 }) => {
-  const { currentProject } = useContext(Context);
   const [confirmCost, setConfirmCost] = useState("");
-
-  const markStepCostConsent = async () => {
-    try {
-      const res = await api.updateOnboardingStep(
-        "<token>",
-        { step: "cost-consent-complete" },
-        {}
-      );
-    } catch (err) {
-      console.log(err);
-    }
-    try {
-      const res = await api.inviteAdmin(
-        "<token>",
-        {},
-        { project_id: currentProject.id }
-      );
-    } catch (err) {
-      console.log(err);
-    }
-  };
 
   return (
     <>
@@ -140,7 +120,7 @@ const AzureCostConsent: React.FC<Props> = ({
           onClick={() => {
             setShowCostConfirmModal(false);
             setConfirmCost("");
-            markStepCostConsent();
+            markCostConsentComplete();
             setCurrentStep("credentials");
           }}
         >

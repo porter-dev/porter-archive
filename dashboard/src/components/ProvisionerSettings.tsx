@@ -133,7 +133,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   };
   const createCluster = async () => {
     setIsClicked(true);
-    console.log("STEFANVAL", loadBalancer);
 
     let data = new Contract({
       cluster: new Cluster({

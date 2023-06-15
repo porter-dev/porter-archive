@@ -94,10 +94,7 @@ const CloudFormationForm: React.FC<Props> = ({
           </Text>
           <Spacer height="15px" />
           <Text color="helper">
-            Provide your AWS account ID to log in and grant Porter access to AWS by clicking 'Grant permissions' below.
-          </Text>
-          <Text color="helper">
-            You will need to select "Create stack" after being redirected to the AWS console.
+            Provide your AWS account ID to log in and grant Porter access to AWS by clicking 'Grant permissions' below. You will need to select "Create stack" after being redirected to the AWS console.
           </Text>
           <Spacer y={1} />
           <Input
@@ -213,8 +210,8 @@ const CloudFormationForm: React.FC<Props> = ({
         <Spacer x={1} inline />
         <Img src={aws} />
         <Text size={16}>
-        Grant AWS permissions
-      </Text>
+          Grant AWS permissions
+        </Text>
       </Container>
       <Spacer y={1} />
       <Text color="helper">

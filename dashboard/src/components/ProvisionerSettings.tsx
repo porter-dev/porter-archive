@@ -267,7 +267,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
-      if (eksValues == undefined) {
+      if (eksValues == null) {
         return
       }
       eksValues.nodeGroups.map((nodeGroup: any) => {

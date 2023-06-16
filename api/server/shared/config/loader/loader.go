@@ -40,7 +40,6 @@ var (
 	InstanceBillingManager billing.BillingManager
 	InstanceEnvConf        *envloader.EnvConf
 	InstanceDB             *pgorm.DB
-	// InstanceCredentialBackend credentials.CredentialStorage
 )
 
 type EnvConfigLoader struct {

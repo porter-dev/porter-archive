@@ -30,6 +30,7 @@ func NewSpan(ctx context.Context, name string) (context.Context, trace.Span) {
 	return ctx, span
 }
 
+// AddKnownContextVariablesToSpan adds known commonly read context variables to a span
 func AddKnownContextVariablesToSpan(ctx context.Context, span trace.Span) {
 	user, ok := ctx.Value(types.UserScope).(*models.User)
 	if ok {

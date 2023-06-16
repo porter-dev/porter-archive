@@ -497,6 +497,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster(ctx context.Context) 
 		}
 
 		tok, err := gcpAuth.GetBearerToken(
+			ctx,
 			conf.getTokenCache,
 			conf.setTokenCache,
 			"https://www.googleapis.com/auth/cloud-platform",
@@ -527,7 +528,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster(ctx context.Context) 
 			shouldOverride = true
 		}
 
-		tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
+		tok, err := awsAuth.GetBearerToken(ctx, conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "unable to get AWS bearer token")
 		}
@@ -581,11 +582,11 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster(ctx context.Context) 
 	return apiConfig, nil
 }
 
-func (conf *OutOfClusterConfig) getTokenCache() (tok *ints.TokenCache, err error) {
+func (conf *OutOfClusterConfig) getTokenCache(ctx context.Context) (tok *ints.TokenCache, err error) {
 	return &conf.Cluster.TokenCache.TokenCache, nil
 }
 
-func (conf *OutOfClusterConfig) setTokenCache(token string, expiry time.Time) error {
+func (conf *OutOfClusterConfig) setTokenCache(ctx context.Context, token string, expiry time.Time) error {
 	_, err := conf.Repo.Cluster().UpdateClusterTokenCache(
 		&ints.ClusterTokenCache{
 			ClusterID: conf.Cluster.ID,

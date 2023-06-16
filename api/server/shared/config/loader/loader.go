@@ -114,7 +114,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 
 	res.Logger.Info().Msg("Creating new gorm repository")
-	res.Repo = gorm.NewRepository(InstanceDB, &key, InstanceCredentialBackend)
+	res.Repo = gorm.NewRepository(InstanceDB, &key, instanceCredentialBackend)
 	res.Logger.Info().Msg("Created new gorm repository")
 
 	res.Logger.Info().Msg("Creating new session store")

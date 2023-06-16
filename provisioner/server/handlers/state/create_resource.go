@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -17,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/porter-dev/porter/provisioner/integrations/redis_stream"
 	"github.com/porter-dev/porter/provisioner/server/config"
 	ptypes "github.com/porter-dev/porter/provisioner/types"
@@ -38,9 +40,11 @@ func NewCreateResourceHandler(
 }
 
 func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-provisioner-resource")
+	defer span.End()
 	// read the infra from the attached scope
-	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
-	operation, _ := r.Context().Value(types.OperationScope).(*models.Operation)
+	infra, _ := ctx.Value(types.InfraScope).(*models.Infra)
+	operation, _ := ctx.Value(types.OperationScope).(*models.Operation)
 	req := &ptypes.CreateResourceRequest{}
 	if ok := c.decoderValidator.DecodeAndValidate(w, r, req); !ok {
 		return
@@ -88,9 +92,9 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	case string(types.InfraECR):
 		_, err = createECRRegistry(c.Config, infra, operation, req.Output)
 	case string(types.InfraRDS):
-		_, err = createRDSDatabase(c.Config, infra, operation, req.Output)
+		_, err = createRDSDatabase(ctx, c.Config, infra, operation, req.Output)
 	case string(types.InfraS3):
-		err = createS3Bucket(c.Config, infra, operation, req.Output)
+		err = createS3Bucket(ctx, c.Config, infra, operation, req.Output)
 	case string(types.InfraDOCR):
 		_, err = createDOCRRegistry(c.Config, infra, operation, req.Output)
 	case string(types.InfraGCR):
@@ -138,7 +142,7 @@ func createECRRegistry(config *config.Config, infra *models.Infra, operation *mo
 	return reg, nil
 }
 
-func createRDSDatabase(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Database, error) {
+func createRDSDatabase(ctx context.Context, config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Database, error) {
 	// check for infra id being 0 as a safeguard so that all non-provisioned
 	// clusters are not matched by read
 	if infra.ID == 0 {
@@ -177,20 +181,20 @@ func createRDSDatabase(config *config.Config, infra *models.Infra, operation *mo
 	if err != nil {
 		return nil, err
 	}
-	err = createRDSEnvGroup(config, infra, database, lastApplied)
+	err = createRDSEnvGroup(ctx, config, infra, database, lastApplied)
 	if err != nil {
 		return nil, err
 	}
 	return database, nil
 }
 
-func createS3Bucket(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) error {
+func createS3Bucket(ctx context.Context, config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) error {
 	lastApplied := make(map[string]interface{})
 	err := json.Unmarshal(operation.LastApplied, &lastApplied)
 	if err != nil {
 		return err
 	}
-	return createS3EnvGroup(config, infra, lastApplied, output)
+	return createS3EnvGroup(ctx, config, infra, lastApplied, output)
 }
 
 func createCluster(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Cluster, error) {
@@ -327,7 +331,7 @@ func createACRRegistry(config *config.Config, infra *models.Infra, operation *mo
 	return config.Repo.Registry().CreateRegistry(reg)
 }
 
-func createRDSEnvGroup(config *config.Config, infra *models.Infra, database *models.Database, lastApplied map[string]interface{}) error {
+func createRDSEnvGroup(ctx context.Context, config *config.Config, infra *models.Infra, database *models.Database, lastApplied map[string]interface{}) error {
 	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, infra.ParentClusterID)
 	if err != nil {
 		return err
@@ -337,7 +341,7 @@ func createRDSEnvGroup(config *config.Config, infra *models.Infra, database *mod
 		DigitalOceanOAuth: config.DOConf,
 		Cluster:           cluster,
 	}
-	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
+	agent, err := kubernetes.GetAgentOutOfClusterConfig(ctx, ooc)
 	if err != nil {
 		return fmt.Errorf("failed to get agent: %s", err.Error())
 	}
@@ -365,7 +369,7 @@ func createRDSEnvGroup(config *config.Config, infra *models.Infra, database *mod
 	return nil
 }
 
-func deleteRDSEnvGroup(config *config.Config, infra *models.Infra, lastApplied map[string]interface{}) error {
+func deleteRDSEnvGroup(ctx context.Context, config *config.Config, infra *models.Infra, lastApplied map[string]interface{}) error {
 	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, infra.ParentClusterID)
 	if err != nil {
 		return err
@@ -375,7 +379,7 @@ func deleteRDSEnvGroup(config *config.Config, infra *models.Infra, lastApplied m
 		DigitalOceanOAuth: config.DOConf,
 		Cluster:           cluster,
 	}
-	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
+	agent, err := kubernetes.GetAgentOutOfClusterConfig(ctx, ooc)
 	if err != nil {
 		return fmt.Errorf("failed to get agent: %s", err.Error())
 	}
@@ -386,7 +390,7 @@ func deleteRDSEnvGroup(config *config.Config, infra *models.Infra, lastApplied m
 	return nil
 }
 
-func createS3EnvGroup(config *config.Config, infra *models.Infra, lastApplied map[string]interface{}, output map[string]interface{}) error {
+func createS3EnvGroup(ctx context.Context, config *config.Config, infra *models.Infra, lastApplied map[string]interface{}, output map[string]interface{}) error {
 	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, infra.ParentClusterID)
 	if err != nil {
 		return err
@@ -396,7 +400,7 @@ func createS3EnvGroup(config *config.Config, infra *models.Infra, lastApplied ma
 		DigitalOceanOAuth: config.DOConf,
 		Cluster:           cluster,
 	}
-	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
+	agent, err := kubernetes.GetAgentOutOfClusterConfig(ctx, ooc)
 	if err != nil {
 		return fmt.Errorf("failed to get agent: %s", err.Error())
 	}
@@ -417,7 +421,7 @@ func createS3EnvGroup(config *config.Config, infra *models.Infra, lastApplied ma
 	return nil
 }
 
-func deleteS3EnvGroup(config *config.Config, infra *models.Infra, lastApplied map[string]interface{}) error {
+func deleteS3EnvGroup(ctx context.Context, config *config.Config, infra *models.Infra, lastApplied map[string]interface{}) error {
 	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, infra.ParentClusterID)
 	if err != nil {
 		return err
@@ -427,7 +431,7 @@ func deleteS3EnvGroup(config *config.Config, infra *models.Infra, lastApplied ma
 		DigitalOceanOAuth: config.DOConf,
 		Cluster:           cluster,
 	}
-	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
+	agent, err := kubernetes.GetAgentOutOfClusterConfig(ctx, ooc)
 	if err != nil {
 		return fmt.Errorf("failed to get agent: %s", err.Error())
 	}

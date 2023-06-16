@@ -1,0 +1,67 @@
+---
+run:
+  timeout: 5m
+  issues-exit-code: 1
+  build-tags:
+    - codeanalysis
+
+# enable exported entity commenting lint rule
+issues:
+  exclude:
+    - EXC0012
+  exclude-use-default: false
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+        severity: error
+  # gocyclo:
+  #   min-complexity: 15
+  gomoddirectives:
+    replace-local: false
+  gosec:
+    excludes:
+    - G307
+
+linters:
+  # disable all default-enabled linters so nothing is mysterious
+  disable-all: true
+  # all enabled linters found at https://golangci-lint.run/usage/linters/
+  enable:
+    - errcheck	
+    - gosimple
+    - govet	
+    - ineffassign	
+    - staticcheck
+    - typecheck
+    - unused
+    - whitespace
+    - unparam
+    - unconvert
+    - goconst
+    - misspell
+    - revive
+    - gofumpt
+    - gocyclo
+    - gomoddirectives
+    - gosec
+
+output:
+  # colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
+  # default is "colored-line-number"
+  format: colored-line-number
+
+  # print lines of code with issue, default is true
+  print-issued-lines: true
+
+  # print linter name in the end of issue text, default is true
+  print-linter-name: true
+
+  # make issues output unique by line, default is true
+  uniq-by-line: true
+
+  # add a prefix to the output file references; default is no prefix
+  path-prefix: ""
+
+  # sorts results by: filepath, line and column
+  sort-results: false

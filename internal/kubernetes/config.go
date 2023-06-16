@@ -444,6 +444,10 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster(ctx context.Context) 
 			return nil, telemetry.Error(ctx, span, err, "error reading kube integration")
 		}
 
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "integration-id", Value: cluster.KubeIntegrationID},
+		)
+
 		authInfoMap[authInfoName].ClientCertificateData = kubeAuth.ClientCertificateData
 		authInfoMap[authInfoName].ClientKeyData = kubeAuth.ClientKeyData
 	case models.Basic:
@@ -454,6 +458,9 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster(ctx context.Context) 
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "error reading kube integration")
 		}
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "integration-id", Value: cluster.KubeIntegrationID},
+		)
 
 		authInfoMap[authInfoName].Username = string(kubeAuth.Username)
 		authInfoMap[authInfoName].Password = string(kubeAuth.Password)
@@ -475,6 +482,9 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster(ctx context.Context) 
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "error reading oidc integration")
 		}
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "integration-id", Value: cluster.OIDCIntegrationID},
+		)
 
 		authInfoMap[authInfoName].AuthProvider = &api.AuthProviderConfig{
 			Name: "oidc",
@@ -495,6 +505,10 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster(ctx context.Context) 
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "error reading gcp integration")
 		}
+
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "integration-id", Value: cluster.GCPIntegrationID},
+		)
 
 		tok, err := gcpAuth.GetBearerToken(
 			ctx,
@@ -520,6 +534,10 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster(ctx context.Context) 
 			return nil, telemetry.Error(ctx, span, err, "error reading aws integration")
 		}
 
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "integration-id", Value: cluster.AWSIntegrationID},
+		)
+
 		awsClusterID := cluster.Name
 		shouldOverride := false
 
@@ -543,6 +561,9 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster(ctx context.Context) 
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "error reading oauth integration")
 		}
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "integration-id", Value: cluster.DOIntegrationID},
+		)
 
 		tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, conf.DigitalOceanOAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, conf.Repo))
 		if err != nil {
@@ -559,6 +580,9 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster(ctx context.Context) 
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "error reading azure integration")
 		}
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "integration-id", Value: cluster.AzureIntegrationID},
+		)
 
 		authInfoMap[authInfoName].Token = string(azInt.AKSPassword)
 	default:

@@ -19,6 +19,7 @@ import Modal from "components/porter/Modal";
 import Input from "components/porter/Input";
 import Text from "components/porter/Text";
 import { set } from "lodash";
+import Link from "../porter/Link";
 
 interface AutoBuildpack {
   name?: string;
@@ -188,7 +189,7 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
         );
         return res;
       } catch (err) {
-        console.log(err);
+        // console.log(err);
       }
     } else if (actionConfig.kind === "gitlab") {
       try {
@@ -310,19 +311,17 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
       <Spacer y={1} />
       <span>
         <Text color="helper">
-          We were unable to find porter.yaml in your root directory. We
-          recommend that you
-        </Text>{" "}
-        <a
-          href="https://docs.porter.run/deploying-applications/application-porter-yaml-reference"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          add porter.yaml
-        </a>{" "}
-        <Text color="helper">
-          to your root directory or specify the subdirectory path here.
+          We were unable to find <Code>porter.yaml</Code> in your root directory. We
+          recommend that you add a <Code>porter.yaml</Code> file to your root directory
+          or specify the path here.
         </Text>
+        <Link
+          to="https://docs.porter.run/standard/deploying-applications/writing-porter-yaml"
+          target="_blank"
+          hasunderline
+        >
+          Using porter.yaml
+        </Link>
       </span>
     </div>
   );
@@ -408,6 +407,10 @@ const DetectContentsList: React.FC<PropsType> = (props) => {
 };
 
 export default DetectContentsList;
+
+const Code = styled.span`
+  font-family: monospace;
+`;
 
 const FlexWrapper = styled.div`
   position: absolute;
@@ -588,7 +591,7 @@ const Item = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected?: boolean }) =>
-      props.lastItem ? "#00000000" : "#606166"};
+    props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;
@@ -619,7 +622,7 @@ const FileItem = styled(Item)`
     props.isADocker ? "#fff" : "#ffffff55"};
   :hover {
     background: ${(props: { isADocker?: boolean }) =>
-      props.isADocker ? "#ffffff22" : "#ffffff11"};
+    props.isADocker ? "#ffffff22" : "#ffffff11"};
   }
 `;
 

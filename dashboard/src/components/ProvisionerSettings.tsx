@@ -56,6 +56,7 @@ const machineTypeOptions = [
   { value: "t3.large", label: "t3.large" },
   { value: "t3.xlarge", label: "t3.xlarge" },
   { value: "t3.2xlarge", label: "t3.2xlarge" },
+  { value: "g4dn.xlarge", label: "g4dn.xlarge" },
 ];
 
 const clusterVersionOptions = [

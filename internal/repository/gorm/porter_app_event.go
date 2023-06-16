@@ -34,9 +34,10 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppID(ctx context.Contex
 	}
 
 	db := repo.db.Model(&models.PorterAppEvent{})
-	db = db.Scopes(helpers.Paginate(db, &paginatedResult, opts...))
+	resultDB := db.Where("porter_app_id = ?", id).Order("created_at DESC")
+	resultDB = resultDB.Scopes(helpers.Paginate(db, &paginatedResult, opts...))
 
-	if err := db.Where("porter_app_id = ?", id).Order("created_at DESC").Find(&apps).Error; err != nil {
+	if err := resultDB.Find(&apps).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, paginatedResult, err
 		}
@@ -56,7 +57,7 @@ func (repo *PorterAppEventRepository) CreateEvent(ctx context.Context, appEvent 
 		appEvent.UpdatedAt = time.Now().UTC()
 	}
 	if appEvent.PorterAppID == 0 {
-		return errors.New("invalid porter app id supplied")
+		return errors.New("invalid porter app id supplied to create event")
 	}
 
 	if err := repo.db.Create(appEvent).Error; err != nil {
@@ -65,21 +66,21 @@ func (repo *PorterAppEventRepository) CreateEvent(ctx context.Context, appEvent 
 	return nil
 }
 
+// UpdateEvent will set all values in the database to the values of the passed in appEvent
 func (repo *PorterAppEventRepository) UpdateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error {
-	if appEvent.ID == uuid.Nil {
-		appEvent.ID = uuid.New()
+	if appEvent.PorterAppID == 0 {
+		return errors.New("invalid porter app id supplied to update event")
 	}
+
+	if appEvent.ID == uuid.Nil {
+		return errors.New("invalid porter app event id supplied to update event")
+	}
+
 	if appEvent.UpdatedAt.IsZero() {
 		appEvent.UpdatedAt = time.Now().UTC()
 	}
-	if appEvent.PorterAppID == 0 {
-		return errors.New("invalid porter app id supplied")
-	}
-	if appEvent.Status == "" {
-		return errors.New("invalid status supplied")
-	}
 
-	if err := repo.db.Model(appEvent).Updates(models.PorterAppEvent{Status: appEvent.Status}).Error; err != nil {
+	if err := repo.db.Model(appEvent).Updates(appEvent).Error; err != nil {
 		return err
 	}
 	return nil

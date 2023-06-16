@@ -6,8 +6,6 @@ import TabSelector from "components/TabSelector";
 import Checkbox from "components/porter/Checkbox";
 import { WebService } from "./serviceTypes";
 import AnimateHeight, { Height } from "react-animate-height";
-import styled from "styled-components";
-import ExpandableSection from "components/porter/ExpandableSection";
 
 interface Props {
   service: WebService;

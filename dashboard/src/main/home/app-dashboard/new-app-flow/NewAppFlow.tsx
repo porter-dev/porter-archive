@@ -3,7 +3,6 @@ import styled from "styled-components";
 import { RouteComponentProps, withRouter } from "react-router";
 import _ from "lodash";
 import yaml from "js-yaml";
-import github from "assets/github-white.png";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -21,20 +20,14 @@ import Container from "components/porter/Container";
 
 import SourceSettings from "./SourceSettings";
 import Services from "./Services";
-import EnvGroupArray, {
-  KeyValueType,
-} from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import GithubActionModal from "./GithubActionModal";
-import {
-  ActionConfigType,
-  GithubActionConfigType,
-  RepoType,
-} from "shared/types";
+import { ActionConfigType } from "shared/types";
 import Error from "components/porter/Error";
-import { string, z } from "zod";
 import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
-import { ReleaseService, Service } from "./serviceTypes";
+import { Service } from "./serviceTypes";
 import GithubConnectModal from "./GithubConnectModal";
+import Link from "components/porter/Link";
 
 type Props = RouteComponentProps & {};
 
@@ -50,18 +43,14 @@ interface FormState {
   applicationName: string;
   selectedSourceType: SourceType | undefined;
   serviceList: Service[];
-  releaseJob: ReleaseService[];
   envVariables: KeyValueType[];
-  releaseCommand: string;
 }
 
 const INITIAL_STATE: FormState = {
   applicationName: "",
   selectedSourceType: undefined,
   serviceList: [],
-  releaseJob: [],
   envVariables: [],
-  releaseCommand: "",
 };
 
 const Validators: {
@@ -71,8 +60,6 @@ const Validators: {
   selectedSourceType: (value: SourceType | undefined) => value !== undefined,
   serviceList: (value: Service[]) => value.length > 0,
   envVariables: (value: KeyValueType[]) => true,
-  releaseCommand: (value: string) => true,
-  releaseJob: (value: ReleaseService[]) => true,
 };
 
 type Detected = {
@@ -95,27 +82,22 @@ type Provider =
     integration_id: number;
   };
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
-  const [templateName, setTemplateName] = useState("");
   const [porterYamlPath, setPorterYamlPath] = useState("");
 
   const [imageUrl, setImageUrl] = useState("");
   const [imageTag, setImageTag] = useState("latest");
   const { currentCluster, currentProject } = useContext(Context);
   const [deploying, setDeploying] = useState<boolean>(false);
-  const [deploymentError, setDeploymentError] = useState<string | undefined>(
-    undefined
-  );
+  const [deploymentError, setDeploymentError] = useState<string | undefined>(undefined);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [existingStep, setExistingStep] = useState<number>(0);
   const [formState, setFormState] = useState<FormState>(INITIAL_STATE);
-  const [actionConfig, setActionConfig] = useState<ActionConfigType>({
-    ...defaultActionConfig,
-  });
+  const [actionConfig, setActionConfig] = useState<ActionConfigType>(defaultActionConfig);
   const [buildView, setBuildView] = useState<string>("buildpacks");
   const [branch, setBranch] = useState("");
-  const [dockerfilePath, setDockerfilePath] = useState(null);
+  const [dockerfilePath, setDockerfilePath] = useState("./Dockerfile");
   const [procfilePath, setProcfilePath] = useState(null);
-  const [folderPath, setFolderPath] = useState(null);
+  const [folderPath, setFolderPath] = useState("./");
   const [buildConfig, setBuildConfig] = useState({});
   const [porterYaml, setPorterYaml] = useState("");
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
@@ -134,9 +116,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [currentProvider, setCurrentProvider] = useState(null);
   const [hasProviders, setHasProviders] = useState(true);
 
-  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(
-    undefined
-  );
+  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(undefined);
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
   const handleSetAccessData = (data: GithubAppAccessData) => {
     setAccessData(data);
@@ -183,7 +163,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const porterYamlToJson = parsedData as PorterJson;
       setPorterJson(porterYamlToJson);
       const newServices = [];
-      const newReleaseJob = [];
       const existingServices = formState.serviceList.map((s) => s.name);
       for (const [name, app] of Object.entries(porterYamlToJson.apps)) {
         if (!existingServices.includes(name)) {
@@ -196,21 +175,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           }
         }
       }
-      if (!formState.releaseJob.length && porterYamlToJson.release != null) {
-        newReleaseJob.push(
-          Service.default(
-            "pre-deploy",
-            "release",
-            porterYamlToJson
-          ) as ReleaseService
-        );
+      if (porterYamlToJson.release != null && !existingServices.includes("pre-deploy")) {
+        newServices.push(Service.default("pre-deploy", "release", porterYamlToJson));
       }
       const newServiceList = [...formState.serviceList, ...newServices];
-      const newReleaseJobList = [...formState.releaseJob, ...newReleaseJob];
       setFormState({
         ...formState,
         serviceList: newServiceList,
-        releaseJob: newReleaseJobList,
       });
       if (Validators.serviceList(newServiceList)) {
         setCurrentStep(Math.max(currentStep, 5));
@@ -330,7 +301,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       // validate form data
       const finalPorterYaml = createFinalPorterYaml(
         formState.serviceList,
-        formState.releaseJob,
         formState.envVariables,
         porterJson,
         // if we are using a heroku buildpack, inject a PORT env variable
@@ -464,12 +434,14 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Spacer y={0.5} />
                 <Text color="helper">
                   Deploy from a Git repository or a Docker registry.
-                  <a
-                    href="https://docs.porter.run/deploying-applications/overview"
+                  <Spacer inline width="5px" />
+                  <Link
+                    hasunderline
+                    to="https://docs.porter.run/standard/deploying-applications/overview"
                     target="_blank"
                   >
-                    &nbsp;Learn more.
-                  </a>
+                    Learn more
+                  </Link>
                 </Text>
                 <Spacer y={0.5} />
                 <SourceSelector
@@ -532,12 +504,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Spacer y={0.5} />
                 <Services
                   setServices={(services: Service[]) => {
-                    setFormState({ ...formState, serviceList: services });
+                    const release = formState.serviceList.filter(Service.isRelease)
+                    setFormState({ ...formState, serviceList: [...services, ...release] });
                     if (Validators.serviceList(services)) {
                       setCurrentStep(Math.max(currentStep, 5));
                     }
                   }}
-                  services={formState.serviceList}
+                  services={formState.serviceList.filter(Service.isNonRelease)}
                   defaultExpanded={true}
                   addNewText={"Add a new service"}
                 />
@@ -561,30 +534,21 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Text size={16}>Pre-deploy job (optional)</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
-                  If specified, this is a job that will be run before every
-                  deployment.
+                  You may add a pre-deploy job to
+                  perform an operation before your application services
+                  deploy each time, like a database migration.
                 </Text>
                 <Spacer y={0.5} />
                 <Services
-                  setServices={(releaseJob: ReleaseService[]) => {
-                    setFormState({ ...formState, releaseJob });
+                  setServices={(release: Service[]) => {
+                    const nonRelease = formState.serviceList.filter(Service.isNonRelease)
+                    setFormState({ ...formState, serviceList: [...nonRelease, ...release] });
                   }}
-                  services={formState.releaseJob}
+                  services={formState.serviceList.filter(Service.isRelease)}
                   defaultExpanded={true}
                   limitOne={true}
-                  customOnClick={() => {
-                    setFormState({
-                      ...formState,
-                      releaseJob: [
-                        Service.default(
-                          "pre-deploy",
-                          "release",
-                          porterJson
-                        ) as ReleaseService,
-                      ],
-                    });
-                  }}
                   addNewText={"Add a new pre-deploy job"}
+                  prePopulateService={Service.default("pre-deploy", "release", porterJson)}
                 />
               </>,
               <Button
@@ -609,7 +573,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
               >
                 Deploy app
               </Button>,
-            ]}
+            ].filter((x) => x)}
           />
           <Spacer y={3} />
         </StyledConfigureTemplate>

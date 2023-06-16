@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"time"
@@ -32,7 +33,7 @@ type Form struct {
 
 // GetAgentOutOfClusterConfig creates a new Agent from outside the cluster using
 // the underlying kubernetes.GetAgentOutOfClusterConfig method
-func GetAgentOutOfClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
+func GetAgentOutOfClusterConfig(ctx context.Context, form *Form, l *logger.Logger) (*Agent, error) {
 	// create a kubernetes agent
 	conf := &kubernetes.OutOfClusterConfig{
 		Cluster:                   form.Cluster,
@@ -43,7 +44,7 @@ func GetAgentOutOfClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 		Timeout:                   form.Timeout,
 	}
 
-	k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(conf)
+	k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(ctx, conf)
 	if err != nil {
 		return nil, err
 	}
@@ -81,9 +82,9 @@ func GetAgentFromK8sAgent(stg string, ns string, l *logger.Logger, k8sAgent *kub
 
 // GetAgentInClusterConfig creates a new Agent from inside the cluster using
 // the underlying kubernetes.GetAgentInClusterConfig method
-func GetAgentInClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
+func GetAgentInClusterConfig(ctx context.Context, form *Form, l *logger.Logger) (*Agent, error) {
 	// create a kubernetes agent
-	k8sAgent, err := kubernetes.GetAgentInClusterConfig(form.Namespace)
+	k8sAgent, err := kubernetes.GetAgentInClusterConfig(ctx, form.Namespace)
 	if err != nil {
 		return nil, err
 	}

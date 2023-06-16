@@ -18,7 +18,7 @@ jobs:
         with:
           app: tf-provisioner
           cluster: "9"
-          host: https://dashboard.internal-tools.getporter.dev
+          host: https://dashboard.internal-tools.porter.run
           namespace: default
           project: "5"
           tag: ${{ steps.vars.outputs.sha_short }}

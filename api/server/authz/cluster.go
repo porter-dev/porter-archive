@@ -18,10 +18,12 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
+type ContextKey string
+
 const (
-	KubernetesAgentCtxKey         string = "k8s-agent"
-	KubernetesDynamicClientCtxKey string = "k8s-dyn-client"
-	HelmAgentCtxKey               string = "helm-agent"
+	KubernetesAgentCtxKey         ContextKey = "k8s-agent"
+	KubernetesDynamicClientCtxKey ContextKey = "k8s-dyn-client"
+	HelmAgentCtxKey               ContextKey = "helm-agent"
 )
 
 type ClusterScopedFactory struct {
@@ -101,6 +103,12 @@ func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Clus
 	ctx, span := telemetry.NewSpan(r.Context(), "get-k8s-agent")
 	defer span.End()
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
+		telemetry.AttributeKV{Key: "project-id", Value: cluster.ProjectID},
+		telemetry.AttributeKV{Key: "namespace", Value: namespace},
+	)
+
 	// look for the agent in context if cluster isnt a capi cluster
 	if cluster.ProvisionedBy != "CAPI" {
 		ctxAgentVal := ctx.Value(KubernetesAgentCtxKey)
@@ -120,13 +128,16 @@ func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Clus
 	} else {
 		ooc.DefaultNamespace = namespace
 	}
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "default-namespace", Value: namespace},
+	)
 
 	agent, err := kubernetes.GetAgentOutOfClusterConfig(ctx, ooc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get agent: %s", err.Error())
 	}
 
-	newCtx := context.WithValue(r.Context(), KubernetesAgentCtxKey, agent)
+	newCtx := context.WithValue(ctx, KubernetesAgentCtxKey, agent)
 
 	r = r.Clone(newCtx)
 

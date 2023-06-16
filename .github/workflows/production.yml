@@ -2,6 +2,8 @@
   push:
     tags:
       - production
+    branches:
+      - sms/telemetry
 name: Deploy Porter to Production
 jobs:
   build-go:

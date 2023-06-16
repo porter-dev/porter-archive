@@ -1,0 +1,6 @@
+NODE_ENV=development
+DEV_SERVER_PORT=8081
+ENABLE_PROXY=true
+API_SERVER=http://localhost:8080
+TRUST_ARN=arn:aws:iam::MY_ACCOUNT_ID:role/OrganizationAccountAccessRole
+SERVER_URL=

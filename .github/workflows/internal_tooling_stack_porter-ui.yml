@@ -86,7 +86,7 @@ jobs:
           command: apply -f nonexistant-porter.yaml
         env:
           PORTER_CLUSTER: "11"
-          PORTER_HOST: https://dashboard.internal-tools.getporter.dev
+          PORTER_HOST: https://dashboard.internal-tools.porter.run
           PORTER_PROJECT: "8"
           PORTER_STACK_NAME: porter-ui
           PORTER_TAG: ${{ steps.vars.outputs.sha_short }}

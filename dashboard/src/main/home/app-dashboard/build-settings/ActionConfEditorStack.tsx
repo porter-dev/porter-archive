@@ -1,48 +1,30 @@
 import React from "react";
 import styled from "styled-components";
 
-import { ActionConfigType } from "shared/types";
-
-import RepoList from "./RepoList";
-import InputRow from "../form-components/InputRow";
 import Input from "components/porter/Input";
+import RepositorySelector from "main/home/app-dashboard/build-settings/RepositorySelector";
+import { PorterApp } from "main/home/app-dashboard/types/porterApp";
 
 type Props = {
-  actionConfig: ActionConfigType | null;
-  setActionConfig: (x: ActionConfigType) => void;
-  setBranch?: (x: string) => void;
-  setDockerfilePath?: (x: string) => void;
-  setFolderPath?: (x: string) => void;
+  git_repo: string;
   setBuildView?: (x: string) => void;
-  setPorterYamlPath?: (x: string) => void;
-};
-
-const defaultActionConfig: ActionConfigType = {
-  git_repo: "",
-  image_repo_uri: "",
-  git_branch: "",
-  git_repo_id: 0,
-  kind: "github",
+  updatePorterApp: (attrs: Partial<PorterApp>) => void;
 };
 
 const ActionConfEditorStack: React.FC<Props> = ({
-  actionConfig,
-  setBranch,
-  setActionConfig,
-  setFolderPath,
-  setDockerfilePath,
+  git_repo,
   setBuildView,
-  setPorterYamlPath,
+  updatePorterApp,
 }) => {
-  if (!actionConfig.git_repo) {
+  if (git_repo === "") {
     return (
-      <ExpandedWrapperAlt>
-        <RepoList
-          actionConfig={actionConfig}
-          setActionConfig={(x: ActionConfigType) => setActionConfig(x)}
+      <ExpandedWrapper>
+        <RepositorySelector
           readOnly={false}
+          updatePorterApp={updatePorterApp}
+          git_repo={git_repo}
         />
-      </ExpandedWrapperAlt>
+      </ExpandedWrapper>
     );
   } else {
     return (
@@ -51,19 +33,21 @@ const ActionConfEditorStack: React.FC<Props> = ({
           disabled={true}
           label="GitHub repository:"
           width="100%"
-          value={actionConfig?.git_repo}
+          value={git_repo}
           setValue={() => { }}
           placeholder=""
         />
         <BackButton
           width="135px"
           onClick={() => {
-            setActionConfig({ ...defaultActionConfig });
-            setBranch ? setBranch("") : null;
-            setFolderPath ? setFolderPath("") : null;
-            setDockerfilePath ? setDockerfilePath("") : null;
             setBuildView ? setBuildView("buildpacks") : null;
-            setPorterYamlPath("");
+            updatePorterApp({
+              repo_name: "",
+              git_branch: "",
+              dockerfile: "",
+              build_context: "",
+              porter_yaml_path: "",
+            })
           }}
         >
           <i className="material-icons">keyboard_backspace</i>
@@ -80,12 +64,7 @@ const ExpandedWrapper = styled.div`
   margin-top: 10px;
   width: 100%;
   border-radius: 3px;
-  border: 1px solid #ffffff44;
   max-height: 275px;
-`;
-
-const ExpandedWrapperAlt = styled(ExpandedWrapper)`
-  border: 0;
 `;
 
 const BackButton = styled.div`

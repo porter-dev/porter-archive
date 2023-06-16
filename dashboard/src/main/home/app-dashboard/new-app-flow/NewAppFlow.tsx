@@ -156,7 +156,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  const validatePorterYaml = (yamlString: string) => {
+  const validateAndSetPorterYaml = (yamlString: string) => {
     let parsedYaml;
     try {
       parsedYaml = yaml.load(yamlString);
@@ -480,6 +480,16 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   source={formState.selectedSourceType}
                   buildView={buildView}
                   setBuildView={setBuildView}
+                  setPorterYaml={(newYaml: string) => {
+                    validateAndSetPorterYaml(newYaml);
+                  }}
+                  porterApp={porterApp}
+                  setPorterApp={setPorterApp}
+                  // these are separate because the porter app takes in the full repo uri which we create from the url+tag later
+                  imageUrl={imageUrl}
+                  setImageUrl={setImageUrl}
+                  imageTag={imageTag}
+                  setImageTag={setImageTag}
                 />
               </>,
               <>

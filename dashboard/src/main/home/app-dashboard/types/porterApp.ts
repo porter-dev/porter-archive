@@ -1,7 +1,7 @@
 export interface PorterApp {
     name: string;
     git_branch: string;
-    git_repo_id: string;
+    git_repo_id: number;
     repo_name: string;
     build_context: string;
     builder: string;
@@ -16,7 +16,7 @@ export const PorterApp = {
     empty: (): PorterApp => ({
         name: "",
         git_branch: "",
-        git_repo_id: "",
+        git_repo_id: 0,
         repo_name: "",
         build_context: "",
         builder: "",
@@ -34,5 +34,10 @@ export const PorterApp = {
     ): PorterApp => ({
         ...app,
         [key]: value,
+    }),
+
+    setAttributes: (app: PorterApp, values: Partial<PorterApp>): PorterApp => ({
+        ...app,
+        ...values,
     }),
 }

@@ -27,7 +27,6 @@ type Props = RouteComponentProps & {
   setDockerfilePath: (x: string) => void;
   folderPath: string | null;
   setFolderPath: (x: string) => void;
-  setBuildConfig: (x: any) => void;
   porterYaml: string;
   setPorterYaml: (x: any) => void;
   buildView: string;
@@ -54,7 +53,6 @@ const SourceSettings: React.FC<Props> = ({
   setDockerfilePath,
   folderPath,
   setFolderPath,
-  setBuildConfig,
   porterYaml,
   setPorterYaml,
   buildView,
@@ -71,23 +69,42 @@ const SourceSettings: React.FC<Props> = ({
       <AnimateHeight height={source ? "auto" : 0}>
         <Spacer y={1} />
         {source === "github" ? (
+          // <SharedBuildSettings
+          //   actionConfig={actionConfig}
+          //   branch={branch}
+          //   dockerfilePath={dockerfilePath}
+          //   folderPath={folderPath}
+          //   setActionConfig={setActionConfig}
+          //   setDockerfilePath={setDockerfilePath}
+          //   setFolderPath={setFolderPath}
+          //   setBuildConfig={setBuildConfig}
+          //   porterYaml={porterYaml}
+          //   setPorterYaml={setPorterYaml}
+          //   setBranch={setBranch}
+          //   setImageUrl={setImageUrl}
+          //   buildView={buildView}
+          //   setBuildView={setBuildView}
+          //   porterYamlPath={porterYamlPath}
+          //   setPorterYamlPath={setPorterYamlPath}
+          // />
           <SharedBuildSettings
             actionConfig={actionConfig}
-            branch={branch}
-            dockerfilePath={dockerfilePath}
-            folderPath={folderPath}
+            branch={porterApp.git_branch}
+            dockerfilePath={porterApp.dockerfile}
+            folderPath={porterApp.build_context}
             setActionConfig={setActionConfig}
-            setDockerfilePath={setDockerfilePath}
-            setFolderPath={setFolderPath}
-            setBuildConfig={setBuildConfig}
+            setDockerfilePath={(path: string) => setPorterApp(PorterApp.setAttribute(porterApp, "dockerfile", path))}
+            setFolderPath={(path: string) => setPorterApp(PorterApp.setAttribute(porterApp, "build_context", path))}
             porterYaml={porterYaml}
             setPorterYaml={setPorterYaml}
-            setBranch={setBranch}
-            setImageUrl={setImageUrl}
+            setBranch={(branch: string) => setPorterApp(PorterApp.setAttribute(porterApp, "git_branch", branch))}
             buildView={buildView}
             setBuildView={setBuildView}
             porterYamlPath={porterYamlPath}
             setPorterYamlPath={setPorterYamlPath}
+            updatePorterApp={(attrs: Partial<PorterApp>) => setPorterApp(PorterApp.setAttributes(porterApp, attrs))}
+            git_repo={porterApp.repo_name}
+            git_repo_id={porterApp.git_repo_id}
           />
         ) : (
           <StyledSourceBox>
@@ -113,7 +130,8 @@ const SourceSettings: React.FC<Props> = ({
               forceExpanded={true}
             />
             <br />
-          </StyledSourceBox>)}
+          </StyledSourceBox>)
+        }
       </AnimateHeight>
     </SourceSettingsContainer>
   );

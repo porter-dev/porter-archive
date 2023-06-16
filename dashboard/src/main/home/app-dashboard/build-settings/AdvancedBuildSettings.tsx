@@ -3,12 +3,9 @@ import styled from "styled-components";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
-import Toggle from "components/porter/Toggle";
 import AnimateHeight from "react-animate-height";
-import { DeviconsNameList } from "assets/devicons-name-list";
 import { BuildpackStack } from "components/repo-selector/BuildpackStack";
 import { ActionConfigType, BuildConfig } from "shared/types";
-import SelectRow from "components/form-components/SelectRow";
 import Select from "components/porter/Select";
 
 interface AutoBuildpack {
@@ -172,113 +169,4 @@ const StyledSourceBox = styled.div`
   border-top: 0px;
   border-top-left-radius: 0px;
   border-top-right-radius: 0px;
-`;
-
-const ToggleWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  width: 100%;
-`;
-
-const StyledCard = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid #ffffff00;
-  background: #ffffff08;
-  margin-bottom: 5px;
-  border-radius: 8px;
-  padding: 14px;
-  overflow: hidden;
-  height: 60px;
-  font-size: 13px;
-`;
-
-const ContentContainer = styled.div`
-  display: flex;
-  height: 100%;
-  width: 100%;
-  align-items: center;
-`;
-const Icon = styled.span<{ disableMarginRight: boolean }>`
-  font-size: 20px;
-  margin-left: 10px;
-  ${(props) => {
-    if (!props.disableMarginRight) {
-      return "margin-right: 20px";
-    }
-  }}
-`;
-
-const EventInformation = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  height: 100%;
-`;
-
-const EventName = styled.div`
-  font-family: "Work Sans", sans-serif;
-  font-weight: 500;
-  color: #ffffff;
-`;
-
-const ActionContainer = styled.div`
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  height: 100%;
-`;
-
-const ActionButton = styled.button`
-  position: relative;
-  border: none;
-  background: none;
-  color: white;
-  padding: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  cursor: pointer;
-  color: #aaaabb;
-
-  :hover {
-    background: #ffffff11;
-    border: 1px solid #ffffff44;
-  }
-
-  > span {
-    font-size: 20px;
-  }
-`;
-const SelectWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  align-items: center;
-`;
-
-const SelectLabel = styled.label`
-  color: #ffffff;
-  font-size: 13px;
-  margin-right: 8px;
-`;
-
-const StyledSelect = styled.select`
-  background-color: #26292e;
-  border: 1px solid #494b4f;
-  border-radius: 5px;
-  color: #aaaabb;
-  cursor: pointer;
-  font-size: 13px;
-  height: 30px;
-  outline: none;
-  padding: 0 8px;
-  width: 150px;
-
-  &:hover {
-    border: 1px solid #7a7b80;
-    color: #ffffff;
-  }
 `;

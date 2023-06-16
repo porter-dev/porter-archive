@@ -11,10 +11,10 @@ import React, {
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
-import AdvancedBuildSettings from "../new-app-flow/AdvancedBuildSettings";
+import AdvancedBuildSettings from "../build-settings/AdvancedBuildSettings";
 import styled from "styled-components";
 import { SourceType } from "../new-app-flow/SourceSelector";
-import ActionConfEditorStack from "components/repo-selector/ActionConfEditorStack";
+import ActionConfEditorStack from "main/home/app-dashboard/build-settings/ActionConfEditorStack";
 import {
   ActionConfigType,
   BuildConfig,
@@ -24,7 +24,7 @@ import {
 } from "shared/types";
 import { RouteComponentProps } from "react-router";
 import { Context } from "shared/Context";
-import ActionConfBranchSelector from "components/repo-selector/ActionConfBranchSelector";
+import ActionConfBranchSelector from "main/home/app-dashboard/build-settings/ActionConfBranchSelector";
 
 import { BuildpackStack } from "components/repo-selector/BuildpackStack";
 import api from "shared/api";

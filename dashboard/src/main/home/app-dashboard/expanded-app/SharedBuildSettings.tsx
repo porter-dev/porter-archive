@@ -1,13 +1,13 @@
 import Input from "components/porter/Input";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import ActionConfBranchSelector from "components/repo-selector/ActionConfBranchSelector";
-import ActionConfEditorStack from "components/repo-selector/ActionConfEditorStack";
-import DetectContentsList from "components/repo-selector/DetectContentsList";
-import React, { useEffect, useState } from "react";
-import AnimateHeight from "react-animate-height";
+import ActionConfBranchSelector from "main/home/app-dashboard/build-settings/ActionConfBranchSelector";
+import ActionConfEditorStack from "main/home/app-dashboard/build-settings/ActionConfEditorStack";
+import DetectContentsList from "main/home/app-dashboard/build-settings/DetectContentsList";
+import React from "react";
 import { ActionConfigType, BuildConfig } from "shared/types";
 import styled from "styled-components";
+import { PorterApp } from "../types/porterApp";
 
 type Props = {
   actionConfig: ActionConfigType;
@@ -28,6 +28,9 @@ type Props = {
   setBuildView: (x: string) => void;
   porterYamlPath: string;
   setPorterYamlPath: (x: string) => void;
+  updatePorterApp: (attrs: Partial<PorterApp>) => void;
+  git_repo: string;
+  git_repo_id: number;
 };
 
 const SharedBuildSettings: React.FC<Props> = ({
@@ -47,6 +50,9 @@ const SharedBuildSettings: React.FC<Props> = ({
   setBuildView,
   porterYamlPath,
   setPorterYamlPath,
+  updatePorterApp,
+  git_repo,
+  git_repo_id,
 }) => {
   return (
     <>
@@ -55,47 +61,28 @@ const SharedBuildSettings: React.FC<Props> = ({
       <Text color="helper">Specify your GitHub repository.</Text>
       <Spacer y={0.5} />
       <ActionConfEditorStack
-        actionConfig={actionConfig}
-        setActionConfig={(actionConfig: ActionConfigType) => {
-          setActionConfig((currentActionConfig: ActionConfigType) => ({
-            ...currentActionConfig,
-            ...actionConfig,
-          }));
-          setImageUrl(actionConfig.image_repo_uri);
-        }}
-        setBranch={setBranch}
-        setDockerfilePath={setDockerfilePath}
-        setFolderPath={setFolderPath}
+        git_repo={git_repo}
+        updatePorterApp={updatePorterApp}
         setBuildView={setBuildView}
-        setPorterYamlPath={setPorterYamlPath}
       />
       <DarkMatter antiHeight="-4px" />
       <Spacer y={0.3} />
-      {actionConfig.git_repo && (
+      {git_repo && (
         <>
           <Spacer y={0.5} />
           <Text color="helper">Specify your GitHub branch.</Text>
           <Spacer y={0.5} />
           <ActionConfBranchSelector
-            actionConfig={actionConfig}
-            branch={branch}
-            setActionConfig={(actionConfig: ActionConfigType) => {
-              setActionConfig((currentActionConfig: ActionConfigType) => ({
-                ...currentActionConfig,
-                ...actionConfig,
-              }));
-              setImageUrl(actionConfig.image_repo_uri);
-            }}
-            setBranch={setBranch}
-            setDockerfilePath={setDockerfilePath}
-            setFolderPath={setFolderPath}
+            git_repo={git_repo}
             setBuildView={setBuildView}
-            setPorterYamlPath={setPorterYamlPath}
+            updatePorterApp={updatePorterApp}
+            branch={branch}
+            git_repo_id={git_repo_id}
           />
         </>
       )}
       <Spacer y={0.3} />
-      {actionConfig.git_repo && branch && (
+      {git_repo && branch && (
         <>
           <Spacer y={1} />
           <Text color="helper">Specify your application root path.</Text>
@@ -138,16 +125,3 @@ const DarkMatter = styled.div<{ antiHeight?: string }>`
   margin-top: ${(props) => props.antiHeight || "-15px"};
 `;
 
-const Subtitle = styled.div`
-  padding: 11px 0px 16px;
-  font-family: "Work Sans", sans-serif;
-  font-size: 13px;
-  color: #aaaabb;
-  line-height: 1.6em;
-`;
-
-const Required = styled.div`
-  margin-left: 8px;
-  color: #fc4976;
-  display: inline-block;
-`;

@@ -1,6 +1,3 @@
-//go:build ee
-// +build ee
-
 package vault
 
 import "github.com/porter-dev/porter/internal/repository/credentials"

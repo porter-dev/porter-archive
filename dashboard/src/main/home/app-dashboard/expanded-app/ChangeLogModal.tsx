@@ -207,7 +207,7 @@ const ChangeLogModal: React.FC<Props> = ({
   return (
     <>
       <Modal closeModal={() => setModalVisible(false)} width={"1100px"}>
-        {revertModal ? <Text size={18}>Reveison Changes</Text>  : <Text size={18}>Change Log</Text>}
+        {revertModal ? <Text size={18}> Revision Changes: </Text>  : <Text size={18}>Change Log</Text>}
         {loading ? (
           <Loading /> // <-- Render loading state
         ) : (

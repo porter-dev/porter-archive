@@ -113,7 +113,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
         projectId: currentProject.id,
         kind: EnumKubernetesKind.AKS,
         cloudProvider: EnumCloudProvider.AZURE,
-        cloudProviderCredentialsId: "",
+        cloudProviderCredentialsId: props.credentialId,
         kindValues: {
           case: "aksKind",
           value: new AKS({

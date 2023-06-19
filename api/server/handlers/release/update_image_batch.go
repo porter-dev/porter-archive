@@ -98,11 +98,12 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 				rel.Config["paused"] = true
 
 				conf := &helm.UpgradeReleaseConfig{
-					Name:       releases[index].Name,
-					Cluster:    cluster,
-					Repo:       c.Repo(),
-					Registries: registries,
-					Values:     rel.Config,
+					Name:                      releases[index].Name,
+					Cluster:                   cluster,
+					Repo:                      c.Repo(),
+					Registries:                registries,
+					Values:                    rel.Config,
+					ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
 				}
 
 				_, err = helmAgent.UpgradeReleaseByValues(context.Background(), conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)

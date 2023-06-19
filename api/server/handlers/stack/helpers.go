@@ -36,13 +36,14 @@ func applyAppResource(opts *applyAppResourceOpts) (*release.Release, error) {
 	}
 
 	conf := &helm.InstallChartConfig{
-		Chart:      chart,
-		Name:       opts.request.Name,
-		Namespace:  opts.namespace,
-		Values:     opts.request.Values,
-		Cluster:    opts.cluster,
-		Repo:       opts.config.Repo,
-		Registries: opts.registries,
+		Chart:                     chart,
+		Name:                      opts.request.Name,
+		Namespace:                 opts.namespace,
+		Values:                    opts.request.Values,
+		Cluster:                   opts.cluster,
+		Repo:                      opts.config.Repo,
+		Registries:                opts.registries,
+		ClusterControlPlaneClient: opts.config.ClusterControlPlaneClient,
 	}
 
 	if conf.Values == nil {
@@ -95,11 +96,12 @@ func updateAppResourceTag(opts *updateAppResourceTagOpts) error {
 	rel.Config["image"] = image
 
 	conf := &helm.UpgradeReleaseConfig{
-		Name:       opts.name,
-		Cluster:    opts.cluster,
-		Repo:       opts.config.Repo,
-		Registries: opts.registries,
-		Values:     rel.Config,
+		Name:                      opts.name,
+		Cluster:                   opts.cluster,
+		Repo:                      opts.config.Repo,
+		Registries:                opts.registries,
+		Values:                    rel.Config,
+		ClusterControlPlaneClient: opts.config.ClusterControlPlaneClient,
 
 		// stack related info
 		StackName:     opts.stackName,

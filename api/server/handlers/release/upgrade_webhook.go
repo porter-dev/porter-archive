@@ -144,11 +144,12 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	conf := &helm.UpgradeReleaseConfig{
-		Name:       release.Name,
-		Cluster:    cluster,
-		Repo:       c.Repo(),
-		Registries: registries,
-		Values:     rel.Config,
+		Name:                      release.Name,
+		Cluster:                   cluster,
+		Repo:                      c.Repo(),
+		Registries:                registries,
+		Values:                    rel.Config,
+		ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
 	}
 
 	slackInts, _ := c.Repo().SlackIntegration().ListSlackIntegrationsByProjectID(release.ProjectID)

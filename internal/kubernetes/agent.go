@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
+
 	goerrors "errors"
 
 	"github.com/porter-dev/porter/api/server/shared/websocket"
@@ -1908,13 +1910,14 @@ func (a *Agent) CreateImagePullSecrets(
 	namespace string,
 	linkedRegs map[string]*models.Registry,
 	doAuth *oauth2.Config,
+	ccpClient porterv1connect.ClusterControlPlaneServiceClient,
 ) (map[string]string, error) {
 	res := make(map[string]string)
 
 	for key, val := range linkedRegs {
 		_reg := registry.Registry(*val)
 
-		data, err := _reg.GetDockerConfigJSON(repo, doAuth)
+		data, err := _reg.GetDockerConfigJSON(repo, doAuth, ccpClient)
 		if err != nil {
 			return nil, err
 		}

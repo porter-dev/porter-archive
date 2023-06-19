@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
+
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
@@ -23,6 +25,7 @@ import (
 type PorterPostrenderer struct {
 	DockerSecretsPostRenderer       *DockerSecretsPostRenderer
 	EnvironmentVariablePostrenderer *EnvironmentVariablePostrenderer
+	ClusterControlPlaneClient       porterv1connect.ClusterControlPlaneServiceClient
 }
 
 func NewPorterPostrenderer(
@@ -33,6 +36,7 @@ func NewPorterPostrenderer(
 	regs []*models.Registry,
 	doAuth *oauth2.Config,
 	disablePullSecretsInjection bool,
+	ccpClient porterv1connect.ClusterControlPlaneServiceClient,
 ) (postrender.PostRenderer, error) {
 	var dockerSecretsPostrenderer *DockerSecretsPostRenderer
 	var err error
@@ -53,6 +57,7 @@ func NewPorterPostrenderer(
 	return &PorterPostrenderer{
 		DockerSecretsPostRenderer:       dockerSecretsPostrenderer,
 		EnvironmentVariablePostrenderer: envVarPostrenderer,
+		ClusterControlPlaneClient:       ccpClient,
 	}, nil
 }
 
@@ -60,7 +65,7 @@ func (p *PorterPostrenderer) Run(
 	renderedManifests *bytes.Buffer,
 ) (modifiedManifests *bytes.Buffer, err error) {
 	if p.DockerSecretsPostRenderer != nil {
-		renderedManifests, err = p.DockerSecretsPostRenderer.Run(renderedManifests)
+		renderedManifests, err = p.DockerSecretsPostRenderer.Run(renderedManifests, p.ClusterControlPlaneClient)
 
 		if err != nil {
 			return nil, err
@@ -142,6 +147,7 @@ func NewDockerSecretsPostRenderer(
 
 func (d *DockerSecretsPostRenderer) Run(
 	renderedManifests *bytes.Buffer,
+	ccpClient porterv1connect.ClusterControlPlaneServiceClient,
 ) (modifiedManifests *bytes.Buffer, err error) {
 	bufCopy := bytes.NewBuffer(renderedManifests.Bytes())
 
@@ -205,7 +211,7 @@ func (d *DockerSecretsPostRenderer) Run(
 					resources:  make([]resource, 0),
 				}
 
-				newData, err := dCopy.Run(bytes.NewBufferString(manifestDataStr))
+				newData, err := dCopy.Run(bytes.NewBufferString(manifestDataStr), ccpClient)
 				if err != nil {
 					continue
 				}
@@ -223,6 +229,7 @@ func (d *DockerSecretsPostRenderer) Run(
 		d.Namespace,
 		linkedRegs,
 		d.DOAuth,
+		ccpClient,
 	)
 	if err != nil {
 		return renderedManifests, nil

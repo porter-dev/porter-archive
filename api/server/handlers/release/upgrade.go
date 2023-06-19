@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	semver "github.com/Masterminds/semver/v3"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -41,12 +43,16 @@ func NewUpgradeReleaseHandler(
 }
 
 func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-upgrade-release")
+	defer span.End()
 
-	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "")
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	helmRelease, _ := ctx.Value(types.ReleaseScope).(*release.Release)
+
+	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "")
 	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting helm agent")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -59,15 +65,17 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
 	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error listing registries")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	conf := &helm.UpgradeReleaseConfig{
-		Name:       helmRelease.Name,
-		Cluster:    cluster,
-		Repo:       c.Repo(),
-		Registries: registries,
+		Name:                      helmRelease.Name,
+		Cluster:                   cluster,
+		Repo:                      c.Repo(),
+		Registries:                registries,
+		ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
 	}
 
 	// if the chart version is set, load a chart from the repo
@@ -234,7 +242,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 			if gitAction != nil && gitAction.ID != 0 && gitAction.GitlabIntegrationID == 0 {
 				gaRunner, err := GetGARunner(
-					r.Context(),
+					ctx,
 					c.Config(),
 					user.ID,
 					cluster.ProjectID,

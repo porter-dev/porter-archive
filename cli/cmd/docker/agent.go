@@ -334,6 +334,8 @@ func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {
 		return types.ImagePullOptions{}, err
 	}
 
+	fmt.Println(authConfigEncoded)
+
 	return types.ImagePullOptions{
 		RegistryAuth: authConfigEncoded,
 		Platform:     "linux/amd64",

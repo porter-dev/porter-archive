@@ -21,12 +21,10 @@ type Props = {
   modalVisible: boolean;
   setModalVisible: (x: boolean) => void;
   serviceChild: any;
-  //envChild: any;
 };
 
 const DiffViewModal: React.FC<Props> = ({
   serviceChild,
-  //envChild,
   setModalVisible,
 }) => {
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);

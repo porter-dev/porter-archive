@@ -30,15 +30,12 @@ type Props = {
   setModalVisible: (x: boolean) => void;
   revision: number;
   currentChart: ChartType;
-
-  //envChild: any;
 };
 
 const ChangeLogModal: React.FC<Props> = ({
   revision,
   currentChart,
   modalVisible,
-  //envChild,
   setModalVisible,
 }) => {
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
@@ -74,9 +71,8 @@ const ChangeLogModal: React.FC<Props> = ({
       }
     );
     const updatedChart = res.data;
-    //console.log(updatedChart);
     setLoading(false);
-    return updatedChart; // <- return updatedChart here
+    return updatedChart; 
   };
 
   useEffect(() => {
@@ -121,7 +117,6 @@ const ChangeLogModal: React.FC<Props> = ({
         case "D":
           if (servicePattern.test(path)) {
             // If so, display a simplified message
-
             changes.push(<Text>{`${path} deleted`}</Text>);
           } else {
             changes.push(<Text>{`${path} removed`}</Text>);

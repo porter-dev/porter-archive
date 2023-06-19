@@ -17,6 +17,7 @@ import Button from "components/porter/Button";
 import api from "shared/api";
 import Link from "components/porter/Link";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
+import ChangeLogModal from "../../ChangeLogModal";
 
 type Props = {
   event: PorterAppEvent;
@@ -26,6 +27,7 @@ type Props = {
 const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
   const [showOverlay, setShowOverlay] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [diffModalVisible, setDiffModalVisible] = useState(false);
 
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
@@ -82,6 +84,23 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
                 <Link hasunderline onClick={() => setShowOverlay(true)}>
                   Revert to version {event?.metadata?.revision}
                 </Link>
+               
+              </TempWrapper>
+              <Spacer inline width="15px" />
+
+              <TempWrapper>
+                <Link hasunderline onClick={() =>  setDiffModalVisible(true)}>
+                  View change log
+                </Link>
+              {diffModalVisible && (
+                <ChangeLogModal
+                  revision={event.metadata.revision}
+                  currentChart={appData.chart}
+                  modalVisible={diffModalVisible}
+                  setModalVisible={setDiffModalVisible}
+                />
+              )}
+               
               </TempWrapper>
             </>
           )}

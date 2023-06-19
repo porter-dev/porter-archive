@@ -1758,7 +1758,7 @@ func (r *Registry) GetDockerConfigJSON(
 		return nil, telemetry.Error(ctx, span, err, "error reading project id")
 	}
 
-	if proj.CapiProvisionerEnabled {
+	if proj.CapiProvisionerEnabled && strings.Contains(r.URL, ".azurecr") {
 		dockerConfigReq := connect.NewRequest(&porterv1.DockerConfigFileForRegistryRequest{
 			ProjectId:   int64(proj.ID),
 			RegistryUri: r.URL,
@@ -1775,7 +1775,12 @@ func (r *Registry) GetDockerConfigJSON(
 		return dockerConfigResp.Msg.DockerConfigFile, nil
 	}
 
-	return nil, telemetry.Error(ctx, span, nil, "no docker config file found")
+	marshalledConf, err := json.Marshal(conf)
+	if err != nil {
+		return nil, telemetry.Error(ctx, span, err, "error marshalling conf")
+	}
+
+	return marshalledConf, nil
 }
 
 func (r *Registry) getECRDockerConfigFile(

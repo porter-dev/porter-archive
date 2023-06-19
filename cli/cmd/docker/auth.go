@@ -254,7 +254,8 @@ func (a *AuthGetter) GetACRCredentials(serverURL string, projID uint) (user stri
 	cachedEntry := a.Cache.Get(serverURL)
 	var token string
 
-	if cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
+	if false && cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
+		fmt.Println("reuse token: ", token)
 		token = cachedEntry.AuthorizationToken
 	} else {
 		// get a token from the server

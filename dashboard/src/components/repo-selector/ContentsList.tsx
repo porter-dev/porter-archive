@@ -71,13 +71,14 @@ export default class ContentsList extends Component<PropsType, StateType> {
       return api
         .getGitlabFolderContent(
           "<token>",
-          { dir: this.state.currentDir || "./" },
+          {
+            repo_path: actionConfig.git_repo,
+            branch: branch,
+            dir: this.state.currentDir || "./",
+          },
           {
             project_id: currentProject.id,
             integration_id: actionConfig.gitlab_integration_id,
-            repo_owner: actionConfig.git_repo.split("/")[0],
-            repo_name: actionConfig.git_repo.split("/")[1],
-            branch: branch,
           }
         )
         .then((res) => {
@@ -128,14 +129,14 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
     return api.detectGitlabBuildpack(
       "<token>",
-      { dir: this.state.currentDir || "." },
+      {
+        repo_path: actionConfig.git_repo,
+        branch: branch,
+        dir: this.state.currentDir || ".",
+      },
       {
         project_id: currentProject.id,
         integration_id: actionConfig.gitlab_integration_id,
-
-        repo_owner: actionConfig.git_repo.split("/")[0],
-        repo_name: actionConfig.git_repo.split("/")[1],
-        branch: branch,
       }
     );
   };
@@ -162,13 +163,14 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
     return api.getGitlabProcfileContents(
       "<token>",
-      { path: procfilePath },
+      {
+        repo_path: actionConfig.git_repo,
+        branch: branch,
+        path: procfilePath,
+      },
       {
         project_id: currentProject.id,
         integration_id: actionConfig.gitlab_integration_id,
-        owner: actionConfig.git_repo.split("/")[0],
-        name: actionConfig.git_repo.split("/")[1],
-        branch: branch,
       }
     );
   };

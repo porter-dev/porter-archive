@@ -11,6 +11,7 @@ import RadioFilter from "components/RadioFilter";
 
 import spinner from "assets/loading.gif";
 import filterOutline from "assets/filter-outline.svg";
+import filterOutlineWhite from "assets/filter-outline-white.svg";
 import time from "assets/time.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -29,26 +30,29 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
+import { Service } from "../new-app-flow/serviceTypes";
 
 type Props = {
   currentChart?: ChartType;
+  services?: Service[];
 };
 
 type PodFilter = {
   podName: string;
-  podNamespace: string;
+  podType: string;
 };
 
-const LogSection: React.FC<Props> = ({ currentChart }) => {
+const LogSection: React.FC<Props> = ({ currentChart, services }) => {
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
   const [podFilter, setPodFilter] = useState<PodFilter>({
     podName: "",
-    podNamespace: "",
+    podType: "",
   });
   const [podFilterOpts, setPodFilterOpts] = useState<PodFilter[]>([]);
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [enteredSearchText, setEnteredSearchText] = useState("");
+  const [searchText, setSearchText] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [notification, setNotification] = useState<string>();
 
@@ -65,120 +69,62 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     }, 5000);
   };
 
-  console.log(podFilter);
+  const namespace = currentChart == null ? "" : currentChart.namespace;
 
-  const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
+  const { logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter.podName,
-    podFilter.podNamespace,
+    podFilter.podType,
+    namespace,
     enteredSearchText,
     notify,
     currentChart,
+    setIsLoading,
     selectedDate
   );
 
   const refreshPodLogsValues = async () => {
-    const filters = {
-      namespace: currentChart.namespace,
-      revision: currentChart.version.toString(),
-      match_prefix: currentChart.name,
-    };
-
-    const logPodValuesResp = await api.getLogPodValues("<TOKEN>", filters, {
-      project_id: currentProject.id,
-      cluster_id: currentCluster.id,
-    });
-
-    if (logPodValuesResp.data?.length != 0) {
-      setPodFilterOpts(
-        _.uniq(logPodValuesResp.data ?? []).map((podName: any) => {
-          return { podName: podName, podNamespace: currentChart.namespace };
-        })
-      );
-
-      // only set pod filter if the current pod is not found in the resulting data
-      if (!podFilter || !logPodValuesResp.data?.includes(podFilter)) {
-        setPodFilter({
-          podName: logPodValuesResp.data[0],
-          podNamespace: currentChart.namespace,
-        });
-      }
-      console.log("pod values set chart namespace", podFilter, podFilterOpts);
-      return;
-    }
-
-    // check if pods are in default namespace
-    const filters_default = {
-      namespace: "default",
-      revision: currentChart.version.toString(),
-      match_prefix: currentChart.name,
-    };
-
-    const logPodValuesResp_default = await api.getLogPodValues(
-      "<TOKEN>",
-      filters_default,
-      {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-      }
-    );
-
-    if (logPodValuesResp_default.data?.length != 0) {
-      setPodFilterOpts(
-        _.uniq(logPodValuesResp_default.data ?? []).map((podName: any) => {
-          return { podName: podName, podNamespace: "default" };
-        })
-      );
-
-      // only set pod filter if the current pod is not found in the resulting data
-      if (!podFilter || !logPodValuesResp_default.data?.includes(podFilter)) {
-        setPodFilter({
-          podName: logPodValuesResp_default.data[0],
-          podNamespace: "default",
-        });
-      }
-      console.log("pod values set default", podFilter, podFilterOpts);
-      return;
-    }
-
-    console.log("pod values empty");
-
-    // if we're on the latest revision and no pod values were returned, query for all release pods
-    if (currentChart.info.status == "deployed") {
-      console.log("search all releast pods");
-      const allReleasePodsResp = await api.getAllReleasePods(
-        "<TOKEN>",
-        {},
-        {
-          id: currentProject.id,
-          name: currentChart.name,
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-        }
-      );
-
-      let podList = allReleasePodsResp.data.map((pod: any) => {
+    if (currentChart == null || services == null) {
+      setPodFilterOpts([]);
+    } else {
+      const podList = services.map((service: Service) => {
         return {
-          podName: pod.metadata.name,
-          podNamespace: pod.metadata.namespace,
+          podName: service.name,
+          podType:
+            service.type.valueOf() == "worker" ? "wkr" : service.type.valueOf(),
         };
       });
-
       setPodFilterOpts(podList);
-
-      if (!podFilter || !podList.includes(podFilter)) {
-        setPodFilter(podList[0]);
-      }
     }
   };
 
   useEffect(() => {
-    if (!loading && scrollToBottomRef.current && scrollToBottomEnabled) {
+    if (!isLoading && scrollToBottomRef.current && scrollToBottomEnabled) {
       scrollToBottomRef.current.scrollIntoView({
         behavior: "smooth",
         block: "end",
       });
     }
-  }, [loading, logs, scrollToBottomRef, scrollToBottomEnabled]);
+  }, [isLoading, logs, scrollToBottomRef, scrollToBottomEnabled]);
+
+  useEffect(() => {
+    if (podFilter.podName != "") {
+      setSelectedDateIfUndefined();
+      return;
+    }
+  }, [podFilter]);
+
+  useEffect(() => {
+    if (selectedDate == null) {
+      resetPodFilter();
+      return;
+    }
+  }, [selectedDate]);
+
+  const resetPodFilter = () => {
+    if (podFilter.podName != "" || podFilter.podType != "") {
+      setPodFilter({ podName: "", podType: "" });
+    }
+  };
 
   const renderLogs = () => {
     return logs?.map((log, i) => {
@@ -212,13 +158,16 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
   };
 
   const setPodFilterWithPodName = (podName: string) => {
+    if (podName == "All") {
+      resetPodFilter();
+      return;
+    }
+
     const filtered = podFilterOpts.filter((pod) => pod.podName == podName);
     if (filtered.length > 0) {
-      console.log("setting filter");
       setPodFilter(filtered[0]);
     } else {
-      console.log("erroring filter");
-      setPodFilter({ podName: "", podNamespace: "" });
+      resetPodFilter();
     }
   };
 
@@ -231,30 +180,48 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     moveCursor(Direction.backward);
   }, [logs, selectedDate]);
 
+  const resetSearch = () => {
+    setSearchText("");
+    setEnteredSearchText("");
+  };
+
+  const setSelectedDateIfUndefined = () => {
+    if (selectedDate == null) {
+      setSelectedDate(dayjs().toDate());
+    }
+  };
+
   const renderContents = () => {
-    const searchBarProps = {
-      // make sure all required component's inputs/Props keys&types match
-      setEnteredSearchText: setEnteredSearchText,
-    };
+    const radioOptions = podFilterOpts?.map((pod) => {
+      return {
+        value: pod.podName,
+        label: pod.podName,
+      };
+    });
+    radioOptions.unshift({ value: "All", label: "All" });
+
     return (
       <>
         <FlexRow>
           <Flex>
-            {/* <LogSearchBar setEnteredSearchText={setEnteredSearchText} /> */}
+            <LogSearchBar
+              searchText={searchText}
+              setSearchText={setSearchText}
+              setEnteredSearchText={setEnteredSearchText}
+              setSelectedDate={setSelectedDateIfUndefined}
+            />
             <LogQueryModeSelectionToggle
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
+              resetSearch={resetSearch}
             />
             <RadioFilter
-              icon={filterOutline}
+              icon={
+                podFilter.podName == "" ? filterOutline : filterOutlineWhite
+              }
               selected={podFilter.podName}
               setSelected={setPodFilterWithPodName}
-              options={podFilterOpts?.map((pod) => {
-                return {
-                  value: pod.podName,
-                  label: pod.podName,
-                };
-              })}
+              options={radioOptions}
               name="Filter logs"
             />
           </Flex>
@@ -279,8 +246,18 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
         </FlexRow>
         <LogsSectionWrapper>
           <StyledLogsSection>
-            {loading || !logs.length ? (
+            {isLoading || (logs.length == 0 && selectedDate == null) ? (
               <Loading message="Waiting for logs..." />
+            ) : logs.length == 0 ? (
+              <>
+                <Message>
+                  No logs found.
+                  <Highlight onClick={refresh}>
+                    <i className="material-icons">autorenew</i>
+                    Refresh
+                  </Highlight>
+                </Message>
+              </>
             ) : (
               <>
                 <LoadMoreButton
@@ -293,14 +270,6 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
                   Load Previous
                 </LoadMoreButton>
                 {renderLogs()}
-                {/* <Message>
-            
-            No matching logs found.
-            <Highlight onClick={() => {}}>
-              <i className="material-icons">autorenew</i>
-              Refresh
-            </Highlight>
-          </Message> */}
                 <LoadMoreButton
                   active={selectedDate && logs.length !== 0}
                   role="button"
@@ -326,6 +295,7 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
   useEffect(() => {
     // determine if the agent is installed properly - if not, start by render upgrade screen
     checkForAgent();
+    resetSearch();
   }, []);
 
   useEffect(() => {
@@ -406,39 +376,37 @@ const LogSection: React.FC<Props> = ({ currentChart }) => {
     };
   };
 
-  return (
-    isPorterAgentInstalling ? (
-      <Fieldset>
-        <Container row>
-          <Spinner src={spinner} />
-          <Spacer inline x={1} />
-          <Text color="helper">The Porter agent is being installed . . .</Text>
-        </Container>
-      </Fieldset>
-    ) : isLoading ? (
-      <Fieldset>
-        <Loading />
-      </Fieldset>
-    ) : !hasPorterAgent ? (
-      <Fieldset>
-        <Text size={16}>We couldn't detect the Porter agent on your cluster</Text>
-        <Spacer y={0.5} />
-        <Text color="helper">In order to use the Logs tab, you need to install the Porter agent.</Text>
-        <Spacer y={1} />
-        <Button onClick={() => triggerInstall()}>
-          <I className="material-icons">add</I> Install Porter agent
-        </Button>
-      </Fieldset>
-    ) : logsError ? (
-      <Fieldset>
-        <Container row>
-          <WarnI className="material-icons">warning</WarnI>
-          <Text color="helper">Porter encountered an error retrieving logs for this application.</Text>
-        </Container>
-      </Fieldset>
-    ) : (
-      renderContents()
-    )
+  return isPorterAgentInstalling ? (
+    <Fieldset>
+      <Container row>
+        <Spinner src={spinner} />
+        <Spacer inline x={1} />
+        <Text color="helper">The Porter agent is being installed . . .</Text>
+      </Container>
+    </Fieldset>
+  ) : !hasPorterAgent ? (
+    <Fieldset>
+      <Text size={16}>We couldn't detect the Porter agent on your cluster</Text>
+      <Spacer y={0.5} />
+      <Text color="helper">
+        In order to use the Logs tab, you need to install the Porter agent.
+      </Text>
+      <Spacer y={1} />
+      <Button onClick={() => triggerInstall()}>
+        <I className="material-icons">add</I> Install Porter agent
+      </Button>
+    </Fieldset>
+  ) : logsError ? (
+    <Fieldset>
+      <Container row>
+        <WarnI className="material-icons">warning</WarnI>
+        <Text color="helper">
+          Porter encountered an error retrieving logs for this application.
+        </Text>
+      </Container>
+    </Fieldset>
+  ) : (
+    renderContents()
   );
 };
 

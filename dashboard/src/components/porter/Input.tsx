@@ -7,7 +7,7 @@ type Props = {
   placeholder: string;
   width?: string;
   value: string;
-  setValue: (value: string) => void;
+  setValue?: (value: string) => void;
   label?: string | React.ReactNode;
   height?: string;
   type?: string;
@@ -15,6 +15,7 @@ type Props = {
   children?: React.ReactNode;
   disabled?: boolean;
   disabledTooltip?: string;
+  onValueChange?: (value: string) => void;
 };
 
 const Input: React.FC<Props> = ({
@@ -29,63 +30,60 @@ const Input: React.FC<Props> = ({
   children,
   disabled,
   disabledTooltip,
+  onValueChange,
 }) => {
-  return (
-    disabled && disabledTooltip ?
-      <Tooltip content={disabledTooltip} position="right">
-        <Block width={width}>
-          {
-            label && (
-              <Label>{label}</Label>
-            )
-          }
-          <StyledInput
-            value={value}
-            onChange={e => setValue(e.target.value)}
-            placeholder={placeholder}
-            width={width}
-            height={height}
-            type={type || "text"}
-            hasError={(error && true) || (error === "")}
-            disabled={disabled ? disabled : false}
-          />
-          {
-            error && (
-              <Error>
-                <i className="material-icons">error</i>
-                {error}
-              </Error>
-            )
-          }
-          {children}
-        </Block>
-      </Tooltip> :
-      <Block width={width} >
-        {
-          label && (
-            <Label>{label}</Label>
-          )
-        }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    if (onValueChange) {
+      onValueChange(inputValue);
+    } else {
+      setValue(inputValue);
+    }
+  };
+  return disabled && disabledTooltip ? (
+    <Tooltip content={disabledTooltip} position="right">
+      <Block width={width}>
+        {label && <Label>{label}</Label>}
         <StyledInput
           value={value}
-          onChange={e => setValue(e.target.value)}
+          onChange={handleChange}
           placeholder={placeholder}
           width={width}
           height={height}
           type={type || "text"}
-          hasError={(error && true) || (error === "")}
+          hasError={(error && true) || error === ""}
           disabled={disabled ? disabled : false}
         />
-        {
-          error && (
-            <Error>
-              <i className="material-icons">error</i>
-              {error}
-            </Error>
-          )
-        }
+        {error && (
+          <Error>
+            <i className="material-icons">error</i>
+            {error}
+          </Error>
+        )}
         {children}
-      </Block >
+      </Block>
+    </Tooltip>
+  ) : (
+    <Block width={width}>
+      {label && <Label>{label}</Label>}
+      <StyledInput
+        value={value}
+        onChange={handleChange}
+        placeholder={placeholder}
+        width={width}
+        height={height}
+        type={type || "text"}
+        hasError={(error && true) || error === ""}
+        disabled={disabled ? disabled : false}
+      />
+      {error && (
+        <Error>
+          <i className="material-icons">error</i>
+          {error}
+        </Error>
+      )}
+      {children}
+    </Block>
   );
 };
 
@@ -96,7 +94,7 @@ const Block = styled.div<{
 }>`
   display: block;
   position: relative;
-  width: ${props => props.width || "200px"};
+  width: ${(props) => props.width || "200px"};
 `;
 
 const Label = styled.div`
@@ -118,25 +116,26 @@ const Error = styled.div`
   }
 `;
 
-
 const StyledInput = styled.input<{
   width: string;
   height: string;
   hasError: boolean;
   disabled: boolean;
 }>`
-  height: ${props => props.height || "35px"};
+  height: ${(props) => props.height || "35px"};
   padding: 5px 10px;
-  width: ${props => props.width || "200px"};
-  color: ${props => props.disabled ? "#aaaabb" : "#ffffff"};
+  width: ${(props) => props.width || "200px"};
+  color: ${(props) => (props.disabled ? "#aaaabb" : "#ffffff")};
   font-size: 13px;
   outline: none;
   border-radius: 5px;
   background: #26292e;
-  cursor: ${props => props.disabled ? "not-allowed" : ""};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "")};
 
-  border: 1px solid ${props => props.hasError ? "#ff3b62" : "#494b4f"};
-  ${props => !props.disabled && `
+  border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#494b4f")};
+  ${(props) =>
+    !props.disabled &&
+    `
     :hover {
       border: 1px solid ${props.hasError ? "#ff3b62" : "#7a7b80"};
     }

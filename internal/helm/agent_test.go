@@ -1,6 +1,7 @@
 package helm_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stefanmcshane/helm/pkg/storage/driver"
@@ -223,7 +224,7 @@ func TestGetReleases(t *testing.T) {
 		// namespace, so we have to reset the namespace of the storage driver
 		agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
 
-		rel, err := agent.GetRelease(tc.getName, tc.getVersion, false)
+		rel, err := agent.GetRelease(context.Background(), tc.getName, tc.getVersion, false)
 		if err != nil {
 			t.Errorf("%v", err)
 		}
@@ -256,7 +257,7 @@ func TestListReleaseHistory(t *testing.T) {
 		// namespace, so we have to reset the namespace of the storage driver
 		agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
 
-		releases, err := agent.GetReleaseHistory("wordpress")
+		releases, err := agent.GetReleaseHistory(context.Background(), "wordpress")
 		if err != nil {
 			t.Errorf("%v", err)
 		}
@@ -325,12 +326,12 @@ func TestRollbackRelease(t *testing.T) {
 		// namespace, so we have to reset the namespace of the storage driver
 		agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
 
-		err := agent.RollbackRelease("wordpress", 1)
+		err := agent.RollbackRelease(context.Background(), "wordpress", 1)
 		if err != nil {
 			t.Errorf("%v", err)
 		}
 
-		rel, err := agent.GetRelease(tc.getName, tc.getVersion, false)
+		rel, err := agent.GetRelease(context.Background(), tc.getName, tc.getVersion, false)
 		if err != nil {
 			t.Errorf("%v", err)
 		}

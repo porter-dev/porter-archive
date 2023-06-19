@@ -18,6 +18,7 @@ import DocsHelper from "./DocsHelper";
 import Error from "./porter/Error";
 import Step from "./porter/Step";
 import Link from "./porter/Link";
+import Container from "./porter/Container";
 
 type Props = {
   goBack: () => void;
@@ -93,10 +94,7 @@ const CloudFormationForm: React.FC<Props> = ({
           </Text>
           <Spacer height="15px" />
           <Text color="helper">
-            Provide your AWS account ID to log in and grant Porter access to AWS by clicking 'Grant permissions' below.
-          </Text>
-          <Text color="helper">
-            You will need to select "Create stack" after being redirected to the AWS console.
+            Provide your AWS account ID to log in and grant Porter access to AWS by clicking 'Grant permissions' below. You will need to select "Create stack" after being redirected to the AWS console.
           </Text>
           <Spacer y={1} />
           <Input
@@ -204,15 +202,17 @@ const CloudFormationForm: React.FC<Props> = ({
 
   return (
     <>
-      <Text size={16}>
+      <Container row>
         <BackButton width="140px" onClick={goBack}>
           <i className="material-icons">first_page</i>
           Select cloud
         </BackButton>
         <Spacer x={1} inline />
         <Img src={aws} />
-        Grant AWS permissions
-      </Text>
+        <Text size={16}>
+          Grant AWS permissions
+        </Text>
+      </Container>
       <Spacer y={1} />
       <Text color="helper">
         Grant Porter permissions to create infrastructure in your AWS account.

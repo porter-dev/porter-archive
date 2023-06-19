@@ -10,7 +10,7 @@ import {
 } from "shared/types";
 import api from "shared/api";
 import { pushFiltered } from "shared/routing";
-import { ExpandedJobChartFC } from "./ExpandedJobChart";
+import ExpandedJobChart from "./ExpandedJobChart";
 import ExpandedChart from "./ExpandedChart";
 import Loading from "components/Loading";
 import PageNotFound from "components/PageNotFound";
@@ -102,7 +102,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
       );
     } else if (currentChart && baseRoute === "jobs") {
       return (
-        <ExpandedJobChartFC
+        <ExpandedJobChart
           namespace={namespace}
           currentChart={currentChart}
           currentCluster={this.context.currentCluster}

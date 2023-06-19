@@ -62,7 +62,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     appData.app.dockerfile ? "docker" : "buildpacks"
   );
 
-  const [folderPath, setFolderPath] = useState("./");
+  const [folderPath, setFolderPath] = useState(appData.app.build_context);
   const defaultActionConfig: ActionConfigType = {
     git_repo: appData.app.repo_name,
     image_repo_uri: appData.chart.image_repo_uri,
@@ -99,7 +99,7 @@ const BuildSettingsTabStack: React.FC<Props> = ({
 
   const triggerWorkflow = async () => {
     try {
-      await api.reRunGHWorkflow(
+      const res = await api.reRunGHWorkflow(
         "",
         {},
         {
@@ -112,6 +112,9 @@ const BuildSettingsTabStack: React.FC<Props> = ({
           filename: "porter_stack_" + appData.chart.name + ".yml",
         }
       );
+      if (res.data != null) {
+        window.open(res.data, "_blank", "noreferrer")
+      }
     } catch (error) {
       if (!error?.response) {
         throw error;
@@ -178,8 +181,10 @@ const BuildSettingsTabStack: React.FC<Props> = ({
       await updatePorterApp({
         repo_name: appData.app.repo_name,
         git_branch: branch,
-        build_context: appData.app.build_context,
-        builder: buildConfig.builder,
+        build_context: folderPath,
+        builder: buildView === "buildpacks"
+          ? buildConfig.builder
+          : "null",
         buildpacks:
           buildView === "buildpacks"
             ? buildConfig?.buildpacks?.join(",")

@@ -11,6 +11,7 @@ This job checks to see if a cluster matches policies set by the OPA config file.
 package jobs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -184,7 +185,7 @@ func (n *recommender) EnqueueTime() time.Time {
 	return n.enqueueTime
 }
 
-func (n *recommender) Run() error {
+func (n *recommender) Run(ctx context.Context) error {
 	for _, ids := range n.clusterAndProjectIDs {
 		fmt.Println(ids.projectID, ids.clusterID)
 

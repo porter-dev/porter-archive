@@ -77,7 +77,6 @@ const ConfirmButton = styled.div`
   width: 80px;
   cursor: pointer;
   opacity: 0;
-  font-family: "Work Sans", sans-serif;
   font-size: 18px;
   font-weight: 500;
   animation: linEnter 0.3s 0.1s;

@@ -8,7 +8,6 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
-	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -35,11 +34,13 @@ func (p *ListGitlabRepoBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	gi, _ := r.Context().Value(types.GitlabIntegrationScope).(*ints.GitlabIntegration)
 
-	owner, name, ok := commonutils.GetOwnerAndNameParams(p, w, r)
-
-	if !ok {
+	request := &types.ListGitlabRepoBranchesRequest{}
+	if ok := p.DecodeAndValidate(w, r, request); !ok {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(errors.New("cannot decode and validate request")))
 		return
 	}
+
+	repoPath := request.RepoPath
 
 	client, err := getGitlabClient(p.Repo(), user.ID, project.ID, gi, p.Config())
 	if err != nil {
@@ -51,7 +52,15 @@ func (p *ListGitlabRepoBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	branches, resp, err := client.Branches.ListBranches(fmt.Sprintf("%s/%s", owner, name), &gitlab.ListBranchesOptions{})
+	branches, resp, err := client.Branches.ListBranches(repoPath,
+		&gitlab.ListBranchesOptions{
+			ListOptions: gitlab.ListOptions{
+				Page:    1,
+				PerPage: 20,
+			},
+			Search: &request.SearchTerm,
+		},
+	)
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("unauthorized gitlab user"), http.StatusUnauthorized))

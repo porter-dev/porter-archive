@@ -1,6 +1,6 @@
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import * as z from "zod";
-import { Service } from "./serviceTypes";
+import { JobService, ReleaseService, Service, WebService, WorkerService } from "./serviceTypes";
 import { overrideObjectValues } from "./utils";
 
 const appConfigSchema = z.object({
@@ -40,18 +40,34 @@ export const PorterYamlSchema = z.object({
     build: BuildSchema.optional(),
     env: EnvSchema.optional(),
     apps: AppsSchema,
-    release: z.string().optional(),
+    release: appConfigSchema.optional(),
 });
 
 export const createFinalPorterYaml = (
     services: Service[],
     dashboardSetEnvVariables: KeyValueType[],
     porterJson: PorterJson | undefined,
+    injectPortEnvVariable: boolean = false,
 ): PorterJson => {
-    return {
+    const [apps, port] = createApps(services.filter(Service.isNonRelease), porterJson, injectPortEnvVariable);
+    const env = combineEnv(dashboardSetEnvVariables, porterJson?.env);
+
+    // inject a port env variable if necessary
+    if (port != null) {
+        env.PORT = port;
+    }
+
+    const release = services.find(Service.isRelease);
+
+    return release != null && release.startCommand.value.trim() != "" ? {
         version: "v1stack",
-        env: combineEnv(dashboardSetEnvVariables, porterJson?.env),
-        apps: createApps(services, porterJson),
+        env,
+        apps,
+        release: createRelease(release, porterJson),
+    } : {
+        version: "v1stack",
+        env,
+        apps,
     };
 };
 
@@ -72,10 +88,12 @@ const combineEnv = (
 };
 
 const createApps = (
-    serviceList: Service[],
+    serviceList: (WorkerService | WebService | JobService)[],
     porterJson: PorterJson | undefined,
-): z.infer<typeof AppsSchema> => {
+    injectPortEnvVariable: boolean,
+): [z.infer<typeof AppsSchema>, string | undefined] => {
     const apps: z.infer<typeof AppsSchema> = {};
+    let port: string | undefined = undefined;
     for (const service of serviceList) {
         let config = Service.serialize(service);
 
@@ -91,6 +109,10 @@ const createApps = (
             );
         }
 
+        if (injectPortEnvVariable && service.type === "web") {
+            port = service.port.value;
+        }
+
         apps[service.name] = {
             type: service.type,
             run: service.startCommand.value,
@@ -98,7 +120,24 @@ const createApps = (
         };
     }
 
-    return apps;
+    return [apps, port];
 };
+
+const createRelease = (release: ReleaseService, porterJson: PorterJson | undefined): z.infer<typeof appConfigSchema> => {
+    let config = Service.serialize(release);
+
+    if (porterJson?.release?.config != null) {
+        config = overrideObjectValues(
+            config,
+            porterJson.release.config
+        );
+    }
+
+    return {
+        type: 'job',
+        run: release.startCommand.value,
+        config,
+    }
+}
 
 export type PorterJson = z.infer<typeof PorterYamlSchema>;

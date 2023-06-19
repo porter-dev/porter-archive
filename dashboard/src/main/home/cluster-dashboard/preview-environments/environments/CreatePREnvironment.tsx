@@ -20,6 +20,10 @@ import _, { create } from "lodash";
 import { readableDate } from "shared/string_utils";
 import dayjs from "dayjs";
 import Loading from "components/Loading";
+import Modal from "components/porter/Modal";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
+import Button from "components/porter/Button";
 
 interface Props {
   environmentID: string;
@@ -58,6 +62,9 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
   const [selectedPR, setSelectedPR] = useState<PullRequest>();
   const [loading, setLoading] = useState(false);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
+  const [showCreatePreviewModal, setShowCreatePreviewModal] = useState<boolean>(
+    false
+  );
 
   const handleCreatePreviewDeployment = async () => {
     try {
@@ -97,10 +104,15 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
       environmentID: Number(environmentID),
       branch: pullRequest.branch_from,
     });
+    setShowCreatePreviewModal(true);
 
     setPorterYAMLErrors(res.data.errors ?? []);
 
     setLoading(false);
+  };
+  const handleModalSubmit = () => {
+    createPreviewDeploymentMutation.mutate();
+    setShowCreatePreviewModal(false);
   };
 
   const filteredPullRequests = useMemo(() => {
@@ -109,6 +121,8 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
       searchValue,
       {
         isCaseSensitive: false,
+        threshold: 0.2, // Adjust this value to fine-tune the matching
+        distance: 50,
         keys: ["pr_title"],
       }
     );
@@ -262,19 +276,47 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
         </ValidationErrorBannerWrapper>
       ) : null}
       <CreatePreviewDeploymentWrapper>
-        <SubmitButton
-          onClick={() => createPreviewDeploymentMutation.mutate()}
-          disabled={
-            loading ||
-            !selectedPR ||
-            porterYAMLErrors.length > 0 ||
-            createPreviewDeploymentMutation.isLoading
-          }
-        >
-          {createPreviewDeploymentMutation.isLoading
-            ? "Creating..."
-            : "Create preview deployment"}
-        </SubmitButton>
+        {showCreatePreviewModal && selectedPR && porterYAMLErrors.length == 0 && (
+          <Modal
+            title="Create Preview Environment"
+            closeModal={() => setShowCreatePreviewModal(false)}
+          >
+            <>
+              <Text color="helper">
+                Create Preview Deployment for {selectedPR.pr_title}?
+              </Text>
+              <Spacer y={1} />
+              {/* <Button
+                onClick={() => handleModalSubmit}
+                loadingText="Submitting..."
+                withBorder
+                status={loading ? "loading" : undefined}
+                disabled={
+                  createPreviewDeploymentMutation.isLoading ||
+                  loading ||
+                  porterYAMLErrors.length > 0
+                }
+              >
+                {createPreviewDeploymentMutation.isLoading
+                  ? "Creating..."
+                  : "Create Preview Deployment"}
+              </Button> */}
+              <SubmitButton
+                onClick={() => createPreviewDeploymentMutation.mutate()}
+                disabled={
+                  loading ||
+                  !selectedPR ||
+                  porterYAMLErrors.length > 0 ||
+                  createPreviewDeploymentMutation.isLoading
+                }
+              >
+                {createPreviewDeploymentMutation.isLoading
+                  ? "Creating..."
+                  : "Create preview deployment"}
+              </SubmitButton>
+            </>
+          </Modal>
+        )}
         {selectedPR && porterYAMLErrors.length ? (
           <RevalidatePorterYAMLSpanWrapper>
             Please fix your porter.yaml file to continue.{" "}

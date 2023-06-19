@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type PorterApp struct {
 	ID        uint `json:"id"`
 	ProjectID uint `json:"project_id"`
@@ -20,6 +22,10 @@ type PorterApp struct {
 	Buildpacks     string `json:"build_packs,omitempty"`
 	Dockerfile     string `json:"dockerfile,omitempty"`
 	PullRequestURL string `json:"pull_request_url,omitempty"`
+
+	// Porter YAML
+	PorterYAMLBase64 string `json:"porter_yaml,omitempty"`
+	PorterYamlPath   string `json:"porter_yaml_path,omitempty"`
 }
 
 // swagger:model
@@ -36,6 +42,7 @@ type CreatePorterAppRequest struct {
 	ImageRepoURI     string    `json:"image_repo_uri"`
 	PullRequestURL   string    `json:"pull_request_url"`
 	PorterYAMLBase64 string    `json:"porter_yaml"`
+	PorterYamlPath   string    `json:"porter_yaml_path"`
 	ImageInfo        ImageInfo `json:"image_info" form:"omitempty"`
 	OverrideRelease  bool      `json:"override_release"`
 }
@@ -51,4 +58,54 @@ type UpdatePorterAppRequest struct {
 	PullRequestURL string `json:"pull_request_url"`
 }
 
+type RollbackPorterAppRequest struct {
+	Revision int `json:"revision" form:"required"`
+}
+
 type ListPorterAppResponse []*PorterApp
+
+// PorterAppEvent represents an event that occurs on a Porter stack during a stacks lifecycle.
+type PorterAppEvent struct {
+	ID string `json:"id"`
+	// Status contains the accepted status' of a given event such as SUCCESS, FAILED, PROGRESSING, etc.
+	Status string `json:"status,omitempty"`
+	// Type represents a supported Porter Stack Event
+	Type PorterAppEventType `json:"type"`
+	// TypeExternalSource represents an external event source such as Github, or Gitlab. This is not always required but will commonly be see in build events
+	TypeExternalSource string `json:"type_source,omitempty"`
+	// CreatedAt is the time (UTC) that a given event was created. This should not change
+	CreatedAt time.Time `json:"created_at"`
+	// UpdatedAt is the time (UTC) that an event was last updated. This can occur when an event was created as PROGRESSING, then was marked as SUCCESSFUL for example
+	UpdatedAt time.Time `json:"updated_at"`
+	// PorterAppID is the ID that the given event relates to
+	PorterAppID uint           `json:"porter_app_id"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
+}
+
+// PorterAppEventType is an alias for a string that represents a Porter Stack Event Type
+type PorterAppEventType string
+
+const (
+	// PorterAppEventType_Build represents a Porter Stack Build event such as in Github or Gitlab
+	PorterAppEventType_Build PorterAppEventType = "BUILD"
+	// PorterAppEventType_Deploy represents a Porter Stack Deploy event which occurred through the Porter UI or CLI
+	PorterAppEventType_Deploy PorterAppEventType = "DEPLOY"
+	// PorterAppEventType_PreDeploy represents a Porter Stack Pre-deploy event which occurred through the Porter UI or CLI
+	PorterAppEventType_PreDeploy PorterAppEventType = "PRE_DEPLOY"
+	// PorterAppEventType_AppEvent represents a Porter Stack App Event which occurred whilst the application was running, such as an OutOfMemory (OOM) error
+	PorterAppEventType_AppEvent PorterAppEventType = "APP_EVENT"
+)
+
+// PorterAppEvent represents a simplified event for creating a Porter stack app event
+// swagger:model
+type CreateOrUpdatePorterAppEventRequest struct {
+	// ID, if supplied, will be assumed to be an update event
+	ID string `json:"id"`
+	// Status contains the accepted status' of a given event such as SUCCESS, FAILED, PROGRESSING, etc.
+	Status string `json:"status,omitempty"`
+	// Type represents a supported Porter Stack Event
+	Type PorterAppEventType `json:"type"`
+	// TypeExternalSource represents an external event source such as Github, or Gitlab. This is not always required but will commonly be see in build events
+	TypeExternalSource string         `json:"type_source,omitempty"`
+	Metadata           map[string]any `json:"metadata,omitempty"`
+}

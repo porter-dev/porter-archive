@@ -1,6 +1,7 @@
 package release
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -36,7 +37,7 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, "")
+	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "")
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -48,7 +49,7 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = helmAgent.RollbackRelease(helmRelease.Name, request.Revision)
+	err = helmAgent.RollbackRelease(context.Background(), helmRelease.Name, request.Revision)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
@@ -75,6 +76,7 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 			if gitAction != nil && gitAction.ID != 0 && gitAction.GitlabIntegrationID == 0 {
 				gaRunner, err := GetGARunner(
+					r.Context(),
 					c.Config(),
 					user.ID,
 					cluster.ProjectID,

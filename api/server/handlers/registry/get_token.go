@@ -18,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
 )
@@ -151,7 +152,10 @@ func NewRegistryGetGCRTokenHandler(
 }
 
 func (c *RegistryGetGCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-registry-get-gcr-token")
+	defer span.End()
+
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	request := &types.GetRegistryGCRTokenRequest{}
 
@@ -162,7 +166,8 @@ func (c *RegistryGetGCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		e := telemetry.Error(ctx, span, err, "error listing registries by project id")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
 
@@ -173,15 +178,16 @@ func (c *RegistryGetGCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		if reg.GCPIntegrationID != 0 && strings.Contains(reg.URL, request.ServerURL) {
 			_reg := registry.Registry(*reg)
 
-			oauthTok, err := _reg.GetGCRToken(c.Repo())
-
-			// if the oauth token is not nil, but the error is not nil, we still return the token
-			// but log an error
-			if oauthTok != nil && err != nil {
-				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
-			} else if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
+			oauthTok, err := _reg.GetGCRToken(ctx, c.Repo())
+			if err != nil {
+				// if the oauth token is not nil, we still return the token but log an error
+				if oauthTok == nil {
+					e := telemetry.Error(ctx, span, err, "error getting gcr token")
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+					return
+				}
+				e := telemetry.Error(ctx, span, err, "error getting gcr token, but token was returned")
+				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(e))
 			}
 
 			token = oauthTok.AccessToken
@@ -213,7 +219,10 @@ func NewRegistryGetGARTokenHandler(
 }
 
 func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-registry-get-gar-token")
+	defer span.End()
+
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	request := &types.GetRegistryGCRTokenRequest{}
 
@@ -224,7 +233,8 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		e := telemetry.Error(ctx, span, err, "error listing registries by project id")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
 
@@ -235,15 +245,16 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		if reg.GCPIntegrationID != 0 && strings.Contains(reg.URL, request.ServerURL) {
 			_reg := registry.Registry(*reg)
 
-			oauthTok, err := _reg.GetGARToken(c.Repo())
-
-			// if the oauth token is not nil, but the error is not nil, we still return the token
-			// but log an error
-			if oauthTok != nil && err != nil {
-				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
-			} else if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
+			oauthTok, err := _reg.GetGARToken(ctx, c.Repo())
+			if err != nil {
+				// if the oauth token is not nil, we still return the token but log an error
+				if oauthTok == nil {
+					e := telemetry.Error(ctx, span, err, "error getting gar token")
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+					return
+				}
+				e := telemetry.Error(ctx, span, err, "error getting gar token, but token was returned")
+				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(e))
 			}
 
 			token = oauthTok.AccessToken
@@ -406,9 +417,9 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	for _, reg := range regs {
 		if reg.AzureIntegrationID != 0 && strings.Contains(reg.URL, "azurecr.io") {
 			_reg := registry.Registry(*reg)
-
 			username, pw, err := _reg.GetACRCredentials(c.Repo())
 			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				continue
 			}
 

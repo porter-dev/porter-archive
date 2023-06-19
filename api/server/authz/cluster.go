@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -16,10 +18,12 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
+type ContextKey string
+
 const (
-	KubernetesAgentCtxKey         string = "k8s-agent"
-	KubernetesDynamicClientCtxKey string = "k8s-dyn-client"
-	HelmAgentCtxKey               string = "helm-agent"
+	KubernetesAgentCtxKey         ContextKey = "k8s-agent"
+	KubernetesDynamicClientCtxKey ContextKey = "k8s-dyn-client"
+	HelmAgentCtxKey               ContextKey = "helm-agent"
 )
 
 type ClusterScopedFactory struct {
@@ -74,7 +78,7 @@ type KubernetesAgentGetter interface {
 	GetOutOfClusterConfig(cluster *models.Cluster) *kubernetes.OutOfClusterConfig
 	GetDynamicClient(r *http.Request, cluster *models.Cluster) (dynamic.Interface, error)
 	GetAgent(r *http.Request, cluster *models.Cluster, namespace string) (*kubernetes.Agent, error)
-	GetHelmAgent(r *http.Request, cluster *models.Cluster, namespace string) (*helm.Agent, error)
+	GetHelmAgent(ctx context.Context, r *http.Request, cluster *models.Cluster, namespace string) (*helm.Agent, error)
 }
 
 type OutOfClusterAgentGetter struct {
@@ -96,9 +100,18 @@ func (d *OutOfClusterAgentGetter) GetOutOfClusterConfig(cluster *models.Cluster)
 }
 
 func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Cluster, namespace string) (*kubernetes.Agent, error) {
+	ctx, span := telemetry.NewSpan(r.Context(), "get-k8s-agent")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
+		telemetry.AttributeKV{Key: "project-id", Value: cluster.ProjectID},
+		telemetry.AttributeKV{Key: "namespace", Value: namespace},
+	)
+
 	// look for the agent in context if cluster isnt a capi cluster
 	if cluster.ProvisionedBy != "CAPI" {
-		ctxAgentVal := r.Context().Value(KubernetesAgentCtxKey)
+		ctxAgentVal := ctx.Value(KubernetesAgentCtxKey)
 
 		if ctxAgentVal != nil {
 			if agent, ok := ctxAgentVal.(*kubernetes.Agent); ok {
@@ -115,24 +128,38 @@ func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Clus
 	} else {
 		ooc.DefaultNamespace = namespace
 	}
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "default-namespace", Value: namespace},
+	)
 
-	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
+	agent, err := kubernetes.GetAgentOutOfClusterConfig(ctx, ooc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get agent: %s", err.Error())
 	}
 
-	newCtx := context.WithValue(r.Context(), KubernetesAgentCtxKey, agent)
+	newCtx := context.WithValue(ctx, KubernetesAgentCtxKey, agent)
 
-	r = r.WithContext(newCtx)
+	r = r.Clone(newCtx)
 
 	return agent, nil
 }
 
-func (d *OutOfClusterAgentGetter) GetHelmAgent(r *http.Request, cluster *models.Cluster, namespace string) (*helm.Agent, error) {
+func (d *OutOfClusterAgentGetter) GetHelmAgent(ctx context.Context, r *http.Request, cluster *models.Cluster, namespace string) (*helm.Agent, error) {
+	ctx, span := telemetry.NewSpan(ctx, "get-helm-agent")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
+		telemetry.AttributeKV{Key: "project-id", Value: cluster.ProjectID},
+	)
+
+	r = r.Clone(ctx)
+
 	// look for the agent in context
-	ctxAgentVal := r.Context().Value(HelmAgentCtxKey)
+	ctxAgentVal := ctx.Value(HelmAgentCtxKey)
 
 	if ctxAgentVal != nil {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "agent-from-context", Value: true})
 		if agent, ok := ctxAgentVal.(*helm.Agent); ok {
 			return agent, nil
 		}
@@ -141,16 +168,18 @@ func (d *OutOfClusterAgentGetter) GetHelmAgent(r *http.Request, cluster *models.
 	// if helm agent not found in context, construct it from k8s agent
 	k8sAgent, err := d.GetAgent(r, cluster, namespace)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error getting k8s agent")
 	}
 
 	if namespace == "" {
 		namespace = getNamespaceFromRequest(r)
 	}
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: namespace})
+
 	helmAgent, err := helm.GetAgentFromK8sAgent("secret", namespace, d.config.Logger, k8sAgent)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Helm agent: %s", err.Error())
+		return nil, telemetry.Error(ctx, span, err, "failed to get Helm agent")
 	}
 
 	newCtx := context.WithValue(r.Context(), HelmAgentCtxKey, helmAgent)

@@ -1,0 +1,559 @@
+import React, { useContext, useEffect, useState } from "react";
+import { get, isEmpty } from "lodash";
+import styled from "styled-components";
+
+import job from "assets/job.png";
+import leftArrow from "assets/left-arrow.svg";
+import KeyValueArray from "components/form-components/KeyValueArray";
+import Loading from "components/Loading";
+import TabRegion, { TabOption } from "components/TabRegion";
+import TitleSection from "components/TitleSection";
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { ChartType } from "shared/types";
+import DeploymentType from "main/home/cluster-dashboard/expanded-chart/DeploymentType";
+import Logs from "../status/Logs";
+import { useRouting } from "shared/routing";
+import LogsSection, { InitLogData } from "main/home/cluster-dashboard/expanded-chart/logs-section/LogsSection";
+import EventsTab from "main/home/cluster-dashboard/expanded-chart/events/EventsTab";
+import { getPodStatus } from "main/home/cluster-dashboard/expanded-chart/deploy-status-section/util";
+import { capitalize } from "shared/string_utils";
+import { usePods } from "shared/hooks/usePods";
+import Container from "components/porter/Container";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
+
+const readableDate = (s: string) => {
+  let ts = new Date(s);
+  let date = ts.toLocaleDateString();
+  let time = ts.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${time} on ${date}`;
+};
+
+const getLatestPod = (pods: any[]) => {
+  if (!Array.isArray(pods)) {
+    return undefined;
+  }
+
+  return [...pods]
+    .sort((a: any, b: any) => {
+      if (!a?.metadata?.creationTimestamp) {
+        return 1;
+      }
+
+      if (!b?.metadata?.creationTimestamp) {
+        return -1;
+      }
+
+      return (
+        new Date(b?.metadata?.creationTimestamp).getTime() -
+        new Date(a?.metadata?.creationTimestamp).getTime()
+      );
+    })
+    .shift();
+};
+
+export const isRunning = (deleting: boolean, job: any, pod: any) => {
+  if (deleting) {
+    return false;
+  }
+
+  if (job.status?.succeeded >= 1) {
+    return false;
+  }
+
+  if (job.status?.conditions) {
+    if (job.status?.conditions[0]?.reason == "DeadlineExceeded") {
+      return false;
+    }
+  }
+
+  if (job.status?.failed >= 1) {
+    return false;
+  }
+
+  if (job.status?.active >= 1) {
+    // determine the status from the pod
+    return pod ? pod.status.startTime : false;
+  }
+
+  return true;
+};
+
+export const renderStatus = (
+  deleting: boolean,
+  job: any,
+  pod: any,
+  time?: string
+) => {
+  if (deleting) {
+    return <Status color="#cc3d42">Deleting</Status>;
+  }
+
+  if (job.status?.succeeded >= 1) {
+    if (time) {
+      return <Status color="#38a88a">Succeeded at {time}</Status>;
+    }
+
+    return <Status color="#38a88a">Succeeded</Status>;
+  }
+
+  if (job.status?.conditions) {
+    if (job.status?.conditions[0]?.reason == "DeadlineExceeded") {
+      return <Status color="#cc3d42">Timed Out</Status>;
+    }
+  }
+
+  if (job.status?.failed >= 1) {
+    return <Status color="#cc3d42">Failed</Status>;
+  }
+
+  if (job.status?.active >= 1) {
+    // determine the status from the pod
+    return pod ? (
+      <Status color="#ffffff11">{capitalize(getPodStatus(pod?.status))}</Status>
+    ) : (
+      <Status color="#ffffff11">Running</Status>
+    );
+  }
+
+  return <Status color="#ffffff11">Running</Status>;
+};
+
+type ExpandedJobRunTabs = "events" | "logs" | "config" | string;
+
+const ExpandedJobRun = ({
+  currentChart,
+  jobRun,
+  onClose,
+}: {
+  currentChart: ChartType;
+  jobRun: any;
+  onClose: () => void;
+}) => {
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
+  const [currentTab, setCurrentTab] = useState<ExpandedJobRunTabs>(
+    currentCluster.agent_integration_enabled ? "events" : "logs"
+  );
+  const { pushQueryParams } = useRouting();
+  const [useDeprecatedLogs, setUseDeprecatedLogs] = useState(false);
+
+  const [pods, isLoading] = usePods({
+    project_id: currentProject.id,
+    cluster_id: currentCluster.id,
+    namespace: jobRun.metadata?.namespace,
+    selectors: [`job-name=${jobRun.metadata?.name}`],
+    controller_kind: "job",
+    controller_name: jobRun.metadata?.name,
+    subscribed: true,
+  });
+
+  let chart = currentChart;
+  let run = jobRun;
+
+  useEffect(() => {
+    return () => {
+      pushQueryParams({}, ["job"]);
+    };
+  }, []);
+
+  const renderConfigSection = (job: any) => {
+    let commandString = job?.spec?.template?.spec?.containers[0]?.command?.join(
+      " "
+    );
+    let envArray = job?.spec?.template?.spec?.containers[0]?.env;
+    let envObject = {} as any;
+    envArray &&
+      envArray.forEach((env: any, i: number) => {
+        const secretName = get(env, "valueFrom.secretKeyRef.name");
+        envObject[env.name] = secretName
+          ? `PORTERSECRET_${secretName}`
+          : env.value;
+      });
+
+    // Handle no config to show
+    if (!commandString && isEmpty(envObject)) {
+      return <Placeholder>No config was found.</Placeholder>;
+    }
+
+    let tag = job.spec.template.spec.containers[0].image.split(":")[1];
+    return (
+      <ConfigSection>
+        {commandString ? (
+          <>
+            Command: <Command>{commandString}</Command>
+          </>
+        ) : (
+          <DarkMatter size="-18px" />
+        )}
+        <Row>
+          Image Tag: <Command>{tag}</Command>
+        </Row>
+        {!isEmpty(envObject) && (
+          <>
+            <KeyValueArray
+              envLoader={true}
+              values={envObject}
+              label="Environment variables:"
+              disabled={true}
+            />
+            <DarkMatter />
+          </>
+        )}
+      </ConfigSection>
+    );
+  };
+
+  const renderEventsSection = () => {
+    return (
+      <EventsTab
+        currentChart={currentChart}
+        overridingJobName={jobRun.metadata?.name}
+        setLogData={() => setCurrentTab("logs")}
+      />
+    );
+  };
+
+  const renderLogsSection = () => {
+    if (useDeprecatedLogs || !currentCluster.agent_integration_enabled) {
+      return (
+        <JobLogsWrapper>
+          <Logs
+            selectedPod={pods[0]}
+            podError={!pods[0] ? "Pod no longer exists." : ""}
+            rawText={true}
+          />
+        </JobLogsWrapper>
+      );
+    }
+
+    let initData: InitLogData = {};
+
+    if (run.status.completionTime) {
+      initData.timestamp = run.status.completionTime;
+    }
+
+    return (
+      <JobLogsWrapper>
+        <DeprecatedWarning>
+          Not seeing your logs? Switch back to{" "}
+          <DeprecatedSelect
+            onClick={() => {
+              setUseDeprecatedLogs(true);
+            }}
+          >
+            {" "}
+            deprecated logging.
+          </DeprecatedSelect>
+        </DeprecatedWarning>
+        <LogsSection
+          isFullscreen={false}
+          setIsFullscreen={() => { }}
+          overridingPodName={pods[0]?.metadata?.name || jobRun.metadata?.name}
+          currentChart={currentChart}
+          initData={initData}
+        />
+      </JobLogsWrapper>
+    );
+  };
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  let options: TabOption[] = [];
+
+  if (currentCluster.agent_integration_enabled) {
+    options.push({
+      label: "Events",
+      value: "events",
+    });
+  }
+
+  options.push(
+    {
+      label: "Logs",
+      value: "logs",
+    },
+    {
+      label: "Config",
+      value: "config",
+    }
+  );
+
+  return (
+    <StyledExpandedChart>
+      <BreadcrumbRow>
+        <Breadcrumb onClick={onClose}>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
+      <HeaderWrapper>
+        <Container row>
+          <Icon src={job} />
+          <Text size={21}>
+            {jobRun.metadata?.name.split('-').slice(1, -2).join('-')}
+          </Text>
+          <Spacer inline width="10px" />
+          <Text size={21} color="#aaaabb66">
+            at {run.status.completionTime ? readableDate(run.status.completionTime) : ""}
+          </Text>
+        </Container>
+        <Spacer y={0.5} />
+        <InfoWrapper>
+          <LastDeployed>
+            {renderStatus(
+              false,
+              run,
+              pods[0],
+              run.status.completionTime
+                ? readableDate(run.status.completionTime)
+                : ""
+            )}
+          </LastDeployed>
+        </InfoWrapper>
+      </HeaderWrapper>
+      <Spacer y={1} />
+      <BodyWrapper>
+        <TabRegion
+          currentTab={currentTab}
+          setCurrentTab={(newTab: string) => {
+            setCurrentTab(newTab);
+          }}
+          options={options}
+        >
+          {currentTab === "events" && renderEventsSection()}
+          {currentTab === "logs" && renderLogsSection()}
+          {currentTab === "config" && <>{renderConfigSection(run)}</>}
+        </TabRegion>
+      </BodyWrapper>
+    </StyledExpandedChart>
+  );
+};
+
+export default ExpandedJobRun;
+
+const Icon = styled.img`
+  height: 24px;
+  margin-right: 15px;
+`;
+
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const Breadcrumb = styled.div`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+  }
+`;
+
+const Wrap = styled.div`
+  z-index: 999;
+`;
+
+const Row = styled.div`
+  margin-top: 20px;
+`;
+
+const DarkMatter = styled.div<{ size?: string }>`
+  width: 100%;
+  margin-bottom: ${(props) => props.size || "-13px"};
+`;
+
+const Command = styled.span`
+  font-family: monospace;
+  color: #aaaabb;
+  margin-left: 7px;
+`;
+
+const ConfigSection = styled.div`
+  padding: 20px 30px 30px;
+  font-size: 13px;
+  font-weight: 500;
+  width: 100%;
+  border-radius: 8px;
+  background: #ffffff08;
+`;
+
+const JobLogsWrapper = styled.div`
+  min-height: 450px;
+  height: fit-content;
+  width: 100%;
+  border-radius: 8px;
+`;
+
+const Status = styled.div<{ color: string }>`
+  padding: 5px 10px;
+  background: ${(props) => props.color};
+  font-size: 13px;
+  border-radius: 3px;
+  height: 25px;
+  color: #ffffff;
+  margin-bottom: -3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Gray = styled.div`
+  color: #ffffff44;
+  margin-left: 15px;
+  font-weight: 400;
+  font-size: 18px;
+`;
+
+const BackButton = styled.div`
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
+`;
+
+const Placeholder = styled.div`
+  min-height: 400px;
+  height: 50vh;
+  padding: 30px;
+  padding-bottom: 70px;
+  font-size: 13px;
+  color: #ffffff44;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const BodyWrapper = styled.div`
+  position: relative;
+  overflow: hidden;
+`;
+
+const HeaderWrapper = styled.div`
+  position: relative;
+`;
+
+const InfoWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  height: 20px;
+`;
+
+const LastDeployed = styled.div`
+  font-size: 13px;
+  margin-left: 0;
+  display: flex;
+  align-items: center;
+  color: #aaaabb66;
+`;
+
+const TagWrapper = styled.div`
+  height: 25px;
+  font-size: 12px;
+  display: flex;
+  margin-left: 20px;
+  margin-bottom: -3px;
+  align-items: center;
+  font-weight: 400;
+  justify-content: center;
+  color: #ffffff44;
+  border: 1px solid #ffffff44;
+  border-radius: 3px;
+  padding-left: 5px;
+  background: #26282e;
+`;
+
+const NamespaceTag = styled.div`
+  height: 100%;
+  margin-left: 6px;
+  color: #aaaabb;
+  background: #43454a;
+  border-radius: 3px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0px 6px;
+  padding-left: 7px;
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
+`;
+
+const StyledExpandedChart = styled.div`
+  width: 100%;
+  z-index: 0;
+  animation: fadeIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  display: flex;
+  overflow-y: auto;
+  padding-bottom: 120px;
+  flex-direction: column;
+  overflow: visible;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const DeprecatedWarning = styled.div`
+  font-size: 12px;
+  color: #ccc;
+  text-align: right;
+  width: 100%;
+  margin-bottom: 20px;
+`;
+
+const DeprecatedSelect = styled.span`
+  cursor: pointer;
+  color: #949effff;
+`;

@@ -149,10 +149,11 @@ export default TokenList;
 const TokenWrapper = styled.div`
   color: #ffffff55;
   background: #ffffff01;
-  border: 1px solid #aaaabbaa;
+  border: 1px solid ${({ theme }) => theme.border};
   font-size: 13px;
   border-radius: 5px;
   cursor: pointer;
+  background: ${({ theme }) => theme.fg};
   margin: 8px 0;
   :hover {
     border: 1px solid #aaaabb;
@@ -207,7 +208,6 @@ const RevokeAccessButton = styled.div`
   display: inline-block;
   font-size: 13px;
   font-weight: 500;
-  font-family: "Work Sans", sans-serif;
   padding: 6px 10px;
   text-align: center;
   border: 1px solid #ffffff55;

@@ -43,6 +43,7 @@ func TestCreateProjectSuccessful(t *testing.T) {
 			},
 		},
 		CapiProvisionerEnabled: true,
+		SimplifiedViewEnabled:  true,
 	}
 
 	gotProject := &types.CreateProjectResponse{}

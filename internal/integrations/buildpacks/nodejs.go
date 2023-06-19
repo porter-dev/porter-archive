@@ -414,7 +414,7 @@ func (runtime *nodejsRuntime) DetectGithub(
 func (runtime *nodejsRuntime) DetectGitlab(
 	client *gitlab.Client,
 	tree []*gitlab.TreeNode,
-	owner, name, path, ref string,
+	repoPath, path, ref string,
 	paketo, heroku *BuilderInfo,
 ) error {
 	results := make(chan struct {

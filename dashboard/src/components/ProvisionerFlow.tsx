@@ -9,28 +9,27 @@ import ProvisionerForm from "components/ProvisionerForm";
 import CloudFormationForm from "components/CloudFormationForm";
 import CredentialsForm from "components/CredentialsForm";
 import Helper from "components/form-components/Helper";
-import Modal from "./porter/Modal";
-import Text from "./porter/Text";
-import Spacer from "./porter/Spacer";
-import Fieldset from "./porter/Fieldset";
-import Checkbox from "./porter/Checkbox";
-import Button from "./porter/Button";
-import ExpandableSection from "./porter/ExpandableSection";
-import Input from "./porter/Input";
+import AzureCredentialForm from "components/AzureCredentialForm";
+import AWSCostConsent from "./AWSCostConsent";
+import AzureCostConsent from "./AzureCostConsent";
 
 const providers = ["aws", "gcp", "azure"];
 
-type Props = {
-};
+type Props = {};
 
-const ProvisionerFlow: React.FC<Props> = ({
-}) => {
-  const { usage, hasBillingEnabled, currentProject } = useContext(Context);
+const ProvisionerFlow: React.FC<Props> = ({ }) => {
+  const {
+    usage,
+    hasBillingEnabled,
+    currentProject,
+    featurePreview,
+  } = useContext(Context);
   const [currentStep, setCurrentStep] = useState("cloud");
   const [credentialId, setCredentialId] = useState("");
   const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
   const [confirmCost, setConfirmCost] = useState("");
   const [useCloudFormationForm, setUseCloudFormationForm] = useState(true);
+  const [selectedProvider, setSelectedProvider] = useState("");
 
   const isUsageExceeded = useMemo(() => {
     if (!hasBillingEnabled) {
@@ -39,145 +38,149 @@ const ProvisionerFlow: React.FC<Props> = ({
     return usage?.current.clusters >= usage?.limit.clusters;
   }, [usage]);
 
-  const markStepCostConsent = async () => {
+  const markStepCostConsent = async (step: string, provider: string) => {
     try {
-      const res = await api.updateOnboardingStep(
+      await api.updateOnboardingStep(
         "<token>",
-        { step: "cost-consent-complete" },
+        { step, provider },
         {}
       );
     } catch (err) {
       console.log(err);
     }
-    try {
-      const res = await api.inviteAdmin(
-        "<token>",
-        {},
-        { project_id: currentProject.id }
-      );
-    } catch (err) {
-      console.log(err);
-    }
-  }
+  };
+
+  const openCostConsentModal = (provider: string) => {
+    setSelectedProvider(provider);
+    setShowCostConfirmModal(true);
+    markStepCostConsent("cost-consent-opened", provider);
+  };
 
   if (currentStep === "cloud") {
     return (
       <>
         <StyledProvisionerFlow>
-          <Helper>
-            Select your hosting backend:
-          </Helper>
+          <Helper>Select your hosting backend:</Helper>
           <BlockList>
             {providers.map((provider: string, i: number) => {
               let providerInfo = integrationList[provider];
               return (
                 <Block
                   key={i}
-                  disabled={isUsageExceeded || provider === "gcp" || provider === "azure"}
+                  disabled={
+                    isUsageExceeded ||
+                    (provider === "azure" && !featurePreview) ||
+                    provider === "gcp"
+                  }
                   onClick={() => {
-                    if (!(isUsageExceeded || provider === "gcp" || provider === "azure")) {
-                      setShowCostConfirmModal(true);
+                    if (
+                      !(
+                        isUsageExceeded ||
+                        (provider === "azure" && !featurePreview) ||
+                        provider === "gcp"
+                      )
+                    ) {
+                      openCostConsentModal(provider)
                     }
                   }}
                 >
                   <Icon src={providerInfo.icon} />
                   <BlockTitle>{providerInfo.label}</BlockTitle>
-                  <BlockDescription>{providerInfo.tagline || "Hosted in your own cloud"}</BlockDescription>
+                  <BlockDescription>
+                    {providerInfo.tagline || "Hosted in your own cloud"}
+                  </BlockDescription>
                 </Block>
               );
             })}
           </BlockList>
         </StyledProvisionerFlow>
-        {showCostConfirmModal && (
-          <Modal closeModal={() => {
-            setConfirmCost("");
-            setShowCostConfirmModal(false);
-          }}>
-            <Text size={16}>
-              Base AWS cost consent
-            </Text>
-            <Spacer height="15px" />
-            <Text color="helper">
-              Porter will create resources in your existing AWS account for hosting applications. You will be separately charged by AWS and can use your cloud credits. Base AWS cost:
-            </Text>
-            <Spacer y={1} />
-            <ExpandableSection
-              noWrapper
-              expandText="[+] Show details"
-              collapseText="[-] Hide details"
-              Header={
-                <Cost>$315.94 / mo</Cost>
-              }
-              ExpandedSection={
-                <>
-                  <Spacer height="15px" />
-                  <Fieldset background="#1b1d2688">
-                    • Amazon Elastic Kubernetes Service (EKS) = $73/mo
-                    <Spacer height="15px" />
-                    • Amazon EC2:
-                    <Spacer height="15px" />
-                    <Tab />+ System workloads: t3.medium instance (2) = $60.74/mo
-                    <Spacer height="15px" />
-                    <Tab />+ Monitoring workloads: t3.large instance (1) = $60.74/mo
-                    <Spacer height="15px" />
-                    <Tab />+ Application workloads: t3.xlarge instance (1) = $121.47/mo
-                  </Fieldset>
-                </>
-              }
-            />
-            <Spacer y={1} />
-            <Text color="helper">
-              Separate from the AWS cost, Porter charges based on the amount of resources that are being used. Porter pricing is as follows, prorated to the minute:
-            </Text>
-            <Spacer y={1} />
-            <Cost>$0.019/hr/vCPU + $0.009/hr/GB RAM</Cost>
-            <Spacer y={1} />
-            <Text color="helper">
-              All AWS resources will be automatically deleted when you delete your Porter project. Please enter the AWS base cost ("315.94") below to proceed:
-            </Text>
-            <Spacer y={1} />
-            <Input placeholder="315.94" value={confirmCost} setValue={setConfirmCost} width="100%" height="40px" />
-            <Spacer y={1} />
-            <Button
-              disabled={confirmCost !== "315.94"}
-              onClick={() => {
-                setShowCostConfirmModal(false);
-                setConfirmCost("");
-                markStepCostConsent();
-                setCurrentStep("credentials");
+        {showCostConfirmModal &&
+          ((selectedProvider === "aws" && (
+            <AWSCostConsent
+              setCurrentStep={setCurrentStep}
+              setShowCostConfirmModal={setShowCostConfirmModal}
+              markCostConsentComplete={() => {
+                try {
+                  markStepCostConsent("cost-consent-complete", "aws")
+                } catch (err) {
+                  console.log(err);
+                }
+
+                if (currentProject != null) {
+                  try {
+                    api.inviteAdmin(
+                      "<token>",
+                      {},
+                      { project_id: currentProject.id }
+                    );
+                  } catch (err) {
+                    console.log(err);
+                  }
+                }
               }}
-            >
-              Continue
-            </Button>
-          </Modal>
-        )}
+            />
+          )) ||
+            (selectedProvider === "azure" && (
+              <AzureCostConsent
+                setCurrentStep={setCurrentStep}
+                setShowCostConfirmModal={setShowCostConfirmModal}
+                markCostConsentComplete={() => {
+                  try {
+                    markStepCostConsent("cost-consent-complete", "azure")
+                  } catch (err) {
+                    console.log(err);
+                  }
+                  if (currentProject != null) {
+                    try {
+                      api.inviteAdmin(
+                        "<token>",
+                        {},
+                        { project_id: currentProject.id }
+                      );
+                    } catch (err) {
+                      console.log(err);
+                    }
+                  }
+                }} />
+            )))}
       </>
     );
   } else if (currentStep === "credentials") {
-    return useCloudFormationForm ? (
-      <CloudFormationForm
-        goBack={() => setCurrentStep("cloud")}
-        proceed={(id) => {
-          setCredentialId(id);
-          setCurrentStep("cluster");
-        }}
-        switchToCredentialFlow={() => setUseCloudFormationForm(false)}
-      />
-    ) : (
-      <CredentialsForm
-        goBack={() => setCurrentStep("cloud")}
-        proceed={(id) => {
-          setCredentialId(id);
-          setCurrentStep("cluster");
-        }}
-      />
+    return (
+      (selectedProvider === "aws" &&
+        (useCloudFormationForm ? (
+          <CloudFormationForm
+            goBack={() => setCurrentStep("cloud")}
+            proceed={(id) => {
+              setCredentialId(id);
+              setCurrentStep("cluster");
+            }}
+            switchToCredentialFlow={() => setUseCloudFormationForm(false)}
+          />
+        ) : (
+          <CredentialsForm
+            goBack={() => setCurrentStep("cloud")}
+            proceed={(id) => {
+              setCredentialId(id);
+              setCurrentStep("cluster");
+            }}
+          />
+        ))) ||
+      (selectedProvider === "azure" && (
+        <AzureCredentialForm
+          goBack={() => setCurrentStep("cloud")}
+          proceed={() => {
+            setCurrentStep("cluster");
+          }}
+        />
+      ))
     );
   } else if (currentStep === "cluster") {
     return (
       <ProvisionerForm
         goBack={() => setCurrentStep("credentials")}
         credentialId={credentialId}
-        useAssumeRole={useCloudFormationForm}
+        provider={selectedProvider}
       />
     );
   }

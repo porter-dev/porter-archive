@@ -28,6 +28,18 @@ export const relativeDate = (date: string | number) => {
   return rtf.format(-time.time, time.unitOfTime);
 };
 
+export const feedDate = (timestamp: string) => {
+  const localTime = new Date(timestamp).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  });
+
+  return localTime;
+}
+
 export const timeFrom = (
   time: string | number,
   secondTime?: string | number

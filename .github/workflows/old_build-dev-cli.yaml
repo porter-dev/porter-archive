@@ -1,0 +1,38 @@
+name: Build Dev CLI
+on:
+  push:
+    branches:
+      - dev
+jobs:
+  build-push-docker-cli:
+    name: Build a new porter-cli docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-access-key-id: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Login to ECR public
+        id: login-ecr
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Login to GHCR
+        id: login-ghcr
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Build
+        run: |
+          DOCKER_BUILDKIT=1 docker build . \
+            -t public.ecr.aws/o1j4x7p4/porter-cli:dev \
+            -f ./services/porter_cli_container/dev.Dockerfile \
+            --build-arg SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+      - name: Push to ECR public
+        run: |
+          docker push public.ecr.aws/o1j4x7p4/porter-cli:dev
+      - name: Push to GHCR
+        run: |
+          docker tag public.ecr.aws/o1j4x7p4/porter-cli:dev ghcr.io/porter-dev/porter/porter-cli:dev
+          docker push ghcr.io/porter-dev/porter/porter-cli:dev

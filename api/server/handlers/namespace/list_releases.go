@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type ListReleasesHandler struct {
@@ -29,6 +30,9 @@ func NewListReleasesHandler(
 }
 
 func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-releases")
+	defer span.End()
+
 	request := &types.ListReleasesRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -39,37 +43,48 @@ func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		request.ReleaseListFilter = &types.ReleaseListFilter{}
 	}
 
-	namespace := r.Context().Value(types.NamespaceScope).(string)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	namespace := ctx.Value(types.NamespaceScope).(string)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, "")
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "namespace", Value: namespace},
+		telemetry.AttributeKV{Key: "cluster_id", Value: cluster.ID},
+	)
+
+	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		e := telemetry.Error(ctx, span, err, "failed to get helm agent")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
 
-	releases, err := helmAgent.ListReleases(namespace, request.ReleaseListFilter)
+	releases, err := helmAgent.ListReleases(ctx, namespace, request.ReleaseListFilter)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		e := telemetry.Error(ctx, span, err, "failed to list releases")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
 
 	var res types.ListReleasesResponse
 
 	for _, helmRel := range releases {
-		rel, err := c.Repo().Release().ReadRelease(cluster.ID, helmRel.Name, helmRel.Namespace)
-
-		if err == nil {
-			res = append(res, &types.Release{
-				Release:       helmRel,
-				PorterRelease: rel.ToReleaseType(),
-			})
-		} else {
-			res = append(res, &types.Release{
-				Release:       helmRel,
-				PorterRelease: &types.PorterRelease{},
-			})
+		release := types.Release{
+			Release: helmRel,
 		}
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "release_name", Value: helmRel.Name},
+			telemetry.AttributeKV{Key: "release_namespace", Value: helmRel.Namespace},
+		)
+
+		rel, err := c.Repo().Release().ReadRelease(cluster.ID, helmRel.Name, helmRel.Namespace)
+		if err != nil {
+			telemetry.Error(ctx, span, err, "failed to read release. Not a fatal error")
+		}
+
+		if rel != nil {
+			release.PorterRelease = rel.ToReleaseType()
+		}
+
 	}
 
 	c.WriteResult(w, r, res)

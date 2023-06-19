@@ -32,6 +32,34 @@ const (
 
 type ListRepoBranchesResponse []string
 
+type ListGitlabRepoBranchesRequest struct {
+	RepoPath   string `schema:"repo_path" form:"required"`
+	SearchTerm string `schema:"search_term"`
+}
+
+type GitlabRepoBranchRequest struct {
+	RepoPath string `schema:"repo_path" form:"required"`
+	Branch   string `schema:"branch" form:"required"`
+}
+
+type GetGitlabContentsRequest struct {
+	GitlabRepoBranchRequest
+	GetContentsRequest
+}
+type GetGitlabBuildpackRequest struct {
+	GitlabRepoBranchRequest
+	GetBuildpackRequest
+}
+type GetGitlabProcfileRequest struct {
+	GitlabRepoBranchRequest
+	GetProcfileRequest
+}
+
+type GetGitlabPorterYamlContentsRequest struct {
+	GitlabRepoBranchRequest
+	GetPorterYamlRequest
+}
+
 type GithubDirectoryRequest struct {
 	Dir string `schema:"dir" form:"required"`
 }

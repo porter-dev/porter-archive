@@ -3,7 +3,7 @@ import Heading from "components/form-components/Heading";
 import RepoList from "components/repo-selector/RepoList";
 import SaveButton from "components/SaveButton";
 import DocsHelper from "components/DocsHelper";
-import { GithubActionConfigType } from "shared/types";
+import { ActionConfigType, GithubActionConfigType } from "shared/types";
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import api from "shared/api";
@@ -16,6 +16,10 @@ import CheckboxRow from "components/form-components/CheckboxRow";
 import BranchFilterSelector from "./components/BranchFilterSelector";
 import Helper from "components/form-components/Helper";
 import NamespaceLabels, { KeyValueType } from "./components/NamespaceLabels";
+import ActionConfEditorStack from "components/repo-selector/ActionConfEditorStack";
+import AnimateHeight from "react-animate-height";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -29,9 +33,10 @@ const ConnectNewRepo: React.FC = () => {
 
   const [status, setStatus] = useState(null);
   const { pushFiltered } = useRouting();
+  const [showSettings, setShowSettings] = useState<boolean>(false);
 
   // NOTE: git_repo_id is a misnomer as this actually refers to the github app's installation id.
-  const [actionConfig, setActionConfig] = useState<GithubActionConfigType>({
+  const [actionConfig, setActionConfig] = useState<ActionConfigType>({
     git_repo: null,
     image_repo_uri: null,
     git_branch: null,
@@ -113,7 +118,7 @@ const ConnectNewRepo: React.FC = () => {
   }, [actionConfig]);
 
   const addRepo = () => {
-    let [owner, repoName] = repo.split("/");
+    let [owner, repoName] = actionConfig.git_repo.split("/");
     const labels: Record<string, string> = {};
 
     setStatus("loading");
@@ -203,7 +208,7 @@ const ConnectNewRepo: React.FC = () => {
 
       <Heading>Select a Repository</Heading>
       <br />
-      <RepoList
+      {/* <RepoList
         actionConfig={actionConfig}
         setActionConfig={(a: GithubActionConfigType) => {
           setActionConfig(a);
@@ -211,6 +216,15 @@ const ConnectNewRepo: React.FC = () => {
         }}
         readOnly={false}
         filteredRepos={filteredRepos}
+      /> */}
+      <ActionConfEditorStack
+        actionConfig={actionConfig}
+        setActionConfig={(actionConfig: ActionConfigType) => {
+          setActionConfig((currentActionConfig: ActionConfigType) => ({
+            ...currentActionConfig,
+            ...actionConfig,
+          }));
+        }}
       />
       <HelperContainer>
         Note: you will need to add a <CodeBlock>porter.yaml</CodeBlock> file to
@@ -222,80 +236,105 @@ const ConnectNewRepo: React.FC = () => {
         />
       </HelperContainer>
 
-      <Heading>Automatic pull request deployments</Heading>
-      <Helper>
-        If you enable this option, the new pull requests will be automatically
-        deployed.
-      </Helper>
-      <CheckboxWrapper>
-        <CheckboxRow
-          label="Enable automatic deploys"
-          checked={enableAutomaticDeployments}
-          toggle={() =>
-            setEnableAutomaticDeployments(!enableAutomaticDeployments)
-          }
-          wrapperStyles={{
-            disableMargin: true,
-          }}
-        />
-      </CheckboxWrapper>
-
-      <Heading>Disable new comments for new deployments</Heading>
-      <Helper>
-        When enabled new comments will not be created for new deployments.
-        Instead the last comment will be updated.
-      </Helper>
-      <CheckboxWrapper>
-        <CheckboxRow
-          label="Disable new comments for deployments"
-          checked={isNewCommentsDisabled}
-          toggle={() => setIsNewCommentsDisabled(!isNewCommentsDisabled)}
-          wrapperStyles={{
-            disableMargin: true,
-          }}
-        />
-      </CheckboxWrapper>
-
-      <Heading>Deploy from branches</Heading>
-      <Helper>
-        Choose the list of branches that you want to deploy changes from.
-      </Helper>
-      <BranchFilterSelector
-        onChange={setDeployBranches}
-        options={availableBranches}
-        value={deployBranches}
-        showLoading={isLoadingBranches}
-      />
-
-      <Heading>Select allowed branches</Heading>
-      <Helper>
-        If the pull request has a base branch included in this list, it will be
-        allowed to be deployed.
-        <br />
-        (Leave empty to allow all branches)
-      </Helper>
-      <BranchFilterSelector
-        onChange={setBaseBranches}
-        options={availableBranches}
-        value={baseBranches}
-        showLoading={isLoadingBranches}
-      />
-
-      <Heading>Namespace labels</Heading>
-      <Helper>
-        Custom labels to be injected into the Kubernetes namespace created for
-        each deployment.
-      </Helper>
-      <NamespaceLabels
-        values={namespaceLabels}
-        setValues={(x: KeyValueType[]) => {
-          let labels: KeyValueType[] = [];
-          x.forEach((entry) => {
-            labels.push({ key: entry.key, value: entry.value });
-          });
-          setNamespaceLabels(labels);
+      {/* <StyledAdvancedBuildSettings
+        showSettings={showSettings}
+        isCurrent={true}
+        onClick={() => {
+          setShowSettings(!showSettings);
         }}
-      />
+      > */}
+      <StyledAdvancedBuildSettings
+        showSettings={showSettings}
+        isCurrent={true}
+        onClick={() => {
+          setShowSettings(!showSettings);
+        }}
+      >
+        <AdvancedBuildTitle>
+          <i className="material-icons dropdown">arrow_drop_down</i>
+          Configure Additonal settings
+        </AdvancedBuildTitle>
+      </StyledAdvancedBuildSettings>
+      <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
+        <StyledSourceBox>
+          <Text size={16}>Deploy from branches</Text>
+          <Helper style={{ marginTop: "10px", marginBottom: "10px" }}>
+            {" "}
+            Choose the list of branches that you want to deploy changes from.
+          </Helper>
+          <BranchFilterSelector
+            onChange={setDeployBranches}
+            options={availableBranches}
+            value={deployBranches}
+            showLoading={isLoadingBranches}
+          />
+
+          <Text size={16}>Select allowed branches</Text>
+          <Helper style={{ marginTop: "10px", marginBottom: "10px" }}>
+            {" "}
+            If the pull request has a base branch included in this list, it will
+            be allowed to be deployed.
+            <br />
+            (Leave empty to allow all branches)
+          </Helper>
+          <BranchFilterSelector
+            onChange={setBaseBranches}
+            options={availableBranches}
+            value={baseBranches}
+            showLoading={isLoadingBranches}
+          />
+          <Text size={16}>Automatic pull request deployments</Text>
+          <Helper style={{ marginTop: "10px", marginBottom: "10px" }}>
+            If you enable this option, the new pull requests will be
+            automatically deployed.
+          </Helper>
+          <CheckboxWrapper>
+            <CheckboxRow
+              label="Enable automatic deploys"
+              checked={enableAutomaticDeployments}
+              toggle={() =>
+                setEnableAutomaticDeployments(!enableAutomaticDeployments)
+              }
+              wrapperStyles={{
+                disableMargin: true,
+              }}
+            />
+          </CheckboxWrapper>
+          <Spacer y={2} />
+          <Text size={16}>Disable new comments for new deployments</Text>
+          <Helper style={{ marginTop: "10px", marginBottom: "10px" }}>
+            When enabled new comments will not be created for new deployments.
+            Instead the last comment will be updated.
+          </Helper>
+          <CheckboxWrapper>
+            <CheckboxRow
+              label="Disable new comments for deployments"
+              checked={isNewCommentsDisabled}
+              toggle={() => setIsNewCommentsDisabled(!isNewCommentsDisabled)}
+              wrapperStyles={{
+                disableMargin: true,
+              }}
+            />
+          </CheckboxWrapper>
+          <Spacer y={2} />
+
+          <Text size={16}>Namespace labels</Text>
+          <Helper style={{ marginTop: "10px", marginBottom: "10px" }}>
+            Custom labels to be injected into the Kubernetes namespace created
+            for each deployment.
+          </Helper>
+          <NamespaceLabels
+            values={namespaceLabels}
+            setValues={(x: KeyValueType[]) => {
+              let labels: KeyValueType[] = [];
+              x.forEach((entry) => {
+                labels.push({ key: entry.key, value: entry.value });
+              });
+              setNamespaceLabels(labels);
+            }}
+          />
+        </StyledSourceBox>
+      </AnimateHeight>
 
       <ActionContainer>
         <SaveButton
@@ -429,4 +468,51 @@ const CheckboxWrapper = styled.div`
   display: flex;
   align-items: center;
   margin-top: 20px;
+`;
+const StyledSourceBox = styled.div`
+  width: 100%;
+  color: #ffffff;
+  padding: 25px 35px 25px;
+  position: relative;
+  font-size: 13px;
+  border-radius: 5px;
+  background: ${(props) => props.theme.fg};
+  border: 1px solid #494b4f;
+  border-top: 0px;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+`;
+const StyledAdvancedBuildSettings = styled.div`
+  color: ${({ showSettings }) => (showSettings ? "white" : "#aaaabb")};
+  background: ${({ theme }) => theme.fg};
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
+    color: white;
+  }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  border-radius: 5px;
+  height: 40px;
+  font-size: 13px;
+  width: 100%;
+  padding-left: 10px;
+  cursor: pointer;
+  border-bottom-left-radius: ${({ showSettings }) => showSettings && "0px"};
+  border-bottom-right-radius: ${({ showSettings }) => showSettings && "0px"};
+
+  .dropdown {
+    margin-right: 8px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 20px;
+    transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
+      props.showSettings ? "" : "rotate(-90deg)"};
+  }
+`;
+const AdvancedBuildTitle = styled.div`
+  display: flex;
+  align-items: center;
 `;

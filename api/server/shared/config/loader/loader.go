@@ -17,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/api/server/shared/websocket"
+	"github.com/porter-dev/porter/ee/integrations/vault"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
@@ -29,18 +30,16 @@ import (
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository/credentials"
 	"github.com/porter-dev/porter/internal/repository/gorm"
-	"github.com/porter-dev/porter/provisioner/client"
-
+	"github.com/porter-dev/porter/internal/telemetry"
 	lr "github.com/porter-dev/porter/pkg/logger"
-
+	"github.com/porter-dev/porter/provisioner/client"
 	pgorm "gorm.io/gorm"
 )
 
 var (
-	InstanceBillingManager    billing.BillingManager
-	InstanceEnvConf           *envloader.EnvConf
-	InstanceDB                *pgorm.DB
-	InstanceCredentialBackend credentials.CredentialStorage
+	InstanceBillingManager billing.BillingManager
+	InstanceEnvConf        *envloader.EnvConf
+	InstanceDB             *pgorm.DB
 )
 
 type EnvConfigLoader struct {
@@ -70,26 +69,35 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	envConf := InstanceEnvConf
 	sc := envConf.ServerConf
 
+	if envConf == nil {
+		return nil, errors.New("nil environment config passed to loader")
+	}
+
+	var instanceCredentialBackend credentials.CredentialStorage
+	if envConf.DBConf.VaultEnabled {
+		if envConf.DBConf.VaultAPIKey == "" || envConf.DBConf.VaultServerURL != "" || envConf.DBConf.VaultPrefix != "" {
+			return nil, errors.New("Vault is enabled but missing required environment variables [VAULT_API_KEY,VAULT_SERVER_URL,VAULT_PREFIX]")
+		}
+
+		instanceCredentialBackend = vault.NewClient(
+			envConf.DBConf.VaultServerURL,
+			envConf.DBConf.VaultAPIKey,
+			envConf.DBConf.VaultPrefix,
+		)
+	}
+
 	res = &config.Config{
 		Logger:            lr.NewConsole(sc.Debug),
 		ServerConf:        sc,
 		DBConf:            envConf.DBConf,
 		RedisConf:         envConf.RedisConf,
 		BillingManager:    InstanceBillingManager,
-		CredentialBackend: InstanceCredentialBackend,
+		CredentialBackend: instanceCredentialBackend,
 	}
 	res.Logger.Info().Msg("Loading MetadataFromConf")
 	res.Metadata = config.MetadataFromConf(envConf.ServerConf, e.version)
 	res.Logger.Info().Msg("Loaded MetadataFromConf")
 	res.DB = InstanceDB
-
-	// res.Logger.Info().Msg("Starting gorm automigrate")
-	// err = gorm.AutoMigrate(InstanceDB, sc.Debug)
-	//
-	// if err != nil {
-	//	return nil, err
-	// }
-	// res.Logger.Info().Msg("Completed gorm automigrate")
 
 	var key [32]byte
 
@@ -98,7 +106,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 
 	res.Logger.Info().Msg("Creating new gorm repository")
-	res.Repo = gorm.NewRepository(InstanceDB, &key, InstanceCredentialBackend)
+	res.Repo = gorm.NewRepository(InstanceDB, &key, instanceCredentialBackend)
 	res.Logger.Info().Msg("Created new gorm repository")
 
 	res.Logger.Info().Msg("Creating new session store")
@@ -300,6 +308,11 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		client := porterv1connect.NewClusterControlPlaneServiceClient(http.DefaultClient, sc.ClusterControlPlaneAddress)
 		res.ClusterControlPlaneClient = client
 		res.Logger.Info().Msg("Created CCP client")
+	}
+
+	res.TelemetryConfig = telemetry.TracerConfig{
+		ServiceName:  sc.TelemetryName,
+		CollectorURL: sc.TelemetryCollectorURL,
 	}
 
 	return res, nil

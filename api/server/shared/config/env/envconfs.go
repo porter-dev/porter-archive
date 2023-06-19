@@ -23,7 +23,7 @@ type ServerConf struct {
 	CookieInsecure       bool          `env:"COOKIE_INSECURE,default=false"`
 	TokenGeneratorSecret string        `env:"TOKEN_GENERATOR_SECRET,default=secret"`
 	TimeoutRead          time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
-	TimeoutWrite         time.Duration `env:"SERVER_TIMEOUT_WRITE,default=30s"`
+	TimeoutWrite         time.Duration `env:"SERVER_TIMEOUT_WRITE,default=60s"`
 	TimeoutIdle          time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
 	IsLocal              bool          `env:"IS_LOCAL,default=false"`
 	IsTesting            bool          `env:"IS_TESTING,default=false"`
@@ -131,6 +131,11 @@ type ServerConf struct {
 	EnableCAPIProvisioner bool `env:"ENABLE_CAPI_PROVISIONER"`
 	// NATSUrl is the URL of the NATS cluster. This is required if ENABLE_CAPI_PROVISIONER is true
 	NATSUrl string `env:"NATS_URL"`
+
+	// TelemetryName is the name that will group this service during collection
+	TelemetryName string `env:"TELEMETRY_NAME"`
+	// TelemetryCollectorURL is the URL (host:port) for collecting spans
+	TelemetryCollectorURL string `env:"TELEMETRY_COLLECTOR_URL,default=localhost:4317"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,
@@ -149,6 +154,8 @@ type DBConf struct {
 	SQLLite     bool   `env:"SQL_LITE,default=false"`
 	SQLLitePath string `env:"SQL_LITE_PATH,default=/porter/porter.db"`
 
+	// VaultEnabled is used to denote if Porter should use Vault for secrets management. This was previously set by 'ee' build tags
+	VaultEnabled   bool   `env:"VAULT_ENABLED,default=false"`
 	VaultPrefix    string `env:"VAULT_PREFIX,default=production"`
 	VaultAPIKey    string `env:"VAULT_API_KEY"`
 	VaultServerURL string `env:"VAULT_SERVER_URL"`

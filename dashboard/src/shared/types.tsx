@@ -14,6 +14,7 @@ export interface ClusterType {
   preview_envs_enabled?: boolean;
   cloud_provider_credential_identifier?: string;
   status?: string;
+  cloud_provider: string;
 }
 
 export interface DetailedClusterType extends ClusterType {
@@ -656,6 +657,7 @@ export type BuildConfig = {
 
 export interface PorterAppOptions {
   porter_yaml: string;
+  porter_yaml_path?: string;
   repo_name?: string;
   git_branch?: string;
   git_repo_id?: number;
@@ -670,3 +672,22 @@ export interface PorterAppOptions {
   };
   override_release?: boolean;
 }
+
+export enum PorterAppEventType {
+  BUILD = "BUILD",
+  DEPLOY = "DEPLOY",
+  APP_EVENT = "APP_EVENT",
+  PRE_DEPLOY = "PRE_DEPLOY",
+}
+export interface PorterAppEvent {
+  created_at: string;
+  updated_at: string;
+  id: string;
+  status: string;
+  type: PorterAppEventType;
+  type_source: string;
+  porter_app_id: number;
+  metadata: any;
+}
+
+

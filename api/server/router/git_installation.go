@@ -3,7 +3,7 @@ package router
 import (
 	"fmt"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/porter-dev/porter/api/server/handlers/environment"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -735,5 +735,72 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
+	getWorkflowLogsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/get_logs_workflow",
+					relPath,
+					types.URLParamGitRepoOwner,
+					types.URLParamGitRepoName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getWorkflowLogsHandler := gitinstallation.NewGetWorkflowLogsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getWorkflowLogsEndpoint,
+		Handler:  getWorkflowLogsHandler,
+		Router:   r,
+	})
+
+	getWorkflowLogByIDEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/workflow_run_id",
+					relPath,
+					types.URLParamGitRepoOwner,
+					types.URLParamGitRepoName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getWorkflowLogByIDHandler := gitinstallation.NewGetSpecificWorkflowLogsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getWorkflowLogByIDEndpoint,
+		Handler:  getWorkflowLogByIDHandler,
+		Router:   r,
+	})
 	return routes, newPath
 }

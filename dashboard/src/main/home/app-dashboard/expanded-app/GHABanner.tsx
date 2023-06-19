@@ -18,6 +18,7 @@ type Props = {
   repoName: string;
   stackName: string;
   gitRepoId: number;
+  porterYamlPath?: string;
 };
 
 const GHABanner: React.FC<Props> = ({
@@ -26,6 +27,7 @@ const GHABanner: React.FC<Props> = ({
   repoName,
   stackName,
   gitRepoId,
+  porterYamlPath = "porter.yaml",
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [showGHAModal, setShowGHAModal] = useState(false);
@@ -34,7 +36,7 @@ const GHABanner: React.FC<Props> = ({
       <StyledGHABanner>
         <>
           {pullRequestUrl ? (
-            <Banner 
+            <Banner
               type="warning"
               suffix={
                 <RefreshButton onClick={() => window.location.reload()}>
@@ -42,22 +44,18 @@ const GHABanner: React.FC<Props> = ({
                 </RefreshButton>
               }
             >
-              <Container row spaced>
-                Your application will not be available until you merge
-                <Spacer inline width="5px" />
-                <Link
-                  to={pullRequestUrl}
-                  target="_blank"
-                  hasunderline
-                >
-                  this PR
-                </Link>
-                <Spacer inline width="5px" />
-                into your branch.
-              </Container>
+              Your application will not be available until you merge the Porter PR.
+              <Spacer inline width="5px" />
+              <Link
+                to={pullRequestUrl}
+                target="_blank"
+                hasunderline
+              >
+                Merge PR
+              </Link>
             </Banner>
           ) : (
-            <Banner   
+            <Banner
               type="warning"
               suffix={
                 <RefreshButton onClick={() => window.location.reload()}>
@@ -88,6 +86,7 @@ const GHABanner: React.FC<Props> = ({
           stackName={stackName}
           projectId={currentProject.id}
           clusterId={currentCluster.id}
+          porterYamlPath={porterYamlPath}
         />
       )}
     </>
@@ -100,12 +99,11 @@ const StyledGHABanner = styled.div`
 `;
 
 const RefreshButton = styled.div`
-  color: #ffffff44;
+  color: #ffffff;
   display: flex;
   align-items: center;
   cursor: pointer;
   :hover {
-    color: #ffffff;
     > img {
       opacity: 1;
     }
@@ -117,6 +115,5 @@ const RefreshButton = styled.div`
     justify-content: center;
     height: 11px;
     margin-right: 10px;
-    opacity: 0.3;
   }
 `;

@@ -74,7 +74,7 @@ func (b *Build) GetImage() string {
 	return *b.Image
 }
 
-func (b *Build) getV1BuildImage(env map[string]string) (*types.Resource, error) {
+func (b *Build) getV1BuildImage(env map[string]string, namespace string) (*types.Resource, error) {
 	config := &preview.BuildDriverConfig{}
 
 	if b.GetMethod() == "pack" {
@@ -110,7 +110,8 @@ func (b *Build) getV1BuildImage(env map[string]string) (*types.Resource, error) 
 			"name": "web",
 		},
 		Target: map[string]any{
-			"app_name": b.GetName(),
+			"app_name":  b.GetName(),
+			"namespace": namespace,
 		},
 		DependsOn: []string{
 			"get-env",
@@ -127,7 +128,7 @@ func GetBuildImageDriverName() string {
 	return fmt.Sprintf("%s-build-image", getBuildImageName())
 }
 
-func (b *Build) getV1PushImage() (*types.Resource, error) {
+func (b *Build) getV1PushImage(namespace string) (*types.Resource, error) {
 	config := &preview.PushDriverConfig{}
 
 	config.Push.Image = fmt.Sprintf("{ .%s.image }", GetBuildImageDriverName())
@@ -147,7 +148,8 @@ func (b *Build) getV1PushImage() (*types.Resource, error) {
 			GetBuildImageDriverName(),
 		},
 		Target: map[string]any{
-			"app_name": b.GetName(),
+			"app_name":  b.GetName(),
+			"namespace": namespace,
 		},
 		Config: rawConfig,
 	}, nil

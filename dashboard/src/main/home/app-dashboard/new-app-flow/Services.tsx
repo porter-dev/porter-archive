@@ -13,16 +13,28 @@ import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
 import { Service, ServiceType } from "./serviceTypes";
-import api from "../../../../shared/api";
-import { Context } from "../../../../shared/Context";
 
 interface ServicesProps {
   services: Service[];
   setServices: (services: Service[]) => void;
-  chart?: any
+  addNewText: string;
+  defaultExpanded?: boolean;
+  chart?: any;
+  limitOne?: boolean;
+  prePopulateService?: Service;
+  setExpandedJob?: (x: string) => void;
 }
 
-const Services: React.FC<ServicesProps> = ({ services, setServices, chart }) => {
+const Services: React.FC<ServicesProps> = ({
+  services,
+  setServices,
+  addNewText,
+  chart,
+  defaultExpanded = false,
+  limitOne = false,
+  setExpandedJob,
+  prePopulateService,
+}) => {
   const [showAddServiceModal, setShowAddServiceModal] = useState<boolean>(
     false
   );
@@ -38,44 +50,75 @@ const Services: React.FC<ServicesProps> = ({ services, setServices, chart }) => 
     return serviceNames.includes(name);
   };
 
+  const maybeGetError = (): string | undefined => {
+    if (serviceName.length > 30) {
+      return "Must be 30 characters or less.";
+    } else if (serviceName != "" && !isServiceNameValid(serviceName)) {
+      return "Lowercase letters, numbers, and '-' only.";
+    } else if (isServiceNameDuplicate(serviceName)) {
+      return "Service name is duplicate";
+    } else {
+      return undefined;
+    }
+  }
+
+  const maybeRenderAddServicesButton = () => {
+    if (limitOne && services.length > 0) {
+      return null;
+    }
+    return (
+      <>
+        <AddServiceButton
+          onClick={() => {
+            if (prePopulateService == null) {
+              setShowAddServiceModal(true);
+              setServiceType("web");
+            } else {
+              const newServices = [
+                ...services,
+                prePopulateService,
+              ]
+              setServices(newServices);
+            }
+          }}
+        >
+          <i className="material-icons add-icon">add_icon</i>
+          {addNewText}
+        </AddServiceButton>
+        <Spacer y={0.5} />
+      </>
+    )
+  }
+
   return (
     <>
       {services.length > 0 && (
-        <>
-          <ServicesContainer>
-            {services.map((service, index) => {
-              return (
-                <ServiceContainer
-                  key={service.name}
-                  service={service}
-                  chart={chart}
-                  editService={(newService: Service) =>
-                    setServices(
-                      services.map((s, i) => (i === index ? newService : s))
-                    )
-                  }
-                  deleteService={() =>
-                    setServices(services.filter((_, i) => i !== index))
-                  }
-                />
-              );
-            })}
-          </ServicesContainer>
-          <Spacer y={0.5} />
-        </>
+        <ServicesContainer>
+          {services.map((service, index) => {
+            return (
+              <ServiceContainer
+                key={service.name}
+                setExpandedJob={setExpandedJob}
+                service={service}
+                chart={chart}
+                editService={(newService: Service) => {
+                  const newServices = services.map((s, i) => (i === index ? newService : s));
+                  setServices(newServices);
+                }}
+                deleteService={() => {
+                  const newServices = services.filter((_, i) => i !== index);
+                  setServices(newServices);
+                }}
+                defaultExpanded={defaultExpanded}
+              />
+            );
+          })}
+        </ServicesContainer>
       )}
-      <AddServiceButton
-        onClick={() => {
-          setShowAddServiceModal(true);
-          setServiceType("web");
-        }}
-      >
-        <i className="material-icons add-icon">add_icon</i>
-        Add a new service
-      </AddServiceButton>
+      {maybeRenderAddServicesButton()}
       {showAddServiceModal && (
         <Modal closeModal={() => setShowAddServiceModal(false)} width="500px">
-          <Text size={16}>Add a new service</Text>
+          <Text size={16}>{addNewText}</Text>
           <Spacer y={1} />
           <Text color="helper">Select a service type:</Text>
           <Spacer y={0.5} />
@@ -103,26 +146,17 @@ const Services: React.FC<ServicesProps> = ({ services, setServices, chart }) => 
             placeholder="ex: my-service"
             width="100%"
             value={serviceName}
-            error={
-              (serviceName != "" &&
-                !isServiceNameValid(serviceName) &&
-                'Lowercase letters, numbers, and "-" only.') ||
-              (serviceName.length > 30 && "Must be 30 characters or less.") ||
-              (isServiceNameDuplicate(serviceName) &&
-                "Service name is duplicate")
-            }
+            error={maybeGetError()}
             setValue={setServiceName}
           />
           <Spacer y={1} />
           <Button
             onClick={() => {
-              setServices([
+              const newServices = [
                 ...services,
-                Service.default(serviceName, serviceType, {
-                  readOnly: false,
-                  value: "",
-                }),
-              ]);
+                Service.default(serviceName, serviceType),
+              ]
+              setServices(newServices);
               setShowAddServiceModal(false);
               setServiceName("");
               setServiceType("web");

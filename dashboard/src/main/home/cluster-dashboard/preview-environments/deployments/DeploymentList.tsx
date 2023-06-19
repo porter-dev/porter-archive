@@ -200,6 +200,8 @@ const DeploymentList = () => {
       filteredByStatus,
       searchValue,
       {
+        threshold: 0.2,
+        distance: 50,
         isCaseSensitive: false,
         keys: ["gh_pr_name", "gh_repo_name", "gh_repo_owner"],
       }
@@ -300,7 +302,7 @@ const DeploymentList = () => {
             <DynamicLink
               to={`/preview-environments/deployments/${environment_id}/${repo_owner}/${repo_name}/settings`}
             >
-              <I className="material-icons">more_vert</I>
+              <I className="material-icons">settings</I>
             </DynamicLink>
           </Flex>
         }

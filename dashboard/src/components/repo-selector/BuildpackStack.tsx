@@ -133,14 +133,14 @@ export const BuildpackStack: React.FC<{
     if (actionConfig.kind === "gitlab") {
       return api.detectGitlabBuildpack<DetectBuildpackResponse>(
         "<token>",
-        { dir: folderPath || "." },
+        {
+          repo_path: actionConfig.git_repo,
+          branch: branch,
+          dir: folderPath || ".",
+        },
         {
           project_id: currentProject.id,
           integration_id: actionConfig.gitlab_integration_id,
-
-          repo_owner: actionConfig.git_repo.split("/")[0],
-          repo_name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
         }
       );
     }
@@ -218,9 +218,7 @@ export const BuildpackStack: React.FC<{
           defaultStack = builders
             .flatMap((builder) => builder.builders)
             .find((stack) => {
-              return (
-                stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK
-              );
+              return stack === DEFAULT_HEROKU_STACK;
             });
         }
         setBuilders(builders);
@@ -395,13 +393,23 @@ export const BuildpackStack: React.FC<{
     return <Loading />;
   }
 
+  const sortedStackOptions = stackOptions.sort((a, b) => {
+    if (a.label < b.label) {
+      return -1;
+    }
+    if (a.label > b.label) {
+      return 1;
+    }
+    return 0;
+  });
+
   return (
     <BuildpackConfigurationContainer>
       <>
         <Select
           value={selectedStack}
           width="300px"
-          options={stackOptions}
+          options={sortedStackOptions}
           setValue={(option) => {
             setSelectedStack(option);
           }}

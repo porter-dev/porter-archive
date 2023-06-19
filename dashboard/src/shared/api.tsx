@@ -211,6 +211,54 @@ const deletePorterApp = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
 });
 
+const rollbackPorterApp = baseApi<
+  {
+    revision: number;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    stack_name: string;
+  }
+>("POST", (pathParams) => {
+  let { project_id, cluster_id, stack_name } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/rollback`;
+});
+
+const getLogsWithinTimeRange = baseApi<
+  {
+    chart_name?: string;
+    limit: number;
+    start_range?: string;
+    end_range?: string;
+    search_param?: string;
+    revision?: string;
+    namespace?: string;
+    pod_selector?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/stacks/logs`
+);
+
+const getFeedEvents = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    stack_name: string;
+    page?: number;
+  }
+>("GET", (pathParams) => {
+  let { project_id, cluster_id, stack_name, page } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/events?page=${page || 1}`;
+});
+
 const createEnvironment = baseApi<
   {
     name: string;
@@ -2077,6 +2125,81 @@ const reRunGHWorkflow = baseApi<
   }
 );
 
+const getGHWorkflowLogs = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    git_installation_id: number;
+    owner: string;
+    name: string;
+    filename?: string;
+    release_name?: string;
+  }
+>(
+  "GET",
+  ({
+    project_id,
+    git_installation_id,
+    owner,
+    name,
+    cluster_id,
+    filename,
+    release_name,
+  }) => {
+    const queryParams = new URLSearchParams();
+
+    if (release_name) {
+      queryParams.set("release_name", release_name);
+    }
+    if (filename) {
+      queryParams.set("filename", filename);
+    }
+
+    return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/get_logs_workflow?${queryParams.toString()}`;
+  }
+);
+
+const getGHWorkflowLogById = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    git_installation_id: number;
+    owner: string;
+    name: string;
+    filename?: string;
+    run_id: string;
+    release_name?: string;
+  }
+>(
+  "GET",
+  ({
+    project_id,
+    git_installation_id,
+    owner,
+    name,
+    cluster_id,
+    filename,
+    run_id,
+    release_name,
+  }) => {
+    const queryParams = new URLSearchParams();
+
+    if (release_name) {
+      queryParams.set("release_name", release_name);
+    }
+    if (filename) {
+      queryParams.set("filename", filename);
+    }
+    if (run_id) {
+      queryParams.set("run_id", run_id);
+    }
+
+    return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/workflow_run_id?${queryParams.toString()}`;
+  }
+);
+
 const triggerPreviewEnvWorkflow = baseApi<
   {},
   { project_id: number; cluster_id: number; deployment_id: number }
@@ -2294,10 +2417,25 @@ const getIncidentEvents = baseApi<
 const updateOnboardingStep = baseApi<
   {
     step: string;
+    provider?: string;
   },
   {}
 >("POST", (pathParams) => {
   return `/api/onboarding_step`;
+});
+
+const updateStackStep = baseApi<
+  {
+    step: string;
+    stack_name?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  let { project_id, cluster_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/analytics`;
 });
 
 // STACKS
@@ -2482,6 +2620,7 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
     github_repo_name: string;
     open_pr: boolean;
     branch: string;
+    porter_yaml_path: string;
   },
   {
     project_id: number;
@@ -2527,10 +2666,13 @@ export default {
   createPasswordResetVerify,
   createPasswordResetFinalize,
   createProject,
+  // PORTER APP
   getPorterApps,
   getPorterApp,
   createPorterApp,
   deletePorterApp,
+  rollbackPorterApp,
+  getLogsWithinTimeRange,
   createConfigMap,
   deleteCluster,
   deleteConfigMap,
@@ -2683,6 +2825,8 @@ export default {
   updateBuildConfig,
   updateGitActionConfig,
   reRunGHWorkflow,
+  getGHWorkflowLogs,
+  getGHWorkflowLogById,
   triggerPreviewEnvWorkflow,
   getTagsByProjectId,
   createTag,
@@ -2705,6 +2849,7 @@ export default {
   createSecretAndOpenGitHubPullRequest,
   // TRACKING
   updateOnboardingStep,
+  updateStackStep,
   // STACKS
   listStacks,
   getStack,
@@ -2718,6 +2863,7 @@ export default {
   removeStackAppResource,
   addStackEnvGroup,
   removeStackEnvGroup,
+  getFeedEvents,
 
   // STATUS
   getGithubStatus,

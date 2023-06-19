@@ -378,20 +378,21 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   }, [invites, currentProject?.id, window?.location?.host, isHTTPS, user?.id]);
 
   const hasSeats = useMemo(() => {
-    if (String(edition) === "dev-ee") {
-      return true;
-    }
+    // if (String(edition) === "dev-ee") {
+    //   return true;
+    // }
 
-    if (!hasBillingEnabled) {
-      return true;
-    }
+    // if (!hasBillingEnabled) {
+    //   return true;
+    // }
 
-    if (usage?.limit.users === 0) {
-      // If usage limit is 0, the project has unlimited seats. Otherwise, check
-      // the usage limit against the current usage.
-      return true;
-    }
-    return usage?.current.users < usage?.limit.users;
+    // if (usage?.limit.users === 0) {
+    //   // If usage limit is 0, the project has unlimited seats. Otherwise, check
+    //   // the usage limit against the current usage.
+    //   return true;
+    // }
+    // return usage?.current.users < usage?.limit.users;
+    return true;
   }, [hasBillingEnabled, usage, edition]);
 
   if (hasBillingEnabled === null && usage === null) {
@@ -512,8 +513,8 @@ const Placeholder = styled.div`
   font-size: 13px;
   color: #aaaabb;
   border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
+  background: ${({ theme }) => theme.fg}};
+  border: 1px solid ${({ theme }) => theme.border};
 `;
 
 const ButtonWrapper = styled.div`

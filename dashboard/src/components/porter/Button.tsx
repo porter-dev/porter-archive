@@ -151,8 +151,9 @@ const StyledButton = styled.button<{
   border: none;
   outline: none;
   color: white;
+  opacity: ${props => props.disabled && props.withBorder ? "0.5" : "1"};
   background: ${props => {
-    if (props.alt) {
+    if (props.alt || props.color === "fg") {
       return props.theme.fg;
     }
     return (props.disabled && !props.color) ? "#aaaabb" : (props.color || props.theme.button);

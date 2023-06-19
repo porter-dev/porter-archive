@@ -3,6 +3,10 @@ package project_integration
 import (
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
+
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
+
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -46,6 +50,20 @@ func (p *CreateAzureHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	res := types.CreateAzureResponse{
 		AzureIntegration: az.ToAzureIntegrationType(),
+	}
+
+	req := connect.NewRequest(&porterv1.CreateAzureConnectionRequest{
+		ProjectId:              int64(project.ID),
+		ClientId:               request.AzureClientID,
+		SubscriptionId:         request.AzureSubscriptionID,
+		TenantId:               request.AzureTenantID,
+		ServicePrincipalSecret: []byte(request.ServicePrincipalKey),
+	})
+	_, err = p.Config().ClusterControlPlaneClient.CreateAzureConnection(r.Context(), req)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 
 	p.WriteResult(w, r, res)

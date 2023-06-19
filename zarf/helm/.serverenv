@@ -1,6 +1,7 @@
 # Fill out this file, and renamed to '.server.env' in order to run this with Tilt
 
 # Required parameters
+
 SQL_LITE=false
 DB_NAME=porter
 DB_USER=porter
@@ -9,14 +10,17 @@ DB_HOST=postgresql
 DB_PORT=5432
 
 # Required for accessing cluster control plane. If ENABLE_CAPI_PROVISIONER=false, nothing in this section will be used
+
 ENABLE_CAPI_PROVISIONER=false
 NATS_URL=nats:4222
 CLUSTER_CONTROL_PLANE_ADDRESS=http://ccp-web:7833
 
 # Github Login OAuth
+
 GITHUB_LOGIN_ENABLED=false
 
 # Github App for repo deployments, and preview environments. Remove these if you are not using preview environments or deploying from a repo locally
+
 GITHUB_APP_CLIENT_ID=<github_app_id>
 GITHUB_APP_CLIENT_SECRET=<github_secret>
 GITHUB_APP_WEBHOOK_SECRET=<webhook_secret>
@@ -24,11 +28,19 @@ GITHUB_APP_NAME=<github_app_name>
 GITHUB_APP_ID=<github_app_id>
 
 # GITHUB_APP_SECRET_PATH is the path to your secret within the container. Tilt will sync your ~/.ssh/ folder into /app/ssh automatically. This will likely be /app/ssh/your_ssh_pem_name
+
 GITHUB_APP_SECRET_PATH=<path_to_secret>
 
 # Optional parameters
+
 HELM_APP_REPO_URL=https://charts.getporter.dev
 HELM_ADD_ON_REPO_URL=https://charts.getporter.dev
 
 # SERVER_URL must be set to your ngrok url, If you are using ngrok for your github app setup on the backend
+
 # SERVER_URL=
+
+# TELEMETRY\_\* are required if you are piping trace events to the open telemetry collector
+
+TELEMETRY_NAME=porter
+TELEMETRY_COLLECTOR_URL=otel-collector:4317

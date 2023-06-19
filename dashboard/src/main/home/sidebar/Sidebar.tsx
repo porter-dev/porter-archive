@@ -11,6 +11,9 @@ import infra from "assets/infra.png";
 
 import { Context } from "shared/Context";
 
+import Text from "components/porter/Text";
+import Container from "components/porter/Container";
+import Spacer from "components/porter/Spacer";
 import Clusters from "./Clusters";
 import ProjectSectionContainer from "./ProjectSectionContainer";
 import { RouteComponentProps, withRouter } from "react-router";
@@ -265,6 +268,12 @@ class Sidebar extends Component<PropsType, StateType> {
           <br />
 
           {this.renderProjectContents()}
+          {this.context.featurePreview && (
+            <Container row>
+              <Spacer inline width="25px" />
+              <Text color="helper">(Feature preview enabled)</Text>
+            </Container>
+          )}
         </StyledSidebar>
       </>
     );
@@ -290,7 +299,6 @@ const ProjectPlaceholder = styled.div`
   justify-content: center;
   height: calc(100% - 100px);
   font-size: 13px;
-  font-family: "Work Sans", sans-serif;
   color: #aaaabb;
   padding-bottom: 80px;
 
@@ -310,7 +318,6 @@ const NavButton = styled(SidebarLink)`
   margin: 5px 15px;
   padding: 0 30px 2px 6px;
   font-size: 13px;
-  font-family: "Work Sans", sans-serif;
   color: ${props => props.theme.text.primary};
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
@@ -408,7 +415,6 @@ const Tooltip = styled.div`
   flex: 1;
   color: white;
   font-size: 12px;
-  font-family: Work Sans, sans-serif;
   outline: 1px solid #ffffff55;
   opacity: 0;
   animation: faded-in 0.2s 0.15s;
@@ -449,7 +455,6 @@ const CollapseButton = styled.div`
 `;
 
 const StyledSidebar = styled.section`
-  font-family: "Work Sans", sans-serif;
   width: 240px;
   position: relative;
   padding-top: 20px;

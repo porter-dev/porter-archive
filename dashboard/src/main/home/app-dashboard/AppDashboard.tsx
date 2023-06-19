@@ -27,6 +27,8 @@ import Toggle from "components/porter/Toggle";
 import PorterLink from "components/porter/Link";
 import Loading from "components/Loading";
 import Fieldset from "components/porter/Fieldset";
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import Icon from "components/porter/Icon";
 
 type Props = {};
 
@@ -48,8 +50,8 @@ const namespaceBlacklist = [
   "monitoring",
 ];
 
-const AppDashboard: React.FC<Props> = ({}) => {
-  const { currentProject, currentCluster } = useContext(Context);
+const AppDashboard: React.FC<Props> = ({ }) => {
+  const { currentProject, currentCluster, setFeaturePreview } = useContext(Context);
   const [apps, setApps] = useState([]);
   const [charts, setCharts] = useState([]);
   const [error, setError] = useState(null);
@@ -106,9 +108,11 @@ const AppDashboard: React.FC<Props> = ({}) => {
         })
       );
       apps.forEach((app: any, i: number) => {
-        app["last_deployed"] = readableDate(
-          timeRes[i].data[0]?.info?.last_deployed
-        );
+        if (timeRes?.[i]?.data?.[0]?.info?.last_deployed != null) {
+          app["last_deployed"] = readableDate(
+            timeRes[i].data[0].info.last_deployed
+          );
+        }
       });
       setApps(apps.reverse());
       setIsLoading(false);
@@ -128,23 +132,41 @@ const AppDashboard: React.FC<Props> = ({}) => {
     return (
       <>
         {app.repo_name ? (
-          <>
+          <Container row>
             <SmallIcon opacity="0.6" src={github} />
-            {app.repo_name}
-          </>
+            <Text size={13} color="#ffffff44">{app.repo_name}</Text>
+          </Container>
         ) : (
-          <>
+          <Container row>
             <SmallIcon
               opacity="0.7"
               height="18px"
               src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
             />
-            {app.image_repo_uri}
-          </>
+            <Text size={13} color="#ffffff44">{app.image_repo_uri}</Text>
+          </Container>
         )}
       </>
     );
   };
+
+  const updateStackStartedStep = async () => {
+    try {
+      await api.updateStackStep(
+        "<token>",
+        {
+          step: 'stack-launch-start'
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      );
+    } catch (err) {
+      // TODO: handle error
+    }
+  }
+
 
   const renderIcon = (b: string, size?: string) => {
     var src = box;
@@ -168,7 +190,7 @@ const AppDashboard: React.FC<Props> = ({}) => {
       }
     }
     return (
-      <>{size === "larger" ? <MidIcon src={src} /> : <Icon src={src} />}</>
+      <>{size === "larger" ? <Icon height="16px" src={src} /> : <Icon height="18px" src={src} />}</>
     );
   };
 
@@ -180,94 +202,108 @@ const AppDashboard: React.FC<Props> = ({}) => {
         description="Web services, workers, and jobs for this project."
         disableLineBreak
       />
-      <Container row spaced>
-        <SearchBar
-          value={searchValue}
-          setValue={setSearchValue}
-          placeholder="Search applications . . ."
-          width="100%"
-        />
-        <Spacer inline x={2} />
-        <Toggle
-          items={[
-            { label: <ToggleIcon src={grid} />, value: "grid" },
-            { label: <ToggleIcon src={list} />, value: "list" },
-          ]}
-          active={view}
-          setActive={setView}
-        />
-        <Spacer inline x={2} />
-        <PorterLink to="/apps/new/app">
-          <Button onClick={() => {}} height="30px" width="160px">
-            <I className="material-icons">add</I> New application
-          </Button>
-        </PorterLink>
-      </Container>
-      <Spacer y={1} />
-      {!isLoading && filteredApps.length === 0 && (
-        <Fieldset>
-          <Container row>
-            <PlaceholderIcon src={notFound} />
-            <Text color="helper">No applications were found.</Text>
-          </Container>
-        </Fieldset>
-      )}
-      {isLoading ? (
-        <Loading offset="-150px" />
-      ) : view === "grid" ? (
-        <GridList>
-          {(filteredApps ?? []).map((app: any, i: number) => {
-            if (!namespaceBlacklist.includes(app.name)) {
-              return (
-                <Link to={`/apps/${app.name}`} key={i}>
-                  <Block>
-                    <Container row>
-                      <Text size={14}>
-                        {renderIcon(app["build_packs"])}
-                        {app.name}
-                      </Text>
-                      <Spacer inline x={2} />
-                    </Container>
-                    <StatusIcon src={healthy} />
-                    <Text size={13} color="#ffffff44">
-                      {renderSource(app)}
-                    </Text>
-                    <Text size={13} color="#ffffff44">
-                      <SmallIcon opacity="0.4" src={time} />
-                      {app.last_deployed}
-                    </Text>
-                  </Block>
-                </Link>
-              );
-            }
-          })}
-        </GridList>
+      {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
+        <ClusterProvisioningPlaceholder />
       ) : (
-        <List>
-          {(filteredApps ?? []).map((app: any, i: number) => {
-            if (!namespaceBlacklist.includes(app.name)) {
-              return (
-                <Link to={`/apps/${app.name}`} key={i}>
-                  <Row>
-                    <Text size={14}>
-                      {renderIcon(app["build_packs"], "larger")}
-                      {app.name}
-                      <Spacer inline x={1} />
-                      <MidIcon src={healthy} />
-                    </Text>
-                    <Spacer height="15px" />
-                    <Text size={13} color="#ffffff44">
-                      {renderSource(app)}
-                      <Spacer inline x={1} />
-                      <SmallIcon opacity="0.4" src={time} />
-                      {app.last_deployed}
-                    </Text>
-                  </Row>
-                </Link>
-              );
-            }
-          })}
-        </List>
+        <>
+          <Container row spaced>
+            <SearchBar
+              value={searchValue}
+              setValue={(x) => {
+                if (x === "open_sesame") {
+                  setFeaturePreview(true);
+                }
+                setSearchValue(x);
+              }}
+              placeholder="Search applications . . ."
+              width="100%"
+            />
+            <Spacer inline x={2} />
+            <Toggle
+              items={[
+                { label: <ToggleIcon src={grid} />, value: "grid" },
+                { label: <ToggleIcon src={list} />, value: "list" },
+              ]}
+              active={view}
+              setActive={setView}
+            />
+            <Spacer inline x={2} />
+            <PorterLink to="/apps/new/app">
+              <Button onClick={async () => updateStackStartedStep()} height="30px" width="160px">
+                <I className="material-icons">add</I> New application
+              </Button>
+            </PorterLink>
+          </Container>
+          <Spacer y={1} />
+          {!isLoading && filteredApps.length === 0 && (
+            <Fieldset>
+              <Container row>
+                <PlaceholderIcon src={notFound} />
+                <Text color="helper">No applications were found.</Text>
+              </Container>
+            </Fieldset>
+          )}
+          {isLoading ? (
+            <Loading offset="-150px" />
+          ) : view === "grid" ? (
+            <GridList>
+              {(filteredApps ?? []).map((app: any, i: number) => {
+                if (!namespaceBlacklist.includes(app.name)) {
+                  return (
+                    <Link to={`/apps/${app.name}`} key={i}>
+                      <Block>
+                        <Container row>
+                          {renderIcon(app["build_packs"])}
+                          <Spacer inline width="12px" />
+                          <Text size={14}>{app.name}</Text>
+                          <Spacer inline x={2} />
+                        </Container>
+                        <StatusIcon src={healthy} />
+                        {renderSource(app)}
+                        <Container row>
+                          <SmallIcon opacity="0.4" src={time} />
+                          <Text size={13} color="#ffffff44">{app.last_deployed}</Text>
+                        </Container>
+                      </Block>
+                    </Link>
+                  );
+                }
+              })}
+            </GridList>
+          ) : (
+            <List>
+              {(filteredApps ?? []).map((app: any, i: number) => {
+                if (!namespaceBlacklist.includes(app.name)) {
+                  return (
+                    <Link to={`/apps/${app.name}`} key={i}>
+                      <Row>
+                        <Container row>
+                          <Spacer inline width="1px" />
+                          {renderIcon(app["build_packs"], "larger")}
+                          <Spacer inline width="12px" />
+                          <Text size={14}>
+                            {app.name}
+                          </Text>
+                          <Spacer inline x={1} />
+                          <Icon height="16px" src={healthy} />
+                        </Container>
+                        <Spacer height="15px" />
+                        <Container row>
+                          {renderSource(app)}
+                          <Spacer inline x={1} />
+                          <SmallIcon opacity="0.4" src={time} />
+                          <Text size={13} color="#ffffff44">
+                            {app.last_deployed}
+                          </Text>
+                        </Container>
+                      </Row>
+                    </Link>
+                  );
+                }
+              })}
+            </List>
+          )}
+        </>
       )}
       <Spacer y={5} />
     </StyledAppDashboard>
@@ -310,17 +346,6 @@ const StatusIcon = styled.img`
   top: 20px;
   right: 20px;
   height: 18px;
-`;
-
-const Icon = styled.img`
-  height: 18px;
-  margin-right: 15px;
-`;
-
-const MidIcon = styled.img`
-  height: 16px;
-  margin-right: 13px;
-  margin-left: 1px;
 `;
 
 const SmallIcon = styled.img<{ opacity?: string; height?: string }>`

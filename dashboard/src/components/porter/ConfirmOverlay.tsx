@@ -1,3 +1,4 @@
+import Loading from "components/Loading";
 import React from "react";
 import { createPortal } from "react-dom";
 import styled from "styled-components";
@@ -6,23 +7,31 @@ type Props = {
   message: string;
   onYes: React.MouseEventHandler;
   onNo: React.MouseEventHandler;
+  loading?: boolean;
 };
 
-const TemplateComponent: React.FC<Props> = ({
+const ConfirmOverlay: React.FC<Props> = ({
   message,
   onYes,
   onNo,
+  loading,
 }) => {
   return (
     <>
       {
         createPortal(
           <StyledConfirmOverlay>
-            {message}
-            <ButtonRow>
-              <ConfirmButton onClick={onYes}>Yes</ConfirmButton>
-              <ConfirmButton onClick={onNo}>No</ConfirmButton>
-            </ButtonRow>
+            {loading ? (
+              <Loading />
+            ) : (
+              <>
+                {message}
+                <ButtonRow>
+                  <ConfirmButton onClick={onYes}>Yes</ConfirmButton>
+                  <ConfirmButton onClick={onNo}>No</ConfirmButton>
+                </ButtonRow>
+              </>
+            )}
           </StyledConfirmOverlay>,
           document.body
         )
@@ -31,7 +40,7 @@ const TemplateComponent: React.FC<Props> = ({
   );
 };
 
-export default TemplateComponent;
+export default ConfirmOverlay;
 
 const StyledConfirmOverlay = styled.div`
   position: absolute;

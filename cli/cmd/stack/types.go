@@ -5,7 +5,7 @@ type PorterStackYAML struct {
 	Build   *Build            `yaml:"build"`
 	Env     map[string]string `yaml:"env"`
 	Apps    map[string]*App   `yaml:"apps"`
-	Release *string           `yaml:"release"`
+	Release *App              `yaml:"release"`
 }
 
 type Build struct {

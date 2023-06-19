@@ -126,6 +126,9 @@ type UpgradeReleaseRequest struct {
 	// (optional) if set, the backend will validate that the user was upgrading from the revision specified by
 	// LatestRevision, and there hasn't been an upgrade in the meantime.
 	LatestRevision uint `json:"latest_revision"`
+
+	// Required to ignore dependecies when we read releases for umbrella charts, because their subcharts aren't Porter charts https://github.com/helm/helm/issues/9214
+	IgnoreDependencies bool
 }
 
 type UpdateImageBatchRequest struct {

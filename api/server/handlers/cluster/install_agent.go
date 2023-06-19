@@ -17,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/nodes"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -42,53 +43,61 @@ func NewInstallAgentHandler(
 }
 
 func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-install-agent-handler")
+	defer span.End()
+
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	k8sAgent, err := c.GetAgent(r, cluster, "porter-agent-system")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "failed to get kubernetes agent")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	helmAgent, err := c.GetHelmAgent(r, cluster, "porter-agent-system")
+	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "porter-agent-system")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "failed to get helm agent")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	err = checkAndDeleteOlderAgent(k8sAgent, helmAgent)
-
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "unable to delete older agent")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	chart, err := loader.LoadChartPublic(c.Config().ServerConf.DefaultAddonHelmRepoURL, "porter-agent", "")
+	chart, err := loader.LoadChartPublic(ctx, c.Config().ServerConf.DefaultAddonHelmRepoURL, "porter-agent", "")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "failed load public porter-agent chart")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	// create namespace if not exists
 	_, err = helmAgent.K8sAgent.CreateNamespace("porter-agent-system", nil)
-
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "failed to get create porter-agent-system namespace")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	// add api token to values
 	jwt, err := token.GetTokenForAPI(user.ID, proj.ID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "failed to get porter-agent api token")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	encoded, err := jwt.EncodeToken(c.Config().TokenConf)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "failed to encode porter-agent api token")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -139,13 +148,10 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Values:    porterAgentValues,
 	}
 
-	_, err = helmAgent.InstallChart(conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
-
+	_, err = helmAgent.InstallChart(context.Background(), conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error installing porter-agent: %w", err), http.StatusBadRequest,
-		))
-
+		err = telemetry.Error(ctx, span, err, "error installing porter-agent")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -172,13 +178,13 @@ func checkAndDeleteOlderAgent(k8sAgent *kubernetes.Agent, helmAgent *helm.Agent)
 	}
 
 	// detect if the `porter-agent` release is installed
-	helmRelease, err := helmAgent.GetRelease("porter-agent", 0, false)
+	helmRelease, err := helmAgent.GetRelease(context.Background(), "porter-agent", 0, false)
 
 	if err != nil || helmRelease == nil {
 		return nil
 	}
 
-	_, err = helmAgent.UninstallChart("porter-agent")
+	_, err = helmAgent.UninstallChart(context.Background(), "porter-agent")
 
 	if err != nil {
 		return err

@@ -38,7 +38,7 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	namespace, _ := r.Context().Value(types.NamespaceScope).(string)
 	stack, _ := r.Context().Value(types.StackScope).(*models.Stack)
 
-	helmAgent, err := p.GetHelmAgent(r, cluster, "")
+	helmAgent, err := p.GetHelmAgent(r.Context(), r, cluster, "")
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

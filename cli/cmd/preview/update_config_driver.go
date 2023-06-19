@@ -56,6 +56,8 @@ func (d *UpdateConfigDriver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource, error) {
+	ctx := context.Background()
+
 	updateConfigDriverConfig, err := d.getConfig(resource)
 	if err != nil {
 		return nil, err
@@ -66,7 +68,7 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 	client := config.GetAPIClient()
 
 	_, err = client.GetRelease(
-		context.Background(),
+		ctx,
 		d.target.Project,
 		d.target.Cluster,
 		d.target.Namespace,
@@ -146,7 +148,7 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 		}
 
 		err = client.CreateRepository(
-			context.Background(),
+			ctx,
 			sharedOpts.ProjectID,
 			regID,
 			&types.CreateRegistryRepositoryRequest{
@@ -190,7 +192,6 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 			Namespace: d.target.Namespace,
 			Name:      d.target.AppName,
 		})
-
 		if err != nil {
 			return nil, err
 		}

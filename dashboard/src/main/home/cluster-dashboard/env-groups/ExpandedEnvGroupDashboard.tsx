@@ -32,11 +32,15 @@ const EnvGroupDashboard = (props: PropsType) => {
     envGrouping,
     setEnvGroups,
   } = useContext(EnvContext);
+  const isTabActive = () => {
+    return !document.hidden;
+  };
 
   const {
     data: envGroups,
     isLoading: listEnvGroupsLoading,
     isError,
+    refetch,
   } = useQuery<any[]>(
     ["envGroupList", currentProject.id, namespace, props.currentCluster.id],
     async () => {
@@ -60,13 +64,16 @@ const EnvGroupDashboard = (props: PropsType) => {
       } catch (err) {
         throw err;
       }
+    },
+    {
+      enabled: false, // Initially disable the query
     }
   );
 
   useEffect(() => {
     const name = params.name;
 
-    if (!envGroups) {
+    if (!envGroups || !isTabActive()) {
       return;
     }
 
@@ -75,6 +82,11 @@ const EnvGroupDashboard = (props: PropsType) => {
     setExpandedEnvGroup(envGroup);
   }, [envGroups, params]);
 
+  useEffect(() => {
+    if (isTabActive()) {
+      refetch(); // Run the query when the component mounts and the tab is active
+    }
+  }, []);
   if (listEnvGroupsLoading) {
     return (
       <Placeholder>

@@ -3,8 +3,8 @@ import { overrideObjectValues } from "./utils";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterJson } from "./schema";
 
-export type Service = WorkerService | WebService | JobService;
-export type ServiceType = 'web' | 'worker' | 'job';
+export type Service = WorkerService | WebService | JobService | ReleaseService;
+export type ServiceType = 'web' | 'worker' | 'job' | 'release';
 
 type ServiceString = {
     readOnly: boolean;
@@ -14,6 +14,42 @@ type ServiceBoolean = {
     readOnly: boolean;
     value: boolean;
 }
+type Ingress = {
+    enabled: ServiceBoolean;
+    hosts: ServiceString;
+    porterHosts: ServiceString;
+}
+type Autoscaling = {
+    enabled: ServiceBoolean,
+    minReplicas: ServiceString,
+    maxReplicas: ServiceString,
+    targetCPUUtilizationPercentage: ServiceString,
+    targetMemoryUtilizationPercentage: ServiceString,
+}
+type LivenessProbe = {
+    enabled: ServiceBoolean,
+    failureThreshold: ServiceString,
+    path: ServiceString,
+    periodSeconds: ServiceString,
+}
+type ReadinessProbe = {
+    enabled: ServiceBoolean,
+    failureThreshold: ServiceString,
+    path: ServiceString,
+    initialDelaySeconds: ServiceString,
+}
+type StartUpProbe = {
+    enabled: ServiceBoolean,
+    failureThreshold: ServiceString,
+    path: ServiceString,
+    periodSeconds: ServiceString,
+}
+type Health = {
+    livenessProbe: LivenessProbe,
+    startupProbe: StartUpProbe,
+    readinessProbe: ReadinessProbe,
+}
+
 
 const ServiceField = {
     string: (defaultValue: string, overrideValue?: string): ServiceString => {
@@ -106,6 +142,7 @@ export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
     type: 'web';
     port: ServiceString;
     ingress: Ingress;
+    health: Health;
 }
 const WebService = {
     default: (name: string, porterJson?: PorterJson): WebService => ({
@@ -123,12 +160,32 @@ const WebService = {
             targetMemoryUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
         },
         ingress: {
-            enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
+            enabled: ServiceField.boolean(true, porterJson?.apps?.[name]?.config?.ingress?.enabled),
             hosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
             porterHosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
         },
-        port: ServiceField.string('80', porterJson?.apps?.[name]?.config?.container?.port),
+        port: ServiceField.string('3000', porterJson?.apps?.[name]?.config?.container?.port),
         canDelete: porterJson?.apps?.[name] == null,
+        health: {
+            startupProbe: {
+                enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.health?.startupProbe?.enabled),
+                failureThreshold: ServiceField.string('3', porterJson?.apps?.[name]?.config?.health?.startupProbe?.failureThreshold),
+                path: ServiceField.string('/startupz', porterJson?.apps?.[name]?.config?.health?.startupProbe?.path),
+                periodSeconds: ServiceField.string('5', porterJson?.apps?.[name]?.config?.health?.startupProbe?.periodSeconds),
+            },
+            readinessProbe: {
+                enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.health?.readinessProbe?.enabled),
+                failureThreshold: ServiceField.string('3', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.failureThreshold),
+                path: ServiceField.string('/readyz', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.path),
+                initialDelaySeconds: ServiceField.string('0', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.initialDelaySeconds),
+            },
+            livenessProbe: {
+                enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.health?.livenessProbe?.enabled),
+                failureThreshold: ServiceField.string('3', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.failureThreshold),
+                path: ServiceField.string('/livez', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.path),
+                periodSeconds: ServiceField.string('5', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.periodSeconds),
+            },
+        }
     }),
     serialize: (service: WebService) => {
         return {
@@ -158,6 +215,26 @@ const WebService = {
                 hosts: service.ingress.hosts.value ? [service.ingress.hosts.value] : [],
                 custom_domain: service.ingress.hosts.value ? true : false,
                 porter_hosts: service.ingress.porterHosts.value ? [service.ingress.porterHosts.value] : [],
+            },
+            health: {
+                startupProbe: {
+                    enabled: service.health.startupProbe.enabled.value,
+                    failureThreshold: service.health.startupProbe.failureThreshold.value,
+                    path: service.health.startupProbe.path.value,
+                    periodSeconds: service.health.startupProbe.periodSeconds.value,
+                },
+                readinessProbe: {
+                    enabled: service.health.readinessProbe.enabled.value,
+                    failureThreshold: service.health.readinessProbe.failureThreshold.value,
+                    path: service.health.readinessProbe.path.value,
+                    initialDelaySeconds: service.health.readinessProbe.initialDelaySeconds.value,
+                },
+                livenessProbe: {
+                    enabled: service.health.livenessProbe.enabled.value,
+                    failureThreshold: service.health.livenessProbe.failureThreshold.value,
+                    path: service.health.livenessProbe.path.value,
+                    periodSeconds: service.health.livenessProbe.periodSeconds.value,
+                },
             }
         }
     },
@@ -183,6 +260,26 @@ const WebService = {
             },
             port: ServiceField.string(values.container?.port ?? '', porterJson?.apps?.[name]?.config?.container?.port),
             canDelete: porterJson?.apps?.[name] == null,
+            health: {
+                startupProbe: {
+                    enabled: ServiceField.boolean(values.health?.startupProbe?.enabled ?? false, porterJson?.apps?.[name]?.config?.health?.startupProbe?.enabled),
+                    failureThreshold: ServiceField.string(values.health?.startupProbe?.failureThreshold ?? '', porterJson?.apps?.[name]?.config?.health?.startupProbe?.failureThreshold),
+                    path: ServiceField.string(values.health?.startupProbe?.path ?? '', porterJson?.apps?.[name]?.config?.health?.startupProbe?.path),
+                    periodSeconds: ServiceField.string(values.health?.startupProbe?.periodSeconds ?? '', porterJson?.apps?.[name]?.config?.health?.startupProbe?.periodSeconds),
+                },
+                readinessProbe: {
+                    enabled: ServiceField.boolean(values.health?.readinessProbe?.enabled ?? false, porterJson?.apps?.[name]?.config?.health?.readinessProbe?.enabled),
+                    failureThreshold: ServiceField.string(values.health?.readinessProbe?.failureThreshold ?? '', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.failureThreshold),
+                    path: ServiceField.string(values.health?.readinessProbe?.path ?? '', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.path),
+                    initialDelaySeconds: ServiceField.string(values.health?.readinessProbe?.initialDelaySeconds ?? '', porterJson?.apps?.[name]?.config?.health?.readinessProbe?.initialDelaySeconds),
+                },
+                livenessProbe: {
+                    enabled: ServiceField.boolean(values.health?.livenessProbe?.enabled ?? false, porterJson?.apps?.[name]?.config?.health?.livenessProbe?.enabled),
+                    failureThreshold: ServiceField.string(values.health?.livenessProbe?.failureThreshold ?? '', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.failureThreshold),
+                    path: ServiceField.string(values.health?.livenessProbe?.path ?? '', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.path),
+                    periodSeconds: ServiceField.string(values.health?.livenessProbe?.periodSeconds ?? '', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.periodSeconds),
+                },
+            }
         }
     }
 }
@@ -238,10 +335,52 @@ const JobService = {
     }
 }
 
+export type ReleaseService = SharedServiceParams & {
+    type: 'release';
+};
+const ReleaseService = {
+    default: (name: string, porterJson?: PorterJson): ReleaseService => ({
+        name,
+        cpu: ServiceField.string('100', porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
+        ram: ServiceField.string('256', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
+        startCommand: ServiceField.string('', porterJson?.release?.run),
+        type: 'release',
+        canDelete: porterJson?.release == null,
+    }),
+
+    serialize: (service: ReleaseService) => {
+        return {
+            container: {
+                command: service.startCommand.value,
+            },
+            resources: {
+                requests: {
+                    cpu: service.cpu.value + 'm',
+                    memory: service.ram.value + 'Mi',
+                }
+            },
+            paused: true, // this makes sure the release isn't run immediately. it is flipped when the porter apply runs the release in the GHA
+        }
+    },
+
+    deserialize: (name: string, values: any, porterJson?: PorterJson): ReleaseService => {
+        return {
+            name,
+            cpu: ServiceField.string(values?.resources?.requests?.cpu?.replace('m', ''), porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
+            ram: ServiceField.string(values?.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
+            startCommand: ServiceField.string(values?.container?.command ?? '', porterJson?.release?.run),
+            type: 'release',
+            canDelete: porterJson?.release == null,
+        }
+    }
+}
+
+
 const TYPE_TO_SUFFIX: Record<ServiceType, string> = {
     'web': '-web',
     'worker': '-wkr',
     'job': '-job',
+    'release': '',
 }
 const SUFFIX_TO_TYPE: Record<string, ServiceType> = {
     '-web': 'web',
@@ -259,6 +398,8 @@ export const Service = {
                 return WorkerService.default(name, porterJson);
             case 'job':
                 return JobService.default(name, porterJson);
+            case 'release':
+                return ReleaseService.default(name, porterJson);
         }
     },
 
@@ -271,6 +412,8 @@ export const Service = {
                 return WorkerService.serialize(service);
             case 'job':
                 return JobService.serialize(service);
+            case 'release':
+                return ReleaseService.serialize(service);
         }
     },
 
@@ -279,7 +422,6 @@ export const Service = {
         if (defaultValues == null) {
             return [];
         }
-
         return Object.keys(defaultValues).map((name: string) => {
             const suffix = name.slice(-4);
             if (suffix in SUFFIX_TO_TYPE) {
@@ -298,13 +440,19 @@ export const Service = {
                         return JobService.deserialize(appName, coalescedValues, porterJson);
                 }
             }
-        }).filter((service: Service | undefined): service is Service => service != null);
+        }).filter((service: Service | undefined): service is Service => service != null) as Service[];
+    },
+    // TODO: consolidate these
+    deserializeRelease: (helmValues: any, porterJson?: PorterJson): ReleaseService => {
+        return ReleaseService.deserialize('pre-deploy', helmValues, porterJson);
     },
 
     // standard typeguards
     isWeb: (service: Service): service is WebService => service.type === 'web',
     isWorker: (service: Service): service is WorkerService => service.type === 'worker',
     isJob: (service: Service): service is JobService => service.type === 'job',
+    isRelease: (service: Service): service is ReleaseService => service.type === 'release',
+    isNonRelease: (service: Service): service is Exclude<Service, ReleaseService> => service.type !== 'release',
 
     // required because of https://github.com/helm/helm/issues/9214
     toHelmName: (service: Service): string => {
@@ -361,16 +509,3 @@ export const Service = {
     }
 }
 
-type Ingress = {
-    enabled: ServiceBoolean;
-    hosts: ServiceString;
-    porterHosts: ServiceString;
-}
-
-type Autoscaling = {
-    enabled: ServiceBoolean,
-    minReplicas: ServiceString,
-    maxReplicas: ServiceString,
-    targetCPUUtilizationPercentage: ServiceString,
-    targetMemoryUtilizationPercentage: ServiceString,
-}

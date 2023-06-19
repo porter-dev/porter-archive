@@ -61,6 +61,7 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.APIContractRevision{},
 		&models.AWSAssumeRoleChain{},
 		&models.PorterApp{},
+		&models.PorterAppEvent{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

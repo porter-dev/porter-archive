@@ -1,6 +1,8 @@
 package stack
 
 import (
+	"context"
+
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
@@ -28,7 +30,7 @@ func applyAppResource(opts *applyAppResourceOpts) (*release.Release, error) {
 		opts.request.TemplateVersion = ""
 	}
 
-	chart, err := loader.LoadChartPublic(opts.request.TemplateRepoURL, opts.request.TemplateName, opts.request.TemplateVersion)
+	chart, err := loader.LoadChartPublic(context.Background(), opts.request.TemplateRepoURL, opts.request.TemplateName, opts.request.TemplateVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +55,7 @@ func applyAppResource(opts *applyAppResourceOpts) (*release.Release, error) {
 		"revision": opts.stackRevision,
 	}
 
-	return opts.helmAgent.InstallChart(conf, opts.config.DOConf, opts.config.ServerConf.DisablePullSecretsInjection)
+	return opts.helmAgent.InstallChart(context.Background(), conf, opts.config.DOConf, opts.config.ServerConf.DisablePullSecretsInjection)
 }
 
 type rollbackAppResourceOpts struct {
@@ -63,7 +65,7 @@ type rollbackAppResourceOpts struct {
 }
 
 func rollbackAppResource(opts *rollbackAppResourceOpts) error {
-	return opts.helmAgent.RollbackRelease(opts.name, int(opts.helmRevisionID))
+	return opts.helmAgent.RollbackRelease(context.Background(), opts.name, int(opts.helmRevisionID))
 }
 
 type updateAppResourceTagOpts struct {
@@ -82,7 +84,7 @@ type updateAppResourceTagOpts struct {
 
 func updateAppResourceTag(opts *updateAppResourceTagOpts) error {
 	// read the current release to get the current values
-	rel, err := opts.helmAgent.GetRelease(opts.name, 0, true)
+	rel, err := opts.helmAgent.GetRelease(context.Background(), opts.name, 0, true)
 	if err != nil {
 		return err
 	}
@@ -104,8 +106,8 @@ func updateAppResourceTag(opts *updateAppResourceTagOpts) error {
 		StackRevision: opts.stackRevision,
 	}
 
-	_, err = opts.helmAgent.UpgradeReleaseByValues(conf, opts.config.DOConf,
-		opts.config.ServerConf.DisablePullSecretsInjection)
+	_, err = opts.helmAgent.UpgradeReleaseByValues(context.Background(), conf, opts.config.DOConf,
+		opts.config.ServerConf.DisablePullSecretsInjection, false)
 
 	return err
 }
@@ -116,7 +118,7 @@ type deleteAppResourceOpts struct {
 }
 
 func deleteAppResource(opts *deleteAppResourceOpts) error {
-	_, err := opts.helmAgent.UninstallChart(opts.name)
+	_, err := opts.helmAgent.UninstallChart(context.Background(), opts.name)
 
 	return err
 }

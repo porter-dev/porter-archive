@@ -18,6 +18,7 @@ type DeployStackHook struct {
 	ProjectID, ClusterID uint
 	BuildImageDriverName string
 	PorterYAML           []byte
+	Builder              string
 }
 
 func (t *DeployStackHook) PreApply() error {
@@ -87,6 +88,7 @@ func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driv
 			PorterYAMLBase64: base64.StdEncoding.EncodeToString(t.PorterYAML),
 			ImageInfo:        imageInfo,
 			OverrideRelease:  false, // deploying from the cli will never delete release resources, only append or override
+			Builder:          t.Builder,
 		},
 	)
 	if err != nil {

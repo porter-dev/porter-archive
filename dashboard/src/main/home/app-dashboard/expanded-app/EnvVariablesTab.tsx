@@ -10,7 +10,7 @@ interface EnvVariablesTabProps {
   envVars: any;
   setEnvVars: (x: any) => void;
   status: React.ReactNode;
-  updatePorterApp: () => void;
+  updatePorterApp: any;
   clearStatus: () => void;
 }
 

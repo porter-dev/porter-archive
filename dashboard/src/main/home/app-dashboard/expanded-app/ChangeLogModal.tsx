@@ -3,20 +3,13 @@ import styled from "styled-components";
 import Modal from "components/porter/Modal";
 import Loading from "components/Loading";
 import Text from "components/porter/Text";
-
-
 import yaml from "js-yaml";
 import DiffViewer, { DiffMethod } from "react-diff-viewer";
-
 import Button from "components/porter/Button";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
-
-
-
 import Spacer from "components/porter/Spacer";
 import Checkbox from "components/porter/Checkbox";
 import { ChartType } from "shared/types";
-
 import * as Diff from "deep-diff";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -214,7 +207,7 @@ const ChangeLogModal: React.FC<Props> = ({
   return (
     <>
       <Modal closeModal={() => setModalVisible(false)} width={"1100px"}>
-        <Text size={18}>Change Log</Text>
+        {revertModal ? <Text size={18}>Reveison Changes</Text>  : <Text size={18}>Change Log</Text>}
         {loading ? (
           <Loading /> // <-- Render loading state
         ) : (
@@ -256,7 +249,9 @@ const ChangeLogModal: React.FC<Props> = ({
           </>
         )}
      
-        <Spacer y={1} />
+       {revertModal && (
+       <>
+       <Spacer y={1} />
           <Button
             onClick={() => setShowOverlay(true)}
             width={"110px"}
@@ -264,6 +259,8 @@ const ChangeLogModal: React.FC<Props> = ({
           >
             Revert
           </Button>
+        </>
+       )}
       {showOverlay && (
         
         <ConfirmOverlay

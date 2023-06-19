@@ -140,12 +140,13 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	conf := &helm.InstallChartConfig{
-		Chart:     chart,
-		Name:      "porter-agent",
-		Namespace: "porter-agent-system",
-		Cluster:   cluster,
-		Repo:      c.Repo(),
-		Values:    porterAgentValues,
+		Chart:                     chart,
+		Name:                      "porter-agent",
+		Namespace:                 "porter-agent-system",
+		Cluster:                   cluster,
+		Repo:                      c.Repo(),
+		Values:                    porterAgentValues,
+		ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
 	}
 
 	_, err = helmAgent.InstallChart(context.Background(), conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)

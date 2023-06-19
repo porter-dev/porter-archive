@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
+
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	artifactregistry "cloud.google.com/go/artifactregistry/apiv1beta2"
@@ -157,22 +159,32 @@ func (r *Registry) ListRepositories(
 	if project.CapiProvisionerEnabled {
 		if strings.Contains(r.URL, ".azurecr.") {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "capi-azure"})
-			creds, err := conf.Repo.AzureIntegration().ListAzureIntegrationsByProjectID(r.ProjectID)
-			if err != nil {
-				return nil, telemetry.Error(ctx, span, err, "error getting azure credentials for capi cluster")
-			}
-			if len(creds) == 0 {
-				return nil, telemetry.Error(ctx, span, err, "no azure credentials for capi cluster")
-			}
-			r.AzureIntegrationID = creds[0].ID
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "azure-integration-id", Value: r.AzureIntegrationID})
 
-			repos, err := r.listACRRepositories(ctx, repo)
+			req := connect.NewRequest(&porterv1.ListRepositoriesForRegistryRequest{
+				ProjectId:   int64(r.ProjectID),
+				RegistryUri: r.URL,
+			})
+
+			resp, err := conf.ClusterControlPlaneClient.ListRepositoriesForRegistry(ctx, req)
 			if err != nil {
-				return nil, telemetry.Error(ctx, span, err, "error listing acr repositories")
+				return nil, telemetry.Error(ctx, span, err, "error listing ecr repositories")
 			}
 
-			return repos, nil
+			res := make([]*ptypes.RegistryRepository, 0)
+
+			parsedURL, err := url.Parse("https://" + r.URL)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, repo := range resp.Msg.Repositories {
+				res = append(res, &ptypes.RegistryRepository{
+					Name: repo.Name,
+					URI:  parsedURL.Host + "/" + repo.Name,
+				})
+			}
+
+			return res, nil
 		} else {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "capi-aws"})
 			uri := strings.TrimPrefix(r.URL, "https://")
@@ -1677,36 +1689,93 @@ func (r *Registry) listDockerHubImages(repoName string, repo repository.Reposito
 func (r *Registry) GetDockerConfigJSON(
 	repo repository.Repository,
 	doAuth *oauth2.Config, // only required if using DOCR
+	ccpClient porterv1connect.ClusterControlPlaneServiceClient,
 ) ([]byte, error) {
+	ctx, span := telemetry.NewSpan(context.Background(), "docker-config-json")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: r.ProjectID},
+		telemetry.AttributeKV{Key: "registry-url", Value: r.URL},
+	)
+
 	var conf *configfile.ConfigFile
 	var err error
 
 	// switch on the auth mechanism to get a token
 	if r.AWSIntegrationID != 0 {
 		conf, err = r.getECRDockerConfigFile(repo)
+
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error getting ECR docker config file")
+		}
+
+		return json.Marshal(conf)
 	}
 
 	if r.GCPIntegrationID != 0 {
 		conf, err = r.getGCRDockerConfigFile(repo)
+
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error getting GCP docker config file")
+		}
+
+		return json.Marshal(conf)
 	}
 
 	if r.DOIntegrationID != 0 {
 		conf, err = r.getDOCRDockerConfigFile(repo, doAuth)
+
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error getting DO docker config file")
+		}
+
+		return json.Marshal(conf)
 	}
 
 	if r.BasicIntegrationID != 0 {
 		conf, err = r.getPrivateRegistryDockerConfigFile(repo)
+
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error getting private docker config file")
+		}
+
+		return json.Marshal(conf)
 	}
 
 	if r.AzureIntegrationID != 0 {
 		conf, err = r.getACRDockerConfigFile(repo)
+
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error getting ACR docker config file")
+		}
+
+		return json.Marshal(conf)
 	}
 
+	proj, err := repo.Project().ReadProject(r.ProjectID)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error reading project id")
 	}
 
-	return json.Marshal(conf)
+	if proj.CapiProvisionerEnabled {
+		dockerConfigReq := connect.NewRequest(&porterv1.DockerConfigFileForRegistryRequest{
+			ProjectId:   int64(proj.ID),
+			RegistryUri: r.URL,
+		})
+		dockerConfigResp, err := ccpClient.DockerConfigFileForRegistry(ctx, dockerConfigReq)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error getting token response from ccp")
+		}
+
+		if dockerConfigResp.Msg == nil || dockerConfigResp.Msg.DockerConfigFile == nil {
+			return nil, telemetry.Error(ctx, span, err, "no docker config found in response")
+		}
+
+		return dockerConfigResp.Msg.DockerConfigFile, nil
+	}
+
+	return nil, telemetry.Error(ctx, span, nil, "no docker config file found")
 }
 
 func (r *Registry) getECRDockerConfigFile(

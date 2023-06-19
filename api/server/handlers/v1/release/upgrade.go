@@ -64,10 +64,11 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	conf := &helm.UpgradeReleaseConfig{
-		Name:       helmRelease.Name,
-		Cluster:    cluster,
-		Repo:       c.Repo(),
-		Registries: registries,
+		Name:                      helmRelease.Name,
+		Cluster:                   cluster,
+		Repo:                      c.Repo(),
+		Registries:                registries,
+		ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
 	}
 
 	// if the chart version is set, load a chart from the repo

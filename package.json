@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@porter-dev/api-contracts": "file:../api-contracts/generated/js"
+  }
+}

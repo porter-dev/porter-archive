@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
+
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/telemetry"
 
@@ -169,6 +171,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 				registries,
 				cluster,
 				c.Repo(),
+				c.Config().ClusterControlPlaneClient,
 			)
 			if err != nil {
 				err = telemetry.Error(ctx, span, err, "error making config for pre-deploy job chart")
@@ -190,13 +193,14 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 
 		conf := &helm.InstallChartConfig{
-			Chart:      chart,
-			Name:       stackName,
-			Namespace:  namespace,
-			Values:     values,
-			Cluster:    cluster,
-			Repo:       c.Repo(),
-			Registries: registries,
+			Chart:                     chart,
+			Name:                      stackName,
+			Namespace:                 namespace,
+			Values:                    values,
+			Cluster:                   cluster,
+			Repo:                      c.Repo(),
+			Registries:                registries,
+			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
 		}
 
 		// create the app chart
@@ -289,6 +293,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 						registries,
 						cluster,
 						c.Repo(),
+						c.Config().ClusterControlPlaneClient,
 					)
 					if err != nil {
 						err = telemetry.Error(ctx, span, err, "error making config for pre-deploy job chart")
@@ -318,12 +323,13 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					}
 
 					conf := &helm.UpgradeReleaseConfig{
-						Name:       helmRelease.Name,
-						Cluster:    cluster,
-						Repo:       c.Repo(),
-						Registries: registries,
-						Values:     releaseJobValues,
-						Chart:      chart,
+						Name:                      helmRelease.Name,
+						Cluster:                   cluster,
+						Repo:                      c.Repo(),
+						Registries:                registries,
+						Values:                    releaseJobValues,
+						Chart:                     chart,
+						ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
 					}
 					_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 					if err != nil {
@@ -337,13 +343,14 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		// update the app chart
 		conf := &helm.InstallChartConfig{
-			Chart:      chart,
-			Name:       stackName,
-			Namespace:  namespace,
-			Values:     values,
-			Cluster:    cluster,
-			Repo:       c.Repo(),
-			Registries: registries,
+			Chart:                     chart,
+			Name:                      stackName,
+			Namespace:                 namespace,
+			Values:                    values,
+			Cluster:                   cluster,
+			Repo:                      c.Repo(),
+			Registries:                registries,
+			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
 		}
 
 		// update the chart
@@ -463,6 +470,7 @@ func createReleaseJobChart(
 	registries []*models.Registry,
 	cluster *models.Cluster,
 	repo repository.Repository,
+	ccpClient porterv1connect.ClusterControlPlaneServiceClient,
 ) (*helm.InstallChartConfig, error) {
 	chart, err := loader.LoadChartPublic(ctx, repoUrl, "job", "")
 	if err != nil {
@@ -473,12 +481,13 @@ func createReleaseJobChart(
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 
 	return &helm.InstallChartConfig{
-		Chart:      chart,
-		Name:       releaseName,
-		Namespace:  namespace,
-		Values:     values,
-		Cluster:    cluster,
-		Repo:       repo,
-		Registries: registries,
+		Chart:                     chart,
+		Name:                      releaseName,
+		Namespace:                 namespace,
+		Values:                    values,
+		Cluster:                   cluster,
+		Repo:                      repo,
+		Registries:                registries,
+		ClusterControlPlaneClient: ccpClient,
 	}, nil
 }

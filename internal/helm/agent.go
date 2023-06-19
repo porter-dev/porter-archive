@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
+
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/pkg/errors"
@@ -196,11 +198,12 @@ func (a *Agent) GetReleaseHistory(
 }
 
 type UpgradeReleaseConfig struct {
-	Name       string
-	Values     map[string]interface{}
-	Cluster    *models.Cluster
-	Repo       repository.Repository
-	Registries []*models.Registry
+	Name                      string
+	Values                    map[string]interface{}
+	Cluster                   *models.Cluster
+	Repo                      repository.Repository
+	Registries                []*models.Registry
+	ClusterControlPlaneClient porterv1connect.ClusterControlPlaneServiceClient
 
 	// Optional, if chart should be overriden
 	Chart *chart.Chart
@@ -282,6 +285,7 @@ func (a *Agent) UpgradeReleaseByValues(
 		conf.Registries,
 		doAuth,
 		disablePullSecretsInjection,
+		conf.ClusterControlPlaneClient,
 	)
 
 	if err != nil {
@@ -425,13 +429,14 @@ func (a *Agent) UpgradeReleaseByValues(
 
 // InstallChartConfig is the config required to install a chart
 type InstallChartConfig struct {
-	Chart      *chart.Chart
-	Name       string
-	Namespace  string
-	Values     map[string]interface{}
-	Cluster    *models.Cluster
-	Repo       repository.Repository
-	Registries []*models.Registry
+	Chart                     *chart.Chart
+	Name                      string
+	Namespace                 string
+	Values                    map[string]interface{}
+	Cluster                   *models.Cluster
+	Repo                      repository.Repository
+	Registries                []*models.Registry
+	ClusterControlPlaneClient porterv1connect.ClusterControlPlaneServiceClient
 }
 
 // InstallChartFromValuesBytes reads the raw values and calls Agent.InstallChart
@@ -509,6 +514,7 @@ func (a *Agent) InstallChart(
 		conf.Registries,
 		doAuth,
 		disablePullSecretsInjection,
+		conf.ClusterControlPlaneClient,
 	)
 
 	if err != nil {
@@ -576,6 +582,7 @@ func (a *Agent) UpgradeInstallChart(
 		conf.Registries,
 		doAuth,
 		disablePullSecretsInjection,
+		conf.ClusterControlPlaneClient,
 	)
 
 	if err != nil {

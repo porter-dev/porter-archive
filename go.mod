@@ -2,6 +2,8 @@ module github.com/porter-dev/porter
 
 go 1.20
 
+replace github.com/porter-dev/api-contracts v0.0.63 => ../api-contracts
+
 require (
 	cloud.google.com/go v0.105.0 // indirect
 	github.com/AlecAivazis/survey/v2 v2.2.9

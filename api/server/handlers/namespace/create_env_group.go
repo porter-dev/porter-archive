@@ -179,11 +179,12 @@ func rolloutApplications(
 			}
 
 			conf := &helm.UpgradeReleaseConfig{
-				Name:       releases[index].Name,
-				Cluster:    cluster,
-				Repo:       config.Repo,
-				Registries: registries,
-				Values:     newConfig,
+				Name:                      releases[index].Name,
+				Cluster:                   cluster,
+				Repo:                      config.Repo,
+				Registries:                registries,
+				Values:                    newConfig,
+				ClusterControlPlaneClient: config.ClusterControlPlaneClient,
 			}
 
 			_, err = helmAgent.UpgradeReleaseByValues(context.Background(), conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection, false)

@@ -52,7 +52,7 @@ func (r *Registry) ToRegistryType() *types.Registry {
 		}
 	} else if r.DOIntegrationID != 0 {
 		serv = types.DOCR
-	} else if r.AzureIntegrationID != 0 {
+	} else if r.AzureIntegrationID != 0 || strings.Contains(r.URL, "azurecr") {
 		serv = types.ACR
 	} else if strings.Contains(r.URL, "index.docker.io") {
 		serv = types.DockerHub

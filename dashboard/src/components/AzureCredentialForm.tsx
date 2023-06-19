@@ -52,7 +52,7 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
       )
       .then(({ data }) => {
         setIsLoading(false);
-        proceed(data.id);
+        proceed(data.cloud_provider_credentials_id);
       })
       .catch((err) => {
         console.error(err);

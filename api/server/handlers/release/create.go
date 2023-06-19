@@ -142,13 +142,14 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	conf := &helm.InstallChartConfig{
-		Chart:      chart,
-		Name:       request.Name,
-		Namespace:  namespace,
-		Values:     request.Values,
-		Cluster:    cluster,
-		Repo:       c.Repo(),
-		Registries: registries,
+		Chart:                     chart,
+		Name:                      request.Name,
+		Namespace:                 namespace,
+		Values:                    request.Values,
+		Cluster:                   cluster,
+		Repo:                      c.Repo(),
+		Registries:                registries,
+		ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
 	}
 
 	helmRelease, err := helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)

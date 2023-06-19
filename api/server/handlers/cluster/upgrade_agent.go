@@ -58,12 +58,13 @@ func (c *UpgradeAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	// newValues["redis"] =
 
 	_, err = helmAgent.UpgradeReleaseByValues(context.Background(), &helm.UpgradeReleaseConfig{
-		Chart:      chart,
-		Name:       "porter-agent",
-		Values:     newValues,
-		Cluster:    cluster,
-		Repo:       c.Repo(),
-		Registries: []*models.Registry{},
+		Chart:                     chart,
+		Name:                      "porter-agent",
+		Values:                    newValues,
+		Cluster:                   cluster,
+		Repo:                      c.Repo(),
+		Registries:                []*models.Registry{},
+		ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
 	}, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 
 	if err != nil {

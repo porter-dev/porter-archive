@@ -170,6 +170,7 @@ type CreateAzureRequest struct {
 
 type CreateAzureResponse struct {
 	*AzureIntegration
+	CloudProviderCredentialIdentifier string `json:"cloud_provider_credentials_id"`
 }
 
 type ListAzureResponse []*AzureIntegration

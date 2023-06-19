@@ -154,6 +154,8 @@ type DBConf struct {
 	SQLLite     bool   `env:"SQL_LITE,default=false"`
 	SQLLitePath string `env:"SQL_LITE_PATH,default=/porter/porter.db"`
 
+	// VaultEnabled is used to denote if Porter should use Vault for secrets management. This was previously set by 'ee' build tags
+	VaultEnabled   bool   `env:"VAULT_ENABLED,default=false"`
 	VaultPrefix    string `env:"VAULT_PREFIX,default=production"`
 	VaultAPIKey    string `env:"VAULT_API_KEY"`
 	VaultServerURL string `env:"VAULT_SERVER_URL"`

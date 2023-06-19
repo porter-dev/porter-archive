@@ -38,12 +38,4 @@ func init() {
 	} else {
 		InstanceBillingManager = &billing.NoopBillingManager{}
 	}
-
-	if InstanceEnvConf.DBConf.VaultAPIKey != "" && InstanceEnvConf.DBConf.VaultServerURL != "" && InstanceEnvConf.DBConf.VaultPrefix != "" {
-		InstanceCredentialBackend = vault.NewClient(
-			InstanceEnvConf.DBConf.VaultServerURL,
-			InstanceEnvConf.DBConf.VaultAPIKey,
-			InstanceEnvConf.DBConf.VaultPrefix,
-		)
-	}
 }

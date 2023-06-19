@@ -317,7 +317,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           setActiveValue={setAwsRegion}
           label="📍 AWS region"
         />
-        {user?.isPorterUser && (
+       
           <Heading>
             <ExpandHeader
               onClick={() => setIsExpanded(!isExpanded)}
@@ -327,7 +327,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               Advanced settings
             </ExpandHeader>
           </Heading>
-        )}
+      
         {isExpanded && (
           <>
             <SelectRow

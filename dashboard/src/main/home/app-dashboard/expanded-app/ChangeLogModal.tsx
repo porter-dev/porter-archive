@@ -12,6 +12,10 @@ import sliders from "assets/sliders.svg";
 import yaml from "js-yaml";
 import DiffViewer, { DiffMethod } from "react-diff-viewer";
 
+import Button from "components/porter/Button";
+import ConfirmOverlay from "components/porter/ConfirmOverlay";
+
+
 import dayjs from "dayjs";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
@@ -30,12 +34,16 @@ type Props = {
   setModalVisible: (x: boolean) => void;
   revision: number;
   currentChart: ChartType;
+  revertModal?: boolean;
+  appData:any;
 };
 
 const ChangeLogModal: React.FC<Props> = ({
   revision,
+  appData,
   currentChart,
   modalVisible,
+  revertModal,
   setModalVisible,
 }) => {
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
@@ -43,7 +51,10 @@ const ChangeLogModal: React.FC<Props> = ({
   const [values, setValues] = useState("");
   const [chartEvent, setChartEvent] = useState(null);
   const [eventValues, setEventValues] = useState("");
+  const [prevChartEvent, setPrevChartEvent] = useState(null);
+  const [prevEventValues, setPrevEventValues] = useState("");
   const [showRawDiff, setShowRawDiff] = useState(false);
+  const [showOverlay, setShowOverlay] = useState<boolean>(false);
 
   const [loading, setLoading] = useState(false);
   const { currentCluster, currentProject, setCurrentError } = useContext(
@@ -75,22 +86,71 @@ const ChangeLogModal: React.FC<Props> = ({
     return updatedChart; 
   };
 
+  const revertToRevision = async (revision: number) => {
+    setLoading(true);
+    try {
+      await api
+        .rollbackPorterApp(
+          "<token>",
+          {
+            revision,
+          },
+          {
+            project_id: appData.app.project_id,
+            stack_name: appData.app.name,
+            cluster_id: appData.app.cluster_id,
+          }
+        )
+      window.location.reload();
+    } catch (err) {
+      setLoading(false);
+      console.log(err)
+    }
+  }
+
+  const getPrevChartData = async (chart: ChartType) => {
+    setLoading(true);
+    const prevRevision = revision - 1;
+    const res = await api.getChart(
+      "<token>",
+      {},
+      {
+        name: chart.name,
+        namespace: chart.namespace,
+        cluster_id: currentCluster.id,
+        revision: prevRevision,
+        id: currentProject.id,
+      }
+    );
+    const updatedChart = res.data;
+    setLoading(false);
+    return updatedChart; 
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       // Fetch the chart data
       const updatedChart = await getChartData(currentChart);
+      const prevChart = await getPrevChartData(currentChart);
 
       // Now that we've waited for getChartData to finish, process the result
       let eventValues = "# Nothing here yet";
       if (updatedChart?.config) {
         eventValues = yaml.dump(updatedChart?.config);
       }
+      let prevEventValues = "# Nothing here yet";
+      if (prevChart?.config) {
+        prevEventValues = yaml.dump(prevChart?.config);
+      }
       setEventValues(eventValues);
       setChartEvent(updatedChart);
+      setPrevEventValues(prevEventValues);
+      setPrevChartEvent(prevChart);
     };
 
     fetchData();
   }, [currentChart.config]);
+
   const parseYamlAndDisplayDifferences = (oldYaml: any, newYaml: any) => {
     const diff = Diff.diff(oldYaml, newYaml);
     const changes: JSX.Element[] = [];
@@ -117,9 +177,14 @@ const ChangeLogModal: React.FC<Props> = ({
         case "D":
           if (servicePattern.test(path)) {
             // If so, display a simplified message
-            changes.push(<Text>{`${path} deleted`}</Text>);
+            changes.push( <ChangeBox type="D">
+            {`${path} deleted`}
+           </ChangeBox>);
           } else {
-            changes.push(<Text>{`${path} removed`}</Text>);
+           
+            changes.push( <ChangeBox type="D">
+            {`${path} removed`}
+           </ChangeBox>);
           }
           break;
         case "E":
@@ -176,10 +241,10 @@ const ChangeLogModal: React.FC<Props> = ({
               <>
                 <div style={{ maxHeight: "400px", overflowY: "auto" }}>
                   <DiffViewer
-                    leftTitle={`Revision No. ${revision}`}
-                    rightTitle={`Current Version`}
-                    oldValue={eventValues}
-                    newValue={values}
+                    leftTitle={ revertModal?  `Current Revision` : `Revision No. ${revision-1}`}
+                    rightTitle={ `Revision No. ${revision}`}
+                    oldValue={revertModal?  values : prevEventValues}
+                    newValue={eventValues}
                     splitView={true}
                     hideLineNumbers={false}
                     useDarkTheme={true}
@@ -189,14 +254,37 @@ const ChangeLogModal: React.FC<Props> = ({
               </>
             ) : (
               <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-                {parseYamlAndDisplayDifferences(
-                  chartEvent?.config,
-                  currentChart.config
+                {revertModal ?  parseYamlAndDisplayDifferences(
+                  currentChart.config,
+                    chartEvent?.config
+                ):parseYamlAndDisplayDifferences(
+                  prevChartEvent?.config,
+                  chartEvent?.config
                 )}
               </div>
             )}
           </>
         )}
+     
+        <Spacer y={1} />
+          <Button
+            onClick={() => setShowOverlay(true)}
+            width={"110px"}
+            loadingText={"Submitting..."}
+          >
+            Revert
+          </Button>
+      {showOverlay && (
+        
+        <ConfirmOverlay
+          loading={loading}
+          message={`Are you sure you want to revert to version no. ${revision}?`}
+          onYes={() => revertToRevision(revision)}
+          onNo={() => setShowOverlay(false)}
+        />
+
+      )}
+      
       </Modal>
     </>
   );

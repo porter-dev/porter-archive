@@ -1,14 +1,10 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Modal from "components/porter/Modal";
-import TitleSection from "components/TitleSection";
 import Loading from "components/Loading";
 import Text from "components/porter/Text";
-import danger from "assets/danger.svg";
-import Anser, { AnserJsonEntry } from "anser";
-import web from "assets/web-bold.png";
-import settings from "assets/settings-bold.png";
-import sliders from "assets/sliders.svg";
+
+
 import yaml from "js-yaml";
 import DiffViewer, { DiffMethod } from "react-diff-viewer";
 
@@ -16,15 +12,11 @@ import Button from "components/porter/Button";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
 
 
-import dayjs from "dayjs";
-import Link from "components/porter/Link";
+
 import Spacer from "components/porter/Spacer";
 import Checkbox from "components/porter/Checkbox";
-import { NavLink } from "react-router-dom";
-import SidebarLink from "main/home/sidebar/SidebarLink";
-import { EnvVariablesTab } from "./EnvVariablesTab";
 import { ChartType } from "shared/types";
-import * as YAML from "js-yaml";
+
 import * as Diff from "deep-diff";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -46,8 +38,6 @@ const ChangeLogModal: React.FC<Props> = ({
   revertModal,
   setModalVisible,
 }) => {
-  const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
-  const [currentView, setCurrentView] = useState("overview");
   const [values, setValues] = useState("");
   const [chartEvent, setChartEvent] = useState(null);
   const [eventValues, setEventValues] = useState("");

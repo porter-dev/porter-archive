@@ -41,8 +41,6 @@ type DetectedBuildpack = {
   buildConfig: BuildConfig;
 };
 
-type DetectBuildpackResponse = DetectedBuildpack[];
-
 const BuildpackStack: React.FC<{
   porterApp: PorterApp;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
@@ -234,16 +232,15 @@ const BuildpackStack: React.FC<{
           buildpack,
         ]);
 
-
-        const index = porterApp.buildpacks.indexOf(buildpackToRemove);
-        if (index > -1) {
-          updatePorterApp({ buildpacks: porterApp.buildpacks.splice(index, 1) });
-        }
-
         tmpSelectedBuildpacks.splice(indexBuildpackToRemove, 1);
 
         return [...tmpSelectedBuildpacks];
       });
+
+      const index = porterApp.buildpacks.indexOf(buildpackToRemove);
+      if (index > -1) {
+        updatePorterApp({ buildpacks: porterApp.buildpacks.splice(index, 1) });
+      }
     };
 
     const handleAddBuildpack = (buildpackToAdd: string) => {
@@ -259,12 +256,13 @@ const BuildpackStack: React.FC<{
           buildpack,
         ]);
 
-        if (porterApp.buildpacks.find((bp) => bp === buildpackToAdd) == null) {
-          updatePorterApp({ buildpacks: [...porterApp.buildpacks, buildpackToAdd] });
-        }
         tmpAvailableBuildpacks.splice(indexBuildpackToAdd, 1);
         return [...tmpAvailableBuildpacks];
       });
+
+      if (porterApp.buildpacks.find((bp) => bp === buildpackToAdd) == null) {
+        updatePorterApp({ buildpacks: [...porterApp.buildpacks, buildpackToAdd] });
+      }
     };
 
     const handleAddCustomBuildpack = (buildpack: Buildpack) => {

@@ -2,7 +2,6 @@ import React, { useEffect, useState, useContext, useCallback } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
-import { z } from "zod";
 
 import notFound from "assets/not-found.png";
 import web from "assets/web.png";
@@ -11,14 +10,11 @@ import github from "assets/github-white.png";
 import pr_icon from "assets/pull_request_icon.svg";
 import loadingImg from "assets/loading.gif";
 import refresh from "assets/refresh.png";
-import deploy from "assets/deploy.png";
 import save from "assets/save-01.svg";
-import danger from "assets/danger.svg";
 
 import api from "shared/api";
 import JSZip from "jszip";
 import { Context } from "shared/Context";
-import useAuth from "shared/auth/useAuth";
 import Error from "components/porter/Error";
 
 import Banner from "components/porter/Banner";
@@ -30,18 +26,16 @@ import Link from "components/porter/Link";
 import Back from "components/porter/Back";
 import TabSelector from "components/TabSelector";
 import Icon from "components/porter/Icon";
-import { ChartType, PorterAppOptions, ResourceType } from "shared/types";
+import { ChartType, PorterAppOptions } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTabStack from "../build-settings/BuildSettingsTabStack";
 import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
-import { ReleaseService, Service } from "../new-app-flow/serviceTypes";
+import { Service } from "../new-app-flow/serviceTypes";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import Fieldset from "components/porter/Fieldset";
 import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
-import EnvGroupArray, {
-  KeyValueType,
-} from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterYamlSchema } from "../new-app-flow/schema";
 import { EnvVariablesTab } from "./EnvVariablesTab";
 import GHABanner from "./GHABanner";
@@ -53,7 +47,6 @@ import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
 import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
 import Anser, { AnserJsonEntry } from "anser";
-import GHALogsModal from "./status/GHALogsModal";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import EventsTab from "./EventsTab";

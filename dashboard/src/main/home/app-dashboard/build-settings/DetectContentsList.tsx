@@ -15,11 +15,6 @@ import Link from "components/porter/Link";
 import { PorterApp } from "../types/porterApp";
 import AdvancedBuildSettings from "./AdvancedBuildSettings";
 
-interface AutoBuildpack {
-  name?: string;
-  valid: boolean;
-}
-
 type PropsType = {
   setPorterYaml: (x: any) => void;
   porterApp: PorterApp;
@@ -39,10 +34,6 @@ const DetectContentsList: React.FC<PropsType> = ({
   const [displayInput, setDisplayInput] = useState(false);
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
 
-  const [autoBuildpack, setAutoBuildpack] = useState<AutoBuildpack>({
-    valid: false,
-    name: "",
-  });
   const { currentProject } = useContext(Context);
   const fetchAndSetPorterYaml = useCallback(async (fileName: string) => {
     try {
@@ -87,12 +78,6 @@ const DetectContentsList: React.FC<PropsType> = ({
     if (dockerFileItem) {
       updatePorterApp({ dockerfile: dockerFileItem.path });
     }
-  }, [contents]);
-
-  useEffect(() => {
-    detectBuildpacks().then(({ data }: { data: any }) => {
-      setAutoBuildpack(data);
-    });
   }, [contents]);
 
   const renderContentList = () => {
@@ -151,26 +136,6 @@ const DetectContentsList: React.FC<PropsType> = ({
     }
 
   };
-  const detectBuildpacks = () => {
-    if (currentProject == null) {
-      return;
-    }
-
-    return api.detectBuildpack(
-      "<token>",
-      {
-        dir: porterApp.build_context || ".",
-      },
-      {
-        project_id: currentProject.id,
-        git_repo_id: porterApp.git_repo_id,
-        kind: "github",
-        owner: porterApp.repo_name.split("/")[0],
-        name: porterApp.repo_name.split("/")[1],
-        branch: porterApp.git_branch,
-      }
-    );
-  };
 
   const handleInputChange = (newValue: string) => {
     updatePorterApp({ porter_yaml_path: newValue });
@@ -204,16 +169,6 @@ const DetectContentsList: React.FC<PropsType> = ({
       console.log(err);
       setLoading(false);
       setError(true);
-    }
-
-    try {
-      const { data } = await detectBuildpacks();
-      setAutoBuildpack(data);
-    } catch (err) {
-      console.log(err);
-      setAutoBuildpack({
-        valid: false,
-      });
     }
   };
 

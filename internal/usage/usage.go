@@ -1,6 +1,7 @@
 package usage
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -132,6 +133,7 @@ func isUsageChanged(oldUsageCache, currUsageCache *models.ProjectUsageCache) boo
 
 // gets the total resource usage across all nodes in all clusters
 func getResourceUsage(opts *GetUsageOpts, clusters []*models.Cluster) (uint, uint, error) {
+	ctx := context.Background()
 	var totCPU, totMem uint = 0, 0
 
 	for _, cluster := range clusters {
@@ -143,7 +145,7 @@ func getResourceUsage(opts *GetUsageOpts, clusters []*models.Cluster) (uint, uin
 			CAPIManagementClusterClient: opts.ClusterControlPlaneServiceClient,
 		}
 
-		agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
+		agent, err := kubernetes.GetAgentOutOfClusterConfig(ctx, ooc)
 		if err != nil {
 			continue
 		}

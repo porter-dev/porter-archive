@@ -52,14 +52,14 @@ func (p *CreateAzureHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AzureIntegration: az.ToAzureIntegrationType(),
 	}
 
-	req := connect.NewRequest(&porterv1.CreateAzureConnectionRequest{
+	req := connect.NewRequest(&porterv1.SaveAzureCredentialsRequest{
 		ProjectId:              int64(project.ID),
 		ClientId:               request.AzureClientID,
 		SubscriptionId:         request.AzureSubscriptionID,
 		TenantId:               request.AzureTenantID,
 		ServicePrincipalSecret: []byte(request.ServicePrincipalKey),
 	})
-	_, err = p.Config().ClusterControlPlaneClient.CreateAzureConnection(r.Context(), req)
+	_, err = p.Config().ClusterControlPlaneClient.SaveAzureCredentials(r.Context(), req)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

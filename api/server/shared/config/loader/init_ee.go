@@ -5,7 +5,6 @@ package loader
 
 import (
 	eeBilling "github.com/porter-dev/porter/ee/billing"
-	"github.com/porter-dev/porter/ee/integrations/vault"
 	"github.com/porter-dev/porter/ee/models"
 	"github.com/porter-dev/porter/internal/billing"
 )

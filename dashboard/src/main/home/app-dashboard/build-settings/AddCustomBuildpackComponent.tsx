@@ -3,6 +3,11 @@ import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Buildpack } from "./BuildpackStack";
 
+function isValidURL(url: string): boolean {
+  const pattern = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,})(:\d{2,5})?([\/\w.-]*)*\/?$/i;
+  return pattern.test(url);
+}
+
 const AddCustomBuildpackComponent: React.FC<{
   onAdd: (buildpack: Buildpack) => void;
 }> = ({ onAdd }) => {
@@ -10,6 +15,10 @@ const AddCustomBuildpackComponent: React.FC<{
   const [error, setError] = useState(false);
 
   const handleAddCustomBuildpack = () => {
+    if (buildpackUrl === "" || !isValidURL(buildpackUrl)) {
+      setError(true);
+      return;
+    }
     setBuildpackUrl("");
     onAdd({
       buildpack: buildpackUrl,

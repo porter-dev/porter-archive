@@ -50,6 +50,7 @@ import Anser, { AnserJsonEntry } from "anser";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import EventsTab from "./EventsTab";
+import { PorterApp } from "../types/porterApp";
 
 type Props = RouteComponentProps & {};
 
@@ -104,6 +105,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
   const [subdomain, setSubdomain] = useState<string>("");
 
+  const [porterApp, setPorterApp] = useState<PorterApp>();
 
   const getPorterApp = async () => {
     setBannerLoading(true);
@@ -165,6 +167,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
       setPorterJson(porterJson);
       setAppData(newAppData);
+      // annoying that we have to parse buildpacks like this but alas
+      setPorterApp({ ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") });
+
       const [newServices, newEnvVars] = updateServicesAndEnvVariables(
         resChartData?.data,
         releaseChartData?.data,
@@ -714,8 +719,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "build-settings":
         return (
           <BuildSettingsTabStack
-            appData={appData}
-            setAppData={setAppData}
+            porterApp={porterApp}
+            setPorterApp={(attrs: Partial<PorterApp>) => setPorterApp(PorterApp.setAttributes(porterApp, attrs))}
             onTabSwitch={getPorterApp}
             clearStatus={() => setButtonStatus("")}
             updatePorterApp={updatePorterApp}
@@ -833,7 +838,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         <StyledExpandedApp>
           <Back to="/apps" />
           <Container row>
-            {renderIcon(appData.app?.build_packs)}
+            {renderIcon(appData.app?.buildpacks)}
             <Spacer inline x={1} />
             <Text size={21}>{appData.app.name}</Text>
             {appData.app.repo_name && (
@@ -1073,28 +1078,6 @@ const RefreshButton = styled.div`
     justify-content: center;
     height: 11px;
     margin-right: 10px;
-  }
-`;
-
-const LogsButton = styled.div`
-  color: white;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  :hover {
-    color: red;
-    > img {
-      opacity: 1;
-    }
-  }
-
-  > img {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 5px;
-    margin-right: 10px;
-    opacity: 0.8;
   }
 `;
 

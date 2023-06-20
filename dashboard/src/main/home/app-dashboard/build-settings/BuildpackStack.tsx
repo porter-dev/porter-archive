@@ -44,9 +44,11 @@ type DetectedBuildpack = {
 const BuildpackStack: React.FC<{
   porterApp: PorterApp;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
+  detectBuildpacks: boolean;
 }> = ({
   porterApp,
   updatePorterApp,
+  detectBuildpacks,
 }) => {
     const { currentProject } = useContext(Context);
 
@@ -64,9 +66,8 @@ const BuildpackStack: React.FC<{
           <Scrollable>
             <Text color="helper">Selected buildpacks:</Text>
             <Spacer y={1} />
-            {selectedBuildpacks.length &&
+            {selectedBuildpacks.length > 0 &&
               renderBuildpacksList(selectedBuildpacks, "remove")}
-
             <Spacer y={1} />
             {availableBuildpacks.length && (
               <>
@@ -124,21 +125,32 @@ const BuildpackStack: React.FC<{
             (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
           ) ?? builders[0];
 
-          setSelectedBuildpacks(defaultBuilder.detected);
-          setAvailableBuildpacks(defaultBuilder.others);
+          const allBuildpacks = defaultBuilder.others.concat(defaultBuilder.detected);
 
-          let detectedBuilder: string;
-          if (defaultBuilder.builders.length && defaultBuilder.builders.includes(DEFAULT_HEROKU_STACK)) {
-            setSelectedStack(DEFAULT_HEROKU_STACK);
-            detectedBuilder = DEFAULT_HEROKU_STACK;
+          if (detectBuildpacks) {
+            let detectedBuilder: string;
+            if (defaultBuilder.builders.length && defaultBuilder.builders.includes(DEFAULT_HEROKU_STACK)) {
+              setSelectedStack(DEFAULT_HEROKU_STACK);
+              detectedBuilder = DEFAULT_HEROKU_STACK;
+            } else {
+              setSelectedStack(defaultBuilder.builders[0]);
+              detectedBuilder = defaultBuilder.builders[0];
+            }
+
+            const newBuildpacks = defaultBuilder.detected.filter(bp => !porterApp.buildpacks.includes(bp.buildpack));
+            updatePorterApp({ builder: detectedBuilder, buildpacks: [...porterApp.buildpacks, ...newBuildpacks.map(bp => bp.buildpack)] });
+            setSelectedBuildpacks(defaultBuilder.detected);
+            setAvailableBuildpacks(defaultBuilder.others);
           } else {
-            setSelectedStack(defaultBuilder.builders[0]);
-            detectedBuilder = defaultBuilder.builders[0];
+            setSelectedStack(porterApp.builder);
+            setSelectedBuildpacks(porterApp.buildpacks?.map(bp => ({
+              name: allBuildpacks.find(b => b.buildpack === bp)?.name ?? bp,
+              buildpack: bp,
+              config: {},
+            })) ?? []);
+            setAvailableBuildpacks(defaultBuilder.others.filter(bp => !porterApp.buildpacks?.includes(bp.buildpack)));
           }
 
-          // update the builder and the buildpacks
-          const newBuildpacks = defaultBuilder.detected.filter(bp => !porterApp.buildpacks.includes(bp.buildpack));
-          updatePorterApp({ builder: detectedBuilder, buildpacks: [...porterApp.buildpacks, ...newBuildpacks.map(bp => bp.buildpack)] });
         } catch (err) {
           console.log(err);
         };
@@ -219,60 +231,38 @@ const BuildpackStack: React.FC<{
     };
 
     const handleRemoveBuildpack = (buildpackToRemove: string) => {
-      setSelectedBuildpacks((selBuildpacks) => {
-        const tmpSelectedBuildpacks = [...selBuildpacks];
-
-        const indexBuildpackToRemove = tmpSelectedBuildpacks.findIndex(
-          (buildpack) => buildpack.buildpack === buildpackToRemove
-        );
-        const buildpack = tmpSelectedBuildpacks[indexBuildpackToRemove];
-
-        setAvailableBuildpacks((availableBuildpacks) => [
-          ...availableBuildpacks,
-          buildpack,
-        ]);
-
-        tmpSelectedBuildpacks.splice(indexBuildpackToRemove, 1);
-
-        return [...tmpSelectedBuildpacks];
-      });
-
-      const index = porterApp.buildpacks.indexOf(buildpackToRemove);
-      if (index > -1) {
-        updatePorterApp({ buildpacks: porterApp.buildpacks.splice(index, 1) });
+      if (porterApp.buildpacks.includes(buildpackToRemove)) {
+        updatePorterApp({ buildpacks: porterApp.buildpacks.filter(bp => bp !== buildpackToRemove) });
+        const buildpack = selectedBuildpacks.find(bp => bp.buildpack === buildpackToRemove);
+        if (buildpack != null) {
+          setAvailableBuildpacks((availableBuildpacks) => [
+            ...availableBuildpacks,
+            buildpack,
+          ]);
+          setSelectedBuildpacks(selectedBuildpacks.filter(bp => bp.buildpack !== buildpackToRemove));
+        }
       }
     };
 
     const handleAddBuildpack = (buildpackToAdd: string) => {
-      setAvailableBuildpacks((avBuildpacks) => {
-        const tmpAvailableBuildpacks = [...avBuildpacks];
-        const indexBuildpackToAdd = tmpAvailableBuildpacks.findIndex(
-          (buildpack) => buildpack.buildpack === buildpackToAdd
-        );
-        const buildpack = tmpAvailableBuildpacks[indexBuildpackToAdd];
-
-        setSelectedBuildpacks((selectedBuildpacks) => [
-          ...selectedBuildpacks,
-          buildpack,
-        ]);
-
-        tmpAvailableBuildpacks.splice(indexBuildpackToAdd, 1);
-        return [...tmpAvailableBuildpacks];
-      });
-
       if (porterApp.buildpacks.find((bp) => bp === buildpackToAdd) == null) {
         updatePorterApp({ buildpacks: [...porterApp.buildpacks, buildpackToAdd] });
+        const buildpack = availableBuildpacks.find((bp) => bp.buildpack === buildpackToAdd);
+        if (buildpack != null) {
+          setSelectedBuildpacks((selectedBuildpacks) => [
+            ...selectedBuildpacks,
+            buildpack,
+          ]);
+          setAvailableBuildpacks(availableBuildpacks.filter((bp) => bp.buildpack !== buildpackToAdd));
+        }
       }
     };
 
     const handleAddCustomBuildpack = (buildpack: Buildpack) => {
       if (porterApp.buildpacks.find((bp) => bp === buildpack.buildpack) == null) {
         updatePorterApp({ buildpacks: [...porterApp.buildpacks, buildpack.buildpack] });
+        setSelectedBuildpacks([...selectedBuildpacks, buildpack]);
       }
-      setSelectedBuildpacks((selectedBuildpacks) => [
-        ...selectedBuildpacks,
-        buildpack,
-      ]);
     };
 
     if (!stackOptions?.length || !builderOptions?.length) {
@@ -302,13 +292,13 @@ const BuildpackStack: React.FC<{
             }}
             label="Builder and stack"
           />
-          {selectedBuildpacks.length && (
+          {selectedBuildpacks.length > 0 && (
             <Helper>
               The following buildpacks were automatically detected. You can also
               manually add/remove buildpacks.
             </Helper>
           )}
-          {selectedBuildpacks.length && (
+          {selectedBuildpacks.length > 0 && (
             <>{renderBuildpacksList(selectedBuildpacks, "remove")}</>
           )}
           <Spacer y={1} />

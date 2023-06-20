@@ -165,9 +165,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         ...formState,
         serviceList: newServiceList,
       });
-      if (Validators.serviceList(newServiceList)) {
-        setCurrentStep(Math.max(currentStep, 5));
-      }
       if (
         porterYamlToJson &&
         porterYamlToJson.apps &&
@@ -189,6 +186,12 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       console.log("Error converting porter yaml file to input: " + error);
     }
   };
+
+  useEffect(() => {
+    if (porterApp.git_branch !== "") {
+      setCurrentStep(Math.max(currentStep, 5));
+    }
+  }, [porterApp.git_branch]);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -287,8 +290,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           git_branch: porterApp.git_branch,
           git_repo_id: porterApp.git_repo_id,
           build_context: porterApp.build_context,
-          builder: porterApp.dockerfile !== "" ? "" : porterApp.builder,
-          buildpacks: porterApp.dockerfile !== "" ? "" : porterApp.buildpacks.join(","),
+          builder: porterApp.dockerfile != null && porterApp.dockerfile !== "" ? "" : porterApp.builder,
+          buildpacks: porterApp.dockerfile != null && porterApp.dockerfile !== "" ? "" : porterApp.buildpacks.join(","),
           dockerfile: porterApp.dockerfile,
           image_repo_uri: porterApp.image_repo_uri,
           porter_yaml: base64Encoded,

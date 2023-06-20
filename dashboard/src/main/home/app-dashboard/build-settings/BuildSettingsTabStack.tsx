@@ -5,98 +5,56 @@ import React, {
 } from "react";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
-import Input from "components/porter/Input";
-import AdvancedBuildSettings from "./AdvancedBuildSettings";
-import styled from "styled-components";
-import {
-  ActionConfigType,
-  BuildConfig,
-  PorterAppOptions,
-} from "shared/types";
+import { PorterAppOptions } from "shared/types";
 import { Context } from "shared/Context";
-import ActionConfBranchSelector from "main/home/app-dashboard/build-settings/ActionConfBranchSelector";
 
 import api from "shared/api";
 import { AxiosError } from "axios";
-import Loading from "components/Loading";
 import Button from "components/porter/Button";
 import Checkbox from "components/porter/Checkbox";
+import SharedBuildSettings from "./SharedBuildSettings";
+import { PorterApp } from "../types/porterApp";
+
 type Props = {
-  appData: any;
-  setAppData: Dispatch<any>;
+  porterApp: PorterApp;
+  setPorterApp: (attrs: Partial<PorterApp>) => void;
   onTabSwitch: () => void;
   updatePorterApp: (options: Partial<PorterAppOptions>) => Promise<void>;
   clearStatus: () => void;
 };
-interface AutoBuildpack {
-  name?: string;
-  valid: boolean;
-}
 
 const BuildSettingsTabStack: React.FC<Props> = ({
-  appData,
-  setAppData,
+  porterApp,
+  setPorterApp,
   onTabSwitch,
   clearStatus,
   updatePorterApp,
 }) => {
-  const { setCurrentError } = useContext(Context);
-  const [updated, setUpdated] = useState(null);
-  const [branch, setBranch] = useState(appData.app.git_branch);
-  const [showSettings, setShowSettings] = useState(false);
-  const [dockerfilePath, setDockerfilePath] = useState(appData.app.dockerfile);
-  const [buildView, setBuildView] = useState<string>(
-    appData.app.dockerfile ? "docker" : "buildpacks"
-  );
-
-  const [folderPath, setFolderPath] = useState(appData.app.build_context);
-  const defaultActionConfig: ActionConfigType = {
-    git_repo: appData.app.repo_name,
-    image_repo_uri: appData.chart.image_repo_uri,
-    git_branch: appData.app.git_branch,
-    git_repo_id: appData.app.git_repo_id,
-    kind: "github",
-  };
-  const defaultBuildConfig: BuildConfig = {
-    builder: appData.app.builder
-      ? appData.app.builder
-      : "paketobuildpacks/builder:full",
-    buildpacks: appData.app.build_packs
-      ? appData.app.build_packs.split(",")
-      : [],
-    config: appData.chart.config,
-  };
-  const [buildConfig, setBuildConfig] = useState<BuildConfig>({
-    ...defaultBuildConfig,
-  });
+  const { setCurrentError, currentCluster, currentProject } = useContext(Context);
   const [redeployOnSave, setRedeployOnSave] = useState(true);
   const [runningWorkflowURL, setRunningWorkflowURL] = useState("");
-  const [autoBuildpack, setAutoBuildpack] = useState<AutoBuildpack>({
-    valid: false,
-    name: "",
-  });
 
-  const [actionConfig, setActionConfig] = useState<ActionConfigType>({
-    ...defaultActionConfig,
-  });
   const [buttonStatus, setButtonStatus] = useState<
     "loading" | "success" | string
   >("");
-  const [imageUrl, setImageUrl] = useState(appData.chart.image_uri);
 
   const triggerWorkflow = async () => {
     try {
+      if (currentProject == null || currentCluster == null) {
+        return;
+      }
+
       const res = await api.reRunGHWorkflow(
         "",
         {},
         {
-          project_id: appData.app.project_id,
-          cluster_id: appData.app.cluster_id,
-          git_installation_id: appData.app.git_repo_id,
-          owner: appData.app.repo_name?.split("/")[0],
-          name: appData.app.repo_name?.split("/")[1],
-          branch: branch,
-          filename: "porter_stack_" + appData.chart.name + ".yml",
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          git_installation_id: porterApp.git_repo_id,
+          owner: porterApp.repo_name?.split("/")[0],
+          name: porterApp.repo_name?.split("/")[1],
+          branch: porterApp.git_branch,
+          filename: "porter_stack_" + porterApp.name + ".yml",
         }
       );
       if (res.data != null) {
@@ -163,34 +121,29 @@ const BuildSettingsTabStack: React.FC<Props> = ({
       throw error;
     }
   };
+
   const saveConfig = async () => {
+    console.log(porterApp.buildpacks)
     try {
       await updatePorterApp({
-        repo_name: appData.app.repo_name,
-        git_branch: branch,
-        build_context: folderPath,
-        builder: buildView === "buildpacks"
-          ? buildConfig.builder
-          : "null",
-        buildpacks:
-          buildView === "buildpacks"
-            ? buildConfig?.buildpacks?.join(",")
-            : "null",
-        dockerfile: buildView === "buildpacks" ? "null" : dockerfilePath,
-        image_repo_uri: appData.chart.image_repo_uri,
+        repo_name: porterApp.repo_name,
+        git_branch: porterApp.git_branch,
+        build_context: porterApp.build_context,
+        builder: porterApp.dockerfile != null && porterApp.dockerfile !== "" ? "null" : porterApp.builder,
+        buildpacks: porterApp.dockerfile != null && porterApp.dockerfile !== "" ? "null" : porterApp.buildpacks.join(","),
+        dockerfile: porterApp.dockerfile,
       });
       onTabSwitch();
     } catch (err) {
       throw err;
     }
   };
+
   const handleSave = async () => {
     setButtonStatus("loading");
 
     try {
       await saveConfig();
-      setAppData(appData);
-
       onTabSwitch();
       setButtonStatus("success");
     } catch (error) {
@@ -198,15 +151,13 @@ const BuildSettingsTabStack: React.FC<Props> = ({
       console.log(error);
     }
   };
+
   const handleSaveAndReDeploy = async () => {
     setButtonStatus("loading");
 
     try {
       await saveConfig();
-      setAppData(appData);
-
       await triggerWorkflow();
-
       onTabSwitch();
       setButtonStatus("success");
       clearStatus();
@@ -217,62 +168,11 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   };
   return (
     <>
-      <Text size={16}>Build settings</Text>
-      <Spacer y={0.5} />
-      <Input
-        disabled={true}
-        label="GitHub repository:"
-        width="100%"
-        value={actionConfig?.git_repo}
-        setValue={() => { }}
-        placeholder=""
-      />
-      <Spacer y={0.5} />
-      {/* <DarkMatter antiHeight="-1px" /> */}
-      {actionConfig.git_repo && (
-        <>
-          <ActionConfBranchSelector
-            branch={branch}
-            setActionConfig={(actionConfig: ActionConfigType) => {
-              setActionConfig((currentActionConfig: ActionConfigType) => ({
-                ...currentActionConfig,
-                ...actionConfig,
-              }));
-              setImageUrl(actionConfig.image_repo_uri);
-            }}
-            setBranch={setBranch}
-            setDockerfilePath={setDockerfilePath}
-            setFolderPath={setFolderPath}
-            setBuildView={setBuildView}
-          />
-        </>
-      )}
-      {actionConfig.git_repo && branch && (
-        <>
-          <Spacer y={1} />
-          <Text color="helper">Application root path:</Text>
-          <Spacer y={0.5} />
-          <Input
-            disabled={!branch ? true : false}
-            placeholder="ex: ./"
-            value={folderPath}
-            width="100%"
-            setValue={setFolderPath}
-          />
-        </>
-      )}
-      <AdvancedBuildSettings
-        dockerfilePath={dockerfilePath}
-        setDockerfilePath={setDockerfilePath}
-        setBuildConfig={setBuildConfig}
-        autoBuildPack={autoBuildpack}
-        showSettings={false}
-        buildView={buildView}
-        setBuildView={setBuildView}
-        actionConfig={actionConfig}
-        branch={branch}
-        folderPath={folderPath}
-        currentBuildConfig={buildConfig}
+      <SharedBuildSettings
+        porterApp={porterApp}
+        setPorterYaml={() => { }}
+        updatePorterApp={setPorterApp}
+        detectBuildpacks={false}
       />
       <Spacer y={1} />
       <Checkbox
@@ -299,115 +199,3 @@ const BuildSettingsTabStack: React.FC<Props> = ({
 };
 
 export default BuildSettingsTabStack;
-
-const SourceSettingsContainer = styled.div``;
-
-const DarkMatter = styled.div<{ antiHeight?: string }>`
-  width: 100%;
-  margin-top: ${(props) => props.antiHeight || "-15px"};
-`;
-
-const AdvancedBuildTitle = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const StyledAdvancedBuildSettings = styled.div`
-  color: ${({ showSettings }) => (showSettings ? "white" : "#aaaabb")};
-  background: #26292e;
-  border: 1px solid #494b4f;
-  :hover {
-    border: 1px solid #7a7b80;
-    color: white;
-  }
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 15px;
-  border-radius: 5px;
-  height: 40px;
-  font-size: 13px;
-  width: 100%;
-  padding-left: 10px;
-  cursor: pointer;
-  border-bottom-left-radius: ${({ showSettings }) => showSettings && "0px"};
-  border-bottom-right-radius: ${({ showSettings }) => showSettings && "0px"};
-
-  .dropdown {
-    margin-right: 8px;
-    font-size: 20px;
-    cursor: pointer;
-    border-radius: 20px;
-    transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
-    props.showSettings ? "" : "rotate(-90deg)"};
-  }
-`;
-const StyledSourceBox = styled.div`
-  width: 100%;
-  color: #ffffff;
-  padding: 14px 35px 20px;
-  position: relative;
-  font-size: 13px;
-  border-radius: 5px;
-  background: ${(props) => props.theme.fg};
-  border: 1px solid #494b4f;
-  border-top: 0px;
-  border-top-left-radius: 0px;
-  border-top-right-radius: 0px;
-`;
-
-const StyledButtonWrapper = styled.div`
-  display: flex;
-  gap: 10px;
-  align-items: center;
-`;
-
-const StyledButton = styled.button`
-  background: #3a48ca;
-  border: 1px solid #494b4f;
-  color: #ffffffff;
-  cursor: pointer;
-  font-size: 13px;
-  padding: 8px 12px;
-  position: relative;
-  border-radius: 5px;
-  margin-bottom: 35px;
-  position: relative;
-  text-align: center;
-  transition: border 0.3s, color 0.3s;
-
-  &:hover {
-    border: 1px solid #7a7b80;
-    color: white;
-  }
-
-  &::after {
-    content: attr(data-description);
-    background-color: #333;
-    border-radius: 4px;
-    bottom: calc(100% + 8px);
-    color: #fff;
-    font-size: 12px;
-    opacity: 0;
-    padding: 8px;
-    position: absolute;
-    left: 0;
-    top: 100%;
-    transform: translateY(0);
-    white-space: nowrap;
-    pointer-events: none;
-  }
-
-  &:hover::after {
-    opacity: 1;
-    bottom: auto;
-    top: 120%;
-  }
-`;
-
-const StyledLoadingDial = styled(Loading)`
-  position: absolute;
-  right: -45px;
-  top: 50%;
-  transform: translateY(-50%);
-`;

@@ -11,49 +11,19 @@ import BuildpackStack from "./BuildpackStack";
 interface AdvancedBuildSettingsProps {
   porterApp: PorterApp;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
+  detectBuildpacks: boolean;
 }
-
-type Buildpack = {
-  name: string;
-  buildpack: string;
-  config?: {
-    [key: string]: string;
-  };
-};
 
 const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = ({
   porterApp,
   updatePorterApp,
+  detectBuildpacks,
 }) => {
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [buildView, setBuildView] = useState<string>(porterApp.dockerfile !== "" ? "docker" : "buildpacks");
-
-  const createDockerView = () => {
-    return (
-      <>
-        <Text color="helper">Dockerfile path (absolute path)</Text>
-        <Spacer y={0.5} />
-        <Input
-          placeholder="ex: ./Dockerfile"
-          value={porterApp.dockerfile}
-          width="300px"
-          setValue={(val: string) => updatePorterApp({ dockerfile: val })}
-        />
-        <Spacer y={0.5} />
-      </>
-    );
-  };
-
-  const createBuildpackView = () => {
-    return (
-      <>
-        <BuildpackStack
-          porterApp={porterApp}
-          updatePorterApp={updatePorterApp}
-        />
-      </>
-    );
-  };
+  const [buildView, setBuildView] = useState<string>(
+    porterApp.dockerfile != null && porterApp.dockerfile !== ""
+      ? "docker" : "buildpacks"
+  );
 
   return (
     <>
@@ -91,8 +61,23 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = ({
           />
           <Spacer y={1} />
           {buildView === "docker"
-            ? createDockerView()
-            : createBuildpackView()}
+            ?
+            <>
+              <Text color="helper">Dockerfile path (absolute path)</Text>
+              <Spacer y={0.5} />
+              <Input
+                placeholder="ex: ./Dockerfile"
+                value={porterApp.dockerfile}
+                width="300px"
+                setValue={(val: string) => updatePorterApp({ dockerfile: val })}
+              />
+              <Spacer y={0.5} />
+            </>
+            : <BuildpackStack
+              porterApp={porterApp}
+              updatePorterApp={updatePorterApp}
+              detectBuildpacks={detectBuildpacks}
+            />}
         </StyledSourceBox>
       </AnimateHeight>
     </>
@@ -112,7 +97,6 @@ const StyledAdvancedBuildSettings = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 15px;
   border-radius: 5px;
   height: 40px;
   font-size: 13px;

@@ -42,6 +42,7 @@ const SourceSettings: React.FC<Props> = ({
             setPorterYaml={setPorterYaml}
             porterApp={porterApp}
             updatePorterApp={(attrs: Partial<PorterApp>) => setPorterApp(PorterApp.setAttributes(porterApp, attrs))}
+            detectBuildpacks={true}
           />
         ) : (
           <StyledSourceBox>

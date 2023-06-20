@@ -248,7 +248,7 @@ const ProvisionerSettingsOld: React.FC<Props> = (props) => {
           setActiveValue={setAwsRegion}
           label="📍 AWS region"
         />
-        {user?.isPorterUser && (
+        { 
           <Heading>
             <ExpandHeader
               onClick={() => setIsExpanded(!isExpanded)}
@@ -258,10 +258,10 @@ const ProvisionerSettingsOld: React.FC<Props> = (props) => {
               Advanced settings
             </ExpandHeader>
           </Heading>
-        )}
+        }
         {isExpanded && (
           <>
-            <SelectRow
+ {user?.isPorterUser && (<SelectRow
               options={clusterVersionOptions}
               width="350px"
               disabled={isReadOnly}
@@ -270,7 +270,7 @@ const ProvisionerSettingsOld: React.FC<Props> = (props) => {
               dropdownMaxHeight="240px"
               setActiveValue={setClusterVersion}
               label="Cluster version"
-            />
+            />)}
             <SelectRow
               options={machineTypeOptions}
               width="350px"

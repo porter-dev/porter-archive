@@ -75,7 +75,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	var instanceCredentialBackend credentials.CredentialStorage
 	if envConf.DBConf.VaultEnabled {
-		if envConf.DBConf.VaultAPIKey == "" || envConf.DBConf.VaultServerURL != "" || envConf.DBConf.VaultPrefix != "" {
+		if envConf.DBConf.VaultAPIKey == "" || envConf.DBConf.VaultServerURL == "" || envConf.DBConf.VaultPrefix == "" {
 			return nil, errors.New("Vault is enabled but missing required environment variables [VAULT_API_KEY,VAULT_SERVER_URL,VAULT_PREFIX]")
 		}
 

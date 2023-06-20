@@ -173,7 +173,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 maxInstances: maxInstances || 10,
                 nodeGroupType: NodeGroupType.APPLICATION,
                 isStateful: false,
-                additionalPolicies: ["Testinmg"],
+                additionalPolicies: additionalNodePolicies,
               }),
             ],
           }),

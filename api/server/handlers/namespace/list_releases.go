@@ -71,6 +71,7 @@ func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		release := types.Release{
 			Release: helmRel,
 		}
+
 		telemetry.WithAttributes(span,
 			telemetry.AttributeKV{Key: "release_name", Value: helmRel.Name},
 			telemetry.AttributeKV{Key: "release_namespace", Value: helmRel.Namespace},
@@ -85,6 +86,7 @@ func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			release.PorterRelease = rel.ToReleaseType()
 		}
 
+		res = append(res, &release)
 	}
 
 	c.WriteResult(w, r, res)

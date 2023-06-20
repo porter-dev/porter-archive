@@ -1,38 +1,25 @@
-import AnimateHeight from "react-animate-height";
 import React, {
-  Component,
   Dispatch,
   useContext,
-  useEffect,
-  useMemo,
-  useRef,
   useState,
 } from "react";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
-import AdvancedBuildSettings from "../build-settings/AdvancedBuildSettings";
+import AdvancedBuildSettings from "./AdvancedBuildSettings";
 import styled from "styled-components";
-import { SourceType } from "../new-app-flow/SourceSelector";
-import ActionConfEditorStack from "main/home/app-dashboard/build-settings/ActionConfEditorStack";
 import {
   ActionConfigType,
   BuildConfig,
-  FullActionConfigType,
-  GithubActionConfigType,
   PorterAppOptions,
 } from "shared/types";
-import { RouteComponentProps } from "react-router";
 import { Context } from "shared/Context";
 import ActionConfBranchSelector from "main/home/app-dashboard/build-settings/ActionConfBranchSelector";
 
-import { BuildpackStack } from "components/repo-selector/BuildpackStack";
 import api from "shared/api";
 import { AxiosError } from "axios";
-import InputRow from "components/form-components/InputRow";
 import Loading from "components/Loading";
 import Button from "components/porter/Button";
-import Container from "components/porter/Container";
 import Checkbox from "components/porter/Checkbox";
 type Props = {
   appData: any;
@@ -245,7 +232,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
       {actionConfig.git_repo && (
         <>
           <ActionConfBranchSelector
-            actionConfig={actionConfig}
             branch={branch}
             setActionConfig={(actionConfig: ActionConfigType) => {
               setActionConfig((currentActionConfig: ActionConfigType) => ({

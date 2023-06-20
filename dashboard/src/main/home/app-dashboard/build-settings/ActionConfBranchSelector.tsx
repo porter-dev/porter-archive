@@ -7,27 +7,25 @@ import RepositorySelector from "./RepositorySelector";
 import BranchSelector from "./BranchSelector";
 
 type Props = {
-  git_repo: string;
+  git_repo_name: string;
   git_repo_id: number;
   branch: string;
-  setBuildView?: (x: string) => void;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
 };
 
 const ActionConfEditorStack: React.FC<Props> = ({
-  git_repo,
+  git_repo_name,
   git_repo_id,
   branch,
-  setBuildView,
   updatePorterApp,
 }) => {
-  if (git_repo === "") {
+  if (git_repo_name === "") {
     return (
       <ExpandedWrapper>
         <RepositorySelector
           readOnly={false}
           updatePorterApp={updatePorterApp}
-          git_repo={git_repo}
+          git_repo_name={git_repo_name}
         />
       </ExpandedWrapper>
     );
@@ -37,7 +35,7 @@ const ActionConfEditorStack: React.FC<Props> = ({
         <ExpandedWrapper>
           <BranchSelector
             setBranch={(branch: string) => updatePorterApp({ git_branch: branch })}
-            repo_name={git_repo}
+            repo_name={git_repo_name}
             git_repo_id={git_repo_id}
           />
         </ExpandedWrapper>
@@ -59,7 +57,6 @@ const ActionConfEditorStack: React.FC<Props> = ({
       <BackButton
         width="145px"
         onClick={() => {
-          setBuildView ? setBuildView("buildpacks") : null;
           updatePorterApp({
             git_branch: "",
             dockerfile: "",

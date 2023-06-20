@@ -3,11 +3,10 @@ import React from "react";
 import Spacer from "components/porter/Spacer";
 import styled from "styled-components";
 import { SourceType } from "./SourceSelector";
-import { ActionConfigType } from "shared/types";
 import { RouteComponentProps, withRouter } from "react-router";
 import { pushFiltered } from "shared/routing";
 import ImageSelector from "components/image-selector/ImageSelector";
-import SharedBuildSettings from "../expanded-app/SharedBuildSettings";
+import SharedBuildSettings from "../build-settings/SharedBuildSettings";
 import Link from "components/porter/Link";
 import { PorterApp } from "../types/porterApp";
 
@@ -17,24 +16,7 @@ type Props = RouteComponentProps & {
   setImageUrl: (x: string) => void;
   imageTag: string;
   setImageTag: (x: string) => void;
-  actionConfig: ActionConfigType;
-  setActionConfig: (
-    x: ActionConfigType | ((prevState: ActionConfigType) => ActionConfigType)
-  ) => void;
-  branch: string;
-  setBranch: (x: string) => void;
-  dockerfilePath: string | null;
-  setDockerfilePath: (x: string) => void;
-  folderPath: string | null;
-  setFolderPath: (x: string) => void;
-  porterYaml: string;
   setPorterYaml: (x: any) => void;
-  buildView: string;
-  setBuildView: (x: string) => void;
-  setCurrentStep: (x: number) => void;
-  currentStep: number;
-  porterYamlPath: string;
-  setPorterYamlPath: (x: string) => void;
   porterApp: PorterApp;
   setPorterApp: (x: PorterApp) => void;
 };
@@ -45,20 +27,7 @@ const SourceSettings: React.FC<Props> = ({
   setImageUrl,
   imageTag,
   setImageTag,
-  actionConfig,
-  setActionConfig,
-  branch,
-  setBranch,
-  dockerfilePath,
-  setDockerfilePath,
-  folderPath,
-  setFolderPath,
-  porterYaml,
   setPorterYaml,
-  buildView,
-  setBuildView,
-  setPorterYamlPath,
-  porterYamlPath,
   porterApp,
   setPorterApp,
   location,
@@ -69,42 +38,10 @@ const SourceSettings: React.FC<Props> = ({
       <AnimateHeight height={source ? "auto" : 0}>
         <Spacer y={1} />
         {source === "github" ? (
-          // <SharedBuildSettings
-          //   actionConfig={actionConfig}
-          //   branch={branch}
-          //   dockerfilePath={dockerfilePath}
-          //   folderPath={folderPath}
-          //   setActionConfig={setActionConfig}
-          //   setDockerfilePath={setDockerfilePath}
-          //   setFolderPath={setFolderPath}
-          //   setBuildConfig={setBuildConfig}
-          //   porterYaml={porterYaml}
-          //   setPorterYaml={setPorterYaml}
-          //   setBranch={setBranch}
-          //   setImageUrl={setImageUrl}
-          //   buildView={buildView}
-          //   setBuildView={setBuildView}
-          //   porterYamlPath={porterYamlPath}
-          //   setPorterYamlPath={setPorterYamlPath}
-          // />
           <SharedBuildSettings
-            actionConfig={actionConfig}
-            branch={porterApp.git_branch}
-            dockerfilePath={porterApp.dockerfile}
-            folderPath={porterApp.build_context}
-            setActionConfig={setActionConfig}
-            setDockerfilePath={(path: string) => setPorterApp(PorterApp.setAttribute(porterApp, "dockerfile", path))}
-            setFolderPath={(path: string) => setPorterApp(PorterApp.setAttribute(porterApp, "build_context", path))}
-            porterYaml={porterYaml}
             setPorterYaml={setPorterYaml}
-            setBranch={(branch: string) => setPorterApp(PorterApp.setAttribute(porterApp, "git_branch", branch))}
-            buildView={buildView}
-            setBuildView={setBuildView}
-            porterYamlPath={porterYamlPath}
-            setPorterYamlPath={setPorterYamlPath}
+            porterApp={porterApp}
             updatePorterApp={(attrs: Partial<PorterApp>) => setPorterApp(PorterApp.setAttributes(porterApp, attrs))}
-            git_repo={porterApp.repo_name}
-            git_repo_id={porterApp.git_repo_id}
           />
         ) : (
           <StyledSourceBox>

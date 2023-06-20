@@ -5,14 +5,15 @@ import api from "shared/api";
 import Error from "components/porter/Error";
 
 import { Context } from "shared/Context";
-import { ActionConfigType, FileType } from "shared/types";
+import { FileType } from "shared/types";
 
 import Spacer from "components/porter/Spacer";
-import AdvancedBuildSettings from "main/home/app-dashboard/build-settings/AdvancedBuildSettings";
 import Modal from "components/porter/Modal";
 import Input from "components/porter/Input";
 import Text from "components/porter/Text";
 import Link from "components/porter/Link";
+import { PorterApp } from "../types/porterApp";
+import AdvancedBuildSettings from "./AdvancedBuildSettings";
 
 interface AutoBuildpack {
   name?: string;
@@ -20,39 +21,20 @@ interface AutoBuildpack {
 }
 
 type PropsType = {
-  actionConfig: ActionConfigType | null;
-  dockerfilePath?: string;
-  folderPath: string;
-  porterYaml?: string;
-  setActionConfig: (x: ActionConfigType) => void;
-  setDockerfilePath: (x: string) => void;
-  setFolderPath: (x: string) => void;
-  setBuildConfig: (x: any) => void;
   setPorterYaml: (x: any) => void;
-  buildView: string;
-  setBuildView: (x: string) => void;
-  porterYamlPath: string;
-  setPorterYamlPath: (x: string) => void;
-  git_repo_id: number;
-  git_repo_name: string;
-  branch: string;
+  porterApp: PorterApp;
+  updatePorterApp: (attrs: Partial<PorterApp>) => void;
 };
 
 const DetectContentsList: React.FC<PropsType> = ({
-  git_repo_id,
-  git_repo_name,
-  branch,
-  setPorterYamlPath,
-  porterYamlPath,
   setPorterYaml,
-  setDockerfilePath,
-  setBuildView,
+  porterApp,
+  updatePorterApp,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [contents, setContents] = useState<FileType[]>([]);
-  const [currentDir, setCurrentDir] = useState("");
   const [changedPorterYaml, setChangedPorterYaml] = useState(true);
   const [displayInput, setDisplayInput] = useState(false);
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
@@ -77,11 +59,11 @@ const DetectContentsList: React.FC<PropsType> = ({
   const toggleModal = async () => {
     if (!showModal) {
       const porterYamlItem = contents.find((item: FileType) =>
-        item.path.includes(porterYamlPath + "porter.yaml")
+        item.path.includes(porterApp.porter_yaml_path + "porter.yaml")
       );
       if (porterYamlItem) {
-        fetchAndSetPorterYaml(porterYamlPath + "porter.yaml");
-        setPorterYamlPath("porter.yaml");
+        fetchAndSetPorterYaml(porterApp.porter_yaml_path + "porter.yaml");
+        updatePorterApp({ porter_yaml_path: "porter.yaml" });
         return;
       }
     }
@@ -103,13 +85,12 @@ const DetectContentsList: React.FC<PropsType> = ({
     );
 
     if (dockerFileItem) {
-      setDockerfilePath(dockerFileItem.path);
-      setBuildView("docker");
+      updatePorterApp({ dockerfile: dockerFileItem.path });
     }
   }, [contents]);
 
   useEffect(() => {
-    detectBuildpacks().then(({ data }) => {
+    detectBuildpacks().then(({ data }: { data: any }) => {
       setAutoBuildpack(data);
     });
   }, [contents]);
@@ -127,34 +108,41 @@ const DetectContentsList: React.FC<PropsType> = ({
   };
 
   const fetchContents = () => {
+    if (currentProject == null) {
+      return;
+    }
+
     return api.getBranchContents(
       "<token>",
-      { dir: currentDir || "./" },
+      { dir: porterApp.build_context || "./" },
       {
         project_id: currentProject.id,
-        git_repo_id,
+        git_repo_id: porterApp.git_repo_id,
         kind: "github",
-        owner: git_repo_name.split("/")[0],
-        name: git_repo_name.split("/")[1],
-        branch,
+        owner: porterApp.repo_name.split("/")[0],
+        name: porterApp.repo_name.split("/")[1],
+        branch: porterApp.git_branch,
       }
     );
   };
 
-  const fetchPorterYamlContent = async (porterYaml: string) => {
+  const fetchPorterYamlContent = async (porterYamlPath: string) => {
     try {
+      if (currentProject == null) {
+        return;
+      }
       const res = await api.getPorterYamlContents(
         "<token>",
         {
-          path: porterYaml,
+          path: porterYamlPath,
         },
         {
           project_id: currentProject.id,
-          git_repo_id: git_repo_id,
+          git_repo_id: porterApp.git_repo_id,
           kind: "github",
-          owner: git_repo_name.split("/")[0],
-          name: git_repo_name.split("/")[1],
-          branch: branch,
+          owner: porterApp.repo_name.split("/")[0],
+          name: porterApp.repo_name.split("/")[1],
+          branch: porterApp.git_branch,
         }
       );
       return res;
@@ -164,33 +152,34 @@ const DetectContentsList: React.FC<PropsType> = ({
 
   };
   const detectBuildpacks = () => {
+    if (currentProject == null) {
+      return;
+    }
+
     return api.detectBuildpack(
       "<token>",
       {
-        dir: currentDir || ".",
+        dir: porterApp.build_context || ".",
       },
       {
         project_id: currentProject.id,
-        git_repo_id: git_repo_id,
+        git_repo_id: porterApp.git_repo_id,
         kind: "github",
-        owner: git_repo_name.split("/")[0],
-        name: git_repo_name.split("/")[1],
-        branch: branch,
+        owner: porterApp.repo_name.split("/")[0],
+        name: porterApp.repo_name.split("/")[1],
+        branch: porterApp.git_branch,
       }
     );
   };
 
   const handleInputChange = (newValue: string) => {
-    setPorterYamlPath(newValue);
+    updatePorterApp({ porter_yaml_path: newValue });
     setChangedPorterYaml(newValue === "");
     if (!displayInput && newValue !== "") {
       setDisplayInput(true);
     }
   };
-  const handleUpdatePorterYamlPath = () => {
-    setPorterYamlPath(porterYamlPath);
-    fetchAndSetPorterYaml(porterYamlPath);
-  };
+
   const updateContents = async () => {
     try {
       const res = await fetchContents();
@@ -227,15 +216,10 @@ const DetectContentsList: React.FC<PropsType> = ({
       });
     }
   };
-  const updatePorterYamlPath = () => {
-    toggleModal();
 
-    fetchAndSetPorterYaml(porterYamlPath);
-  };
   const ignoreModal = () => {
     toggleModal();
-
-    setPorterYamlPath("");
+    updatePorterApp({ porter_yaml_path: "" });
   };
 
   const NoPorterYamlContent = () => (
@@ -269,9 +253,9 @@ const DetectContentsList: React.FC<PropsType> = ({
           <Input
             disabled={false}
             placeholder="ex: ./subdirectory/porter.yaml"
-            value={porterYamlPath}
+            value={porterApp.porter_yaml_path}
             width="100%"
-            setValue={setPorterYamlPath}
+            setValue={(val: string) => updatePorterApp({ porter_yaml_path: val })}
           />
           <Spacer y={1} />
           <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -284,7 +268,7 @@ const DetectContentsList: React.FC<PropsType> = ({
               Ignore
             </Button>
             <Button
-              onClick={updatePorterYamlPath}
+              onClick={() => fetchAndSetPorterYaml(porterApp.porter_yaml_path)}
               loadingText="Submitting..."
               color="#616fee"
               status={loading ? "loading" : undefined}
@@ -296,21 +280,21 @@ const DetectContentsList: React.FC<PropsType> = ({
       )}
       {renderContentList() && (
         <>
-          {porterYamlPath != "porter.yaml" &&
-            (displayInput || porterYamlPath) && (
+          {porterApp.porter_yaml_path !== "porter.yaml" &&
+            (displayInput || porterApp.porter_yaml_path) && (
               <>
                 <Text color="helper">Porter.yaml path:</Text>
                 <Spacer y={0.5} />
                 <Input
                   disabled={false}
                   placeholder="ex: ./"
-                  value={porterYamlPath}
+                  value={porterApp.porter_yaml_path}
                   width="100%"
                   onValueChange={handleInputChange}
                 />
                 <Spacer y={0.5} />
                 <Button
-                  onClick={handleUpdatePorterYamlPath}
+                  onClick={() => fetchAndSetPorterYaml(porterApp.porter_yaml_path)}
                   loadingText="Submitting..."
                   color={changedPorterYaml ? "#ffffff11" : "#616fee"}
                   status={buttonStatus}
@@ -322,16 +306,8 @@ const DetectContentsList: React.FC<PropsType> = ({
               </>
             )}
           <AdvancedBuildSettings
-            dockerfilePath={props.dockerfilePath}
-            setDockerfilePath={props.setDockerfilePath}
-            setBuildConfig={props.setBuildConfig}
-            autoBuildPack={autoBuildpack}
-            showSettings={false}
-            actionConfig={props.actionConfig}
-            branch={props.branch}
-            folderPath={props.folderPath}
-            buildView={props.buildView}
-            setBuildView={props.setBuildView}
+            porterApp={porterApp}
+            updatePorterApp={updatePorterApp}
           />
         </>
       )}

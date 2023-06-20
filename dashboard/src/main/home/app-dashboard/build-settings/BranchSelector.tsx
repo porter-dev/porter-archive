@@ -15,7 +15,7 @@ type Props = {
   git_repo_id: number;
 };
 
-const BranchList: React.FC<Props> = ({
+const BranchSelector: React.FC<Props> = ({
   setBranch,
   currentBranch,
   repo_name,
@@ -120,7 +120,7 @@ const BranchList: React.FC<Props> = ({
   );
 };
 
-export default BranchList;
+export default BranchSelector;
 
 const BranchName = styled.div<{ lastItem: boolean; disabled?: boolean }>`
   display: flex;

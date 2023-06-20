@@ -1,30 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
 import AnimateHeight from "react-animate-height";
-import { BuildpackStack } from "components/repo-selector/BuildpackStack";
-import { ActionConfigType, BuildConfig } from "shared/types";
 import Select from "components/porter/Select";
-
-interface AutoBuildpack {
-  name?: string;
-  valid: boolean;
-}
+import { PorterApp } from "../types/porterApp";
+import BuildpackStack from "./BuildpackStack";
 
 interface AdvancedBuildSettingsProps {
-  autoBuildPack?: AutoBuildpack;
-  buildView: string;
-  showSettings: boolean;
-  actionConfig: ActionConfigType | null;
-  branch: string;
-  folderPath: string;
-  dockerfilePath?: string;
-  setDockerfilePath: (x: string) => void;
-  setBuildConfig?: (x: any) => void;
-  currentBuildConfig?: BuildConfig;
-  setBuildView: (x: string) => void;
+  porterApp: PorterApp;
+  updatePorterApp: (attrs: Partial<PorterApp>) => void;
 }
 
 type Buildpack = {
@@ -35,22 +21,23 @@ type Buildpack = {
   };
 };
 
-const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
-  const [showSettings, setShowSettings] = useState<boolean>(props.showSettings);
-  const buildView = props.setBuildView(props.buildView || "buildpacks");
+const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = ({
+  porterApp,
+  updatePorterApp,
+}) => {
+  const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [buildView, setBuildView] = useState<string>(porterApp.dockerfile !== "" ? "docker" : "buildpacks");
 
-  useEffect(() => { }, [props.buildView]);
   const createDockerView = () => {
-    // props.setBuildConfig({});
     return (
       <>
         <Text color="helper">Dockerfile path (absolute path)</Text>
         <Spacer y={0.5} />
         <Input
           placeholder="ex: ./Dockerfile"
-          value={props.dockerfilePath}
+          value={porterApp.dockerfile}
           width="300px"
-          setValue={props.setDockerfilePath}
+          setValue={(val: string) => updatePorterApp({ dockerfile: val })}
         />
         <Spacer y={0.5} />
       </>
@@ -61,15 +48,8 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
     return (
       <>
         <BuildpackStack
-          actionConfig={props.actionConfig}
-          branch={props.branch}
-          folderPath={props.folderPath}
-          onChange={(config) => {
-            props.setBuildConfig(config);
-          }}
-          hide={false}
-          currentBuildConfig={props.currentBuildConfig}
-          setBuildConfig={props.setBuildConfig}
+          porterApp={porterApp}
+          updatePorterApp={updatePorterApp}
         />
       </>
     );
@@ -84,7 +64,7 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
           setShowSettings(!showSettings);
         }}
       >
-        {props.buildView == "docker" ? (
+        {buildView == "docker" ? (
           <AdvancedBuildTitle>
             <i className="material-icons dropdown">arrow_drop_down</i>
             Configure Dockerfile settings
@@ -100,17 +80,17 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = (props) => {
       <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
         <StyledSourceBox>
           <Select
-            value={props.buildView}
+            value={buildView}
             width="300px"
             options={[
               { value: "docker", label: "Docker" },
               { value: "buildpacks", label: "Buildpacks" },
             ]}
-            setValue={(option) => props.setBuildView(option)}
+            setValue={(option) => setBuildView(option)}
             label="Build method"
           />
           <Spacer y={1} />
-          {props.buildView === "docker"
+          {buildView === "docker"
             ? createDockerView()
             : createBuildpackView()}
         </StyledSourceBox>

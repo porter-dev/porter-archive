@@ -8,7 +8,6 @@ export interface PorterApp {
     buildpacks: string[];
     dockerfile: string;
     image_repo_uri: string;
-    porter_yaml: string;
     porter_yaml_path: string;
 }
 
@@ -18,12 +17,11 @@ export const PorterApp = {
         git_branch: "",
         git_repo_id: 0,
         repo_name: "",
-        build_context: "",
+        build_context: "./",
         builder: "",
         buildpacks: [],
         dockerfile: "",
         image_repo_uri: "",
-        porter_yaml: "",
         porter_yaml_path: "",
     }),
 

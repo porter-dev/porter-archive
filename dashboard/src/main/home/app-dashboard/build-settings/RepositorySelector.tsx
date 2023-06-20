@@ -1,9 +1,9 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import github from "assets/github-white.png";
 
 import api from "shared/api";
-import { ActionConfigType, RepoType } from "shared/types";
+import { RepoType } from "shared/types";
 import { Context } from "shared/Context";
 
 import DynamicLink from "components/DynamicLink";
@@ -15,7 +15,7 @@ import { PorterApp } from "../types/porterApp";
 type Props = {
   readOnly: boolean;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
-  git_repo: string;
+  git_repo_name: string;
 };
 
 type Provider =
@@ -32,7 +32,7 @@ type Provider =
 
 const RepositorySelector: React.FC<Props> = ({
   readOnly,
-  git_repo,
+  git_repo_name,
   updatePorterApp,
 }) => {
   const [providers, setProviders] = useState([]);
@@ -50,22 +50,11 @@ const RepositorySelector: React.FC<Props> = ({
       (provider) => provider.provider === "github"
     );
 
-    const gitlabProviders = providers.filter(
-      (provider) => provider.provider === "gitlab"
-    );
-
-    const githubSortedProviders = githubProviders.sort((a, b) => {
+    return githubProviders.sort((a, b) => {
       if (a.provider === "github" && b.provider === "github") {
         return a.name.localeCompare(b.name);
       }
     });
-
-    const gitlabSortedProviders = gitlabProviders.sort((a, b) => {
-      if (a.provider === "gitlab" && b.provider === "gitlab") {
-        return a.instance_url.localeCompare(b.instance_url);
-      }
-    });
-    return [...gitlabSortedProviders, ...githubSortedProviders];
   };
 
   useEffect(() => {
@@ -206,7 +195,7 @@ const RepositorySelector: React.FC<Props> = ({
         return (
           <RepoName
             key={i}
-            isSelected={repo.FullName === git_repo}
+            isSelected={repo.FullName === git_repo_name}
             lastItem={i === repos.length - 1}
             onClick={() => setRepo(repo)}
             readOnly={readOnly}

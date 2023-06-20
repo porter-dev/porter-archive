@@ -2,27 +2,25 @@ import React from "react";
 import styled from "styled-components";
 
 import Input from "components/porter/Input";
-import RepositorySelector from "main/home/app-dashboard/build-settings/RepositorySelector";
-import { PorterApp } from "main/home/app-dashboard/types/porterApp";
+import RepositorySelector from "./RepositorySelector";
+import { PorterApp } from "../types/porterApp";
 
 type Props = {
-  git_repo: string;
-  setBuildView?: (x: string) => void;
+  git_repo_name: string;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
 };
 
 const ActionConfEditorStack: React.FC<Props> = ({
-  git_repo,
-  setBuildView,
+  git_repo_name,
   updatePorterApp,
 }) => {
-  if (git_repo === "") {
+  if (git_repo_name === "") {
     return (
       <ExpandedWrapper>
         <RepositorySelector
           readOnly={false}
           updatePorterApp={updatePorterApp}
-          git_repo={git_repo}
+          git_repo_name={git_repo_name}
         />
       </ExpandedWrapper>
     );
@@ -33,14 +31,13 @@ const ActionConfEditorStack: React.FC<Props> = ({
           disabled={true}
           label="GitHub repository:"
           width="100%"
-          value={git_repo}
+          value={git_repo_name}
           setValue={() => { }}
           placeholder=""
         />
         <BackButton
           width="135px"
           onClick={() => {
-            setBuildView ? setBuildView("buildpacks") : null;
             updatePorterApp({
               repo_name: "",
               git_branch: "",

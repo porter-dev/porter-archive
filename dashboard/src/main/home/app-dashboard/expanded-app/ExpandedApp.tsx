@@ -32,7 +32,7 @@ import TabSelector from "components/TabSelector";
 import Icon from "components/porter/Icon";
 import { ChartType, PorterAppOptions, ResourceType } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
-import BuildSettingsTabStack from "./BuildSettingsTabStack";
+import BuildSettingsTabStack from "../build-settings/BuildSettingsTabStack";
 import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
 import { ReleaseService, Service } from "../new-app-flow/serviceTypes";

@@ -89,6 +89,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
+  const [additionalNodePolicies, setAdditionalNodePolicies] = useState<string[]>([]);
   const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
   const [loadBalancer, setLoadBalancer] = useState<LoadBalancer | undefined>();
@@ -156,6 +157,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 maxInstances: 5,
                 nodeGroupType: NodeGroupType.SYSTEM,
                 isStateful: false,
+                additionalPolicies: additionalNodePolicies,
               }),
               new EKSNodeGroup({
                 instanceType: "t3.large",
@@ -163,6 +165,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 maxInstances: 1,
                 nodeGroupType: NodeGroupType.MONITORING,
                 isStateful: true,
+                additionalPolicies: additionalNodePolicies,
               }),
               new EKSNodeGroup({
                 instanceType: machineType,
@@ -170,6 +173,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 maxInstances: maxInstances || 10,
                 nodeGroupType: NodeGroupType.APPLICATION,
                 isStateful: false,
+                additionalPolicies: ["Testinmg"],
               }),
             ],
           }),
@@ -271,13 +275,19 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       if (eksValues == null) {
         return
       }
-      eksValues.nodeGroups.map((nodeGroup: any) => {
-        if (nodeGroup.nodeGroupType === "NODE_GROUP_TYPE_APPLICATION") {
+      eksValues.nodeGroups.map((nodeGroup: EKSNodeGroup) => {
+        if (nodeGroup.nodeGroupType === NodeGroupType.APPLICATION) {
           setMachineType(nodeGroup.instanceType);
           setMinInstances(nodeGroup.minInstances);
           setMaxInstances(nodeGroup.maxInstances);
         }
+
+        if (nodeGroup.additionalPolicies?.length > 0) {
+          // this shares policies across all node groups, but there is no reason that this can be specific policies per node group
+          setAdditionalNodePolicies(nodeGroup.additionalPolicies);
+        }
       });
+
       setCreateStatus("");
       setClusterName(eksValues.clusterName);
       setAwsRegion(eksValues.region);
@@ -327,16 +337,16 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           setActiveValue={setAwsRegion}
           label="📍 AWS region"
         />
-        
-          <Heading>
-            <ExpandHeader
-              onClick={() => setIsExpanded(!isExpanded)}
-              isExpanded={isExpanded}
-            >
-              <i className="material-icons">arrow_drop_down</i>
-              Advanced settings
-            </ExpandHeader>
-          </Heading>
+
+        <Heading>
+          <ExpandHeader
+            onClick={() => setIsExpanded(!isExpanded)}
+            isExpanded={isExpanded}
+          >
+            <i className="material-icons">arrow_drop_down</i>
+            Advanced settings
+          </ExpandHeader>
+        </Heading>
 
         {isExpanded && (
           <>

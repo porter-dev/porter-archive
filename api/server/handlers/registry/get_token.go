@@ -409,6 +409,20 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "project-id", Value: proj.ID})
 
+	request := &types.GetRegistryACRTokenRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	if request.ServerURL == "" {
+		err := telemetry.Error(ctx, span, nil, "missing server url")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
 	if err != nil {
@@ -421,7 +435,7 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	var expiresAt *time.Time
 
 	for _, reg := range regs {
-		if strings.Contains(reg.URL, "azurecr.io") {
+		if strings.Contains(reg.URL, request.ServerURL) {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "registry-name", Value: reg.Name})
 
 			if proj.CapiProvisionerEnabled {
@@ -439,7 +453,7 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 				}
 
 				if tokenResp.Msg == nil || tokenResp.Msg.Token == "" {
-					err := telemetry.Error(ctx, span, err, "no token found in response")
+					err := telemetry.Error(ctx, span, nil, "no token found in response")
 					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 					return
 				}

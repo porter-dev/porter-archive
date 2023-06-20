@@ -60,14 +60,14 @@ func (p *CreateAzureHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AzureIntegration: az.ToAzureIntegrationType(),
 	}
 
-	req := connect.NewRequest(&porterv1.CreateAzureConnectionRequest{
+	req := connect.NewRequest(&porterv1.SaveAzureCredentialsRequest{
 		ProjectId:              int64(project.ID),
 		ClientId:               request.AzureClientID,
 		SubscriptionId:         request.AzureSubscriptionID,
 		TenantId:               request.AzureTenantID,
 		ServicePrincipalSecret: []byte(request.ServicePrincipalKey),
 	})
-	resp, err := p.Config().ClusterControlPlaneClient.CreateAzureConnection(ctx, req)
+	resp, err := p.Config().ClusterControlPlaneClient.SaveAzureCredentials(ctx, req)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error creating azure connection")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -75,7 +75,7 @@ func (p *CreateAzureHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if resp.Msg == nil || resp.Msg.CredentialsIdentifier == "" {
-		err := telemetry.Error(ctx, span, err, "no cloud credential identifier returned")
+		err := telemetry.Error(ctx, span, nil, "no cloud credential identifier returned")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

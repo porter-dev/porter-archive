@@ -2,8 +2,6 @@ module github.com/porter-dev/porter
 
 go 1.20
 
-replace github.com/porter-dev/api-contracts v0.0.63 => ../api-contracts
-
 require (
 	cloud.google.com/go v0.105.0 // indirect
 	github.com/AlecAivazis/survey/v2 v2.2.9
@@ -78,7 +76,7 @@ require (
 	github.com/honeycombio/otel-launcher-go v0.2.0
 	github.com/nats-io/nats.go v1.24.0
 	github.com/open-policy-agent/opa v0.44.0
-	github.com/porter-dev/api-contracts v0.0.63
+	github.com/porter-dev/api-contracts v0.0.66
 	github.com/riandyrn/otelchi v0.5.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d

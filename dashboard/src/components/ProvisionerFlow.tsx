@@ -65,14 +65,14 @@ const ProvisionerFlow: React.FC<Props> = ({}) => {
                   key={i}
                   disabled={
                     isUsageExceeded ||
-                    (provider === "azure" && !featurePreview) ||
+                    // (provider === "azure" && !featurePreview) ||
                     provider === "gcp"
                   }
                   onClick={() => {
                     if (
                       !(
                         isUsageExceeded ||
-                        (provider === "azure" && !featurePreview) ||
+                        // (provider === "azure" && !featurePreview) ||
                         provider === "gcp"
                       )
                     ) {

@@ -7,7 +7,6 @@ import azure from "assets/azure.png";
 import Heading from "components/form-components/Heading";
 import Helper from "./form-components/Helper";
 import ProvisionerSettings from "./ProvisionerSettings";
-import ProvisionerSettingsOld from "./ProvisionerSettingsOld";
 import Text from "./porter/Text";
 import Spacer from "./porter/Spacer";
 import Container from "./porter/Container";

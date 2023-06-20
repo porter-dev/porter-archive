@@ -8,6 +8,7 @@ import settings from "assets/settings-bold.png";
 import web from "assets/web-bold.png";
 import addOns from "assets/add-ons-bold.png";
 import infra from "assets/infra.png";
+import sliders from "assets/sliders.svg";
 
 import { Context } from "shared/Context";
 
@@ -187,6 +188,17 @@ class Sidebar extends Component<PropsType, StateType> {
           >
             <Img src={addOns} />
             Add-ons
+          </NavButton>
+          <NavButton
+            path="/env-groups"
+           
+            active={
+             
+              window.location.pathname.startsWith("/env-groups")
+            }
+          >
+            <Img src={sliders} />
+            Global env groups
           </NavButton>
           {this.props.isAuthorized("integrations", "", [
             "get",

@@ -19,7 +19,7 @@ type PorterApp struct {
 	// Build settings (optional)
 	BuildContext   string `json:"build_context,omitempty"`
 	Builder        string `json:"builder,omitempty"`
-	Buildpacks     string `json:"build_packs,omitempty"`
+	Buildpacks     string `json:"buildpacks,omitempty"`
 	Dockerfile     string `json:"dockerfile,omitempty"`
 	PullRequestURL string `json:"pull_request_url,omitempty"`
 

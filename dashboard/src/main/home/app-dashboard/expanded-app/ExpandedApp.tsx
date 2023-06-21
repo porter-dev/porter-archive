@@ -2,7 +2,6 @@ import React, { useEffect, useState, useContext, useCallback } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
-import { z } from "zod";
 
 import notFound from "assets/not-found.png";
 import web from "assets/web.png";
@@ -11,14 +10,11 @@ import github from "assets/github-white.png";
 import pr_icon from "assets/pull_request_icon.svg";
 import loadingImg from "assets/loading.gif";
 import refresh from "assets/refresh.png";
-import deploy from "assets/deploy.png";
 import save from "assets/save-01.svg";
-import danger from "assets/danger.svg";
 
 import api from "shared/api";
 import JSZip from "jszip";
 import { Context } from "shared/Context";
-import useAuth from "shared/auth/useAuth";
 import Error from "components/porter/Error";
 
 import Banner from "components/porter/Banner";
@@ -30,18 +26,16 @@ import Link from "components/porter/Link";
 import Back from "components/porter/Back";
 import TabSelector from "components/TabSelector";
 import Icon from "components/porter/Icon";
-import { ChartType, PorterAppOptions, ResourceType } from "shared/types";
+import { ChartType, PorterAppOptions } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
-import BuildSettingsTabStack from "./BuildSettingsTabStack";
+import BuildSettingsTab from "../build-settings/BuildSettingsTab";
 import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
-import { ReleaseService, Service } from "../new-app-flow/serviceTypes";
+import { Service } from "../new-app-flow/serviceTypes";
 import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import Fieldset from "components/porter/Fieldset";
 import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
-import EnvGroupArray, {
-  KeyValueType,
-} from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterYamlSchema } from "../new-app-flow/schema";
 import { EnvVariablesTab } from "./EnvVariablesTab";
 import GHABanner from "./GHABanner";
@@ -53,10 +47,10 @@ import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
 import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
 import Anser, { AnserJsonEntry } from "anser";
-import GHALogsModal from "./status/GHALogsModal";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import EventsTab from "./EventsTab";
+import { PorterApp } from "../types/porterApp";
 
 type Props = RouteComponentProps & {};
 
@@ -111,7 +105,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
   const [subdomain, setSubdomain] = useState<string>("");
 
+  const [porterApp, setPorterApp] = useState<PorterApp>();
+  // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
+  const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
 
+  // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
   const getPorterApp = async () => {
     setBannerLoading(true);
     const { appName } = props.match.params as any;
@@ -172,6 +170,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
       setPorterJson(porterJson);
       setAppData(newAppData);
+      // annoying that we have to parse buildpacks like this but alas
+      const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") };
+      setPorterApp(parsedPorterApp);
+      setTempPorterApp(parsedPorterApp);
+
       const [newServices, newEnvVars] = updateServicesAndEnvVariables(
         resChartData?.data,
         releaseChartData?.data,
@@ -279,7 +282,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         appData != null &&
         currentCluster != null &&
         currentProject != null &&
-        appData.app != null
+        appData.app != null &&
+        tempPorterApp != null
       ) {
         const finalPorterYaml = createFinalPorterYaml(
           services,
@@ -294,6 +298,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           "<token>",
           {
             porter_yaml: base64Encoded,
+            repo_name: tempPorterApp.repo_name,
+            git_branch: tempPorterApp.git_branch,
+            build_context: tempPorterApp.build_context,
+            builder: !_.isEmpty(tempPorterApp.dockerfile) ? "null" : tempPorterApp.builder,
+            buildpacks: !_.isEmpty(tempPorterApp.dockerfile) ? "null" : tempPorterApp.buildpacks.join(","),
+            dockerfile: tempPorterApp.dockerfile,
             ...options,
             override_release: true,
           },
@@ -304,6 +314,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           }
         );
         setPorterYaml(finalPorterYaml);
+        setPorterApp(tempPorterApp);
         setButtonStatus("success");
         setShowUnsavedChangesBanner(false);
       } else {
@@ -326,6 +337,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setBannerLoading(false);
     });
   }, [appData]);
+
+  useEffect(() => {
+    if (!_.isEqual(_.omitBy(porterApp, _.isEmpty), _.omitBy(tempPorterApp, _.isEmpty))) {
+      setButtonStatus("");
+      setShowUnsavedChangesBanner(true);
+    } else {
+      setShowUnsavedChangesBanner(false);
+    }
+  }, [tempPorterApp, porterApp]);
 
   const getBuildLogs = async () => {
     try {
@@ -641,12 +661,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       appData.app.builder != null && appData.app.builder.includes("heroku")
     );
     if (!_.isEqual(porterYaml, newPorterYaml)) {
+      setButtonStatus("");
       setShowUnsavedChangesBanner(true);
     } else {
       setShowUnsavedChangesBanner(false);
     }
-    // console.log("old porter yaml", porterYaml);
-    // console.log("new porter yaml", newPorterYaml);
   };
 
   const renderTabContents = () => {
@@ -720,12 +739,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
       case "build-settings":
         return (
-          <BuildSettingsTabStack
-            appData={appData}
-            setAppData={setAppData}
-            onTabSwitch={getPorterApp}
+          <BuildSettingsTab
+            porterApp={tempPorterApp}
+            setTempPorterApp={(attrs: Partial<PorterApp>) => setTempPorterApp(PorterApp.setAttributes(tempPorterApp, attrs))}
             clearStatus={() => setButtonStatus("")}
             updatePorterApp={updatePorterApp}
+            setShowUnsavedChangesBanner={setShowUnsavedChangesBanner}
           />
         );
       case "settings":
@@ -840,7 +859,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         <StyledExpandedApp>
           <Back to="/apps" />
           <Container row>
-            {renderIcon(appData.app?.build_packs)}
+            {renderIcon(appData.app?.buildpacks)}
             <Spacer inline x={1} />
             <Text size={21}>{appData.app.name}</Text>
             {appData.app.repo_name && (
@@ -1080,28 +1099,6 @@ const RefreshButton = styled.div`
     justify-content: center;
     height: 11px;
     margin-right: 10px;
-  }
-`;
-
-const LogsButton = styled.div`
-  color: white;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  :hover {
-    color: red;
-    > img {
-      opacity: 1;
-    }
-  }
-
-  > img {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 5px;
-    margin-right: 10px;
-    opacity: 0.8;
   }
 `;
 

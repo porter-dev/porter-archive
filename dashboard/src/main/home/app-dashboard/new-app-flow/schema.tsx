@@ -2,6 +2,7 @@ import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArr
 import * as z from "zod";
 import { JobService, ReleaseService, Service, WebService, WorkerService } from "./serviceTypes";
 import { overrideObjectValues } from "./utils";
+import _ from "lodash";
 
 const appConfigSchema = z.object({
     run: z.string().min(1),
@@ -59,7 +60,7 @@ export const createFinalPorterYaml = (
 
     const release = services.find(Service.isRelease);
 
-    return release != null && release.startCommand.value.trim() != "" ? {
+    return release != null && !_.isEmpty(release.startCommand.value) ? {
         version: "v1stack",
         env,
         apps,

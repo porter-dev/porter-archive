@@ -32,6 +32,7 @@ const locationOptions = [
   { value: "eastus", label: "East US" },
   { value: "westus2", label: "West US 2" },
   { value: "westus3", label: "West US 3" },
+  { value: "canadacentral", label: "Central Canada" },
 ];
 
 const machineTypeOptions = [
@@ -113,7 +114,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
         projectId: currentProject.id,
         kind: EnumKubernetesKind.AKS,
         cloudProvider: EnumCloudProvider.AZURE,
-        cloudProviderCredentialsId: "",
+        cloudProviderCredentialsId: props.credentialId,
         kindValues: {
           case: "aksKind",
           value: new AKS({

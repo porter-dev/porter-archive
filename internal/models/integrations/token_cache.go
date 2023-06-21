@@ -1,6 +1,7 @@
 package integrations
 
 import (
+	"context"
 	"time"
 
 	"gorm.io/gorm"
@@ -23,11 +24,11 @@ type TokenCache struct {
 
 // GetTokenCacheFunc is a function that retrieves the token and expiry
 // time from the db
-type GetTokenCacheFunc func() (tok *TokenCache, err error)
+type GetTokenCacheFunc func(ctx context.Context) (tok *TokenCache, err error)
 
 // SetTokenCacheFunc is a function that updates the token cache
 // with a new token and expiry time
-type SetTokenCacheFunc func(token string, expiry time.Time) error
+type SetTokenCacheFunc func(ctx context.Context, token string, expiry time.Time) error
 
 // IsExpired returns true if a token is expired, false otherwise
 func (t *TokenCache) IsExpired() bool {

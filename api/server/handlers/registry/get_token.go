@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/bufbuild/connect-go"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
@@ -18,8 +21,6 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
-
-	"github.com/aws/aws-sdk-go/aws/arn"
 )
 
 type RegistryGetECRTokenHandler struct {
@@ -151,7 +152,10 @@ func NewRegistryGetGCRTokenHandler(
 }
 
 func (c *RegistryGetGCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-registry-get-gcr-token")
+	defer span.End()
+
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	request := &types.GetRegistryGCRTokenRequest{}
 
@@ -162,7 +166,8 @@ func (c *RegistryGetGCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		e := telemetry.Error(ctx, span, err, "error listing registries by project id")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
 
@@ -173,15 +178,16 @@ func (c *RegistryGetGCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		if reg.GCPIntegrationID != 0 && strings.Contains(reg.URL, request.ServerURL) {
 			_reg := registry.Registry(*reg)
 
-			oauthTok, err := _reg.GetGCRToken(c.Repo())
-
-			// if the oauth token is not nil, but the error is not nil, we still return the token
-			// but log an error
-			if oauthTok != nil && err != nil {
-				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
-			} else if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
+			oauthTok, err := _reg.GetGCRToken(ctx, c.Repo())
+			if err != nil {
+				// if the oauth token is not nil, we still return the token but log an error
+				if oauthTok == nil {
+					e := telemetry.Error(ctx, span, err, "error getting gcr token")
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+					return
+				}
+				e := telemetry.Error(ctx, span, err, "error getting gcr token, but token was returned")
+				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(e))
 			}
 
 			token = oauthTok.AccessToken
@@ -213,7 +219,10 @@ func NewRegistryGetGARTokenHandler(
 }
 
 func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-registry-get-gar-token")
+	defer span.End()
+
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	request := &types.GetRegistryGCRTokenRequest{}
 
@@ -224,7 +233,8 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		e := telemetry.Error(ctx, span, err, "error listing registries by project id")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
 
@@ -235,15 +245,16 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		if reg.GCPIntegrationID != 0 && strings.Contains(reg.URL, request.ServerURL) {
 			_reg := registry.Registry(*reg)
 
-			oauthTok, err := _reg.GetGARToken(c.Repo())
-
-			// if the oauth token is not nil, but the error is not nil, we still return the token
-			// but log an error
-			if oauthTok != nil && err != nil {
-				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
-			} else if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
+			oauthTok, err := _reg.GetGARToken(ctx, c.Repo())
+			if err != nil {
+				// if the oauth token is not nil, we still return the token but log an error
+				if oauthTok == nil {
+					e := telemetry.Error(ctx, span, err, "error getting gar token")
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+					return
+				}
+				e := telemetry.Error(ctx, span, err, "error getting gar token, but token was returned")
+				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(e))
 			}
 
 			token = oauthTok.AccessToken
@@ -391,33 +402,110 @@ func NewRegistryGetACRTokenHandler(
 }
 
 func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-acr-token")
+	defer span.End()
+
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "project-id", Value: proj.ID})
+
+	request := &types.GetRegistryACRTokenRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	if request.ServerURL == "" {
+		err := telemetry.Error(ctx, span, nil, "missing server url")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	serverUrl := strings.TrimSuffix(request.ServerURL, "/")
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "server-url", Value: serverUrl})
 
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error getting registries by project id")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	var token string
 	var expiresAt *time.Time
 
+	var matchingReg *models.Registry
 	for _, reg := range regs {
-		if reg.AzureIntegrationID != 0 && strings.Contains(reg.URL, "azurecr.io") {
-			_reg := registry.Registry(*reg)
-			username, pw, err := _reg.GetACRCredentials(c.Repo())
-			if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				continue
-			}
-
-			token = base64.StdEncoding.EncodeToString([]byte(string(username) + ":" + string(pw)))
-
-			// we'll just set an arbitrary 30-day expiry time (this is not enforced)
-			timeExpires := time.Now().Add(30 * 24 * 3600 * time.Second)
-			expiresAt = &timeExpires
+		if strings.Contains(reg.URL, serverUrl) {
+			matchingReg = reg
 		}
+	}
+
+	if matchingReg == nil {
+		err := telemetry.Error(ctx, span, err, "no matching registry")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "registry-name", Value: matchingReg.Name})
+
+	if proj.CapiProvisionerEnabled {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "capi-provisioned", Value: true})
+
+		if c.Config().ClusterControlPlaneClient == nil {
+			err := telemetry.Error(ctx, span, nil, "cluster control plane client cannot be nil")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		tokenReq := connect.NewRequest(&porterv1.TokenForRegistryRequest{
+			ProjectId:   int64(proj.ID),
+			RegistryUri: matchingReg.URL,
+		})
+		tokenResp, err := c.Config().ClusterControlPlaneClient.TokenForRegistry(ctx, tokenReq)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting token response from ccp")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		if tokenResp.Msg == nil || tokenResp.Msg.Token == "" {
+			err := telemetry.Error(ctx, span, nil, "no token found in response")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		token = tokenResp.Msg.Token
+
+		// we'll just set an arbitrary 30-day expiry time (this is not enforced)
+		timeExpires := time.Now().UTC().Add(30 * 24 * time.Hour)
+		expiresAt = &timeExpires
+	}
+
+	if matchingReg.AzureIntegrationID != 0 {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "capi-provisioned", Value: false})
+
+		_reg := registry.Registry(*matchingReg)
+		username, pw, err := _reg.GetACRCredentials(c.Repo())
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting token response from ccp")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		token = base64.StdEncoding.EncodeToString([]byte(string(username) + ":" + string(pw)))
+		// we'll just set an arbitrary 30-day expiry time (this is not enforced)
+		timeExpires := time.Now().UTC().Add(30 * 24 * time.Hour)
+		expiresAt = &timeExpires
+	}
+
+	if token == "" {
+		err := telemetry.Error(ctx, span, nil, "missing token")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
 	}
 
 	resp := &types.GetRegistryTokenResponse{

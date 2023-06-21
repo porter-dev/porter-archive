@@ -16,7 +16,7 @@ type Props = RouteComponentProps & {
   setImageUrl: (x: string) => void;
   imageTag: string;
   setImageTag: (x: string) => void;
-  setPorterYaml: (x: any) => void;
+  setPorterYaml: (yaml: string, filename: string) => void;
   porterApp: PorterApp;
   setPorterApp: (x: PorterApp) => void;
 };
@@ -42,7 +42,8 @@ const SourceSettings: React.FC<Props> = ({
             setPorterYaml={setPorterYaml}
             porterApp={porterApp}
             updatePorterApp={(attrs: Partial<PorterApp>) => setPorterApp(PorterApp.setAttributes(porterApp, attrs))}
-            detectBuildpacks={true}
+            autoDetectBuildpacks={true}
+            canChangeRepo={true}
           />
         ) : (
           <StyledSourceBox>

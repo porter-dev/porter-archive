@@ -10,8 +10,10 @@ import Button from "components/porter/Button";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import Error from "components/porter/Error";
 import { PorterApp } from "../types/porterApp";
 import AddCustomBuildpackComponent from "./AddCustomBuildpackComponent";
+import BuildpackList from "./BuildpackList";
 
 const DEFAULT_BUILDER_NAME = "heroku";
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
@@ -41,20 +43,30 @@ type DetectedBuildpack = {
   buildConfig: BuildConfig;
 };
 
+const BUILDPACK_TO_NAME: { [key: string]: string } = {
+  "heroku/nodejs": "NodeJS",
+  "heroku/python": "Python",
+  "heroku/java": "Java",
+  "heroku/ruby": "Ruby",
+  "heroku/go": "Go",
+};
+
 const BuildpackStack: React.FC<{
   porterApp: PorterApp;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
-  detectBuildpacks: boolean;
+  autoDetectBuildpacks: boolean;
 }> = ({
   porterApp,
   updatePorterApp,
-  detectBuildpacks,
+  autoDetectBuildpacks,
 }) => {
     const { currentProject } = useContext(Context);
 
     const [builders, setBuilders] = useState<DetectedBuildpack[]>([]);
     const [selectedStack, setSelectedStack] = useState<string>("");
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDetectingBuildpacks, setIsDetectingBuildpacks] = useState(false);
+    const [error, setError] = useState<string>("");
 
     const [selectedBuildpacks, setSelectedBuildpacks] = useState<Buildpack[]>([]);
     const [availableBuildpacks, setAvailableBuildpacks] = useState<Buildpack[]>([]);
@@ -64,19 +76,30 @@ const BuildpackStack: React.FC<{
           <Text size={16}>Buildpack Configuration</Text>
           <Spacer y={1} />
           <Scrollable>
-            <Text color="helper">Selected buildpacks:</Text>
-            <Spacer y={1} />
-            {selectedBuildpacks.length > 0 &&
-              renderBuildpacksList(selectedBuildpacks, "remove")}
-            <Spacer y={1} />
-            {availableBuildpacks.length && (
-              <>
-                <Text color="helper">Available buildpacks:</Text>
-                <Spacer y={1} />
-                <>{renderBuildpacksList(availableBuildpacks, "add")}</>
-              </>
-            )}
-            <Spacer y={1} />
+            <Select
+              value={selectedStack}
+              width="300px"
+              options={sortedStackOptions}
+              setValue={(option) => {
+                setSelectedStack(option);
+                updatePorterApp({ builder: option });
+              }}
+              label="Builder and stack"
+            />
+            <Spacer y={0.5} />
+            <BuildpackList
+              selectedBuildpacks={selectedBuildpacks}
+              setSelectedBuildpacks={setSelectedBuildpacks}
+              availableBuildpacks={availableBuildpacks}
+              setAvailableBuildpacks={setAvailableBuildpacks}
+              porterApp={porterApp}
+              updatePorterApp={updatePorterApp}
+              showAvailableBuildpacks={true}
+              isDetectingBuildpacks={isDetectingBuildpacks}
+              detectBuildpacksError={error}
+              droppableId={"modal"}
+            />
+            <Spacer y={0.5} />
             <Text color="helper">
               You may also add buildpacks by directly providing their GitHub links
               or links to ZIP files that contain the buildpack source code.
@@ -87,18 +110,41 @@ const BuildpackStack: React.FC<{
           </Scrollable>
           <Footer>
             <Shade />
-            <Button onClick={() => setIsModalOpen(false)}>Save buildpacks</Button>
+            <FooterButtons>
+              <Button onClick={() => detectAndSetBuildPacks(true)}>Detect buildpacks</Button>
+              <Button onClick={() => setIsModalOpen(false)} width={"75px"}>Save</Button>
+            </FooterButtons>
           </Footer>
         </>
       );
     };
+    const detectAndSetBuildPacks = async (detect: boolean) => {
+      try {
+        if (currentProject == null) {
+          return;
+        }
 
-    useEffect(() => {
-      const detectAndSetBuildPacks = async () => {
-        try {
-          if (currentProject == null) {
+        if (!detect) {
+          // in this case, we are not detecting buildpacks, so we just populate based on the DB
+          setBuilders([{
+            name: porterApp.builder.split("/")[0],
+            builders: [porterApp.builder],
+            detected: [],
+            others: [],
+            buildConfig: {} as BuildConfig,
+          }])
+          setSelectedStack(porterApp.builder);
+          setSelectedBuildpacks(porterApp.buildpacks?.map(bp => ({
+            name: BUILDPACK_TO_NAME[bp] ?? bp,
+            buildpack: bp,
+            config: {},
+          })) ?? []);
+          setAvailableBuildpacks([]);
+        } else {
+          if (isDetectingBuildpacks) {
             return;
           }
+          setIsDetectingBuildpacks(true);
           const detectBuildPackRes = await api.detectBuildpack(
             "<token>",
             {
@@ -118,7 +164,6 @@ const BuildpackStack: React.FC<{
           if (builders.length === 0) {
             return;
           }
-
           setBuilders(builders);
 
           const defaultBuilder = builders.find(
@@ -127,35 +172,39 @@ const BuildpackStack: React.FC<{
 
           const allBuildpacks = defaultBuilder.others.concat(defaultBuilder.detected);
 
-          if (detectBuildpacks) {
-            let detectedBuilder: string;
-            if (defaultBuilder.builders.length && defaultBuilder.builders.includes(DEFAULT_HEROKU_STACK)) {
-              setSelectedStack(DEFAULT_HEROKU_STACK);
-              detectedBuilder = DEFAULT_HEROKU_STACK;
-            } else {
-              setSelectedStack(defaultBuilder.builders[0]);
-              detectedBuilder = defaultBuilder.builders[0];
-            }
+          let detectedBuilder: string;
+          if (defaultBuilder.builders.length && defaultBuilder.builders.includes(DEFAULT_HEROKU_STACK)) {
+            setSelectedStack(DEFAULT_HEROKU_STACK);
+            detectedBuilder = DEFAULT_HEROKU_STACK;
+          } else {
+            setSelectedStack(defaultBuilder.builders[0]);
+            detectedBuilder = defaultBuilder.builders[0];
+          }
 
-            const newBuildpacks = defaultBuilder.detected.filter(bp => !porterApp.buildpacks.includes(bp.buildpack));
+          const newBuildpacks = defaultBuilder.detected.filter(bp => !porterApp.buildpacks.includes(bp.buildpack));
+          if (autoDetectBuildpacks) {
             updatePorterApp({ builder: detectedBuilder, buildpacks: [...porterApp.buildpacks, ...newBuildpacks.map(bp => bp.buildpack)] });
             setSelectedBuildpacks(defaultBuilder.detected);
             setAvailableBuildpacks(defaultBuilder.others);
+            setError("");
           } else {
-            setSelectedStack(porterApp.builder);
-            setSelectedBuildpacks(porterApp.buildpacks?.map(bp => ({
-              name: allBuildpacks.find(b => b.buildpack === bp)?.name ?? bp,
-              buildpack: bp,
-              config: {},
-            })) ?? []);
-            setAvailableBuildpacks(defaultBuilder.others.filter(bp => !porterApp.buildpacks?.includes(bp.buildpack)));
+            setAvailableBuildpacks(allBuildpacks.filter(bp => !porterApp.buildpacks?.includes(bp.buildpack)));
           }
-
-        } catch (err) {
-          console.log(err);
-        };
+        }
+      } catch (err) {
+        if (autoDetectBuildpacks) {
+          updatePorterApp({ buildpacks: [] });
+          setSelectedBuildpacks([]);
+          setAvailableBuildpacks([]);
+          setError(`Unable to detect buildpacks at path: ${porterApp.build_context}. Please make sure your repo, branch, and application root path are all set correctly and attempt to detect again.`);
+        }
+      } finally {
+        setIsDetectingBuildpacks(false);
       }
-      detectAndSetBuildPacks();
+    }
+
+    useEffect(() => {
+      detectAndSetBuildPacks(autoDetectBuildpacks);
     }, [currentProject]);
 
     const builderOptions = useMemo(() => {
@@ -182,82 +231,6 @@ const BuildpackStack: React.FC<{
       });
     }, [builders]);
 
-    const renderBuildpacksList = (
-      buildpacks: Buildpack[],
-      action: "remove" | "add",
-      isLast: boolean = false
-    ) => {
-      return buildpacks?.map((buildpack, index) => {
-        const [languageName] = buildpack.name?.split("/").reverse();
-
-        const devicon = DeviconsNameList.find(
-          (devicon) => languageName.toLowerCase() === devicon.name
-        );
-
-        const icon = `devicon-${devicon?.name}-plain colored`;
-
-        let disableIcon = false;
-        if (!devicon) {
-          disableIcon = true;
-        }
-
-        return (
-          <StyledCard key={buildpack.name} marginBottom="5px">
-            <ContentContainer>
-              <Icon disableMarginRight={disableIcon} className={icon} />
-              <EventInformation>
-                <EventName>{buildpack?.name}</EventName>
-              </EventInformation>
-            </ContentContainer>
-            <ActionContainer>
-              {action === "add" && (
-                <ActionButton
-                  onClick={() => handleAddBuildpack(buildpack.buildpack)}
-                >
-                  <span className="material-icons-outlined">add</span>
-                </ActionButton>
-              )}
-              {action === "remove" && (
-                <ActionButton
-                  onClick={() => handleRemoveBuildpack(buildpack.buildpack)}
-                >
-                  <span className="material-icons">delete</span>
-                </ActionButton>
-              )}
-            </ActionContainer>
-          </StyledCard>
-        );
-      });
-    };
-
-    const handleRemoveBuildpack = (buildpackToRemove: string) => {
-      if (porterApp.buildpacks.includes(buildpackToRemove)) {
-        updatePorterApp({ buildpacks: porterApp.buildpacks.filter(bp => bp !== buildpackToRemove) });
-        const buildpack = selectedBuildpacks.find(bp => bp.buildpack === buildpackToRemove);
-        if (buildpack != null) {
-          setAvailableBuildpacks((availableBuildpacks) => [
-            ...availableBuildpacks,
-            buildpack,
-          ]);
-          setSelectedBuildpacks(selectedBuildpacks.filter(bp => bp.buildpack !== buildpackToRemove));
-        }
-      }
-    };
-
-    const handleAddBuildpack = (buildpackToAdd: string) => {
-      if (porterApp.buildpacks.find((bp) => bp === buildpackToAdd) == null) {
-        updatePorterApp({ buildpacks: [...porterApp.buildpacks, buildpackToAdd] });
-        const buildpack = availableBuildpacks.find((bp) => bp.buildpack === buildpackToAdd);
-        if (buildpack != null) {
-          setSelectedBuildpacks((selectedBuildpacks) => [
-            ...selectedBuildpacks,
-            buildpack,
-          ]);
-          setAvailableBuildpacks(availableBuildpacks.filter((bp) => bp.buildpack !== buildpackToAdd));
-        }
-      }
-    };
-
     const handleAddCustomBuildpack = (buildpack: Buildpack) => {
       if (porterApp.buildpacks.find((bp) => bp === buildpack.buildpack) == null) {
         updatePorterApp({ buildpacks: [...porterApp.buildpacks, buildpack.buildpack] });
@@ -281,36 +254,44 @@ const BuildpackStack: React.FC<{
 
     return (
       <BuildpackConfigurationContainer>
-        <>
-          <Select
-            value={selectedStack}
-            width="300px"
-            options={sortedStackOptions}
-            setValue={(option) => {
-              setSelectedStack(option);
-              updatePorterApp({ builder: option });
-            }}
-            label="Builder and stack"
-          />
-          {selectedBuildpacks.length > 0 && (
+        {selectedBuildpacks.length > 0 && (
+          <>
             <Helper>
               The following buildpacks were automatically detected. You can also
-              manually add/remove buildpacks.
+              manually add, remove, or re-order buildpacks here.
             </Helper>
-          )}
-          {selectedBuildpacks.length > 0 && (
-            <>{renderBuildpacksList(selectedBuildpacks, "remove")}</>
-          )}
-          <Spacer y={1} />
-          <Button onClick={() => setIsModalOpen(true)}>
-            <I className="material-icons">add</I> Add buildpack
-          </Button>
-          {isModalOpen && (
-            <Modal closeModal={() => setIsModalOpen(false)}>
-              {renderModalContent()}
-            </Modal>
-          )}
-        </>
+            <BuildpackList
+              selectedBuildpacks={selectedBuildpacks}
+              setSelectedBuildpacks={setSelectedBuildpacks}
+              availableBuildpacks={availableBuildpacks}
+              setAvailableBuildpacks={setAvailableBuildpacks}
+              porterApp={porterApp}
+              updatePorterApp={updatePorterApp}
+              showAvailableBuildpacks={false}
+              isDetectingBuildpacks={isDetectingBuildpacks}
+              detectBuildpacksError={error}
+              droppableId={"non-modal"}
+            />
+          </>
+        )}
+        {autoDetectBuildpacks && error !== "" && (
+          <>
+            <Spacer y={1} />
+            <Error message={error} />
+          </>
+        )}
+        <Spacer y={1} />
+        <Button onClick={() => {
+          setIsModalOpen(true);
+          setError("");
+        }}>
+          <I className="material-icons">add</I> Add / detect buildpacks
+        </Button>
+        {isModalOpen && (
+          <Modal closeModal={() => setIsModalOpen(false)}>
+            {renderModalContent()}
+          </Modal>
+        )}
       </BuildpackConfigurationContainer>
     );
   };
@@ -325,6 +306,11 @@ const Shade = styled.div`
   height: 50px;
   width: 100%;
   background: linear-gradient(to bottom, #00000000, ${({ theme }) => theme.fg});
+`;
+
+const FooterButtons = styled.div`
+  display: flex;
+  justify-content: space-between;
 `;
 
 const Footer = styled.div`
@@ -367,79 +353,4 @@ const fadeIn = keyframes`
 
 const BuildpackConfigurationContainer = styled.div`
   animation: ${fadeIn} 0.75s;
-`;
-
-const StyledCard = styled.div<{ marginBottom?: string }>`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid #494b4f;
-  background: ${({ theme }) => theme.fg};
-  margin-bottom: ${(props) => props.marginBottom || "30px"};
-  border-radius: 8px;
-  padding: 14px;
-  overflow: hidden;
-  height: 60px;
-  font-size: 13px;
-  animation: ${fadeIn} 0.5s;
-`;
-
-const ContentContainer = styled.div`
-  display: flex;
-  height: 100%;
-  width: 100%;
-  align-items: center;
-`;
-
-const Icon = styled.span<{ disableMarginRight: boolean }>`
-  font-size: 20px;
-  margin-left: 10px;
-  ${(props) => {
-    if (!props.disableMarginRight) {
-      return "margin-right: 20px";
-    }
-  }}
-`;
-
-const EventInformation = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  height: 100%;
-`;
-
-const EventName = styled.div`
-  font-family: "Work Sans", sans-serif;
-  font-weight: 500;
-  color: #ffffff;
-`;
-
-const ActionContainer = styled.div`
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  height: 100%;
-`;
-
-const ActionButton = styled.button`
-  position: relative;
-  border: none;
-  background: none;
-  color: white;
-  padding: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  cursor: pointer;
-  color: #aaaabb;
-
-  :hover {
-    background: #ffffff11;
-    border: 1px solid #ffffff44;
-  }
-
-  > span {
-    font-size: 20px;
-  }
 `;

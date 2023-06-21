@@ -106,7 +106,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [subdomain, setSubdomain] = useState<string>("");
 
   const [porterApp, setPorterApp] = useState<PorterApp>();
+  // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
+  const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
 
+  // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
   const getPorterApp = async () => {
     setBannerLoading(true);
     const { appName } = props.match.params as any;
@@ -168,7 +171,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setPorterJson(porterJson);
       setAppData(newAppData);
       // annoying that we have to parse buildpacks like this but alas
-      setPorterApp({ ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") });
+      const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") };
+      setPorterApp(parsedPorterApp);
+      setTempPorterApp(parsedPorterApp);
 
       const [newServices, newEnvVars] = updateServicesAndEnvVariables(
         resChartData?.data,
@@ -277,7 +282,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         appData != null &&
         currentCluster != null &&
         currentProject != null &&
-        appData.app != null
+        appData.app != null &&
+        tempPorterApp != null
       ) {
         const finalPorterYaml = createFinalPorterYaml(
           services,
@@ -292,6 +298,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           "<token>",
           {
             porter_yaml: base64Encoded,
+            repo_name: tempPorterApp.repo_name,
+            git_branch: tempPorterApp.git_branch,
+            build_context: tempPorterApp.build_context,
+            builder: !_.isEmpty(tempPorterApp.dockerfile) ? "null" : tempPorterApp.builder,
+            buildpacks: !_.isEmpty(tempPorterApp.dockerfile) ? "null" : tempPorterApp.buildpacks.join(","),
+            dockerfile: tempPorterApp.dockerfile,
             ...options,
             override_release: true,
           },
@@ -302,6 +314,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           }
         );
         setPorterYaml(finalPorterYaml);
+        setPorterApp(tempPorterApp);
         setButtonStatus("success");
         setShowUnsavedChangesBanner(false);
       } else {
@@ -324,6 +337,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setBannerLoading(false);
     });
   }, [appData]);
+
+  useEffect(() => {
+    if (!_.isEqual(_.omitBy(porterApp, _.isEmpty), _.omitBy(tempPorterApp, _.isEmpty))) {
+      setButtonStatus("");
+      setShowUnsavedChangesBanner(true);
+    } else {
+      setShowUnsavedChangesBanner(false);
+    }
+  }, [tempPorterApp, porterApp]);
 
   const getBuildLogs = async () => {
     try {
@@ -639,12 +661,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       appData.app.builder != null && appData.app.builder.includes("heroku")
     );
     if (!_.isEqual(porterYaml, newPorterYaml)) {
+      setButtonStatus("");
       setShowUnsavedChangesBanner(true);
     } else {
       setShowUnsavedChangesBanner(false);
     }
-    // console.log("old porter yaml", porterYaml);
-    // console.log("new porter yaml", newPorterYaml);
   };
 
   const renderTabContents = () => {
@@ -719,11 +740,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "build-settings":
         return (
           <BuildSettingsTabStack
-            porterApp={porterApp}
-            setPorterApp={(attrs: Partial<PorterApp>) => setPorterApp(PorterApp.setAttributes(porterApp, attrs))}
-            onTabSwitch={getPorterApp}
+            porterApp={tempPorterApp}
+            setTempPorterApp={(attrs: Partial<PorterApp>) => setTempPorterApp(PorterApp.setAttributes(tempPorterApp, attrs))}
             clearStatus={() => setButtonStatus("")}
             updatePorterApp={updatePorterApp}
+            setShowUnsavedChangesBanner={setShowUnsavedChangesBanner}
           />
         );
       case "settings":

@@ -1,6 +1,7 @@
 import React, {
   Dispatch,
   useContext,
+  useEffect,
   useState,
 } from "react";
 import Text from "components/porter/Text";
@@ -14,19 +15,18 @@ import Button from "components/porter/Button";
 import Checkbox from "components/porter/Checkbox";
 import SharedBuildSettings from "./SharedBuildSettings";
 import { PorterApp } from "../types/porterApp";
+import _ from "lodash";
 
 type Props = {
   porterApp: PorterApp;
-  setPorterApp: (attrs: Partial<PorterApp>) => void;
-  onTabSwitch: () => void;
+  setTempPorterApp: (app: PorterApp) => void;
   updatePorterApp: (options: Partial<PorterAppOptions>) => Promise<void>;
   clearStatus: () => void;
 };
 
 const BuildSettingsTabStack: React.FC<Props> = ({
   porterApp,
-  setPorterApp,
-  onTabSwitch,
+  setTempPorterApp,
   clearStatus,
   updatePorterApp,
 }) => {
@@ -123,19 +123,10 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   };
 
   const saveConfig = async () => {
-    console.log(porterApp.buildpacks)
     try {
-      await updatePorterApp({
-        repo_name: porterApp.repo_name,
-        git_branch: porterApp.git_branch,
-        build_context: porterApp.build_context,
-        builder: porterApp.dockerfile != null && porterApp.dockerfile !== "" ? "null" : porterApp.builder,
-        buildpacks: porterApp.dockerfile != null && porterApp.dockerfile !== "" ? "null" : porterApp.buildpacks.join(","),
-        dockerfile: porterApp.dockerfile,
-      });
-      onTabSwitch();
+      await updatePorterApp({});
     } catch (err) {
-      throw err;
+      console.log(err);
     }
   };
 
@@ -144,7 +135,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
 
     try {
       await saveConfig();
-      onTabSwitch();
       setButtonStatus("success");
     } catch (error) {
       setButtonStatus("Something went wrong");
@@ -158,7 +148,6 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     try {
       await saveConfig();
       await triggerWorkflow();
-      onTabSwitch();
       setButtonStatus("success");
       clearStatus();
     } catch (error) {
@@ -170,9 +159,10 @@ const BuildSettingsTabStack: React.FC<Props> = ({
     <>
       <SharedBuildSettings
         porterApp={porterApp}
+        updatePorterApp={(attrs: Partial<PorterApp>) => setTempPorterApp(PorterApp.setAttributes(porterApp, attrs))}
         setPorterYaml={() => { }}
-        updatePorterApp={setPorterApp}
-        detectBuildpacks={false}
+        autoDetectBuildpacks={false}
+        canChangeRepo={false}
       />
       <Spacer y={1} />
       <Checkbox

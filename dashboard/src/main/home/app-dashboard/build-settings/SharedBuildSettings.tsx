@@ -10,17 +10,19 @@ import BranchSelector from "./BranchSelector";
 import AdvancedBuildSettings from "./AdvancedBuildSettings";
 
 type Props = {
-  setPorterYaml: (x: any) => void;
+  setPorterYaml: (yaml: string, filename: string) => void;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
   porterApp: PorterApp;
-  detectBuildpacks: boolean;
+  autoDetectBuildpacks: boolean;
+  canChangeRepo: boolean;
 };
 
 const SharedBuildSettings: React.FC<Props> = ({
   setPorterYaml,
   updatePorterApp,
   porterApp,
-  detectBuildpacks,
+  autoDetectBuildpacks,
+  canChangeRepo,
 }) => {
   return (
     <>
@@ -51,22 +53,27 @@ const SharedBuildSettings: React.FC<Props> = ({
             setValue={() => { }}
             placeholder=""
           />
-          <BackButton
-            width="135px"
-            onClick={() => {
-              updatePorterApp({
-                repo_name: "",
-                git_branch: "",
-                dockerfile: "",
-                build_context: "./",
-                porter_yaml_path: "./porter.yaml",
-              })
-            }}
-          >
-            <i className="material-icons">keyboard_backspace</i>
-            Select repo
-          </BackButton>
-          <Spacer y={1} />
+          {canChangeRepo &&
+            <>
+              <BackButton
+                width="135px"
+                onClick={() => {
+                  updatePorterApp({
+                    repo_name: "",
+                    git_branch: "",
+                    dockerfile: "",
+                    build_context: "./",
+                    porter_yaml_path: "./porter.yaml",
+                  })
+                }}
+              >
+                <i className="material-icons">keyboard_backspace</i>
+                Select repo
+              </BackButton>
+              <Spacer y={0.5} />
+            </>
+          }
+          <Spacer y={0.5} />
           <Text color="helper">Specify your GitHub branch.</Text>
           <Spacer y={0.5} />
           {porterApp.git_branch === "" && (
@@ -123,7 +130,7 @@ const SharedBuildSettings: React.FC<Props> = ({
               <AdvancedBuildSettings
                 porterApp={porterApp}
                 updatePorterApp={updatePorterApp}
-                detectBuildpacks={detectBuildpacks}
+                autoDetectBuildpacks={autoDetectBuildpacks}
               />
             </>
           )}

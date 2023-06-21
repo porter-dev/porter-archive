@@ -15,7 +15,7 @@ import Link from "components/porter/Link";
 import { PorterApp } from "../types/porterApp";
 
 type PropsType = {
-  setPorterYaml: (x: any) => void;
+  setPorterYaml: (yaml: string, filename: string) => void;
   porterApp: PorterApp;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
 };
@@ -37,10 +37,9 @@ const DetectContentsList: React.FC<PropsType> = ({
     setButtonStatus("loading");
     const response = await fetchPorterYamlContent(fileName);
     if (response == null) {
-      setButtonStatus(<Error message="Unable to detect porter.yaml. Please check your path and try again." />);
+      setButtonStatus(<Error message="Unable to detect porter.yaml. Please check your path and try again, or continue without using porter.yaml." />);
     } else {
-      setPorterYaml(atob(response.data));
-      updatePorterApp({ porter_yaml_path: possiblePorterYamlPath });
+      setPorterYaml(atob(response.data), fileName);
       setButtonStatus("success");
     }
     setShowModal(false);
@@ -50,7 +49,7 @@ const DetectContentsList: React.FC<PropsType> = ({
     const fetchOnRender = async () => {
       try {
         const response = await fetchPorterYamlContent("./porter.yaml");
-        setPorterYaml(atob(response.data));
+        setPorterYaml(atob(response.data), "./porter.yaml");
       } catch (error) {
         setShowModal(true);
       }
@@ -156,11 +155,6 @@ const DetectContentsList: React.FC<PropsType> = ({
     }
   };
 
-  const ignoreModal = () => {
-    setShowModal(false);
-    updatePorterApp({ porter_yaml_path: "" });
-  };
-
   const NoPorterYamlContent = () => (
     <div>
       <Text size={16}>No <Code>porter.yaml</Code> detected</Text>
@@ -200,7 +194,10 @@ const DetectContentsList: React.FC<PropsType> = ({
           <Spacer y={1} />
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <Button
-              onClick={ignoreModal}
+              onClick={() => {
+                setShowModal(false);
+                updatePorterApp({ porter_yaml_path: "" });
+              }}
               loadingText="Submitting..."
               color="#ffffff11"
               status={loading ? "loading" : undefined}

@@ -62,17 +62,12 @@ interface GithubAppAccessData {
   username?: string;
   accounts?: string[];
 }
-type Provider =
-  | {
-    provider: "github";
-    name: string;
-    installation_id: number;
-  }
-  | {
-    provider: "gitlab";
-    instance_url: string;
-    integration_id: number;
-  };
+
+interface PorterJsonWithPath {
+  porterYamlPath: string;
+  porterJson: PorterJson;
+}
+
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [porterApp, setPorterApp] = useState<PorterApp>(PorterApp.empty());
 
@@ -98,7 +93,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [accessData, setAccessData] = useState<GithubAppAccessData>({});
   const [hasProviders, setHasProviders] = useState(true);
 
-  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(undefined);
+  const [porterJsonWithPath, setPorterJsonWithPath] = useState<PorterJsonWithPath | undefined>(undefined);
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
   const handleSetAccessData = (data: GithubAppAccessData) => {
     setAccessData(data);
@@ -137,13 +132,13 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  const validateAndSetPorterYaml = (yamlString: string) => {
+  const validateAndSetPorterYaml = (yamlString: string, filename: string) => {
     let parsedYaml;
     try {
       parsedYaml = yaml.load(yamlString);
       const parsedData = PorterYamlSchema.parse(parsedYaml);
       const porterYamlToJson = parsedData as PorterJson;
-      setPorterJson(porterYamlToJson);
+      setPorterJsonWithPath({ porterJson: porterYamlToJson, porterYamlPath: filename });
       const newServices = [];
       const existingServices = formState.serviceList.map((s) => s.name);
       for (const [name, app] of Object.entries(porterYamlToJson.apps)) {
@@ -161,6 +156,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         newServices.push(Service.default("pre-deploy", "release", porterYamlToJson));
       }
       const newServiceList = [...formState.serviceList, ...newServices];
+      if (Validators.serviceList(newServiceList)) {
+        setCurrentStep(Math.max(currentStep, 5));
+      }
       setFormState({
         ...formState,
         serviceList: newServiceList,
@@ -187,9 +185,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     }
   };
 
+  // this advances the step in the case that a user chooses a repo that doesn't have a porter.yaml
   useEffect(() => {
     if (porterApp.git_branch !== "") {
-      setCurrentStep(Math.max(currentStep, 5));
+      setCurrentStep(Math.max(currentStep, 2));
     }
   }, [porterApp.git_branch]);
 
@@ -265,7 +264,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const finalPorterYaml = createFinalPorterYaml(
         formState.serviceList,
         formState.envVariables,
-        porterJson,
+        porterJsonWithPath?.porterJson,
         // if we are using a heroku buildpack, inject a PORT env variable
         porterApp.builder.includes("heroku")
       );
@@ -290,14 +289,15 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           git_branch: porterApp.git_branch,
           git_repo_id: porterApp.git_repo_id,
           build_context: porterApp.build_context,
-          builder: porterApp.dockerfile != null && porterApp.dockerfile !== "" ? "" : porterApp.builder,
-          buildpacks: porterApp.dockerfile != null && porterApp.dockerfile !== "" ? "" : porterApp.buildpacks.join(","),
+          builder: !_.isEmpty(porterApp.dockerfile) ? "" : porterApp.builder,
+          buildpacks: !_.isEmpty(porterApp.dockerfile) ? "" : porterApp.buildpacks.join(","),
           dockerfile: porterApp.dockerfile,
           image_repo_uri: porterApp.image_repo_uri,
           porter_yaml: base64Encoded,
           override_release: true,
           image_info: imageInfo,
-          porter_yaml_path: porterApp.porter_yaml_path,
+          // for some reason I couldn't get the path to update the porterApp object correctly here so I just grouped it with the porter json :/
+          porter_yaml_path: porterJsonWithPath?.porterYamlPath,
         },
         {
           cluster_id: currentCluster.id,
@@ -407,8 +407,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 />
                 <SourceSettings
                   source={formState.selectedSourceType}
-                  setPorterYaml={(newYaml: string) => {
-                    validateAndSetPorterYaml(newYaml);
+                  setPorterYaml={(newYaml: string, filename: string) => {
+                    validateAndSetPorterYaml(newYaml, filename);
                   }}
                   porterApp={porterApp}
                   setPorterApp={setPorterApp}
@@ -486,7 +486,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   defaultExpanded={true}
                   limitOne={true}
                   addNewText={"Add a new pre-deploy job"}
-                  prePopulateService={Service.default("pre-deploy", "release", porterJson)}
+                  prePopulateService={Service.default("pre-deploy", "release", porterJsonWithPath?.porterJson)}
                 />
               </>,
               <Button
@@ -527,7 +527,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           clusterId={currentCluster.id}
           deployPorterApp={deployPorterApp}
           deploymentError={deploymentError}
-          porterYamlPath={porterApp.porter_yaml_path}
+          porterYamlPath={porterJsonWithPath?.porterYamlPath}
         />
       )}
     </CenterWrapper>

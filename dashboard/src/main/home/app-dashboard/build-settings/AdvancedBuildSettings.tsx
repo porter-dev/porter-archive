@@ -7,21 +7,22 @@ import AnimateHeight from "react-animate-height";
 import Select from "components/porter/Select";
 import { PorterApp } from "../types/porterApp";
 import BuildpackStack from "./BuildpackStack";
+import _ from "lodash";
 
 interface AdvancedBuildSettingsProps {
   porterApp: PorterApp;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
-  detectBuildpacks: boolean;
+  autoDetectBuildpacks: boolean;
 }
 
 const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = ({
   porterApp,
   updatePorterApp,
-  detectBuildpacks,
+  autoDetectBuildpacks,
 }) => {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [buildView, setBuildView] = useState<string>(
-    porterApp.dockerfile != null && porterApp.dockerfile !== ""
+    !_.isEmpty(porterApp.dockerfile)
       ? "docker" : "buildpacks"
   );
 
@@ -59,10 +60,10 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = ({
             setValue={(option) => setBuildView(option)}
             label="Build method"
           />
-          <Spacer y={1} />
           {buildView === "docker"
             ?
             <>
+              <Spacer y={0.5} />
               <Text color="helper">Dockerfile path (absolute path)</Text>
               <Spacer y={0.5} />
               <Input
@@ -76,7 +77,7 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = ({
             : <BuildpackStack
               porterApp={porterApp}
               updatePorterApp={updatePorterApp}
-              detectBuildpacks={detectBuildpacks}
+              autoDetectBuildpacks={autoDetectBuildpacks}
             />}
         </StyledSourceBox>
       </AnimateHeight>

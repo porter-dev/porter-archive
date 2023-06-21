@@ -7,6 +7,7 @@ import Text from "components/porter/Text";
 import Error from "components/porter/Error";
 import sliders from "assets/sliders.svg";
 import EnvGroupModal from "./env-vars/EnvGroupModal";
+import ExpandableEnvGroup from "./env-vars/ExpandableEnvGroup";
 import { PopulatedEnvGroup } from "../../../../components/porter-form/types";
 import _, { isObject, differenceBy, omit } from "lodash";
 
@@ -24,7 +25,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   envVars,
   setEnvVars,
   syncedEnvGroups,
-  setSyncedEnvGroups
+  setSyncedEnvGroups,
   status,
   updatePorterApp,
   clearStatus,
@@ -104,91 +105,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
     </>
   );
 };
-const ExpandableEnvGroup: React.FC<{
-  envGroup: PopulatedEnvGroup;
-  onDelete: () => void;
-}> = ({ envGroup, onDelete }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  return (
-    <>
-      <StyledCard>
-        <Flex>
-          <ContentContainer>
-            <EventInformation>
-              <EventName>{envGroup.name}</EventName>
-            </EventInformation>
-          </ContentContainer>
-          <ActionContainer>
-            <ActionButton onClick={() => onDelete()}>
-              <span className="material-icons">delete</span>
-            </ActionButton>
-            <ActionButton onClick={() => setIsExpanded((prev) => !prev)}>
-              <i className="material-icons">
-                {isExpanded ? "arrow_drop_up" : "arrow_drop_down"}
-              </i>
-            </ActionButton>
-          </ActionContainer>
-        </Flex>
-        {isExpanded && (
-          <>
-            {isObject(envGroup.variables) ? (
-              <>
-                {Object.entries(envGroup.variables || {})?.map(
-                  ([key, value], i: number) => {
-                    // Preprocess non-string env values set via raw Helm values
-                    if (typeof value === "object") {
-                      value = JSON.stringify(value);
-                    } else {
-                      value = String(value);
-                    }
 
-                    return (
-                      <InputWrapper key={i}>
-                        <KeyInput
-                          placeholder="ex: key"
-                          width="270px"
-                          value={key}
-                          disabled
-                        />
-                        <Spacer />
-                        {value?.includes("PORTERSECRET") ? (
-                          <KeyInput
-                            placeholder="ex: value"
-                            width="270px"
-                            value={value}
-                            disabled
-                            type={
-                              value.includes("PORTERSECRET")
-                                ? "password"
-                                : "text"
-                            }
-                          />
-                        ) : (
-                          <MultiLineInput
-                            placeholder="ex: value"
-                            width="270px"
-                            value={value}
-                            disabled
-                            rows={value?.split("\n").length}
-                            spellCheck={false}
-                          ></MultiLineInput>
-                        )}
-                      </InputWrapper>
-                    );
-                  }
-                )}
-              </>
-            ) : (
-              <NoVariablesTextWrapper>
-                This env group has no variables yet
-              </NoVariablesTextWrapper>
-            )}
-          </>
-        )}
-      </StyledCard>
-    </>
-  );
-};
 
 const AddRowButton = styled.div`
   display: flex;

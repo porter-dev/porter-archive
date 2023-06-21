@@ -257,8 +257,8 @@ func (a *AuthGetter) GetACRCredentials(serverURL string, projID uint) (user stri
 	if cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
 		token = cachedEntry.AuthorizationToken
 	} else {
-		// get a token from the server
-		tokenResp, err := a.Client.GetACRAuthorizationToken(context.Background(), projID)
+		req := &types.GetRegistryACRTokenRequest{ServerURL: serverURL}
+		tokenResp, err := a.Client.GetACRAuthorizationToken(context.Background(), projID, req)
 		if err != nil {
 			return "", "", err
 		}

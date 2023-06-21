@@ -16,7 +16,7 @@ import styled from "styled-components";
 import Button from "components/porter/Button";
 import api from "shared/api";
 import Link from "components/porter/Link";
-import ConfirmOverlay from "components/porter/ConfirmOverlay";
+import ChangeLogModal from "../../ChangeLogModal";
 
 type Props = {
   event: PorterAppEvent;
@@ -24,8 +24,9 @@ type Props = {
 };
 
 const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
-  const [showOverlay, setShowOverlay] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [diffModalVisible, setDiffModalVisible] = useState(false);
+  const [revertModalVisible, setRevertModalVisible] = useState(false);
 
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
@@ -37,29 +38,6 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
         return <Text color="#aaaabb66">Deployment in progress...</Text>;
     }
   };
-
-  const revertToRevision = async (revision: number) => {
-    setLoading(true);
-    try {
-      await api
-        .rollbackPorterApp(
-          "<token>",
-          {
-            revision,
-          },
-          {
-            project_id: appData.app.project_id,
-            stack_name: appData.app.name,
-            cluster_id: appData.app.cluster_id,
-          }
-        )
-      window.location.reload();
-    } catch (err) {
-      setLoading(false);
-      console.log(err)
-    }
-  }
-
   return (
     <StyledEventCard>
       <Container row spaced>
@@ -79,22 +57,41 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
             <>
               <Spacer inline x={1} />
               <TempWrapper>
-                <Link hasunderline onClick={() => setShowOverlay(true)}>
+                <Link hasunderline onClick={() => setRevertModalVisible(true)}>
                   Revert to version {event?.metadata?.revision}
                 </Link>
+
               </TempWrapper>
             </>
           )}
+          <Spacer inline width="15px" />
+          <TempWrapper>
+            {event?.metadata?.revision != 1 && (<Link hasunderline onClick={() => setDiffModalVisible(true)}>
+              View changes
+            </Link>)}
+            {diffModalVisible && (
+              <ChangeLogModal
+                revision={event.metadata.revision}
+                currentChart={appData.chart}
+                modalVisible={diffModalVisible}
+                setModalVisible={setDiffModalVisible}
+                appData={appData}
+              />
+            )}
+            {revertModalVisible && (
+              <ChangeLogModal
+                revision={event.metadata.revision}
+                currentChart={appData.chart}
+                modalVisible={revertModalVisible}
+                setModalVisible={setRevertModalVisible}
+                revertModal={true}
+                appData={appData}
+              />
+            )}
+          </TempWrapper>
         </Container>
       </Container>
-      {showOverlay && (
-        <ConfirmOverlay
-          loading={loading}
-          message={`Are you sure you want to revert to version no. ${event?.metadata?.revision}?`}
-          onYes={() => revertToRevision(event.metadata.revision)}
-          onNo={() => setShowOverlay(false)}
-        />
-      )}
+
     </StyledEventCard>
   );
 };

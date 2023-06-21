@@ -60,7 +60,7 @@ const Services: React.FC<ServicesProps> = ({
     } else {
       return undefined;
     }
-  }
+  };
 
   const maybeRenderAddServicesButton = () => {
     if (limitOne && services.length > 0) {
@@ -87,8 +87,8 @@ const Services: React.FC<ServicesProps> = ({
         </AddServiceButton>
         <Spacer y={0.5} />
       </>
-    )
-  }
+    );
+  };
 
   return (
     <>
@@ -110,6 +110,7 @@ const Services: React.FC<ServicesProps> = ({
                   setServices(newServices);
                 }}
                 defaultExpanded={defaultExpanded}
+                readOnly={true}
               />
             );
           })}

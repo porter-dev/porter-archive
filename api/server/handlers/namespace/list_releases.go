@@ -69,8 +69,10 @@ func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	for _, helmRel := range releases {
 		release := types.Release{
-			Release: helmRel,
+			Release:       helmRel,
+			PorterRelease: &types.PorterRelease{},
 		}
+
 		telemetry.WithAttributes(span,
 			telemetry.AttributeKV{Key: "release_name", Value: helmRel.Name},
 			telemetry.AttributeKV{Key: "release_namespace", Value: helmRel.Namespace},
@@ -85,6 +87,7 @@ func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			release.PorterRelease = rel.ToReleaseType()
 		}
 
+		res = append(res, &release)
 	}
 
 	c.WriteResult(w, r, res)

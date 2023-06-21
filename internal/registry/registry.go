@@ -1759,6 +1759,10 @@ func (r *Registry) GetDockerConfigJSON(
 	}
 
 	if proj.CapiProvisionerEnabled && strings.Contains(r.URL, ".azurecr") {
+		if ccpClient == nil {
+			return nil, telemetry.Error(ctx, span, nil, "ccpClient cannot be nil")
+		}
+
 		dockerConfigReq := connect.NewRequest(&porterv1.DockerConfigFileForRegistryRequest{
 			ProjectId:   int64(proj.ID),
 			RegistryUri: r.URL,

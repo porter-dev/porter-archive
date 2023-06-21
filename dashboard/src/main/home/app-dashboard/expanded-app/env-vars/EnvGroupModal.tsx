@@ -1,5 +1,5 @@
 import { RouteComponentProps, withRouter } from "react-router";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import React, { useContext, useEffect, useState } from "react";
 import Loading from "components/Loading";
 
@@ -19,7 +19,11 @@ import Container from "components/porter/Container";
 import Checkbox from "components/porter/Checkbox";
 import { Context } from "../../../../../shared/Context";
 import sliders from "assets/sliders.svg";
-
+import { isEmpty, isObject } from "lodash";
+import {
+  EnvGroupData,
+  formattedEnvironmentValue,
+} from "../../../cluster-dashboard/env-groups/EnvGroup";
 import {
   PartialEnvGroup,
   PopulatedEnvGroup,
@@ -28,11 +32,14 @@ import {
 type Props = RouteComponentProps & {
   closeModal: () => void;
   availableEnvGroups?: PartialEnvGroup[];
+  setValues: (values: Record<string, string>) => void;
 }
 
 const EnvGroupModal: React.FC<Props> = ({
   closeModal,
+  setValues,
   availableEnvGroups,
+
 
 }) => {
   const { currentCluster, currentProject } = useContext(Context);
@@ -51,7 +58,7 @@ const EnvGroupModal: React.FC<Props> = ({
           {},
           {
             id: currentProject.id,
-            namespace: "default",
+            namespace: "porter-stack-nginx",
             cluster_id: currentCluster.id,
           }
         )
@@ -139,14 +146,8 @@ const EnvGroupModal: React.FC<Props> = ({
   };
 
   const onSubmit = () => {
-    if (
-      shouldSync ||
-      selectedEnvGroup.meta_version === 1
-    ) {
-      this.props.setValues(selectedEnvGroup.variables);
-    } else {
-      this.props.setSyncedEnvGroups(selectedEnvGroup);
-    }
+
+    setValues(selectedEnvGroup.variables);
 
     closeModal();
   };
@@ -161,10 +162,37 @@ const EnvGroupModal: React.FC<Props> = ({
         Select an Env Group to load into your application.
       </Text>
       <Spacer y={0.5} />
-      <EnvGroupList>{renderEnvGroupList()}</EnvGroupList>
+      <GroupModalSections>
+        <SidebarSection $expanded={!selectedEnvGroup}>
+          <EnvGroupList>{renderEnvGroupList()}</EnvGroupList>
+        </SidebarSection>
+        {selectedEnvGroup && (<SidebarSection>
+          <GroupEnvPreview>
+            {isObject(selectedEnvGroup?.variables) ? (
+              <>
+                {Object.entries(selectedEnvGroup?.variables || {})
+                  .map(
+                    ([key, value]) =>
+                      `${key}=${formattedEnvironmentValue(value)}`
+                  )
+                  .join("\n")}
+              </>
+            ) : (
+              <>This environment group has no variables</>
+            )}
+          </GroupEnvPreview>
+          {/* {clashingKeys?.length > 0 && (
+                <>
+                  <ClashingKeyRowDivider />
+                  {this.renderEnvGroupPreview(clashingKeys)}
+                </>
+              )} */}
+        </SidebarSection>)}
+      </GroupModalSections>
+      <Spacer y={1} />
       <Button
-
         onClick={onSubmit}
+        disabled={!selectedEnvGroup}
       >
         Load Env Group
       </Button>
@@ -231,4 +259,40 @@ border-radius: 3px;
 background: #ffffff11;
 border: 1px solid #ffffff44;
 overflow-y: auto;
+`;
+
+const AbsoluteWrapper = styled.div`
+  position: absolute;
+  z-index: 999;
+  bottom: 18px;
+  left: 25px;
+  display: flex;
+  align-items: center;
+`;
+
+const SidebarSection = styled.section<{ $expanded?: boolean }>`
+  height: 100%;
+  overflow-y: auto;
+  ${(props) =>
+    props.$expanded &&
+    css`
+      grid-column: span 2;
+    `}
+`;
+
+const GroupEnvPreview = styled.pre`
+  font-family: monospace;
+  margin: 0 0 10px 0;
+  white-space: pre-line;
+  word-break: break-word;
+  user-select: text;
+`;
+const GroupModalSections = styled.div`
+  margin-top: 20px;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+  max-height: 365px;
 `;

@@ -110,6 +110,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
   const [subdomain, setSubdomain] = useState<string>("");
+  const [syncedEnvGroups, setSyncedEnvGroups] = useState<any[]>([]);
 
 
   const getPorterApp = async () => {
@@ -769,7 +770,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             envVars={envVars}
             setEnvVars={(envVars: KeyValueType[]) => {
               setEnvVars(envVars);
-              onAppUpdate(services, envVars.filter((e) => e.key !== "" || e.value !== ""));
+              //onAppUpdate(services, envVars.filter((e) => e.key !== "" || e.value !== ""));
             }}
             status={buttonStatus}
             updatePorterApp={updatePorterApp}

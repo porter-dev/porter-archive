@@ -20,7 +20,9 @@ type Props = {
   revision: number;
   currentChart: ChartType;
   revertModal?: boolean;
-  appData:any;
+  appData: any;
+  diffContent: boolean;
+  setDiffContent: (x: boolean) => void;
 };
 
 const ChangeLogModal: React.FC<Props> = ({
@@ -38,6 +40,7 @@ const ChangeLogModal: React.FC<Props> = ({
   const [prevEventValues, setPrevEventValues] = useState("");
   const [showRawDiff, setShowRawDiff] = useState(false);
   const [showOverlay, setShowOverlay] = useState<boolean>(false);
+  const [changesConfig, setChangesConfig] = useState<boolean>(true);
 
   const [loading, setLoading] = useState(false);
   const { currentCluster, currentProject, setCurrentError } = useContext(
@@ -66,7 +69,7 @@ const ChangeLogModal: React.FC<Props> = ({
     );
     const updatedChart = res.data;
     setLoading(false);
-    return updatedChart; 
+    return updatedChart;
   };
 
   const revertToRevision = async (revision: number) => {
@@ -107,7 +110,7 @@ const ChangeLogModal: React.FC<Props> = ({
     );
     const updatedChart = res.data;
     setLoading(false);
-    return updatedChart; 
+    return updatedChart;
   };
 
   useEffect(() => {
@@ -137,10 +140,8 @@ const ChangeLogModal: React.FC<Props> = ({
   const parseYamlAndDisplayDifferences = (oldYaml: any, newYaml: any) => {
     const diff = Diff.diff(oldYaml, newYaml);
     const changes: JSX.Element[] = [];
-
     // Define the regex pattern to match service creation
     const servicePattern = /^[a-zA-Z0-9\-]*-[a-zA-Z0-9]*[^\.]$/;
-
     diff?.forEach((difference: any) => {
       let path = difference.path?.join(" ");
       switch (difference.kind) {
@@ -160,14 +161,14 @@ const ChangeLogModal: React.FC<Props> = ({
         case "D":
           if (servicePattern.test(path)) {
             // If so, display a simplified message
-            changes.push( <ChangeBox type="D">
-            {`${path} deleted`}
-           </ChangeBox>);
+            changes.push(<ChangeBox type="D">
+              {`${path} deleted`}
+            </ChangeBox>);
           } else {
-           
-            changes.push( <ChangeBox type="D">
-            {`${path} removed`}
-           </ChangeBox>);
+
+            changes.push(<ChangeBox type="D">
+              {`${path} removed`}
+            </ChangeBox>);
           }
           break;
         case "E":
@@ -200,78 +201,103 @@ const ChangeLogModal: React.FC<Props> = ({
           break;
       }
     });
+    if (changes.length === 0) {
+      changes.push(
+        <ChangeBox type="E">
+          {`No changes detected`}
+        </ChangeBox>
+      )
+    }
 
-    return <ChangeLog>{changes}</ChangeLog>;
+    return <ChangeLog>{changes}</ChangeLog>
+
   };
 
   return (
     <>
-      <Modal closeModal={() => setModalVisible(false)} width={"1100px"}>
-        {revertModal ? <Text size={18}> Revision Changes: </Text>  : <Text size={18}>Change Log</Text>}
+      <Modal closeModal={() => setModalVisible(false)} width={"800px"}>
+        {revertModal ? <Text size={18}> Revert to version no. {revision} </Text> : <Text size={18}>Changes for version no. {revision}</Text>}
         {loading ? (
           <Loading /> // <-- Render loading state
         ) : (
-          <>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <Checkbox
-                checked={showRawDiff}
-                toggleChecked={() => setShowRawDiff(!showRawDiff)}
-              >
-                <Text>Show Raw Diff</Text>
-              </Checkbox>
+          revertModal ? (<>
+            <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+              <DiffViewer
+                leftTitle={revertModal ? `Current Revision` : `Revision No. ${revision - 1}`}
+                rightTitle={`Revision No. ${revision}`}
+                oldValue={revertModal ? values : prevEventValues}
+                newValue={eventValues}
+                splitView={true}
+                hideLineNumbers={false}
+                useDarkTheme={true}
+                compareMethod={DiffMethod.TRIMMED_LINES}
+              />
             </div>
-            {showRawDiff ? (
-              <>
+          </>) :
+            (<>
+              {showRawDiff ? (
+                <>
+                  <div style={{ maxHeight: "400px", overflowY: "auto", borderRadius: "8px" }}>
+                    <DiffViewer
+                      leftTitle={revertModal ? `Current Revision` : `Revision No. ${revision - 1}`}
+                      rightTitle={`Revision No. ${revision}`}
+                      oldValue={revertModal ? values : prevEventValues}
+                      newValue={eventValues}
+                      splitView={true}
+                      hideLineNumbers={false}
+                      useDarkTheme={true}
+                      compareMethod={DiffMethod.TRIMMED_LINES}
+                    />
+                  </div>
+                </>
+              ) : (
                 <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-                  <DiffViewer
-                    leftTitle={ revertModal?  `Current Revision` : `Revision No. ${revision-1}`}
-                    rightTitle={ `Revision No. ${revision}`}
-                    oldValue={revertModal?  values : prevEventValues}
-                    newValue={eventValues}
-                    splitView={true}
-                    hideLineNumbers={false}
-                    useDarkTheme={true}
-                    compareMethod={DiffMethod.TRIMMED_LINES}
-                  />
-                </div>
-              </>
-            ) : (
-              <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-                {revertModal ?  parseYamlAndDisplayDifferences(
-                  currentChart.config,
+                  {revertModal ? parseYamlAndDisplayDifferences(
+                    currentChart.config,
                     chartEvent?.config
-                ):parseYamlAndDisplayDifferences(
-                  prevChartEvent?.config,
-                  chartEvent?.config
-                )}
-              </div>
-            )}
+                  ) : parseYamlAndDisplayDifferences(
+                    prevChartEvent?.config,
+                    chartEvent?.config
+                  )}
+                </div>
+              )}
+
+              {changesConfig && (<><Spacer y={.3} />
+                <div style={{ display: "flex" }}>
+
+                  <Checkbox
+                    checked={showRawDiff}
+                    toggleChecked={() => setShowRawDiff(!showRawDiff)}
+                  >
+                    <Text>Show raw diff</Text>
+                  </Checkbox>
+                </div></>)}
+            </>))
+        }
+
+        {revertModal && (
+          <>
+            <Spacer y={1} />
+            <Button
+              onClick={() => setShowOverlay(true)}
+              width={"110px"}
+              loadingText={"Submitting..."}
+            >
+              Revert
+            </Button>
           </>
         )}
-     
-       {revertModal && (
-       <>
-       <Spacer y={1} />
-          <Button
-            onClick={() => setShowOverlay(true)}
-            width={"110px"}
-            loadingText={"Submitting..."}
-          >
-            Revert
-          </Button>
-        </>
-       )}
-      {showOverlay && (
-        
-        <ConfirmOverlay
-          loading={loading}
-          message={`Are you sure you want to revert to version no. ${revision}?`}
-          onYes={() => revertToRevision(revision)}
-          onNo={() => setShowOverlay(false)}
-        />
+        {showOverlay && (
 
-      )}
-      
+          <ConfirmOverlay
+            loading={loading}
+            message={`Are you sure you want to revert to version no. ${revision}?`}
+            onYes={() => revertToRevision(revision)}
+            onNo={() => setShowOverlay(false)}
+          />
+
+        )}
+
       </Modal>
     </>
   );
@@ -282,17 +308,19 @@ export default ChangeLogModal;
 const ChangeLog = styled.div`
   display: flex;
   flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
 `;
+
 const ChangeBox = styled.div<{ type: string }>`
   padding: 10px;
-
   background-color: ${({ type }) =>
     type === "N"
       ? "#034a53"
       : type === "D"
-      ? "#632f34"
-      : type === "E"
-      ? "#272831"
-      : "#fff"};
+        ? "#632f34"
+        : type === "E"
+          ? "#272831"
+          : "#fff"};
   color: "#fff";
 `;

@@ -60,38 +60,38 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
                 <Link hasunderline onClick={() => setRevertModalVisible(true)}>
                   Revert to version {event?.metadata?.revision}
                 </Link>
-               
+
               </TempWrapper>
             </>
           )}
           <Spacer inline width="15px" />
           <TempWrapper>
-          { event?.metadata?.revision != 1 && ( <Link hasunderline onClick={() =>  setDiffModalVisible(true)}>
-              View change log
+            {event?.metadata?.revision != 1 && (<Link hasunderline onClick={() => setDiffModalVisible(true)}>
+              View changes
             </Link>)}
-          {diffModalVisible && (
-            <ChangeLogModal
-              revision={event.metadata.revision}
-              currentChart={appData.chart}
-              modalVisible={diffModalVisible}
-              setModalVisible={setDiffModalVisible}
-              appData={appData}
-            />
-          )}
-          {revertModalVisible && (
-            <ChangeLogModal
-              revision={event.metadata.revision}
-              currentChart={appData.chart}
-              modalVisible={revertModalVisible}
-              setModalVisible={setRevertModalVisible}
-              revertModal= {true}
-              appData={appData}
-            />
-          )}
+            {diffModalVisible && (
+              <ChangeLogModal
+                revision={event.metadata.revision}
+                currentChart={appData.chart}
+                modalVisible={diffModalVisible}
+                setModalVisible={setDiffModalVisible}
+                appData={appData}
+              />
+            )}
+            {revertModalVisible && (
+              <ChangeLogModal
+                revision={event.metadata.revision}
+                currentChart={appData.chart}
+                modalVisible={revertModalVisible}
+                setModalVisible={setRevertModalVisible}
+                revertModal={true}
+                appData={appData}
+              />
+            )}
           </TempWrapper>
         </Container>
       </Container>
-      
+
     </StyledEventCard>
   );
 };

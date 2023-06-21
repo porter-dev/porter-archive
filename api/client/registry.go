@@ -217,25 +217,6 @@ func (c *Client) GetACRAuthorizationToken(
 	return resp, err
 }
 
-// GetACRDockerConfigFile gets an ACR Docker config file
-func (c *Client) GetACRDockerConfigFile(
-	ctx context.Context,
-	projectID uint,
-) (*types.GetRegistryTokenResponse, error) {
-	resp := &types.GetRegistryTokenResponse{}
-
-	err := c.getRequest(
-		fmt.Sprintf(
-			"/projects/%d/registries/acr/token",
-			projectID,
-		),
-		nil,
-		resp,
-	)
-
-	return resp, err
-}
-
 // GetDockerhubAuthorizationToken gets a Docker Hub authorization token
 func (c *Client) GetDockerhubAuthorizationToken(
 	ctx context.Context,

@@ -423,6 +423,9 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	serverUrl := strings.TrimSuffix(request.ServerURL, "/")
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "server-url", Value: serverUrl})
+
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
 	if err != nil {
@@ -435,7 +438,7 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	var expiresAt *time.Time
 
 	for _, reg := range regs {
-		if strings.Contains(reg.URL, request.ServerURL) {
+		if strings.Contains(reg.URL, serverUrl) {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "registry-name", Value: reg.Name})
 
 			if proj.CapiProvisionerEnabled {

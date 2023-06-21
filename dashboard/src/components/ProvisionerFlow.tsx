@@ -17,7 +17,7 @@ const providers = ["aws", "gcp", "azure"];
 
 type Props = {};
 
-const ProvisionerFlow: React.FC<Props> = ({ }) => {
+const ProvisionerFlow: React.FC<Props> = ({}) => {
   const {
     usage,
     hasBillingEnabled,
@@ -40,11 +40,7 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
 
   const markStepCostConsent = async (step: string, provider: string) => {
     try {
-      await api.updateOnboardingStep(
-        "<token>",
-        { step, provider },
-        {}
-      );
+      await api.updateOnboardingStep("<token>", { step, provider }, {});
     } catch (err) {
       console.log(err);
     }
@@ -69,18 +65,18 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                   key={i}
                   disabled={
                     isUsageExceeded ||
-                    (provider === "azure" && !featurePreview) ||
+                    // (provider === "azure" && !featurePreview) ||
                     provider === "gcp"
                   }
                   onClick={() => {
                     if (
                       !(
                         isUsageExceeded ||
-                        (provider === "azure" && !featurePreview) ||
+                        // (provider === "azure" && !featurePreview) ||
                         provider === "gcp"
                       )
                     ) {
-                      openCostConsentModal(provider)
+                      openCostConsentModal(provider);
                     }
                   }}
                 >
@@ -101,7 +97,7 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
               setShowCostConfirmModal={setShowCostConfirmModal}
               markCostConsentComplete={() => {
                 try {
-                  markStepCostConsent("cost-consent-complete", "aws")
+                  markStepCostConsent("cost-consent-complete", "aws");
                 } catch (err) {
                   console.log(err);
                 }
@@ -126,7 +122,7 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                 setShowCostConfirmModal={setShowCostConfirmModal}
                 markCostConsentComplete={() => {
                   try {
-                    markStepCostConsent("cost-consent-complete", "azure")
+                    markStepCostConsent("cost-consent-complete", "azure");
                   } catch (err) {
                     console.log(err);
                   }
@@ -141,7 +137,8 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                       console.log(err);
                     }
                   }
-                }} />
+                }}
+              />
             )))}
       </>
     );
@@ -169,7 +166,8 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
       (selectedProvider === "azure" && (
         <AzureCredentialForm
           goBack={() => setCurrentStep("cloud")}
-          proceed={() => {
+          proceed={(id) => {
+            setCredentialId(id);
             setCurrentStep("cluster");
           }}
         />

@@ -176,6 +176,10 @@ type GetRegistryTokenResponse struct {
 	ExpiresAt *time.Time `json:"expires_at"`
 }
 
+type GetRegistryACRTokenRequest struct {
+	ServerURL string `schema:"server_url"`
+}
+
 type GetRegistryGCRTokenRequest struct {
 	ServerURL string `schema:"server_url"`
 }

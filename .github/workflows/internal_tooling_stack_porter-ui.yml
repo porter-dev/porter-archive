@@ -25,9 +25,9 @@ jobs:
       - name: Download Go Modules
         run: go mod download
       - name: Build Server Binary
-        run: go build -ldflags="-w -s -X 'main.Version=production'" -o ./bin/app ./cmd/app
+        run: go build -ldflags="-w -s -X 'main.Version=production'" -tags ee -o ./bin/app ./cmd/app
       - name: Build Migration Binary
-        run: go build -ldflags '-w -s' -o ./bin/migrate ./cmd/migrate
+        run: go build -ldflags '-w -s' -tags ee -o ./bin/migrate ./cmd/migrate
       - name: Compress binaries
         run: |
           upx bin/* --best --lzma
@@ -86,7 +86,7 @@ jobs:
           command: apply -f nonexistant-porter.yaml
         env:
           PORTER_CLUSTER: "11"
-          PORTER_HOST: https://dashboard.internal-tools.getporter.dev
+          PORTER_HOST: https://dashboard.internal-tools.porter.run
           PORTER_PROJECT: "8"
           PORTER_STACK_NAME: porter-ui
           PORTER_TAG: ${{ steps.vars.outputs.sha_short }}

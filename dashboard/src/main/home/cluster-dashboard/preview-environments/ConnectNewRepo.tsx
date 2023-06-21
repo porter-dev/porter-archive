@@ -16,10 +16,10 @@ import CheckboxRow from "components/form-components/CheckboxRow";
 import BranchFilterSelector from "./components/BranchFilterSelector";
 import Helper from "components/form-components/Helper";
 import NamespaceLabels, { KeyValueType } from "./components/NamespaceLabels";
-import ActionConfEditorStack from "main/home/app-dashboard/build-settings/ActionConfEditorStack";
 import AnimateHeight from "react-animate-height";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
+import ConnectNewRepoActionConfEditor from "./ConnectNewRepoActionConfEditor";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -217,7 +217,7 @@ const ConnectNewRepo: React.FC = () => {
         readOnly={false}
         filteredRepos={filteredRepos}
       /> */}
-      <ActionConfEditorStack
+      <ConnectNewRepoActionConfEditor
         actionConfig={actionConfig}
         setActionConfig={(actionConfig: ActionConfigType) => {
           setActionConfig((currentActionConfig: ActionConfigType) => ({

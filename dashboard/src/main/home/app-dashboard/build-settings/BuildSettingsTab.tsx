@@ -1,7 +1,5 @@
 import React, {
-  Dispatch,
   useContext,
-  useEffect,
   useState,
 } from "react";
 import Text from "components/porter/Text";
@@ -24,7 +22,7 @@ type Props = {
   clearStatus: () => void;
 };
 
-const BuildSettingsTabStack: React.FC<Props> = ({
+const BuildSettingsTab: React.FC<Props> = ({
   porterApp,
   setTempPorterApp,
   clearStatus,
@@ -188,4 +186,4 @@ const BuildSettingsTabStack: React.FC<Props> = ({
   );
 };
 
-export default BuildSettingsTabStack;
+export default BuildSettingsTab;

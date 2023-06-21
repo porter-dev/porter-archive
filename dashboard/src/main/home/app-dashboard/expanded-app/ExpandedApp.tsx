@@ -28,7 +28,7 @@ import TabSelector from "components/TabSelector";
 import Icon from "components/porter/Icon";
 import { ChartType, PorterAppOptions } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
-import BuildSettingsTabStack from "../build-settings/BuildSettingsTabStack";
+import BuildSettingsTab from "../build-settings/BuildSettingsTab";
 import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
 import { Service } from "../new-app-flow/serviceTypes";
@@ -739,7 +739,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
       case "build-settings":
         return (
-          <BuildSettingsTabStack
+          <BuildSettingsTab
             porterApp={tempPorterApp}
             setTempPorterApp={(attrs: Partial<PorterApp>) => setTempPorterApp(PorterApp.setAttributes(tempPorterApp, attrs))}
             clearStatus={() => setButtonStatus("")}

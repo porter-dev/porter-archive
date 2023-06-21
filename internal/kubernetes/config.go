@@ -245,32 +245,33 @@ type OutOfClusterConfig struct {
 // TODO: this should be split out from OutOfClusterConfig, and implemented separately in order to wrap the kubernetes RESTGetter interface.
 // Until then, we lose context propagation on all these calls
 func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
-	ctx, span := telemetry.NewSpan(context.Background(), "ooc-to-rest-config")
-	defer span.End()
+	ctx := context.Background()
+	// ctx, span := telemetry.NewSpan(context.Background(), "ooc-to-rest-config")
+	// defer span.End()
 
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "cluster-id", Value: conf.Cluster.ID},
-		telemetry.AttributeKV{Key: "project-id", Value: conf.Cluster.ProjectID},
-	)
+	// telemetry.WithAttributes(span,
+	// 	telemetry.AttributeKV{Key: "cluster-id", Value: conf.Cluster.ID},
+	// 	telemetry.AttributeKV{Key: "project-id", Value: conf.Cluster.ProjectID},
+	// )
 
 	if conf.Cluster.ProvisionedBy == "CAPI" {
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "capi-provisioned", Value: true})
+		// telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "capi-provisioned", Value: true})
 
 		rc, err := restConfigForCAPICluster(ctx, conf.CAPIManagementClusterClient, *conf.Cluster)
 		if err != nil {
-			return nil, telemetry.Error(ctx, span, err, "error getting config for capi cluster")
+			return nil, fmt.Errorf("error getting config for capi cluster: %w", err)
 		}
 		return rc, nil
 	}
 
 	cmdConf, err := conf.GetClientConfigFromCluster(ctx)
 	if err != nil {
-		return nil, telemetry.Error(ctx, span, err, "error getting client config from cluster")
+		return nil, fmt.Errorf("error getting client config from cluster: %w", err)
 	}
 
 	restConf, err := cmdConf.ClientConfig()
 	if err != nil {
-		return nil, telemetry.Error(ctx, span, err, "error getting client config")
+		return nil, fmt.Errorf("error getting client config: %w", err)
 	}
 
 	restConf.Timeout = conf.Timeout

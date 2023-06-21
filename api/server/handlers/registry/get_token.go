@@ -429,7 +429,7 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting registries by project id")
+		err = telemetry.Error(ctx, span, err, "error getting registries by project id")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

@@ -155,7 +155,7 @@ func (r *Registry) ListRepositories(
 	}
 
 	if project.CapiProvisionerEnabled {
-		// TODO: Remove this conditional when AWS list repos is supported in CAPI
+		// TODO: Remove this conditional when AWS list repos is supported in CCP
 		if strings.Contains(r.URL, ".azurecr.") {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "capi-azure"})
 
@@ -173,7 +173,7 @@ func (r *Registry) ListRepositories(
 
 			parsedURL, err := url.Parse("https://" + r.URL)
 			if err != nil {
-				return nil, err
+				return nil, telemetry.Error(ctx, span, err, "error parsing url")
 			}
 
 			for _, repo := range resp.Msg.Repositories {

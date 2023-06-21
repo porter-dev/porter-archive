@@ -6,17 +6,13 @@ import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import ExpandableSection from "components/porter/ExpandableSection";
-import Fieldset from "components/porter/Fieldset";
 import Button from "components/porter/Button";
 import Select from "components/porter/Select";
 import api from "shared/api";
 import { getGithubAction } from "./utils";
-import AceEditor from "react-ace";
 import YamlEditor from "components/YamlEditor";
 import Error from "components/porter/Error";
-import Container from "components/porter/Container";
 import Checkbox from "components/porter/Checkbox";
-
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
@@ -180,11 +176,6 @@ const GithubActionModal: React.FC<Props> = ({
 }
 
 export default withRouter(GithubActionModal);
-
-const Tab = styled.span`
-  margin-left: 20px;
-  height: 1px;
-`;
 
 const ModalHeader = styled.div`
   font-weight: 600;

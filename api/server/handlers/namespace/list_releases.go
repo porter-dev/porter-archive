@@ -69,8 +69,8 @@ func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	for _, helmRel := range releases {
 		release := types.Release{
-			Release: helmRel,
-			// PorterRelease: &types.PorterRelease{},
+			Release:       helmRel,
+			PorterRelease: &types.PorterRelease{},
 		}
 
 		telemetry.WithAttributes(span,

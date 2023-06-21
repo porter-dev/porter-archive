@@ -437,57 +437,69 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	var token string
 	var expiresAt *time.Time
 
+	var matchingReg *models.Registry
 	for _, reg := range regs {
 		if strings.Contains(reg.URL, serverUrl) {
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "registry-name", Value: reg.Name})
-
-			if proj.CapiProvisionerEnabled {
-				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "capi-provisioned", Value: true})
-
-				if c.Config().ClusterControlPlaneClient == nil {
-					err := telemetry.Error(ctx, span, nil, "cluster control plane client cannot be nil")
-					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-					return
-				}
-
-				tokenReq := connect.NewRequest(&porterv1.TokenForRegistryRequest{
-					ProjectId:   int64(proj.ID),
-					RegistryUri: reg.URL,
-				})
-				tokenResp, err := c.Config().ClusterControlPlaneClient.TokenForRegistry(ctx, tokenReq)
-				if err != nil {
-					err := telemetry.Error(ctx, span, err, "error getting token response from ccp")
-					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-					return
-				}
-
-				if tokenResp.Msg == nil || tokenResp.Msg.Token == "" {
-					err := telemetry.Error(ctx, span, nil, "no token found in response")
-					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-					return
-				}
-
-				token = tokenResp.Msg.Token
-
-				// we'll just set an arbitrary 30-day expiry time (this is not enforced)
-				timeExpires := time.Now().UTC().Add(30 * 24 * time.Hour)
-				expiresAt = &timeExpires
-			} else if reg.AzureIntegrationID != 0 {
-				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "capi-provisioned", Value: false})
-
-				_reg := registry.Registry(*reg)
-				username, pw, err := _reg.GetACRCredentials(c.Repo())
-				if err != nil {
-					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-					continue
-				}
-
-				token = base64.StdEncoding.EncodeToString([]byte(string(username) + ":" + string(pw)))
-				// we'll just set an arbitrary 30-day expiry time (this is not enforced)
-				timeExpires := time.Now().UTC().Add(30 * 24 * time.Hour)
-				expiresAt = &timeExpires
-			}
+			matchingReg = reg
 		}
+	}
+
+	if matchingReg == nil {
+		err := telemetry.Error(ctx, span, err, "no matching registry")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "registry-name", Value: matchingReg.Name})
+
+	if proj.CapiProvisionerEnabled {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "capi-provisioned", Value: true})
+
+		if c.Config().ClusterControlPlaneClient == nil {
+			err := telemetry.Error(ctx, span, nil, "cluster control plane client cannot be nil")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		tokenReq := connect.NewRequest(&porterv1.TokenForRegistryRequest{
+			ProjectId:   int64(proj.ID),
+			RegistryUri: matchingReg.URL,
+		})
+		tokenResp, err := c.Config().ClusterControlPlaneClient.TokenForRegistry(ctx, tokenReq)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting token response from ccp")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		if tokenResp.Msg == nil || tokenResp.Msg.Token == "" {
+			err := telemetry.Error(ctx, span, nil, "no token found in response")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		token = tokenResp.Msg.Token
+
+		// we'll just set an arbitrary 30-day expiry time (this is not enforced)
+		timeExpires := time.Now().UTC().Add(30 * 24 * time.Hour)
+		expiresAt = &timeExpires
+	}
+
+	if matchingReg.AzureIntegrationID != 0 {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "capi-provisioned", Value: false})
+
+		_reg := registry.Registry(*matchingReg)
+		username, pw, err := _reg.GetACRCredentials(c.Repo())
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting token response from ccp")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		token = base64.StdEncoding.EncodeToString([]byte(string(username) + ":" + string(pw)))
+		// we'll just set an arbitrary 30-day expiry time (this is not enforced)
+		timeExpires := time.Now().UTC().Add(30 * 24 * time.Hour)
+		expiresAt = &timeExpires
 	}
 
 	if token == "" {

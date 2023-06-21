@@ -39,6 +39,8 @@ func (p *CreateAzureHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := ctx.Value(types.UserScope).(*models.User)
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "project-id", Value: project.ID})
+
 	request := &types.CreateAzureRequest{}
 
 	if ok := p.DecodeAndValidate(w, r, request); !ok {

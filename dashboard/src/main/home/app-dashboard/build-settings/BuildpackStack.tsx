@@ -14,6 +14,8 @@ import Error from "components/porter/Error";
 import { PorterApp } from "../types/porterApp";
 import AddCustomBuildpackComponent from "./AddCustomBuildpackComponent";
 import BuildpackList from "./BuildpackList";
+import Icon from "components/porter/Icon";
+import stars from "assets/stars-white.svg";
 
 const DEFAULT_BUILDER_NAME = "heroku";
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
@@ -111,7 +113,11 @@ const BuildpackStack: React.FC<{
           <Footer>
             <Shade />
             <FooterButtons>
-              <Button onClick={() => detectAndSetBuildPacks(true)}>Detect buildpacks</Button>
+              <Button onClick={() => detectAndSetBuildPacks(true)}>
+                <Icon src={stars} height="15px" />
+                <Spacer inline x={0.5} />
+                Detect buildpacks
+              </Button>
               <Button onClick={() => setIsModalOpen(false)} width={"75px"}>Save</Button>
             </FooterButtons>
           </Footer>

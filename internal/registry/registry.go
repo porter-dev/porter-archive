@@ -155,24 +155,35 @@ func (r *Registry) ListRepositories(
 	}
 
 	if project.CapiProvisionerEnabled {
+		// TODO: Remove this conditional when AWS list repos is supported in CCP
 		if strings.Contains(r.URL, ".azurecr.") {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "capi-azure"})
-			creds, err := conf.Repo.AzureIntegration().ListAzureIntegrationsByProjectID(r.ProjectID)
-			if err != nil {
-				return nil, telemetry.Error(ctx, span, err, "error getting azure credentials for capi cluster")
-			}
-			if len(creds) == 0 {
-				return nil, telemetry.Error(ctx, span, err, "no azure credentials for capi cluster")
-			}
-			r.AzureIntegrationID = creds[0].ID
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "azure-integration-id", Value: r.AzureIntegrationID})
 
-			repos, err := r.listACRRepositories(ctx, repo)
+			req := connect.NewRequest(&porterv1.ListRepositoriesForRegistryRequest{
+				ProjectId:   int64(r.ProjectID),
+				RegistryUri: r.URL,
+			})
+
+			resp, err := conf.ClusterControlPlaneClient.ListRepositoriesForRegistry(ctx, req)
 			if err != nil {
-				return nil, telemetry.Error(ctx, span, err, "error listing acr repositories")
+				return nil, telemetry.Error(ctx, span, err, "error listing ecr repositories")
 			}
 
-			return repos, nil
+			res := make([]*ptypes.RegistryRepository, 0)
+
+			parsedURL, err := url.Parse("https://" + r.URL)
+			if err != nil {
+				return nil, telemetry.Error(ctx, span, err, "error parsing url")
+			}
+
+			for _, repo := range resp.Msg.Repositories {
+				res = append(res, &ptypes.RegistryRepository{
+					Name: repo.Name,
+					URI:  parsedURL.Host + "/" + repo.Name,
+				})
+			}
+
+			return res, nil
 		} else {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "capi-aws"})
 			uri := strings.TrimPrefix(r.URL, "https://")

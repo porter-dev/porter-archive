@@ -6,6 +6,7 @@ import { OFState } from "main/home/onboarding/state";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
+import info from "assets/info-outlined.svg";
 
 import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
@@ -33,7 +34,8 @@ import Select from "./porter/Select";
 import Input from "./porter/Input";
 import Checkbox from "./porter/Checkbox";
 import { Certificate } from "crypto";
-
+import Tooltip from "./porter/Tooltip";
+import Icon from "./porter/Icon";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -108,7 +110,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
-
+  const [inputError, setInputError] = useState<boolean>(false);
   const markStepStarted = async (step: string) => {
     try {
       await api.updateOnboardingStep("<token>", { step }, {});
@@ -135,6 +137,63 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
     return undefined;
   };
+  const validateInput = (wildCardDomainer) => {
+    if (!wildCardDomainer) {
+      return "Required for ALB Load Balancer"
+    }
+    if (wildCardDomainer?.charAt(0) == "*") {
+      return "Wildcard domain cannot start with *"
+    }
+    return false;
+
+  };
+  function validateIPInput(IPAllowList) {
+    // This regular expression checks for an IP address with a subnet mask.
+    const regex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/;
+
+    // Split the input string by comma and remove any empty elements
+    const ipAddresses = IPAllowList.split(",").filter(Boolean);
+    // Validate each IP address
+    for (let ip of ipAddresses) {
+      if (!regex.test(ip.trim())) {
+        // If any IP is invalid, return true (error)
+        return true;
+      }
+    }
+    // If all IPs are valid, return false (no error)
+    return false;
+  }
+  function validateTags(awsTags) {
+    // Regular expression t o check for a key-value pair format "key=value"
+    const regex = /^[a-zA-Z0-9]+=[a-zA-Z0-9]+$/;
+    // Split the input string by comma and remove any empty elements
+    const tags = awsTags.split(",").filter(Boolean);
+    // Validate each tag
+    for (let tag of tags) {
+      if (!regex.test(tag.trim())) {
+        // If any tag is invalid, return true (error)
+        return true;
+      }
+    }
+    // If all tags are valid, return false (no error)
+    return false;
+  }
+  function validateAllInputs() {
+
+    if (validateInput(wildCardDomain) != false) {
+      setInputError(true);
+      return true;
+    }
+    if (validateTags(awsTags)) {
+      setInputError(true);
+      return true;
+    }
+    if (validateIPInput(IPAllowList)) {
+      setInputError(true);
+      return true;
+    }
+
+  }
   const isDisabled = () => {
     return (
       !user.email.endsWith("porter.run") &&
@@ -142,7 +201,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         (isReadOnly && props.provisionerError === "") ||
         props.provisionerError === "" ||
         currentCluster?.status === "UPDATING" ||
-        isClicked)
+        isClicked || validateAllInputs())
     );
   };
   function convertStringToTags(tagString) {
@@ -377,50 +436,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       );
     }
 
-    const validateInput = () => {
-      return (
-        wildCardDomain && wildCardDomain.charAt(0) == "*"
-      );
-    };
-    function validateIPInput(IPAllowList) {
-      // This regular expression checks for an IP address with a subnet mask.
-      const regex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/;
-
-      // Split the input string by comma and remove any empty elements
-      const ipAddresses = IPAllowList.split(",").filter(Boolean);
-
-      // Validate each IP address
-      for (let ip of ipAddresses) {
-        if (!regex.test(ip.trim())) {
-          // If any IP is invalid, return true (error)
-          return true;
-        }
-      }
-
-      // If all IPs are valid, return false (no error)
-      return false;
-    }
-
-    function validateTags(awsTags) {
-      // Regular expression t o check for a key-value pair format "key=value"
-      const regex = /^[a-zA-Z0-9]+=[a-zA-Z0-9]+$/;
-
-      // Split the input string by comma and remove any empty elements
-      const tags = awsTags.split(",").filter(Boolean);
-
-      // Validate each tag
-      for (let tag of tags) {
-        if (!regex.test(tag.trim())) {
-          // If any tag is invalid, return true (error)
-          return true;
-        }
-      }
-
-      // If all tags are valid, return false (no error)
-      return false;
-    }
-
-
     // If settings, update full form
     return (
       <>
@@ -505,9 +520,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 label="Wildcard domain"
                 placeholder="user-2.porter.run"
                 error={
-                  validateInput() &&
-                  (wildCardDomain?.length == 0 ?
-                    "Requried for ALB Load Balancer Type" : "Cannot lead with *")
+                  validateInput(wildCardDomain)
                 }
               />
               <Spacer y={1} />
@@ -573,19 +586,41 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               >
                 <Text color="helper">WAFv2 Enabled</Text>
               </Checkbox>
-              {wafV2Enabled && <><Spacer y={1} /><Input
-                width="350px"
-                type="string"
-                disabled={isReadOnly}
-                value={wafV2ARN}
-                setValue={(x: string) => setwafV2ARN(x)}
-                label="WAFv2 ARN"
-                placeholder="arn:*********"
-                error={
-                  (wafV2Enabled && (wafV2ARN == undefined || wafV2ARN?.length == 0) &&
-                    ("Requried for WafV2"))
+              {wafV2Enabled && <>
+                <Spacer y={1} />
+
+
+                <FlexCenter>
+                  <>
+                    <Input
+                      width="500px"
+                      type="string"
+                      label="WAFv2 ARN"
+                      disabled={isReadOnly}
+                      value={wafV2ARN}
+                      setValue={(x: string) => setwafV2ARN(x)}
+                      placeholder="arn:aws:wafv2:REGION:ACCOUNT_ID:regional/webacl/ACL_NAME/RULE_ID"
+
+                    />
+                    <Wrapper>
+                      <Tooltip
+                        children={<Icon src={info} />}
+                        content={'Only Regional WAFv2 is supported. To find your ARN, navigate to the WAF console, click the Gear icon in the top right, and toggle "ARN" to on'}
+                        position="right"
+                      />
+                    </Wrapper>
+                  </>
+                </FlexCenter>
+
+                {(wafV2ARN == undefined || wafV2ARN?.length == 0) &&
+
+                  <ErrorInLine>
+                    <i className="material-icons">error</i>
+                    {"Requried if WafV2 is Enabled"}
+                  </ErrorInLine>
+
                 }
-              /></>}
+              </>}
               <Spacer y={1} />
             </>
             )}
@@ -634,16 +669,26 @@ const StyledForm = styled.div`
   margin-bottom: 30px;
 `;
 
-const ErrorContainer = styled.div`
-  position: relative;
-  margin-top: 20px;
-  padding: 30px 30px 25px;
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
+const FlexCenter = styled.div`
+  display: flex;
+  align-items: center  ;
+  gap: 3px;
+`
+const Wrapper = styled.div`
+  transform: translateY(+13px);
+`;
+
+const ErrorInLine = styled.div`
+  display: flex;
+  align-items: center;
   font-size: 13px;
-  margin-bottom: 30px;
-  color: red;
+  color: #ff3b62;
+  margin-top: 10px;
+
+  > i {
+    font-size: 18px;
+    margin-right: 5px;
+  }
 `;
 
 const AWS_LOGIN_ERROR_MESSAGE =

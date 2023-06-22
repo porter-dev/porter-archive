@@ -6,7 +6,7 @@ import Input from "components/porter/Input";
 import AnimateHeight from "react-animate-height";
 import Select from "components/porter/Select";
 import { PorterApp } from "../types/porterApp";
-import BuildpackStack from "./BuildpackStack";
+import BuildpackSettings from "./buildpacks/BuildpackSettings";
 import _ from "lodash";
 
 interface AdvancedBuildSettingsProps {
@@ -74,7 +74,7 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = ({
               />
               <Spacer y={0.5} />
             </>
-            : <BuildpackStack
+            : <BuildpackSettings
               porterApp={porterApp}
               updatePorterApp={updatePorterApp}
               autoDetectBuildpacks={autoDetectBuildpacks}

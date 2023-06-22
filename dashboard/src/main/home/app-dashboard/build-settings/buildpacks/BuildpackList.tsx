@@ -1,6 +1,6 @@
 import React from "react";
-import { PorterApp } from "../types/porterApp";
-import { Buildpack } from "./BuildpackStack";
+import { PorterApp } from "../../types/porterApp";
+import { Buildpack } from "./BuildpackSettings";
 import BuildpackCard from "./BuildpackCard";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";

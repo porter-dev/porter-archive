@@ -4,7 +4,7 @@ import Text from "components/porter/Text";
 import React from "react";
 import styled from "styled-components";
 import { PorterApp } from "../types/porterApp";
-import DetectContentsList from "./DetectContentsList";
+import DetectDockerfileAndPorterYaml from "./DetectDockerfileAndPorterYaml";
 import RepositorySelector from "./RepositorySelector";
 import BranchSelector from "./BranchSelector";
 import AdvancedBuildSettings from "./AdvancedBuildSettings";
@@ -13,7 +13,7 @@ type Props = {
   setPorterYaml: (yaml: string, filename: string) => void;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
   porterApp: PorterApp;
-  autoDetectBuildpacks: boolean;
+  autoDetectionOn: boolean;
   canChangeRepo: boolean;
 };
 
@@ -21,7 +21,7 @@ const SharedBuildSettings: React.FC<Props> = ({
   setPorterYaml,
   updatePorterApp,
   porterApp,
-  autoDetectBuildpacks,
+  autoDetectionOn,
   canChangeRepo,
 }) => {
   return (
@@ -122,15 +122,18 @@ const SharedBuildSettings: React.FC<Props> = ({
                 setValue={(val: string) => updatePorterApp({ build_context: val })}
               />
               <Spacer y={1} />
-              <DetectContentsList
-                setPorterYaml={setPorterYaml}
-                porterApp={porterApp}
-                updatePorterApp={updatePorterApp}
-              />
+              {/* TODO: refactor everything from the below 'component' into this file */}
+              {autoDetectionOn && (
+                <DetectDockerfileAndPorterYaml
+                  setPorterYaml={setPorterYaml}
+                  porterApp={porterApp}
+                  updatePorterApp={updatePorterApp}
+                />
+              )}
               <AdvancedBuildSettings
                 porterApp={porterApp}
                 updatePorterApp={updatePorterApp}
-                autoDetectBuildpacks={autoDetectBuildpacks}
+                autoDetectBuildpacks={autoDetectionOn}
               />
             </>
           )}

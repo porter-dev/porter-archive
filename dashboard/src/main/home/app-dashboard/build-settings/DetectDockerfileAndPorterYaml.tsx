@@ -20,7 +20,7 @@ type PropsType = {
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
 };
 
-const DetectContentsList: React.FC<PropsType> = ({
+const DetectDockerfileAndPorterYaml: React.FC<PropsType> = ({
   setPorterYaml,
   porterApp,
   updatePorterApp,
@@ -246,7 +246,7 @@ const DetectContentsList: React.FC<PropsType> = ({
   );
 };
 
-export default DetectContentsList;
+export default DetectDockerfileAndPorterYaml;
 
 const Code = styled.span`
   font-family: monospace;

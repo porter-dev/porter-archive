@@ -7,7 +7,7 @@
     "@loadable/component": "^5.15.2",
     "@material-ui/core": "^4.11.3",
     "@material-ui/lab": "^4.0.0-alpha.61",
-    "@porter-dev/api-contracts": "^0.0.66",
+    "@porter-dev/api-contracts": "^0.0.68",
     "@sentry/react": "^6.13.2",
     "@sentry/tracing": "^6.13.2",
     "@tanstack/react-query": "^4.13.0",

@@ -29,6 +29,10 @@ import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
 import Link from "./porter/Link";
 import Text from "./porter/Text";
+import Select from "./porter/Select";
+import Input from "./porter/Input";
+import Checkbox from "./porter/Checkbox";
+import { Certificate } from "crypto";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -86,6 +90,14 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
   const [machineType, setMachineType] = useState("t3.xlarge");
+  const [loadBalancerType, setLoadBalancerType] = useState(false);
+  const [wildCardDoman, setWildCardDomain] = useState("")
+  const [IPAllowList, setIPAllowList] = useState<string>("")
+  const [accessS3Logs, setAccessS3Logs] = useState<boolean>(false)
+  const [wafV2Enabled, setWaf2Enabled] = useState<boolean>(false)
+  const [awsTags, setAwsTags] = useState<string>("")
+  const [wafV2ARN, setwafV2ARN] = useState("")
+  const [certificateARN, seCertificateARN] = useState("")
   const [isExpanded, setIsExpanded] = useState(false);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
@@ -148,7 +160,14 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             clusterVersion: clusterVersion || "v1.24.0",
             cidrRange: cidrRange || "10.78.0.0/16",
             region: awsRegion,
-            loadBalancer: loadBalancer,
+            loadBalancer: new LoadBalancer({
+              loadBalancerType: loadBalancerType ? LoadBalancerType.ALB : LoadBalancerType.NLB,
+              wildcardDomain: wildCardDoman,
+              allowlistIpRanges: IPAllowList,
+              enableS3AccessLogs: accessS3Logs,
+              enableWafv2: wafV2Enabled,
+              wafv2Arn: wafV2ARN,
+            }),
             nodeGroups: [
               new EKSNodeGroup({
                 instanceType: "t3.medium",
@@ -269,13 +288,15 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
+
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
+      console.log(eksValues);
       if (eksValues == null) {
         return
       }
       eksValues.nodeGroups.map((nodeGroup: EKSNodeGroup) => {
-        if (nodeGroup.nodeGroupType === NodeGroupType.APPLICATION) {
+        if (nodeGroup.nodeGroupType.toString() === "NODE_GROUP_TYPE_APPLICATION") {
           setMachineType(nodeGroup.instanceType);
           setMinInstances(nodeGroup.minInstances);
           setMaxInstances(nodeGroup.maxInstances);
@@ -286,15 +307,24 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           setAdditionalNodePolicies(nodeGroup.additionalPolicies);
         }
       });
-
       setCreateStatus("");
       setClusterName(eksValues.clusterName);
       setAwsRegion(eksValues.region);
       setClusterVersion(eksValues.clusterVersion);
       setCidrRange(eksValues.cidrRange);
-      setLoadBalancer(eksValues.loadBalancer)
+      if (eksValues.loadBalancer != null) {
+        setIPAllowList(eksValues.loadBalancer.allowlistIpRanges)
+        setWildCardDomain(eksValues.loadBalancer.wildcardDomain)
+        console.log(eksValues.loadBalancer.enableS3AccessLogs)
+        setAccessS3Logs(eksValues.loadBalancer.enableS3AccessLogs)
+        //setAwsTags(eksValues.loadBalancer.tags)
+        setLoadBalancerType(eksValues.loadBalancer.loadBalancerType.toString() === "LOAD_BALANCER_TYPE_ALB")
+        setwafV2ARN(eksValues.loadBalancer.wafv2Arn)
+        setWaf2Enabled(eksValues.loadBalancer.enableWafv2)
+      }
     }
-  }, [props.selectedClusterVersion]);
+
+  }, [isExpanded, props.selectedClusterVersion]);
 
   const renderForm = () => {
     // Render simplified form if initial create
@@ -349,27 +379,25 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
         {isExpanded && (
           <>
-            {user?.isPorterUser && (<SelectRow
+            {user?.isPorterUser && (<Select
               options={clusterVersionOptions}
               width="350px"
               disabled={isReadOnly}
               value={clusterVersion}
-              scrollBuffer={true}
-              dropdownMaxHeight="240px"
-              setActiveValue={setClusterVersion}
+              setValue={setClusterVersion}
               label="Cluster version"
             />)}
-            <SelectRow
+            <Spacer y={1} />
+            <Select
               options={machineTypeOptions}
               width="350px"
               disabled={isReadOnly}
               value={machineType}
-              scrollBuffer={true}
-              dropdownMaxHeight="240px"
-              setActiveValue={setMachineType}
+              setValue={setMachineType}
               label="Machine type"
             />
-            <InputRow
+            <Spacer y={1} />
+            <Input
               width="350px"
               type="number"
               disabled={isReadOnly}
@@ -378,7 +406,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               label="Maximum number of application EC2 instances"
               placeholder="ex: 1"
             />
-            <InputRow
+            <Spacer y={1} />
+            <Input
               width="350px"
               type="string"
               disabled={isReadOnly}
@@ -387,8 +416,95 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               label="VPC CIDR range"
               placeholder="ex: 10.78.0.0/16"
             />
+            <Spacer y={1} />
+            <Checkbox
+              checked={loadBalancerType}
+              disabled={isReadOnly}
+              toggleChecked={() => { setLoadBalancerType(!loadBalancerType) }}
+              disabledTooltip={"Wait for provisioning to complete before editing this field."}
+            >
+              <Text color="helper">Set Load Balancer Type to ALB</Text>
+            </Checkbox>
+            <Spacer y={1} />
+            {loadBalancerType && (<>
+              <Input
+                width="350px"
+                disabled={isReadOnly}
+                value={wildCardDoman}
+                setValue={(x: string) => setWildCardDomain(x)}
+                label="Wildcard domain"
+                placeholder="user-2.porter.run"
+              />
+              <Spacer y={1} />
+              <Input
+                width="350px"
+                disabled={isReadOnly}
+                value={IPAllowList}
+                setValue={(x: string) => setIPAllowList(x)}
+                label="IP Allow List"
+                placeholder="160.72.72.58/32,160.72.72.59/32"
+              />
+              <Spacer y={1} />
+              <Input
+                width="350px"
+                disabled={isReadOnly}
+                value={certificateARN}
+                setValue={(x: string) => seCertificateARN(x)}
+                label="Certificate ARN"
+                placeholder="160.72.72.58/32,160.72.72.59/32"
+              />
+              <Spacer y={1} />
+
+              <Input
+                width="350px"
+                disabled={isReadOnly}
+                value={awsTags}
+                setValue={(x: string) => setAwsTags(x)}
+                label="AWS Tags"
+                placeholder="costcenter,environment,project"
+              />
+              <Spacer y={1} />
+              <Checkbox
+                checked={accessS3Logs}
+                disabled={isReadOnly}
+                toggleChecked={() => {
+                  {
+                    console.log(!accessS3Logs)
+                  }
+                  setAccessS3Logs(!accessS3Logs)
+                }}
+                disabledTooltip={"Wait for provisioning to complete before editing this field."}
+              >
+                <Text color="helper">Access Logs to S3</Text>
+              </Checkbox>
+              <Spacer y={1} />
+              <Checkbox
+                checked={wafV2Enabled}
+                disabled={isReadOnly}
+                toggleChecked={() => {
+                  if (wafV2Enabled) {
+                    setwafV2ARN("");
+                  }
+                  setWaf2Enabled(!wafV2Enabled);
+                }}
+                disabledTooltip={"Wait for provisioning to complete before editing this field."}
+              >
+                <Text color="helper">WAFv2 Enabled</Text>
+              </Checkbox>
+              {wafV2Enabled && <><Spacer y={1} /><Input
+                width="350px"
+                type="string"
+                disabled={isReadOnly}
+                value={wafV2ARN}
+                setValue={(x: string) => setwafV2ARN(x)}
+                label="WAFv2 ARN"
+                placeholder="arn:*********" /></>}
+              <Spacer y={1} />
+            </>
+            )}
           </>
-        )}
+        )
+        }
       </>
     );
   };

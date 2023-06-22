@@ -70,7 +70,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
       <Container row spaced>
         <Container row>
           <Icon height="16px" src={app_event} />
-          <Spacer inline width="15px" />
+          <Spacer inline width="10px" />
           <Text>{event.metadata.detail}</Text>
         </Container>
       </Container>

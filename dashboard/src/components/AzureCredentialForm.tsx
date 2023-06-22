@@ -41,7 +41,7 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
     } else if (subscriptionId.trim() === "") {
       setErrorMessage("Subscription ID is required");
     } else if (clientId.trim() === "") {
-      setErrorMessage("Client ID is required");
+      setErrorMessage("App ID is required");
     } else if (tenantId.trim() === "") {
       setErrorMessage("Tenant ID is required");
     } else if (servicePrincipalKey.trim() === "") {
@@ -110,7 +110,7 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
           />
           <Spacer y={1} />
           <Input
-            label={<Flex>Client ID</Flex>}
+            label={<Flex>App ID</Flex>}
             value={clientId}
             setValue={(e) => {
               setClientId(e.trim());

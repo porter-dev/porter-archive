@@ -97,7 +97,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [loadBalancerType, setLoadBalancerType] = useState(false);
   const [wildCardDomain, setWildCardDomain] = useState("")
   const [IPAllowList, setIPAllowList] = useState<string>("")
-  const [accessS3Logs, setAccessS3Logs] = useState<boolean>(false)
+  //const [accessS3Logs, setAccessS3Logs] = useState<boolean>(false)
   const [wafV2Enabled, setWaf2Enabled] = useState<boolean>(false)
   const [awsTags, setAwsTags] = useState<string>("")
   const [wafV2ARN, setwafV2ARN] = useState("")
@@ -230,27 +230,27 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     let loadBalancerObj = new LoadBalancer({});
     loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
     loadBalancerObj.wildcardDomain = wildCardDomain;
-    loadBalancerObj.enableS3AccessLogs = accessS3Logs;
+    //loadBalancerObj.enableS3AccessLogs = accessS3Logs;
     if (loadBalancerType) {
       loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
       loadBalancerObj.wildcardDomain = wildCardDomain;
-      loadBalancerObj.enableS3AccessLogs = accessS3Logs;
+
       if (awsTags) {
         loadBalancerObj.tags = convertStringToTags(awsTags);
       }
       if (IPAllowList) {
         loadBalancerObj.allowlistIpRanges = IPAllowList
       }
-      if (accessS3Logs) {
-        loadBalancerObj.enableS3AccessLogs = accessS3Logs;
-      }
+      // if (accessS3Logs) {
+      //   loadBalancerObj.enableS3AccessLogs = accessS3Logs;
+      // }
 
-      if (accessS3Logs) {
-        loadBalancerObj.enableS3AccessLogs = accessS3Logs;
-      }
-      else {
-        loadBalancerObj.enableS3AccessLogs = false;
-      }
+      // if (accessS3Logs) {
+      //   loadBalancerObj.enableS3AccessLogs = accessS3Logs;
+      // }
+      // else {
+      //   loadBalancerObj.enableS3AccessLogs = false;
+      // }
       if (wafV2Enabled) {
         loadBalancerObj.enableWafv2 = wafV2Enabled;
       }
@@ -426,7 +426,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       if (eksValues.loadBalancer != null) {
         setIPAllowList(eksValues.loadBalancer.allowlistIpRanges)
         setWildCardDomain(eksValues.loadBalancer.wildcardDomain)
-        setAccessS3Logs(eksValues.loadBalancer.enableS3AccessLogs)
+        //setAccessS3Logs(eksValues.loadBalancer.enableS3AccessLogs)
 
         if (eksValues.loadBalancer.tags) {
           setAwsTags(Object.entries(eksValues.loadBalancer.tags)
@@ -548,7 +548,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                       setAwsTags("");
                       seCertificateARN("");
                       setWaf2Enabled(false);
-                      setAccessS3Logs(false);
+                      //setAccessS3Logs(false);
                     }
 
                     setLoadBalancerType(!loadBalancerType)
@@ -646,7 +646,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                   </ErrorInLine>}
 
                   <Spacer y={1} />
-                  <Checkbox
+                  {/* <Checkbox
                     checked={accessS3Logs}
                     disabled={isReadOnly}
                     toggleChecked={() => {
@@ -658,7 +658,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                     disabledTooltip={"Wait for provisioning to complete before editing this field."}
                   >
                     <Text color="helper">Access Logs to S3</Text>
-                  </Checkbox>
+                  </Checkbox> */}
                   <Spacer y={1} />
                   <Checkbox
                     checked={wafV2Enabled}

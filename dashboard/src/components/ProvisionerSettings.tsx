@@ -235,7 +235,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
       loadBalancerObj.wildcardDomain = wildCardDomain;
       loadBalancerObj.enableS3AccessLogs = accessS3Logs;
-      loadBalancerObj.wafv2Arn = wafV2ARN;
       if (awsTags) {
         loadBalancerObj.tags = convertStringToTags(awsTags);
       }
@@ -246,14 +245,21 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         loadBalancerObj.enableS3AccessLogs = accessS3Logs;
       }
 
+      if (accessS3Logs) {
+        loadBalancerObj.enableS3AccessLogs = accessS3Logs;
+      }
+      else {
+        loadBalancerObj.enableS3AccessLogs = false;
+      }
       if (wafV2Enabled) {
         loadBalancerObj.enableWafv2 = wafV2Enabled;
       }
-
+      else {
+        loadBalancerObj.enableWafv2 = false;
+      }
       if (wafV2ARN) {
         loadBalancerObj.wafv2Arn = wafV2ARN;
       }
-
       if (certificateARN) {
         loadBalancerObj.additionalCertificateArns = certificateARN.split(",");
       }

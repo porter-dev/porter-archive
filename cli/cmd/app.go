@@ -155,14 +155,17 @@ func init() {
 func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	execArgs := args[1:]
 
-	color.New(color.FgGreen).Println("Running", strings.Join(execArgs, " "), "for application", args[0])
+	color.New(color.FgGreen).Println("Attempting to run", strings.Join(execArgs, " "), "for application", args[0])
 
 	appNamespace = fmt.Sprintf("porter-stack-%s", args[0])
 
 	if len(execArgs) > 0 {
 		res, err := client.GetPorterApp(context.Background(), cliConf.Project, cliConf.Cluster, args[0])
 		if err != nil {
-			return fmt.Errorf("Unable to run command - application not found: %w", err)
+			return fmt.Errorf("Unable to run command: %w", err)
+		}
+		if res.Name == "" {
+			return fmt.Errorf("An application named \"%s\" was not found in your project (ID: %d). Please check your spelling and try again.", args[0], cliConf.Project)
 		}
 
 		if res.Builder != "" &&

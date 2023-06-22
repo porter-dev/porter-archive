@@ -110,7 +110,6 @@ const Services: React.FC<ServicesProps> = ({
                   setServices(newServices);
                 }}
                 defaultExpanded={defaultExpanded}
-                readOnly={true}
               />
             );
           })}

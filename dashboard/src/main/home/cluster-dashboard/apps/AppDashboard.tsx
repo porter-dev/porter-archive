@@ -67,17 +67,15 @@ const AppDashboard: React.FC<Props> = ({
                 currentView={currentView}
               />
               <Spacer inline width="10px" />
-              {!currentProject?.capi_provisioner_enabled && (
-                <NamespaceSelector
-                  setNamespace={(x) => {
-                    setNamespace(x);
-                    pushQueryParams(props, {
-                      namespace: x || "ALL",
-                    });
-                  }}
-                  namespace={namespace}
-                />
-              )}
+              <NamespaceSelector
+                setNamespace={(x) => {
+                  setNamespace(x);
+                  pushQueryParams(props, {
+                    namespace: x || "ALL",
+                  });
+                }}
+                namespace={namespace}
+              />
               <TagFilter
                 onSelect={setSelectedTag}
               />
@@ -101,7 +99,7 @@ const AppDashboard: React.FC<Props> = ({
           <ChartList
             currentView={currentView}
             currentCluster={currentCluster}
-            namespace={currentProject.capi_provisioner_enabled ? "default" : namespace}
+            namespace={namespace}
             sortType={sortType}
             selectedTag={selectedTag}
           />

@@ -132,9 +132,8 @@ const Chart: React.FunctionComponent<Props> = ({
 
     const cluster = context.currentCluster?.name;
 
-    const route = `${isJob ? "/jobs" : "/applications"}/${cluster}/${
-      chart.namespace
-    }/${chart.name}`;
+    const route = `${isJob ? "/jobs" : "/applications"}/${cluster}/${chart.namespace
+      }/${chart.name}`;
 
     const newParams = {
       // @ts-ignore
@@ -224,7 +223,7 @@ const Chart: React.FunctionComponent<Props> = ({
 
           <TagWrapper>
             Namespace
-            <NamespaceTag>{chart.namespace}</NamespaceTag>
+            <NamespaceTag>{context.currentProject?.capi_provisioner_enabled && chart.namespace.startsWith("porter-stack-") ? chart.namespace.replace("porter-stack-", "") : chart.namespace}</NamespaceTag>
           </TagWrapper>
         </BottomWrapper>
 
@@ -375,13 +374,12 @@ const JobStatus = styled.span<{ status?: JobStatusType }>`
   font-weight: ${(props) =>
     props.status && props.status !== JobStatusType.Running ? "500" : ""};
   ${(props) => `
-  color: ${
-    props.status === JobStatusType.Succeeded
+  color: ${props.status === JobStatusType.Succeeded
       ? "rgb(56, 168, 138)"
       : props.status === JobStatusType.Failed
-      ? "#ff385d"
-      : "#aaaabb66"
-  }`}
+        ? "#ff385d"
+        : "#aaaabb66"
+    }`}
 `;
 
 const StyledChart = styled.div`

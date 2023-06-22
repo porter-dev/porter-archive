@@ -185,7 +185,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               enableWafv2: loadBalancerType ? wafV2Enabled : false,
               wafv2Arn: loadBalancerType && wafV2Enabled ? wafV2ARN : "",
               tags: loadBalancerType ? convertStringToTags(awsTags) : {},
-              additionalCertificateArns: loadBalancerType ? certificateARN.split(",") : [],
+              additionalCertificateArns: loadBalancerType ? certificateARN?.split(",") : [],
             }),
             nodeGroups: [
               new EKSNodeGroup({

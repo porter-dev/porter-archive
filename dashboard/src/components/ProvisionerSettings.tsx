@@ -91,7 +91,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [awsRegion, setAwsRegion] = useState("us-east-1");
   const [machineType, setMachineType] = useState("t3.xlarge");
   const [loadBalancerType, setLoadBalancerType] = useState(false);
-  const [wildCardDoman, setWildCardDomain] = useState("")
+  const [wildCardDomain, setWildCardDomain] = useState("")
   const [IPAllowList, setIPAllowList] = useState<string>("")
   const [accessS3Logs, setAccessS3Logs] = useState<boolean>(false)
   const [wafV2Enabled, setWaf2Enabled] = useState<boolean>(false)
@@ -141,9 +141,26 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       ((!clusterName && true) ||
         (isReadOnly && props.provisionerError === "") ||
         props.provisionerError === "" ||
-        currentCluster?.status === "UPDATING")
+        currentCluster?.status === "UPDATING" ||
+        isClicked)
     );
   };
+  function convertStringToTags(tagString) {
+    if (typeof tagString !== 'string' || tagString.trim() === '') {
+      return undefined;
+    }
+
+    // Split the input string by comma, then reduce the resulting array to an object
+    const tags = tagString.split(",").reduce((obj, item) => {
+      // Split each item by "=", 
+      const [key, value] = item.split("=");
+      // Add the key-value pair to the object
+      obj[key] = value;
+      return obj;
+    }, {});
+
+    return tags;
+  }
   const createCluster = async () => {
     setIsClicked(true);
 
@@ -162,11 +179,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             region: awsRegion,
             loadBalancer: new LoadBalancer({
               loadBalancerType: loadBalancerType ? LoadBalancerType.ALB : LoadBalancerType.NLB,
-              wildcardDomain: wildCardDoman,
-              allowlistIpRanges: IPAllowList,
-              enableS3AccessLogs: accessS3Logs,
-              enableWafv2: wafV2Enabled,
-              wafv2Arn: wafV2ARN,
+              wildcardDomain: loadBalancerType ? wildCardDomain : "",
+              allowlistIpRanges: loadBalancerType ? IPAllowList : "",
+              enableS3AccessLogs: loadBalancerType ? accessS3Logs : false,
+              enableWafv2: loadBalancerType ? wafV2Enabled : false,
+              wafv2Arn: loadBalancerType && wafV2Enabled ? wafV2ARN : "",
+              tags: loadBalancerType ? convertStringToTags(awsTags) : {},
+              additionalCertificateArns: loadBalancerType ? certificateARN.split(",") : [],
             }),
             nodeGroups: [
               new EKSNodeGroup({
@@ -317,7 +336,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         setWildCardDomain(eksValues.loadBalancer.wildcardDomain)
         console.log(eksValues.loadBalancer.enableS3AccessLogs)
         setAccessS3Logs(eksValues.loadBalancer.enableS3AccessLogs)
-        //setAwsTags(eksValues.loadBalancer.tags)
+        setAwsTags(Object.entries(eksValues.loadBalancer.tags)
+          .map(([key, value]) => `${key}=${value}`)
+          .join(','));
         setLoadBalancerType(eksValues.loadBalancer.loadBalancerType.toString() === "LOAD_BALANCER_TYPE_ALB")
         setwafV2ARN(eksValues.loadBalancer.wafv2Arn)
         setWaf2Enabled(eksValues.loadBalancer.enableWafv2)
@@ -351,6 +372,50 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         </>
       );
     }
+
+    const validateInput = () => {
+      return (
+        wildCardDomain && wildCardDomain.charAt(0) == "*"
+      );
+    };
+    function validateIPInput(IPAllowList) {
+      // This regular expression checks for an IP address with a subnet mask.
+      const regex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/;
+
+      // Split the input string by comma and remove any empty elements
+      const ipAddresses = IPAllowList.split(",").filter(Boolean);
+
+      // Validate each IP address
+      for (let ip of ipAddresses) {
+        if (!regex.test(ip.trim())) {
+          // If any IP is invalid, return true (error)
+          return true;
+        }
+      }
+
+      // If all IPs are valid, return false (no error)
+      return false;
+    }
+
+    function validateTags(awsTags) {
+      // Regular expression t o check for a key-value pair format "key=value"
+      const regex = /^[a-zA-Z0-9]+=[a-zA-Z0-9]+$/;
+
+      // Split the input string by comma and remove any empty elements
+      const tags = awsTags.split(",").filter(Boolean);
+
+      // Validate each tag
+      for (let tag of tags) {
+        if (!regex.test(tag.trim())) {
+          // If any tag is invalid, return true (error)
+          return true;
+        }
+      }
+
+      // If all tags are valid, return false (no error)
+      return false;
+    }
+
 
     // If settings, update full form
     return (
@@ -405,6 +470,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               setValue={(x: number) => setMaxInstances(x)}
               label="Maximum number of application EC2 instances"
               placeholder="ex: 1"
+
             />
             <Spacer y={1} />
             <Input
@@ -430,10 +496,15 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Input
                 width="350px"
                 disabled={isReadOnly}
-                value={wildCardDoman}
+                value={wildCardDomain}
                 setValue={(x: string) => setWildCardDomain(x)}
                 label="Wildcard domain"
                 placeholder="user-2.porter.run"
+                error={
+                  validateInput() &&
+                  (wildCardDomain?.length == 0 ?
+                    "Requried for ALB Load Balancer Type" : "Cannot lead with *")
+                }
               />
               <Spacer y={1} />
               <Input
@@ -443,6 +514,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 setValue={(x: string) => setIPAllowList(x)}
                 label="IP Allow List"
                 placeholder="160.72.72.58/32,160.72.72.59/32"
+                error={
+                  validateIPInput(IPAllowList) && "Needs to be Comma Separated Valid IP addresses"
+                }
               />
               <Spacer y={1} />
               <Input
@@ -451,7 +525,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 value={certificateARN}
                 setValue={(x: string) => seCertificateARN(x)}
                 label="Certificate ARN"
-                placeholder="160.72.72.58/32,160.72.72.59/32"
+                placeholder="arn:********"
               />
               <Spacer y={1} />
 
@@ -461,7 +535,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 value={awsTags}
                 setValue={(x: string) => setAwsTags(x)}
                 label="AWS Tags"
-                placeholder="costcenter,environment,project"
+                placeholder="costcenter=1,environment=10,project=32"
+                error={
+
+                  validateTags(awsTags) && "Needs to be Comma key value pair in the format key=value"
+                }
               />
               <Spacer y={1} />
               <Checkbox
@@ -498,7 +576,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 value={wafV2ARN}
                 setValue={(x: string) => setwafV2ARN(x)}
                 label="WAFv2 ARN"
-                placeholder="arn:*********" /></>}
+                placeholder="arn:*********"
+                error={
+                  (wafV2Enabled && (wafV2ARN == undefined || wafV2ARN?.length == 0) &&
+                    ("Requried for WafV2"))
+                }
+              /></>}
               <Spacer y={1} />
             </>
             )}
@@ -513,11 +596,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     <>
       <StyledForm>{renderForm()}</StyledForm>
       <Button
-        disabled={
-          isClicked ||
-          isDisabled() ||
-          getStatus() == "Provisioning is still in progress..."
-        }
+        disabled={isDisabled()}
         onClick={createCluster}
         status={getStatus()}
       >

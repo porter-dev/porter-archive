@@ -129,8 +129,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       ((!clusterName && true) ||
         (isReadOnly && props.provisionerError === "") ||
         props.provisionerError === "" ||
-        currentCluster?.status === "UPDATING" ||
-        isClicked)
+        currentCluster?.status === "UPDATING")
     );
   };
   const createCluster = async () => {
@@ -398,7 +397,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     <>
       <StyledForm>{renderForm()}</StyledForm>
       <Button
-        disabled={isDisabled()}
+        disabled={
+          isClicked ||
+          isDisabled() ||
+          getStatus() == "Provisioning is still in progress..."
+        }
         onClick={createCluster}
         status={getStatus()}
       >

@@ -239,7 +239,7 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
             <>
               <JobList
                 jobs={jobs}
-                setJobs={() => {}}
+                setJobs={() => { }}
                 expandJob={(job: any) => {
                   setSelectedJob(job);
                 }}
@@ -371,51 +371,51 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
           {(leftTabOptions?.length > 0 ||
             formData.tabs?.length > 0 ||
             rightTabOptions?.length > 0) && (
-            <PorterFormWrapper
-              formData={formData}
-              valuesToOverride={{
-                namespace: chart?.namespace,
-                clusterId: currentCluster?.id,
-              }}
-              renderTabContents={renderTabContents}
-              isReadOnly={
-                hasPorterImageTemplate ||
-                !isAuthorized("job", "", ["get", "update"]) ||
-                disableForm
-              }
-              onSubmit={(formValues) =>
-                updateChart(processValuesToUpdateChart(formValues))
-              }
-              includeMetadata
-              leftTabOptions={leftTabOptions}
-              rightTabOptions={rightTabOptions}
-              saveValuesStatus={saveStatus}
-              saveButtonText="Save config"
-              includeHiddenFields
-              addendum={
-                <TabButton
-                  onClick={() =>
-                    setDevOpsMode((prev) => {
-                      localStorage.setItem("devOpsMode", prev.toString());
-                      return !prev;
-                    })
-                  }
-                  devOpsMode={devOpsMode}
-                >
-                  <i className="material-icons">offline_bolt</i> DevOps Mode
-                </TabButton>
-              }
-              injectedProps={{
-                "key-value-array": {
-                  availableSyncEnvGroups:
-                    isStack && !disableForm ? stackEnvGroups : undefined,
-                },
-                "url-link": {
-                  chart: chart,
-                },
-              }}
-            />
-          )}
+              <PorterFormWrapper
+                formData={formData}
+                valuesToOverride={{
+                  namespace: chart?.namespace,
+                  clusterId: currentCluster?.id,
+                }}
+                renderTabContents={renderTabContents}
+                isReadOnly={
+                  hasPorterImageTemplate ||
+                  !isAuthorized("job", "", ["get", "update"]) ||
+                  disableForm
+                }
+                onSubmit={(formValues) =>
+                  updateChart(processValuesToUpdateChart(formValues))
+                }
+                includeMetadata
+                leftTabOptions={leftTabOptions}
+                rightTabOptions={rightTabOptions}
+                saveValuesStatus={saveStatus}
+                saveButtonText="Save config"
+                includeHiddenFields
+                addendum={
+                  <TabButton
+                    onClick={() =>
+                      setDevOpsMode((prev) => {
+                        localStorage.setItem("devOpsMode", prev.toString());
+                        return !prev;
+                      })
+                    }
+                    devOpsMode={devOpsMode}
+                  >
+                    <i className="material-icons">offline_bolt</i> DevOps Mode
+                  </TabButton>
+                }
+                injectedProps={{
+                  "key-value-array": {
+                    availableSyncEnvGroups:
+                      isStack && !disableForm ? stackEnvGroups : undefined,
+                  },
+                  "url-link": {
+                    chart: chart,
+                  },
+                }}
+              />
+            )}
         </BodyWrapper>
       </StyledExpandedChart>
     </>
@@ -443,64 +443,64 @@ const ExpandedJobHeader: React.FC<{
   setDisableForm,
   disableRevisions,
 }) => (
-  <>
-    <BreadcrumbRow>
-      <Breadcrumb onClick={closeChart}>
-        <ArrowIcon src={leftArrow} />
-        <Wrap>Back</Wrap>
-      </Breadcrumb>
-    </BreadcrumbRow>
-    <HeaderWrapper>
-      <TitleSection icon={chart?.chart.metadata.icon} iconWidth="33px">
-        {chart?.name}
-        <DeploymentType currentChart={chart} />
-        <TagWrapper>
-          Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
-        </TagWrapper>
-      </TitleSection>
-      {chart?.config?.description ? (
-        <Description>{chart?.config?.description}</Description>
-      ) : null}
-
-      <InfoWrapper>
-        {chart?.canonical_name !== "" ? (
-          <Url>
-            <Bolded>Helm Release Name:</Bolded>
-            {chart?.name}
-          </Url>
+    <>
+      <BreadcrumbRow>
+        <Breadcrumb onClick={closeChart}>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
+      <HeaderWrapper>
+        <TitleSection icon={chart?.chart.metadata.icon} iconWidth="33px">
+          {chart?.name}
+          <DeploymentType currentChart={chart} />
+          <TagWrapper>
+            Namespace <NamespaceTag>{chart.namespace.startsWith("porter-stack-") ? chart.namespace.replace("porter-stack-", "") : chart.namespace}</NamespaceTag>
+          </TagWrapper>
+        </TitleSection>
+        {chart?.config?.description ? (
+          <Description>{chart?.config?.description}</Description>
         ) : null}
-        <LastDeployed>
-          Run {jobs?.length} times <Dot>•</Dot>Last template update at
-          {" " + readableDate(chart.info.last_deployed)}
-        </LastDeployed>
-      </InfoWrapper>
-      {!disableRevisions ? (
-        <RevisionSection
-          chart={chart}
-          refreshChart={() => refreshChart()}
-          setRevision={(chart, isCurrent) => {
-            loadChartWithSpecificRevision(chart?.version);
-            setDisableForm(!isCurrent);
-          }}
-          forceRefreshRevisions={false}
-          refreshRevisionsOff={() => {}}
-          shouldUpdate={
-            chart?.latest_version &&
-            chart?.latest_version !== chart?.chart.metadata.version
-          }
-          latestVersion={chart?.latest_version}
-          upgradeVersion={(_version, cb) => {
-            upgradeChart().then(() => {
-              if (typeof cb === "function") {
-                cb();
-              }
-            });
-          }}
-        />
-      ) : null}
-    </HeaderWrapper>
-  </>
-);
+
+        <InfoWrapper>
+          {chart?.canonical_name !== "" ? (
+            <Url>
+              <Bolded>Helm Release Name:</Bolded>
+              {chart?.name}
+            </Url>
+          ) : null}
+          <LastDeployed>
+            Run {jobs?.length} times <Dot>•</Dot>Last template update at
+            {" " + readableDate(chart.info.last_deployed)}
+          </LastDeployed>
+        </InfoWrapper>
+        {!disableRevisions ? (
+          <RevisionSection
+            chart={chart}
+            refreshChart={() => refreshChart()}
+            setRevision={(chart, isCurrent) => {
+              loadChartWithSpecificRevision(chart?.version);
+              setDisableForm(!isCurrent);
+            }}
+            forceRefreshRevisions={false}
+            refreshRevisionsOff={() => { }}
+            shouldUpdate={
+              chart?.latest_version &&
+              chart?.latest_version !== chart?.chart.metadata.version
+            }
+            latestVersion={chart?.latest_version}
+            upgradeVersion={(_version, cb) => {
+              upgradeChart().then(() => {
+                if (typeof cb === "function") {
+                  cb();
+                }
+              });
+            }}
+          />
+        ) : null}
+      </HeaderWrapper>
+    </>
+  );
 
 const ArrowIcon = styled.img`
   width: 15px;
@@ -780,11 +780,11 @@ const TabButton = styled.div`
   border-radius: 20px;
   text-shadow: 0px 0px 8px
     ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "#ffffff66" : "none"};
+    props.devOpsMode ? "#ffffff66" : "none"};
   cursor: pointer;
   :hover {
     color: ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "" : "#aaaabb99"};
+    props.devOpsMode ? "" : "#aaaabb99"};
   }
 
   > i {

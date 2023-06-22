@@ -501,129 +501,134 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               label="VPC CIDR range"
               placeholder="ex: 10.78.0.0/16"
             />
-            <Spacer y={1} />
-            <Checkbox
-              checked={loadBalancerType}
-              disabled={isReadOnly}
-              toggleChecked={() => { setLoadBalancerType(!loadBalancerType) }}
-              disabledTooltip={"Wait for provisioning to complete before editing this field."}
-            >
-              <Text color="helper">Set Load Balancer Type to ALB</Text>
-            </Checkbox>
-            <Spacer y={1} />
-            {loadBalancerType && (<>
-              <Input
-                width="350px"
-                disabled={isReadOnly}
-                value={wildCardDomain}
-                setValue={(x: string) => setWildCardDomain(x)}
-                label="Wildcard domain"
-                placeholder="user-2.porter.run"
-                error={
-                  validateInput(wildCardDomain)
-                }
-              />
-              <Spacer y={1} />
-              <Input
-                width="350px"
-                disabled={isReadOnly}
-                value={IPAllowList}
-                setValue={(x: string) => setIPAllowList(x)}
-                label="IP Allow List"
-                placeholder="160.72.72.58/32,160.72.72.59/32"
-                error={
-                  validateIPInput(IPAllowList) && "Needs to be Comma Separated Valid IP addresses"
-                }
-              />
-              <Spacer y={1} />
-              <Input
-                width="350px"
-                disabled={isReadOnly}
-                value={certificateARN}
-                setValue={(x: string) => seCertificateARN(x)}
-                label="Certificate ARN"
-                placeholder="arn:********"
-              />
-              <Spacer y={1} />
 
-              <Input
-                width="350px"
-                disabled={isReadOnly}
-                value={awsTags}
-                setValue={(x: string) => setAwsTags(x)}
-                label="AWS Tags"
-                placeholder="costcenter=1,environment=10,project=32"
-                error={
-
-                  validateTags(awsTags) && "Needs to be Comma key value pair in the format key=value"
-                }
-              />
-              <Spacer y={1} />
-              <Checkbox
-                checked={accessS3Logs}
-                disabled={isReadOnly}
-                toggleChecked={() => {
-                  {
-                    console.log(!accessS3Logs)
-                  }
-                  setAccessS3Logs(!accessS3Logs)
-                }}
-                disabledTooltip={"Wait for provisioning to complete before editing this field."}
-              >
-                <Text color="helper">Access Logs to S3</Text>
-              </Checkbox>
-              <Spacer y={1} />
-              <Checkbox
-                checked={wafV2Enabled}
-                disabled={isReadOnly}
-                toggleChecked={() => {
-                  if (wafV2Enabled) {
-                    setwafV2ARN("");
-                  }
-                  setWaf2Enabled(!wafV2Enabled);
-                }}
-                disabledTooltip={"Wait for provisioning to complete before editing this field."}
-              >
-                <Text color="helper">WAFv2 Enabled</Text>
-              </Checkbox>
-              {wafV2Enabled && <>
+            {!currentProject.simplified_view_enabled &&
+              <>
                 <Spacer y={1} />
+                <Checkbox
+                  checked={loadBalancerType}
+                  disabled={isReadOnly}
+                  toggleChecked={() => { setLoadBalancerType(!loadBalancerType) }}
+                  disabledTooltip={"Wait for provisioning to complete before editing this field."}
+                >
+                  <Text color="helper">Set Load Balancer Type to ALB</Text>
+                </Checkbox>
+                <Spacer y={1} />
+                {loadBalancerType && (<>
+                  <Input
+                    width="350px"
+                    disabled={isReadOnly}
+                    value={wildCardDomain}
+                    setValue={(x: string) => setWildCardDomain(x)}
+                    label="Wildcard domain"
+                    placeholder="user-2.porter.run"
+                    error={
+                      validateInput(wildCardDomain)
+                    }
+                  />
+                  <Spacer y={1} />
+                  <Input
+                    width="350px"
+                    disabled={isReadOnly}
+                    value={IPAllowList}
+                    setValue={(x: string) => setIPAllowList(x)}
+                    label="IP Allow List"
+                    placeholder="160.72.72.58/32,160.72.72.59/32"
+                    error={
+                      validateIPInput(IPAllowList) && "Needs to be Comma Separated Valid IP addresses"
+                    }
+                  />
+                  <Spacer y={1} />
+                  <Input
+                    width="350px"
+                    disabled={isReadOnly}
+                    value={certificateARN}
+                    setValue={(x: string) => seCertificateARN(x)}
+                    label="Certificate ARN"
+                    placeholder="arn:********"
+                  />
+                  <Spacer y={1} />
+
+                  <Input
+                    width="350px"
+                    disabled={isReadOnly}
+                    value={awsTags}
+                    setValue={(x: string) => setAwsTags(x)}
+                    label="AWS Tags"
+                    placeholder="costcenter=1,environment=10,project=32"
+                    error={
+
+                      validateTags(awsTags) && "Needs to be Comma key value pair in the format key=value"
+                    }
+                  />
+                  <Spacer y={1} />
+                  <Checkbox
+                    checked={accessS3Logs}
+                    disabled={isReadOnly}
+                    toggleChecked={() => {
+                      {
+                        console.log(!accessS3Logs)
+                      }
+                      setAccessS3Logs(!accessS3Logs)
+                    }}
+                    disabledTooltip={"Wait for provisioning to complete before editing this field."}
+                  >
+                    <Text color="helper">Access Logs to S3</Text>
+                  </Checkbox>
+                  <Spacer y={1} />
+                  <Checkbox
+                    checked={wafV2Enabled}
+                    disabled={isReadOnly}
+                    toggleChecked={() => {
+                      if (wafV2Enabled) {
+                        setwafV2ARN("");
+                      }
+                      setWaf2Enabled(!wafV2Enabled);
+                    }}
+                    disabledTooltip={"Wait for provisioning to complete before editing this field."}
+                  >
+                    <Text color="helper">WAFv2 Enabled</Text>
+                  </Checkbox>
+                  {wafV2Enabled && <>
+                    <Spacer y={1} />
 
 
-                <FlexCenter>
-                  <>
-                    <Input
-                      width="500px"
-                      type="string"
-                      label="WAFv2 ARN"
-                      disabled={isReadOnly}
-                      value={wafV2ARN}
-                      setValue={(x: string) => setwafV2ARN(x)}
-                      placeholder="arn:aws:wafv2:REGION:ACCOUNT_ID:regional/webacl/ACL_NAME/RULE_ID"
+                    <FlexCenter>
+                      <>
+                        <Input
+                          width="500px"
+                          type="string"
+                          label="WAFv2 ARN"
+                          disabled={isReadOnly}
+                          value={wafV2ARN}
+                          setValue={(x: string) => setwafV2ARN(x)}
+                          placeholder="arn:aws:wafv2:REGION:ACCOUNT_ID:regional/webacl/ACL_NAME/RULE_ID"
 
-                    />
-                    <Wrapper>
-                      <Tooltip
-                        children={<Icon src={info} />}
-                        content={'Only Regional WAFv2 is supported. To find your ARN, navigate to the WAF console, click the Gear icon in the top right, and toggle "ARN" to on'}
-                        position="right"
-                      />
-                    </Wrapper>
-                  </>
-                </FlexCenter>
+                        />
+                        <Wrapper>
+                          <Tooltip
+                            children={<Icon src={info} />}
+                            content={'Only Regional WAFv2 is supported. To find your ARN, navigate to the WAF console, click the Gear icon in the top right, and toggle "ARN" to on'}
+                            position="right"
+                          />
+                        </Wrapper>
+                      </>
+                    </FlexCenter>
 
-                {(wafV2ARN == undefined || wafV2ARN?.length == 0) &&
+                    {(wafV2ARN == undefined || wafV2ARN?.length == 0) &&
 
-                  <ErrorInLine>
-                    <i className="material-icons">error</i>
-                    {"Requried if WafV2 is Enabled"}
-                  </ErrorInLine>
+                      <ErrorInLine>
+                        <i className="material-icons">error</i>
+                        {"Requried if WafV2 is Enabled"}
+                      </ErrorInLine>
 
-                }
-              </>}
-              <Spacer y={1} />
-            </>
-            )}
+                    }
+                  </>}
+                  <Spacer y={1} />
+                </>
+                )}
+              </>
+            }
           </>
         )
         }

@@ -70,11 +70,11 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
       <Container row spaced>
         <Container row>
           <Icon height="16px" src={app_event} />
-          <Spacer inline width="10px" />
-          <Text additionalStyles={"overflow: auto;max-height: 70px;max-width: 600px;"}>{event.metadata.detail}</Text>
+          <Spacer inline width="15px" />
+          <Text>Your application was restarted because it exceeded its memory limit of 256Mi. Reduce the amount of memory your application is consuming or increase its memory limit from the Resources tab.{event.metadata.detail}</Text>
         </Container>
       </Container>
-      <Spacer y={1} />
+      <Spacer y={0.5} />
       <Container row spaced>
         <TempWrapper>
           <Link onClick={getAppLogs} hasunderline>

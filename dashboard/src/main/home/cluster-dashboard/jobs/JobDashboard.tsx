@@ -7,7 +7,7 @@ import job from "assets/job.png";
 import { Context } from "shared/Context";
 import { JobStatusType } from "shared/types";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { 
+import {
   pushQueryParams,
   pushFiltered,
   PorterUrl,
@@ -59,17 +59,15 @@ const JobDashboard: React.FC<Props> = ({
                 lastRunStatus={lastRunStatus}
                 setLastRunStatus={setLastRunStatus}
               />
-              {!currentProject?.capi_provisioner_enabled && (
-                <NamespaceSelector
-                  setNamespace={(x) => {
-                    setNamespace(x);
-                    pushQueryParams(props, {
-                      namespace: x || "ALL",
-                    });
-                  }}
-                  namespace={namespace}
-                />
-              )}
+              <NamespaceSelector
+                setNamespace={(x) => {
+                  setNamespace(x);
+                  pushQueryParams(props, {
+                    namespace: x || "ALL",
+                  });
+                }}
+                namespace={namespace}
+              />
               <TagFilter
                 onSelect={setSelectedTag}
               />
@@ -91,18 +89,18 @@ const JobDashboard: React.FC<Props> = ({
                 </ToggleOption>
               </ToggleButton>
               {props.isAuthorized(
-                "namespace", 
-                [], 
+                "namespace",
+                [],
                 ["get", "create"]
               ) && (
-                <Button
-                  onClick={() => {
-                    pushFiltered(props, "/launch", ["project_id"]);
-                  }}
-                >
-                  <i className="material-icons">add</i> Launch template
-                </Button>
-              )}
+                  <Button
+                    onClick={() => {
+                      pushFiltered(props, "/launch", ["project_id"]);
+                    }}
+                  >
+                    <i className="material-icons">add</i> Launch template
+                  </Button>
+                )}
             </Flex>
           </ControlRow>
           <HidableElement show={showRuns}>
@@ -206,7 +204,7 @@ const Button = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
+    props.disabled ? "" : "#505edddd"};
   }
 
   > i {

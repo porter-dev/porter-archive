@@ -107,12 +107,10 @@ const EnvGroupDashboard = (props: PropsType) => {
                 sortType={state.sortType}
               />
               <Spacer inline width="10px" />
-              {!currentProject?.capi_provisioner_enabled && (
-                <NamespaceSelector
-                  setNamespace={setNamespace}
-                  namespace={state.namespace}
-                />
-              )}
+              <NamespaceSelector
+                setNamespace={setNamespace}
+                namespace={state.namespace}
+              />
             </SortFilterWrapper>
             <Flex>
               {isAuthorizedToAdd && (

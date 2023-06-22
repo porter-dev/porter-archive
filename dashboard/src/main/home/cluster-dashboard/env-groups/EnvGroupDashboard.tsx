@@ -217,7 +217,7 @@ const Button = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
+    props.disabled ? "" : "#505edddd"};
   }
 
   > i {

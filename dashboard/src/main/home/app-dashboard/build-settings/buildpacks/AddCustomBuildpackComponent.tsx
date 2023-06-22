@@ -1,7 +1,7 @@
 import InputRow from "components/form-components/InputRow";
 import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { Buildpack } from "./BuildpackStack";
+import { Buildpack } from "./BuildpackSettings";
 
 function isValidURL(url: string): boolean {
   const pattern = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,})(:\d{2,5})?([\/\w.-]*)*\/?$/i;

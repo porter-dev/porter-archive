@@ -11,7 +11,7 @@ import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Error from "components/porter/Error";
-import { PorterApp } from "../types/porterApp";
+import { PorterApp } from "../../types/porterApp";
 import AddCustomBuildpackComponent from "./AddCustomBuildpackComponent";
 import BuildpackList from "./BuildpackList";
 import Icon from "components/porter/Icon";
@@ -53,7 +53,7 @@ const BUILDPACK_TO_NAME: { [key: string]: string } = {
   "heroku/go": "Go",
 };
 
-const BuildpackStack: React.FC<{
+const BuildpackSettings: React.FC<{
   porterApp: PorterApp;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
   autoDetectBuildpacks: boolean;
@@ -302,7 +302,7 @@ const BuildpackStack: React.FC<{
     );
   };
 
-export default BuildpackStack;
+export default BuildpackSettings;
 
 
 const Shade = styled.div`

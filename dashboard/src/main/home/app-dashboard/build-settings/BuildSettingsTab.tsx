@@ -159,7 +159,7 @@ const BuildSettingsTab: React.FC<Props> = ({
         porterApp={porterApp}
         updatePorterApp={(attrs: Partial<PorterApp>) => setTempPorterApp(PorterApp.setAttributes(porterApp, attrs))}
         setPorterYaml={() => { }}
-        autoDetectBuildpacks={false}
+        autoDetectionOn={false}
         canChangeRepo={false}
       />
       <Spacer y={1} />

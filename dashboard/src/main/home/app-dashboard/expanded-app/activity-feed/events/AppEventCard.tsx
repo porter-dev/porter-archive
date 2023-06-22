@@ -71,7 +71,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
         <Container row>
           <Icon height="16px" src={app_event} />
           <Spacer inline width="15px" />
-          <Text>Your application was restarted because it exceeded its memory limit of 256Mi. Reduce the amount of memory your application is consuming or increase its memory limit from the Resources tab.{event.metadata.detail}</Text>
+          <Text>{event.metadata.detail}</Text>
         </Container>
       </Container>
       <Spacer y={0.5} />

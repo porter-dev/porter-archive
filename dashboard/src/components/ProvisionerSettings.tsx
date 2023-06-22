@@ -147,9 +147,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return false;
 
   };
-  function validateIPInput(IPAllowList) {
+  function validateIPInput(IPAllowList: string) {
     // This regular expression checks for an IP address with a subnet mask.
     const regex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/;
+
+    if (IPAllowList == "") {
+      return false;
+    }
 
     // Split the input string by comma and remove any empty elements
     const ipAddresses = IPAllowList.split(",").filter(Boolean);
@@ -369,7 +373,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
-      console.log(eksValues);
       if (eksValues == null) {
         return
       }
@@ -391,9 +394,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       setClusterVersion(eksValues.clusterVersion);
       setCidrRange(eksValues.cidrRange);
       if (eksValues.loadBalancer != null) {
-        setIPAllowList(eksValues.loadBalancer.allowlistIpRanges)
+        setIPAllowList(eksValues.loadBalancer.allowlistIpRanges || "")
         setWildCardDomain(eksValues.loadBalancer.wildcardDomain)
-        console.log(eksValues.loadBalancer.enableS3AccessLogs)
         setAccessS3Logs(eksValues.loadBalancer.enableS3AccessLogs)
 
         if (eksValues.loadBalancer.tags) {
@@ -566,9 +568,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                     checked={accessS3Logs}
                     disabled={isReadOnly}
                     toggleChecked={() => {
-                      {
-                        console.log(!accessS3Logs)
-                      }
                       setAccessS3Logs(!accessS3Logs)
                     }}
                     disabledTooltip={"Wait for provisioning to complete before editing this field."}

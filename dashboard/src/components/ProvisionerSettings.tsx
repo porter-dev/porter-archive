@@ -336,9 +336,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         setWildCardDomain(eksValues.loadBalancer.wildcardDomain)
         console.log(eksValues.loadBalancer.enableS3AccessLogs)
         setAccessS3Logs(eksValues.loadBalancer.enableS3AccessLogs)
-        setAwsTags(Object.entries(eksValues.loadBalancer.tags)
-          .map(([key, value]) => `${key}=${value}`)
-          .join(','));
+
+        if (eksValues.loadBalancer.tags) {
+          setAwsTags(Object.entries(eksValues.loadBalancer.tags)
+            .map(([key, value]) => `${key}=${value}`)
+            .join(','));
+        }
+
         setLoadBalancerType(eksValues.loadBalancer.loadBalancerType.toString() === "LOAD_BALANCER_TYPE_ALB")
         setwafV2ARN(eksValues.loadBalancer.wafv2Arn)
         setWaf2Enabled(eksValues.loadBalancer.enableWafv2)

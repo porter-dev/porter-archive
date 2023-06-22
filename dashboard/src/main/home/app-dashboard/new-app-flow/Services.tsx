@@ -21,9 +21,8 @@ interface ServicesProps {
   defaultExpanded?: boolean;
   chart?: any;
   limitOne?: boolean;
-  customOnClick?: () => void;
+  prePopulateService?: Service;
   setExpandedJob?: (x: string) => void;
-  onUpdate?: () => void;
 }
 
 const Services: React.FC<ServicesProps> = ({
@@ -33,9 +32,8 @@ const Services: React.FC<ServicesProps> = ({
   chart,
   defaultExpanded = false,
   limitOne = false,
-  customOnClick,
   setExpandedJob,
-  onUpdate = () => ({}),
+  prePopulateService,
 }) => {
   const [showAddServiceModal, setShowAddServiceModal] = useState<boolean>(
     false
@@ -62,7 +60,7 @@ const Services: React.FC<ServicesProps> = ({
     } else {
       return undefined;
     }
-  }
+  };
 
   const maybeRenderAddServicesButton = () => {
     if (limitOne && services.length > 0) {
@@ -72,13 +70,16 @@ const Services: React.FC<ServicesProps> = ({
       <>
         <AddServiceButton
           onClick={() => {
-            if (customOnClick != null) {
-              customOnClick();
-              return;
+            if (prePopulateService == null) {
+              setShowAddServiceModal(true);
+              setServiceType("web");
+            } else {
+              const newServices = [
+                ...services,
+                prePopulateService,
+              ]
+              setServices(newServices);
             }
-            setShowAddServiceModal(true);
-            setServiceType("web");
-            onUpdate();
           }}
         >
           <i className="material-icons add-icon">add_icon</i>
@@ -86,8 +87,8 @@ const Services: React.FC<ServicesProps> = ({
         </AddServiceButton>
         <Spacer y={0.5} />
       </>
-    )
-  }
+    );
+  };
 
   return (
     <>
@@ -100,15 +101,16 @@ const Services: React.FC<ServicesProps> = ({
                 setExpandedJob={setExpandedJob}
                 service={service}
                 chart={chart}
-                editService={(newService: Service) =>
-                  setServices(
-                    services.map((s, i) => (i === index ? newService : s))
-                  )
-                }
-                deleteService={() =>
-                  setServices(services.filter((_, i) => i !== index))
-                }
+                editService={(newService: Service) => {
+                  const newServices = services.map((s, i) => (i === index ? newService : s));
+                  setServices(newServices);
+                }}
+                deleteService={() => {
+                  const newServices = services.filter((_, i) => i !== index);
+                  setServices(newServices);
+                }}
                 defaultExpanded={defaultExpanded}
+                readOnly={true}
               />
             );
           })}
@@ -151,10 +153,11 @@ const Services: React.FC<ServicesProps> = ({
           <Spacer y={1} />
           <Button
             onClick={() => {
-              setServices([
+              const newServices = [
                 ...services,
                 Service.default(serviceName, serviceType),
-              ]);
+              ]
+              setServices(newServices);
               setShowAddServiceModal(false);
               setServiceName("");
               setServiceType("web");

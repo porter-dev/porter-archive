@@ -52,10 +52,13 @@ import (
 )
 
 // Agent is a Kubernetes agent for performing operations that interact with the
-// api server
+// api server. Do not create this struct directly, use NewKubernetesAgent instead.
 type Agent struct {
 	RESTClientGetter genericclioptions.RESTClientGetter
 	Clientset        kubernetes.Interface
+
+	// context is used here as a workaround since RESTClientGetter and kubernetes.Interface do not support contexts
+	context context.Context
 }
 
 type Message struct {
@@ -72,6 +75,15 @@ type AuthError struct{}
 
 func (e *AuthError) Error() string {
 	return "Unauthorized error"
+}
+
+// NewKubernetesAgent creates a new agent for accessing kubernetes on a cluster
+func NewKubernetesAgent(ctx context.Context, restClientGetter genericclioptions.RESTClientGetter, clientset kubernetes.Interface) Agent {
+	return Agent{
+		RESTClientGetter: restClientGetter,
+		Clientset:        clientset,
+		context:          ctx,
+	}
 }
 
 // UpdateClientset updates the Agent's Clientset (this refreshes auth tokens)

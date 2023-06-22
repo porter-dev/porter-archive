@@ -22,11 +22,6 @@ import (
 
 func NewAPIRouter(config *config.Config) *chi.Mux {
 	r := chi.NewRouter()
-	r.Use(otelchi.Middleware(
-		"porter-server-middleware",
-		otelchi.WithRequestMethodInSpanName(true),
-		otelchi.WithChiRoutes(r),
-	))
 
 	endpointFactory := shared.NewAPIObjectEndpointFactory(config)
 
@@ -67,11 +62,11 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	}
 
 	r.Route("/api", func(r chi.Router) {
-		// set panic middleware for all API endpoints to catch panics
-		r.Use(panicMW.Middleware)
-
-		// set the content type for all API endpoints and log all request info)
-		r.Use(middleware.ContentTypeJSON)
+		r.Use(
+			otelchi.Middleware("porter-server-middleware", otelchi.WithRequestMethodInSpanName(true), otelchi.WithChiRoutes(r)),
+			panicMW.Middleware,
+			middleware.ContentTypeJSON,
+		)
 
 		baseRoutes := baseRegisterer.GetRoutes(
 			r,
@@ -116,11 +111,11 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	})
 
 	r.Route("/api/v1", func(r chi.Router) {
-		// set panic middleware for all API endpoints to catch panics
-		r.Use(panicMW.Middleware)
-
-		// set the content type for all API endpoints and log all request info
-		r.Use(middleware.ContentTypeJSON)
+		r.Use(
+			otelchi.Middleware("porter-server-middleware", otelchi.WithRequestMethodInSpanName(true), otelchi.WithChiRoutes(r)),
+			panicMW.Middleware,
+			middleware.ContentTypeJSON,
+		)
 
 		var allRoutes []*router.Route
 
@@ -300,9 +295,10 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 
 		if route.Endpoint.Metadata.CheckUsage && config.ServerConf.UsageTrackingEnabled {
 			usageMW := middleware.NewUsageMiddleware(config, route.Endpoint.Metadata.UsageMetric)
-
 			atomicGroup.Use(usageMW.Middleware)
 		}
+
+		atomicGroup.Use(middleware.HydrateTraces)
 
 		atomicGroup.Method(
 			string(route.Endpoint.Metadata.Method),

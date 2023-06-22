@@ -80,7 +80,7 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	for idx, appEvent := range porterAppEvents {
 		if appEvent.Status == "PROGRESSING" {
-			pae, err := p.updateExistingAppEvent(ctx, *cluster, stackName, appEvent.ID)
+			pae, err := p.updateExistingAppEvent(ctx, *cluster, stackName, *appEvent)
 			if err != nil {
 				e := telemetry.Error(ctx, span, nil, "unable to update existing porter app event")
 				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
@@ -108,13 +108,17 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	p.WriteResult(w, r, res)
 }
 
-func (p *PorterAppEventListHandler) updateExistingAppEvent(ctx context.Context, cluster models.Cluster, stackName string, id uuid.UUID) (models.PorterAppEvent, error) {
+func (p *PorterAppEventListHandler) updateExistingAppEvent(ctx context.Context, cluster models.Cluster, stackName string, appEvent models.PorterAppEvent) (models.PorterAppEvent, error) {
 	ctx, span := telemetry.NewSpan(ctx, "update-porter-app-event")
 	defer span.End()
 
-	event, err := p.Repo().PorterAppEvent().ReadEvent(ctx, id)
+	if appEvent.ID == uuid.Nil {
+		return models.PorterAppEvent{}, telemetry.Error(ctx, span, nil, "porter app event id is nil when updating")
+	}
+
+	event, err := p.Repo().PorterAppEvent().ReadEvent(ctx, appEvent.ID)
 	if err != nil {
-		return models.PorterAppEvent{}, telemetry.Error(ctx, span, nil, "error retrieving porter app by name for cluster")
+		return models.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error retrieving porter app by name for cluster")
 	}
 
 	telemetry.WithAttributes(span,
@@ -125,61 +129,12 @@ func (p *PorterAppEventListHandler) updateExistingAppEvent(ctx context.Context, 
 		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},
 	)
 
-	repoOrg, ok := event.Metadata["org"].(string)
-	if !ok {
-		return models.PorterAppEvent{}, telemetry.Error(ctx, span, nil, "error retrieving repo org from metadata")
-	}
-
-	repoName, ok := event.Metadata["repo"].(string)
-	if !ok {
-		return models.PorterAppEvent{}, telemetry.Error(ctx, span, nil, "error retrieving repo name from metadata")
-	}
-
-	actionRunIDIface, ok := event.Metadata["action_run_id"]
-	if !ok {
-		return models.PorterAppEvent{}, telemetry.Error(ctx, span, nil, "error retrieving action run id from metadata")
-	}
-	actionRunID, ok := actionRunIDIface.(float64)
-	if !ok {
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "action-run-id-type", Value: reflect.TypeOf(actionRunIDIface).String()})
-		return models.PorterAppEvent{}, telemetry.Error(ctx, span, nil, "error converting action run id to int")
-	}
-
-	accountIDIface, ok := event.Metadata["github_account_id"]
-	if !ok {
-		return models.PorterAppEvent{}, telemetry.Error(ctx, span, nil, "error retrieving github account id from metadata")
-	}
-	githubAccountID, ok := accountIDIface.(float64)
-	if !ok {
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "github-account-id-type", Value: reflect.TypeOf(accountIDIface).String()})
-		return models.PorterAppEvent{}, telemetry.Error(ctx, span, nil, "error converting github account id to int")
-	}
-
-	// read the environment to get the environment id
-	env, err := p.Repo().GithubAppInstallation().ReadGithubAppInstallationByAccountID(int64(githubAccountID))
-	if err != nil {
-		return models.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error reading github environment by owner repo name")
-	}
-
-	ghClient, err := getGithubClientFromEnvironment(p.Config(), env.InstallationID)
-	if err != nil {
-		return models.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error getting github client using porter application")
-	}
-
-	actionRun, _, err := ghClient.Actions.GetWorkflowRunByID(ctx, repoOrg, repoName, int64(actionRunID))
-	if err != nil {
-		return models.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error getting github action run by id")
-	}
-
-	if *actionRun.Status == "completed" {
-		if *actionRun.Conclusion == "success" {
-			event.Status = "SUCCESS"
-		} else {
-			event.Status = "FAILED"
+	if appEvent.Type == string(types.PorterAppEventType_Build) && appEvent.TypeExternalSource == "GITHUB" {
+		err = p.updateBuildEvent_Github(ctx, &event)
+		if err != nil {
+			return models.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error updating porter app event for github build")
 		}
 	}
-
-	fmt.Println("STEFAN", *actionRun.Status, actionRun.Conclusion, event.Status)
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-event-updated-status", Value: event.Status})
 
@@ -193,6 +148,67 @@ func (p *PorterAppEventListHandler) updateExistingAppEvent(ctx context.Context, 
 	}
 
 	return event, nil
+}
+
+func (p *PorterAppEventListHandler) updateBuildEvent_Github(ctx context.Context, event *models.PorterAppEvent) error {
+	ctx, span := telemetry.NewSpan(ctx, "update-porter-app-build-event")
+	defer span.End()
+
+	repoOrg, ok := event.Metadata["org"].(string)
+	if !ok {
+		return telemetry.Error(ctx, span, nil, "error retrieving repo org from metadata")
+	}
+
+	repoName, ok := event.Metadata["repo"].(string)
+	if !ok {
+		return telemetry.Error(ctx, span, nil, "error retrieving repo name from metadata")
+	}
+
+	actionRunIDIface, ok := event.Metadata["action_run_id"]
+	if !ok {
+		return telemetry.Error(ctx, span, nil, "error retrieving action run id from metadata")
+	}
+	actionRunID, ok := actionRunIDIface.(float64)
+	if !ok {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "action-run-id-type", Value: reflect.TypeOf(actionRunIDIface).String()})
+		return telemetry.Error(ctx, span, nil, "error converting action run id to int")
+	}
+
+	accountIDIface, ok := event.Metadata["github_account_id"]
+	if !ok {
+		return telemetry.Error(ctx, span, nil, "error retrieving github account id from metadata")
+	}
+	githubAccountID, ok := accountIDIface.(float64)
+	if !ok {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "github-account-id-type", Value: reflect.TypeOf(accountIDIface).String()})
+		return telemetry.Error(ctx, span, nil, "error converting github account id to int")
+	}
+
+	// read the environment to get the environment id
+	env, err := p.Repo().GithubAppInstallation().ReadGithubAppInstallationByAccountID(int64(githubAccountID))
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error reading github environment by owner repo name")
+	}
+
+	ghClient, err := getGithubClientFromEnvironment(p.Config(), env.InstallationID)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error getting github client using porter application")
+	}
+
+	actionRun, _, err := ghClient.Actions.GetWorkflowRunByID(ctx, repoOrg, repoName, int64(actionRunID))
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error getting github action run by id")
+	}
+
+	if *actionRun.Status == "completed" {
+		if *actionRun.Conclusion == "success" {
+			event.Status = "SUCCESS"
+		} else {
+			event.Status = "FAILED"
+		}
+	}
+
+	return nil
 }
 
 func getGithubClientFromEnvironment(config *config.Config, installationID int64) (*github.Client, error) {

@@ -82,5 +82,6 @@ type UpdateUserInfoRequest struct {
 }
 
 type UpdateOnboardingStepRequest struct {
-	Step string `json:"step" form:"required,max=255"`
+	Step     string `json:"step" form:"required,max=255"`
+	Provider string `json:"provider"`
 }

@@ -2,6 +2,7 @@ import { PorterAppEvent } from "shared/types";
 import healthy from "assets/status-healthy.png";
 import failure from "assets/failure.png";
 import loading from "assets/loading.gif";
+import api from "shared/api";
 
 export const getDuration = (event: PorterAppEvent): string => {
     const startTimeStamp = new Date(event.created_at).getTime();
@@ -10,25 +11,29 @@ export const getDuration = (event: PorterAppEvent): string => {
     const timeDifferenceMilliseconds = endTimeStamp - startTimeStamp;
 
     const seconds = Math.floor(timeDifferenceMilliseconds / 1000);
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
+    const weeks = Math.floor(seconds / 604800);
+    const remainingDays = Math.floor((seconds % 604800) / 86400);
+    const remainingHours = Math.floor((seconds % 86400) / 3600);
+    const remainingMinutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
 
-    let formattedTime = "";
-
-    if (hours > 0) {
-        formattedTime += `${hours} h `;
+    if (weeks > 0) {
+        return `${weeks}w ${remainingDays}d`;
     }
 
-    if (minutes > 0) {
-        formattedTime += `${minutes} m `;
+    if (remainingDays > 0) {
+        return `${remainingDays}d ${remainingHours}h`;
     }
 
-    if (hours === 0 && minutes === 0) {
-        formattedTime += `${remainingSeconds} s`;
+    if (remainingHours > 0) {
+        return `${remainingHours}h ${remainingMinutes}m`;
     }
 
-    return formattedTime.trim();
+    if (remainingMinutes > 0) {
+        return `${remainingMinutes}m ${remainingSeconds}s`;
+    }
+
+    return `${remainingSeconds}s`;
 };
 
 export const getStatusIcon = (status: string) => {
@@ -41,5 +46,28 @@ export const getStatusIcon = (status: string) => {
             return loading;
         default:
             return loading;
+    }
+};
+
+export const triggerWorkflow = async (appData: any) => {
+    try {
+        const res = await api.reRunGHWorkflow(
+            "",
+            {},
+            {
+                project_id: appData.app.project_id,
+                cluster_id: appData.app.cluster_id,
+                git_installation_id: appData.app.git_repo_id,
+                owner: appData.app.repo_name?.split("/")[0],
+                name: appData.app.repo_name?.split("/")[1],
+                branch: appData.app.branch_name,
+                filename: "porter_stack_" + appData.chart.name + ".yml",
+            }
+        );
+        if (res.data != null) {
+            window.open(res.data, "_blank", "noreferrer");
+        }
+    } catch (error) {
+        console.log(error);
     }
 };

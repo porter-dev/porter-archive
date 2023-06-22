@@ -17,16 +17,13 @@ const EventCard: React.FC<Props> = ({ event, appData }) => {
   const renderEventCard = (event: PorterAppEvent) => {
     switch (event.type) {
       case PorterAppEventType.APP_EVENT:
-      // TODO: implement
-      // return <AppEventCard event={event} appData={appData} />;
+        return <AppEventCard event={event} appData={appData} />;
       case PorterAppEventType.BUILD:
         return <BuildEventCard event={event} appData={appData} />;
       case PorterAppEventType.DEPLOY:
-      // TODO: implement
-      // return <DeployEventCard event={event} appData={appData} />;
+        return <DeployEventCard event={event} appData={appData} />;
       case PorterAppEventType.PRE_DEPLOY:
-      // TODO: implement
-      // return <PreDeployEventCard event={event} />;
+        return <PreDeployEventCard event={event} appData={appData} />;
       default:
         return null;
     };
@@ -37,11 +34,11 @@ const EventCard: React.FC<Props> = ({ event, appData }) => {
 
 export default EventCard;
 
-export const StyledEventCard = styled.div`
+export const StyledEventCard = styled.div<{ row?: boolean }>`
   width: 100%;
   padding: 15px;
   display: flex;
-  flex-direction: column;
+  flex-direction: ${({ row }) => row ? "row" : "column"};
   justify-content: space-between;
   height: 85px;
   border-radius: 5px;

@@ -158,7 +158,7 @@ func (n *previewDeploymentsTTLDeleter) Run(ctx context.Context) error {
 					log.Printf("deleting preview deployments based on TTL %s for %s/%s",
 						n.previewDeploymentsTTL, env.GitRepoOwner, env.GitRepoName)
 
-					k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(&kubernetes.OutOfClusterConfig{
+					k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(ctx, &kubernetes.OutOfClusterConfig{
 						Cluster:                   cluster,
 						Repo:                      n.repo,
 						DigitalOceanOAuth:         n.doConf,

@@ -12,13 +12,13 @@ import WebTabs from "./WebTabs";
 import WorkerTabs from "./WorkerTabs";
 import JobTabs from "./JobTabs";
 import { Service } from "./serviceTypes";
-import { StyledStatusFooter } from "../expanded-app/StatusFooter";
 import StatusFooter from "../expanded-app/StatusFooter";
 import ReleaseTabs from "./ReleaseTabs";
 
 interface ServiceProps {
   service: Service;
   chart?: any;
+  readOnly?: boolean;
   editService: (service: Service) => void;
   deleteService: () => void;
   defaultExpanded: boolean;
@@ -28,6 +28,7 @@ interface ServiceProps {
 const ServiceContainer: React.FC<ServiceProps> = ({
   service,
   chart,
+  readOnly,
   deleteService,
   editService,
   defaultExpanded,
@@ -111,7 +112,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {renderIcon(service)}
           {service.name.trim().length > 0 ? service.name : "New Service"}
         </ServiceTitle>
-        {service.canDelete && (
+        {service.canDelete && !readOnly && (
           <ActionButton onClick={deleteService}>
             <span className="material-icons">delete</span>
           </ActionButton>
@@ -216,7 +217,7 @@ const ServiceHeader = styled.div<{
     border-radius: 20px;
     margin-left: -10px;
     transform: ${(props: { showExpanded: boolean; chart: any }) =>
-      props.showExpanded ? "" : "rotate(-90deg)"};
+    props.showExpanded ? "" : "rotate(-90deg)"};
   }
 
   animation: fadeIn 0.3s 0s;

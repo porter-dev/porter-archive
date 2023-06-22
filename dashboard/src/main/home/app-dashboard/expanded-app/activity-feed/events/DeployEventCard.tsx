@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 
 
-import run_for from "assets/run_for.png";
 import deploy from "assets/deploy.png";
+import refresh from "assets/refresh.png";
 
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
@@ -12,6 +12,11 @@ import Modal from "components/porter/Modal";
 import { PorterAppEvent } from "shared/types";
 import { getDuration, getStatusIcon } from './utils';
 import { StyledEventCard } from "./EventCard";
+import styled from "styled-components";
+import Button from "components/porter/Button";
+import api from "shared/api";
+import Link from "components/porter/Link";
+import ChangeLogModal from "../../ChangeLogModal";
 
 type Props = {
   event: PorterAppEvent;
@@ -19,47 +24,103 @@ type Props = {
 };
 
 const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [modalContent, setModalContent] = useState<React.ReactNode>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [diffModalVisible, setDiffModalVisible] = useState(false);
+  const [revertModalVisible, setRevertModalVisible] = useState(false);
 
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return <Text color="#68BF8B">Deployment succeeded.</Text>;
+        return event?.metadata?.image_tag ? <Text color="#68BF8B">Deployed <Code>{event?.metadata?.image_tag}</Code></Text> : <Text color="#68BF8B">Deployment successful</Text>;
       case "FAILED":
-        return <Text color="#FF6060">Deployment failed.</Text>;
+        return <Text color="#FF6060">Deployment failed</Text>;
       default:
         return <Text color="#aaaabb66">Deployment in progress...</Text>;
     }
   };
-
   return (
     <StyledEventCard>
       <Container row spaced>
         <Container row>
-          <Icon height="18px" src={deploy} />
+          <Icon height="16px" src={deploy} />
           <Spacer inline width="10px" />
-          <Text size={14}>Application deploy</Text>
-        </Container>
-        <Container row>
-          <Icon height="14px" src={run_for} />
-          <Spacer inline width="6px" />
-          <Text color="helper">{getDuration(event)}</Text>
+          <Text>Application version no. {event.metadata?.revision}</Text>
         </Container>
       </Container>
       <Spacer y={1} />
       <Container row spaced>
         <Container row>
-          <Icon height="18px" src={getStatusIcon(event.status)} />
+          <Icon height="16px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText(event)}
+          {appData?.chart?.version !== event.metadata?.revision && (
+            <>
+              <Spacer inline x={1} />
+              <TempWrapper>
+                <Link hasunderline onClick={() => setRevertModalVisible(true)}>
+                  Revert to version {event?.metadata?.revision}
+                </Link>
+
+              </TempWrapper>
+            </>
+          )}
+          <Spacer inline width="15px" />
+          <TempWrapper>
+            {event?.metadata?.revision != 1 && (<Link hasunderline onClick={() => setDiffModalVisible(true)}>
+              View changes
+            </Link>)}
+            {diffModalVisible && (
+              <ChangeLogModal
+                revision={event.metadata.revision}
+                currentChart={appData.chart}
+                modalVisible={diffModalVisible}
+                setModalVisible={setDiffModalVisible}
+                appData={appData}
+              />
+            )}
+            {revertModalVisible && (
+              <ChangeLogModal
+                revision={event.metadata.revision}
+                currentChart={appData.chart}
+                modalVisible={revertModalVisible}
+                setModalVisible={setRevertModalVisible}
+                revertModal={true}
+                appData={appData}
+              />
+            )}
+          </TempWrapper>
         </Container>
       </Container>
-      {showModal && (
-        <Modal closeModal={() => setShowModal(false)}>{modalContent}</Modal>
-      )}
+
     </StyledEventCard>
   );
 };
 
 export default DeployEventCard;
+
+// TODO: remove after fixing v-align
+const TempWrapper = styled.div`
+  margin-top: -3px;
+`;
+
+const Code = styled.span`
+  font-family: monospace;
+`;
+
+const RevertButton = styled.div<{ width?: string }>`
+  border-radius: 5px;
+  height: 30px;
+  font-size: 13px;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0px 10px;
+  background: #ffffff11;
+  border: 1px solid #aaaabb33;
+  cursor: pointer;
+  :hover {
+    border: 1px solid #7a7b80;
+  }
+  width: 92px;
+`;

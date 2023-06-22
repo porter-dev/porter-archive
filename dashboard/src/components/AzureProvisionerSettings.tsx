@@ -11,62 +11,45 @@ import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import InputRow from "./form-components/InputRow";
-import SaveButton from "./SaveButton";
 import {
   Contract,
   EnumKubernetesKind,
   EnumCloudProvider,
-  NodeGroupType,
-  EKSNodeGroup,
-  EKS,
   Cluster,
+  AKS,
+  AKSNodePool,
+  NodePoolType,
 } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
-import Text from "./porter/Text";
+import Button from "./porter/Button";
+import Error from "./porter/Error";
 import Spacer from "./porter/Spacer";
+import Step from "./porter/Step";
+import Link from "./porter/Link";
+import Text from "./porter/Text";
 
-const regionOptions = [
-  { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
-  { value: "us-east-2", label: "US East (Ohio) us-east-2" },
-  { value: "us-west-1", label: "US West (N. California) us-west-1" },
-  { value: "us-west-2", label: "US West (Oregon) us-west-2" },
-  { value: "af-south-1", label: "Africa (Cape Town) af-south-1" },
-  { value: "ap-east-1", label: "Asia Pacific (Hong Kong) ap-east-1" },
-  { value: "ap-south-1", label: "Asia Pacific (Mumbai) ap-south-1" },
-  { value: "ap-northeast-2", label: "Asia Pacific (Seoul) ap-northeast-2" },
-  { value: "ap-southeast-1", label: "Asia Pacific (Singapore) ap-southeast-1" },
-  { value: "ap-southeast-2", label: "Asia Pacific (Sydney) ap-southeast-2" },
-  { value: "ap-northeast-1", label: "Asia Pacific (Tokyo) ap-northeast-1" },
-  { value: "ca-central-1", label: "Canada (Central) ca-central-1" },
-  { value: "eu-central-1", label: "Europe (Frankfurt) eu-central-1" },
-  { value: "eu-west-1", label: "Europe (Ireland) eu-west-1" },
-  { value: "eu-west-2", label: "Europe (London) eu-west-2" },
-  { value: "eu-south-1", label: "Europe (Milan) eu-south-1" },
-  { value: "eu-west-3", label: "Europe (Paris) eu-west-3" },
-  { value: "eu-north-1", label: "Europe (Stockholm) eu-north-1" },
-  { value: "me-south-1", label: "Middle East (Bahrain) me-south-1" },
-  { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" },
+const locationOptions = [
+  { value: "eastus", label: "East US" },
+  { value: "westus2", label: "West US 2" },
+  { value: "westus3", label: "West US 3" },
+  { value: "canadacentral", label: "Central Canada" },
 ];
 
 const machineTypeOptions = [
-  { value: "t3.medium", label: "t3.medium" },
-  { value: "t3.large", label: "t3.large" },
-  { value: "t3.xlarge", label: "t3.xlarge" },
-  { value: "t3.2xlarge", label: "t3.2xlarge" },
+  { value: "Standard_A2_v2", label: "Standard_A2_v2" },
+  { value: "Standard_A4_v2", label: "Standard_A4_v2" },
 ];
 
-const clusterVersionOptions = [
-  { value: "v1.24.0", label: "1.24.0" },
-  { value: "v1.25.0", label: "1.25.0" },
-];
+const clusterVersionOptions = [{ value: "v1.24.9", label: "v1.24.9" }];
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
+  provisionerError?: string;
   credentialId: string;
   clusterId?: number;
 };
 
-const ProvisionerSettingsOld: React.FC<Props> = (props) => {
+const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const {
     user,
     currentProject,
@@ -77,64 +60,89 @@ const ProvisionerSettingsOld: React.FC<Props> = (props) => {
   } = useContext(Context);
   const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
-  const [awsRegion, setAwsRegion] = useState("us-east-1");
-  const [machineType, setMachineType] = useState("t3.xlarge");
+  const [azureLocation, setAzureLocation] = useState("eastus");
+  const [machineType, setMachineType] = useState("Standard_A2_v2");
   const [isExpanded, setIsExpanded] = useState(false);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
   const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
-  const [clusterVersion, setClusterVersion] = useState("v1.24.0");
+  const [clusterVersion, setClusterVersion] = useState("v1.24.9");
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>(undefined);
+  const [isClicked, setIsClicked] = useState(false);
 
-  const markProvisioningStarted = async () => {
+  const markStepStarted = async (step: string) => {
     try {
-      const res = await api.updateOnboardingStep(
-        "<token>",
-        { step: "provisioning-started" },
-        {}
-      );
+      await api.updateOnboardingStep("<token>", { step }, {});
     } catch (err) {
       console.log(err);
     }
   };
 
+  const getStatus = () => {
+    if (isReadOnly && props.provisionerError == "") {
+      return "Provisioning is still in progress...";
+    } else if (errorMessage) {
+      return (
+        <Error
+          message={errorMessage}
+          ctaText={
+            errorMessage !== DEFAULT_ERROR_MESSAGE
+              ? "Troubleshooting steps"
+              : null
+          }
+          errorModalContents={null}
+        />
+      );
+    }
+    return undefined;
+  };
+  const isDisabled = () => {
+    return (
+      !user.email.endsWith("porter.run") &&
+      ((!clusterName && true) ||
+        (isReadOnly && props.provisionerError === "") ||
+        props.provisionerError === "" ||
+        currentCluster.status === "UPDATING" ||
+        isClicked)
+    );
+  };
   const createCluster = async () => {
-    markProvisioningStarted();
-
+    setIsClicked(true);
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
-        kind: EnumKubernetesKind.EKS,
-        cloudProvider: EnumCloudProvider.AWS,
-        cloudProviderCredentialsId: String(props.credentialId),
+        kind: EnumKubernetesKind.AKS,
+        cloudProvider: EnumCloudProvider.AZURE,
+        cloudProviderCredentialsId: props.credentialId,
         kindValues: {
-          case: "eksKind",
-          value: new EKS({
-            clusterName,
-            clusterVersion: clusterVersion || "v1.24.0",
+          case: "aksKind",
+          value: new AKS({
+            clusterName: clusterName,
+            clusterVersion: clusterVersion || "v1.24.9",
             cidrRange: cidrRange || "10.78.0.0/16",
-            region: awsRegion,
-            nodeGroups: [
-              new EKSNodeGroup({
-                instanceType: "t3.medium",
+            location: azureLocation,
+            nodePools: [
+              new AKSNodePool({
+                instanceType: "Standard_A2_v2",
                 minInstances: 1,
-                maxInstances: 5,
-                nodeGroupType: NodeGroupType.SYSTEM,
-                isStateful: false,
+                maxInstances: 3,
+                nodePoolType: NodePoolType.SYSTEM,
+                mode: "User",
               }),
-              new EKSNodeGroup({
-                instanceType: "t3.large",
+              new AKSNodePool({
+                instanceType: "Standard_A4_v2",
                 minInstances: 1,
-                maxInstances: 5,
-                nodeGroupType: NodeGroupType.MONITORING,
-                isStateful: false,
+                maxInstances: 3,
+                nodePoolType: NodePoolType.MONITORING,
+                mode: "User",
               }),
-              new EKSNodeGroup({
+              new AKSNodePool({
                 instanceType: machineType,
                 minInstances: minInstances || 1,
                 maxInstances: maxInstances || 10,
-                nodeGroupType: NodeGroupType.APPLICATION,
-                isStateful: false,
+                nodePoolType: NodePoolType.APPLICATION,
+                mode: "User",
               }),
             ],
           }),
@@ -147,33 +155,47 @@ const ProvisionerSettingsOld: React.FC<Props> = (props) => {
     }
 
     try {
+      setIsReadOnly(true);
+      setErrorMessage(undefined);
+
+      if (!props.clusterId) {
+        markStepStarted("provisioning-started");
+      }
+
       const res = await api.createContract("<token>", data, {
         project_id: currentProject.id,
       });
 
       // Only refresh and set clusters on initial create
-      if (!props.clusterId) {
-        setShouldRefreshClusters(true);
-        api
-          .getClusters("<token>", {}, { id: currentProject.id })
-          .then(({ data }) => {
-            data.forEach((cluster: ClusterType) => {
-              if (cluster.id === res.data.contract_revision?.cluster_id) {
-                // setHasFinishedOnboarding(true);
-                setCurrentCluster(cluster);
-                OFState.actions.goTo("clean_up");
-                pushFiltered(props, "/cluster-dashboard", ["project_id"], {
-                  cluster: cluster.name,
-                });
-              }
-            });
-          })
-          .catch((err) => {
-            console.error(err);
+      // if (!props.clusterId) {
+      setShouldRefreshClusters(true);
+      api
+        .getClusters("<token>", {}, { id: currentProject.id })
+        .then(({ data }) => {
+          data.forEach((cluster: ClusterType) => {
+            if (cluster.id === res.data.contract_revision?.cluster_id) {
+              // setHasFinishedOnboarding(true);
+              setCurrentCluster(cluster);
+              OFState.actions.goTo("clean_up");
+              pushFiltered(props, "/cluster-dashboard", ["project_id"], {
+                cluster: cluster.name,
+              });
+            }
           });
-      }
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+      // }
+      setErrorMessage(undefined);
     } catch (err) {
-      console.log(err);
+      const errMessage = err.response.data.error.replace("unknown: ", "");
+      // hacky, need to standardize error contract with backend
+      setIsClicked(false);
+      setErrorMessage(DEFAULT_ERROR_MESSAGE);
+    } finally {
+      setIsReadOnly(false);
+      setIsClicked(false);
     }
   };
 
@@ -193,18 +215,18 @@ const ProvisionerSettingsOld: React.FC<Props> = (props) => {
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
-      contract.cluster.eksKind.nodeGroups.map((nodeGroup: any) => {
-        if (nodeGroup.nodeGroupType === "NODE_GROUP_TYPE_APPLICATION") {
-          setMachineType(nodeGroup.instanceType);
-          setMinInstances(nodeGroup.minInstances);
-          setMaxInstances(nodeGroup.maxInstances);
+      contract.cluster.aksKind.nodePools.map((nodePool: any) => {
+        if (nodePool.nodePoolType === "NODE_POOL_TYPE_APPLICATION") {
+          setMachineType(nodePool.instanceType);
+          setMinInstances(nodePool.minInstances);
+          setMaxInstances(nodePool.maxInstances);
         }
       });
       setCreateStatus("");
-      setClusterName(contract.cluster.eksKind.clusterName);
-      setAwsRegion(contract.cluster.eksKind.region);
-      setClusterVersion(contract.cluster.eksKind.clusterVersion);
-      setCidrRange(contract.cluster.eksKind.cidrRange);
+      setClusterName(contract.cluster.aksKind.clusterName);
+      setAzureLocation(contract.cluster.aksKind.location);
+      setClusterVersion(contract.cluster.aksKind.clusterVersion);
+      setCidrRange(contract.cluster.aksKind.cidrRange);
     }
   }, [props.selectedClusterVersion]);
 
@@ -213,22 +235,41 @@ const ProvisionerSettingsOld: React.FC<Props> = (props) => {
     if (!props.clusterId) {
       return (
         <>
-          <Text size={16}>Select an AWS region</Text>
+          <Text size={16}>Select an Azure location</Text>
           <Spacer y={1} />
           <Text color="helper">
             Porter will automatically provision your infrastructure in the
-            specified region.
+            specified location.
           </Text>
           <Spacer height="10px" />
           <SelectRow
-            options={regionOptions}
+            options={locationOptions}
             width="350px"
             disabled={isReadOnly}
-            value={awsRegion}
+            value={azureLocation}
             scrollBuffer={true}
             dropdownMaxHeight="240px"
-            setActiveValue={setAwsRegion}
-            label="📍 AWS region"
+            setActiveValue={setAzureLocation}
+            label="📍 Azure location"
+          />
+          <SelectRow
+            options={machineTypeOptions}
+            width="350px"
+            disabled={isReadOnly}
+            value={machineType}
+            scrollBuffer={true}
+            dropdownMaxHeight="240px"
+            setActiveValue={setMachineType}
+            label="Machine type"
+          />
+          <InputRow
+            width="350px"
+            type="string"
+            disabled={isReadOnly}
+            value={cidrRange}
+            setValue={(x: string) => setCidrRange(x)}
+            label="VPC CIDR range"
+            placeholder="ex: 10.78.0.0/16"
           />
         </>
       );
@@ -237,16 +278,16 @@ const ProvisionerSettingsOld: React.FC<Props> = (props) => {
     // If settings, update full form
     return (
       <>
-        <Heading isAtTop>EKS configuration</Heading>
+        <Heading isAtTop>AKS configuration</Heading>
         <SelectRow
-          options={regionOptions}
+          options={locationOptions}
           width="350px"
           disabled={isReadOnly || true}
-          value={awsRegion}
+          value={azureLocation}
           scrollBuffer={true}
           dropdownMaxHeight="240px"
-          setActiveValue={setAwsRegion}
-          label="📍 AWS region"
+          setActiveValue={setAzureLocation}
+          label="📍 Azure location"
         />
         {user?.isPorterUser && (
           <Heading>
@@ -308,19 +349,18 @@ const ProvisionerSettingsOld: React.FC<Props> = (props) => {
   return (
     <>
       <StyledForm>{renderForm()}</StyledForm>
-      <SaveButton
-        disabled={(!clusterName && true) || isReadOnly}
+      <Button
+        disabled={isDisabled()}
         onClick={createCluster}
-        clearPosition
-        text="Provision"
-        statusPosition="right"
-        status={isReadOnly && "Provisioning is still in progress"}
-      />
+        status={getStatus()}
+      >
+        Provision
+      </Button>
     </>
   );
 };
 
-export default withRouter(ProvisionerSettingsOld);
+export default withRouter(AzureProvisionerSettings);
 
 const ExpandHeader = styled.div<{ isExpanded: boolean }>`
   display: flex;
@@ -338,8 +378,11 @@ const StyledForm = styled.div`
   position: relative;
   padding: 30px 30px 25px;
   border-radius: 5px;
-  background: #26292e;
+  background: ${({ theme }) => theme.fg};
   border: 1px solid #494b4f;
   font-size: 13px;
   margin-bottom: 30px;
 `;
+
+const DEFAULT_ERROR_MESSAGE =
+  "An error occurred while provisioning your infrastructure. Please try again.";

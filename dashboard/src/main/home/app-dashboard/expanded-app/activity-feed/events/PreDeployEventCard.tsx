@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import styled from "styled-components";
 
 import pre_deploy from "assets/pre_deploy.png";
 
 import run_for from "assets/run_for.png";
+import refresh from "assets/refresh.png";
 
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
@@ -11,81 +13,72 @@ import Icon from "components/porter/Icon";
 import Modal from "components/porter/Modal";
 
 import { PorterAppEvent } from "shared/types";
-import { getDuration, getStatusIcon } from './utils';
+import { getDuration, getStatusIcon, triggerWorkflow } from './utils';
 import { StyledEventCard } from "./EventCard";
+import Link from "components/porter/Link";
+import LogsModal from "../../status/LogsModal";
+import api from "shared/api";
+import dayjs from "dayjs";
+import Anser from "anser";
 
 type Props = {
   event: PorterAppEvent;
+  appData: any;
 };
 
-const PreDeployEventCard: React.FC<Props> = ({ event }) => {
+const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalContent, setModalContent] = useState<React.ReactNode>(null);
+  const [logModalVisible, setLogModalVisible] = useState(false);
+  const [logs, setLogs] = useState([]);
 
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return <Text color="#68BF8B">Pre-deploy succeeded.</Text>;
+        return <Text color="#68BF8B">Pre-deploy succeeded</Text>;
       case "FAILED":
-        return <Text color="#FF6060">Pre-deploy failed.</Text>;
+        return <Text color="#FF6060">Pre-deploy failed</Text>;
       default:
         return <Text color="#aaaabb66">Pre-deploy in progress...</Text>;
     }
   };
 
-  const renderInfoCta = (event: any) => {
-    switch (event.status) {
-      case "SUCCESS":
-        return (
-          <>
-            {/* <Link hasunderline onClick={() => getBuildLogs()}>
-              View logs
-            </Link>
+  const getPredeployLogs = async () => {
+    setLogModalVisible(true);
+    try {
+      const logResp = await api.getLogsWithinTimeRange(
+        "<token>",
+        {
+          chart_name: appData.releaseChart.name,
+          namespace: appData.releaseChart.namespace,
+          start_range: dayjs(event.metadata.start_time).subtract(1, 'minute').toISOString(),
+          end_range: dayjs(event.metadata.end_time).add(1, 'minute').toISOString(),
+          limit: 1000,
+        },
+        {
+          project_id: appData.app.project_id,
+          cluster_id: appData.app.cluster_id,
+        }
+      )
+      const updatedLogs = logResp.data.logs.map((l: { line: string; timestamp: string; }, index: number) => {
+        try {
+          return {
+            line: JSON.parse(l.line)?.log ?? Anser.ansiToJson(l.line),
+            lineNumber: index + 1,
+            timestamp: l.timestamp,
+          }
+        } catch (err) {
+          return {
+            line: Anser.ansiToJson(l.line),
+            lineNumber: index + 1,
+            timestamp: l.timestamp,
+          }
+        }
+      });
 
-            {logModalVisible && (
-              <GHALogsModal
-                appData={appData}
-                logs={logs}
-                modalVisible={logModalVisible}
-                setModalVisible={setLogModalVisible}
-                actionRunId={event.metadata?.action_run_id}
-              />
-            )}
-            <Spacer inline x={1} /> */}
-          </>
-        );
-      case "FAILED":
-        return (
-          <>
-            {/* <Link hasunderline onClick={() => getBuildLogs()}>
-              View logs
-            </Link>
-
-            {logModalVisible && (
-              <GHALogsModal
-                appData={appData}
-                logs={logs}
-                modalVisible={logModalVisible}
-                setModalVisible={setLogModalVisible}
-                actionRunId={event.metadata?.action_run_id}
-              />
-            )}
-            <Spacer inline x={1} /> */}
-          </>
-        );
-      default:
-        return (
-          <>
-            {/* <Link
-              hasunderline
-              target="_blank"
-              to={`https://github.com/${appData.app.repo_name}/actions/runs/${event.metadata?.action_run_id}`}
-            >
-              View live logs
-            </Link>
-            <Spacer inline x={1} /> */}
-          </>
-        );
+      setLogs(updatedLogs);
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -93,9 +86,9 @@ const PreDeployEventCard: React.FC<Props> = ({ event }) => {
     <StyledEventCard>
       <Container row spaced>
         <Container row>
-          <Icon height="18px" src={pre_deploy} />
+          <Icon height="16px" src={pre_deploy} />
           <Spacer inline width="10px" />
-          <Text size={14}>Application pre-deploy</Text>
+          <Text>Application pre-deploy</Text>
         </Container>
         <Container row>
           <Icon height="14px" src={run_for} />
@@ -106,14 +99,23 @@ const PreDeployEventCard: React.FC<Props> = ({ event }) => {
       <Spacer y={1} />
       <Container row spaced>
         <Container row>
-          <Icon height="18px" src={getStatusIcon(event.status)} />
+          <Icon height="16px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText(event)}
-          <Spacer inline x={1} />
-          {renderInfoCta(event)}
-          {/* {event.status === "FAILED" && (
+          {(event.status === "SUCCESS" || event.status === "FAILED") &&
             <>
-              <Link hasunderline onClick={() => triggerWorkflow()}>
+              <Spacer inline x={1} />
+              <Wrapper>
+                <Link hasunderline onClick={getPredeployLogs}>
+                  View logs
+                </Link>
+              </Wrapper>
+            </>
+          }
+          {event.status === "FAILED" && (
+            <>
+              <Spacer inline x={1} />
+              <Link hasunderline onClick={() => triggerWorkflow(appData)}>
                 <Container row>
                   <Icon height="10px" src={refresh} />
                   <Spacer inline width="5px" />
@@ -121,7 +123,15 @@ const PreDeployEventCard: React.FC<Props> = ({ event }) => {
                 </Container>
               </Link>
             </>
-          )} */}
+          )}
+          {logModalVisible && (
+            <LogsModal
+              logs={logs}
+              logsName={"pre-deploy"}
+              setModalVisible={setLogModalVisible}
+            />
+          )}
+          <Spacer inline x={1} />
         </Container>
       </Container>
       {showModal && (
@@ -132,3 +142,7 @@ const PreDeployEventCard: React.FC<Props> = ({ event }) => {
 };
 
 export default PreDeployEventCard;
+
+const Wrapper = styled.div`
+  margin-top: -3px;
+`;

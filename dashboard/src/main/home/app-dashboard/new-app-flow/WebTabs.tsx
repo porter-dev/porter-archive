@@ -1,19 +1,16 @@
 import Input from "components/porter/Input";
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import Checkbox from "components/porter/Checkbox";
 import { WebService } from "./serviceTypes";
 import AnimateHeight, { Height } from "react-animate-height";
-import styled from "styled-components";
-import ExpandableSection from "components/porter/ExpandableSection";
 
 interface Props {
   service: WebService;
   editService: (service: WebService) => void;
   setHeight: (height: Height) => void;
-  hasFooter?: boolean;
 }
 
 const RESOURCE_HEIGHT_WITHOUT_AUTOSCALING = 373;
@@ -25,7 +22,6 @@ const WebTabs: React.FC<Props> = ({
   service,
   editService,
   setHeight,
-  hasFooter,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>("main");
 

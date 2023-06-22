@@ -19,7 +19,7 @@ type PorterApp struct {
 	// Build settings (optional)
 	BuildContext   string `json:"build_context,omitempty"`
 	Builder        string `json:"builder,omitempty"`
-	Buildpacks     string `json:"build_packs,omitempty"`
+	Buildpacks     string `json:"buildpacks,omitempty"`
 	Dockerfile     string `json:"dockerfile,omitempty"`
 	PullRequestURL string `json:"pull_request_url,omitempty"`
 
@@ -58,6 +58,10 @@ type UpdatePorterAppRequest struct {
 	PullRequestURL string `json:"pull_request_url"`
 }
 
+type RollbackPorterAppRequest struct {
+	Revision int `json:"revision" form:"required"`
+}
+
 type ListPorterAppResponse []*PorterApp
 
 // PorterAppEvent represents an event that occurs on a Porter stack during a stacks lifecycle.
@@ -86,6 +90,8 @@ const (
 	PorterAppEventType_Build PorterAppEventType = "BUILD"
 	// PorterAppEventType_Deploy represents a Porter Stack Deploy event which occurred through the Porter UI or CLI
 	PorterAppEventType_Deploy PorterAppEventType = "DEPLOY"
+	// PorterAppEventType_PreDeploy represents a Porter Stack Pre-deploy event which occurred through the Porter UI or CLI
+	PorterAppEventType_PreDeploy PorterAppEventType = "PRE_DEPLOY"
 	// PorterAppEventType_AppEvent represents a Porter Stack App Event which occurred whilst the application was running, such as an OutOfMemory (OOM) error
 	PorterAppEventType_AppEvent PorterAppEventType = "APP_EVENT"
 )

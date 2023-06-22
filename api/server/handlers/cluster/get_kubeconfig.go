@@ -1,9 +1,11 @@
 package cluster
 
 import (
-	"errors"
+	"encoding/base64"
 	"net/http"
 
+	"github.com/bufbuild/connect-go"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -11,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -30,46 +33,50 @@ func NewGetTemporaryKubeconfigHandler(
 }
 
 func (c *GetTemporaryKubeconfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-temporary-kubeconfig")
+	defer span.End()
+
 	if c.Config().ServerConf.DisableTemporaryKubeconfig {
-		c.HandleAPIError(w, r, apierrors.NewErrNotFound(
-			errors.New("temporary kubeconfig generation is disabled on this instance"),
-		))
+		e := telemetry.Error(ctx, span, nil, "temporary kubeconfig generation is disabled on this instance")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusNotFound))
 		return
 	}
-	ctx := r.Context()
 
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	outOfClusterConfig := c.GetOutOfClusterConfig(cluster)
-	//
-	//if cluster.ProvisionedBy == "CAPI" {
-	//	kubeconfigResp, err := c.Config().ClusterControlPlaneClient.KubeConfigForCluster(context.Background(), connect.NewRequest(
-	//		&porterv1.KubeConfigForClusterRequest{
-	//			ProjectId: int64(cluster.ProjectID),
-	//			ClusterId: int64(cluster.ID),
-	//		},
-	//	))
-	//	if err != nil {
-	//		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting temporary capi config: %w", err)))
-	//		return
-	//	}
-	//	if kubeconfigResp.Msg == nil {
-	//		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error reading temporary capi config: %w", err)))
-	//		return
-	//	}
-	//	b64, err := base64.StdEncoding.DecodeString(kubeconfigResp.Msg.KubeConfig)
-	//	if err != nil {
-	//		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to decode base64 kubeconfig: %w", err)))
-	//		return
-	//	}
-	//	res := &types.GetTemporaryKubeconfigResponse{
-	//		Kubeconfig: b64,
-	//	}
-	//	c.WriteResult(w, r, res)
-	//	return
-	//}
 
-	kubeconfig, err := outOfClusterConfig.CreateRawConfigFromCluster()
+	if cluster.ProvisionedBy == "CAPI" {
+		kubeconfigResp, err := c.Config().ClusterControlPlaneClient.KubeConfigForCluster(ctx, connect.NewRequest(
+			&porterv1.KubeConfigForClusterRequest{
+				ProjectId: int64(cluster.ProjectID),
+				ClusterId: int64(cluster.ID),
+			},
+		))
+		if err != nil {
+			e := telemetry.Error(ctx, span, err, "error getting temporary capi config")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+		if kubeconfigResp.Msg == nil {
+			e := telemetry.Error(ctx, span, err, "error reading temporary capi config")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+		b64, err := base64.StdEncoding.DecodeString(kubeconfigResp.Msg.KubeConfig)
+		if err != nil {
+			e := telemetry.Error(ctx, span, err, "unable to decode base64 kubeconfig")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+		res := &types.GetTemporaryKubeconfigResponse{
+			Kubeconfig: b64,
+		}
+		c.WriteResult(w, r, res)
+		return
+	}
+
+	kubeconfig, err := outOfClusterConfig.CreateRawConfigFromCluster(ctx)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

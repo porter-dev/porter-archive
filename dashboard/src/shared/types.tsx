@@ -14,6 +14,7 @@ export interface ClusterType {
   preview_envs_enabled?: boolean;
   cloud_provider_credential_identifier?: string;
   status?: string;
+  cloud_provider: string;
 }
 
 export interface DetailedClusterType extends ClusterType {

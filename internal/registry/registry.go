@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	artifactregistry "cloud.google.com/go/artifactregistry/apiv1beta2"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -72,66 +74,150 @@ func (r *Registry) ListRepositories(
 	repo repository.Repository,
 	conf *config.Config,
 ) ([]*ptypes.RegistryRepository, error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-repositories")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "registry-name", Value: r.Name},
+		telemetry.AttributeKV{Key: "registry-id", Value: r.ID},
+		telemetry.AttributeKV{Key: "project-id", Value: r.ProjectID},
+	)
+
 	// switch on the auth mechanism to get a token
 	if r.AWSIntegrationID != 0 {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "aws"})
 		aws, err := repo.AWSIntegration().ReadAWSIntegration(
 			r.ProjectID,
 			r.AWSIntegrationID,
 		)
 		if err != nil {
-			return nil, err
+			return nil, telemetry.Error(ctx, span, err, "error reading aws integration")
 		}
-		return r.listECRRepositories(aws)
+
+		repos, err := r.listECRRepositories(aws)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error listing ecr repositories")
+		}
+
+		return repos, nil
 	}
 
 	if r.GCPIntegrationID != 0 {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "gcp"})
 		if strings.Contains(r.URL, "pkg.dev") {
-			return r.listGARRepositories(repo)
+			return r.listGARRepositories(ctx, repo)
 		}
 
-		return r.listGCRRepositories(repo)
+		repos, err := r.listGCRRepositories(repo)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error listing gcr repositories")
+		}
+
+		return repos, nil
 	}
 
 	if r.DOIntegrationID != 0 {
-		return r.listDOCRRepositories(repo, conf.DOConf)
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "do"})
+
+		repos, err := r.listDOCRRepositories(repo, conf.DOConf)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error listing docr repositories")
+		}
+
+		return repos, nil
 	}
 
 	if r.AzureIntegrationID != 0 {
-		return r.listACRRepositories(repo)
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "azure"})
+
+		repos, err := r.listACRRepositories(ctx, repo)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error listing acr repositories")
+		}
+
+		return repos, nil
 	}
 
 	if r.BasicIntegrationID != 0 {
-		return r.listPrivateRegistryRepositories(repo)
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "basic"})
+
+		repos, err := r.listPrivateRegistryRepositories(repo)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error listing private repositories")
+		}
+
+		return repos, nil
 	}
 
 	project, err := conf.Repo.Project().ReadProject(r.ProjectID)
 	if err != nil {
-		return nil, fmt.Errorf("error getting project for repository: %w", err)
+		return nil, telemetry.Error(ctx, span, err, "error getting project for repository")
 	}
 
 	if project.CapiProvisionerEnabled {
-		uri := strings.TrimPrefix(r.URL, "https://")
-		splits := strings.Split(uri, ".")
-		accountID := splits[0]
-		region := splits[3]
-		req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{
-			ProjectId:    int64(r.ProjectID),
-			AwsAccountId: accountID,
-		})
-		creds, err := conf.ClusterControlPlaneClient.AssumeRoleCredentials(ctx, req)
-		if err != nil {
-			return nil, fmt.Errorf("error getting capi credentials for repository: %w", err)
+		// TODO: Remove this conditional when AWS list repos is supported in CCP
+		if strings.Contains(r.URL, ".azurecr.") {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "capi-azure"})
+
+			req := connect.NewRequest(&porterv1.ListRepositoriesForRegistryRequest{
+				ProjectId:   int64(r.ProjectID),
+				RegistryUri: r.URL,
+			})
+
+			resp, err := conf.ClusterControlPlaneClient.ListRepositoriesForRegistry(ctx, req)
+			if err != nil {
+				return nil, telemetry.Error(ctx, span, err, "error listing ecr repositories")
+			}
+
+			res := make([]*ptypes.RegistryRepository, 0)
+
+			parsedURL, err := url.Parse("https://" + r.URL)
+			if err != nil {
+				return nil, telemetry.Error(ctx, span, err, "error parsing url")
+			}
+
+			for _, repo := range resp.Msg.Repositories {
+				res = append(res, &ptypes.RegistryRepository{
+					Name: repo.Name,
+					URI:  parsedURL.Host + "/" + repo.Name,
+				})
+			}
+
+			return res, nil
+		} else {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "capi-aws"})
+			uri := strings.TrimPrefix(r.URL, "https://")
+			splits := strings.Split(uri, ".")
+			if len(splits) < 4 {
+				return nil, telemetry.Error(ctx, span, nil, "uri does not have enough splits")
+			}
+			accountID := splits[0]
+			region := splits[3]
+			req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{
+				ProjectId:    int64(r.ProjectID),
+				AwsAccountId: accountID,
+			})
+			creds, err := conf.ClusterControlPlaneClient.AssumeRoleCredentials(ctx, req)
+			if err != nil {
+				return nil, telemetry.Error(ctx, span, err, "error getting capi credentials for registry")
+			}
+			aws := &ints.AWSIntegration{
+				AWSAccessKeyID:     []byte(creds.Msg.AwsAccessId),
+				AWSSecretAccessKey: []byte(creds.Msg.AwsSecretKey),
+				AWSSessionToken:    []byte(creds.Msg.AwsSessionToken),
+				AWSRegion:          region,
+			}
+
+			repos, err := r.listECRRepositories(aws)
+			if err != nil {
+				return nil, telemetry.Error(ctx, span, err, "error listing ecr repositories")
+			}
+
+			return repos, nil
 		}
-		aws := &ints.AWSIntegration{
-			AWSAccessKeyID:     []byte(creds.Msg.AwsAccessId),
-			AWSSecretAccessKey: []byte(creds.Msg.AwsSecretKey),
-			AWSSessionToken:    []byte(creds.Msg.AwsSessionToken),
-			AWSRegion:          region,
-		}
-		return r.listECRRepositories(aws)
 	}
 
-	return nil, fmt.Errorf("error listing repositories")
+	return nil, telemetry.Error(ctx, span, nil, "error listing repositories")
 }
 
 type gcrJWT struct {
@@ -149,8 +235,8 @@ type gcrRepositoryResp struct {
 	Errors       []gcrErr `json:"errors"`
 }
 
-func (r *Registry) GetGCRToken(repo repository.Repository) (*oauth2.Token, error) {
-	getTokenCache := r.getTokenCacheFunc(repo)
+func (r *Registry) GetGCRToken(ctx context.Context, repo repository.Repository) (*oauth2.Token, error) {
+	getTokenCache := r.getTokenCacheFunc(ctx, repo)
 
 	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
 		r.ProjectID,
@@ -162,8 +248,9 @@ func (r *Registry) GetGCRToken(repo repository.Repository) (*oauth2.Token, error
 
 	// get oauth2 access token
 	return gcp.GetBearerToken(
+		ctx,
 		getTokenCache,
-		r.setTokenCacheFunc(repo),
+		r.setTokenCacheFunc(ctx, repo),
 		"https://www.googleapis.com/auth/devstorage.read_write",
 	)
 }
@@ -244,8 +331,8 @@ func (r *Registry) listGCRRepositories(
 	return res, nil
 }
 
-func (r *Registry) GetGARToken(repo repository.Repository) (*oauth2.Token, error) {
-	getTokenCache := r.getTokenCacheFunc(repo)
+func (r *Registry) GetGARToken(ctx context.Context, repo repository.Repository) (*oauth2.Token, error) {
+	getTokenCache := r.getTokenCacheFunc(ctx, repo)
 
 	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
 		r.ProjectID,
@@ -257,25 +344,29 @@ func (r *Registry) GetGARToken(repo repository.Repository) (*oauth2.Token, error
 
 	// get oauth2 access token
 	return gcp.GetBearerToken(
+		ctx,
 		getTokenCache,
-		r.setTokenCacheFunc(repo),
+		r.setTokenCacheFunc(ctx, repo),
 		"https://www.googleapis.com/auth/cloud-platform",
 	)
 }
 
 type garTokenSource struct {
+	// ctx is only passed in here as the oauth2.Token() doesnt support contexts
+	ctx  context.Context
 	reg  *Registry
 	repo repository.Repository
 }
 
 func (source *garTokenSource) Token() (*oauth2.Token, error) {
-	return source.reg.GetGARToken(source.repo)
+	return source.reg.GetGARToken(source.ctx, source.repo)
 }
 
 // GAR has the concept of a "repository" which is a collection of images, unlike ECR or others
 // where a repository is a single image. This function returns the list of fully qualified names
 // of GAR images including their repository names.
 func (r *Registry) listGARRepositories(
+	ctx context.Context,
 	repo repository.Repository,
 ) ([]*ptypes.RegistryRepository, error) {
 	gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(
@@ -286,9 +377,10 @@ func (r *Registry) listGARRepositories(
 		return nil, err
 	}
 
-	client, err := artifactregistry.NewClient(context.Background(), option.WithTokenSource(&garTokenSource{
+	client, err := artifactregistry.NewClient(ctx, option.WithTokenSource(&garTokenSource{
 		reg:  r,
 		repo: repo,
+		ctx:  ctx,
 	}), option.WithScopes("roles/artifactregistry.reader"))
 	if err != nil {
 		return nil, err
@@ -335,9 +427,10 @@ func (r *Registry) listGARRepositories(
 		nextToken = it.PageInfo().Token
 	}
 
-	svc, err := v1artifactregistry.NewService(context.Background(), option.WithTokenSource(&garTokenSource{
+	svc, err := v1artifactregistry.NewService(ctx, option.WithTokenSource(&garTokenSource{
 		reg:  r,
 		repo: repo,
+		ctx:  ctx,
 	}), option.WithScopes("roles/artifactregistry.reader"))
 	if err != nil {
 		return nil, err
@@ -429,51 +522,67 @@ func (r *Registry) listECRRepositories(aws *ints.AWSIntegration) ([]*ptypes.Regi
 	return res, nil
 }
 
-func (r *Registry) listACRRepositories(repo repository.Repository) ([]*ptypes.RegistryRepository, error) {
+type acrRepositoryResp struct {
+	Repositories []string `json:"repositories"`
+}
+
+func (r *Registry) listACRRepositories(ctx context.Context, repo repository.Repository) ([]*ptypes.RegistryRepository, error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-acr-repositories")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "registry-name", Value: r.Name},
+		telemetry.AttributeKV{Key: "registry-id", Value: r.ID},
+		telemetry.AttributeKV{Key: "project-id", Value: r.ProjectID},
+	)
+
 	az, err := repo.AzureIntegration().ReadAzureIntegration(
 		r.ProjectID,
 		r.AzureIntegrationID,
 	)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error reading azure integration")
 	}
 
 	client := &http.Client{}
 
+	acrURL := r.URL
+	if !strings.Contains(acrURL, "http") {
+		acrURL = fmt.Sprintf("https://%s", acrURL)
+	}
+
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/v2/_catalog", r.URL),
+		fmt.Sprintf("%s/v2/_catalog", acrURL),
 		nil,
 	)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error getting http request")
 	}
 
 	req.SetBasicAuth(az.AzureClientID, string(az.ServicePrincipalSecret))
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "error making http call")
 	}
 
-	gcrResp := gcrRepositoryResp{}
+	acrResp := acrRepositoryResp{}
 
-	if err := json.NewDecoder(resp.Body).Decode(&gcrResp); err != nil {
-		return nil, fmt.Errorf("Could not read Azure registry repositories: %v", err)
+	if err := json.NewDecoder(resp.Body).Decode(&acrResp); err != nil {
+		return nil, telemetry.Error(ctx, span, err, "could not read Azure registry repository response")
 	}
 
 	res := make([]*ptypes.RegistryRepository, 0)
 
-	if err != nil {
-		return nil, err
-	}
-
-	for _, repo := range gcrResp.Repositories {
+	for _, repo := range acrResp.Repositories {
 		res = append(res, &ptypes.RegistryRepository{
 			Name: repo,
 			URI:  strings.TrimPrefix(r.URL, "https://") + "/" + repo,
 		})
 	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "repo-count", Value: len(acrResp.Repositories)})
 
 	return res, nil
 }
@@ -718,9 +827,10 @@ func (r *Registry) listPrivateRegistryRepositories(
 }
 
 func (r *Registry) getTokenCacheFunc(
+	ctx context.Context,
 	repo repository.Repository,
 ) ints.GetTokenCacheFunc {
-	return func() (tok *ints.TokenCache, err error) {
+	return func(ctx context.Context) (tok *ints.TokenCache, err error) {
 		reg, err := repo.Registry().ReadRegistry(r.ProjectID, r.ID)
 		if err != nil {
 			return nil, err
@@ -731,9 +841,10 @@ func (r *Registry) getTokenCacheFunc(
 }
 
 func (r *Registry) setTokenCacheFunc(
+	ctx context.Context,
 	repo repository.Repository,
 ) ints.SetTokenCacheFunc {
-	return func(token string, expiry time.Time) error {
+	return func(ctx context.Context, token string, expiry time.Time) error {
 		_, err := repo.Registry().UpdateRegistryTokenCache(
 			&ints.RegTokenCache{
 				TokenCache: ints.TokenCache{
@@ -766,7 +877,7 @@ func (r *Registry) CreateRepository(
 		}
 		return r.createECRRepository(aws, name)
 	} else if r.GCPIntegrationID != 0 && strings.Contains(r.URL, "pkg.dev") {
-		return r.createGARRepository(conf.Repo, name)
+		return r.createGARRepository(ctx, conf.Repo, name)
 	}
 
 	project, err := conf.Repo.Project().ReadProject(r.ProjectID)
@@ -775,6 +886,11 @@ func (r *Registry) CreateRepository(
 	}
 
 	if project.CapiProvisionerEnabled {
+		// no need to create repository if pushing to ACR
+		if strings.Contains(r.URL, ".azurecr.") {
+			return nil
+		}
+
 		uri := strings.TrimPrefix(r.URL, "https://")
 		splits := strings.Split(uri, ".")
 		accountID := splits[0]
@@ -831,6 +947,7 @@ func (r *Registry) createECRRepository(
 }
 
 func (r *Registry) createGARRepository(
+	ctx context.Context,
 	repo repository.Repository,
 	name string,
 ) error {
@@ -842,9 +959,10 @@ func (r *Registry) createGARRepository(
 		return err
 	}
 
-	client, err := artifactregistry.NewClient(context.Background(), option.WithTokenSource(&garTokenSource{
+	client, err := artifactregistry.NewClient(ctx, option.WithTokenSource(&garTokenSource{
 		reg:  r,
 		repo: repo,
+		ctx:  ctx,
 	}), option.WithScopes("roles/artifactregistry.admin"))
 	if err != nil {
 		return err
@@ -907,7 +1025,7 @@ func (r *Registry) ListImages(
 
 	if r.GCPIntegrationID != 0 {
 		if strings.Contains(r.URL, "pkg.dev") {
-			return r.listGARImages(repoName, repo)
+			return r.listGARImages(ctx, repoName, repo)
 		}
 
 		return r.listGCRImages(repoName, repo)
@@ -1273,7 +1391,7 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 	return res, nil
 }
 
-func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
+func (r *Registry) listGARImages(ctx context.Context, repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
 	repoImageSlice := strings.Split(repoName, "/")
 
 	if len(repoImageSlice) != 2 {
@@ -1288,9 +1406,10 @@ func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
-	svc, err := v1artifactregistry.NewService(context.Background(), option.WithTokenSource(&garTokenSource{
+	svc, err := v1artifactregistry.NewService(ctx, option.WithTokenSource(&garTokenSource{
 		reg:  r,
 		repo: repo,
+		ctx:  ctx,
 	}), option.WithScopes("roles/artifactregistry.reader"))
 	if err != nil {
 		return nil, err

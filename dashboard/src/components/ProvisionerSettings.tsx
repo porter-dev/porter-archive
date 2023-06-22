@@ -36,6 +36,8 @@ import Checkbox from "./porter/Checkbox";
 import { Certificate } from "crypto";
 import Tooltip from "./porter/Tooltip";
 import Icon from "./porter/Icon";
+import { set } from "traverse";
+import { load } from "js-yaml";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -147,14 +149,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return false;
 
   };
-  function validateIPInput(IPAllowList: string) {
+  function validateIPInput(IPAllowList) {
     // This regular expression checks for an IP address with a subnet mask.
     const regex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/;
-
-    if (IPAllowList == "") {
-      return false;
+    if (!IPAllowList) {
+      return false
     }
-
     // Split the input string by comma and remove any empty elements
     const ipAddresses = IPAllowList.split(",").filter(Boolean);
     // Validate each IP address
@@ -210,7 +210,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   };
   function convertStringToTags(tagString) {
     if (typeof tagString !== 'string' || tagString.trim() === '') {
-      return undefined;
+      return [];
     }
 
     // Split the input string by comma, then reduce the resulting array to an object
@@ -227,6 +227,38 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const createCluster = async () => {
     setIsClicked(true);
 
+    let loadBalancerObj = new LoadBalancer({});
+    loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
+    loadBalancerObj.wildcardDomain = wildCardDomain;
+    loadBalancerObj.enableS3AccessLogs = accessS3Logs;
+    if (loadBalancerType) {
+      loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
+      loadBalancerObj.wildcardDomain = wildCardDomain;
+      loadBalancerObj.enableS3AccessLogs = accessS3Logs;
+      loadBalancerObj.wafv2Arn = wafV2ARN;
+      if (awsTags) {
+        loadBalancerObj.tags = convertStringToTags(awsTags);
+      }
+      if (IPAllowList) {
+        loadBalancerObj.allowlistIpRanges = IPAllowList
+      }
+      if (accessS3Logs) {
+        loadBalancerObj.enableS3AccessLogs = accessS3Logs;
+      }
+
+      if (wafV2Enabled) {
+        loadBalancerObj.enableWafv2 = wafV2Enabled;
+      }
+
+      if (wafV2ARN) {
+        loadBalancerObj.wafv2Arn = wafV2ARN;
+      }
+
+      if (certificateARN) {
+        loadBalancerObj.additionalCertificateArns = certificateARN.split(",");
+      }
+    }
+
     let data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -240,16 +272,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             clusterVersion: clusterVersion || "v1.24.0",
             cidrRange: cidrRange || "10.78.0.0/16",
             region: awsRegion,
-            loadBalancer: new LoadBalancer({
-              loadBalancerType: loadBalancerType ? LoadBalancerType.ALB : LoadBalancerType.NLB,
-              wildcardDomain: loadBalancerType ? wildCardDomain : "",
-              allowlistIpRanges: loadBalancerType ? IPAllowList : "",
-              enableS3AccessLogs: loadBalancerType ? accessS3Logs : false,
-              enableWafv2: loadBalancerType ? wafV2Enabled : false,
-              wafv2Arn: loadBalancerType && wafV2Enabled ? wafV2ARN : "",
-              tags: loadBalancerType ? convertStringToTags(awsTags) : {},
-              additionalCertificateArns: loadBalancerType ? certificateARN?.split(",") : [],
-            }),
+            loadBalancer: loadBalancerObj,
             nodeGroups: [
               new EKSNodeGroup({
                 instanceType: "t3.medium",
@@ -373,6 +396,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
+      console.log(eksValues);
       if (eksValues == null) {
         return
       }
@@ -394,7 +418,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       setClusterVersion(eksValues.clusterVersion);
       setCidrRange(eksValues.cidrRange);
       if (eksValues.loadBalancer != null) {
-        setIPAllowList(eksValues.loadBalancer.allowlistIpRanges || "")
+        setIPAllowList(eksValues.loadBalancer.allowlistIpRanges)
         setWildCardDomain(eksValues.loadBalancer.wildcardDomain)
         setAccessS3Logs(eksValues.loadBalancer.enableS3AccessLogs)
 
@@ -404,7 +428,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             .join(','));
         }
 
-        setLoadBalancerType(eksValues.loadBalancer.loadBalancerType.toString() === "LOAD_BALANCER_TYPE_ALB")
+        setLoadBalancerType(eksValues.loadBalancer.loadBalancerType?.toString() === "LOAD_BALANCER_TYPE_ALB")
         setwafV2ARN(eksValues.loadBalancer.wafv2Arn)
         setWaf2Enabled(eksValues.loadBalancer.enableWafv2)
       }
@@ -497,7 +521,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             <Input
               width="350px"
               type="string"
-              disabled={isReadOnly}
+              disabled={true}
               value={cidrRange}
               setValue={(x: string) => setCidrRange(x)}
               label="VPC CIDR range"
@@ -510,64 +534,119 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 <Checkbox
                   checked={loadBalancerType}
                   disabled={isReadOnly}
-                  toggleChecked={() => { setLoadBalancerType(!loadBalancerType) }}
+                  toggleChecked={() => {
+                    if (loadBalancerType) {
+                      setWildCardDomain("");
+                      setIPAllowList("");
+                      setwafV2ARN("");
+                      setAwsTags("");
+                      seCertificateARN("");
+                      setWaf2Enabled(false);
+                      setAccessS3Logs(false);
+                    }
+
+                    setLoadBalancerType(!loadBalancerType)
+                  }}
                   disabledTooltip={"Wait for provisioning to complete before editing this field."}
                 >
                   <Text color="helper">Set Load Balancer Type to ALB</Text>
                 </Checkbox>
                 <Spacer y={1} />
                 {loadBalancerType && (<>
-                  <Input
-                    width="350px"
-                    disabled={isReadOnly}
-                    value={wildCardDomain}
-                    setValue={(x: string) => setWildCardDomain(x)}
-                    label="Wildcard domain"
-                    placeholder="user-2.porter.run"
-                    error={
-                      validateInput(wildCardDomain)
-                    }
-                  />
+
+                  <FlexCenter>
+                    <Input
+                      width="350px"
+                      disabled={isReadOnly}
+                      value={wildCardDomain}
+                      setValue={(x: string) => setWildCardDomain(x)}
+                      label="Wildcard domain"
+                      placeholder="user-2.porter.run"
+                    />
+                    <Wrapper>
+                      <Tooltip
+                        children={<Icon src={info} />}
+                        content={'The provided domain should have a wildcard subdomain pointed to the LoadBalancer address. Using testing.porter.run will create a certificate for testing.porter.run with a SAN *.testing.porter.run'}
+                        position="right"
+                      />
+                    </Wrapper>
+
+                  </FlexCenter>
+
+                  {validateInput(wildCardDomain) && <ErrorInLine>
+                    <i className="material-icons">error</i>
+                    {validateInput(wildCardDomain)}
+                  </ErrorInLine>}
                   <Spacer y={1} />
-                  <Input
-                    width="350px"
-                    disabled={isReadOnly}
-                    value={IPAllowList}
-                    setValue={(x: string) => setIPAllowList(x)}
-                    label="IP Allow List"
-                    placeholder="160.72.72.58/32,160.72.72.59/32"
-                    error={
-                      validateIPInput(IPAllowList) && "Needs to be Comma Separated Valid IP addresses"
-                    }
-                  />
+
+                  <FlexCenter>
+                    <>
+                      <Input
+                        width="350px"
+                        disabled={isReadOnly}
+                        value={IPAllowList}
+                        setValue={(x: string) => setIPAllowList(x)}
+                        label="IP Allow List"
+                        placeholder="160.72.72.58/32,160.72.72.59/32"
+                      />
+                      <Wrapper>
+                        <Tooltip
+                          children={<Icon src={info} />}
+                          content={'Each range should be a CIDR, including netmask such as 10.1.2.3/21. To use multiple values, they should be comma-separated with no spaces'}
+                          position="right"
+                        />
+                      </Wrapper>
+                    </>
+                  </FlexCenter>
+                  {validateIPInput(IPAllowList) && <ErrorInLine>
+                    <i className="material-icons">error</i>
+                    {"Needs to be Comma Separated Valid IP addresses"}
+                  </ErrorInLine>}
                   <Spacer y={1} />
+
                   <Input
                     width="350px"
                     disabled={isReadOnly}
                     value={certificateARN}
                     setValue={(x: string) => seCertificateARN(x)}
                     label="Certificate ARN"
-                    placeholder="arn:********"
+                    placeholder="arn:aws:acm:REGION:ACCOUNT_ID:certificate/ACM_ID"
                   />
                   <Spacer y={1} />
 
-                  <Input
-                    width="350px"
-                    disabled={isReadOnly}
-                    value={awsTags}
-                    setValue={(x: string) => setAwsTags(x)}
-                    label="AWS Tags"
-                    placeholder="costcenter=1,environment=10,project=32"
-                    error={
 
-                      validateTags(awsTags) && "Needs to be Comma key value pair in the format key=value"
-                    }
-                  />
+                  <FlexCenter>
+                    <>
+                      <Input
+                        width="350px"
+                        disabled={isReadOnly}
+                        value={awsTags}
+                        setValue={(x: string) => setAwsTags(x)}
+                        label="AWS Tags"
+                        placeholder="costcenter=1,environment=10,project=32"
+                      />
+                      <Wrapper>
+                        <Tooltip
+                          children={<Icon src={info} />}
+                          content={"Each tag should be of the format 'key=value'. To use multiple values, they should be comma-separated with no spaces."}
+                          position="right"
+                        />
+                      </Wrapper>
+                    </>
+                  </FlexCenter>
+                  {validateTags(awsTags) && <ErrorInLine>
+                    <i className="material-icons">error</i>
+                    {"Needs to be Comma Separated Valid Tags"}
+                  </ErrorInLine>}
+
                   <Spacer y={1} />
                   <Checkbox
                     checked={accessS3Logs}
                     disabled={isReadOnly}
                     toggleChecked={() => {
+                      {
+                        console.log(!accessS3Logs)
+                      }
                       setAccessS3Logs(!accessS3Logs)
                     }}
                     disabledTooltip={"Wait for provisioning to complete before editing this field."}
@@ -618,7 +697,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
                       <ErrorInLine>
                         <i className="material-icons">error</i>
-                        {"Requried if WafV2 is Enabled"}
+                        {"Required if WafV2 is enabled"}
                       </ErrorInLine>
 
                     }

@@ -253,7 +253,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                     <Link to={`/apps/${app.name}`} key={i}>
                       <Block>
                         <Container row>
-                          {renderIcon(app["build_packs"])}
+                          {renderIcon(app["buildpacks"])}
                           <Spacer inline width="12px" />
                           <Text size={14}>{app.name}</Text>
                           <Spacer inline x={2} />
@@ -279,7 +279,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                       <Row>
                         <Container row>
                           <Spacer inline width="1px" />
-                          {renderIcon(app["build_packs"], "larger")}
+                          {renderIcon(app["buildpacks"], "larger")}
                           <Spacer inline width="12px" />
                           <Text size={14}>
                             {app.name}

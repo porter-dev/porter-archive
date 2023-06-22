@@ -6,6 +6,7 @@ import { OFState } from "main/home/onboarding/state";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
+import info from "assets/info-outlined.svg";
 
 import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
@@ -29,7 +30,14 @@ import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
 import Link from "./porter/Link";
 import Text from "./porter/Text";
-
+import Select from "./porter/Select";
+import Input from "./porter/Input";
+import Checkbox from "./porter/Checkbox";
+import { Certificate } from "crypto";
+import Tooltip from "./porter/Tooltip";
+import Icon from "./porter/Icon";
+import { set } from "traverse";
+import { load } from "js-yaml";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -86,6 +94,14 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
   const [machineType, setMachineType] = useState("t3.xlarge");
+  const [loadBalancerType, setLoadBalancerType] = useState(false);
+  const [wildCardDomain, setWildCardDomain] = useState("")
+  const [IPAllowList, setIPAllowList] = useState<string>("")
+  //const [accessS3Logs, setAccessS3Logs] = useState<boolean>(false)
+  const [wafV2Enabled, setWaf2Enabled] = useState<boolean>(false)
+  const [awsTags, setAwsTags] = useState<string>("")
+  const [wafV2ARN, setwafV2ARN] = useState("")
+  const [certificateARN, seCertificateARN] = useState("")
   const [isExpanded, setIsExpanded] = useState(false);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
@@ -96,7 +112,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
-
+  const [inputError, setInputError] = useState<boolean>(false);
   const markStepStarted = async (step: string) => {
     try {
       await api.updateOnboardingStep("<token>", { step }, {});
@@ -123,17 +139,131 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
     return undefined;
   };
+  const validateInput = (wildCardDomainer) => {
+    if (!wildCardDomainer) {
+      return "Required for ALB Load Balancer"
+    }
+    if (wildCardDomainer?.charAt(0) == "*") {
+      return "Wildcard domain cannot start with *"
+    }
+    return false;
+
+  };
+  function validateIPInput(IPAllowList) {
+    // This regular expression checks for an IP address with a subnet mask.
+    const regex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/;
+    if (!IPAllowList) {
+      return false
+    }
+    // Split the input string by comma and remove any empty elements
+    const ipAddresses = IPAllowList.split(",").filter(Boolean);
+    // Validate each IP address
+    for (let ip of ipAddresses) {
+      if (!regex.test(ip.trim())) {
+        // If any IP is invalid, return true (error)
+        return true;
+      }
+    }
+    // If all IPs are valid, return false (no error)
+    return false;
+  }
+  function validateTags(awsTags) {
+    // Regular expression t o check for a key-value pair format "key=value"
+    const regex = /^[a-zA-Z0-9]+=[a-zA-Z0-9]+$/;
+    // Split the input string by comma and remove any empty elements
+    const tags = awsTags.split(",").filter(Boolean);
+    // Validate each tag
+    for (let tag of tags) {
+      if (!regex.test(tag.trim())) {
+        // If any tag is invalid, return true (error)
+        return true;
+      }
+    }
+    // If all tags are valid, return false (no error)
+    return false;
+  }
+  function validateAllInputs() {
+
+    if (validateInput(wildCardDomain) != false) {
+      setInputError(true);
+      return true;
+    }
+    if (validateTags(awsTags)) {
+      setInputError(true);
+      return true;
+    }
+    if (validateIPInput(IPAllowList)) {
+      setInputError(true);
+      return true;
+    }
+
+  }
   const isDisabled = () => {
     return (
       !user.email.endsWith("porter.run") &&
       ((!clusterName && true) ||
         (isReadOnly && props.provisionerError === "") ||
         props.provisionerError === "" ||
-        currentCluster?.status === "UPDATING")
+        currentCluster?.status === "UPDATING" ||
+        isClicked || validateAllInputs())
     );
   };
+  function convertStringToTags(tagString) {
+    if (typeof tagString !== 'string' || tagString.trim() === '') {
+      return [];
+    }
+
+    // Split the input string by comma, then reduce the resulting array to an object
+    const tags = tagString.split(",").reduce((obj, item) => {
+      // Split each item by "=", 
+      const [key, value] = item.split("=");
+      // Add the key-value pair to the object
+      obj[key] = value;
+      return obj;
+    }, {});
+
+    return tags;
+  }
   const createCluster = async () => {
     setIsClicked(true);
+
+    let loadBalancerObj = new LoadBalancer({});
+    loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
+    loadBalancerObj.wildcardDomain = wildCardDomain;
+    //loadBalancerObj.enableS3AccessLogs = accessS3Logs;
+    if (loadBalancerType) {
+      loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
+      loadBalancerObj.wildcardDomain = wildCardDomain;
+
+      if (awsTags) {
+        loadBalancerObj.tags = convertStringToTags(awsTags);
+      }
+      if (IPAllowList) {
+        loadBalancerObj.allowlistIpRanges = IPAllowList
+      }
+      // if (accessS3Logs) {
+      //   loadBalancerObj.enableS3AccessLogs = accessS3Logs;
+      // }
+
+      // if (accessS3Logs) {
+      //   loadBalancerObj.enableS3AccessLogs = accessS3Logs;
+      // }
+      // else {
+      //   loadBalancerObj.enableS3AccessLogs = false;
+      // }
+      if (wafV2Enabled) {
+        loadBalancerObj.enableWafv2 = wafV2Enabled;
+      }
+      else {
+        loadBalancerObj.enableWafv2 = false;
+      }
+      if (wafV2ARN) {
+        loadBalancerObj.wafv2Arn = wafV2ARN;
+      }
+      if (certificateARN) {
+        loadBalancerObj.additionalCertificateArns = certificateARN.split(",");
+      }
+    }
 
     let data = new Contract({
       cluster: new Cluster({
@@ -148,7 +278,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             clusterVersion: clusterVersion || "v1.24.0",
             cidrRange: cidrRange || "10.78.0.0/16",
             region: awsRegion,
-            loadBalancer: loadBalancer,
+            loadBalancer: loadBalancerObj,
             nodeGroups: [
               new EKSNodeGroup({
                 instanceType: "t3.medium",
@@ -269,13 +399,15 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
+
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
+      console.log(eksValues);
       if (eksValues == null) {
         return
       }
       eksValues.nodeGroups.map((nodeGroup: EKSNodeGroup) => {
-        if (nodeGroup.nodeGroupType === NodeGroupType.APPLICATION) {
+        if (nodeGroup.nodeGroupType.toString() === "NODE_GROUP_TYPE_APPLICATION") {
           setMachineType(nodeGroup.instanceType);
           setMinInstances(nodeGroup.minInstances);
           setMaxInstances(nodeGroup.maxInstances);
@@ -286,15 +418,29 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           setAdditionalNodePolicies(nodeGroup.additionalPolicies);
         }
       });
-
       setCreateStatus("");
       setClusterName(eksValues.clusterName);
       setAwsRegion(eksValues.region);
       setClusterVersion(eksValues.clusterVersion);
       setCidrRange(eksValues.cidrRange);
-      setLoadBalancer(eksValues.loadBalancer)
+      if (eksValues.loadBalancer != null) {
+        setIPAllowList(eksValues.loadBalancer.allowlistIpRanges)
+        setWildCardDomain(eksValues.loadBalancer.wildcardDomain)
+        //setAccessS3Logs(eksValues.loadBalancer.enableS3AccessLogs)
+
+        if (eksValues.loadBalancer.tags) {
+          setAwsTags(Object.entries(eksValues.loadBalancer.tags)
+            .map(([key, value]) => `${key}=${value}`)
+            .join(','));
+        }
+
+        setLoadBalancerType(eksValues.loadBalancer.loadBalancerType?.toString() === "LOAD_BALANCER_TYPE_ALB")
+        setwafV2ARN(eksValues.loadBalancer.wafv2Arn)
+        setWaf2Enabled(eksValues.loadBalancer.enableWafv2)
+      }
     }
-  }, [props.selectedClusterVersion]);
+
+  }, [isExpanded, props.selectedClusterVersion]);
 
   const renderForm = () => {
     // Render simplified form if initial create
@@ -349,27 +495,25 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
         {isExpanded && (
           <>
-            {user?.isPorterUser && (<SelectRow
+            {user?.isPorterUser && (<Select
               options={clusterVersionOptions}
               width="350px"
               disabled={isReadOnly}
               value={clusterVersion}
-              scrollBuffer={true}
-              dropdownMaxHeight="240px"
-              setActiveValue={setClusterVersion}
+              setValue={setClusterVersion}
               label="Cluster version"
             />)}
-            <SelectRow
+            <Spacer y={1} />
+            <Select
               options={machineTypeOptions}
               width="350px"
               disabled={isReadOnly}
               value={machineType}
-              scrollBuffer={true}
-              dropdownMaxHeight="240px"
-              setActiveValue={setMachineType}
+              setValue={setMachineType}
               label="Machine type"
             />
-            <InputRow
+            <Spacer y={1} />
+            <Input
               width="350px"
               type="number"
               disabled={isReadOnly}
@@ -377,18 +521,201 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               setValue={(x: number) => setMaxInstances(x)}
               label="Maximum number of application EC2 instances"
               placeholder="ex: 1"
+
             />
-            <InputRow
+            <Spacer y={1} />
+            <Input
               width="350px"
               type="string"
-              disabled={isReadOnly}
+              disabled={true}
               value={cidrRange}
               setValue={(x: string) => setCidrRange(x)}
               label="VPC CIDR range"
               placeholder="ex: 10.78.0.0/16"
             />
+
+            {!currentProject.simplified_view_enabled &&
+              <>
+                <Spacer y={1} />
+                <Checkbox
+                  checked={loadBalancerType}
+                  disabled={isReadOnly}
+                  toggleChecked={() => {
+                    if (loadBalancerType) {
+                      setWildCardDomain("");
+                      setIPAllowList("");
+                      setwafV2ARN("");
+                      setAwsTags("");
+                      seCertificateARN("");
+                      setWaf2Enabled(false);
+                      //setAccessS3Logs(false);
+                    }
+
+                    setLoadBalancerType(!loadBalancerType)
+                  }}
+                  disabledTooltip={"Wait for provisioning to complete before editing this field."}
+                >
+                  <Text color="helper">Set Load Balancer Type to ALB</Text>
+                </Checkbox>
+                <Spacer y={1} />
+                {loadBalancerType && (<>
+
+                  <FlexCenter>
+                    <Input
+                      width="350px"
+                      disabled={isReadOnly}
+                      value={wildCardDomain}
+                      setValue={(x: string) => setWildCardDomain(x)}
+                      label="Wildcard domain"
+                      placeholder="user-2.porter.run"
+                    />
+                    <Wrapper>
+                      <Tooltip
+                        children={<Icon src={info} />}
+                        content={'The provided domain should have a wildcard subdomain pointed to the LoadBalancer address. Using testing.porter.run will create a certificate for testing.porter.run with a SAN *.testing.porter.run'}
+                        position="right"
+                      />
+                    </Wrapper>
+
+                  </FlexCenter>
+
+                  {validateInput(wildCardDomain) && <ErrorInLine>
+                    <i className="material-icons">error</i>
+                    {validateInput(wildCardDomain)}
+                  </ErrorInLine>}
+                  <Spacer y={1} />
+
+                  <FlexCenter>
+                    <>
+                      <Input
+                        width="350px"
+                        disabled={isReadOnly}
+                        value={IPAllowList}
+                        setValue={(x: string) => setIPAllowList(x)}
+                        label="IP Allow List"
+                        placeholder="160.72.72.58/32,160.72.72.59/32"
+                      />
+                      <Wrapper>
+                        <Tooltip
+                          children={<Icon src={info} />}
+                          content={'Each range should be a CIDR, including netmask such as 10.1.2.3/21. To use multiple values, they should be comma-separated with no spaces'}
+                          position="right"
+                        />
+                      </Wrapper>
+                    </>
+                  </FlexCenter>
+                  {validateIPInput(IPAllowList) && <ErrorInLine>
+                    <i className="material-icons">error</i>
+                    {"Needs to be Comma Separated Valid IP addresses"}
+                  </ErrorInLine>}
+                  <Spacer y={1} />
+
+                  <Input
+                    width="350px"
+                    disabled={isReadOnly}
+                    value={certificateARN}
+                    setValue={(x: string) => seCertificateARN(x)}
+                    label="Certificate ARN"
+                    placeholder="arn:aws:acm:REGION:ACCOUNT_ID:certificate/ACM_ID"
+                  />
+                  <Spacer y={1} />
+
+
+                  <FlexCenter>
+                    <>
+                      <Input
+                        width="350px"
+                        disabled={isReadOnly}
+                        value={awsTags}
+                        setValue={(x: string) => setAwsTags(x)}
+                        label="AWS Tags"
+                        placeholder="costcenter=1,environment=10,project=32"
+                      />
+                      <Wrapper>
+                        <Tooltip
+                          children={<Icon src={info} />}
+                          content={"Each tag should be of the format 'key=value'. To use multiple values, they should be comma-separated with no spaces."}
+                          position="right"
+                        />
+                      </Wrapper>
+                    </>
+                  </FlexCenter>
+                  {validateTags(awsTags) && <ErrorInLine>
+                    <i className="material-icons">error</i>
+                    {"Needs to be Comma Separated Valid Tags"}
+                  </ErrorInLine>}
+
+                  <Spacer y={1} />
+                  {/* <Checkbox
+                    checked={accessS3Logs}
+                    disabled={isReadOnly}
+                    toggleChecked={() => {
+                      {
+                        console.log(!accessS3Logs)
+                      }
+                      setAccessS3Logs(!accessS3Logs)
+                    }}
+                    disabledTooltip={"Wait for provisioning to complete before editing this field."}
+                  >
+                    <Text color="helper">Access Logs to S3</Text>
+                  </Checkbox> */}
+                  <Spacer y={1} />
+                  <Checkbox
+                    checked={wafV2Enabled}
+                    disabled={isReadOnly}
+                    toggleChecked={() => {
+                      if (wafV2Enabled) {
+                        setwafV2ARN("");
+                      }
+                      setWaf2Enabled(!wafV2Enabled);
+                    }}
+                    disabledTooltip={"Wait for provisioning to complete before editing this field."}
+                  >
+                    <Text color="helper">WAFv2 Enabled</Text>
+                  </Checkbox>
+                  {wafV2Enabled && <>
+                    <Spacer y={1} />
+
+
+                    <FlexCenter>
+                      <>
+                        <Input
+                          width="500px"
+                          type="string"
+                          label="WAFv2 ARN"
+                          disabled={isReadOnly}
+                          value={wafV2ARN}
+                          setValue={(x: string) => setwafV2ARN(x)}
+                          placeholder="arn:aws:wafv2:REGION:ACCOUNT_ID:regional/webacl/ACL_NAME/RULE_ID"
+
+                        />
+                        <Wrapper>
+                          <Tooltip
+                            children={<Icon src={info} />}
+                            content={'Only Regional WAFv2 is supported. To find your ARN, navigate to the WAF console, click the Gear icon in the top right, and toggle "ARN" to on'}
+                            position="right"
+                          />
+                        </Wrapper>
+                      </>
+                    </FlexCenter>
+
+                    {(wafV2ARN == undefined || wafV2ARN?.length == 0) &&
+
+                      <ErrorInLine>
+                        <i className="material-icons">error</i>
+                        {"Required if WafV2 is enabled"}
+                      </ErrorInLine>
+
+                    }
+                  </>}
+                  <Spacer y={1} />
+                </>
+                )}
+              </>
+            }
           </>
-        )}
+        )
+        }
       </>
     );
   };
@@ -397,11 +724,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     <>
       <StyledForm>{renderForm()}</StyledForm>
       <Button
-        disabled={
-          isClicked ||
-          isDisabled() ||
-          getStatus() == "Provisioning is still in progress..."
-        }
+        disabled={isDisabled()}
         onClick={createCluster}
         status={getStatus()}
       >
@@ -435,16 +758,26 @@ const StyledForm = styled.div`
   margin-bottom: 30px;
 `;
 
-const ErrorContainer = styled.div`
-  position: relative;
-  margin-top: 20px;
-  padding: 30px 30px 25px;
-  border-radius: 5px;
-  background: #26292e;
-  border: 1px solid #494b4f;
+const FlexCenter = styled.div`
+  display: flex;
+  align-items: center  ;
+  gap: 3px;
+`
+const Wrapper = styled.div`
+  transform: translateY(+13px);
+`;
+
+const ErrorInLine = styled.div`
+  display: flex;
+  align-items: center;
   font-size: 13px;
-  margin-bottom: 30px;
-  color: red;
+  color: #ff3b62;
+  margin-top: 10px;
+
+  > i {
+    font-size: 18px;
+    margin-right: 5px;
+  }
 `;
 
 const AWS_LOGIN_ERROR_MESSAGE =

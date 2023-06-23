@@ -71,10 +71,10 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
         <Container row>
           <Icon height="16px" src={app_event} />
           <Spacer inline width="10px" />
-          <Text additionalStyles={"overflow: auto;max-height: 70px;max-width: 600px;"}>{event.metadata.detail}</Text>
+          <Text>{event.metadata.detail}</Text>
         </Container>
       </Container>
-      <Spacer y={1} />
+      <Spacer y={0.5} />
       <Container row spaced>
         <TempWrapper>
           <Link onClick={getAppLogs} hasunderline>

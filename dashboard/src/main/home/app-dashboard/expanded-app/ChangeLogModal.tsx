@@ -217,11 +217,12 @@ const ChangeLogModal: React.FC<Props> = ({
     <>
       <Modal closeModal={() => setModalVisible(false)} width={"800px"}>
         {revertModal ? <Text size={18}> Revert to version no. {revision} </Text> : <Text size={18}>Changes for version no. {revision}</Text>}
+        <Spacer y={1} />
         {loading ? (
           <Loading /> // <-- Render loading state
         ) : (
           revertModal ? (<>
-            <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+            <div style={{ maxHeight: "400px", overflowY: "auto", borderRadius: "8px" }}>
               <DiffViewer
                 leftTitle={revertModal ? `Current Revision` : `Revision No. ${revision - 1}`}
                 rightTitle={`Revision No. ${revision}`}
@@ -262,7 +263,8 @@ const ChangeLogModal: React.FC<Props> = ({
                 </div>
               )}
 
-              {changesConfig && (<><Spacer y={.3} />
+              {changesConfig && (<>
+                <Spacer y={1} />
                 <div style={{ display: "flex" }}>
 
                   <Checkbox

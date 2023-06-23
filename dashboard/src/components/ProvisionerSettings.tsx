@@ -228,6 +228,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setIsClicked(true);
 
     let loadBalancerObj = new LoadBalancer({});
+    loadBalancerObj.loadBalancerType = LoadBalancerType.NLB;
     if (loadBalancerType) {
       loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
       loadBalancerObj.wildcardDomain = wildCardDomain;
@@ -251,6 +252,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         loadBalancerObj.additionalCertificateArns = certificateARN.split(",");
       }
     }
+
 
     let data = new Contract({
       cluster: new Cluster({

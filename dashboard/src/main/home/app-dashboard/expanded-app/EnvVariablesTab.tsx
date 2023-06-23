@@ -65,6 +65,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
           }
           setEnvVars(x)
         }}
+        values={envVars}
         closeModal={() => setShowEnvModal(false)} />}
       {!!syncedEnvGroups?.length && (
         <>

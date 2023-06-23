@@ -28,19 +28,20 @@ import {
   PartialEnvGroup,
   PopulatedEnvGroup,
 } from "components/porter-form/types";
+import { KeyValueType } from "../../../cluster-dashboard/env-groups/EnvGroupArray";
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
   availableEnvGroups?: PartialEnvGroup[];
-  setValues: (values: Record<string, string>) => void;
+  setValues: (x: KeyValueType[]) => void;
+  values: KeyValueType[];
 }
 
 const EnvGroupModal: React.FC<Props> = ({
   closeModal,
   setValues,
   availableEnvGroups,
-
-
+  values,
 }) => {
   const { currentCluster, currentProject } = useContext(Context);
   const [envGroups, setEnvGroups] = useState<any>([])
@@ -97,6 +98,12 @@ const EnvGroupModal: React.FC<Props> = ({
   };
 
   useEffect(() => {
+    if (!values) {
+      setValues([]);
+    }
+  }, [values]);
+
+  useEffect(() => {
     if (Array.isArray(availableEnvGroups)) {
       setEnvGroups(availableEnvGroups);
       setLoading(false);
@@ -146,9 +153,21 @@ const EnvGroupModal: React.FC<Props> = ({
   };
 
   const onSubmit = () => {
+    const _values = [...values];
 
-    setValues(selectedEnvGroup.variables);
-
+    Object.entries(selectedEnvGroup?.variables || {})
+      .map(
+        ([key, value]) =>
+          _values.push({
+            key,
+            value: value as string,
+            hidden: false,
+            locked: false,
+            deleted: false,
+          })
+      )
+    setValues(_values);
+    console.log(_values)
     closeModal();
   };
 

@@ -1,4 +1,3 @@
-import { DeviconsNameList } from "assets/devicons-name-list";
 import Helper from "components/form-components/Helper";
 import Select from "components/porter/Select";
 import Loading from "components/Loading";
@@ -16,42 +15,14 @@ import AddCustomBuildpackComponent from "./AddCustomBuildpackComponent";
 import BuildpackList from "./BuildpackList";
 import Icon from "components/porter/Icon";
 import stars from "assets/stars-white.svg";
-
-const DEFAULT_BUILDER_NAME = "heroku";
-const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
-const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
-
-type BuildConfig = {
-  builder: string;
-  buildpacks: string[];
-  config: null | {
-    [key: string]: string;
-  };
-};
-
-export type Buildpack = {
-  name: string;
-  buildpack: string;
-  config: {
-    [key: string]: string;
-  };
-};
-
-type DetectedBuildpack = {
-  name: string;
-  builders: string[];
-  detected: Buildpack[];
-  others: Buildpack[];
-  buildConfig: BuildConfig;
-};
-
-const BUILDPACK_TO_NAME: { [key: string]: string } = {
-  "heroku/nodejs": "NodeJS",
-  "heroku/python": "Python",
-  "heroku/java": "Java",
-  "heroku/ruby": "Ruby",
-  "heroku/go": "Go",
-};
+import {
+  BUILDPACK_TO_NAME,
+  BuildConfig,
+  Buildpack,
+  DEFAULT_BUILDER_NAME,
+  DEFAULT_HEROKU_STACK,
+  DetectedBuildpack
+} from "../../types/buildpack";
 
 const BuildpackSettings: React.FC<{
   porterApp: PorterApp;

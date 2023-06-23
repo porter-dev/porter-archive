@@ -1,12 +1,12 @@
 import React from "react";
 import { PorterApp } from "../../types/porterApp";
-import { Buildpack } from "./BuildpackSettings";
 import BuildpackCard from "./BuildpackCard";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Loading from "components/Loading";
 import Error from "components/porter/Error";
 import { Droppable, DragDropContext } from "react-beautiful-dnd";
+import { Buildpack } from "../../types/buildpack";
 
 interface Props {
     porterApp: PorterApp,

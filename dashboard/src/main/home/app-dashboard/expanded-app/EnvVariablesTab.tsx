@@ -1,15 +1,17 @@
 import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import EnvGroupArray from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import Text from "components/porter/Text";
 import Error from "components/porter/Error";
 import sliders from "assets/sliders.svg";
 import EnvGroupModal from "./env-vars/EnvGroupModal";
 import ExpandableEnvGroup from "./env-vars/ExpandableEnvGroup";
-import { PopulatedEnvGroup } from "../../../../components/porter-form/types";
+import { PopulatedEnvGroup, PartialEnvGroup } from "../../../../components/porter-form/types";
 import _, { isObject, differenceBy, omit } from "lodash";
+import api from "../../../../shared/api";
+import { Context } from "../../../../shared/Context";
 
 interface EnvVariablesTabProps {
   envVars: any;
@@ -17,24 +19,74 @@ interface EnvVariablesTabProps {
   status: React.ReactNode;
   updatePorterApp: any;
   clearStatus: () => void;
-  syncedEnvGroups?: PopulatedEnvGroup[];
-  setSyncedEnvGroups?: (values: PopulatedEnvGroup) => void;
 }
 
 export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   envVars,
   setEnvVars,
-  syncedEnvGroups,
-  setSyncedEnvGroups,
   status,
   updatePorterApp,
   clearStatus,
 }) => {
 
+
+  const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([])
   const [showEnvModal, setShowEnvModal] = useState(false);
+  const [envGroups, setEnvGroups] = useState<any>([])
+  const { currentCluster, currentProject } = useContext(Context);
+
   useEffect(() => {
     setEnvVars(envVars);
   }, [envVars]);
+  useEffect(() => {
+    updateEnvGroups();
+  }, []);
+
+  const updateEnvGroups = async () => {
+    let envGroups: PartialEnvGroup[] = [];
+    try {
+      envGroups = await api
+        .listEnvGroups<PartialEnvGroup[]>(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            namespace: "default",
+            cluster_id: currentCluster.id,
+          }
+        )
+        .then((res) => res.data);
+    } catch (error) {
+      // setLoading(false)
+      // setError(true);
+      return;
+    }
+    const populateEnvGroupsPromises = envGroups.map((envGroup) =>
+      api
+        .getEnvGroup<PopulatedEnvGroup>(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            cluster_id: currentCluster.id,
+            name: envGroup.name,
+            namespace: envGroup.namespace,
+            version: envGroup.version,
+          }
+        )
+        .then((res) => res.data)
+    );
+
+    try {
+      const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
+      setSyncedEnvGroups(populatedEnvGroups)
+      // setLoading(false)
+
+    } catch (error) {
+      // setLoading(false)
+      // setError(true);
+    }
+  }
 
 
   return (
@@ -63,10 +115,13 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
           if (status !== "") {
             clearStatus();
           }
-          setEnvVars(x)
+          setEnvVars(x);
         }}
         values={envVars}
-        closeModal={() => setShowEnvModal(false)} />}
+        closeModal={() => setShowEnvModal(false)}
+        syncedEnvGroups={syncedEnvGroups}
+        setSyncedEnvGroups={setSyncedEnvGroups}
+      />}
       {!!syncedEnvGroups?.length && (
         <>
           <Text>Synced environment groups</Text >
@@ -76,15 +131,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
                 key={envGroup?.name}
                 envGroup={envGroup}
                 onDelete={() => {
-                  setState((prev) => {
-                    const synced = prev.synced_env_groups?.filter(
-                      (env) => env.name !== envGroup.name
-                    );
-                    return {
-                      ...prev,
-                      synced_env_groups: synced,
-                    };
-                  });
+                  console.log("delete")
                 }}
               />
             );

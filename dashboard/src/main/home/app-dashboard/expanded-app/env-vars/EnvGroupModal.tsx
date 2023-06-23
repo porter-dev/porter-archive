@@ -29,18 +29,23 @@ import {
   PopulatedEnvGroup,
 } from "components/porter-form/types";
 import { KeyValueType } from "../../../cluster-dashboard/env-groups/EnvGroupArray";
+import { set } from "zod";
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
   availableEnvGroups?: PartialEnvGroup[];
   setValues: (x: KeyValueType[]) => void;
   values: KeyValueType[];
+  syncedEnvGroups: PopulatedEnvGroup[];
+  setSyncedEnvGroups: (values: PopulatedEnvGroup) => void;
 }
 
 const EnvGroupModal: React.FC<Props> = ({
   closeModal,
   setValues,
   availableEnvGroups,
+  syncedEnvGroups,
+  setSyncedEnvGroups,
   values,
 }) => {
   const { currentCluster, currentProject } = useContext(Context);
@@ -49,7 +54,6 @@ const EnvGroupModal: React.FC<Props> = ({
   const [error, setError] = useState<any>(null);
   const [shouldSync, setShouldSync] = useState<boolean>(false);
   const [selectedEnvGroup, setSelectedEnvGroup] = useState<PopulatedEnvGroup | null>(null);
-
   const updateEnvGroups = async () => {
     let envGroups: PartialEnvGroup[] = [];
     try {
@@ -59,7 +63,7 @@ const EnvGroupModal: React.FC<Props> = ({
           {},
           {
             id: currentProject.id,
-            namespace: "porter-stack-nginx",
+            namespace: "default",
             cluster_id: currentCluster.id,
           }
         )
@@ -128,14 +132,14 @@ const EnvGroupModal: React.FC<Props> = ({
       );
     } else {
       return envGroups
-        // .filter((envGroup) => {
-        //   if (!Array.isArray(this.props.syncedEnvGroups)) {
-        //     return true;
-        //   }
-        //   return !this.props.syncedEnvGroups.find(
-        //     (syncedEnvGroup) => syncedEnvGroup.name === envGroup.name
-        //   );
-        // })
+        .filter((envGroup) => {
+          if (!Array.isArray(syncedEnvGroups)) {
+            return true;
+          }
+          return !syncedEnvGroups.find(
+            (syncedEnvGroup) => syncedEnvGroup.name === envGroup.name
+          );
+        })
         .map((envGroup: any, i: number) => {
           return (
             <EnvGroupRow
@@ -153,21 +157,25 @@ const EnvGroupModal: React.FC<Props> = ({
   };
 
   const onSubmit = () => {
-    const _values = [...values];
+    if (shouldSync) {
+      setSyncedEnvGroups(selectedEnvGroup);
+    }
+    else {
+      const _values = [...values];
 
-    Object.entries(selectedEnvGroup?.variables || {})
-      .map(
-        ([key, value]) =>
-          _values.push({
-            key,
-            value: value as string,
-            hidden: false,
-            locked: false,
-            deleted: false,
-          })
-      )
-    setValues(_values);
-    console.log(_values)
+      Object.entries(selectedEnvGroup?.variables || {})
+        .map(
+          ([key, value]) =>
+            _values.push({
+              key,
+              value: value as string,
+              hidden: false,
+              locked: false,
+              deleted: false,
+            })
+        )
+      setValues(_values);
+    }
     closeModal();
   };
 
@@ -208,6 +216,15 @@ const EnvGroupModal: React.FC<Props> = ({
               )} */}
         </SidebarSection>)}
       </GroupModalSections>
+      <Spacer y={1} />
+      <Checkbox
+        checked={shouldSync}
+        toggleChecked={() =>
+          setShouldSync((!shouldSync))
+        }
+      >
+        <Text color="helper">Sync Env Group</Text>
+      </Checkbox>
       <Spacer y={1} />
       <Button
         onClick={onSubmit}

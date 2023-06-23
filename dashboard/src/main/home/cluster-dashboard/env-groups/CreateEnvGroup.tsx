@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useContext } from "react";
 import styled from "styled-components";
 import api from "shared/api";
 
@@ -37,7 +37,6 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
     envVariables: [] as KeyValueType[],
     submitStatus: "",
   };
-
   componentDidMount() {
     this.updateNamespaces();
   }
@@ -171,29 +170,31 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
               placeholder="ex: doctor-scientist"
               width="100%"
             />
-
-            <Heading>Destination</Heading>
-            <Subtitle>
-              Specify the namespace you would like to create this environment
-              group in.
-            </Subtitle>
-            <DestinationSection>
-              <NamespaceLabel>
-                <i className="material-icons">view_list</i>Namespace
-              </NamespaceLabel>
-              <Selector
-                key={"namespace"}
-                activeValue={this.state.selectedNamespace}
-                setActiveValue={(namespace: string) =>
-                  this.setState({ selectedNamespace: namespace })
-                }
-                options={this.state.namespaceOptions}
-                width="250px"
-                dropdownWidth="335px"
-                closeOverlay={true}
-              />
-            </DestinationSection>
-
+            {!this?.context?.currentProject?.simplified_view_enabled && (<>
+              <Heading>Destination</Heading>
+              <Subtitle>
+                Specify the namespace you would like to create this environment
+                group in.
+              </Subtitle>
+              <DestinationSection>
+                <NamespaceLabel>
+                  <i className="material-icons">view_list</i>Namespace
+                </NamespaceLabel>
+                <Selector
+                  key={"namespace"}
+                  activeValue={this.state.selectedNamespace}
+                  setActiveValue={(namespace: string) =>
+                    this.setState({ selectedNamespace: namespace })
+                  }
+                  options={this.state.namespaceOptions}
+                  width="250px"
+                  dropdownWidth="335px"
+                  closeOverlay={true}
+                />
+              </DestinationSection>
+            </>
+            )
+            }
             <Heading>Environment variables</Heading>
             <Helper>
               Set environment variables for your secrets and environment-specific
@@ -206,8 +207,8 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
               fileUpload={true}
               secretOption={true}
             />
-           </Wrapper> 
-           <SaveButton
+          </Wrapper>
+          <SaveButton
             disabled={this.isDisabled()}
             text="Create env group"
             clearPosition={true}

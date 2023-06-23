@@ -83,8 +83,7 @@ const ProvisionerFlow: React.FC<Props> = ({}) => {
                   <Icon src={providerInfo.icon} />
                   <BlockTitle>{providerInfo.label}</BlockTitle>
                   <BlockDescription>
-                      {isUsageExceeded ||
-                      (provider === "azure" && !currentProject?.azure_enabled) ||
+                      {(provider === "azure" && !currentProject?.azure_enabled) ||
                       provider === "gcp" ? providerInfo.tagline : "Hosted in your own cloud"}
                   </BlockDescription>
                 </Block>

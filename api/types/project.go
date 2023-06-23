@@ -11,6 +11,7 @@ type Project struct {
 	StacksEnabled          bool    `json:"stacks_enabled"`
 	CapiProvisionerEnabled bool    `json:"capi_provisioner_enabled"`
 	SimplifiedViewEnabled  bool    `json:"simplified_view_enabled"`
+	AzureEnabled           bool    `json:"azure_enabled"`
 }
 
 type FeatureFlags struct {
@@ -20,6 +21,7 @@ type FeatureFlags struct {
 	ManagedDatabasesEnabled    string `json:"managed_databases_enabled,omitempty"`
 	CapiProvisionerEnabled     string `json:"capi_provisioner_enabled,omitempty"`
 	SimplifiedViewEnabled      string `json:"simplified_view_enabled,omitempty"`
+	AzureEnabled               bool   `json:"azure_enabled,omitempty"`
 }
 
 type CreateProjectRequest struct {

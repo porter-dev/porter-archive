@@ -65,14 +65,14 @@ const ProvisionerFlow: React.FC<Props> = ({}) => {
                   key={i}
                   disabled={
                     isUsageExceeded ||
-                    (provider === "azure" && !featurePreview) ||
+                    (provider === "azure" && !currentProject?.azure_enabled) ||
                     provider === "gcp"
                   }
                   onClick={() => {
                     if (
                       !(
                         isUsageExceeded ||
-                        (provider === "azure" && !featurePreview) ||
+                        (provider === "azure" && !currentProject?.azure_enabled) ||
                         provider === "gcp"
                       )
                     ) {
@@ -83,7 +83,8 @@ const ProvisionerFlow: React.FC<Props> = ({}) => {
                   <Icon src={providerInfo.icon} />
                   <BlockTitle>{providerInfo.label}</BlockTitle>
                   <BlockDescription>
-                    {providerInfo.tagline || "Hosted in your own cloud"}
+                      {(provider === "azure" && !currentProject?.azure_enabled) ||
+                      provider === "gcp" ? providerInfo.tagline : "Hosted in your own cloud"}
                   </BlockDescription>
                 </Block>
               );

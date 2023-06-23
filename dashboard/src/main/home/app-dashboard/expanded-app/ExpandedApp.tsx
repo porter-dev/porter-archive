@@ -301,8 +301,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             repo_name: tempPorterApp.repo_name,
             git_branch: tempPorterApp.git_branch,
             build_context: tempPorterApp.build_context,
-            builder: !_.isEmpty(tempPorterApp.dockerfile) ? "null" : tempPorterApp.builder,
-            buildpacks: !_.isEmpty(tempPorterApp.dockerfile) ? "null" : tempPorterApp.buildpacks.join(","),
+            builder: !_.isEmpty(tempPorterApp.dockerfile) || !_.isEmpty(tempPorterApp.image_repo_uri) ? "null" : tempPorterApp.builder,
+            buildpacks: !_.isEmpty(tempPorterApp.dockerfile) || !_.isEmpty(tempPorterApp.image_repo_uri) ? "null" : tempPorterApp.buildpacks.join(","),
             dockerfile: tempPorterApp.dockerfile,
             ...options,
             override_release: true,
@@ -407,7 +407,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       }
     } catch (error) {
-      console.log(error);
+      // console.log(error);
     }
   };
 

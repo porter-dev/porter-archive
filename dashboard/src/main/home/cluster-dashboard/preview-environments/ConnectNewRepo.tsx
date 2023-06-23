@@ -16,10 +16,10 @@ import CheckboxRow from "components/form-components/CheckboxRow";
 import BranchFilterSelector from "./components/BranchFilterSelector";
 import Helper from "components/form-components/Helper";
 import NamespaceLabels, { KeyValueType } from "./components/NamespaceLabels";
-import ActionConfEditorStack from "components/repo-selector/ActionConfEditorStack";
 import AnimateHeight from "react-animate-height";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
+import ConnectNewRepoActionConfEditor from "./ConnectNewRepoActionConfEditor";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -77,7 +77,7 @@ const ConnectNewRepo: React.FC = () => {
         });
         setFilteredRepos(newFilteredRepos || []);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -217,7 +217,7 @@ const ConnectNewRepo: React.FC = () => {
         readOnly={false}
         filteredRepos={filteredRepos}
       /> */}
-      <ActionConfEditorStack
+      <ConnectNewRepoActionConfEditor
         actionConfig={actionConfig}
         setActionConfig={(actionConfig: ActionConfigType) => {
           setActionConfig((currentActionConfig: ActionConfigType) => ({
@@ -509,7 +509,7 @@ const StyledAdvancedBuildSettings = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
-      props.showSettings ? "" : "rotate(-90deg)"};
+    props.showSettings ? "" : "rotate(-90deg)"};
   }
 `;
 const AdvancedBuildTitle = styled.div`

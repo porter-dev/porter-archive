@@ -167,7 +167,7 @@ func (t *helmRevisionsCountTracker) Run(ctx context.Context) error {
 					return
 				}
 
-				k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(&kubernetes.OutOfClusterConfig{
+				k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(ctx, &kubernetes.OutOfClusterConfig{
 					Cluster:                   cluster,
 					Repo:                      t.repo,
 					DigitalOceanOAuth:         t.doConf,
@@ -188,7 +188,7 @@ func (t *helmRevisionsCountTracker) Run(ctx context.Context) error {
 				log.Printf("fetched %d namespaces for cluster ID %d", len(namespaces.Items), cluster.ID)
 
 				for _, ns := range namespaces.Items {
-					agent, err := utils.NewRetryHelmAgent(&helm.Form{
+					agent, err := utils.NewRetryHelmAgent(ctx, &helm.Form{
 						Cluster:                   cluster,
 						Namespace:                 ns.Name,
 						Repo:                      t.repo,

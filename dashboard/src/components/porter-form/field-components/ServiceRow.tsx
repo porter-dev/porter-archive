@@ -35,7 +35,7 @@ export default class ServiceRow extends Component<PropsType, StateType> {
                 <Name>{name}</Name> <Dash>-</Dash> <IP>{clusterIP}</IP>
               </Flex>
               <TagWrapper>
-                Namespace: <NamespaceTag>{namespace}</NamespaceTag>
+                Namespace: <NamespaceTag>{namespace.startsWith("porter-stack-") ? namespace.replace("porter-stack-", "") : namespace}</NamespaceTag>
               </TagWrapper>
             </StyledServiceRow>
           )}

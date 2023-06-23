@@ -1,24 +1,21 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import github from "assets/github-white.png";
 
 import api from "shared/api";
-import { ActionConfigType, RepoType } from "shared/types";
+import { RepoType } from "shared/types";
 import { Context } from "shared/Context";
 
-import Loading from "../Loading";
-import SearchBar from "../SearchBar";
 import DynamicLink from "components/DynamicLink";
-import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
-import Text from "components/porter/Text";
-import { search } from "../../shared/search";
+import Loading from "components/Loading";
+import SearchBar from "components/SearchBar";
+import ProviderSelector from "./ProviderSelector";
+import { PorterApp } from "../types/porterApp";
 
 type Props = {
-  actionConfig: ActionConfigType | null;
-  setActionConfig: (x: ActionConfigType) => void;
-  userId?: number;
   readOnly: boolean;
-  filteredRepos?: string[];
+  updatePorterApp: (attrs: Partial<PorterApp>) => void;
+  git_repo_name: string;
 };
 
 type Provider =
@@ -33,46 +30,32 @@ type Provider =
     integration_id: number;
   };
 
-// Sort provider by name if it's github or instance url if it's gitlab
-const sortProviders = (providers: Provider[]) => {
-  const githubProviders = providers.filter(
-    (provider) => provider.provider === "github"
-  );
-
-  const gitlabProviders = providers.filter(
-    (provider) => provider.provider === "gitlab"
-  );
-
-  const githubSortedProviders = githubProviders.sort((a, b) => {
-    if (a.provider === "github" && b.provider === "github") {
-      return a.name.localeCompare(b.name);
-    }
-  });
-
-  const gitlabSortedProviders = gitlabProviders.sort((a, b) => {
-    if (a.provider === "gitlab" && b.provider === "gitlab") {
-      return a.instance_url.localeCompare(b.instance_url);
-    }
-  });
-  return [...gitlabSortedProviders, ...githubSortedProviders];
-};
-
-const RepoList: React.FC<Props> = ({
-  actionConfig,
-  setActionConfig,
-  userId,
+const RepositorySelector: React.FC<Props> = ({
   readOnly,
-  filteredRepos,
+  git_repo_name,
+  updatePorterApp,
 }) => {
   const [providers, setProviders] = useState([]);
   const [currentProvider, setCurrentProvider] = useState(null);
   const [repos, setRepos] = useState<RepoType[]>([]);
   const [repoLoading, setRepoLoading] = useState(true);
-  const [selectedRepo, setSelectedRepo] = useState(null);
   const [repoError, setRepoError] = useState(false);
   const [searchFilter, setSearchFilter] = useState<string>("");
   const [hasProviders, setHasProviders] = useState(true);
   const { currentProject, setCurrentError } = useContext(Context);
+
+  // Sort provider by name if it's github or instance url if it's gitlab
+  const sortProviders = (providers: Provider[]) => {
+    const githubProviders = providers.filter(
+      (provider) => provider.provider === "github"
+    );
+
+    return githubProviders.sort((a, b) => {
+      if (a.provider === "github" && b.provider === "github") {
+        return a.name.localeCompare(b.name);
+      }
+    });
+  };
 
   useEffect(() => {
     let isSubscribed = true;
@@ -114,30 +97,8 @@ const RepoList: React.FC<Props> = ({
     } catch (error) { }
   };
 
-  const loadGitlabRepos = async (integrationId: number) => {
-    try {
-      const res = await api.getGitlabRepos<string[]>(
-        "<token>",
-        {
-          searchTerm: searchFilter,
-        },
-        { project_id: currentProject.id, integration_id: integrationId }
-      );
-      const repos: RepoType[] = res.data.map((repo) => ({
-        FullName: repo,
-        Kind: "gitlab",
-        GitIntegrationId: integrationId,
-      }));
-      return repos;
-    } catch (error) { }
-  };
-
   const loadRepos = (provider: any) => {
-    if (provider.provider === "github") {
-      return loadGithubRepos(provider.installation_id);
-    } else {
-      return loadGitlabRepos(provider.integration_id);
-    }
+    return loadGithubRepos(provider.installation_id);
   };
 
   useEffect(() => {
@@ -167,39 +128,21 @@ const RepoList: React.FC<Props> = ({
 
   // clear out actionConfig and SelectedRepository if new search is performed
   useEffect(() => {
-    setActionConfig({
-      git_repo: "",
-      image_repo_uri: "",
-      git_branch: "",
+    updatePorterApp({
+      repo_name: "",
       git_repo_id: 0,
-      kind: "github",
+      git_branch: "",
+      image_repo_uri: "",
     });
-    setSelectedRepo(null);
   }, [searchFilter]);
 
   const setRepo = (x: RepoType) => {
-    let repoConfig: any;
-    if (x.Kind === "gitlab") {
-      repoConfig = {
-        kind: "gitlab",
-        git_repo: x.FullName,
-        gitlab_integration_id: x.GitIntegrationId,
-      };
-    } else {
-      repoConfig = {
-        kind: "github",
-        git_repo: x.FullName,
-        git_repo_id: x.GHRepoID,
-      };
-    }
-
-    const updatedConfig = {
-      ...actionConfig,
-      ...repoConfig,
-    };
-
-    setActionConfig(updatedConfig);
-    setSelectedRepo(x.FullName);
+    updatePorterApp({
+      repo_name: x.FullName,
+      git_repo_id: x.GHRepoID,
+      git_branch: "",
+      image_repo_uri: "",
+    });
   };
 
   const renderRepoList = () => {
@@ -212,31 +155,17 @@ const RepoList: React.FC<Props> = ({
     } else if (repoError) {
       return <LoadingWrapper>Error loading repos.</LoadingWrapper>;
     } else if (!Array.isArray(repos) || repos.length === 0) {
-      if (currentProvider.provider === "gitlab") {
-        return (
-          <LoadingWrapper>
-            GitLab could not be reached.
-            <A
-              to={`${window.location.origin}/api/projects/${currentProject.id}/oauth/gitlab?integration_id=${currentProvider.integration_id}`}
-            >
-              Connect your GitLab account to Porter
-            </A>
-            or select another Git provider.
-          </LoadingWrapper>
-        );
-      } else {
-        return (
-          <LoadingWrapper>
-            No connected Github repos found. You can
-            <A
-              to={`${window.location.origin}/api/integrations/github-app/install`}
-            >
-              Install Porter in more repositories
-            </A>
-            or select another git provider.
-          </LoadingWrapper>
-        );
-      }
+      return (
+        <LoadingWrapper>
+          No connected Github repos found. You can
+          <A
+            to={`${window.location.origin}/api/integrations/github-app/install`}
+          >
+            Install Porter in more repositories
+          </A>
+          or select another git provider.
+        </LoadingWrapper>
+      );
     }
 
     // show 10 most recently used repos if user hasn't searched anything yet
@@ -263,17 +192,14 @@ const RepoList: React.FC<Props> = ({
       return <LoadingWrapper>No matching Github repos found.</LoadingWrapper>;
     } else {
       return results.map((repo: RepoType, i: number) => {
-        const shouldDisable = !!filteredRepos?.find(
-          (filteredRepo) => repo.FullName === filteredRepo
-        );
         return (
           <RepoName
             key={i}
-            isSelected={repo.FullName === selectedRepo}
+            isSelected={repo.FullName === git_repo_name}
             lastItem={i === repos.length - 1}
             onClick={() => setRepo(repo)}
             readOnly={readOnly}
-            disabled={shouldDisable}
+            disabled={false}
           >
             {repo.Kind === "github" ? (
               <img src={github} alt={"github icon"} />
@@ -281,7 +207,6 @@ const RepoList: React.FC<Props> = ({
               <i className="devicon-gitlab-plain colored" />
             )}
             {repo.FullName}
-            {shouldDisable && ` - This repo was already added`}
           </RepoName>
         );
       });
@@ -333,7 +258,7 @@ const RepoList: React.FC<Props> = ({
   return <>{renderExpanded()}</>;
 };
 
-export default RepoList;
+export default RepositorySelector;
 
 const GitHubIcon = styled.img`
   width: 20px;
@@ -382,148 +307,6 @@ const ConnectToGithubButton = styled.a`
     justify-content: center;
   }
 `;
-
-const Flex = styled.div`
-  padding: 20px 50px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const ProviderSelector = (props: {
-  values: any[];
-  currentValue: any;
-  onChange: (provider: any) => void;
-}) => {
-  const wrapperRef = useRef();
-  const { values, currentValue, onChange } = props;
-  const [isOpen, setIsOpen] = useState(false);
-  const icon = `devicon-${currentValue?.provider}-plain colored`;
-  useOutsideAlerter(wrapperRef, () => {
-    setIsOpen(false);
-  });
-
-  if (!currentValue) {
-    return (
-      <ProviderSelectorStyles.Wrapper>
-        <Loading />
-      </ProviderSelectorStyles.Wrapper>
-    );
-  }
-
-  return (
-    <>
-      <ProviderSelectorStyles.Wrapper ref={wrapperRef} isOpen={isOpen}>
-        <ProviderSelectorStyles.Icon className={icon} />
-
-        <ProviderSelectorStyles.Button
-          onClick={() => setIsOpen((prev) => !prev)}
-        >
-          {currentValue?.name || currentValue?.instance_url}
-        </ProviderSelectorStyles.Button>
-        <i className="material-icons">arrow_drop_down</i>
-        {isOpen ? (
-          <>
-            <ProviderSelectorStyles.OptionWrapper>
-              {values.map((provider) => {
-                return (
-                  <ProviderSelectorStyles.Option
-                    onClick={() => {
-                      setIsOpen(false);
-                      onChange(provider);
-                    }}
-                  >
-                    <ProviderSelectorStyles.Icon
-                      className={`devicon-${provider?.provider}-plain colored`}
-                    />
-                    <ProviderSelectorStyles.Text>
-                      {provider?.name || provider?.instance_url}
-                    </ProviderSelectorStyles.Text>
-                  </ProviderSelectorStyles.Option>
-                );
-              })}
-            </ProviderSelectorStyles.OptionWrapper>
-          </>
-        ) : null}
-      </ProviderSelectorStyles.Wrapper>
-    </>
-  );
-};
-
-const ProviderSelectorStyles = {
-  Wrapper: styled.div<{ isOpen?: boolean }>`
-    position: relative;
-    margin-bottom: 10px;
-    height: 40px;
-    display: flex;
-    min-width: 50%;
-    cursor: pointer;
-    margin-right: 10px;
-    margin-left: 2px;
-    align-items: center;
-
-    > i {
-      margin-left: -26px;
-      margin-right: 10px;
-      z-index: 0;
-      transform: ${(props) => (props.isOpen ? "rotate(180deg)" : "")};
-    }
-  `,
-  Button: styled.div`
-    height: 100%;
-    font-weight: bold;
-    font-size: 14px;
-    border-bottom: 0;
-    z-index: 999;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 6px 15px;
-    padding-left: 40px;
-    padding-right: 28px;
-    border-bottom: 2px solid #ffffff;
-    padding-top: 11px;
-  `,
-  OptionWrapper: styled.div`
-    top: 40px;
-    position: absolute;
-    background: #37393f;
-    border-radius: 3px;
-    max-height: 300px;
-    overflow-y: auto;
-    width: calc(100% - 4px);
-    box-shadow: 0 8px 20px 0px #00000088;
-    z-index: 999;
-  `,
-  Option: styled.div`
-    display: flex;
-    align-items: center;
-
-    :hover {
-      background-color: #ffffff22;
-    }
-  `,
-  Icon: styled.span`
-    font-size: 20px;
-    filter: invert(1);
-    margin-left: 9px;
-    margin-right: -29px;
-    color: white;
-  `,
-  Text: styled.div`
-    font-weight: bold;
-    font-size: 14px;
-    margin-left: 40px;
-    height: 45px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 8px 10px;
-    width: 100%;
-    padding-top: 14px;
-    padding-left: 0;
-  `,
-};
 
 const RepoListWrapper = styled.div`
   border: 1px solid #ffffff55;

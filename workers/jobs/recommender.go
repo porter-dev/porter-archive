@@ -195,7 +195,7 @@ func (n *recommender) Run(ctx context.Context) error {
 			continue
 		}
 
-		k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(&kubernetes.OutOfClusterConfig{
+		k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(ctx, &kubernetes.OutOfClusterConfig{
 			Cluster:                   cluster,
 			Repo:                      n.repo,
 			DigitalOceanOAuth:         n.doConf,

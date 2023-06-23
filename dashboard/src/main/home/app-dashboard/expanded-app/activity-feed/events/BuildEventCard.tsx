@@ -195,7 +195,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
           <Text color="helper">{getDuration(event)}</Text>
         </Container>
       </Container>
-      <Spacer y={1} />
+      <Spacer y={0.5} />
       <Container row spaced>
         <Container row>
           <Icon height="16px" src={getStatusIcon(event.status)} />

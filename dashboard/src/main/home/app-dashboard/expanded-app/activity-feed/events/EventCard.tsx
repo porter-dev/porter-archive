@@ -40,7 +40,6 @@ export const StyledEventCard = styled.div<{ row?: boolean }>`
   display: flex;
   flex-direction: ${({ row }) => row ? "row" : "column"};
   justify-content: space-between;
-  height: 85px;
   border-radius: 5px;
   background: ${({ theme }) => theme.fg};
   border: 1px solid ${({ theme }) => theme.border};

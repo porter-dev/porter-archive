@@ -54,7 +54,7 @@ export default class EnvGroup extends Component<PropsType, StateType> {
 
             <TagWrapper>
               Namespace
-              <NamespaceTag>{namespace}</NamespaceTag>
+              <NamespaceTag>{namespace.startsWith("porter-stack-") ? namespace.replace("porter-stack-", "") : namespace}</NamespaceTag>
             </TagWrapper>
           </BottomWrapper>
 

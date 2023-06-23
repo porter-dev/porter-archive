@@ -31,34 +31,58 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
   const [servicePrincipalKey, setServicePrincipalKey] = useState("");
   const [tenantId, setTenantId] = useState("");
   const [subscriptionId, setSubscriptionId] = useState("");
-  const [roleStatus, setRoleStatus] = useState("");
-  const [errorMessage, setErrorMessage] = useState(undefined);
+  const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const saveCredentials = () => {
+  const saveCredentials = async () => {
     setIsLoading(true);
-    api
-      .createAzureIntegration(
-        "<token>",
-        {
-          azure_client_id: clientId,
-          azure_subscription_id: subscriptionId,
-          azure_tenant_id: tenantId,
-          service_principal_key: servicePrincipalKey,
-        },
-        {
-          id: currentProject.id,
+    if (currentProject == null) {
+      setErrorMessage("Current project is not defined.");
+    } else if (subscriptionId.trim() === "") {
+      setErrorMessage("Subscription ID is required");
+    } else if (clientId.trim() === "") {
+      setErrorMessage("App ID is required");
+    } else if (tenantId.trim() === "") {
+      setErrorMessage("Tenant ID is required");
+    } else if (servicePrincipalKey.trim() === "") {
+      setErrorMessage("Password is required");
+    } else {
+      try {
+        const azureIntegrationResponse = await api.createAzureIntegration(
+          "<token>",
+          {
+            azure_client_id: clientId,
+            azure_subscription_id: subscriptionId,
+            azure_tenant_id: tenantId,
+            service_principal_key: servicePrincipalKey,
+          },
+          {
+            id: currentProject.id,
+          });
+        const azureIntegrationId = azureIntegrationResponse.data.cloud_provider_credentials_id;
+        proceed(azureIntegrationId)
+      } catch (err) {
+        if (err.response?.data?.error) {
+          setErrorMessage(err.response?.data?.error.replace("unknown: ", ""));
+        } else {
+          setErrorMessage("Something went wrong, please try again later.");
         }
-      )
-      .then(({ data }) => {
-        setIsLoading(false);
-        proceed(data.id);
-      })
-      .catch((err) => {
-        console.error(err);
-        setErrorMessage(err);
-        setIsLoading(false);
-      });
+      }
+    }
+
+    setIsLoading(false);
+  };
+
+  const getButtonStatus = () => {
+    if (isLoading) {
+      return "loading";
+    } else if (errorMessage !== "") {
+      return <Error
+        message={errorMessage}
+      />;
+    } else {
+      return null;
+    }
   };
 
   const renderContent = () => {
@@ -86,12 +110,23 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
           />
           <Spacer y={1} />
           <Input
-            label={<Flex>Client ID</Flex>}
+            label={<Flex>App ID</Flex>}
             value={clientId}
             setValue={(e) => {
               setClientId(e.trim());
             }}
             placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
+            width="100%"
+          />
+          <Spacer y={1} />
+          <Input
+            type="password"
+            label={<Flex>Password</Flex>}
+            value={servicePrincipalKey}
+            setValue={(e) => {
+              setServicePrincipalKey(e.trim());
+            }}
+            placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
             width="100%"
           />
           <Spacer y={1} />
@@ -104,86 +139,11 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
             placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
             width="100%"
           />
-          <Spacer y={1} />
-          <Input
-            type="password"
-            label={<Flex>Client Secret</Flex>}
-            value={servicePrincipalKey}
-            setValue={(e) => {
-              setServicePrincipalKey(e.trim());
-            }}
-            placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
-            width="100%"
-          />
         </Fieldset>
         <Spacer y={1} />
         <Button
-          onClick={() => {
-            saveCredentials();
-          }}
-          status={
-            errorMessage ? (
-              <Error
-                message={errorMessage}
-                ctaText="Troubleshooting steps"
-                errorModalContents={
-                  <>
-                    <Text size={16}>Granting Porter access to Azure</Text>
-                    <Spacer y={1} />
-                    <Text color="helper">
-                      Porter needs access to your Azure subscription in order to
-                      create infrastructure. You can grant Porter access to
-                      Azure by following these steps:
-                    </Text>
-                    <Spacer y={1} />
-                    <Step number={1}>
-                      <Link
-                        to="https://aws.amazon.com/resources/create-account/"
-                        target="_blank"
-                      >
-                        Create an AWS account
-                      </Link>
-                      <Spacer inline width="5px" />
-                      if you don't already have one.
-                    </Step>
-                    <Spacer y={1} />
-                    <Step number={2}>
-                      Once you are logged in to your AWS account,
-                      <Spacer inline width="5px" />
-                      <Link
-                        to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account"
-                        target="_blank"
-                      >
-                        copy your account ID
-                      </Link>
-                      .
-                    </Step>
-                    <Spacer y={1} />
-                    <Step number={3}>
-                      Fill in your account ID on Porter and select "Grant
-                      permissions".
-                    </Step>
-                    <Spacer y={1} />
-                    <Step number={4}>
-                      After being redirected to AWS, select "Create stack" on
-                      the AWS console.
-                    </Step>
-                    <Spacer y={1} />
-                    <Step number={5}>
-                      Wait until the stack status has changed from
-                      "CREATE_IN_PROGRESS" to "CREATE_COMPLETE".
-                    </Step>
-                    <Spacer y={1} />
-                    <Step number={6}>
-                      Return to Porter and select "Continue".
-                    </Step>
-                  </>
-                }
-              />
-            ) : (
-              roleStatus
-            )
-          }
+          onClick={saveCredentials}
+          status={getButtonStatus()}
         >
           Continue
         </Button>

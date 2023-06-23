@@ -53,7 +53,7 @@ const GithubConnectModal: React.FC<Props> = ({
     if (accessError) {
       return (
         <>
-          <Text color="helper">To deploy from GitHub, authorize Porter to view your repos.</Text> 
+          <Text color="helper">To deploy from GitHub, authorize Porter to view your repos.</Text>
           <ListWrapper>
             <Helper>
               No connected repos found.
@@ -150,20 +150,6 @@ const GitIcon = styled.img`
   filter: brightness(120%);
 `;
 
-const Tab = styled.span`
-  margin-left: 20px;
-  height: 1px;
-`;
-
-const ModalHeader = styled.div`
-  font-weight: 600;
-  font-size: 16px;
-  font-family: monospace;
-  height: 40px;
-  display: flex;
-  align-items: center;
-`;
-
 const ListWrapper = styled.div`
   width: 100%;
   height: 240px;
@@ -206,7 +192,7 @@ const ConnectToGithubButton = styled.a`
     props.disabled ? "#aaaabbee" : "#2E3338"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#353a3e"};
+    props.disabled ? "" : "#353a3e"};
   }
 
   > i {
@@ -223,7 +209,7 @@ const ConnectToGithubButton = styled.a`
   }
   &:hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#353a3e"};
+    props.disabled ? "" : "#353a3e"};
   }
 
   &:not([disabled]) {
@@ -235,8 +221,4 @@ const GitHubIcon = styled.img`
   width: 20px;
   filter: brightness(150%);
   margin-right: 10px;
-`;
-const ButtonWrapper = styled.div`
-  display: flex;
-  justify-content: space-between;
 `;

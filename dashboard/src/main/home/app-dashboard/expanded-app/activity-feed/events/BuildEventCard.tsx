@@ -203,6 +203,8 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
           {renderStatusText(event)}
           <Spacer inline x={1} />
           {renderInfoCta(event)}
+          <Spacer inline x={1} />
+          {/* <Link to={`/apps/${appData.app.name}/events/${event.id}`} hasunderline>View event</Link> */}
         </Container>
       </Container>
       {showModal && (

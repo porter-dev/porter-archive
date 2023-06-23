@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
-import { RouteComponentProps, withRouter } from "react-router";
+import { RouteComponentProps, useParams, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
 
@@ -62,6 +62,23 @@ const icons = [
   web,
 ];
 
+const validTabs = [
+  "activity",
+  "overview",
+  "logs",
+  "metrics",
+  "debug",
+  "environment",
+  "build-settings",
+  "settings",
+] as const;
+const DEFAULT_TAB = "activity";
+type ValidTab = typeof validTabs[number];
+interface Params {
+  eventId?: string;
+  tab?: ValidTab;
+}
+
 const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const {
     currentCluster,
@@ -82,7 +99,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     false
   );
 
-  const [tab, setTab] = useState("activity");
   const [saveValuesStatus, setSaveValueStatus] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [bannerLoading, setBannerLoading] = useState<boolean>(false);
@@ -98,7 +114,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   const [expandedJob, setExpandedJob] = useState(null);
   const [logs, setLogs] = useState<Log[]>([]);
-  const [modalVisible, setModalVisible] = useState(false);
 
   const [services, setServices] = useState<Service[]>([]);
   const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
@@ -108,6 +123,32 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [porterApp, setPorterApp] = useState<PorterApp>();
   // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
   const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
+
+  const { eventId, tab } = useParams<Params>();
+  const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
+
+  useEffect(() => {
+    setBannerLoading(true);
+    getBuildLogs().then(() => {
+      setBannerLoading(false);
+    });
+  }, [appData]);
+
+  useEffect(() => {
+    if (!_.isEqual(_.omitBy(porterApp, _.isEmpty), _.omitBy(tempPorterApp, _.isEmpty))) {
+      setButtonStatus("");
+      setShowUnsavedChangesBanner(true);
+    } else {
+      setShowUnsavedChangesBanner(false);
+    }
+  }, [tempPorterApp, porterApp]);
+
+  useEffect(() => {
+    const { appName } = props.match.params as any;
+    if (currentCluster && appName && currentProject) {
+      getPorterApp();
+    }
+  }, [currentCluster]);
 
   // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
   const getPorterApp = async () => {
@@ -330,22 +371,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setButtonStatus(<Error message={errMessage} />);
     }
   };
-
-  useEffect(() => {
-    setBannerLoading(true);
-    getBuildLogs().then(() => {
-      setBannerLoading(false);
-    });
-  }, [appData]);
-
-  useEffect(() => {
-    if (!_.isEqual(_.omitBy(porterApp, _.isEmpty), _.omitBy(tempPorterApp, _.isEmpty))) {
-      setButtonStatus("");
-      setShowUnsavedChangesBanner(true);
-    } else {
-      setShowUnsavedChangesBanner(false);
-    }
-  }, [tempPorterApp, porterApp]);
 
   const getBuildLogs = async () => {
     try {
@@ -635,13 +660,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     [appData?.chart]
   );
 
-  useEffect(() => {
-    const { appName } = props.match.params as any;
-    if (currentCluster && appName && currentProject) {
-      getPorterApp();
-    }
-  }, [currentCluster]);
-
   const getReadableDate = (s: string) => {
     const ts = new Date(s);
     const date = ts.toLocaleDateString();
@@ -669,7 +687,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   };
 
   const renderTabContents = () => {
-    switch (tab) {
+    switch (selectedTab) {
       case "overview":
         return (
           <>
@@ -766,23 +784,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Button>
           </>
         );
-      case "events":
-        return <EventsTab currentChart={appData.chart} />;
-      case "activity":
-        return (
-          <ActivityFeed
-            chart={appData.chart}
-            stackName={appData?.app?.name}
-            appData={appData}
-          />
-        );
       case "logs":
         return <LogSection currentChart={appData.chart} services={services} />;
       case "metrics":
         return <MetricsSection currentChart={appData.chart} />;
-      case "status":
+      case "debug":
         return <StatusSectionFC currentChart={appData.chart} />;
-      case "environment-variables":
+      case "environment":
         return (
           <EnvVariablesTab
             envVars={envVars}
@@ -795,37 +803,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             clearStatus={() => setButtonStatus("")}
           />
         );
-      case "pre-deploy":
-        return (
-          <>
-            {!isLoading && !services.some(Service.isRelease) && (
-              <>
-                <Fieldset>
-                  <Container row>
-                    <PlaceholderIcon src={notFound} />
-                    <Text color="helper">
-                      No pre-deploy jobs were found. You can add a pre-deploy
-                      job in the Overview tab to perform an operation before
-                      your application services deploy, like a database
-                      migration.
-                    </Text>
-                  </Container>
-                </Fieldset>
-                <Spacer y={0.5} />
-              </>
-            )}
-            {services.some(Service.isRelease) && (
-              <JobRuns
-                lastRunStatus="all"
-                namespace={appData.chart?.namespace}
-                sortType="Newest"
-                releaseName={appData.app.name + "-r"}
-              />
-            )}
-          </>
-        );
       default:
-        return <div>Tab not found</div>;
+        return <ActivityFeed
+          chart={appData.chart}
+          stackName={appData?.app?.name}
+          appData={appData}
+          eventId={eventId}
+        />;
     }
   };
 
@@ -1029,10 +1013,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   { label: "Overview", value: "overview" },
                   hasBuiltImage && { label: "Logs", value: "logs" },
                   hasBuiltImage && { label: "Metrics", value: "metrics" },
-                  hasBuiltImage && { label: "Debug", value: "status" },
+                  hasBuiltImage && { label: "Debug", value: "debug" },
                   {
                     label: "Environment",
-                    value: "environment-variables",
+                    value: "environment",
                   },
                   appData.app.git_repo_id && {
                     label: "Build settings",
@@ -1040,12 +1024,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   },
                   { label: "Settings", value: "settings" },
                 ].filter((x) => x)}
-                currentTab={tab}
+                currentTab={selectedTab}
                 setCurrentTab={(tab: string) => {
                   if (buttonStatus !== "") {
                     setButtonStatus("");
                   }
-                  setTab(tab);
+                  props.history.push(`/apps/${appData.app.name}/${tab}`);
                 }}
               />
               <Spacer y={1} />

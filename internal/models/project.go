@@ -65,6 +65,7 @@ type Project struct {
 	APITokensEnabled       bool
 	CapiProvisionerEnabled bool
 	SimplifiedViewEnabled  bool
+	AzureEnabled           bool
 }
 
 // ToProjectType generates an external types.Project to be shared over REST
@@ -86,5 +87,6 @@ func (p *Project) ToProjectType() *types.Project {
 		APITokensEnabled:       p.APITokensEnabled,
 		CapiProvisionerEnabled: p.CapiProvisionerEnabled,
 		SimplifiedViewEnabled:  p.SimplifiedViewEnabled,
+		AzureEnabled:           p.AzureEnabled,
 	}
 }

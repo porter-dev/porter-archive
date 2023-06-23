@@ -269,6 +269,7 @@ export interface ProjectType {
   api_tokens_enabled: boolean;
   stacks_enabled: boolean;
   simplified_view_enabled: boolean;
+  azure_enabled: boolean;
   roles: {
     id: number;
     kind: string;

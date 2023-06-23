@@ -228,9 +228,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setIsClicked(true);
 
     let loadBalancerObj = new LoadBalancer({});
-    loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
-    loadBalancerObj.wildcardDomain = wildCardDomain;
-    //loadBalancerObj.enableS3AccessLogs = accessS3Logs;
     if (loadBalancerType) {
       loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
       loadBalancerObj.wildcardDomain = wildCardDomain;
@@ -241,16 +238,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       if (IPAllowList) {
         loadBalancerObj.allowlistIpRanges = IPAllowList
       }
-      // if (accessS3Logs) {
-      //   loadBalancerObj.enableS3AccessLogs = accessS3Logs;
-      // }
-
-      // if (accessS3Logs) {
-      //   loadBalancerObj.enableS3AccessLogs = accessS3Logs;
-      // }
-      // else {
-      //   loadBalancerObj.enableS3AccessLogs = false;
-      // }
       if (wafV2Enabled) {
         loadBalancerObj.enableWafv2 = wafV2Enabled;
       }

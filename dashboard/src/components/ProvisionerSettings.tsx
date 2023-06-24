@@ -183,21 +183,19 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return false;
   }
   function validateAllInputs() {
-
-    if (validateInput(wildCardDomain) != false) {
-      setInputError(true);
-      return true;
-    }
-    if (validateTags(awsTags)) {
-      setInputError(true);
-      return true;
-    }
-    if (validateIPInput(IPAllowList)) {
-      setInputError(true);
+    if (validateInput(wildCardDomain) != false || validateTags(awsTags) || validateIPInput(IPAllowList)) {
+      if (inputError != true) {
+        setInputError(true);
+      }
       return true;
     }
 
+    if (inputError != false) {
+      setInputError(false);
+    }
+    return false;
   }
+
   const isDisabled = () => {
     return (
       !user.email.endsWith("porter.run") &&
@@ -209,6 +207,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     );
   };
   function convertStringToTags(tagString) {
+    console.log("convertStringToTags called")
     if (typeof tagString !== 'string' || tagString.trim() === '') {
       return [];
     }
@@ -225,6 +224,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return tags;
   }
   const createCluster = async () => {
+    console.log("createCluster called")
     setIsClicked(true);
 
     let loadBalancerObj = new LoadBalancer({});

@@ -100,7 +100,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       ((!clusterName && true) ||
         (isReadOnly && props.provisionerError === "") ||
         props.provisionerError === "" ||
-        currentCluster.status === "UPDATING" ||
+        currentCluster?.status === "UPDATING" ||
         isClicked)
     );
   };
@@ -225,8 +225,8 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     setIsReadOnly(
       props.clusterId &&
-      (currentCluster.status === "UPDATING" ||
-        currentCluster.status === "UPDATING_UNAVAILABLE")
+      (currentCluster?.status === "UPDATING" ||
+        currentCluster?.status === "UPDATING_UNAVAILABLE")
     );
     setClusterName(
       `${currentProject.name}-cluster-${Math.random()

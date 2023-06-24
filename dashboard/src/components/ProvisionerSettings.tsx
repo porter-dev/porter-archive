@@ -112,7 +112,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
-  const [inputError, setInputError] = useState<boolean>(false);
   const markStepStarted = async (step: string) => {
     try {
       await api.updateOnboardingStep("<token>", { step }, {});
@@ -182,22 +181,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     // If all tags are valid, return false (no error)
     return false;
   }
-  function validateAllInputs() {
-
-    if (validateInput(wildCardDomain) != false) {
-      setInputError(true);
-      return true;
-    }
-    if (validateTags(awsTags)) {
-      setInputError(true);
-      return true;
-    }
-    if (validateIPInput(IPAllowList)) {
-      setInputError(true);
-      return true;
-    }
-
-  }
   const isDisabled = () => {
     return (
       !user.email.endsWith("porter.run") &&
@@ -205,7 +188,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         (isReadOnly && props.provisionerError === "") ||
         props.provisionerError === "" ||
         currentCluster?.status === "UPDATING" ||
-        isClicked || validateAllInputs())
+        isClicked)
     );
   };
   function convertStringToTags(tagString) {

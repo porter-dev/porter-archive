@@ -187,13 +187,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       if (inputError != true) {
         setInputError(true);
       }
-      return true;
+      return false;
     }
 
     if (inputError != false) {
       setInputError(false);
     }
-    return false;
+    return true;
   }
 
   const isDisabled = () => {

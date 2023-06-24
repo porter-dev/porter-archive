@@ -122,6 +122,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   };
 
   const getStatus = () => {
+    console.log("getStatus called")
     if (isReadOnly && props.provisionerError == "") {
       return "Provisioning is still in progress...";
     } else if (errorMessage) {
@@ -140,6 +141,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return undefined;
   };
   const validateInput = (wildCardDomainer) => {
+    console.log("validateInput called")
     if (!wildCardDomainer) {
       return "Required for ALB Load Balancer"
     }
@@ -150,6 +152,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   };
   function validateIPInput(IPAllowList) {
+    console.log("validateIPInput called")
     // This regular expression checks for an IP address with a subnet mask.
     const regex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/;
     if (!IPAllowList) {
@@ -168,6 +171,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return false;
   }
   function validateTags(awsTags) {
+    console.log("validateTags called")
     // Regular expression t o check for a key-value pair format "key=value"
     const regex = /^[a-zA-Z0-9]+=[a-zA-Z0-9]+$/;
     // Split the input string by comma and remove any empty elements
@@ -183,22 +187,23 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return false;
   }
   function validateAllInputs() {
+    console.log("validateAllInputs called")
 
-    if (validateInput(wildCardDomain) != false) {
-      setInputError(true);
-      return true;
-    }
-    if (validateTags(awsTags)) {
-      setInputError(true);
-      return true;
-    }
-    if (validateIPInput(IPAllowList)) {
-      setInputError(true);
+    if (validateInput(wildCardDomain) != false || validateTags(awsTags) || validateIPInput(IPAllowList)) {
+      if (inputError != true) {
+        setInputError(true);
+      }
       return true;
     }
 
+    if (inputError != false) {
+      setInputError(false);
+    }
+    return false;
   }
+
   const isDisabled = () => {
+    console.log("isDisabled called")
     return (
       !user.email.endsWith("porter.run") &&
       ((!clusterName && true) ||
@@ -209,6 +214,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     );
   };
   function convertStringToTags(tagString) {
+    console.log("convertStringToTags called")
     if (typeof tagString !== 'string' || tagString.trim() === '') {
       return [];
     }
@@ -225,6 +231,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return tags;
   }
   const createCluster = async () => {
+    console.log("createCluster called")
     setIsClicked(true);
 
     let loadBalancerObj = new LoadBalancer({});

@@ -205,6 +205,7 @@ const PorterForm: React.FC<Props> = (props) => {
   };
 
   const submit = () => {
+    console.log("submitting");
     onSubmit(() => {
       if (props.redirectTabAfterSave != "") {
         setCurrentTab(props.redirectTabAfterSave);

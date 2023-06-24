@@ -192,7 +192,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           if (
             oldControllers &&
             oldControllers[object.metadata.uid]?.status?.conditions ==
-              object.status?.conditions
+            object.status?.conditions
           ) {
             return oldControllers;
           }
@@ -259,11 +259,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const syncedEnvGroups = props?.metadata
       ? props?.metadata["container.env"]
       : {};
+    console.log(syncedEnvGroups)
 
     const deletedEnvGroups = syncedEnvGroups?.deleted || [];
 
     const addedEnvGroups = syncedEnvGroups?.added || [];
 
+    console.log(addedEnvGroups)
     const addApplicationToEnvGroupPromises = addedEnvGroups.map(
       (envGroup: any) => {
         return api.addApplicationToEnvGroup(
@@ -463,7 +465,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   being deployed
                 </Header>
                 {props.currentChart.git_action_config &&
-                props.currentChart.git_action_config.gitlab_integration_id ? (
+                  props.currentChart.git_action_config.gitlab_integration_id ? (
                   <>
                     Navigate to the{" "}
                     <A
@@ -899,7 +901,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
               isFullscreen={true}
               setIsFullscreen={setIsFullscreen}
               currentChart={currentChart}
-              setInitData={() => {}}
+              setInitData={() => { }}
             />
           ) : (
             <StyledExpandedChart>
@@ -976,7 +978,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     shouldUpdate={
                       currentChart.latest_version &&
                       currentChart.latest_version !==
-                        currentChart.chart.metadata.version
+                      currentChart.chart.metadata.version
                     }
                     latestVersion={currentChart.latest_version}
                     upgradeVersion={handleUpgradeVersion}
@@ -1186,11 +1188,11 @@ const TabButton = styled.div`
   border-radius: 20px;
   text-shadow: 0px 0px 8px
     ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "#ffffff66" : "none"};
+    props.devOpsMode ? "#ffffff66" : "none"};
   cursor: pointer;
   :hover {
     color: ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "" : "#aaaabb99"};
+    props.devOpsMode ? "" : "#aaaabb99"};
   }
 
   > i {

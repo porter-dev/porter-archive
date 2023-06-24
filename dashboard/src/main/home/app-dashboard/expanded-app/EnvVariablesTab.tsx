@@ -18,6 +18,8 @@ interface EnvVariablesTabProps {
   setEnvVars: (x: any) => void;
   status: React.ReactNode;
   updatePorterApp: any;
+  syncedEnvGroups: PopulatedEnvGroup[];
+  setSyncedEnvGroups: (values: PopulatedEnvGroup) => void;
   clearStatus: () => void;
 }
 
@@ -26,11 +28,10 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   setEnvVars,
   status,
   updatePorterApp,
+  syncedEnvGroups,
+  setSyncedEnvGroups,
   clearStatus,
 }) => {
-
-
-  const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([])
   const [showEnvModal, setShowEnvModal] = useState(false);
   const [envGroups, setEnvGroups] = useState<any>([])
   const { currentCluster, currentProject } = useContext(Context);
@@ -79,7 +80,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
 
     try {
       const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
-      setSyncedEnvGroups(populatedEnvGroups)
+      setEnvGroups(populatedEnvGroups)
       // setLoading(false)
 
     } catch (error) {
@@ -124,7 +125,8 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       />}
       {!!syncedEnvGroups?.length && (
         <>
-          <Text>Synced environment groups</Text >
+          <Spacer y={0.5} />
+          <Text size={16}>Synced environment groups</Text >
           {syncedEnvGroups?.map((envGroup: any) => {
             return (
               <ExpandableEnvGroup

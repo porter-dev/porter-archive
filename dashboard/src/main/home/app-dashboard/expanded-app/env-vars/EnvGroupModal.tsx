@@ -63,7 +63,7 @@ const EnvGroupModal: React.FC<Props> = ({
           {},
           {
             id: currentProject.id,
-            namespace: "default",
+            namespace: "porter-stack-nginx",
             cluster_id: currentCluster.id,
           }
         )
@@ -158,7 +158,10 @@ const EnvGroupModal: React.FC<Props> = ({
 
   const onSubmit = () => {
     if (shouldSync) {
-      setSyncedEnvGroups(selectedEnvGroup);
+
+      syncedEnvGroups.push(selectedEnvGroup);
+      console.log(syncedEnvGroups)
+      setSyncedEnvGroups(syncedEnvGroups);
     }
     else {
       const _values = [...values];

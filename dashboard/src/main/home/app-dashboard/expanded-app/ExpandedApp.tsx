@@ -51,6 +51,7 @@ import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import EventsTab from "./EventsTab";
 import { PorterApp } from "../types/porterApp";
+import { PopulatedEnvGroup } from "../../../../components/porter-form/types";
 
 type Props = RouteComponentProps & {};
 
@@ -104,7 +105,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
   const [subdomain, setSubdomain] = useState<string>("");
-  const [syncedEnvGroups, setSyncedEnvGroups] = useState<any[]>([]);
+  const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([])
 
   const [porterApp, setPorterApp] = useState<PorterApp>();
   // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
@@ -175,7 +176,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") };
       setPorterApp(parsedPorterApp);
       setTempPorterApp(parsedPorterApp);
-
+      console.log(newAppData.chart)
       const [newServices, newEnvVars] = updateServicesAndEnvVariables(
         resChartData?.data,
         releaseChartData?.data,
@@ -314,6 +315,34 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             stack_name: appData.app.name,
           }
         );
+        const addedEnvGroups = syncedEnvGroups || [];
+
+        const addApplicationToEnvGroupPromises = addedEnvGroups.map(
+          (envGroup: any) => {
+            return api.addApplicationToEnvGroup(
+              "<token>",
+              {
+                name: envGroup?.name,
+                app_name: appData.chart.name,
+              },
+              {
+                project_id: currentProject.id,
+                cluster_id: currentCluster.id,
+                namespace: appData.chart.namespace,
+              }
+            );
+          }
+        );
+
+        try {
+          await Promise.all(addApplicationToEnvGroupPromises);
+          console.log("added app to env group");
+        } catch (error) {
+          console.log(error);
+          setCurrentError(
+            "We coudln't sync the env group to the application, please try again."
+          );
+        }
         setPorterYaml(finalPorterYaml);
         setPorterApp(tempPorterApp);
         setButtonStatus("success");
@@ -792,6 +821,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               setEnvVars(envVars);
               //onAppUpdate(services, envVars.filter((e) => e.key !== "" || e.value !== ""));
             }}
+            syncedEnvGroups={syncedEnvGroups}
+            setSyncedEnvGroups={setSyncedEnvGroups}
             status={buttonStatus}
             updatePorterApp={updatePorterApp}
             clearStatus={() => setButtonStatus("")}

@@ -192,7 +192,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -407,6 +407,12 @@ const Home: React.FC<Props> = (props) => {
             <Route path="/apps/new/app">
               <NewAppFlow />
             </Route>
+            <Route path="/apps/:appName/events/:eventId">
+              <ExpandedApp />
+            </Route>
+            <Route path="/apps/:appName/:tab">
+              <ExpandedApp />
+            </Route>
             <Route path="/apps/:appName">
               <ExpandedApp />
             </Route>
@@ -435,17 +441,17 @@ const Home: React.FC<Props> = (props) => {
               overrideInfraTabEnabled({
                 projectID: currentProject?.id,
               })) && (
-              <Route
-                path="/infrastructure"
-                render={() => {
-                  return (
-                    <DashboardWrapper>
-                      <InfrastructureRouter />
-                    </DashboardWrapper>
-                  );
-                }}
-              />
-            )}
+                <Route
+                  path="/infrastructure"
+                  render={() => {
+                    return (
+                      <DashboardWrapper>
+                        <InfrastructureRouter />
+                      </DashboardWrapper>
+                    );
+                  }}
+                />
+              )}
             <Route
               path="/dashboard"
               render={() => {

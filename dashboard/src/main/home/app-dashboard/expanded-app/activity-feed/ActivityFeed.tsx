@@ -23,10 +23,11 @@ import Container from "components/porter/Container";
 type Props = {
   chart: any;
   stackName: string;
-  appData: string;
+  appData: any;
+  eventId?: string;
 };
 
-const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
+const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) => {
   const { currentProject, currentCluster } = useContext(Context);
 
   const [events, setEvents] = useState<any[]>([]);
@@ -136,6 +137,14 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         <Loading />
       </div>
     );
+  }
+
+  if (eventId != null) {
+    return (
+      <StyledActivityFeed>
+        {eventId}
+      </StyledActivityFeed>
+    )
   }
 
   if (!hasPorterAgent) {

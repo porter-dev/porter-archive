@@ -100,7 +100,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   );
 
   const [saveValuesStatus, setSaveValueStatus] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
   const [bannerLoading, setBannerLoading] = useState<boolean>(false);
 
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
@@ -153,6 +152,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
   const getPorterApp = async () => {
     setBannerLoading(true);
+    setIsLoading(true);
     const { appName } = props.match.params as any;
     try {
       if (!currentCluster || !currentProject) {
@@ -532,6 +532,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   const getChartData = async (chart: ChartType, isCurrent?: boolean) => {
     setButtonStatus("");
+    setIsLoading(true);
     try {
       const res = await api.getChart(
         "<token>",
@@ -595,7 +596,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     } catch (err) {
       console.log(err);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
 
   };
@@ -825,8 +826,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   return (
     <>
-      {isLoading && !appData && <Loading />}
-      {!appData && !isLoading && (
+      {isLoading && appData == null && <Loading />}
+      {!isLoading && appData == null && (
         <Placeholder>
           <Container row>
             <PlaceholderIcon src={notFound} />
@@ -839,7 +840,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           <Link to="/apps">Return to dashboard</Link>
         </Placeholder>
       )}
-      {appData && appData.app && (
+      {!isLoading && appData != null && appData.app != null && (
         <StyledExpandedApp>
           <Back to="/apps" />
           <Container row>

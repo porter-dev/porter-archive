@@ -183,10 +183,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   }
   const isDisabled = () => {
     return (
-      !user.email.endsWith("porter.run") &&
+      !user?.isPorterUser &&
       ((!clusterName && true) ||
         (isReadOnly && props.provisionerError === "") ||
-        props.provisionerError === "" ||
         currentCluster?.status === "UPDATING" ||
         isClicked)
     );

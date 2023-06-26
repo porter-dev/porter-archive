@@ -10,13 +10,13 @@ import Spacer from "components/porter/Spacer";
 import Icon from "components/porter/Icon";
 import Modal from "components/porter/Modal";
 import { PorterAppEvent } from "shared/types";
-import { getDuration, getStatusIcon } from './utils';
+import { getDuration, getStatusIcon } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import styled from "styled-components";
 import Button from "components/porter/Button";
 import api from "shared/api";
 import Link from "components/porter/Link";
-import ChangeLogModal from "../../ChangeLogModal";
+import ChangeLogModal from "../../../ChangeLogModal";
 
 type Props = {
   event: PorterAppEvent;

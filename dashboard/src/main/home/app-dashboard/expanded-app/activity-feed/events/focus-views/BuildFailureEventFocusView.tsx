@@ -8,19 +8,22 @@ import styled from "styled-components";
 import Anser, { AnserJsonEntry } from "anser";
 import JSZip from "jszip";
 import dayjs from "dayjs";
-import { Log as LogType } from "../useAgentLogs";
+import { Log as LogType } from "../../../useAgentLogs";
 import { PorterAppEvent } from "shared/types";
+import Text from "components/porter/Text";
+import { readableDate } from "shared/string_utils";
+import { getDuration } from "../utils";
+import Link from "components/porter/Link";
 
 type Props = {
-    eventId: string;
+    event: PorterAppEvent;
     appData: any;
 };
 
-const EventFocusView: React.FC<Props> = ({
-    eventId,
+const BuildFailureEventFocusView: React.FC<Props> = ({
+    event,
     appData,
 }) => {
-    const { currentProject, currentCluster } = useContext(Context);
     const [logs, setLogs] = useState<LogType[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
@@ -34,7 +37,10 @@ const EventFocusView: React.FC<Props> = ({
         }
     }, [isLoading, logs, scrollToBottomRef]);
 
-    const getBuildLogs = async (event: PorterAppEvent) => {
+    const getBuildLogs = async () => {
+        if (event == null) {
+            return;
+        }
         try {
             setLogs([]);
 
@@ -77,7 +83,11 @@ const EventFocusView: React.FC<Props> = ({
                                     const lines = fileData.split("\n");
                                     const timestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z/;
 
-                                    lines.forEach((line, index) => {
+                                    for (let i = 0; i < lines.length; i++) {
+                                        const line = lines[i];
+                                        if (line.includes("Post job cleanup.")) {
+                                            break;
+                                        }
                                         const lineWithoutTimestamp = line.replace(timestampPattern, "").trimStart();
                                         const anserLine: AnserJsonEntry[] = Anser.ansiToJson(lineWithoutTimestamp);
                                         if (lineWithoutTimestamp.toLowerCase().includes("error")) {
@@ -86,12 +96,12 @@ const EventFocusView: React.FC<Props> = ({
 
                                         const log: LogType = {
                                             line: anserLine,
-                                            lineNumber: index + 1,
+                                            lineNumber: i + 1,
                                             timestamp: line.match(timestampPattern)?.[0],
                                         };
 
                                         logs.push(log);
-                                    });
+                                    }
                                 }
                             })()
                         );
@@ -109,38 +119,15 @@ const EventFocusView: React.FC<Props> = ({
     };
 
     useEffect(() => {
-        const getEvent = async () => {
-            if (currentProject == null || currentCluster == null) {
-                return;
-            }
-            try {
-                setIsLoading(true);
-                const eventResp = await api.getPorterAppEvent(
-                    "<token>",
-                    {},
-                    {
-                        project_id: currentProject.id,
-                        cluster_id: currentCluster.id,
-                        event_id: eventId,
-                    }
-                )
-                const evt = eventResp.data.event as PorterAppEvent;
-                console.log(evt);
-                await getBuildLogs(evt);
-            } catch (err) {
-                console.log(err);
-            }
-        }
-        getEvent();
-    }, []);
+        getBuildLogs();
+    }, [event]);
 
     return (
-        <StyledEventFocusView>
-            <Breadcrumb
-                currentStep={"Build"}
-                steps={[{ value: "Activity", label: "Activity" }, { value: "Build", label: "Build" }]}
-            />
-            <Spacer y={1} />
+        <>
+            <Text size={16} color="#FF6060">Build failed</Text>
+            <Spacer y={0.5} />
+            <Text color="helper">Started {readableDate(event.created_at)} and ran for {getDuration(event)}.</Text>
+            <Spacer y={0.5} />
             <StyledLogsSection>
                 {isLoading ? (
                     <Loading message="Waiting for logs..." />
@@ -184,24 +171,23 @@ const EventFocusView: React.FC<Props> = ({
                 )}
                 <div ref={scrollToBottomRef} />
             </StyledLogsSection>
-        </StyledEventFocusView>
+            <Spacer y={0.5} />
+            <Link
+                hasunderline
+                target="_blank"
+                to={
+                    event.metadata.action_run_id
+                        ? `https://github.com/${appData.app.repo_name}/actions/runs/${event.metadata.action_run_id}`
+                        : `https://github.com/${appData.app.repo_name}/actions`
+                }
+            >
+                View full build logs
+            </Link>
+        </>
     );
 };
 
-export default EventFocusView;
-
-const StyledEventFocusView = styled.div`
-    width: 100%;
-    animation: fadeIn 0.3s 0s;
-    @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-    }
-`;
+export default BuildFailureEventFocusView;
 
 const StyledLogsSection = styled.div`
   width: 100%;
@@ -293,4 +279,26 @@ const LogInnerSpan = styled.span`
         props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
 `;
 
+const BackButton = styled.div`
+  display: flex;
+  align-items: center;
+  max-width: fit-content;
+  cursor: pointer;
+  font-size: 11px;
+  max-height: fit-content;
+  padding: 5px 13px;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  color: white;
+  background: #ffffff11;
 
+  :hover {
+    background: #ffffff22;
+  }
+
+  > i {
+    color: white;
+    font-size: 16px;
+    margin-right: 6px;
+  }
+`;

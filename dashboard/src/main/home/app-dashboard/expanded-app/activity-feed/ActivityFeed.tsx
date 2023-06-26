@@ -8,7 +8,7 @@ import refresh from "assets/refresh.png";
 
 import Text from "components/porter/Text";
 
-import EventCard from "./events/EventCard";
+import EventCard from "./events/cards/EventCard";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 import Fieldset from "components/porter/Fieldset";
@@ -19,7 +19,7 @@ import _ from "lodash";
 import Button from "components/porter/Button";
 import Icon from "components/porter/Icon";
 import Container from "components/porter/Container";
-import EventFocusView from "./EventFocusView";
+import EventFocusView from "./events/focus-views/EventFocusView";
 
 type Props = {
   chart: any;

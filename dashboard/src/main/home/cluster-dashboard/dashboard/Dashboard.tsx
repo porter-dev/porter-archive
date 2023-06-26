@@ -66,7 +66,6 @@ export const Dashboard: React.FunctionComponent = () => {
       case "namespaces":
         return <NamespaceList />;
       case "configuration":
-        console.log(context.currentCluster);
         return (
           <>
             <Br />
@@ -163,7 +162,7 @@ export const Dashboard: React.FunctionComponent = () => {
         setIngressIp(ingress_ip);
         setIngressError(ingress_error);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -286,9 +285,8 @@ export const Dashboard: React.FunctionComponent = () => {
             </EditIconStyle>
           </Flex>
         }
-        description={`Cluster settings and status for ${
-          context.currentCluster.vanity_name || context.currentCluster.name
-        }.`}
+        description={`Cluster settings and status for ${context.currentCluster.vanity_name || context.currentCluster.name
+          }.`}
         disableLineBreak
         capitalize={false}
       />

@@ -185,7 +185,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return (!clusterName)
   }
   const userProvisioning = () => {
-    console.log(props.provisionerError)
     //If the cluster is updating or updating unavailabe but there are no errors do not allow re-provisioning 
     return (isReadOnly && (props.provisionerError === ""))
   }

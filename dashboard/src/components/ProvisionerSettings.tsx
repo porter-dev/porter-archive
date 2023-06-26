@@ -116,7 +116,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     try {
       await api.updateOnboardingStep("<token>", { step }, {});
     } catch (err) {
-      console.log(err);
+      // console.log(err);
     }
   };
 
@@ -381,7 +381,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
-      console.log(eksValues);
       if (eksValues == null) {
         return
       }

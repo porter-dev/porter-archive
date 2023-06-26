@@ -13,10 +13,10 @@ import Icon from "components/porter/Icon";
 import Modal from "components/porter/Modal";
 
 import { PorterAppEvent } from "shared/types";
-import { getDuration, getStatusIcon, triggerWorkflow } from './utils';
+import { getDuration, getStatusIcon, triggerWorkflow } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import Link from "components/porter/Link";
-import LogsModal from "../../status/LogsModal";
+import LogsModal from "../../../status/LogsModal";
 import api from "shared/api";
 import dayjs from "dayjs";
 import Anser from "anser";

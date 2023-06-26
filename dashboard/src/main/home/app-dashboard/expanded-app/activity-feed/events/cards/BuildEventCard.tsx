@@ -15,10 +15,11 @@ import api from "shared/api";
 import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
 import JSZip from "jszip";
 import Anser, { AnserJsonEntry } from "anser";
-import GHALogsModal from "../../status/GHALogsModal";
+import GHALogsModal from "../../../status/GHALogsModal";
 import { PorterAppEvent } from "shared/types";
-import { getDuration, getStatusIcon, triggerWorkflow } from './utils';
+import { getDuration, getStatusIcon, triggerWorkflow } from '../utils';
 import { StyledEventCard } from "./EventCard";
+import document from "assets/document.svg";
 
 type Props = {
   event: PorterAppEvent;
@@ -116,42 +117,18 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
   const renderInfoCta = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return (
-          <Wrapper>
-            <Link hasunderline onClick={() => getBuildLogs()}>
-              View logs
-            </Link>
-
-            {logModalVisible && (
-              <GHALogsModal
-                appData={appData}
-                logs={logs}
-                modalVisible={logModalVisible}
-                setModalVisible={setLogModalVisible}
-                actionRunId={event.metadata?.action_run_id}
-              />
-            )}
-            <Spacer inline x={1} />
-          </Wrapper>
-        );
+        return null;
       case "FAILED":
         return (
           <Wrapper>
-            <Link hasunderline onClick={() => getBuildLogs()}>
-              View logs
+            <Link to={`/apps/${appData.app.name}/events/${event.id}`} hasunderline>
+              <Container row>
+                <Icon src={document} height="10px" />
+                <Spacer inline width="5px" />
+                View more details
+              </Container>
             </Link>
-
-            {logModalVisible && (
-              <GHALogsModal
-                appData={appData}
-                logs={logs}
-                modalVisible={logModalVisible}
-                setModalVisible={setLogModalVisible}
-                actionRunId={event.metadata?.action_run_id}
-              />
-            )}
             <Spacer inline x={1} />
-
             <Link hasunderline onClick={() => triggerWorkflow(appData)}>
               <Container row>
                 <Icon height="10px" src={refresh} />
@@ -200,7 +177,6 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
           <Spacer inline x={1} />
           {renderInfoCta(event)}
           <Spacer inline x={1} />
-          {/* <Link to={`/apps/${appData.app.name}/events/${event.id}`} hasunderline>View event</Link> */}
         </Container>
       </Container>
     </StyledEventCard>

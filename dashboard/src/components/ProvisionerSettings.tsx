@@ -181,12 +181,21 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     // If all tags are valid, return false (no error)
     return false;
   }
+  const clusterNameDoesNotExist = () => {
+    return (!clusterName)
+  }
+  const userProvisioning = () => {
+    console.log(props.provisionerError)
+    //If the cluster is updating or updating unavailabe but there are no errors do not allow re-provisioning 
+    return (isReadOnly && (props.provisionerError === ""))
+  }
+
   const isDisabled = () => {
+
     return (
       !user?.isPorterUser &&
-      ((!clusterName && true) ||
-        (isReadOnly && props.provisionerError === "") ||
-        currentCluster?.status === "UPDATING" ||
+      (clusterNameDoesNotExist() ||
+        userProvisioning() ||
         isClicked)
     );
   };

@@ -38,9 +38,11 @@ type Props = RouteComponentProps & {
   values: KeyValueType[];
   syncedEnvGroups: PopulatedEnvGroup[];
   setSyncedEnvGroups: (values: PopulatedEnvGroup) => void;
+  appData: any;
 }
 
 const EnvGroupModal: React.FC<Props> = ({
+  appData,
   closeModal,
   setValues,
   availableEnvGroups,
@@ -54,6 +56,8 @@ const EnvGroupModal: React.FC<Props> = ({
   const [error, setError] = useState<any>(null);
   const [shouldSync, setShouldSync] = useState<boolean>(false);
   const [selectedEnvGroup, setSelectedEnvGroup] = useState<PopulatedEnvGroup | null>(null);
+  const [cloneSuccess, setCloneSuccess] = useState(false);
+
   const updateEnvGroups = async () => {
     let envGroups: PartialEnvGroup[] = [];
     try {
@@ -63,7 +67,7 @@ const EnvGroupModal: React.FC<Props> = ({
           {},
           {
             id: currentProject.id,
-            namespace: "porter-stack-nginx",
+            namespace: "default",
             cluster_id: currentCluster.id,
           }
         )
@@ -116,7 +120,29 @@ const EnvGroupModal: React.FC<Props> = ({
     updateEnvGroups();
   }, []);
 
-
+  const cloneEnvGroup = async () => {
+    setCloneSuccess(false);
+    try {
+      await api.cloneEnvGroup(
+        "<token>",
+        {
+          name: selectedEnvGroup.name,
+          namespace: appData.chart.namespace,
+          clone_name: selectedEnvGroup.name,
+          version: selectedEnvGroup.version,
+        },
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: "default",
+        }
+      );
+      setCloneSuccess(true);
+      console.log("Success!")
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const renderEnvGroupList = () => {
     if (loading) {
       return (
@@ -161,6 +187,7 @@ const EnvGroupModal: React.FC<Props> = ({
 
       syncedEnvGroups.push(selectedEnvGroup);
       console.log(syncedEnvGroups)
+      cloneEnvGroup();
       setSyncedEnvGroups(syncedEnvGroups);
     }
     else {

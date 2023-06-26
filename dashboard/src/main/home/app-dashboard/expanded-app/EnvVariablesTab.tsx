@@ -21,6 +21,7 @@ interface EnvVariablesTabProps {
   syncedEnvGroups: PopulatedEnvGroup[];
   setSyncedEnvGroups: (values: PopulatedEnvGroup) => void;
   clearStatus: () => void;
+  appData: any;
 }
 
 export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
@@ -31,6 +32,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   syncedEnvGroups,
   setSyncedEnvGroups,
   clearStatus,
+  appData,
 }) => {
   const [showEnvModal, setShowEnvModal] = useState(false);
   const [envGroups, setEnvGroups] = useState<any>([])
@@ -82,6 +84,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
       setEnvGroups(populatedEnvGroups)
       // setLoading(false)
+      console.log(populatedEnvGroups)
 
     } catch (error) {
       // setLoading(false)
@@ -122,6 +125,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
         closeModal={() => setShowEnvModal(false)}
         syncedEnvGroups={syncedEnvGroups}
         setSyncedEnvGroups={setSyncedEnvGroups}
+        appData={appData}
       />}
       {!!syncedEnvGroups?.length && (
         <>

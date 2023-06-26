@@ -830,6 +830,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             updatePorterApp={updatePorterApp}
             clearStatus={() => setButtonStatus("")}
             setSyncedEnvGroups={setSyncedEnvGroups}
+            appData={appData}
           />
         );
       case "pre-deploy":

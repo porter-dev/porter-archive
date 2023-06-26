@@ -50,7 +50,6 @@ func (c *AddEnvGroupAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// read the attached configmap
 	cm, _, err := agent.GetLatestVersionedConfigMap(request.Name, namespace)
-
 	if err != nil && errors.Is(err, kubernetes.IsNotFoundError) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("env group not found"),
@@ -70,6 +69,7 @@ func (c *AddEnvGroupAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	res, err := envgroup.ToEnvGroup(cm)
+	fmt.Println(res)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

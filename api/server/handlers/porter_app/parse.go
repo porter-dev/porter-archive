@@ -18,11 +18,12 @@ import (
 )
 
 type PorterStackYAML struct {
-	Version *string           `yaml:"version"`
-	Build   *Build            `yaml:"build"`
-	Env     map[string]string `yaml:"env"`
-	Apps    map[string]*App   `yaml:"apps"`
-	Release *App              `yaml:"release"`
+	Version   *string           `yaml:"version"`
+	Build     *Build            `yaml:"build"`
+	Env       map[string]string `yaml:"env"`
+	SyncedEnv map[string]string `yaml:"synced_env"`
+	Apps      map[string]*App   `yaml:"apps"`
+	Release   *App              `yaml:"release"`
 }
 
 type Build struct {
@@ -79,7 +80,7 @@ func parse(
 	// return the parsed release values for the release job chart, if they exist
 	var releaseJobValues map[string]interface{}
 	if parsed.Release != nil && parsed.Release.Run != nil {
-		releaseJobValues = buildReleaseValues(parsed.Release, parsed.Env, imageInfo, injectLauncher)
+		releaseJobValues = buildReleaseValues(parsed.Release, parsed.Env, parsed.SyncedEnv, imageInfo, injectLauncher)
 	}
 
 	return chart, convertedValues, releaseJobValues, nil
@@ -96,7 +97,8 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 
 	for name, app := range parsed.Apps {
 		appType := getType(name, app)
-		defaultValues := getDefaultValues(app, parsed.Env, appType)
+
+		defaultValues := getDefaultValues(app, parsed.Env, parsed.SyncedEnv, appType)
 		convertedConfig := convertMap(app.Config).(map[string]interface{})
 		helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
 
@@ -160,8 +162,8 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 	return values, nil
 }
 
-func buildReleaseValues(release *App, env map[string]string, imageInfo types.ImageInfo, injectLauncher bool) map[string]interface{} {
-	defaultValues := getDefaultValues(release, env, "job")
+func buildReleaseValues(release *App, env map[string]string, synced_env map[string]string, imageInfo types.ImageInfo, injectLauncher bool) map[string]interface{} {
+	defaultValues := getDefaultValues(release, env, synced_env, "job")
 	convertedConfig := convertMap(release.Config).(map[string]interface{})
 	helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
 
@@ -196,7 +198,7 @@ func getType(name string, app *App) string {
 	return "worker"
 }
 
-func getDefaultValues(app *App, env map[string]string, appType string) map[string]interface{} {
+func getDefaultValues(app *App, env map[string]string, synced_env map[string]string, appType string) map[string]interface{} {
 	var defaultValues map[string]interface{}
 	var runCommand string
 	if app.Run != nil {
@@ -207,9 +209,13 @@ func getDefaultValues(app *App, env map[string]string, appType string) map[strin
 			"command": runCommand,
 			"env": map[string]interface{}{
 				"normal": CopyEnv(env),
+				"synced": synced_env,
 			},
 		},
 	}
+	fmt.Println("*******************")
+	fmt.Println(defaultValues)
+	fmt.Println("*******************")
 
 	return defaultValues
 }

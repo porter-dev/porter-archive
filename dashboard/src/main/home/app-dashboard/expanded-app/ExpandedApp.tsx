@@ -186,6 +186,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         newServices,
         newEnvVars,
         porterJson,
+        syncedEnvGroups,
         // if we are using a heroku buildpack, inject a PORT env variable
         newAppData.app.builder != null && newAppData.app.builder.includes("heroku")
       );
@@ -290,6 +291,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         const finalPorterYaml = createFinalPorterYaml(
           services,
           envVars,
+          syncedEnvGroups,
           porterJson,
           // if we are using a heroku buildpack, inject a PORT env variable
           appData.app.builder != null && appData.app.builder.includes("heroku")
@@ -315,9 +317,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             stack_name: appData.app.name,
           }
         );
-        const addedEnvGroups = syncedEnvGroups || [];
-
-        const addApplicationToEnvGroupPromises = addedEnvGroups.map(
+        console.log(syncedEnvGroups)
+        // console.log(appData.chart.namespace)
+        // console.log(appData.chart)
+        const addApplicationToEnvGroupPromises = syncedEnvGroups.map(
           (envGroup: any) => {
             return api.addApplicationToEnvGroup(
               "<token>",
@@ -687,6 +690,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     const newPorterYaml = createFinalPorterYaml(
       services,
       envVars,
+      syncedEnvGroups,
       porterJson,
       // if we are using a heroku buildpack, inject a PORT env variable
       appData.app.builder != null && appData.app.builder.includes("heroku")
@@ -822,10 +826,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               //onAppUpdate(services, envVars.filter((e) => e.key !== "" || e.value !== ""));
             }}
             syncedEnvGroups={syncedEnvGroups}
-            setSyncedEnvGroups={setSyncedEnvGroups}
             status={buttonStatus}
             updatePorterApp={updatePorterApp}
             clearStatus={() => setButtonStatus("")}
+            setSyncedEnvGroups={setSyncedEnvGroups}
           />
         );
       case "pre-deploy":

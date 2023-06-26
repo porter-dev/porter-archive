@@ -497,7 +497,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               disabled={isReadOnly}
               value={maxInstances}
               setValue={(x: number) => setMaxInstances(x)}
-              label="Maximum number of application Nodes"
+              label="Maximum number of application nodes"
               placeholder="ex: 1"
 
             />

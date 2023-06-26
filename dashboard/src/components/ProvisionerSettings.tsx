@@ -116,7 +116,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     try {
       await api.updateOnboardingStep("<token>", { step }, {});
     } catch (err) {
-      console.log(err);
+      // console.log(err);
     }
   };
 

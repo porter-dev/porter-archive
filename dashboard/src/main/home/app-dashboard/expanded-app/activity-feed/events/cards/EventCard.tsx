@@ -1,7 +1,6 @@
 import React from "react";
 import styled from "styled-components";
 
-import Text from "components/porter/Text";
 import { PorterAppEvent, PorterAppEventType } from "shared/types";
 import BuildEventCard from "./BuildEventCard";
 import PreDeployEventCard from "./PreDeployEventCard";

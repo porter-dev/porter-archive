@@ -191,7 +191,7 @@ export default BuildFailureEventFocusView;
 
 const StyledLogsSection = styled.div`
   width: 100%;
-  min-height: 400px;
+  min-height: 600px;
   height: calc(100vh - 460px);
   display: flex;
   flex-direction: column;

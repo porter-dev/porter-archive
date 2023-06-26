@@ -19,6 +19,7 @@ import _ from "lodash";
 import Button from "components/porter/Button";
 import Icon from "components/porter/Icon";
 import Container from "components/porter/Container";
+import EventFocusView from "./EventFocusView";
 
 type Props = {
   chart: any;
@@ -140,11 +141,10 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
   }
 
   if (eventId != null) {
-    return (
-      <StyledActivityFeed>
-        {eventId}
-      </StyledActivityFeed>
-    )
+    return <EventFocusView
+      eventId={eventId}
+      appData={appData}
+    />;
   }
 
   if (!hasPorterAgent) {

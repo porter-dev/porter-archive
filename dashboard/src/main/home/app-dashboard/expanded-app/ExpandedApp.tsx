@@ -41,7 +41,6 @@ import { EnvVariablesTab } from "./EnvVariablesTab";
 import GHABanner from "./GHABanner";
 import LogSection from "./LogSection";
 import ActivityFeed from "./activity-feed/ActivityFeed";
-import JobRuns from "./JobRuns";
 import MetricsSection from "./MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
@@ -49,7 +48,6 @@ import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/use
 import Anser, { AnserJsonEntry } from "anser";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
-import EventsTab from "./EventsTab";
 import { PorterApp } from "../types/porterApp";
 
 type Props = RouteComponentProps & {};

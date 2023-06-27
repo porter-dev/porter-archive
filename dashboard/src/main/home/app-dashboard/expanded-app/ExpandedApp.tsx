@@ -210,7 +210,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setPorterJson(porterJson);
       setAppData(newAppData);
       // annoying that we have to parse buildpacks like this but alas
-      const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") };
+      const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") ?? [] };
       setPorterApp(parsedPorterApp);
       setTempPorterApp(parsedPorterApp);
 
@@ -341,7 +341,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             git_branch: tempPorterApp.git_branch,
             build_context: tempPorterApp.build_context,
             builder: tempPorterApp.builder,
-            buildpacks: (tempPorterApp.buildpacks ?? []).join(","),
+            buildpacks: tempPorterApp.buildpacks.join(","),
             dockerfile: tempPorterApp.dockerfile,
             ...options,
             override_release: true,

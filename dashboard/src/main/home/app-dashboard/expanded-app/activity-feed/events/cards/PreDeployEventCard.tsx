@@ -20,6 +20,7 @@ import LogsModal from "../../../status/LogsModal";
 import api from "shared/api";
 import dayjs from "dayjs";
 import Anser from "anser";
+import document from "assets/document.svg";
 
 type Props = {
   event: PorterAppEvent;
@@ -102,28 +103,28 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
           <Icon height="16px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText(event)}
-          {(event.status === "SUCCESS" || event.status === "FAILED") &&
+          {(event.status === "FAILED") &&
             <>
               <Spacer inline x={1} />
               <Wrapper>
-                <Link hasunderline onClick={getPredeployLogs}>
-                  View logs
+                <Link to={`/apps/${appData.app.name}/events/${event.id}`} hasunderline>
+                  <Container row>
+                    <Icon src={document} height="10px" />
+                    <Spacer inline width="5px" />
+                    View details
+                  </Container>
+                </Link>
+                <Spacer inline x={1} />
+                <Link hasunderline onClick={() => triggerWorkflow(appData)}>
+                  <Container row>
+                    <Icon height="10px" src={refresh} />
+                    <Spacer inline width="5px" />
+                    Retry
+                  </Container>
                 </Link>
               </Wrapper>
             </>
           }
-          {event.status === "FAILED" && (
-            <>
-              <Spacer inline x={1} />
-              <Link hasunderline onClick={() => triggerWorkflow(appData)}>
-                <Container row>
-                  <Icon height="10px" src={refresh} />
-                  <Spacer inline width="5px" />
-                  Retry
-                </Container>
-              </Link>
-            </>
-          )}
           {logModalVisible && (
             <LogsModal
               logs={logs}

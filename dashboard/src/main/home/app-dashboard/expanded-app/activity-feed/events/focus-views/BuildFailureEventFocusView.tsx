@@ -1,8 +1,6 @@
-import Breadcrumb from "components/Breadcrumb";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { Context } from "shared/Context";
+import React, { useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import Anser, { AnserJsonEntry } from "anser";
@@ -277,28 +275,4 @@ const LogInnerSpan = styled.span`
         props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
   background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
         props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
-`;
-
-const BackButton = styled.div`
-  display: flex;
-  align-items: center;
-  max-width: fit-content;
-  cursor: pointer;
-  font-size: 11px;
-  max-height: fit-content;
-  padding: 5px 13px;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  color: white;
-  background: #ffffff11;
-
-  :hover {
-    background: #ffffff22;
-  }
-
-  > i {
-    color: white;
-    font-size: 16px;
-    margin-right: 6px;
-  }
 `;

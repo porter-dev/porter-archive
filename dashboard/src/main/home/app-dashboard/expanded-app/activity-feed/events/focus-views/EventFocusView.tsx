@@ -7,6 +7,7 @@ import styled from "styled-components";
 import { PorterAppEvent } from "shared/types";
 import Link from "components/porter/Link";
 import BuildFailureEventFocusView from "./BuildFailureEventFocusView";
+import PreDeployFailureEventFocusView from "./PredeployFailureEventFocusView";
 
 type Props = {
     eventId: string;
@@ -47,6 +48,8 @@ const EventFocusView: React.FC<Props> = ({
         switch (event.type) {
             case "BUILD":
                 return <BuildFailureEventFocusView event={event} appData={appData} />
+            case "PRE_DEPLOY":
+                return <PreDeployFailureEventFocusView event={event} appData={appData} />
             default:
                 return null
         }

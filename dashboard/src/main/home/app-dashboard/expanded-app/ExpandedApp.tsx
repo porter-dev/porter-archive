@@ -210,7 +210,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setPorterJson(porterJson);
       setAppData(newAppData);
       // annoying that we have to parse buildpacks like this but alas
-      const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") };
+      const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") ?? [] };
       setPorterApp(parsedPorterApp);
       setTempPorterApp(parsedPorterApp);
 

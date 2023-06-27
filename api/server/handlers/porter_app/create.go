@@ -361,15 +361,13 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
+		if app == nil {
+			err = telemetry.Error(ctx, span, nil, "app with name does not exist in project")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
+			return
+		}
 
-		app.RepoName = request.RepoName
-		app.GitBranch = request.GitBranch
-		app.BuildContext = request.BuildContext
-		app.Builder = request.Builder
-		app.Buildpacks = request.Buildpacks
-		app.Dockerfile = request.Dockerfile
-		app.ImageRepoURI = request.ImageRepoURI
-		app.PullRequestURL = request.PullRequestURL
+		app.UpdatePorterAppModel(*request)
 
 		telemetry.WithAttributes(
 			span,

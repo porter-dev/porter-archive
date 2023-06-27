@@ -361,6 +361,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
+		if app == nil {
+			err = telemetry.Error(ctx, span, nil, "app with name does not exist in project")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
+			return
+		}
 
 		if request.RepoName != "" {
 			app.RepoName = request.RepoName
@@ -371,26 +376,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		if request.BuildContext != "" {
 			app.BuildContext = request.BuildContext
 		}
-		if request.Builder != "" {
-			if request.Builder == "null" {
-				app.Builder = ""
-			} else {
-				app.Builder = request.Builder
-			}
-		}
-		if request.Buildpacks != "" {
-			if request.Buildpacks == "null" {
-				app.Buildpacks = ""
-			} else {
-				app.Buildpacks = request.Buildpacks
-			}
-		}
+		// handles deletion of builder and buildpacks
+		app.Builder = request.Builder
+		app.Buildpacks = request.Buildpacks
 		if request.Dockerfile != "" {
-			if request.Dockerfile == "null" {
-				app.Dockerfile = ""
-			} else {
-				app.Dockerfile = request.Dockerfile
-			}
+			app.Dockerfile = request.Dockerfile
 		}
 		if request.ImageRepoURI != "" {
 			app.ImageRepoURI = request.ImageRepoURI

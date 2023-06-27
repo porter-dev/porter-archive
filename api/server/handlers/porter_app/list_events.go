@@ -189,15 +189,24 @@ func (p *PorterAppEventListHandler) updateBuildEvent_Github(ctx context.Context,
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "error reading github environment by owner repo name")
 	}
+	if env == nil {
+		return telemetry.Error(ctx, span, nil, "github environment is nil")
+	}
 
 	ghClient, err := getGithubClientFromEnvironment(p.Config(), env.InstallationID)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "error getting github client using porter application")
 	}
+	if ghClient == nil {
+		return telemetry.Error(ctx, span, nil, "github client is nil")
+	}
 
 	actionRun, _, err := ghClient.Actions.GetWorkflowRunByID(ctx, repoOrg, repoName, int64(actionRunID))
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "error getting github action run by id")
+	}
+	if actionRun == nil {
+		return telemetry.Error(ctx, span, nil, "github action run is nil")
 	}
 
 	if *actionRun.Status == "completed" {
@@ -206,6 +215,7 @@ func (p *PorterAppEventListHandler) updateBuildEvent_Github(ctx context.Context,
 		} else {
 			event.Status = "FAILED"
 		}
+		event.Metadata["end_time"] = actionRun.GetUpdatedAt().Time
 	}
 
 	return nil

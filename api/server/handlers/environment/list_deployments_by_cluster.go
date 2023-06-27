@@ -55,8 +55,8 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	if req.EnvironmentID == 0 {
 		depls, err := c.Repo().Environment().ListDeploymentsByCluster(project.ID, cluster.ID)
 		if err != nil {
-			e := telemetry.Error(ctx, span, err, "failed to list deployments from cluster")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			err = telemetry.Error(ctx, span, err, "failed to list deployments from cluster")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
@@ -70,8 +70,8 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 
 			env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, deployment.EnvironmentID)
 			if err != nil {
-				e := telemetry.Error(ctx, span, err, "failed to get environment from deployment")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+				err = telemetry.Error(ctx, span, err, "failed to get environment from deployment")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 
@@ -88,16 +88,16 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		for _, deployment := range deployments {
 			env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, deployment.EnvironmentID)
 			if err != nil {
-				e := telemetry.Error(ctx, span, err, "failed to get environment from deployment")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+				err = telemetry.Error(ctx, span, err, "failed to get environment from deployment")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 
 			if _, ok := envToGithubClientMap[env.ID]; !ok {
 				client, err := getGithubClientFromEnvironment(c.Config(), env)
 				if err != nil {
-					e := telemetry.Error(ctx, span, err, "error getting github client from environment")
-					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+					err = telemetry.Error(ctx, span, err, "error getting github client from environment")
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 					return
 				}
 
@@ -123,8 +123,8 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			if _, ok := envToGithubClientMap[env.ID]; !ok {
 				client, err := getGithubClientFromEnvironment(c.Config(), env)
 				if err != nil {
-					e := telemetry.Error(ctx, span, err, "error getting github client from environment")
-					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+					err = telemetry.Error(ctx, span, err, "error getting github client from environment")
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 					return
 				}
 
@@ -133,8 +133,8 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 
 			prs, err := fetchOpenPullRequests(ctx, c.Config(), envToGithubClientMap[env.ID], env, deplInfoMap)
 			if err != nil {
-				e := telemetry.Error(ctx, span, err, "error fetching pull requests")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+				err = telemetry.Error(ctx, span, err, "error fetching pull requests")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 
@@ -143,15 +143,15 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	} else {
 		env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, req.EnvironmentID)
 		if err != nil {
-			e := telemetry.Error(ctx, span, err, "error fetching environment")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			err = telemetry.Error(ctx, span, err, "error fetching environment")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
 		depls, err := c.Repo().Environment().ListDeployments(env.ID)
 		if err != nil {
-			e := telemetry.Error(ctx, span, err, "error listing deployments")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			e = telemetry.Error(ctx, span, err, "error listing deployments")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
@@ -159,8 +159,8 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 
 		client, err := getGithubClientFromEnvironment(c.Config(), env)
 		if err != nil {
-			e := telemetry.Error(ctx, span, err, "error getting github client from environment")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			err = telemetry.Error(ctx, span, err, "error getting github client from environment")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
@@ -190,8 +190,8 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 
 		prs, err := fetchOpenPullRequests(ctx, c.Config(), client, env, deplInfoMap)
 		if err != nil {
-			e := telemetry.Error(ctx, span, err, "error fetching pull requests")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			err = telemetry.Error(ctx, span, err, "error fetching pull requests")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 

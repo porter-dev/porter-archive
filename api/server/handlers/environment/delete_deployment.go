@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -106,6 +107,24 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	originalBranches := strings.Split(env.GitDeployBranches, ",")
+	newBranches := []string{}
+
+	for _, branch := range originalBranches {
+		if branch != depl.PRBranchFrom {
+			newBranches = append(newBranches, branch)
+		}
+	}
+
+	env.GitDeployBranches = strings.Join(newBranches, ",")
+
+	_, err = c.Repo().Environment().UpdateEnvironment(env)
+
+	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

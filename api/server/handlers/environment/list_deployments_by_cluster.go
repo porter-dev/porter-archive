@@ -39,6 +39,11 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	req := &types.ListDeploymentRequest{}
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
+		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
+		telemetry.AttributeKV{Key: "environment-id", Value: req.EnvironmentID},
+	)
 
 	if ok := c.DecodeAndValidate(w, r, req); !ok {
 		return
@@ -50,7 +55,7 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	if req.EnvironmentID == 0 {
 		depls, err := c.Repo().Environment().ListDeploymentsByCluster(project.ID, cluster.ID)
 		if err != nil {
-			e := telemetry.Error(ctx, span, err, fmt.Sprintf("Failed to list deployments from cluster %d", cluster.ID))
+			e := telemetry.Error(ctx, span, err, "failed to list deployments from cluster")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 			return
 		}

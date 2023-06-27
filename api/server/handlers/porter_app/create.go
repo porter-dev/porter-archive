@@ -362,42 +362,14 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		if request.RepoName != "" {
-			app.RepoName = request.RepoName
-		}
-		if request.GitBranch != "" {
-			app.GitBranch = request.GitBranch
-		}
-		if request.BuildContext != "" {
-			app.BuildContext = request.BuildContext
-		}
-		if request.Builder != "" {
-			if request.Builder == "null" {
-				app.Builder = ""
-			} else {
-				app.Builder = request.Builder
-			}
-		}
-		if request.Buildpacks != "" {
-			if request.Buildpacks == "null" {
-				app.Buildpacks = ""
-			} else {
-				app.Buildpacks = request.Buildpacks
-			}
-		}
-		if request.Dockerfile != "" {
-			if request.Dockerfile == "null" {
-				app.Dockerfile = ""
-			} else {
-				app.Dockerfile = request.Dockerfile
-			}
-		}
-		if request.ImageRepoURI != "" {
-			app.ImageRepoURI = request.ImageRepoURI
-		}
-		if request.PullRequestURL != "" {
-			app.PullRequestURL = request.PullRequestURL
-		}
+		app.RepoName = request.RepoName
+		app.GitBranch = request.GitBranch
+		app.BuildContext = request.BuildContext
+		app.Builder = request.Builder
+		app.Buildpacks = request.Buildpacks
+		app.Dockerfile = request.Dockerfile
+		app.ImageRepoURI = request.ImageRepoURI
+		app.PullRequestURL = request.PullRequestURL
 
 		telemetry.WithAttributes(
 			span,

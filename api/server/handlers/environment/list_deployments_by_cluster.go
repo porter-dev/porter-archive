@@ -150,7 +150,7 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 
 		depls, err := c.Repo().Environment().ListDeployments(env.ID)
 		if err != nil {
-			e = telemetry.Error(ctx, span, err, "error listing deployments")
+			err = telemetry.Error(ctx, span, err, "error listing deployments")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}

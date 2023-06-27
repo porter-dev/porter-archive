@@ -51,27 +51,3 @@ func (a *PorterApp) ToPorterAppType() *types.PorterApp {
 		PorterYamlPath: a.PorterYamlPath,
 	}
 }
-
-func (a *PorterApp) UpdatePorterAppModel(request types.CreatePorterAppRequest) {
-	if request.RepoName != "" {
-		a.RepoName = request.RepoName
-	}
-	if request.GitBranch != "" {
-		a.GitBranch = request.GitBranch
-	}
-	if request.BuildContext != "" {
-		a.BuildContext = request.BuildContext
-	}
-	// handles deletion of builder and buildpacks
-	a.Builder = request.Builder
-	a.Buildpacks = request.Buildpacks
-	if request.Dockerfile != "" {
-		a.Dockerfile = request.Dockerfile
-	}
-	if request.ImageRepoURI != "" {
-		a.ImageRepoURI = request.ImageRepoURI
-	}
-	if request.PullRequestURL != "" {
-		a.PullRequestURL = request.PullRequestURL
-	}
-}

@@ -367,7 +367,27 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		app.UpdatePorterAppModel(*request)
+		if request.RepoName != "" {
+			app.RepoName = request.RepoName
+		}
+		if request.GitBranch != "" {
+			app.GitBranch = request.GitBranch
+		}
+		if request.BuildContext != "" {
+			app.BuildContext = request.BuildContext
+		}
+		// handles deletion of builder and buildpacks
+		app.Builder = request.Builder
+		app.Buildpacks = request.Buildpacks
+		if request.Dockerfile != "" {
+			app.Dockerfile = request.Dockerfile
+		}
+		if request.ImageRepoURI != "" {
+			app.ImageRepoURI = request.ImageRepoURI
+		}
+		if request.PullRequestURL != "" {
+			app.PullRequestURL = request.PullRequestURL
+		}
 
 		telemetry.WithAttributes(
 			span,

@@ -19,9 +19,11 @@ interface EnvVariablesTabProps {
   status: React.ReactNode;
   updatePorterApp: any;
   syncedEnvGroups: PopulatedEnvGroup[];
-  setSyncedEnvGroups: (values: PopulatedEnvGroup) => void;
+  setSyncedEnvGroups: (values: PopulatedEnvGroup[]) => void;
   clearStatus: () => void;
   appData: any;
+  deletedEnvGroups: PopulatedEnvGroup[];
+  setDeletedEnvGroups: (values: PopulatedEnvGroup[]) => void;
 }
 
 export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
@@ -31,6 +33,8 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   updatePorterApp,
   syncedEnvGroups,
   setSyncedEnvGroups,
+  deletedEnvGroups,
+  setDeletedEnvGroups,
   clearStatus,
   appData,
 }) => {
@@ -84,7 +88,9 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
       setEnvGroups(populatedEnvGroups)
       // setLoading(false)
-      console.log(populatedEnvGroups)
+      const filteredEnvGroups = populatedEnvGroups.filter(envGroup => envGroup.applications.includes(appData.chart.name));
+      console.log(populatedEnvGroups);
+      setSyncedEnvGroups(filteredEnvGroups)
 
     } catch (error) {
       // setLoading(false)
@@ -92,7 +98,13 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
     }
   }
 
+  const deleteEnvGroup = (envGroup: PopulatedEnvGroup) => {
 
+    setDeletedEnvGroups([...deletedEnvGroups, envGroup]);
+    setSyncedEnvGroups(syncedEnvGroups?.filter(
+      (env) => env.name !== envGroup.name
+    ))
+  }
   return (
     <>
       <Text size={16}>Environment variables</Text>
@@ -137,7 +149,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
                 key={envGroup?.name}
                 envGroup={envGroup}
                 onDelete={() => {
-                  console.log("delete")
+                  deleteEnvGroup(envGroup);
                 }}
               />
             );

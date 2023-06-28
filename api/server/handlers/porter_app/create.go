@@ -124,12 +124,14 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	injectLauncher := strings.Contains(request.Builder, "heroku") ||
 		strings.Contains(request.Builder, "paketo")
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "builder", Value: request.Builder})
-
+	fmt.Println(request.EnvGroups)
 	chart, values, releaseJobValues, err := parse(
 		porterYaml,
 		imageInfo,
 		c.Config(),
 		cluster.ProjectID,
+		request.EnvGroups,
+		namespace,
 		releaseValues,
 		releaseDependencies,
 		SubdomainCreateOpts{

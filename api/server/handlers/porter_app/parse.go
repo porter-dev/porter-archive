@@ -54,6 +54,8 @@ func parse(
 	imageInfo types.ImageInfo,
 	config *config.Config,
 	projectID uint,
+	envGroups []string,
+	namespace string,
 	existingValues map[string]interface{},
 	existingDependencies []*chart.Dependency,
 	opts SubdomainCreateOpts,
@@ -66,6 +68,17 @@ func parse(
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
 	}
 
+	fmt.Println("HEEEREEREERER")
+	fmt.Println(envGroups)
+	for i := range envGroups {
+		cm, _, err := opts.k8sAgent.GetLatestVersionedConfigMap(envGroups[i], namespace)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
+		}
+		fmt.Println("This is the config map:", cm)
+	}
+
+	// 	fmt.Println("This is the config map:" ,cm)
 	values, err := buildStackValues(parsed, imageInfo, existingValues, opts, injectLauncher)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
@@ -188,6 +201,12 @@ func buildReleaseValues(release *App, env map[string]string, synced_env map[stri
 	return helm_values
 }
 
+// func populateSyncedEnvGroups(release *App, opts SubdomainCreateOpts) {
+// 	// TODO
+// 	cm, _, err := opts.k8sAgent.GetLatestVersionedConfigMap()
+// 	fmt.Println("This is the config map:" ,cm)
+// }
+
 func getType(name string, app *App) string {
 	if app.Type != nil {
 		return *app.Type
@@ -213,9 +232,6 @@ func getDefaultValues(app *App, env map[string]string, synced_env map[string]str
 			},
 		},
 	}
-	fmt.Println("*******************")
-	fmt.Println(defaultValues)
-	fmt.Println("*******************")
 
 	return defaultValues
 }

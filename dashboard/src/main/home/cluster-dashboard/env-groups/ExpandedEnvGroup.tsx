@@ -249,6 +249,34 @@ export const ExpandedEnvGroupFC = ({
           .then((res) => res.data);
         setButtonStatus("successful");
         updateEnvGroup(updatedEnvGroup);
+        if (currentProject?.simplified_view_enabled) {
+          try {
+            // Check if updatedEnvGroup.applications is an array and it has elements
+            if (Array.isArray(updatedEnvGroup.applications) && updatedEnvGroup.applications.length) {
+              console.log("here")
+              for (const application of updatedEnvGroup.applications) {
+                await api.cloneEnvGroup(
+                  "<token>",
+                  {
+                    name: updatedEnvGroup.name,
+                    namespace: "porter-stack-" + application,  // Use the application's namespace
+                    clone_name: updatedEnvGroup.name,
+                    version: updatedEnvGroup.version,
+                  },
+                  {
+                    id: currentProject.id,
+                    cluster_id: currentCluster.id,
+                    namespace: "default",
+                  }
+                );
+              }
+              console.log("Success!")
+            }
+          } catch (error) {
+            console.log(error);
+          }
+        }
+
         setTimeout(() => setButtonStatus(""), 1000);
       } catch (error) {
         setButtonStatus("Couldn't update successfully");
@@ -373,6 +401,10 @@ export const ExpandedEnvGroupFC = ({
           )
           .then((res) => res.data);
         setButtonStatus("successful");
+
+        if (currentProject?.simplified_view_enabled) {
+          console.log(updatedEnvGroup);
+        }
         updateEnvGroup(updatedEnvGroup);
         setTimeout(() => setButtonStatus(""), 1000);
       } catch (error) {
@@ -601,33 +633,35 @@ const EnvGroupSettings = ({
             Delete {envGroup.name}
           </Button>
           <DarkMatter />
-          <Heading>Clone environment group</Heading>
-          <Helper>
-            Clone this set of environment variables into a new env group.
-          </Helper>
-          <InputRow
-            type="string"
-            value={name}
-            setValue={(x: string) => setName(x)}
-            label="New env group name"
-            placeholder="ex: my-cloned-env-group"
-          />
-          <InputRow
-            type="string"
-            value={cloneNamespace}
-            setValue={(x: string) => setCloneNamespace(x)}
-            label="New env group namespace"
-            placeholder="ex: default"
-          />
-          <FlexAlt>
-            <Button onClick={cloneEnvGroup}>Clone {envGroup.name}</Button>
-            {cloneSuccess && (
-              <StatusWrapper position="right" successful={true}>
-                <i className="material-icons">done</i>
-                <StatusTextWrapper>Successfully cloned</StatusTextWrapper>
-              </StatusWrapper>
-            )}
-          </FlexAlt>
+          {!currentProject?.simplified_view_enabled && (<>
+            <Heading>Clone environment group</Heading>
+            <Helper>
+              Clone this set of environment variables into a new env group.
+            </Helper>
+            <InputRow
+              type="string"
+              value={name}
+              setValue={(x: string) => setName(x)}
+              label="New env group name"
+              placeholder="ex: my-cloned-env-group"
+            />
+            <InputRow
+              type="string"
+              value={cloneNamespace}
+              setValue={(x: string) => setCloneNamespace(x)}
+              label="New env group namespace"
+              placeholder="ex: default"
+            />
+            <FlexAlt>
+              <Button onClick={cloneEnvGroup}>Clone {envGroup.name}</Button>
+              {cloneSuccess && (
+                <StatusWrapper position="right" successful={true}>
+                  <i className="material-icons">done</i>
+                  <StatusTextWrapper>Successfully cloned</StatusTextWrapper>
+                </StatusWrapper>
+              )}
+            </FlexAlt>
+          </>)}
         </InnerWrapper>
       )}
     </TabWrapper>

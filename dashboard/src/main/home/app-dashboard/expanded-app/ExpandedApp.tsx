@@ -106,6 +106,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
   const [subdomain, setSubdomain] = useState<string>("");
   const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([])
+  const [deletedEnvGroups, setDeleteEnvGroups] = useState<PopulatedEnvGroup[]>([])
 
   const [porterApp, setPorterApp] = useState<PorterApp>();
   // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
@@ -310,6 +311,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             dockerfile: tempPorterApp.dockerfile,
             ...options,
             override_release: true,
+            envGroups: ["testersasdfasdfdsfasdf"],
           },
           {
             cluster_id: currentCluster.id,
@@ -320,6 +322,55 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         console.log(syncedEnvGroups)
         // console.log(appData.chart.namespace)
         // console.log(appData.chart)
+        const filteredEnvGroups = deletedEnvGroups.filter((deletedEnvGroup) => {
+          return !syncedEnvGroups.some((syncedEnvGroup) => {
+            return syncedEnvGroup.name === deletedEnvGroup.name; // Assuming `id` is the unique identifier for the envGroup
+          });
+        });
+
+        setDeleteEnvGroups(filteredEnvGroups);
+        if (deletedEnvGroups) {
+          const removeApplicationToEnvGroupPromises = deletedEnvGroups.map((envGroup: any) => {
+            return api.removeApplicationFromEnvGroup(
+              "<token>",
+              {
+                name: envGroup?.name,
+                app_name: appData.chart.name,
+              },
+              {
+                project_id: currentProject.id,
+                cluster_id: currentCluster.id,
+                namespace: "default",
+              }
+            );
+          });
+
+          try {
+            await Promise.all(removeApplicationToEnvGroupPromises);
+          } catch (error) {
+            setCurrentError(
+              "We couldn't remove the synced env group from the application, please try again."
+            );
+          }
+
+          // const namespace = appData?.chart.namespace;
+
+          // const deleteEnvGroupPromises = deletedEnvGroups.map((envGroup: any) => {
+          //   return api.deleteEnvGroup(
+          //     "<token>",
+          //     {
+          //       name: envGroup.name,
+          //     },
+          //     {
+          //       id: currentProject.id,
+          //       cluster_id: currentCluster.id,
+          //       namespace,
+          //     }
+          //   );
+          // });
+
+          // await Promise.all(deleteEnvGroupPromises);
+        }
         const addApplicationToEnvGroupPromises = syncedEnvGroups.map(
           (envGroup: any) => {
             return api.addApplicationToEnvGroup(
@@ -331,7 +382,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               {
                 project_id: currentProject.id,
                 cluster_id: currentCluster.id,
-                namespace: appData.chart.namespace,
+                namespace: "default",
               }
             );
           }
@@ -346,6 +397,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             "We coudln't sync the env group to the application, please try again."
           );
         }
+
+
         setPorterYaml(finalPorterYaml);
         setPorterApp(tempPorterApp);
         setButtonStatus("success");
@@ -831,6 +884,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             clearStatus={() => setButtonStatus("")}
             setSyncedEnvGroups={setSyncedEnvGroups}
             appData={appData}
+            deletedEnvGroups={deletedEnvGroups}
+            setDeletedEnvGroups={setDeleteEnvGroups}
           />
         );
       case "pre-deploy":

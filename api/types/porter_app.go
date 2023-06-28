@@ -45,6 +45,7 @@ type CreatePorterAppRequest struct {
 	PorterYamlPath   string    `json:"porter_yaml_path"`
 	ImageInfo        ImageInfo `json:"image_info" form:"omitempty"`
 	OverrideRelease  bool      `json:"override_release"`
+	EnvGroups        []string  `json:"env_groups"`
 }
 
 type UpdatePorterAppRequest struct {

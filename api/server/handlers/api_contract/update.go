@@ -2,7 +2,6 @@ package api_contract
 
 import (
 	"encoding/base64"
-	"fmt"
 	"net/http"
 
 	"github.com/bufbuild/connect-go"
@@ -15,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type APIContractUpdateHandler struct {
@@ -34,7 +34,9 @@ func NewAPIContractUpdateHandler(
 // ServeHTTP parses the Porter API contract for validity, and forwards the requests for handling on to another service
 // For now, this handling cluster creation only, by inserting a row into the cluster table in order to create an ID for this cluster, as well as stores the raw request JSON for updating later
 func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-update-api-contract")
+	defer span.End()
+
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	user, _ := ctx.Value(types.UserScope).(*models.User)
 
@@ -42,8 +44,8 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	err := helpers.UnmarshalContractObjectFromReader(r.Body, &apiContract)
 	if err != nil {
-		e := fmt.Errorf("error parsing api contract: %w", err)
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+		e := telemetry.Error(ctx, span, err, "error parsing api contract")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 		return
 	}
 
@@ -63,8 +65,8 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			}
 			dbcl, err := c.Config().Repo.Cluster().CreateCluster(&dbcli)
 			if err != nil {
-				e := fmt.Errorf("error updating mock contract: %w", err)
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+				e := telemetry.Error(ctx, span, err, "error updating mocking contract")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 				return
 			}
 			clusterID = int32(dbcl.ID)
@@ -72,8 +74,8 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 		by, err := helpers.MarshalContractObject(ctx, &apiContract)
 		if err != nil {
-			e := fmt.Errorf("error marshalling mock api contract: %w", err)
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			e := telemetry.Error(ctx, span, err, "error marshalling mock api contract")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 			return
 		}
 		b64Contract := base64.StdEncoding.EncodeToString([]byte(by))
@@ -86,8 +88,8 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 		revision, err := c.Config().Repo.APIContractRevisioner().Insert(ctx, revisionInput)
 		if err != nil {
-			e := fmt.Errorf("error updating mock contract: %w", err)
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			e := telemetry.Error(ctx, span, err, "error updating mock api contract")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 			return
 		}
 		resp := &porterv1.ContractRevision{
@@ -108,8 +110,8 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	})
 	revision, err := c.Config().ClusterControlPlaneClient.UpdateContract(ctx, updateRequest)
 	if err != nil {
-		e := fmt.Errorf("error sending contract for update: %w", err)
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+		e := telemetry.Error(ctx, span, err, "error sending contract for update")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
 

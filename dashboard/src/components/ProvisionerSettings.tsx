@@ -22,6 +22,7 @@ import {
   Cluster,
   LoadBalancer,
   LoadBalancerType,
+  EKSLogging
 } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
@@ -97,6 +98,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [loadBalancerType, setLoadBalancerType] = useState(false);
   const [wildCardDomain, setWildCardDomain] = useState("")
   const [IPAllowList, setIPAllowList] = useState<string>("")
+  const [controlPlaneLogs, setControlPlaneLogs] = useState<EKSLogging>(new EKSLogging())
   //const [accessS3Logs, setAccessS3Logs] = useState<boolean>(false)
   const [wafV2Enabled, setWaf2Enabled] = useState<boolean>(false)
   const [awsTags, setAwsTags] = useState<string>("")
@@ -108,7 +110,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [additionalNodePolicies, setAdditionalNodePolicies] = useState<string[]>([]);
   const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
-  const [loadBalancer, setLoadBalancer] = useState<LoadBalancer | undefined>();
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
@@ -258,6 +259,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             cidrRange: cidrRange || "10.78.0.0/16",
             region: awsRegion,
             loadBalancer: loadBalancerObj,
+            logging: controlPlaneLogs,
             nodeGroups: [
               new EKSNodeGroup({
                 instanceType: "t3.medium",
@@ -416,6 +418,16 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         setwafV2ARN(eksValues.loadBalancer.wafv2Arn)
         setWaf2Enabled(eksValues.loadBalancer.enableWafv2)
       }
+
+      if (eksValues.logging != null) {
+        const l = new EKSLogging();
+        l.enableApiServerLogs = eksValues.logging.enableApiServerLogs;
+        l.enableAuditLogs = eksValues.logging.enableAuditLogs;
+        l.enableAuthenticatorLogs = eksValues.logging.enableAuthenticatorLogs;
+        l.enableControllerManagerLogs = eksValues.logging.enableControllerManagerLogs;
+        l.enableSchedulerLogs = eksValues.logging.enableSchedulerLogs;
+        setControlPlaneLogs(l);
+      }
     }
 
   }, [isExpanded, props.selectedClusterVersion]);
@@ -514,6 +526,67 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
             {!currentProject.simplified_view_enabled &&
               <>
+
+                <Spacer y={1} />
+                <Checkbox
+                  checked={controlPlaneLogs.enableApiServerLogs}
+                  disabled={isReadOnly}
+                  toggleChecked={() => {
+                    setControlPlaneLogs(new EKSLogging({ ...controlPlaneLogs, enableApiServerLogs: !controlPlaneLogs.enableApiServerLogs }))
+                  }}
+                  disabledTooltip={"Wait for provisioning to complete before editing this field."}
+                >
+                  <Text color="helper">Enable API Server logs in CloudWatch for this cluster</Text>
+                </Checkbox>
+
+                <Spacer y={1} />
+                <Checkbox
+                  checked={controlPlaneLogs.enableAuditLogs}
+                  disabled={isReadOnly}
+                  toggleChecked={() => {
+                    setControlPlaneLogs(new EKSLogging({ ...controlPlaneLogs, enableAuditLogs: !controlPlaneLogs.enableAuditLogs }))
+                  }}
+                  disabledTooltip={"Wait for provisioning to complete before editing this field."}
+                >
+                  <Text color="helper">Enable Audit logs in CloudWatch for this cluster</Text>
+                </Checkbox>
+
+                <Spacer y={1} />
+                <Checkbox
+                  checked={controlPlaneLogs.enableAuthenticatorLogs}
+                  disabled={isReadOnly}
+                  toggleChecked={() => {
+                    setControlPlaneLogs(new EKSLogging({ ...controlPlaneLogs, enableAuthenticatorLogs: !controlPlaneLogs.enableAuthenticatorLogs }))
+                  }}
+                  disabledTooltip={"Wait for provisioning to complete before editing this field."}
+                >
+                  <Text color="helper">Enable Authenticator logs in CloudWatch for this cluster</Text>
+                </Checkbox>
+
+                <Spacer y={1} />
+                <Checkbox
+                  checked={controlPlaneLogs.enableControllerManagerLogs}
+                  disabled={isReadOnly}
+                  toggleChecked={() => {
+                    setControlPlaneLogs(new EKSLogging({ ...controlPlaneLogs, enableControllerManagerLogs: !controlPlaneLogs.enableControllerManagerLogs }))
+                  }}
+                  disabledTooltip={"Wait for provisioning to complete before editing this field."}
+                >
+                  <Text color="helper">Enable Controller Manager logs in CloudWatch for this cluster</Text>
+                </Checkbox>
+
+                <Spacer y={1} />
+                <Checkbox
+                  checked={controlPlaneLogs.enableSchedulerLogs}
+                  disabled={isReadOnly}
+                  toggleChecked={() => {
+                    setControlPlaneLogs(new EKSLogging({ ...controlPlaneLogs, enableSchedulerLogs: !controlPlaneLogs.enableSchedulerLogs }))
+                  }}
+                  disabledTooltip={"Wait for provisioning to complete before editing this field."}
+                >
+                  <Text color="helper">Enable Scheduler logs in CloudWatch for this cluster</Text>
+                </Checkbox>
+
                 <Spacer y={1} />
                 <Checkbox
                   checked={loadBalancerType}
@@ -686,6 +759,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
                     }
                   </>}
+
                   <Spacer y={1} />
                 </>
                 )}

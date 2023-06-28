@@ -2,6 +2,7 @@ package porter_app
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -65,27 +66,27 @@ func parse(
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
 	}
 
-	values, err := buildStackValues(parsed, imageInfo, existingValues, opts, injectLauncher)
+	values, err := buildUmbrellaChartValues(parsed, imageInfo, existingValues, opts, injectLauncher)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
 	}
 	convertedValues := convertMap(values).(map[string]interface{})
 
-	chart, err := buildStackChart(parsed, config, projectID, existingDependencies)
+	chart, err := buildUmbrellaChart(parsed, config, projectID, existingDependencies)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error building chart from porter.yaml", err)
 	}
 
 	// return the parsed release values for the release job chart, if they exist
-	var releaseJobValues map[string]interface{}
+	var preDeployJobValues map[string]interface{}
 	if parsed.Release != nil && parsed.Release.Run != nil {
-		releaseJobValues = buildReleaseValues(parsed.Release, parsed.Env, imageInfo, injectLauncher)
+		preDeployJobValues = buildPreDeployJobChartValues(parsed.Release, parsed.Env, imageInfo, injectLauncher)
 	}
 
-	return chart, convertedValues, releaseJobValues, nil
+	return chart, convertedValues, preDeployJobValues, nil
 }
 
-func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existingValues map[string]interface{}, opts SubdomainCreateOpts, injectLauncher bool) (map[string]interface{}, error) {
+func buildUmbrellaChartValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existingValues map[string]interface{}, opts SubdomainCreateOpts, injectLauncher bool) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
 	if parsed.Apps == nil {
@@ -107,6 +108,11 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 				existingValuesMap := existingValues[helmName].(map[string]interface{})
 				helm_values = utils.DeepCoalesceValues(existingValuesMap, helm_values)
 			}
+		}
+
+		validateErr := validateHelmValues(helm_values)
+		if validateErr != "" {
+			return nil, fmt.Errorf("error validating service \"%s\": %s", name, validateErr)
 		}
 
 		err := createSubdomainIfRequired(helm_values, opts) // modifies helm_values to add subdomains if necessary
@@ -160,7 +166,31 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 	return values, nil
 }
 
-func buildReleaseValues(release *App, env map[string]string, imageInfo types.ImageInfo, injectLauncher bool) map[string]interface{} {
+// we can add to this function up later or use an alternative
+func validateHelmValues(values map[string]interface{}) string {
+	containerMap, err := getNestedMap(values, "container")
+	if err != nil {
+		return "error checking port: misformatted values"
+	} else {
+		portVal, portExists := containerMap["port"]
+		if portExists {
+			portStr, pOK := portVal.(string)
+			if !pOK {
+				return "error checking port: no port in container"
+			}
+
+			port, err := strconv.Atoi(portStr)
+			if err != nil || port < 1024 || port > 65535 {
+				return "port must be a number between 1024 and 65535"
+			}
+		} else {
+			return "must specify port if choosing to expose service externally"
+		}
+	}
+	return ""
+}
+
+func buildPreDeployJobChartValues(release *App, env map[string]string, imageInfo types.ImageInfo, injectLauncher bool) map[string]interface{} {
 	defaultValues := getDefaultValues(release, env, "job")
 	convertedConfig := convertMap(release.Config).(map[string]interface{})
 	helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
@@ -214,7 +244,7 @@ func getDefaultValues(app *App, env map[string]string, appType string) map[strin
 	return defaultValues
 }
 
-func buildStackChart(parsed *PorterStackYAML, config *config.Config, projectID uint, existingDependencies []*chart.Dependency) (*chart.Chart, error) {
+func buildUmbrellaChart(parsed *PorterStackYAML, config *config.Config, projectID uint, existingDependencies []*chart.Dependency) (*chart.Chart, error) {
 	deps := make([]*chart.Dependency, 0)
 	for alias, app := range parsed.Apps {
 		var appType string

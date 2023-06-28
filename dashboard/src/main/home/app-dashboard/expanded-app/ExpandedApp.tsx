@@ -891,7 +891,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             <>
               <Container>
                 <Text>
-                  <a href={subdomain} target="_blank">
+                  <a href={Service.prefixSubdomain(subdomain)} target="_blank">
                     {subdomain}
                   </a>
                 </Text>

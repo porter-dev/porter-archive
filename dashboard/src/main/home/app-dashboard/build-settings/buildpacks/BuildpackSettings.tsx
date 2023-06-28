@@ -117,6 +117,7 @@ const BuildpackSettings: React.FC<{
             setAvailableBuildpacks(defaultBuilder.others);
             setError("");
           } else {
+            updatePorterApp({ builder: detectedBuilder });
             setAvailableBuildpacks(allBuildpacks.filter(bp => !porterApp.buildpacks?.includes(bp.buildpack)));
           }
         }

@@ -39,3 +39,5 @@ export const PorterApp = {
         ...values,
     }),
 }
+
+export type BuildMethod = "docker" | "buildpacks";

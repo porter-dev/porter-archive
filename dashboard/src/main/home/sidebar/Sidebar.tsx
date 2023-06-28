@@ -198,7 +198,7 @@ class Sidebar extends Component<PropsType, StateType> {
             }
           >
             <Img src={sliders} />
-            Env groups
+            Efnv groups
           </NavButton>
           {this.props.isAuthorized("integrations", "", [
             "get",

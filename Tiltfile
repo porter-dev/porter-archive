@@ -57,6 +57,7 @@ local_resource(
     "ee",
     "internal",
     "pkg",
+    "vendor",
   ],
   resource_deps=["postgresql"],
   labels=["z_binaries"]

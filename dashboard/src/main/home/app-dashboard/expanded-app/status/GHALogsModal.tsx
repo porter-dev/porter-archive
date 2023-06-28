@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Modal from "components/porter/Modal";
 import TitleSection from "components/TitleSection";
-import { Log } from "../useAgentLogs";
+import { Log } from "../logs/useAgentLogs";
 import Loading from "components/Loading";
 import Text from "components/porter/Text";
 import danger from "assets/danger.svg";

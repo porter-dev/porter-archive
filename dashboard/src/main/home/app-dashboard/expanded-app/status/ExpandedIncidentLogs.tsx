@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Log } from "../useAgentLogs";
+import { Log } from "../logs/useAgentLogs";
 import React from "react";
 import styled from "styled-components";
 import Loading from "components/Loading";
@@ -7,59 +7,59 @@ import dayjs from "dayjs";
 import Anser from "anser";
 
 interface ExpandedIncidentLogsProps {
-    logs: Log[];
+  logs: Log[];
 }
 
 const ExpandedIncidentLogs: React.FC<ExpandedIncidentLogsProps> = ({ logs }: ExpandedIncidentLogsProps) => {
-    const scrollToBottomRef = useRef<HTMLDivElement>(null);
+  const scrollToBottomRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        if (scrollToBottomRef.current) {
-            scrollToBottomRef.current.scrollIntoView({
-                behavior: "smooth",
-                block: "end",
-            });
-        }
-    }, [logs, scrollToBottomRef]);
+  useEffect(() => {
+    if (scrollToBottomRef.current) {
+      scrollToBottomRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }
+  }, [logs, scrollToBottomRef]);
 
-    return logs.length ?
-        (<LogsSectionWrapper>
-            <StyledLogsSection>
-                {logs?.map((log, i) => {
-                    return (
-                        <LogSpan key={[log.lineNumber, i].join(".")}>
-                            <span className="line-number">{log.lineNumber}.</span>
-                            {log.timestamp && <span className="line-timestamp">
-                                {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
-                            </span>}
-                            <LogOuter key={[log.lineNumber, i].join(".")}>
-                                {Array.isArray(log.line) ? log.line?.map((ansi, j) => {
-                                    if (ansi.clearLine) {
-                                        return null;
-                                    }
+  return logs.length ?
+    (<LogsSectionWrapper>
+      <StyledLogsSection>
+        {logs?.map((log, i) => {
+          return (
+            <LogSpan key={[log.lineNumber, i].join(".")}>
+              <span className="line-number">{log.lineNumber}.</span>
+              {log.timestamp && <span className="line-timestamp">
+                {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
+              </span>}
+              <LogOuter key={[log.lineNumber, i].join(".")}>
+                {Array.isArray(log.line) ? log.line?.map((ansi, j) => {
+                  if (ansi.clearLine) {
+                    return null;
+                  }
 
-                                    return (
-                                        <LogInnerSpan
-                                            key={[log.lineNumber, i, j].join(".")}
-                                            ansi={ansi}
-                                        >
-                                            {ansi.content.replace(/ /g, "\u00a0")}
-                                        </LogInnerSpan>
-                                    );
-                                }) : (
-                                    log.line
-                                )}
-                            </LogOuter>
-                        </LogSpan>
-                    );
-                })}
-                <div ref={scrollToBottomRef} />
-            </StyledLogsSection>
-        </LogsSectionWrapper>)
-        :
-        (<LogsLoadWrapper>
-            <Loading />
-        </LogsLoadWrapper >)
+                  return (
+                    <LogInnerSpan
+                      key={[log.lineNumber, i, j].join(".")}
+                      ansi={ansi}
+                    >
+                      {ansi.content.replace(/ /g, "\u00a0")}
+                    </LogInnerSpan>
+                  );
+                }) : (
+                  log.line
+                )}
+              </LogOuter>
+            </LogSpan>
+          );
+        })}
+        <div ref={scrollToBottomRef} />
+      </StyledLogsSection>
+    </LogsSectionWrapper>)
+    :
+    (<LogsLoadWrapper>
+      <Loading />
+    </LogsLoadWrapper >)
 };
 
 export default ExpandedIncidentLogs;
@@ -141,11 +141,11 @@ const LogInnerSpan = styled.span`
   font-family: monospace, sans-serif;
   font-size: 12px;
   font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>
-        props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
+    props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
   color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
-        props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
+    props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
   background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
-        props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
+    props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
 `;
 
 export const ViewLogsWrapper = styled.div`

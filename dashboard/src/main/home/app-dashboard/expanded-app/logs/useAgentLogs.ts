@@ -32,9 +32,9 @@ const LogSchema = z.object({
 type LogLine = z.infer<typeof LogSchema>;
 
 export const parseLogs = (logs: any[] = []): Log[] => {
-  return logs.filter(Boolean).map((logLine: any, idx) => {
+  return logs.filter(Boolean).map((log: any, idx) => {
     try {
-      const parsed: LogLine = LogSchema.parse(logLine);
+      const parsed: LogLine = LogSchema.parse(log);
 
       // TODO Move log parsing to the render method
       const ansiLog = Anser.ansiToJson(parsed.line);
@@ -44,11 +44,17 @@ export const parseLogs = (logs: any[] = []): Log[] => {
         timestamp: parsed.timestamp,
       };
     } catch (err) {
+      console.log(err)
+      // return {
+      //   line: Anser.ansiToJson(log),
+      //   lineNumber: idx + 1,
+      //   timestamp: undefined,
+      // };
       return {
-        line: Anser.ansiToJson(logLine),
+        line: log,
         lineNumber: idx + 1,
         timestamp: undefined,
-      };
+      }
     }
   });
 };
@@ -200,12 +206,15 @@ export const useLogs = (
       },
       onmessage: (evt: MessageEvent) => {
         // Nothing to do here
-        if (!evt?.data || typeof evt.data !== "string") {
+        if (evt.data == null) {
           return;
         }
-
+        console.log("here is the data", evt)
         const newLogs = parseLogs(
-          evt?.data?.split("}\n").map((line: string) => line + "}")
+          [{
+            line: evt.data,
+            timestamp: evt.timeStamp.toString(),
+          }]
         );
 
         pushLogs(newLogs);

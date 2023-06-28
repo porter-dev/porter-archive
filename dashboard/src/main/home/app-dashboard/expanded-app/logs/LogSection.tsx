@@ -30,7 +30,7 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
-import { Service } from "../new-app-flow/serviceTypes";
+import { Service } from "../../new-app-flow/serviceTypes";
 
 type Props = {
   currentChart?: ChartType;

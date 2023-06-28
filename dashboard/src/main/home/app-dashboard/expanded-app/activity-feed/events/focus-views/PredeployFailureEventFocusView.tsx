@@ -5,82 +5,82 @@ import api from "shared/api";
 import styled from "styled-components";
 import Anser from "anser";
 import dayjs from "dayjs";
-import { Log as LogType, parseLogs } from "../../../useAgentLogs";
+import { Log as LogType, parseLogs } from "../../../logs/useAgentLogs";
 import { PorterAppEvent } from "shared/types";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
 import { getDuration } from "../utils";
-import LogSection from "../../../LogSection";
+import LogSection from "../../../logs/LogSection";
 
 type Props = {
-    event: PorterAppEvent;
-    appData: any;
+  event: PorterAppEvent;
+  appData: any;
 };
 
 const PreDeployFailureEventFocusView: React.FC<Props> = ({
-    event,
-    appData,
+  event,
+  appData,
 }) => {
-    const [logs, setLogs] = useState<LogType[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
-    const [noLogsMessage, setNoLogsMessage] = useState<string>("Waiting for logs...");
+  const [logs, setLogs] = useState<LogType[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
+  const [noLogsMessage, setNoLogsMessage] = useState<string>("Waiting for logs...");
 
-    useEffect(() => {
-        if (!isLoading && scrollToBottomRef.current) {
-            scrollToBottomRef.current.scrollIntoView({
-                behavior: "smooth",
-                block: "end",
-            });
-        }
-    }, [isLoading, logs, scrollToBottomRef]);
+  useEffect(() => {
+    if (!isLoading && scrollToBottomRef.current) {
+      scrollToBottomRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }
+  }, [isLoading, logs, scrollToBottomRef]);
 
-    // const getPredeployLogs = async () => {
-    //     setIsLoading(true);
-    //     try {
-    //         if (appData.releaseChart == null) {
-    //             setNoLogsMessage("Unable to retrieve logs because the pre-deploy job no longer exists.")
-    //             return;
-    //         }
-    //         const logResp = await api.getLogsWithinTimeRange(
-    //             "<token>",
-    //             {
-    //                 chart_name: appData.releaseChart.name,
-    //                 namespace: appData.releaseChart.namespace,
-    //                 start_range: dayjs(event.metadata.start_time).subtract(1, 'minute').toISOString(),
-    //                 end_range: dayjs(event.metadata.end_time).add(1, 'minute').toISOString(),
-    //                 limit: 1000,
-    //             },
-    //             {
-    //                 project_id: appData.app.project_id,
-    //                 cluster_id: appData.app.cluster_id,
-    //             }
-    //         )
-    //         if (logResp.data == null || logResp.data.logs == null || logResp.data.logs.length == 0) {
-    //             setNoLogsMessage("No logs found.")
-    //             return;
-    //         }
-    //         setLogs(parseLogs(logResp.data.logs));
-    //     } catch (error) {
-    //         console.log(error);
-    //     } finally {
-    //         setIsLoading(false);
-    //     }
-    // };
+  // const getPredeployLogs = async () => {
+  //     setIsLoading(true);
+  //     try {
+  //         if (appData.releaseChart == null) {
+  //             setNoLogsMessage("Unable to retrieve logs because the pre-deploy job no longer exists.")
+  //             return;
+  //         }
+  //         const logResp = await api.getLogsWithinTimeRange(
+  //             "<token>",
+  //             {
+  //                 chart_name: appData.releaseChart.name,
+  //                 namespace: appData.releaseChart.namespace,
+  //                 start_range: dayjs(event.metadata.start_time).subtract(1, 'minute').toISOString(),
+  //                 end_range: dayjs(event.metadata.end_time).add(1, 'minute').toISOString(),
+  //                 limit: 1000,
+  //             },
+  //             {
+  //                 project_id: appData.app.project_id,
+  //                 cluster_id: appData.app.cluster_id,
+  //             }
+  //         )
+  //         if (logResp.data == null || logResp.data.logs == null || logResp.data.logs.length == 0) {
+  //             setNoLogsMessage("No logs found.")
+  //             return;
+  //         }
+  //         setLogs(parseLogs(logResp.data.logs));
+  //     } catch (error) {
+  //         console.log(error);
+  //     } finally {
+  //         setIsLoading(false);
+  //     }
+  // };
 
-    // useEffect(() => {
-    //     getPredeployLogs();
-    // }, [event]);
+  // useEffect(() => {
+  //     getPredeployLogs();
+  // }, [event]);
 
-    return (
-        <>
-            <Text size={16} color="#FF6060">Pre-deploy failed</Text>
-            <Spacer y={0.5} />
-            <Text color="helper">Started {readableDate(event.created_at)} and ran for {getDuration(event)}.</Text>
-            <Spacer y={0.5} />
-            <LogSection currentChart={appData.releaseChart} />
-        </>
-    );
+  return (
+    <>
+      <Text size={16} color="#FF6060">Pre-deploy failed</Text>
+      <Spacer y={0.5} />
+      <Text color="helper">Started {readableDate(event.created_at)} and ran for {getDuration(event)}.</Text>
+      <Spacer y={0.5} />
+      <LogSection currentChart={appData.releaseChart} />
+    </>
+  );
 };
 
 export default PreDeployFailureEventFocusView;
@@ -168,9 +168,9 @@ const LogInnerSpan = styled.span`
   font-family: monospace, sans-serif;
   font-size: 12px;
   font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>
-        props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
+    props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
   color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
-        props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
+    props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
   background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
-        props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
+    props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
 `;

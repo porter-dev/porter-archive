@@ -6,7 +6,7 @@ import styled from "styled-components";
 import Anser, { AnserJsonEntry } from "anser";
 import JSZip from "jszip";
 import dayjs from "dayjs";
-import { Log as LogType } from "../../../useAgentLogs";
+import { Log as LogType } from "../../../logs/useAgentLogs";
 import { PorterAppEvent } from "shared/types";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";

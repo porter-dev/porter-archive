@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import Modal from "components/porter/Modal";
 import TitleSection from "components/TitleSection";
-import { Log } from "../useAgentLogs";
+import { Log } from "../logs/useAgentLogs";
 import Text from "components/porter/Text";
 import danger from "assets/danger.svg";
 

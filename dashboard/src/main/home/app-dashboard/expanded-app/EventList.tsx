@@ -14,7 +14,7 @@ import TitleSection from "components/TitleSection";
 import api from "shared/api";
 import Modal from "main/home/modals/Modal";
 import time from "assets/time.svg";
-import { Direction, Log, parseLogs } from "./useAgentLogs";
+import { Direction, Log, parseLogs } from "./logs/useAgentLogs";
 import { Context } from "shared/Context";
 import dayjs from "dayjs";
 import Anser from "anser";

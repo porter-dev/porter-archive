@@ -69,6 +69,12 @@ local_resource(
     labels=["z_binaries"],
 )
 
+local_resource(
+    name="disable-porter-helm-test",
+    cmd='tilt disable porter-server-web-test-connection',
+    resource_deps=["porter-server-web"]
+)
+
 docker_build_with_restart(
     ref="porter1/porter-server",
     context=".",

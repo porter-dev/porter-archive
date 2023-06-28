@@ -12,7 +12,7 @@ import { AxiosError } from "axios";
 import Button from "components/porter/Button";
 import Checkbox from "components/porter/Checkbox";
 import SharedBuildSettings from "./SharedBuildSettings";
-import { PorterApp } from "../types/porterApp";
+import { BuildMethod, PorterApp } from "../types/porterApp";
 import _ from "lodash";
 
 type Props = {
@@ -20,6 +20,8 @@ type Props = {
   setTempPorterApp: (app: PorterApp) => void;
   updatePorterApp: (options: Partial<PorterAppOptions>) => Promise<void>;
   clearStatus: () => void;
+  buildView: BuildMethod;
+  setBuildView: (buildView: BuildMethod) => void;
 };
 
 const BuildSettingsTab: React.FC<Props> = ({
@@ -27,6 +29,8 @@ const BuildSettingsTab: React.FC<Props> = ({
   setTempPorterApp,
   clearStatus,
   updatePorterApp,
+  buildView,
+  setBuildView,
 }) => {
   const { setCurrentError, currentCluster, currentProject } = useContext(Context);
   const [redeployOnSave, setRedeployOnSave] = useState(true);
@@ -161,6 +165,8 @@ const BuildSettingsTab: React.FC<Props> = ({
         setPorterYaml={() => { }}
         autoDetectionOn={false}
         canChangeRepo={false}
+        buildView={buildView}
+        setBuildView={setBuildView}
       />
       <Spacer y={1} />
       <Checkbox

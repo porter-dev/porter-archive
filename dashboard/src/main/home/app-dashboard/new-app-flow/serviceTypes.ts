@@ -493,16 +493,19 @@ export const Service = {
             if (values == null || values.ingress == null || !values.ingress.enabled) {
                 continue;
             }
-            if (values.ingress.custom_domain && values.ingress.hosts?.length > 0) {
+            if (values.ingress.porter_hosts?.length > 0 || (values.ingress.custom_domain && values.ingress.hosts?.length > 0)) {
+                if (values.ingress.custom_domain && values.ingress.hosts?.length > 0) {
+                    // if they have a custom domain, use that
+                    matchedWebHost = values.ingress.hosts[0];
+                } else {
+                    // otherwise, use their porter domain
+                    matchedWebHost = values.ingress.porter_hosts[0];
+                }
                 matchedWebCount++;
-                matchedWebHost = values.ingress.hosts[0];
-            }
-            if (values.ingress.porter_hosts?.length > 0) {
-                matchedWebCount++;
-                matchedWebHost = values.ingress.porter_hosts[0];
             }
         }
 
+        // if multiple web services have a subdomain, return nothing
         if (matchedWebCount > 1) {
             return "";
         }

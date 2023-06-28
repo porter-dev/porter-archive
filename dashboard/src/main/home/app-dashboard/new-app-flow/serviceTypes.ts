@@ -16,6 +16,7 @@ type ServiceBoolean = {
 }
 type Ingress = {
     enabled: ServiceBoolean;
+    customDomain: ServiceString;
     hosts: ServiceString;
     porterHosts: ServiceString;
 }
@@ -161,6 +162,7 @@ const WebService = {
         },
         ingress: {
             enabled: ServiceField.boolean(true, porterJson?.apps?.[name]?.config?.ingress?.enabled),
+            customDomain: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
             hosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
             porterHosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
         },
@@ -212,8 +214,8 @@ const WebService = {
             },
             ingress: {
                 enabled: service.ingress.enabled.value,
-                hosts: service.ingress.hosts.value ? [service.ingress.hosts.value] : [],
-                custom_domain: service.ingress.hosts.value ? true : false,
+                custom_domain: service.ingress.customDomain.value ? true : false,
+                hosts: service.ingress.customDomain.value ? [service.ingress.customDomain.value] : [],
                 porter_hosts: service.ingress.porterHosts.value ? [service.ingress.porterHosts.value] : [],
             },
             health: {
@@ -255,6 +257,7 @@ const WebService = {
             },
             ingress: {
                 enabled: ServiceField.boolean(values.ingress?.enabled ?? false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
+                customDomain: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
                 hosts: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
                 porterHosts: ServiceField.string(values.ingress?.porter_hosts?.length ? values.ingress.porter_hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
             },

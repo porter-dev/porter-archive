@@ -16,7 +16,7 @@ interface Props {
 const RESOURCE_HEIGHT_WITHOUT_AUTOSCALING = 373;
 const RESOURCE_HEIGHT_WITH_AUTOSCALING = 713;
 const NETWORKING_HEIGHT_WITHOUT_INGRESS = 204;
-const NETWORKING_HEIGHT_WITH_INGRESS = 353;
+const NETWORKING_HEIGHT_WITH_INGRESS = 333;
 const ADVANCED_BASE_HEIGHT = 215;
 const PROBE_INPUTS_HEIGHT = 230;
 
@@ -114,15 +114,15 @@ const WebTabs: React.FC<Props> = ({
               </>
             }
             placeholder="ex: my-app.my-domain.com"
-            value={service.ingress.hosts.value}
-            disabled={service.ingress.hosts.readOnly}
+            value={service.ingress.customDomain.value}
+            disabled={service.ingress.customDomain.readOnly}
             width="300px"
             setValue={(e) => {
               editService({
                 ...service,
                 ingress: {
                   ...service.ingress,
-                  hosts: { readOnly: false, value: e },
+                  customDomain: { readOnly: false, value: e },
                 },
               });
             }}
@@ -696,10 +696,19 @@ const WebTabs: React.FC<Props> = ({
           </a>
         </Text>
       )
+    } else if (service.ingress.customDomain.value !== "") {
+      return (
+        <Text color="helper">Application URL: Your application will be available at{" "}
+          <a href={Service.prefixSubdomain(service.ingress.customDomain.value)} target="_blank">
+            {service.ingress.customDomain.value}
+          </a>
+          {" "}on next deploy.
+        </Text>
+      )
     } else {
       return (
         <Text color="helper">
-          Application URL: Not generated yet. If no custom domain is provided, Porter will generate a URL for you on next deploy.
+          Application URL: Not generated yet. Porter will generate a URL for you on next deploy.
         </Text>
       )
     }

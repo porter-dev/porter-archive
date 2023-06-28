@@ -79,33 +79,20 @@ const BuildpackList: React.FC<Props> = ({
         }
 
         if (availableBuildpacks.length > 0) {
-            return (
-                <>
-                    <Spacer y={0.5} />
-                    <Text>Available buildpacks:</Text>
-                    <Spacer y={0.5} />
-                    {availableBuildpacks.map((buildpack, index) => {
-                        return (
-                            <BuildpackCard
-                                buildpack={buildpack}
-                                action={"add"}
-                                onClickFn={handleAddBuildpack}
-                                index={index}
-                                draggable={false}
-                            />
-                        )
-                    })
-                    }
-                </>
-            )
+            return availableBuildpacks.map((buildpack, index) => {
+                return (
+                    <BuildpackCard
+                        buildpack={buildpack}
+                        action={"add"}
+                        onClickFn={handleAddBuildpack}
+                        index={index}
+                        draggable={false}
+                    />
+                )
+            })
         }
 
-        return (
-            <>
-                <Spacer y={0.5} />
-                <Text color="helper">No buildpacks detected. Click 'Detect buildpacks' below to scan your repository for available buildpacks.</Text>
-            </>
-        )
+        return <Text color="helper">No available buildpacks detected.</Text>
     }
 
     return (
@@ -117,13 +104,13 @@ const BuildpackList: React.FC<Props> = ({
                     <Spacer y={0.5} />
                 </>
             }
-            <Droppable droppableId={droppableId}>
+            {selectedBuildpacks.length !== 0 && <Droppable droppableId={droppableId}>
                 {provided => (
                     <div
                         {...provided.droppableProps}
                         ref={provided.innerRef}
                     >
-                        {selectedBuildpacks?.map((buildpack, index) => (
+                        {selectedBuildpacks.map((buildpack, index) => (
                             <BuildpackCard
                                 buildpack={buildpack}
                                 action={"remove"}
@@ -136,8 +123,18 @@ const BuildpackList: React.FC<Props> = ({
                         {provided.placeholder}
                     </div>
                 )}
-            </Droppable>
-            {showAvailableBuildpacks && renderAvailableBuildpacks()}
+            </Droppable>}
+            {selectedBuildpacks.length === 0 &&
+                <Text color="helper">No buildpacks selected.</Text>
+            }
+            {showAvailableBuildpacks &&
+                <>
+                    <Spacer y={0.5} />
+                    <Text>Available buildpacks:</Text>
+                    <Spacer y={0.5} />
+                    {renderAvailableBuildpacks()}
+                </>
+            }
         </DragDropContext>
     );
 };

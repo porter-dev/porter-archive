@@ -4,7 +4,7 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import Checkbox from "components/porter/Checkbox";
-import { WebService } from "./serviceTypes";
+import { Service, WebService } from "./serviceTypes";
 import AnimateHeight, { Height } from "react-animate-height";
 
 interface Props {
@@ -15,7 +15,9 @@ interface Props {
 
 const RESOURCE_HEIGHT_WITHOUT_AUTOSCALING = 373;
 const RESOURCE_HEIGHT_WITH_AUTOSCALING = 713;
-const ADVANCED_BASE_HEIGHT = 300;
+const NETWORKING_HEIGHT_WITHOUT_INGRESS = 204;
+const NETWORKING_HEIGHT_WITH_INGRESS = 353;
+const ADVANCED_BASE_HEIGHT = 215;
 const PROBE_INPUTS_HEIGHT = 230;
 
 const WebTabs: React.FC<Props> = ({
@@ -26,7 +28,7 @@ const WebTabs: React.FC<Props> = ({
   const [currentTab, setCurrentTab] = React.useState<string>("main");
 
   const renderMain = () => {
-    setHeight(288);
+    setHeight(159);
     return (
       <>
         <Spacer y={1} />
@@ -57,6 +59,14 @@ const WebTabs: React.FC<Props> = ({
           }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
+      </>
+    );
+  };
+
+  const renderNetworking = () => {
+    setHeight(service.ingress.enabled.value ? NETWORKING_HEIGHT_WITH_INGRESS : NETWORKING_HEIGHT_WITHOUT_INGRESS)
+    return (
+      <>
         <Spacer y={1} />
         <Input
           label="Container port"
@@ -87,14 +97,48 @@ const WebTabs: React.FC<Props> = ({
           }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         >
-          <Text color="helper">Generate a Porter URL for external traffic</Text>
+          <Text color="helper">Expose to external traffic</Text>
         </Checkbox>
+        <AnimateHeight height={service.ingress.enabled.value ? 'auto' : 0}>
+          <Spacer y={1} />
+          <Input
+            label={
+              <>
+                <span>Custom domain</span>
+                <a
+                  href="https://docs.porter.run/standard/deploying-applications/https-and-domains/custom-domains"
+                  target="_blank"
+                >
+                  &nbsp;(?)
+                </a>
+              </>
+            }
+            placeholder="ex: my-app.my-domain.com"
+            value={service.ingress.hosts.value}
+            disabled={service.ingress.hosts.readOnly}
+            width="300px"
+            setValue={(e) => {
+              editService({
+                ...service,
+                ingress: {
+                  ...service.ingress,
+                  hosts: { readOnly: false, value: e },
+                },
+              });
+            }}
+            disabledTooltip={
+              "You may only edit this field in your porter.yaml."
+            }
+          />
+          <Spacer y={1} />
+          {getApplicationURLText()}
+        </AnimateHeight>
       </>
     );
-  };
+  }
 
   const renderResources = () => {
-    service.autoscaling.enabled.value ? setHeight(RESOURCE_HEIGHT_WITH_AUTOSCALING) : setHeight(RESOURCE_HEIGHT_WITHOUT_AUTOSCALING);
+    setHeight(service.autoscaling.enabled.value ? RESOURCE_HEIGHT_WITH_AUTOSCALING : RESOURCE_HEIGHT_WITHOUT_AUTOSCALING)
     return (
       <>
         <Spacer y={1} />
@@ -285,6 +329,7 @@ const WebTabs: React.FC<Props> = ({
     }
     return height;
   };
+
   const renderHealth = () => {
     setHeight(calculateHealthHeight());
     return (
@@ -629,42 +674,36 @@ const WebTabs: React.FC<Props> = ({
   const renderAdvanced = () => {
     return (
       <>
-        <>
-          <Spacer y={1} />
-          <Input
-            label={
-              <>
-                <span>Custom domain</span>
-                <a
-                  href="https://docs.porter.run/standard/deploying-applications/https-and-domains/custom-domains"
-                  target="_blank"
-                >
-                  &nbsp;(?)
-                </a>
-              </>
-            }
-            placeholder="ex: my-app.my-domain.com"
-            value={service.ingress.hosts.value}
-            disabled={service.ingress.hosts.readOnly}
-            width="300px"
-            setValue={(e) => {
-              editService({
-                ...service,
-                ingress: {
-                  ...service.ingress,
-                  hosts: { readOnly: false, value: e },
-                },
-              });
-            }}
-            disabledTooltip={
-              "You may only edit this field in your porter.yaml."
-            }
-          />
-          {renderHealth()}
-        </>
+        {renderHealth()}
       </>
     );
   };
+
+  const getApplicationURLText = () => {
+    if (service.ingress.hosts.value !== "") {
+      return (
+        <Text>Application URL:{" "}
+          <a href={Service.prefixSubdomain(service.ingress.hosts.value)} target="_blank">
+            {service.ingress.hosts.value}
+          </a>
+        </Text>
+      )
+    } else if (service.ingress.porterHosts.value !== "") {
+      return (
+        <Text>Application URL:{" "}
+          <a href={Service.prefixSubdomain(service.ingress.porterHosts.value)} target="_blank">
+            {service.ingress.porterHosts.value}
+          </a>
+        </Text>
+      )
+    } else {
+      return (
+        <Text color="helper">
+          Application URL: Not generated yet. If no custom domain is provided, Porter will generate a URL for you on next deploy.
+        </Text>
+      )
+    }
+  }
   return (
     <>
       <>
@@ -672,6 +711,7 @@ const WebTabs: React.FC<Props> = ({
           options={[
             { label: "Main", value: "main" },
             { label: "Resources", value: "resources" },
+            { label: "Networking", value: "networking" },
             { label: "Advanced", value: "advanced" },
           ]}
           currentTab={currentTab}
@@ -679,6 +719,7 @@ const WebTabs: React.FC<Props> = ({
         />
         {currentTab === "main" && renderMain()}
         {currentTab === "resources" && renderResources()}
+        {currentTab === "networking" && renderNetworking()}
         {currentTab === "advanced" && renderAdvanced()}
       </>
     </>

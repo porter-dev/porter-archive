@@ -225,6 +225,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     const regex = /^[a-z0-9-]{1,61}$/;
     return regex.test(name);
   };
+
   const handleAppNameChange = (name: string) => {
     setPorterApp(PorterApp.setAttribute(porterApp, "name", name));
     if (isAppNameValid(name) && Validators.applicationName(name)) {
@@ -316,7 +317,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       return true;
     } catch (err: any) {
       // TODO: better error handling
-      console.log(err);
       const errMessage =
         err?.response?.data?.error ??
         err?.toString() ??

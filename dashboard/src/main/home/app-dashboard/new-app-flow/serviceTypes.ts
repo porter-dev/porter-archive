@@ -135,7 +135,7 @@ const WorkerService = {
             },
             canDelete: porterJson?.apps?.[name] == null,
         }
-    }
+    },
 }
 
 export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
@@ -281,7 +281,7 @@ const WebService = {
                 },
             }
         }
-    }
+    },
 }
 
 export type JobService = SharedServiceParams & {
@@ -332,7 +332,7 @@ const JobService = {
             cronSchedule: ServiceField.string(values.schedule?.value ?? '', porterJson?.apps?.[name]?.config?.schedule?.value),
             canDelete: porterJson?.apps?.[name] == null,
         }
-    }
+    },
 }
 
 export type ReleaseService = SharedServiceParams & {
@@ -372,7 +372,7 @@ const ReleaseService = {
             type: 'release',
             canDelete: porterJson?.release == null,
         }
-    }
+    },
 }
 
 
@@ -485,12 +485,8 @@ export const Service = {
             return "";
         }
 
-        const prefixSubdomain = (subdomain: string) => {
-            if (subdomain.startsWith('https://') || subdomain.startsWith('http://')) {
-                return subdomain;
-            }
-            return 'https://' + subdomain;
-        }
+        let matchedWebCount = 0;
+        let matchedWebHost = "";
 
         for (const web of webServices) {
             const values = helmValues[Service.toHelmName(web)];
@@ -498,14 +494,27 @@ export const Service = {
                 continue;
             }
             if (values.ingress.custom_domain && values.ingress.hosts?.length > 0) {
-                return prefixSubdomain(values.ingress.hosts[0]);
+                matchedWebCount++;
+                matchedWebHost = values.ingress.hosts[0];
             }
             if (values.ingress.porter_hosts?.length > 0) {
-                return prefixSubdomain(values.ingress.porter_hosts[0]);
+                matchedWebCount++;
+                matchedWebHost = values.ingress.porter_hosts[0];
             }
         }
 
-        return "";
-    }
+        if (matchedWebCount > 1) {
+            return "";
+        }
+
+        return matchedWebHost;
+    },
+
+    prefixSubdomain: (subdomain: string) => {
+        if (subdomain.startsWith('https://') || subdomain.startsWith('http://')) {
+            return subdomain;
+        }
+        return 'https://' + subdomain;
+    },
 }
 

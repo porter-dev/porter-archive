@@ -57,7 +57,7 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = ({
               { value: "docker", label: "Docker" },
               { value: "buildpacks", label: "Buildpacks" },
             ]}
-            setValue={(option) => setBuildView(option)}
+            setValue={setBuildView}
             label="Build method"
           />
           {buildView === "docker"

@@ -94,6 +94,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
   const [machineType, setMachineType] = useState("t3.xlarge");
+  const [guardDutyEnabled, setGuardDutyEnabled] = useState<boolean>(false)
   const [loadBalancerType, setLoadBalancerType] = useState(false);
   const [wildCardDomain, setWildCardDomain] = useState("")
   const [IPAllowList, setIPAllowList] = useState<string>("")
@@ -258,6 +259,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             cidrRange: cidrRange || "10.78.0.0/16",
             region: awsRegion,
             loadBalancer: loadBalancerObj,
+            enableGuardDuty: guardDutyEnabled,
             nodeGroups: [
               new EKSNodeGroup({
                 instanceType: "t3.medium",
@@ -416,6 +418,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         setwafV2ARN(eksValues.loadBalancer.wafv2Arn)
         setWaf2Enabled(eksValues.loadBalancer.enableWafv2)
       }
+      setGuardDutyEnabled(eksValues.enableGuardDuty)
     }
 
   }, [isExpanded, props.selectedClusterVersion]);

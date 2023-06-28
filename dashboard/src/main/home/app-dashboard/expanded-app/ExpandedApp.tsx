@@ -48,7 +48,7 @@ import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/use
 import Anser, { AnserJsonEntry } from "anser";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
-import { PorterApp } from "../types/porterApp";
+import { BuildMethod, PorterApp } from "../types/porterApp";
 
 type Props = RouteComponentProps & {};
 
@@ -97,7 +97,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     false
   );
 
-  const [saveValuesStatus, setSaveValueStatus] = useState<string>("");
   const [bannerLoading, setBannerLoading] = useState<boolean>(false);
 
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
@@ -120,6 +119,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [porterApp, setPorterApp] = useState<PorterApp>();
   // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
   const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
+  const [buildView, setBuildView] = useState<BuildMethod>("docker");
 
   const { eventId, tab } = useParams<Params>();
   const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
@@ -143,12 +143,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   useEffect(() => {
     const { appName } = props.match.params as any;
     if (currentCluster && appName && currentProject) {
-      getPorterApp();
+      getPorterApp({ revision: 0 });
     }
   }, [currentCluster]);
 
   // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
-  const getPorterApp = async () => {
+  const getPorterApp = async ({ revision }: { revision: number }) => {
     setBannerLoading(true);
     setIsLoading(true);
     const { appName } = props.match.params as any;
@@ -173,14 +173,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           namespace: `porter-stack-${appName}`,
           cluster_id: currentCluster.id,
           name: appName,
-          revision: 0,
+          revision: revision,
         }
       );
 
-      let releaseChartData;
-      // get the release chart
+      let preDeployChartData;
+      // get the pre-deploy chart
       try {
-        releaseChartData = await api.getChart(
+        preDeployChartData = await api.getChart(
           "<token>",
           {},
           {
@@ -188,6 +188,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             namespace: `porter-stack-${appName}`,
             cluster_id: currentCluster.id,
             name: `${appName}-r`,
+            // this is always latest because we do not tie the pre-deploy chart to the umbrella chart
             revision: 0,
           }
         );
@@ -200,7 +201,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       const newAppData = {
         app: resPorterApp?.data,
         chart: resChartData?.data,
-        releaseChart: releaseChartData?.data,
+        releaseChart: preDeployChartData?.data,
       };
       const porterJson = await fetchPorterYamlContent(
         resPorterApp?.data?.porter_yaml_path ?? "porter.yaml",
@@ -213,10 +214,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") ?? [] };
       setPorterApp(parsedPorterApp);
       setTempPorterApp(parsedPorterApp);
+      setBuildView(!_.isEmpty(parsedPorterApp.dockerfile) ? "docker" : "buildpacks")
 
       const [newServices, newEnvVars] = updateServicesAndEnvVariables(
         resChartData?.data,
-        releaseChartData?.data,
+        preDeployChartData?.data,
         porterJson,
       );
       const finalPorterYaml = createFinalPorterYaml(
@@ -333,19 +335,27 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
+
+        const updatedPorterApp = {
+          porter_yaml: base64Encoded,
+          override_release: true,
+          ...PorterApp.empty(),
+          build_context: tempPorterApp.build_context,
+          repo_name: tempPorterApp.repo_name,
+          git_branch: tempPorterApp.git_branch,
+          buildpacks: "",
+          ...options,
+        }
+        if (buildView === "docker") {
+          updatedPorterApp.dockerfile = tempPorterApp.dockerfile;
+        } else {
+          updatedPorterApp.builder = tempPorterApp.builder;
+          updatedPorterApp.buildpacks = tempPorterApp.buildpacks.join(",");
+        }
+
         await api.createPorterApp(
           "<token>",
-          {
-            porter_yaml: base64Encoded,
-            repo_name: tempPorterApp.repo_name,
-            git_branch: tempPorterApp.git_branch,
-            build_context: tempPorterApp.build_context,
-            builder: tempPorterApp.builder,
-            buildpacks: tempPorterApp.buildpacks.join(","),
-            dockerfile: tempPorterApp.dockerfile,
-            ...options,
-            override_release: true,
-          },
+          updatedPorterApp,
           {
             cluster_id: currentCluster.id,
             project_id: currentProject.id,
@@ -528,136 +538,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     return [newServices, envVars];
   };
 
-  const getChartData = async (chart: ChartType, isCurrent?: boolean) => {
-    setButtonStatus("");
-    setIsLoading(true);
-    try {
-      const res = await api.getChart(
-        "<token>",
-        {},
-        {
-          name: chart.name,
-          namespace: chart.namespace,
-          cluster_id: currentCluster.id,
-          revision: chart.version,
-          id: currentProject.id,
-        }
-      );
-
-      const updatedChart = res.data;
-
-      if (appData != null && updatedChart != null) {
-        setAppData({ ...appData, chart: updatedChart });
-      }
-
-      // let releaseChartData;
-      // // get the release chart
-      // try {
-      //   releaseChartData = await api.getChart(
-      //     "<token>",
-      //     {},
-      //     {
-      //       id: currentProject.id,
-      //       namespace: `porter-stack-${chart.name}`,
-      //       cluster_id: currentCluster.id,
-      //       name: `${chart.name}-r`,
-      //       revision: 0,
-      //     }
-      //   );
-      // } catch (err) {
-      //   // do nothing, unable to find release chart
-      //   // console.log(err);
-      // }
-
-      // const releaseChart = releaseChartData?.data;
-
-      // if (appData != null && updatedChart != null) {
-      //   if (releaseChart != null) {
-      //     setAppData({ ...appData, chart: updatedChart, releaseChart });
-      //   } else {
-      //     setAppData({ ...appData, chart: updatedChart });
-      //   }
-      // }
-
-      const [newServices, newEnvVars] = updateServicesAndEnvVariables(
-        updatedChart,
-        appData.releaseChart,
-        porterJson,
-        appData.app.builder != null && appData.app.builder.includes("heroku")
-      );
-
-      if (isCurrent) {
-        setShowUnsavedChangesBanner(false);
-      } else {
-        onAppUpdate(newServices, newEnvVars);
-      }
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setIsLoading(false);
-    }
-
-  };
-
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
-    getChartData(chart, isCurrent);
+    getPorterApp({ revision: chart.version });
   };
-
-  const appUpgradeVersion = useCallback(
-    async (version: string, cb: () => void) => {
-      // convert current values to yaml
-      const values = appData.chart.config;
-
-      const valuesYaml = yaml.dump({
-        ...values,
-      });
-
-      setSaveValueStatus("loading");
-      getChartData(appData.chart);
-
-      try {
-        await api.upgradeChartValues(
-          "<token>",
-          {
-            values: valuesYaml,
-            version: version,
-            latest_revision: appData.chart.version,
-          },
-          {
-            id: currentProject.id,
-            namespace: appData.chart.namespace,
-            name: appData.chart.name,
-            cluster_id: currentCluster.id,
-          }
-        );
-        setSaveValueStatus("successful");
-        setForceRefreshRevisions(true);
-
-        window.analytics?.track("Chart Upgraded", {
-          chart: appData.chart.name,
-          values: valuesYaml,
-        });
-
-        cb && cb();
-      } catch (err) {
-        const parsedErr = err?.response?.data?.error;
-
-        if (parsedErr) {
-          err = parsedErr;
-        }
-
-        setSaveValueStatus(err);
-        setCurrentError(parsedErr);
-
-        window.analytics?.track("Failed to Upgrade Chart", {
-          chart: appData.chart.name,
-          values: valuesYaml,
-          error: err,
-        });
-      }
-    },
-    [appData?.chart]
-  );
 
   const getReadableDate = (s: string) => {
     const ts = new Date(s);
@@ -762,6 +645,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             clearStatus={() => setButtonStatus("")}
             updatePorterApp={updatePorterApp}
             setShowUnsavedChangesBanner={setShowUnsavedChangesBanner}
+            buildView={buildView}
+            setBuildView={setBuildView}
           />
         );
       case "settings":
@@ -824,7 +709,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   return (
     <>
-      {isLoading && appData == null && <Loading />}
+      {isLoading && <Loading />}
       {!isLoading && appData == null && (
         <Placeholder>
           <Container row>
@@ -977,7 +862,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
-                    upgradeVersion={appUpgradeVersion}
                   />
                   <DarkMatter antiHeight="-18px" />
                 </>

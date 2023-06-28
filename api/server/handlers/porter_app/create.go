@@ -376,12 +376,10 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		if request.BuildContext != "" {
 			app.BuildContext = request.BuildContext
 		}
-		// handles deletion of builder and buildpacks
+		// handles deletion of builder,buildpacks, and dockerfile path
 		app.Builder = request.Builder
 		app.Buildpacks = request.Buildpacks
-		if request.Dockerfile != "" {
-			app.Dockerfile = request.Dockerfile
-		}
+		app.Dockerfile = request.Dockerfile
 		if request.ImageRepoURI != "" {
 			app.ImageRepoURI = request.ImageRepoURI
 		}

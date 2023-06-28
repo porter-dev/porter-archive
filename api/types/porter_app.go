@@ -1,6 +1,8 @@
 package types
 
-import "time"
+import (
+	"time"
+)
 
 type PorterApp struct {
 	ID        uint `json:"id"`

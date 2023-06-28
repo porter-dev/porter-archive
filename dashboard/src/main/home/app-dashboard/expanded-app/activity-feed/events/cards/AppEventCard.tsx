@@ -10,7 +10,7 @@ import Icon from "components/porter/Icon";
 import { PorterAppEvent } from "shared/types";
 import { StyledEventCard } from "./EventCard";
 import styled from "styled-components";
-import AppEventModal from "../../status/AppEventModal";
+import AppEventModal from "../../../status/AppEventModal";
 import { readableDate } from "shared/string_utils";
 import dayjs from "dayjs";
 import Anser from "anser";

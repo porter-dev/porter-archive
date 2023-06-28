@@ -112,12 +112,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
-  const [inputError, setInputError] = useState<boolean>(false);
   const markStepStarted = async (step: string) => {
     try {
       await api.updateOnboardingStep("<token>", { step }, {});
     } catch (err) {
-      console.log(err);
+      // console.log(err);
     }
   };
 
@@ -182,30 +181,21 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     // If all tags are valid, return false (no error)
     return false;
   }
-  function validateAllInputs() {
-
-    if (validateInput(wildCardDomain) != false) {
-      setInputError(true);
-      return true;
-    }
-    if (validateTags(awsTags)) {
-      setInputError(true);
-      return true;
-    }
-    if (validateIPInput(IPAllowList)) {
-      setInputError(true);
-      return true;
-    }
-
+  const clusterNameDoesNotExist = () => {
+    return (!clusterName)
   }
+  const userProvisioning = () => {
+    //If the cluster is updating or updating unavailabe but there are no errors do not allow re-provisioning 
+    return (isReadOnly && (props.provisionerError === ""))
+  }
+
   const isDisabled = () => {
+
     return (
-      !user.email.endsWith("porter.run") &&
-      ((!clusterName && true) ||
-        (isReadOnly && props.provisionerError === "") ||
-        props.provisionerError === "" ||
-        currentCluster?.status === "UPDATING" ||
-        isClicked || validateAllInputs())
+      !user?.isPorterUser &&
+      (clusterNameDoesNotExist() ||
+        userProvisioning() ||
+        isClicked)
     );
   };
   function convertStringToTags(tagString) {
@@ -228,9 +218,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setIsClicked(true);
 
     let loadBalancerObj = new LoadBalancer({});
-    loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
-    loadBalancerObj.wildcardDomain = wildCardDomain;
-    //loadBalancerObj.enableS3AccessLogs = accessS3Logs;
+    loadBalancerObj.loadBalancerType = LoadBalancerType.NLB;
     if (loadBalancerType) {
       loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
       loadBalancerObj.wildcardDomain = wildCardDomain;
@@ -241,16 +229,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       if (IPAllowList) {
         loadBalancerObj.allowlistIpRanges = IPAllowList
       }
-      // if (accessS3Logs) {
-      //   loadBalancerObj.enableS3AccessLogs = accessS3Logs;
-      // }
-
-      // if (accessS3Logs) {
-      //   loadBalancerObj.enableS3AccessLogs = accessS3Logs;
-      // }
-      // else {
-      //   loadBalancerObj.enableS3AccessLogs = false;
-      // }
       if (wafV2Enabled) {
         loadBalancerObj.enableWafv2 = wafV2Enabled;
       }
@@ -264,6 +242,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         loadBalancerObj.additionalCertificateArns = certificateARN.split(",");
       }
     }
+
 
     let data = new Contract({
       cluster: new Cluster({
@@ -403,7 +382,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
-      console.log(eksValues);
       if (eksValues == null) {
         return
       }
@@ -521,7 +499,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               disabled={isReadOnly}
               value={maxInstances}
               setValue={(x: number) => setMaxInstances(x)}
-              label="Maximum number of application EC2 instances"
+              label="Maximum number of application nodes"
               placeholder="ex: 1"
 
             />

@@ -187,6 +187,18 @@ const getPorterApp = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
 });
 
+const getPorterAppEvent = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    event_id: string;
+  }
+>("GET", (pathParams) => {
+  let { project_id, cluster_id, event_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/events/${event_id}`;
+});
+
 const createPorterApp = baseApi<
   PorterAppOptions,
   {
@@ -2669,6 +2681,7 @@ export default {
   // PORTER APP
   getPorterApps,
   getPorterApp,
+  getPorterAppEvent,
   createPorterApp,
   deletePorterApp,
   rollbackPorterApp,

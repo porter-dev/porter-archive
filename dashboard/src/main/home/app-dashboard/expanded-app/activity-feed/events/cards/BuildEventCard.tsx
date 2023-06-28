@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 
-import app_event from "assets/app_event.png";
 import build from "assets/build.png";
 
 import run_for from "assets/run_for.png";
@@ -12,15 +11,15 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import Icon from "components/porter/Icon";
-import Modal from "components/porter/Modal";
 import api from "shared/api";
 import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
 import JSZip from "jszip";
 import Anser, { AnserJsonEntry } from "anser";
-import GHALogsModal from "../../status/GHALogsModal";
-import { PorterAppEvent, PorterAppEventType } from "shared/types";
-import { getDuration, getStatusIcon, triggerWorkflow } from './utils';
+import GHALogsModal from "../../../status/GHALogsModal";
+import { PorterAppEvent } from "shared/types";
+import { getDuration, getStatusIcon, triggerWorkflow } from '../utils';
 import { StyledEventCard } from "./EventCard";
+import document from "assets/document.svg";
 
 type Props = {
   event: PorterAppEvent;
@@ -28,8 +27,6 @@ type Props = {
 };
 
 const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [modalContent, setModalContent] = useState<React.ReactNode>(null);
   const [logModalVisible, setLogModalVisible] = useState(false);
   const [logs, setLogs] = useState<Log[]>([]);
 
@@ -120,42 +117,18 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
   const renderInfoCta = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return (
-          <Wrapper>
-            <Link hasunderline onClick={() => getBuildLogs()}>
-              View logs
-            </Link>
-
-            {logModalVisible && (
-              <GHALogsModal
-                appData={appData}
-                logs={logs}
-                modalVisible={logModalVisible}
-                setModalVisible={setLogModalVisible}
-                actionRunId={event.metadata?.action_run_id}
-              />
-            )}
-            <Spacer inline x={1} />
-          </Wrapper>
-        );
+        return null;
       case "FAILED":
         return (
           <Wrapper>
-            <Link hasunderline onClick={() => getBuildLogs()}>
-              View logs
+            <Link to={`/apps/${appData.app.name}/events/${event.id}`} hasunderline>
+              <Container row>
+                <Icon src={document} height="10px" />
+                <Spacer inline width="5px" />
+                View more details
+              </Container>
             </Link>
-
-            {logModalVisible && (
-              <GHALogsModal
-                appData={appData}
-                logs={logs}
-                modalVisible={logModalVisible}
-                setModalVisible={setLogModalVisible}
-                actionRunId={event.metadata?.action_run_id}
-              />
-            )}
             <Spacer inline x={1} />
-
             <Link hasunderline onClick={() => triggerWorkflow(appData)}>
               <Container row>
                 <Icon height="10px" src={refresh} />
@@ -203,11 +176,9 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
           {renderStatusText(event)}
           <Spacer inline x={1} />
           {renderInfoCta(event)}
+          <Spacer inline x={1} />
         </Container>
       </Container>
-      {showModal && (
-        <Modal closeModal={() => setShowModal(false)}>{modalContent}</Modal>
-      )}
     </StyledEventCard>
   );
 };

@@ -8,7 +8,7 @@ import refresh from "assets/refresh.png";
 
 import Text from "components/porter/Text";
 
-import EventCard from "./events/EventCard";
+import EventCard from "./events/cards/EventCard";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 import Fieldset from "components/porter/Fieldset";
@@ -19,14 +19,16 @@ import _ from "lodash";
 import Button from "components/porter/Button";
 import Icon from "components/porter/Icon";
 import Container from "components/porter/Container";
+import EventFocusView from "./events/focus-views/EventFocusView";
 
 type Props = {
   chart: any;
   stackName: string;
-  appData: string;
+  appData: any;
+  eventId?: string;
 };
 
-const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
+const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) => {
   const { currentProject, currentCluster } = useContext(Context);
 
   const [events, setEvents] = useState<any[]>([]);
@@ -136,6 +138,13 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
         <Loading />
       </div>
     );
+  }
+
+  if (eventId != null) {
+    return <EventFocusView
+      eventId={eventId}
+      appData={appData}
+    />;
   }
 
   if (!hasPorterAgent) {

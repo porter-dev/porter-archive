@@ -49,6 +49,8 @@ type Props = RouteComponentProps & {
   clusterId?: number;
 };
 
+const VALID_CIDR_RANGE_PATTERN = /^(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.0\.0\/16$/;
+
 const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const {
     user,
@@ -68,7 +70,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
   const [clusterVersion, setClusterVersion] = useState("v1.24.9");
   const [isReadOnly, setIsReadOnly] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>(undefined);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
 
   const markStepStarted = async (step: string) => {
@@ -86,28 +88,49 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       return (
         <Error
           message={errorMessage}
-          ctaText={
-            errorMessage !== DEFAULT_ERROR_MESSAGE
-              ? "Troubleshooting steps"
-              : null
-          }
-          errorModalContents={null}
         />
       );
     }
     return undefined;
   };
+
   const isDisabled = () => {
     return (
       !user.email.endsWith("porter.run") &&
       ((!clusterName && true) ||
         (isReadOnly && props.provisionerError === "") ||
         props.provisionerError === "" ||
-        currentCluster.status === "UPDATING" ||
+        currentCluster?.status === "UPDATING" ||
         isClicked)
     );
   };
+
+  const validateInputs = (): string => {
+    if (!clusterName) {
+      return "Cluster name is required";
+    }
+    if (!azureLocation) {
+      return "Azure location is required";
+    }
+    if (!machineType) {
+      return "Machine type is required";
+    }
+    if (!cidrRange) {
+      return "VPC CIDR range is required";
+    }
+    if (!VALID_CIDR_RANGE_PATTERN.test(cidrRange)) {
+      return "VPC CIDR range must be in the format of [0-255].[0-255].0.0/16";
+    }
+
+    return "";
+  }
   const createCluster = async () => {
+    const err = validateInputs();
+    if (err !== "") {
+      setErrorMessage(err)
+      return;
+    }
+
     setIsClicked(true);
     var data = new Contract({
       cluster: new Cluster({
@@ -156,7 +179,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
 
     try {
       setIsReadOnly(true);
-      setErrorMessage(undefined);
+      setErrorMessage("");
 
       if (!props.clusterId) {
         markStepStarted("provisioning-started");
@@ -202,8 +225,8 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     setIsReadOnly(
       props.clusterId &&
-        (currentCluster.status === "UPDATING" ||
-          currentCluster.status === "UPDATING_UNAVAILABLE")
+      (currentCluster?.status === "UPDATING" ||
+        currentCluster?.status === "UPDATING_UNAVAILABLE")
     );
     setClusterName(
       `${currentProject.name}-cluster-${Math.random()
@@ -370,7 +393,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
     margin-right: 7px;
     margin-left: -7px;
     transform: ${(props) =>
-      props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
   }
 `;
 

@@ -1,8 +1,8 @@
 import React from "react";
-import { Buildpack } from "./BuildpackSettings";
 import { DeviconsNameList } from "assets/devicons-name-list";
 import styled, { keyframes } from "styled-components";
 import { Draggable } from "react-beautiful-dnd";
+import { Buildpack } from "../../types/buildpack";
 
 interface Props {
   buildpack: Buildpack;

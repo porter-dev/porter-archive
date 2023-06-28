@@ -297,8 +297,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       data["cluster"]["clusterId"] = props.clusterId;
     }
 
-    console.log(data)
-
     try {
       setIsReadOnly(true);
       setErrorMessage(undefined);

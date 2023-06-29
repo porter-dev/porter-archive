@@ -48,6 +48,7 @@ const BuildpackSettings: React.FC<{
           // in this case, we are not detecting buildpacks, so we just populate based on the DB
           if (porterApp.builder != null) {
             setSelectedStack(porterApp.builder);
+            setStackOptions([{ label: porterApp.builder, value: porterApp.builder }]);
           }
           if (porterApp.buildpacks != null) {
             setSelectedBuildpacks(porterApp.buildpacks.map(bp => ({

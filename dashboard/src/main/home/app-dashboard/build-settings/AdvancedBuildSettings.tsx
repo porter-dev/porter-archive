@@ -5,7 +5,7 @@ import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
 import AnimateHeight from "react-animate-height";
 import Select from "components/porter/Select";
-import { PorterApp } from "../types/porterApp";
+import { BuildMethod, PorterApp } from "../types/porterApp";
 import BuildpackSettings from "./buildpacks/BuildpackSettings";
 import _ from "lodash";
 
@@ -13,18 +13,18 @@ interface AdvancedBuildSettingsProps {
   porterApp: PorterApp;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
   autoDetectBuildpacks: boolean;
+  buildView: BuildMethod;
+  setBuildView: (buildView: BuildMethod) => void;
 }
 
 const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = ({
   porterApp,
   updatePorterApp,
   autoDetectBuildpacks,
+  buildView,
+  setBuildView,
 }) => {
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [buildView, setBuildView] = useState<string>(
-    !_.isEmpty(porterApp.dockerfile)
-      ? "docker" : "buildpacks"
-  );
 
   return (
     <>
@@ -57,7 +57,7 @@ const AdvancedBuildSettings: React.FC<AdvancedBuildSettingsProps> = ({
               { value: "docker", label: "Docker" },
               { value: "buildpacks", label: "Buildpacks" },
             ]}
-            setValue={(option) => setBuildView(option)}
+            setValue={(option: string) => setBuildView(option as BuildMethod)}
             label="Build method"
           />
           {buildView === "docker"

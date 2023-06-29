@@ -193,7 +193,7 @@ const ConnectNewRepo: React.FC = () => {
             currentStep={currentStep}
             steps={[
               <>
-                <Text size={16}>Application name</Text>
+                <Text size={16}>Choose a repository</Text>
                 <ConnectNewRepoActionConfEditor
                   actionConfig={actionConfig}
                   setActionConfig={(actionConfig: ActionConfigType) => {

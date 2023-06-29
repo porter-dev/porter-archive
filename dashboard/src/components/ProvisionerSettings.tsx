@@ -398,7 +398,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         }
       });
       setCreateStatus("");
-      console.log(eksValues.clusterName);
       setClusterName(eksValues.clusterName);
       setAwsRegion(eksValues.region);
       setClusterVersion(eksValues.clusterVersion);

@@ -107,10 +107,10 @@ const EnvGroupDashboard = (props: PropsType) => {
                 sortType={state.sortType}
               />
               <Spacer inline width="10px" />
-              <NamespaceSelector
+              {!currentProject.simplified_view_enabled && <NamespaceSelector
                 setNamespace={setNamespace}
                 namespace={state.namespace}
-              />
+              />}
             </SortFilterWrapper>
             <Flex>
               {isAuthorizedToAdd && (
@@ -137,7 +137,7 @@ const EnvGroupDashboard = (props: PropsType) => {
       return (
         <ExpandedEnvGroup
           isAuthorized={props.isAuthorized}
-          namespace={state.expandedEnvGroup?.namespace || state.namespace}
+          namespace={currentProject?.capi_provisioner_enabled ? "default" : (state.expandedEnvGroup?.namespace || state.namespace)}
           currentCluster={props.currentCluster}
           envGroup={state.expandedEnvGroup}
           closeExpanded={() => closeExpanded()}

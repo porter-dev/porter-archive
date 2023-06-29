@@ -124,7 +124,6 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	injectLauncher := strings.Contains(request.Builder, "heroku") ||
 		strings.Contains(request.Builder, "paketo")
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "builder", Value: request.Builder})
-	fmt.Println(request.EnvGroups)
 	chart, values, releaseJobValues, err := parse(
 		porterYaml,
 		imageInfo,
@@ -347,7 +346,8 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			Repo:       c.Repo(),
 			Registries: registries,
 		}
-
+		fmt.Println("Chart:", chart)
+		fmt.Println("Values: ", values)
 		// update the chart
 		_, err = helmAgent.UpgradeInstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 		if err != nil {

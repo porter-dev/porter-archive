@@ -249,11 +249,37 @@ export const ExpandedEnvGroupFC = ({
           .then((res) => res.data);
         setButtonStatus("successful");
         updateEnvGroup(updatedEnvGroup);
+
+        setTimeout(() => setButtonStatus(""), 1000);
+
+
         if (currentProject?.simplified_view_enabled) {
+          try {
+            await api
+              .updateStacksEnvGroup<PopulatedEnvGroup>(
+                "<token>",
+                {
+                  name,
+                  variables: normalVariables,
+                  secret_variables: secretVariables,
+                  apps: updatedEnvGroup.applications,
+                },
+                {
+                  project_id: currentProject.id,
+                  cluster_id: currentCluster.id,
+                  namespace,
+                }
+              )
+              .then((res) => res.data);
+            setButtonStatus("successful");
+          } catch (error) {
+            setButtonStatus("Couldn't update successfully");
+            setCurrentError(error);
+          }
           try {
             // Check if updatedEnvGroup.applications is an array and it has elements
             if (Array.isArray(updatedEnvGroup.applications) && updatedEnvGroup.applications.length) {
-              console.log("here")
+
               for (const application of updatedEnvGroup.applications) {
                 await api.cloneEnvGroup(
                   "<token>",
@@ -270,20 +296,19 @@ export const ExpandedEnvGroupFC = ({
                   }
                 );
               }
-              console.log("Success!")
+              console.log("Cloning Success!")
             }
           } catch (error) {
             console.log(error);
           }
         }
-
-        setTimeout(() => setButtonStatus(""), 1000);
       } catch (error) {
         setButtonStatus("Couldn't update successfully");
         setCurrentError(error);
         setTimeout(() => setButtonStatus(""), 1000);
       }
-    } else {
+    }
+    else {
       // SEPARATE THE TWO KINDS OF VARIABLES
       let secret = variables.filter(
         (variable) =>

@@ -2,6 +2,7 @@ package porter_app
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -18,12 +19,12 @@ import (
 )
 
 type PorterStackYAML struct {
-	Version   *string           `yaml:"version"`
-	Build     *Build            `yaml:"build"`
-	Env       map[string]string `yaml:"env"`
-	SyncedEnv map[string]string `yaml:"synced_env"`
-	Apps      map[string]*App   `yaml:"apps"`
-	Release   *App              `yaml:"release"`
+	Version   *string             `yaml:"version"`
+	Build     *Build              `yaml:"build"`
+	Env       map[string]string   `yaml:"env"`
+	SyncedEnv []*SyncedEnvSection `yaml:"synced_env"`
+	Apps      map[string]*App     `yaml:"apps"`
+	Release   *App                `yaml:"release"`
 }
 
 type Build struct {
@@ -49,6 +50,17 @@ type SubdomainCreateOpts struct {
 	stackName      string
 }
 
+type SyncedEnvSection struct {
+	Name    string                `json:"name" yaml:"name"`
+	Version uint                  `json:"version" yaml:"version"`
+	Keys    []SyncedEnvSectionKey `json:"keys" yaml:"keys"`
+}
+
+type SyncedEnvSectionKey struct {
+	Name   string `json:"name" yaml:"name"`
+	Secret bool   `json:"secret" yaml:"secret"`
+}
+
 func parse(
 	porterYaml []byte,
 	imageInfo types.ImageInfo,
@@ -67,17 +79,44 @@ func parse(
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
 	}
+	synced_env := make([]*SyncedEnvSection, 0)
 
-	fmt.Println("HEEEREEREERER")
-	fmt.Println(envGroups)
 	for i := range envGroups {
 		cm, _, err := opts.k8sAgent.GetLatestVersionedConfigMap(envGroups[i], namespace)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
 		}
-		fmt.Println("This is the config map:", cm)
+
+		versionStr, ok := cm.ObjectMeta.Labels["version"]
+		if !ok {
+			return nil, nil, nil, fmt.Errorf("error extracting version from config map")
+		}
+		versionInt, err := strconv.Atoi(versionStr)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("error converting version to int: %w", err)
+		}
+
+		version := uint(versionInt)
+
+		newSection := &SyncedEnvSection{
+			Name:    envGroups[i],
+			Version: version,
+		}
+
+		newSectionKeys := make([]SyncedEnvSectionKey, 0)
+
+		for key, val := range cm.Data {
+			newSectionKeys = append(newSectionKeys, SyncedEnvSectionKey{
+				Name:   key,
+				Secret: strings.Contains(val, "PORTERSECRET"),
+			})
+		}
+
+		newSection.Keys = newSectionKeys
+		synced_env = append(synced_env, newSection)
 	}
 
+	parsed.SyncedEnv = synced_env
 	// 	fmt.Println("This is the config map:" ,cm)
 	values, err := buildStackValues(parsed, imageInfo, existingValues, opts, injectLauncher)
 	if err != nil {
@@ -93,7 +132,7 @@ func parse(
 	// return the parsed release values for the release job chart, if they exist
 	var releaseJobValues map[string]interface{}
 	if parsed.Release != nil && parsed.Release.Run != nil {
-		releaseJobValues = buildReleaseValues(parsed.Release, parsed.Env, parsed.SyncedEnv, imageInfo, injectLauncher)
+		releaseJobValues = buildReleaseValues(parsed.Release, parsed.Env, synced_env, imageInfo, injectLauncher)
 	}
 
 	return chart, convertedValues, releaseJobValues, nil
@@ -175,7 +214,7 @@ func buildStackValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existi
 	return values, nil
 }
 
-func buildReleaseValues(release *App, env map[string]string, synced_env map[string]string, imageInfo types.ImageInfo, injectLauncher bool) map[string]interface{} {
+func buildReleaseValues(release *App, env map[string]string, synced_env []*SyncedEnvSection, imageInfo types.ImageInfo, injectLauncher bool) map[string]interface{} {
 	defaultValues := getDefaultValues(release, env, synced_env, "job")
 	convertedConfig := convertMap(release.Config).(map[string]interface{})
 	helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
@@ -217,7 +256,7 @@ func getType(name string, app *App) string {
 	return "worker"
 }
 
-func getDefaultValues(app *App, env map[string]string, synced_env map[string]string, appType string) map[string]interface{} {
+func getDefaultValues(app *App, env map[string]string, synced_env []*SyncedEnvSection, appType string) map[string]interface{} {
 	var defaultValues map[string]interface{}
 	var runCommand string
 	if app.Run != nil {
@@ -228,12 +267,38 @@ func getDefaultValues(app *App, env map[string]string, synced_env map[string]str
 			"command": runCommand,
 			"env": map[string]interface{}{
 				"normal": CopyEnv(env),
-				"synced": synced_env,
+				"synced": deconstructSyncedEnvs(synced_env, env),
 			},
 		},
 	}
 
 	return defaultValues
+}
+
+func deconstructSyncedEnvs(synced_env []*SyncedEnvSection, env map[string]string) []map[string]interface{} {
+	synced := make([]map[string]interface{}, 0)
+	for _, group := range synced_env {
+		keys := make([]map[string]interface{}, 0)
+		for _, key := range group.Keys {
+			if _, exists := env[key.Name]; !exists {
+				// Only include keys not present in env
+				keys = append(keys, map[string]interface{}{
+					"name":   key.Name,
+					"secret": key.Secret,
+				})
+			}
+		}
+
+		syncedGroup := map[string]interface{}{
+			"keys":    keys,
+			"name":    group.Name,
+			"version": group.Version,
+		}
+
+		synced = append(synced, syncedGroup)
+	}
+
+	return synced
 }
 
 func buildStackChart(parsed *PorterStackYAML, config *config.Config, projectID uint, existingDependencies []*chart.Dependency) (*chart.Chart, error) {
@@ -316,7 +381,7 @@ func createChartFromDependencies(deps []*chart.Dependency) (*chart.Chart, error)
 		Type:         "application",
 		Dependencies: deps,
 	}
-
+	fmt.Println("This is dependencies:", deps)
 	// create a new chart object with the metadata
 	c := &chart.Chart{
 		Metadata: metadata,
@@ -382,7 +447,7 @@ func CopyEnv(env map[string]string) map[string]interface{} {
 		}
 		envCopy[k] = v
 	}
-
+	fmt.Println("This is the env copy:", envCopy)
 	return envCopy
 }
 

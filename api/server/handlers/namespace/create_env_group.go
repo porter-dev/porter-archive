@@ -134,7 +134,6 @@ func rolloutApplications(
 	if err != nil {
 		return []error{err}
 	}
-
 	// construct the synced env section that should be written
 	newSection := &SyncedEnvSection{
 		Name:    envGroup.Name,
@@ -165,6 +164,7 @@ func rolloutApplications(
 		go func() {
 			defer wg.Done()
 			// read release via agent
+
 			newConfig, err := getNewConfig(release.Config, newSection)
 			if err != nil {
 				mu.Lock()
@@ -172,7 +172,7 @@ func rolloutApplications(
 				mu.Unlock()
 				return
 			}
-
+			fmt.Println("NewConfig: ", newConfig)
 			// if this is a job chart, update the config and set correct paused param to true
 			if release.Chart.Name() == "job" {
 				newConfig["paused"] = true
@@ -349,10 +349,9 @@ func getNewConfig(curr map[string]interface{}, syncedEnvSection *SyncedEnvSectio
 func getNestedMap(obj map[string]interface{}, fields ...string) (map[string]interface{}, error) {
 	var res map[string]interface{}
 	curr := obj
-
+	fmt.Println("Nested Map", obj)
 	for _, field := range fields {
 		objField, ok := curr[field]
-
 		if !ok {
 			return nil, fmt.Errorf("%s not found", field)
 		}

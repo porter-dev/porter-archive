@@ -514,7 +514,6 @@ func (a *Agent) InstallChart(
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "error getting post renderer")
 	}
-
 	if req := conf.Chart.Metadata.Dependencies; req != nil {
 		for _, dep := range req {
 			depChart, err := loader.LoadChartPublic(ctx, dep.Repository, dep.Name, dep.Version)
@@ -584,8 +583,10 @@ func (a *Agent) UpgradeInstallChart(
 
 	if req := conf.Chart.Metadata.Dependencies; req != nil {
 		for _, dep := range req {
-			depChart, err := loader.LoadChartPublic(ctx, dep.Repository, dep.Name, dep.Version)
+			depChart, err := loader.LoadChartPublic(ctx, dep.Repository, "web", "0.112.0")
+			fmt.Println("NO ERROR HERE FOR", dep.Name, dep.Version)
 			if err != nil {
+				fmt.Println("ERROR HERE for", dep.Name, dep.Version)
 				return nil, telemetry.Error(ctx, span, err, fmt.Sprintf("error retrieving chart dependency %s/%s-%s", dep.Repository, dep.Name, dep.Version))
 			}
 
@@ -593,6 +594,7 @@ func (a *Agent) UpgradeInstallChart(
 		}
 	}
 
+	fmt.Println("UPGRADE INSTALL CHART", conf.Name, conf.Chart, conf.Values)
 	return cmd.Run(conf.Name, conf.Chart, conf.Values)
 }
 

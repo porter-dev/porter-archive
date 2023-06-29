@@ -369,7 +369,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       (currentCluster.status === "UPDATING" ||
         currentCluster.status === "UPDATING_UNAVAILABLE")
     );
-
     setClusterName(
       `${currentProject.name}-cluster-${Math.random()
         .toString(36)

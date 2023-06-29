@@ -346,8 +346,6 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			Repo:       c.Repo(),
 			Registries: registries,
 		}
-		fmt.Println("Chart:", chart)
-		fmt.Println("Values: ", values)
 		// update the chart
 		_, err = helmAgent.UpgradeInstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 		if err != nil {

@@ -145,7 +145,14 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "found", Value: found})
 
 		if !found {
+			webhookURL := getGithubWebhookURLFromUID(c.Config().ServerConf.ServerURL, string(env.WebhookID))
+
 			hook.Events = append(hook.Events, "push")
+			hook.Config = map[string]interface{}{
+				"url":          webhookURL,
+				"content_type": "json",
+				"secret":       c.Config().ServerConf.GithubIncomingWebhookSecret,
+			}
 
 			_, _, err := client.Repositories.EditHook(
 				context.Background(), env.GitRepoOwner, env.GitRepoName, env.GithubWebhookID, hook,

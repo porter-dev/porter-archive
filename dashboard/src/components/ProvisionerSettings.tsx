@@ -373,7 +373,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       (currentCluster.status === "UPDATING" ||
         currentCluster.status === "UPDATING_UNAVAILABLE")
     );
-
     setClusterName(
       `${currentProject.name}-cluster-${Math.random()
         .toString(36)
@@ -402,7 +401,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         }
       });
       setCreateStatus("");
-      console.log(eksValues.clusterName);
       setClusterName(eksValues.clusterName);
       setAwsRegion(eksValues.region);
       setClusterVersion(eksValues.clusterVersion);

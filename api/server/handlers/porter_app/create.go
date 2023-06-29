@@ -141,6 +141,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			stackName:      stackName,
 		},
 		injectLauncher,
+		shouldCreate,
 	)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error parsing porter yaml into chart and values")
@@ -377,9 +378,27 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			app.BuildContext = request.BuildContext
 		}
 		// handles deletion of builder,buildpacks, and dockerfile path
-		app.Builder = request.Builder
-		app.Buildpacks = request.Buildpacks
-		app.Dockerfile = request.Dockerfile
+		if request.Builder != "" {
+			if request.Builder == "null" {
+				app.Builder = ""
+			} else {
+				app.Builder = request.Builder
+			}
+		}
+		if request.Buildpacks != "" {
+			if request.Buildpacks == "null" {
+				app.Buildpacks = ""
+			} else {
+				app.Buildpacks = request.Buildpacks
+			}
+		}
+		if request.Dockerfile != "" {
+			if request.Dockerfile == "null" {
+				app.Dockerfile = ""
+			} else {
+				app.Dockerfile = request.Dockerfile
+			}
+		}
 		if request.ImageRepoURI != "" {
 			app.ImageRepoURI = request.ImageRepoURI
 		}

@@ -72,6 +72,7 @@ func parse(
 	existingDependencies []*chart.Dependency,
 	opts SubdomainCreateOpts,
 	injectLauncher bool,
+	shouldCreate bool,
 ) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
 	parsed := &PorterStackYAML{}
 
@@ -118,7 +119,7 @@ func parse(
 
 	parsed.SyncedEnv = synced_env
 	// 	fmt.Println("This is the config map:" ,cm)
-	values, err := buildUmbrellaChartValues(parsed, imageInfo, existingValues, opts, injectLauncher)
+	values, err := buildUmbrellaChartValues(parsed, imageInfo, existingValues, opts, injectLauncher, shouldCreate)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
 	}
@@ -138,7 +139,14 @@ func parse(
 	return chart, convertedValues, preDeployJobValues, nil
 }
 
-func buildUmbrellaChartValues(parsed *PorterStackYAML, imageInfo types.ImageInfo, existingValues map[string]interface{}, opts SubdomainCreateOpts, injectLauncher bool) (map[string]interface{}, error) {
+func buildUmbrellaChartValues(
+	parsed *PorterStackYAML,
+	imageInfo types.ImageInfo,
+	existingValues map[string]interface{},
+	opts SubdomainCreateOpts,
+	injectLauncher bool,
+	shouldCreate bool,
+) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
 	if parsed.Apps == nil {
@@ -163,7 +171,7 @@ func buildUmbrellaChartValues(parsed *PorterStackYAML, imageInfo types.ImageInfo
 			}
 		}
 
-		validateErr := validateHelmValues(helm_values)
+		validateErr := validateHelmValues(helm_values, shouldCreate)
 		if validateErr != "" {
 			return nil, fmt.Errorf("error validating service \"%s\": %s", name, validateErr)
 		}
@@ -220,24 +228,27 @@ func buildUmbrellaChartValues(parsed *PorterStackYAML, imageInfo types.ImageInfo
 }
 
 // we can add to this function up later or use an alternative
-func validateHelmValues(values map[string]interface{}) string {
-	containerMap, err := getNestedMap(values, "container")
-	if err != nil {
-		return "error checking port: misformatted values"
-	} else {
-		portVal, portExists := containerMap["port"]
-		if portExists {
-			portStr, pOK := portVal.(string)
-			if !pOK {
-				return "error checking port: no port in container"
-			}
-
-			port, err := strconv.Atoi(portStr)
-			if err != nil || port < 1024 || port > 65535 {
-				return "port must be a number between 1024 and 65535"
-			}
+func validateHelmValues(values map[string]interface{}, shouldCreate bool) string {
+	// currently, we only validate port on initial app create, because this will break any updates to existing apps with lower port numbers
+	if shouldCreate {
+		containerMap, err := getNestedMap(values, "container")
+		if err != nil {
+			return "error checking port: misformatted values"
 		} else {
-			return "must specify port if choosing to expose service externally"
+			portVal, portExists := containerMap["port"]
+			if portExists {
+				portStr, pOK := portVal.(string)
+				if !pOK {
+					return "error checking port: no port in container"
+				}
+
+				port, err := strconv.Atoi(portStr)
+				if err != nil || port < 1024 || port > 65535 {
+					return "port must be a number between 1024 and 65535"
+				}
+			} else {
+				return "must specify port if choosing to expose service externally"
+			}
 		}
 	}
 	return ""

@@ -413,9 +413,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
         if (buildView === "docker") {
           updatedPorterApp.dockerfile = tempPorterApp.dockerfile;
+          updatedPorterApp.builder = "null";
+          updatedPorterApp.buildpacks = "null";
         } else {
           updatedPorterApp.builder = tempPorterApp.builder;
           updatedPorterApp.buildpacks = tempPorterApp.buildpacks.join(",");
+          updatedPorterApp.dockerfile = "null";
         }
 
         await api.createPorterApp(

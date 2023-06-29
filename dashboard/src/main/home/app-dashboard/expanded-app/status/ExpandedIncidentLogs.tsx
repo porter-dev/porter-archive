@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Log } from "../logs/useAgentLogs";
+import { PorterLog } from "../useAgentLogs";
 import React from "react";
 import styled from "styled-components";
 import Loading from "components/Loading";
@@ -7,7 +7,7 @@ import dayjs from "dayjs";
 import Anser from "anser";
 
 interface ExpandedIncidentLogsProps {
-  logs: Log[];
+  logs: PorterLog[];
 }
 
 const ExpandedIncidentLogs: React.FC<ExpandedIncidentLogsProps> = ({ logs }: ExpandedIncidentLogsProps) => {

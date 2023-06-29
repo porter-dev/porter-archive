@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Modal from "components/porter/Modal";
 import TitleSection from "components/TitleSection";
-import { Log } from "../logs/useAgentLogs";
+import { PorterLog } from "../useAgentLogs";
 import Loading from "components/Loading";
 import Text from "components/porter/Text";
 import danger from "assets/danger.svg";
@@ -14,14 +14,14 @@ import Spacer from "components/porter/Spacer";
 import Checkbox from "components/porter/Checkbox";
 type Props = {
   appData: any;
-  logs: Log[];
+  logs: PorterLog[];
   modalVisible: boolean;
   setModalVisible: (x: boolean) => void;
   actionRunId?: string;
 };
 
 interface ExpandedIncidentLogsProps {
-  logs: Log[];
+  logs: PorterLog[];
 }
 
 const GHALogsModal: React.FC<Props> = ({

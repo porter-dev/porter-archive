@@ -14,7 +14,7 @@ import TitleSection from "components/TitleSection";
 import api from "shared/api";
 import Modal from "main/home/modals/Modal";
 import time from "assets/time.svg";
-import { Direction, Log, parseLogs } from "./logs/useAgentLogs";
+import { Direction, PorterLog, parseLogs } from "./useAgentLogs";
 import { Context } from "shared/Context";
 import dayjs from "dayjs";
 import Anser from "anser";
@@ -25,7 +25,7 @@ type Props = {
 };
 
 interface ExpandedIncidentLogsProps {
-  logs: Log[];
+  logs: PorterLog[];
 }
 
 const ExpandedIncidentLogs = ({ logs }: ExpandedIncidentLogsProps) => {
@@ -74,7 +74,7 @@ const ExpandedIncidentLogs = ({ logs }: ExpandedIncidentLogsProps) => {
 const EventList: React.FC<Props> = ({ filters, namespace }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [events, setEvents] = useState([]);
-  const [logs, setLogs] = useState<Log[]>([]);
+  const [logs, setLogs] = useState<PorterLog[]>([]);
   const [expandedEvent, setExpandedEvent] = useState(null);
   const [expandedIncidentEvents, setExpandedIncidentEvents] = useState(null);
   const [isLoading, setIsLoading] = useState(true);

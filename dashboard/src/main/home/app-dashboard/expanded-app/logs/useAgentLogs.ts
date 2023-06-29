@@ -18,23 +18,31 @@ export enum Direction {
   backward = "backward",
 }
 
-export interface Log {
+export interface PorterLog {
   line: AnserJsonEntry[];
   lineNumber: number;
   timestamp?: string;
 }
 
-const LogSchema = z.object({
-  line: z.string(),
-  timestamp: z.string(),
+const AgentLogMetadataSchema = z.object({
+  pod_name: z.string(),
+  pod_namespace: z.string(),
+  revision: z.string(),
+  output_stream: z.string(),
+  app_name: z.string(),
 });
 
-type LogLine = z.infer<typeof LogSchema>;
+const AgentLogSchema = z.object({
+  line: z.string(),
+  timestamp: z.string(),
+  metadata: AgentLogMetadataSchema.optional(),
+});
+type AgentLog = z.infer<typeof AgentLogSchema>;
 
-export const parseLogs = (logs: any[] = []): Log[] => {
-  return logs.filter(Boolean).map((log: any, idx) => {
+export const parseLogs = (logs: any[] = []): PorterLog[] => {
+  return logs.map((log: any, idx) => {
     try {
-      const parsed: LogLine = LogSchema.parse(log);
+      const parsed: AgentLog = AgentLogSchema.parse(log);
 
       // TODO Move log parsing to the render method
       const ansiLog = Anser.ansiToJson(parsed.line);
@@ -44,14 +52,8 @@ export const parseLogs = (logs: any[] = []): Log[] => {
         timestamp: parsed.timestamp,
       };
     } catch (err) {
-      console.log(err)
-      // return {
-      //   line: Anser.ansiToJson(log),
-      //   lineNumber: idx + 1,
-      //   timestamp: undefined,
-      // };
       return {
-        line: log,
+        line: Anser.ansiToJson(log),
         lineNumber: idx + 1,
         timestamp: undefined,
       }
@@ -76,11 +78,11 @@ export const useLogs = (
   setDate?: Date
 ) => {
   const isLive = !setDate;
-  const logsBufferRef = useRef<Log[]>([]);
+  const logsBufferRef = useRef<PorterLog[]>([]);
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
-  const [logs, setLogs] = useState<Log[]>([]);
+  const [logs, setLogs] = useState<PorterLog[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
     previousCursor: null,
     nextCursor: null,
@@ -110,7 +112,7 @@ export const useLogs = (
   } = useWebsockets();
 
   const updateLogs = (
-    newLogs: Log[],
+    newLogs: PorterLog[],
     direction: Direction = Direction.forward
   ) => {
     // Nothing to update here
@@ -176,7 +178,7 @@ export const useLogs = (
     logsBufferRef.current = [];
   };
 
-  const pushLogs = (newLogs: Log[]) => {
+  const pushLogs = (newLogs: PorterLog[]) => {
     logsBufferRef.current.push(...newLogs);
 
     if (logsBufferRef.current.length >= MAX_BUFFER_LOGS) {
@@ -209,15 +211,18 @@ export const useLogs = (
         if (evt.data == null) {
           return;
         }
-        console.log("here is the data", evt)
-        const newLogs = parseLogs(
-          [{
-            line: evt.data,
-            timestamp: evt.timeStamp.toString(),
-          }]
-        );
-
-        pushLogs(newLogs);
+        const jsonData = evt.data.trim().split("\n")
+        const newLogs: any[] = [];
+        jsonData.forEach((data: string) => {
+          try {
+            const jsonLog = JSON.parse(data);
+            newLogs.push(jsonLog)
+          } catch (err) {
+            console.log(err)
+            console.log(evt.data)
+          }
+        });
+        pushLogs(parseLogs(newLogs));
       },
       onclose: () => {
         console.log("Closed websocket:", websocketKey);
@@ -234,7 +239,7 @@ export const useLogs = (
     direction: Direction,
     limit: number = QUERY_LIMIT
   ): Promise<{
-    logs: Log[];
+    logs: PorterLog[];
     previousCursor: string | null;
     nextCursor: string | null;
   }> => {

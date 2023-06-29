@@ -149,7 +149,7 @@ class Clusters extends Component<PropsType, StateType> {
 
     if (currentProject?.simplified_view_enabled ) {
       const cluster = clusters[0];
-      return currentCluster?.preview_envs_enabled ? (
+      return currentProject?.preview_envs_enabled && currentCluster?.preview_envs_enabled ? (
         <NavButton
           path="/preview-environments"
           targetClusterName={cluster?.name}

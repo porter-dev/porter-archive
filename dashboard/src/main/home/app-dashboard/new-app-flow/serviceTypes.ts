@@ -16,6 +16,7 @@ type ServiceBoolean = {
 }
 type Ingress = {
     enabled: ServiceBoolean;
+    customDomain: ServiceString;
     hosts: ServiceString;
     porterHosts: ServiceString;
 }
@@ -135,7 +136,7 @@ const WorkerService = {
             },
             canDelete: porterJson?.apps?.[name] == null,
         }
-    }
+    },
 }
 
 export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
@@ -161,6 +162,7 @@ const WebService = {
         },
         ingress: {
             enabled: ServiceField.boolean(true, porterJson?.apps?.[name]?.config?.ingress?.enabled),
+            customDomain: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
             hosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
             porterHosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
         },
@@ -212,8 +214,8 @@ const WebService = {
             },
             ingress: {
                 enabled: service.ingress.enabled.value,
-                hosts: service.ingress.hosts.value ? [service.ingress.hosts.value] : [],
-                custom_domain: service.ingress.hosts.value ? true : false,
+                custom_domain: service.ingress.customDomain.value ? true : false,
+                hosts: service.ingress.customDomain.value ? [service.ingress.customDomain.value] : [],
                 porter_hosts: service.ingress.porterHosts.value ? [service.ingress.porterHosts.value] : [],
             },
             health: {
@@ -255,6 +257,7 @@ const WebService = {
             },
             ingress: {
                 enabled: ServiceField.boolean(values.ingress?.enabled ?? false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
+                customDomain: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
                 hosts: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
                 porterHosts: ServiceField.string(values.ingress?.porter_hosts?.length ? values.ingress.porter_hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
             },
@@ -281,7 +284,7 @@ const WebService = {
                 },
             }
         }
-    }
+    },
 }
 
 export type JobService = SharedServiceParams & {
@@ -332,7 +335,7 @@ const JobService = {
             cronSchedule: ServiceField.string(values.schedule?.value ?? '', porterJson?.apps?.[name]?.config?.schedule?.value),
             canDelete: porterJson?.apps?.[name] == null,
         }
-    }
+    },
 }
 
 export type ReleaseService = SharedServiceParams & {
@@ -372,7 +375,7 @@ const ReleaseService = {
             type: 'release',
             canDelete: porterJson?.release == null,
         }
-    }
+    },
 }
 
 
@@ -485,27 +488,39 @@ export const Service = {
             return "";
         }
 
-        const prefixSubdomain = (subdomain: string) => {
-            if (subdomain.startsWith('https://') || subdomain.startsWith('http://')) {
-                return subdomain;
-            }
-            return 'https://' + subdomain;
-        }
+        let matchedWebCount = 0;
+        let matchedWebHost = "";
 
         for (const web of webServices) {
             const values = helmValues[Service.toHelmName(web)];
             if (values == null || values.ingress == null || !values.ingress.enabled) {
                 continue;
             }
-            if (values.ingress.custom_domain && values.ingress.hosts?.length > 0) {
-                return prefixSubdomain(values.ingress.hosts[0]);
-            }
-            if (values.ingress.porter_hosts?.length > 0) {
-                return prefixSubdomain(values.ingress.porter_hosts[0]);
+            if (values.ingress.porter_hosts?.length > 0 || (values.ingress.custom_domain && values.ingress.hosts?.length > 0)) {
+                if (values.ingress.custom_domain && values.ingress.hosts?.length > 0) {
+                    // if they have a custom domain, use that
+                    matchedWebHost = values.ingress.hosts[0];
+                } else {
+                    // otherwise, use their porter domain
+                    matchedWebHost = values.ingress.porter_hosts[0];
+                }
+                matchedWebCount++;
             }
         }
 
-        return "";
-    }
+        // if multiple web services have a subdomain, return nothing
+        if (matchedWebCount > 1) {
+            return "";
+        }
+
+        return matchedWebHost;
+    },
+
+    prefixSubdomain: (subdomain: string) => {
+        if (subdomain.startsWith('https://') || subdomain.startsWith('http://')) {
+            return subdomain;
+        }
+        return 'https://' + subdomain;
+    },
 }
 

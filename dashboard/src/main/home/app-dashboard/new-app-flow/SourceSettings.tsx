@@ -8,7 +8,7 @@ import { pushFiltered } from "shared/routing";
 import ImageSelector from "components/image-selector/ImageSelector";
 import SharedBuildSettings from "../build-settings/SharedBuildSettings";
 import Link from "components/porter/Link";
-import { PorterApp } from "../types/porterApp";
+import { BuildMethod, PorterApp } from "../types/porterApp";
 
 type Props = RouteComponentProps & {
   source: SourceType | undefined;
@@ -19,6 +19,8 @@ type Props = RouteComponentProps & {
   setPorterYaml: (yaml: string, filename: string) => void;
   porterApp: PorterApp;
   setPorterApp: (x: PorterApp) => void;
+  buildView: BuildMethod;
+  setBuildView: (buildView: BuildMethod) => void;
 };
 
 const SourceSettings: React.FC<Props> = ({
@@ -30,6 +32,8 @@ const SourceSettings: React.FC<Props> = ({
   setPorterYaml,
   porterApp,
   setPorterApp,
+  buildView,
+  setBuildView,
   location,
   history,
 }) => {
@@ -44,6 +48,8 @@ const SourceSettings: React.FC<Props> = ({
             updatePorterApp={(attrs: Partial<PorterApp>) => setPorterApp(PorterApp.setAttributes(porterApp, attrs))}
             autoDetectionOn={true}
             canChangeRepo={true}
+            buildView={buildView}
+            setBuildView={setBuildView}
           />
         ) : (
           <StyledSourceBox>

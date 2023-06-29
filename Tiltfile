@@ -57,6 +57,7 @@ local_resource(
     "ee",
     "internal",
     "pkg",
+    "vendor",
   ],
   resource_deps=["postgresql"],
   labels=["z_binaries"]
@@ -67,6 +68,12 @@ local_resource(
     cmd='''GOWORK=off CGO_ENABLED=0 %s go build -mod vendor -gcflags '-N -l' -tags ee -o ./bin/migrate ./cmd/migrate/main.go ./cmd/migrate/migrate_ee.go''' % build_args,
     resource_deps=["postgresql"],
     labels=["z_binaries"],
+)
+
+local_resource(
+    name="disable-porter-helm-test",
+    cmd='tilt disable porter-server-web-test-connection',
+    resource_deps=["porter-server-web"]
 )
 
 docker_build_with_restart(

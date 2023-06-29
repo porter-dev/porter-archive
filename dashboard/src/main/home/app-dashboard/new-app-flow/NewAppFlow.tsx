@@ -27,7 +27,7 @@ import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
 import { Service } from "./serviceTypes";
 import GithubConnectModal from "./GithubConnectModal";
 import Link from "components/porter/Link";
-import { PorterApp } from "../types/porterApp";
+import { BuildMethod, PorterApp } from "../types/porterApp";
 
 type Props = RouteComponentProps & {};
 
@@ -95,6 +95,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
   const [porterJsonWithPath, setPorterJsonWithPath] = useState<PorterJsonWithPath | undefined>(undefined);
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
+  const [buildView, setBuildView] = useState<BuildMethod>("buildpacks");
+
   const handleSetAccessData = (data: GithubAppAccessData) => {
     setAccessData(data);
     setShowGithubConnectModal(
@@ -225,6 +227,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     const regex = /^[a-z0-9-]{1,61}$/;
     return regex.test(name);
   };
+
   const handleAppNameChange = (name: string) => {
     setPorterApp(PorterApp.setAttribute(porterApp, "name", name));
     if (isAppNameValid(name) && Validators.applicationName(name)) {
@@ -282,23 +285,30 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         };
       }
 
+      const porterAppRequest = {
+        porter_yaml: base64Encoded,
+        override_release: true,
+        image_info: imageInfo,
+        ...PorterApp.empty(),
+        buildpacks: "",
+        // for some reason I couldn't get the path to update the porterApp object correctly here so I just grouped it with the porter json :/
+        porter_yaml_path: porterJsonWithPath?.porterYamlPath,
+        repo_name: porterApp.repo_name,
+        git_branch: porterApp.git_branch,
+        git_repo_id: porterApp.git_repo_id,
+        build_context: porterApp.build_context,
+        image_repo_uri: porterApp.image_repo_uri,
+      }
+      if (buildView === "docker") {
+        porterAppRequest.dockerfile = porterApp.dockerfile;
+      } else {
+        porterAppRequest.builder = porterApp.builder;
+        porterAppRequest.buildpacks = porterApp.buildpacks.join(",");
+      }
+
       await api.createPorterApp(
         "<token>",
-        {
-          repo_name: porterApp.repo_name,
-          git_branch: porterApp.git_branch,
-          git_repo_id: porterApp.git_repo_id,
-          build_context: porterApp.build_context,
-          builder: !_.isEmpty(porterApp.dockerfile) ? "" : porterApp.builder,
-          buildpacks: !_.isEmpty(porterApp.dockerfile) ? "" : porterApp.buildpacks.join(","),
-          dockerfile: porterApp.dockerfile,
-          image_repo_uri: porterApp.image_repo_uri,
-          porter_yaml: base64Encoded,
-          override_release: true,
-          image_info: imageInfo,
-          // for some reason I couldn't get the path to update the porterApp object correctly here so I just grouped it with the porter json :/
-          porter_yaml_path: porterJsonWithPath?.porterYamlPath,
-        },
+        porterAppRequest,
         {
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
@@ -316,7 +326,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       return true;
     } catch (err: any) {
       // TODO: better error handling
-      console.log(err);
       const errMessage =
         err?.response?.data?.error ??
         err?.toString() ??
@@ -419,6 +428,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   }}
                   imageTag={imageTag}
                   setImageTag={setImageTag}
+                  buildView={buildView}
+                  setBuildView={setBuildView}
                 />
               </>,
               <>

@@ -3,7 +3,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import React from "react";
 import styled from "styled-components";
-import { PorterApp } from "../types/porterApp";
+import { BuildMethod, PorterApp } from "../types/porterApp";
 import DetectDockerfileAndPorterYaml from "./DetectDockerfileAndPorterYaml";
 import RepositorySelector from "./RepositorySelector";
 import BranchSelector from "./BranchSelector";
@@ -15,6 +15,8 @@ type Props = {
   porterApp: PorterApp;
   autoDetectionOn: boolean;
   canChangeRepo: boolean;
+  buildView: BuildMethod;
+  setBuildView: (buildView: BuildMethod) => void;
 };
 
 const SharedBuildSettings: React.FC<Props> = ({
@@ -23,6 +25,8 @@ const SharedBuildSettings: React.FC<Props> = ({
   porterApp,
   autoDetectionOn,
   canChangeRepo,
+  buildView,
+  setBuildView,
 }) => {
   return (
     <>
@@ -128,12 +132,15 @@ const SharedBuildSettings: React.FC<Props> = ({
                   setPorterYaml={setPorterYaml}
                   porterApp={porterApp}
                   updatePorterApp={updatePorterApp}
+                  updateDockerfileFound={() => setBuildView("docker")}
                 />
               )}
               <AdvancedBuildSettings
                 porterApp={porterApp}
                 updatePorterApp={updatePorterApp}
                 autoDetectBuildpacks={autoDetectionOn}
+                buildView={buildView}
+                setBuildView={setBuildView}
               />
             </>
           )}

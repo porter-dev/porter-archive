@@ -511,9 +511,9 @@ export const ExpandedEnvGroupFC = ({
       <HeaderWrapper>
         <TitleSection icon={key} iconWidth="33px">
           {envGroup.name}
-          <TagWrapper>
+          {!currentProject?.simplified_view_enabled && <TagWrapper>
             Namespace <NamespaceTag>{currentProject?.capi_provisioner_enabled && namespace.startsWith("porter-stack-") ? namespace.replace("porter-stack-", "") : namespace}</NamespaceTag>
-          </TagWrapper>
+          </TagWrapper>}
         </TitleSection>
       </HeaderWrapper>
 

@@ -514,6 +514,7 @@ func (a *Agent) InstallChart(
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "error getting post renderer")
 	}
+
 	if req := conf.Chart.Metadata.Dependencies; req != nil {
 		for _, dep := range req {
 			depChart, err := loader.LoadChartPublic(ctx, dep.Repository, dep.Name, dep.Version)

@@ -664,7 +664,7 @@ const EnvGroupSettings = ({
           {!canDelete && (
             <Helper color="#f5cb42">
               Applications are still synced to this env group. Navigate to
-              "Linked Applications" and remove this env group from all
+              "Linked applications" and remove this env group from all
               applications to delete.
             </Helper>
           )}
@@ -718,7 +718,7 @@ const EnvGroupSettings = ({
 };
 
 const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
-  const { currentCluster } = useContext(Context);
+  const { currentCluster, currentProject } = useContext(Context);
 
   return (
     <>
@@ -741,12 +741,19 @@ const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
                 </EventInformation>
               </ContentContainer>
               <ActionContainer>
-                <ActionButton
-                  to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
+                {currentProject?.simplified_view_enabled ? (<ActionButton
+                  to={`/apps/${appName}`}
                   target="_blank"
                 >
                   <span className="material-icons-outlined">open_in_new</span>
-                </ActionButton>
+                </ActionButton>)
+                  :
+                  (<ActionButton
+                    to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
+                    target="_blank"
+                  >
+                    <span className="material-icons-outlined">open_in_new</span>
+                  </ActionButton>)}
               </ActionContainer>
             </Flex>
           </StyledCard>

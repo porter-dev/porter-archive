@@ -37,7 +37,7 @@ type Props = RouteComponentProps & {
   setValues: (x: KeyValueType[]) => void;
   values: KeyValueType[];
   syncedEnvGroups: PopulatedEnvGroup[];
-  setSyncedEnvGroups: (values: PopulatedEnvGroup) => void;
+  setSyncedEnvGroups: (values: PopulatedEnvGroup[]) => void;
   appData: any;
 }
 
@@ -268,19 +268,6 @@ const EnvGroupModal: React.FC<Props> = ({
 
 export default withRouter(EnvGroupModal);
 
-const Tab = styled.span`
-  margin-left: 20px;
-  height: 1px;
-`;
-
-const ModalHeader = styled.div`
-  font-weight: 600;
-  font-size: 16px;
-  font-family: monospace;
-  height: 40px;
-  display: flex;
-  align-items: center;
-`;
 const LoadingWrapper = styled.div`
 height: 150px;
 `;
@@ -325,15 +312,6 @@ border-radius: 3px;
 background: #ffffff11;
 border: 1px solid #ffffff44;
 overflow-y: auto;
-`;
-
-const AbsoluteWrapper = styled.div`
-  position: absolute;
-  z-index: 999;
-  bottom: 18px;
-  left: 25px;
-  display: flex;
-  align-items: center;
 `;
 
 const SidebarSection = styled.section<{ $expanded?: boolean }>`

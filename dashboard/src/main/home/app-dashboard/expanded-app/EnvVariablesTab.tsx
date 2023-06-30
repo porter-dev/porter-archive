@@ -120,6 +120,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
           setEnvVars(x)
         }}
         fileUpload={true}
+        syncedEnvGroups={syncedEnvGroups}
       />
       <LoadButton
         onClick={() => setShowEnvModal(true)}
@@ -384,3 +385,4 @@ const NoVariablesTextWrapper = styled.div`
   justify-content: center;
   color: #ffffff99;
 `;
+

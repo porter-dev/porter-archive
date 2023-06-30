@@ -134,7 +134,7 @@ func rolloutStacksApplications(
 	}
 
 	version := uint(versionInt)
-	fmt.Println("HERE VERSION", version)
+
 	newSection := &SyncedEnvSection{
 		Name:    envGroupName,
 		Version: version,

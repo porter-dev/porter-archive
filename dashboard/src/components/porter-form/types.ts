@@ -102,13 +102,13 @@ export interface ArrayInputField extends GenericInputField {
 export interface SelectField extends GenericInputField {
   type: "select";
   settings:
-    | {
-        type: "normal";
-        options: { value: string; label: string }[];
-      }
-    | {
-        type: "provider";
-      };
+  | {
+    type: "normal";
+    options: { value: string; label: string }[];
+  }
+  | {
+    type: "provider";
+  };
   width: string;
   label?: string;
   dropdownLabel?: string;
@@ -213,8 +213,8 @@ export interface PorterFormValidationInfo {
 }
 
 // internal field state interfaces
-export interface StringInputFieldState {}
-export interface CheckboxFieldState {}
+export interface StringInputFieldState { }
+export interface CheckboxFieldState { }
 
 export type PartialEnvGroup = {
   name: string;
@@ -242,8 +242,8 @@ export interface KeyValueArrayFieldState {
   showEditorModal: boolean;
   synced_env_groups: PopulatedEnvGroup[];
 }
-export interface ArrayInputFieldState {}
-export interface SelectFieldState {}
+export interface ArrayInputFieldState { }
+export interface SelectFieldState { }
 
 export type PorterFormFieldFieldState =
   | StringInputFieldState

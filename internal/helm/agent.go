@@ -584,7 +584,7 @@ func (a *Agent) UpgradeInstallChart(
 	if req := conf.Chart.Metadata.Dependencies; req != nil {
 		for _, dep := range req {
 			depChart, err := loader.LoadChartPublic(ctx, dep.Repository, dep.Name, dep.Version)
-			// fmt.Println("NO ERROR HERE for", dep.Name, dep.Version)
+			fmt.Println("NO ERROR HERE for", dep.Name, dep.Version)
 			if err != nil {
 				fmt.Println("ERROR HERE for", dep.Name, dep.Version)
 				return nil, telemetry.Error(ctx, span, err, fmt.Sprintf("error retrieving chart dependency %s/%s-%s", dep.Repository, dep.Name, dep.Version))

@@ -48,7 +48,7 @@ import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/use
 import Anser, { AnserJsonEntry } from "anser";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
-import { PopulatedEnvGroup } from "../../../../components/porter-form/types";
+import { PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
 
 type Props = RouteComponentProps & {};
@@ -210,6 +210,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         resPorterApp?.data?.porter_yaml_path ?? "porter.yaml",
         newAppData
       );
+      updateEnvGroups()
 
       setPorterJson(porterJson);
       setAppData(newAppData);
@@ -219,7 +220,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setTempPorterApp(parsedPorterApp);
       console.log(newAppData.chart)
       setBuildView(!_.isEmpty(parsedPorterApp.dockerfile) ? "docker" : "buildpacks")
-
       const [newServices, newEnvVars] = updateServicesAndEnvVariables(
         resChartData?.data,
         preDeployChartData?.data,
@@ -229,7 +229,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         newServices,
         newEnvVars,
         porterJson,
-        syncedEnvGroups,
         // if we are using a heroku buildpack, inject a PORT env variable
         newAppData.app.builder != null && newAppData.app.builder.includes("heroku")
       );
@@ -392,7 +391,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         const finalPorterYaml = createFinalPorterYaml(
           services,
           envVars,
-          syncedEnvGroups,
           porterJson,
           // if we are using a heroku buildpack, inject a PORT env variable
           appData.app.builder != null && appData.app.builder.includes("heroku")
@@ -547,6 +545,52 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
+  const updateEnvGroups = async () => {
+    let envGroups: PartialEnvGroup[] = [];
+    try {
+      envGroups = await api
+        .listEnvGroups<PartialEnvGroup[]>(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            namespace: "default",
+            cluster_id: currentCluster.id,
+          }
+        )
+        .then((res) => res.data);
+    } catch (error) {
+      // setLoading(false)
+      // setError(true);
+      return;
+    }
+    const populateEnvGroupsPromises = envGroups.map((envGroup) =>
+      api
+        .getEnvGroup<PopulatedEnvGroup>(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            cluster_id: currentCluster.id,
+            name: envGroup.name,
+            namespace: envGroup.namespace,
+            version: envGroup.version,
+          }
+        )
+        .then((res) => res.data)
+    );
+
+    try {
+      const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
+
+      setSyncedEnvGroups(populatedEnvGroups)
+
+    } catch (error) {
+      // setLoading(false)
+      // setError(true);
+    }
+  }
+
   const renderIcon = (b: string, size?: string) => {
     var src = box;
     if (b) {
@@ -628,7 +672,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     const newPorterYaml = createFinalPorterYaml(
       services,
       envVars,
-      syncedEnvGroups,
       porterJson,
       // if we are using a heroku buildpack, inject a PORT env variable
       appData.app.builder != null && appData.app.builder.includes("heroku")

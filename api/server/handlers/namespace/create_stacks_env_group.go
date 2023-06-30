@@ -3,7 +3,6 @@ package namespace
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -256,8 +255,7 @@ func getNewStacksConfig(curr map[string]interface{}, syncedEnvSection *SyncedEnv
 	for _, dep := range release.Chart.Metadata.Dependencies {
 		envConf, err := getStacksNestedMap(curr, dep.Name, "container", "env")
 		// env, err := getStacksNestedMap(curr, dep.Name, "container", "env", "normal")
-		fmt.Println("ENV: ", envConf)
-		fmt.Println("FILTERED", filterSyncedKeys(envConf))
+		fmt.Println("FILTER:", filterEnvConf(envConf))
 
 		if err != nil {
 			return nil, err
@@ -418,35 +416,30 @@ func getStacksNestedMap(obj map[string]interface{}, fields ...string) (map[strin
 	return res, nil
 }
 
-func filterSyncedKeys(envConf map[string]interface{}) map[string]interface{} {
-	// Type assert normalKeys to a map
+func filterEnvConf(envConf map[string]interface{}) map[string]interface{} {
 	normalKeys, ok := envConf["normal"].(map[string]interface{})
 	if !ok {
-		log.Fatal("normalKeys is not the expected type")
+		fmt.Println("Error converting normal keys to map[string]interface{}")
 	}
-
-	syncedKeys, ok := envConf["synced"].([]map[string]interface{})
+	synced, ok := envConf["synced"].([]map[string]interface{})
 	if !ok {
-		log.Fatal("syncedKeys is not the expected type")
+		fmt.Println("Error converting normal keys to map[string]interface{}")
 	}
+	// Create filteredSynced
+	filteredSynced := make([]map[string]interface{}, 0)
 
-	// Create filteredSyncedKeys
-	filteredSyncedKeys := make([]map[string]interface{}, 0)
-
-	for _, syncedKey := range syncedKeys {
-		keys, ok := syncedKey["keys"].([]map[string]interface{})
+	for _, s := range synced {
+		keys, ok := s["keys"].([]map[string]interface{})
 		if !ok {
-			log.Fatal("keys is not the expected type")
+			fmt.Println("Error converting normal keys to map[string]interface{}")
 		}
-
 		filteredKeys := make([]map[string]interface{}, 0)
 
 		for _, key := range keys {
 			name, ok := key["name"].(string)
 			if !ok {
-				log.Fatal("name is not the expected type")
+				fmt.Println("Error converting normal keys to map[string]interface{}")
 			}
-
 			_, existsInNormal := normalKeys[name]
 			if !existsInNormal {
 				filteredKeys = append(filteredKeys, key)
@@ -455,15 +448,15 @@ func filterSyncedKeys(envConf map[string]interface{}) map[string]interface{} {
 
 		// only add the filtered keys if they exist
 		if len(filteredKeys) > 0 {
-			syncedKey["keys"] = filteredKeys
-			filteredSyncedKeys = append(filteredSyncedKeys, syncedKey)
+			s["keys"] = filteredKeys
+			filteredSynced = append(filteredSynced, s)
 		}
 	}
 
-	// Create a new envConf with filteredSyncedKeys
+	// Create a new envConf with filteredSynced and normalKeys
 	newEnvConf := make(map[string]interface{})
 	newEnvConf["normal"] = normalKeys
-	newEnvConf["synced"] = filteredSyncedKeys
+	newEnvConf["synced"] = filteredSynced
 
 	return newEnvConf
 }
@@ -475,10 +468,14 @@ func filterSyncedKeys(envConf map[string]interface{}) map[string]interface{} {
 // }
 
 func getType(name string) string {
-	if strings.Contains(name, "web") {
+	if strings.HasSuffix(name, "-web") {
 		return "web"
+	} else if strings.HasSuffix(name, "-wkr") {
+		return "worker"
+	} else if strings.HasSuffix(name, "-job") {
+		return "job"
 	}
-	return "worker"
+	return ""
 }
 
 func createPorterAppEvent(ctx context.Context, status string, appID uint, revision int, tag string, repo repository.PorterAppEventRepository) (*models.PorterAppEvent, error) {

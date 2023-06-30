@@ -14,15 +14,6 @@ const appConfigSchema = z.object({
 export const AppsSchema = z.record(appConfigSchema);
 
 export const EnvSchema = z.record(z.string());
-export const PopulatedEnvGroupSchema = z.record(z.object({
-    name: z.string(),
-    namespace: z.string(),
-    version: z.number(),
-    variables: z.record(z.string()),
-    applications: z.array(z.any()),
-    meta_version: z.number(),
-    stack_id: z.string().optional(),
-}));
 
 export const BuildSchema = z.object({
     method: z.string().refine(value => ["pack", "docker", "registry"].includes(value)),
@@ -50,7 +41,6 @@ export const PorterYamlSchema = z.object({
     version: z.string().optional(),
     build: BuildSchema.optional(),
     env: EnvSchema.optional(),
-    syncedEnv: PopulatedEnvGroupSchema.optional(),
     apps: AppsSchema,
     release: appConfigSchema.optional(),
 });
@@ -58,14 +48,11 @@ export const PorterYamlSchema = z.object({
 export const createFinalPorterYaml = (
     services: Service[],
     dashboardSetEnvVariables: KeyValueType[],
-    syncedEnvGroup: PopulatedEnvGroup[],
     porterJson: PorterJson | undefined,
     injectPortEnvVariable: boolean = false,
 ): PorterJson => {
-    porterJson?.syncedEnv
     const [apps, port] = createApps(services.filter(Service.isNonRelease), porterJson, injectPortEnvVariable);
     const env = combineEnv(dashboardSetEnvVariables, porterJson?.env);
-    const syncedEnv = syncedEnvGroup;
 
     // inject a port env variable if necessary
     console.log(env)
@@ -104,26 +91,6 @@ const combineEnv = (
     return env;
 };
 
-const combineSyncedEnv = (
-    syncedEnvGroups: PopulatedEnvGroup[],
-    porterYamlSyncedEnv: Record<string, z.infer<typeof PopulatedEnvGroupSchema>> | undefined
-): Record<string, z.infer<typeof PopulatedEnvGroupSchema>> => {
-    const syncedEnv: Record<string, z.infer<typeof PopulatedEnvGroupSchema>> = {};
-
-    // Parse each PopulatedEnvGroup into the schema type
-    for (const group of syncedEnvGroups) {
-        syncedEnv[group.name] = PopulatedEnvGroupSchema.parse(group);
-    }
-
-    // Merge the syncedEnv from porterJson if it exists
-    if (porterYamlSyncedEnv != null) {
-        for (const [key, value] of Object.entries(porterYamlSyncedEnv)) {
-            syncedEnv[key] = value;
-        }
-    }
-
-    return syncedEnv;
-};
 const createApps = (
     serviceList: (WorkerService | WebService | JobService)[],
     porterJson: PorterJson | undefined,

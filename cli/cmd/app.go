@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -24,7 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/kubectl/pkg/util/term"
 
-	templaterUtils "github.com/porter-dev/porter/internal/templater/utils"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
@@ -1049,71 +1047,34 @@ func appUpdateTag(_ *types.GetAuthenticatedUserResponse, client *api.Client, arg
 	if err != nil {
 		return fmt.Errorf("Unable to find application %s", args[0])
 	}
-
-	// check for the post-deploy job associated with the release
-	postDeployReleaseName := fmt.Sprintf("%s-r", args[0])
-	postDeployRelease, postDeployReleaseErr := client.GetRelease(context.TODO(), cliConf.Project, cliConf.Cluster, namespace, postDeployReleaseName)
+	repository, ok := release.Config["global"].(map[string]interface{})["image"].(map[string]interface{})["repository"].(string)
+	if !ok || repository == "" {
+		return fmt.Errorf("Application %s does not have an associated image repository. Unable to update tag", args[0])
+	}
+	imageInfo := types.ImageInfo{
+		Repository: repository,
+		Tag:        appTag,
+	}
+	createUpdatePorterAppRequest := &types.CreatePorterAppRequest{
+		ClusterID:       cliConf.Cluster,
+		ProjectID:       cliConf.Project,
+		ImageInfo:       imageInfo,
+		OverrideRelease: false,
+	}
 
 	color.New(color.FgGreen).Printf("Updating application %s to build using tag \"%s\"\n", args[0], appTag)
-	overrideValues := map[string]interface{}{
-		"global": map[string]interface{}{
-			"image": map[string]interface{}{
-				"tag": appTag,
-			},
-		},
-	}
-	mergedValues := templaterUtils.CoalesceValues(release.Config, overrideValues)
 
-	bytes, err := json.Marshal(mergedValues)
-	if err != nil {
-		return fmt.Errorf("Unable to update application %s: %w", args[0], err)
-	}
-	err = client.UpgradeRelease(
+	_, err = client.CreatePorterApp(
 		context.Background(),
 		cliConf.Project,
 		cliConf.Cluster,
-		namespace,
 		args[0],
-		&types.UpgradeReleaseRequest{
-			Values:             string(bytes),
-			IgnoreDependencies: true,
-		},
+		createUpdatePorterAppRequest,
 	)
 	if err != nil {
 		return fmt.Errorf("Unable to update application %s: %w", args[0], err)
 	}
 
-	color.New(color.FgGreen).Printf("Successfully updated application %s\n", args[0])
-
-	if postDeployReleaseErr != nil {
-		// didn't find a post-deploy job, so we're done
-		return nil
-	}
-	color.New(color.FgGreen).Printf("Post-deploy job for application %s found. Updating job to build using tag \"%s\" as well\n", args[0], appTag)
-	overrideValues = map[string]interface{}{
-		"image": map[string]interface{}{
-			"tag": appTag,
-		},
-	}
-	mergedValues = templaterUtils.CoalesceValues(postDeployRelease.Config, overrideValues)
-
-	bytes, err = json.Marshal(mergedValues)
-	if err != nil {
-		return fmt.Errorf("Unable to update post-deploy job for application %s: %w", args[0], err)
-	}
-	err = client.UpgradeRelease(
-		context.Background(),
-		cliConf.Project,
-		cliConf.Cluster,
-		namespace,
-		postDeployReleaseName,
-		&types.UpgradeReleaseRequest{
-			Values: string(bytes),
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("Unable to update post-deploy job for application %s: %w", args[0], err)
-	}
-
+	color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], appTag)
 	return nil
 }

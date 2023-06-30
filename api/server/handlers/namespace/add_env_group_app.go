@@ -69,7 +69,6 @@ func (c *AddEnvGroupAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	res, err := envgroup.ToEnvGroup(cm)
-	fmt.Println(res)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -7,70 +7,70 @@ import Input from "components/porter/Input";
 import RepoList from "components/repo-selector/RepoList";
 
 type Props = {
-    actionConfig: ActionConfigType | null;
-    setActionConfig: (x: ActionConfigType) => void;
-    setBranch?: (x: string) => void;
-    setDockerfilePath?: (x: string) => void;
-    setFolderPath?: (x: string) => void;
-    setBuildView?: (x: string) => void;
-    setPorterYamlPath?: (x: string) => void;
+  actionConfig: ActionConfigType | null;
+  setActionConfig: (x: ActionConfigType) => void;
+  setBranch?: (x: string) => void;
+  setDockerfilePath?: (x: string) => void;
+  setFolderPath?: (x: string) => void;
+  setBuildView?: (x: string) => void;
+  setPorterYamlPath?: (x: string) => void;
 };
 
 const defaultActionConfig: ActionConfigType = {
-    git_repo: null,
-    image_repo_uri: null,
-    git_branch: null,
-    git_repo_id: 0,
-    kind: "github",
+  git_repo: null,
+  image_repo_uri: null,
+  git_branch: null,
+  git_repo_id: 0,
+  kind: "github",
 };
 
 const ConnectNewRepoActionConfEditor: React.FC<Props> = ({
-    actionConfig,
-    setBranch,
-    setActionConfig,
-    setFolderPath,
-    setDockerfilePath,
-    setBuildView,
-    setPorterYamlPath,
+  actionConfig,
+  setBranch,
+  setActionConfig,
+  setFolderPath,
+  setDockerfilePath,
+  setBuildView,
+  setPorterYamlPath,
 }) => {
-    if (!actionConfig.git_repo) {
-        return (
-            <ExpandedWrapperAlt>
-                <RepoList
-                    actionConfig={actionConfig}
-                    setActionConfig={(x: ActionConfigType) => setActionConfig(x)}
-                    readOnly={false}
-                />
-            </ExpandedWrapperAlt>
-        );
-    } else {
-        return (
-            <>
-                <Input
-                    disabled={true}
-                    label="GitHub repository:"
-                    width="100%"
-                    value={actionConfig?.git_repo}
-                    setValue={() => { }}
-                    placeholder=""
-                />
-                <BackButton
-                    width="135px"
-                    onClick={() => {
-                        setActionConfig({ ...defaultActionConfig });
-                        setBranch ? setBranch("") : null;
-                        setFolderPath ? setFolderPath("") : null;
-                        setDockerfilePath ? setDockerfilePath("") : null;
-                        setBuildView ? setBuildView("buildpacks") : null;
-                        setPorterYamlPath("");
-                    }}
-                >
-                    <i className="material-icons">keyboard_backspace</i>
-                    Select repo
-                </BackButton>
-            </>
-        );
-    }
+  if (!actionConfig.git_repo) {
+    return (
+      <ExpandedWrapperAlt>
+        <RepoList
+          actionConfig={actionConfig}
+          setActionConfig={(x: ActionConfigType) => setActionConfig(x)}
+          readOnly={false}
+        />
+      </ExpandedWrapperAlt>
+    );
+  } else {
+    return (
+      <>
+        <Input
+          disabled={true}
+          label="GitHub repository:"
+          width="100%"
+          value={actionConfig?.git_repo}
+          setValue={() => {}}
+          placeholder=""
+        />
+        <BackButton
+          width="135px"
+          onClick={() => {
+            setActionConfig({ ...defaultActionConfig });
+            setBranch ? setBranch("") : null;
+            setFolderPath ? setFolderPath("") : null;
+            setDockerfilePath ? setDockerfilePath("") : null;
+            setBuildView ? setBuildView("buildpacks") : null;
+            setPorterYamlPath && setPorterYamlPath("");
+          }}
+        >
+          <i className="material-icons">keyboard_backspace</i>
+          Select repo
+        </BackButton>
+      </>
+    );
+  }
 };
 
 export default ConnectNewRepoActionConfEditor;

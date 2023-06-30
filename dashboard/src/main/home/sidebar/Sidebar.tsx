@@ -240,7 +240,6 @@ class Sidebar extends Component<PropsType, StateType> {
 
           {/* Hacky workaround for setting currentCluster with legacy method */}
           <Clusters
-            display="none"
             setWelcome={this.props.setWelcome}
             currentView={currentView}
             isSelected={false}

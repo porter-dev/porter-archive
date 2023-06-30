@@ -67,6 +67,15 @@ const machineTypeOptions = [
   { value: "t3.large", label: "t3.large" },
   { value: "t3.xlarge", label: "t3.xlarge" },
   { value: "t3.2xlarge", label: "t3.2xlarge" },
+  { value: "t3a.medium", label: "t3a.medium" },
+  { value: "t3a.large", label: "t3a.large" },
+  { value: "t3a.xlarge", label: "t3a.xlarge" },
+  { value: "t3a.2xlarge", label: "t3a.2xlarge" },
+  { value: "c6i.large", label: "c6i.large" },
+  { value: "c6i.xlarge", label: "c6i.xlarge" },
+  { value: "c6i.2xlarge", label: "c6i.2xlarge" },
+  { value: "c6i.4xlarge", label: "c6i.4xlarge" },
+  { value: "c6i.8xlarge", label: "c6i.8xlarge" },
   { value: "g4dn.xlarge", label: "g4dn.xlarge" },
 ];
 

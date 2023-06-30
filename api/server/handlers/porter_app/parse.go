@@ -118,7 +118,7 @@ func buildUmbrellaChartValues(
 			}
 		}
 
-		validateErr := validateHelmValues(helm_values, shouldCreate)
+		validateErr := validateHelmValues(helm_values, shouldCreate, appType)
 		if validateErr != "" {
 			return nil, fmt.Errorf("error validating service \"%s\": %s", name, validateErr)
 		}
@@ -175,26 +175,29 @@ func buildUmbrellaChartValues(
 }
 
 // we can add to this function up later or use an alternative
-func validateHelmValues(values map[string]interface{}, shouldCreate bool) string {
+func validateHelmValues(values map[string]interface{}, shouldCreate bool, appType string) string {
 	// currently, we only validate port on initial app create, because this will break any updates to existing apps with lower port numbers
 	if shouldCreate {
-		containerMap, err := getNestedMap(values, "container")
-		if err != nil {
-			return "error checking port: misformatted values"
-		} else {
-			portVal, portExists := containerMap["port"]
-			if portExists {
-				portStr, pOK := portVal.(string)
-				if !pOK {
-					return "error checking port: no port in container"
-				}
-
-				port, err := strconv.Atoi(portStr)
-				if err != nil || port < 1024 || port > 65535 {
-					return "port must be a number between 1024 and 65535"
-				}
+		// validate port for web services
+		if appType == "web" {
+			containerMap, err := getNestedMap(values, "container")
+			if err != nil {
+				return "error checking port: misformatted values"
 			} else {
-				return "must specify port if choosing to expose service externally"
+				portVal, portExists := containerMap["port"]
+				if portExists {
+					portStr, pOK := portVal.(string)
+					if !pOK {
+						return "error checking port: no port in container"
+					}
+
+					port, err := strconv.Atoi(portStr)
+					if err != nil || port < 1024 || port > 65535 {
+						return "port must be a number between 1024 and 65535"
+					}
+				} else {
+					return "port must be specified for web services"
+				}
 			}
 		}
 	}

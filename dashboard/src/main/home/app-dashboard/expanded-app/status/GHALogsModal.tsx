@@ -2,16 +2,15 @@ import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Modal from "components/porter/Modal";
 import TitleSection from "components/TitleSection";
-import { PorterLog } from "../useAgentLogs";
 import Loading from "components/Loading";
 import Text from "components/porter/Text";
 import danger from "assets/danger.svg";
-import Anser, { AnserJsonEntry } from "anser";
+import Anser from "anser";
 
 import dayjs from "dayjs";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
-import Checkbox from "components/porter/Checkbox";
+import { PorterLog } from "../logs/types";
 type Props = {
   appData: any;
   logs: PorterLog[];

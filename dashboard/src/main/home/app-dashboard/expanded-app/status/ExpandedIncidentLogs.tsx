@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { PorterLog } from "../useAgentLogs";
+import { useEffect, useRef } from "react";
 import React from "react";
 import styled from "styled-components";
 import Loading from "components/Loading";
 import dayjs from "dayjs";
 import Anser from "anser";
+import { PorterLog } from "../logs/types";
 
 interface ExpandedIncidentLogsProps {
   logs: PorterLog[];

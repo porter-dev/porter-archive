@@ -6,12 +6,12 @@ import styled from "styled-components";
 import Anser, { AnserJsonEntry } from "anser";
 import JSZip from "jszip";
 import dayjs from "dayjs";
-import { PorterLog as LogType } from "../../../useAgentLogs";
 import { PorterAppEvent } from "shared/types";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
 import { getDuration } from "../utils";
 import Link from "components/porter/Link";
+import { PorterLog } from "../../../logs/types";
 
 type Props = {
     event: PorterAppEvent;
@@ -22,7 +22,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
     event,
     appData,
 }) => {
-    const [logs, setLogs] = useState<LogType[]>([]);
+    const [logs, setLogs] = useState<PorterLog[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
 
@@ -55,7 +55,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
                     run_id: event.metadata.action_run_id,
                 }
             );
-            let logs: LogType[] = [];
+            let logs: PorterLog[] = [];
             if (res.data != null) {
                 // Fetch the logs
                 const logsResponse = await fetch(res.data);
@@ -92,7 +92,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
                                             anserLine[0].fg = "238,75,43";
                                         }
 
-                                        const log: LogType = {
+                                        const log: PorterLog = {
                                             line: anserLine,
                                             lineNumber: i + 1,
                                             timestamp: line.match(timestampPattern)?.[0],

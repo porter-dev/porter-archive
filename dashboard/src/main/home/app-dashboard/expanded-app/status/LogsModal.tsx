@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import Modal from "components/porter/Modal";
 import TitleSection from "components/TitleSection";
-import { PorterLog } from "../useAgentLogs";
 import Text from "components/porter/Text";
 import danger from "assets/danger.svg";
 
 import ExpandedIncidentLogs from "./ExpandedIncidentLogs";
+import { PorterLog } from "../logs/types";
 
 interface LogsModalProps {
     logs: PorterLog[];

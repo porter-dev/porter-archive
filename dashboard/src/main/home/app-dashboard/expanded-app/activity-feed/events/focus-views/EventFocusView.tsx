@@ -7,12 +7,15 @@ import styled from "styled-components";
 import { PorterAppEvent } from "shared/types";
 import Link from "components/porter/Link";
 import BuildFailureEventFocusView from "./BuildFailureEventFocusView";
-import PreDeployFailureEventFocusView from "./PredeployFailureEventFocusView";
+import PreDeployEventFocusView from "./PredeployEventFocusView";
+import _ from "lodash";
 
 type Props = {
     eventId: string;
     appData: any;
 };
+
+const EVENT_POLL_INTERVAL = 15000; // poll every 15 seconds
 
 const EventFocusView: React.FC<Props> = ({
     eventId,
@@ -36,12 +39,18 @@ const EventFocusView: React.FC<Props> = ({
                         event_id: eventId,
                     }
                 )
-                setEvent(eventResp.data.event as PorterAppEvent)
+                const newEvent = eventResp.data.event as PorterAppEvent;
+                setEvent(newEvent);
+                if (newEvent.metadata.end_time != null) {
+                    clearInterval(intervalId);
+                }
             } catch (err) {
                 console.log(err);
             }
         }
+        const intervalId = setInterval(getEvent, EVENT_POLL_INTERVAL);
         getEvent();
+        return () => clearInterval(intervalId);
     }, []);
 
     const getEventFocusView = (event: PorterAppEvent, appData: any) => {
@@ -49,14 +58,14 @@ const EventFocusView: React.FC<Props> = ({
             case "BUILD":
                 return <BuildFailureEventFocusView event={event} appData={appData} />
             case "PRE_DEPLOY":
-                return <PreDeployFailureEventFocusView event={event} appData={appData} />
+                return <PreDeployEventFocusView event={event} appData={appData} />
             default:
                 return null
         }
     }
 
     return (
-        <StyledEventFocusView>
+        <AppearingView>
             <Link to={`/apps/${appData.app.name}/activity`}>
                 <BackButton>
                     <i className="material-icons">keyboard_backspace</i>
@@ -66,13 +75,13 @@ const EventFocusView: React.FC<Props> = ({
             <Spacer y={0.5} />
             {event == null && <Loading />}
             {event != null && getEventFocusView(event, appData)}
-        </StyledEventFocusView>
+        </AppearingView>
     );
 };
 
 export default EventFocusView;
 
-const StyledEventFocusView = styled.div`
+export const AppearingView = styled.div`
     width: 100%;
     animation: fadeIn 0.3s 0s;
     @keyframes fadeIn {

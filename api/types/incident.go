@@ -120,9 +120,9 @@ type GetChartLogsWithinTimeRangeRequest struct {
 	StartRange  time.Time `schema:"start_range,omitempty"`
 	EndRange    time.Time `schema:"end_range,omitempty"`
 	SearchParam string    `schema:"search_param"`
-	Revision    string    `schema:"revision"`
 	Namespace   string    `schema:"namespace"`
 	PodSelector string    `schema:"pod_selector"`
+	Direction   string    `schema:"direction"`
 }
 
 type GetPodValuesRequest struct {

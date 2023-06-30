@@ -1,43 +1,16 @@
-import Anser, { AnserJsonEntry } from "anser";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import _ from "lodash";
-import { z } from "zod";
 import { useContext, useEffect, useRef, useState } from "react";
 import api from "shared/api";
+import Anser from "anser";
 import { Context } from "shared/Context";
 import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
 import { ChartType } from "shared/types";
-import { isJSON } from "shared/util";
+import { AgentLog, AgentLogSchema, Direction, PorterLog, PaginationInfo } from "./types";
 
 const MAX_LOGS = 5000;
 const MAX_BUFFER_LOGS = 1000;
 const QUERY_LIMIT = 1000;
-
-export enum Direction {
-  forward = "forward",
-  backward = "backward",
-}
-
-export interface PorterLog {
-  line: AnserJsonEntry[];
-  lineNumber: number;
-  timestamp?: string;
-}
-
-const AgentLogMetadataSchema = z.object({
-  pod_name: z.string(),
-  pod_namespace: z.string(),
-  revision: z.string(),
-  output_stream: z.string(),
-  app_name: z.string(),
-});
-
-const AgentLogSchema = z.object({
-  line: z.string(),
-  timestamp: z.string(),
-  metadata: AgentLogMetadataSchema.optional(),
-});
-type AgentLog = z.infer<typeof AgentLogSchema>;
 
 export const parseLogs = (logs: any[] = []): PorterLog[] => {
   return logs.map((log: any, idx) => {
@@ -53,18 +26,13 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
       };
     } catch (err) {
       return {
-        line: Anser.ansiToJson(log),
+        line: Anser.ansiToJson(log.toString()),
         lineNumber: idx + 1,
         timestamp: undefined,
       }
     }
   });
 };
-
-interface PaginationInfo {
-  previousCursor: string | null;
-  nextCursor: string | null;
-}
 
 export const useLogs = (
   currentPodName: string,
@@ -75,7 +43,11 @@ export const useLogs = (
   currentChart: ChartType | undefined,
   setLoading: (isLoading: boolean) => void,
   // if setDate is set, results are not live
-  setDate?: Date
+  setDate?: Date,
+  timeRange?: {
+    startTime: Dayjs,
+    endTime?: Dayjs,
+  }
 ) => {
   const isLive = !setDate;
   const logsBufferRef = useRef<PorterLog[]>([]);
@@ -233,7 +205,7 @@ export const useLogs = (
     openWebsocket(websocketKey);
   };
 
-  const queryLogs = (
+  const queryLogs = async (
     startDate: string,
     endDate: string,
     direction: Direction,
@@ -243,50 +215,77 @@ export const useLogs = (
     previousCursor: string | null;
     nextCursor: string | null;
   }> => {
-    return api
-      .getLogs(
-        "<token>",
-        {
-          pod_selector: currentPod + "-.*",
-          namespace,
-          revision: currentChart.version.toString(),
-          search_param: searchParam,
-          start_range: startDate,
-          end_range: endDate,
-          limit,
-          direction,
-        },
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-        }
-      )
-      .then((res) => {
-        const newLogs = parseLogs(res.data?.logs);
+    if (currentCluster == null || currentProject == null) {
+      return {
+        logs: [],
+        previousCursor: null,
+        nextCursor: null,
+      };
+    }
 
-        if (direction === Direction.backward) {
-          newLogs.reverse();
-        }
+    const getLogsReq = {
+      namespace,
+      search_param: searchParam,
+      start_range: startDate,
+      end_range: endDate,
+      limit,
+      chart_name: "",
+      pod_selector: currentPodName,
+      direction,
+    };
 
-        return {
-          logs: newLogs,
-          previousCursor:
-            // There are no more historical logs so don't set the previous cursor
-            newLogs.length < QUERY_LIMIT && direction == Direction.backward
-              ? null
-              : res.data.backward_continue_time,
-          nextCursor: res.data.forward_continue_time,
-        };
-      })
-      .catch((err) => {
-        setCurrentError(err);
-
+    if (currentPodName === "") {
+      if (currentChart == null) {
         return {
           logs: [],
           previousCursor: null,
           nextCursor: null,
         };
-      });
+      } else if (currentChart.name.endsWith("-r")) {
+        getLogsReq.chart_name = currentChart.name;
+      } else {
+        getLogsReq.pod_selector = currentPod + "-.*";
+      }
+    }
+
+    try {
+      const logsResp = await api.getLogsWithinTimeRange(
+        "<token>",
+        getLogsReq,
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      )
+
+      if (logsResp.data == null) {
+        return {
+          logs: [],
+          previousCursor: null,
+          nextCursor: null,
+        };
+      }
+
+      const newLogs = parseLogs(logsResp.data.logs);
+      if (direction === Direction.backward) {
+        newLogs.reverse();
+      }
+      return {
+        logs: newLogs,
+        previousCursor:
+          // There are no more historical logs so don't set the previous cursor
+          newLogs.length < QUERY_LIMIT && direction == Direction.backward
+            ? null
+            : logsResp.data.backward_continue_time,
+        nextCursor: logsResp.data.forward_continue_time,
+      };
+    } catch {
+      return {
+        logs: [],
+        previousCursor: null,
+        nextCursor: null,
+      };
+    }
   };
 
   const refresh = async () => {
@@ -298,8 +297,8 @@ export const useLogs = (
     setLogs([]);
     flushLogsBuffer(true);
     const websocketKey = `${currentPod}-${namespace}-websocket`;
-    const endDate = dayjs(setDate);
-    const oneDayAgo = endDate.subtract(1, "day");
+    const endDate = timeRange?.endTime != null ? timeRange.endTime : dayjs(setDate);
+    const oneDayAgo = timeRange != null ? timeRange.startTime : endDate.subtract(1, "day");
 
     const { logs: initialLogs, previousCursor, nextCursor } = await queryLogs(
       oneDayAgo.toISOString(),
@@ -327,8 +326,6 @@ export const useLogs = (
     if (isLive) {
       setupWebsocket(websocketKey);
     }
-
-    return () => isLive && closeWebsocket(websocketKey);
   };
 
   const moveCursor = async (direction: Direction) => {
@@ -427,6 +424,12 @@ export const useLogs = (
       closeAllWebsockets();
     }
   }, [isLive]);
+
+  useEffect(() => {
+    return () => {
+      closeAllWebsockets();
+    };
+  }, []);
 
   return {
     logs,

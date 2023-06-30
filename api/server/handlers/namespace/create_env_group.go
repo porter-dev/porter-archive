@@ -134,6 +134,7 @@ func rolloutApplications(
 	if err != nil {
 		return []error{err}
 	}
+	
 	// construct the synced env section that should be written
 	newSection := &SyncedEnvSection{
 		Name:    envGroup.Name,

@@ -14,6 +14,7 @@ type Props = {
   setFolderPath?: (x: string) => void;
   setBuildView?: (x: string) => void;
   setPorterYamlPath?: (x: string) => void;
+  defaultRepo?: string
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -32,11 +33,13 @@ const ConnectNewRepoActionConfEditor: React.FC<Props> = ({
   setDockerfilePath,
   setBuildView,
   setPorterYamlPath,
+  defaultRepo
 }) => {
   if (!actionConfig.git_repo) {
     return (
       <ExpandedWrapperAlt>
         <RepoList
+          defaultRepo={defaultRepo}
           actionConfig={actionConfig}
           setActionConfig={(x: ActionConfigType) => setActionConfig(x)}
           readOnly={false}

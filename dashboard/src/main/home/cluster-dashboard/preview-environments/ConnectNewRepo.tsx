@@ -4,7 +4,7 @@ import RepoList from "components/repo-selector/RepoList";
 import SaveButton from "components/SaveButton";
 import DocsHelper from "components/DocsHelper";
 import { ActionConfigType, GithubActionConfigType } from "shared/types";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -22,11 +22,14 @@ import Spacer from "components/porter/Spacer";
 import ConnectNewRepoActionConfEditor from "./ConnectNewRepoActionConfEditor";
 import VerticalSteps from "components/porter/VerticalSteps";
 import Back from "components/porter/Back";
+import { useParams } from "react-router";
 
 const ConnectNewRepo: React.FC = () => {
+  const { getQueryParam } = useRouting();
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
+
   const [repo, setRepo] = useState(null);
   const [enableAutomaticDeployments, setEnableAutomaticDeployments] = useState(
     false
@@ -52,6 +55,9 @@ const ConnectNewRepo: React.FC = () => {
   const [deployBranches, setDeployBranches] = useState<string[]>([]);
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  const [preselectedRepo, setPreselectedRepo] = useState<string | undefined>(
+    undefined
+  );
 
   // Disable new comments data
   const [isNewCommentsDisabled, setIsNewCommentsDisabled] = useState(false);
@@ -119,6 +125,13 @@ const ConnectNewRepo: React.FC = () => {
         }
       });
   }, [actionConfig]);
+
+  useEffect(() => {
+    const repo = getQueryParam("selected_repo");
+    if (repo) {
+      setPreselectedRepo(repo);
+    }
+  }, [preselectedRepo]);
 
   const addRepo = () => {
     let [owner, repoName] = actionConfig.git_repo.split("/");
@@ -195,6 +208,7 @@ const ConnectNewRepo: React.FC = () => {
               <>
                 <Text size={16}>Choose a repository</Text>
                 <ConnectNewRepoActionConfEditor
+                  defaultRepo={preselectedRepo}
                   actionConfig={actionConfig}
                   setActionConfig={(actionConfig: ActionConfigType) => {
                     setActionConfig(

@@ -16,15 +16,16 @@ const SearchBar: React.FC<Props> = ({
   fullWidth,
 }) => {
   const [searchInput, setSearchInput] = useState("");
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLDivElement | null>(null);
 
   // hack for deferring the focus call to the next tick of the event loop, giving the browser enough time to render the input element before setting focus on it
   useEffect(() => {
     setTimeout(() => {
-      inputRef.current.focus();
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }, 0);
   }, []);
-
 
   return (
     <SearchRowWrapper fullWidth={fullWidth}>
@@ -84,7 +85,7 @@ const ButtonWrapper = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "#505edddd"};
+      props.disabled ? "" : "#505edddd"};
   }
   height: 40px;
   display: flex;

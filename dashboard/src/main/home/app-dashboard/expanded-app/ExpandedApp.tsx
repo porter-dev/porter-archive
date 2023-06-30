@@ -49,6 +49,9 @@ import Anser, { AnserJsonEntry } from "anser";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import { BuildMethod, PorterApp } from "../types/porterApp";
+import { useRouting } from "shared/routing";
+import { IterableElement } from "type-fest";
+import { PreviewEnvSettings } from "./PreviewEnvSettings";
 
 type Props = RouteComponentProps & {};
 
@@ -71,19 +74,18 @@ const validTabs = [
   "settings",
 ] as const;
 const DEFAULT_TAB = "activity";
-type ValidTab = typeof validTabs[number];
+type ValidTab = IterableElement<typeof validTabs>;
 interface Params {
   eventId?: string;
   tab?: ValidTab;
 }
 
 const ExpandedApp: React.FC<Props> = ({ ...props }) => {
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentError,
-    featurePreview,
-  } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
+  const router = useRouting();
+
   const [isLoading, setIsLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [appData, setAppData] = useState(null);
@@ -103,10 +105,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
 
   // this is what we read from their porter.yaml in github
-  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(undefined);
+  const [porterJson, setPorterJson] = useState<PorterJson | undefined>(
+    undefined
+  );
   // this is what we use to update the release. the above is a subset of this
   const [porterYaml, setPorterYaml] = useState<PorterJson>({} as PorterJson);
-  const [showUnsavedChangesBanner, setShowUnsavedChangesBanner] = useState<boolean>(false);
+  const [
+    showUnsavedChangesBanner,
+    setShowUnsavedChangesBanner,
+  ] = useState<boolean>(false);
 
   const [expandedJob, setExpandedJob] = useState(null);
   const [logs, setLogs] = useState<Log[]>([]);
@@ -122,7 +129,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [buildView, setBuildView] = useState<BuildMethod>("docker");
 
   const { eventId, tab } = useParams<Params>();
-  const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
+  const selectedTab: ValidTab =
+    tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
 
   useEffect(() => {
     setBannerLoading(true);
@@ -132,7 +140,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   }, [appData]);
 
   useEffect(() => {
-    if (!_.isEqual(_.omitBy(porterApp, _.isEmpty), _.omitBy(tempPorterApp, _.isEmpty))) {
+    if (
+      !_.isEqual(
+        _.omitBy(porterApp, _.isEmpty),
+        _.omitBy(tempPorterApp, _.isEmpty)
+      )
+    ) {
       setButtonStatus("");
       setShowUnsavedChangesBanner(true);
     } else {
@@ -211,22 +224,28 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setPorterJson(porterJson);
       setAppData(newAppData);
       // annoying that we have to parse buildpacks like this but alas
-      const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") ?? [] };
+      const parsedPorterApp = {
+        ...resPorterApp?.data,
+        buildpacks: newAppData.app.buildpacks?.split(",") ?? [],
+      };
       setPorterApp(parsedPorterApp);
       setTempPorterApp(parsedPorterApp);
-      setBuildView(!_.isEmpty(parsedPorterApp.dockerfile) ? "docker" : "buildpacks")
+      setBuildView(
+        !_.isEmpty(parsedPorterApp.dockerfile) ? "docker" : "buildpacks"
+      );
 
       const [newServices, newEnvVars] = updateServicesAndEnvVariables(
         resChartData?.data,
         preDeployChartData?.data,
-        porterJson,
+        porterJson
       );
       const finalPorterYaml = createFinalPorterYaml(
         newServices,
         newEnvVars,
         porterJson,
         // if we are using a heroku buildpack, inject a PORT env variable
-        newAppData.app.builder != null && newAppData.app.builder.includes("heroku")
+        newAppData.app.builder != null &&
+          newAppData.app.builder.includes("heroku")
       );
       setPorterYaml(finalPorterYaml);
 
@@ -345,7 +364,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           git_branch: tempPorterApp.git_branch,
           buildpacks: "",
           ...options,
-        }
+        };
         if (buildView === "docker") {
           updatedPorterApp.dockerfile = tempPorterApp.dockerfile;
           updatedPorterApp.builder = "null";
@@ -356,15 +375,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           updatedPorterApp.dockerfile = "null";
         }
 
-        await api.createPorterApp(
-          "<token>",
-          updatedPorterApp,
-          {
-            cluster_id: currentCluster.id,
-            project_id: currentProject.id,
-            stack_name: appData.app.name,
-          }
-        );
+        await api.createPorterApp("<token>", updatedPorterApp, {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+          stack_name: appData.app.name,
+        });
         setPorterYaml(finalPorterYaml);
         setPorterApp(tempPorterApp);
         setButtonStatus("success");
@@ -505,7 +520,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const updateServicesAndEnvVariables = (
     currentChart?: ChartType,
     releaseChart?: ChartType,
-    porterJson?: PorterJson,
+    porterJson?: PorterJson
   ): [Service[], KeyValueType[]] => {
     // handle normal chart
     const helmValues = currentChart?.config;
@@ -532,7 +547,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
     // handle release chart
     if (releaseChart?.config || porterJson?.release) {
-      const release = Service.deserializeRelease(releaseChart?.config, porterJson);
+      const release = Service.deserializeRelease(
+        releaseChart?.config,
+        porterJson
+      );
       newServices.push(release);
     }
 
@@ -586,15 +604,19 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     if (buttonStatus !== "") {
                       setButtonStatus("");
                     }
-                    const nonRelease = services.filter(Service.isNonRelease)
-                    const newServices = [...nonRelease, ...release]
-                    setServices(newServices)
-                    onAppUpdate(newServices, envVars)
+                    const nonRelease = services.filter(Service.isNonRelease);
+                    const newServices = [...nonRelease, ...release];
+                    setServices(newServices);
+                    onAppUpdate(newServices, envVars);
                   }}
                   chart={appData.releaseChart}
                   services={services.filter(Service.isRelease)}
                   limitOne={true}
-                  prePopulateService={Service.default("pre-deploy", "release", porterJson)}
+                  prePopulateService={Service.default(
+                    "pre-deploy",
+                    "release",
+                    porterJson
+                  )}
                   addNewText={"Add a new pre-deploy job"}
                   defaultExpanded={false}
                 />
@@ -619,8 +641,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 if (buttonStatus !== "") {
                   setButtonStatus("");
                 }
-                const release = services.filter(Service.isRelease)
-                const newServices = [...svcs, ...release]
+                const release = services.filter(Service.isRelease);
+                const newServices = [...svcs, ...release];
                 setServices(newServices);
                 onAppUpdate(newServices, envVars);
               }}
@@ -644,7 +666,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         return (
           <BuildSettingsTab
             porterApp={tempPorterApp}
-            setTempPorterApp={(attrs: Partial<PorterApp>) => setTempPorterApp(PorterApp.setAttributes(tempPorterApp, attrs))}
+            setTempPorterApp={(attrs: Partial<PorterApp>) =>
+              setTempPorterApp(PorterApp.setAttributes(tempPorterApp, attrs))
+            }
             clearStatus={() => setButtonStatus("")}
             updatePorterApp={updatePorterApp}
             setShowUnsavedChangesBanner={setShowUnsavedChangesBanner}
@@ -655,8 +679,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "settings":
         return (
           <>
+            {currentProject?.preview_envs_enabled && (
+              <PreviewEnvSettings
+                appName={appData?.app.name}
+                repoName={appData?.app.repo_name}
+              />
+            )}
             <Text size={16}>Delete "{appData.app.name}"</Text>
-            <Spacer y={1} />
+            <Spacer y={0.25} />
             <Text color="helper">
               Delete this application and all of its resources.
             </Text>
@@ -683,7 +713,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             envVars={envVars}
             setEnvVars={(envVars: KeyValueType[]) => {
               setEnvVars(envVars);
-              onAppUpdate(services, envVars.filter((e) => e.key !== "" || e.value !== ""));
+              onAppUpdate(
+                services,
+                envVars.filter((e) => e.key !== "" || e.value !== "")
+              );
             }}
             status={buttonStatus}
             updatePorterApp={updatePorterApp}
@@ -691,12 +724,14 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           />
         );
       default:
-        return <ActivityFeed
-          chart={appData.chart}
-          stackName={appData?.app?.name}
-          appData={appData}
-          eventId={eventId}
-        />;
+        return (
+          <ActivityFeed
+            chart={appData.chart}
+            stackName={appData?.app?.name}
+            appData={appData}
+            eventId={eventId}
+          />
+        );
     }
   };
 
@@ -827,9 +862,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   <Banner
                     suffix={
                       <>
-                        <RefreshButton
-                          onClick={() => window.location.reload()}
-                        >
+                        <RefreshButton onClick={() => window.location.reload()}>
                           <img src={refresh} />
                           Refresh
                         </RefreshButton>
@@ -862,7 +895,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     shouldUpdate={
                       appData.chart.latest_version &&
                       appData.chart.latest_version !==
-                      appData.chart.chart.metadata.version
+                        appData.chart.chart.metadata.version
                     }
                     latestVersion={appData.chart.latest_version}
                   />

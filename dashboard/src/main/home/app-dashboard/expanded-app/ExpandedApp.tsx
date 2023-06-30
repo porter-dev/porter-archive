@@ -293,6 +293,28 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     setShowDeleteOverlay(false);
     setDeleting(true);
     const { appName } = props.match.params as any;
+    if (syncedEnvGroups.length > 0) {
+      const removeApplicationToEnvGroupPromises = syncedEnvGroups.map((envGroup: any) => {
+        return api.removeApplicationFromEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: appData.chart.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: "default",
+          }
+        );
+      });
+
+      try {
+        await Promise.all(removeApplicationToEnvGroupPromises);
+      } catch (error) {
+        console.log("Error")
+      }
+    }
     try {
       await api.deletePorterApp(
         "<token>",

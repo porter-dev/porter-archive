@@ -59,15 +59,16 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 	// if the environment group exists and has MetaVersion=1, throw an error
-	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, namespace)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
+
 	aggregateReleases := []*release.Release{}
 	for i := range request.Apps {
-
-		releases, err := envgroup.GetStackSyncedReleases(helmAgent, "porter-stack-"+request.Apps[i])
+		namespace := "porter-stack-" + request.Apps[i]
+		helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, namespace)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+		releases, err := envgroup.GetStackSyncedReleases(helmAgent, namespace)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -133,7 +134,7 @@ func rolloutStacksApplications(
 	}
 
 	version := uint(versionInt)
-
+	fmt.Println("HERE VERSION", version)
 	newSection := &SyncedEnvSection{
 		Name:    envGroupName,
 		Version: version,

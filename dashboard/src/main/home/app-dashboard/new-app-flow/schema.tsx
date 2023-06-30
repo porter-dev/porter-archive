@@ -3,7 +3,6 @@ import * as z from "zod";
 import { JobService, ReleaseService, Service, WebService, WorkerService } from "./serviceTypes";
 import { overrideObjectValues } from "./utils";
 import _ from "lodash";
-import { PopulatedEnvGroup } from "../../../../components/porter-form/types";
 
 const appConfigSchema = z.object({
     run: z.string().min(1),
@@ -55,7 +54,6 @@ export const createFinalPorterYaml = (
     const env = combineEnv(dashboardSetEnvVariables, porterJson?.env);
 
     // inject a port env variable if necessary
-    console.log(env)
     if (port != null) {
         env.PORT = port;
     }
@@ -65,7 +63,6 @@ export const createFinalPorterYaml = (
     return release != null && !_.isEmpty(release.startCommand.value) ? {
         version: "v1stack",
         env,
-
         apps,
         release: createRelease(release, porterJson),
     } : {

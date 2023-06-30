@@ -1,6 +1,6 @@
 import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
-import EnvGroupArray from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import EnvGroupArrayStacks from "main/home/cluster-dashboard/env-groups/EnvGroupArrayStacks";
 import React, { useContext, useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import Text from "components/porter/Text";
@@ -110,7 +110,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       <Text size={16}>Environment variables</Text>
       <Spacer y={0.5} />
       <Text color="helper">Shared among all services.</Text>
-      <EnvGroupArray
+      <EnvGroupArrayStacks
         key={envVars.length}
         values={envVars}
         setValues={(x: any) => {

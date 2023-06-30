@@ -54,7 +54,7 @@ const EnvGroupModal: React.FC<Props> = ({
   const [envGroups, setEnvGroups] = useState<any>([])
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<any>(null);
-  const [shouldSync, setShouldSync] = useState<boolean>(false);
+  const [shouldSync, setShouldSync] = useState<boolean>(true);
   const [selectedEnvGroup, setSelectedEnvGroup] = useState<PopulatedEnvGroup | null>(null);
   const [cloneSuccess, setCloneSuccess] = useState(false);
 
@@ -215,53 +215,65 @@ const EnvGroupModal: React.FC<Props> = ({
         Load global env group
       </Text>
       <Spacer height="15px" />
-      <Text color="helper">
-        Select an Env Group to load into your application.
-      </Text>
-      <Spacer y={0.5} />
-      <GroupModalSections>
-        <SidebarSection $expanded={!selectedEnvGroup}>
-          <EnvGroupList>{renderEnvGroupList()}</EnvGroupList>
-        </SidebarSection>
-        {selectedEnvGroup && (<SidebarSection>
-          <GroupEnvPreview>
-            {isObject(selectedEnvGroup?.variables) ? (
-              <>
-                {Object.entries(selectedEnvGroup?.variables || {})
-                  .map(
-                    ([key, value]) =>
-                      `${key}=${formattedEnvironmentValue(value)}`
-                  )
-                  .join("\n")}
-              </>
-            ) : (
-              <>This environment group has no variables</>
-            )}
-          </GroupEnvPreview>
-          {/* {clashingKeys?.length > 0 && (
+      {syncedEnvGroups.length != envGroups.length ? (<>
+        <Text color="helper">
+          Select an Env Group to load into your application.
+        </Text>
+        <Spacer y={0.5} />
+        <GroupModalSections>
+          <SidebarSection $expanded={!selectedEnvGroup}>
+            <EnvGroupList>{renderEnvGroupList()}</EnvGroupList>
+          </SidebarSection>
+          {selectedEnvGroup && (
+            <><SidebarSection>
+
+              <GroupEnvPreview>
+                {isObject(selectedEnvGroup?.variables) ? (
+                  <>
+                    {Object.entries(selectedEnvGroup?.variables || {})
+                      .map(
+                        ([key, value]) =>
+                          `${key}=${formattedEnvironmentValue(value)}`
+                      )
+                      .join("\n")}
+                  </>
+                ) : (
+                  <>This environment group has no variables</>
+                )}
+              </GroupEnvPreview>
+              {/* {clashingKeys?.length > 0 && (
                 <>
                   <ClashingKeyRowDivider />
                   {this.renderEnvGroupPreview(clashingKeys)}
                 </>
               )} */}
-        </SidebarSection>)}
-      </GroupModalSections>
-      <Spacer y={1} />
-      <Checkbox
-        checked={shouldSync}
-        toggleChecked={() =>
-          setShouldSync((!shouldSync))
-        }
-      >
-        <Text color="helper">Sync Env Group</Text>
-      </Checkbox>
-      <Spacer y={1} />
-      <Button
-        onClick={onSubmit}
-        disabled={!selectedEnvGroup}
-      >
-        Load Env Group
-      </Button>
+            </SidebarSection>
+              <Checkbox
+                checked={shouldSync}
+                toggleChecked={() =>
+                  setShouldSync((!shouldSync))
+                }
+              >
+                <Text color="helper">Sync Env Group</Text>
+              </Checkbox>
+            </>
+          )
+
+          }
+
+        </GroupModalSections>
+        <Spacer y={1} />
+
+        <Spacer y={1} />
+        <Button
+          onClick={onSubmit}
+          disabled={!selectedEnvGroup}
+        >
+          Load Env Group
+        </Button> </>
+      ) : (<Text >
+        No selectable Env Groups
+      </Text>)}
     </Modal>
   )
 }

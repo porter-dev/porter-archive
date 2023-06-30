@@ -57,7 +57,7 @@ const ExpandableEnvGroup: React.FC<{
                           value={key}
                           disabled
                         />
-                        <Spacer />
+                        <Spacer x={.5} inline />
                         {value?.includes("PORTERSECRET") ? (
                           <KeyInput
                             placeholder="ex: value"

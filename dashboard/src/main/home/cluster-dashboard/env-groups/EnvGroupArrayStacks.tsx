@@ -106,7 +106,7 @@ const EnvGroupArray = ({
                     spellCheck={false}
                     override={isKeyOverriding(entry.key)}
                   />
-                  < Spacer x={.5} />
+                  < Spacer x={.5} inline />
                   {entry.hidden ? (
                     entry.value?.includes("PORTERSECRET") ? (
                       <Input
@@ -189,7 +189,7 @@ const EnvGroupArray = ({
                     </DeleteButton>
                   )}
 
-                  {isKeyOverriding(entry.key) && <><Spacer x={1} inline /> <Text color={'#6b74d6'} >Key is Overriding values in Env Group</Text></>}
+                  {isKeyOverriding(entry.key) && <><Spacer x={1} inline /> <Text color={'#6b74d6'} >Key is overriding value in a environment group</Text></>}
                 </InputWrapper>
               );
             }
@@ -213,7 +213,7 @@ const EnvGroupArray = ({
             >
               <i className="material-icons">add</i> Add Row
             </AddRowButton>
-            <Spacer x={1} />
+            <Spacer x={.5} inline />
             {fileUpload && (
               <UploadButton
                 onClick={() => {
@@ -329,7 +329,7 @@ const InputWrapper = styled.div`
   display: flex;
   align-items: center;
   margin-top: 5px;
-  gap: 3px;
+
 `;
 
 type InputProps = {

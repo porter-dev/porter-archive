@@ -421,7 +421,6 @@ func createChartFromDependencies(deps []*chart.Dependency) (*chart.Chart, error)
 		Type:         "application",
 		Dependencies: deps,
 	}
-	fmt.Println("This is dependencies:", deps)
 	// create a new chart object with the metadata
 	c := &chart.Chart{
 		Metadata: metadata,
@@ -487,7 +486,6 @@ func CopyEnv(env map[string]string) map[string]interface{} {
 		}
 		envCopy[k] = v
 	}
-	fmt.Println("This is the env copy:", envCopy)
 	return envCopy
 }
 

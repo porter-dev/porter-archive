@@ -349,7 +349,6 @@ func getNewConfig(curr map[string]interface{}, syncedEnvSection *SyncedEnvSectio
 func getNestedMap(obj map[string]interface{}, fields ...string) (map[string]interface{}, error) {
 	var res map[string]interface{}
 	curr := obj
-	fmt.Println("Nested Map", obj)
 	for _, field := range fields {
 		objField, ok := curr[field]
 		if !ok {

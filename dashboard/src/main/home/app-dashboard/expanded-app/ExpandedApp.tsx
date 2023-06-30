@@ -323,7 +323,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   const updatePorterApp = async (options: Partial<PorterAppOptions>) => {
     //setting the EnvGroups Config Maps
-    console.log(syncedEnvGroups)
+
     const filteredEnvGroups = deletedEnvGroups.filter((deletedEnvGroup) => {
       return !syncedEnvGroups.some((syncedEnvGroup) => {
         return syncedEnvGroup.name === deletedEnvGroup.name;

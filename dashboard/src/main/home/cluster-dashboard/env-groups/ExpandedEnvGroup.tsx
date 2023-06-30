@@ -230,7 +230,7 @@ export const ExpandedEnvGroupFC = ({
         }),
         {}
       );
-
+      //Create the Env Group
       try {
         const updatedEnvGroup = await api
           .updateEnvGroup<PopulatedEnvGroup>(
@@ -254,28 +254,8 @@ export const ExpandedEnvGroupFC = ({
 
 
         if (currentProject?.simplified_view_enabled) {
-          try {
-            await api
-              .updateStacksEnvGroup<PopulatedEnvGroup>(
-                "<token>",
-                {
-                  name,
-                  variables: normalVariables,
-                  secret_variables: secretVariables,
-                  apps: updatedEnvGroup.applications,
-                },
-                {
-                  project_id: currentProject.id,
-                  cluster_id: currentCluster.id,
-                  namespace,
-                }
-              )
-              .then((res) => res.data);
-            setButtonStatus("successful");
-          } catch (error) {
-            setButtonStatus("Couldn't update successfully");
-            setCurrentError(error);
-          }
+
+          //Clone the env group to all applications
           try {
             // Check if updatedEnvGroup.applications is an array and it has elements
             if (Array.isArray(updatedEnvGroup.applications) && updatedEnvGroup.applications.length) {
@@ -301,13 +281,57 @@ export const ExpandedEnvGroupFC = ({
           } catch (error) {
             console.log(error);
           }
+
+          //Update the Stacks Env Groups with the new variables
+          try {
+            await api
+              .updateStacksEnvGroup<PopulatedEnvGroup>(
+                "<token>",
+                {
+                  name,
+                  variables: normalVariables,
+                  secret_variables: secretVariables,
+                  apps: updatedEnvGroup.applications,
+                },
+                {
+                  project_id: currentProject.id,
+                  cluster_id: currentCluster.id,
+                  namespace,
+                }
+              )
+              .then((res) => res.data);
+            setButtonStatus("successful");
+          } catch (error) {
+            setButtonStatus("Couldn't update successfully");
+            setCurrentError(error);
+          }
+
         }
-      } catch (error) {
+      }
+
+
+
+
+
+
+
+      catch (error) {
         setButtonStatus("Couldn't update successfully");
         setCurrentError(error);
         setTimeout(() => setButtonStatus(""), 1000);
       }
+
+
+
+
+
+
+
+
     }
+
+
+
     else {
       // SEPARATE THE TWO KINDS OF VARIABLES
       let secret = variables.filter(

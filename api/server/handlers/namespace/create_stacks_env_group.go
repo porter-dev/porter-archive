@@ -76,10 +76,7 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 		aggregateReleases = append(aggregateReleases, releases...)
 	}
-	// fmt.Println("Aggregate Releases: ", aggregateReleases)
-	// c.WriteResult(w, r, envGroup)
 
-	// trigger rollout of new applications after writing the result
 	errors := rolloutStacksApplications(c, c.Config(), cluster, request.Name, namespace, agent, aggregateReleases, r, w)
 
 	if len(errors) > 0 {
@@ -170,7 +167,6 @@ func rolloutStacksApplications(
 				mu.Unlock()
 				return
 			}
-			// fmt.Println("NewConfig: ", newConfig)
 			// if this is a job chart, update the config and set correct paused param to true
 			if release.Chart.Name() == "job" {
 				newConfig["paused"] = true
@@ -210,7 +206,6 @@ func rolloutStacksApplications(
 				Repo:       config.Repo,
 				Registries: registries,
 			}
-			// fmt.Println(releases[index].Chart)
 			helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "porter-stack-"+releases[index].Name)
 			if err != nil {
 				fmt.Println("Could Not Get Helm Agent ")
@@ -218,7 +213,6 @@ func rolloutStacksApplications(
 			}
 			_, err = helmAgent.UpgradeInstallChart(r.Context(), conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection)
 			if err != nil {
-				fmt.Println("UHOH ")
 				mu.Lock()
 				errors = append(errors, err)
 				mu.Unlock()
@@ -255,9 +249,11 @@ func getNewStacksConfig(curr map[string]interface{}, syncedEnvSection *SyncedEnv
 
 	for _, dep := range release.Chart.Metadata.Dependencies {
 		envConf, err := getStacksNestedMap(curr, dep.Name, "container", "env")
-		// env, err := getStacksNestedMap(curr, dep.Name, "container", "env", "normal")
-		fmt.Println("FILTER:", filterEnvConf(envConf))
 
+		normalKeys, ok := envConf["normal"].(map[string]interface{})
+		if !ok {
+			fmt.Println("Normal Keys", normalKeys)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -315,12 +311,19 @@ func getNewStacksConfig(curr map[string]interface{}, syncedEnvSection *SyncedEnv
 
 					for _, keyFieldInter := range keyFieldInterArr {
 						mapConv, ok := keyFieldInter.(map[string]interface{})
-
 						if !ok {
 							continue
 						}
 
-						keyFieldMapArr = append(keyFieldMapArr, mapConv)
+						// check if mapConv["name"] is in normalKeys
+						keyName, ok := mapConv["name"].(string) // check if "name" key exists and is a string
+						if !ok {
+							continue
+						}
+						if _, exists := normalKeys[keyName]; !exists {
+							keyFieldMapArr = append(keyFieldMapArr, mapConv)
+						}
+
 					}
 
 					keyFieldRes := make([]SyncedEnvSectionKey, 0)
@@ -349,7 +352,6 @@ func getNewStacksConfig(curr map[string]interface{}, syncedEnvSection *SyncedEnv
 							}
 						}
 					}
-
 					syncedArrObj.Keys = keyFieldRes
 				}
 
@@ -361,7 +363,7 @@ func getNewStacksConfig(curr map[string]interface{}, syncedEnvSection *SyncedEnv
 
 			for _, candidate := range syncedArr {
 				if candidate.Name == syncedEnvSection.Name {
-					resArr = append(resArr, *syncedEnvSection)
+					resArr = append(resArr, *filterEnvConf(syncedEnvSection, normalKeys))
 					foundMatch = true
 				} else {
 					resArr = append(resArr, *candidate)
@@ -371,7 +373,6 @@ func getNewStacksConfig(curr map[string]interface{}, syncedEnvSection *SyncedEnv
 			if !foundMatch {
 				return curr, nil
 			}
-
 			envConf["synced"] = resArr
 		}
 	}
@@ -417,49 +418,19 @@ func getStacksNestedMap(obj map[string]interface{}, fields ...string) (map[strin
 	return res, nil
 }
 
-func filterEnvConf(envConf map[string]interface{}) map[string]interface{} {
-	normalKeys, ok := envConf["normal"].(map[string]interface{})
-	if !ok {
-		fmt.Println("Error converting normal keys to map[string]interface{}")
-	}
-	synced, ok := envConf["synced"].([]map[string]interface{})
-	if !ok {
-		fmt.Println("Error converting normal keys to map[string]interface{}")
-	}
-	// Create filteredSynced
-	filteredSynced := make([]map[string]interface{}, 0)
+func filterEnvConf(syncedEnv *SyncedEnvSection, normalEnv map[string]interface{}) *SyncedEnvSection {
+	// filter out keys that are already in normalEnv
+	keys := make([]SyncedEnvSectionKey, 0)
 
-	for _, s := range synced {
-		keys, ok := s["keys"].([]map[string]interface{})
-		if !ok {
-			fmt.Println("Error converting normal keys to map[string]interface{}")
-		}
-		filteredKeys := make([]map[string]interface{}, 0)
-
-		for _, key := range keys {
-			name, ok := key["name"].(string)
-			if !ok {
-				fmt.Println("Error converting normal keys to map[string]interface{}")
-			}
-			_, existsInNormal := normalKeys[name]
-			if !existsInNormal {
-				filteredKeys = append(filteredKeys, key)
-			}
-		}
-
-		// only add the filtered keys if they exist
-		if len(filteredKeys) > 0 {
-			s["keys"] = filteredKeys
-			filteredSynced = append(filteredSynced, s)
+	for _, key := range syncedEnv.Keys {
+		if _, exists := normalEnv[key.Name]; !exists {
+			keys = append(keys, key)
 		}
 	}
 
-	// Create a new envConf with filteredSynced and normalKeys
-	newEnvConf := make(map[string]interface{})
-	newEnvConf["normal"] = normalKeys
-	newEnvConf["synced"] = filteredSynced
+	syncedEnv.Keys = keys
 
-	return newEnvConf
+	return syncedEnv
 }
 
 // postUpgrade runs any necessary scripting after the release has been upgraded.

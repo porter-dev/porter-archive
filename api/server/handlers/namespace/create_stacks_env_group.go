@@ -62,13 +62,13 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	aggregateReleases := []*release.Release{}
 	for i := range request.Apps {
-		namespace := "porter-stack-" + request.Apps[i]
-		helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, namespace)
+		namespaceStack := "porter-stack-" + request.Apps[i]
+		helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, namespaceStack)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
-		releases, err := envgroup.GetStackSyncedReleases(helmAgent, namespace)
+		releases, err := envgroup.GetStackSyncedReleases(helmAgent, namespaceStack)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -90,12 +90,6 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 	c.WriteResult(w, r, nil)
-	// err = postStacksUpgrade(c.Config(), cluster.ProjectID, cluster.ID, envGroup)
-
-	// if err != nil {
-	// 	c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
-	// 	return
-	// }
 }
 
 func rolloutStacksApplications(
@@ -113,40 +107,6 @@ func rolloutStacksApplications(
 	if err != nil {
 		return []error{err}
 	}
-	cm, _, err := agent.GetLatestVersionedConfigMap(envGroupName, namespace)
-	if err != nil {
-		fmt.Println("Error getting latest versioned config map: ", err)
-		return []error{err}
-	}
-
-	versionStr, ok := cm.ObjectMeta.Labels["version"]
-	if !ok {
-		fmt.Println("Error getting latest versioned config map: ", err)
-		return []error{err}
-	}
-	versionInt, err := strconv.Atoi(versionStr)
-	if err != nil {
-		fmt.Println("Error getting latest versioned config map: ", err)
-		return []error{err}
-	}
-
-	version := uint(versionInt)
-
-	newSection := &SyncedEnvSection{
-		Name:    envGroupName,
-		Version: version,
-	}
-
-	newSectionKeys := make([]SyncedEnvSectionKey, 0)
-
-	for key, val := range cm.Data {
-		newSectionKeys = append(newSectionKeys, SyncedEnvSectionKey{
-			Name:   key,
-			Secret: strings.Contains(val, "PORTERSECRET"),
-		})
-	}
-
-	newSection.Keys = newSectionKeys
 	// asynchronously update releases with that image repo uri
 	var wg sync.WaitGroup
 	mu := &sync.Mutex{}
@@ -156,6 +116,39 @@ func rolloutStacksApplications(
 		index := i
 		release := rel
 		wg.Add(1)
+		cm, _, err := agent.GetLatestVersionedConfigMap(envGroupName, "porter-stack-"+releases[index].Name)
+		if err != nil {
+			fmt.Println("Error getting latest versioned config map: ", err)
+			return []error{err}
+		}
+
+		versionStr, ok := cm.ObjectMeta.Labels["version"]
+		if !ok {
+			fmt.Println("Error getting latest versioned config map: ", err)
+			return []error{err}
+		}
+		versionInt, err := strconv.Atoi(versionStr)
+		if err != nil {
+			fmt.Println("Error getting latest versioned config map: ", err)
+			return []error{err}
+		}
+
+		version := uint(versionInt)
+		newSection := &SyncedEnvSection{
+			Name:    envGroupName,
+			Version: version,
+		}
+
+		newSectionKeys := make([]SyncedEnvSectionKey, 0)
+
+		for key, val := range cm.Data {
+			newSectionKeys = append(newSectionKeys, SyncedEnvSectionKey{
+				Name:   key,
+				Secret: strings.Contains(val, "PORTERSECRET"),
+			})
+		}
+
+		newSection.Keys = newSectionKeys
 
 		go func() {
 			defer wg.Done()

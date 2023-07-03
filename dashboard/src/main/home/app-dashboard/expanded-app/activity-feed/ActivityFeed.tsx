@@ -96,6 +96,9 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
 
   }, [currentProject, currentCluster, hasPorterAgent, page]);
 
+  useEffect(() => {
+    getEvents();
+  }, [eventId]);
 
   const installAgent = async () => {
     const project_id = currentProject?.id;

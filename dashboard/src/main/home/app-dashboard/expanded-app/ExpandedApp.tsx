@@ -39,7 +39,7 @@ import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArr
 import { PorterYamlSchema } from "../new-app-flow/schema";
 import { EnvVariablesTab } from "./EnvVariablesTab";
 import GHABanner from "./GHABanner";
-import LogSection from "./LogSection";
+import LogSection from "./logs/LogSection";
 import ActivityFeed from "./activity-feed/ActivityFeed";
 import MetricsSection from "./MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
@@ -683,6 +683,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Button>
           </>
         );
+      case "activity":
+        return <ActivityFeed
+          chart={appData.chart}
+          stackName={appData?.app?.name}
+          appData={appData}
+          eventId={eventId}
+        />;
       case "logs":
         return <LogSection currentChart={appData.chart} services={services} />;
       case "metrics":

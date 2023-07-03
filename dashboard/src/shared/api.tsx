@@ -244,9 +244,9 @@ const getLogsWithinTimeRange = baseApi<
     start_range?: string;
     end_range?: string;
     search_param?: string;
-    revision?: string;
     namespace?: string;
     pod_selector?: string;
+    direction?: string;
   },
   {
     project_id: number;

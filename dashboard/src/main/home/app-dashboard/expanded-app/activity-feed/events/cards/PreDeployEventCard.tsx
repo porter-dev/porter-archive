@@ -10,16 +10,12 @@ import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Icon from "components/porter/Icon";
-import Modal from "components/porter/Modal";
 
 import { PorterAppEvent } from "shared/types";
 import { getDuration, getStatusIcon, triggerWorkflow } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import Link from "components/porter/Link";
-import LogsModal from "../../../status/LogsModal";
-import api from "shared/api";
-import dayjs from "dayjs";
-import Anser from "anser";
+import document from "assets/document.svg";
 
 type Props = {
   event: PorterAppEvent;
@@ -27,11 +23,6 @@ type Props = {
 };
 
 const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [modalContent, setModalContent] = useState<React.ReactNode>(null);
-  const [logModalVisible, setLogModalVisible] = useState(false);
-  const [logs, setLogs] = useState([]);
-
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
@@ -40,45 +31,6 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
         return <Text color="#FF6060">Pre-deploy failed</Text>;
       default:
         return <Text color="#aaaabb66">Pre-deploy in progress...</Text>;
-    }
-  };
-
-  const getPredeployLogs = async () => {
-    setLogModalVisible(true);
-    try {
-      const logResp = await api.getLogsWithinTimeRange(
-        "<token>",
-        {
-          chart_name: appData.releaseChart.name,
-          namespace: appData.releaseChart.namespace,
-          start_range: dayjs(event.metadata.start_time).subtract(1, 'minute').toISOString(),
-          end_range: dayjs(event.metadata.end_time).add(1, 'minute').toISOString(),
-          limit: 1000,
-        },
-        {
-          project_id: appData.app.project_id,
-          cluster_id: appData.app.cluster_id,
-        }
-      )
-      const updatedLogs = logResp.data.logs.map((l: { line: string; timestamp: string; }, index: number) => {
-        try {
-          return {
-            line: JSON.parse(l.line)?.log ?? Anser.ansiToJson(l.line),
-            lineNumber: index + 1,
-            timestamp: l.timestamp,
-          }
-        } catch (err) {
-          return {
-            line: Anser.ansiToJson(l.line),
-            lineNumber: index + 1,
-            timestamp: l.timestamp,
-          }
-        }
-      });
-
-      setLogs(updatedLogs);
-    } catch (error) {
-      console.log(error);
     }
   };
 
@@ -102,41 +54,31 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
           <Icon height="16px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText(event)}
-          {(event.status === "SUCCESS" || event.status === "FAILED") &&
+          {(event.status !== "SUCCESS") &&
             <>
               <Spacer inline x={1} />
               <Wrapper>
-                <Link hasunderline onClick={getPredeployLogs}>
-                  View logs
+                <Link to={`/apps/${appData.app.name}/events/${event.id}`} hasunderline>
+                  <Container row>
+                    <Icon src={document} height="10px" />
+                    <Spacer inline width="5px" />
+                    View details
+                  </Container>
+                </Link>
+                <Spacer inline x={1} />
+                <Link hasunderline onClick={() => triggerWorkflow(appData)}>
+                  <Container row>
+                    <Icon height="10px" src={refresh} />
+                    <Spacer inline width="5px" />
+                    Retry
+                  </Container>
                 </Link>
               </Wrapper>
             </>
           }
-          {event.status === "FAILED" && (
-            <>
-              <Spacer inline x={1} />
-              <Link hasunderline onClick={() => triggerWorkflow(appData)}>
-                <Container row>
-                  <Icon height="10px" src={refresh} />
-                  <Spacer inline width="5px" />
-                  Retry
-                </Container>
-              </Link>
-            </>
-          )}
-          {logModalVisible && (
-            <LogsModal
-              logs={logs}
-              logsName={"pre-deploy"}
-              setModalVisible={setLogModalVisible}
-            />
-          )}
           <Spacer inline x={1} />
         </Container>
       </Container>
-      {showModal && (
-        <Modal closeModal={() => setShowModal(false)}>{modalContent}</Modal>
-      )}
     </StyledEventCard>
   );
 };

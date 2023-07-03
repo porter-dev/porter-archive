@@ -125,7 +125,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
               <Container row>
                 <Icon src={document} height="10px" />
                 <Spacer inline width="5px" />
-                View more details
+                View details
               </Container>
             </Link>
             <Spacer inline x={1} />

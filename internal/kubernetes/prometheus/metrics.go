@@ -139,7 +139,7 @@ func QueryPrometheus(
 	} else if opts.Metric == "memory" {
 		query = fmt.Sprintf("container_memory_usage_bytes{%s}", podSelector)
 	} else if opts.Metric == "network" {
-		netPodSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container="POD"`, opts.Namespace, selectionRegex)
+		netPodSelector := fmt.Sprintf(`namespace="%s",pod=~"%s"`, opts.Namespace, selectionRegex)
 		query = fmt.Sprintf("rate(container_network_receive_bytes_total{%s}[5m])", netPodSelector)
 	} else if opts.Metric == "nginx:errors" {
 		num := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{status=~"5.*",exported_namespace="%s",ingress=~"%s"}[5m]) OR on() vector(0))`, opts.Namespace, selectionRegex)

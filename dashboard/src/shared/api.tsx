@@ -2440,6 +2440,7 @@ const updateStackStep = baseApi<
   {
     step: string;
     stack_name?: string;
+    error_message?: string;
   },
   {
     project_id: number;

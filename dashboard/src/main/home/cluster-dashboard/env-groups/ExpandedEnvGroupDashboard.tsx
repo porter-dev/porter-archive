@@ -38,8 +38,12 @@ const EnvGroupDashboard = (props: PropsType) => {
     ["envGroupList", currentProject.id, namespace, props.currentCluster.id],
     async () => {
       try {
+        console.log("SOHAM")
+
         if (!namespace) {
-          return [];
+          if (!currentProject?.simplified_view_enabled || !currentProject?.capi_provisioner_enabled) {
+            return [];
+          }
         }
 
         const res = await api.listEnvGroups(
@@ -47,7 +51,7 @@ const EnvGroupDashboard = (props: PropsType) => {
           {},
           {
             id: currentProject.id,
-            namespace: (currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "default" : namespace,
+            namespace: currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled ? "default" : namespace,
             cluster_id: props.currentCluster.id,
           }
         );

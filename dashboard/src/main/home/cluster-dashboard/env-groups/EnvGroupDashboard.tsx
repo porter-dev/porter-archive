@@ -50,7 +50,7 @@ const EnvGroupDashboard = (props: PropsType) => {
   const setNamespace = (namespace: string) => {
     setState((state) => ({ ...state, namespace }));
     pushQueryParams(props, {
-      namespace: namespace ?? "ALL",
+      namespace: currentProject.simplified_view_enabled && currentProject.capi_provisioner_enabled ? ("default") : (namespace ?? "ALL"),
     });
   };
 

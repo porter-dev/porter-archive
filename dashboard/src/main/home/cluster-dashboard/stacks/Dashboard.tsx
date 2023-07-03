@@ -19,12 +19,17 @@ const Dashboard = () => {
   const { getQueryParam, pushQueryParams } = useRouting();
 
   const handleNamespaceChange = (namespace: string) => {
+    console.log("HERE")
+    console.log(namespace)
     setCurrentNamespace(namespace);
     pushQueryParams({ namespace });
   };
 
   useEffect(() => {
     const newNamespace = getQueryParam("namespace");
+    console.log("HERE")
+    console.log(newNamespace)
+
     if (newNamespace !== currentNamespace) {
       setCurrentNamespace(newNamespace);
     }
@@ -112,7 +117,7 @@ const Button = styled(DynamicLink)`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
+    props.disabled ? "" : "#505edddd"};
   }
 
   > i {

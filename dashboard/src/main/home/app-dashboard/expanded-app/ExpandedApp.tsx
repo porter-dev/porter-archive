@@ -196,8 +196,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           }
         );
       } catch (err) {
-        // do nothing, unable to find release chart
-        // console.log(err);
+        setError(err)
       }
 
       // update apps and release
@@ -218,7 +217,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") ?? [] };
       setPorterApp(parsedPorterApp);
       setTempPorterApp(parsedPorterApp);
-      console.log(newAppData.chart)
       setBuildView(!_.isEmpty(parsedPorterApp.dockerfile) ? "docker" : "buildpacks")
       const [newServices, newEnvVars] = updateServicesAndEnvVariables(
         resChartData?.data,
@@ -283,7 +281,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       }
     } catch (err) {
       setError(err);
-      console.log(err);
     } finally {
       setIsLoading(false);
     }
@@ -295,7 +292,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     const { appName } = props.match.params as any;
     if (envGroups) {
       const removeApplicationToEnvGroupPromises = envGroups.map((envGroup: any) => {
-        console.log(envGroup)
         return api.removeApplicationFromEnvGroup(
           "<token>",
           {
@@ -313,7 +309,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       try {
         await Promise.all(removeApplicationToEnvGroupPromises);
       } catch (error) {
-        console.log("Error")
+        setError(error);
       }
     }
     try {
@@ -406,12 +402,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
     try {
       await Promise.all(addApplicationToEnvGroupPromises);
-      console.log("added app to env group");
     } catch (error) {
-      console.log(error);
-      setCurrentError(
-        "We coudln't sync the env group to the application, please try again."
-      );
+      setError(error);
     }
     try {
       setButtonStatus("loading");
@@ -543,7 +535,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       }
     } catch (error) {
-      // console.log(error);
+      setError(error);
     }
   };
 

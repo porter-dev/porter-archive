@@ -293,8 +293,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     setShowDeleteOverlay(false);
     setDeleting(true);
     const { appName } = props.match.params as any;
-    if (envGroups.length > 0) {
-      const removeApplicationToEnvGroupPromises = syncedEnvGroups.map((envGroup: any) => {
+    if (envGroups) {
+      const removeApplicationToEnvGroupPromises = envGroups.map((envGroup: any) => {
+        console.log(envGroup)
         return api.removeApplicationFromEnvGroup(
           "<token>",
           {

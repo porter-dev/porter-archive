@@ -123,7 +123,7 @@ const EnvGroupDashboard = (props: PropsType) => {
 
           <EnvGroupList
             currentCluster={props.currentCluster}
-            namespace={currentProject?.capi_provisioner_enabled ? "default" : state.namespace}
+            namespace={currentProject?.simplified_view_enabled ? "default" : state.namespace}
             sortType={state.sortType}
             setExpandedEnvGroup={setExpandedEnvGroup}
           />
@@ -137,7 +137,7 @@ const EnvGroupDashboard = (props: PropsType) => {
       return (
         <ExpandedEnvGroup
           isAuthorized={props.isAuthorized}
-          namespace={currentProject?.capi_provisioner_enabled ? "default" : (currentProject?.capi_provisioner_enabled ? "default" : (state.expandedEnvGroup?.namespace || state.namespace))}
+          namespace={currentProject?.simplified_view_enabled ? "default" : (state.expandedEnvGroup?.namespace || state.namespace)}
           currentCluster={props.currentCluster}
           envGroup={state.expandedEnvGroup}
           closeExpanded={() => closeExpanded()}

@@ -50,7 +50,7 @@ const EnvGroupDashboard = (props: PropsType) => {
   const setNamespace = (namespace: string) => {
     setState((state) => ({ ...state, namespace }));
     pushQueryParams(props, {
-      namespace: currentProject.simplified_view_enabled && currentProject.capi_provisioner_enabled ? ("default") : (namespace ?? "ALL"),
+      namespace: currentProject.simplified_view_enabled ? ("default") : (namespace ?? "ALL"),
     });
   };
 
@@ -109,7 +109,7 @@ const EnvGroupDashboard = (props: PropsType) => {
               <Spacer inline width="10px" />
               {!currentProject.simplified_view_enabled && <NamespaceSelector
                 setNamespace={setNamespace}
-                namespace={currentProject.simplified_view_enabled && currentProject?.capi_provisioner_enabled ? "default" : state.namespace}
+                namespace={currentProject.simplified_view_enabled ? "default" : state.namespace}
               />}
             </SortFilterWrapper>
             <Flex>

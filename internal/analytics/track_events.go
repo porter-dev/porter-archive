@@ -45,4 +45,6 @@ const (
 	StackLaunchStart    SegmentEvent = "Stack Launch Started"
 	StackLaunchComplete SegmentEvent = "Stack Launch Complete"
 	StackLaunchSuccess  SegmentEvent = "Stack Launch Success"
+	StackLaunchFailure  SegmentEvent = "Stack Launch Failure"
+	StackDeletion       SegmentEvent = "Stack Deletion"
 )

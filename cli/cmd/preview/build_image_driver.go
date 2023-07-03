@@ -10,6 +10,7 @@ import (
 	"github.com/cli/cli/git"
 	"github.com/docker/distribution/reference"
 	"github.com/mitchellh/mapstructure"
+	"github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
@@ -259,13 +260,19 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 			return nil, err
 		}
 
+		var currentTag string
+		// implement caching for porter stack builds
+		if os.Getenv("PORTER_STACK_NAME") != "" {
+			currentTag = getCurrentImageTagIfExists(client, d.target.Project, d.target.Cluster, os.Getenv("PORTER_STACK_NAME"))
+		}
+
 		err = buildAgent.BuildDocker(
 			agent,
 			basePath,
 			d.config.Build.Context,
 			d.config.Build.Dockerfile,
 			tag,
-			"",
+			currentTag,
 		)
 	} else {
 		var buildConfig *types.BuildConfig
@@ -300,6 +307,29 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	d.output["image"] = fmt.Sprintf("%s:%s", imageURL, tag)
 
 	return resource, nil
+}
+
+func getCurrentImageTagIfExists(client *client.Client, projectID, clusterID uint, stackName string) string {
+	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+	release, err := client.GetRelease(
+		context.Background(),
+		projectID,
+		clusterID,
+		namespace,
+		stackName,
+	)
+
+	if err == nil && release != nil && release.Config != nil {
+		if globalConfig, ok := release.Config["global"].(map[string]interface{}); ok {
+			if imageConfig, ok := globalConfig["image"].(map[string]interface{}); ok {
+				if tag, ok := imageConfig["tag"].(string); ok {
+					return tag
+				}
+			}
+		}
+	}
+
+	return ""
 }
 
 func (d *BuildDriver) Output() (map[string]interface{}, error) {

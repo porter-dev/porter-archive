@@ -386,7 +386,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
       }
     }
-    console.log("SYNCED ENV GROUPS: ", syncedEnvGroups)
     const addApplicationToEnvGroupPromises = syncedEnvGroups.map(
       (envGroup: any) => {
         return api.addApplicationToEnvGroup(
@@ -431,7 +430,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
-        console.log("HERE: ", syncedEnvGroups.map((env: PopulatedEnvGroup) => env.name))
         const updatedPorterApp = {
           porter_yaml: base64Encoded,
           override_release: true,

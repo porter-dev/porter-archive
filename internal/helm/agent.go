@@ -592,6 +592,7 @@ func (a *Agent) UpgradeInstallChart(
 			conf.Chart.AddDependency(depChart)
 		}
 	}
+
 	return cmd.Run(conf.Name, conf.Chart, conf.Values)
 }
 

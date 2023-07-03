@@ -95,6 +95,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
     } catch (error) {
       // setLoading(false)
       // setError(true);
+      return;
     }
   }
 

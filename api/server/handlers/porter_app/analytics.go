@@ -67,5 +67,28 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		}))
 	}
 
+	if request.Step == "stack-launch-failure" {
+		v.Config().AnalyticsClient.Track(analytics.StackLaunchFailureTrack(&analytics.StackLaunchFailureOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			StackName:              request.StackName,
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			ErrorMessage:           request.ErrorMessage,
+		}))
+	}
+
+	if request.Step == "stack-deletion" {
+		v.Config().AnalyticsClient.Track(analytics.StackDeletionTrack(&analytics.StackDeletionOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			StackName:              request.StackName,
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+		}))
+	}
+
 	v.WriteResult(w, r, user.ToUserType())
 }

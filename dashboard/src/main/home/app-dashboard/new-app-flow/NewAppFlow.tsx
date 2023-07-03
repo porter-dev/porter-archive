@@ -113,7 +113,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     );
   };
 
-  const updateStackStep = async (step: string) => {
+  const updateStackStep = async (step: string, errorMessage: string = "") => {
     try {
       if (currentCluster?.id == null || currentProject?.id == null) {
         throw "Unable to capture analytics, project or cluster not found";
@@ -123,6 +123,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         {
           step,
           stack_name: porterApp.name,
+          error_message: errorMessage,
         },
         {
           cluster_id: currentCluster.id,
@@ -331,7 +332,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         err?.toString() ??
         "An error occurred while deploying your app. Please try again.";
       setDeploymentError(errMessage);
-
+      updateStackStep("stack-launch-failure", errMessage);
       return false;
     } finally {
       setDeploying(false);

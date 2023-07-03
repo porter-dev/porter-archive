@@ -89,7 +89,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       setEnvGroups(populatedEnvGroups)
       // setLoading(false)
       const filteredEnvGroups = populatedEnvGroups.filter(envGroup => envGroup.applications.includes(appData.chart.name));
-      console.log(populatedEnvGroups);
+
       setSyncedEnvGroups(filteredEnvGroups)
 
     } catch (error) {

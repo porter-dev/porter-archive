@@ -135,7 +135,7 @@ func ProjectCreateTrack(opts *ProjectCreateTrackOpts) segmentTrack {
 // CostConsentOpenedTrackOpts are the options for creating a track when a user opens the cost consent
 type CostConsentOpenedTrackOpts struct {
 	*UserScopedTrackOpts
-	Provider string
+	Provider    string
 	Email       string
 	FirstName   string
 	LastName    string
@@ -159,7 +159,7 @@ func CostConsentOpenedTrack(opts *CostConsentOpenedTrackOpts) segmentTrack {
 // CostConsentCompletedTrackOpts are the options for creating a track when a user completes the cost consent
 type CostConsentCompletedTrackOpts struct {
 	*UserScopedTrackOpts
-	Provider string
+	Provider    string
 	Email       string
 	FirstName   string
 	LastName    string
@@ -671,5 +671,57 @@ func StackLaunchSuccessTrack(opts *StackLaunchSuccessOpts) segmentTrack {
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, StackLaunchSuccess),
+	)
+}
+
+// StackLaunchFailureOpts are the options for creating a track when a user fails in creating a stack
+type StackLaunchFailureOpts struct {
+	*ProjectScopedTrackOpts
+
+	StackName    string
+	Email        string
+	FirstName    string
+	LastName     string
+	CompanyName  string
+	ErrorMessage string
+}
+
+// StackLaunchFailureTrack returns a track for when a user fails creating a stack
+func StackLaunchFailureTrack(opts *StackLaunchFailureOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["error_message"] = opts.ErrorMessage
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, StackLaunchFailure),
+	)
+}
+
+// StackDeletionOpts are the options for creating a track when a user deletes a stack
+type StackDeletionOpts struct {
+	*ProjectScopedTrackOpts
+
+	StackName   string
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
+}
+
+// StackDeletionTrack returns a track for when a user deletes a stack
+func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, StackDeletion),
 	)
 }

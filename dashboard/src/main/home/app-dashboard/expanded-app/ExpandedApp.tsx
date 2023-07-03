@@ -308,6 +308,18 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           namespace: `porter-stack-${appName}`,
         }
       );
+      // intentionally do not await this promise
+      api.updateStackStep(
+        "<token>",
+        {
+          step: "stack-deletion",
+          stack_name: appName,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      );
       props.history.push("/apps");
     } catch (err) {
       setError(err);

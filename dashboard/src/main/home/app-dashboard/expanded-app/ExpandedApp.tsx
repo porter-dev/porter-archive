@@ -118,7 +118,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [subdomain, setSubdomain] = useState<string>("");
   const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([])
   const [deletedEnvGroups, setDeleteEnvGroups] = useState<PopulatedEnvGroup[]>([])
-
+  const [envGroups, setEnvGroups] = useState<PopulatedEnvGroup[]>([])
   const [porterApp, setPorterApp] = useState<PorterApp>();
   // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
   const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
@@ -356,7 +356,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   const updatePorterApp = async (options: Partial<PorterAppOptions>) => {
     //setting the EnvGroups Config Maps
-
     const filteredEnvGroups = deletedEnvGroups.filter((deletedEnvGroup) => {
       return !syncedEnvGroups.some((syncedEnvGroup) => {
         return syncedEnvGroup.name === deletedEnvGroup.name;
@@ -387,6 +386,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
       }
     }
+    console.log("SYNCED ENV GROUPS: ", syncedEnvGroups)
     const addApplicationToEnvGroupPromises = syncedEnvGroups.map(
       (envGroup: any) => {
         return api.addApplicationToEnvGroup(
@@ -431,7 +431,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
-
+        console.log("HERE: ", syncedEnvGroups.map((env: PopulatedEnvGroup) => env.name))
         const updatedPorterApp = {
           porter_yaml: base64Encoded,
           override_release: true,
@@ -617,7 +617,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     try {
       const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
 
-      setSyncedEnvGroups(populatedEnvGroups)
+      setEnvGroups(populatedEnvGroups)
 
     } catch (error) {
       // setLoading(false)

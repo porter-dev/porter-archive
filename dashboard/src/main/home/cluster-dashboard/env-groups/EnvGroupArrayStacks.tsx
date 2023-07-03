@@ -46,7 +46,6 @@ const EnvGroupArray = ({
   const isKeyOverriding = (key: string) => {
 
     if (!syncedEnvGroups) return false;
-    console.log(syncedEnvGroups.some(envGroup => key in envGroup.variables))
     return syncedEnvGroups.some(envGroup => key in envGroup.variables);
   };
 

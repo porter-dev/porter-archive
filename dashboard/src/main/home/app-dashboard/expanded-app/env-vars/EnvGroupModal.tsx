@@ -138,7 +138,6 @@ const EnvGroupModal: React.FC<Props> = ({
         }
       );
       setCloneSuccess(true);
-      console.log("Success!")
     } catch (error) {
       console.log(error);
     }
@@ -186,7 +185,6 @@ const EnvGroupModal: React.FC<Props> = ({
     if (shouldSync) {
 
       syncedEnvGroups.push(selectedEnvGroup);
-      console.log(syncedEnvGroups)
       cloneEnvGroup();
       setSyncedEnvGroups(syncedEnvGroups);
     }

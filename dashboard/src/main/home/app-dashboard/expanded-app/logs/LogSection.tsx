@@ -34,9 +34,8 @@ import { Service } from "../../new-app-flow/serviceTypes";
 type Props = {
   currentChart?: ChartType;
   services?: Service[];
-  startTime?: string;
   timeRange?: {
-    startTime: Dayjs;
+    startTime?: Dayjs;
     endTime?: Dayjs;
   };
   showFilter?: boolean;
@@ -63,7 +62,7 @@ const LogSection: React.FC<Props> = ({
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [enteredSearchText, setEnteredSearchText] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(timeRange?.startTime != null ? timeRange.startTime.toDate() : undefined);
   const [notification, setNotification] = useState<string>();
 
   const [hasPorterAgent, setHasPorterAgent] = useState(true);
@@ -100,8 +99,7 @@ const LogSection: React.FC<Props> = ({
       const podList = services.map((service: Service) => {
         return {
           podName: service.name,
-          podType:
-            service.type.valueOf() == "worker" ? "wkr" : service.type.valueOf(),
+          podType: service.type == "worker" ? "wkr" : service.type,
         };
       });
       setPodFilterOpts(podList);

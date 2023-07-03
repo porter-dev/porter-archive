@@ -671,6 +671,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Button>
           </>
         );
+      case "activity":
+        return <ActivityFeed
+          chart={appData.chart}
+          stackName={appData?.app?.name}
+          appData={appData}
+          eventId={eventId}
+        />;
       case "logs":
         return <LogSection currentChart={appData.chart} services={services} />;
       case "metrics":

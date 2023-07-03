@@ -56,7 +56,7 @@ const PreDeployEventFocusView: React.FC<Props> = ({
       <LogSection
         currentChart={appData.releaseChart}
         timeRange={{
-          startTime: dayjs(event.metadata.start_time).subtract(1, 'minute'),
+          startTime: event.metadata.end_time != null ? dayjs(event.metadata.start_time).subtract(1, 'minute') : undefined,
           endTime: event.metadata.end_time != null ? dayjs(event.metadata.end_time).add(1, 'minute') : undefined,
         }}
         showFilter={false}

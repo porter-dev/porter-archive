@@ -45,7 +45,7 @@ export const useLogs = (
   // if setDate is set, results are not live
   setDate?: Date,
   timeRange?: {
-    startTime: Dayjs,
+    startTime?: Dayjs,
     endTime?: Dayjs,
   }
 ) => {
@@ -190,8 +190,8 @@ export const useLogs = (
             const jsonLog = JSON.parse(data);
             newLogs.push(jsonLog)
           } catch (err) {
-            console.log(err)
-            console.log(evt.data)
+            // TODO: better error handling
+            // console.log(err)
           }
         });
         pushLogs(parseLogs(newLogs));
@@ -298,7 +298,7 @@ export const useLogs = (
     flushLogsBuffer(true);
     const websocketKey = `${currentPod}-${namespace}-websocket`;
     const endDate = timeRange?.endTime != null ? timeRange.endTime : dayjs(setDate);
-    const oneDayAgo = timeRange != null ? timeRange.startTime : endDate.subtract(1, "day");
+    const oneDayAgo = timeRange?.startTime != null ? timeRange.startTime : endDate.subtract(1, "day");
 
     const { logs: initialLogs, previousCursor, nextCursor } = await queryLogs(
       oneDayAgo.toISOString(),

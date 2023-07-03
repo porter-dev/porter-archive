@@ -96,6 +96,9 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
 
   }, [currentProject, currentCluster, hasPorterAgent, page]);
 
+  useEffect(() => {
+    getEvents();
+  }, [eventId]);
 
   const installAgent = async () => {
     const project_id = currentProject?.id;
@@ -179,21 +182,6 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
 
   return (
     <StyledActivityFeed>
-      <Container row spaced>
-        <Spacer inline x={1} />
-        <Button
-          onClick={getEvents}
-          height="20px"
-          color="fg"
-          withBorder
-        >
-          <Icon src={refresh} height="10px"></Icon>
-          <Spacer inline x={0.5} />
-          Refresh feed
-        </Button>
-      </Container>
-      <Spacer y={1} />
-
       {events.map((event, i) => {
         return (
           <EventWrapper isLast={i === events.length - 1} key={i}>
@@ -214,7 +202,20 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
           <Pagination page={page} setPage={setPage} totalPages={numPages} />
         </>
       )}
-
+      <Spacer y={1} />
+      <Container row spaced>
+        <Spacer inline x={1} />
+        <Button
+          onClick={getEvents}
+          height="20px"
+          color="fg"
+          withBorder
+        >
+          <Icon src={refresh} height="10px"></Icon>
+          <Spacer inline x={0.5} />
+          Refresh feed
+        </Button>
+      </Container>
     </StyledActivityFeed>
   );
 };

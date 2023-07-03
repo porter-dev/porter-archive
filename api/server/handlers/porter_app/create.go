@@ -553,7 +553,5 @@ func cloneEnvGroup(c *CreatePorterAppHandler, w http.ResponseWriter, r *http.Req
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
-
-		fmt.Println("Created config map for env group")
 	}
 }

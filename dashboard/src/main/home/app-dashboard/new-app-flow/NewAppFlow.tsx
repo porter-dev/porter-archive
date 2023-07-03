@@ -7,6 +7,7 @@ import yaml from "js-yaml";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import web from "assets/web.png";
+import sliders from "assets/sliders.svg";
 
 import Back from "components/porter/Back";
 import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
@@ -28,6 +29,10 @@ import { Service } from "./serviceTypes";
 import GithubConnectModal from "./GithubConnectModal";
 import Link from "components/porter/Link";
 import { BuildMethod, PorterApp } from "../types/porterApp";
+import { PartialEnvGroup, PopulatedEnvGroup } from "components/porter-form/types";
+import EnvGroupArrayStacks from "main/home/cluster-dashboard/env-groups/EnvGroupArrayStacks";
+import EnvGroupModal from "../expanded-app/env-vars/EnvGroupModal";
+import ExpandableEnvGroup from "../expanded-app/env-vars/ExpandableEnvGroup";
 
 type Props = RouteComponentProps & {};
 
@@ -96,6 +101,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [porterJsonWithPath, setPorterJsonWithPath] = useState<PorterJsonWithPath | undefined>(undefined);
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
   const [buildView, setBuildView] = useState<BuildMethod>("buildpacks");
+
+  const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([]);
+  const [showEnvModal, setShowEnvModal] = useState(false);
+  const [deletedEnvGroups, setDeleteEnvGroups] = useState<PopulatedEnvGroup[]>([])
 
   const handleSetAccessData = (data: GithubAppAccessData) => {
     setAccessData(data);
@@ -251,6 +260,12 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         porterApp.name.length > 61)
     );
   };
+  const deleteEnvGroup = (envGroup: PopulatedEnvGroup) => {
+    setDeleteEnvGroups([...deletedEnvGroups, envGroup]);
+    setSyncedEnvGroups(syncedEnvGroups?.filter(
+      (env) => env.name !== envGroup.name
+    ))
+  }
 
   const deployPorterApp = async () => {
     try {
@@ -299,6 +314,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         git_repo_id: porterApp.git_repo_id,
         build_context: porterApp.build_context,
         image_repo_uri: porterApp.image_repo_uri,
+        env_groups: syncedEnvGroups.map((env: PopulatedEnvGroup) => env.name)
       }
       if (buildView === "docker") {
         porterAppRequest.dockerfile = porterApp.dockerfile;
@@ -319,6 +335,68 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
       if (porterApp.repo_name === "") {
         props.history.push(`/apps/${porterApp.name}`);
+      }
+
+
+      const filteredEnvGroups = deletedEnvGroups.filter((deletedEnvGroup) => {
+        return !syncedEnvGroups.some((syncedEnvGroup) => {
+          return syncedEnvGroup.name === deletedEnvGroup.name;
+        });
+      });
+      setDeleteEnvGroups(filteredEnvGroups);
+      if (deletedEnvGroups) {
+        const removeApplicationToEnvGroupPromises = deletedEnvGroups.map((envGroup: any) => {
+          return api.removeApplicationFromEnvGroup(
+            "<token>",
+            {
+              name: envGroup?.name,
+              app_name: porterApp.name,
+            },
+            {
+              project_id: currentProject.id,
+              cluster_id: currentCluster.id,
+              namespace: "default",
+            }
+          );
+        });
+
+        try {
+          await Promise.all(removeApplicationToEnvGroupPromises);
+        } catch (err: any) {
+          const errMessage =
+            err?.response?.data?.error ??
+            err?.toString() ??
+            "An error occurred while deploying your app. Please try again.";
+          setDeploymentError(errMessage);
+          updateStackStep("stack-launch-failure", errMessage);
+        }
+      }
+      const addApplicationToEnvGroupPromises = syncedEnvGroups.map(
+        (envGroup: any) => {
+          return api.addApplicationToEnvGroup(
+            "<token>",
+            {
+              name: envGroup?.name,
+              app_name: porterApp.name,
+            },
+            {
+              project_id: currentProject.id,
+              cluster_id: currentCluster.id,
+              namespace: "default",
+            }
+          );
+        }
+      );
+
+      try {
+        await Promise.all(addApplicationToEnvGroupPromises);
+      } catch (err: any) {
+        const errMessage =
+          err?.response?.data?.error ??
+          err?.toString() ??
+          "An error occurred while deploying your app. Please try again.";
+        setDeploymentError(errMessage);
+        updateStackStep("stack-launch-failure", errMessage);
       }
 
       // log analytics event that we successfully deployed
@@ -471,13 +549,48 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Text color="helper">
                   Specify environment variables shared among all services.
                 </Text>
-                <EnvGroupArray
+                <EnvGroupArrayStacks
+                  key={formState.envVariables.length}
                   values={formState.envVariables}
                   setValues={(x: any) => {
                     setFormState({ ...formState, envVariables: x });
                   }}
                   fileUpload={true}
+                  syncedEnvGroups={syncedEnvGroups}
                 />
+                <LoadButton
+                  onClick={() => setShowEnvModal(true)}
+                >
+                  <img src={sliders} /> Load from Env Group
+                </LoadButton>
+                {showEnvModal && <EnvGroupModal
+                  setValues={(x: any) => {
+                    setFormState({ ...formState, envVariables: x });
+                  }}
+                  values={formState.envVariables}
+                  closeModal={() => setShowEnvModal(false)}
+                  syncedEnvGroups={syncedEnvGroups}
+                  setSyncedEnvGroups={setSyncedEnvGroups}
+                  namespace={"porter-stack-" + porterApp.name}
+                  newApp={true}
+                />}
+                {!!syncedEnvGroups?.length && (
+                  <>
+                    <Spacer y={0.5} />
+                    <Text size={16}>Synced environment groups</Text >
+                    {syncedEnvGroups?.map((envGroup: any) => {
+                      return (
+                        <ExpandableEnvGroup
+                          key={envGroup?.name}
+                          envGroup={envGroup}
+                          onDelete={() => {
+                            deleteEnvGroup(envGroup);
+                          }}
+                        />
+                      );
+                    })}
+                  </>
+                )}
               </>,
               formState.selectedSourceType == "github" &&
               <>
@@ -612,3 +725,45 @@ const StyledConfigureTemplate = styled.div`
 `;
 
 
+const AddRowButton = styled.div`
+  display: flex;
+  align-items: center;
+  width: 270px;
+  font-size: 13px;
+  color: #aaaabb;
+  height: 32px;
+  border-radius: 3px;
+  cursor: pointer;
+  background: #ffffff11;
+  :hover {
+    background: #ffffff22;
+  }
+
+  > i {
+    color: #ffffff44;
+    font-size: 16px;
+    margin-left: 8px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+`;
+const LoadButton = styled(AddRowButton)`
+  background: none;
+  border: 1px solid #ffffff55;
+  > i {
+    color: #ffffff44;
+    font-size: 16px;
+    margin-left: 8px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  > img {
+    width: 14px;
+    margin-left: 10px;
+    margin-right: 12px;
+  }
+`;

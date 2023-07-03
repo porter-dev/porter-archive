@@ -3,11 +3,14 @@ package porter_app
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -124,6 +127,17 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	injectLauncher := strings.Contains(request.Builder, "heroku") ||
 		strings.Contains(request.Builder, "paketo")
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "builder", Value: request.Builder})
+
+	if shouldCreate {
+		// create the namespace if it does not exist already
+		_, err = k8sAgent.CreateNamespace(namespace, nil)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error creating namespace")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		cloneEnvGroup(c, w, r, k8sAgent, request.EnvGroups, namespace)
+	}
 	chart, values, releaseJobValues, err := parse(
 		porterYaml,
 		imageInfo,
@@ -151,14 +165,6 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	if shouldCreate {
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installing-application", Value: true})
-
-		// create the namespace if it does not exist already
-		_, err = k8sAgent.CreateNamespace(namespace, nil)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error creating namespace")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
 
 		// create the release job chart if it does not exist (only done by front-end currently, where we set overrideRelease=true)
 		if request.OverrideRelease && releaseJobValues != nil {
@@ -488,4 +494,66 @@ func createReleaseJobChart(
 		Repo:       repo,
 		Registries: registries,
 	}, nil
+}
+
+func cloneEnvGroup(c *CreatePorterAppHandler, w http.ResponseWriter, r *http.Request, agent *kubernetes.Agent, envGroups []string, namespace string) {
+	for _, envGroupName := range envGroups {
+		cm, _, err := agent.GetLatestVersionedConfigMap(envGroupName, "default")
+		if err != nil {
+			if errors.Is(err, kubernetes.IsNotFoundError) {
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+					fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", envGroupName, "default"), http.StatusNotFound,
+					"no config map found for envgroup",
+				))
+				return
+			}
+
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+		secret, _, err := agent.GetLatestVersionedSecret(envGroupName, "default")
+		if err != nil {
+			if errors.Is(err, kubernetes.IsNotFoundError) {
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+					fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", envGroupName, "default"), http.StatusNotFound,
+					"no k8s secret found for envgroup",
+				))
+				return
+			}
+
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+		vars := make(map[string]string)
+		secretVars := make(map[string]string)
+
+		for key, val := range cm.Data {
+			if !strings.Contains(val, "PORTERSECRET") {
+				vars[key] = val
+			}
+		}
+
+		for key, val := range secret.Data {
+			secretVars[key] = string(val)
+		}
+
+		configMap, err := envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
+			Name:            envGroupName,
+			Namespace:       namespace,
+			Variables:       vars,
+			SecretVariables: secretVars,
+		})
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		_, err = envgroup.ToEnvGroup(configMap)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		fmt.Println("Created config map for env group")
+	}
 }

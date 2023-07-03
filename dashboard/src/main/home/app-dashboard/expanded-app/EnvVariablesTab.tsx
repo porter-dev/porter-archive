@@ -139,7 +139,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
         closeModal={() => setShowEnvModal(false)}
         syncedEnvGroups={syncedEnvGroups}
         setSyncedEnvGroups={setSyncedEnvGroups}
-        appData={appData}
+        namespace={appData.chart.namespace}
       />}
       {!!syncedEnvGroups?.length && (
         <>

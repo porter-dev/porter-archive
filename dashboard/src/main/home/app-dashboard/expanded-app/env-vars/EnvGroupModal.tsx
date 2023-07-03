@@ -38,17 +38,19 @@ type Props = RouteComponentProps & {
   values: KeyValueType[];
   syncedEnvGroups: PopulatedEnvGroup[];
   setSyncedEnvGroups: (values: PopulatedEnvGroup[]) => void;
-  appData: any;
+  namespace: string;
+  newApp?: boolean;
 }
 
 const EnvGroupModal: React.FC<Props> = ({
-  appData,
   closeModal,
   setValues,
   availableEnvGroups,
   syncedEnvGroups,
   setSyncedEnvGroups,
   values,
+  namespace,
+  newApp,
 }) => {
   const { currentCluster, currentProject } = useContext(Context);
   const [envGroups, setEnvGroups] = useState<any>([])
@@ -127,7 +129,7 @@ const EnvGroupModal: React.FC<Props> = ({
         "<token>",
         {
           name: selectedEnvGroup.name,
-          namespace: appData.chart.namespace,
+          namespace: namespace,
           clone_name: selectedEnvGroup.name,
           version: selectedEnvGroup.version,
         },
@@ -185,7 +187,9 @@ const EnvGroupModal: React.FC<Props> = ({
     if (shouldSync) {
 
       syncedEnvGroups.push(selectedEnvGroup);
-      cloneEnvGroup();
+      if (!newApp) {
+        cloneEnvGroup();
+      }
       setSyncedEnvGroups(syncedEnvGroups);
     }
     else {

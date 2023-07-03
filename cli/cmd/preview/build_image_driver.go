@@ -318,18 +318,43 @@ func getCurrentImageTagIfExists(client *client.Client, projectID, clusterID uint
 		namespace,
 		stackName,
 	)
-
-	if err == nil && release != nil && release.Config != nil {
-		if globalConfig, ok := release.Config["global"].(map[string]interface{}); ok {
-			if imageConfig, ok := globalConfig["image"].(map[string]interface{}); ok {
-				if tag, ok := imageConfig["tag"].(string); ok {
-					return tag
-				}
-			}
-		}
+	if err != nil {
+		return ""
 	}
 
-	return ""
+	if release == nil {
+		return ""
+	}
+
+	if release.Config == nil {
+		return ""
+	}
+
+	value, ok := release.Config["global"]
+	if !ok {
+		return ""
+	}
+	globalConfig := value.(map[string]interface{})
+	if globalConfig == nil {
+		return ""
+	}
+
+	value, ok = globalConfig["image"]
+	if !ok {
+		return ""
+	}
+	imageConfig := value.(map[string]interface{})
+	if imageConfig == nil {
+		return ""
+	}
+
+	value, ok = imageConfig["tag"]
+	if !ok {
+		return ""
+	}
+	tag := value.(string)
+
+	return tag
 }
 
 func (d *BuildDriver) Output() (map[string]interface{}, error) {

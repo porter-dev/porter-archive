@@ -55,7 +55,7 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	agent, err := c.GetAgent(r, cluster, namespace)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, 504, "error getting agent"))
 		return
 	}
 	// if the environment group exists and has MetaVersion=1, throw an error
@@ -65,12 +65,12 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		namespaceStack := "porter-stack-" + request.Apps[i]
 		helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, namespaceStack)
 		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, 504, "error getting agent"))
 			return
 		}
 		releases, err := envgroup.GetStackSyncedReleases(helmAgent, namespaceStack)
 		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, 504, "error getting releases"))
 			return
 		}
 
@@ -86,7 +86,7 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			errStrArr = append(errStrArr, err.Error())
 		}
 
-		c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(fmt.Errorf(strings.Join(errStrArr, ","))))
+		c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrPassThroughToClient(err, 504, "error getting adding env group"))
 		return
 	}
 	c.WriteResult(w, r, nil)
@@ -118,18 +118,15 @@ func rolloutStacksApplications(
 		wg.Add(1)
 		cm, _, err := agent.GetLatestVersionedConfigMap(envGroupName, "porter-stack-"+releases[index].Name)
 		if err != nil {
-			fmt.Println("Error getting latest versioned config map: ", err)
 			return []error{err}
 		}
 
 		versionStr, ok := cm.ObjectMeta.Labels["version"]
 		if !ok {
-			fmt.Println("Error getting latest versioned config map: ", err)
 			return []error{err}
 		}
 		versionInt, err := strconv.Atoi(versionStr)
 		if err != nil {
-			fmt.Println("Error getting latest versioned config map: ", err)
 			return []error{err}
 		}
 

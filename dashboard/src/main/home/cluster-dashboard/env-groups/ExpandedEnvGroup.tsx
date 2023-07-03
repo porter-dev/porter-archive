@@ -276,10 +276,9 @@ export const ExpandedEnvGroupFC = ({
                   }
                 );
               }
-              console.log("Cloning Success!")
             }
           } catch (error) {
-            console.log(error);
+            setCurrentError(error);
           }
 
           //Update the Stacks Env Groups with the new variables
@@ -450,10 +449,6 @@ export const ExpandedEnvGroupFC = ({
           )
           .then((res) => res.data);
         setButtonStatus("successful");
-
-        if (currentProject?.simplified_view_enabled) {
-          console.log(updatedEnvGroup);
-        }
         updateEnvGroup(updatedEnvGroup);
         setTimeout(() => setButtonStatus(""), 1000);
       } catch (error) {

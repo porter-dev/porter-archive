@@ -64,6 +64,9 @@ class SourcePage extends Component<PropsType, StateType> {
   renderSourceSelector = () => {
     let { capabilities, setCurrentModal } = this.context;
     let { sourceType, setSourceType, hasSource } = this.props;
+    console.log("GitHub:", capabilities.github);
+    console.log("GitLab:", capabilities.gitlab);
+    console.log("hasSource:", hasSource);
 
     if (sourceType === "") {
       return (

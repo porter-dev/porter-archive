@@ -311,11 +311,8 @@ func getDefaultValues(app *App, env map[string]string, synced_env []*SyncedEnvSe
 	envConf, err := getStacksNestedMap(existingValues, name+"-"+appType, "container", "env")
 	if !userUpdate && err == nil {
 		syncedEnvs = envConf
-		fmt.Println("This is the synced envs:", syncedEnvs)
 	} else {
 		syncedEnvs = deconstructSyncedEnvs(synced_env, env)
-		fmt.Println("This is the BETTER synced envs:", syncedEnvs)
-
 	}
 
 	defaultValues = map[string]interface{}{
@@ -699,7 +696,5 @@ func getStacksNestedMap(obj map[string]interface{}, fields ...string) ([]map[str
 		}
 		result[i] = mapElement
 	}
-	fmt.Println("Synced", result)
-
 	return result, nil
 }

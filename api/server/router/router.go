@@ -112,7 +112,12 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(
-			otelchi.Middleware("porter-server-middleware", otelchi.WithRequestMethodInSpanName(true), otelchi.WithChiRoutes(r)),
+			otelchi.Middleware("porter-server-middleware", otelchi.WithRequestMethodInSpanName(true), otelchi.WithChiRoutes(r), otelchi.WithFilter(func(r *http.Request) bool {
+				if strings.HasSuffix(r.URL.Path, "/livez") || strings.HasSuffix(r.URL.Path, "/readyz") {
+					return false
+				}
+				return true
+			})),
 			panicMW.Middleware,
 			middleware.ContentTypeJSON,
 		)

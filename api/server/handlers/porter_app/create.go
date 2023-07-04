@@ -143,6 +143,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		imageInfo,
 		c.Config(),
 		cluster.ProjectID,
+		request.UserUpdate,
 		request.EnvGroups,
 		namespace,
 		releaseValues,

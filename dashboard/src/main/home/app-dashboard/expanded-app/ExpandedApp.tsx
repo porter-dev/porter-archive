@@ -118,7 +118,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [subdomain, setSubdomain] = useState<string>("");
   const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([])
   const [deletedEnvGroups, setDeleteEnvGroups] = useState<PopulatedEnvGroup[]>([])
-  const [envGroups, setEnvGroups] = useState<PopulatedEnvGroup[]>([])
   const [porterApp, setPorterApp] = useState<PorterApp>();
   // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
   const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
@@ -209,8 +208,40 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         resPorterApp?.data?.porter_yaml_path ?? "porter.yaml",
         newAppData
       );
-      updateEnvGroups()
+      let envGroups: PartialEnvGroup[] = [];
+      envGroups = await api
+        .listEnvGroups<PartialEnvGroup[]>(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            namespace: "default",
+            cluster_id: currentCluster.id,
+          }
+        )
+        .then((res) => res.data);
 
+      const populateEnvGroupsPromises = envGroups.map((envGroup) =>
+        api
+          .getEnvGroup<PopulatedEnvGroup>(
+            "<token>",
+            {},
+            {
+              id: currentProject.id,
+              cluster_id: currentCluster.id,
+              name: envGroup.name,
+              namespace: envGroup.namespace,
+              version: envGroup.version,
+            }
+          )
+          .then((res) => res.data)
+      );
+
+      const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
+
+      const filteredEnvGroups = populatedEnvGroups.filter(envGroup => envGroup.applications.includes(newAppData.chart.name));
+
+      setSyncedEnvGroups(filteredEnvGroups)
       setPorterJson(porterJson);
       setAppData(newAppData);
       // annoying that we have to parse buildpacks like this but alas
@@ -290,8 +321,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     setShowDeleteOverlay(false);
     setDeleting(true);
     const { appName } = props.match.params as any;
-    if (envGroups) {
-      const removeApplicationToEnvGroupPromises = envGroups.map((envGroup: any) => {
+    if (syncedEnvGroups) {
+      const removeApplicationToEnvGroupPromises = syncedEnvGroups.map((envGroup: any) => {
         return api.removeApplicationFromEnvGroup(
           "<token>",
           {
@@ -423,6 +454,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
+        console.log(syncedEnvGroups.map((env) => env.name))
         const updatedPorterApp = {
           porter_yaml: base64Encoded,
           override_release: true,
@@ -432,7 +464,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           git_branch: tempPorterApp.git_branch,
           buildpacks: "",
           ...options,
-          env_groups: syncedEnvGroups.map((env: PopulatedEnvGroup) => env.name)
+          env_groups: syncedEnvGroups.map((env) => env.name),
+          user_update: true,
         }
         if (buildView === "docker") {
           updatedPorterApp.dockerfile = tempPorterApp.dockerfile;
@@ -569,52 +602,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       // TODO: handle error
     }
   };
-
-  const updateEnvGroups = async () => {
-    let envGroups: PartialEnvGroup[] = [];
-    try {
-      envGroups = await api
-        .listEnvGroups<PartialEnvGroup[]>(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            namespace: "default",
-            cluster_id: currentCluster.id,
-          }
-        )
-        .then((res) => res.data);
-    } catch (error) {
-      // setLoading(false)
-      // setError(true);
-      return;
-    }
-    const populateEnvGroupsPromises = envGroups.map((envGroup) =>
-      api
-        .getEnvGroup<PopulatedEnvGroup>(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-            name: envGroup.name,
-            namespace: envGroup.namespace,
-            version: envGroup.version,
-          }
-        )
-        .then((res) => res.data)
-    );
-
-    try {
-      const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
-
-      setEnvGroups(populatedEnvGroups)
-
-    } catch (error) {
-      // setLoading(false)
-      // setError(true);
-    }
-  }
 
   const renderIcon = (b: string, size?: string) => {
     var src = box;

@@ -314,7 +314,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         git_repo_id: porterApp.git_repo_id,
         build_context: porterApp.build_context,
         image_repo_uri: porterApp.image_repo_uri,
-        env_groups: syncedEnvGroups.map((env: PopulatedEnvGroup) => env.name)
+        env_groups: syncedEnvGroups.map((env: PopulatedEnvGroup) => env.name),
+        user_update: true,
       }
       if (buildView === "docker") {
         porterAppRequest.dockerfile = porterApp.dockerfile;

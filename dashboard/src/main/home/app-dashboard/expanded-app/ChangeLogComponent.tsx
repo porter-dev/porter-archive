@@ -40,23 +40,30 @@ const ChangeLogComponent: FC<Props> = ({ oldYaml, newYaml }) => {
   diff?.forEach((difference: any) => {
     let path = difference.path?.join(".");
     // Extract the base path and check if it includes forbidden paths
-    const basePath = path?.split('.').slice(0, -1).join('.');
-    const forbiddenPaths = ["container", "env", "keys", "name"];
-    const isForbiddenPath = forbiddenPaths?.some(subPath => basePath?.includes(subPath));
+
+    const syncedPaths = ["synced"];
+    const isSyncedPath = syncedPaths.some(subPath => path?.includes(subPath));
 
     // Restructure the path when synced is included
-    if (path?.includes("synced")) {
+    if (isSyncedPath) {
       const parts = path?.split(".");
       const syncedIndex = parts?.indexOf("synced");
       path = `${parts[0]}.${parts[syncedIndex]}.${parts[parts?.length - 1]}`;
     }
 
-    if (difference.kind === "E" && isForbiddenPath) {
+    // Extract the base path and check if it includes forbidden paths
+    const basePath = path?.split('.').slice(0, -1).join('.');
+    const forbiddenPaths = ["container", "env", "keys", "name"];
+    const isForbiddenPath = forbiddenPaths.some(subPath => basePath?.includes(subPath));
+
+    if (difference.kind === "E" && isForbiddenPath && !isSyncedPath) {
       return;  // Skip if it's a forbidden path
     }
 
     console.log("Filtered Difference: ", difference);
     console.log("Filtered Path: ", path);
+
+    // rest of th
 
     switch (difference.kind) {
       case "E":

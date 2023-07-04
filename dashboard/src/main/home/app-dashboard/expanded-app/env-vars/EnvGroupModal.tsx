@@ -214,7 +214,7 @@ const EnvGroupModal: React.FC<Props> = ({
   return (
     <Modal closeModal={closeModal}>
       <Text size={16}>
-        Load global env group
+        Load env group
       </Text>
       <Spacer height="15px" />
       {syncedEnvGroups.length != envGroups.length ? (<>

@@ -6,7 +6,7 @@ import styled from "styled-components";
 
 interface LogQueryModeSelectionToggleProps {
   selectedDate?: Date;
-  setSelectedDate: React.Dispatch<React.SetStateAction<Date>>;
+  setSelectedDate: (date?: Date) => void;
   resetSearch: () => void;
 }
 

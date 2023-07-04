@@ -314,7 +314,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         git_repo_id: porterApp.git_repo_id,
         build_context: porterApp.build_context,
         image_repo_uri: porterApp.image_repo_uri,
-        env_groups: syncedEnvGroups.map((env: PopulatedEnvGroup) => env.name),
+        env_groups: syncedEnvGroups?.map((env: PopulatedEnvGroup) => env.name),
         user_update: true,
       }
       if (buildView === "docker") {
@@ -346,7 +346,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       });
       setDeleteEnvGroups(filteredEnvGroups);
       if (deletedEnvGroups) {
-        const removeApplicationToEnvGroupPromises = deletedEnvGroups.map((envGroup: any) => {
+        const removeApplicationToEnvGroupPromises = deletedEnvGroups?.map((envGroup: any) => {
           return api.removeApplicationFromEnvGroup(
             "<token>",
             {
@@ -372,7 +372,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           updateStackStep("stack-launch-failure", errMessage);
         }
       }
-      const addApplicationToEnvGroupPromises = syncedEnvGroups.map(
+      const addApplicationToEnvGroupPromises = syncedEnvGroups?.map(
         (envGroup: any) => {
           return api.addApplicationToEnvGroup(
             "<token>",

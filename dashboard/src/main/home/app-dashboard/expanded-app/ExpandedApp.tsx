@@ -221,7 +221,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         )
         .then((res) => res.data);
 
-      const populateEnvGroupsPromises = envGroups.map((envGroup) =>
+      const populateEnvGroupsPromises = envGroups?.map((envGroup) =>
         api
           .getEnvGroup<PopulatedEnvGroup>(
             "<token>",
@@ -322,7 +322,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     setDeleting(true);
     const { appName } = props.match.params as any;
     if (syncedEnvGroups) {
-      const removeApplicationToEnvGroupPromises = syncedEnvGroups.map((envGroup: any) => {
+      const removeApplicationToEnvGroupPromises = syncedEnvGroups?.map((envGroup: any) => {
         return api.removeApplicationFromEnvGroup(
           "<token>",
           {
@@ -391,7 +391,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     });
     setDeleteEnvGroups(filteredEnvGroups);
     if (deletedEnvGroups) {
-      const removeApplicationToEnvGroupPromises = deletedEnvGroups.map((envGroup: any) => {
+      const removeApplicationToEnvGroupPromises = deletedEnvGroups?.map((envGroup: any) => {
         return api.removeApplicationFromEnvGroup(
           "<token>",
           {
@@ -414,7 +414,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
       }
     }
-    const addApplicationToEnvGroupPromises = syncedEnvGroups.map(
+    const addApplicationToEnvGroupPromises = syncedEnvGroups?.map(
       (envGroup: any) => {
         return api.addApplicationToEnvGroup(
           "<token>",
@@ -454,7 +454,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
-        console.log(syncedEnvGroups.map((env) => env.name))
         const updatedPorterApp = {
           porter_yaml: base64Encoded,
           override_release: true,
@@ -464,7 +463,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           git_branch: tempPorterApp.git_branch,
           buildpacks: "",
           ...options,
-          env_groups: syncedEnvGroups.map((env) => env.name),
+          env_groups: syncedEnvGroups?.map((env) => env.name),
           user_update: true,
         }
         if (buildView === "docker") {

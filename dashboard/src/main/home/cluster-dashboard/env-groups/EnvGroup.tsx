@@ -52,10 +52,10 @@ export default class EnvGroup extends Component<PropsType, StateType> {
               </LastDeployed>
             </InfoWrapper>
 
-            <TagWrapper>
+            {!this.context?.currentProject.simplified_view_enabled && <TagWrapper>
               Namespace
               <NamespaceTag>{namespace.startsWith("porter-stack-") ? namespace.replace("porter-stack-", "") : namespace}</NamespaceTag>
-            </TagWrapper>
+            </TagWrapper>}
           </BottomWrapper>
 
           <Version>v{version}</Version>

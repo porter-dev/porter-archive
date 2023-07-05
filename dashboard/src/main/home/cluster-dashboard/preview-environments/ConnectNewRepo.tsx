@@ -224,7 +224,7 @@ const ConnectNewRepo: React.FC = () => {
                           return prev;
                         }
 
-                        return prev + 1;
+                        return prev + 2;
                       });
                     }
                   }}
@@ -236,7 +236,7 @@ const ConnectNewRepo: React.FC = () => {
                   <DocsHelper
                     disableMargin
                     tooltipText="A Porter YAML file is a declarative set of resources that Porter uses to build and update your preview environment deployments."
-                    link="https://docs.porter.run/preview-environments/porter-yaml-reference"
+                    link="https://docs.porter.run/standard/deploying-applications/writing-porter-yaml"
                   />
                 </HelperContainer>
               </>,
@@ -262,19 +262,17 @@ const ConnectNewRepo: React.FC = () => {
                   />
                 </CheckboxWrapper>
               </>,
+              <SaveButton
+                text="Add repository"
+                disabled={actionConfig.git_repo_id ? false : true}
+                onClick={addRepo}
+                makeFlush={true}
+                clearPosition={true}
+                status={status}
+                statusPosition={"left"}
+              />,
             ]}
           />
-          <ActionContainer>
-            <SaveButton
-              text="Add repository"
-              disabled={actionConfig.git_repo_id ? false : true}
-              onClick={addRepo}
-              makeFlush={true}
-              clearPosition={true}
-              status={status}
-              statusPosition={"left"}
-            />
-          </ActionContainer>
         </Div>
       </CenterWrapper>
     );

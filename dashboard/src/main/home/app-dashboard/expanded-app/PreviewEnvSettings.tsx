@@ -40,8 +40,6 @@ export const PreviewEnvSettings: React.FC<Props> = ({ appName, repoName }) => {
     }
   );
 
-  console.log("repoName", repoName);
-
   const [
     showPreviewDisabledBanner,
     setShowPreviewDisabledBanner,

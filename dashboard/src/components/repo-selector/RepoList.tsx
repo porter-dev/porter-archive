@@ -181,11 +181,9 @@ const RepoList: React.FC<Props> = ({
 
   useEffect(() => {
     if (repos.length && !selectedRepo && defaultRepo) {
-      console.log('all repos', repos)
       const repo = repos.find(
         (repo) => repo.Kind === "github" && repo.FullName === defaultRepo
       );
-      console.log('repo', repo)
       if (repo) {
         setRepo(repo);
       }

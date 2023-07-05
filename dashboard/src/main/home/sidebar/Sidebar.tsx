@@ -109,7 +109,12 @@ class Sidebar extends Component<PropsType, StateType> {
 
   renderProjectContents = () => {
     let { currentView } = this.props;
-    let { currentProject, user, currentCluster, hasFinishedOnboarding } = this.context;
+    let {
+      currentProject,
+      user,
+      currentCluster,
+      hasFinishedOnboarding,
+    } = this.context;
     if (!currentProject?.simplified_view_enabled) {
       return (
         <ScrollWrapper>
@@ -156,11 +161,9 @@ class Sidebar extends Component<PropsType, StateType> {
           <br />
 
           <SidebarLabel>
-            {currentProject?.capi_provisioner_enabled ? (
-              "Your team"
-            ) : (
-              "Clusters"
-            )}
+            {currentProject?.capi_provisioner_enabled
+              ? "Your team"
+              : "Clusters"}
           </SidebarLabel>
           <Clusters
             setWelcome={this.props.setWelcome}
@@ -188,6 +191,13 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={addOns} />
             Add-ons
           </NavButton>
+          <Clusters
+            setWelcome={this.props.setWelcome}
+            currentView={currentView}
+            isSelected={false}
+            forceRefreshClusters={this.props.forceRefreshClusters}
+            setRefreshClusters={this.props.setRefreshClusters}
+          />
           {this.props.isAuthorized("integrations", "", [
             "get",
             "create",
@@ -207,9 +217,7 @@ class Sidebar extends Component<PropsType, StateType> {
             <NavButton
               path={"/cluster-dashboard"}
               targetClusterName={currentCluster?.name}
-              active={
-                window.location.pathname.startsWith("/cluster-dashboard")
-              }
+              active={window.location.pathname.startsWith("/cluster-dashboard")}
             >
               <Img src={infra} />
               Infrastructure
@@ -225,15 +233,6 @@ class Sidebar extends Component<PropsType, StateType> {
               Project settings
             </NavButton>
           )}
-
-          {/* Hacky workaround for setting currentCluster with legacy method */}
-          <Clusters
-            setWelcome={this.props.setWelcome}
-            currentView={currentView}
-            isSelected={false}
-            forceRefreshClusters={this.props.forceRefreshClusters}
-            setRefreshClusters={this.props.setRefreshClusters}
-          />
         </ScrollWrapper>
       );
     }
@@ -317,7 +316,7 @@ const NavButton = styled(SidebarLink)`
   margin: 5px 15px;
   padding: 0 30px 2px 6px;
   font-size: 13px;
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 
@@ -361,14 +360,14 @@ const SidebarBg = styled.div`
   top: 0;
   left: 0;
   width: 100%;
-  background-color: ${props => props.theme.bg};
+  background-color: ${(props) => props.theme.bg};
   height: 100%;
   z-index: -1;
   border-right: 1px solid #383a3f;
 `;
 
 const SidebarLabel = styled.div`
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   padding: 5px 23px;
   margin-bottom: 5px;
   font-size: 13px;

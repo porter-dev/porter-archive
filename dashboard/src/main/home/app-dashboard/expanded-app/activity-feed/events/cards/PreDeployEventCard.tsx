@@ -11,11 +11,11 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Icon from "components/porter/Icon";
 
-import { PorterAppEvent } from "shared/types";
 import { getDuration, getStatusIcon, triggerWorkflow } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import Link from "components/porter/Link";
 import document from "assets/document.svg";
+import { PorterAppEvent } from "../types";
 
 type Props = {
   event: PorterAppEvent;

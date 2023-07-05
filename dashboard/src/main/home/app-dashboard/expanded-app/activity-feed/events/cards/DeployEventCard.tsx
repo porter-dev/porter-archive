@@ -1,43 +1,70 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 
 import deploy from "assets/deploy.png";
-import refresh from "assets/refresh.png";
 
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Icon from "components/porter/Icon";
-import Modal from "components/porter/Modal";
-import { PorterAppEvent } from "shared/types";
-import { getDuration, getStatusIcon } from '../utils';
+import { getStatusIcon } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import styled from "styled-components";
-import Button from "components/porter/Button";
-import api from "shared/api";
 import Link from "components/porter/Link";
 import ChangeLogModal from "../../../ChangeLogModal";
+import { PorterAppDeployEvent } from "../types";
+import AnimateHeight from "react-animate-height";
 
 type Props = {
-  event: PorterAppEvent;
+  event: PorterAppDeployEvent;
   appData: any;
 };
 
 const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
-  const [loading, setLoading] = useState<boolean>(false);
   const [diffModalVisible, setDiffModalVisible] = useState(false);
   const [revertModalVisible, setRevertModalVisible] = useState(false);
+  const [serviceStatusVisible, setServiceStatusVisible] = useState(false);
 
-  const renderStatusText = (event: PorterAppEvent) => {
+  const renderStatusText = (event: PorterAppDeployEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return event?.metadata?.image_tag ? <Text color="#68BF8B">Deployed <Code>{event?.metadata?.image_tag}</Code></Text> : <Text color="#68BF8B">Deployment successful</Text>;
+        return event.metadata.image_tag != null ? <Text color="#68BF8B">Deployed <Code>{event.metadata.image_tag}</Code></Text> : <Text color="#68BF8B">Deployment successful</Text>;
       case "FAILED":
         return <Text color="#FF6060">Deployment failed</Text>;
       default:
-        return <Text color="#aaaabb66">Deployment in progress...</Text>;
+        return (
+          <Text color="helper">
+            Deploying <Code>{event.metadata.image_tag}</Code> to {Object.keys(event.metadata.service_status).length} service{Object.keys(event.metadata.service_status).length === 1 ? "" : "s"}...
+          </Text>
+        );
     }
   };
+
+  const renderServiceStatus = () => {
+    const serviceStatus = event.metadata.service_status;
+    if (Object.keys(serviceStatus).length === 0) {
+      return (
+        <Container row>
+          <Text color="helper">No services found.</Text>
+        </Container>
+      );
+    }
+
+    return Object.keys(serviceStatus).map((key) => {
+      return (
+        <Container key={key} row>
+          <Spacer inline x={1} />
+          <Icon height="16px" src={getStatusIcon(serviceStatus[key])} />
+          <Spacer inline x={1} />
+          <Container row>
+            <Text>{key}</Text>
+            <Spacer inline x={1} />
+            <Text color="helper">{serviceStatus[key]}</Text>
+          </Container>
+        </Container>
+      );
+    });
+  }
   return (
     <StyledEventCard>
       <Container row spaced>
@@ -53,6 +80,16 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
           <Icon height="16px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText(event)}
+          {event.metadata.service_status != null &&
+            <>
+              <Spacer inline x={1} />
+              <TempWrapper>
+                <Link hasunderline onClick={() => setServiceStatusVisible(!serviceStatusVisible)}>
+                  View service status
+                </Link>
+              </TempWrapper>
+            </>
+          }
           {appData?.chart?.version !== event.metadata?.revision && (
             <>
               <Spacer inline x={1} />
@@ -64,7 +101,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
               </TempWrapper>
             </>
           )}
-          <Spacer inline width="15px" />
+          <Spacer inline x={1} />
           <TempWrapper>
             {event?.metadata?.revision != 1 && (<Link hasunderline onClick={() => setDiffModalVisible(true)}>
               View changes
@@ -91,7 +128,10 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
           </TempWrapper>
         </Container>
       </Container>
-
+      <AnimateHeight height={serviceStatusVisible ? "auto" : 0}>
+        <Spacer y={0.5} />
+        {event.metadata.service_status != null && renderServiceStatus()}
+      </AnimateHeight>
     </StyledEventCard>
   );
 };
@@ -107,20 +147,3 @@ const Code = styled.span`
   font-family: monospace;
 `;
 
-const RevertButton = styled.div<{ width?: string }>`
-  border-radius: 5px;
-  height: 30px;
-  font-size: 13px;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0px 10px;
-  background: #ffffff11;
-  border: 1px solid #aaaabb33;
-  cursor: pointer;
-  :hover {
-    border: 1px solid #7a7b80;
-  }
-  width: 92px;
-`;

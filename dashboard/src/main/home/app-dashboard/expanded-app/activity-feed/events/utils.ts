@@ -1,8 +1,8 @@
-import { PorterAppEvent } from "shared/types";
 import healthy from "assets/status-healthy.png";
 import failure from "assets/failure.png";
 import loading from "assets/loading.gif";
 import api from "shared/api";
+import { PorterAppEvent } from "./types";
 
 export const getDuration = (event: PorterAppEvent): string => {
     const startTimeStamp = new Date(event.metadata.start_time ?? event.created_at).getTime();

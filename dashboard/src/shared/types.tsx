@@ -663,21 +663,4 @@ export interface PorterAppOptions {
   override_release?: boolean;
 }
 
-export enum PorterAppEventType {
-  BUILD = "BUILD",
-  DEPLOY = "DEPLOY",
-  APP_EVENT = "APP_EVENT",
-  PRE_DEPLOY = "PRE_DEPLOY",
-}
-export interface PorterAppEvent {
-  created_at: string;
-  updated_at: string;
-  id: string;
-  status: string;
-  type: PorterAppEventType;
-  type_source: string;
-  porter_app_id: number;
-  metadata: any;
-}
-
 

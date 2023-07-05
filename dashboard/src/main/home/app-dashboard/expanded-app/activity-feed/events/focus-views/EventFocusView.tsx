@@ -4,11 +4,11 @@ import React, { useContext, useEffect, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import styled from "styled-components";
-import { PorterAppEvent } from "shared/types";
 import Link from "components/porter/Link";
 import BuildFailureEventFocusView from "./BuildFailureEventFocusView";
 import PreDeployEventFocusView from "./PredeployEventFocusView";
 import _ from "lodash";
+import { PorterAppEvent } from "../types";
 
 type Props = {
     eventId: string;

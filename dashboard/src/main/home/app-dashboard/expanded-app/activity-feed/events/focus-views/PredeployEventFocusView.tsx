@@ -1,7 +1,6 @@
 import Spacer from "components/porter/Spacer";
 import React from "react";
 import dayjs from "dayjs";
-import { PorterAppEvent } from "shared/types";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
 import { getDuration } from "../utils";
@@ -10,6 +9,7 @@ import { AppearingView } from "./EventFocusView";
 import Icon from "components/porter/Icon";
 import loading from "assets/loading.gif";
 import Container from "components/porter/Container";
+import { PorterAppEvent } from "../types";
 
 type Props = {
   event: PorterAppEvent;

@@ -74,28 +74,28 @@ func parse(
 	opts SubdomainCreateOpts,
 	injectLauncher bool,
 	shouldCreate bool,
-) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
+) (*chart.Chart, map[string]interface{}, map[string]interface{}, []string, error) {
 	parsed := &PorterStackYAML{}
 
 	err := yaml.Unmarshal(porterYaml, parsed)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
+		return nil, nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
 	}
 	synced_env := make([]*SyncedEnvSection, 0)
 
 	for i := range envGroups {
 		cm, _, err := opts.k8sAgent.GetLatestVersionedConfigMap(envGroups[i], namespace)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
+			return nil, nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
 		}
 
 		versionStr, ok := cm.ObjectMeta.Labels["version"]
 		if !ok {
-			return nil, nil, nil, fmt.Errorf("error extracting version from config map")
+			return nil, nil, nil, nil, fmt.Errorf("error extracting version from config map")
 		}
 		versionInt, err := strconv.Atoi(versionStr)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error converting version to int: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("error converting version to int: %w", err)
 		}
 
 		version := uint(versionInt)
@@ -119,16 +119,16 @@ func parse(
 	}
 
 	parsed.SyncedEnv = synced_env
-	// 	fmt.Println("This is the config map:" ,cm)
-	values, err := buildUmbrellaChartValues(parsed, imageInfo, existingValues, opts, injectLauncher, shouldCreate, userUpdate)
+
+	values, serviceNames, err := buildUmbrellaChartValues(parsed, imageInfo, existingValues, opts, injectLauncher, shouldCreate, userUpdate)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
+		return nil, nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
 	}
 	convertedValues := convertMap(values).(map[string]interface{})
 
 	chart, err := buildUmbrellaChart(parsed, config, projectID, existingDependencies)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", "error building chart from porter.yaml", err)
+		return nil, nil, nil, nil, fmt.Errorf("%s: %w", "error building chart from porter.yaml", err)
 	}
 
 	// return the parsed release values for the release job chart, if they exist
@@ -137,7 +137,7 @@ func parse(
 		preDeployJobValues = buildPreDeployJobChartValues(parsed.Release, parsed.Env, parsed.SyncedEnv, imageInfo, injectLauncher, existingValues, strings.TrimSuffix(strings.TrimPrefix(namespace, "porter-stack-"), "")+"-r", userUpdate)
 	}
 
-	return chart, convertedValues, preDeployJobValues, nil
+	return chart, convertedValues, preDeployJobValues, serviceNames, nil
 }
 
 func buildUmbrellaChartValues(
@@ -148,16 +148,19 @@ func buildUmbrellaChartValues(
 	injectLauncher bool,
 	shouldCreate bool,
 	userUpdate bool,
-) (map[string]interface{}, error) {
+) (map[string]interface{}, []string, error) {
 	values := make(map[string]interface{})
 
 	if parsed.Apps == nil {
 		if existingValues == nil {
-			return nil, fmt.Errorf("porter.yaml must contain at least one app, or release must exist and have values")
+			return nil, nil, fmt.Errorf("porter.yaml must contain at least one app, or release must exist and have values")
 		}
 	}
 
+	serviceNames := make([]string, 0)
+
 	for name, app := range parsed.Apps {
+		serviceNames = append(serviceNames, name)
 		appType := getType(name, app)
 
 		defaultValues := getDefaultValues(app, parsed.Env, parsed.SyncedEnv, appType, existingValues, name, userUpdate)
@@ -175,12 +178,12 @@ func buildUmbrellaChartValues(
 
 		validateErr := validateHelmValues(helm_values, shouldCreate, appType)
 		if validateErr != "" {
-			return nil, fmt.Errorf("error validating service \"%s\": %s", name, validateErr)
+			return nil, nil, fmt.Errorf("error validating service \"%s\": %s", name, validateErr)
 		}
 
 		err := createSubdomainIfRequired(helm_values, opts) // modifies helm_values to add subdomains if necessary
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		// just in case this slips by
@@ -226,7 +229,7 @@ func buildUmbrellaChartValues(
 		}
 	}
 
-	return values, nil
+	return values, serviceNames, nil
 }
 
 // we can add to this function up later or use an alternative

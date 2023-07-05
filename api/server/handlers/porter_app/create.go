@@ -138,7 +138,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 		cloneEnvGroup(c, w, r, k8sAgent, request.EnvGroups, namespace)
 	}
-	chart, values, releaseJobValues, err := parse(
+	chart, values, preDeployJobValues, serviceNames, err := parse(
 		porterYaml,
 		imageInfo,
 		c.Config(),
@@ -167,13 +167,13 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	if shouldCreate {
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installing-application", Value: true})
 
-		// create the release job chart if it does not exist (only done by front-end currently, where we set overrideRelease=true)
-		if request.OverrideRelease && releaseJobValues != nil {
+		// create the pre-deploy job chart if it does not exist (only done by front-end currently, where we set overrideRelease=true)
+		if request.OverrideRelease && preDeployJobValues != nil {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installing-pre-deploy-job", Value: true})
 			conf, err := createReleaseJobChart(
 				ctx,
 				stackName,
-				releaseJobValues,
+				preDeployJobValues,
 				c.Config().ServerConf.DefaultApplicationHelmRepoURL,
 				registries,
 				cluster,
@@ -223,17 +223,6 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		existing, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error reading app from DB")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		} else if existing.Name != "" {
-			err = telemetry.Error(ctx, span, err, "app with name already exists in project")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
-			return
-		}
-
 		app := &models.PorterApp{
 			Name:      stackName,
 			ClusterID: cluster.ID,
@@ -259,7 +248,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		_, err = createPorterAppEvent(ctx, "SUCCESS", porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		_, err = createPorterAppDeployEvent(ctx, serviceNames, "PROGRESSING", porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating porter app event")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -272,7 +261,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		// create/update the release job chart
 		if request.OverrideRelease {
-			if releaseJobValues == nil {
+			if preDeployJobValues == nil {
 				releaseJobName := fmt.Sprintf("%s-r", stackName)
 				_, err := helmAgent.GetRelease(ctx, releaseJobName, 0, false)
 				if err == nil {
@@ -293,7 +282,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					conf, err := createReleaseJobChart(
 						ctx,
 						stackName,
-						releaseJobValues,
+						preDeployJobValues,
 						c.Config().ServerConf.DefaultApplicationHelmRepoURL,
 						registries,
 						cluster,
@@ -331,7 +320,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 						Cluster:    cluster,
 						Repo:       c.Repo(),
 						Registries: registries,
-						Values:     releaseJobValues,
+						Values:     preDeployJobValues,
 						Chart:      chart,
 					}
 					_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
@@ -432,7 +421,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		_, err = createPorterAppEvent(ctx, "SUCCESS", updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		_, err = createPorterAppDeployEvent(ctx, serviceNames, "PROGRESSING", updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating porter app event")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -443,8 +432,21 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// createPorterAppEvent creates an event for use in the activity feed
-func createPorterAppEvent(ctx context.Context, status string, appID uint, revision int, tag string, repo repository.PorterAppEventRepository) (*models.PorterAppEvent, error) {
+// createPorterAppDeployEvent creates an event for use in the activity feed
+func createPorterAppDeployEvent(
+	ctx context.Context,
+	serviceNames []string,
+	status string,
+	appID uint,
+	revision int,
+	tag string,
+	repo repository.PorterAppEventRepository,
+) (*models.PorterAppEvent, error) {
+	// create a map of service names to their status
+	serviceStatuses := make(map[string]string)
+	for _, serviceName := range serviceNames {
+		serviceStatuses[serviceName] = status
+	}
 	event := models.PorterAppEvent{
 		ID:                 uuid.New(),
 		Status:             status,
@@ -452,8 +454,9 @@ func createPorterAppEvent(ctx context.Context, status string, appID uint, revisi
 		TypeExternalSource: "KUBERNETES",
 		PorterAppID:        appID,
 		Metadata: map[string]any{
-			"revision":  revision,
-			"image_tag": tag,
+			"revision":       revision,
+			"image_tag":      tag,
+			"service_status": serviceStatuses,
 		},
 	}
 

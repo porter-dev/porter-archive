@@ -15,11 +15,10 @@ import api from "shared/api";
 import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
 import JSZip from "jszip";
 import Anser, { AnserJsonEntry } from "anser";
-import GHALogsModal from "../../../status/GHALogsModal";
-import { PorterAppEvent } from "shared/types";
 import { getDuration, getStatusIcon, triggerWorkflow } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import document from "assets/document.svg";
+import { PorterAppEvent } from "../types";
 
 type Props = {
   event: PorterAppEvent;

@@ -7,7 +7,6 @@ import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import Icon from "components/porter/Icon";
 
-import { PorterAppEvent } from "shared/types";
 import { StyledEventCard } from "./EventCard";
 import styled from "styled-components";
 import AppEventModal from "../../../status/AppEventModal";
@@ -16,6 +15,7 @@ import dayjs from "dayjs";
 import Anser from "anser";
 import api from "shared/api";
 import { Direction } from "../../../logs/types";
+import { PorterAppEvent } from "../types";
 
 type Props = {
   event: PorterAppEvent;

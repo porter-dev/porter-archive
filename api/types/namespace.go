@@ -169,6 +169,24 @@ type CreateEnvGroupRequest struct {
 	SecretVariables map[string]string `json:"secret_variables"`
 }
 
+// CreateEnvGroupRequest represents the request body to create or update an env group
+//
+// swagger:model
+type CreateStacksEnvGroupRequest struct {
+	// the name of the env group to create or update
+	// example: prod-env-group
+	Name string `json:"name" form:"required,dns1123"`
+
+	// the variables to include in the env group
+	Variables map[string]string `json:"variables" form:"required"`
+
+	// the secret variables to include in the env group
+	SecretVariables map[string]string `json:"secret_variables"`
+
+	// the list of all applications to include in the env group
+	Apps []string `json:"apps"`
+}
+
 type CreateConfigMapResponse struct {
 	*v1.ConfigMap
 }

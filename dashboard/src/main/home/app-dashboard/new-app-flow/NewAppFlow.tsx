@@ -7,6 +7,7 @@ import yaml from "js-yaml";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import web from "assets/web.png";
+import sliders from "assets/sliders.svg";
 
 import Back from "components/porter/Back";
 import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
@@ -28,6 +29,10 @@ import { Service } from "./serviceTypes";
 import GithubConnectModal from "./GithubConnectModal";
 import Link from "components/porter/Link";
 import { BuildMethod, PorterApp } from "../types/porterApp";
+import { PartialEnvGroup, PopulatedEnvGroup } from "components/porter-form/types";
+import EnvGroupArrayStacks from "main/home/cluster-dashboard/env-groups/EnvGroupArrayStacks";
+import EnvGroupModal from "../expanded-app/env-vars/EnvGroupModal";
+import ExpandableEnvGroup from "../expanded-app/env-vars/ExpandableEnvGroup";
 
 type Props = RouteComponentProps & {};
 
@@ -97,6 +102,73 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
   const [buildView, setBuildView] = useState<BuildMethod>("buildpacks");
 
+  const [existingApps, setExistingApps] = useState<string[]>([]);
+  const [appNameInputError, setAppNameInputError] = useState<string | undefined>(undefined);
+
+  const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([]);
+  const [showEnvModal, setShowEnvModal] = useState(false);
+  const [deletedEnvGroups, setDeleteEnvGroups] = useState<PopulatedEnvGroup[]>([])
+
+  // this advances the step in the case that a user chooses a repo that doesn't have a porter.yaml
+  useEffect(() => {
+    if (porterApp.git_branch !== "") {
+      setCurrentStep(Math.max(currentStep, 2));
+    }
+  }, [porterApp.git_branch]);
+
+  useEffect(() => {
+    let isSubscribed = true;
+
+    if (currentProject == null) {
+      return;
+    }
+
+    api
+      .getGitProviders("<token>", {}, { project_id: currentProject?.id })
+      .then((res) => {
+        const data = res.data;
+        if (!isSubscribed) {
+          return;
+        }
+
+        if (!Array.isArray(data)) {
+          setHasProviders(false);
+          return;
+        }
+      })
+      .catch((err) => {
+        setHasProviders(false);
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [currentProject]);
+
+  useEffect(() => {
+    const getApps = async () => {
+      try {
+        const res = await api.getPorterApps(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        );
+        if (res?.data != null) {
+          setExistingApps(res.data.map((app: PorterApp) => app.name));
+        }
+      } catch (err) {
+      }
+    };
+    getApps();
+  }, [])
+
+  useEffect(() => {
+    setFormState({ ...formState, serviceList: [] });
+  }, [porterApp.git_branch]);
+
   const handleSetAccessData = (data: GithubAppAccessData) => {
     setAccessData(data);
     setShowGithubConnectModal(
@@ -113,7 +185,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     );
   };
 
-  const updateStackStep = async (step: string) => {
+  const updateStackStep = async (step: string, errorMessage: string = "") => {
     try {
       if (currentCluster?.id == null || currentProject?.id == null) {
         throw "Unable to capture analytics, project or cluster not found";
@@ -123,6 +195,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         {
           step,
           stack_name: porterApp.name,
+          error_message: errorMessage,
         },
         {
           cluster_id: currentCluster.id,
@@ -187,55 +260,16 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  // this advances the step in the case that a user chooses a repo that doesn't have a porter.yaml
-  useEffect(() => {
-    if (porterApp.git_branch !== "") {
-      setCurrentStep(Math.max(currentStep, 2));
-    }
-  }, [porterApp.git_branch]);
-
-  useEffect(() => {
-    let isSubscribed = true;
-
-    if (currentProject == null) {
-      return;
-    }
-
-    api
-      .getGitProviders("<token>", {}, { project_id: currentProject?.id })
-      .then((res) => {
-        const data = res.data;
-        if (!isSubscribed) {
-          return;
-        }
-
-        if (!Array.isArray(data)) {
-          setHasProviders(false);
-          return;
-        }
-      })
-      .catch((err) => {
-        setHasProviders(false);
-      });
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [currentProject]);
-
-  const isAppNameValid = (name: string) => {
-    const regex = /^[a-z0-9-]{1,61}$/;
-    return regex.test(name);
-  };
-
   const handleAppNameChange = (name: string) => {
     setPorterApp(PorterApp.setAttribute(porterApp, "name", name));
-    if (isAppNameValid(name) && Validators.applicationName(name)) {
+    const appNameInputError = getAppNameInputError(name);
+    if (appNameInputError == null) {
       setCurrentStep(Math.max(Math.max(currentStep, 1), existingStep));
     } else {
       setExistingStep(Math.max(currentStep, existingStep));
       setCurrentStep(0);
     }
+    setAppNameInputError(appNameInputError);
   };
 
   const handleDoNotConnect = () => {
@@ -243,13 +277,26 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     localStorage.setItem("hasClickedDoNotConnect", "true");
   };
 
-  const shouldHighlightAppNameInput = () => {
-    return (
-      porterApp.name !== "" &&
-      (!isAppNameValid(porterApp.name) ||
-        porterApp.name.length > 61)
-    );
+  const getAppNameInputError = (name: string) => {
+    const regex = /^[a-z0-9-]{1,61}$/;
+    if (name === "") {
+      return undefined;
+    } else if (!regex.test(name)) {
+      return 'Lowercase letters, numbers, and "-" only.';
+    } else if (name.length > 30) {
+      return "Maximum 30 characters allowed.";
+    } else if (existingApps.includes(name)) {
+      return "An app with this name already exists.";
+    }
+    return undefined;
   };
+
+  const deleteEnvGroup = (envGroup: PopulatedEnvGroup) => {
+    setDeleteEnvGroups([...deletedEnvGroups, envGroup]);
+    setSyncedEnvGroups(syncedEnvGroups?.filter(
+      (env) => env.name !== envGroup.name
+    ))
+  }
 
   const deployPorterApp = async () => {
     try {
@@ -298,6 +345,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         git_repo_id: porterApp.git_repo_id,
         build_context: porterApp.build_context,
         image_repo_uri: porterApp.image_repo_uri,
+        env_groups: syncedEnvGroups?.map((env: PopulatedEnvGroup) => env.name),
+        user_update: true,
       }
       if (buildView === "docker") {
         porterAppRequest.dockerfile = porterApp.dockerfile;
@@ -320,6 +369,68 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         props.history.push(`/apps/${porterApp.name}`);
       }
 
+
+      const filteredEnvGroups = deletedEnvGroups.filter((deletedEnvGroup) => {
+        return !syncedEnvGroups.some((syncedEnvGroup) => {
+          return syncedEnvGroup.name === deletedEnvGroup.name;
+        });
+      });
+      setDeleteEnvGroups(filteredEnvGroups);
+      if (deletedEnvGroups) {
+        const removeApplicationToEnvGroupPromises = deletedEnvGroups?.map((envGroup: any) => {
+          return api.removeApplicationFromEnvGroup(
+            "<token>",
+            {
+              name: envGroup?.name,
+              app_name: porterApp.name,
+            },
+            {
+              project_id: currentProject.id,
+              cluster_id: currentCluster.id,
+              namespace: "default",
+            }
+          );
+        });
+
+        try {
+          await Promise.all(removeApplicationToEnvGroupPromises);
+        } catch (err: any) {
+          const errMessage =
+            err?.response?.data?.error ??
+            err?.toString() ??
+            "An error occurred while deploying your app. Please try again.";
+          setDeploymentError(errMessage);
+          updateStackStep("stack-launch-failure", errMessage);
+        }
+      }
+      const addApplicationToEnvGroupPromises = syncedEnvGroups?.map(
+        (envGroup: any) => {
+          return api.addApplicationToEnvGroup(
+            "<token>",
+            {
+              name: envGroup?.name,
+              app_name: porterApp.name,
+            },
+            {
+              project_id: currentProject.id,
+              cluster_id: currentCluster.id,
+              namespace: "default",
+            }
+          );
+        }
+      );
+
+      try {
+        await Promise.all(addApplicationToEnvGroupPromises);
+      } catch (err: any) {
+        const errMessage =
+          err?.response?.data?.error ??
+          err?.toString() ??
+          "An error occurred while deploying your app. Please try again.";
+        setDeploymentError(errMessage);
+        updateStackStep("stack-launch-failure", errMessage);
+      }
+
       // log analytics event that we successfully deployed
       updateStackStep("stack-launch-success");
 
@@ -331,16 +442,12 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         err?.toString() ??
         "An error occurred while deploying your app. Please try again.";
       setDeploymentError(errMessage);
-
+      updateStackStep("stack-launch-failure", errMessage);
       return false;
     } finally {
       setDeploying(false);
     }
   };
-
-  useEffect(() => {
-    setFormState({ ...formState, serviceList: [] });
-  }, [porterApp.git_branch]);
 
   return (
     <CenterWrapper>
@@ -380,17 +487,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   placeholder="ex: academic-sophon"
                   value={porterApp.name}
                   width="300px"
-                  error={
-                    shouldHighlightAppNameInput() &&
-                    (porterApp.name.length > 30
-                      ? "Maximum 30 characters allowed."
-                      : 'Lowercase letters, numbers, and "-" only.')
-                  }
-                  setValue={(e) => {
-                    handleAppNameChange(e);
-                  }}
+                  error={appNameInputError}
+                  setValue={handleAppNameChange}
                 />
-                {shouldHighlightAppNameInput()}
               </>,
               <>
                 <Text size={16}>Deployment method</Text>
@@ -470,13 +569,48 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Text color="helper">
                   Specify environment variables shared among all services.
                 </Text>
-                <EnvGroupArray
+                <EnvGroupArrayStacks
+                  key={formState.envVariables.length}
                   values={formState.envVariables}
                   setValues={(x: any) => {
                     setFormState({ ...formState, envVariables: x });
                   }}
                   fileUpload={true}
+                  syncedEnvGroups={syncedEnvGroups}
                 />
+                <LoadButton
+                  onClick={() => setShowEnvModal(true)}
+                >
+                  <img src={sliders} /> Load from Env Group
+                </LoadButton>
+                {showEnvModal && <EnvGroupModal
+                  setValues={(x: any) => {
+                    setFormState({ ...formState, envVariables: x });
+                  }}
+                  values={formState.envVariables}
+                  closeModal={() => setShowEnvModal(false)}
+                  syncedEnvGroups={syncedEnvGroups}
+                  setSyncedEnvGroups={setSyncedEnvGroups}
+                  namespace={"porter-stack-" + porterApp.name}
+                  newApp={true}
+                />}
+                {!!syncedEnvGroups?.length && (
+                  <>
+                    <Spacer y={0.5} />
+                    <Text size={16}>Synced environment groups</Text >
+                    {syncedEnvGroups?.map((envGroup: any) => {
+                      return (
+                        <ExpandableEnvGroup
+                          key={envGroup?.name}
+                          envGroup={envGroup}
+                          onDelete={() => {
+                            deleteEnvGroup(envGroup);
+                          }}
+                        />
+                      );
+                    })}
+                  </>
+                )}
               </>,
               formState.selectedSourceType == "github" &&
               <>
@@ -611,3 +745,45 @@ const StyledConfigureTemplate = styled.div`
 `;
 
 
+const AddRowButton = styled.div`
+  display: flex;
+  align-items: center;
+  width: 270px;
+  font-size: 13px;
+  color: #aaaabb;
+  height: 32px;
+  border-radius: 3px;
+  cursor: pointer;
+  background: #ffffff11;
+  :hover {
+    background: #ffffff22;
+  }
+
+  > i {
+    color: #ffffff44;
+    font-size: 16px;
+    margin-left: 8px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+`;
+const LoadButton = styled(AddRowButton)`
+  background: none;
+  border: 1px solid #ffffff55;
+  > i {
+    color: #ffffff44;
+    font-size: 16px;
+    margin-left: 8px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  > img {
+    width: 14px;
+    margin-left: 10px;
+    margin-right: 12px;
+  }
+`;

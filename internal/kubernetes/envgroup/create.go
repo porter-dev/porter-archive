@@ -217,6 +217,29 @@ func GetSyncedReleases(helmAgent *helm.Agent, configMap *v1.ConfigMap) ([]*relea
 	return res, nil
 }
 
+func GetStackSyncedReleases(helmAgent *helm.Agent, namespace string) ([]*release.Release, error) {
+	res := make([]*release.Release, 0)
+
+	releases, err := helmAgent.ListReleases(context.Background(), namespace, &types.ReleaseListFilter{
+		StatusFilter: []string{
+			"deployed",
+			"uninstalled",
+			"pending",
+			"pending-install",
+			"pending-upgrade",
+			"pending-rollback",
+			"failed",
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	res = append(res, releases...)
+
+	return res, nil
+}
+
 func EncodeSecrets(data map[string]string) map[string][]byte {
 	res := make(map[string][]byte)
 

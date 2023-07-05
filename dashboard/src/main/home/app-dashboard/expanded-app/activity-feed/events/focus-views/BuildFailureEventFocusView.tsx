@@ -1,19 +1,17 @@
-import Breadcrumb from "components/Breadcrumb";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { Context } from "shared/Context";
+import React, { useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import Anser, { AnserJsonEntry } from "anser";
 import JSZip from "jszip";
 import dayjs from "dayjs";
-import { Log as LogType } from "../../../useAgentLogs";
 import { PorterAppEvent } from "shared/types";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
 import { getDuration } from "../utils";
 import Link from "components/porter/Link";
+import { PorterLog } from "../../../logs/types";
 
 type Props = {
     event: PorterAppEvent;
@@ -24,7 +22,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
     event,
     appData,
 }) => {
-    const [logs, setLogs] = useState<LogType[]>([]);
+    const [logs, setLogs] = useState<PorterLog[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
 
@@ -57,7 +55,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
                     run_id: event.metadata.action_run_id,
                 }
             );
-            let logs: LogType[] = [];
+            let logs: PorterLog[] = [];
             if (res.data != null) {
                 // Fetch the logs
                 const logsResponse = await fetch(res.data);
@@ -94,7 +92,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
                                             anserLine[0].fg = "238,75,43";
                                         }
 
-                                        const log: LogType = {
+                                        const log: PorterLog = {
                                             line: anserLine,
                                             lineNumber: i + 1,
                                             timestamp: line.match(timestampPattern)?.[0],
@@ -277,28 +275,4 @@ const LogInnerSpan = styled.span`
         props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
   background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
         props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
-`;
-
-const BackButton = styled.div`
-  display: flex;
-  align-items: center;
-  max-width: fit-content;
-  cursor: pointer;
-  font-size: 11px;
-  max-height: fit-content;
-  padding: 5px 13px;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  color: white;
-  background: #ffffff11;
-
-  :hover {
-    background: #ffffff22;
-  }
-
-  > i {
-    color: white;
-    font-size: 16px;
-    margin-right: 6px;
-  }
 `;

@@ -120,9 +120,9 @@ type GetChartLogsWithinTimeRangeRequest struct {
 	StartRange  time.Time `schema:"start_range,omitempty"`
 	EndRange    time.Time `schema:"end_range,omitempty"`
 	SearchParam string    `schema:"search_param"`
-	Revision    string    `schema:"revision"`
 	Namespace   string    `schema:"namespace"`
 	PodSelector string    `schema:"pod_selector"`
+	Direction   string    `schema:"direction"`
 }
 
 type GetPodValuesRequest struct {
@@ -140,8 +140,17 @@ type GetRevisionValuesRequest struct {
 }
 
 type LogLine struct {
-	Timestamp *time.Time `json:"timestamp"`
-	Line      string     `json:"line"`
+	Timestamp *time.Time  `json:"timestamp"`
+	Line      string      `json:"line"`
+	Metadata  LogMetadata `json:"metadata"`
+}
+
+type LogMetadata struct {
+	PodName      string `json:"pod_name"`
+	PodNamespace string `json:"pod_namespace"`
+	Revision     string `json:"revision"`
+	OutputStream string `json:"output_stream"`
+	AppName      string `json:"app_name"`
 }
 
 type GetLogResponse struct {

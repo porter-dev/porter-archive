@@ -12,13 +12,12 @@ import RadioFilter from "components/RadioFilter";
 import spinner from "assets/loading.gif";
 import filterOutline from "assets/filter-outline.svg";
 import filterOutlineWhite from "assets/filter-outline-white.svg";
-import time from "assets/time.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { Direction, useLogs } from "./useAgentLogs";
+import { useLogs } from "./utils";
+import { Direction } from "./types";
 import Anser from "anser";
-import DateTimePicker from "components/date-time-picker/DateTimePicker";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
 import { ChartType } from "shared/types";
@@ -30,11 +29,16 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
-import { Service } from "../new-app-flow/serviceTypes";
+import { Service } from "../../new-app-flow/serviceTypes";
 
 type Props = {
   currentChart?: ChartType;
   services?: Service[];
+  timeRange?: {
+    startTime?: Dayjs;
+    endTime?: Dayjs;
+  };
+  showFilter?: boolean;
 };
 
 type PodFilter = {
@@ -42,7 +46,12 @@ type PodFilter = {
   podType: string;
 };
 
-const LogSection: React.FC<Props> = ({ currentChart, services }) => {
+const LogSection: React.FC<Props> = ({
+  currentChart,
+  services,
+  timeRange,
+  showFilter = true,
+}) => {
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
   const [podFilter, setPodFilter] = useState<PodFilter>({
@@ -53,7 +62,7 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [enteredSearchText, setEnteredSearchText] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(timeRange?.startTime != null ? timeRange.startTime.toDate() : undefined);
   const [notification, setNotification] = useState<string>();
 
   const [hasPorterAgent, setHasPorterAgent] = useState(true);
@@ -79,7 +88,8 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
     notify,
     currentChart,
     setIsLoading,
-    selectedDate
+    selectedDate,
+    timeRange,
   );
 
   const refreshPodLogsValues = async () => {
@@ -89,8 +99,7 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
       const podList = services.map((service: Service) => {
         return {
           podName: service.name,
-          podType:
-            service.type.valueOf() == "worker" ? "wkr" : service.type.valueOf(),
+          podType: service.type == "worker" ? "wkr" : service.type,
         };
       });
       setPodFilterOpts(podList);
@@ -99,9 +108,10 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
 
   useEffect(() => {
     if (!isLoading && scrollToBottomRef.current && scrollToBottomEnabled) {
+      const scrollPosition = scrollToBottomRef.current.offsetTop + scrollToBottomRef.current.offsetHeight - window.innerHeight;
       scrollToBottomRef.current.scrollIntoView({
         behavior: "smooth",
-        block: "end",
+        top: scrollPosition,
       });
     }
   }, [isLoading, logs, scrollToBottomRef, scrollToBottomEnabled]);
@@ -215,15 +225,17 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
               setSelectedDate={setSelectedDate}
               resetSearch={resetSearch}
             />
-            <RadioFilter
-              icon={
-                podFilter.podName == "" ? filterOutline : filterOutlineWhite
-              }
-              selected={podFilter.podName}
-              setSelected={setPodFilterWithPodName}
-              options={radioOptions}
-              name="Filter logs"
-            />
+            {showFilter &&
+              <RadioFilter
+                icon={
+                  podFilter.podName == "" ? filterOutline : filterOutlineWhite
+                }
+                selected={podFilter.podName}
+                setSelected={setPodFilterWithPodName}
+                options={radioOptions}
+                name="Filter logs"
+              />
+            }
           </Flex>
           <Flex>
             <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
@@ -369,13 +381,6 @@ const LogSection: React.FC<Props> = ({ currentChart, services }) => {
     installAgent();
   };
 
-  const getFilters = () => {
-    return {
-      release_name: currentChart.name,
-      release_namespace: currentChart.namespace,
-    };
-  };
-
   return isPorterAgentInstalling ? (
     <Fieldset>
       <Container row>
@@ -432,73 +437,6 @@ const WarnI = styled.i`
 const Spinner = styled.img`
   width: 15px;
   height: 15px;
-`;
-
-const BackButton = styled.div`
-  display: flex;
-  width: 30px;
-  z-index: 2;
-  cursor: pointer;
-  height: 30px;
-  align-items: center;
-  margin-right: 15px;
-  justify-content: center;
-  cursor: pointer;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  background: #ffffff11;
-
-  > i {
-    font-size: 18px;
-  }
-
-  :hover {
-    background: #ffffff22;
-    > img {
-      opacity: 1;
-    }
-  }
-`;
-
-const AbsoluteTitle = styled.div`
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  width: 100%;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  padding-left: 20px;
-  font-size: 18px;
-  font-weight: 500;
-  user-select: text;
-`;
-
-const Fullscreen = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  padding-top: 60px;
-`;
-
-const Icon = styled.div`
-  background: #26292e;
-  border-radius: 5px;
-  height: 30px;
-  width: 30px;
-  display: flex;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  > i {
-    font-size: 14px;
-  }
-  border: 1px solid #494b4f;
-  :hover {
-    border: 1px solid #7a7b80;
-  }
 `;
 
 const Checkbox = styled.div<{ checked: boolean }>`
@@ -578,48 +516,9 @@ const FlexRow = styled.div`
   flex-wrap: wrap;
 `;
 
-const SearchBarWrapper = styled.div`
-  display: flex;
-  flex: 1;
-
-  > i {
-    color: #aaaabb;
-    padding-top: 1px;
-    margin-left: 8px;
-    font-size: 16px;
-    margin-right: 8px;
-  }
-`;
-
-const SearchInput = styled.input`
-  outline: none;
-  border: none;
-  font-size: 13px;
-  background: none;
-  width: 100%;
-  color: white;
-  height: 100%;
-`;
-
-const SearchRow = styled.div`
-  display: flex;
-  align-items: center;
-  height: 30px;
-  margin-right: 10px;
-  background: #26292e;
-  border-radius: 5px;
-  border: 1px solid #aaaabb33;
-`;
-
-const SearchRowWrapper = styled(SearchRow)`
-  border-radius: 5px;
-  width: 250px;
-`;
-
 const StyledLogsSection = styled.div`
   width: 100%;
-  min-height: 400px;
-  height: calc(100vh - 460px);
+  height: 600px;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -764,72 +663,4 @@ const NotificationWrapper = styled.div<{ active?: boolean }>`
 
 const LogsSectionWrapper = styled.div`
   position: relative;
-`;
-
-const InstallPorterAgentButton = styled.button`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  cursor: pointer;
-  font-family: "Work Sans", sans-serif;
-  border: none;
-  border-radius: 5px;
-  color: white;
-  height: 35px;
-  padding: 0px 8px;
-  padding-bottom: 1px;
-  margin-top: 20px;
-  font-weight: 500;
-  padding-right: 15px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  cursor: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "not-allowed" : "pointer"};
-  background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "#aaaabbee" : "#5561C0"};
-  :hover {
-    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
-  }
-  > i {
-    color: white;
-    width: 18px;
-    height: 18px;
-    font-weight: 600;
-    font-size: 12px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    margin-right: 5px;
-    justify-content: center;
-  }
-`;
-
-const Placeholder = styled.div`
-  padding: 30px;
-  padding-bottom: 40px;
-  font-size: 13px;
-  color: #ffffff44;
-  min-height: 400px;
-  height: 50vh;
-  background: #ffffff08;
-  border-radius: 8px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  > i {
-    font-size: 18px;
-    margin-right: 8px;
-  }
-`;
-
-const Header = styled.div`
-  font-weight: 500;
-  color: #aaaabb;
-  font-size: 16px;
-  margin-bottom: 15px;
 `;

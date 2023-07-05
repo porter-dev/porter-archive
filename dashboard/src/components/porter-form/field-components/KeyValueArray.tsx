@@ -66,7 +66,6 @@ const KeyValueArray: React.FC<Props> = (props) => {
   useEffect(() => {
     if (hasSetValue(props) && !Array.isArray(state?.synced_env_groups)) {
       const values = props.value[0];
-      // console.log(values);
       const envGroups: PartialEnvGroup[] = values?.synced || [];
 
       if (Array.isArray(props.injectedProps?.availableSyncEnvGroups)) {

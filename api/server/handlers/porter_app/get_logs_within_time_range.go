@@ -70,7 +70,6 @@ func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http
 		EndRange:    &request.EndRange,
 		Namespace:   request.Namespace,
 		MatchPrefix: request.ChartName,
-		Revision:    request.Revision,
 	}
 
 	var podSelector string
@@ -137,9 +136,10 @@ func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http
 		Limit:       request.Limit,
 		StartRange:  &request.StartRange,
 		EndRange:    &request.EndRange,
-		Revision:    request.Revision,
 		PodSelector: podSelector,
 		Namespace:   request.Namespace,
+		Direction:   request.Direction,
+		SearchParam: request.SearchParam,
 	}
 
 	logs, err := porter_agent.GetHistoricalLogs(agent.Clientset, agentSvc, logRequest)

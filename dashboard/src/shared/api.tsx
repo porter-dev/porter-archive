@@ -244,9 +244,9 @@ const getLogsWithinTimeRange = baseApi<
     start_range?: string;
     end_range?: string;
     search_param?: string;
-    revision?: string;
     namespace?: string;
     pod_selector?: string;
+    direction?: string;
   },
   {
     project_id: number;
@@ -1684,6 +1684,24 @@ const updateEnvGroup = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/create`
 );
 
+const updateStacksEnvGroup = baseApi<
+  {
+    name: string;
+    variables: { [key: string]: string };
+    secret_variables?: { [key: string]: string };
+    apps?: string[];
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+  }
+>(
+  "POST",
+  ({ cluster_id, project_id, namespace }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/envgroup/create`
+);
+
 const createConfigMap = baseApi<
   {
     name: string;
@@ -2440,6 +2458,7 @@ const updateStackStep = baseApi<
   {
     step: string;
     stack_name?: string;
+    error_message?: string;
   },
   {
     project_id: number;
@@ -2824,6 +2843,7 @@ export default {
   createEnvGroup,
   cloneEnvGroup,
   updateEnvGroup,
+  updateStacksEnvGroup,
   listEnvGroups,
   getEnvGroup,
   deleteEnvGroup,

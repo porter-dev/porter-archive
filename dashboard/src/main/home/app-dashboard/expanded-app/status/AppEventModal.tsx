@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import Modal from "components/porter/Modal";
 import TitleSection from "components/TitleSection";
-import { Log } from "../useAgentLogs";
 import Text from "components/porter/Text";
 import danger from "assets/danger.svg";
 
@@ -11,9 +10,10 @@ import Spacer from "components/porter/Spacer";
 import document from "assets/document.svg";
 import styled from "styled-components";
 import time from "assets/time.svg";
+import { PorterLog } from "../logs/types";
 
 interface AppEventModalProps {
-    logs: Log[];
+    logs: PorterLog[];
     setModalVisible: (x: boolean) => void;
     porterAppName: string;
     timestamp: string;

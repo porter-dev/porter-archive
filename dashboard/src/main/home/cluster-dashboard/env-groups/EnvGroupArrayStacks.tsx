@@ -6,7 +6,9 @@ import EnvEditorModal from "main/home/modals/EnvEditorModal";
 import upload from "assets/upload.svg";
 import { MultiLineInput } from "components/porter-form/field-components/KeyValueArray";
 import { dotenv_parse } from "shared/string_utils";
-
+import { PopulatedEnvGroup } from "components/porter-form/types";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
 export type KeyValueType = {
   key: string;
   value: string;
@@ -22,6 +24,7 @@ type PropsType = {
   disabled?: boolean;
   fileUpload?: boolean;
   secretOption?: boolean;
+  syncedEnvGroups?: PopulatedEnvGroup[];
 };
 
 const EnvGroupArray = ({
@@ -31,6 +34,7 @@ const EnvGroupArray = ({
   disabled,
   fileUpload,
   secretOption,
+  syncedEnvGroups
 }: PropsType) => {
   const [showEditorModal, setShowEditorModal] = useState(false);
 
@@ -39,6 +43,11 @@ const EnvGroupArray = ({
       setValues([]);
     }
   }, [values]);
+  const isKeyOverriding = (key: string) => {
+
+    if (!syncedEnvGroups) return false;
+    return syncedEnvGroups.some(envGroup => key in envGroup.variables);
+  };
 
   const readFile = (env: string) => {
     const envObj = dotenv_parse(env);
@@ -94,38 +103,62 @@ const EnvGroupArray = ({
                     }}
                     disabled={disabled || entry.locked}
                     spellCheck={false}
+                    override={isKeyOverriding(entry.key)}
                   />
-                  <Spacer />
-
+                  < Spacer x={.5} inline />
                   {entry.hidden ? (
-                    <Input
-                      placeholder="ex: value"
-                      width="270px"
-                      value={entry.value}
-                      onChange={(e: any) => {
-                        const _values = [...values];
-                        _values[i].value = e.target.value;
-                        setValues(_values);
-                      }}
-                      disabled={disabled || entry.locked}
-                      type={entry.hidden ? "password" : "text"}
-                      spellCheck={false}
-                    />
+                    entry.value?.includes("PORTERSECRET") ? (
+                      <Input
+                        placeholder="ex: value"
+                        width="270px"
+                        value={entry.value}
+                        disabled
+                        type={"password"}
+                        spellCheck={false}
+                        override={isKeyOverriding(entry.key)}
+                      />) : (
+                      <Input
+                        placeholder="ex: value"
+                        width="270px"
+                        value={entry.value}
+                        onChange={(e: any) => {
+                          const _values = [...values];
+                          _values[i].value = e.target.value;
+                          setValues(_values);
+                        }}
+                        disabled={disabled || entry.locked}
+                        type={entry.hidden ? "password" : "text"}
+                        spellCheck={false}
+                        override={isKeyOverriding(entry.key)}
+
+                      />)
                   ) : (
-                    <MultiLineInput
-                      placeholder="ex: value"
-                      width="270px"
-                      value={entry.value}
-                      onChange={(e: any) => {
-                        const _values = [...values];
-                        _values[i].value = e.target.value;
-                        setValues(_values);
-                      }}
-                      rows={entry.value?.split("\n").length}
-                      disabled={disabled || entry.locked}
-                      spellCheck={false}
-                    />
-                  )}
+                    entry.value?.includes("PORTERSECRET") ? (
+                      <Input
+                        placeholder="ex: value"
+                        width="270px"
+                        value={entry.value}
+                        disabled
+                        type={"password"}
+                        spellCheck={false}
+                        override={isKeyOverriding(entry.key)}
+                      />) : (
+                      <MultiLineInputer
+                        placeholder="ex: value"
+                        width="270px"
+                        value={entry.value}
+                        onChange={(e: any) => {
+                          const _values = [...values];
+                          _values[i].value = e.target.value;
+                          setValues(_values);
+                        }}
+                        rows={entry.value?.split("\n").length}
+                        disabled={disabled || entry.locked}
+                        spellCheck={false}
+                        override={isKeyOverriding(entry.key)}
+                      />
+                    ))
+                  }
                   {secretOption && (
                     <HideButton
                       onClick={() => {
@@ -154,6 +187,8 @@ const EnvGroupArray = ({
                       <i className="material-icons">cancel</i>
                     </DeleteButton>
                   )}
+
+                  {isKeyOverriding(entry.key) && <><Spacer x={1} inline /> <Text color={'#6b74d6'} >Key is overriding value in a environment group</Text></>}
                 </InputWrapper>
               );
             }
@@ -177,7 +212,7 @@ const EnvGroupArray = ({
             >
               <i className="material-icons">add</i> Add Row
             </AddRowButton>
-            <Spacer />
+            <Spacer x={.5} inline />
             {fileUpload && (
               <UploadButton
                 onClick={() => {
@@ -207,10 +242,7 @@ const EnvGroupArray = ({
 };
 
 export default EnvGroupArray;
-const Spacer = styled.div`
-  width: 10px;
-  height: 20px;
-`;
+
 
 const AddRowButton = styled.div`
   display: flex;
@@ -296,24 +328,28 @@ const InputWrapper = styled.div`
   display: flex;
   align-items: center;
   margin-top: 5px;
+
 `;
 
-const Input = styled.input`
+type InputProps = {
+  disabled?: boolean;
+  width: string;
+  override?: boolean;
+};
+
+const Input = styled.input<InputProps>`
   outline: none;
   border: none;
   margin-bottom: 5px;
   font-size: 13px;
   background: #ffffff11;
-  border: 1px solid #ffffff55;
+  border: ${(props) => (props.override ? '2px solid #6b74d6' : ' 1px solid #ffffff55')};
   border-radius: 3px;
-  width: ${(props: { disabled?: boolean; width: string }) =>
-    props.width ? props.width : "270px"};
-  color: ${(props: { disabled?: boolean; width: string }) =>
-    props.disabled ? "#ffffff44" : "white"};
+  width: ${(props) => props.width ? props.width : "270px"};
+  color: ${(props) => props.disabled ? "#ffffff44" : "white"};
   padding: 5px 10px;
   height: 35px;
 `;
-
 const Label = styled.div`
   color: #ffffff;
   margin-bottom: 10px;
@@ -322,4 +358,45 @@ const Label = styled.div`
 const StyledInputArray = styled.div`
   margin-bottom: 15px;
   margin-top: 22px;
+`;
+
+export const MultiLineInputer = styled.textarea<InputProps>`
+  outline: none;
+  border: none;
+  margin-bottom: 5px;
+  font-size: 13px;
+  background: #ffffff11;
+  border: ${(props) => (props.override ? '2px solid #6b74d6' : ' 1px solid #ffffff55')};
+  border-radius: 3px;
+  min-width: ${(props) => (props.width ? props.width : "270px")};
+  max-width: ${(props) => (props.width ? props.width : "270px")};
+  color: ${(props) => (props.disabled ? "#ffffff44" : "white")};
+  padding: 8px 10px 5px 10px;
+  min-height: 35px;
+  max-height: 100px;
+  white-space: nowrap;
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    :horizontal {
+      height: 8px;
+    }
+  }
+
+  ::-webkit-scrollbar-corner {
+    width: 10px;
+    background: #ffffff11;
+    color: white;
+  }
+
+  ::-webkit-scrollbar-track {
+    width: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: darkgrey;
+    outline: 1px solid slategrey;
+  }
 `;

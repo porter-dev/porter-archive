@@ -1,40 +1,21 @@
-import Anser, { AnserJsonEntry } from "anser";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import _ from "lodash";
-import { z } from "zod";
 import { useContext, useEffect, useRef, useState } from "react";
 import api from "shared/api";
+import Anser from "anser";
 import { Context } from "shared/Context";
 import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
 import { ChartType } from "shared/types";
-import { isJSON } from "shared/util";
+import { AgentLog, AgentLogSchema, Direction, PorterLog, PaginationInfo } from "./types";
 
 const MAX_LOGS = 5000;
 const MAX_BUFFER_LOGS = 1000;
 const QUERY_LIMIT = 1000;
 
-export enum Direction {
-  forward = "forward",
-  backward = "backward",
-}
-
-export interface Log {
-  line: AnserJsonEntry[];
-  lineNumber: number;
-  timestamp?: string;
-}
-
-const LogSchema = z.object({
-  line: z.string(),
-  timestamp: z.string(),
-});
-
-type LogLine = z.infer<typeof LogSchema>;
-
-export const parseLogs = (logs: any[] = []): Log[] => {
-  return logs.filter(Boolean).map((logLine: any, idx) => {
+export const parseLogs = (logs: any[] = []): PorterLog[] => {
+  return logs.map((log: any, idx) => {
     try {
-      const parsed: LogLine = LogSchema.parse(logLine);
+      const parsed: AgentLog = AgentLogSchema.parse(log);
 
       // TODO Move log parsing to the render method
       const ansiLog = Anser.ansiToJson(parsed.line);
@@ -45,18 +26,13 @@ export const parseLogs = (logs: any[] = []): Log[] => {
       };
     } catch (err) {
       return {
-        line: Anser.ansiToJson(logLine),
+        line: Anser.ansiToJson(log.toString()),
         lineNumber: idx + 1,
         timestamp: undefined,
-      };
+      }
     }
   });
 };
-
-interface PaginationInfo {
-  previousCursor: string | null;
-  nextCursor: string | null;
-}
 
 export const useLogs = (
   currentPodName: string,
@@ -67,14 +43,18 @@ export const useLogs = (
   currentChart: ChartType | undefined,
   setLoading: (isLoading: boolean) => void,
   // if setDate is set, results are not live
-  setDate?: Date
+  setDate?: Date,
+  timeRange?: {
+    startTime?: Dayjs,
+    endTime?: Dayjs,
+  }
 ) => {
   const isLive = !setDate;
-  const logsBufferRef = useRef<Log[]>([]);
+  const logsBufferRef = useRef<PorterLog[]>([]);
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
-  const [logs, setLogs] = useState<Log[]>([]);
+  const [logs, setLogs] = useState<PorterLog[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
     previousCursor: null,
     nextCursor: null,
@@ -104,7 +84,7 @@ export const useLogs = (
   } = useWebsockets();
 
   const updateLogs = (
-    newLogs: Log[],
+    newLogs: PorterLog[],
     direction: Direction = Direction.forward
   ) => {
     // Nothing to update here
@@ -170,7 +150,7 @@ export const useLogs = (
     logsBufferRef.current = [];
   };
 
-  const pushLogs = (newLogs: Log[]) => {
+  const pushLogs = (newLogs: PorterLog[]) => {
     logsBufferRef.current.push(...newLogs);
 
     if (logsBufferRef.current.length >= MAX_BUFFER_LOGS) {
@@ -200,15 +180,21 @@ export const useLogs = (
       },
       onmessage: (evt: MessageEvent) => {
         // Nothing to do here
-        if (!evt?.data || typeof evt.data !== "string") {
+        if (evt.data == null) {
           return;
         }
-
-        const newLogs = parseLogs(
-          evt?.data?.split("}\n").map((line: string) => line + "}")
-        );
-
-        pushLogs(newLogs);
+        const jsonData = evt.data.trim().split("\n")
+        const newLogs: any[] = [];
+        jsonData.forEach((data: string) => {
+          try {
+            const jsonLog = JSON.parse(data);
+            newLogs.push(jsonLog)
+          } catch (err) {
+            // TODO: better error handling
+            // console.log(err)
+          }
+        });
+        pushLogs(parseLogs(newLogs));
       },
       onclose: () => {
         console.log("Closed websocket:", websocketKey);
@@ -219,60 +205,87 @@ export const useLogs = (
     openWebsocket(websocketKey);
   };
 
-  const queryLogs = (
+  const queryLogs = async (
     startDate: string,
     endDate: string,
     direction: Direction,
     limit: number = QUERY_LIMIT
   ): Promise<{
-    logs: Log[];
+    logs: PorterLog[];
     previousCursor: string | null;
     nextCursor: string | null;
   }> => {
-    return api
-      .getLogs(
-        "<token>",
-        {
-          pod_selector: currentPod + "-.*",
-          namespace,
-          revision: currentChart.version.toString(),
-          search_param: searchParam,
-          start_range: startDate,
-          end_range: endDate,
-          limit,
-          direction,
-        },
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-        }
-      )
-      .then((res) => {
-        const newLogs = parseLogs(res.data?.logs);
+    if (currentCluster == null || currentProject == null) {
+      return {
+        logs: [],
+        previousCursor: null,
+        nextCursor: null,
+      };
+    }
 
-        if (direction === Direction.backward) {
-          newLogs.reverse();
-        }
+    const getLogsReq = {
+      namespace,
+      search_param: searchParam,
+      start_range: startDate,
+      end_range: endDate,
+      limit,
+      chart_name: "",
+      pod_selector: currentPodName,
+      direction,
+    };
 
-        return {
-          logs: newLogs,
-          previousCursor:
-            // There are no more historical logs so don't set the previous cursor
-            newLogs.length < QUERY_LIMIT && direction == Direction.backward
-              ? null
-              : res.data.backward_continue_time,
-          nextCursor: res.data.forward_continue_time,
-        };
-      })
-      .catch((err) => {
-        setCurrentError(err);
-
+    if (currentPodName === "") {
+      if (currentChart == null) {
         return {
           logs: [],
           previousCursor: null,
           nextCursor: null,
         };
-      });
+      } else if (currentChart.name.endsWith("-r")) {
+        getLogsReq.chart_name = currentChart.name;
+      } else {
+        getLogsReq.pod_selector = currentPod + "-.*";
+      }
+    }
+
+    try {
+      const logsResp = await api.getLogsWithinTimeRange(
+        "<token>",
+        getLogsReq,
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      )
+
+      if (logsResp.data == null) {
+        return {
+          logs: [],
+          previousCursor: null,
+          nextCursor: null,
+        };
+      }
+
+      const newLogs = parseLogs(logsResp.data.logs);
+      if (direction === Direction.backward) {
+        newLogs.reverse();
+      }
+      return {
+        logs: newLogs,
+        previousCursor:
+          // There are no more historical logs so don't set the previous cursor
+          newLogs.length < QUERY_LIMIT && direction == Direction.backward
+            ? null
+            : logsResp.data.backward_continue_time,
+        nextCursor: logsResp.data.forward_continue_time,
+      };
+    } catch {
+      return {
+        logs: [],
+        previousCursor: null,
+        nextCursor: null,
+      };
+    }
   };
 
   const refresh = async () => {
@@ -284,8 +297,8 @@ export const useLogs = (
     setLogs([]);
     flushLogsBuffer(true);
     const websocketKey = `${currentPod}-${namespace}-websocket`;
-    const endDate = dayjs(setDate);
-    const oneDayAgo = endDate.subtract(1, "day");
+    const endDate = timeRange?.endTime != null ? timeRange.endTime : dayjs(setDate);
+    const oneDayAgo = timeRange?.startTime != null ? timeRange.startTime : endDate.subtract(1, "day");
 
     const { logs: initialLogs, previousCursor, nextCursor } = await queryLogs(
       oneDayAgo.toISOString(),
@@ -313,8 +326,6 @@ export const useLogs = (
     if (isLive) {
       setupWebsocket(websocketKey);
     }
-
-    return () => isLive && closeWebsocket(websocketKey);
   };
 
   const moveCursor = async (direction: Direction) => {
@@ -413,6 +424,12 @@ export const useLogs = (
       closeAllWebsockets();
     }
   }, [isLive]);
+
+  useEffect(() => {
+    return () => {
+      closeAllWebsockets();
+    };
+  }, []);
 
   return {
     logs,

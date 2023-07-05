@@ -15,6 +15,7 @@ import { readableDate } from "shared/string_utils";
 import dayjs from "dayjs";
 import Anser from "anser";
 import api from "shared/api";
+import { Direction } from "../../../logs/types";
 
 type Props = {
   event: PorterAppEvent;
@@ -36,6 +37,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
           end_range: dayjs(event.updated_at).add(1, 'minute').toISOString(),
           pod_selector: event.metadata.pod_name.endsWith(".*") ? event.metadata.pod_name : event.metadata.pod_name + ".*",
           limit: 1000,
+          direction: Direction.forward,
         },
         {
           project_id: appData.app.project_id,

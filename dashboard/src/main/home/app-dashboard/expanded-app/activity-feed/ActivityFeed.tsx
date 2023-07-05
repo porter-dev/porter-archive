@@ -94,11 +94,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
       getEvents();
     }
 
-  }, [currentProject, currentCluster, hasPorterAgent, page]);
-
-  useEffect(() => {
-    getEvents();
-  }, [eventId]);
+  }, [currentProject, currentCluster, hasPorterAgent, page, eventId]);
 
   const installAgent = async () => {
     const project_id = currentProject?.id;
@@ -150,7 +146,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
     />;
   }
 
-  if (!hasPorterAgent) {
+  if (!loading && !hasPorterAgent) {
     return (
       <Fieldset>
         <Text size={16}>

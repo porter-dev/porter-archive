@@ -8,6 +8,7 @@ import settings from "assets/settings-bold.png";
 import web from "assets/web-bold.png";
 import addOns from "assets/add-ons-bold.png";
 import infra from "assets/infra.png";
+import sliders from "assets/sliders.svg";
 
 import { Context } from "shared/Context";
 
@@ -137,21 +138,21 @@ class Sidebar extends Component<PropsType, StateType> {
             "update",
             "delete",
           ]) && (
-            <NavButton path={"/integrations"}>
-              <Img src={integrations} />
-              Integrations
-            </NavButton>
-          )}
+              <NavButton path={"/integrations"}>
+                <Img src={integrations} />
+                Integrations
+              </NavButton>
+            )}
           {this.props.isAuthorized("settings", "", [
             "get",
             "update",
             "delete",
           ]) && (
-            <NavButton path={"/project-settings"}>
-              <Img src={settings} />
-              Project settings
-            </NavButton>
-          )}
+              <NavButton path={"/project-settings"}>
+                <Img src={settings} />
+                Project settings
+              </NavButton>
+            )}
 
           <br />
 
@@ -188,43 +189,54 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={addOns} />
             Add-ons
           </NavButton>
+          <NavButton
+            path="/env-groups"
+
+            active={
+
+              window.location.pathname.startsWith("/env-groups")
+            }
+          >
+            <Img src={sliders} />
+            Env groups
+          </NavButton>
           {this.props.isAuthorized("integrations", "", [
             "get",
             "create",
             "update",
             "delete",
           ]) && (
-            <NavButton path={"/integrations"}>
-              <Img src={integrations} />
-              Integrations
-            </NavButton>
-          )}
+              <NavButton path={"/integrations"}>
+                <Img src={integrations} />
+                Integrations
+              </NavButton>
+            )}
           {this.props.isAuthorized("settings", "", [
             "get",
             "update",
             "delete",
           ]) && (
-            <NavButton
-              path={"/cluster-dashboard"}
-              targetClusterName={currentCluster?.name}
-              active={
-                window.location.pathname.startsWith("/cluster-dashboard")
-              }
-            >
-              <Img src={infra} />
-              Infrastructure
-            </NavButton>
-          )}
+              <NavButton
+                path={"/cluster-dashboard"}
+                targetClusterName={currentCluster?.name}
+                active={
+                  window.location.pathname.startsWith("/cluster-dashboard")
+                }
+              >
+                <Img src={infra} />
+                Infrastructure
+              </NavButton>
+            )}
           {this.props.isAuthorized("settings", "", [
             "get",
             "update",
             "delete",
           ]) && (
-            <NavButton path={"/project-settings"}>
-              <Img src={settings} />
-              Project settings
-            </NavButton>
-          )}
+              <NavButton path={"/project-settings"}>
+                <Img src={settings} />
+                Project settings
+              </NavButton>
+            )}
 
           {/* Hacky workaround for setting currentCluster with legacy method */}
           <Clusters

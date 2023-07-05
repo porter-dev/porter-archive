@@ -13,6 +13,7 @@ import { ChartType } from "shared/types";
 import * as Diff from "deep-diff";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import ChangeLogComponent from "./ChangeLogComponent";
 
 type Props = {
   modalVisible: boolean;
@@ -137,82 +138,6 @@ const ChangeLogModal: React.FC<Props> = ({
     fetchData();
   }, [currentChart.config]);
 
-  const parseYamlAndDisplayDifferences = (oldYaml: any, newYaml: any) => {
-    const diff = Diff.diff(oldYaml, newYaml);
-    const changes: JSX.Element[] = [];
-    // Define the regex pattern to match service creation
-    const servicePattern = /^[a-zA-Z0-9\-]*-[a-zA-Z0-9]*[^\.]$/;
-    diff?.forEach((difference: any) => {
-      let path = difference.path?.join(" ");
-      switch (difference.kind) {
-        case "N":
-          // Check if the added item is a service by testing the path against the regex pattern
-          if (servicePattern.test(path)) {
-            changes.push(<ChangeBox type="N">{`${path} created`}</ChangeBox>);
-          } else {
-            // If not, display the full message
-            changes.push(
-              <ChangeBox type="N">{`${path} added: ${JSON.stringify(
-                difference.rhs
-              )}`}</ChangeBox>
-            );
-          }
-          break;
-        case "D":
-          if (servicePattern.test(path)) {
-            // If so, display a simplified message
-            changes.push(<ChangeBox type="D">
-              {`${path} deleted`}
-            </ChangeBox>);
-          } else {
-
-            changes.push(<ChangeBox type="D">
-              {`${path} removed`}
-            </ChangeBox>);
-          }
-          break;
-        case "E":
-          changes.push(
-            <ChangeBox type="E">
-              {`${path}: ${JSON.stringify(difference.lhs)} -> ${JSON.stringify(
-                difference.rhs
-              )}`}
-            </ChangeBox>
-          );
-          break;
-        case "A":
-          path = path + `[${difference.index}]`;
-          if (difference.item.kind === "N")
-            changes.push(
-              <Text>{`${path} added: ${JSON.stringify(
-                difference.item.rhs
-              )}`}</Text>
-            );
-          if (difference.item.kind === "D")
-            changes.push(<Text>{`${path} removed`}</Text>);
-          if (difference.item.kind === "E")
-            changes.push(
-              <Text>
-                {`${path} updated: ${JSON.stringify(
-                  difference.item.lhs
-                )} -> ${JSON.stringify(difference.item.rhs)}`}
-              </Text>
-            );
-          break;
-      }
-    });
-    if (changes.length === 0) {
-      changes.push(
-        <ChangeBox type="E">
-          {`No changes detected`}
-        </ChangeBox>
-      )
-    }
-
-    return <ChangeLog>{changes}</ChangeLog>
-
-  };
-
   return (
     <>
       <Modal closeModal={() => setModalVisible(false)} width={"800px"}>
@@ -253,13 +178,17 @@ const ChangeLogModal: React.FC<Props> = ({
                 </>
               ) : (
                 <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-                  {revertModal ? parseYamlAndDisplayDifferences(
-                    currentChart.config,
-                    chartEvent?.config
-                  ) : parseYamlAndDisplayDifferences(
-                    prevChartEvent?.config,
-                    chartEvent?.config
-                  )}
+                  {revertModal ?
+
+                    <ChangeLogComponent
+                      oldYaml={currentChart.config}
+                      newYaml={chartEvent?.config}
+                    />
+                    : <ChangeLogComponent
+                      oldYaml={prevChartEvent?.config}
+                      newYaml={chartEvent?.config}
+                    />
+                  }
                 </div>
               )}
 
@@ -306,23 +235,3 @@ const ChangeLogModal: React.FC<Props> = ({
 };
 
 export default ChangeLogModal;
-
-const ChangeLog = styled.div`
-  display: flex;
-  flex-direction: column;
-  border-radius: 8px;
-  overflow: hidden;
-`;
-
-const ChangeBox = styled.div<{ type: string }>`
-  padding: 10px;
-  background-color: ${({ type }) =>
-    type === "N"
-      ? "#034a53"
-      : type === "D"
-        ? "#632f34"
-        : type === "E"
-          ? "#272831"
-          : "#fff"};
-  color: "#fff";
-`;

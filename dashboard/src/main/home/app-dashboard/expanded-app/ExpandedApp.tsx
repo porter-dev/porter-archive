@@ -48,6 +48,7 @@ import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/use
 import Anser, { AnserJsonEntry } from "anser";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
+import { PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
 
 type Props = RouteComponentProps & {};
@@ -115,7 +116,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
   const [subdomain, setSubdomain] = useState<string>("");
-
+  const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([])
+  const [deletedEnvGroups, setDeleteEnvGroups] = useState<PopulatedEnvGroup[]>([])
   const [porterApp, setPorterApp] = useState<PorterApp>();
   // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
   const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
@@ -193,8 +195,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           }
         );
       } catch (err) {
-        // do nothing, unable to find release chart
-        // console.log(err);
+        setError(err)
       }
 
       // update apps and release
@@ -207,7 +208,40 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         resPorterApp?.data?.porter_yaml_path ?? "porter.yaml",
         newAppData
       );
+      let envGroups: PartialEnvGroup[] = [];
+      envGroups = await api
+        .listEnvGroups<PartialEnvGroup[]>(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            namespace: "default",
+            cluster_id: currentCluster.id,
+          }
+        )
+        .then((res) => res.data);
 
+      const populateEnvGroupsPromises = envGroups?.map((envGroup) =>
+        api
+          .getEnvGroup<PopulatedEnvGroup>(
+            "<token>",
+            {},
+            {
+              id: currentProject.id,
+              cluster_id: currentCluster.id,
+              name: envGroup.name,
+              namespace: envGroup.namespace,
+              version: envGroup.version,
+            }
+          )
+          .then((res) => res.data)
+      );
+
+      const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
+
+      const filteredEnvGroups = populatedEnvGroups.filter(envGroup => envGroup.applications.includes(newAppData.chart.name));
+
+      setSyncedEnvGroups(filteredEnvGroups)
       setPorterJson(porterJson);
       setAppData(newAppData);
       // annoying that we have to parse buildpacks like this but alas
@@ -215,7 +249,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setPorterApp(parsedPorterApp);
       setTempPorterApp(parsedPorterApp);
       setBuildView(!_.isEmpty(parsedPorterApp.dockerfile) ? "docker" : "buildpacks")
-
       const [newServices, newEnvVars] = updateServicesAndEnvVariables(
         resChartData?.data,
         preDeployChartData?.data,
@@ -279,7 +312,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       }
     } catch (err) {
       setError(err);
-      console.log(err);
     } finally {
       setIsLoading(false);
     }
@@ -289,6 +321,28 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     setShowDeleteOverlay(false);
     setDeleting(true);
     const { appName } = props.match.params as any;
+    if (syncedEnvGroups) {
+      const removeApplicationToEnvGroupPromises = syncedEnvGroups?.map((envGroup: any) => {
+        return api.removeApplicationFromEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: appData.chart.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: "default",
+          }
+        );
+      });
+
+      try {
+        await Promise.all(removeApplicationToEnvGroupPromises);
+      } catch (error) {
+        setError(error);
+      }
+    }
     try {
       await api.deletePorterApp(
         "<token>",
@@ -329,6 +383,59 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   };
 
   const updatePorterApp = async (options: Partial<PorterAppOptions>) => {
+    //setting the EnvGroups Config Maps
+    const filteredEnvGroups = deletedEnvGroups.filter((deletedEnvGroup) => {
+      return !syncedEnvGroups.some((syncedEnvGroup) => {
+        return syncedEnvGroup.name === deletedEnvGroup.name;
+      });
+    });
+    setDeleteEnvGroups(filteredEnvGroups);
+    if (deletedEnvGroups) {
+      const removeApplicationToEnvGroupPromises = deletedEnvGroups?.map((envGroup: any) => {
+        return api.removeApplicationFromEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: appData.chart.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: "default",
+          }
+        );
+      });
+
+      try {
+        await Promise.all(removeApplicationToEnvGroupPromises);
+      } catch (error) {
+        setCurrentError(
+          "We couldn't remove the synced env group from the application, please try again."
+        );
+      }
+    }
+    const addApplicationToEnvGroupPromises = syncedEnvGroups?.map(
+      (envGroup: any) => {
+        return api.addApplicationToEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: appData.chart.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: "default",
+          }
+        );
+      }
+    );
+
+    try {
+      await Promise.all(addApplicationToEnvGroupPromises);
+    } catch (error) {
+      setError(error);
+    }
     try {
       setButtonStatus("loading");
       if (
@@ -347,7 +454,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
-
         const updatedPorterApp = {
           porter_yaml: base64Encoded,
           override_release: true,
@@ -357,6 +463,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           git_branch: tempPorterApp.git_branch,
           buildpacks: "",
           ...options,
+          env_groups: syncedEnvGroups?.map((env) => env.name),
+          user_update: true,
         }
         if (buildView === "docker") {
           updatedPorterApp.dockerfile = tempPorterApp.dockerfile;
@@ -371,12 +479,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         await api.createPorterApp(
           "<token>",
           updatedPorterApp,
+
           {
             cluster_id: currentCluster.id,
             project_id: currentProject.id,
             stack_name: appData.app.name,
           }
         );
+
+
         setPorterYaml(finalPorterYaml);
         setPorterApp(tempPorterApp);
         setButtonStatus("success");
@@ -386,6 +497,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       }
     } catch (err) {
       // TODO: better error handling
+
       console.log(err);
       const errMessage =
         err?.response?.data?.error ??
@@ -455,7 +567,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       }
     } catch (error) {
-      // console.log(error);
+      setError(error);
     }
   };
 
@@ -702,11 +814,16 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             envVars={envVars}
             setEnvVars={(envVars: KeyValueType[]) => {
               setEnvVars(envVars);
-              onAppUpdate(services, envVars.filter((e) => e.key !== "" || e.value !== ""));
+              //onAppUpdate(services, envVars.filter((e) => e.key !== "" || e.value !== ""));
             }}
+            syncedEnvGroups={syncedEnvGroups}
             status={buttonStatus}
             updatePorterApp={updatePorterApp}
             clearStatus={() => setButtonStatus("")}
+            setSyncedEnvGroups={setSyncedEnvGroups}
+            appData={appData}
+            deletedEnvGroups={deletedEnvGroups}
+            setDeletedEnvGroups={setDeleteEnvGroups}
           />
         );
       default:

@@ -523,7 +523,16 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               setValue={(x: number) => setMaxInstances(x)}
               label="Maximum number of application nodes"
               placeholder="ex: 1"
-
+            />
+            <Spacer y={1} />
+            <Input
+              width="350px"
+              type="number"
+              disabled={isReadOnly}
+              value={minInstances}
+              setValue={(x: number) => setMinInstances(x)}
+              label="Minimum number of application nodes. If set to 0, no applications will be deployed."
+              placeholder="ex: 1"
             />
             <Spacer y={1} />
             <Input

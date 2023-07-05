@@ -230,7 +230,7 @@ export const ExpandedEnvGroupFC = ({
         }),
         {}
       );
-
+      //Create the Env Group
       try {
         const updatedEnvGroup = await api
           .updateEnvGroup<PopulatedEnvGroup>(
@@ -249,13 +249,89 @@ export const ExpandedEnvGroupFC = ({
           .then((res) => res.data);
         setButtonStatus("successful");
         updateEnvGroup(updatedEnvGroup);
+
         setTimeout(() => setButtonStatus(""), 1000);
-      } catch (error) {
+
+
+        if (currentProject?.simplified_view_enabled) {
+
+          //Clone the env group to all applications
+          try {
+            // Check if updatedEnvGroup.applications is an array and it has elements
+            if (Array.isArray(updatedEnvGroup.applications) && updatedEnvGroup.applications.length) {
+
+              for (const application of updatedEnvGroup.applications) {
+                await api.cloneEnvGroup(
+                  "<token>",
+                  {
+                    name: updatedEnvGroup.name,
+                    namespace: "porter-stack-" + application,  // Use the application's namespace
+                    clone_name: updatedEnvGroup.name,
+                    version: updatedEnvGroup.version,
+                  },
+                  {
+                    id: currentProject.id,
+                    cluster_id: currentCluster.id,
+                    namespace: "default",
+                  }
+                );
+              }
+            }
+          } catch (error) {
+            setCurrentError(error);
+          }
+
+          //Update the Stacks Env Groups with the new variables
+          try {
+            await api
+              .updateStacksEnvGroup<PopulatedEnvGroup>(
+                "<token>",
+                {
+                  name,
+                  variables: normalVariables,
+                  secret_variables: secretVariables,
+                  apps: updatedEnvGroup.applications,
+                },
+                {
+                  project_id: currentProject.id,
+                  cluster_id: currentCluster.id,
+                  namespace,
+                }
+              )
+              .then((res) => res.data);
+            setButtonStatus("successful");
+          } catch (error) {
+            setButtonStatus("Couldn't update successfully");
+            setCurrentError(error);
+          }
+
+        }
+      }
+
+
+
+
+
+
+
+      catch (error) {
         setButtonStatus("Couldn't update successfully");
         setCurrentError(error);
         setTimeout(() => setButtonStatus(""), 1000);
       }
-    } else {
+
+
+
+
+
+
+
+
+    }
+
+
+
+    else {
       // SEPARATE THE TWO KINDS OF VARIABLES
       let secret = variables.filter(
         (variable) =>
@@ -430,9 +506,9 @@ export const ExpandedEnvGroupFC = ({
       <HeaderWrapper>
         <TitleSection icon={key} iconWidth="33px">
           {envGroup.name}
-          <TagWrapper>
+          {!currentProject?.simplified_view_enabled && <TagWrapper>
             Namespace <NamespaceTag>{currentProject?.capi_provisioner_enabled && namespace.startsWith("porter-stack-") ? namespace.replace("porter-stack-", "") : namespace}</NamespaceTag>
-          </TagWrapper>
+          </TagWrapper>}
         </TitleSection>
       </HeaderWrapper>
 
@@ -583,7 +659,7 @@ const EnvGroupSettings = ({
           {!canDelete && (
             <Helper color="#f5cb42">
               Applications are still synced to this env group. Navigate to
-              "Linked Applications" and remove this env group from all
+              "Linked applications" and remove this env group from all
               applications to delete.
             </Helper>
           )}
@@ -601,33 +677,35 @@ const EnvGroupSettings = ({
             Delete {envGroup.name}
           </Button>
           <DarkMatter />
-          <Heading>Clone environment group</Heading>
-          <Helper>
-            Clone this set of environment variables into a new env group.
-          </Helper>
-          <InputRow
-            type="string"
-            value={name}
-            setValue={(x: string) => setName(x)}
-            label="New env group name"
-            placeholder="ex: my-cloned-env-group"
-          />
-          <InputRow
-            type="string"
-            value={cloneNamespace}
-            setValue={(x: string) => setCloneNamespace(x)}
-            label="New env group namespace"
-            placeholder="ex: default"
-          />
-          <FlexAlt>
-            <Button onClick={cloneEnvGroup}>Clone {envGroup.name}</Button>
-            {cloneSuccess && (
-              <StatusWrapper position="right" successful={true}>
-                <i className="material-icons">done</i>
-                <StatusTextWrapper>Successfully cloned</StatusTextWrapper>
-              </StatusWrapper>
-            )}
-          </FlexAlt>
+          {!currentProject?.simplified_view_enabled && (<>
+            <Heading>Clone environment group</Heading>
+            <Helper>
+              Clone this set of environment variables into a new env group.
+            </Helper>
+            <InputRow
+              type="string"
+              value={name}
+              setValue={(x: string) => setName(x)}
+              label="New env group name"
+              placeholder="ex: my-cloned-env-group"
+            />
+            <InputRow
+              type="string"
+              value={cloneNamespace}
+              setValue={(x: string) => setCloneNamespace(x)}
+              label="New env group namespace"
+              placeholder="ex: default"
+            />
+            <FlexAlt>
+              <Button onClick={cloneEnvGroup}>Clone {envGroup.name}</Button>
+              {cloneSuccess && (
+                <StatusWrapper position="right" successful={true}>
+                  <i className="material-icons">done</i>
+                  <StatusTextWrapper>Successfully cloned</StatusTextWrapper>
+                </StatusWrapper>
+              )}
+            </FlexAlt>
+          </>)}
         </InnerWrapper>
       )}
     </TabWrapper>
@@ -635,7 +713,7 @@ const EnvGroupSettings = ({
 };
 
 const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
-  const { currentCluster } = useContext(Context);
+  const { currentCluster, currentProject } = useContext(Context);
 
   return (
     <>
@@ -658,12 +736,19 @@ const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
                 </EventInformation>
               </ContentContainer>
               <ActionContainer>
-                <ActionButton
-                  to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
+                {currentProject?.simplified_view_enabled ? (<ActionButton
+                  to={`/apps/${appName}`}
                   target="_blank"
                 >
                   <span className="material-icons-outlined">open_in_new</span>
-                </ActionButton>
+                </ActionButton>)
+                  :
+                  (<ActionButton
+                    to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
+                    target="_blank"
+                  >
+                    <span className="material-icons-outlined">open_in_new</span>
+                  </ActionButton>)}
               </ActionContainer>
             </Flex>
           </StyledCard>

@@ -50,6 +50,7 @@ import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import { PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
+import EventFocusView from "./activity-feed/events/focus-views/EventFocusView";
 
 type Props = RouteComponentProps & {};
 
@@ -70,6 +71,7 @@ const validTabs = [
   "environment",
   "build-settings",
   "settings",
+  "events",
 ] as const;
 const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
@@ -800,8 +802,20 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           chart={appData.chart}
           stackName={appData?.app?.name}
           appData={appData}
-          eventId={eventId}
         />;
+      case "events":
+        if (eventId != null) {
+          return <EventFocusView
+            eventId={eventId}
+            appData={appData}
+          />;
+        } else {
+          return <ActivityFeed
+            chart={appData.chart}
+            stackName={appData?.app?.name}
+            appData={appData}
+          />;
+        }
       case "logs":
         return <LogSection currentChart={appData.chart} services={services} />;
       case "metrics":
@@ -831,7 +845,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           chart={appData.chart}
           stackName={appData?.app?.name}
           appData={appData}
-          eventId={eventId}
         />;
     }
   };

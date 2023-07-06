@@ -99,7 +99,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
             <ServiceStatusContainer>
               <Icon height="16px" src={getStatusIcon(serviceStatus[key])} />
               <Spacer inline x={0.5} />
-              <Text color="helper">{serviceStatus[key]}</Text>
+              <Text color="helper">{serviceStatus[key] === "PROGRESSING" ? "DEPLOYING" : serviceStatus[key]}</Text>
             </ServiceStatusContainer>
           </Container>
         </Container>

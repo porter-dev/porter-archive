@@ -146,18 +146,23 @@ class ProjectSettings extends Component<PropsType, StateType> {
         <>
           <Heading isAtTop={true}>Delete project</Heading>
           <Helper>
+            {this.context.user.email}
+          </Helper>
+          <Helper>
             Permanently delete this project. This will destroy all clusters tied
             to this project that have been provisioned by Porter. Note that this
             will not delete the image registries provisioned by Porter. To
             delete the registries, please do so manually in your cloud console.
           </Helper>
 
-          <Helper>
+          <Helper
+            color={'red'}>
             Destruction of resources sometimes results in dangling resources. To
             ensure that everything has been properly destroyed, please visit
             your cloud provider's console.
             <Spacer inline width="5px" />
             <Link
+
               target="_blank"
               hasunderline
               to="https://docs.porter.run/other/deleting-dangling-resources"

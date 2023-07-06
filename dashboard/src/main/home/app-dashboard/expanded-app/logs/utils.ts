@@ -60,6 +60,7 @@ export const useLogs = (
     nextCursor: null,
   });
 
+  // if currentPodName is empty assume we are looking at all chart pod logs
   const currentPod =
     currentPodName == ""
       ? currentChart?.name
@@ -230,22 +231,22 @@ export const useLogs = (
       end_range: endDate,
       limit,
       chart_name: "",
-      pod_selector: currentPodName,
+      pod_selector: currentPod + "-.*",
       direction,
     };
 
-    if (currentPodName === "") {
-      if (currentChart == null) {
-        return {
-          logs: [],
-          previousCursor: null,
-          nextCursor: null,
-        };
-      } else if (currentChart.name.endsWith("-r")) {
-        getLogsReq.chart_name = currentChart.name;
-      } else {
-        getLogsReq.pod_selector = currentPod + "-.*";
-      }
+    if (currentChart == null) {
+      return {
+        logs: [],
+        previousCursor: null,
+        nextCursor: null,
+      };
+    }
+
+    // special casing for pre-deploy logs - see get_logs_within_time_range.go
+    if (currentChart.name.endsWith("-r")) {
+      getLogsReq.chart_name = currentChart.name;
+      getLogsReq.pod_selector = "";
     }
 
     try {

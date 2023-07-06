@@ -2,7 +2,9 @@ package porter_app
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -75,7 +77,7 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 
 	event, err := p.updateExistingAppEvent(ctx, *cluster, stackName, *request)
 	if err != nil {
-		e := telemetry.Error(ctx, span, err, "error creating new app event")
+		e := telemetry.Error(ctx, span, err, "error updating existing app event")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 		return
 	}
@@ -99,25 +101,30 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 	)
 
 	if eventType == string(types.PorterAppEventType_AppEvent) {
-		// Agent has no way to know what the porter app event id is, so if we must dedup here
-		// TODO: create a filter to filter by only agent events. Not an issue now as app events are deduped per hour on the agent side
-		if agentEventID, ok := requestMetadata["agent_event_id"]; ok {
-			existingEvents, _, err := p.Repo().PorterAppEvent().ListEventsByPorterAppID(ctx, app.ID)
-			if err != nil {
-				return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error listing porter app events for event type")
-			}
+		if _, ok := requestMetadata["deploy_status"]; ok {
+			// update the deploy event if it exists
+			return p.maybeUpdateDeployEvent(ctx, porterAppName, app.ID, requestMetadata), nil
+		} else {
+			// Agent has no way to know what the porter app event id is, so if we must dedup here
+			// TODO: create a filter to filter by only agent events. Not an issue now as app events are deduped per hour on the agent side
+			if agentEventID, ok := requestMetadata["agent_event_id"]; ok {
+				existingEvents, _, err := p.Repo().PorterAppEvent().ListEventsByPorterAppID(ctx, app.ID)
+				if err != nil {
+					return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error listing porter app events for event type")
+				}
 
-			for _, existingEvent := range existingEvents {
-				if existingEvent.Type == eventType {
-					existingAgentEventID, ok := existingEvent.Metadata["agent_event_id"]
-					if !ok {
-						continue
-					}
-					if existingAgentEventID == 0 {
-						continue
-					}
-					if existingAgentEventID == agentEventID {
-						return existingEvent.ToPorterAppEvent(), nil
+				for _, existingEvent := range existingEvents {
+					if existingEvent.Type == eventType {
+						existingAgentEventID, ok := existingEvent.Metadata["agent_event_id"]
+						if !ok {
+							continue
+						}
+						if existingAgentEventID == 0 {
+							continue
+						}
+						if existingAgentEventID == agentEventID {
+							return existingEvent.ToPorterAppEvent(), nil
+						}
 					}
 				}
 			}
@@ -193,4 +200,149 @@ func (p *CreateUpdatePorterAppEventHandler) updateExistingAppEvent(ctx context.C
 	}
 
 	return existingAppEvent.ToPorterAppEvent(), nil
+}
+
+func (p *CreateUpdatePorterAppEventHandler) maybeUpdateDeployEvent(ctx context.Context, appName string, appID uint, requestMetadata map[string]any) types.PorterAppEvent {
+	ctx, span := telemetry.NewSpan(ctx, "update-deploy-event")
+	defer span.End()
+
+	revision, ok := requestMetadata["revision"]
+	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "revision not found in request metadata")
+		return types.PorterAppEvent{}
+	}
+	revisionFloat64, ok := revision.(float64)
+	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "revision not a float64")
+		return types.PorterAppEvent{}
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "revision", Value: revisionFloat64})
+
+	podName, ok := requestMetadata["pod_name"]
+	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "pod name not found in request metadata")
+		return types.PorterAppEvent{}
+	}
+	podNameStr, ok := podName.(string)
+	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "pod name not a string")
+		return types.PorterAppEvent{}
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "pod-name", Value: podNameStr})
+
+	serviceName := getServiceName(podNameStr, appName)
+	if serviceName == "" {
+		_ = telemetry.Error(ctx, span, nil, "service name not found in pod name")
+		return types.PorterAppEvent{}
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "service-name", Value: serviceName})
+
+	newStatus, ok := requestMetadata["deploy_status"]
+	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "deploy status not found in request metadata")
+		return types.PorterAppEvent{}
+	}
+	newStatusStr, ok := newStatus.(string)
+	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "deploy status not a string")
+		return types.PorterAppEvent{}
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "new-status", Value: newStatusStr})
+
+	existingEvents, _, err := p.Repo().PorterAppEvent().ListEventsByPorterAppIDAndType(ctx, appID, string(types.PorterAppEventType_Deploy))
+	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "error listing porter app events for deploy event type")
+		return types.PorterAppEvent{}
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-deployment-event", Value: false})
+
+	var matchEvent *models.PorterAppEvent
+	for _, existingEvent := range existingEvents {
+		if existingEvent.Status != "PROGRESSING" {
+			continue
+		}
+		if _, ok := existingEvent.Metadata["revision"]; !ok {
+			continue
+		}
+		if existingEvent.Metadata["revision"] == revisionFloat64 {
+			matchEvent = existingEvent
+			break
+		}
+	}
+
+	if matchEvent != nil {
+		serviceStatus, ok := matchEvent.Metadata["service_status"]
+		if !ok {
+			_ = telemetry.Error(ctx, span, nil, "service status not found in deploy event metadata")
+			return types.PorterAppEvent{}
+		}
+		serviceStatusMap, ok := serviceStatus.(map[string]interface{})
+		if !ok {
+			_ = telemetry.Error(ctx, span, nil, "service status not a map[string]interface")
+			return types.PorterAppEvent{}
+		}
+		if _, ok := serviceStatusMap[serviceName]; !ok {
+			_ = telemetry.Error(ctx, span, nil, fmt.Sprintf("service status not found for service %s", serviceName))
+			return types.PorterAppEvent{}
+		}
+
+		// only update service status if it has not been updated yet
+		if serviceStatusMap[serviceName] == "PROGRESSING" {
+			serviceStatusMap[serviceName] = newStatusStr
+
+			allServicesDone := true
+			anyServicesFailed := false
+			for _, status := range serviceStatusMap {
+				if status == "PROGRESSING" {
+					allServicesDone = false
+					break
+				}
+				if status == "FAILED" {
+					anyServicesFailed = true
+				}
+			}
+			if allServicesDone {
+				if anyServicesFailed {
+					matchEvent.Status = "FAILED"
+				} else {
+					matchEvent.Status = "SUCCESS"
+				}
+			}
+
+			matchEvent.Metadata["service_status"] = serviceStatusMap
+			err = p.Repo().PorterAppEvent().UpdateEvent(ctx, matchEvent)
+			if err != nil {
+				_ = telemetry.Error(ctx, span, err, "error updating deploy event")
+				return matchEvent.ToPorterAppEvent()
+			}
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-deployment-event", Value: true})
+		}
+	}
+
+	return types.PorterAppEvent{}
+}
+
+func getServiceName(podName, porterAppName string) string {
+	prefix := porterAppName + "-"
+	if !strings.HasPrefix(podName, prefix) {
+		return ""
+	}
+
+	podName = strings.TrimPrefix(podName, prefix)
+	suffixes := []string{"-web", "-wkr", "-job"}
+	index := -1
+
+	for _, suffix := range suffixes {
+		newIndex := strings.LastIndex(podName, suffix)
+		if newIndex > index {
+			index = newIndex
+		}
+	}
+
+	if index != -1 {
+		return podName[:index]
+	}
+
+	return ""
 }

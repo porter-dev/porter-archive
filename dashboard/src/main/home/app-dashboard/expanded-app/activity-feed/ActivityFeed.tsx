@@ -28,6 +28,8 @@ type Props = {
   eventId?: string;
 };
 
+const EVENTS_POLL_INTERVAL = 10000;
+
 const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) => {
   const { currentProject, currentCluster } = useContext(Context);
 
@@ -91,7 +93,9 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
     if (!hasPorterAgent) {
       checkForAgent();
     } else {
+      const intervalId = setInterval(getEvents, EVENTS_POLL_INTERVAL);
       getEvents();
+      return () => clearInterval(intervalId);
     }
 
   }, [currentProject, currentCluster, hasPorterAgent, page, eventId]);

@@ -25,18 +25,55 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
   const [revertModalVisible, setRevertModalVisible] = useState(false);
   const [serviceStatusVisible, setServiceStatusVisible] = useState(false);
 
-  const renderStatusText = (event: PorterAppDeployEvent) => {
+  const renderStatusText = () => {
     switch (event.status) {
       case "SUCCESS":
-        return event.metadata.image_tag != null ? <Text color="#68BF8B">Deployed <Code>{event.metadata.image_tag}</Code></Text> : <Text color="#68BF8B">Deployment successful</Text>;
+        return event.metadata.image_tag != null ?
+          event.metadata.service_status != null ?
+            <Text color="#68BF8B">
+              Deployed <Code>{event.metadata.image_tag}</Code> to {Object.keys(event.metadata.service_status).length} service{Object.keys(event.metadata.service_status).length === 1 ? "" : "s"}
+            </Text> :
+            <Text color="#68BF8B">
+              Deployed <Code>{event.metadata.image_tag}</Code>
+            </Text>
+          :
+          <Text color="#68BF8B">
+            Deployment successful
+          </Text>;
       case "FAILED":
-        return <Text color="#FF6060">Deployment failed</Text>;
+        if (event.metadata.service_status != null) {
+          let failedServices = 0;
+          for (const key in event.metadata.service_status) {
+            if (event.metadata.service_status[key] === "FAILED") {
+              failedServices++;
+            }
+          }
+          return (
+            <Text color="#FF6060">
+              Failed to deploy <Code>{event.metadata.image_tag}</Code> to {failedServices} service{failedServices === 1 ? "" : "s"}
+            </Text>
+          );
+        } else {
+          return (
+            <Text color="#FF6060">
+              Deployment failed
+            </Text>
+          );
+        }
       default:
-        return (
-          <Text color="helper">
-            Deploying <Code>{event.metadata.image_tag}</Code> to {Object.keys(event.metadata.service_status).length} service{Object.keys(event.metadata.service_status).length === 1 ? "" : "s"}...
-          </Text>
-        );
+        if (event.metadata.service_status != null) {
+          return (
+            <Text color="helper">
+              Deploying <Code>{event.metadata.image_tag}</Code> to {Object.keys(event.metadata.service_status).length} service{Object.keys(event.metadata.service_status).length === 1 ? "" : "s"}...
+            </Text>
+          );
+        } else {
+          return (
+            <Text color="helper">
+              Deploying <Code>{event.metadata.image_tag}</Code> to {Object.keys(event.metadata.service_status).length} service{Object.keys(event.metadata.service_status).length === 1 ? "" : "s"}...
+            </Text>
+          );
+        }
     }
   };
 
@@ -54,12 +91,16 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
       return (
         <Container key={key} row>
           <Spacer inline x={1} />
-          <Icon height="16px" src={getStatusIcon(serviceStatus[key])} />
-          <Spacer inline x={1} />
           <Container row>
-            <Text>{key}</Text>
+            <ServiceStatusContainer>
+              <Text>{key}</Text>
+            </ServiceStatusContainer>
             <Spacer inline x={1} />
-            <Text color="helper">{serviceStatus[key]}</Text>
+            <ServiceStatusContainer>
+              <Icon height="16px" src={getStatusIcon(serviceStatus[key])} />
+              <Spacer inline x={0.5} />
+              <Text color="helper">{serviceStatus[key]}</Text>
+            </ServiceStatusContainer>
           </Container>
         </Container>
       );
@@ -79,7 +120,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
         <Container row>
           <Icon height="16px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
-          {renderStatusText(event)}
+          {renderStatusText()}
           {event.metadata.service_status != null &&
             <>
               <Spacer inline x={1} />
@@ -90,12 +131,12 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
               </TempWrapper>
             </>
           }
-          {appData?.chart?.version !== event.metadata?.revision && (
+          {appData?.chart?.version !== event.metadata.revision && (
             <>
               <Spacer inline x={1} />
               <TempWrapper>
                 <Link hasunderline onClick={() => setRevertModalVisible(true)}>
-                  Revert to version {event?.metadata?.revision}
+                  Revert to version {event.metadata.revision}
                 </Link>
 
               </TempWrapper>
@@ -103,7 +144,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
           )}
           <Spacer inline x={1} />
           <TempWrapper>
-            {event?.metadata?.revision != 1 && (<Link hasunderline onClick={() => setDiffModalVisible(true)}>
+            {event.metadata.revision != 1 && (<Link hasunderline onClick={() => setDiffModalVisible(true)}>
               View changes
             </Link>)}
             {diffModalVisible && (
@@ -147,3 +188,11 @@ const Code = styled.span`
   font-family: monospace;
 `;
 
+const ServiceStatusContainer = styled.div`
+  display: flex;
+  align-items: center;  
+  width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;

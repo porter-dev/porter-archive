@@ -16,6 +16,7 @@ import Input from "components/porter/Input";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Link from "components/porter/Link";
+import Select from "components/porter/Select";
 
 type Props = {
   authenticate: () => void;
@@ -287,6 +288,27 @@ const Register: React.FC<Props> = ({
               width="100%"
               height="40px"
               error={(companyNameError && "")}
+            />
+            <Spacer y={1} />
+            <Select
+              options={[
+                {
+                  label: "right",
+                  value: "UHOH",
+                },
+                {
+                  label: "ok",
+                  value: "OK",
+                }
+              ]}
+              label="Where did you hear about us? (optional)"
+              value={""}
+              setValue={(x) => {
+                setCompanyName(x);
+                setCompanyNameError(false);
+              }}
+              width="100%"
+              height="40px"
             />
             <Spacer y={1} />
             <Input

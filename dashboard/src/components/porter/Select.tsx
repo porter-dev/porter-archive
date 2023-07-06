@@ -25,20 +25,26 @@ const Select: React.FC<Props> = ({
   setValue,
 }) => {
   return (
-    <Block width={width}>
+    <Block width={width || ""}>
       {label && <Label>{label}</Label>}
       <SelectWrapper>
         <i className="material-icons">arrow_drop_down</i>
         <StyledSelect
           onChange={(e) => {
-            setValue(e.target.value);
+            if (setValue) {
+              setValue(e.target.value);
+            }
           }}
-          width={width}
-          height={height}
+          width={width || ""}
+          placeholder="Nothing"
+          height={height || ""}
           hasError={(error && true) || error === ""}
           disabled={disabled ? disabled : false}
-          value={value}
+          value={""}
         >
+          <Option value="" disabled selected>
+            Select your option
+          </Option>
           {options.map((option, i) => {
             return (
               <option value={option.value} key={i}>
@@ -60,6 +66,10 @@ const Select: React.FC<Props> = ({
 };
 
 export default Select;
+
+const Option = styled.option`
+  color: red;
+`;
 
 const Block = styled.div<{
   width: string;

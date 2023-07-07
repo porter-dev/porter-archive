@@ -256,7 +256,7 @@ export const ExpandedEnvGroupFC = ({
 
 
         if (currentProject?.simplified_view_enabled) {
-
+          setButtonStatus("loading");
           //Clone the env group to all applications
           try {
             // Check if updatedEnvGroup.applications is an array and it has elements
@@ -285,6 +285,7 @@ export const ExpandedEnvGroupFC = ({
 
           //Update the Stacks Env Groups with the new variables
           try {
+            setButtonStatus("loading");
             await api
               .updateStacksEnvGroup<PopulatedEnvGroup>(
                 "<token>",
@@ -300,8 +301,7 @@ export const ExpandedEnvGroupFC = ({
                   namespace,
                 }
               )
-              .then((res) => res.data);
-            setButtonStatus("successful");
+              .then((res) => res.data); setButtonStatus("successful")
           } catch (error) {
             setButtonStatus("Couldn't update successfully");
             setCurrentError(error);

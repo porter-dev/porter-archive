@@ -257,10 +257,10 @@ func rolloutStacksApplications(
 						return
 					}
 				} else {
-					// telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-pre-deploy-job", Value: true})
+					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-pre-deploy-job", Value: true})
 					chart, err := loader.LoadChartPublic(ctx, c.Config().Metadata.DefaultAppHelmRepoURL, "job", "")
 					if err != nil {
-						// err = telemetry.Error(ctx, span, err, "error loading latest job chart")
+						err = telemetry.Error(ctx, span, err, "error loading latest job chart")
 						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 						return
 					}
@@ -275,7 +275,7 @@ func rolloutStacksApplications(
 					}
 					_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 					if err != nil {
-						// err = telemetry.Error(ctx, span, err, "error upgrading pre-deploy job chart")
+						err = telemetry.Error(ctx, span, err, "error upgrading pre-deploy job chart")
 						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 						return
 					}

@@ -47,12 +47,14 @@ func NewCreateStacksEnvGroupHandler(
 
 func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	request := &types.CreateStacksEnvGroupRequest{}
-
+	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(ctx, "serve-create-env-group-stacks")
+	defer span.End()
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
-	namespace := r.Context().Value(types.NamespaceScope).(string)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	namespace := ctx.Value(types.NamespaceScope).(string)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, namespace)
 	if err != nil {
@@ -64,7 +66,7 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	aggregateReleases := []*release.Release{}
 	for i := range request.Apps {
 		namespaceStack := "porter-stack-" + request.Apps[i]
-		helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, namespaceStack)
+		helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespaceStack)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, 504, "error getting agent"))
 			return
@@ -78,7 +80,7 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		aggregateReleases = append(aggregateReleases, releases...)
 	}
 
-	errors := rolloutStacksApplications(c, c.Config(), cluster, request.Name, namespace, agent, aggregateReleases, r, w)
+	errors := rolloutStacksApplications(c, c.Config(), cluster, request.Name, namespace, agent, aggregateReleases, r, ctx, w)
 
 	if len(errors) > 0 {
 		errStrArr := make([]string, 0)
@@ -102,12 +104,14 @@ func rolloutStacksApplications(
 	agent *kubernetes.Agent,
 	releases []*release.Release,
 	r *http.Request,
+	ctx context.Context,
 	w http.ResponseWriter,
 ) []error {
 	registries, err := config.Repo.Registry().ListRegistriesByProjectID(cluster.ProjectID)
 	if err != nil {
 		return []error{err}
 	}
+	ctx, span := telemetry.NewSpan(ctx, "rollout-env-group-stacks")
 	// asynchronously update releases with that image repo uri
 	var wg sync.WaitGroup
 	mu := &sync.Mutex{}
@@ -170,7 +174,6 @@ func rolloutStacksApplications(
 			if !strings.HasSuffix(release.Name, suffix) {
 				if req := releases[index].Chart.Metadata.Dependencies; req != nil {
 					for _, dep := range req {
-						fmt.Println("Updating dependency", dep.Name)
 						dep.Name = getType(dep.Name)
 					}
 				}
@@ -204,12 +207,12 @@ func rolloutStacksApplications(
 					Registries: registries,
 				}
 
-				helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "porter-stack-"+releases[index].Name)
+				helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "porter-stack-"+releases[index].Name)
 				if err != nil {
 					fmt.Println("Could Not Get Helm Agent ")
 					return
 				}
-				_, err = helmAgent.UpgradeInstallChart(r.Context(), conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection)
+				_, err = helmAgent.UpgradeInstallChart(ctx, conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection)
 				if err != nil {
 					mu.Lock()
 					errors = append(errors, err)
@@ -217,16 +220,16 @@ func rolloutStacksApplications(
 					return
 				}
 			} else {
-				helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "porter-stack-"+releaseName)
+				helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "porter-stack-"+releaseName)
 				if err != nil {
 					fmt.Println("Could Not Get Helm Agent ")
 					return
 				}
-				helmRelease, err := helmAgent.GetRelease(r.Context(), rel.Name, 0, false)
+				helmRelease, err := helmAgent.GetRelease(ctx, rel.Name, 0, false)
 				if err != nil {
-					// telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "creating-pre-deploy-job", Value: true})
+					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "creating-pre-deploy-job", Value: true})
 					conf, err := createReleaseJobChart(
-						r.Context(),
+						ctx,
 						releaseName,
 						newConfig,
 						c.Config().ServerConf.DefaultApplicationHelmRepoURL,
@@ -235,28 +238,27 @@ func rolloutStacksApplications(
 						c.Repo(),
 					)
 					if err != nil {
-						// err = telemetry.Error(r.Context(), span, err, "error making config for pre-deploy job chart")
-						// c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+						err = telemetry.Error(ctx, span, err, "error making config for pre-deploy job chart")
+						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 						return
 					}
 
-					_, err = helmAgent.InstallChart(r.Context(), conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+					_, err = helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 					if err != nil {
-						// err = telemetry.Error(r.Context(), span, err, "error installing pre-deploy job chart")
-						// telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "install-pre-deploy-job-error", Value: err})
-						//	c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-						_, uninstallChartErr := helmAgent.UninstallChart(r.Context(), fmt.Sprintf("%s-r", releaseName))
+						err = telemetry.Error(ctx, span, err, "error installing pre-deploy job chart")
+						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+						_, uninstallChartErr := helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", releaseName))
 						if uninstallChartErr != nil {
-							// uninstallChartErr = telemetry.Error(r.Context(), span, err, "error uninstalling pre-deploy job chart after failed install")
+							uninstallChartErr = telemetry.Error(ctx, span, err, "error uninstalling pre-deploy job chart after failed install")
 							c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(uninstallChartErr, http.StatusInternalServerError))
 						}
 						return
 					}
 				} else {
-					// telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-pre-deploy-job", Value: true})
-					chart, err := loader.LoadChartPublic(r.Context(), c.Config().Metadata.DefaultAppHelmRepoURL, "job", "")
+					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-pre-deploy-job", Value: true})
+					chart, err := loader.LoadChartPublic(ctx, c.Config().Metadata.DefaultAppHelmRepoURL, "job", "")
 					if err != nil {
-						// err = telemetry.Error(r.Context(), span, err, "error loading latest job chart")
+						err = telemetry.Error(ctx, span, err, "error loading latest job chart")
 						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 						return
 					}
@@ -269,9 +271,9 @@ func rolloutStacksApplications(
 						Values:     newConfig,
 						Chart:      chart,
 					}
-					_, err = helmAgent.UpgradeReleaseByValues(r.Context(), conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
+					_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 					if err != nil {
-						// err = telemetry.Error(r.Context(), span, err, "error upgrading pre-deploy job chart")
+						err = telemetry.Error(ctx, span, err, "error upgrading pre-deploy job chart")
 						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 						return
 					}
@@ -280,7 +282,7 @@ func rolloutStacksApplications(
 		}()
 
 		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, releases[index].Name)
-		ctx, span := telemetry.NewSpan(r.Context(), "serve-create-porter-app")
+		ctx, span := telemetry.NewSpan(ctx, "serve-update-porter-app")
 		updatedPorterApp, err := c.Repo().PorterApp().UpdatePorterApp(app)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error writing updated app to DB")

@@ -135,43 +135,42 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 		return nil, err
 	}
 
+	// create repository if it does not exist
+	repoResp, err := client.ListRegistryRepositories(context.Background(), d.target.Project, regID)
+	if err != nil {
+		return nil, err
+	}
+
+	repos := *repoResp
+
+	found := false
+
+	for _, repo := range repos {
+		if repo.URI == imageURL {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		err = client.CreateRepository(
+			context.Background(),
+			d.target.Project,
+			regID,
+			&types.CreateRegistryRepositoryRequest{
+				ImageRepoURI: imageURL,
+			},
+		)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if d.config.Build.UsePackCache {
 		err := config.SetDockerConfig(client)
 		if err != nil {
 			return nil, err
-		}
-
-		if d.config.Build.Method == "pack" {
-			repoResp, err := client.ListRegistryRepositories(context.Background(), d.target.Project, regID)
-			if err != nil {
-				return nil, err
-			}
-
-			repos := *repoResp
-
-			found := false
-
-			for _, repo := range repos {
-				if repo.URI == imageURL {
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				err = client.CreateRepository(
-					context.Background(),
-					d.target.Project,
-					regID,
-					&types.CreateRegistryRepositoryRequest{
-						ImageRepoURI: imageURL,
-					},
-				)
-
-				if err != nil {
-					return nil, err
-				}
-			}
 		}
 	}
 

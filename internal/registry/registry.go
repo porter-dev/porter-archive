@@ -866,28 +866,42 @@ func (r *Registry) CreateRepository(
 	conf *config.Config,
 	name string,
 ) error {
+	ctx, span := telemetry.NewSpan(ctx, "create-repository")
+	defer span.End()
+
 	// if aws, create repository
 	if r.AWSIntegrationID != 0 {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "aws-integration-id", Value: r.AWSIntegrationID})
 		aws, err := conf.Repo.AWSIntegration().ReadAWSIntegration(
 			r.ProjectID,
 			r.AWSIntegrationID,
 		)
 		if err != nil {
-			return err
+			return telemetry.Error(ctx, span, err, "error reading aws integration")
 		}
-		return r.createECRRepository(aws, name)
+		err = r.createECRRepository(aws, name)
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "error creating ecr repository")
+		}
+		return nil
 	} else if r.GCPIntegrationID != 0 && strings.Contains(r.URL, "pkg.dev") {
-		return r.createGARRepository(ctx, conf.Repo, name)
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "gcp-integration-id", Value: r.GCPIntegrationID})
+		err := r.createGARRepository(ctx, conf.Repo, name)
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "error creating gar repository")
+		}
+		return nil
 	}
 
 	project, err := conf.Repo.Project().ReadProject(r.ProjectID)
 	if err != nil {
-		return fmt.Errorf("error getting project for repository: %w", err)
+		return telemetry.Error(ctx, span, err, "error getting project for repository")
 	}
 
 	if project.CapiProvisionerEnabled {
 		// no need to create repository if pushing to ACR
 		if strings.Contains(r.URL, ".azurecr.") {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "skipping-create-because-azure", Value: true})
 			return nil
 		}
 
@@ -899,9 +913,10 @@ func (r *Registry) CreateRepository(
 			ProjectId:    int64(r.ProjectID),
 			AwsAccountId: accountID,
 		})
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "uri", Value: uri})
 		creds, err := conf.ClusterControlPlaneClient.AssumeRoleCredentials(ctx, req)
 		if err != nil {
-			return fmt.Errorf("error getting capi credentials for repository: %w", err)
+			return telemetry.Error(ctx, span, err, "error getting capi credentials for repository")
 		}
 		aws := &ints.AWSIntegration{
 			AWSAccessKeyID:     []byte(creds.Msg.AwsAccessId),
@@ -909,7 +924,10 @@ func (r *Registry) CreateRepository(
 			AWSSessionToken:    []byte(creds.Msg.AwsSessionToken),
 			AWSRegion:          region,
 		}
-		return r.createECRRepository(aws, name)
+		err = r.createECRRepository(aws, name)
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "error creating ecr repository")
+		}
 	}
 
 	// otherwise, no-op

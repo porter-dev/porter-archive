@@ -48,7 +48,7 @@ func NewCreateStacksEnvGroupHandler(
 func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	request := &types.CreateStacksEnvGroupRequest{}
 	ctx := r.Context()
-	ctx, span := telemetry.NewSpan(ctx, "create-env-group-stacks")
+	ctx, span := telemetry.NewSpan(ctx, "serve-create-env-group-stacks")
 	defer span.End()
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
@@ -80,7 +80,7 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		aggregateReleases = append(aggregateReleases, releases...)
 	}
 
-	errors := rolloutStacksApplications(c, c.Config(), cluster, request.Name, namespace, agent, aggregateReleases, r, w)
+	errors := rolloutStacksApplications(c, c.Config(), cluster, request.Name, namespace, agent, aggregateReleases, r, ctx, w)
 
 	if len(errors) > 0 {
 		errStrArr := make([]string, 0)
@@ -104,13 +104,13 @@ func rolloutStacksApplications(
 	agent *kubernetes.Agent,
 	releases []*release.Release,
 	r *http.Request,
+	ctx context.Context,
 	w http.ResponseWriter,
 ) []error {
 	registries, err := config.Repo.Registry().ListRegistriesByProjectID(cluster.ProjectID)
 	if err != nil {
 		return []error{err}
 	}
-	ctx := r.Context()
 	ctx, span := telemetry.NewSpan(ctx, "rollout-env-group-stacks")
 	// asynchronously update releases with that image repo uri
 	var wg sync.WaitGroup
@@ -174,7 +174,6 @@ func rolloutStacksApplications(
 			if !strings.HasSuffix(release.Name, suffix) {
 				if req := releases[index].Chart.Metadata.Dependencies; req != nil {
 					for _, dep := range req {
-						// fmt.Println("Updating dependency", dep.Name)
 						dep.Name = getType(dep.Name)
 					}
 				}
@@ -247,7 +246,6 @@ func rolloutStacksApplications(
 					_, err = helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 					if err != nil {
 						err = telemetry.Error(ctx, span, err, "error installing pre-deploy job chart")
-						telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "install-pre-deploy-job-error", Value: err})
 						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 						_, uninstallChartErr := helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", releaseName))
 						if uninstallChartErr != nil {
@@ -284,7 +282,7 @@ func rolloutStacksApplications(
 		}()
 
 		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, releases[index].Name)
-		ctx, span := telemetry.NewSpan(ctx, "serve-create-porter-app")
+		ctx, span := telemetry.NewSpan(ctx, "serve-update-porter-app")
 		updatedPorterApp, err := c.Repo().PorterApp().UpdatePorterApp(app)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error writing updated app to DB")

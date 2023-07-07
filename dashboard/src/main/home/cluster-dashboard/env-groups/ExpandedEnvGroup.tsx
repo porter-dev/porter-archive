@@ -301,7 +301,7 @@ export const ExpandedEnvGroupFC = ({
                   namespace,
                 }
               )
-              .then((res) => res.data); setButtonStatus("successful")
+            setButtonStatus("successful")
           } catch (error) {
             setButtonStatus("Couldn't update successfully");
             setCurrentError(error);

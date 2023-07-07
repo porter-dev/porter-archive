@@ -84,6 +84,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
           page,
         }
       );
+      setError(undefined)
       setNumPages(res.data.num_pages);
       setEvents(res.data.events);
     } catch (err) {

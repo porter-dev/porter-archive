@@ -48,7 +48,8 @@ func NewCreateStacksEnvGroupHandler(
 func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	request := &types.CreateStacksEnvGroupRequest{}
 	ctx := r.Context()
-	ctx, span := telemetry.NewSpan(ctx, "add-env-group stacks")
+	ctx, span := telemetry.NewSpan(ctx, "create-env-group-stacks")
+	defer span.End()
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
@@ -67,13 +68,11 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		namespaceStack := "porter-stack-" + request.Apps[i]
 		helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespaceStack)
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error getting helm")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, 504, "error getting agent"))
 			return
 		}
 		releases, err := envgroup.GetStackSyncedReleases(helmAgent, namespaceStack)
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error getting releases")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, 504, "error getting releases"))
 			return
 		}
@@ -112,7 +111,7 @@ func rolloutStacksApplications(
 		return []error{err}
 	}
 	ctx := r.Context()
-	ctx, span := telemetry.NewSpan(r.Context(), "roll-out-stack")
+	ctx, span := telemetry.NewSpan(ctx, "rollout-env-group-stacks")
 	// asynchronously update releases with that image repo uri
 	var wg sync.WaitGroup
 	mu := &sync.Mutex{}
@@ -175,6 +174,7 @@ func rolloutStacksApplications(
 			if !strings.HasSuffix(release.Name, suffix) {
 				if req := releases[index].Chart.Metadata.Dependencies; req != nil {
 					for _, dep := range req {
+						// fmt.Println("Updating dependency", dep.Name)
 						dep.Name = getType(dep.Name)
 					}
 				}
@@ -210,7 +210,7 @@ func rolloutStacksApplications(
 
 				helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "porter-stack-"+releases[index].Name)
 				if err != nil {
-					err = telemetry.Error(ctx, span, err, "error getting helm")
+					fmt.Println("Could Not Get Helm Agent ")
 					return
 				}
 				_, err = helmAgent.UpgradeInstallChart(ctx, conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection)
@@ -223,7 +223,7 @@ func rolloutStacksApplications(
 			} else {
 				helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "porter-stack-"+releaseName)
 				if err != nil {
-					err = telemetry.Error(ctx, span, err, "error getting helm")
+					fmt.Println("Could Not Get Helm Agent ")
 					return
 				}
 				helmRelease, err := helmAgent.GetRelease(ctx, rel.Name, 0, false)
@@ -284,7 +284,7 @@ func rolloutStacksApplications(
 		}()
 
 		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, releases[index].Name)
-		ctx, span := telemetry.NewSpan(r.Context(), "serve-create-porter-app")
+		ctx, span := telemetry.NewSpan(ctx, "serve-create-porter-app")
 		updatedPorterApp, err := c.Repo().PorterApp().UpdatePorterApp(app)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error writing updated app to DB")
@@ -313,7 +313,10 @@ func getNewStacksConfig(curr map[string]interface{}, syncedEnvSection *SyncedEnv
 	for _, dep := range release.Chart.Metadata.Dependencies {
 		envConf, err := getStacksNestedMap(curr, dep.Name, "container", "env")
 
-		normalKeys, _ := envConf["normal"].(map[string]interface{})
+		normalKeys, ok := envConf["normal"].(map[string]interface{})
+		if !ok {
+			fmt.Println("Normal Keys", normalKeys)
+		}
 		if err != nil {
 			return nil, err
 		}

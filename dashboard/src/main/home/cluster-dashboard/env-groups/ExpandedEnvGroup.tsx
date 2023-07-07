@@ -247,7 +247,9 @@ export const ExpandedEnvGroupFC = ({
             }
           )
           .then((res) => res.data);
-        setButtonStatus("successful");
+        if (!currentProject?.simplified_view_enabled) {
+          setButtonStatus("successful");
+        }
         updateEnvGroup(updatedEnvGroup);
 
         setTimeout(() => setButtonStatus(""), 1000);
@@ -307,30 +309,12 @@ export const ExpandedEnvGroupFC = ({
 
         }
       }
-
-
-
-
-
-
-
       catch (error) {
         setButtonStatus("Couldn't update successfully");
         setCurrentError(error);
         setTimeout(() => setButtonStatus(""), 1000);
       }
-
-
-
-
-
-
-
-
     }
-
-
-
     else {
       // SEPARATE THE TWO KINDS OF VARIABLES
       let secret = variables.filter(

@@ -569,6 +569,7 @@ const EnvGroupVariablesEditor = ({
           text="Update"
           onClick={() => handleUpdateValues()}
           status={buttonStatus}
+          disabled={buttonStatus == "loading"}
           makeFlush={true}
           clearPosition={true}
           statusPosition="right"

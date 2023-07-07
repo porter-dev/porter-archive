@@ -3,6 +3,7 @@ import * as Diff from "deep-diff";
 import styled from 'styled-components';
 import Text from 'components/porter/Text';
 import { flatMapDepth } from 'lodash';
+import Link from 'components/porter/Link';
 
 const createCompareLink = (repoId: string, oldTag: string, newTag: string) => {
   const baseUrl = 'https://github.com';
@@ -73,7 +74,14 @@ const ChangeLogComponent: FC<Props> = ({ oldYaml, newYaml, appData }) => {
           changes.push(
             <ChangeBox type="E">
               {`Image tag: ${oldCommit} -> ${newCommit}. `}
-              <a href={commitDiffLink} target="_blank" rel="noopener noreferrer">View Commit Diff</a>
+
+              <Link
+                target="_blank"
+                hasunderline
+                to={commitDiffLink}
+              >
+                View Commit Diff
+              </Link>
             </ChangeBox>
           );
         } else {

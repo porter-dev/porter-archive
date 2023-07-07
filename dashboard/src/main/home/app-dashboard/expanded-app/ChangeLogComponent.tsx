@@ -70,20 +70,26 @@ const ChangeLogComponent: FC<Props> = ({ oldYaml, newYaml, appData }) => {
         if (path === "global image tag") {
           const oldCommit = difference.lhs;
           const newCommit = difference.rhs;
-          const commitDiffLink = `https://github.com/${appData.app.repo_name}/compare/${oldCommit}...${newCommit}`;
-          changes.push(
+          if (appData?.app?.repo_name) {
+            const commitDiffLink = `https://github.com/${appData.app.repo_name}/compare/${oldCommit}...${newCommit}`;
+            changes.push(
+              <ChangeBox type="E">
+                {`Tag upated: ${oldCommit} -> ${newCommit}.   `}
+
+                <Link
+                  target="_blank"
+                  hasunderline
+                  to={commitDiffLink}
+                >
+                  View commit diff
+                </Link>
+              </ChangeBox>
+            );
+          } else {
             <ChangeBox type="E">
               {`Tag upated: ${oldCommit} -> ${newCommit}.   `}
-
-              <Link
-                target="_blank"
-                hasunderline
-                to={commitDiffLink}
-              >
-                View commit diff
-              </Link>
             </ChangeBox>
-          );
+          }
         } else {
           changes.push(
             <ChangeBox type="E">

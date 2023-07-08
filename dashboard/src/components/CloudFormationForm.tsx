@@ -31,11 +31,19 @@ const CloudFormationForm: React.FC<Props> = ({
   proceed,
   switchToCredentialFlow
 }) => {
+  const [hasSentAWSNotif, setHasSentAWSNotif] = useState(false);
   const [grantPermissionsError, setGrantPermissionsError] = useState("");
   const [roleStatus, setRoleStatus] = useState("");
   const [errorMessage, setErrorMessage] = useState(undefined);
   const [AWSAccountID, setAWSAccountID] = useState("");
   const { currentProject } = useContext(Context);
+  const markStepStarted = async (step: string) => {
+    try {
+      await api.updateOnboardingStep("<token>", { step }, {});
+    } catch (err) {
+      // console.log(err);
+    }
+  };
 
   const getExternalId = () => {
     let externalId = localStorage.getItem(AWSAccountID)
@@ -115,6 +123,10 @@ const CloudFormationForm: React.FC<Props> = ({
             setValue={(e) => {
               if (e === "open-sesame") {
                 switchToCredentialFlow();
+              }
+              if (e.trim().length === 12 && !hasSentAWSNotif) {
+                setHasSentAWSNotif(true);
+                markStepStarted("aws-account-id-complete");
               }
               setGrantPermissionsError("");
               setAWSAccountID(e.trim());

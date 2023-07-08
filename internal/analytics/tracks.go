@@ -180,6 +180,29 @@ func CostConsentCompletedTrack(opts *CostConsentCompletedTrackOpts) segmentTrack
 	)
 }
 
+// AWSInputTrackOpts are the options for creating a track when a user inputs a complete AWS account ID
+type AWSInputTrackOpts struct {
+	*UserScopedTrackOpts
+
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
+}
+
+// AWSInputTrack returns a track for when a user inputs a complete AWS account ID
+func AWSInputTrack(opts *AWSInputTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ProvisioningAttempted),
+	)
+}
+
 // CredentialStepTrackOpts are the options for creating a track when a user completes the credential step
 type CredentialStepTrackOpts struct {
 	*UserScopedTrackOpts

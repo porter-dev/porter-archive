@@ -55,6 +55,16 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		}))
 	}
 
+	if request.Step == "aws-account-id-complete" {
+		v.Config().AnalyticsClient.Track(analytics.AWSInputTrack(&analytics.AWSInputTrackOpts{
+			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+			Email:               user.Email,
+			FirstName:           user.FirstName,
+			LastName:            user.LastName,
+			CompanyName:         user.CompanyName,
+		}))
+	}
+
 	if request.Step == "credential-step-complete" {
 		v.Config().AnalyticsClient.Track(analytics.CredentialStepTrack(&analytics.CredentialStepTrackOpts{
 			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),

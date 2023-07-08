@@ -199,7 +199,7 @@ func AWSInputTrack(opts *AWSInputTrackOpts) segmentTrack {
 
 	return getSegmentUserTrack(
 		opts.UserScopedTrackOpts,
-		getDefaultSegmentTrack(additionalProps, ProvisioningAttempted),
+		getDefaultSegmentTrack(additionalProps, AWSInputted),
 	)
 }
 

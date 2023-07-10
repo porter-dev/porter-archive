@@ -174,7 +174,7 @@ func (s *UserNotifier) SendProjectDeleteEmail(opts *notifier.SendProjectDeleteEm
 			Address: s.opts.SenderEmail,
 			Name:    "Porter",
 		},
-		TemplateID: s.opts.DeleteProjectTemplateID,
+		TemplateID: s.opts.ProjectInviteTemplateID,
 	}
 
 	request.Body = mail.GetRequestBody(sgMail)

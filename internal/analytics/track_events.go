@@ -8,12 +8,16 @@ const (
 	UserVerifyEmail SegmentEvent = "User Verified Email"
 	ProjectCreate   SegmentEvent = "New Project Event"
 
-	CostConsentOpened      SegmentEvent = "Cost Consent Opened"
-	CostConsentComplete    SegmentEvent = "Cost Consent Complete"
-	CredentialStepComplete SegmentEvent = "Credential Step Complete"
-	PreProvisionCheck      SegmentEvent = "Pre Provision Check Started"
-	AWSInputted            SegmentEvent = "AWS Account ID Inputted"
-	ProvisioningAttempted  SegmentEvent = "Provisioning Attempted"
+	CostConsentOpened           SegmentEvent = "Cost Consent Opened"
+	CostConsentComplete         SegmentEvent = "Cost Consent Complete"
+	CredentialStepComplete      SegmentEvent = "Credential Step Complete"
+	PreProvisionCheck           SegmentEvent = "Pre Provision Check Started"
+	AWSInputted                 SegmentEvent = "AWS Account ID Inputted"
+	AWSCloudformationRedirect   SegmentEvent = "AWS Cloudformation Redirect"
+	AWSLoginRedirect            SegmentEvent = "AWS Login Redirect"
+	AWSCreateIntegrationSuccess SegmentEvent = "AWS Create Integration Success"
+	AWSCreateIntegrationFailure SegmentEvent = "AWS Create Integration Failure"
+	ProvisioningAttempted       SegmentEvent = "Provisioning Attempted"
 
 	ClusterProvisioningStart   SegmentEvent = "Cluster Provisioning Started"
 	ClusterProvisioningError   SegmentEvent = "Cluster Provisioning Error"
@@ -42,7 +46,7 @@ const (
 	ClusterDestroyingStart   SegmentEvent = "Cluster Destroying Start"
 	ClusterDestroyingSuccess SegmentEvent = "Cluster Destroying Success"
 
-	// stacks
+	// porter apps
 	StackLaunchStart    SegmentEvent = "Stack Launch Started"
 	StackLaunchComplete SegmentEvent = "Stack Launch Complete"
 	StackLaunchSuccess  SegmentEvent = "Stack Launch Success"

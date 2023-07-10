@@ -205,6 +205,7 @@ const CloudFormationForm: React.FC<Props> = ({
                     Log in
                   </Button>
                 </AWSButtonContainer>
+                {/* escape hatch for dev use only */}
                 {process.env.TRUST_ARN != null && process.env.TRUST_ARN !== "arn:aws:iam::108458755588:role/CAPIManagement" &&
                   <>
                     <Spacer y={0.5} />

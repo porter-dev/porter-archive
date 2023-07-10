@@ -30,12 +30,11 @@ func NewCreateAWSHandler(
 }
 
 func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	user, _ := ctx.Value(types.UserScope).(*models.User)
-	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
-
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-aws-integration")
 	defer span.End()
+
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	request := &types.CreateAWSRequest{}
 	if ok := p.DecodeAndValidate(w, r, request); !ok {

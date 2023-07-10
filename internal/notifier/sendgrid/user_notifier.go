@@ -16,6 +16,7 @@ type UserNotifierOpts struct {
 	PWGHTemplateID          string
 	VerifyEmailTemplateID   string
 	ProjectInviteTemplateID string
+	DeleteProjectTemplateID string
 }
 
 func NewUserNotifier(opts *UserNotifierOpts) notifier.UserNotifier {
@@ -134,6 +135,38 @@ func (s *UserNotifier) SendProjectInviteEmail(opts *notifier.SendProjectInviteEm
 					"url":          opts.URL,
 					"sender_email": opts.ProjectOwnerEmail,
 					"project":      opts.Project,
+				},
+			},
+		},
+		From: &mail.Email{
+			Address: s.opts.SenderEmail,
+			Name:    "Porter",
+		},
+		TemplateID: s.opts.ProjectInviteTemplateID,
+	}
+
+	request.Body = mail.GetRequestBody(sgMail)
+
+	_, err := sendgrid.API(request)
+
+	return err
+}
+
+func (s *UserNotifier) SendProjectDeleteEmail(opts *notifier.SendProjectDeleteEmailOpts) error {
+	request := sendgrid.GetRequest(s.opts.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
+	request.Method = "POST"
+
+	sgMail := &mail.SGMailV3{
+		Personalizations: []*mail.Personalization{
+			{
+				To: []*mail.Email{
+					{
+						Address: opts.Email,
+					},
+				},
+				DynamicTemplateData: map[string]interface{}{
+					"email":   opts.Email,
+					"project": opts.Project,
 				},
 			},
 		},

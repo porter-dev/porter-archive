@@ -1,7 +1,6 @@
 package project_integration
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/bufbuild/connect-go"
@@ -13,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type CreateAWSHandler struct {
@@ -30,12 +30,17 @@ func NewCreateAWSHandler(
 }
 
 func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	ctx := r.Context()
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-aws-integration")
+	defer span.End()
 
 	request := &types.CreateAWSRequest{}
 	if ok := p.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding request")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -43,7 +48,8 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	aws, err := p.Repo().AWSIntegration().CreateAWSIntegration(aws)
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error creating aws integration")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -60,13 +66,19 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			TargetArn:       request.TargetArn,
 			ExternalId:      request.ExternalID,
 		}
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "target-arn", Value: request.TargetArn},
+			telemetry.AttributeKV{Key: "external-id", Value: request.ExternalID},
+			telemetry.AttributeKV{Key: "target-access-id", Value: request.AWSAccessKeyID},
+		)
 		credResp, err := p.Config().ClusterControlPlaneClient.CreateAssumeRoleChain(ctx, connect.NewRequest(&credReq))
 		if err != nil {
-			e := fmt.Errorf("unable to create CAPI required credential: %w", err)
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusPreconditionFailed, err.Error()))
+			err = telemetry.Error(ctx, span, err, "error creating CAPI required credential")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed, err.Error()))
 			return
 		}
 		res.CloudProviderCredentialIdentifier = credResp.Msg.TargetArn
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cloud-provider-credential-identifier", Value: credResp.Msg.TargetArn})
 	}
 
 	p.WriteResult(w, r, res)

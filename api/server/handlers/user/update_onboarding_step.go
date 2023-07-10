@@ -62,6 +62,42 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			FirstName:           user.FirstName,
 			LastName:            user.LastName,
 			CompanyName:         user.CompanyName,
+			AccountId:           request.AccountId,
+		}))
+	}
+
+	if request.Step == "aws-cloudformation-redirect-success" {
+		v.Config().AnalyticsClient.Track(analytics.AWSCloudformationRedirectSuccess(&analytics.AWSCloudFormationRedirectOpts{
+			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+			Email:               user.Email,
+			FirstName:           user.FirstName,
+			LastName:            user.LastName,
+			CompanyName:         user.CompanyName,
+			AccountId:           request.AccountId,
+			CloudformationURL:   request.CloudformationURL,
+		}))
+	}
+
+	if request.Step == "aws-create-integration-success" {
+		v.Config().AnalyticsClient.Track(analytics.AWSCreateIntegrationSucceeded(&analytics.AWSCreateIntegrationOpts{
+			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+			Email:               user.Email,
+			FirstName:           user.FirstName,
+			LastName:            user.LastName,
+			CompanyName:         user.CompanyName,
+			AccountId:           request.AccountId,
+		}))
+	}
+
+	if request.Step == "aws-create-integration-failure" {
+		v.Config().AnalyticsClient.Track(analytics.AWSCreateIntegrationFailed(&analytics.AWSCreateIntegrationOpts{
+			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+			Email:               user.Email,
+			FirstName:           user.FirstName,
+			LastName:            user.LastName,
+			CompanyName:         user.CompanyName,
+			AccountId:           request.AccountId,
+			ErrorMessage:        request.ErrorMessage,
 		}))
 	}
 

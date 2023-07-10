@@ -82,6 +82,9 @@ type UpdateUserInfoRequest struct {
 }
 
 type UpdateOnboardingStepRequest struct {
-	Step     string `json:"step" form:"required,max=255"`
-	Provider string `json:"provider"`
+	Step              string `json:"step" form:"required,max=255"`
+	Provider          string `json:"provider"`
+	AccountId         string `json:"account_id"`
+	CloudformationURL string `json:"cloudformation_url"`
+	ErrorMessage      string `json:"error_message"`
 }

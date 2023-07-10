@@ -188,6 +188,7 @@ type AWSInputTrackOpts struct {
 	FirstName   string
 	LastName    string
 	CompanyName string
+	AccountId   string
 }
 
 // AWSInputTrack returns a track for when a user inputs a complete AWS account ID
@@ -196,10 +197,77 @@ func AWSInputTrack(opts *AWSInputTrackOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["account_id"] = opts.AccountId
 
 	return getSegmentUserTrack(
 		opts.UserScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, AWSInputted),
+	)
+}
+
+type AWSCloudFormationRedirectOpts struct {
+	*UserScopedTrackOpts
+
+	Email             string
+	FirstName         string
+	LastName          string
+	CompanyName       string
+	AccountId         string
+	CloudformationURL string
+}
+
+// AWSCloudformationRedirectSuccess returns a track for when a user clicks 'grant permissions' and gets redirected to cloudformation
+func AWSCloudformationRedirectSuccess(opts *AWSCloudFormationRedirectOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["account_id"] = opts.AccountId
+	additionalProps["cloudformation_url"] = opts.CloudformationURL
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, AWSCloudformationRedirect),
+	)
+}
+
+type AWSCreateIntegrationOpts struct {
+	*UserScopedTrackOpts
+
+	Email        string
+	FirstName    string
+	LastName     string
+	CompanyName  string
+	AccountId    string
+	ErrorMessage string
+}
+
+// AWSCreateIntegrationSucceeded returns a track for when a user succeeds in creating an aws integration
+func AWSCreateIntegrationSucceeded(opts *AWSCreateIntegrationOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["account_id"] = opts.AccountId
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, AWSCreateIntegrationSuccess),
+	)
+}
+
+// AWSCreateIntegrationSucceeded returns a track for when a user succeeds in creating an aws integration
+func AWSCreateIntegrationFailed(opts *AWSCreateIntegrationOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["account_id"] = opts.AccountId
+	additionalProps["error_message"] = opts.ErrorMessage
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, AWSCreateIntegrationFailure),
 	)
 }
 

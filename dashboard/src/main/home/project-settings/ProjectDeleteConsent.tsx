@@ -36,7 +36,12 @@ const ProjectDeleteConsent: React.FC<Props> = ({
       >
         <Text size={16}>Delete {currentProject.name}?</Text>
         <Spacer y={1} />
-        <Text color="red">
+
+        <Text size={14} color="red">
+          Attention:
+        </Text>
+        <Spacer y={.1} />
+        <Text>
           Destruction of resources sometimes results in dangling resources. To
           ensure that everything has been properly destroyed, please visit
           your cloud provider's console.
@@ -50,8 +55,7 @@ const ProjectDeleteConsent: React.FC<Props> = ({
           Deletion instructions
         </Link>
         <Spacer y={1} />
-        <Text color="yellow"> This action cannot be undone.</Text>
-        <Spacer y={1} />
+
         <Text color="helper">
           To acknowledge, enter the project name in the text input field.
         </Text>
@@ -63,6 +67,7 @@ const ProjectDeleteConsent: React.FC<Props> = ({
           height="40px"
         />
         <Spacer y={1} />
+
         <Button
           disabled={confirmDelete !== currentProject?.name}
           onClick={() => {
@@ -71,6 +76,7 @@ const ProjectDeleteConsent: React.FC<Props> = ({
               currentProject: currentProject,
             });
           }}
+          status={confirmDelete == currentProject?.name ? "This action cannot be undone" : ""}
         >
           Continue
         </Button>

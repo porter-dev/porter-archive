@@ -12,6 +12,7 @@ const (
 	CostConsentComplete    SegmentEvent = "Cost Consent Complete"
 	CredentialStepComplete SegmentEvent = "Credential Step Complete"
 	PreProvisionCheck      SegmentEvent = "Pre Provision Check Started"
+	AWSInputted            SegmentEvent = "AWS Account ID Inputted"
 	ProvisioningAttempted  SegmentEvent = "Provisioning Attempted"
 
 	ClusterProvisioningStart   SegmentEvent = "Cluster Provisioning Started"

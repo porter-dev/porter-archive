@@ -76,7 +76,9 @@ const ProvisionerFlow: React.FC<Props> = ({}) => {
                         provider === "gcp"
                       )
                     ) {
-                      openCostConsentModal(provider);
+                      // openCostConsentModal(provider);
+                      setSelectedProvider(provider);
+                      setCurrentStep("credentials");
                     }
                   }}
                 >

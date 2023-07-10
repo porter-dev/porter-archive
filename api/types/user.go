@@ -87,4 +87,5 @@ type UpdateOnboardingStepRequest struct {
 	AccountId         string `json:"account_id"`
 	CloudformationURL string `json:"cloudformation_url"`
 	ErrorMessage      string `json:"error_message"`
+	LoginURL          string `json:"login_url"`
 }

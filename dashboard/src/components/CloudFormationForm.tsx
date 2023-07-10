@@ -29,7 +29,6 @@ const CloudFormationForm: React.FC<Props> = ({
   switchToCredentialFlow
 }) => {
   const [hasSentAWSNotif, setHasSentAWSNotif] = useState(false);
-  const [grantPermissionsError, setGrantPermissionsError] = useState("");
   const [roleStatus, setRoleStatus] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [AWSAccountID, setAWSAccountID] = useState("");
@@ -44,17 +43,19 @@ const CloudFormationForm: React.FC<Props> = ({
       cloudformation_url = "",
       error_message = "",
       login_url = "",
+      external_id = "",
     }:
       {
         step: string;
-        account_id?: string
-        cloudformation_url?: string
-        error_message?: string
-        login_url?: string
+        account_id?: string;
+        cloudformation_url?: string;
+        error_message?: string;
+        login_url?: string;
+        external_id?: string;
       }
   ) => {
     try {
-      await api.updateOnboardingStep("<token>", { step, account_id, cloudformation_url, error_message, login_url }, {});
+      await api.updateOnboardingStep("<token>", { step, account_id, cloudformation_url, error_message, login_url, external_id }, {});
     } catch (err) {
       // console.log(err);
     }
@@ -136,7 +137,8 @@ const CloudFormationForm: React.FC<Props> = ({
         step: "aws-create-integration-failure",
         account_id: AWSAccountID,
         error_message: err?.response?.data?.error ??
-          err?.toString() ?? "unable to determine error - check honeycomb"
+          err?.toString() ?? "unable to determine error - check honeycomb",
+        external_id: externalId,
       })
     }
   };
@@ -149,10 +151,10 @@ const CloudFormationForm: React.FC<Props> = ({
   }
 
   const directToCloudFormationAndProceedStep = () => {
-    let externalId = getExternalId();
+    const externalId = getExternalId();
     let trustArn = process.env.TRUST_ARN ? process.env.TRUST_ARN : "arn:aws:iam::108458755588:role/CAPIManagement";
     const cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`
-    markStepStarted({ step: "aws-cloudformation-redirect-success", account_id: AWSAccountID, cloudformation_url })
+    markStepStarted({ step: "aws-cloudformation-redirect-success", account_id: AWSAccountID, cloudformation_url, external_id: externalId })
     setCurrentStep(3);
     window.open(cloudformation_url, "_blank")
   }
@@ -226,18 +228,7 @@ const CloudFormationForm: React.FC<Props> = ({
                   <ButtonImg src={aws} />
                   <Button
                     width={"170px"}
-                    onClick={() => {
-                      if (AWSAccountID.length === 12 && !isNaN(Number(AWSAccountID))) {
-                        directToCloudFormationAndProceedStep();
-                      } else {
-                        setGrantPermissionsError("Invalid AWS account ID");
-                      }
-                    }}
-                    status={
-                      grantPermissionsError && (
-                        <Error message={grantPermissionsError} />
-                      )
-                    }
+                    onClick={directToCloudFormationAndProceedStep}
                     color="#1E2631"
                     withBorder
                   >

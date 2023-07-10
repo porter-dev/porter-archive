@@ -73,7 +73,7 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	fmt.Println("Deleteing", user.Email)
 	err := p.Config().UserNotifier.SendProjectDeleteEmail(
 		&notifier.SendProjectDeleteEmailOpts{
-			Email:   "sohamdessai99@gmail.com",
+			Email:   "support@porter.run",
 			Project: proj.Name,
 		},
 	)

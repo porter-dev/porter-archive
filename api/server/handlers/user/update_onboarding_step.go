@@ -110,6 +110,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			CompanyName:         user.CompanyName,
 			AccountId:           request.AccountId,
 			ErrorMessage:        request.ErrorMessage,
+			ExternalId:          request.ExternalId,
 		}))
 	}
 

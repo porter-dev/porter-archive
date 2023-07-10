@@ -29,7 +29,6 @@ const CloudFormationForm: React.FC<Props> = ({
   switchToCredentialFlow
 }) => {
   const [hasSentAWSNotif, setHasSentAWSNotif] = useState(false);
-  const [grantPermissionsError, setGrantPermissionsError] = useState("");
   const [roleStatus, setRoleStatus] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [AWSAccountID, setAWSAccountID] = useState("");
@@ -44,17 +43,19 @@ const CloudFormationForm: React.FC<Props> = ({
       cloudformation_url = "",
       error_message = "",
       login_url = "",
+      external_id = "",
     }:
       {
         step: string;
-        account_id?: string
-        cloudformation_url?: string
-        error_message?: string
-        login_url?: string
+        account_id?: string;
+        cloudformation_url?: string;
+        error_message?: string;
+        login_url?: string;
+        external_id?: string;
       }
   ) => {
     try {
-      await api.updateOnboardingStep("<token>", { step, account_id, cloudformation_url, error_message, login_url }, {});
+      await api.updateOnboardingStep("<token>", { step, account_id, cloudformation_url, error_message, login_url, external_id }, {});
     } catch (err) {
       // console.log(err);
     }
@@ -136,7 +137,8 @@ const CloudFormationForm: React.FC<Props> = ({
         step: "aws-create-integration-failure",
         account_id: AWSAccountID,
         error_message: err?.response?.data?.error ??
-          err?.toString() ?? "unable to determine error - check honeycomb"
+          err?.toString() ?? "unable to determine error - check honeycomb",
+        external_id: externalId,
       })
     }
   };
@@ -226,18 +228,7 @@ const CloudFormationForm: React.FC<Props> = ({
                   <ButtonImg src={aws} />
                   <Button
                     width={"170px"}
-                    onClick={() => {
-                      if (AWSAccountID.length === 12 && !isNaN(Number(AWSAccountID))) {
-                        directToCloudFormationAndProceedStep();
-                      } else {
-                        setGrantPermissionsError("Invalid AWS account ID");
-                      }
-                    }}
-                    status={
-                      grantPermissionsError && (
-                        <Error message={grantPermissionsError} />
-                      )
-                    }
+                    onClick={directToCloudFormationAndProceedStep}
                     color="#1E2631"
                     withBorder
                   >

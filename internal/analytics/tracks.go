@@ -255,6 +255,7 @@ type AWSCreateIntegrationOpts struct {
 	LastName     string
 	CompanyName  string
 	AccountId    string
+	ExternalId   string
 	ErrorMessage string
 }
 
@@ -280,6 +281,7 @@ func AWSCreateIntegrationFailed(opts *AWSCreateIntegrationOpts) segmentTrack {
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["account_id"] = opts.AccountId
 	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["external_id"] = opts.ExternalId
 
 	return getSegmentUserTrack(
 		opts.UserScopedTrackOpts,

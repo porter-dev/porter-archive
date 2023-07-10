@@ -87,6 +87,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			CompanyName:         user.CompanyName,
 			AccountId:           request.AccountId,
 			CloudformationURL:   request.CloudformationURL,
+			ExternalId:          request.ExternalId,
 		}))
 	}
 

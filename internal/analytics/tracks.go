@@ -215,6 +215,7 @@ type AWSRedirectOpts struct {
 	AccountId         string
 	CloudformationURL string
 	LoginURL          string
+	ExternalId        string
 }
 
 // AWSCloudformationRedirectSuccess returns a track for when a user clicks 'grant permissions' and gets redirected to cloudformation
@@ -225,6 +226,7 @@ func AWSCloudformationRedirectSuccess(opts *AWSRedirectOpts) segmentTrack {
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["account_id"] = opts.AccountId
 	additionalProps["cloudformation_url"] = opts.CloudformationURL
+	additionalProps["external_id"] = opts.ExternalId
 
 	return getSegmentUserTrack(
 		opts.UserScopedTrackOpts,

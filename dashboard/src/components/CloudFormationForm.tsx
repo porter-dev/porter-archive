@@ -151,10 +151,10 @@ const CloudFormationForm: React.FC<Props> = ({
   }
 
   const directToCloudFormationAndProceedStep = () => {
-    let externalId = getExternalId();
+    const externalId = getExternalId();
     let trustArn = process.env.TRUST_ARN ? process.env.TRUST_ARN : "arn:aws:iam::108458755588:role/CAPIManagement";
     const cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`
-    markStepStarted({ step: "aws-cloudformation-redirect-success", account_id: AWSAccountID, cloudformation_url })
+    markStepStarted({ step: "aws-cloudformation-redirect-success", account_id: AWSAccountID, cloudformation_url, external_id: externalId })
     setCurrentStep(3);
     window.open(cloudformation_url, "_blank")
   }

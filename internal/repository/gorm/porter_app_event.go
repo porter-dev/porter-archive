@@ -123,3 +123,18 @@ func (repo *PorterAppEventRepository) ReadEvent(ctx context.Context, id uuid.UUI
 
 	return appEvent, nil
 }
+
+func (repo *PorterAppEventRepository) FindDeployEventByRevision(ctx context.Context, porterAppID uint, revision float64) (models.PorterAppEvent, error) {
+	appEvent := models.PorterAppEvent{}
+
+	id := strconv.Itoa(int(porterAppID))
+	if id == "" {
+		return appEvent, errors.New("invalid porter app id supplied")
+	}
+
+	if err := repo.db.Where("porter_app_id = ? AND type = 'DEPLOY' AND metadata ->> 'revision' = ?", id, revision).First(&appEvent).Error; err != nil {
+		return appEvent, err
+	}
+
+	return appEvent, nil
+}

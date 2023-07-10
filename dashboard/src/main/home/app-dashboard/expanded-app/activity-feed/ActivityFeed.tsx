@@ -26,7 +26,7 @@ type Props = {
   appData: any;
 };
 
-const EVENTS_POLL_INTERVAL = 10000;
+const EVENTS_POLL_INTERVAL = 5000; // poll every 5 seconds
 
 const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const { currentProject, currentCluster } = useContext(Context);

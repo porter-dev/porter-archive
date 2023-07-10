@@ -72,17 +72,15 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
       <Container row spaced>
         <Container row>
           <Icon height="16px" src={app_event} />
-          <Spacer inline width="10px" />
-          <Text>{event.metadata.detail}</Text>
+          <Spacer inline x={1} />
+          <Text>{event.metadata.summary}</Text>
         </Container>
       </Container>
       <Spacer y={0.5} />
       <Container row spaced>
-        <TempWrapper>
-          <Link onClick={getAppLogs} hasunderline>
-            View details
-          </Link>
-        </TempWrapper>
+        <Link onClick={getAppLogs} hasunderline>
+          View details
+        </Link>
       </Container>
       {showModal && (
         <AppEventModal
@@ -90,7 +88,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
           logs={logs}
           porterAppName={appData.app.name}
           timestamp={readableDate(event.updated_at)}
-          expandedAppEventMessage={event.metadata.summary}
+          expandedAppEventMessage={event.metadata.detail}
         />
       )}
     </StyledEventCard>
@@ -99,22 +97,3 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
 
 export default AppEventCard;
 
-const TempWrapper = styled.div`
-  margin-top: -3px;
-`;
-
-const ViewDetailsButton = styled.div<{ width?: string }>`
-  border-radius: 5px;
-  height: 30px;
-  font-size: 13px;
-  color: white;
-  display: flex;
-  align-items: center;
-  padding: 0px 10px;
-  background: #ffffff11;
-  border: 1px solid #aaaabb33;
-  cursor: pointer;
-  :hover {
-    border: 1px solid #7a7b80;
-  }
-`;

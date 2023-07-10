@@ -205,7 +205,7 @@ func AWSInputTrack(opts *AWSInputTrackOpts) segmentTrack {
 	)
 }
 
-type AWSCloudFormationRedirectOpts struct {
+type AWSRedirectOpts struct {
 	*UserScopedTrackOpts
 
 	Email             string
@@ -214,10 +214,11 @@ type AWSCloudFormationRedirectOpts struct {
 	CompanyName       string
 	AccountId         string
 	CloudformationURL string
+	LoginURL          string
 }
 
 // AWSCloudformationRedirectSuccess returns a track for when a user clicks 'grant permissions' and gets redirected to cloudformation
-func AWSCloudformationRedirectSuccess(opts *AWSCloudFormationRedirectOpts) segmentTrack {
+func AWSCloudformationRedirectSuccess(opts *AWSRedirectOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
@@ -228,6 +229,21 @@ func AWSCloudformationRedirectSuccess(opts *AWSCloudFormationRedirectOpts) segme
 	return getSegmentUserTrack(
 		opts.UserScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, AWSCloudformationRedirect),
+	)
+}
+
+// AWSLoginRedirectSuccess returns a track for when a user is prompted to login to AWS
+func AWSLoginRedirectSuccess(opts *AWSRedirectOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["account_id"] = opts.AccountId
+	additionalProps["login_url"] = opts.LoginURL
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, AWSLoginRedirect),
 	)
 }
 

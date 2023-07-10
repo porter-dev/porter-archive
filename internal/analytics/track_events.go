@@ -14,6 +14,7 @@ const (
 	PreProvisionCheck           SegmentEvent = "Pre Provision Check Started"
 	AWSInputted                 SegmentEvent = "AWS Account ID Inputted"
 	AWSCloudformationRedirect   SegmentEvent = "AWS Cloudformation Redirect"
+	AWSLoginRedirect            SegmentEvent = "AWS Login Redirect"
 	AWSCreateIntegrationSuccess SegmentEvent = "AWS Create Integration Success"
 	AWSCreateIntegrationFailure SegmentEvent = "AWS Create Integration Failure"
 	ProvisioningAttempted       SegmentEvent = "Provisioning Attempted"

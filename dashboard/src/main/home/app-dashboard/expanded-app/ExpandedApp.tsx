@@ -492,6 +492,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         setPorterApp(tempPorterApp);
         setButtonStatus("success");
         setShowUnsavedChangesBanner(false);
+        getPorterApp({ revision: 0 });
       } else {
         setButtonStatus(<Error message="Unable to update app" />);
       }
@@ -666,7 +667,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   };
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
-    getPorterApp({ revision: chart.version });
+    getPorterApp({ revision: isCurrent ? 0 : chart.version });
   };
 
   const getReadableDate = (s: string) => {

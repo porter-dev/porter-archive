@@ -297,7 +297,6 @@ export const useLogs = (
     setLoading(true);
     setLogs([]);
     flushLogsBuffer(true);
-    const websocketKey = `${currentPod}-${namespace}-websocket`;
     const endDate = timeRange?.endTime != null ? timeRange.endTime : dayjs(setDate);
     const oneDayAgo = timeRange?.startTime != null ? timeRange.startTime : endDate.subtract(1, "day");
 
@@ -320,7 +319,9 @@ export const useLogs = (
       );
     }
 
-    closeWebsocket(websocketKey);
+    closeAllWebsockets();
+    const suffix = Math.random().toString(36).substring(2, 15);
+    const websocketKey = `${currentPod}-${namespace}-websocket-${suffix}`;
 
     setLoading(false);
 

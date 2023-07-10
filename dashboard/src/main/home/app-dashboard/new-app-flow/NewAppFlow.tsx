@@ -167,6 +167,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
   useEffect(() => {
     setFormState({ ...formState, serviceList: [] });
+    setDetected(undefined);
   }, [porterApp.git_branch]);
 
   const handleSetAccessData = (data: GithubAppAccessData) => {
@@ -321,16 +322,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
-      let imageInfo = {
+      const imageInfo = {
         repository: "",
         tag: "",
       };
-      if (porterApp.image_repo_uri && imageTag) {
-        imageInfo = {
-          repository: porterApp.image_repo_uri,
-          tag: imageTag,
-        };
-      }
 
       const porterAppRequest = {
         porter_yaml: base64Encoded,
@@ -348,7 +343,15 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         env_groups: syncedEnvGroups?.map((env: PopulatedEnvGroup) => env.name),
         user_update: true,
       }
-      if (buildView === "docker") {
+      if (porterApp.image_repo_uri && imageTag) {
+        porterAppRequest.image_info = {
+          repository: porterApp.image_repo_uri,
+          tag: imageTag,
+        };
+        porterAppRequest.repo_name = "";
+        porterAppRequest.git_branch = "";
+        porterAppRequest.git_repo_id = 0;
+      } else if (buildView === "docker") {
         porterAppRequest.dockerfile = porterApp.dockerfile;
       } else {
         porterAppRequest.builder = porterApp.builder;
@@ -365,7 +368,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         }
       );
 
-      if (porterApp.repo_name === "") {
+      if (porterAppRequest.repo_name === "") {
         props.history.push(`/apps/${porterApp.name}`);
       }
 

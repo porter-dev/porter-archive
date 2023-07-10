@@ -23,8 +23,8 @@ type SendProjectInviteEmailOpts struct {
 }
 
 type SendProjectDeleteEmailOpts struct {
-	Project           string
-	ProjectOwnerEmail string
+	Project string
+	Email   string
 }
 
 type UserNotifier interface {

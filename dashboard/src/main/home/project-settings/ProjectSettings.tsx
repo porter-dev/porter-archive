@@ -16,6 +16,7 @@ import APITokensSection from "./APITokensSection";
 import _ from "lodash";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
+import ProjectDeleteConsent from "./ProjectDeleteConsent";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 
@@ -23,6 +24,7 @@ type StateType = {
   projectName: string;
   currentTab: string;
   tabOptions: { value: string; label: string }[];
+  showCostConfirmModal: boolean;
 };
 
 class ProjectSettings extends Component<PropsType, StateType> {
@@ -30,6 +32,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
     projectName: "",
     currentTab: "manage-access",
     tabOptions: [] as { value: string; label: string }[],
+    showCostConfirmModal: false,
   };
 
   componentDidUpdate(prevProps: PropsType) {
@@ -146,7 +149,6 @@ class ProjectSettings extends Component<PropsType, StateType> {
         <>
           <Heading isAtTop={true}>Delete project</Heading>
           <Helper>
-            {this.context.user.email}
           </Helper>
           <Helper>
             Permanently delete this project. This will destroy all clusters tied
@@ -155,33 +157,17 @@ class ProjectSettings extends Component<PropsType, StateType> {
             delete the registries, please do so manually in your cloud console.
           </Helper>
 
-          <Helper
-            color={'red'}>
-            Destruction of resources sometimes results in dangling resources. To
-            ensure that everything has been properly destroyed, please visit
-            your cloud provider's console.
-            <Spacer inline width="5px" />
-            <Link
-
-              target="_blank"
-              hasunderline
-              to="https://docs.porter.run/other/deleting-dangling-resources"
-            >
-              Deletion instructions
-            </Link>
-          </Helper>
-
-          <Warning highlight={true}>This action cannot be undone.</Warning>
-
           <DeleteButton
             onClick={() => {
-              this.context.setCurrentModal("UpdateProjectModal", {
-                currentProject: this.context.currentProject,
-              });
+              this.setState({ showCostConfirmModal: true });
             }}
           >
             Delete project
           </DeleteButton>
+          <ProjectDeleteConsent
+            setShowCostConfirmModal={(show: boolean) => this.setState({ showCostConfirmModal: show })}
+            show={this.state.showCostConfirmModal}  // <-- Pass these props
+          />
         </>
       );
     }

@@ -161,12 +161,12 @@ func (s *UserNotifier) SendProjectDeleteEmail(opts *notifier.SendProjectDeleteEm
 			{
 				To: []*mail.Email{
 					{
-						Address: opts.ProjectOwnerEmail,
+						Address: opts.Email,
 					},
 				},
 				DynamicTemplateData: map[string]interface{}{
-					"sender_email": opts.ProjectOwnerEmail,
-					"project":      opts.Project,
+					"email":   opts.Email,
+					"project": opts.Project,
 				},
 			},
 		},

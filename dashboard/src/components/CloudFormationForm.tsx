@@ -34,12 +34,25 @@ const CloudFormationForm: React.FC<Props> = ({
   const [hasSentAWSNotif, setHasSentAWSNotif] = useState(false);
   const [grantPermissionsError, setGrantPermissionsError] = useState("");
   const [roleStatus, setRoleStatus] = useState("");
-  const [errorMessage, setErrorMessage] = useState(undefined);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [AWSAccountID, setAWSAccountID] = useState("");
   const { currentProject } = useContext(Context);
-  const markStepStarted = async (step: string) => {
+  const markStepStarted = async (
+    {
+      step,
+      account_id = "",
+      cloudformation_url = "",
+      error_message = "",
+    }:
+      {
+        step: string;
+        account_id?: string
+        cloudformation_url?: string
+        error_message?: string
+      }
+  ) => {
     try {
-      await api.updateOnboardingStep("<token>", { step }, {});
+      await api.updateOnboardingStep("<token>", { step, account_id, cloudformation_url, error_message }, {});
     } catch (err) {
       // console.log(err);
     }
@@ -47,7 +60,6 @@ const CloudFormationForm: React.FC<Props> = ({
 
   const getExternalId = () => {
     let externalId = localStorage.getItem(AWSAccountID)
-    console.log(externalId)
     if (!externalId) {
       externalId = uuidv4()
       localStorage.setItem(AWSAccountID, externalId);
@@ -63,6 +75,10 @@ const CloudFormationForm: React.FC<Props> = ({
     setRoleStatus("loading");
     setErrorMessage(undefined)
     try {
+      if (currentProject == null) {
+        setErrorMessage("Could not find current project.")
+        return;
+      };
       await api
         .createAWSIntegration(
           "<token>",
@@ -75,21 +91,26 @@ const CloudFormationForm: React.FC<Props> = ({
           }
         );
       setRoleStatus("successful")
+      markStepStarted({ step: "aws-create-integration-success", account_id: AWSAccountID })
       proceed(targetARN);
     } catch (err) {
-      console.log(err);
       setRoleStatus("");
       setErrorMessage("Porter could not access your AWS account. Please make sure you have granted permissions and try again.")
+      markStepStarted({
+        step: "aws-create-integration-failure",
+        account_id: AWSAccountID,
+        error_message: err?.response?.data?.error ??
+          err?.toString() ?? "unable to determine error - check honeycomb"
+      })
     }
   };
 
   const directToCloudFormation = () => {
     let externalId = getExternalId();
     let trustArn = process.env.TRUST_ARN ? process.env.TRUST_ARN : "arn:aws:iam::108458755588:role/CAPIManagement";
-    window.open(
-      `https://console.aws.amazon.com/cloudformation/home?
-      #/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`
-    )
+    const cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`
+    markStepStarted({ step: "aws-cloudformation-redirect-success", account_id: AWSAccountID, cloudformation_url })
+    window.open(cloudformation_url, "_blank")
   }
 
   const renderContent = () => {
@@ -126,7 +147,7 @@ const CloudFormationForm: React.FC<Props> = ({
               }
               if (e.trim().length === 12 && !hasSentAWSNotif) {
                 setHasSentAWSNotif(true);
-                markStepStarted("aws-account-id-complete");
+                markStepStarted({ step: "aws-account-id-complete", account_id: e.trim() });
               }
               setGrantPermissionsError("");
               setAWSAccountID(e.trim());

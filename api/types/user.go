@@ -88,4 +88,6 @@ type UpdateOnboardingStepRequest struct {
 	CloudformationURL string `json:"cloudformation_url"`
 	ErrorMessage      string `json:"error_message"`
 	LoginURL          string `json:"login_url"`
+	// used as a 'password' for the aws assume role chain to porter-manager role
+	ExternalId string `json:"external_id"`
 }

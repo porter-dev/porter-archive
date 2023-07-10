@@ -2452,6 +2452,7 @@ const updateOnboardingStep = baseApi<
     cloudformation_url?: string;
     error_message?: string;
     login_url?: string;
+    external_id?: string;
   },
   {}
 >("POST", (pathParams) => {

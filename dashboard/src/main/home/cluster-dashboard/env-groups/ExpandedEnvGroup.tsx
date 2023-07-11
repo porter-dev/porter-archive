@@ -118,7 +118,6 @@ export const ExpandedEnvGroupFC = ({
       { value: "settings", label: "Settings" },
     ];
   }, [currentEnvGroup]);
-  console.log(namespace)
   const populateEnvGroup = async () => {
     try {
       const populatedEnvGroup = await api

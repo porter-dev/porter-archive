@@ -645,7 +645,7 @@ export type BuildConfig = {
   };
 };
 
-export interface PorterAppOptions {
+export interface CreateUpdatePorterAppOptions {
   porter_yaml: string;
   porter_yaml_path?: string;
   repo_name?: string;
@@ -661,6 +661,7 @@ export interface PorterAppOptions {
     tag: string;
   };
   override_release?: boolean;
+  full_helm_values?: string;
 }
 
 

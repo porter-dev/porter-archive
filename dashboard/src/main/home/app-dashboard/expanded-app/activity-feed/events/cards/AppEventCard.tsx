@@ -8,7 +8,6 @@ import Link from "components/porter/Link";
 import Icon from "components/porter/Icon";
 
 import { StyledEventCard } from "./EventCard";
-import styled from "styled-components";
 import AppEventModal from "../../../status/AppEventModal";
 import { readableDate } from "shared/string_utils";
 import dayjs from "dayjs";

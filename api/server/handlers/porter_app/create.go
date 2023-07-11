@@ -107,9 +107,18 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		// this is required because when the front-end sends an update request with overrideRelease=true, it is unable to
 		// get the image info from the release. unless it is explicitly provided in the request, we avoid overwriting it
-		// by attempting to get the image info from the release
+		// by attempting to get the image info from the release or the provided helm values
 		if helmRelease != nil && (imageInfo.Repository == "" || imageInfo.Tag == "") {
-			imageInfo = attemptToGetImageInfoFromRelease(helmRelease.Config)
+			if request.FullHelmValues != "" {
+				imageInfo, err = attemptToGetImageInfoFromFullHelmValues(request.FullHelmValues)
+				if err != nil {
+					err = telemetry.Error(ctx, span, err, "error getting image info from full helm values")
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+					return
+				}
+			} else {
+				imageInfo = attemptToGetImageInfoFromRelease(helmRelease.Config)
+			}
 		}
 	} else {
 		releaseValues = helmRelease.Config
@@ -139,27 +148,30 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		cloneEnvGroup(c, w, r, k8sAgent, request.EnvGroups, namespace)
 	}
 	chart, values, preDeployJobValues, serviceNames, err := parse(
-		porterYaml,
-		imageInfo,
-		c.Config(),
-		cluster.ProjectID,
-		request.UserUpdate,
-		request.EnvGroups,
-		namespace,
-		releaseValues,
-		releaseDependencies,
-		SubdomainCreateOpts{
-			k8sAgent:       k8sAgent,
-			dnsRepo:        c.Repo().DNSRecord(),
-			powerDnsClient: c.Config().PowerDNSClient,
-			appRootDomain:  c.Config().ServerConf.AppRootDomain,
-			stackName:      stackName,
+		ParseConf{
+			PorterYaml:                porterYaml,
+			ImageInfo:                 imageInfo,
+			ServerConfig:              c.Config(),
+			ProjectID:                 cluster.ProjectID,
+			UserUpdate:                request.UserUpdate,
+			EnvGroups:                 request.EnvGroups,
+			Namespace:                 namespace,
+			ExistingHelmValues:        releaseValues,
+			ExistingChartDependencies: releaseDependencies,
+			SubdomainCreateOpts: SubdomainCreateOpts{
+				k8sAgent:       k8sAgent,
+				dnsRepo:        c.Repo().DNSRecord(),
+				powerDnsClient: c.Config().PowerDNSClient,
+				appRootDomain:  c.Config().ServerConf.AppRootDomain,
+				stackName:      stackName,
+			},
+			InjectLauncherToStartCommand: injectLauncher,
+			ShouldValidateHelmValues:     shouldCreate,
+			FullHelmValues:               request.FullHelmValues,
 		},
-		injectLauncher,
-		shouldCreate,
 	)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error parsing porter yaml into chart and values")
+		err = telemetry.Error(ctx, span, err, "parse error")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

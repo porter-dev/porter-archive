@@ -89,6 +89,10 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
     () => closeAllWebsockets();
   }, [currentSelectors, controller, currentCluster, currentProject]);
 
+  useEffect(() => {
+    return () => closeAllWebsockets();
+  }, [])
+
   const updatePods = async () => {
     try {
       const res = await api.getMatchingPods(
@@ -322,9 +326,12 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       }
 
       if (event.Kind != "pod") {
-        let [available, total] = getAvailability(object.metadata.kind, object);
-        setAvailable(available);
-        setTotal(total);
+        const availability = getAvailability(object.metadata.kind, object);
+        if (availability != null) {
+          let [available, total] = availability;
+          setAvailable(available);
+          setTotal(total);
+        }
         return;
       }
       updatePods();

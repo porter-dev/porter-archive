@@ -90,7 +90,7 @@ class RevisionSection extends Component<PropsType, StateType> {
     const ws = new WebSocket(`${url}${apiPath}`);
 
     ws.onopen = () => {
-      // console.log("connected to chart live updates websocket");
+      console.log("connected to chart live updates websocket");
     };
 
     ws.onmessage = (evt: MessageEvent) => {
@@ -119,7 +119,7 @@ class RevisionSection extends Component<PropsType, StateType> {
               return { ...prevState, revisions: [object, ...prevRevisions] };
             }
 
-            return { ...prevState, revisions: prevRevisions };
+            return { ...prevState, revisions: prevRevisions, maxVersion: Math.max(...prevRevisions.map(rev => rev.version)) };
           },
           () => {
             this.props.setRevision(this.state.revisions[0], true);

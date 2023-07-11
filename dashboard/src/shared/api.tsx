@@ -2,7 +2,7 @@ import { PolicyDocType } from "./auth/types";
 import { PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
 import { baseApi } from "./baseApi";
 
-import { BuildConfig, FullActionConfigType, PorterAppOptions } from "./types";
+import { BuildConfig, FullActionConfigType, CreateUpdatePorterAppOptions } from "./types";
 import {
   CreateStackBody,
   SourceConfig,
@@ -200,7 +200,7 @@ const getPorterAppEvent = baseApi<
 });
 
 const createPorterApp = baseApi<
-  PorterAppOptions,
+  CreateUpdatePorterAppOptions,
   {
     project_id: number;
     cluster_id: number;
@@ -2448,6 +2448,11 @@ const updateOnboardingStep = baseApi<
   {
     step: string;
     provider?: string;
+    account_id?: string;
+    cloudformation_url?: string;
+    error_message?: string;
+    login_url?: string;
+    external_id?: string;
   },
   {}
 >("POST", (pathParams) => {

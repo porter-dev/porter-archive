@@ -18,7 +18,7 @@ const Error: React.FC<Props> = ({
   errorModalContents,
 }) => {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
-  
+
   return (
     <>
       <StyledError>
@@ -26,7 +26,7 @@ const Error: React.FC<Props> = ({
         <Block>
         <Bold>Error:</Bold>
         <Text>{message}</Text>
-        {ctaText && (
+        {ctaText && (errorModalContents != null || ctaOnClick != null) && (
           <Cta onClick={() => {
             errorModalContents ? setErrorModalOpen(true) : ctaOnClick();
           }}>

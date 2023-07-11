@@ -59,7 +59,7 @@ func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, pr
 
 	v1File.Resources = append(v1File.Resources, bi, pi)
 
-	release, cmd, err := createReleaseResource(client,
+	preDeploy, cmd, err := createPreDeployResource(client,
 		stackConf.parsed.Release,
 		stackConf.stackName,
 		bi.Name,
@@ -72,11 +72,11 @@ func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, pr
 		return nil, "", err
 	}
 
-	if release != nil {
-		color.New(color.FgYellow).Printf("Found release command to run before deploying apps: %s \n", cmd)
-		v1File.Resources = append(v1File.Resources, release)
+	if preDeploy != nil {
+		color.New(color.FgYellow).Printf("Found pre-deploy command to run before deploying apps: %s \n", cmd)
+		v1File.Resources = append(v1File.Resources, preDeploy)
 	} else {
-		color.New(color.FgYellow).Printf("No release command found in porter.yaml or helm. \n")
+		color.New(color.FgYellow).Printf("No pre-deploy command found in porter.yaml or helm. \n")
 	}
 
 	return v1File, builder, nil

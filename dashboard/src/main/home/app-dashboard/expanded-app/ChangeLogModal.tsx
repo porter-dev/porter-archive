@@ -183,11 +183,14 @@ const ChangeLogModal: React.FC<Props> = ({
                     <ChangeLogComponent
                       oldYaml={currentChart.config}
                       newYaml={chartEvent?.config}
+                      appData={appData}
                     />
                     : <ChangeLogComponent
                       oldYaml={prevChartEvent?.config}
                       newYaml={chartEvent?.config}
+                      appData={appData}
                     />
+
                   }
                 </div>
               )}

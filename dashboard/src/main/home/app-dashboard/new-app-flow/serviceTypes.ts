@@ -300,16 +300,10 @@ const JobService = {
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
         type: 'job',
         jobsExecuteConcurrently: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.allowConcurrent),
-        cronSchedule: ServiceField.string('', porterJson?.apps?.[name]?.config?.schedule?.value),
+        cronSchedule: ServiceField.string('*/10 * * * *', porterJson?.apps?.[name]?.config?.schedule?.value),
         canDelete: porterJson?.apps?.[name] == null,
     }),
     serialize: (service: JobService) => {
-        const schedule = service.cronSchedule.value ? {
-            schedule: {
-                enabled: true,
-                value: service.cronSchedule.value,
-            }
-        } : {};
         return {
             allowConcurrent: service.jobsExecuteConcurrently.value,
             container: {
@@ -321,7 +315,11 @@ const JobService = {
                     memory: service.ram.value + 'Mi',
                 }
             },
-            ...schedule,
+            schedule: {
+                enabled: service.cronSchedule.value ? true : false,
+                value: service.cronSchedule.value,
+            },
+            paused: true,
         }
     },
     deserialize: (name: string, values: any, porterJson?: PorterJson): JobService => {

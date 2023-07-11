@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/registry"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type RegistryCreateRepositoryHandler struct {
@@ -30,12 +31,15 @@ func NewRegistryCreateRepositoryHandler(
 func (p *RegistryCreateRepositoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	reg, _ := ctx.Value(types.RegistryScope).(*models.Registry)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-repository")
+	defer span.End()
 
 	request := &types.CreateRegistryRepositoryRequest{}
 
 	ok := p.DecodeAndValidate(w, r, request)
-
 	if !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding request")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -45,10 +49,16 @@ func (p *RegistryCreateRepositoryHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	// parse the name from the registry
 	nameSpl := strings.Split(request.ImageRepoURI, "/")
 	repoName := strings.ToLower(strings.ReplaceAll(nameSpl[len(nameSpl)-1], "_", "-"))
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "repo-name", Value: repoName},
+		telemetry.AttributeKV{Key: "registry-id", Value: reg.ID},
+		telemetry.AttributeKV{Key: "image-repo-uri", Value: request.ImageRepoURI},
+	)
 
 	err := regAPI.CreateRepository(ctx, p.Config(), repoName)
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error creating repository")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

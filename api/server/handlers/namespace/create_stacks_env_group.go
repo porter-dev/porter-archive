@@ -20,6 +20,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
+	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
@@ -46,12 +47,14 @@ func NewCreateStacksEnvGroupHandler(
 
 func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	request := &types.CreateStacksEnvGroupRequest{}
-
+	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(ctx, "serve-create-env-group-stacks")
+	defer span.End()
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
-	namespace := r.Context().Value(types.NamespaceScope).(string)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	namespace := ctx.Value(types.NamespaceScope).(string)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, namespace)
 	if err != nil {
@@ -63,7 +66,7 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	aggregateReleases := []*release.Release{}
 	for i := range request.Apps {
 		namespaceStack := "porter-stack-" + request.Apps[i]
-		helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, namespaceStack)
+		helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespaceStack)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, 504, "error getting agent"))
 			return
@@ -77,7 +80,7 @@ func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		aggregateReleases = append(aggregateReleases, releases...)
 	}
 
-	errors := rolloutStacksApplications(c, c.Config(), cluster, request.Name, namespace, agent, aggregateReleases, r, w)
+	errors := rolloutStacksApplications(c, c.Config(), cluster, request.Name, namespace, agent, aggregateReleases, r, ctx, w)
 
 	if len(errors) > 0 {
 		errStrArr := make([]string, 0)
@@ -101,12 +104,14 @@ func rolloutStacksApplications(
 	agent *kubernetes.Agent,
 	releases []*release.Release,
 	r *http.Request,
+	ctx context.Context,
 	w http.ResponseWriter,
 ) []error {
 	registries, err := config.Repo.Registry().ListRegistriesByProjectID(cluster.ProjectID)
 	if err != nil {
 		return []error{err}
 	}
+	ctx, span := telemetry.NewSpan(ctx, "rollout-env-group-stacks")
 	// asynchronously update releases with that image repo uri
 	var wg sync.WaitGroup
 	mu := &sync.Mutex{}
@@ -116,7 +121,12 @@ func rolloutStacksApplications(
 		index := i
 		release := rel
 		wg.Add(1)
-		cm, _, err := agent.GetLatestVersionedConfigMap(envGroupName, "porter-stack-"+releases[index].Name)
+		suffix := "-r"
+		releaseName := release.Name
+		if strings.HasSuffix(release.Name, suffix) {
+			releaseName = strings.TrimSuffix(releaseName, suffix)
+		}
+		cm, _, err := agent.GetLatestVersionedConfigMap(envGroupName, "porter-stack-"+releaseName)
 		if err != nil {
 			return []error{err}
 		}
@@ -161,57 +171,118 @@ func rolloutStacksApplications(
 			if release.Chart.Name() == "job" {
 				newConfig["paused"] = true
 			}
-
-			if req := releases[index].Chart.Metadata.Dependencies; req != nil {
-				for _, dep := range req {
-					dep.Name = getType(dep.Name)
+			if !strings.HasSuffix(release.Name, suffix) {
+				if req := releases[index].Chart.Metadata.Dependencies; req != nil {
+					for _, dep := range req {
+						dep.Name = getType(dep.Name)
+					}
 				}
-			}
 
-			metadata := &chart.Metadata{
-				Name:        "umbrella",
-				Description: "Web application that is exposed to external traffic.",
-				Version:     "0.96.0",
-				APIVersion:  "v2",
-				Home:        "https://getporter.dev/",
-				Icon:        "https://user-images.githubusercontent.com/65516095/111255214-07d3da80-85ed-11eb-99e2-fddcbdb99bdb.png",
-				Keywords: []string{
-					"porter",
-					"application",
-					"service",
-					"umbrella",
-				},
-				Type:         "application",
-				Dependencies: releases[index].Chart.Metadata.Dependencies,
-			}
-			charter := &chart.Chart{
-				Metadata: metadata,
-			}
-			conf := &helm.InstallChartConfig{
-				Chart:      charter,
-				Name:       releases[index].Name,
-				Namespace:  "porter-stack-" + releases[index].Name,
-				Values:     newConfig,
-				Cluster:    cluster,
-				Repo:       config.Repo,
-				Registries: registries,
-			}
-			helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "porter-stack-"+releases[index].Name)
-			if err != nil {
-				fmt.Println("Could Not Get Helm Agent ")
-				return
-			}
-			_, err = helmAgent.UpgradeInstallChart(r.Context(), conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection)
-			if err != nil {
-				mu.Lock()
-				errors = append(errors, err)
-				mu.Unlock()
-				return
+				metadata := &chart.Metadata{
+					Name:        "umbrella",
+					Description: "Web application that is exposed to external traffic.",
+					Version:     "0.96.0",
+					APIVersion:  "v2",
+					Home:        "https://getporter.dev/",
+					Icon:        "https://user-images.githubusercontent.com/65516095/111255214-07d3da80-85ed-11eb-99e2-fddcbdb99bdb.png",
+					Keywords: []string{
+						"porter",
+						"application",
+						"service",
+						"umbrella",
+					},
+					Type:         "application",
+					Dependencies: releases[index].Chart.Metadata.Dependencies,
+				}
+				charter := &chart.Chart{
+					Metadata: metadata,
+				}
+				conf := &helm.InstallChartConfig{
+					Chart:      charter,
+					Name:       releases[index].Name,
+					Namespace:  "porter-stack-" + releases[index].Name,
+					Values:     newConfig,
+					Cluster:    cluster,
+					Repo:       config.Repo,
+					Registries: registries,
+				}
+
+				helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "porter-stack-"+releases[index].Name)
+				if err != nil {
+					fmt.Println("Could Not Get Helm Agent ")
+					return
+				}
+				_, err = helmAgent.UpgradeInstallChart(ctx, conf, config.DOConf, config.ServerConf.DisablePullSecretsInjection)
+				if err != nil {
+					mu.Lock()
+					errors = append(errors, err)
+					mu.Unlock()
+					return
+				}
+			} else {
+				helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "porter-stack-"+releaseName)
+				if err != nil {
+					fmt.Println("Could Not Get Helm Agent ")
+					return
+				}
+				helmRelease, err := helmAgent.GetRelease(ctx, rel.Name, 0, false)
+				if err != nil {
+					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "creating-pre-deploy-job", Value: true})
+					conf, err := createReleaseJobChart(
+						ctx,
+						releaseName,
+						newConfig,
+						c.Config().ServerConf.DefaultApplicationHelmRepoURL,
+						registries,
+						cluster,
+						c.Repo(),
+					)
+					if err != nil {
+						err = telemetry.Error(ctx, span, err, "error making config for pre-deploy job chart")
+						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+						return
+					}
+
+					_, err = helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+					if err != nil {
+						err = telemetry.Error(ctx, span, err, "error installing pre-deploy job chart")
+						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+						_, uninstallChartErr := helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", releaseName))
+						if uninstallChartErr != nil {
+							uninstallChartErr = telemetry.Error(ctx, span, err, "error uninstalling pre-deploy job chart after failed install")
+							c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(uninstallChartErr, http.StatusInternalServerError))
+						}
+						return
+					}
+				} else {
+					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-pre-deploy-job", Value: true})
+					chart, err := loader.LoadChartPublic(ctx, c.Config().Metadata.DefaultAppHelmRepoURL, "job", "")
+					if err != nil {
+						err = telemetry.Error(ctx, span, err, "error loading latest job chart")
+						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+						return
+					}
+
+					conf := &helm.UpgradeReleaseConfig{
+						Name:       helmRelease.Name,
+						Cluster:    cluster,
+						Repo:       c.Repo(),
+						Registries: registries,
+						Values:     newConfig,
+						Chart:      chart,
+					}
+					_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
+					if err != nil {
+						err = telemetry.Error(ctx, span, err, "error upgrading pre-deploy job chart")
+						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+						return
+					}
+				}
 			}
 		}()
 
 		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, releases[index].Name)
-		ctx, span := telemetry.NewSpan(r.Context(), "serve-create-porter-app")
+		ctx, span := telemetry.NewSpan(ctx, "serve-update-porter-app")
 		updatedPorterApp, err := c.Repo().PorterApp().UpdatePorterApp(app)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error writing updated app to DB")
@@ -485,4 +556,32 @@ func attemptToGetImageInfoFromRelease(values map[string]interface{}) types.Image
 	}
 
 	return imageInfo
+}
+
+func createReleaseJobChart(
+	ctx context.Context,
+	stackName string,
+	values map[string]interface{},
+	repoUrl string,
+	registries []*models.Registry,
+	cluster *models.Cluster,
+	repo repository.Repository,
+) (*helm.InstallChartConfig, error) {
+	chart, err := loader.LoadChartPublic(ctx, repoUrl, "job", "")
+	if err != nil {
+		return nil, err
+	}
+
+	releaseName := fmt.Sprintf("%s-r", stackName)
+	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+
+	return &helm.InstallChartConfig{
+		Chart:      chart,
+		Name:       releaseName,
+		Namespace:  namespace,
+		Values:     values,
+		Cluster:    cluster,
+		Repo:       repo,
+		Registries: registries,
+	}, nil
 }

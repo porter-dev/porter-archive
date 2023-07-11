@@ -102,9 +102,73 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
   const [buildView, setBuildView] = useState<BuildMethod>("buildpacks");
 
+  const [existingApps, setExistingApps] = useState<string[]>([]);
+  const [appNameInputError, setAppNameInputError] = useState<string | undefined>(undefined);
+
   const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([]);
   const [showEnvModal, setShowEnvModal] = useState(false);
   const [deletedEnvGroups, setDeleteEnvGroups] = useState<PopulatedEnvGroup[]>([])
+
+  // this advances the step in the case that a user chooses a repo that doesn't have a porter.yaml
+  useEffect(() => {
+    if (porterApp.git_branch !== "") {
+      setCurrentStep(Math.max(currentStep, 2));
+    }
+  }, [porterApp.git_branch]);
+
+  useEffect(() => {
+    let isSubscribed = true;
+
+    if (currentProject == null) {
+      return;
+    }
+
+    api
+      .getGitProviders("<token>", {}, { project_id: currentProject?.id })
+      .then((res) => {
+        const data = res.data;
+        if (!isSubscribed) {
+          return;
+        }
+
+        if (!Array.isArray(data)) {
+          setHasProviders(false);
+          return;
+        }
+      })
+      .catch((err) => {
+        setHasProviders(false);
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [currentProject]);
+
+  useEffect(() => {
+    const getApps = async () => {
+      try {
+        const res = await api.getPorterApps(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        );
+        if (res?.data != null) {
+          setExistingApps(res.data.map((app: PorterApp) => app.name));
+        }
+      } catch (err) {
+      }
+    };
+    getApps();
+  }, [])
+
+  useEffect(() => {
+    setFormState({ ...formState, serviceList: [] });
+    setDetected(undefined);
+  }, [porterApp.git_branch]);
 
   const handleSetAccessData = (data: GithubAppAccessData) => {
     setAccessData(data);
@@ -197,55 +261,16 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  // this advances the step in the case that a user chooses a repo that doesn't have a porter.yaml
-  useEffect(() => {
-    if (porterApp.git_branch !== "") {
-      setCurrentStep(Math.max(currentStep, 2));
-    }
-  }, [porterApp.git_branch]);
-
-  useEffect(() => {
-    let isSubscribed = true;
-
-    if (currentProject == null) {
-      return;
-    }
-
-    api
-      .getGitProviders("<token>", {}, { project_id: currentProject?.id })
-      .then((res) => {
-        const data = res.data;
-        if (!isSubscribed) {
-          return;
-        }
-
-        if (!Array.isArray(data)) {
-          setHasProviders(false);
-          return;
-        }
-      })
-      .catch((err) => {
-        setHasProviders(false);
-      });
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [currentProject]);
-
-  const isAppNameValid = (name: string) => {
-    const regex = /^[a-z0-9-]{1,61}$/;
-    return regex.test(name);
-  };
-
   const handleAppNameChange = (name: string) => {
     setPorterApp(PorterApp.setAttribute(porterApp, "name", name));
-    if (isAppNameValid(name) && Validators.applicationName(name)) {
+    const appNameInputError = getAppNameInputError(name);
+    if (appNameInputError == null) {
       setCurrentStep(Math.max(Math.max(currentStep, 1), existingStep));
     } else {
       setExistingStep(Math.max(currentStep, existingStep));
       setCurrentStep(0);
     }
+    setAppNameInputError(appNameInputError);
   };
 
   const handleDoNotConnect = () => {
@@ -253,13 +278,20 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     localStorage.setItem("hasClickedDoNotConnect", "true");
   };
 
-  const shouldHighlightAppNameInput = () => {
-    return (
-      porterApp.name !== "" &&
-      (!isAppNameValid(porterApp.name) ||
-        porterApp.name.length > 61)
-    );
+  const getAppNameInputError = (name: string) => {
+    const regex = /^[a-z0-9-]{1,61}$/;
+    if (name === "") {
+      return undefined;
+    } else if (!regex.test(name)) {
+      return 'Lowercase letters, numbers, and "-" only.';
+    } else if (name.length > 30) {
+      return "Maximum 30 characters allowed.";
+    } else if (existingApps.includes(name)) {
+      return "An app with this name already exists.";
+    }
+    return undefined;
   };
+
   const deleteEnvGroup = (envGroup: PopulatedEnvGroup) => {
     setDeleteEnvGroups([...deletedEnvGroups, envGroup]);
     setSyncedEnvGroups(syncedEnvGroups?.filter(
@@ -290,16 +322,10 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
-      let imageInfo = {
+      const imageInfo = {
         repository: "",
         tag: "",
       };
-      if (porterApp.image_repo_uri && imageTag) {
-        imageInfo = {
-          repository: porterApp.image_repo_uri,
-          tag: imageTag,
-        };
-      }
 
       const porterAppRequest = {
         porter_yaml: base64Encoded,
@@ -317,7 +343,15 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         env_groups: syncedEnvGroups?.map((env: PopulatedEnvGroup) => env.name),
         user_update: true,
       }
-      if (buildView === "docker") {
+      if (porterApp.image_repo_uri && imageTag) {
+        porterAppRequest.image_info = {
+          repository: porterApp.image_repo_uri,
+          tag: imageTag,
+        };
+        porterAppRequest.repo_name = "";
+        porterAppRequest.git_branch = "";
+        porterAppRequest.git_repo_id = 0;
+      } else if (buildView === "docker") {
         porterAppRequest.dockerfile = porterApp.dockerfile;
       } else {
         porterAppRequest.builder = porterApp.builder;
@@ -334,7 +368,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         }
       );
 
-      if (porterApp.repo_name === "") {
+      if (porterAppRequest.repo_name === "") {
         props.history.push(`/apps/${porterApp.name}`);
       }
 
@@ -418,10 +452,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  useEffect(() => {
-    setFormState({ ...formState, serviceList: [] });
-  }, [porterApp.git_branch]);
-
   return (
     <CenterWrapper>
       <Div>
@@ -460,17 +490,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   placeholder="ex: academic-sophon"
                   value={porterApp.name}
                   width="300px"
-                  error={
-                    shouldHighlightAppNameInput() &&
-                    (porterApp.name.length > 30
-                      ? "Maximum 30 characters allowed."
-                      : 'Lowercase letters, numbers, and "-" only.')
-                  }
-                  setValue={(e) => {
-                    handleAppNameChange(e);
-                  }}
+                  error={appNameInputError}
+                  setValue={handleAppNameChange}
                 />
-                {shouldHighlightAppNameInput()}
               </>,
               <>
                 <Text size={16}>Deployment method</Text>

@@ -62,6 +62,7 @@ type ServerConf struct {
 	SendgridProjectInviteTemplateID    string `env:"SENDGRID_INVITE_TEMPLATE_ID"`
 	SendgridIncidentAlertTemplateID    string `env:"SENDGRID_INCIDENT_ALERT_TEMPLATE_ID"`
 	SendgridIncidentResolvedTemplateID string `env:"SENDGRID_INCIDENT_RESOLVED_TEMPLATE_ID"`
+	SendgridDeleteProjectTemplateID    string `env:"SENDGRID_DELETE_PROJECT_TEMPLATE_ID"`
 	SendgridSenderEmail                string `env:"SENDGRID_SENDER_EMAIL"`
 
 	SlackClientID     string `env:"SLACK_CLIENT_ID"`

@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/notifier"
 )
 
 type ProjectDeleteHandler struct {
@@ -68,6 +69,16 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 				}
 			}
 		}
+	}
+	err := p.Config().UserNotifier.SendProjectDeleteEmail(
+		&notifier.SendProjectDeleteEmailOpts{
+			Email:   user.Email,
+			Project: proj.Name,
+		},
+	)
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 
 	deletedProject, err := p.Repo().Project().DeleteProject(proj)

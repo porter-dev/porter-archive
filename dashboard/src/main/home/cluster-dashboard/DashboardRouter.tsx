@@ -107,9 +107,9 @@ const DashboardRouter: React.FC<Props> = ({
   }, [currentCluster]);
 
   useEffect(() => {
-    let { currentNamespace } = (currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "default" : props.match?.params as any;
+    let { currentNamespace } = (currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "porter-env-group" : props.match?.params as any;
     if (!currentNamespace) {
-      currentNamespace = (currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "default" : getQueryParam(props, "namespace");
+      currentNamespace = (currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "porter-env-group" : getQueryParam(props, "namespace");
     }
     setSortType("Newest");
     setCurrentChart(null);

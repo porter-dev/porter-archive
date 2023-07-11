@@ -204,7 +204,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           {},
           {
             id: currentProject.id,
-            namespace: "default",
+            namespace: "porter-env-group",
             cluster_id: currentCluster.id,
           }
         )
@@ -321,7 +321,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           {
             project_id: currentProject.id,
             cluster_id: currentCluster.id,
-            namespace: "default",
+            namespace: "porter-env-group",
           }
         );
       });
@@ -390,7 +390,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           {
             project_id: currentProject.id,
             cluster_id: currentCluster.id,
-            namespace: "default",
+            namespace: "porter-env-group",
           }
         );
       });
@@ -414,7 +414,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           {
             project_id: currentProject.id,
             cluster_id: currentCluster.id,
-            namespace: "default",
+            namespace: "porter-env-group",
           }
         );
       }

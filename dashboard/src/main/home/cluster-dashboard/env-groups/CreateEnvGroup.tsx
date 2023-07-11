@@ -55,6 +55,26 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
 
     let envVariables = this.state.envVariables;
 
+    if (this.context.currentProject.simplified_view_enabled) {
+      api
+        .createNamespace(
+          "<token>",
+          {
+            name: "porter-env-group",
+          },
+          {
+            id: this.context.currentProject.id,
+            cluster_id: this.props.currentCluster.id,
+          }
+        )
+        .catch((error) => {
+          if (error.response && error.response.status === 412) {
+            console.log("Ignoring known 412 error");
+          } else {
+            console.error(error);
+          }
+        });
+    }
     envVariables
       .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
         // remove any collisions that are marked as deleted and are duplicates
@@ -95,7 +115,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
         {
           id: this.context.currentProject.id,
           cluster_id: this.props.currentCluster.id,
-          namespace: this.state.selectedNamespace,
+          namespace: this.context.currentProject.simplified_view_enabled ? "porter-env-group" : this.state.selectedNamespace,
         }
       )
       .then((res) => {

@@ -118,7 +118,6 @@ export const ExpandedEnvGroupFC = ({
       { value: "settings", label: "Settings" },
     ];
   }, [currentEnvGroup]);
-
   const populateEnvGroup = async () => {
     try {
       const populatedEnvGroup = await api
@@ -274,7 +273,7 @@ export const ExpandedEnvGroupFC = ({
                   {
                     id: currentProject.id,
                     cluster_id: currentCluster.id,
-                    namespace: "default",
+                    namespace: "porter-env-group",
                   }
                 );
               }

@@ -21,7 +21,7 @@ type PropsType = RouteComponentProps &
   };
 
 const EnvGroupDashboard = (props: PropsType) => {
-  const namespace = (currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "default" : getQueryParam(props, "namespace");
+  const namespace = (currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "porter-env-group" : getQueryParam(props, "namespace");
   const params = useParams<{ name: string }>();
   const { currentProject } = useContext(Context);
   const [expandedEnvGroup, setExpandedEnvGroup] = useState<any>();
@@ -49,7 +49,7 @@ const EnvGroupDashboard = (props: PropsType) => {
           {},
           {
             id: currentProject.id,
-            namespace: currentProject?.simplified_view_enabled ? "default" : namespace,
+            namespace: currentProject?.simplified_view_enabled ? "porter-env-group" : namespace,
             cluster_id: props.currentCluster.id,
           }
         );
@@ -97,7 +97,7 @@ const EnvGroupDashboard = (props: PropsType) => {
     return (
       <ExpandedEnvGroup
         isAuthorized={props.isAuthorized}
-        namespace={(currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "default" : expandedEnvGroup?.namespace ?? namespace}
+        namespace={(currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "porter-env-group" : expandedEnvGroup?.namespace ?? namespace}
         currentCluster={props.currentCluster}
         envGroup={expandedEnvGroup}
         closeExpanded={() => props.history.push("/env-groups")}

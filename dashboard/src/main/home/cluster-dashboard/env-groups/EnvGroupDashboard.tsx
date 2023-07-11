@@ -50,7 +50,7 @@ const EnvGroupDashboard = (props: PropsType) => {
   const setNamespace = (namespace: string) => {
     setState((state) => ({ ...state, namespace }));
     pushQueryParams(props, {
-      namespace: currentProject.simplified_view_enabled ? ("default") : (namespace ?? "ALL"),
+      namespace: currentProject.simplified_view_enabled ? ("porter-env-group") : (namespace ?? "ALL"),
     });
   };
 
@@ -109,7 +109,7 @@ const EnvGroupDashboard = (props: PropsType) => {
               <Spacer inline width="10px" />
               {!currentProject.simplified_view_enabled && <NamespaceSelector
                 setNamespace={setNamespace}
-                namespace={currentProject.simplified_view_enabled ? "default" : state.namespace}
+                namespace={currentProject.simplified_view_enabled ? "porter-env-group" : state.namespace}
               />}
             </SortFilterWrapper>
             <Flex>
@@ -123,7 +123,7 @@ const EnvGroupDashboard = (props: PropsType) => {
 
           <EnvGroupList
             currentCluster={props.currentCluster}
-            namespace={currentProject?.simplified_view_enabled ? "default" : state.namespace}
+            namespace={currentProject?.simplified_view_enabled ? "porter-env-group" : state.namespace}
             sortType={state.sortType}
             setExpandedEnvGroup={setExpandedEnvGroup}
           />
@@ -137,7 +137,7 @@ const EnvGroupDashboard = (props: PropsType) => {
       return (
         <ExpandedEnvGroup
           isAuthorized={props.isAuthorized}
-          namespace={currentProject?.simplified_view_enabled ? "default" : (state.expandedEnvGroup?.namespace || state.namespace)}
+          namespace={currentProject?.simplified_view_enabled ? "porter-env-group" : (state.expandedEnvGroup?.namespace || state.namespace)}
           currentCluster={props.currentCluster}
           envGroup={state.expandedEnvGroup}
           closeExpanded={() => closeExpanded()}

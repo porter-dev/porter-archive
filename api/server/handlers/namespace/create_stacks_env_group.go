@@ -48,13 +48,13 @@ func NewCreateStacksEnvGroupHandler(
 func (c *CreateStacksEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	request := &types.CreateStacksEnvGroupRequest{}
 	ctx := r.Context()
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 	ctx, span := telemetry.NewSpan(ctx, "serve-create-env-group-stacks")
 	defer span.End()
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
 	namespace := ctx.Value(types.NamespaceScope).(string)
-	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, namespace)
 	if err != nil {

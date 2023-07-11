@@ -202,9 +202,6 @@ const WebService = {
                 command: service.startCommand.value,
                 port: service.port.value,
             },
-            service: {
-                port: service.port.value,
-            },
             autoscaling: {
                 enabled: service.autoscaling.enabled.value,
                 minReplicas: service.autoscaling.minReplicas.value,

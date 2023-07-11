@@ -61,30 +61,56 @@ type SyncedEnvSectionKey struct {
 	Secret bool   `json:"secret" yaml:"secret"`
 }
 
-func parse(
-	porterYaml []byte,
-	imageInfo types.ImageInfo,
-	config *config.Config,
-	projectID uint,
-	userUpdate bool,
-	envGroups []string,
-	namespace string,
-	existingValues map[string]interface{},
-	existingDependencies []*chart.Dependency,
-	opts SubdomainCreateOpts,
-	injectLauncher bool,
-	shouldCreate bool,
-) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
+type ParseConf struct {
+	// PorterYaml is the raw porter yaml which is used to build the values + chart for helm upgrade
+	PorterYaml []byte
+	// ImageInfo contains the repository and tag of the image to use for the helm upgrade. Kept separate from the PorterYaml because the image info
+	// is stored in the 'global' key of the values, which is not part of the porter yaml
+	ImageInfo types.ImageInfo
+	// ServerConfig is the server conf, used to find the default helm repo
+	ServerConfig *config.Config
+	// ProjectID
+	ProjectID uint
+	// UserUpdate used for synced env groups
+	UserUpdate bool
+	// EnvGroups used for synced env groups
+	EnvGroups []string
+	// Namespace used for synced env groups
+	Namespace string
+	// ExistingHelmValues is the existing values for the helm release, if it exists
+	ExistingHelmValues map[string]interface{}
+	// ExistingChartDependencies is the existing dependencies for the helm release, if it exists
+	ExistingChartDependencies []*chart.Dependency
+	// SubdomainCreateOpts contains the necessary information to create a subdomain if necessary
+	SubdomainCreateOpts SubdomainCreateOpts
+	// InjectLauncherToStartCommand is a flag to determine whether to prepend the launcher to the start command
+	InjectLauncherToStartCommand bool
+	// ShouldValidateHelmValues is a flag to determine whether to validate helm values
+	ShouldValidateHelmValues bool
+	// FullHelmValues if provided, override anything specified in porter.yaml. Used as an escape hatch for support
+	FullHelmValues string
+}
+
+func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
 	parsed := &PorterStackYAML{}
 
-	err := yaml.Unmarshal(porterYaml, parsed)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
+	if conf.FullHelmValues != "" {
+		parsedHelmValues, err := convertHelmValuesToPorterYaml(conf.FullHelmValues)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing raw helm values", err)
+		}
+		parsed = parsedHelmValues
+	} else {
+		err := yaml.Unmarshal(conf.PorterYaml, parsed)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
+		}
 	}
+
 	synced_env := make([]*SyncedEnvSection, 0)
 
-	for i := range envGroups {
-		cm, _, err := opts.k8sAgent.GetLatestVersionedConfigMap(envGroups[i], namespace)
+	for i := range conf.EnvGroups {
+		cm, _, err := conf.SubdomainCreateOpts.k8sAgent.GetLatestVersionedConfigMap(conf.EnvGroups[i], conf.Namespace)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
 		}
@@ -101,7 +127,7 @@ func parse(
 		version := uint(versionInt)
 
 		newSection := &SyncedEnvSection{
-			Name:    envGroups[i],
+			Name:    conf.EnvGroups[i],
 			Version: version,
 		}
 
@@ -119,22 +145,22 @@ func parse(
 	}
 
 	parsed.SyncedEnv = synced_env
-	// 	fmt.Println("This is the config map:" ,cm)
-	values, err := buildUmbrellaChartValues(parsed, imageInfo, existingValues, opts, injectLauncher, shouldCreate, userUpdate)
+
+	values, err := buildUmbrellaChartValues(parsed, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
+		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values", err)
 	}
 	convertedValues := convertMap(values).(map[string]interface{})
 
-	chart, err := buildUmbrellaChart(parsed, config, projectID, existingDependencies)
+	chart, err := buildUmbrellaChart(parsed, conf.ServerConfig, conf.ProjectID, conf.ExistingChartDependencies)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", "error building chart from porter.yaml", err)
+		return nil, nil, nil, fmt.Errorf("%s: %w", "error building chart", err)
 	}
 
 	// return the parsed release values for the release job chart, if they exist
 	var preDeployJobValues map[string]interface{}
 	if parsed.Release != nil && parsed.Release.Run != nil {
-		preDeployJobValues = buildPreDeployJobChartValues(parsed.Release, parsed.Env, parsed.SyncedEnv, imageInfo, injectLauncher, existingValues, strings.TrimSuffix(strings.TrimPrefix(namespace, "porter-stack-"), "")+"-r", userUpdate)
+		preDeployJobValues = buildPreDeployJobChartValues(parsed.Release, parsed.Env, parsed.SyncedEnv, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate)
 	}
 
 	return chart, convertedValues, preDeployJobValues, nil
@@ -146,14 +172,14 @@ func buildUmbrellaChartValues(
 	existingValues map[string]interface{},
 	opts SubdomainCreateOpts,
 	injectLauncher bool,
-	shouldCreate bool,
+	shouldValidateHelmValues bool,
 	userUpdate bool,
 ) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
 	if parsed.Apps == nil {
 		if existingValues == nil {
-			return nil, fmt.Errorf("porter.yaml must contain at least one app, or release must exist and have values")
+			return nil, fmt.Errorf("porter.yaml must contain at least one app, or pre-deploy must exist and have values")
 		}
 	}
 
@@ -173,7 +199,7 @@ func buildUmbrellaChartValues(
 			}
 		}
 
-		validateErr := validateHelmValues(helm_values, shouldCreate, appType)
+		validateErr := validateHelmValues(helm_values, shouldValidateHelmValues, appType)
 		if validateErr != "" {
 			return nil, fmt.Errorf("error validating service \"%s\": %s", name, validateErr)
 		}
@@ -230,9 +256,8 @@ func buildUmbrellaChartValues(
 }
 
 // we can add to this function up later or use an alternative
-func validateHelmValues(values map[string]interface{}, shouldCreate bool, appType string) string {
-	// currently, we only validate port on initial app create, because this will break any updates to existing apps with lower port numbers
-	if shouldCreate {
+func validateHelmValues(values map[string]interface{}, shouldValidateHelmValues bool, appType string) string {
+	if shouldValidateHelmValues {
 		// validate port for web services
 		if appType == "web" {
 			containerMap, err := getNestedMap(values, "container")
@@ -284,12 +309,6 @@ func buildPreDeployJobChartValues(release *App, env map[string]string, synced_en
 
 	return helm_values
 }
-
-// func populateSyncedEnvGroups(release *App, opts SubdomainCreateOpts) {
-// 	// TODO
-// 	cm, _, err := opts.k8sAgent.GetLatestVersionedConfigMap()
-// 	fmt.Println("This is the config map:" ,cm)
-// }
 
 func getType(name string, app *App) string {
 	if app.Type != nil {
@@ -639,6 +658,17 @@ func getChartTypeFromHelmName(name string) string {
 	return ""
 }
 
+func getServiceNameAndTypeFromHelmName(name string) (string, string) {
+	if strings.HasSuffix(name, "-web") {
+		return strings.TrimSuffix(name, "-web"), "web"
+	} else if strings.HasSuffix(name, "-wkr") {
+		return strings.TrimSuffix(name, "-wkr"), "worker"
+	} else if strings.HasSuffix(name, "-job") {
+		return strings.TrimSuffix(name, "-job"), "job"
+	}
+	return "", ""
+}
+
 func attemptToGetImageInfoFromRelease(values map[string]interface{}) types.ImageInfo {
 	imageInfo := types.ImageInfo{}
 
@@ -659,6 +689,17 @@ func attemptToGetImageInfoFromRelease(values map[string]interface{}) types.Image
 	}
 
 	return imageInfo
+}
+
+func attemptToGetImageInfoFromFullHelmValues(fullHelmValues string) (types.ImageInfo, error) {
+	imageInfo := types.ImageInfo{}
+	var values map[string]interface{}
+	err := yaml.Unmarshal([]byte(fullHelmValues), &values)
+	if err != nil {
+		return imageInfo, fmt.Errorf("error unmarshaling full helm values to read image info: %w", err)
+	}
+	convertedValues := convertMap(values).(map[string]interface{})
+	return attemptToGetImageInfoFromRelease(convertedValues), nil
 }
 
 func getStacksNestedMap(obj map[string]interface{}, fields ...string) ([]map[string]interface{}, error) {
@@ -697,4 +738,29 @@ func getStacksNestedMap(obj map[string]interface{}, fields ...string) ([]map[str
 		result[i] = mapElement
 	}
 	return result, nil
+}
+
+func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) {
+	var values map[string]interface{}
+	err := yaml.Unmarshal([]byte(helmValues), &values)
+	if err != nil {
+		return nil, err
+	}
+	apps := make(map[string]*App)
+	for k, v := range values {
+		if k == "global" {
+			continue
+		}
+		serviceName, serviceType := getServiceNameAndTypeFromHelmName(k)
+		if serviceName == "" {
+			return nil, fmt.Errorf("invalid service key: %s. make sure that service key ends in either -web, -wkr, or -job", k)
+		}
+		apps[serviceName] = &App{
+			Config: convertMap(v).(map[string]interface{}),
+			Type:   &serviceType,
+		}
+	}
+	return &PorterStackYAML{
+		Apps: apps,
+	}, nil
 }

@@ -4,7 +4,7 @@ import React, {
 } from "react";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
-import { PorterAppOptions } from "shared/types";
+import { CreateUpdatePorterAppOptions } from "shared/types";
 import { Context } from "shared/Context";
 
 import api from "shared/api";
@@ -18,7 +18,7 @@ import _ from "lodash";
 type Props = {
   porterApp: PorterApp;
   setTempPorterApp: (app: PorterApp) => void;
-  updatePorterApp: (options: Partial<PorterAppOptions>) => Promise<void>;
+  updatePorterApp: (options: Partial<CreateUpdatePorterAppOptions>) => Promise<void>;
   clearStatus: () => void;
   buildView: BuildMethod;
   setBuildView: (buildView: BuildMethod) => void;

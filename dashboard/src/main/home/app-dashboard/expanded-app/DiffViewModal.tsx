@@ -16,7 +16,7 @@ import Spacer from "components/porter/Spacer";
 import Checkbox from "components/porter/Checkbox";
 import { NavLink } from "react-router-dom";
 import SidebarLink from "main/home/sidebar/SidebarLink";
-import { EnvVariablesTab } from "./EnvVariablesTab";
+import { EnvVariablesTab } from "./env-vars/EnvVariablesTab";
 type Props = {
   modalVisible: boolean;
   setModalVisible: (x: boolean) => void;

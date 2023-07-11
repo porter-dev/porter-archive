@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useCallback } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { RouteComponentProps, useParams, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
@@ -13,7 +13,6 @@ import refresh from "assets/refresh.png";
 import save from "assets/save-01.svg";
 
 import api from "shared/api";
-import JSZip from "jszip";
 import { Context } from "shared/Context";
 import Error from "components/porter/Error";
 
@@ -26,7 +25,7 @@ import Link from "components/porter/Link";
 import Back from "components/porter/Back";
 import TabSelector from "components/TabSelector";
 import Icon from "components/porter/Icon";
-import { ChartType, PorterAppOptions } from "shared/types";
+import { ChartType, CreateUpdatePorterAppOptions } from "shared/types";
 import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTab from "../build-settings/BuildSettingsTab";
 import Button from "components/porter/Button";
@@ -37,19 +36,18 @@ import Fieldset from "components/porter/Fieldset";
 import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterYamlSchema } from "../new-app-flow/schema";
-import { EnvVariablesTab } from "./EnvVariablesTab";
+import { EnvVariablesTab } from "./env-vars/EnvVariablesTab";
 import GHABanner from "./GHABanner";
 import LogSection from "./logs/LogSection";
 import ActivityFeed from "./activity-feed/ActivityFeed";
 import MetricsSection from "./MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
-import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
-import Anser, { AnserJsonEntry } from "anser";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import { PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
+import HelmValuesTab from "./HelmValuesTab";
 
 type Props = RouteComponentProps & {};
 
@@ -70,6 +68,7 @@ const validTabs = [
   "environment",
   "build-settings",
   "settings",
+  "helm-values",
 ] as const;
 const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
@@ -83,7 +82,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     currentCluster,
     currentProject,
     setCurrentError,
-    featurePreview,
+    user,
   } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
@@ -93,7 +92,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   );
   const [hasBuiltImage, setHasBuiltImage] = useState<boolean>(false);
 
-  const [error, setError] = useState(null);
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
     false
   );
@@ -110,8 +108,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [showUnsavedChangesBanner, setShowUnsavedChangesBanner] = useState<boolean>(false);
 
   const [expandedJob, setExpandedJob] = useState(null);
-  const [logs, setLogs] = useState<Log[]>([]);
-
   const [services, setServices] = useState<Service[]>([]);
   const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
@@ -125,13 +121,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   const { eventId, tab } = useParams<Params>();
   const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
-
-  useEffect(() => {
-    setBannerLoading(true);
-    getBuildLogs().then(() => {
-      setBannerLoading(false);
-    });
-  }, [appData]);
 
   useEffect(() => {
     if (!_.isEqual(_.omitBy(porterApp, _.isEmpty), _.omitBy(tempPorterApp, _.isEmpty))) {
@@ -195,7 +184,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           }
         );
       } catch (err) {
-        setError(err)
+        // that's ok if there's an error, just means there is no pre-deploy chart
       }
 
       // update apps and release
@@ -311,7 +300,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       }
     } catch (err) {
-      setError(err);
+      // TODO: handle error
     } finally {
       setIsLoading(false);
     }
@@ -340,7 +329,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       try {
         await Promise.all(removeApplicationToEnvGroupPromises);
       } catch (error) {
-        setError(error);
+        // TODO: Handle error
       }
     }
     try {
@@ -376,13 +365,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       );
       props.history.push("/apps");
     } catch (err) {
-      setError(err);
+      // TODO: handle error
     } finally {
       setDeleting(false);
     }
   };
 
-  const updatePorterApp = async (options: Partial<PorterAppOptions>) => {
+  const updatePorterApp = async (options: Partial<CreateUpdatePorterAppOptions>) => {
     //setting the EnvGroups Config Maps
     const filteredEnvGroups = deletedEnvGroups.filter((deletedEnvGroup) => {
       return !syncedEnvGroups.some((syncedEnvGroup) => {
@@ -434,7 +423,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     try {
       await Promise.all(addApplicationToEnvGroupPromises);
     } catch (error) {
-      setError(error);
+      // TODO: handle error
     }
     try {
       setButtonStatus("loading");
@@ -462,9 +451,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           repo_name: tempPorterApp.repo_name,
           git_branch: tempPorterApp.git_branch,
           buildpacks: "",
-          ...options,
           env_groups: syncedEnvGroups?.map((env) => env.name),
           user_update: true,
+          ...options,
         }
         if (buildView === "docker") {
           updatedPorterApp.dockerfile = tempPorterApp.dockerfile;
@@ -479,7 +468,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         await api.createPorterApp(
           "<token>",
           updatedPorterApp,
-
           {
             cluster_id: currentCluster.id,
             project_id: currentProject.id,
@@ -498,77 +486,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       }
     } catch (err) {
       // TODO: better error handling
-
-      console.log(err);
       const errMessage =
         err?.response?.data?.error ??
         err?.toString() ??
         "An error occurred while deploying your app. Please try again.";
       setButtonStatus(<Error message={errMessage} />);
-    }
-  };
-
-  const getBuildLogs = async () => {
-    try {
-      const res = await api.getGHWorkflowLogs(
-        "",
-        {},
-        {
-          project_id: appData.app.project_id,
-          cluster_id: appData.app.cluster_id,
-          git_installation_id: appData.app.git_repo_id,
-          owner: appData.app.repo_name?.split("/")[0],
-          name: appData.app.repo_name?.split("/")[1],
-          filename: "porter_stack_" + appData.chart.name + ".yml",
-        }
-      );
-      let logs: Log[] = [];
-      if (res.data != null) {
-        // Fetch the logs
-        const logsResponse = await fetch(res.data);
-
-        // Ensure that the response body is only read once
-        const logsBlob = await logsResponse.blob();
-
-        if (logsResponse.headers.get("Content-Type") === "application/zip") {
-          const zip = await JSZip.loadAsync(logsBlob);
-
-          zip.forEach(async function (relativePath, zipEntry) {
-            const fileData = await zip.file(relativePath)?.async("string");
-
-            if (
-              fileData &&
-              fileData.includes("Run porter-dev/porter-cli-action@v0.1.0")
-            ) {
-              const lines = fileData.split("\n");
-              const timestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+Z/;
-
-              lines.forEach((line, index) => {
-                const lineWithoutTimestamp = line
-                  .replace(timestampPattern, "")
-                  .trimStart();
-                const anserLine: AnserJsonEntry[] = Anser.ansiToJson(
-                  lineWithoutTimestamp
-                );
-                if (lineWithoutTimestamp.toLowerCase().includes("error")) {
-                  anserLine[0].fg = "238,75,43";
-                }
-
-                const log: Log = {
-                  line: anserLine,
-                  lineNumber: index + 1,
-                  timestamp: line.match(timestampPattern)?.[0],
-                };
-
-                logs.push(log);
-              });
-            }
-          });
-          setLogs(logs);
-        }
-      }
-    } catch (error) {
-      setError(error);
     }
   };
 
@@ -698,6 +620,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   const renderTabContents = () => {
     switch (selectedTab) {
+      case "activity":
+        return <ActivityFeed
+          chart={appData.chart}
+          stackName={appData?.app?.name}
+          appData={appData}
+          eventId={eventId}
+        />;
       case "overview":
         return (
           <>
@@ -796,13 +725,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Button>
           </>
         );
-      case "activity":
-        return <ActivityFeed
-          chart={appData.chart}
-          stackName={appData?.app?.name}
-          appData={appData}
-          eventId={eventId}
-        />;
       case "logs":
         return <LogSection currentChart={appData.chart} services={services} />;
       case "metrics":
@@ -827,6 +749,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             setDeletedEnvGroups={setDeleteEnvGroups}
           />
         );
+      case "helm-values":
+        return <HelmValuesTab
+          currentChart={appData.chart}
+          updatePorterApp={updatePorterApp}
+          buttonStatus={buttonStatus}
+        />
       default:
         return <ActivityFeed
           chart={appData.chart}
@@ -1046,6 +974,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     value: "build-settings",
                   },
                   { label: "Settings", value: "settings" },
+                  user.email.endsWith("porter.run") && { label: "Helm values", value: "helm-values" },
                 ].filter((x) => x)}
                 currentTab={selectedTab}
                 setCurrentTab={(tab: string) => {

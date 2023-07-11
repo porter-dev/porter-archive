@@ -2448,6 +2448,11 @@ const updateOnboardingStep = baseApi<
   {
     step: string;
     provider?: string;
+    account_id?: string;
+    cloudformation_url?: string;
+    error_message?: string;
+    login_url?: string;
+    external_id?: string;
   },
   {}
 >("POST", (pathParams) => {

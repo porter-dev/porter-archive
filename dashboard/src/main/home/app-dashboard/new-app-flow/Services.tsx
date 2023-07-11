@@ -135,7 +135,7 @@ const Services: React.FC<ServicesProps> = ({
               options={[
                 { label: "Web", value: "web" },
                 { label: "Worker", value: "worker" },
-                { label: "Job", value: "job" },
+                { label: "Cron Job", value: "job" },
               ]}
             />
           </Container>

@@ -71,6 +71,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [clusterVersion, setClusterVersion] = useState("v1.24.9");
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
 
   const markStepStarted = async (step: string) => {
@@ -84,10 +85,16 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const getStatus = () => {
     if (isReadOnly && props.provisionerError == "") {
       return "Provisioning is still in progress...";
-    } else if (errorMessage) {
+    } else if (errorMessage !== "") {
       return (
         <Error
-          message={errorMessage}
+          message={errorDetails !== "" ? errorMessage + " (" + errorDetails + ")" : errorMessage}
+          ctaText={
+            errorMessage !== DEFAULT_ERROR_MESSAGE
+                ? "Troubleshooting steps"
+                : null
+          }
+          errorModalContents={errorMessageToModal(errorMessage)}
         />
       );
     }
@@ -128,6 +135,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
     const err = validateInputs();
     if (err !== "") {
       setErrorMessage(err)
+      setErrorDetails("")
       return;
     }
 
@@ -180,6 +188,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
     try {
       setIsReadOnly(true);
       setErrorMessage("");
+      setErrorDetails("")
 
       if (!props.clusterId) {
         markStepStarted("provisioning-started");
@@ -210,12 +219,22 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
           console.error(err);
         });
       // }
-      setErrorMessage(undefined);
+      setErrorMessage("");
+      setErrorDetails("")
     } catch (err) {
       const errMessage = err.response.data.error.replace("unknown: ", "");
       // hacky, need to standardize error contract with backend
       setIsClicked(false);
-      setErrorMessage(DEFAULT_ERROR_MESSAGE);
+      if (errMessage.includes("resource provider")) {
+        setErrorMessage(AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE);
+        setErrorDetails(errMessage)
+      } else if (errMessage.includes("quota")) {
+        setErrorMessage(AZURE_CORE_QUOTA_ERROR_MESSAGE)
+        setErrorDetails(errMessage)
+      } else {
+        setErrorMessage(DEFAULT_ERROR_MESSAGE);
+        setErrorDetails("")
+      }
     } finally {
       setIsReadOnly(false);
       setIsClicked(false);
@@ -409,3 +428,122 @@ const StyledForm = styled.div`
 
 const DEFAULT_ERROR_MESSAGE =
   "An error occurred while provisioning your infrastructure. Please try again.";
+const AZURE_CORE_QUOTA_ERROR_MESSAGE =
+    "Your Azure subscription has reached a vCPU core quota in the location";
+const AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE =
+    "Your Azure subscription is missing required resource providers";
+
+const errorMessageToModal = (errorMessage: string) => {
+  switch (errorMessage) {
+    case AZURE_CORE_QUOTA_ERROR_MESSAGE:
+      return (
+          <>
+            <Text size={16} weight={500}>
+              Requesting more cores
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              You will need to request a quota increase for vCPUs in your region.
+            </Text>
+            <Spacer y={1} />
+            <Step number={1}>
+              Log into
+              <Spacer inline width="5px" />
+              <Link
+                  to="https://login.microsoftonline.com/"
+                  target="_blank"
+              >
+                your Azure account
+              </Link>
+              .
+            </Step>
+            <Spacer y={1} />
+            <Step number={2}>
+              Navigate to
+              <Spacer inline width="5px" />
+              <Link
+                  to="https://portal.azure.com/#view/Microsoft_Azure_Billing/SubscriptionsBlade"
+                  target="_blank"
+              >
+                the Subscriptions page
+              </Link>
+              <Spacer inline width="5px" />
+              and select the subscription you are using to provision Porter.
+            </Step>
+            <Spacer y={1} />
+            <Step number={3}>
+              Select "Usage + Quotas" under "Settings" from the left panel.
+            </Step>
+            <Spacer y={1} />
+            <Step number={4}>
+              Select "Compute" and search for the quotas that have reached usage limits in your region. Request an increase by clicking the pencil icon on the far right.
+            </Step>
+            <Spacer y={1} />
+            <Text color="helper">
+              We recommend an initial quota of 30 vCPUs for both Total Regional Cores and Standard Av2 Family.
+            </Text>
+            <Spacer y={1} />
+            <Step number={5}>
+              Once the request has been approved, return to Porter and retry the
+              provision.
+            </Step>
+            <Spacer y={1} />
+            <Text color="helper">
+              Quota increases can take several minutes to process. If Azure is unable to automatically increase the quota, create a support request as prompted by Azure. Requests are usually fulfilled in a few hours.
+            </Text>
+          </>
+      );
+    case AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE:
+      return (
+          <>
+            <Text size={16} weight={500}>
+              Registering required resource providers
+            </Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              You will need to register all of the following resource providers to your Azure subscription before provisioning: Capacity, Compute, ContainerRegistry, ContainerService, ManagedIdentity, Network, OperationalInsights, OperationsManagement, ResourceGraph, Resources, Storage
+            </Text>
+            <Spacer y={1} />
+            <Step number={1}>
+              Log into
+              <Spacer inline width="5px" />
+              <Link
+                  to="https://login.microsoftonline.com/"
+                  target="_blank"
+              >
+                your Azure account
+              </Link>
+              .
+            </Step>
+            <Spacer y={1} />
+            <Step number={2}>
+              Navigate to
+              <Spacer inline width="5px" />
+              <Link
+                  to="https://portal.azure.com/#view/Microsoft_Azure_Billing/SubscriptionsBlade"
+                  target="_blank"
+              >
+                the Subscriptions page
+              </Link>
+              <Spacer inline width="5px" />
+               and select the subscription you are using to provision Porter.
+            </Step>
+            <Spacer y={1} />
+            <Step number={3}>
+              Select "Resource Providers" under "Settings" from the left panel.
+            </Step>
+            <Spacer y={1} />
+            <Step number={4}>
+              Search for each required resource provider and select "Register" from the top menu bar if it is not already registered.
+            </Step>
+            <Spacer y={1} />
+            <Step number={5}>
+              After confirming that all providers are registered, return to Porter and retry the
+              provision.
+            </Step>
+          </>
+      );
+    default:
+      return null;
+  }
+};

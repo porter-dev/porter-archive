@@ -34,7 +34,7 @@ const HelmValuesTab: React.FC<Props> = ({
                 <YamlEditor
                     value={values}
                     onChange={setValues}
-                    height="600px"
+                    height="calc(100vh - 412px)"
                 />
             </Wrapper>
             <Spacer y={0.5} />
@@ -64,7 +64,7 @@ const StyledValuesYaml = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 600px;
+  height: calc(100vh - 350px);
   font-size: 13px;
   overflow: hidden;
   border-radius: 8px;

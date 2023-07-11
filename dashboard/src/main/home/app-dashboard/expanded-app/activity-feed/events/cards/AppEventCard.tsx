@@ -73,7 +73,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
         <Container row>
           <Icon height="16px" src={app_event} />
           <Spacer inline width="10px" />
-          <Text>{event.metadata.detail}</Text>
+          <Text>{event.metadata.summary}</Text>
         </Container>
       </Container>
       <Spacer y={0.5} />
@@ -90,7 +90,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
           logs={logs}
           porterAppName={appData.app.name}
           timestamp={readableDate(event.updated_at)}
-          expandedAppEventMessage={event.metadata.summary}
+          expandedAppEventMessage={event.metadata.detail}
         />
       )}
     </StyledEventCard>

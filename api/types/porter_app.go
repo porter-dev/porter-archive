@@ -49,6 +49,7 @@ type CreatePorterAppRequest struct {
 	OverrideRelease  bool      `json:"override_release"`
 	EnvGroups        []string  `json:"env_groups"`
 	UserUpdate       bool      `json:"user_update"`
+	FullHelmValues   string    `json:"full_helm_values"`
 }
 
 type UpdatePorterAppRequest struct {

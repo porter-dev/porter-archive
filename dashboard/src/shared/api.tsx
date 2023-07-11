@@ -2,7 +2,7 @@ import { PolicyDocType } from "./auth/types";
 import { PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
 import { baseApi } from "./baseApi";
 
-import { BuildConfig, FullActionConfigType, PorterAppOptions } from "./types";
+import { BuildConfig, FullActionConfigType, CreateUpdatePorterAppOptions } from "./types";
 import {
   CreateStackBody,
   SourceConfig,
@@ -200,7 +200,7 @@ const getPorterAppEvent = baseApi<
 });
 
 const createPorterApp = baseApi<
-  PorterAppOptions,
+  CreateUpdatePorterAppOptions,
   {
     project_id: number;
     cluster_id: number;

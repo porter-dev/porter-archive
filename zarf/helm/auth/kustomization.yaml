@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../base
+
+helmCharts:
+- name: web
+  repo: https://charts.getporter.dev
+  releaseName: auth-server
+  valuesFile: auth.yaml
+
+patchesStrategicMerge:
+- |-
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: auth-server-web
+  spec:
+    template:
+      spec:
+        containers:
+        - name: web
+          envFrom:
+          - configMapRef: 
+              name: server-env
+          volumeMounts:
+          - mountPath: /app/ssh
+            name: ssh-keys
+        volumes:
+        - name: ssh-keys
+          hostPath:
+            path: /local-user/.ssh

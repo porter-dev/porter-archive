@@ -136,6 +136,9 @@ type ServerConf struct {
 	TelemetryName string `env:"TELEMETRY_NAME"`
 	// TelemetryCollectorURL is the URL (host:port) for collecting spans
 	TelemetryCollectorURL string `env:"TELEMETRY_COLLECTOR_URL,default=localhost:4317"`
+
+	AuthManagementServerURL  string `env:"AUTH_MANAGEMENT_SERVER_URL,default=http://localhost:8090"`
+	AuthManagementServerPort int    `env:"AUTH_MANAGEMENT_SERVER_PORT,default=8090"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

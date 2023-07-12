@@ -21,7 +21,7 @@ openapi.yaml
 vendor
 **/*.env
 **/node_modules
-zarf/helm/charts
+zarf/helm/porter/charts
 
 # Local docs directories
 /docs/.obsidian
@@ -76,3 +76,4 @@ terraform.rc
 tmp
 
 tsconfig.json
+/zarf/helm/auth/charts/

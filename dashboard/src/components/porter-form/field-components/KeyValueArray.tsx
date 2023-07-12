@@ -80,9 +80,13 @@ const KeyValueArray: React.FC<Props> = (props) => {
           .filter(Boolean);
 
         setState(() => ({
-          synced_env_groups: Array.isArray(populatedEnvGroups)
-            ? populatedEnvGroups
-            : [],
+          synced_env_groups: currentProject?.stacks_enabled ?
+            (Array.isArray(populatedEnvGroups)
+              ? populatedEnvGroups
+              : []) :
+            (Array.isArray(populatedEnvGroups)
+              ? populatedEnvGroups
+              : [])
         }));
         return;
       }

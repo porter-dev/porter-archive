@@ -514,11 +514,11 @@ func createPreDeployJobChart(
 
 func cloneEnvGroup(c *CreatePorterAppHandler, w http.ResponseWriter, r *http.Request, agent *kubernetes.Agent, envGroups []string, namespace string) {
 	for _, envGroupName := range envGroups {
-		cm, _, err := agent.GetLatestVersionedConfigMap(envGroupName, "default")
+		cm, _, err := agent.GetLatestVersionedConfigMap(envGroupName, "porter-env-group")
 		if err != nil {
 			if errors.Is(err, kubernetes.IsNotFoundError) {
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-					fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", envGroupName, "default"), http.StatusNotFound,
+					fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", envGroupName, "porter-env-group"), http.StatusNotFound,
 					"no config map found for envgroup",
 				))
 				return
@@ -527,11 +527,11 @@ func cloneEnvGroup(c *CreatePorterAppHandler, w http.ResponseWriter, r *http.Req
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
-		secret, _, err := agent.GetLatestVersionedSecret(envGroupName, "default")
+		secret, _, err := agent.GetLatestVersionedSecret(envGroupName, "porter-env-group")
 		if err != nil {
 			if errors.Is(err, kubernetes.IsNotFoundError) {
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-					fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", envGroupName, "default"), http.StatusNotFound,
+					fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", envGroupName, "porter-env-group"), http.StatusNotFound,
 					"no k8s secret found for envgroup",
 				))
 				return

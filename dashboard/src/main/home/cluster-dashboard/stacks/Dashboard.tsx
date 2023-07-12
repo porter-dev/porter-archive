@@ -19,17 +19,12 @@ const Dashboard = () => {
   const { getQueryParam, pushQueryParams } = useRouting();
 
   const handleNamespaceChange = (namespace: string) => {
-    console.log("HERE")
-    console.log(namespace)
     setCurrentNamespace(namespace);
     pushQueryParams({ namespace });
   };
 
   useEffect(() => {
     const newNamespace = getQueryParam("namespace");
-    console.log("HERE")
-    console.log(newNamespace)
-
     if (newNamespace !== currentNamespace) {
       setCurrentNamespace(newNamespace);
     }

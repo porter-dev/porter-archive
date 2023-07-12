@@ -390,7 +390,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
             {
               project_id: currentProject.id,
               cluster_id: currentCluster.id,
-              namespace: "default",
+              namespace: "porter-env-group",
             }
           );
         });
@@ -417,7 +417,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
             {
               project_id: currentProject.id,
               cluster_id: currentCluster.id,
-              namespace: "default",
+              namespace: "porter-env-group",
             }
           );
         }

@@ -58,7 +58,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
           {},
           {
             id: currentProject.id,
-            namespace: "default",
+            namespace: "porter-env-group",
             cluster_id: currentCluster.id,
           }
         )

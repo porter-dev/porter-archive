@@ -69,7 +69,7 @@ const EnvGroupModal: React.FC<Props> = ({
           {},
           {
             id: currentProject.id,
-            namespace: "default",
+            namespace: "porter-env-group",
             cluster_id: currentCluster.id,
           }
         )
@@ -136,7 +136,7 @@ const EnvGroupModal: React.FC<Props> = ({
         {
           id: currentProject.id,
           cluster_id: currentCluster.id,
-          namespace: "default",
+          namespace: "porter-env-group",
         }
       );
       setCloneSuccess(true);

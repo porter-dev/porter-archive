@@ -3,6 +3,8 @@ package stack
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
@@ -10,30 +12,86 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
-	"gopkg.in/yaml.v2"
+	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
 )
 
 type StackConf struct {
 	apiClient            *api.Client
-	rawBytes             []byte
-	parsed               *PorterStackYAML
+	parsed               *Application
 	stackName, namespace string
 	projectID, clusterID uint
 }
 
-func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, projectID uint, clusterID uint) (*switchboardTypes.ResourceGroup, string, error) {
-	v1File := &switchboardTypes.ResourceGroup{
-		Version: "v1",
-		Resources: []*switchboardTypes.Resource{
-			{
-				Name:   "get-env",
-				Driver: "os-env",
-			},
-		},
-	}
+func CreateStackDeploy(client *api.Client, worker *switchboardWorker.Worker, fileBytes []byte, app *Application, stackName string, cliConf *config.CLIConfig) ([]*switchboardTypes.Resource, error) {
+	// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
 	var builder string
+	resources, builder, err := createV1BuildResources(client, app, stackName, cliConf.Project, cliConf.Cluster)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
+	}
 
-	stackConf, err := createStackConf(client, raw, stackName, projectID, clusterID)
+	deployStackHook := &DeployStackHook{
+		Client:               client,
+		StackName:            stackName,
+		ProjectID:            cliConf.Project,
+		ClusterID:            cliConf.Cluster,
+		BuildImageDriverName: GetBuildImageDriverName(),
+		PorterYAML:           fileBytes,
+		Builder:              builder,
+	}
+	worker.RegisterHook("deploy-stack", deployStackHook)
+
+	if os.Getenv("GITHUB_RUN_ID") != "" {
+		// Create app event to signfy start of build
+		req := &types.CreateOrUpdatePorterAppEventRequest{
+			Status:             "PROGRESSING",
+			Type:               types.PorterAppEventType_Build,
+			TypeExternalSource: "GITHUB",
+			Metadata: map[string]any{
+				"action_run_id": os.Getenv("GITHUB_RUN_ID"),
+				"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
+			},
+		}
+
+		repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+		if len(repoNameSplit) != 2 {
+			return nil, fmt.Errorf("unable to parse GITHUB_REPOSITORY")
+		}
+		req.Metadata["repo"] = repoNameSplit[1]
+
+		actionRunID := os.Getenv("GITHUB_RUN_ID")
+		if actionRunID != "" {
+			arid, err := strconv.Atoi(actionRunID)
+			if err != nil {
+				return nil, fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+			}
+			req.Metadata["action_run_id"] = arid
+		}
+
+		repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
+		if repoOwnerAccountID != "" {
+			arid, err := strconv.Atoi(repoOwnerAccountID)
+			if err != nil {
+				return nil, fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+			}
+			req.Metadata["github_account_id"] = arid
+		}
+
+		ctx := context.Background()
+		_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create porter app build event: %w", err)
+		}
+	}
+
+	return resources, nil
+}
+
+func createV1BuildResources(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) ([]*switchboardTypes.Resource, string, error) {
+	var builder string
+	resources := make([]*switchboardTypes.Resource, 0)
+
+	stackConf, err := createStackConf(client, app, stackName, projectID, clusterID)
 	if err != nil {
 		return nil, "", err
 	}
@@ -57,7 +115,7 @@ func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, pr
 		}
 	}
 
-	v1File.Resources = append(v1File.Resources, bi, pi)
+	resources = append(resources, bi, pi)
 
 	preDeploy, cmd, err := createPreDeployResource(client,
 		stackConf.parsed.Release,
@@ -74,26 +132,15 @@ func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, pr
 
 	if preDeploy != nil {
 		color.New(color.FgYellow).Printf("Found pre-deploy command to run before deploying apps: %s \n", cmd)
-		v1File.Resources = append(v1File.Resources, preDeploy)
+		resources = append(resources, preDeploy)
 	} else {
 		color.New(color.FgYellow).Printf("No pre-deploy command found in porter.yaml or helm. \n")
 	}
 
-	return v1File, builder, nil
+	return resources, builder, nil
 }
 
-func createStackConf(client *api.Client, raw []byte, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
-	var parsed *PorterStackYAML
-	if raw == nil {
-		parsed = createDefaultPorterYaml()
-	} else {
-		parsed = &PorterStackYAML{}
-		err := yaml.Unmarshal(raw, parsed)
-		if err != nil {
-			errMsg := composePreviewMessage("error parsing porter.yaml", Error)
-			return nil, fmt.Errorf("%s: %w", errMsg, err)
-		}
-	}
+func createStackConf(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
 
 	err := config.ValidateCLIEnvironment()
 	if err != nil {
@@ -104,13 +151,12 @@ func createStackConf(client *api.Client, raw []byte, stackName string, projectID
 	releaseEnvVars := getEnvFromRelease(client, stackName, projectID, clusterID)
 	if releaseEnvVars != nil {
 		color.New(color.FgYellow).Printf("Reading build env from release\n")
-		parsed.Env = mergeStringMaps(parsed.Env, releaseEnvVars)
+		app.Env = mergeStringMaps(app.Env, releaseEnvVars)
 	}
 
 	return &StackConf{
 		apiClient: client,
-		rawBytes:  raw,
-		parsed:    parsed,
+		parsed:    app,
 		stackName: stackName,
 		projectID: projectID,
 		clusterID: clusterID,
@@ -208,12 +254,6 @@ func convertToBuild(porterApp *types.PorterApp) Build {
 		Buildpacks: buildpacks,
 		Dockerfile: dockerfile,
 		Image:      image,
-	}
-}
-
-func createDefaultPorterYaml() *PorterStackYAML {
-	return &PorterStackYAML{
-		Apps: nil,
 	}
 }
 

@@ -88,6 +88,17 @@ const CloudFormationForm: React.FC<Props> = ({
       if (!hasSentAWSNotif) {
         setHasSentAWSNotif(true);
         markStepStarted({ step: "aws-account-id-complete", account_id: accountId });
+        if (currentProject != null) {
+          try {
+            api.inviteAdmin(
+              "<token>",
+              {},
+              { project_id: currentProject.id }
+            );
+          } catch (err) {
+            console.log(err);
+          }
+        }
       }
     } else {
       setCurrentStep(0);

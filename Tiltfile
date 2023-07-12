@@ -142,7 +142,7 @@ docker_build_with_restart(
 
 local_resource(
   name='reload-server-config',
-  cmd='kubectl rollout restart deployment porter-server-web && kubectl rollout restart deployment porter-server-web',
+  cmd='kubectl rollout restart deployment porter-server-web && kubectl rollout restart deployment auth-server-web',
   deps=[
     "zarf/helm/base/.server.env"
   ],

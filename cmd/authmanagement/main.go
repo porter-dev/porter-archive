@@ -9,10 +9,9 @@ import (
 )
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	version := "v0.0.0-dgtown"
 
-	cl := loader.NewEnvLoader("")
+	cl := loader.NewEnvLoader(version)
 
 	config, err := cl.LoadConfig()
 	if err != nil {
@@ -21,7 +20,7 @@ func main() {
 
 	authManagementServer := authmanagement.AuthManagementServer{Port: config.ServerConf.AuthManagementServerPort, Config: config}
 
-	err = authManagementServer.ListenAndServe(ctx)
+	err = authManagementServer.ListenAndServe(context.Background())
 	if err != nil {
 		log.Fatalf("issue running server: %s", err.Error())
 	}

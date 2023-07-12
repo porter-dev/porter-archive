@@ -96,8 +96,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     false
   );
 
-  const [bannerLoading, setBannerLoading] = useState<boolean>(false);
-
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
   const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
 
@@ -140,7 +138,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
   const getPorterApp = async ({ revision }: { revision: number }) => {
-    setBannerLoading(true);
     setIsLoading(true);
     const { appName } = props.match.params as any;
     try {
@@ -869,7 +866,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           ) : (
             <>
               {!workflowCheckPassed ? (
-                bannerLoading ? (
+                isLoading ? (
                   <Banner>
                     <Loading />
                   </Banner>
@@ -884,7 +881,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   />
                 )
               ) : !hasBuiltImage ? (
-                bannerLoading ? (
+                isLoading ? (
                   <Banner>
                     <Loading />
                   </Banner>

@@ -866,7 +866,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           ) : (
             <>
               {!workflowCheckPassed ? (
-                loading ? (
+                isLoading ? (
                   <Banner>
                     <Loading />
                   </Banner>

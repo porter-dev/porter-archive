@@ -112,8 +112,7 @@ local_resource(
 docker_build_with_restart(
     ref="porter1/porter-server",
     context=".",
-    dockerfile="zarf/docker/Dockerfile.server.tilt",
-    # entrypoint='dlv --listen=:40000 --api-version=2 --headless=true --log=true exec /porter/bin/app',
+    dockerfile="zarf/docker/Dockerfile.tilt.server",
     entrypoint='/app/migrate && /app/porter',
     build_args={},
     only=[
@@ -128,8 +127,7 @@ docker_build_with_restart(
 docker_build_with_restart(
     ref="porter1/auth-server",
     context=".",
-    dockerfile="zarf/docker/Dockerfile.server.tilt",
-    # entrypoint='dlv --listen=:40000 --api-version=2 --headless=true --log=true exec /porter/bin/app',
+    dockerfile="zarf/docker/Dockerfile.tilt.auth",
     entrypoint='/app/auth',
     build_args={},
     only=[

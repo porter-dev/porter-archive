@@ -182,7 +182,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		// create the pre-deploy job chart if it does not exist (only done by front-end currently, where we set overrideRelease=true)
 		if request.OverrideRelease && preDeployJobValues != nil {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installing-pre-deploy-job", Value: true})
-			conf, err := createReleaseJobChart(
+			conf, err := createPreDeployJobChart(
 				ctx,
 				stackName,
 				preDeployJobValues,
@@ -291,7 +291,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 				helmRelease, err := helmAgent.GetRelease(ctx, releaseJobName, 0, false)
 				if err != nil {
 					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "creating-pre-deploy-job", Value: true})
-					conf, err := createReleaseJobChart(
+					conf, err := createPreDeployJobChart(
 						ctx,
 						stackName,
 						preDeployJobValues,
@@ -484,7 +484,7 @@ func createPorterAppDeployEvent(
 	return &event, nil
 }
 
-func createReleaseJobChart(
+func createPreDeployJobChart(
 	ctx context.Context,
 	stackName string,
 	values map[string]interface{},

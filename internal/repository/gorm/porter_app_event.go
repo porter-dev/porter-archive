@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strconv"
 	"time"
@@ -35,28 +36,6 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppID(ctx context.Contex
 
 	db := repo.db.Model(&models.PorterAppEvent{})
 	resultDB := db.Where("porter_app_id = ?", id).Order("created_at DESC")
-	resultDB = resultDB.Scopes(helpers.Paginate(db, &paginatedResult, opts...))
-
-	if err := resultDB.Find(&apps).Error; err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, paginatedResult, err
-		}
-	}
-
-	return apps, paginatedResult, nil
-}
-
-func (repo *PorterAppEventRepository) ListEventsByPorterAppIDAndType(ctx context.Context, porterAppID uint, eventType string, opts ...helpers.QueryOption) ([]*models.PorterAppEvent, helpers.PaginatedResult, error) {
-	apps := []*models.PorterAppEvent{}
-	paginatedResult := helpers.PaginatedResult{}
-
-	id := strconv.Itoa(int(porterAppID))
-	if id == "" {
-		return nil, paginatedResult, errors.New("invalid porter app id supplied")
-	}
-
-	db := repo.db.Model(&models.PorterAppEvent{})
-	resultDB := db.Where("porter_app_id = ? AND type = ?", id, eventType).Order("created_at DESC")
 	resultDB = resultDB.Scopes(helpers.Paginate(db, &paginatedResult, opts...))
 
 	if err := resultDB.Find(&apps).Error; err != nil {
@@ -124,15 +103,24 @@ func (repo *PorterAppEventRepository) ReadEvent(ctx context.Context, id uuid.UUI
 	return appEvent, nil
 }
 
-func (repo *PorterAppEventRepository) FindDeployEventByRevision(ctx context.Context, porterAppID uint, revision float64) (models.PorterAppEvent, error) {
+func (repo *PorterAppEventRepository) ReadDeployEventByRevision(ctx context.Context, porterAppID uint, revision float64) (models.PorterAppEvent, error) {
 	appEvent := models.PorterAppEvent{}
 
-	id := strconv.Itoa(int(porterAppID))
-	if id == "" {
-		return appEvent, errors.New("invalid porter app id supplied")
+	if porterAppID == 0 {
+		return appEvent, errors.New("invalid porter app ID supplied")
 	}
 
-	if err := repo.db.Where("porter_app_id = ? AND type = 'DEPLOY' AND metadata ->> 'revision' = ?", id, revision).First(&appEvent).Error; err != nil {
+	// Convert porterAppID to string
+	strAppID := strconv.Itoa(int(porterAppID))
+
+	// Convert revision to JSON number string
+	revJSON, err := json.Marshal(revision)
+	if err != nil {
+		return appEvent, errors.New("unable to marshal revision")
+	}
+	strRevision := string(revJSON)
+
+	if err := repo.db.Where("porter_app_id = ? AND metadata->>'revision' = ?", strAppID, strRevision).First(&appEvent).Error; err != nil {
 		return appEvent, err
 	}
 

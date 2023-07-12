@@ -19,29 +19,37 @@ if os.getenv("PLATFORM") == "amd64":
 allow_k8s_contexts('kind-porter')
 cluster = str(local('kubectl config current-context')).strip()
 if (cluster.startswith("kind-")):
-    install = kustomize('zarf/helm', flags=["--enable-helm"])
-    decoded = decode_yaml_stream(install)
-    for d in decoded:
-        if d.get('kind') == 'Deployment':
-            if "securityContext" in d['spec']['template']['spec']:
-                d['spec']['template']['spec'].pop('securityContext')
-            for c in d['spec']['template']['spec']['containers']:
-                if "securityContext" in c:
-                    c.pop('securityContext')
+    for service in ["porter", "auth"]:
+        install = kustomize('zarf/helm/' + service, flags=["--enable-helm"])
+        decoded = decode_yaml_stream(install)
+        for d in decoded:
+            if d.get('kind') == 'Deployment':
+                if "securityContext" in d['spec']['template']['spec']:
+                    d['spec']['template']['spec'].pop('securityContext')
+                for c in d['spec']['template']['spec']['containers']:
+                    if "securityContext" in c:
+                        c.pop('securityContext')
 
-    updated_install = encode_yaml_stream(decoded)
+        updated_install = encode_yaml_stream(decoded)
 
-    k8s_yaml(updated_install)
-
-    k8s_resource(
-        workload='porter-server-web',
-        port_forwards="8080:8080",
-        labels=["porter"],
-        resource_deps=["porter-binary"],
-    )
+        k8s_yaml(updated_install, allow_duplicates=True)
 else:
     local("echo 'Be careful that you aren't connected to a staging or prod cluster' && exit 1")
     exit()
+
+k8s_resource(
+    workload= 'porter-server-web',
+    port_forwards="8080:8080",
+    labels=["porter"],
+    resource_deps=["porter-binary"],
+)
+
+k8s_resource(
+    workload= 'auth-server-web',
+    port_forwards="8090:8090",
+    labels=["porter"],
+    resource_deps=["auth-binary"],
+)
 
 watch_file('zarf/helm/.server.env')
 watch_file('zarf/helm/.dashboard.env')
@@ -54,6 +62,25 @@ local_resource(
     "api",
     "build",
     "cli",
+    "cmd",
+    "ee",
+    "internal",
+    "pkg",
+    "vendor",
+  ],
+  resource_deps=["postgresql"],
+  labels=["z_binaries"]
+)
+
+## Build binary locally for faster devexp
+local_resource(
+  name='auth-binary',
+  cmd='''GOWORK=off CGO_ENABLED=0 %s go build -mod vendor -gcflags '-N -l' -tags ee -o ./bin/auth ./cmd/authmanagement/main.go''' % build_args,
+  deps=[
+    "api",
+    "build",
+    "cli",
+    "cmd",
     "ee",
     "internal",
     "pkg",
@@ -76,6 +103,12 @@ local_resource(
     resource_deps=["porter-server-web"]
 )
 
+local_resource(
+    name="disable-auth-helm-test",
+    cmd='tilt disable auth-server-web-test-connection',
+    resource_deps=["auth-server-web"]
+)
+
 docker_build_with_restart(
     ref="porter1/porter-server",
     context=".",
@@ -90,16 +123,31 @@ docker_build_with_restart(
         sync('./bin/porter', '/app/'),
         sync('./bin/migrate', '/app/'),
     ]
-) 
+)
+
+docker_build_with_restart(
+    ref="porter1/auth-server",
+    context=".",
+    dockerfile="zarf/docker/Dockerfile.server.tilt",
+    # entrypoint='dlv --listen=:40000 --api-version=2 --headless=true --log=true exec /porter/bin/app',
+    entrypoint='/app/auth',
+    build_args={},
+    only=[
+        "bin",
+    ],
+    live_update=[
+        sync('./bin/auth', '/app/'),
+    ]
+)
 
 local_resource(
   name='reload-server-config',
-  cmd='kubectl rollout restart deployment porter-server-web',
+  cmd='kubectl rollout restart deployment porter-server-web && kubectl rollout restart deployment porter-server-web',
   deps=[
-    "zarf/helm/.server.env"
+    "zarf/helm/base/.server.env"
   ],
   labels=["porter"],
-  resource_deps=["porter-server-web"]
+  resource_deps=["porter-server-web", "auth-server-web"]
 )
 
 # Frontend

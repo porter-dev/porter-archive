@@ -20,20 +20,6 @@ type PropsType = {
   jobRun: any;
 };
 
-export const resolutions: { [range: string]: string } = {
-  "1H": "1s",
-  "6H": "15s",
-  "1D": "15s",
-  "1M": "5h",
-};
-
-export const secondsBeforeNow: { [range: string]: number } = {
-  "1H": 60 * 60,
-  "6H": 60 * 60 * 6,
-  "1D": 60 * 60 * 24,
-  "1M": 60 * 60 * 24 * 30,
-};
-
 const JobMetricsSection: React.FunctionComponent<PropsType> = ({
   jobChart: currentChart,
   jobRun,
@@ -114,48 +100,6 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
     return "5h";
   };
 
-  const getAutoscalingThreshold = async (
-    metricType: "cpu_hpa_threshold" | "memory_hpa_threshold",
-    shouldsum: boolean,
-    namespace: string,
-    start: number,
-    end: number
-  ) => {
-    setIsLoading((prev) => prev + 1);
-    setHpaData([]);
-    try {
-      const res = await api.getMetrics(
-        "<token>",
-        {
-          metric: metricType,
-          shouldsum: shouldsum,
-          kind: selectedController?.kind,
-          name: selectedController?.metadata.name,
-          namespace: namespace,
-          startrange: start,
-          endrange: end,
-          resolution: getJobResolution(start, end),
-          pods: [],
-        },
-        {
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
-
-      if (!Array.isArray(res.data) || !res.data[0]?.results) {
-        return;
-      }
-      const autoscalingMetrics = new MetricNormalizer(res.data, metricType);
-      setHpaData(autoscalingMetrics.getParsedData());
-      return;
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading((prev) => prev - 1);
-    }
-  };
-
   const getMetrics = async () => {
     try {
       let namespace = currentChart.namespace;
@@ -179,7 +123,7 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
         "<token>",
         {
           metric: selectedMetric,
-          shouldsum: true,
+          shouldavg: true,
           kind: "job",
           name: jobRun?.metadata?.name,
           namespace: namespace,
@@ -215,44 +159,6 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
       getMetrics();
     }
   }, [selectedMetric, selectedRange, selectedController, selectedIngress]);
-
-  const renderMetricsSettings = () => {
-    if (showMetricsSettings && true) {
-      if (selectedMetric == "nginx:errors") {
-        return (
-          <>
-            <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
-            <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
-              <Label>Additional Settings</Label>
-              <SelectRow
-                label="Target Ingress"
-                value={selectedIngress}
-                setActiveValue={(x: any) => setSelectedIngress(x)}
-                options={ingressOptions}
-                width="100%"
-              />
-            </DropdownAlt>
-          </>
-        );
-      }
-
-      return (
-        <>
-          <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
-          <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
-            <Label>Additional Settings</Label>
-            <SelectRow
-              label="Target Controller"
-              value={selectedController}
-              setActiveValue={(x: any) => setSelectedController(x)}
-              options={controllerOptions}
-              width="100%"
-            />
-          </DropdownAlt>
-        </>
-      );
-    }
-  };
 
   const renderDropdown = () => {
     if (dropdownExpanded) {
@@ -386,14 +292,6 @@ const Highlight = styled.div`
   }
 `;
 
-const Label = styled.div`
-  font-weight: bold;
-`;
-
-const Relative = styled.div`
-  position: relative;
-`;
-
 const Message = styled.div`
   display: flex;
   height: 100%;
@@ -404,30 +302,6 @@ const Message = styled.div`
   text-align: center;
   color: #ffffff44;
   font-size: 13px;
-`;
-
-const IconWrapper = styled.div`
-  display: flex;
-  position: relative;
-  align-items: center;
-  justify-content: center;
-  margin-top: 2px;
-  border-radius: 30px;
-  height: 25px;
-  width: 25px;
-  margin-left: 8px;
-  cursor: pointer;
-  :hover {
-    background: #ffffff22;
-  }
-`;
-
-const SettingsIcon = styled.img`
-  opacity: 0.4;
-  width: 20px;
-  height: 20px;
-  margin-left: -1px;
-  margin-bottom: -2px;
 `;
 
 const Flex = styled.div`
@@ -491,18 +365,6 @@ const Dropdown = styled.div`
   overflow-y: auto;
   margin-bottom: 20px;
   box-shadow: 0px 4px 10px 0px #00000088;
-`;
-
-const DropdownAlt = styled(Dropdown)`
-  padding: 20px 20px 7px;
-  overflow: visible;
-`;
-
-const RangeWrapper = styled.div`
-  float: right;
-  font-weight: bold;
-  width: 156px;
-  margin-top: -8px;
 `;
 
 const MetricSelector = styled.div`

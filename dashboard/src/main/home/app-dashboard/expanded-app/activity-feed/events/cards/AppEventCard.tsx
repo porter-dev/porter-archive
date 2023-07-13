@@ -15,6 +15,7 @@ import { readableDate } from "shared/string_utils";
 import dayjs from "dayjs";
 import Anser from "anser";
 import api from "shared/api";
+import { Direction } from "../../../logs/types";
 
 type Props = {
   event: PorterAppEvent;
@@ -36,6 +37,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
           end_range: dayjs(event.updated_at).add(1, 'minute').toISOString(),
           pod_selector: event.metadata.pod_name.endsWith(".*") ? event.metadata.pod_name : event.metadata.pod_name + ".*",
           limit: 1000,
+          direction: Direction.forward,
         },
         {
           project_id: appData.app.project_id,
@@ -71,7 +73,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
         <Container row>
           <Icon height="16px" src={app_event} />
           <Spacer inline width="10px" />
-          <Text>{event.metadata.detail}</Text>
+          <Text>{event.metadata.summary}</Text>
         </Container>
       </Container>
       <Spacer y={0.5} />
@@ -88,7 +90,7 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
           logs={logs}
           porterAppName={appData.app.name}
           timestamp={readableDate(event.updated_at)}
-          expandedAppEventMessage={event.metadata.summary}
+          expandedAppEventMessage={event.metadata.detail}
         />
       )}
     </StyledEventCard>

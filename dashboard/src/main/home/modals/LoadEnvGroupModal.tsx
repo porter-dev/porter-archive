@@ -115,7 +115,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    if (Array.isArray(this.props.availableEnvGroups)) {
+    if (Array.isArray(this.props.availableEnvGroups) && !this.context.currentProject.stacks_enabled) {
       this.setState({
         envGroups: this.props.availableEnvGroups,
         loading: false,

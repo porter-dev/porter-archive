@@ -6,12 +6,12 @@ import styled, { keyframes } from "styled-components";
 import Text from "components/porter/Text";
 import Error from "components/porter/Error";
 import sliders from "assets/sliders.svg";
-import EnvGroupModal from "./env-vars/EnvGroupModal";
-import ExpandableEnvGroup from "./env-vars/ExpandableEnvGroup";
-import { PopulatedEnvGroup, PartialEnvGroup } from "../../../../components/porter-form/types";
+import EnvGroupModal from "./EnvGroupModal";
+import ExpandableEnvGroup from "./ExpandableEnvGroup";
+import { PopulatedEnvGroup, PartialEnvGroup } from "../../../../../components/porter-form/types";
 import _, { isObject, differenceBy, omit } from "lodash";
-import api from "../../../../shared/api";
-import { Context } from "../../../../shared/Context";
+import api from "../../../../../shared/api";
+import { Context } from "../../../../../shared/Context";
 
 interface EnvVariablesTabProps {
   envVars: any;
@@ -58,7 +58,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
           {},
           {
             id: currentProject.id,
-            namespace: "default",
+            namespace: "porter-env-group",
             cluster_id: currentCluster.id,
           }
         )

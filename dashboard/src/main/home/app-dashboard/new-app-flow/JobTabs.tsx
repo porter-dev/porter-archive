@@ -6,6 +6,8 @@ import TabSelector from "components/TabSelector";
 import Checkbox from "components/porter/Checkbox";
 import { JobService } from "./serviceTypes";
 import { Height } from "react-animate-height";
+import cronstrue from 'cronstrue';
+import Link from "components/porter/Link";
 
 interface Props {
   service: JobService;
@@ -19,6 +21,23 @@ const JobTabs: React.FC<Props> = ({
   setHeight,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>('main');
+
+  const getScheduleDescription = () => {
+    try {
+      return <Text color="helper">This job runs: {cronstrue.toString(service.cronSchedule.value)}</Text>;
+    } catch (err) {
+      return <Text color="helper">
+        Invalid cron schedule.{" "}
+        <Link
+          to={"https://crontab.cronhub.io/"}
+          hasunderline
+          target="_blank"
+        >
+          Need help?
+        </Link>
+      </Text>;
+    }
+  }
 
   const renderMain = () => {
     return (
@@ -35,7 +54,7 @@ const JobTabs: React.FC<Props> = ({
         />
         <Spacer y={1} />
         <Input
-          label="Cron schedule (leave blank to run manually)"
+          label="Cron schedule"
           placeholder="ex: */5 * * * *"
           value={service.cronSchedule.value}
           disabled={service.cronSchedule.readOnly}
@@ -43,6 +62,8 @@ const JobTabs: React.FC<Props> = ({
           setValue={(e) => { editService({ ...service, cronSchedule: { readOnly: false, value: e } }) }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
+        <Spacer y={0.5} />
+        {getScheduleDescription()}
       </>
     )
   };
@@ -101,7 +122,7 @@ const JobTabs: React.FC<Props> = ({
         currentTab={currentTab}
         setCurrentTab={(value: string) => {
           if (value === 'main') {
-            setHeight(244);
+            setHeight(276);
           } else if (value === 'resources') {
             setHeight(244);
           } else if (value === 'advanced') {

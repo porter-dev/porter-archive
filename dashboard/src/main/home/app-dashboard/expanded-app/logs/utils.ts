@@ -60,6 +60,7 @@ export const useLogs = (
     nextCursor: null,
   });
 
+  // if currentPodName is empty assume we are looking at all chart pod logs
   const currentPod =
     currentPodName == ""
       ? currentChart?.name
@@ -230,22 +231,22 @@ export const useLogs = (
       end_range: endDate,
       limit,
       chart_name: "",
-      pod_selector: currentPodName,
+      pod_selector: currentPod + "-.*",
       direction,
     };
 
-    if (currentPodName === "") {
-      if (currentChart == null) {
-        return {
-          logs: [],
-          previousCursor: null,
-          nextCursor: null,
-        };
-      } else if (currentChart.name.endsWith("-r")) {
-        getLogsReq.chart_name = currentChart.name;
-      } else {
-        getLogsReq.pod_selector = currentPod + "-.*";
-      }
+    if (currentChart == null) {
+      return {
+        logs: [],
+        previousCursor: null,
+        nextCursor: null,
+      };
+    }
+
+    // special casing for pre-deploy logs - see get_logs_within_time_range.go
+    if (currentChart.name.endsWith("-r")) {
+      getLogsReq.chart_name = currentChart.name;
+      getLogsReq.pod_selector = "";
     }
 
     try {
@@ -296,7 +297,6 @@ export const useLogs = (
     setLoading(true);
     setLogs([]);
     flushLogsBuffer(true);
-    const websocketKey = `${currentPod}-${namespace}-websocket`;
     const endDate = timeRange?.endTime != null ? timeRange.endTime : dayjs(setDate);
     const oneDayAgo = timeRange?.startTime != null ? timeRange.startTime : endDate.subtract(1, "day");
 
@@ -319,7 +319,9 @@ export const useLogs = (
       );
     }
 
-    closeWebsocket(websocketKey);
+    closeAllWebsockets();
+    const suffix = Math.random().toString(36).substring(2, 15);
+    const websocketKey = `${currentPod}-${namespace}-websocket-${suffix}`;
 
     setLoading(false);
 

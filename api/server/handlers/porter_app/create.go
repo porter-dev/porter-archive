@@ -107,9 +107,18 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		// this is required because when the front-end sends an update request with overrideRelease=true, it is unable to
 		// get the image info from the release. unless it is explicitly provided in the request, we avoid overwriting it
-		// by attempting to get the image info from the release
+		// by attempting to get the image info from the release or the provided helm values
 		if helmRelease != nil && (imageInfo.Repository == "" || imageInfo.Tag == "") {
-			imageInfo = attemptToGetImageInfoFromRelease(helmRelease.Config)
+			if request.FullHelmValues != "" {
+				imageInfo, err = attemptToGetImageInfoFromFullHelmValues(request.FullHelmValues)
+				if err != nil {
+					err = telemetry.Error(ctx, span, err, "error getting image info from full helm values")
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+					return
+				}
+			} else {
+				imageInfo = attemptToGetImageInfoFromRelease(helmRelease.Config)
+			}
 		}
 	} else {
 		releaseValues = helmRelease.Config
@@ -138,28 +147,31 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 		cloneEnvGroup(c, w, r, k8sAgent, request.EnvGroups, namespace)
 	}
-	chart, values, releaseJobValues, err := parse(
-		porterYaml,
-		imageInfo,
-		c.Config(),
-		cluster.ProjectID,
-		request.UserUpdate,
-		request.EnvGroups,
-		namespace,
-		releaseValues,
-		releaseDependencies,
-		SubdomainCreateOpts{
-			k8sAgent:       k8sAgent,
-			dnsRepo:        c.Repo().DNSRecord(),
-			powerDnsClient: c.Config().PowerDNSClient,
-			appRootDomain:  c.Config().ServerConf.AppRootDomain,
-			stackName:      stackName,
+	chart, values, preDeployJobValues, err := parse(
+		ParseConf{
+			PorterYaml:                porterYaml,
+			ImageInfo:                 imageInfo,
+			ServerConfig:              c.Config(),
+			ProjectID:                 cluster.ProjectID,
+			UserUpdate:                request.UserUpdate,
+			EnvGroups:                 request.EnvGroups,
+			Namespace:                 namespace,
+			ExistingHelmValues:        releaseValues,
+			ExistingChartDependencies: releaseDependencies,
+			SubdomainCreateOpts: SubdomainCreateOpts{
+				k8sAgent:       k8sAgent,
+				dnsRepo:        c.Repo().DNSRecord(),
+				powerDnsClient: c.Config().PowerDNSClient,
+				appRootDomain:  c.Config().ServerConf.AppRootDomain,
+				stackName:      stackName,
+			},
+			InjectLauncherToStartCommand: injectLauncher,
+			ShouldValidateHelmValues:     shouldCreate,
+			FullHelmValues:               request.FullHelmValues,
 		},
-		injectLauncher,
-		shouldCreate,
 	)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error parsing porter yaml into chart and values")
+		err = telemetry.Error(ctx, span, err, "parse error")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
@@ -168,12 +180,12 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installing-application", Value: true})
 
 		// create the release job chart if it does not exist (only done by front-end currently, where we set overrideRelease=true)
-		if request.OverrideRelease && releaseJobValues != nil {
+		if request.OverrideRelease && preDeployJobValues != nil {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installing-pre-deploy-job", Value: true})
 			conf, err := createReleaseJobChart(
 				ctx,
 				stackName,
-				releaseJobValues,
+				preDeployJobValues,
 				c.Config().ServerConf.DefaultApplicationHelmRepoURL,
 				registries,
 				cluster,
@@ -272,7 +284,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		// create/update the release job chart
 		if request.OverrideRelease {
-			if releaseJobValues == nil {
+			if preDeployJobValues == nil {
 				releaseJobName := fmt.Sprintf("%s-r", stackName)
 				_, err := helmAgent.GetRelease(ctx, releaseJobName, 0, false)
 				if err == nil {
@@ -293,7 +305,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					conf, err := createReleaseJobChart(
 						ctx,
 						stackName,
-						releaseJobValues,
+						preDeployJobValues,
 						c.Config().ServerConf.DefaultApplicationHelmRepoURL,
 						registries,
 						cluster,
@@ -331,7 +343,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 						Cluster:    cluster,
 						Repo:       c.Repo(),
 						Registries: registries,
-						Values:     releaseJobValues,
+						Values:     preDeployJobValues,
 						Chart:      chart,
 					}
 					_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
@@ -499,11 +511,11 @@ func createReleaseJobChart(
 
 func cloneEnvGroup(c *CreatePorterAppHandler, w http.ResponseWriter, r *http.Request, agent *kubernetes.Agent, envGroups []string, namespace string) {
 	for _, envGroupName := range envGroups {
-		cm, _, err := agent.GetLatestVersionedConfigMap(envGroupName, "default")
+		cm, _, err := agent.GetLatestVersionedConfigMap(envGroupName, "porter-env-group")
 		if err != nil {
 			if errors.Is(err, kubernetes.IsNotFoundError) {
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-					fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", envGroupName, "default"), http.StatusNotFound,
+					fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", envGroupName, "porter-env-group"), http.StatusNotFound,
 					"no config map found for envgroup",
 				))
 				return
@@ -512,11 +524,11 @@ func cloneEnvGroup(c *CreatePorterAppHandler, w http.ResponseWriter, r *http.Req
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
-		secret, _, err := agent.GetLatestVersionedSecret(envGroupName, "default")
+		secret, _, err := agent.GetLatestVersionedSecret(envGroupName, "porter-env-group")
 		if err != nil {
 			if errors.Is(err, kubernetes.IsNotFoundError) {
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-					fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", envGroupName, "default"), http.StatusNotFound,
+					fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", envGroupName, "porter-env-group"), http.StatusNotFound,
 					"no k8s secret found for envgroup",
 				))
 				return

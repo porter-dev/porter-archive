@@ -23,6 +23,7 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
         line: ansiLog,
         lineNumber: idx + 1,
         timestamp: parsed.timestamp,
+        metadata: parsed.metadata,
       };
     } catch (err) {
       return {
@@ -80,7 +81,6 @@ export const useLogs = (
   const {
     newWebsocket,
     openWebsocket,
-    closeWebsocket,
     closeAllWebsockets,
   } = useWebsockets();
 

@@ -120,7 +120,7 @@ func (repo *PorterAppEventRepository) ReadDeployEventByRevision(ctx context.Cont
 	}
 	strRevision := string(revJSON)
 
-	if err := repo.db.Where("porter_app_id = ? AND metadata->>'revision' = ?", strAppID, strRevision).First(&appEvent).Error; err != nil {
+	if err := repo.db.Where("porter_app_id = ? AND type = 'DEPLOY' AND metadata->>'revision' = ?", strAppID, strRevision).First(&appEvent).Error; err != nil {
 		return appEvent, err
 	}
 

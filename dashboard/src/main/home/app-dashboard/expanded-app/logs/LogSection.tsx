@@ -7,7 +7,6 @@ import React, {
 } from "react";
 
 import styled from "styled-components";
-import RadioFilter from "components/RadioFilter";
 
 import spinner from "assets/loading.gif";
 import filterOutline from "assets/filter-outline.svg";
@@ -15,8 +14,7 @@ import filterOutlineWhite from "assets/filter-outline-white.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { useLogs } from "./utils";
-import { Direction } from "./types";
-import Anser from "anser";
+import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName } from "./types";
 import dayjs, { Dayjs } from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
@@ -30,6 +28,8 @@ import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 import { Service } from "../../new-app-flow/serviceTypes";
+import LogFilter from "./LogFilter";
+import StyledLogs from "./StyledLogs";
 
 type Props = {
   currentChart?: ChartType;
@@ -69,6 +69,64 @@ const LogSection: React.FC<Props> = ({
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [logsError, setLogsError] = useState<string | undefined>(undefined);
+  const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
+    revision: "all",
+    output_stream: "all",
+    pod_name: "all",
+  });
+
+  const createVersionOptions = (number: number) => {
+    return Array.from({ length: number }, (_, index) => {
+      const version = index + 1;
+      const label = `Version ${version}`;
+      const value = version.toString();
+      return GenericFilterOption.of(label, value);
+    }).reverse().slice(0, 3);
+  }
+
+  const [filters, setFilters] = useState<GenericLogFilter[]>([
+    {
+      name: "pod_name",
+      displayName: "Service",
+      default: GenericFilterOption.of("All", "all"),
+      options: services?.map(s => {
+        return GenericFilterOption.of(s.name, `${currentChart?.name}-${s.name}-${s.type == "worker" ? "wkr" : s.type}`)
+      }) ?? [],
+      setOption: (option: GenericFilterOption) => {
+        setSelectedFilterValues((s) => ({
+          ...s,
+          pod_name: option.value,
+        }));
+      }
+    },
+    {
+      name: "revision",
+      displayName: "Version",
+      default: GenericFilterOption.of("All", "all"),
+      options: currentChart != null ? createVersionOptions(currentChart.version) : [],
+      setOption: (option: GenericFilterOption) => {
+        setSelectedFilterValues((s) => ({
+          ...s,
+          revision: option.value,
+        }));
+      }
+    },
+    {
+      name: "output_stream",
+      displayName: "Output Stream",
+      default: GenericFilterOption.of("All", "all"),
+      options: [
+        GenericFilterOption.of("stdout", "stdout"),
+        GenericFilterOption.of("stderr", "stderr"),
+      ],
+      setOption: (option: GenericFilterOption) => {
+        setSelectedFilterValues((s) => ({
+          ...s,
+          output_stream: option.value,
+        }));
+      }
+    },
+  ]);
 
   const notify = (message: string) => {
     setNotification(message);
@@ -117,13 +175,6 @@ const LogSection: React.FC<Props> = ({
   }, [isLoading, logs, scrollToBottomRef, scrollToBottomEnabled]);
 
   useEffect(() => {
-    if (podFilter.podName != "") {
-      setSelectedDateIfUndefined();
-      return;
-    }
-  }, [podFilter]);
-
-  useEffect(() => {
     if (selectedDate == null) {
       resetPodFilter();
       return;
@@ -134,37 +185,6 @@ const LogSection: React.FC<Props> = ({
     if (podFilter.podName != "" || podFilter.podType != "") {
       setPodFilter({ podName: "", podType: "" });
     }
-  };
-
-  const renderLogs = () => {
-    return logs?.map((log, i) => {
-      return (
-        <Log key={[log.lineNumber, i].join(".")}>
-          <span className="line-number">{log.lineNumber}.</span>
-          <span className="line-timestamp">
-            {log.timestamp
-              ? dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")
-              : "-"}
-          </span>
-          <LogOuter key={[log.lineNumber, i].join(".")}>
-            {log.line?.map((ansi, j) => {
-              if (ansi.clearLine) {
-                return null;
-              }
-
-              return (
-                <LogInnerSpan
-                  key={[log.lineNumber, i, j].join(".")}
-                  ansi={ansi}
-                >
-                  {ansi.content.replace(/ /g, "\u00a0")}
-                </LogInnerSpan>
-              );
-            })}
-          </LogOuter>
-        </Log>
-      );
-    });
   };
 
   const setPodFilterWithPodName = (podName: string) => {
@@ -225,17 +245,6 @@ const LogSection: React.FC<Props> = ({
               setSelectedDate={setSelectedDate}
               resetSearch={resetSearch}
             />
-            {showFilter &&
-              <RadioFilter
-                icon={
-                  podFilter.podName == "" ? filterOutline : filterOutlineWhite
-                }
-                selected={podFilter.podName}
-                setSelected={setPodFilterWithPodName}
-                options={radioOptions}
-                name="Filter logs"
-              />
-            }
           </Flex>
           <Flex>
             <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
@@ -256,6 +265,22 @@ const LogSection: React.FC<Props> = ({
             </ScrollButton>
           </Flex>
         </FlexRow>
+        <Spacer y={0.5} />
+        {showFilter &&
+          <>
+            <LogFilter
+              icon={
+                podFilter.podName === "" ? filterOutline : filterOutlineWhite
+              }
+              selected={podFilter.podName}
+              setSelected={setPodFilterWithPodName}
+              options={radioOptions}
+              filters={filters}
+              selectedFilterValues={selectedFilterValues}
+            />
+            <Spacer y={0.5} />
+          </>
+        }
         <LogsSectionWrapper>
           <StyledLogsSection>
             {isLoading || (logs.length == 0 && selectedDate == null) ? (
@@ -281,7 +306,7 @@ const LogSection: React.FC<Props> = ({
                 >
                   Load Previous
                 </LoadMoreButton>
-                {renderLogs()}
+                <StyledLogs logs={logs} />
                 <LoadMoreButton
                   active={selectedDate && logs.length !== 0}
                   role="button"
@@ -480,7 +505,6 @@ const ScrollButton = styled.div`
 const Flex = styled.div`
   display: flex;
   align-items: center;
-  border-bottom: 25px solid transparent;
 `;
 
 const Message = styled.div`
@@ -542,55 +566,6 @@ const StyledLogsSection = styled.div`
       transform: translateY(0px);
     }
   }
-`;
-
-const Log = styled.div`
-  font-family: monospace;
-  user-select: text;
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  width: 100%;
-  & > * {
-    padding-block: 5px;
-  }
-  & > .line-timestamp {
-    height: 100%;
-    color: #949effff;
-    opacity: 0.5;
-    font-family: monospace;
-    min-width: fit-content;
-    padding-inline-end: 5px;
-  }
-  & > .line-number {
-    height: 100%;
-    background: #202538;
-    display: inline-block;
-    text-align: right;
-    min-width: 45px;
-    padding-inline-end: 5px;
-    opacity: 0.3;
-    font-family: monospace;
-  }
-`;
-
-const LogOuter = styled.div`
-  display: inline-block;
-  word-wrap: anywhere;
-  flex-grow: 1;
-  font-family: monospace, sans-serif;
-  font-size: 12px;
-`;
-
-const LogInnerSpan = styled.span`
-  font-family: monospace, sans-serif;
-  font-size: 12px;
-  font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>
-    props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
-  color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
-    props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
-  background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
-    props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
 `;
 
 const LoadMoreButton = styled.div<{ active: boolean }>`

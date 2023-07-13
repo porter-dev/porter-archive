@@ -1,6 +1,7 @@
 import healthy from "assets/status-healthy.png";
-import failure from "assets/failure.png";
+import failure from "assets/failure.svg";
 import loading from "assets/loading.gif";
+import canceled from "assets/canceled.svg"
 import api from "shared/api";
 import { PorterAppEvent } from "./types";
 
@@ -45,7 +46,7 @@ export const getStatusIcon = (status: string) => {
         case "PROGRESSING":
             return loading;
         case "CANCELED":
-            return failure;
+            return canceled;
         default:
             return loading;
     }

@@ -117,7 +117,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
             </ServiceStatusContainer>
             <Spacer inline x={1} />
             <ServiceStatusContainer>
-              <Icon height="16px" src={getStatusIcon(serviceStatus[key])} />
+              <Icon height="12px" src={getStatusIcon(serviceStatus[key])} />
               <Spacer inline x={0.5} />
               <Text color="helper">{serviceStatus[key] === "PROGRESSING" ? "DEPLOYING" : serviceStatus[key]}</Text>
             </ServiceStatusContainer>
@@ -138,7 +138,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
       <Spacer y={0.5} />
       <Container row spaced>
         <Container row>
-          <Icon height="16px" src={getStatusIcon(event.status)} />
+          <Icon height="12px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText()}
           {event.metadata.service_status != null &&

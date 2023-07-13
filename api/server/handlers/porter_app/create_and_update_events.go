@@ -277,6 +277,7 @@ func (p *CreateUpdatePorterAppEventHandler) maybeUpdateDeployEvent(ctx context.C
 		return types.PorterAppEvent{}
 	}
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "existing-status", Value: serviceStatusMap[serviceName]})
 	// only update service status if it has not been updated yet
 	if serviceStatusMap[serviceName] == "PROGRESSING" {
 		serviceStatusMap[serviceName] = newStatusStr

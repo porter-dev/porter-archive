@@ -10,6 +10,7 @@ export interface PorterLog {
     line: AnserJsonEntry[];
     lineNumber: number;
     timestamp?: string;
+    metadata?: z.infer<typeof AgentLogMetadataSchema>;
 }
 
 export interface PaginationInfo {
@@ -31,3 +32,26 @@ export const AgentLogSchema = z.object({
     metadata: AgentLogMetadataSchema.optional(),
 });
 export type AgentLog = z.infer<typeof AgentLogSchema>;
+
+export interface GenericFilterOption {
+    label: string;
+    value: string;
+}
+export const GenericFilterOption = {
+    of: (label: string, value: string): GenericFilterOption => {
+        return { label, value };
+    }
+}
+export type LogFilterName = 'revision' | 'output_stream' | 'pod_name';
+export interface GenericLogFilter {
+    name: LogFilterName;
+    displayName: string;
+    default: GenericFilterOption;
+    options: GenericFilterOption[];
+    setOption: (option: GenericFilterOption) => void;
+}
+export const GenericLogFilter = {
+    isDefault: (filter: GenericLogFilter, value: string) => {
+        return filter.default.value === value;
+    }
+}

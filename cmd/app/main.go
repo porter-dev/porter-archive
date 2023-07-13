@@ -96,7 +96,7 @@ func main() {
 		g.Go(func() error {
 			config.Logger.Info().Msgf("Starting AuthManagement server on port %d", a.Config.Port)
 			if err := a.ListenAndServe(ctx); err != nil && err != http.ErrServerClosed {
-				config.Logger.Fatal().Err(err).Msg("Auth server startup failed")
+				config.Logger.Fatal().Err(err).Msg("AuthManagement startup failed")
 				return err
 			}
 			config.Logger.Info().Msg("Shutting down AuthManagement server")

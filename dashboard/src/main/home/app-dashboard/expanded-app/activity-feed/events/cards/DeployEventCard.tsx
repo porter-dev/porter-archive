@@ -60,6 +60,26 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
             </Text>
           );
         }
+      case "CANCELED":
+        if (event.metadata.service_status != null) {
+          let canceledServices = 0;
+          for (const key in event.metadata.service_status) {
+            if (event.metadata.service_status[key] === "CANCELED") {
+              canceledServices++;
+            }
+          }
+          return (
+            <Text color="#FFBF00">
+              Canceled deploy of <Code>{event.metadata.image_tag}</Code> to {canceledServices} service{canceledServices === 1 ? "" : "s"}
+            </Text>
+          );
+        } else {
+          return (
+            <Text color="#FFBF00">
+              Deployment canceled
+            </Text>
+          );
+        }
       default:
         if (event.metadata.service_status != null) {
           return (

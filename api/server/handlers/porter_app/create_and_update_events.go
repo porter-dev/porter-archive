@@ -258,11 +258,9 @@ func (p *CreateUpdatePorterAppEventHandler) maybeUpdateDeployEvent(ctx context.C
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-deployment-event", Value: false})
 
 	// first check to see if the event is empty, meaning there was no match found
-	if matchEvent.Type != string(types.PorterAppEventType_Deploy) || matchEvent.Status != "PROGRESSING" {
+	if matchEvent.ID == uuid.Nil || matchEvent.Status != "PROGRESSING" {
 		return types.PorterAppEvent{}
 	}
-
-	fmt.Printf("found matching deploy event: %v\n", matchEvent)
 
 	serviceStatus, ok := matchEvent.Metadata["service_status"]
 	if !ok {

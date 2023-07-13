@@ -44,6 +44,8 @@ export const getStatusIcon = (status: string) => {
             return failure;
         case "PROGRESSING":
             return loading;
+        case "CANCELED":
+            return failure;
         default:
             return loading;
     }

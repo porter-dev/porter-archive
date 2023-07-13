@@ -31,6 +31,7 @@ func NewRollbackPorterAppHandler(
 	}
 }
 
+// TODO: make this just call create-porter-app
 func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-rollback-porter-app")
 	defer span.End()

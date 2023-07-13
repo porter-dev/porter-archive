@@ -454,6 +454,12 @@ func createPorterAppDeployEvent(
 	tag string,
 	repo repository.PorterAppEventRepository,
 ) (*models.PorterAppEvent, error) {
+	ctx, span := telemetry.NewSpan(ctx, "create-porter-app-deploy-event")
+	defer span.End()
+
+	// mark all pending deployments from the deploy event of the previous revision as canceled
+	updatePreviousPorterAppDeployEvent(ctx, appID, revision, repo)
+
 	// create a map of service names to their status
 	serviceStatuses := make(map[string]string)
 	for _, serviceName := range serviceNames {
@@ -472,16 +478,65 @@ func createPorterAppDeployEvent(
 		},
 	}
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "revision", Value: revision}, telemetry.AttributeKV{Key: "image-tag", Value: tag})
+
 	err := repo.CreateEvent(ctx, &event)
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error creating porter app event")
 		return nil, err
 	}
 
 	if event.ID == uuid.Nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, nil, "event id for newly created app event is nil")
 	}
 
 	return &event, nil
+}
+
+func updatePreviousPorterAppDeployEvent(ctx context.Context, appID uint, revision int, repo repository.PorterAppEventRepository) {
+	ctx, span := telemetry.NewSpan(ctx, "update-previous-porter-app-deploy-event")
+	defer span.End()
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-previous-event", Value: false}, telemetry.AttributeKV{Key: "new-revision", Value: revision})
+	if revision <= 1 {
+		return
+	}
+	revisionFloat64 := float64(revision - 1)
+	matchEvent, err := repo.ReadDeployEventByRevision(ctx, appID, revisionFloat64)
+	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "error reading deploy event by revision")
+		return
+	}
+	if matchEvent.ID == uuid.Nil {
+		_ = telemetry.Error(ctx, span, nil, "could not find previous deploy event")
+		return
+	}
+	if matchEvent.Status != "PROGRESSING" {
+		return
+	}
+	serviceStatus, ok := matchEvent.Metadata["service_status"]
+	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "service status not found in deploy event metadata")
+		return
+	}
+	serviceStatusMap, ok := serviceStatus.(map[string]interface{})
+	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "service status not a map[string]interface")
+		return
+	}
+	for serviceName := range serviceStatusMap {
+		if serviceStatusMap[serviceName] == "PROGRESSING" {
+			serviceStatusMap[serviceName] = "CANCELED"
+		}
+	}
+	matchEvent.Metadata["service_status"] = serviceStatusMap
+	matchEvent.Status = "CANCELED"
+	err = repo.UpdateEvent(ctx, &matchEvent)
+	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "error updating deploy event")
+		return
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-previous-event", Value: true})
 }
 
 func createPreDeployJobChart(

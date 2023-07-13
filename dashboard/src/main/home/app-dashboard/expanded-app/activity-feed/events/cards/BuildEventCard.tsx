@@ -36,7 +36,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
       case "FAILED":
         return <Text color="#FF6060">Build failed</Text>;
       default:
-        return <Text color="#aaaabb66">Build in progress...</Text>;
+        return <Text color="helper">Build in progress...</Text>;
     }
   };
 

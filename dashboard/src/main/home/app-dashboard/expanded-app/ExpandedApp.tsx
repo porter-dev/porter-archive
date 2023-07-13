@@ -69,7 +69,6 @@ const validTabs = [
   "environment",
   "build-settings",
   "settings",
-  "events",
   "helm-values",
 ] as const;
 const DEFAULT_TAB = "activity";
@@ -618,6 +617,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   };
 
   const renderTabContents = () => {
+    if (eventId != null && eventId !== "") {
+      return <EventFocusView
+        eventId={eventId}
+        appData={appData}
+      />;
+    }
     switch (selectedTab) {
       case "activity":
         return <ActivityFeed
@@ -723,19 +728,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Button>
           </>
         );
-      case "events":
-        if (eventId != null) {
-          return <EventFocusView
-            eventId={eventId}
-            appData={appData}
-          />;
-        } else {
-          return <ActivityFeed
-            chart={appData.chart}
-            stackName={appData?.app?.name}
-            appData={appData}
-          />;
-        }
       case "logs":
         return <LogSection currentChart={appData.chart} services={services} />;
       case "metrics":
@@ -1021,10 +1013,6 @@ export default withRouter(ExpandedApp);
 const A = styled.a`
   display: flex;
   align-items: center;
-`;
-
-const Underline = styled.div`
-  border-bottom: 1px solid #ffffff;
 `;
 
 const RefreshButton = styled.div`

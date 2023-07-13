@@ -78,26 +78,24 @@ func main() {
 	}
 
 	g.Go(func() error {
-		config.Logger.Info().Msgf("Starting Porter API server on port %d", config.ServerConf.Port)
+		config.Logger.Info().Msgf("Starting PorterAPI server on port %d", config.ServerConf.Port)
 		if err := p.ListenAndServe(ctx); err != nil && err != http.ErrServerClosed {
-			config.Logger.Fatal().Err(err).Msg("Porter API startup failed")
-			return err
+			return fmt.Errorf("PorterAPI server failed: %s", err.Error())
 		}
-		config.Logger.Info().Msg("Shutting down Porter API server")
+		config.Logger.Info().Msg("Shutting down PorterAPI server")
 		return nil
 	})
 
 	if authServiceFlag {
-		a, err := authmanagement.NewAuthManagementServer()
-		if err != nil {
-			config.Logger.Fatal().Err(err).Msg("Failed to create auth management server")
-		}
-
 		g.Go(func() error {
+			a, err := authmanagement.NewAuthManagementServer()
+			if err != nil {
+				return fmt.Errorf("failed to initialize AuthManagement server: %s", err.Error())
+			}
+
 			config.Logger.Info().Msgf("Starting AuthManagement server on port %d", a.Config.Port)
 			if err := a.ListenAndServe(ctx); err != nil && err != http.ErrServerClosed {
-				config.Logger.Fatal().Err(err).Msg("AuthManagement startup failed")
-				return err
+				return fmt.Errorf("AuthManagement server failed: %s", err.Error())
 			}
 			config.Logger.Info().Msg("Shutting down AuthManagement server")
 			return nil
@@ -116,15 +114,16 @@ func main() {
 			cancel()
 			return nil
 		case <-ctx.Done():
-			config.Logger.Info().Msg("Context cancelled")
 			return nil
 		}
 	}
 
 	g.Go(termFunc)
 
-	// returning errors will trigger the errgroup context cancellation, but we let each go routine log its own error and swallow it here
-	_ = g.Wait()
+	err = g.Wait()
+	if err != nil {
+		config.Logger.Fatal().Err(err).Msg("Received server error")
+	}
 }
 
 const (

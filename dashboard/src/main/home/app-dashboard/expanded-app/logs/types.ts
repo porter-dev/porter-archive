@@ -48,10 +48,23 @@ export interface GenericLogFilter {
     displayName: string;
     default: GenericFilterOption;
     options: GenericFilterOption[];
-    setOption: (option: GenericFilterOption) => void;
+    setValue: (value: string) => void;
 }
 export const GenericLogFilter = {
     isDefault: (filter: GenericLogFilter, value: string) => {
         return filter.default.value === value;
-    }
+    },
+
+    getDefaultOption: (filterName: LogFilterName) => {
+        switch (filterName) {
+            case 'revision':
+                return GenericFilterOption.of('All', 'all');
+            case 'output_stream':
+                return GenericFilterOption.of('stdout', 'stdout');
+            case 'pod_name':
+                return GenericFilterOption.of('All', 'all');
+            default:
+                return GenericFilterOption.of('All', 'all');
+        }
+    },
 }

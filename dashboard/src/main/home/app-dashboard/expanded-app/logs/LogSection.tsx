@@ -9,8 +9,6 @@ import React, {
 import styled from "styled-components";
 
 import spinner from "assets/loading.gif";
-import filterOutline from "assets/filter-outline.svg";
-import filterOutlineWhite from "assets/filter-outline-white.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { useLogs } from "./utils";
@@ -28,7 +26,7 @@ import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 import { Service } from "../../new-app-flow/serviceTypes";
-import LogFilter from "./LogFilter";
+import LogFilterContainer from "./LogFilterContainer";
 import StyledLogs from "./StyledLogs";
 
 type Props = {
@@ -39,6 +37,7 @@ type Props = {
     endTime?: Dayjs;
   };
   showFilter?: boolean;
+  appName: string;
 };
 
 type PodFilter = {
@@ -50,6 +49,7 @@ const LogSection: React.FC<Props> = ({
   currentChart,
   services,
   timeRange,
+  appName,
   showFilter = true,
 }) => {
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
@@ -70,15 +70,15 @@ const LogSection: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [logsError, setLogsError] = useState<string | undefined>(undefined);
   const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
-    revision: "all",
-    output_stream: "all",
-    pod_name: "all",
+    revision: GenericLogFilter.getDefaultOption("revision").value,
+    output_stream: GenericLogFilter.getDefaultOption("output_stream").value,
+    pod_name: GenericLogFilter.getDefaultOption("pod_name").value,
   });
 
   const createVersionOptions = (number: number) => {
     return Array.from({ length: number }, (_, index) => {
       const version = index + 1;
-      const label = `Version ${version}`;
+      const label = version === number ? `Version ${version} (latest)` : `Version ${version}`;
       const value = version.toString();
       return GenericFilterOption.of(label, value);
     }).reverse().slice(0, 3);
@@ -88,41 +88,40 @@ const LogSection: React.FC<Props> = ({
     {
       name: "pod_name",
       displayName: "Service",
-      default: GenericFilterOption.of("All", "all"),
+      default: GenericLogFilter.getDefaultOption("pod_name"),
       options: services?.map(s => {
-        return GenericFilterOption.of(s.name, `${currentChart?.name}-${s.name}-${s.type == "worker" ? "wkr" : s.type}`)
+        return GenericFilterOption.of(s.name, `${s.name}-${s.type == "worker" ? "wkr" : s.type}`)
       }) ?? [],
-      setOption: (option: GenericFilterOption) => {
+      setValue: (value: string) => {
         setSelectedFilterValues((s) => ({
           ...s,
-          pod_name: option.value,
+          pod_name: value,
         }));
       }
     },
     {
       name: "revision",
       displayName: "Version",
-      default: GenericFilterOption.of("All", "all"),
+      default: GenericLogFilter.getDefaultOption("revision"),
       options: currentChart != null ? createVersionOptions(currentChart.version) : [],
-      setOption: (option: GenericFilterOption) => {
+      setValue: (value: string) => {
         setSelectedFilterValues((s) => ({
           ...s,
-          revision: option.value,
+          revision: value,
         }));
       }
     },
     {
       name: "output_stream",
       displayName: "Output Stream",
-      default: GenericFilterOption.of("All", "all"),
+      default: GenericLogFilter.getDefaultOption("output_stream"),
       options: [
-        GenericFilterOption.of("stdout", "stdout"),
         GenericFilterOption.of("stderr", "stderr"),
       ],
-      setOption: (option: GenericFilterOption) => {
+      setValue: (value: string) => {
         setSelectedFilterValues((s) => ({
           ...s,
-          output_stream: option.value,
+          output_stream: value,
         }));
       }
     },
@@ -136,12 +135,9 @@ const LogSection: React.FC<Props> = ({
     }, 5000);
   };
 
-  const namespace = currentChart == null ? "" : currentChart.namespace;
-
   const { logs, refresh, moveCursor, paginationInfo } = useLogs(
-    podFilter.podName,
-    podFilter.podType,
-    namespace,
+    selectedFilterValues,
+    currentChart == null ? "" : currentChart.namespace,
     enteredSearchText,
     notify,
     currentChart,
@@ -149,20 +145,6 @@ const LogSection: React.FC<Props> = ({
     selectedDate,
     timeRange,
   );
-
-  const refreshPodLogsValues = async () => {
-    if (currentChart == null || services == null) {
-      setPodFilterOpts([]);
-    } else {
-      const podList = services.map((service: Service) => {
-        return {
-          podName: service.name,
-          podType: service.type == "worker" ? "wkr" : service.type,
-        };
-      });
-      setPodFilterOpts(podList);
-    }
-  };
 
   useEffect(() => {
     if (!isLoading && scrollToBottomRef.current && scrollToBottomEnabled) {
@@ -181,23 +163,23 @@ const LogSection: React.FC<Props> = ({
     }
   }, [selectedDate]);
 
-  const resetPodFilter = () => {
-    if (podFilter.podName != "" || podFilter.podType != "") {
-      setPodFilter({ podName: "", podType: "" });
+  const refreshPodLogsValues = async () => {
+    if (currentChart == null || services == null) {
+      setPodFilterOpts([]);
+    } else {
+      const podList = services.map((service: Service) => {
+        return {
+          podName: service.name,
+          podType: service.type == "worker" ? "wkr" : service.type,
+        };
+      });
+      setPodFilterOpts(podList);
     }
   };
 
-  const setPodFilterWithPodName = (podName: string) => {
-    if (podName == "All") {
-      resetPodFilter();
-      return;
-    }
-
-    const filtered = podFilterOpts.filter((pod) => pod.podName == podName);
-    if (filtered.length > 0) {
-      setPodFilter(filtered[0]);
-    } else {
-      resetPodFilter();
+  const resetPodFilter = () => {
+    if (podFilter.podName != "" || podFilter.podType != "") {
+      setPodFilter({ podName: "", podType: "" });
     }
   };
 
@@ -268,13 +250,7 @@ const LogSection: React.FC<Props> = ({
         <Spacer y={0.5} />
         {showFilter &&
           <>
-            <LogFilter
-              icon={
-                podFilter.podName === "" ? filterOutline : filterOutlineWhite
-              }
-              selected={podFilter.podName}
-              setSelected={setPodFilterWithPodName}
-              options={radioOptions}
+            <LogFilterContainer
               filters={filters}
               selectedFilterValues={selectedFilterValues}
             />
@@ -306,7 +282,11 @@ const LogSection: React.FC<Props> = ({
                 >
                   Load Previous
                 </LoadMoreButton>
-                <StyledLogs logs={logs} />
+                <StyledLogs
+                  logs={logs}
+                  appName={appName}
+                  filters={filters}
+                />
                 <LoadMoreButton
                   active={selectedDate && logs.length !== 0}
                   role="button"
@@ -577,39 +557,6 @@ const LoadMoreButton = styled.div<{ active: boolean }>`
   background: #1f2023;
   cursor: pointer;
   font-family: monospace;
-`;
-
-const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`
-  padding: 0 10px;
-  color: ${(props) => (props.selected ? "" : "#494b4f")};
-  border: 1px solid #494b4f;
-  height: 100%;
-  display: flex;
-  margin-left: ${(props) => (props.nudgeLeft ? "-1px" : "")};
-  align-items: center;
-  border-radius: ${(props) =>
-    props.nudgeLeft ? "0 5px 5px 0" : "5px 0 0 5px"};
-  :hover {
-    border: 1px solid #7a7b80;
-    z-index: 2;
-  }
-`;
-
-const ToggleButton = styled.div`
-  background: #26292e;
-  border-radius: 5px;
-  font-size: 13px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-`;
-
-const TimeIcon = styled.img<{ selected?: boolean }>`
-  width: 16px;
-  height: 16px;
-  z-index: 2;
-  opacity: ${(props) => (props.selected ? "" : "50%")};
 `;
 
 const NotificationWrapper = styled.div<{ active?: boolean }>`

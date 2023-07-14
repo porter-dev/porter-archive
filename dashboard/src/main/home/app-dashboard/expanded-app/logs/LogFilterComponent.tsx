@@ -1,28 +1,29 @@
 import Text from "components/porter/Text";
-import React, { useEffect } from "react";
+import React from "react";
 import styled from "styled-components";
-import { GenericFilterOption } from "./types";
+import { GenericLogFilter } from "./types";
 import Spacer from "components/porter/Spacer";
 import Select from "components/porter/Select";
 
 type Props = {
-    name: string;
-    options: GenericFilterOption[];
+    filter: GenericLogFilter;
+    selectedValue: string;
 };
 
 const LogFilterComponent: React.FC<Props> = ({
-    options,
-    name,
+    filter,
+    selectedValue,
 }) => {
-    useEffect(() => {
-        // Do something
-    }, []);
-
     return (
         <StyledLogFilterComponent>
-            <Text>{name}</Text>
+            <Text>{filter.displayName}</Text>
             <Spacer inline x={0.5} />
-            <Select options={options} height={"30px"} />
+            <Select
+                options={[filter.default, ...filter.options]}
+                height={"30px"}
+                value={selectedValue}
+                setValue={filter.setValue}
+            />
         </StyledLogFilterComponent>
     );
 };
@@ -32,7 +33,6 @@ export default LogFilterComponent;
 const StyledLogFilterComponent = styled.div`
     display: flex;
     align-items: center;
-    width: 100%;
     animation: fadeIn 0.3s 0s;
     @keyframes fadeIn {
     from {

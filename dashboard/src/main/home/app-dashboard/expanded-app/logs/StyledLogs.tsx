@@ -1,33 +1,68 @@
 import React from "react";
-import { PorterLog } from "./types";
+import { GenericLogFilter, PorterLog } from "./types";
 import styled from "styled-components";
 import Anser from "anser";
 import dayjs from "dayjs";
+import { getPodSelectorFromPodNameAndAppName, getServiceNameFromPodNameAndAppName, getVersionTagColor } from "./utils";
 
 
 type Props = {
     logs: PorterLog[];
+    appName: string;
+    filters: GenericLogFilter[];
 };
 
 const StyledLogs: React.FC<Props> = ({
-    logs
+    logs,
+    appName,
+    filters,
 }) => {
+    const renderFilterTagForLog = (filter: GenericLogFilter, log: PorterLog, index: number) => {
+        if (log.metadata == null) {
+            return null;
+        }
+        switch (filter.name) {
+            case "revision":
+                return (
+                    <LogInnerPill
+                        color={getVersionTagColor(log.metadata.revision)}
+                        key={index}
+                        onClick={() => filter.setValue(log.metadata.revision)}
+                    >
+                        {`Version: ${log.metadata.revision}`}
+                    </LogInnerPill>
+                )
+            case "pod_name":
+                return (
+                    <LogInnerPill
+                        color={"white"}
+                        key={index}
+                        onClick={() => filter.setValue(getPodSelectorFromPodNameAndAppName(log.metadata.pod_name, appName))}
+                    >
+                        {getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName)}
+                    </LogInnerPill>
+                )
+            default:
+                return null;
+        }
+    }
+
     return (
-        <>
+        <StyledLogsContainer>
             {logs.map((log, i) => {
                 return (
                     <Log key={[log.lineNumber, i].join(".")}>
-                        <span className="line-number">{log.lineNumber}.</span>
-                        <span className="line-timestamp">
-                            {log.timestamp
-                                ? dayjs(log.timestamp).format("MM/DD/YYYY HH:mm:ss")
-                                : "-"}
-                        </span>
-                        {log.metadata != null &&
-                            <LogInnerPill>
-                                {`Version: ${log.metadata.revision}`}
-                            </LogInnerPill>
-                        }
+                        <LogLabelsContainer includeLabels={log.metadata != null}>
+                            <LineNumber className="line-number">{log.lineNumber}.</LineNumber>
+                            <LineTimestamp className="line-timestamp">
+                                {log.timestamp
+                                    ? dayjs(log.timestamp).format("MM/DD HH:mm:ss")
+                                    : "-"}
+                            </LineTimestamp>
+                            {filters.map((filter, j) => {
+                                return renderFilterTagForLog(filter, log, j)
+                            })}
+                        </LogLabelsContainer>
                         <LogOuter key={[log.lineNumber, i].join(".")}>
                             {log.line?.map((ansi, j) => {
                                 if (ansi.clearLine) {
@@ -47,55 +82,70 @@ const StyledLogs: React.FC<Props> = ({
                     </Log>
                 );
             })}
-        </>
+        </StyledLogsContainer>
     );
 };
 
 export default StyledLogs;
 
-const Log = styled.div`
-  font-family: monospace;
-  user-select: text;
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  width: 100%;
-  & > * {
-    padding-block: 5px;
-  }
-  & > .line-timestamp {
+const StyledLogsContainer = styled.div`
+`;
+
+const LogLabelsContainer = styled.div<{ includeLabels: boolean }>`
+    min-width: ${props => props.includeLabels ? "390px" : "100px"}; 
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    
+`;
+
+const LineTimestamp = styled.span`
     height: 100%;
     color: #949effff;
     opacity: 0.5;
     font-family: monospace;
     min-width: fit-content;
-    padding-inline-end: 5px;
-  }
-  & > .line-number {
+`
+
+const LineNumber = styled.span`
     height: 100%;
     background: #202538;
     display: inline-block;
     text-align: right;
     min-width: 45px;
-    padding-inline-end: 5px;
     opacity: 0.3;
     font-family: monospace;
-  }
+`
+
+const Log = styled.div`
+  font-family: monospace;
+  user-select: text;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-height: 25px;
 `;
 
-const LogInnerPill = styled.div`
-    display: flex;
-    align-items: center;
+const LogInnerPill = styled.div<{ color: string }>`
+    display: inline-block;
+    vertical-align: middle;
+    width: 100px;
     padding: 0px 5px;
-    height: 90%;
+    height: 20px;
     color: black;
-    background-color: #949fffff;
+    background-color: ${(props) => props.color};
     border-radius: 5px;
     opacity: 1;
     font-family: monospace;
-    min-width: fit-content;
-    padding-inline-end: 5px;
-
+    cursor: pointer;
+    hover: {
+        border: 1px solid #949effff;
+    }
+    overflow: hidden;
+    white-space: nowrap;    
+    text-overflow: ellipsis;
 `
 
 const LogOuter = styled.div`

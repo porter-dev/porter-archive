@@ -729,7 +729,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           </>
         );
       case "logs":
-        return <LogSection currentChart={appData.chart} services={services} />;
+        return <LogSection currentChart={appData.chart} services={services} appName={appData.app.name} />;
       case "metrics":
         return <MetricsSection currentChart={appData.chart} />;
       case "debug":

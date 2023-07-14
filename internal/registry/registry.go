@@ -156,8 +156,9 @@ func (r *Registry) ListRepositories(
 
 	if project.CapiProvisionerEnabled {
 		// TODO: Remove this conditional when AWS list repos is supported in CCP
-		if strings.Contains(r.URL, ".azurecr.") {
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "capi-azure"})
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "registry-uri", Value: r.URL})
+
+		if strings.Contains(r.URL, ".azurecr.") || strings.Contains(r.URL, "-docker.pkg.dev") {
 
 			req := connect.NewRequest(&porterv1.ListRepositoriesForRegistryRequest{
 				ProjectId:   int64(r.ProjectID),
@@ -166,7 +167,7 @@ func (r *Registry) ListRepositories(
 
 			resp, err := conf.ClusterControlPlaneClient.ListRepositoriesForRegistry(ctx, req)
 			if err != nil {
-				return nil, telemetry.Error(ctx, span, err, "error listing ecr repositories")
+				return nil, telemetry.Error(ctx, span, err, "error listing docker repositories")
 			}
 
 			res := make([]*ptypes.RegistryRepository, 0)
@@ -185,7 +186,6 @@ func (r *Registry) ListRepositories(
 
 			return res, nil
 		} else {
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "auth-mechanism", Value: "capi-aws"})
 			uri := strings.TrimPrefix(r.URL, "https://")
 			splits := strings.Split(uri, ".")
 			if len(splits) < 4 {
@@ -869,6 +869,8 @@ func (r *Registry) CreateRepository(
 	ctx, span := telemetry.NewSpan(ctx, "create-repository")
 	defer span.End()
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "registry-uri", Value: r.URL})
+
 	// if aws, create repository
 	if r.AWSIntegrationID != 0 {
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "aws-integration-id", Value: r.AWSIntegrationID})
@@ -900,8 +902,8 @@ func (r *Registry) CreateRepository(
 
 	if project.CapiProvisionerEnabled {
 		// no need to create repository if pushing to ACR
-		if strings.Contains(r.URL, ".azurecr.") {
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "skipping-create-because-azure", Value: true})
+		if strings.Contains(r.URL, ".azurecr.") || strings.Contains(r.URL, "-docker.pkg.dev") {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "skipping-create-repo", Value: true})
 			return nil
 		}
 

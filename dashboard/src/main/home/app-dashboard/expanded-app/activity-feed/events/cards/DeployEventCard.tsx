@@ -2,6 +2,7 @@ import React, { useState } from "react";
 
 
 import deploy from "assets/deploy.png";
+import document from "assets/document.svg";
 
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
@@ -107,24 +108,36 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
       );
     }
 
-    return Object.keys(serviceStatus).map((key) => {
-      return (
-        <Container key={key} row>
-          <Spacer inline x={1} />
-          <Container row>
-            <ServiceStatusContainer>
-              <Text>{key}</Text>
-            </ServiceStatusContainer>
+    return <ServiceStatusesContainer>
+      {Object.keys(serviceStatus).map((key) => {
+        return (
+          <Container key={key} row>
             <Spacer inline x={1} />
-            <ServiceStatusContainer>
-              <Icon height="12px" src={getStatusIcon(serviceStatus[key])} />
-              <Spacer inline x={0.5} />
-              <Text color="helper">{serviceStatus[key] === "PROGRESSING" ? "DEPLOYING" : serviceStatus[key]}</Text>
-            </ServiceStatusContainer>
+            <Container row>
+              <ServiceStatusContainer>
+                <Text>{key}</Text>
+              </ServiceStatusContainer>
+              <Spacer inline x={1} />
+              <ServiceStatusContainer>
+                <Icon height="12px" src={getStatusIcon(serviceStatus[key])} />
+                <Spacer inline x={0.5} />
+                <Text color="helper">{serviceStatus[key] === "PROGRESSING" ? "DEPLOYING" : serviceStatus[key]}</Text>
+              </ServiceStatusContainer>
+              <Spacer inline x={1} />
+              <ServiceStatusContainer>
+                <Icon height="12px" src={document} />
+                <Spacer inline x={0.5} />
+                <Link
+                  to={`/apps/${appData.app.name}/logs?version=${event.metadata.revision}&service=${key}`}
+                >
+                  View logs
+                </Link>
+              </ServiceStatusContainer>
+            </Container>
           </Container>
-        </Container>
-      );
-    });
+        );
+      })}
+    </ServiceStatusesContainer>
   }
   return (
     <StyledEventCard>
@@ -216,3 +229,9 @@ const ServiceStatusContainer = styled.div`
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
+
+const ServiceStatusesContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+ `; 

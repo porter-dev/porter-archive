@@ -28,6 +28,7 @@ import Button from "components/porter/Button";
 import { Service } from "../../new-app-flow/serviceTypes";
 import LogFilterContainer from "./LogFilterContainer";
 import StyledLogs from "./StyledLogs";
+import { useLocation } from "react-router";
 
 type Props = {
   currentChart?: ChartType;
@@ -40,11 +41,6 @@ type Props = {
   appName: string;
 };
 
-type PodFilter = {
-  podName: string;
-  podType: string;
-};
-
 const LogSection: React.FC<Props> = ({
   currentChart,
   services,
@@ -52,13 +48,11 @@ const LogSection: React.FC<Props> = ({
   appName,
   showFilter = true,
 }) => {
+  const { search } = useLocation();
+  const queryParams = new URLSearchParams(search);
+
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
-  const [podFilter, setPodFilter] = useState<PodFilter>({
-    podName: "",
-    podType: "",
-  });
-  const [podFilterOpts, setPodFilterOpts] = useState<PodFilter[]>([]);
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [enteredSearchText, setEnteredSearchText] = useState("");
   const [searchText, setSearchText] = useState("");
@@ -69,10 +63,20 @@ const LogSection: React.FC<Props> = ({
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [logsError, setLogsError] = useState<string | undefined>(undefined);
+  const getSelectorFromServiceQueryParam = (serviceName: string | null) => {
+    if (serviceName == null) {
+      return undefined;
+    }
+    const match = services?.find(s => s.name == serviceName);
+    if (match == null) {
+      return undefined;
+    }
+    return `${match.name}-${match.type == "worker" ? "wkr" : match.type}`;
+  }
   const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
-    revision: GenericLogFilter.getDefaultOption("revision").value,
-    output_stream: GenericLogFilter.getDefaultOption("output_stream").value,
-    pod_name: GenericLogFilter.getDefaultOption("pod_name").value,
+    revision: queryParams.get('version') ?? GenericLogFilter.getDefaultOption("revision").value,
+    output_stream: queryParams.get('output_stream') ?? GenericLogFilter.getDefaultOption("output_stream").value,
+    pod_name: getSelectorFromServiceQueryParam(queryParams.get("service")) ?? GenericLogFilter.getDefaultOption("pod_name").value,
   });
 
   const createVersionOptions = (number: number) => {
@@ -158,29 +162,17 @@ const LogSection: React.FC<Props> = ({
 
   useEffect(() => {
     if (selectedDate == null) {
-      resetPodFilter();
+      resetFilters();
       return;
     }
   }, [selectedDate]);
 
-  const refreshPodLogsValues = async () => {
-    if (currentChart == null || services == null) {
-      setPodFilterOpts([]);
-    } else {
-      const podList = services.map((service: Service) => {
-        return {
-          podName: service.name,
-          podType: service.type == "worker" ? "wkr" : service.type,
-        };
-      });
-      setPodFilterOpts(podList);
-    }
-  };
-
-  const resetPodFilter = () => {
-    if (podFilter.podName != "" || podFilter.podType != "") {
-      setPodFilter({ podName: "", podType: "" });
-    }
+  const resetFilters = () => {
+    setSelectedFilterValues({
+      revision: queryParams.get('version') ?? GenericLogFilter.getDefaultOption("revision").value,
+      output_stream: queryParams.get('output_stream') ?? GenericLogFilter.getDefaultOption("output_stream").value,
+      pod_name: getSelectorFromServiceQueryParam(queryParams.get("service")) ?? GenericLogFilter.getDefaultOption("pod_name").value,
+    });
   };
 
   const onLoadPrevious = useCallback(() => {
@@ -204,14 +196,6 @@ const LogSection: React.FC<Props> = ({
   };
 
   const renderContents = () => {
-    const radioOptions = podFilterOpts?.map((pod) => {
-      return {
-        value: pod.podName,
-        label: pod.podName,
-      };
-    });
-    radioOptions.unshift({ value: "All", label: "All" });
-
     return (
       <>
         <FlexRow>
@@ -238,7 +222,6 @@ const LogSection: React.FC<Props> = ({
             <Spacer inline width="10px" />
             <ScrollButton
               onClick={() => {
-                refreshPodLogsValues();
                 refresh();
               }}
             >
@@ -348,7 +331,6 @@ const LogSection: React.FC<Props> = ({
             })
             .then((res) => {
               setHasPorterAgent(true);
-              refreshPodLogsValues();
               setIsPorterAgentInstalling(false);
               setIsLoading(false);
             })

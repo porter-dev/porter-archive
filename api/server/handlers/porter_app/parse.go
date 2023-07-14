@@ -7,6 +7,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/stack"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -18,47 +19,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type PorterStackYAML struct {
-	Version   *string             `yaml:"version"`
-	Build     *Build              `yaml:"build"`
-	Env       map[string]string   `yaml:"env"`
-	SyncedEnv []*SyncedEnvSection `yaml:"synced_env"`
-	Apps      map[string]*App     `yaml:"apps"`
-	Release   *App                `yaml:"release"`
-}
-
-type Build struct {
-	Context    *string   `yaml:"context" validate:"dir"`
-	Method     *string   `yaml:"method" validate:"required,oneof=pack docker registry"`
-	Builder    *string   `yaml:"builder" validate:"required_if=Method pack"`
-	Buildpacks []*string `yaml:"buildpacks"`
-	Dockerfile *string   `yaml:"dockerfile" validate:"required_if=Method docker"`
-	Image      *string   `yaml:"image" validate:"required_if=Method registry"`
-}
-
-type App struct {
-	Run    *string                `yaml:"run" validate:"required"`
-	Config map[string]interface{} `yaml:"config"`
-	Type   *string                `yaml:"type" validate:"oneof=web worker job"`
-}
-
 type SubdomainCreateOpts struct {
 	k8sAgent       *kubernetes.Agent
 	dnsRepo        repository.DNSRecordRepository
 	powerDnsClient *powerdns.Client
 	appRootDomain  string
 	stackName      string
-}
-
-type SyncedEnvSection struct {
-	Name    string                `json:"name" yaml:"name"`
-	Version uint                  `json:"version" yaml:"version"`
-	Keys    []SyncedEnvSectionKey `json:"keys" yaml:"keys"`
-}
-
-type SyncedEnvSectionKey struct {
-	Name   string `json:"name" yaml:"name"`
-	Secret bool   `json:"secret" yaml:"secret"`
 }
 
 type ParseConf struct {
@@ -92,7 +58,7 @@ type ParseConf struct {
 }
 
 func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
-	parsed := &PorterStackYAML{}
+	parsed := &stack.PorterStackYAML{}
 
 	if conf.FullHelmValues != "" {
 		parsedHelmValues, err := convertHelmValuesToPorterYaml(conf.FullHelmValues)
@@ -107,7 +73,7 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 		}
 	}
 
-	synced_env := make([]*SyncedEnvSection, 0)
+	synced_env := make([]*stack.SyncedEnvSection, 0)
 
 	for i := range conf.EnvGroups {
 		cm, _, err := conf.SubdomainCreateOpts.k8sAgent.GetLatestVersionedConfigMap(conf.EnvGroups[i], conf.Namespace)
@@ -126,15 +92,15 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 
 		version := uint(versionInt)
 
-		newSection := &SyncedEnvSection{
+		newSection := &stack.SyncedEnvSection{
 			Name:    conf.EnvGroups[i],
 			Version: version,
 		}
 
-		newSectionKeys := make([]SyncedEnvSectionKey, 0)
+		newSectionKeys := make([]stack.SyncedEnvSectionKey, 0)
 
 		for key, val := range cm.Data {
-			newSectionKeys = append(newSectionKeys, SyncedEnvSectionKey{
+			newSectionKeys = append(newSectionKeys, stack.SyncedEnvSectionKey{
 				Name:   key,
 				Secret: strings.Contains(val, "PORTERSECRET"),
 			})
@@ -144,30 +110,34 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 		synced_env = append(synced_env, newSection)
 	}
 
-	parsed.SyncedEnv = synced_env
+	application, err := stack.CreateAppFromFile(parsed)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
+	}
 
-	values, err := buildUmbrellaChartValues(parsed, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate)
+	values, err := buildUmbrellaChartValues(application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values", err)
 	}
 	convertedValues := convertMap(values).(map[string]interface{})
 
-	chart, err := buildUmbrellaChart(parsed, conf.ServerConfig, conf.ProjectID, conf.ExistingChartDependencies)
+	chart, err := buildUmbrellaChart(application, conf.ServerConfig, conf.ProjectID, conf.ExistingChartDependencies)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error building chart", err)
 	}
 
 	// return the parsed release values for the release job chart, if they exist
 	var preDeployJobValues map[string]interface{}
-	if parsed.Release != nil && parsed.Release.Run != nil {
-		preDeployJobValues = buildPreDeployJobChartValues(parsed.Release, parsed.Env, parsed.SyncedEnv, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate)
+	if application.Release != nil && application.Release.Run != nil {
+		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate)
 	}
 
 	return chart, convertedValues, preDeployJobValues, nil
 }
 
 func buildUmbrellaChartValues(
-	parsed *PorterStackYAML,
+	application *stack.Application,
+	syncedEnv []*stack.SyncedEnvSection,
 	imageInfo types.ImageInfo,
 	existingValues map[string]interface{},
 	opts SubdomainCreateOpts,
@@ -177,21 +147,21 @@ func buildUmbrellaChartValues(
 ) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
-	if parsed.Apps == nil {
+	if application.Services == nil {
 		if existingValues == nil {
-			return nil, fmt.Errorf("porter.yaml must contain at least one app, or pre-deploy must exist and have values")
+			return nil, fmt.Errorf("porter.yaml must contain at least one service, or pre-deploy must exist and have values")
 		}
 	}
 
-	for name, app := range parsed.Apps {
-		appType := getType(name, app)
+	for name, service := range application.Services {
+		serviceType := getType(name, service)
 
-		defaultValues := getDefaultValues(app, parsed.Env, parsed.SyncedEnv, appType, existingValues, name, userUpdate)
-		convertedConfig := convertMap(app.Config).(map[string]interface{})
+		defaultValues := getDefaultValues(service, application.Env, syncedEnv, serviceType, existingValues, name, userUpdate)
+		convertedConfig := convertMap(service.Config).(map[string]interface{})
 		helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
 
 		// required to identify the chart type because of https://github.com/helm/helm/issues/9214
-		helmName := getHelmName(name, appType)
+		helmName := getHelmName(name, serviceType)
 		if existingValues != nil {
 			if existingValues[helmName] != nil {
 				existingValuesMap := existingValues[helmName].(map[string]interface{})
@@ -199,7 +169,7 @@ func buildUmbrellaChartValues(
 			}
 		}
 
-		validateErr := validateHelmValues(helm_values, shouldValidateHelmValues, appType)
+		validateErr := validateHelmValues(helm_values, shouldValidateHelmValues, serviceType)
 		if validateErr != "" {
 			return nil, fmt.Errorf("error validating service \"%s\": %s", name, validateErr)
 		}
@@ -210,7 +180,7 @@ func buildUmbrellaChartValues(
 		}
 
 		// just in case this slips by
-		if appType == "web" {
+		if serviceType == "web" {
 			if helm_values["ingress"] == nil {
 				helm_values["ingress"] = map[string]interface{}{
 					"enabled": false,
@@ -284,7 +254,7 @@ func validateHelmValues(values map[string]interface{}, shouldValidateHelmValues 
 	return ""
 }
 
-func buildPreDeployJobChartValues(release *App, env map[string]string, synced_env []*SyncedEnvSection, imageInfo types.ImageInfo, injectLauncher bool, existingValues map[string]interface{}, name string, userUpdate bool) map[string]interface{} {
+func buildPreDeployJobChartValues(release *stack.Service, env map[string]string, synced_env []*stack.SyncedEnvSection, imageInfo types.ImageInfo, injectLauncher bool, existingValues map[string]interface{}, name string, userUpdate bool) map[string]interface{} {
 	defaultValues := getDefaultValues(release, env, synced_env, "job", existingValues, name+"-r", userUpdate)
 	convertedConfig := convertMap(release.Config).(map[string]interface{})
 	helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
@@ -310,21 +280,26 @@ func buildPreDeployJobChartValues(release *App, env map[string]string, synced_en
 	return helm_values
 }
 
-func getType(name string, app *App) string {
-	if app.Type != nil {
-		return *app.Type
+func getType(name string, service *stack.Service) string {
+	if service.Type != nil {
+		return *service.Type
 	}
 	if strings.Contains(name, "web") {
 		return "web"
 	}
+
+	if strings.Contains(name, "job") {
+		return "job"
+	}
+
 	return "worker"
 }
 
-func getDefaultValues(app *App, env map[string]string, synced_env []*SyncedEnvSection, appType string, existingValues map[string]interface{}, name string, userUpdate bool) map[string]interface{} {
+func getDefaultValues(service *stack.Service, env map[string]string, synced_env []*stack.SyncedEnvSection, appType string, existingValues map[string]interface{}, name string, userUpdate bool) map[string]interface{} {
 	var defaultValues map[string]interface{}
 	var runCommand string
-	if app.Run != nil {
-		runCommand = *app.Run
+	if service.Run != nil {
+		runCommand = *service.Run
 	}
 	var syncedEnvs []map[string]interface{}
 	envConf, err := getStacksNestedMap(existingValues, name+"-"+appType, "container", "env")
@@ -347,7 +322,7 @@ func getDefaultValues(app *App, env map[string]string, synced_env []*SyncedEnvSe
 	return defaultValues
 }
 
-func deconstructSyncedEnvs(synced_env []*SyncedEnvSection, env map[string]string) []map[string]interface{} {
+func deconstructSyncedEnvs(synced_env []*stack.SyncedEnvSection, env map[string]string) []map[string]interface{} {
 	synced := make([]map[string]interface{}, 0)
 	for _, group := range synced_env {
 		keys := make([]map[string]interface{}, 0)
@@ -373,35 +348,35 @@ func deconstructSyncedEnvs(synced_env []*SyncedEnvSection, env map[string]string
 	return synced
 }
 
-func buildUmbrellaChart(parsed *PorterStackYAML, config *config.Config, projectID uint, existingDependencies []*chart.Dependency) (*chart.Chart, error) {
+func buildUmbrellaChart(application *stack.Application, config *config.Config, projectID uint, existingDependencies []*chart.Dependency) (*chart.Chart, error) {
 	deps := make([]*chart.Dependency, 0)
-	for alias, app := range parsed.Apps {
-		var appType string
+	for alias, service := range application.Services {
+		var serviceType string
 		if existingDependencies != nil {
 			for _, dep := range existingDependencies {
 				// this condition checks that the dependency is of the form <alias>-web or <alias>-wkr or <alias>-job, meaning it already exists in the chart
 				if strings.HasPrefix(dep.Alias, fmt.Sprintf("%s-", alias)) && (strings.HasSuffix(dep.Alias, "-web") || strings.HasSuffix(dep.Alias, "-wkr") || strings.HasSuffix(dep.Alias, "-job")) {
-					appType = getChartTypeFromHelmName(dep.Alias)
-					if appType == "" {
+					serviceType = getChartTypeFromHelmName(dep.Alias)
+					if serviceType == "" {
 						return nil, fmt.Errorf("unable to determine type of existing dependency")
 					}
 				}
 			}
 			// this is a new app, so we need to get the type from the app name or type
-			if appType == "" {
-				appType = getType(alias, app)
+			if serviceType == "" {
+				serviceType = getType(alias, service)
 			}
 		} else {
-			appType = getType(alias, app)
+			serviceType = getType(alias, service)
 		}
 		selectedRepo := config.ServerConf.DefaultApplicationHelmRepoURL
-		selectedVersion, err := getLatestTemplateVersion(appType, config, projectID)
+		selectedVersion, err := getLatestTemplateVersion(serviceType, config, projectID)
 		if err != nil {
 			return nil, err
 		}
-		helmName := getHelmName(alias, appType)
+		helmName := getHelmName(alias, serviceType)
 		deps = append(deps, &chart.Dependency{
-			Name:       appType,
+			Name:       serviceType,
 			Alias:      helmName,
 			Version:    selectedVersion,
 			Repository: selectedRepo,
@@ -740,13 +715,13 @@ func getStacksNestedMap(obj map[string]interface{}, fields ...string) ([]map[str
 	return result, nil
 }
 
-func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) {
+func convertHelmValuesToPorterYaml(helmValues string) (*stack.PorterStackYAML, error) {
 	var values map[string]interface{}
 	err := yaml.Unmarshal([]byte(helmValues), &values)
 	if err != nil {
 		return nil, err
 	}
-	apps := make(map[string]*App)
+	services := make(map[string]*stack.Service)
 	for k, v := range values {
 		if k == "global" {
 			continue
@@ -755,12 +730,12 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 		if serviceName == "" {
 			return nil, fmt.Errorf("invalid service key: %s. make sure that service key ends in either -web, -wkr, or -job", k)
 		}
-		apps[serviceName] = &App{
+		services[serviceName] = &stack.Service{
 			Config: convertMap(v).(map[string]interface{}),
 			Type:   &serviceType,
 		}
 	}
-	return &PorterStackYAML{
-		Apps: apps,
+	return &stack.PorterStackYAML{
+		Services: services,
 	}, nil
 }

@@ -12,16 +12,16 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 )
 
-type DeployStackHook struct {
+type DeployAppHook struct {
 	Client               *api.Client
-	StackName            string
+	ApplicationName      string
 	ProjectID, ClusterID uint
 	BuildImageDriverName string
 	PorterYAML           []byte
 	Builder              string
 }
 
-func (t *DeployStackHook) PreApply() error {
+func (t *DeployAppHook) PreApply() error {
 	err := config.ValidateCLIEnvironment()
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
@@ -30,38 +30,38 @@ func (t *DeployStackHook) PreApply() error {
 	return nil
 }
 
-func (t *DeployStackHook) DataQueries() map[string]interface{} {
+func (t *DeployAppHook) DataQueries() map[string]interface{} {
 	res := map[string]interface{}{
 		"image": fmt.Sprintf("{$.%s.image}", t.BuildImageDriverName),
 	}
 	return res
 }
 
-// deploy the stack
-func (t *DeployStackHook) PostApply(driverOutput map[string]interface{}) error {
+// deploy the app
+func (t *DeployAppHook) PostApply(driverOutput map[string]interface{}) error {
 	client := config.GetAPIClient()
-	namespace := fmt.Sprintf("porter-stack-%s", t.StackName)
+	namespace := fmt.Sprintf("porter-stack-%s", t.ApplicationName)
 
 	_, err := client.GetRelease(
 		context.Background(),
 		t.ProjectID,
 		t.ClusterID,
 		namespace,
-		t.StackName,
+		t.ApplicationName,
 	)
 
 	shouldCreate := err != nil
 
 	if err != nil {
-		color.New(color.FgYellow).Printf("Could not read release for stack %s (%s): attempting creation\n", t.StackName, err.Error())
+		color.New(color.FgYellow).Printf("Could not read release for app %s (%s): attempting creation\n", t.ApplicationName, err.Error())
 	} else {
-		color.New(color.FgGreen).Printf("Found release for stack %s: attempting update\n", t.StackName)
+		color.New(color.FgGreen).Printf("Found release for app %s: attempting update\n", t.ApplicationName)
 	}
 
-	return t.applyStack(client, shouldCreate, driverOutput)
+	return t.applyApp(client, shouldCreate, driverOutput)
 }
 
-func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driverOutput map[string]interface{}) error {
+func (t *DeployAppHook) applyApp(client *api.Client, shouldCreate bool, driverOutput map[string]interface{}) error {
 	var imageInfo types.ImageInfo
 	image, ok := driverOutput["image"].(string)
 	// if it contains a $, then it means the query didn't resolve to anything
@@ -81,7 +81,7 @@ func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driv
 		context.Background(),
 		t.ProjectID,
 		t.ClusterID,
-		t.StackName,
+		t.ApplicationName,
 		&types.CreatePorterAppRequest{
 			ClusterID:        t.ClusterID,
 			ProjectID:        t.ProjectID,
@@ -93,13 +93,13 @@ func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driv
 	)
 	if err != nil {
 		if shouldCreate {
-			return fmt.Errorf("error creating stack %s: %w", t.StackName, err)
+			return fmt.Errorf("error creating app %s: %w", t.ApplicationName, err)
 		}
-		return fmt.Errorf("error updating stack %s: %w", t.StackName, err)
+		return fmt.Errorf("error updating app %s: %w", t.ApplicationName, err)
 	}
 
 	return nil
 }
 
-func (t *DeployStackHook) OnConsolidatedErrors(map[string]error) {}
-func (t *DeployStackHook) OnError(error)                         {}
+func (t *DeployAppHook) OnConsolidatedErrors(map[string]error) {}
+func (t *DeployAppHook) OnError(error)                         {}

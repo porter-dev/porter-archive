@@ -31,7 +31,7 @@ func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, er
 	}
 
 	// Check if both service queries are empty - that means there's no compatible Prometheus installation.
-	if len(services.Items) == 0 && len(upgradedServices.Items) == 0 {
+	if len(redundantServices.Items) == 0 && len(upgradedServices.Items) == 0 {
 		return nil, false, nil
 	}
 

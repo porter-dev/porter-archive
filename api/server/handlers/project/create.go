@@ -43,6 +43,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		Name:                   request.Name,
 		CapiProvisionerEnabled: true,
 		SimplifiedViewEnabled:  true,
+		HelmValuesEnabled:      false,
 	}
 
 	var err error

@@ -12,6 +12,7 @@ type Project struct {
 	CapiProvisionerEnabled bool    `json:"capi_provisioner_enabled"`
 	SimplifiedViewEnabled  bool    `json:"simplified_view_enabled"`
 	AzureEnabled           bool    `json:"azure_enabled"`
+	HelmValuesEnabled      bool    `json:"helm_values_enabled"`
 }
 
 type FeatureFlags struct {
@@ -22,6 +23,7 @@ type FeatureFlags struct {
 	CapiProvisionerEnabled     string `json:"capi_provisioner_enabled,omitempty"`
 	SimplifiedViewEnabled      string `json:"simplified_view_enabled,omitempty"`
 	AzureEnabled               bool   `json:"azure_enabled,omitempty"`
+	HelmValuesEnabled          bool   `json:"helm_values_enabled,omitempty"`
 }
 
 type CreateProjectRequest struct {

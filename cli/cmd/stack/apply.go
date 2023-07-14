@@ -23,74 +23,83 @@ type StackConf struct {
 	projectID, clusterID uint
 }
 
-func CreateStackDeploy(client *api.Client, worker *switchboardWorker.Worker, app *Application, stackName string, cliConf *config.CLIConfig) ([]*switchboardTypes.Resource, error) {
+func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worker, app *Application, applicationName string, cliConf *config.CLIConfig) ([]*switchboardTypes.Resource, error) {
 	// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
 	var builder string
-	resources, builder, err := createV1BuildResources(client, app, stackName, cliConf.Project, cliConf.Cluster)
+	resources, builder, err := createV1BuildResources(client, app, applicationName, cliConf.Project, cliConf.Cluster)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 	}
 
-	stackBytes, err := yaml.Marshal(app)
+	applicationBytes, err := yaml.Marshal(app)
 	if err != nil {
 		return nil, fmt.Errorf("malformed application definition: %w", err)
 	}
 
-	deployStackHook := &DeployStackHook{
+	deployStackHook := &DeployAppHook{
 		Client:               client,
-		StackName:            stackName,
+		ApplicationName:      applicationName,
 		ProjectID:            cliConf.Project,
 		ClusterID:            cliConf.Cluster,
-		BuildImageDriverName: GetBuildImageDriverName(stackName),
-		PorterYAML:           stackBytes,
+		BuildImageDriverName: GetBuildImageDriverName(applicationName),
+		PorterYAML:           applicationBytes,
 		Builder:              builder,
 	}
+
 	worker.RegisterHook("deploy-stack", deployStackHook)
-
 	if os.Getenv("GITHUB_RUN_ID") != "" {
-		// Create app event to signfy start of build
-		req := &types.CreateOrUpdatePorterAppEventRequest{
-			Status:             "PROGRESSING",
-			Type:               types.PorterAppEventType_Build,
-			TypeExternalSource: "GITHUB",
-			Metadata: map[string]any{
-				"action_run_id": os.Getenv("GITHUB_RUN_ID"),
-				"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
-			},
-		}
-
-		repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
-		if len(repoNameSplit) != 2 {
-			return nil, fmt.Errorf("unable to parse GITHUB_REPOSITORY")
-		}
-		req.Metadata["repo"] = repoNameSplit[1]
-
-		actionRunID := os.Getenv("GITHUB_RUN_ID")
-		if actionRunID != "" {
-			arid, err := strconv.Atoi(actionRunID)
-			if err != nil {
-				return nil, fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
-			}
-			req.Metadata["action_run_id"] = arid
-		}
-
-		repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
-		if repoOwnerAccountID != "" {
-			arid, err := strconv.Atoi(repoOwnerAccountID)
-			if err != nil {
-				return nil, fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
-			}
-			req.Metadata["github_account_id"] = arid
-		}
-
-		ctx := context.Background()
-		_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
+		err := createAppEvent(client, applicationName, cliConf)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create porter app build event: %w", err)
+			return nil, err
 		}
 	}
 
 	return resources, nil
+}
+
+// Create app event to signfy start of build
+func createAppEvent(client *api.Client, applicationName string, cliConf *config.CLIConfig) error {
+	req := &types.CreateOrUpdatePorterAppEventRequest{
+		Status:             "PROGRESSING",
+		Type:               types.PorterAppEventType_Build,
+		TypeExternalSource: "GITHUB",
+		Metadata: map[string]any{
+			"action_run_id": os.Getenv("GITHUB_RUN_ID"),
+			"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
+		},
+	}
+
+	repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+	if len(repoNameSplit) != 2 {
+		return fmt.Errorf("unable to parse GITHUB_REPOSITORY")
+	}
+	req.Metadata["repo"] = repoNameSplit[1]
+
+	actionRunID := os.Getenv("GITHUB_RUN_ID")
+	if actionRunID != "" {
+		arid, err := strconv.Atoi(actionRunID)
+		if err != nil {
+			return fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+		}
+		req.Metadata["action_run_id"] = arid
+	}
+
+	repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
+	if repoOwnerAccountID != "" {
+		arid, err := strconv.Atoi(repoOwnerAccountID)
+		if err != nil {
+			return fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+		}
+		req.Metadata["github_account_id"] = arid
+	}
+
+	ctx := context.Background()
+	_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, applicationName, req)
+	if err != nil {
+		return fmt.Errorf("unable to create porter app build event: %w", err)
+	}
+
+	return nil
 }
 
 func createV1BuildResources(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) ([]*switchboardTypes.Resource, string, error) {

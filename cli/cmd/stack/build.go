@@ -13,7 +13,7 @@ func (b *Build) GetName(appName string) string {
 		return ""
 	}
 
-	return getBuildImageName(appName)
+	return appName
 }
 
 func (b *Build) GetContext() string {
@@ -120,12 +120,8 @@ func (b *Build) getV1BuildImage(appName string, env map[string]string, namespace
 	}, nil
 }
 
-func getBuildImageName(appName string) string {
-	return fmt.Sprintf("%s-base-image", appName)
-}
-
 func GetBuildImageDriverName(appName string) string {
-	return fmt.Sprintf("%s-build-image", getBuildImageName(appName))
+	return fmt.Sprintf("%s-build-image", appName)
 }
 
 func (b *Build) getV1PushImage(appName string, namespace string) (*types.Resource, error) {
@@ -141,7 +137,7 @@ func (b *Build) getV1PushImage(appName string, namespace string) (*types.Resourc
 	}
 
 	return &types.Resource{
-		Name:   b.GetName(appName),
+		Name:   fmt.Sprintf("%s-push-image", b.GetName(appName)),
 		Driver: "push-image",
 		DependsOn: []string{
 			"get-env",

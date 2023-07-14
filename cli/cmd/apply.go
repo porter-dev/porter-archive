@@ -175,7 +175,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 
 		if parsed.Applications != nil {
 			for appName, app := range parsed.Applications {
-				resources, err := stack.CreateStackDeploy(client, worker, app, appName, cliConf)
+				resources, err := stack.CreateApplicationDeploy(client, worker, app, appName, cliConf)
 				if err != nil {
 					return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 				}
@@ -193,7 +193,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 				return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 			}
 
-			resources, err := stack.CreateStackDeploy(client, worker, app, appName, cliConf)
+			resources, err := stack.CreateApplicationDeploy(client, worker, app, appName, cliConf)
 			if err != nil {
 				return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 			}

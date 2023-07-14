@@ -8,12 +8,12 @@ import (
 	"github.com/porter-dev/switchboard/pkg/types"
 )
 
-func (b *Build) GetName() string {
+func (b *Build) GetName(appName string) string {
 	if b == nil {
 		return ""
 	}
 
-	return getBuildImageName()
+	return getBuildImageName(appName)
 }
 
 func (b *Build) GetContext() string {
@@ -74,7 +74,7 @@ func (b *Build) GetImage() string {
 	return *b.Image
 }
 
-func (b *Build) getV1BuildImage(env map[string]string, namespace string) (*types.Resource, error) {
+func (b *Build) getV1BuildImage(appName string, env map[string]string, namespace string) (*types.Resource, error) {
 	config := &preview.BuildDriverConfig{}
 
 	if b.GetMethod() == "pack" {
@@ -104,13 +104,13 @@ func (b *Build) getV1BuildImage(env map[string]string, namespace string) (*types
 	}
 
 	return &types.Resource{
-		Name:   fmt.Sprintf("%s-build-image", b.GetName()),
+		Name:   fmt.Sprintf("%s-build-image", b.GetName(appName)),
 		Driver: "build-image",
 		Source: map[string]any{
 			"name": "web",
 		},
 		Target: map[string]any{
-			"app_name":  b.GetName(),
+			"app_name":  b.GetName(appName),
 			"namespace": namespace,
 		},
 		DependsOn: []string{
@@ -120,18 +120,18 @@ func (b *Build) getV1BuildImage(env map[string]string, namespace string) (*types
 	}, nil
 }
 
-func getBuildImageName() string {
-	return "base-image"
+func getBuildImageName(appName string) string {
+	return fmt.Sprintf("%s-base-image", appName)
 }
 
-func GetBuildImageDriverName() string {
-	return fmt.Sprintf("%s-build-image", getBuildImageName())
+func GetBuildImageDriverName(appName string) string {
+	return fmt.Sprintf("%s-build-image", getBuildImageName(appName))
 }
 
-func (b *Build) getV1PushImage(namespace string) (*types.Resource, error) {
+func (b *Build) getV1PushImage(appName string, namespace string) (*types.Resource, error) {
 	config := &preview.PushDriverConfig{}
 
-	config.Push.Image = fmt.Sprintf("{ .%s.image }", GetBuildImageDriverName())
+	config.Push.Image = fmt.Sprintf("{ .%s.image }", GetBuildImageDriverName(appName))
 
 	rawConfig := make(map[string]any)
 
@@ -141,14 +141,14 @@ func (b *Build) getV1PushImage(namespace string) (*types.Resource, error) {
 	}
 
 	return &types.Resource{
-		Name:   b.GetName(),
+		Name:   b.GetName(appName),
 		Driver: "push-image",
 		DependsOn: []string{
 			"get-env",
-			GetBuildImageDriverName(),
+			GetBuildImageDriverName(appName),
 		},
 		Target: map[string]any{
-			"app_name":  b.GetName(),
+			"app_name":  b.GetName(appName),
 			"namespace": namespace,
 		},
 		Config: rawConfig,

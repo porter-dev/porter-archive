@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
+	"gopkg.in/yaml.v3"
 )
 
 type StackConf struct {
@@ -22,7 +23,7 @@ type StackConf struct {
 	projectID, clusterID uint
 }
 
-func CreateStackDeploy(client *api.Client, worker *switchboardWorker.Worker, fileBytes []byte, app *Application, stackName string, cliConf *config.CLIConfig) ([]*switchboardTypes.Resource, error) {
+func CreateStackDeploy(client *api.Client, worker *switchboardWorker.Worker, app *Application, stackName string, cliConf *config.CLIConfig) ([]*switchboardTypes.Resource, error) {
 	// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
 	var builder string
 	resources, builder, err := createV1BuildResources(client, app, stackName, cliConf.Project, cliConf.Cluster)
@@ -30,13 +31,18 @@ func CreateStackDeploy(client *api.Client, worker *switchboardWorker.Worker, fil
 		return nil, fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 	}
 
+	stackBytes, err := yaml.Marshal(app)
+	if err != nil {
+		return nil, fmt.Errorf("malformed application definition: %w", err)
+	}
+
 	deployStackHook := &DeployStackHook{
 		Client:               client,
 		StackName:            stackName,
 		ProjectID:            cliConf.Project,
 		ClusterID:            cliConf.Cluster,
-		BuildImageDriverName: GetBuildImageDriverName(),
-		PorterYAML:           fileBytes,
+		BuildImageDriverName: GetBuildImageDriverName(stackName),
+		PorterYAML:           stackBytes,
 		Builder:              builder,
 	}
 	worker.RegisterHook("deploy-stack", deployStackHook)
@@ -98,43 +104,51 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 
 	var bi, pi *switchboardTypes.Resource
 
-	if stackConf.parsed.Build != nil {
-		bi, pi, builder, err = createV1BuildResourcesFromPorterYaml(stackConf)
-		if err != nil {
-			color.New(color.FgRed).Printf("Could not build using values specified in porter.yaml (%s), attempting to load stack build settings instead \n", err.Error())
-			bi, pi, builder, err = createV1BuildResourcesFromDB(client, stackConf)
-			if err != nil {
-				return nil, "", err
-			}
-		}
-	} else {
+	// look up build settings from DB if none specified in porter.yaml
+	if stackConf.parsed.Build == nil {
 		color.New(color.FgYellow).Printf("No build values specified in porter.yaml, attempting to load stack build settings instead \n")
-		bi, pi, builder, err = createV1BuildResourcesFromDB(client, stackConf)
+
+		res, err := client.GetPorterApp(context.Background(), stackConf.projectID, stackConf.clusterID, stackConf.stackName)
+
+		if err != nil {
+			return nil, "", fmt.Errorf("unable to read build info from DB: %w", err)
+		}
+
+		converted := convertToBuild(res)
+		stackConf.parsed.Build = &converted
+	}
+
+	// only include build and push steps if an image is not already specified
+	if stackConf.parsed.Build.Image == nil {
+		bi, pi, builder, err = createV1BuildResourcesFromPorterYaml(stackConf)
+
 		if err != nil {
 			return nil, "", err
 		}
-	}
 
-	resources = append(resources, bi, pi)
+		resources = append(resources, bi, pi)
 
-	preDeploy, cmd, err := createPreDeployResource(client,
-		stackConf.parsed.Release,
-		stackConf.stackName,
-		bi.Name,
-		pi.Name,
-		stackConf.projectID,
-		stackConf.clusterID,
-		stackConf.parsed.Env,
-	)
-	if err != nil {
-		return nil, "", err
-	}
+		// also excluding use of pre-deploy with pre-built imges
+		preDeploy, cmd, err := createPreDeployResource(client,
+			stackConf.parsed.Release,
+			stackConf.stackName,
+			bi.Name,
+			pi.Name,
+			stackConf.projectID,
+			stackConf.clusterID,
+			stackConf.parsed.Env,
+		)
 
-	if preDeploy != nil {
-		color.New(color.FgYellow).Printf("Found pre-deploy command to run before deploying apps: %s \n", cmd)
-		resources = append(resources, preDeploy)
-	} else {
-		color.New(color.FgYellow).Printf("No pre-deploy command found in porter.yaml or helm. \n")
+		if err != nil {
+			return nil, "", err
+		}
+
+		if preDeploy != nil {
+			color.New(color.FgYellow).Printf("Found pre-deploy command to run before deploying apps: %s \n", cmd)
+			resources = append(resources, preDeploy)
+		} else {
+			color.New(color.FgYellow).Printf("No pre-deploy command found in porter.yaml or helm. \n")
+		}
 	}
 
 	return resources, builder, nil
@@ -165,42 +179,17 @@ func createStackConf(client *api.Client, app *Application, stackName string, pro
 }
 
 func createV1BuildResourcesFromPorterYaml(stackConf *StackConf) (*switchboardTypes.Resource, *switchboardTypes.Resource, string, error) {
-	bi, err := stackConf.parsed.Build.getV1BuildImage(stackConf.parsed.Env, stackConf.namespace)
+	bi, err := stackConf.parsed.Build.getV1BuildImage(stackConf.stackName, stackConf.parsed.Env, stackConf.namespace)
 	if err != nil {
 		return nil, nil, "", err
 	}
 
-	pi, err := stackConf.parsed.Build.getV1PushImage(stackConf.namespace)
+	pi, err := stackConf.parsed.Build.getV1PushImage(stackConf.stackName, stackConf.namespace)
 	if err != nil {
 		return nil, nil, "", err
 	}
 
 	return bi, pi, stackConf.parsed.Build.GetBuilder(), nil
-}
-
-func createV1BuildResourcesFromDB(client *api.Client, stackConf *StackConf) (*switchboardTypes.Resource, *switchboardTypes.Resource, string, error) {
-	res, err := client.GetPorterApp(context.Background(), stackConf.projectID, stackConf.clusterID, stackConf.stackName)
-	if err != nil {
-		return nil, nil, "", fmt.Errorf("unable to read build info from DB: %w", err)
-	}
-
-	if res == nil {
-		return nil, nil, "", fmt.Errorf("stack %s not found", stackConf.stackName)
-	}
-
-	build := convertToBuild(res)
-
-	bi, err := build.getV1BuildImage(stackConf.parsed.Env, stackConf.namespace)
-	if err != nil {
-		return nil, nil, "", err
-	}
-
-	pi, err := build.getV1PushImage(stackConf.namespace)
-	if err != nil {
-		return nil, nil, "", err
-	}
-
-	return bi, pi, build.GetBuilder(), nil
 }
 
 func convertToBuild(porterApp *types.PorterApp) Build {

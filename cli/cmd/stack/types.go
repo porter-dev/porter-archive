@@ -5,6 +5,7 @@ type PorterStackYAML struct {
 	Version      *string                 `yaml:"version"`
 	Build        *Build                  `yaml:"build"`
 	Env          map[string]string       `yaml:"env"`
+	SyncedEnv    []*SyncedEnvSection     `yaml:"synced_env"`
 	Apps         map[string]*Service     `yaml:"apps" validate:"required_without=Applications Services"`
 	Services     map[string]*Service     `yaml:"services" validate:"required_without=Applications Apps"`
 
@@ -29,7 +30,18 @@ type Build struct {
 }
 
 type Service struct {
-	Run    *string                `yaml:"run" validate:"required"`
+	Run    *string                `yaml:"run"`
 	Config map[string]interface{} `yaml:"config"`
 	Type   *string                `yaml:"type" validate:"required, oneof=web worker job"`
+}
+
+type SyncedEnvSection struct {
+	Name    string                `json:"name" yaml:"name"`
+	Version uint                  `json:"version" yaml:"version"`
+	Keys    []SyncedEnvSectionKey `json:"keys" yaml:"keys"`
+}
+
+type SyncedEnvSectionKey struct {
+	Name   string `json:"name" yaml:"name"`
+	Secret bool   `json:"secret" yaml:"secret"`
 }

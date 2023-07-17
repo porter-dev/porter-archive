@@ -123,9 +123,17 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
-  const markStepStarted = async (step: string) => {
+  const markStepStarted = async (step: string, errMessage?: string) => {
     try {
-      await api.updateOnboardingStep("<token>", { step }, {});
+      await api.updateOnboardingStep("<token>", {
+        step,
+        error_message: errMessage,
+        region: awsRegion,
+      },
+        {
+          project_id: currentProject.id,
+        },
+      );
     } catch (err) {
       // console.log(err);
     }
@@ -323,13 +331,15 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             id: currentProject.id,
           }
         );
-
-        markStepStarted("provisioning-started");
       }
 
       const res = await api.createContract("<token>", data, {
         project_id: currentProject.id,
       });
+
+      if (!props.clusterId) {
+        markStepStarted("provisioning-started");
+      }
 
       // Only refresh and set clusters on initial create
       // if (!props.clusterId) {
@@ -370,6 +380,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       } else {
         setErrorMessage(DEFAULT_ERROR_MESSAGE);
       }
+      markStepStarted("provisioning-failed", errMessage);
     } finally {
       setIsReadOnly(false);
       setIsClicked(false);

@@ -201,6 +201,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/onboarding_step -> project.UpdateOnboardingStepHandler
+	updateOnboardingStepEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/onboarding_step",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	updateOnboardingStepHandler := project.NewUpdateOnboardingStepHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateOnboardingStepEndpoint,
+		Handler:  updateOnboardingStepHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/invite_admin -> project.NewProjectInviteAdminHandler
 	projectInviteAdminEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

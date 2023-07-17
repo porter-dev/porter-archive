@@ -92,3 +92,15 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	v.WriteResult(w, r, user.ToUserType())
 }
+
+func TrackStackBuildFailure(
+	config *config.Config,
+	user *models.User,
+	project *models.Project,
+	stackName string,
+) error {
+	return config.AnalyticsClient.Track(analytics.StackBuildFailureTrack(&analytics.StackBuildFailureOpts{
+		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+		StackName:              stackName,
+	}))
+}

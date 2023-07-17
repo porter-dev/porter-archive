@@ -1,4 +1,4 @@
-package user
+package project
 
 import (
 	"net/http"
@@ -27,6 +27,7 @@ func NewUpdateOnboardingStepHandler(
 
 func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
+	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	request := &types.UpdateOnboardingStepRequest{}
 	if ok := v.DecodeAndValidate(w, r, request); !ok {
@@ -57,61 +58,60 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	if request.Step == "aws-account-id-complete" {
 		v.Config().AnalyticsClient.Track(analytics.AWSInputTrack(&analytics.AWSInputTrackOpts{
-			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-			Email:               user.Email,
-			FirstName:           user.FirstName,
-			LastName:            user.LastName,
-			CompanyName:         user.CompanyName,
-			AccountId:           request.AccountId,
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			AccountId:              request.AccountId,
 		}))
 	}
 
 	if request.Step == "aws-login-redirect-success" {
 		v.Config().AnalyticsClient.Track(analytics.AWSLoginRedirectSuccess(&analytics.AWSRedirectOpts{
-			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-			Email:               user.Email,
-			FirstName:           user.FirstName,
-			LastName:            user.LastName,
-			CompanyName:         user.CompanyName,
-			AccountId:           request.AccountId,
-			LoginURL:            request.LoginURL,
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			AccountId:              request.AccountId,
+			LoginURL:               request.LoginURL,
 		}))
 	}
 
 	if request.Step == "aws-cloudformation-redirect-success" {
 		v.Config().AnalyticsClient.Track(analytics.AWSCloudformationRedirectSuccess(&analytics.AWSRedirectOpts{
-			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-			Email:               user.Email,
-			FirstName:           user.FirstName,
-			LastName:            user.LastName,
-			CompanyName:         user.CompanyName,
-			AccountId:           request.AccountId,
-			CloudformationURL:   request.CloudformationURL,
-			ExternalId:          request.ExternalId,
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			AccountId:              request.AccountId,
+			CloudformationURL:      request.CloudformationURL,
+			ExternalId:             request.ExternalId,
 		}))
 	}
 
 	if request.Step == "aws-create-integration-success" {
 		v.Config().AnalyticsClient.Track(analytics.AWSCreateIntegrationSucceeded(&analytics.AWSCreateIntegrationOpts{
-			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-			Email:               user.Email,
-			FirstName:           user.FirstName,
-			LastName:            user.LastName,
-			CompanyName:         user.CompanyName,
-			AccountId:           request.AccountId,
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			AccountId:              request.AccountId,
 		}))
 	}
 
 	if request.Step == "aws-create-integration-failure" {
 		v.Config().AnalyticsClient.Track(analytics.AWSCreateIntegrationFailed(&analytics.AWSCreateIntegrationOpts{
-			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-			Email:               user.Email,
-			FirstName:           user.FirstName,
-			LastName:            user.LastName,
-			CompanyName:         user.CompanyName,
-			AccountId:           request.AccountId,
-			ErrorMessage:        request.ErrorMessage,
-			ExternalId:          request.ExternalId,
+			Email:        user.Email,
+			FirstName:    user.FirstName,
+			LastName:     user.LastName,
+			CompanyName:  user.CompanyName,
+			AccountId:    request.AccountId,
+			ErrorMessage: request.ErrorMessage,
+			ExternalId:   request.ExternalId,
 		}))
 	}
 
@@ -123,21 +123,33 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	if request.Step == "pre-provisioning-check-started" {
 		v.Config().AnalyticsClient.Track(analytics.PreProvisionCheckTrack(&analytics.PreProvisionCheckTrackOpts{
-			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-			Email:               user.Email,
-			FirstName:           user.FirstName,
-			LastName:            user.LastName,
-			CompanyName:         user.CompanyName,
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
 		}))
 	}
 
 	if request.Step == "provisioning-started" {
 		v.Config().AnalyticsClient.Track(analytics.ProvisioningAttemptTrack(&analytics.ProvisioningAttemptTrackOpts{
-			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-			Email:               user.Email,
-			FirstName:           user.FirstName,
-			LastName:            user.LastName,
-			CompanyName:         user.CompanyName,
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+		}))
+	}
+
+	if request.Step == "provisioning-failed" {
+		v.Config().AnalyticsClient.Track(analytics.ProvisionFailureTrack(&analytics.ProvisioningAttemptTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			ErrorMessage:           request.ErrorMessage,
+			Region:                 request.Region,
 		}))
 	}
 

@@ -182,7 +182,7 @@ func CostConsentCompletedTrack(opts *CostConsentCompletedTrackOpts) segmentTrack
 
 // AWSInputTrackOpts are the options for creating a track when a user inputs a complete AWS account ID
 type AWSInputTrackOpts struct {
-	*UserScopedTrackOpts
+	*ProjectScopedTrackOpts
 
 	Email       string
 	FirstName   string
@@ -199,14 +199,14 @@ func AWSInputTrack(opts *AWSInputTrackOpts) segmentTrack {
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["account_id"] = opts.AccountId
 
-	return getSegmentUserTrack(
-		opts.UserScopedTrackOpts,
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, AWSInputted),
 	)
 }
 
 type AWSRedirectOpts struct {
-	*UserScopedTrackOpts
+	*ProjectScopedTrackOpts
 
 	Email             string
 	FirstName         string
@@ -228,8 +228,8 @@ func AWSCloudformationRedirectSuccess(opts *AWSRedirectOpts) segmentTrack {
 	additionalProps["cloudformation_url"] = opts.CloudformationURL
 	additionalProps["external_id"] = opts.ExternalId
 
-	return getSegmentUserTrack(
-		opts.UserScopedTrackOpts,
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, AWSCloudformationRedirect),
 	)
 }
@@ -250,7 +250,7 @@ func AWSLoginRedirectSuccess(opts *AWSRedirectOpts) segmentTrack {
 }
 
 type AWSCreateIntegrationOpts struct {
-	*UserScopedTrackOpts
+	*ProjectScopedTrackOpts
 
 	Email        string
 	FirstName    string
@@ -269,8 +269,8 @@ func AWSCreateIntegrationSucceeded(opts *AWSCreateIntegrationOpts) segmentTrack 
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["account_id"] = opts.AccountId
 
-	return getSegmentUserTrack(
-		opts.UserScopedTrackOpts,
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, AWSCreateIntegrationSuccess),
 	)
 }
@@ -285,8 +285,8 @@ func AWSCreateIntegrationFailed(opts *AWSCreateIntegrationOpts) segmentTrack {
 	additionalProps["error_message"] = opts.ErrorMessage
 	additionalProps["external_id"] = opts.ExternalId
 
-	return getSegmentUserTrack(
-		opts.UserScopedTrackOpts,
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, AWSCreateIntegrationFailure),
 	)
 }
@@ -308,7 +308,7 @@ func CredentialStepTrack(opts *CredentialStepTrackOpts) segmentTrack {
 
 // PreProvisionCheckTrackOpts are the options for creating a track when a user checks if they can provision
 type PreProvisionCheckTrackOpts struct {
-	*UserScopedTrackOpts
+	*ProjectScopedTrackOpts
 
 	Email       string
 	FirstName   string
@@ -323,20 +323,22 @@ func PreProvisionCheckTrack(opts *PreProvisionCheckTrackOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 
-	return getSegmentUserTrack(
-		opts.UserScopedTrackOpts,
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, PreProvisionCheck),
 	)
 }
 
 // ProvisioningAttemptedTrackOpts are the options for creating a track when a user attempts provisioning
 type ProvisioningAttemptTrackOpts struct {
-	*UserScopedTrackOpts
+	*ProjectScopedTrackOpts
 
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	Email        string
+	FirstName    string
+	LastName     string
+	CompanyName  string
+	ErrorMessage string
+	Region       string
 }
 
 // ProvisioningAttemptTrack returns a track for when a user attempts provisioning
@@ -346,9 +348,24 @@ func ProvisioningAttemptTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 
-	return getSegmentUserTrack(
-		opts.UserScopedTrackOpts,
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, ProvisioningAttempted),
+	)
+}
+
+// PreProvisionCheckTrack returns a track for when a user attempts provisioning
+func ProvisionFailureTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["region"] = opts.Region
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, PreProvisionCheckFailure),
 	)
 }
 
@@ -834,5 +851,23 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, StackDeletion),
+	)
+}
+
+// StackBuildFailureOpts are the options for creating a track when a stack fails to build
+type StackBuildFailureOpts struct {
+	*ProjectScopedTrackOpts
+
+	StackName string
+}
+
+// StackBuildFailureTrack returns a track for when a stack fails to build
+func StackBuildFailureTrack(opts *StackBuildFailureOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, StackBuildFailure),
 	)
 }

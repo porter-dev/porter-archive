@@ -12,6 +12,7 @@ const (
 	CostConsentComplete         SegmentEvent = "Cost Consent Complete"
 	CredentialStepComplete      SegmentEvent = "Credential Step Complete"
 	PreProvisionCheck           SegmentEvent = "Pre Provision Check Started"
+	PreProvisionCheckFailure    SegmentEvent = "Pre Provision Check Failure"
 	AWSInputted                 SegmentEvent = "AWS Account ID Inputted"
 	AWSCloudformationRedirect   SegmentEvent = "AWS Cloudformation Redirect"
 	AWSLoginRedirect            SegmentEvent = "AWS Login Redirect"
@@ -52,4 +53,5 @@ const (
 	StackLaunchSuccess  SegmentEvent = "Stack Launch Success"
 	StackLaunchFailure  SegmentEvent = "Stack Launch Failure"
 	StackDeletion       SegmentEvent = "Stack Deletion"
+	StackBuildFailure   SegmentEvent = "Stack Build Failure"
 )

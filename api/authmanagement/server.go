@@ -15,15 +15,17 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
+// Config contains all configuration options for the AuthManagementServer
 type Config struct {
-	Port                 int    `env:"AUTH_MANAGEMENT_SERVER_PORT,default=8090"`
+	// Port is the port that the AuthManagementServer listens on
+	Port int `env:"AUTH_MANAGEMENT_SERVER_PORT,default=8090"`
+	// TokenGeneratorSecret is the secret used to generate JWT tokens
 	TokenGeneratorSecret string `env:"TOKEN_GENERATOR_SECRET,default=secret"`
 }
 
-// AuthManagementServer contains all configuration options for the AuthManagementServer, implementing the
-// gRPC server's interface
+// AuthManagementServer stores the server config and implements the gRPC server's interface
 type AuthManagementServer struct {
-	Config *Config
+	Config Config
 }
 
 // NewAuthManagementServer loads the authmanagement.Config from the environment and returns an initialized AuthManagementServer
@@ -35,7 +37,7 @@ func NewAuthManagementServer() (AuthManagementServer, error) {
 		return server, fmt.Errorf("Failed to decode server conf: %s", err)
 	}
 
-	server.Config = &config
+	server.Config = config
 
 	return server, nil
 }

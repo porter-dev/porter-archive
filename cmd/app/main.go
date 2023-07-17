@@ -63,7 +63,8 @@ func main() {
 
 	// ignore error so that telemetry is not required
 	tracer, err := telemetry.InitTracer(ctx, config.TelemetryConfig)
-	if err == nil {
+	if err != nil {
+		config.Logger.Fatal().Err(err).Msg("Received server error")
 		defer tracer.Shutdown()
 	}
 
@@ -100,8 +101,6 @@ func main() {
 			config.Logger.Info().Msg("Shutting down AuthManagement server")
 			return nil
 		})
-	} else {
-		config.Logger.Info().Msgf("Not starting AuthManagement server")
 	}
 
 	termFunc := func() error {

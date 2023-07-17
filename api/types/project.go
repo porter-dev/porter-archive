@@ -133,6 +133,6 @@ type UpdateOnboardingStepRequest struct {
 	ErrorMessage      string `json:"error_message"`
 	LoginURL          string `json:"login_url"`
 	Region            string `json:"region"`
-	// used as a 'password' for the aws assume role chain to porter-manager role
+	// ExternalId used as a 'password' for the aws assume role chain to porter-manager role
 	ExternalId string `json:"external_id"`
 }

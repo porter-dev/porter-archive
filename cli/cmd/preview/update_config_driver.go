@@ -10,7 +10,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
 	api "github.com/porter-dev/porter/api/client"
-	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
@@ -140,24 +139,6 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 				RegistryURL: registryURL,
 				RepoSuffix:  repoSuffix,
 			},
-		}
-
-		regID, imageURL, err := createAgent.GetImageRepoURL(d.target.AppName, sharedOpts.Namespace)
-		if err != nil {
-			return nil, err
-		}
-
-		err = client.CreateRepository(
-			ctx,
-			sharedOpts.ProjectID,
-			regID,
-			&types.CreateRegistryRepositoryRequest{
-				ImageRepoURI: imageURL,
-			},
-		)
-
-		if err != nil {
-			return nil, err
 		}
 
 		image := fmt.Sprintf("%s:%s", strings.Split(d.config.UpdateConfig.Image, ":")[0], tag)

@@ -8,12 +8,12 @@ import (
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
-	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/stack"
 	"github.com/porter-dev/porter/internal/telemetry"
 	"gopkg.in/yaml.v2"
 )
@@ -89,7 +89,7 @@ func (c *GithubGetPorterYamlHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	parsed := &porter_app.PorterStackYAML{}
+	parsed := &stack.PorterStackYAML{}
 	err = yaml.Unmarshal([]byte(fileData), parsed)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "invalid porter yaml format")

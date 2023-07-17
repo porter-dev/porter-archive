@@ -67,7 +67,6 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 
 	if string(request.Type) == string(types.PorterAppEventType_Build) {
 		if errors, ok := request.Metadata["errors"]; ok {
-			// cast errors to map[string]error
 			if errs, ok := errors.(map[string]error); ok {
 				reportErrors(ctx, errs, p.Config(), user, project, stackName)
 			}

@@ -365,7 +365,7 @@ func ProvisionFailureTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
-		getDefaultSegmentTrack(additionalProps, PreProvisionCheckFailure),
+		getDefaultSegmentTrack(additionalProps, ProvisioningFailure),
 	)
 }
 

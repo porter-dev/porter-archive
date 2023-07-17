@@ -61,12 +61,11 @@ func main() {
 	}
 	config.Logger.Info().Msg("Initialed data")
 
-	// ignore error so that telemetry is not required
 	tracer, err := telemetry.InitTracer(ctx, config.TelemetryConfig)
 	if err != nil {
-		config.Logger.Fatal().Err(err).Msg("Received server error")
-		defer tracer.Shutdown()
+		config.Logger.Fatal().Err(err).Msg("Error initializing telemetry")
 	}
+	defer tracer.Shutdown()
 
 	config.Logger.Info().Msg("Creating API router")
 	appRouter := router.NewAPIRouter(config)
@@ -74,7 +73,7 @@ func main() {
 
 	p := server.PorterAPIServer{
 		Port:       config.ServerConf.Port,
-		Handler:    appRouter,
+		Router:     appRouter,
 		ServerConf: config.ServerConf,
 	}
 

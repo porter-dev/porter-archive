@@ -11,8 +11,11 @@ import (
 
 // PorterAPIServer contains the routing and configuration options for starting the PorterAPIServer
 type PorterAPIServer struct {
-	Port       int
-	Handler    *chi.Mux
+	// Port is the port that PorterAPIServer listens on
+	Port int
+	// Router is the router that handles requests
+	Router *chi.Mux
+	// ServerConf is the server configuration
 	ServerConf *env.ServerConf
 }
 
@@ -25,7 +28,7 @@ func (p PorterAPIServer) ListenAndServe(ctx context.Context) error {
 
 	srv := &http.Server{
 		Addr:         address,
-		Handler:      p.Handler,
+		Handler:      p.Router,
 		ReadTimeout:  p.ServerConf.TimeoutRead,
 		WriteTimeout: p.ServerConf.TimeoutWrite,
 		IdleTimeout:  p.ServerConf.TimeoutIdle,

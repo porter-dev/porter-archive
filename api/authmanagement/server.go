@@ -15,22 +15,22 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
-// Config contains all configuration options for the AuthManagementServer
+// Config contains all configuration options for the AuthManagementService
 type Config struct {
-	// Port is the port that the AuthManagementServer listens on
-	Port int `env:"AUTH_MANAGEMENT_SERVER_PORT,default=8090"`
+	// Port is the port that the AuthManagementService listens on
+	Port int `env:"AUTH_MANAGEMENT_SERVICE_PORT,default=8090"`
 	// TokenGeneratorSecret is the secret used to generate JWT tokens
 	TokenGeneratorSecret string `env:"TOKEN_GENERATOR_SECRET,default=secret"`
 }
 
-// AuthManagementServer stores the server config and implements the gRPC server's interface
-type AuthManagementServer struct {
+// AuthManagementService stores the service config and implements the gRPC server's interface
+type AuthManagementService struct {
 	Config Config
 }
 
-// NewAuthManagementServer loads the authmanagement.Config from the environment and returns an initialized AuthManagementServer
-func NewAuthManagementServer() (AuthManagementServer, error) {
-	var server AuthManagementServer
+// NewService loads the authmanagement.Config from the environment and returns an initialized AuthManagementService
+func NewService() (AuthManagementService, error) {
+	var server AuthManagementService
 
 	var config Config
 	if err := envdecode.StrictDecode(&config); err != nil {
@@ -42,8 +42,8 @@ func NewAuthManagementServer() (AuthManagementServer, error) {
 	return server, nil
 }
 
-// ListenAndServe starts the AuthManagementServer
-func (a AuthManagementServer) ListenAndServe(ctx context.Context) error {
+// ListenAndServe starts the AuthManagementService
+func (a AuthManagementService) ListenAndServe(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 

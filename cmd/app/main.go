@@ -88,7 +88,7 @@ func main() {
 
 	if authServiceFlag {
 		g.Go(func() error {
-			a, err := authmanagement.NewAuthManagementServer()
+			a, err := authmanagement.NewService()
 			if err != nil {
 				return fmt.Errorf("failed to initialize AuthManagement server: %s", err.Error())
 			}

@@ -195,9 +195,12 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			var services map[string]*stack.Service
 			if parsed.Apps != nil {
 				services = parsed.Apps
-			} else {
+			}
+
+			if parsed.Services != nil {
 				services = parsed.Services
 			}
+
 			if services == nil {
 				return fmt.Errorf("missing services from porter yaml file")
 			}

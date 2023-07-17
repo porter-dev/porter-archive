@@ -2453,10 +2453,13 @@ const updateOnboardingStep = baseApi<
     error_message?: string;
     login_url?: string;
     external_id?: string;
+    region?: string;
   },
-  {}
->("POST", (pathParams) => {
-  return `/api/onboarding_step`;
+  {
+    project_id: number;
+  }
+>("POST", ({ project_id }) => {
+  return `/api//projects/${project_id}/onboarding_step`;
 });
 
 const updateStackStep = baseApi<

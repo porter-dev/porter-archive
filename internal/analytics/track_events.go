@@ -18,6 +18,7 @@ const (
 	AWSCreateIntegrationSuccess SegmentEvent = "AWS Create Integration Success"
 	AWSCreateIntegrationFailure SegmentEvent = "AWS Create Integration Failure"
 	ProvisioningAttempted       SegmentEvent = "Provisioning Attempted"
+	ProvisioningFailure         SegmentEvent = "Provisioning Failure"
 
 	ClusterProvisioningStart   SegmentEvent = "Cluster Provisioning Started"
 	ClusterProvisioningError   SegmentEvent = "Cluster Provisioning Error"
@@ -52,4 +53,5 @@ const (
 	StackLaunchSuccess  SegmentEvent = "Stack Launch Success"
 	StackLaunchFailure  SegmentEvent = "Stack Launch Failure"
 	StackDeletion       SegmentEvent = "Stack Deletion"
+	StackBuildFailure   SegmentEvent = "Stack Build Failure"
 )

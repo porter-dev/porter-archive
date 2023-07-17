@@ -80,14 +80,3 @@ type UpdateUserInfoRequest struct {
 	LastName    string `json:"last_name" form:"required,max=255"`
 	CompanyName string `json:"company_name" form:"required,max=255"`
 }
-
-type UpdateOnboardingStepRequest struct {
-	Step              string `json:"step" form:"required,max=255"`
-	Provider          string `json:"provider"`
-	AccountId         string `json:"account_id"`
-	CloudformationURL string `json:"cloudformation_url"`
-	ErrorMessage      string `json:"error_message"`
-	LoginURL          string `json:"login_url"`
-	// used as a 'password' for the aws assume role chain to porter-manager role
-	ExternalId string `json:"external_id"`
-}

@@ -76,7 +76,9 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
 
   const markStepStarted = async (step: string) => {
     try {
-      await api.updateOnboardingStep("<token>", { step }, {});
+      await api.updateOnboardingStep("<token>", { step }, {
+        project_id: currentProject.id,
+      });
     } catch (err) {
       console.log(err);
     }
@@ -91,8 +93,8 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
           message={errorDetails !== "" ? errorMessage + " (" + errorDetails + ")" : errorMessage}
           ctaText={
             errorMessage !== DEFAULT_ERROR_MESSAGE
-                ? "Troubleshooting steps"
-                : null
+              ? "Troubleshooting steps"
+              : null
           }
           errorModalContents={errorMessageToModal(errorMessage)}
         />
@@ -429,119 +431,119 @@ const StyledForm = styled.div`
 const DEFAULT_ERROR_MESSAGE =
   "An error occurred while provisioning your infrastructure. Please try again.";
 const AZURE_CORE_QUOTA_ERROR_MESSAGE =
-    "Your Azure subscription has reached a vCPU core quota in the location";
+  "Your Azure subscription has reached a vCPU core quota in the location";
 const AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE =
-    "Your Azure subscription is missing required resource providers";
+  "Your Azure subscription is missing required resource providers";
 
 const errorMessageToModal = (errorMessage: string) => {
   switch (errorMessage) {
     case AZURE_CORE_QUOTA_ERROR_MESSAGE:
       return (
-          <>
-            <Text size={16} weight={500}>
-              Requesting more cores
-            </Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              You will need to request a quota increase for vCPUs in your region.
-            </Text>
-            <Spacer y={1} />
-            <Step number={1}>
-              Log into
-              <Spacer inline width="5px" />
-              <Link
-                  to="https://login.microsoftonline.com/"
-                  target="_blank"
-              >
-                your Azure account
-              </Link>
-              .
-            </Step>
-            <Spacer y={1} />
-            <Step number={2}>
-              Navigate to
-              <Spacer inline width="5px" />
-              <Link
-                  to="https://portal.azure.com/#view/Microsoft_Azure_Billing/SubscriptionsBlade"
-                  target="_blank"
-              >
-                the Subscriptions page
-              </Link>
-              <Spacer inline width="5px" />
-              and select the subscription you are using to provision Porter.
-            </Step>
-            <Spacer y={1} />
-            <Step number={3}>
-              Select "Usage + Quotas" under "Settings" from the left panel.
-            </Step>
-            <Spacer y={1} />
-            <Step number={4}>
-              Select "Compute" and search for the quotas that have reached usage limits in your region. Request an increase by clicking the pencil icon on the far right.
-            </Step>
-            <Spacer y={1} />
-            <Text color="helper">
-              We recommend an initial quota of 30 vCPUs for both Total Regional Cores and Standard Av2 Family.
-            </Text>
-            <Spacer y={1} />
-            <Step number={5}>
-              Once the request has been approved, return to Porter and retry the
-              provision.
-            </Step>
-            <Spacer y={1} />
-            <Text color="helper">
-              Quota increases can take several minutes to process. If Azure is unable to automatically increase the quota, create a support request as prompted by Azure. Requests are usually fulfilled in a few hours.
-            </Text>
-          </>
+        <>
+          <Text size={16} weight={500}>
+            Requesting more cores
+          </Text>
+          <Spacer y={1} />
+          <Text color="helper">
+            You will need to request a quota increase for vCPUs in your region.
+          </Text>
+          <Spacer y={1} />
+          <Step number={1}>
+            Log into
+            <Spacer inline width="5px" />
+            <Link
+              to="https://login.microsoftonline.com/"
+              target="_blank"
+            >
+              your Azure account
+            </Link>
+            .
+          </Step>
+          <Spacer y={1} />
+          <Step number={2}>
+            Navigate to
+            <Spacer inline width="5px" />
+            <Link
+              to="https://portal.azure.com/#view/Microsoft_Azure_Billing/SubscriptionsBlade"
+              target="_blank"
+            >
+              the Subscriptions page
+            </Link>
+            <Spacer inline width="5px" />
+            and select the subscription you are using to provision Porter.
+          </Step>
+          <Spacer y={1} />
+          <Step number={3}>
+            Select "Usage + Quotas" under "Settings" from the left panel.
+          </Step>
+          <Spacer y={1} />
+          <Step number={4}>
+            Select "Compute" and search for the quotas that have reached usage limits in your region. Request an increase by clicking the pencil icon on the far right.
+          </Step>
+          <Spacer y={1} />
+          <Text color="helper">
+            We recommend an initial quota of 30 vCPUs for both Total Regional Cores and Standard Av2 Family.
+          </Text>
+          <Spacer y={1} />
+          <Step number={5}>
+            Once the request has been approved, return to Porter and retry the
+            provision.
+          </Step>
+          <Spacer y={1} />
+          <Text color="helper">
+            Quota increases can take several minutes to process. If Azure is unable to automatically increase the quota, create a support request as prompted by Azure. Requests are usually fulfilled in a few hours.
+          </Text>
+        </>
       );
     case AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE:
       return (
-          <>
-            <Text size={16} weight={500}>
-              Registering required resource providers
-            </Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              You will need to register all of the following resource providers to your Azure subscription before provisioning: Capacity, Compute, ContainerRegistry, ContainerService, ManagedIdentity, Network, OperationalInsights, OperationsManagement, ResourceGraph, Resources, Storage
-            </Text>
-            <Spacer y={1} />
-            <Step number={1}>
-              Log into
-              <Spacer inline width="5px" />
-              <Link
-                  to="https://login.microsoftonline.com/"
-                  target="_blank"
-              >
-                your Azure account
-              </Link>
-              .
-            </Step>
-            <Spacer y={1} />
-            <Step number={2}>
-              Navigate to
-              <Spacer inline width="5px" />
-              <Link
-                  to="https://portal.azure.com/#view/Microsoft_Azure_Billing/SubscriptionsBlade"
-                  target="_blank"
-              >
-                the Subscriptions page
-              </Link>
-              <Spacer inline width="5px" />
-               and select the subscription you are using to provision Porter.
-            </Step>
-            <Spacer y={1} />
-            <Step number={3}>
-              Select "Resource Providers" under "Settings" from the left panel.
-            </Step>
-            <Spacer y={1} />
-            <Step number={4}>
-              Search for each required resource provider and select "Register" from the top menu bar if it is not already registered.
-            </Step>
-            <Spacer y={1} />
-            <Step number={5}>
-              After confirming that all providers are registered, return to Porter and retry the
-              provision.
-            </Step>
-          </>
+        <>
+          <Text size={16} weight={500}>
+            Registering required resource providers
+          </Text>
+          <Spacer y={1} />
+          <Text color="helper">
+            You will need to register all of the following resource providers to your Azure subscription before provisioning: Capacity, Compute, ContainerRegistry, ContainerService, ManagedIdentity, Network, OperationalInsights, OperationsManagement, ResourceGraph, Resources, Storage
+          </Text>
+          <Spacer y={1} />
+          <Step number={1}>
+            Log into
+            <Spacer inline width="5px" />
+            <Link
+              to="https://login.microsoftonline.com/"
+              target="_blank"
+            >
+              your Azure account
+            </Link>
+            .
+          </Step>
+          <Spacer y={1} />
+          <Step number={2}>
+            Navigate to
+            <Spacer inline width="5px" />
+            <Link
+              to="https://portal.azure.com/#view/Microsoft_Azure_Billing/SubscriptionsBlade"
+              target="_blank"
+            >
+              the Subscriptions page
+            </Link>
+            <Spacer inline width="5px" />
+            and select the subscription you are using to provision Porter.
+          </Step>
+          <Spacer y={1} />
+          <Step number={3}>
+            Select "Resource Providers" under "Settings" from the left panel.
+          </Step>
+          <Spacer y={1} />
+          <Step number={4}>
+            Search for each required resource provider and select "Register" from the top menu bar if it is not already registered.
+          </Step>
+          <Spacer y={1} />
+          <Step number={5}>
+            After confirming that all providers are registered, return to Porter and retry the
+            provision.
+          </Step>
+        </>
       );
     default:
       return null;

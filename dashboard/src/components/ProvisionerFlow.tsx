@@ -17,7 +17,7 @@ const providers = ["aws", "gcp", "azure"];
 
 type Props = {};
 
-const ProvisionerFlow: React.FC<Props> = ({}) => {
+const ProvisionerFlow: React.FC<Props> = ({ }) => {
   const {
     usage,
     hasBillingEnabled,
@@ -40,7 +40,7 @@ const ProvisionerFlow: React.FC<Props> = ({}) => {
 
   const markStepCostConsent = async (step: string, provider: string) => {
     try {
-      await api.updateOnboardingStep("<token>", { step, provider }, {});
+      await api.updateOnboardingStep("<token>", { step, provider }, { project_id: currentProject.id });
     } catch (err) {
       console.log(err);
     }
@@ -85,7 +85,7 @@ const ProvisionerFlow: React.FC<Props> = ({}) => {
                   <Icon src={providerInfo.icon} />
                   <BlockTitle>{providerInfo.label}</BlockTitle>
                   <BlockDescription>
-                      {(provider === "azure" && !currentProject?.azure_enabled) ||
+                    {(provider === "azure" && !currentProject?.azure_enabled) ||
                       provider === "gcp" ? providerInfo.tagline : "Hosted in your own cloud"}
                   </BlockDescription>
                 </Block>

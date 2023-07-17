@@ -347,6 +347,7 @@ func ProvisioningAttemptTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["region"] = opts.Region
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,

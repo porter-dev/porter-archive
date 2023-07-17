@@ -139,6 +139,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			Region:                 request.Region,
 		}))
 	}
 

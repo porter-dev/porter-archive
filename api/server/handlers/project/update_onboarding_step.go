@@ -105,13 +105,14 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	if request.Step == "aws-create-integration-failure" {
 		v.Config().AnalyticsClient.Track(analytics.AWSCreateIntegrationFailed(&analytics.AWSCreateIntegrationOpts{
-			Email:        user.Email,
-			FirstName:    user.FirstName,
-			LastName:     user.LastName,
-			CompanyName:  user.CompanyName,
-			AccountId:    request.AccountId,
-			ErrorMessage: request.ErrorMessage,
-			ExternalId:   request.ExternalId,
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			AccountId:              request.AccountId,
+			ErrorMessage:           request.ErrorMessage,
+			ExternalId:             request.ExternalId,
 		}))
 	}
 

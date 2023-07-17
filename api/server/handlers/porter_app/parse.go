@@ -7,7 +7,6 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/cli/cmd/stack"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -18,6 +17,52 @@ import (
 
 	"gopkg.in/yaml.v2"
 )
+
+type PorterStackYAML struct {
+	Applications map[string]*Application `yaml:"applications" validate:"required_without=Services Apps"`
+	Version      *string                 `yaml:"version"`
+	Build        *Build                  `yaml:"build"`
+	Env          map[string]string       `yaml:"env"`
+	SyncedEnv    []*SyncedEnvSection     `yaml:"synced_env"`
+	Apps         map[string]*Service     `yaml:"apps" validate:"required_without=Applications Services"`
+	Services     map[string]*Service     `yaml:"services" validate:"required_without=Applications Apps"`
+
+	Release *Service `yaml:"release"`
+}
+
+type Application struct {
+	Services map[string]*Service `yaml:"services" validate:"required"`
+	Build    *Build              `yaml:"build"`
+	Env      map[string]string   `yaml:"env"`
+
+	Release *Service `yaml:"release"`
+}
+
+type Build struct {
+	Context    *string   `yaml:"context" validate:"dir"`
+	Method     *string   `yaml:"method" validate:"required,oneof=pack docker registry"`
+	Builder    *string   `yaml:"builder" validate:"required_if=Method pack"`
+	Buildpacks []*string `yaml:"buildpacks"`
+	Dockerfile *string   `yaml:"dockerfile" validate:"required_if=Method docker"`
+	Image      *string   `yaml:"image" validate:"required_if=Method registry"`
+}
+
+type Service struct {
+	Run    *string                `yaml:"run"`
+	Config map[string]interface{} `yaml:"config"`
+	Type   *string                `yaml:"type" validate:"required, oneof=web worker job"`
+}
+
+type SyncedEnvSection struct {
+	Name    string                `json:"name" yaml:"name"`
+	Version uint                  `json:"version" yaml:"version"`
+	Keys    []SyncedEnvSectionKey `json:"keys" yaml:"keys"`
+}
+
+type SyncedEnvSectionKey struct {
+	Name   string `json:"name" yaml:"name"`
+	Secret bool   `json:"secret" yaml:"secret"`
+}
 
 type SubdomainCreateOpts struct {
 	k8sAgent       *kubernetes.Agent
@@ -58,7 +103,7 @@ type ParseConf struct {
 }
 
 func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
-	parsed := &stack.PorterStackYAML{}
+	parsed := &PorterStackYAML{}
 
 	if conf.FullHelmValues != "" {
 		parsedHelmValues, err := convertHelmValuesToPorterYaml(conf.FullHelmValues)
@@ -73,7 +118,7 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 		}
 	}
 
-	synced_env := make([]*stack.SyncedEnvSection, 0)
+	synced_env := make([]*SyncedEnvSection, 0)
 
 	for i := range conf.EnvGroups {
 		cm, _, err := conf.SubdomainCreateOpts.k8sAgent.GetLatestVersionedConfigMap(conf.EnvGroups[i], conf.Namespace)
@@ -92,15 +137,15 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 
 		version := uint(versionInt)
 
-		newSection := &stack.SyncedEnvSection{
+		newSection := &SyncedEnvSection{
 			Name:    conf.EnvGroups[i],
 			Version: version,
 		}
 
-		newSectionKeys := make([]stack.SyncedEnvSectionKey, 0)
+		newSectionKeys := make([]SyncedEnvSectionKey, 0)
 
 		for key, val := range cm.Data {
-			newSectionKeys = append(newSectionKeys, stack.SyncedEnvSectionKey{
+			newSectionKeys = append(newSectionKeys, SyncedEnvSectionKey{
 				Name:   key,
 				Secret: strings.Contains(val, "PORTERSECRET"),
 			})
@@ -110,9 +155,29 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 		synced_env = append(synced_env, newSection)
 	}
 
-	application, err := stack.CreateAppFromFile(parsed)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
+	if parsed.Apps != nil && parsed.Services != nil {
+		return nil, nil, nil, fmt.Errorf("'apps' and 'services' are synonymous but both were defined")
+	}
+
+	var services map[string]*Service
+	if parsed.Apps != nil {
+		services = parsed.Apps
+	}
+
+	if parsed.Services != nil {
+		services = parsed.Services
+	}
+
+	if services == nil {
+		return nil, nil, nil, fmt.Errorf("missing services from porter yaml file")
+	}
+
+
+	application := &Application{
+		Env:      parsed.Env,
+		Services: services,
+		Build:    parsed.Build,
+		Release:  parsed.Release,
 	}
 
 	values, err := buildUmbrellaChartValues(application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate)
@@ -136,8 +201,8 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 }
 
 func buildUmbrellaChartValues(
-	application *stack.Application,
-	syncedEnv []*stack.SyncedEnvSection,
+	application *Application,
+	syncedEnv []*SyncedEnvSection,
 	imageInfo types.ImageInfo,
 	existingValues map[string]interface{},
 	opts SubdomainCreateOpts,
@@ -254,7 +319,7 @@ func validateHelmValues(values map[string]interface{}, shouldValidateHelmValues 
 	return ""
 }
 
-func buildPreDeployJobChartValues(release *stack.Service, env map[string]string, synced_env []*stack.SyncedEnvSection, imageInfo types.ImageInfo, injectLauncher bool, existingValues map[string]interface{}, name string, userUpdate bool) map[string]interface{} {
+func buildPreDeployJobChartValues(release *Service, env map[string]string, synced_env []*SyncedEnvSection, imageInfo types.ImageInfo, injectLauncher bool, existingValues map[string]interface{}, name string, userUpdate bool) map[string]interface{} {
 	defaultValues := getDefaultValues(release, env, synced_env, "job", existingValues, name+"-r", userUpdate)
 	convertedConfig := convertMap(release.Config).(map[string]interface{})
 	helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
@@ -280,7 +345,7 @@ func buildPreDeployJobChartValues(release *stack.Service, env map[string]string,
 	return helm_values
 }
 
-func getType(name string, service *stack.Service) string {
+func getType(name string, service *Service) string {
 	if service.Type != nil {
 		return *service.Type
 	}
@@ -295,7 +360,7 @@ func getType(name string, service *stack.Service) string {
 	return "worker"
 }
 
-func getDefaultValues(service *stack.Service, env map[string]string, synced_env []*stack.SyncedEnvSection, appType string, existingValues map[string]interface{}, name string, userUpdate bool) map[string]interface{} {
+func getDefaultValues(service *Service, env map[string]string, synced_env []*SyncedEnvSection, appType string, existingValues map[string]interface{}, name string, userUpdate bool) map[string]interface{} {
 	var defaultValues map[string]interface{}
 	var runCommand string
 	if service.Run != nil {
@@ -322,7 +387,7 @@ func getDefaultValues(service *stack.Service, env map[string]string, synced_env 
 	return defaultValues
 }
 
-func deconstructSyncedEnvs(synced_env []*stack.SyncedEnvSection, env map[string]string) []map[string]interface{} {
+func deconstructSyncedEnvs(synced_env []*SyncedEnvSection, env map[string]string) []map[string]interface{} {
 	synced := make([]map[string]interface{}, 0)
 	for _, group := range synced_env {
 		keys := make([]map[string]interface{}, 0)
@@ -348,7 +413,7 @@ func deconstructSyncedEnvs(synced_env []*stack.SyncedEnvSection, env map[string]
 	return synced
 }
 
-func buildUmbrellaChart(application *stack.Application, config *config.Config, projectID uint, existingDependencies []*chart.Dependency) (*chart.Chart, error) {
+func buildUmbrellaChart(application *Application, config *config.Config, projectID uint, existingDependencies []*chart.Dependency) (*chart.Chart, error) {
 	deps := make([]*chart.Dependency, 0)
 	for alias, service := range application.Services {
 		var serviceType string
@@ -715,13 +780,13 @@ func getStacksNestedMap(obj map[string]interface{}, fields ...string) ([]map[str
 	return result, nil
 }
 
-func convertHelmValuesToPorterYaml(helmValues string) (*stack.PorterStackYAML, error) {
+func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) {
 	var values map[string]interface{}
 	err := yaml.Unmarshal([]byte(helmValues), &values)
 	if err != nil {
 		return nil, err
 	}
-	services := make(map[string]*stack.Service)
+	services := make(map[string]*Service)
 	for k, v := range values {
 		if k == "global" {
 			continue
@@ -730,12 +795,12 @@ func convertHelmValuesToPorterYaml(helmValues string) (*stack.PorterStackYAML, e
 		if serviceName == "" {
 			return nil, fmt.Errorf("invalid service key: %s. make sure that service key ends in either -web, -wkr, or -job", k)
 		}
-		services[serviceName] = &stack.Service{
+		services[serviceName] = &Service{
 			Config: convertMap(v).(map[string]interface{}),
 			Type:   &serviceType,
 		}
 	}
-	return &stack.PorterStackYAML{
+	return &PorterStackYAML{
 		Services: services,
 	}, nil
 }

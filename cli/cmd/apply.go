@@ -187,7 +187,30 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			if appName == "" {
 				return fmt.Errorf("environment variable PORTER_STACK_NAME must be set")
 			}
-			app, err := stack.CreateAppFromFile(parsed)
+
+			if parsed.Apps != nil && parsed.Services != nil {
+				return fmt.Errorf("'apps' and 'services' are synonymous but both were defined")
+			}
+
+			var services map[string]*stack.Service
+			if parsed.Apps != nil {
+				services = parsed.Apps
+			}
+
+			if parsed.Services != nil {
+				services = parsed.Services
+			}
+
+			if services == nil {
+				return fmt.Errorf("missing services from porter yaml file")
+			}
+
+			app := &stack.Application{
+				Env:      parsed.Env,
+				Services: services,
+				Build:    parsed.Build,
+				Release:  parsed.Release,
+			}
 
 			if err != nil {
 				return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)

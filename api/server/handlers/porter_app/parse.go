@@ -165,6 +165,9 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 	} else {
 		services = parsed.Services
 	}
+	if services == nil {
+		return nil, nil, nil, fmt.Errorf("missing services from porter yaml file")
+	}
 
 	application := &Application{
 		Env:      parsed.Env,

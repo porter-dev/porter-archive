@@ -198,6 +198,9 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			} else {
 				services = parsed.Services
 			}
+			if services == nil {
+				return fmt.Errorf("missing services from porter yaml file")
+			}
 
 			app := &stack.Application{
 				Env:      parsed.Env,

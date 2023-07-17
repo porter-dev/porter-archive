@@ -12,9 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// returns the prometheus service name
+// Returns the prometheus service name. The prometheus-community/prometheus chart @ v15.5.3 uses non-FQDN labels, unlike v22.6.2. This function checks for both labels.
 func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, error) {
-	// The prometheus-community/prometheus chart @ v15.5.3 uses non-FQDN labels.
 	redundantServices, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app=prometheus,component=server,heritage=Helm",
 	})
@@ -22,7 +21,6 @@ func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, er
 		return nil, false, err
 	}
 
-	// OTOH the same chart @ v22.6.2 uses more standardised labels.
 	upgradedServices, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/component=server,app.kubernetes.io/instance=prometheus,app.kubernetes.io/managed-by=Helm",
 	})
@@ -30,18 +28,14 @@ func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, er
 		return nil, false, err
 	}
 
-	// Check if both service queries are empty - that means there's no compatible Prometheus installation.
-	if len(redundantServices.Items) == 0 && len(upgradedServices.Items) == 0 {
-		return nil, false, nil
-	}
-
-	// Now that we know there is a compatible Prometheus in here somewhere, we'll send the one that's availble.
 	if len(redundantServices.Items) > 0 {
 		return &redundantServices.Items[0], true, nil
 	}
 	if len(upgradedServices.Items) > 0 {
 		return &upgradedServices.Items[0], true, nil
 	}
+
+	return nil, false, err
 }
 
 // returns the prometheus service name

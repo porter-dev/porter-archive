@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { RouteComponentProps, useParams, withRouter } from "react-router";
+import { RouteComponentProps, useLocation, useParams, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
 
@@ -62,6 +62,7 @@ const icons = [
 
 const validTabs = [
   "activity",
+  "events",
   "overview",
   "logs",
   "metrics",
@@ -118,7 +119,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
   const [buildView, setBuildView] = useState<BuildMethod>("docker");
 
-  const { eventId, tab } = useParams<Params>();
+  const { tab } = useParams<Params>();
+  const { search } = useLocation();
+  const queryParams = new URLSearchParams(search);
+  const logFilterQueryParamOpts = {
+    revision: queryParams.get('version'),
+    output_stream: queryParams.get('output_stream'),
+    service: queryParams.get('service'),
+  }
+  const eventId = queryParams.get('event_id');
   const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
 
   useEffect(() => {
@@ -617,14 +626,20 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   };
 
   const renderTabContents = () => {
-    if (eventId != null && eventId !== "") {
-      return <EventFocusView
-        eventId={eventId}
-        appData={appData}
-      />;
-    }
     switch (selectedTab) {
       case "activity":
+        return <ActivityFeed
+          chart={appData.chart}
+          stackName={appData?.app?.name}
+          appData={appData}
+        />;
+      case "events":
+        if (eventId != null && eventId !== "") {
+          return <EventFocusView
+            eventId={eventId}
+            appData={appData}
+          />;
+        }
         return <ActivityFeed
           chart={appData.chart}
           stackName={appData?.app?.name}
@@ -729,7 +744,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           </>
         );
       case "logs":
-        return <LogSection currentChart={appData.chart} services={services} appName={appData.app.name} />;
+        return <LogSection
+          currentChart={appData.chart}
+          services={services}
+          appName={appData.app.name}
+          filterOpts={logFilterQueryParamOpts}
+        />;
       case "metrics":
         return <MetricsSection currentChart={appData.chart} />;
       case "debug":

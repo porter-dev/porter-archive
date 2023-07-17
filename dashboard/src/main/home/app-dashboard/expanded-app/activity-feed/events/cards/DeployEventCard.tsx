@@ -125,12 +125,13 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
               </ServiceStatusContainer>
               <Spacer inline x={1} />
               <ServiceStatusContainer>
-                <Icon height="12px" src={document} />
-                <Spacer inline x={0.5} />
                 <Link
                   to={`/apps/${appData.app.name}/logs?version=${event.metadata.revision}&service=${key}`}
+                // to={`/apps/${appData.app.name}/events?event_id=${event.id}&version=${event.metadata.revision}&service=${key}`}
                 >
-                  View logs
+                  <Icon height="12px" src={document} />
+                  <Spacer inline x={0.5} />
+                  Live logs
                 </Link>
               </ServiceStatusContainer>
             </Container>

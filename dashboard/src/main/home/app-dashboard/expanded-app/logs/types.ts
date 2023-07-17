@@ -68,3 +68,8 @@ export const GenericLogFilter = {
         }
     },
 }
+export type LogFilterQueryParamOpts = {
+    revision: string | null;
+    output_stream: string | null;
+    service: string | null;
+}

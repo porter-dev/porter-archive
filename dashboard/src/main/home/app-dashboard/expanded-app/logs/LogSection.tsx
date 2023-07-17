@@ -12,7 +12,7 @@ import spinner from "assets/loading.gif";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { useLogs } from "./utils";
-import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName } from "./types";
+import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName, LogFilterQueryParamOpts } from "./types";
 import dayjs, { Dayjs } from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
@@ -28,17 +28,17 @@ import Button from "components/porter/Button";
 import { Service } from "../../new-app-flow/serviceTypes";
 import LogFilterContainer from "./LogFilterContainer";
 import StyledLogs from "./StyledLogs";
-import { useLocation } from "react-router";
 
 type Props = {
-  currentChart?: ChartType;
+  appName: string;
+  currentChart: ChartType;
   services?: Service[];
   timeRange?: {
     startTime?: Dayjs;
     endTime?: Dayjs;
   };
   showFilter?: boolean;
-  appName: string;
+  filterOpts?: LogFilterQueryParamOpts;
 };
 
 const LogSection: React.FC<Props> = ({
@@ -46,11 +46,9 @@ const LogSection: React.FC<Props> = ({
   services,
   timeRange,
   appName,
+  filterOpts,
   showFilter = true,
 }) => {
-  const { search } = useLocation();
-  const queryParams = new URLSearchParams(search);
-
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
@@ -63,7 +61,7 @@ const LogSection: React.FC<Props> = ({
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [logsError, setLogsError] = useState<string | undefined>(undefined);
-  const getSelectorFromServiceQueryParam = (serviceName: string | null) => {
+  const getSelectorFromServiceQueryParam = (serviceName: string | null | undefined) => {
     if (serviceName == null) {
       return undefined;
     }
@@ -74,9 +72,9 @@ const LogSection: React.FC<Props> = ({
     return `${match.name}-${match.type == "worker" ? "wkr" : match.type}`;
   }
   const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
-    revision: queryParams.get('version') ?? GenericLogFilter.getDefaultOption("revision").value,
-    output_stream: queryParams.get('output_stream') ?? GenericLogFilter.getDefaultOption("output_stream").value,
-    pod_name: getSelectorFromServiceQueryParam(queryParams.get("service")) ?? GenericLogFilter.getDefaultOption("pod_name").value,
+    revision: filterOpts?.revision ?? GenericLogFilter.getDefaultOption("revision").value,
+    output_stream: filterOpts?.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
+    pod_name: getSelectorFromServiceQueryParam(filterOpts?.service) ?? GenericLogFilter.getDefaultOption("pod_name").value,
   });
 
   const createVersionOptions = (number: number) => {
@@ -169,9 +167,9 @@ const LogSection: React.FC<Props> = ({
 
   const resetFilters = () => {
     setSelectedFilterValues({
-      revision: queryParams.get('version') ?? GenericLogFilter.getDefaultOption("revision").value,
-      output_stream: queryParams.get('output_stream') ?? GenericLogFilter.getDefaultOption("output_stream").value,
-      pod_name: getSelectorFromServiceQueryParam(queryParams.get("service")) ?? GenericLogFilter.getDefaultOption("pod_name").value,
+      revision: filterOpts?.revision ?? GenericLogFilter.getDefaultOption("revision").value,
+      output_stream: filterOpts?.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
+      pod_name: getSelectorFromServiceQueryParam(filterOpts?.service) ?? GenericLogFilter.getDefaultOption("pod_name").value,
     });
   };
 

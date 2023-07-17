@@ -30,7 +30,8 @@ const PreDeployEventFocusView: React.FC<Props> = ({
         return (
           <Container row>
             <Icon height="16px" src={loading} />
-            <Spacer inline width="10px" /><Text size={16}>Pre-deploy in progress...</Text>
+            <Spacer inline width="10px" />
+            <Text size={16}>Pre-deploy in progress...</Text>
           </Container>
         );
     }
@@ -60,6 +61,7 @@ const PreDeployEventFocusView: React.FC<Props> = ({
           endTime: event.metadata.end_time != null ? dayjs(event.metadata.end_time).add(1, 'minute') : undefined,
         }}
         showFilter={false}
+        appName={appData.app.name}
       />
     </>
   );

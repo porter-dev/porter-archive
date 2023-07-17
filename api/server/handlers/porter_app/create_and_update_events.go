@@ -65,7 +65,7 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		telemetry.AttributeKV{Key: "porter-app-event-id", Value: request.ID},
 	)
 
-	if string(request.Type) == string(types.PorterAppEventType_AppEvent) {
+	if string(request.Type) == string(types.PorterAppEventType_Build) {
 		if errors, ok := request.Metadata["errors"]; ok {
 			// cast errors to map[string]error
 			if errs, ok := errors.(map[string]error); ok {

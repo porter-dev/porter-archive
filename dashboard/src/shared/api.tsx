@@ -208,7 +208,7 @@ const createPorterApp = baseApi<
   }
 >("POST", (pathParams) => {
   let { project_id, cluster_id, stack_name } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
 });
 
 const deletePorterApp = baseApi<

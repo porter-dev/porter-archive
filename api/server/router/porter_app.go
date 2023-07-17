@@ -140,7 +140,7 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack} -> porter_app.NewCreatePorterAppHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> porter_app.NewCreatePorterAppHandler
 	createPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,

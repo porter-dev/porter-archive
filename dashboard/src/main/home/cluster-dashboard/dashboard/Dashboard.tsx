@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-import { useLocation } from "react-router";
+import { useHistory, useLocation } from "react-router";
 import editIcon from "assets/edit-button.svg";
 
 import api from "shared/api";
@@ -22,6 +22,10 @@ import ClusterSettingsModal from "./ClusterSettingsModal";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 import AzureProvisionerSettings from "components/AzureProvisionerSettings";
+import Button from "components/porter/Button";
+import { ClusterType } from "shared/types";
+import Clusters from "main/home/sidebar/Clusters";
+import Select from "components/porter/Select";
 
 type TabEnum =
   | "nodes"
@@ -47,7 +51,9 @@ export const Dashboard: React.FunctionComponent = () => {
   const [ingressIp, setIngressIp] = useState(null);
   const [ingressError, setIngressError] = useState(null);
   const [cloudProvider, setCloudProvider] = useState("azure");
-
+  const [options, setOptions] = useState([]);
+  const [selectedCluster, setSelectedCluster] = useState<any>(null);
+  const [clusters, setClusters] = useState([])
   const context = useContext(Context);
   const renderTab = () => {
     switch (currentTab) {
@@ -69,23 +75,23 @@ export const Dashboard: React.FunctionComponent = () => {
         return (
           <>
             <Br />
-            {context.currentCluster.cloud_provider == "AWS" && (
+            {selectedCluster.cloud_provider == "AWS" && (
               <ProvisionerSettings
                 selectedClusterVersion={selectedClusterVersion}
                 provisionerError={provisionFailureReason}
-                clusterId={context.currentCluster.id}
+                clusterId={selectedCluster.id}
                 credentialId={
-                  context.currentCluster.cloud_provider_credential_identifier
+                  selectedCluster.cloud_provider_credential_identifier
                 }
               />
             )}
-            {context.currentCluster.cloud_provider == "Azure" && (
+            {selectedCluster.cloud_provider == "Azure" && (
               <AzureProvisionerSettings
                 selectedClusterVersion={selectedClusterVersion}
                 provisionerError={provisionFailureReason}
-                clusterId={context.currentCluster.id}
+                clusterId={selectedCluster.id}
                 credentialId={
-                  context.currentCluster.cloud_provider_credential_identifier
+                  selectedCluster.cloud_provider_credential_identifier
                 }
               />
             )}
@@ -99,7 +105,7 @@ export const Dashboard: React.FunctionComponent = () => {
   useEffect(() => {
     ``;
     if (
-      context.currentCluster.status !== "UPDATING_UNAVAILABLE" &&
+      selectedCluster?.status !== "UPDATING_UNAVAILABLE" &&
       !tabOptions.find((tab) => tab.value === "nodes")
     ) {
       if (!context.currentProject?.capi_provisioner_enabled) {
@@ -131,6 +137,7 @@ export const Dashboard: React.FunctionComponent = () => {
   }, [isAuthorized]);
 
   useEffect(() => {
+    renderClusterSelector();
     const selectedTab = getQueryParam({ location }, "selected_tab");
     if (tabOptions.find((tab) => tab.value === selectedTab)) {
       setCurrentTab(selectedTab as any);
@@ -147,14 +154,38 @@ export const Dashboard: React.FunctionComponent = () => {
     }
   }, [context.currentCluster]);
 
-  const updateClusterWithDetailedData = async () => {
+  const renderClusterSelector = () => {
+    console.log("HERE")
+    api
+      .getClusters("<token>", {}, { id: context.currentProject?.id })
+      .then((res) => {
+        // TODO: handle uninitialized kubeconfig
+        if (res.data) {
+          let clusters = res.data;
+          clusters.sort((a: any, b: any) => a.id - b.id);
+          if (clusters.length > 0) {
+            // Set cluster from URL if in path or param
+            let options = clusters.map((item: { name: any; }) => ({
+              label: item.name,
+              value: item.name
+            }));
+            setClusters(clusters)
+            setOptions(options)
+            setSelectedCluster(clusters[0]);  // Set initial cluster as the first one
+
+          }
+        }
+
+      })
+  }
+  const updateClusterWithDetailedData = async (cluster: any) => {
     try {
       const res = await api.getCluster(
         "<token>",
         {},
         {
           project_id: context.currentProject.id,
-          cluster_id: context.currentCluster.id,
+          cluster_id: cluster.id,
         }
       );
       if (res.data) {
@@ -166,8 +197,9 @@ export const Dashboard: React.FunctionComponent = () => {
   };
 
   useEffect(() => {
-    updateClusterWithDetailedData();
+    updateClusterWithDetailedData(selectedCluster);
   }, []);
+  const history = useHistory();
 
   const renderContents = () => {
     if (context.currentProject?.capi_provisioner_enabled) {
@@ -180,8 +212,8 @@ export const Dashboard: React.FunctionComponent = () => {
             setProvisionFailureReason={setProvisionFailureReason}
           />
           {showProvisionerStatus &&
-            (context.currentCluster.status === "UPDATING" ||
-              context.currentCluster.status === "UPDATING_UNAVAILABLE") && (
+            (selectedCluster?.status === "UPDATING" ||
+              selectedCluster?.status === "UPDATING_UNAVAILABLE") && (
               <>
                 <ProvisionerStatus
                   provisionFailureReason={provisionFailureReason}
@@ -200,6 +232,7 @@ export const Dashboard: React.FunctionComponent = () => {
     } else {
       return (
         <>
+          <Spacer y={1} />
           <TabSelector
             options={currentTabOptions}
             currentTab={currentTab}
@@ -271,9 +304,13 @@ export const Dashboard: React.FunctionComponent = () => {
                   strokeLinejoin="round"
                 />
               </svg>
-              <Spacer inline />
+              {/* <Spacer inline />
               {context.currentCluster.vanity_name ||
                 context.currentCluster.name}
+              <Spacer inline /> */}
+              <Spacer inline />
+              {selectedCluster?.vanity_name ||
+                selectedCluster?.name}
               <Spacer inline />
             </Flex>
             <EditIconStyle
@@ -285,16 +322,37 @@ export const Dashboard: React.FunctionComponent = () => {
             </EditIconStyle>
           </Flex>
         }
-        description={`Cluster settings and status for ${context.currentCluster.vanity_name || context.currentCluster.name
+        description={`Cluster settings and status for ${selectedCluster?.vanity_name ||
+          selectedCluster?.name
           }.`}
         disableLineBreak
         capitalize={false}
       />
+      {context.currentProject?.simplified_view_enabled &&
+        <>
+          <Select
+            label={"Select Cluster"}
+            options={options}
+            value={selectedCluster?.name}
+            setValue={(name) => {
+              const cluster = clusters.find(c => c.name === name);
+              setSelectedCluster(cluster);
+            }}
+            width={"350px"}>
+          </Select>
+          <Spacer y={1} />
+          <Button onClick={() => history.push('/onboarding/source')}>
+            Deploy New Cluster
+          </Button>
 
+          <Spacer y={1} />
+        </>
+      }
       {renderContents()}
     </>
   );
 };
+
 
 const EditIconStyle = styled.div`
   width: 20px;

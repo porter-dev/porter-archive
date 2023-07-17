@@ -48,6 +48,7 @@ import AnimateHeight from "react-animate-height";
 import { PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
 import HelmValuesTab from "./HelmValuesTab";
+import ProjectDeleteConsent from "main/home/project-settings/ProjectDeleteConsent";
 
 type Props = RouteComponentProps & {};
 
@@ -971,7 +972,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     value: "build-settings",
                   },
                   { label: "Settings", value: "settings" },
-                  user.email.endsWith("porter.run") && { label: "Helm values", value: "helm-values" },
+                  (user.email.endsWith("porter.run") || currentProject.helm_values_enabled) && { label: "Helm values", value: "helm-values" },
                 ].filter((x) => x)}
                 currentTab={selectedTab}
                 setCurrentTab={(tab: string) => {

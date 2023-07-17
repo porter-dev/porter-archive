@@ -3,6 +3,7 @@ package porter_app
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -36,6 +37,8 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	defer span.End()
 
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "cluster-id", Value: int(cluster.ID)},
 		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},
@@ -62,6 +65,15 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		telemetry.AttributeKV{Key: "porter-app-event-id", Value: request.ID},
 	)
 
+	if string(request.Type) == string(types.PorterAppEventType_AppEvent) {
+		if errors, ok := request.Metadata["errors"]; ok {
+			// cast errors to map[string]error
+			if errs, ok := errors.(map[string]error); ok {
+				reportErrors(ctx, errs, p.Config(), user, project, stackName)
+			}
+		}
+	}
+
 	if request.ID == "" {
 		event, err := p.createNewAppEvent(ctx, *cluster, stackName, request.Status, string(request.Type), request.TypeExternalSource, request.Metadata)
 		if err != nil {
@@ -80,6 +92,18 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		return
 	}
 	p.WriteResult(w, r, event)
+}
+
+func reportErrors(ctx context.Context, errs map[string]error, config *config.Config, user *models.User, project *models.Project, stackName string) {
+	ctx, span := telemetry.NewSpan(ctx, "report-build-errors")
+	defer span.End()
+	var errStr string
+	for k, v := range errs {
+		errStr += k + ": " + v.Error() + ", "
+	}
+	errStr = strings.TrimSuffix(errStr, ", ")
+	_ = telemetry.Error(ctx, span, nil, errStr)
+	_ = TrackStackBuildFailure(config, user, project, stackName, errStr)
 }
 
 // createNewAppEvent will create a new app event for the given porter app name. If the app event is an agent event, then it will be created only if there is no existing event which has the agent ID. In the case that an existing event is found, that will be returned instead

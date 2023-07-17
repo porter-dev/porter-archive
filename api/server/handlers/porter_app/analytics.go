@@ -98,9 +98,11 @@ func TrackStackBuildFailure(
 	user *models.User,
 	project *models.Project,
 	stackName string,
+	errorMessage string,
 ) error {
 	return config.AnalyticsClient.Track(analytics.StackBuildFailureTrack(&analytics.StackBuildFailureOpts{
 		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 		StackName:              stackName,
+		ErrorMessage:           errorMessage,
 	}))
 }

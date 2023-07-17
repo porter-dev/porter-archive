@@ -859,13 +859,15 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 type StackBuildFailureOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName string
+	StackName    string
+	ErrorMessage string
 }
 
 // StackBuildFailureTrack returns a track for when a stack fails to build
 func StackBuildFailureTrack(opts *StackBuildFailureOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 	additionalProps["stack_name"] = opts.StackName
+	additionalProps["error_message"] = opts.ErrorMessage
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,

@@ -2,7 +2,6 @@ package authmanagement
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -28,13 +27,16 @@ func (a AuthManagementService) APIToken(ctx context.Context, req *connect.Reques
 	resp := connect.NewResponse(&porterv1.APITokenResponse{})
 
 	if req == nil {
-		return resp, connect.NewError(connect.CodeInvalidArgument, errors.New("missing request"))
+		err := telemetry.Error(ctx, span, nil, "missing request")
+		return resp, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	if req.Msg == nil {
-		return resp, connect.NewError(connect.CodeInvalidArgument, errors.New("missing request message"))
+		err := telemetry.Error(ctx, span, nil, "missing request message")
+		return resp, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	if req.Msg.ProjectId == 0 {
-		return resp, connect.NewError(connect.CodeInvalidArgument, errors.New("missing project id"))
+		err := telemetry.Error(ctx, span, nil, "missing project id")
+		return resp, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "project-id", Value: req.Msg.ProjectId})

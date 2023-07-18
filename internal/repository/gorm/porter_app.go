@@ -27,7 +27,7 @@ func (repo *PorterAppRepository) CreatePorterApp(a *models.PorterApp) (*models.P
 func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*models.PorterApp, error) {
 	apps := []*models.PorterApp{}
 
-	if err := repo.db.Where("cluster_id = ?", clusterID).Find(&apps).Error; err != nil {
+	if err := repo.db.Where("cluster_id = ? AND environment_config_id IS NULL", clusterID).Find(&apps).Error; err != nil {
 		return nil, err
 	}
 

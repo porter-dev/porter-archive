@@ -83,7 +83,7 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> porter_app.NewPorterAppListHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks -> porter_app.NewPorterAppListHandler
 	listPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,

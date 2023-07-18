@@ -64,7 +64,7 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 
 	if request.Type == types.PorterAppEventType_Build {
 		if errors, ok := request.Metadata["errors"]; ok {
-			if errs, ok := errors.(map[string]error); ok {
+			if errs, ok := errors.(map[string]string); ok {
 				reportErrors(ctx, errs, p.Config(), user, project, stackName)
 			}
 		}
@@ -90,13 +90,13 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	p.WriteResult(w, r, event)
 }
 
-func reportErrors(ctx context.Context, errs map[string]error, config *config.Config, user *models.User, project *models.Project, stackName string) {
+func reportErrors(ctx context.Context, errs map[string]string, config *config.Config, user *models.User, project *models.Project, stackName string) {
 	ctx, span := telemetry.NewSpan(ctx, "report-build-errors")
 	defer span.End()
 	var errStr string
 	for k, v := range errs {
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: telemetry.AttributeKey(fmt.Sprintf("resource-%s", k)), Value: v.Error()})
-		errStr += k + ": " + v.Error() + ", "
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: telemetry.AttributeKey(fmt.Sprintf("resource-%s", k)), Value: v})
+		errStr += k + ": " + v + ", "
 	}
 	errStr = strings.TrimSuffix(errStr, ", ")
 	_ = telemetry.Error(ctx, span, nil, errStr)

@@ -243,8 +243,8 @@ func AWSLoginRedirectSuccess(opts *AWSRedirectOpts) segmentTrack {
 	additionalProps["account_id"] = opts.AccountId
 	additionalProps["login_url"] = opts.LoginURL
 
-	return getSegmentUserTrack(
-		opts.UserScopedTrackOpts,
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, AWSLoginRedirect),
 	)
 }

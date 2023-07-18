@@ -61,20 +61,12 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		telemetry.AttributeKV{Key: "porter-app-event-external-source", Value: request.TypeExternalSource},
 		telemetry.AttributeKV{Key: "porter-app-event-id", Value: request.ID},
 	)
-	fmt.Printf("here is the request type: %v\n", request.Type)
-	fmt.Printf("here is the type of type: %T\n", request.Type)
-	fmt.Printf("here is the type of string type: %T\n", string(request.Type))
-	fmt.Println("i am updating the app event")
+
 	if request.Type == types.PorterAppEventType_Build {
-		fmt.Println("i am updating the app event for build")
 		if errors, ok := request.Metadata["errors"]; ok {
-			if errs, ok := errors.(map[string]string); ok {
+			if errs, ok := errors.(map[string]interface{}); ok {
 				reportErrors(ctx, errs, p.Config(), user, project, stackName)
-			} else {
-				fmt.Printf("errors is of type: %T\n", errors)
 			}
-		} else {
-			fmt.Printf("errors not found in metadata. here is metadata: %v\n", request.Metadata)
 		}
 	}
 
@@ -98,11 +90,19 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	p.WriteResult(w, r, event)
 }
 
-func reportErrors(ctx context.Context, errs map[string]string, config *config.Config, user *models.User, project *models.Project, stackName string) {
+func reportErrors(ctx context.Context, errs map[string]interface{}, config *config.Config, user *models.User, project *models.Project, stackName string) {
 	ctx, span := telemetry.NewSpan(ctx, "report-build-errors")
 	defer span.End()
-	var errStr string
+
+	errStringMap := make(map[string]string)
 	for k, v := range errs {
+		if valueStr, ok := v.(string); ok {
+			errStringMap[k] = valueStr
+		}
+	}
+
+	var errStr string
+	for k, v := range errStringMap {
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: telemetry.AttributeKey(fmt.Sprintf("resource-%s", k)), Value: v})
 		errStr += k + ": " + v + ", "
 	}

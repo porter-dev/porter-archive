@@ -243,8 +243,8 @@ func AWSLoginRedirectSuccess(opts *AWSRedirectOpts) segmentTrack {
 	additionalProps["account_id"] = opts.AccountId
 	additionalProps["login_url"] = opts.LoginURL
 
-	return getSegmentUserTrack(
-		opts.UserScopedTrackOpts,
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, AWSLoginRedirect),
 	)
 }
@@ -859,13 +859,20 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 type StackBuildFailureOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName string
+	StackName   string
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
 }
 
 // StackBuildFailureTrack returns a track for when a stack fails to build
 func StackBuildFailureTrack(opts *StackBuildFailureOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 	additionalProps["stack_name"] = opts.StackName
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,

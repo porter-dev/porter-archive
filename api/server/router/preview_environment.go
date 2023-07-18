@@ -1,8 +1,6 @@
 package router
 
 import (
-	"fmt"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/porter-dev/porter/api/server/handlers/preview_environment"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -46,7 +44,7 @@ func getPreviewEnvRoutes(
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) ([]*router.Route, *types.Path) {
-	relPath := "/preview_environment"
+	relPath := "/preview_environments"
 
 	newPath := &types.Path{
 		Parent:       basePath,
@@ -55,14 +53,14 @@ func getPreviewEnvRoutes(
 
 	var routes []*router.Route
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/preview_environment -> preview_environment.NewCreatePreviewEnvironmentHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/preview_environments -> preview_environment.NewCreatePreviewEnvironmentHandler
 	createPreviewEnvEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamStackName),
+				RelativePath: relPath,
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

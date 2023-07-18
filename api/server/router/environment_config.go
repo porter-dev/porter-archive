@@ -55,6 +55,34 @@ func getEnvConfigRoutes(
 
 	var routes []*router.Route
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/env_config/{env_config_id}/stacks/{name}
+	getEnvConfigStackEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/stacks/{%s}", relPath, types.URLParamEnvConfigID, types.URLParamStackName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getEnvConfigStackHandler := environment_config.NewGetEnvConfigStackHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getEnvConfigStackEndpoint,
+		Handler:  getEnvConfigStackHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/env_config/{env_config_id} -> env_config.NewGetEnvConfigHandler
 	getEnvConfigEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

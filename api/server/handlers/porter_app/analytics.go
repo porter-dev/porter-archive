@@ -93,7 +93,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	v.WriteResult(w, r, user.ToUserType())
 }
 
-func TrackStackBuildResult(
+func TrackStackBuildStatus(
 	config *config.Config,
 	user *models.User,
 	project *models.Project,

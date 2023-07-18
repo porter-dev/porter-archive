@@ -111,7 +111,7 @@ func reportBuildStatus(ctx context.Context, request *types.CreateOrUpdatePorterA
 		}
 	}
 
-	_ = TrackStackBuildResult(config, user, project, stackName, errStr, request.Status)
+	_ = TrackStackBuildStatus(config, user, project, stackName, errStr, request.Status)
 }
 
 // createNewAppEvent will create a new app event for the given porter app name. If the app event is an agent event, then it will be created only if there is no existing event which has the agent ID. In the case that an existing event is found, that will be returned instead

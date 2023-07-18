@@ -56,7 +56,7 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	}
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "porter-app-name", Value: stackName},
-		telemetry.AttributeKV{Key: "porter-app-event-type-id", Value: request.Type},
+		telemetry.AttributeKV{Key: "porter-app-event-type-id", Value: string(request.Type)},
 		telemetry.AttributeKV{Key: "porter-app-event-status", Value: request.Status},
 		telemetry.AttributeKV{Key: "porter-app-event-external-source", Value: request.TypeExternalSource},
 		telemetry.AttributeKV{Key: "porter-app-event-id", Value: request.ID},
@@ -66,6 +66,8 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		if errors, ok := request.Metadata["errors"]; ok {
 			if errs, ok := errors.(map[string]string); ok {
 				reportErrors(ctx, errs, p.Config(), user, project, stackName)
+			} else {
+				fmt.Printf("errors is of type: %T\n", errors)
 			}
 		}
 	}

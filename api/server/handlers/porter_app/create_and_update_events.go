@@ -2,6 +2,7 @@ package porter_app
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -39,10 +40,6 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 	user, _ := ctx.Value(types.UserScope).(*models.User)
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "cluster-id", Value: int(cluster.ID)},
-		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},
-	)
 
 	request := &types.CreateOrUpdatePorterAppEventRequest{}
 	if ok := p.DecodeAndValidate(w, r, request); !ok {
@@ -65,7 +62,7 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		telemetry.AttributeKV{Key: "porter-app-event-id", Value: request.ID},
 	)
 
-	if string(request.Type) == string(types.PorterAppEventType_Build) {
+	if request.Type == types.PorterAppEventType_Build {
 		if errors, ok := request.Metadata["errors"]; ok {
 			if errs, ok := errors.(map[string]error); ok {
 				reportErrors(ctx, errs, p.Config(), user, project, stackName)
@@ -98,6 +95,7 @@ func reportErrors(ctx context.Context, errs map[string]error, config *config.Con
 	defer span.End()
 	var errStr string
 	for k, v := range errs {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: telemetry.AttributeKey(fmt.Sprintf("resource-%s", k)), Value: v.Error()})
 		errStr += k + ": " + v.Error() + ", "
 	}
 	errStr = strings.TrimSuffix(errStr, ", ")

@@ -63,7 +63,7 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	)
 
 	if request.Type == types.PorterAppEventType_Build {
-		reportBuildResult(ctx, request, p.Config(), user, project, stackName)
+		reportBuildStatus(ctx, request, p.Config(), user, project, stackName)
 	}
 
 	if request.ID == "" {
@@ -86,10 +86,13 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	p.WriteResult(w, r, event)
 }
 
-func reportBuildResult(ctx context.Context, request *types.CreateOrUpdatePorterAppEventRequest, config *config.Config, user *models.User, project *models.Project, stackName string) {
-	ctx, span := telemetry.NewSpan(ctx, "report-build-result")
+func reportBuildStatus(ctx context.Context, request *types.CreateOrUpdatePorterAppEventRequest, config *config.Config, user *models.User, project *models.Project, stackName string) {
+	ctx, span := telemetry.NewSpan(ctx, "report-build-status")
 	defer span.End()
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-build-status", Value: request.Status})
+
+	var errStr string
 	if errors, ok := request.Metadata["errors"]; ok {
 		if errs, ok := errors.(map[string]interface{}); ok {
 			errStringMap := make(map[string]string)
@@ -98,19 +101,17 @@ func reportBuildResult(ctx context.Context, request *types.CreateOrUpdatePorterA
 					errStringMap[k] = valueStr
 				}
 			}
-		
-			var errStr string
+
 			for k, v := range errStringMap {
 				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: telemetry.AttributeKey(fmt.Sprintf("resource-%s", k)), Value: v})
 				errStr += k + ": " + v + ", "
 			}
 			errStr = strings.TrimSuffix(errStr, ", ")
 			_ = telemetry.Error(ctx, span, nil, errStr)
-			_ = TrackStackBuildResult(config, user, project, stackName, errStr, request.Status)
 		}
-	} else {
-		_ = TrackStackBuildResult(config, user, project, stackName, "", request.Status)
 	}
+
+	_ = TrackStackBuildResult(config, user, project, stackName, errStr, request.Status)
 }
 
 // createNewAppEvent will create a new app event for the given porter app name. If the app event is an agent event, then it will be created only if there is no existing event which has the agent ID. In the case that an existing event is found, that will be returned instead

@@ -123,13 +123,17 @@ func TrackStackBuildResult(
 		}))
 	}
 
-	return config.AnalyticsClient.Track(analytics.StackBuildFailureTrack(&analytics.StackBuildOpts{
-		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
-		StackName:              stackName,
-		ErrorMessage:           errorMessage,
-		Email:                  user.Email,
-		FirstName:              user.FirstName,
-		LastName:               user.LastName,
-		CompanyName:            user.CompanyName,
-	}))
+	if status == "FAILED" {
+		return config.AnalyticsClient.Track(analytics.StackBuildFailureTrack(&analytics.StackBuildOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			StackName:              stackName,
+			ErrorMessage:           errorMessage,
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+		}))
+	}
+
+	return nil
 }

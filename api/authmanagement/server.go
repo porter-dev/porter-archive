@@ -6,6 +6,17 @@ import (
 	"net/http"
 	"time"
 
+	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
+
+	"github.com/porter-dev/porter/ee/integrations/vault"
+	"github.com/porter-dev/porter/internal/repository/credentials"
+	"github.com/porter-dev/porter/internal/repository/gorm"
+
+	"github.com/porter-dev/porter/api/server/shared/config/env"
+	"github.com/porter-dev/porter/internal/adapter"
+
+	"github.com/porter-dev/porter/internal/repository"
+
 	"github.com/joeshaw/envdecode"
 
 	"github.com/bufbuild/connect-go"
@@ -15,12 +26,28 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
-// Config contains all configuration options for the AuthManagementService
-type Config struct {
+// ServiceEnv contains all environment variables for the AuthManagementService
+type ServiceEnv struct {
 	// Port is the port that the AuthManagementService listens on
 	Port int `env:"AUTH_MANAGEMENT_SERVICE_PORT,default=8090"`
 	// TokenGeneratorSecret is the secret used to generate JWT tokens
 	TokenGeneratorSecret string `env:"TOKEN_GENERATOR_SECRET,default=secret"`
+}
+
+type EnvVars struct {
+	// DBEnv holds all the environment variables for DB connection
+	DBEnv env.DBConf
+	// ServiceEnv holds all the environment variables for the AuthManagementService
+	ServiceEnv ServiceEnv
+}
+
+type Config struct {
+	// Port is the port that the AuthManagementService listens on
+	Port int
+	// TokenGeneratorSecret is the secret used to generate JWT tokens
+	TokenGeneratorSecret string
+	// APITokenManager is the interface for managing API tokens
+	APITokenManager repository.APITokenRepository
 }
 
 // AuthManagementService stores the service config and implements the gRPC server's interface
@@ -32,12 +59,38 @@ type AuthManagementService struct {
 func NewService() (AuthManagementService, error) {
 	var server AuthManagementService
 
-	var config Config
-	if err := envdecode.StrictDecode(&config); err != nil {
-		return server, fmt.Errorf("Failed to decode server conf: %s", err)
+	var envVars EnvVars
+	if err := envdecode.StrictDecode(&envVars); err != nil {
+		return server, fmt.Errorf("failed to decode environment variables: %w", err)
 	}
 
-	server.Config = config
+	db, err := adapter.New(&envVars.DBEnv)
+	if err != nil {
+		return server, fmt.Errorf("failed to create DB client: %w", err)
+	}
+
+	var instanceCredentialBackend credentials.CredentialStorage
+	if envVars.DBEnv.VaultEnabled {
+		instanceCredentialBackend = vault.NewClient(
+			envVars.DBEnv.VaultServerURL,
+			envVars.DBEnv.VaultAPIKey,
+			envVars.DBEnv.VaultPrefix,
+		)
+	}
+
+	var key [32]byte
+
+	for i, b := range []byte(envVars.DBEnv.EncryptionKey) {
+		key[i] = b
+	}
+
+	repo := gorm.NewRepository(db, &key, instanceCredentialBackend)
+
+	server.Config = Config{
+		Port:                 envVars.ServiceEnv.Port,
+		TokenGeneratorSecret: envVars.ServiceEnv.TokenGeneratorSecret,
+		APITokenManager:      repo.APIToken(),
+	}
 
 	return server, nil
 }
@@ -48,6 +101,12 @@ func (a AuthManagementService) ListenAndServe(ctx context.Context) error {
 	defer cancel()
 
 	mux := http.NewServeMux()
+
+	reflector := grpcreflect.NewStaticReflector(
+		"porter.v1.AuthManagementService",
+	)
+	mux.Handle(grpcreflect.NewHandlerV1(reflector))
+	mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
 
 	mux.Handle(porterv1connect.NewAuthManagementServiceHandler(a,
 		connect.WithInterceptors(

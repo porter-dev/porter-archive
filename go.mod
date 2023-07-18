@@ -52,7 +52,7 @@ require (
 	google.golang.org/api v0.103.0
 	google.golang.org/genproto v0.0.0-20221202195650-67e5cbc046fd
 	google.golang.org/grpc v1.52.0
-	google.golang.org/protobuf v1.29.0
+	google.golang.org/protobuf v1.30.0
 	gorm.io/gorm v1.24.2
 	k8s.io/api v0.26.0
 	k8s.io/apimachinery v0.26.0
@@ -70,7 +70,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.23.1
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry v0.5.0
 	github.com/briandowns/spinner v1.18.1
-	github.com/bufbuild/connect-go v1.5.2
+	github.com/bufbuild/connect-go v1.7.0
+	github.com/bufbuild/connect-grpcreflect-go v1.1.0
 	github.com/bufbuild/connect-opentelemetry-go v0.1.0
 	github.com/glebarez/sqlite v1.6.0
 	github.com/go-chi/chi/v5 v5.0.8

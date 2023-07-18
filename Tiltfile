@@ -32,16 +32,23 @@ if (cluster.startswith("kind-")):
     updated_install = encode_yaml_stream(decoded)
 
     k8s_yaml(updated_install)
-
-    k8s_resource(
-        workload='porter-server-web',
-        port_forwards="8080:8080",
-        labels=["porter"],
-        resource_deps=["porter-binary"],
-    )
 else:
     local("echo 'Be careful that you aren't connected to a staging or prod cluster' && exit 1")
     exit()
+
+k8s_resource(
+    workload='porter-server-web',
+    port_forwards=["8080:8080"],
+    labels=["porter"],
+    resource_deps=["porter-binary"],
+)
+
+k8s_resource(
+    workload='porter-auth-web',
+    port_forwards=["8090:8090"],
+    labels=["porter"],
+    resource_deps=["porter-binary"],
+)
 
 watch_file('zarf/helm/.server.env')
 watch_file('zarf/helm/.dashboard.env')
@@ -76,13 +83,17 @@ local_resource(
     cmd='tilt disable porter-server-web-test-connection',
     resource_deps=["porter-server-web"]
 )
+local_resource(
+    name="disable-auth-helm-test",
+    cmd='tilt disable porter-auth-web-test-connection',
+    resource_deps=["porter-auth-web"]
+)
 
 docker_build_with_restart(
     ref="porter1/porter-server",
     context=".",
     dockerfile="zarf/docker/Dockerfile.server.tilt",
-    # entrypoint='dlv --listen=:40000 --api-version=2 --headless=true --log=true exec /porter/bin/app',
-    entrypoint='/app/migrate && /app/porter --auth',
+    entrypoint='/app/migrate && /app/porter',
     build_args={},
     only=[
         "bin",
@@ -91,7 +102,21 @@ docker_build_with_restart(
         sync('./bin/porter', '/app/'),
         sync('./bin/migrate', '/app/'),
     ]
-) 
+)
+
+docker_build_with_restart(
+    ref="porter1/porter-auth",
+    context=".",
+    dockerfile="zarf/docker/Dockerfile.server.tilt",
+    entrypoint='/app/porter --auth',
+    build_args={},
+    only=[
+        "bin",
+    ],
+    live_update=[
+        sync('./bin/porter', '/app/'),
+    ]
+)
 
 local_resource(
   name='reload-server-config',

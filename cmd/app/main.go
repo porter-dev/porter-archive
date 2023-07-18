@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"github.com/porter-dev/porter/api/server"
+	"github.com/porter-dev/porter/api/server/router"
 
 	"github.com/porter-dev/porter/api/authmanagement"
 
@@ -21,7 +22,6 @@ import (
 
 	"github.com/porter-dev/porter/internal/telemetry"
 
-	"github.com/porter-dev/porter/api/server/router"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/config/loader"
 	"github.com/porter-dev/porter/internal/models"
@@ -38,7 +38,7 @@ func main() {
 
 	var versionFlag, authServiceFlag bool
 	flag.BoolVar(&versionFlag, "version", false, "print version and exit")
-	flag.BoolVar(&authServiceFlag, "auth", false, "run auth service in addition to porter api")
+	flag.BoolVar(&authServiceFlag, "auth", false, "run auth service instead of porter api")
 	flag.Parse()
 
 	// Exit safely when version is used
@@ -67,25 +67,6 @@ func main() {
 	}
 	defer tracer.Shutdown()
 
-	config.Logger.Info().Msg("Creating API router")
-	appRouter := router.NewAPIRouter(config)
-	config.Logger.Info().Msg("Created API router")
-
-	p := server.PorterAPIServer{
-		Port:       config.ServerConf.Port,
-		Router:     appRouter,
-		ServerConf: config.ServerConf,
-	}
-
-	g.Go(func() error {
-		config.Logger.Info().Msgf("Starting PorterAPI server on port %d", config.ServerConf.Port)
-		if err := p.ListenAndServe(ctx); err != nil && err != http.ErrServerClosed {
-			return fmt.Errorf("PorterAPI server failed: %s", err.Error())
-		}
-		config.Logger.Info().Msg("Shutting down PorterAPI server")
-		return nil
-	})
-
 	if authServiceFlag {
 		g.Go(func() error {
 			a, err := authmanagement.NewService()
@@ -98,6 +79,25 @@ func main() {
 				return fmt.Errorf("AuthManagement server failed: %s", err.Error())
 			}
 			config.Logger.Info().Msg("Shutting down AuthManagement server")
+			return nil
+		})
+	} else {
+		config.Logger.Info().Msg("Creating API router")
+		appRouter := router.NewAPIRouter(config)
+		config.Logger.Info().Msg("Created API router")
+
+		p := server.PorterAPIServer{
+			Port:       config.ServerConf.Port,
+			Router:     appRouter,
+			ServerConf: config.ServerConf,
+		}
+
+		g.Go(func() error {
+			config.Logger.Info().Msgf("Starting PorterAPI server on port %d", config.ServerConf.Port)
+			if err := p.ListenAndServe(ctx); err != nil && err != http.ErrServerClosed {
+				return fmt.Errorf("PorterAPI server failed: %s", err.Error())
+			}
+			config.Logger.Info().Msg("Shutting down PorterAPI server")
 			return nil
 		})
 	}

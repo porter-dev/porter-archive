@@ -158,7 +158,7 @@ func (authn *AuthNPorterToken) getPorterTokenFromRequest(r *http.Request) (*mode
 
 	porterTokenID, err := strconv.ParseUint(r.Header.Get("X-Porter-Token-ID"), 10, 64)
 	if err != nil {
-		return nil, errInvalidToken
+		return nil, fmt.Errorf("err %w.... %w", err, errInvalidToken)
 	}
 
 	return ValidatePorterToken(authn.config, uint(porterTokenID), porterToken)

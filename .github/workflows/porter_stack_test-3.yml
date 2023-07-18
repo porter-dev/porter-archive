@@ -22,7 +22,9 @@ jobs:
       run: /bin/bash -c "$(curl -fsSL https://install.porter.run)"
     - name: Login to Porter
       timeout-minutes: 30
-      run: porter auth login --token ${{ secrets.PORTER_STACK_7_11 }}
+      env:
+        PORTER_TOKEN: ${{ secrets.PORTER_TOKEN_7_11 }}
+      run: porter auth login --token "$PORTER_TOKEN"
     - name: Deploy stack
       timeout-minutes: 30
       run: go run ./cli/main.go apply

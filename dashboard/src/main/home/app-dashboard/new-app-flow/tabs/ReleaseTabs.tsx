@@ -163,7 +163,7 @@ const ReleaseTabs: React.FC<Props> = ({
     return (
         <>
             <TabSelector
-                options={currentCluster?.cloud_provider === "GKE" ?
+                options={currentCluster?.cloud_provider === "GCP" ?
                     [
                         { label: 'Main', value: 'main' },
                         { label: 'Resources', value: 'resources' },

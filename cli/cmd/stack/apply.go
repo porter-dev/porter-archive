@@ -26,7 +26,18 @@ type StackConf struct {
 func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worker, app *Application, applicationName string, cliConf *config.CLIConfig) ([]*switchboardTypes.Resource, error) {
 	// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
 	var builder string
-	resources, builder, err := createV1BuildResources(client, app, applicationName, cliConf.Project, cliConf.Cluster)
+	
+	namespace, envMeta, err := HandleEnvironmentConfiguration(client, cliConf, applicationName)
+	if err != nil {
+		return nil, err
+	}
+	
+	stackConf, err := createStackConf(client, app, namespace, applicationName, cliConf.Project, cliConf.Cluster)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing porter.yaml: %w", err)
+	}
+
+	resources, builder, err := createV1BuildResources(client, app, stackConf)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 	}
@@ -44,6 +55,8 @@ func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worke
 		BuildImageDriverName: GetBuildImageDriverName(applicationName),
 		PorterYAML:           applicationBytes,
 		Builder:              builder,
+		Namespace:            namespace,
+		EnvironmentMeta:      envMeta,
 	}
 
 	worker.RegisterHook("deploy-stack", deployStackHook)
@@ -102,16 +115,8 @@ func createAppEvent(client *api.Client, applicationName string, cliConf *config.
 	return nil
 }
 
-func createV1BuildResources(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) ([]*switchboardTypes.Resource, string, error) {
-	var builder string
+func createV1BuildResources(client *api.Client, app *Application, stackConf *StackConf) ([]*switchboardTypes.Resource, string, error) {
 	resources := make([]*switchboardTypes.Resource, 0)
-
-	stackConf, err := createStackConf(client, app, stackName, projectID, clusterID)
-	if err != nil {
-		return nil, "", err
-	}
-
-	var bi, pi *switchboardTypes.Resource
 
 	// look up build settings from DB if none specified in porter.yaml
 	if stackConf.parsed.Build == nil {
@@ -129,7 +134,7 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 
 	// only include build and push steps if an image is not already specified
 	if stackConf.parsed.Build.Image == nil {
-		bi, pi, builder, err = createV1BuildResourcesFromPorterYaml(stackConf)
+		bi, pi, builder, err := createV1BuildResourcesFromPorterYaml(stackConf)
 
 		if err != nil {
 			return nil, "", err
@@ -158,13 +163,14 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 		} else {
 			color.New(color.FgYellow).Printf("No pre-deploy command found in porter.yaml or helm. \n")
 		}
+
+		return resources, builder, nil
 	}
 
-	return resources, builder, nil
+	return resources, "", nil
 }
 
-func createStackConf(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
-
+func createStackConf(client *api.Client, app *Application, namespace string, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
 	err := config.ValidateCLIEnvironment()
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
@@ -183,7 +189,7 @@ func createStackConf(client *api.Client, app *Application, stackName string, pro
 		stackName: stackName,
 		projectID: projectID,
 		clusterID: clusterID,
-		namespace: fmt.Sprintf("porter-stack-%s", stackName),
+		namespace: namespace,
 	}, nil
 }
 

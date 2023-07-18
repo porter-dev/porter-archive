@@ -64,8 +64,13 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "application-name", Value: stackName})
+	var namespace string
+	if request.Namespace != "" {
+		namespace = request.Namespace
+	} else {
+		namespace = fmt.Sprintf("porter-stack-%s", stackName)
+	}
 
 	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespace)
 	if err != nil {

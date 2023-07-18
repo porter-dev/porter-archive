@@ -19,6 +19,8 @@ type DeployAppHook struct {
 	BuildImageDriverName string
 	PorterYAML           []byte
 	Builder              string
+	Namespace            string
+	EnvironmentMeta      *EnvironmentMeta
 }
 
 func (t *DeployAppHook) PreApply() error {
@@ -40,13 +42,12 @@ func (t *DeployAppHook) DataQueries() map[string]interface{} {
 // deploy the app
 func (t *DeployAppHook) PostApply(driverOutput map[string]interface{}) error {
 	client := config.GetAPIClient()
-	namespace := fmt.Sprintf("porter-stack-%s", t.ApplicationName)
 
 	_, err := client.GetRelease(
 		context.Background(),
 		t.ProjectID,
 		t.ClusterID,
-		namespace,
+		t.Namespace,
 		t.ApplicationName,
 	)
 
@@ -77,25 +78,34 @@ func (t *DeployAppHook) applyApp(client *api.Client, shouldCreate bool, driverOu
 		}
 	}
 
+	req := &types.CreatePorterAppRequest{
+		ClusterID:        t.ClusterID,
+		ProjectID:        t.ProjectID,
+		PorterYAMLBase64: base64.StdEncoding.EncodeToString(t.PorterYAML),
+		ImageInfo:        imageInfo,
+		OverrideRelease:  false, // deploying from the cli will never delete release resources, only append or override
+		Builder:          t.Builder,
+		Namespace:        t.Namespace,
+	}
+
 	_, err := client.CreatePorterApp(
 		context.Background(),
 		t.ProjectID,
 		t.ClusterID,
 		t.ApplicationName,
-		&types.CreatePorterAppRequest{
-			ClusterID:        t.ClusterID,
-			ProjectID:        t.ProjectID,
-			PorterYAMLBase64: base64.StdEncoding.EncodeToString(t.PorterYAML),
-			ImageInfo:        imageInfo,
-			OverrideRelease:  false, // deploying from the cli will never delete release resources, only append or override
-			Builder:          t.Builder,
-		},
+		req,
 	)
+
 	if err != nil {
 		if shouldCreate {
 			return fmt.Errorf("error creating app %s: %w", t.ApplicationName, err)
 		}
 		return fmt.Errorf("error updating app %s: %w", t.ApplicationName, err)
+	}
+
+	if t.EnvironmentMeta != nil {
+		// create preview env record
+
 	}
 
 	return nil

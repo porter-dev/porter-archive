@@ -34,13 +34,15 @@ type ServiceEnv struct {
 	TokenGeneratorSecret string `env:"TOKEN_GENERATOR_SECRET,default=secret"`
 }
 
+// EnvVars holds all the environment variables to be decoded for the AuthManagementService
 type EnvVars struct {
 	// DBEnv holds all the environment variables for DB connection
 	DBEnv env.DBConf
-	// ServiceEnv holds all the environment variables for the AuthManagementService
+	// ServiceEnv holds all the environment variables specific to the AuthManagementService
 	ServiceEnv ServiceEnv
 }
 
+// Config contains all configuration options for the AuthManagementService
 type Config struct {
 	// Port is the port that the AuthManagementService listens on
 	Port int
@@ -95,7 +97,7 @@ func NewService() (AuthManagementService, error) {
 	return server, nil
 }
 
-// ListenAndServe starts the AuthManagementService
+// ListenAndServe starts the AuthManagementService and will shutdown when the context is canceled
 func (a AuthManagementService) ListenAndServe(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

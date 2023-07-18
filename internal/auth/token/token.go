@@ -108,9 +108,12 @@ func GetTokenFromEncoded(tokenString string, conf *TokenGeneratorConf) (*Token, 
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		iby, err := strconv.ParseUint(fmt.Sprintf("%v", claims["iby"]), 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid iby claim: %v", err)
+		var iby uint64
+		if _, ok := claims["iby"]; ok {
+			iby, err = strconv.ParseUint(fmt.Sprintf("%v", claims["iby"]), 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid iby claim: %v", err)
+			}
 		}
 
 		projID, err := strconv.ParseUint(fmt.Sprintf("%v", claims["project_id"]), 10, 64)

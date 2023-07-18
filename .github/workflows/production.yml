@@ -92,7 +92,7 @@ jobs:
           token: ${{ secrets.PORTER_TOKEN_5 }}
       - name: Update Porter Auth
         timeout-minutes: 20
-        uses: porter-dev/porter-update-action@v0.1.0
+        uses: porter-dev/porter-update-config-action@v0.1.0
         with:
           app: porter-auth
           cluster: "9"

@@ -69,6 +69,8 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 			} else {
 				fmt.Printf("errors is of type: %T\n", errors)
 			}
+		} else {
+			fmt.Printf("errors not found in metadata. here is metadata: %v\n", request.Metadata)
 		}
 	}
 

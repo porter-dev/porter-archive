@@ -142,7 +142,7 @@ func (authn *AuthN) handleForbiddenForSession(
 }
 
 func (authn *AuthN) verifyTokenWithNext(w http.ResponseWriter, r *http.Request, tok *token.Token) {
-	// if the token has a stored token id and secret we check that the token is valid in the database
+	// if the token has a stored token id we check that the token is valid in the database
 	if tok.TokenID != "" {
 		apiToken, err := authn.config.Repo.APIToken().ReadAPIToken(tok.ProjectID, tok.TokenID)
 		if err != nil {

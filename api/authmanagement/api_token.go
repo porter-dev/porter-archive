@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/dgrijalva/jwt-go"
 
-	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/models"
 
@@ -46,67 +47,50 @@ func (a AuthManagementService) APIToken(ctx context.Context, req *connect.Reques
 		return resp, telemetry.Error(ctx, span, err, "error listing api tokens")
 	}
 
+	var apiToken *models.APIToken
 	for _, tok := range existingTokens {
 		if tok.Name == "porter-agent-token" {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "token-exists", Value: true})
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "token-id", Value: tok.UniqueID})
-
-			now := time.Now().UTC()
-
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-				"sub_kind":   "porter-agent",
-				"sub":        string(token.API),
-				"iby":        0, // Using as a placeholder for system user as it is not checked in the api authn flow, but might make sense to later create a system user in the db
-				"iat":        fmt.Sprintf("%d", now.Unix()),
-				"project_id": tok.ProjectID,
-				"token_id":   tok.UniqueID,
-			})
-
-			encodedToken, err := token.SignedString([]byte(a.Config.TokenGeneratorSecret))
-			if err != nil {
-				return resp, telemetry.Error(ctx, span, err, "error signing token")
-			}
-
-			resp.Msg.Token = encodedToken
-
-			return resp, nil
+			apiToken = tok
 		}
 	}
 
-	tokenID, err := uuid.NewUUID()
-	if err != nil {
-		return resp, telemetry.Error(ctx, span, err, "error generating tokenID")
+	if apiToken == nil {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "token-exists", Value: false})
+
+		tokenID, err := uuid.NewUUID()
+		if err != nil {
+			return resp, telemetry.Error(ctx, span, err, "error generating tokenID")
+		}
+
+		expiresAt := time.Now().Add(time.Hour * 24 * 365)
+
+		apiToken = &models.APIToken{
+			UniqueID:   tokenID.String(),
+			ProjectID:  uint(req.Msg.ProjectId),
+			Expiry:     &expiresAt,
+			Revoked:    false,
+			PolicyUID:  "developer",
+			PolicyName: "developer",
+			Name:       "porter-agent-token",
+		}
+
+		apiToken, err = a.Config.APITokenManager.CreateAPIToken(apiToken)
+		if err != nil {
+			return resp, telemetry.Error(ctx, span, err, "error creating api token")
+		}
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "token-id", Value: tokenID.String()})
-
-	expiresAt := time.Now().Add(time.Hour * 24 * 365)
-
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "expires-at", Value: expiresAt.String()})
-
-	apiToken := &models.APIToken{
-		UniqueID:   tokenID.String(),
-		ProjectID:  uint(req.Msg.ProjectId),
-		Expiry:     &expiresAt,
-		Revoked:    false,
-		PolicyUID:  "developer",
-		PolicyName: "developer",
-		Name:       "porter-agent-token",
-	}
-
-	apiToken, err = a.Config.APITokenManager.CreateAPIToken(apiToken)
-	if err != nil {
-		return resp, telemetry.Error(ctx, span, err, "error creating api token")
-	}
-
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "token-id", Value: apiToken.UniqueID})
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "token-id", Value: apiToken.UniqueID},
+		telemetry.AttributeKV{Key: "expiry", Value: apiToken.Expiry.UTC().String()},
+	)
 
 	now := time.Now().UTC()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub_kind":   "porter-agent",
 		"sub":        string(token.API),
-		"iby":        0, // TODO: add a system user id
 		"iat":        fmt.Sprintf("%d", now.Unix()),
 		"project_id": apiToken.ProjectID,
 		"token_id":   apiToken.UniqueID,

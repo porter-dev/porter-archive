@@ -56,13 +56,17 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	}
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "porter-app-name", Value: stackName},
-		telemetry.AttributeKV{Key: "porter-app-event-type-id", Value: string(request.Type)},
+		telemetry.AttributeKV{Key: "porter-app-event-type", Value: string(request.Type)},
 		telemetry.AttributeKV{Key: "porter-app-event-status", Value: request.Status},
 		telemetry.AttributeKV{Key: "porter-app-event-external-source", Value: request.TypeExternalSource},
 		telemetry.AttributeKV{Key: "porter-app-event-id", Value: request.ID},
 	)
-
+	fmt.Printf("here is the request type: %v\n", request.Type)
+	fmt.Printf("here is the type of type: %T\n", request.Type)
+	fmt.Printf("here is the type of string type: %T\n", string(request.Type))
+	fmt.Println("i am updating the app event")
 	if request.Type == types.PorterAppEventType_Build {
+		fmt.Println("i am updating the app event for build")
 		if errors, ok := request.Metadata["errors"]; ok {
 			if errs, ok := errors.(map[string]string); ok {
 				reportErrors(ctx, errs, p.Config(), user, project, stackName)

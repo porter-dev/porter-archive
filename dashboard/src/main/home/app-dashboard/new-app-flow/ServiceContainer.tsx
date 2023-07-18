@@ -8,12 +8,12 @@ import worker from "assets/worker.png";
 import job from "assets/job.png";
 
 import Spacer from "components/porter/Spacer";
-import WebTabs from "./WebTabs";
-import WorkerTabs from "./WorkerTabs";
-import JobTabs from "./JobTabs";
+import WebTabs from "./tabs/WebTabs";
+import WorkerTabs from "./tabs/WorkerTabs";
+import JobTabs from "./tabs/JobTabs";
 import { Service } from "./serviceTypes";
 import StatusFooter from "../expanded-app/StatusFooter";
-import ReleaseTabs from "./ReleaseTabs";
+import ReleaseTabs from "./tabs/ReleaseTabs";
 
 interface ServiceProps {
   service: Service;

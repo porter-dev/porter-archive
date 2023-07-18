@@ -22,11 +22,11 @@ jobs:
       run: /bin/bash -c "$(curl -fsSL https://install.porter.run)"
     - name: Deploy stack
       timeout-minutes: 30
-      run: porter auth login --token "$PORTER_TOKEN" && go run ./cli/main.go apply
+      run: porter auth login --token $PORTER_TOKEN && go run ./cli/main.go apply
       env:
         PORTER_CLUSTER: "11"
         PORTER_HOST: https://9ada-160-72-72-58.ngrok-free.app
         PORTER_PROJECT: "7"
         PORTER_STACK_NAME: test-3
         PORTER_TAG: ${{ steps.vars.outputs.sha_short }}
-        PORTER_TOKEN: ${{ secrets.PORTER_STACK_8_11 }}
+        PORTER_TOKEN: ${{ secrets.PORTER_STACK_7_11 }}

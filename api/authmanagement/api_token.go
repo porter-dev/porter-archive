@@ -42,11 +42,29 @@ func (a AuthManagementService) APIToken(ctx context.Context, req *connect.Reques
 		return resp, telemetry.Error(ctx, span, err, "error listing api tokens")
 	}
 
-	for _, token := range existingTokens {
-		if token.Name == "porter-agent-token" {
+	for _, tok := range existingTokens {
+		if tok.Name == "porter-agent-token" {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "token-exists", Value: true})
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "token-id", Value: token.UniqueID})
-			resp.Msg.Token = token.UniqueID
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "token-id", Value: tok.UniqueID})
+
+			now := time.Now().UTC()
+
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+				"sub_kind":   "porter-agent",
+				"sub":        string(token.API),
+				"iby":        0, // TODO: add a system user id
+				"iat":        fmt.Sprintf("%d", now.Unix()),
+				"project_id": tok.ProjectID,
+				"token_id":   tok.UniqueID,
+			})
+
+			encodedToken, err := token.SignedString([]byte(a.Config.TokenGeneratorSecret))
+			if err != nil {
+				return resp, telemetry.Error(ctx, span, err, "error signing token")
+			}
+
+			resp.Msg.Token = encodedToken
+
 			return resp, nil
 		}
 	}

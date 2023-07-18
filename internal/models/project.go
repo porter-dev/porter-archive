@@ -48,6 +48,9 @@ type Project struct {
 	// provisioned aws infra
 	Infras []Infra `json:"infras"`
 
+	// configured environments
+	EnvironmentConfigs []EnvironmentConfig `json:"environment_configs"`
+
 	// auth mechanisms
 	KubeIntegrations   []ints.KubeIntegration   `json:"kube_integrations"`
 	BasicIntegrations  []ints.BasicIntegration  `json:"basic_integrations"`

@@ -30,6 +30,8 @@ type PorterApp struct {
 
 	// Porter YAML
 	PorterYamlPath string
+
+	EnvironmentConfigID uint
 }
 
 // ToPorterAppType generates an external types.PorterApp to be shared over REST

@@ -32,25 +32,26 @@ type PorterApp struct {
 
 // swagger:model
 type CreatePorterAppRequest struct {
-	ClusterID        uint      `json:"cluster_id"`
-	ProjectID        uint      `json:"project_id"`
-	RepoName         string    `json:"repo_name"`
-	GitBranch        string    `json:"git_branch"`
-	GitRepoID        uint      `json:"git_repo_id"`
-	BuildContext     string    `json:"build_context"`
-	Builder          string    `json:"builder"`
-	Buildpacks       string    `json:"buildpacks"`
-	Dockerfile       string    `json:"dockerfile"`
-	ImageRepoURI     string    `json:"image_repo_uri"`
-	PullRequestURL   string    `json:"pull_request_url"`
-	PorterYAMLBase64 string    `json:"porter_yaml"`
-	PorterYamlPath   string    `json:"porter_yaml_path"`
-	ImageInfo        ImageInfo `json:"image_info" form:"omitempty"`
-	OverrideRelease  bool      `json:"override_release"`
-	EnvGroups        []string  `json:"env_groups"`
-	UserUpdate       bool      `json:"user_update"`
-	FullHelmValues   string    `json:"full_helm_values"`
-	Namespace        string    `json:"namespace"`
+	ClusterID           uint      `json:"cluster_id"`
+	ProjectID           uint      `json:"project_id"`
+	RepoName            string    `json:"repo_name"`
+	GitBranch           string    `json:"git_branch"`
+	GitRepoID           uint      `json:"git_repo_id"`
+	BuildContext        string    `json:"build_context"`
+	Builder             string    `json:"builder"`
+	Buildpacks          string    `json:"buildpacks"`
+	Dockerfile          string    `json:"dockerfile"`
+	ImageRepoURI        string    `json:"image_repo_uri"`
+	PullRequestURL      string    `json:"pull_request_url"`
+	PorterYAMLBase64    string    `json:"porter_yaml"`
+	PorterYamlPath      string    `json:"porter_yaml_path"`
+	ImageInfo           ImageInfo `json:"image_info" form:"omitempty"`
+	OverrideRelease     bool      `json:"override_release"`
+	EnvGroups           []string  `json:"env_groups"`
+	UserUpdate          bool      `json:"user_update"`
+	FullHelmValues      string    `json:"full_helm_values"`
+	Namespace           string    `json:"namespace"`
+	EnvironmentConfigID uint      `json:"environment_config_id"`
 }
 
 type UpdatePorterAppRequest struct {

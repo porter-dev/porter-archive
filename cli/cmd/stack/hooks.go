@@ -20,7 +20,7 @@ type DeployAppHook struct {
 	PorterYAML           []byte
 	Builder              string
 	Namespace            string
-	EnvironmentMeta      *EnvironmentMeta
+	EnvironmentMeta      EnvironmentMeta
 }
 
 func (t *DeployAppHook) PreApply() error {
@@ -88,6 +88,10 @@ func (t *DeployAppHook) applyApp(client *api.Client, shouldCreate bool, driverOu
 		Namespace:        t.Namespace,
 	}
 
+	if t.EnvironmentMeta.EnvironmentConfigID != 0 {
+		req.EnvironmentConfigID = t.EnvironmentMeta.EnvironmentConfigID
+	}
+
 	_, err := client.CreatePorterApp(
 		context.Background(),
 		t.ProjectID,
@@ -103,9 +107,24 @@ func (t *DeployAppHook) applyApp(client *api.Client, shouldCreate bool, driverOu
 		return fmt.Errorf("error updating app %s: %w", t.ApplicationName, err)
 	}
 
-	if t.EnvironmentMeta != nil {
+	if t.EnvironmentMeta.GitHubMetadata.BranchFrom != "" {
+		color.New(color.FgGreen).Printf("Creating preview environment for app %s based on branch '%s'\n", t.ApplicationName, t.EnvironmentMeta.GitHubMetadata.BranchFrom)
 		// create preview env record
+		_, err = client.CreatePreviewEnvironment(
+			context.Background(),
+			t.ProjectID,
+			t.ClusterID,
+			&types.CreatePreviewEnvironmentRequest{
+				EnvironmentConfigID: t.EnvironmentMeta.EnvironmentConfigID,
+				GitRepoOwner:        t.EnvironmentMeta.GitHubMetadata.RepoOwner,
+				GitRepoName:         t.EnvironmentMeta.GitHubMetadata.Repo,
+				Branch:              t.EnvironmentMeta.GitHubMetadata.BranchFrom,
+			},
+		)
 
+		if err != nil {
+			return fmt.Errorf("error creating preview environment: %w", err)
+		}
 	}
 
 	return nil

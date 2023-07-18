@@ -37,7 +37,17 @@ func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*mo
 func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string) (*models.PorterApp, error) {
 	app := &models.PorterApp{}
 
-	if err := repo.db.Where("cluster_id = ? AND name = ?", clusterID, name).Limit(1).Find(&app).Error; err != nil {
+	if err := repo.db.Where("cluster_id = ? AND name = ? AND environment_config_id IS NULL", clusterID, name).Limit(1).Find(&app).Error; err != nil {
+		return nil, err
+	}
+
+	return app, nil
+}
+
+func (repo *PorterAppRepository) ReadPorterAppByNameInEnvironment(clusterID uint, name string, envConfigID uint) (*models.PorterApp, error) {
+	app := &models.PorterApp{}
+
+	if err := repo.db.Where("cluster_id = ? AND name = ? AND environment_config_id = ?", clusterID, name, envConfigID).First(&app).Error; err != nil {
 		return nil, err
 	}
 

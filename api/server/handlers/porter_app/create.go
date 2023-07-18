@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/telemetry"
+	"gorm.io/gorm"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -240,17 +241,6 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		existing, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error reading app from DB")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		} else if existing.Name != "" {
-			err = telemetry.Error(ctx, span, err, "app with name already exists in project")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
-			return
-		}
-
 		app := &models.PorterApp{
 			Name:      stackName,
 			ClusterID: cluster.ID,
@@ -266,6 +256,35 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			ImageRepoURI:   request.ImageRepoURI,
 			PullRequestURL: request.PullRequestURL,
 			PorterYamlPath: request.PorterYamlPath,
+		}
+
+		if request.EnvironmentConfigID != 0 {
+			existing, err := c.Repo().PorterApp().ReadPorterAppByNameInEnvironment(cluster.ID, stackName, request.EnvironmentConfigID)
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				err = telemetry.Error(ctx, span, err, "error reading app from DB")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
+
+			if existing != nil {
+				err = telemetry.Error(ctx, span, err, "app with name already exists in environment")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
+				return
+			}
+
+			app.EnvironmentConfigID = request.EnvironmentConfigID
+
+		} else {
+			existing, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "error reading app from DB")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			} else if existing.Name != "" {
+				err = telemetry.Error(ctx, span, err, "app with name already exists in project")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
+				return
+			}
 		}
 
 		// create the db entry
@@ -380,12 +399,23 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 
 		// update the DB entry
-		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error reading app from DB")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
+		var app *models.PorterApp
+		if request.EnvironmentConfigID != 0 {
+			app, err = c.Repo().PorterApp().ReadPorterAppByNameInEnvironment(cluster.ID, stackName, request.EnvironmentConfigID)
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				err = telemetry.Error(ctx, span, err, "error reading app from DB")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
+		} else {
+			app, err = c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "error reading app from DB")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
 		}
+
 		if app == nil {
 			err = telemetry.Error(ctx, span, nil, "app with name does not exist in project")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))

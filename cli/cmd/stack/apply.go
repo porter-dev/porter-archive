@@ -26,20 +26,20 @@ type StackConf struct {
 func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worker, app *Application, applicationName string, cliConf *config.CLIConfig) ([]*switchboardTypes.Resource, error) {
 	// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
 	var builder string
-	
+
 	namespace, envMeta, err := HandleEnvironmentConfiguration(client, cliConf, applicationName)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	stackConf, err := createStackConf(client, app, namespace, applicationName, cliConf.Project, cliConf.Cluster)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing porter.yaml: %w", err)
 	}
 
-	resources, builder, err := createV1BuildResources(client, app, stackConf)
+	resources, builder, err := createV1BuildResources(client, app, stackConf, envMeta)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
+		return nil, err
 	}
 
 	applicationBytes, err := yaml.Marshal(app)
@@ -115,20 +115,30 @@ func createAppEvent(client *api.Client, applicationName string, cliConf *config.
 	return nil
 }
 
-func createV1BuildResources(client *api.Client, app *Application, stackConf *StackConf) ([]*switchboardTypes.Resource, string, error) {
+func createV1BuildResources(client *api.Client, app *Application, stackConf *StackConf, envMeta EnvironmentMeta) ([]*switchboardTypes.Resource, string, error) {
 	resources := make([]*switchboardTypes.Resource, 0)
 
 	// look up build settings from DB if none specified in porter.yaml
 	if stackConf.parsed.Build == nil {
 		color.New(color.FgYellow).Printf("No build values specified in porter.yaml, attempting to load stack build settings instead \n")
 
-		res, err := client.GetPorterApp(context.Background(), stackConf.projectID, stackConf.clusterID, stackConf.stackName)
+		var converted Build
+		if envMeta.EnvironmentConfigID == 0 {
+			res, err := client.GetPorterApp(context.Background(), stackConf.projectID, stackConf.clusterID, stackConf.stackName)
+			if err != nil {
+				return nil, "", fmt.Errorf("unable to read build info from DB: %w", err)
+			}
+			converted = convertToBuild(res)
+		} else {
+			color.New(color.FgYellow).Printf("Looking for application %s in specified environment \n", stackConf.stackName)
 
-		if err != nil {
-			return nil, "", fmt.Errorf("unable to read build info from DB: %w", err)
+			res, err := client.GetPorterAppByEnvironment(context.Background(), stackConf.projectID, stackConf.clusterID, envMeta.EnvironmentConfigID, stackConf.stackName)
+			if err != nil {
+				return nil, "", fmt.Errorf("unable to read build info from DB: %w", err)
+			}
+			converted = convertToBuild(res)
 		}
 
-		converted := convertToBuild(res)
 		stackConf.parsed.Build = &converted
 	}
 

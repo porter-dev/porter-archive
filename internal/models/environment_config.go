@@ -21,6 +21,7 @@ type EnvironmentConfig struct {
 	Auto bool
 
 	PreviewEnvironments []PreviewEnvironment
+	PorterApps          []PorterApp
 }
 
 func (c *EnvironmentConfig) ToEnvironmentConfigType() *types.EnvironmentConfig {

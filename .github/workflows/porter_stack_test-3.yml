@@ -17,6 +17,9 @@ jobs:
     - name: Set Github tag
       id: vars
       run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    - name: Login to Porter
+      timeout-minutes: 30
+      run: porter auth login --token ${{ secrets.PORTER_STACK_7_11 }}
     - name: Deploy stack
       timeout-minutes: 30
       run: go run ./cli/main.go apply

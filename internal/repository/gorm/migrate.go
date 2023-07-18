@@ -62,6 +62,8 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.AWSAssumeRoleChain{},
 		&models.PorterApp{},
 		&models.PorterAppEvent{},
+		&models.EnvironmentConfig{},
+		&models.PreviewEnvironment{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

@@ -52,6 +52,7 @@ const (
 	URLParamStackName             URLParam = "stack_name"
 	URLParamStackEventID          URLParam = "stack_event_id"
 	URLParamPorterAppEventID      URLParam = "porter_app_event_id"
+	URLParamEnvConfigID           URLParam = "env_config_id"
 )
 
 type Path struct {

@@ -50,6 +50,7 @@ type CreatePorterAppRequest struct {
 	EnvGroups        []string  `json:"env_groups"`
 	UserUpdate       bool      `json:"user_update"`
 	FullHelmValues   string    `json:"full_helm_values"`
+	Namespace        string    `json:"namespace"`
 }
 
 type UpdatePorterAppRequest struct {

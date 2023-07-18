@@ -6,6 +6,10 @@ helmCharts:
   repo: https://charts.getporter.dev
   releaseName: porter-server
   valuesFile: server.yaml
+- name: web
+  repo: https://charts.getporter.dev
+  releaseName: porter-auth
+  valuesFile: auth.yaml
 
 configMapGenerator:
 - name: porter-server-env
@@ -34,3 +38,23 @@ patchesStrategicMerge:
         - name: ssh-keys
           hostPath:
             path: /local-user/.ssh
+- |-
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: porter-auth-web
+  spec:
+    template:
+      spec:
+        containers:
+          - name: web
+            envFrom:
+              - configMapRef:
+                  name: porter-server-env
+            volumeMounts:
+              - mountPath: /app/ssh
+                name: ssh-keys
+        volumes:
+          - name: ssh-keys
+            hostPath:
+              path: /local-user/.ssh

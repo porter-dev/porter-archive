@@ -104,5 +104,9 @@ func TrackStackBuildFailure(
 		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 		StackName:              stackName,
 		ErrorMessage:           errorMessage,
+		Email:                  user.Email,
+		FirstName:              user.FirstName,
+		LastName:               user.LastName,
+		CompanyName:            user.CompanyName,
 	}))
 }

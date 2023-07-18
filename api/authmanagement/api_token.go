@@ -18,7 +18,9 @@ import (
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 )
 
-// APIToken returns an encoded token for programmatic access to the Porter UI
+// APIToken returns an encoded token for programmatic access to the Porter UI. Currently, this token is hardcoded
+// to use the "porter-agent-token" name. Once this endpoint is used for multiple tokens, the GRPC request should
+// include the token name or type as an argument.
 func (a AuthManagementService) APIToken(ctx context.Context, req *connect.Request[porterv1.APITokenRequest]) (*connect.Response[porterv1.APITokenResponse], error) {
 	ctx, span := telemetry.NewSpan(ctx, "auth-endpoint-api-token")
 	defer span.End()
@@ -52,7 +54,7 @@ func (a AuthManagementService) APIToken(ctx context.Context, req *connect.Reques
 			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 				"sub_kind":   "porter-agent",
 				"sub":        string(token.API),
-				"iby":        0, // TODO: add a system user id
+				"iby":        0, // Using as a placeholder for system user as it is not checked in the api authn flow, but might make sense to later create a system user in the db
 				"iat":        fmt.Sprintf("%d", now.Unix()),
 				"project_id": tok.ProjectID,
 				"token_id":   tok.UniqueID,

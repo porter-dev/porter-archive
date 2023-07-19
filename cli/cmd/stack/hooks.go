@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/fatih/color"
@@ -20,7 +19,6 @@ type DeployAppHook struct {
 	BuildImageDriverName string
 	PorterYAML           []byte
 	Builder              string
-	BuildEventID         string
 }
 
 func (t *DeployAppHook) PreApply() error {
@@ -29,15 +27,6 @@ func (t *DeployAppHook) PreApply() error {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
 		return fmt.Errorf("%s: %w", errMsg, err)
 	}
-
-	if os.Getenv("GITHUB_RUN_ID") != "" {
-		buildEventId, err := createAppEvent(t.Client, t.ApplicationName, t.ProjectID, t.ClusterID)
-		if err != nil {
-			return err
-		}
-		t.BuildEventID = buildEventId
-	}
-
 	return nil
 }
 
@@ -50,17 +39,10 @@ func (t *DeployAppHook) DataQueries() map[string]interface{} {
 
 // deploy the app
 func (t *DeployAppHook) PostApply(driverOutput map[string]interface{}) error {
-	eventRequest := types.CreateOrUpdatePorterAppEventRequest{
-		Status:   "SUCCESS",
-		Type:     types.PorterAppEventType_Build,
-		Metadata: map[string]any{},
-		ID:       t.BuildEventID,
-	}
-	_, _ = t.Client.CreateOrUpdatePorterAppEvent(context.Background(), t.ProjectID, t.ClusterID, t.ApplicationName, &eventRequest)
-
+	client := config.GetAPIClient()
 	namespace := fmt.Sprintf("porter-stack-%s", t.ApplicationName)
 
-	_, err := t.Client.GetRelease(
+	_, err := client.GetRelease(
 		context.Background(),
 		t.ProjectID,
 		t.ClusterID,
@@ -76,10 +58,10 @@ func (t *DeployAppHook) PostApply(driverOutput map[string]interface{}) error {
 		color.New(color.FgGreen).Printf("Found release for app %s: attempting update\n", t.ApplicationName)
 	}
 
-	return t.applyApp(shouldCreate, driverOutput)
+	return t.applyApp(client, shouldCreate, driverOutput)
 }
 
-func (t *DeployAppHook) applyApp(shouldCreate bool, driverOutput map[string]interface{}) error {
+func (t *DeployAppHook) applyApp(client *api.Client, shouldCreate bool, driverOutput map[string]interface{}) error {
 	var imageInfo types.ImageInfo
 	image, ok := driverOutput["image"].(string)
 	// if it contains a $, then it means the query didn't resolve to anything
@@ -95,7 +77,7 @@ func (t *DeployAppHook) applyApp(shouldCreate bool, driverOutput map[string]inte
 		}
 	}
 
-	_, err := t.Client.CreatePorterApp(
+	_, err := client.CreatePorterApp(
 		context.Background(),
 		t.ProjectID,
 		t.ClusterID,
@@ -119,24 +101,5 @@ func (t *DeployAppHook) applyApp(shouldCreate bool, driverOutput map[string]inte
 	return nil
 }
 
-func (t *DeployAppHook) OnConsolidatedErrors(errors map[string]error) {
-	errorStringMap := make(map[string]string)
-	for k, v := range errors {
-		errorStringMap[k] = v.Error()
-	}
-	eventRequest := types.CreateOrUpdatePorterAppEventRequest{
-		Status: "FAILED",
-		Type:   types.PorterAppEventType_Build,
-		Metadata: map[string]any{
-			"errors": errorStringMap,
-		},
-		ID: t.BuildEventID,
-	}
-	_, _ = t.Client.CreateOrUpdatePorterAppEvent(context.Background(), t.ProjectID, t.ClusterID, t.ApplicationName, &eventRequest)
-}
-
-func (t *DeployAppHook) OnError(err error) {
-	t.OnConsolidatedErrors(map[string]error{
-		"pre-apply": err,
-	})
-}
+func (t *DeployAppHook) OnConsolidatedErrors(map[string]error) {}
+func (t *DeployAppHook) OnError(error)                         {}

@@ -96,6 +96,9 @@ func (b *Build) getV1BuildImage(appName string, env map[string]string, namespace
 	config.Build.Context = b.GetContext()
 	config.Build.Env = CopyEnv(env)
 
+	config.Build.Builder = "heroku/buildpacks:20"
+	config.Build.Buildpacks = []string{"heroku/nodejs"}
+
 	rawConfig := make(map[string]any)
 
 	err := mapstructure.Decode(config, &rawConfig)

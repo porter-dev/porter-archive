@@ -2459,7 +2459,7 @@ const updateOnboardingStep = baseApi<
     project_id: number;
   }
 >("POST", ({ project_id }) => {
-  return `/api//projects/${project_id}/onboarding_step`;
+  return `/api/projects/${project_id}/onboarding_step`;
 });
 
 const updateStackStep = baseApi<

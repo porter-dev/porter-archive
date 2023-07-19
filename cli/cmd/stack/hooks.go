@@ -86,10 +86,7 @@ func (t *DeployAppHook) applyApp(client *api.Client, shouldCreate bool, driverOu
 		OverrideRelease:  false, // deploying from the cli will never delete release resources, only append or override
 		Builder:          t.Builder,
 		Namespace:        t.Namespace,
-	}
-
-	if t.EnvironmentMeta.EnvironmentConfigID != 0 {
-		req.EnvironmentConfigID = t.EnvironmentMeta.EnvironmentConfigID
+		EnvironmentConfigID: t.EnvironmentMeta.EnvironmentConfigID,
 	}
 
 	_, err := client.CreatePorterApp(

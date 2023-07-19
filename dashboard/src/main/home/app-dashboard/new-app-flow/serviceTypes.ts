@@ -165,6 +165,9 @@ const WebService = {
                 hosts: service.ingress.customDomain.value ? [service.ingress.customDomain.value] : [],
                 porter_hosts: service.ingress.porterHosts.value ? [service.ingress.porterHosts.value] : [],
             },
+            service: {
+                port: service.port.value,
+            },
             health: {
                 startupProbe: {
                     enabled: service.health.startupProbe.enabled.value,

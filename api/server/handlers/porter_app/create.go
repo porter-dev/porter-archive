@@ -264,8 +264,9 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
-		
-		if existing != nil && request.EnvironmentConfigID == 0 {
+
+		// asssuming that namespace not being set means the app is running in production env
+		if existing != nil && request.Namespace == "" {
 			err = telemetry.Error(ctx, span, err, "app with name already exists in environment")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 			return

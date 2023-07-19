@@ -2,9 +2,7 @@ package porter_app
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -38,8 +36,10 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	defer span.End()
 
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-	user, _ := ctx.Value(types.UserScope).(*models.User)
-	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "cluster-id", Value: int(cluster.ID)},
+		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},
+	)
 
 	request := &types.CreateOrUpdatePorterAppEventRequest{}
 	if ok := p.DecodeAndValidate(w, r, request); !ok {
@@ -56,15 +56,11 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	}
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "porter-app-name", Value: stackName},
-		telemetry.AttributeKV{Key: "porter-app-event-type", Value: string(request.Type)},
+		telemetry.AttributeKV{Key: "porter-app-event-type-id", Value: request.Type},
 		telemetry.AttributeKV{Key: "porter-app-event-status", Value: request.Status},
 		telemetry.AttributeKV{Key: "porter-app-event-external-source", Value: request.TypeExternalSource},
 		telemetry.AttributeKV{Key: "porter-app-event-id", Value: request.ID},
 	)
-
-	if request.Type == types.PorterAppEventType_Build {
-		reportBuildStatus(ctx, request, p.Config(), user, project, stackName)
-	}
 
 	if request.ID == "" {
 		event, err := p.createNewAppEvent(ctx, *cluster, stackName, request.Status, string(request.Type), request.TypeExternalSource, request.Metadata)
@@ -84,34 +80,6 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		return
 	}
 	p.WriteResult(w, r, event)
-}
-
-func reportBuildStatus(ctx context.Context, request *types.CreateOrUpdatePorterAppEventRequest, config *config.Config, user *models.User, project *models.Project, stackName string) {
-	ctx, span := telemetry.NewSpan(ctx, "report-build-status")
-	defer span.End()
-
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-build-status", Value: request.Status})
-
-	var errStr string
-	if errors, ok := request.Metadata["errors"]; ok {
-		if errs, ok := errors.(map[string]interface{}); ok {
-			errStringMap := make(map[string]string)
-			for k, v := range errs {
-				if valueStr, ok := v.(string); ok {
-					errStringMap[k] = valueStr
-				}
-			}
-
-			for k, v := range errStringMap {
-				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: telemetry.AttributeKey(fmt.Sprintf("resource-%s", k)), Value: v})
-				errStr += k + ": " + v + ", "
-			}
-			errStr = strings.TrimSuffix(errStr, ", ")
-			_ = telemetry.Error(ctx, span, nil, errStr)
-		}
-	}
-
-	_ = TrackStackBuildStatus(config, user, project, stackName, errStr, request.Status)
 }
 
 // createNewAppEvent will create a new app event for the given porter app name. If the app event is an agent event, then it will be created only if there is no existing event which has the agent ID. In the case that an existing event is found, that will be returned instead

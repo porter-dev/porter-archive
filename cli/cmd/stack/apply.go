@@ -36,7 +36,7 @@ func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worke
 		return nil, fmt.Errorf("malformed application definition: %w", err)
 	}
 
-	deployAppHook := &DeployAppHook{
+	deployStackHook := &DeployAppHook{
 		Client:               client,
 		ApplicationName:      applicationName,
 		ProjectID:            cliConf.Project,
@@ -46,12 +46,19 @@ func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worke
 		Builder:              builder,
 	}
 
-	worker.RegisterHook("deploy-app", deployAppHook)
+	worker.RegisterHook("deploy-stack", deployStackHook)
+	if os.Getenv("GITHUB_RUN_ID") != "" {
+		err := createAppEvent(client, applicationName, cliConf)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return resources, nil
 }
 
 // Create app event to signfy start of build
-func createAppEvent(client *api.Client, applicationName string, projectId, clusterId uint) (string, error) {
+func createAppEvent(client *api.Client, applicationName string, cliConf *config.CLIConfig) error {
 	req := &types.CreateOrUpdatePorterAppEventRequest{
 		Status:             "PROGRESSING",
 		Type:               types.PorterAppEventType_Build,
@@ -64,7 +71,7 @@ func createAppEvent(client *api.Client, applicationName string, projectId, clust
 
 	repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 	if len(repoNameSplit) != 2 {
-		return "", fmt.Errorf("unable to parse GITHUB_REPOSITORY")
+		return fmt.Errorf("unable to parse GITHUB_REPOSITORY")
 	}
 	req.Metadata["repo"] = repoNameSplit[1]
 
@@ -72,7 +79,7 @@ func createAppEvent(client *api.Client, applicationName string, projectId, clust
 	if actionRunID != "" {
 		arid, err := strconv.Atoi(actionRunID)
 		if err != nil {
-			return "", fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+			return fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
 		}
 		req.Metadata["action_run_id"] = arid
 	}
@@ -81,18 +88,18 @@ func createAppEvent(client *api.Client, applicationName string, projectId, clust
 	if repoOwnerAccountID != "" {
 		arid, err := strconv.Atoi(repoOwnerAccountID)
 		if err != nil {
-			return "", fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+			return fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
 		}
 		req.Metadata["github_account_id"] = arid
 	}
 
 	ctx := context.Background()
-	event, err := client.CreateOrUpdatePorterAppEvent(ctx, projectId, clusterId, applicationName, req)
+	_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, applicationName, req)
 	if err != nil {
-		return "", fmt.Errorf("unable to create porter app build event: %w", err)
+		return fmt.Errorf("unable to create porter app build event: %w", err)
 	}
 
-	return event.ID, nil
+	return nil
 }
 
 func createV1BuildResources(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) ([]*switchboardTypes.Resource, string, error) {
@@ -111,6 +118,7 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 		color.New(color.FgYellow).Printf("No build values specified in porter.yaml, attempting to load stack build settings instead \n")
 
 		res, err := client.GetPorterApp(context.Background(), stackConf.projectID, stackConf.clusterID, stackConf.stackName)
+
 		if err != nil {
 			return nil, "", fmt.Errorf("unable to read build info from DB: %w", err)
 		}
@@ -139,6 +147,7 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 			stackConf.clusterID,
 			stackConf.parsed.Env,
 		)
+
 		if err != nil {
 			return nil, "", err
 		}
@@ -155,6 +164,7 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 }
 
 func createStackConf(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
+
 	err := config.ValidateCLIEnvironment()
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)

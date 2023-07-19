@@ -39,7 +39,7 @@ require (
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
 	github.com/opencontainers/image-spec v1.0.3-0.20220114050600-8b9d41f48198
 	github.com/pkg/errors v0.9.1
-	github.com/porter-dev/switchboard v0.0.0-20221019155755-67ff2bf04935
+	github.com/porter-dev/switchboard v0.0.2
 	github.com/rs/zerolog v1.26.0
 	github.com/sendgrid/sendgrid-go v3.8.0+incompatible
 	github.com/spf13/cobra v1.6.1
@@ -52,7 +52,7 @@ require (
 	google.golang.org/api v0.103.0
 	google.golang.org/genproto v0.0.0-20221202195650-67e5cbc046fd
 	google.golang.org/grpc v1.52.0
-	google.golang.org/protobuf v1.29.0
+	google.golang.org/protobuf v1.30.0
 	gorm.io/gorm v1.24.2
 	k8s.io/api v0.26.0
 	k8s.io/apimachinery v0.26.0
@@ -70,7 +70,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.23.1
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry v0.5.0
 	github.com/briandowns/spinner v1.18.1
-	github.com/bufbuild/connect-go v1.5.2
+	github.com/bufbuild/connect-go v1.7.0
+	github.com/bufbuild/connect-grpcreflect-go v1.1.0
 	github.com/bufbuild/connect-opentelemetry-go v0.1.0
 	github.com/glebarez/sqlite v1.6.0
 	github.com/go-chi/chi/v5 v5.0.8

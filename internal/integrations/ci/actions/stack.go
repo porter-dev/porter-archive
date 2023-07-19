@@ -114,7 +114,7 @@ func getStackApplyActionYAML(opts *GetStackApplyActionYAMLOpts) ([]byte, error) 
 				},
 			},
 		},
-		Name: "Deploy to Porter",
+		Name: fmt.Sprintf("Deploy to %s", opts.StackName),
 		Jobs: map[string]GithubActionYAMLJob{
 			"porter-deploy": {
 				RunsOn: "ubuntu-latest",

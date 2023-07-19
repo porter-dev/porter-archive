@@ -1,11 +1,13 @@
 import Input from "components/porter/Input";
-import React from "react";
+import React, { useContext } from "react";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import Checkbox from "components/porter/Checkbox";
-import { Service, WebService } from "./serviceTypes";
+import { Service, WebService } from "../serviceTypes";
 import AnimateHeight, { Height } from "react-animate-height";
+import { Context } from "shared/Context";
+import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, RESOURCE_HEIGHT_WITHOUT_AUTOSCALING, RESOURCE_HEIGHT_WITH_AUTOSCALING } from "./utils";
 
 interface Props {
   service: WebService;
@@ -13,8 +15,7 @@ interface Props {
   setHeight: (height: Height) => void;
 }
 
-const RESOURCE_HEIGHT_WITHOUT_AUTOSCALING = 373;
-const RESOURCE_HEIGHT_WITH_AUTOSCALING = 713;
+
 const NETWORKING_HEIGHT_WITHOUT_INGRESS = 204;
 const NETWORKING_HEIGHT_WITH_INGRESS = 333;
 const ADVANCED_BASE_HEIGHT = 215;
@@ -26,6 +27,7 @@ const WebTabs: React.FC<Props> = ({
   setHeight,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>("main");
+  const { currentCluster } = useContext(Context);
 
   const renderMain = () => {
     setHeight(159);
@@ -132,6 +134,96 @@ const WebTabs: React.FC<Props> = ({
           />
           <Spacer y={1} />
           {getApplicationURLText()}
+        </AnimateHeight>
+      </>
+    );
+  }
+
+  const renderDatabase = () => {
+    setHeight(service.cloudsql.enabled.value ? DATABASE_HEIGHT_ENABLED : DATABASE_HEIGHT_DISABLED)
+    return (
+      <>
+        <Spacer y={1} />
+        <Checkbox
+          checked={service.cloudsql.enabled.value}
+          disabled={service.cloudsql.enabled.readOnly}
+          toggleChecked={() => {
+            editService({
+              ...service,
+              cloudsql: {
+                ...service.cloudsql,
+                enabled: {
+                  readOnly: false,
+                  value: !service.cloudsql.enabled.value,
+                },
+              },
+            });
+          }}
+          disabledTooltip={"You may only edit this field in your porter.yaml."}
+        >
+          <Text color="helper">Securely connect to Google Cloud SQL</Text>
+        </Checkbox>
+        <AnimateHeight height={service.cloudsql.enabled.value ? 'auto' : 0}>
+          <Spacer y={1} />
+          <Input
+            label={"Instance Connection Name"}
+            placeholder="ex: project-123:us-east1:pachyderm"
+            value={service.cloudsql.connectionName.value}
+            disabled={service.cloudsql.connectionName.readOnly}
+            width="300px"
+            setValue={(e) => {
+              editService({
+                ...service,
+                cloudsql: {
+                  ...service.cloudsql,
+                  connectionName: { readOnly: false, value: e },
+                },
+              });
+            }}
+            disabledTooltip={
+              "You may only edit this field in your porter.yaml."
+            }
+          />
+          <Spacer y={1} />
+          <Input
+            label={"DB Port"}
+            placeholder="5432"
+            value={service.cloudsql.dbPort.value}
+            disabled={service.cloudsql.dbPort.readOnly}
+            width="300px"
+            setValue={(e) => {
+              editService({
+                ...service,
+                cloudsql: {
+                  ...service.cloudsql,
+                  dbPort: { readOnly: false, value: e },
+                },
+              });
+            }}
+            disabledTooltip={
+              "You may only edit this field in your porter.yaml."
+            }
+          />
+          <Spacer y={1} />
+          <Input
+            label={"Service Account JSON"}
+            placeholder="ex: { <SERVICE_ACCOUNT_JSON> }"
+            value={service.cloudsql.serviceAccountJSON.value}
+            disabled={service.cloudsql.serviceAccountJSON.readOnly}
+            width="300px"
+            setValue={(e) => {
+              editService({
+                ...service,
+                cloudsql: {
+                  ...service.cloudsql,
+                  serviceAccountJSON: { readOnly: false, value: e },
+                },
+              });
+            }}
+            disabledTooltip={
+              "You may only edit this field in your porter.yaml."
+            }
+          />
         </AnimateHeight>
       </>
     );
@@ -330,7 +422,7 @@ const WebTabs: React.FC<Props> = ({
     return height;
   };
 
-  const renderHealth = () => {
+  const renderAdvanced = () => {
     setHeight(calculateHealthHeight());
     return (
       <>
@@ -671,14 +763,6 @@ const WebTabs: React.FC<Props> = ({
     );
   };
 
-  const renderAdvanced = () => {
-    return (
-      <>
-        {renderHealth()}
-      </>
-    );
-  };
-
   const getApplicationURLText = () => {
     if (service.ingress.hosts.value !== "") {
       return (
@@ -713,24 +797,33 @@ const WebTabs: React.FC<Props> = ({
       )
     }
   }
+
   return (
     <>
-      <>
-        <TabSelector
-          options={[
+      <TabSelector
+        options={currentCluster?.cloud_provider === "GCP" ?
+          [
+            { label: "Main", value: "main" },
+            { label: "Resources", value: "resources" },
+            { label: "Networking", value: "networking" },
+            { label: "Database", value: "database" },
+            { label: "Advanced", value: "advanced" },
+          ] :
+          [
             { label: "Main", value: "main" },
             { label: "Resources", value: "resources" },
             { label: "Networking", value: "networking" },
             { label: "Advanced", value: "advanced" },
-          ]}
-          currentTab={currentTab}
-          setCurrentTab={setCurrentTab}
-        />
-        {currentTab === "main" && renderMain()}
-        {currentTab === "resources" && renderResources()}
-        {currentTab === "networking" && renderNetworking()}
-        {currentTab === "advanced" && renderAdvanced()}
-      </>
+          ]
+        }
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+      />
+      {currentTab === "main" && renderMain()}
+      {currentTab === "resources" && renderResources()}
+      {currentTab === "networking" && renderNetworking()}
+      {currentTab === "database" && renderDatabase()}
+      {currentTab === "advanced" && renderAdvanced()}
     </>
   );
 };

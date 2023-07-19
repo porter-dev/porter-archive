@@ -2,7 +2,7 @@
   push:
     branches:
     - stacks-fix-cli-analytics-control
-name: Deploy to pls-work-1
+name: Deploy to pls-work-1-control
 jobs:
   porter-deploy:
     runs-on: ubuntu-latest

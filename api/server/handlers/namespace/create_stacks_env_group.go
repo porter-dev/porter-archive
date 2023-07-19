@@ -281,7 +281,7 @@ func rolloutStacksApplications(
 			}
 		}()
 
-		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, releases[index].Name)
+		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, releases[index].Name, 0)
 		ctx, span := telemetry.NewSpan(ctx, "serve-update-porter-app")
 		updatedPorterApp, err := c.Repo().PorterApp().UpdatePorterApp(app)
 		if err != nil {

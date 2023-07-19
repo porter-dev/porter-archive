@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type PorterAppListHandler struct {
@@ -25,12 +26,15 @@ func NewPorterAppListHandler(
 }
 
 func (p *PorterAppListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-porter-apps")
+	defer span.End()
+
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
-	porterApps, err := p.Repo().PorterApp().ListPorterAppByClusterID(cluster.ID)
+	porterApps, err := p.Repo().PorterApp().ListPorterAppByClusterID(cluster.ID, 0)
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "Failed to list porter apps")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

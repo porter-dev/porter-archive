@@ -17,7 +17,7 @@ func NewPorterAppRepository(canQuery bool, failingMethods ...string) repository.
 	return &PorterAppRepository{canQuery, strings.Join(failingMethods, ",")}
 }
 
-func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string) (*models.PorterApp, error) {
+func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string, envConfigID uint) (*models.PorterApp, error) {
 	return nil, errors.New("cannot write database")
 }
 
@@ -29,14 +29,10 @@ func (repo *PorterAppRepository) UpdatePorterApp(app *models.PorterApp) (*models
 	return nil, errors.New("cannot write database")
 }
 
-func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*models.PorterApp, error) {
+func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID, envConfigID uint) ([]*models.PorterApp, error) {
 	return nil, errors.New("cannot write database")
 }
 
 func (repo *PorterAppRepository) DeletePorterApp(app *models.PorterApp) (*models.PorterApp, error) {
-	return nil, errors.New("cannot write database")
-}
-
-func (repo *PorterAppRepository) ReadPorterAppByNameInEnvironment(clusterID uint, name string, envConfigID uint) (*models.PorterApp, error) {
 	return nil, errors.New("cannot write database")
 }

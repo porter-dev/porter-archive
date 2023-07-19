@@ -20,3 +20,7 @@ func NewEnvironmentConfigRepository(canQuery bool, failingMethods ...string) rep
 func (repo *EnvironmentConfigRepository) ReadEnvironmentConfig(projectID, clusterID, id uint) (*models.EnvironmentConfig, error) {
 	return nil, errors.New("cannot write database")
 }
+
+func (repo *EnvironmentConfigRepository) ReadDefaultEnvironmentConfig(projectID, clusterID uint) (*models.EnvironmentConfig, error) {
+	return nil, errors.New("cannot write database")
+}

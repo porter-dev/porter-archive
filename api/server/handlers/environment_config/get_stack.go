@@ -64,7 +64,7 @@ func (c *GetEnvConfigStackHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		telemetry.AttributeKV{Key: "stack-name", Value: stackName},
 	)
 
-	app, err := c.Repo().PorterApp().ReadPorterAppByNameInEnvironment(cluster.ID, stackName, uint(envConfigId))
+	app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName, uint(envConfigId))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			err = telemetry.Error(ctx, span, err, "App not found for environment config")

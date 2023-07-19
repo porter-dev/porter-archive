@@ -17,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type OpenStackPRHandler struct {
@@ -34,19 +35,33 @@ func NewOpenStackPRHandler(
 }
 
 func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-secret-and-open-pr")
+	defer span.End()
+
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
 	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
 	if reqErr != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
 		return
 	}
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "stack-name", Value: stackName},
+	)
 
 	request := &types.CreateSecretAndOpenGHPRRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "repo-owner", Value: request.GithubRepoOwner},
+		telemetry.AttributeKV{Key: "repo-name", Value: request.GithubRepoName},
+		telemetry.AttributeKV{Key: "branch", Value: request.Branch},
+		telemetry.AttributeKV{Key: "open-pr", Value: request.OpenPr},
+	)
 
 	client, err := getGithubClient(c.Config(), request.GithubAppInstallationID)
 	if err != nil {
@@ -57,12 +72,14 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// generate porter jwt token
 	jwt, err := token.GetTokenForAPI(user.ID, project.ID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting token for API: %w", err)))
+		err = telemetry.Error(ctx, span, err, "Error getting token for API")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 	encoded, err := jwt.EncodeToken(c.Config().TokenConf)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error encoding API token: %w", err)))
+		err = telemetry.Error(ctx, span, err, "Error encoding token")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -76,7 +93,8 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		request.GithubRepoName,
 	)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error generating secret: %w", err)))
+		err = telemetry.Error(ctx, span, err, "Error creating github secret")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -102,13 +120,15 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if unwrappedErr != nil {
 			if errors.Is(unwrappedErr, actions.ErrProtectedBranch) {
+				err = telemetry.Error(ctx, span, err, "Branch is protected")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
 			} else if errors.Is(unwrappedErr, actions.ErrCreatePRForProtectedBranch) {
+				err = telemetry.Error(ctx, span, err, "Error creating PR for protected branch")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed))
 			}
 		} else {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error setting up application in the github "+
-				"repo: %w", err)))
+			err = telemetry.Error(ctx, span, err, "Error opening PR")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 	}
@@ -120,9 +140,10 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// update DB with the PR url
-		porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+		porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName, 0)
 		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to get porter app db: %w", err)))
+			err = telemetry.Error(ctx, span, err, "Error reading porter app from db")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
@@ -130,7 +151,8 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		_, err = c.Repo().PorterApp().UpdatePorterApp(porterApp)
 		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to write pr url to porter app db: %w", err)))
+			err = telemetry.Error(ctx, span, err, "Unable to write pr url to porter app to db")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 	}

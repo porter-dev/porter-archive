@@ -11,14 +11,15 @@ type EnvironmentConfig struct {
 	gorm.Model
 
 	ProjectID         uint
-	ClusterID         uint
+	ClusterID         uint `gorm:"uniqueIndex:idx_cluster_id_name"`
 	GitInstallationID uint
 
 	WebhookID       string `gorm:"unique"`
 	GithubWebhookID int64
 
-	Name string
-	Auto bool
+	Name      string `gorm:"uniqueIndex:idx_cluster_id_name"`
+	Auto      bool   `gorm:"default:false"`
+	IsDefault bool   `gorm:"default:false"`
 
 	PreviewEnvironments []PreviewEnvironment
 	PorterApps          []PorterApp

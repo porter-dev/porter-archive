@@ -87,7 +87,7 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 	ctx, span := telemetry.NewSpan(ctx, "create-porter-app-event")
 	defer span.End()
 
-	app, err := p.Repo().PorterApp().ReadPorterAppByName(cluster.ID, porterAppName)
+	app, err := p.Repo().PorterApp().ReadPorterAppByName(cluster.ID, porterAppName, 0)
 	if err != nil {
 		return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error retrieving porter app by name for cluster")
 	}
@@ -153,7 +153,7 @@ func (p *CreateUpdatePorterAppEventHandler) updateExistingAppEvent(ctx context.C
 	ctx, span := telemetry.NewSpan(ctx, "update-porter-app-event")
 	defer span.End()
 
-	app, err := p.Repo().PorterApp().ReadPorterAppByName(cluster.ID, porterAppName)
+	app, err := p.Repo().PorterApp().ReadPorterAppByName(cluster.ID, porterAppName, 0)
 	if err != nil {
 		return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error retrieving porter app by name for cluster")
 	}

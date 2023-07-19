@@ -39,7 +39,7 @@ func (c *DeletePorterAppByNameHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	porterApp, appErr := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+	porterApp, appErr := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName, 0)
 	if appErr != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(appErr))
 		return

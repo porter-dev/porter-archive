@@ -61,7 +61,7 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	app, err := p.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+	app, err := p.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName, 0)
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

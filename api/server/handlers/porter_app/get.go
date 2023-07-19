@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type GetPorterAppHandler struct {
@@ -28,17 +29,21 @@ func NewGetPorterAppHandler(
 }
 
 func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-porter-app")
+	defer span.End()
+
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
 	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
 	if reqErr != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
 		return
 	}
 
-	app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+	app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName, 0)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "Failed to read porter app")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

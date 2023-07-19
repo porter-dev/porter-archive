@@ -134,7 +134,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	if request.Builder == "" {
 		// attempt to get builder from db
-		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName, request.EnvironmentConfigID)
 		if err == nil {
 			request.Builder = app.Builder
 		}
@@ -258,33 +258,24 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			PorterYamlPath: request.PorterYamlPath,
 		}
 
-		if request.EnvironmentConfigID != 0 {
-			existing, err := c.Repo().PorterApp().ReadPorterAppByNameInEnvironment(cluster.ID, stackName, request.EnvironmentConfigID)
-			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				err = telemetry.Error(ctx, span, err, "error reading app from DB")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
+		existing, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName, request.EnvironmentConfigID)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			err = telemetry.Error(ctx, span, err, "error reading app from DB")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		
+		if existing != nil && request.EnvironmentConfigID == 0 {
+			err = telemetry.Error(ctx, span, err, "app with name already exists in environment")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
+			return
+		}
 
-			if existing != nil {
-				err = telemetry.Error(ctx, span, err, "app with name already exists in environment")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
-				return
-			}
-
-			app.EnvironmentConfigID = request.EnvironmentConfigID
-
-		} else {
-			existing, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
-			if err != nil {
-				err = telemetry.Error(ctx, span, err, "error reading app from DB")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			} else if existing.Name != "" {
-				err = telemetry.Error(ctx, span, err, "app with name already exists in project")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
-				return
-			}
+		err = assignEnvironmentToApp(c, app, project.ID, cluster.ID, request.EnvironmentConfigID)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error assigning environment to app")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
 		}
 
 		// create the db entry
@@ -399,21 +390,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 
 		// update the DB entry
-		var app *models.PorterApp
-		if request.EnvironmentConfigID != 0 {
-			app, err = c.Repo().PorterApp().ReadPorterAppByNameInEnvironment(cluster.ID, stackName, request.EnvironmentConfigID)
-			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				err = telemetry.Error(ctx, span, err, "error reading app from DB")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
-		} else {
-			app, err = c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
-			if err != nil {
-				err = telemetry.Error(ctx, span, err, "error reading app from DB")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
+		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName, request.EnvironmentConfigID)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			err = telemetry.Error(ctx, span, err, "error reading app from DB")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
 		}
 
 		if app == nil {
@@ -602,4 +583,29 @@ func cloneEnvGroup(c *CreatePorterAppHandler, w http.ResponseWriter, r *http.Req
 			return
 		}
 	}
+}
+
+func assignEnvironmentToApp(c *CreatePorterAppHandler, app *models.PorterApp, projectID, clusterID, envConfID uint) error {
+	ctx, span := telemetry.NewSpan(context.Background(), "assign-env-to-app")
+	if app == nil {
+		return fmt.Errorf("Application does not exist")
+	}
+
+	if envConfID != 0 {
+		envConf, err := c.Repo().EnvironmentConfig().ReadEnvironmentConfig(projectID, clusterID, envConfID)
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "error reading environment config from DB")
+		}
+
+		app.EnvironmentConfigID = envConf.ID
+		return nil
+	}
+
+	envConf, err := c.Repo().EnvironmentConfig().ReadDefaultEnvironmentConfig(projectID, clusterID)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error reading environment config from DB")
+	}
+
+	app.EnvironmentConfigID = envConf.ID
+	return nil
 }

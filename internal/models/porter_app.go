@@ -13,7 +13,7 @@ type PorterApp struct {
 	ProjectID uint
 	ClusterID uint
 
-	Name string
+	Name string `gorm:"uniqueIndex:idx_name_env_config_id"`
 
 	ImageRepoURI string
 
@@ -31,7 +31,7 @@ type PorterApp struct {
 	// Porter YAML
 	PorterYamlPath string
 
-	EnvironmentConfigID uint
+	EnvironmentConfigID uint `gorm:"uniqueIndex:idx_name_env_config_id"`
 }
 
 // ToPorterAppType generates an external types.PorterApp to be shared over REST

@@ -30,3 +30,16 @@ func (repo *EnvironmentConfigRepository) ReadEnvironmentConfig(projectID, cluste
 
 	return env_config, nil
 }
+
+func (repo *EnvironmentConfigRepository) ReadDefaultEnvironmentConfig(projectID, clusterID uint) (*models.EnvironmentConfig, error) {
+	env_config := &models.EnvironmentConfig{}
+
+	if err := repo.db.Order("id desc").Where(
+		"project_id = ? AND cluster_id = ? AND is_default = true",
+		projectID, clusterID,
+	).First(&env_config).Error; err != nil {
+		return nil, err
+	}
+
+	return env_config, nil
+}

@@ -24,28 +24,36 @@ func (repo *PorterAppRepository) CreatePorterApp(a *models.PorterApp) (*models.P
 	return a, nil
 }
 
-func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*models.PorterApp, error) {
+func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID, envConfigID uint) ([]*models.PorterApp, error) {
 	apps := []*models.PorterApp{}
 
-	if err := repo.db.Where("cluster_id = ? AND environment_config_id IS NULL", clusterID).Find(&apps).Error; err != nil {
+	if envConfigID == 0 {
+		// get porter_apps where environment_config is default by joining on environment_config_id
+		if err := repo.db.Joins("JOIN environment_configs ON porter_apps.environment_config_id = environment_configs.id").Where("porter_apps.cluster_id = ? AND environment_configs.is_default = true", clusterID).Find(&apps).Error; err != nil {
+			return nil, err
+		}
+
+		return apps, nil
+	}
+
+	if err := repo.db.Where("cluster_id = ? AND environment_config_id = ?", clusterID, envConfigID).Find(&apps).Error; err != nil {
 		return nil, err
 	}
 
 	return apps, nil
 }
 
-func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string) (*models.PorterApp, error) {
+func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string, envConfigID uint) (*models.PorterApp, error) {
 	app := &models.PorterApp{}
 
-	if err := repo.db.Where("cluster_id = ? AND name = ? AND environment_config_id IS NULL", clusterID, name).Limit(1).Find(&app).Error; err != nil {
-		return nil, err
+	if envConfigID == 0 {
+		// get porter_app where environment_config is default by joining on environment_config_id
+		if err := repo.db.Joins("JOIN environment_configs ON porter_apps.environment_config_id = environment_configs.id").Where("porter_apps.cluster_id = ? AND porter_apps.name = ? AND environment_configs.is_default = true", clusterID, name).First(&app).Error; err != nil {
+			return nil, err
+		}
+
+		return app, nil
 	}
-
-	return app, nil
-}
-
-func (repo *PorterAppRepository) ReadPorterAppByNameInEnvironment(clusterID uint, name string, envConfigID uint) (*models.PorterApp, error) {
-	app := &models.PorterApp{}
 
 	if err := repo.db.Where("cluster_id = ? AND name = ? AND environment_config_id = ?", clusterID, name, envConfigID).First(&app).Error; err != nil {
 		return nil, err

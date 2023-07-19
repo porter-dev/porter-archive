@@ -71,7 +71,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		imageInfo.Tag = "latest"
 	}
 
-	porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+	porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName, 0)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error getting porter app")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

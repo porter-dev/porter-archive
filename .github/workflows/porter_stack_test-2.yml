@@ -24,9 +24,9 @@ jobs:
       timeout-minutes: 30
       run: porter auth login --token $PORTER_TOKEN
       env:
-        PORTER_CLUSTER: 2
-        PORTER_HOST: https://aebf-160-72-72-58.ngrok-free.app
-        PORTER_PROJECT: 1
+        PORTER_CLUSTER: 2698
+        PORTER_HOST: https://dashboard.getporter.dev
+        PORTER_PROJECT: 7224
         PORTER_STACK_NAME: test-2
         PORTER_TAG: ${{ steps.vars.outputs.sha_short }}
         PORTER_TOKEN: ${{ secrets.PORTER_STACK_1_2 }}
@@ -34,9 +34,9 @@ jobs:
       timeout-minutes: 30
       run: go run ./cli/main.go apply
       env:
-        PORTER_CLUSTER: "2"
-        PORTER_HOST: https://aebf-160-72-72-58.ngrok-free.app
-        PORTER_PROJECT: "1"
+        PORTER_CLUSTER: 2698
+        PORTER_HOST: https://dashboard.getporter.dev
+        PORTER_PROJECT: 7224
         PORTER_STACK_NAME: test-2
         PORTER_TAG: ${{ steps.vars.outputs.sha_short }}
         PORTER_TOKEN: ${{ secrets.PORTER_STACK_1_2 }}

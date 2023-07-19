@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/router/middleware"
 	v1 "github.com/porter-dev/porter/api/server/router/v1"
+	v2 "github.com/porter-dev/porter/api/server/router/v2"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
@@ -155,6 +156,51 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		)
 
 		allRoutes = append(allRoutes, v1Routes...)
+
+		registerRoutes(config, allRoutes)
+	})
+
+	r.Route("/api/v2", func(r chi.Router) {
+		r.Use(
+			otelchi.Middleware("porter-server-middleware", otelchi.WithRequestMethodInSpanName(true), otelchi.WithChiRoutes(r), otelchi.WithFilter(func(r *http.Request) bool {
+				if strings.HasSuffix(r.URL.Path, "/livez") || strings.HasSuffix(r.URL.Path, "/readyz") {
+					return false
+				}
+				return true
+			})),
+			panicMW.Middleware,
+			middleware.ContentTypeJSON,
+		)
+
+		var allRoutes []*router.Route
+
+		v2RegistryRegisterer := v2.NewV2RegistryScopedRegisterer()
+		v2ReleaseRegisterer := v2.NewV2ReleaseScopedRegisterer()
+		v2StackRegisterer := v2.NewV2StackScopedRegisterer()
+		v2EnvGroupRegisterer := v2.NewV2EnvGroupScopedRegisterer()
+		v2NamespaceRegisterer := v2.NewV2NamespaceScopedRegisterer(
+			v2ReleaseRegisterer,
+			v2StackRegisterer,
+			v2EnvGroupRegisterer,
+		)
+		v2PorterAppRegister := v2.NewStackScopedRegisterer()
+		v2ClusterRegisterer := v2.NewV2ClusterScopedRegisterer(v2NamespaceRegisterer, v2PorterAppRegister)
+		v2ProjRegisterer := v2.NewV2ProjectScopedRegisterer(
+			v2ClusterRegisterer,
+			v2RegistryRegisterer,
+		)
+
+		v2Routes := v2ProjRegisterer.GetRoutes(
+			r,
+			config,
+			&types.Path{
+				RelativePath: "",
+			},
+			endpointFactory,
+			v2ProjRegisterer.Children...,
+		)
+
+		allRoutes = append(allRoutes, v2Routes...)
 
 		registerRoutes(config, allRoutes)
 	})

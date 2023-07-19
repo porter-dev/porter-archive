@@ -2,7 +2,7 @@
   push:
     branches:
     - stacks-fix-cli-analytics-2
-name: Deploy to test-2
+name: Deploy to pls-work-1
 jobs:
   porter-deploy:
     runs-on: ubuntu-latest
@@ -27,7 +27,7 @@ jobs:
         PORTER_CLUSTER: 2698
         PORTER_HOST: https://dashboard.getporter.dev
         PORTER_PROJECT: 7224
-        PORTER_STACK_NAME: test-2
+        PORTER_STACK_NAME: pls-work-1
         PORTER_TAG: ${{ steps.vars.outputs.sha_short }}
         PORTER_TOKEN: ${{ secrets.PORTER_STACK_1_2 }}
     - name: Deploy stack
@@ -37,6 +37,6 @@ jobs:
         PORTER_CLUSTER: 2698
         PORTER_HOST: https://dashboard.getporter.dev
         PORTER_PROJECT: 7224
-        PORTER_STACK_NAME: test-2
+        PORTER_STACK_NAME: pls-work-1
         PORTER_TAG: ${{ steps.vars.outputs.sha_short }}
         PORTER_TOKEN: ${{ secrets.PORTER_STACK_1_2 }}

@@ -208,15 +208,15 @@ const WebTabs: React.FC<Props> = ({
           <Input
             label={"Service Account JSON"}
             placeholder="ex: { <SERVICE_ACCOUNT_JSON> }"
-            value={service.cloudsql.serviceAccountJSON.value}
-            disabled={service.cloudsql.serviceAccountJSON.readOnly}
+            value={service.cloudsql.serviceAccountJson.value}
+            disabled={service.cloudsql.serviceAccountJson.readOnly}
             width="300px"
             setValue={(e) => {
               editService({
                 ...service,
                 cloudsql: {
                   ...service.cloudsql,
-                  serviceAccountJSON: { readOnly: false, value: e },
+                  serviceAccountJson: { readOnly: false, value: e },
                 },
               });
             }}

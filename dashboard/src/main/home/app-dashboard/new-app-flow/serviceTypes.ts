@@ -54,7 +54,7 @@ type CloudSql = {
     enabled: ServiceBoolean,
     connectionName: ServiceString,
     dbPort: ServiceString,
-    serviceAccountJSON: ServiceString,
+    serviceAccountJson: ServiceString,
 }
 
 
@@ -136,7 +136,7 @@ const WebService = {
             enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
             connectionName: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
             dbPort: ServiceField.string('5432', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
-            serviceAccountJSON: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+            serviceAccountJson: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJson),
         },
     }),
     serialize: (service: WebService) => {
@@ -189,7 +189,7 @@ const WebService = {
                 enabled: service.cloudsql.enabled.value,
                 connectionName: service.cloudsql.connectionName.value,
                 dbPort: service.cloudsql.dbPort.value,
-                serviceAccountJSON: service.cloudsql.serviceAccountJSON.value,
+                serviceAccountJson: service.cloudsql.serviceAccountJson.value,
             },
         }
     },
@@ -240,7 +240,7 @@ const WebService = {
                 enabled: ServiceField.boolean(values.cloudsql?.enabled ?? false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
                 connectionName: ServiceField.string(values.cloudsql?.connectionName ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
                 dbPort: ServiceField.string(values.cloudsql?.dbPort ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
-                serviceAccountJSON: ServiceField.string(values.cloudsql?.serviceAccountJSON ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+                serviceAccountJson: ServiceField.string(values.cloudsql?.serviceAccountJson ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJson),
             },
         }
     },
@@ -271,7 +271,7 @@ const WorkerService = {
             enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
             connectionName: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
             dbPort: ServiceField.string('5432', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
-            serviceAccountJSON: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+            serviceAccountJson: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJson),
         },
     }),
     serialize: (service: WorkerService) => {
@@ -297,7 +297,7 @@ const WorkerService = {
                 enabled: service.cloudsql.enabled.value,
                 connectionName: service.cloudsql.connectionName.value,
                 dbPort: service.cloudsql.dbPort.value,
-                serviceAccountJSON: service.cloudsql.serviceAccountJSON.value,
+                serviceAccountJson: service.cloudsql.serviceAccountJson.value,
             },
         }
     },
@@ -321,7 +321,7 @@ const WorkerService = {
                 enabled: ServiceField.boolean(values.cloudsql?.enabled ?? false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
                 connectionName: ServiceField.string(values.cloudsql?.connectionName ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
                 dbPort: ServiceField.string(values.cloudsql?.dbPort ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
-                serviceAccountJSON: ServiceField.string(values.cloudsql?.serviceAccountJSON ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+                serviceAccountJson: ServiceField.string(values.cloudsql?.serviceAccountJson ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJson),
             },
         }
     },
@@ -346,7 +346,7 @@ const JobService = {
             enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
             connectionName: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
             dbPort: ServiceField.string('5432', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
-            serviceAccountJSON: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+            serviceAccountJson: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJson),
         },
     }),
     serialize: (service: JobService) => {
@@ -370,7 +370,7 @@ const JobService = {
                 enabled: service.cloudsql.enabled.value,
                 connectionName: service.cloudsql.connectionName.value,
                 dbPort: service.cloudsql.dbPort.value,
-                serviceAccountJSON: service.cloudsql.serviceAccountJSON.value,
+                serviceAccountJson: service.cloudsql.serviceAccountJson.value,
             },
         }
     },
@@ -388,7 +388,7 @@ const JobService = {
                 enabled: ServiceField.boolean(values.cloudsql?.enabled ?? false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
                 connectionName: ServiceField.string(values.cloudsql?.connectionName ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
                 dbPort: ServiceField.string(values.cloudsql?.dbPort ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
-                serviceAccountJSON: ServiceField.string(values.cloudsql?.serviceAccountJSON ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+                serviceAccountJson: ServiceField.string(values.cloudsql?.serviceAccountJson ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJson),
             },
         }
     },
@@ -409,7 +409,7 @@ const ReleaseService = {
             enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
             connectionName: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
             dbPort: ServiceField.string('5432', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
-            serviceAccountJSON: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+            serviceAccountJson: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJson),
         },
     }),
 
@@ -429,7 +429,7 @@ const ReleaseService = {
                 enabled: service.cloudsql.enabled.value,
                 connectionName: service.cloudsql.connectionName.value,
                 dbPort: service.cloudsql.dbPort.value,
-                serviceAccountJSON: service.cloudsql.serviceAccountJSON.value,
+                serviceAccountJson: service.cloudsql.serviceAccountJson.value,
             },
         }
     },
@@ -446,7 +446,7 @@ const ReleaseService = {
                 enabled: ServiceField.boolean(values.cloudsql?.enabled ?? false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
                 connectionName: ServiceField.string(values.cloudsql?.connectionName ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
                 dbPort: ServiceField.string(values.cloudsql?.dbPort ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
-                serviceAccountJSON: ServiceField.string(values.cloudsql?.serviceAccountJSON ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+                serviceAccountJson: ServiceField.string(values.cloudsql?.serviceAccountJson ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJson),
             },
         }
     },

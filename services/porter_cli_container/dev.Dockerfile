@@ -22,8 +22,6 @@ RUN --mount=type=cache,target=$GOPATH/pkg/mod \
 # --------------------
 FROM base AS build-go
 
-ARG SENTRY_DSN
-
 RUN make build-cli-dev
 
 # Deployment environment

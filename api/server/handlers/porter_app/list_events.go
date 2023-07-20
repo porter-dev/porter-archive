@@ -42,10 +42,8 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	defer span.End()
 
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "cluster-id", Value: int(cluster.ID)},
-		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},
-	)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
 	if reqErr != nil {
@@ -80,7 +78,7 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	for idx, appEvent := range porterAppEvents {
 		if appEvent.Status == "PROGRESSING" {
-			pae, err := p.updateExistingAppEvent(ctx, *cluster, stackName, *appEvent)
+			pae, err := p.updateExistingAppEvent(ctx, *cluster, stackName, *appEvent, user, project)
 			if err != nil {
 				e := telemetry.Error(ctx, span, nil, "unable to update existing porter app event")
 				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
@@ -108,7 +106,14 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	p.WriteResult(w, r, res)
 }
 
-func (p *PorterAppEventListHandler) updateExistingAppEvent(ctx context.Context, cluster models.Cluster, stackName string, appEvent models.PorterAppEvent) (models.PorterAppEvent, error) {
+func (p *PorterAppEventListHandler) updateExistingAppEvent(
+	ctx context.Context,
+	cluster models.Cluster,
+	stackName string,
+	appEvent models.PorterAppEvent,
+	user *models.User,
+	project *models.Project,
+) (models.PorterAppEvent, error) {
 	ctx, span := telemetry.NewSpan(ctx, "update-porter-app-event")
 	defer span.End()
 
@@ -130,7 +135,7 @@ func (p *PorterAppEventListHandler) updateExistingAppEvent(ctx context.Context, 
 	)
 
 	if appEvent.Type == string(types.PorterAppEventType_Build) && appEvent.TypeExternalSource == "GITHUB" {
-		err = p.updateBuildEvent_Github(ctx, &event)
+		err = p.updateBuildEvent_Github(ctx, &event, user, project, stackName)
 		if err != nil {
 			return models.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error updating porter app event for github build")
 		}
@@ -150,7 +155,13 @@ func (p *PorterAppEventListHandler) updateExistingAppEvent(ctx context.Context, 
 	return event, nil
 }
 
-func (p *PorterAppEventListHandler) updateBuildEvent_Github(ctx context.Context, event *models.PorterAppEvent) error {
+func (p *PorterAppEventListHandler) updateBuildEvent_Github(
+	ctx context.Context,
+	event *models.PorterAppEvent,
+	user *models.User,
+	project *models.Project,
+	stackName string,
+) error {
 	ctx, span := telemetry.NewSpan(ctx, "update-porter-app-build-event")
 	defer span.End()
 
@@ -214,6 +225,7 @@ func (p *PorterAppEventListHandler) updateBuildEvent_Github(ctx context.Context,
 			event.Status = "SUCCESS"
 		} else {
 			event.Status = "FAILED"
+			_ = TrackStackBuildFailure(p.Config(), user, project, stackName)
 		}
 		event.Metadata["end_time"] = actionRun.GetUpdatedAt().Time
 	}

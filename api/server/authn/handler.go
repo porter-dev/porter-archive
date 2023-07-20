@@ -142,8 +142,8 @@ func (authn *AuthN) handleForbiddenForSession(
 }
 
 func (authn *AuthN) verifyTokenWithNext(w http.ResponseWriter, r *http.Request, tok *token.Token) {
-	// if the token has a stored token id and secret we check that the token is valid in the database
-	if tok.Secret != "" && tok.TokenID != "" {
+	// if the token has a stored token id we check that the token is valid in the database
+	if tok.TokenID != "" {
 		apiToken, err := authn.config.Repo.APIToken().ReadAPIToken(tok.ProjectID, tok.TokenID)
 		if err != nil {
 			authn.sendForbiddenError(fmt.Errorf("token with id %s not valid", tok.TokenID), w, r)
@@ -224,7 +224,7 @@ func (authn *AuthN) getTokenFromRequest(r *http.Request) (*token.Token, error) {
 
 	tok, err := token.GetTokenFromEncoded(reqToken, authn.config.TokenConf)
 	if err != nil {
-		return nil, errInvalidToken
+		return nil, fmt.Errorf("%s: %w", errInvalidToken.Error(), err)
 	}
 
 	return tok, nil

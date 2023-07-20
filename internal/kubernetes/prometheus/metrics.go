@@ -12,23 +12,33 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// returns the prometheus service name
+// GetPrometheusService returns the prometheus service name. The prometheus-community/prometheus chart @ v15.5.3 uses non-FQDN labels, unlike v22.6.2. This function checks for both labels.
 func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, error) {
-	services, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
+	redundantServices, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app=prometheus,component=server,heritage=Helm",
 	})
 	if err != nil {
 		return nil, false, err
 	}
 
-	if len(services.Items) == 0 {
-		return nil, false, nil
+	upgradedServices, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
+		LabelSelector: "app.kubernetes.io/component=server,app.kubernetes.io/instance=prometheus,app.kubernetes.io/managed-by=Helm",
+	})
+	if err != nil {
+		return nil, false, err
 	}
 
-	return &services.Items[0], true, nil
+	if len(redundantServices.Items) > 0 {
+		return &redundantServices.Items[0], true, nil
+	}
+	if len(upgradedServices.Items) > 0 {
+		return &upgradedServices.Items[0], true, nil
+	}
+
+	return nil, false, err
 }
 
-// returns the prometheus service name
+// getKubeStateMetricsService returns the prometheus service name
 func getKubeStateMetricsService(clientset kubernetes.Interface) (*v1.Service, bool, error) {
 	services, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/name=kube-state-metrics",

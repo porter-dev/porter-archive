@@ -157,70 +157,67 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 			return fmt.Errorf("error parsing porter.yaml: %w", err)
 		}
 	} else if previewVersion.Version == "v1stack" || previewVersion.Version == "" {
-		stackName := os.Getenv("PORTER_STACK_NAME")
-		if stackName == "" {
-			return fmt.Errorf("environment variable PORTER_STACK_NAME must be set")
-		}
 
-		// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
-		var builder string
-		resGroup, builder, err = stack.CreateV1BuildResources(client, fileBytes, stackName, cliConf.Project, cliConf.Cluster)
+		parsed, err := stack.ValidateAndMarshal(fileBytes)
 		if err != nil {
-			return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
+			return fmt.Errorf("error parsing porter.yaml: %w", err)
 		}
 
-		deployStackHook := &stack.DeployStackHook{
-			Client:               client,
-			StackName:            stackName,
-			ProjectID:            cliConf.Project,
-			ClusterID:            cliConf.Cluster,
-			BuildImageDriverName: stack.GetBuildImageDriverName(),
-			PorterYAML:           fileBytes,
-			Builder:              builder,
-		}
-		worker.RegisterHook("deploy-stack", deployStackHook)
-
-		if os.Getenv("GITHUB_RUN_ID") != "" {
-			// Create app event to signfy start of build
-			req := &types.CreateOrUpdatePorterAppEventRequest{
-				Status:             "PROGRESSING",
-				Type:               types.PorterAppEventType_Build,
-				TypeExternalSource: "GITHUB",
-				Metadata: map[string]any{
-					"action_run_id": os.Getenv("GITHUB_RUN_ID"),
-					"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
+		resGroup = &switchboardTypes.ResourceGroup{
+			Version: "v1",
+			Resources: []*switchboardTypes.Resource{
+				{
+					Name:   "get-env",
+					Driver: "os-env",
 				},
-			}
+			},
+		}
 
-			repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
-			if len(repoNameSplit) != 2 {
-				return fmt.Errorf("unable to parse GITHUB_REPOSITORY")
-			}
-			req.Metadata["repo"] = repoNameSplit[1]
-
-			actionRunID := os.Getenv("GITHUB_RUN_ID")
-			if actionRunID != "" {
-				arid, err := strconv.Atoi(actionRunID)
+		if parsed.Applications != nil {
+			for appName, app := range parsed.Applications {
+				resources, err := stack.CreateApplicationDeploy(client, worker, app, appName, cliConf)
 				if err != nil {
-					return fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+					return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 				}
-				req.Metadata["action_run_id"] = arid
+
+				resGroup.Resources = append(resGroup.Resources, resources...)
+			}
+		} else {
+			appName := os.Getenv("PORTER_STACK_NAME")
+			if appName == "" {
+				return fmt.Errorf("environment variable PORTER_STACK_NAME must be set")
 			}
 
-			repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
-			if repoOwnerAccountID != "" {
-				arid, err := strconv.Atoi(repoOwnerAccountID)
-				if err != nil {
-					return fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
-				}
-				req.Metadata["github_account_id"] = arid
+			if parsed.Apps != nil && parsed.Services != nil {
+				return fmt.Errorf("'apps' and 'services' are synonymous but both were defined")
 			}
 
-			ctx := context.Background()
-			_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, stackName, req)
+			var services map[string]*stack.Service
+			if parsed.Apps != nil {
+				services = parsed.Apps
+			}
+
+			if parsed.Services != nil {
+				services = parsed.Services
+			}
+
+			app := &stack.Application{
+				Env:      parsed.Env,
+				Services: services,
+				Build:    parsed.Build,
+				Release:  parsed.Release,
+			}
+
 			if err != nil {
-				return fmt.Errorf("unable to create porter app build event: %w", err)
+				return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 			}
+
+			resources, err := stack.CreateApplicationDeploy(client, worker, app, appName, cliConf)
+			if err != nil {
+				return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
+			}
+
+			resGroup.Resources = append(resGroup.Resources, resources...)
 		}
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)

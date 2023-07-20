@@ -6,7 +6,7 @@ import { PorterJson } from "./schema";
 export type Service = WorkerService | WebService | JobService | ReleaseService;
 export type ServiceType = 'web' | 'worker' | 'job' | 'release';
 
-type ServiceString = {
+export type ServiceString = {
     readOnly: boolean;
     value: string;
 }
@@ -14,11 +14,31 @@ type ServiceBoolean = {
     readOnly: boolean;
     value: boolean;
 }
+export type ServiceArray<T extends ServiceString | ServiceBoolean> = {
+    key: string;
+    value: T;
+}[];
+const ServiceArray = {
+    serialize: <T extends ServiceString | ServiceBoolean>(serviceArray: ServiceArray<T>) => {
+        const map: Record<string, string> = {};
+        serviceArray.map(({ key, value }: {
+            key: string;
+            value: T;
+        }) => {
+            if (key != '') {
+                map[key] = value.value.toString();
+            }
+        });
+        return map;
+    }
+}
+
 type Ingress = {
     enabled: ServiceBoolean;
     customDomain: ServiceString;
     hosts: ServiceString;
     porterHosts: ServiceString;
+    annotations: ServiceArray<ServiceString>;
 }
 type Autoscaling = {
     enabled: ServiceBoolean,
@@ -71,6 +91,22 @@ const ServiceField = {
             value: overrideValue ?? defaultValue,
         }
     },
+    array: (defaultMap: Record<string, string>, overrideMap?: Record<string, string>): ServiceArray<ServiceString> => {
+        const serviceMap: Record<string, ServiceString> = {};
+        for (const key in defaultMap) {
+            serviceMap[key] = ServiceField.string(defaultMap[key]);
+        }
+        for (const key in overrideMap) {
+            serviceMap[key] = ServiceField.string('', overrideMap[key]);
+        }
+        if (Object.keys(serviceMap).length == 0) {
+            return [];
+        }
+        return Object.keys(serviceMap).map((key) => ({
+            key,
+            value: serviceMap[key],
+        }));
+    }
 }
 
 type SharedServiceParams = {
@@ -109,6 +145,7 @@ const WebService = {
             customDomain: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
             hosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
             porterHosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
+            annotations: ServiceField.array({}, porterJson?.apps?.[name]?.config?.ingress?.annotations)
         },
         port: ServiceField.string('3000', porterJson?.apps?.[name]?.config?.container?.port),
         canDelete: porterJson?.apps?.[name] == null,
@@ -164,6 +201,10 @@ const WebService = {
                 custom_domain: service.ingress.customDomain.value ? true : false,
                 hosts: service.ingress.customDomain.value ? [service.ingress.customDomain.value] : [],
                 porter_hosts: service.ingress.porterHosts.value ? [service.ingress.porterHosts.value] : [],
+                annotations: ServiceArray.serialize(service.ingress.annotations),
+            },
+            service: {
+                port: service.port.value,
             },
             health: {
                 startupProbe: {
@@ -213,6 +254,7 @@ const WebService = {
                 customDomain: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
                 hosts: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
                 porterHosts: ServiceField.string(values.ingress?.porter_hosts?.length ? values.ingress.porter_hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
+                annotations: ServiceField.array(values.ingress?.annotations ?? {}, porterJson?.apps?.[name]?.config?.ingress?.annotations),
             },
             port: ServiceField.string(values.container?.port ?? '', porterJson?.apps?.[name]?.config?.container?.port),
             canDelete: porterJson?.apps?.[name] == null,

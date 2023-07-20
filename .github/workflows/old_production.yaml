@@ -1,0 +1,99 @@
+name: Deploy to old production
+on:
+  push:
+    tags:
+      - production
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v2.0
+        with:
+          version: "v1.19.15"
+      - name: Log in to gcloud CLI
+        run: gcloud auth configure-docker
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Write Dashboard Environment Variables
+        run: |
+          cat >./dashboard/.env <<EOL
+          NODE_ENV=production
+          API_SERVER=dashboard.getporter.dev
+          COHERE_API_KEY=${{secrets.COHERE_API_KEY}}
+          DISCORD_KEY=${{secrets.DISCORD_KEY}}
+          DISCORD_CID=${{secrets.DISCORD_CID}}
+          FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
+          IS_HOSTED=true
+          ENABLE_COHERE=true
+          COHERE_API_KEY=${{secrets.COHERE_KEY}}
+          INTERCOM_APP_ID=${{secrets.INTERCOM_APP_ID}}
+          INTERCOM_SRC=${{secrets.INTERCOM_SRC}}
+          HOTJAR_ID=${{secrets.HOTJAR_ID}}
+          SEGMENT_WRITE_KEY=${{secrets.SEGMENT_WRITE_KEY}}
+          SEGMENT_PUBLIC_KEY=${{secrets.SEGMENT_PUBLIC_KEY}}
+          APPLICATION_CHART_REPO_URL=https://charts.getporter.dev
+          ADDON_CHART_REPO_URL=https://chart-addons.getporter.dev
+          ENABLE_SENTRY=true
+          SENTRY_DSN=${{secrets.SENTRY_DSN}}
+          SENTRY_ENV=frontend-production
+          ZAPIER_WEBHOOK_URL=${{secrets.ZAPIER_WEBHOOK_URL}}
+          DISCORD_WEBHOOK_URL=${{secrets.DISCORD_WEBHOOK_URL}}
+          EOL
+      - name: Build
+        run: |
+          DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter:latest -f ./ee/docker/ee.Dockerfile --build-arg version=production
+      - name: Push
+        run: |
+          docker push gcr.io/porter-dev-273614/porter:latest
+      - name: Deploy to cluster
+        run: |
+          aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name production-2
+            
+          kubectl rollout restart deployment/porter
+  deploy-provisioner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v2.0
+        with:
+          version: "v1.19.15"
+      - name: Log in to gcloud CLI
+        run: gcloud auth configure-docker
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build
+        run: |
+          DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/provisioner-service:latest -f ./ee/docker/provisioner.Dockerfile
+      - name: Push
+        run: |
+          docker push gcr.io/porter-dev-273614/provisioner-service:latest
+      - name: Deploy to cluster
+        run: |
+          aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name production-2
+            
+          kubectl rollout restart deployment/provisioner

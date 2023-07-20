@@ -48,10 +48,12 @@ const (
 	ClusterDestroyingSuccess SegmentEvent = "Cluster Destroying Success"
 
 	// porter apps
-	StackLaunchStart    SegmentEvent = "Stack Launch Started"
-	StackLaunchComplete SegmentEvent = "Stack Launch Complete"
-	StackLaunchSuccess  SegmentEvent = "Stack Launch Success"
-	StackLaunchFailure  SegmentEvent = "Stack Launch Failure"
-	StackDeletion       SegmentEvent = "Stack Deletion"
-	StackBuildFailure   SegmentEvent = "Stack Build Failure"
+	StackLaunchStart      SegmentEvent = "Stack Launch Started"
+	StackLaunchComplete   SegmentEvent = "Stack Launch Complete"
+	StackLaunchSuccess    SegmentEvent = "Stack Launch Success"
+	StackLaunchFailure    SegmentEvent = "Stack Launch Failure"
+	StackDeletion         SegmentEvent = "Stack Deletion"
+	StackBuildProgressing SegmentEvent = "Stack Build Progressing"
+	StackBuildFailure     SegmentEvent = "Stack Build Failure"
+	StackBuildSuccess     SegmentEvent = "Stack Build Success"
 )

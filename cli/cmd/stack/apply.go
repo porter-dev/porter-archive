@@ -52,38 +52,48 @@ func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worke
 
 // Create app event to signfy start of build
 func createAppEvent(client *api.Client, applicationName string, projectId, clusterId uint) (string, error) {
-	req := &types.CreateOrUpdatePorterAppEventRequest{
-		Status:             "PROGRESSING",
-		Type:               types.PorterAppEventType_Build,
-		TypeExternalSource: "GITHUB",
-		Metadata: map[string]any{
-			"action_run_id": os.Getenv("GITHUB_RUN_ID"),
-			"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
-		},
-	}
-
-	repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
-	if len(repoNameSplit) != 2 {
-		return "", fmt.Errorf("unable to parse GITHUB_REPOSITORY")
-	}
-	req.Metadata["repo"] = repoNameSplit[1]
-
-	actionRunID := os.Getenv("GITHUB_RUN_ID")
-	if actionRunID != "" {
-		arid, err := strconv.Atoi(actionRunID)
-		if err != nil {
-			return "", fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+	var req *types.CreateOrUpdatePorterAppEventRequest
+	if os.Getenv("GITHUB_RUN_ID") != "" {
+		req = &types.CreateOrUpdatePorterAppEventRequest{
+			Status:             "PROGRESSING",
+			Type:               types.PorterAppEventType_Build,
+			TypeExternalSource: "GITHUB",
+			Metadata: map[string]any{
+				"action_run_id": os.Getenv("GITHUB_RUN_ID"),
+				"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
+			},
 		}
-		req.Metadata["action_run_id"] = arid
-	}
 
-	repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
-	if repoOwnerAccountID != "" {
-		arid, err := strconv.Atoi(repoOwnerAccountID)
-		if err != nil {
-			return "", fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+		repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+		if len(repoNameSplit) != 2 {
+			return "", fmt.Errorf("unable to parse GITHUB_REPOSITORY")
 		}
-		req.Metadata["github_account_id"] = arid
+		req.Metadata["repo"] = repoNameSplit[1]
+
+		actionRunID := os.Getenv("GITHUB_RUN_ID")
+		if actionRunID != "" {
+			arid, err := strconv.Atoi(actionRunID)
+			if err != nil {
+				return "", fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+			}
+			req.Metadata["action_run_id"] = arid
+		}
+
+		repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
+		if repoOwnerAccountID != "" {
+			arid, err := strconv.Atoi(repoOwnerAccountID)
+			if err != nil {
+				return "", fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+			}
+			req.Metadata["github_account_id"] = arid
+		}
+	} else {
+		req = &types.CreateOrUpdatePorterAppEventRequest{
+			Status:             "PROGRESSING",
+			Type:               types.PorterAppEventType_Build,
+			TypeExternalSource: "GITHUB",
+			Metadata:           map[string]any{},
+		}
 	}
 
 	ctx := context.Background()

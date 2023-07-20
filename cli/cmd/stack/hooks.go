@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/fatih/color"
@@ -30,13 +29,11 @@ func (t *DeployAppHook) PreApply() error {
 		return fmt.Errorf("%s: %w", errMsg, err)
 	}
 
-	if os.Getenv("GITHUB_RUN_ID") != "" {
-		buildEventId, err := createAppEvent(t.Client, t.ApplicationName, t.ProjectID, t.ClusterID)
-		if err != nil {
-			return err
-		}
-		t.BuildEventID = buildEventId
+	buildEventId, err := createAppEvent(t.Client, t.ApplicationName, t.ProjectID, t.ClusterID)
+	if err != nil {
+		return err
 	}
+	t.BuildEventID = buildEventId
 
 	return nil
 }

@@ -3,7 +3,7 @@
 # Base Go environment
 # -------------------
 # pinned because of https://github.com/moby/moby/issues/45935
-FROM golang:1.20.5-alpine as base
+FROM golang:1.20.5 as base
 WORKDIR /porter
 
 RUN apt-get update && apt-get install -y gcc musl-dev git make

@@ -119,7 +119,7 @@ func (t *DeployAppHook) applyApp(shouldCreate bool, driverOutput map[string]inte
 func (t *DeployAppHook) OnConsolidatedErrors(errors map[string]error) {
 	errorStringMap := make(map[string]string)
 	for k, v := range errors {
-		errorStringMap[k] = v.Error()
+		errorStringMap[k] = fmt.Sprintf("%+v", v)
 	}
 	eventRequest := types.CreateOrUpdatePorterAppEventRequest{
 		Status: "FAILED",

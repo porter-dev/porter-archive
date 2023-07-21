@@ -1,6 +1,7 @@
 # Development environment
 # -----------------------
-FROM golang:1.20-alpine
+# pinned because of https://github.com/moby/moby/issues/45935
+FROM golang:1.20.5
 WORKDIR /porter
 
 RUN apk update && apk add --no-cache gcc musl-dev git

@@ -218,7 +218,13 @@ func (p *PorterAppEventListHandler) updateBuildEvent_Github(
 	}
 
 	if *actionRun.Status == "completed" {
-		_ = TrackStackBuildStatus(p.Config(), user, project, stackName, "", event.Status)
+		if *actionRun.Conclusion == "success" {
+			event.Status = "SUCCESS"
+			_ = TrackStackBuildStatus(p.Config(), user, project, stackName, "", "SUCCESS")
+		} else {
+			event.Status = "FAILED"
+			_ = TrackStackBuildStatus(p.Config(), user, project, stackName, "", "FAILED")
+		}
 		event.Metadata["end_time"] = actionRun.GetUpdatedAt().Time
 	}
 

@@ -8,6 +8,7 @@ import api from "shared/api";
 import ProvisionerForm from "components/ProvisionerForm";
 import CloudFormationForm from "components/CloudFormationForm";
 import CredentialsForm from "components/CredentialsForm";
+import GCPCredentialsForm from "components/GCPCredentialsForm";
 import Helper from "components/form-components/Helper";
 import AzureCredentialForm from "components/AzureCredentialForm";
 import AWSCostConsent from "./AWSCostConsent";
@@ -66,14 +67,14 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                   disabled={
                     isUsageExceeded ||
                     (provider === "azure" && !currentProject?.azure_enabled) ||
-                    provider === "gcp"
+                    (provider === "gcp" && !currentProject?.azure_enabled)
                   }
                   onClick={() => {
                     if (
                       !(
                         isUsageExceeded ||
                         (provider === "azure" && !currentProject?.azure_enabled) ||
-                        provider === "gcp"
+                        (provider === "gcp" && !currentProject?.azure_enabled)
                       )
                     ) {
                       // openCostConsentModal(provider);
@@ -86,7 +87,7 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                   <BlockTitle>{providerInfo.label}</BlockTitle>
                   <BlockDescription>
                     {(provider === "azure" && !currentProject?.azure_enabled) ||
-                      provider === "gcp" ? providerInfo.tagline : "Hosted in your own cloud"}
+                      (provider === "gcp" && !currentProject?.azure_enabled) ? providerInfo.tagline : "Hosted in your own cloud"}
                   </BlockDescription>
                 </Block>
               );
@@ -168,6 +169,15 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
         ))) ||
       (selectedProvider === "azure" && (
         <AzureCredentialForm
+          goBack={() => setCurrentStep("cloud")}
+          proceed={(id) => {
+            setCredentialId(id);
+            setCurrentStep("cluster");
+          }}
+        />
+      )) ||
+      (selectedProvider === "gcp" && (
+        <GCPCredentialsForm
           goBack={() => setCurrentStep("cloud")}
           proceed={(id) => {
             setCredentialId(id);

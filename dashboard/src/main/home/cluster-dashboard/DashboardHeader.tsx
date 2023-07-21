@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useContext } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
@@ -7,6 +7,7 @@ import TitleSection from "components/TitleSection";
 import Spacer from "components/porter/Spacer";
 import Tooltip from "components/porter/Tooltip";
 import Container from "components/porter/Container";
+import ClusterSelector from "../ClusterSelector";
 
 type PropsType = {
   image?: any;
@@ -16,49 +17,54 @@ type PropsType = {
   disableLineBreak?: boolean;
   capitalize?: boolean;
   prefix?: any;
+  enableMultiCluster?: boolean;
 };
 
-type StateType = {};
+const DashboardHeader: React.FC<PropsType> = ({
+  image,
+  title,
+  description,
+  materialIconClass,
+  disableLineBreak,
+  capitalize = true,
+  prefix,
+  enableMultiCluster,
+}) => {
+  const context = useContext(Context);
 
-export default class DashboardHeader extends Component<PropsType, StateType> {
-  render() {
-    return (
-      <>
-        <Container row>
-          {this.props.prefix}
-          <TitleSection
-            capitalize={
-              this.props.capitalize === undefined || this.props.capitalize
-            }
-            icon={this.props.image}
-            materialIconClass={this.props.materialIconClass}
-          >
-            {this.props.title}
-          </TitleSection>
-        </Container>
+  return (
+    <>
+      <Container row>
+        {prefix}
+        <TitleSection capitalize={capitalize} icon={image} materialIconClass={materialIconClass}>
+          {title}
+        </TitleSection>
+      </Container>
 
-        {this.props.description && (
-          <>
-            <Spacer height="35px" />
-            <InfoSection>
-              <TopRow>
-                <Tooltip content="TestInfo" position="bottom" hidden={true}>
-                  <InfoLabel>
-                    <i className="material-icons">info</i> Info
-                  </InfoLabel>
-                </Tooltip>
-              </TopRow>
-              <Description>{this.props.description}</Description>
-            </InfoSection>
-          </>
-        )}
-        <Spacer height="35px" />
-      </>
-    );
-  }
-}
+      {description && (
+        <>
+          <Spacer height="35px" />
+          <InfoSection>
+            <TopRow>
+              <Tooltip content="TestInfo" position="bottom" hidden={true}>
+                <InfoLabel>
+                  <i className="material-icons">info</i> Info
+                </InfoLabel>
+              </Tooltip>
+            </TopRow>
+            <Description>{description}</Description>
+          </InfoSection>
+        </>
+      )}
+      {context.currentProject?.simplified_view_enabled && enableMultiCluster && (
+        <><ClusterSelector /></>
+      )}
+      <Spacer height="35px" />
+    </>
+  );
+};
 
-DashboardHeader.contextType = Context;
+export default DashboardHeader;
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);

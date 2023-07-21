@@ -29,6 +29,8 @@ import Loading from "components/Loading";
 import Fieldset from "components/porter/Fieldset";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Icon from "components/porter/Icon";
+import ClusterSelector from "../ClusterSelector";
+import { ClusterType } from "shared/types";
 
 type Props = {};
 
@@ -59,6 +61,9 @@ const AppDashboard: React.FC<Props> = ({ }) => {
   const [view, setView] = useState("grid");
   const [isLoading, setIsLoading] = useState(true);
   const [shouldLoadTime, setShouldLoadTime] = useState(true);
+  const [options, setOptions] = useState([]);
+  const context = useContext(Context);
+  const [clusters, setClusters] = useState<ClusterType[]>([])
 
   const filteredApps = useMemo(() => {
     const filteredBySearch = search(apps ?? [], searchValue, {
@@ -68,7 +73,30 @@ const AppDashboard: React.FC<Props> = ({ }) => {
 
     return _.sortBy(filteredBySearch);
   }, [apps, searchValue]);
+  const renderClusterSelector = () => {
+    console.log("HERE")
+    api
+      .getClusters("<token>", {}, { id: currentProject.id })
+      .then((res) => {
+        // TODO: handle uninitialized kubeconfig
+        if (res.data) {
+          let clusters = res.data;
+          clusters.sort((a: any, b: any) => a.id - b.id);
+          if (clusters.length > 0) {
+            // Set cluster from URL if in path or param
+            let option = clusters.map((item: { name: any; }) => ({
+              label: item.name,
+              value: item.name
+            }));
+            setClusters(clusters)
+            setOptions(option)
+            console.log(option)
+            // Set initial cluster as the first one
+          }
+        }
 
+      })
+  }
   const getApps = async () => {
     setIsLoading(true);
     try {
@@ -123,8 +151,10 @@ const AppDashboard: React.FC<Props> = ({ }) => {
   };
 
   useEffect(() => {
+
     if (currentProject?.id > 0 && currentCluster?.id > 0) {
       getApps();
+      renderClusterSelector()
     }
   }, [currentCluster, currentProject]);
 
@@ -201,7 +231,9 @@ const AppDashboard: React.FC<Props> = ({ }) => {
         title="Applications"
         description="Web services, workers, and jobs for this project."
         disableLineBreak
+        enableMultiCluster={true}
       />
+
       {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (

@@ -1,9 +1,9 @@
-import React, { 
-  useEffect, 
-  useState, 
-  useContext, 
-  useMemo, 
-  useCallback 
+import React, {
+  useEffect,
+  useState,
+  useContext,
+  useMemo,
+  useCallback
 } from "react";
 import styled from "styled-components";
 import _ from "lodash";
@@ -67,7 +67,7 @@ const AppDashboard: React.FC<Props> = ({
   const filteredAddOns = useMemo(() => {
     const filtered = addOns.filter((app: any) => {
       return (
-        !namespaceBlacklist.includes(app.namespace) && 
+        !namespaceBlacklist.includes(app.namespace) &&
         !templateBlacklist.includes(app.chart.metadata.name)
       );
     });
@@ -149,13 +149,14 @@ const AppDashboard: React.FC<Props> = ({
         capitalize={false}
         description="Add-ons and supporting workloads for this project."
         disableLineBreak
+        enableMultiCluster={true}
       />
       {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (
         <>
           <Container row spaced>
-            <SearchBar 
+            <SearchBar
               value={searchValue}
               setValue={setSearchValue}
               placeholder="Search add-ons . . ."
@@ -172,7 +173,7 @@ const AppDashboard: React.FC<Props> = ({
             />
             <Spacer inline x={2} />
             <Link to="/addons/new">
-              <Button onClick={() => {}} height="30px" width="130px">
+              <Button onClick={() => { }} height="30px" width="130px">
                 <I className="material-icons">add</I> New add-on
               </Button>
             </Link>
@@ -192,7 +193,7 @@ const AppDashboard: React.FC<Props> = ({
                 return (
                   <Block to={getExpandedChartLinkURL(app)} key={i}>
                     <Container row>
-                      <Icon 
+                      <Icon
                         src={
                           hardcodedIcons[app.chart.metadata.name] ||
                           app.chart.metadata.icon
@@ -210,7 +211,7 @@ const AppDashboard: React.FC<Props> = ({
                   </Block>
                 );
               })}
-          </GridList>
+            </GridList>
           ) : (
             <List>
               {(filteredAddOns ?? []).map((app: any, i: number) => {
@@ -254,7 +255,7 @@ const PlaceholderIcon = styled.img`
   opacity: 0.65;
 `;
 
-const Row = styled(Link)<{ isAtBottom?: boolean }>`
+const Row = styled(Link) <{ isAtBottom?: boolean }>`
   cursor: pointer;
   display: block;
   padding: 15px;

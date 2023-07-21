@@ -22,6 +22,8 @@ import { getQueryParam, pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import SidebarLink from "./SidebarLink";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
+import ClusterSelector from "../ClusterSelector";
+import ClusterSideBar from "../ClusterSideBar";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -218,7 +220,7 @@ class Sidebar extends Component<PropsType, StateType> {
           ]) && (
               <NavButton
                 path={"/cluster-dashboard"}
-                targetClusterName={currentCluster?.name}
+
                 active={
                   window.location.pathname.startsWith("/cluster-dashboard")
                 }
@@ -275,6 +277,7 @@ class Sidebar extends Component<PropsType, StateType> {
           </CollapseButton>
 
           <ProjectSectionContainer />
+          {/* <ClusterSideBar /> */}
 
           <br />
 

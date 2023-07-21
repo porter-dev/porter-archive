@@ -474,6 +474,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
             title="Deploy a new application"
             capitalize={false}
             disableLineBreak
+            enableMultiCluster={true}
           />
           <DarkMatter />
           <VerticalSteps

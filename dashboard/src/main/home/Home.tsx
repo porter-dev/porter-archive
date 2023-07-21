@@ -14,6 +14,7 @@ import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import DashboardRouter from "./cluster-dashboard/DashboardRouter";
 import Dashboard from "./dashboard/Dashboard";
+import PorterAppDashboard from "./cluster-dashboard/dashboard/PorterAppDashboard";
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 
@@ -474,6 +475,7 @@ const Home: React.FC<Props> = (props) => {
                 "/databases",
                 "/preview-environments",
                 "/stacks",
+                "/cluster-dashboard/list"
               ]}
               render={() => {
                 if (currentCluster?.id === -1) {
@@ -541,7 +543,7 @@ const Home: React.FC<Props> = (props) => {
           </Modal>
         )}
       </StyledHome>
-    </ThemeProvider>
+    </ThemeProvider >
   );
 };
 

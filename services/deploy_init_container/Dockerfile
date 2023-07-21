@@ -1,5 +1,5 @@
 # pinned because of https://github.com/moby/moby/issues/45935
-FROM golang:1.20.5 as builder
+FROM golang:1.20.5-alpine as builder
 
 WORKDIR /init-backend
 COPY main.go .

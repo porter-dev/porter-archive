@@ -271,6 +271,7 @@ export interface ProjectType {
   simplified_view_enabled: boolean;
   azure_enabled: boolean;
   helm_values_enabled: boolean;
+  env_group_enabled: boolean;
   roles: {
     id: number;
     kind: string;

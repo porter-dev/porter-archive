@@ -39,7 +39,7 @@ const EventFocusView: React.FC<Props> = ({
                         event_id: eventId,
                     }
                 )
-                const newEvent = eventResp.data.event as PorterAppEvent;
+                const newEvent = PorterAppEvent.toPorterAppEvent(eventResp.data.event);
                 setEvent(newEvent);
                 if (newEvent.metadata.end_time != null) {
                     clearInterval(intervalId);

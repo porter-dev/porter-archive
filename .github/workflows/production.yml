@@ -22,6 +22,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache: false
+          go-version: '1.20.5'
       - name: Download Go Modules
         run: go mod download
       - name: Build Server Binary

@@ -109,7 +109,7 @@ func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIn
 
 type QueryOpts struct {
 	Metric     string   `schema:"metric"`
-	ShouldSum  bool     `schema:"shouldsum"`
+	ShouldAvg  bool     `schema:"shouldavg"`
 	Kind       string   `schema:"kind"`
 	PodList    []string `schema:"pods"`
 	Name       string   `schema:"name"`
@@ -196,8 +196,8 @@ func QueryPrometheus(
 		query = createHPACurrentReplicasQuery(metricName, opts.Name, opts.Namespace, appLabel, hpaMetricName)
 	}
 
-	if opts.ShouldSum {
-		query = fmt.Sprintf("sum(%s)", query)
+	if opts.ShouldAvg {
+		query = fmt.Sprintf("avg(%s)", query)
 	}
 
 	queryParams := map[string]string{

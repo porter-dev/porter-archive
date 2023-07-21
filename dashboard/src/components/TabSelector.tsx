@@ -1,16 +1,16 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-export interface selectOption {
-  value: string;
+export interface selectOption<T> {
+  value: T;
   label: string;
   component?: any;
 }
 
-type PropsType = {
+type PropsType<T> = {
   currentTab: string;
-  options: selectOption[];
-  setCurrentTab: (value: string) => void;
+  options: selectOption<T>[];
+  setCurrentTab: (value: T) => void;
   addendum?: any;
   color?: string;
   noBuffer?: boolean;
@@ -18,7 +18,7 @@ type PropsType = {
 
 type StateType = {};
 
-export default class TabSelector extends Component<PropsType, StateType> {
+export default class TabSelector<T> extends Component<PropsType<T>, StateType> {
   getCurrentComponent() {
     const currentOption = this.props.options.find(
       (option) => option.value === this.props.currentTab
@@ -29,13 +29,13 @@ export default class TabSelector extends Component<PropsType, StateType> {
     return null;
   }
 
-  handleTabClick = (value: string) => {
+  handleTabClick = (value: T) => {
     this.props.setCurrentTab(value);
   };
 
   renderTabList = () => {
     let color = this.props.color || "#aaaabb";
-    return this.props.options.map((option: selectOption, i: number) => {
+    return this.props.options.map((option: selectOption<T>, i: number) => {
       return (
         <Tab
           key={i}
@@ -95,13 +95,13 @@ const TabWrapper = styled.div`
 
 const Tab = styled.div`
   height: 30px;
-  margin-right: ${(props: { lastItem: boolean; highlight: string }) =>
+  margin-right: ${(props: { lastItem: boolean; highlight: string | null }) =>
     props.lastItem ? "" : "30px"};
   display: flex;
   font-family: "Work Sans", sans-serif;
   font-size: 13px;
   user-select: none;
-  color: ${(props: { lastItem: boolean; highlight: string }) =>
+  color: ${(props: { lastItem: boolean; highlight: string | null }) =>
     props.highlight ? props.highlight : "#aaaabb55"};
   flex-direction: column;
   padding-top: 7px;
@@ -111,10 +111,10 @@ const Tab = styled.div`
   cursor: pointer;
   white-space: nowrap;
   border-bottom: 1px solid
-    ${(props: { lastItem: boolean; highlight: string }) =>
+    ${(props: { lastItem: boolean; highlight: string | null }) =>
       props.highlight ? props.highlight : "none"};
   :hover {
-    color: ${(props: { lastItem: boolean; highlight: string }) =>
+    color: ${(props: { lastItem: boolean; highlight: string | null }) =>
       props.highlight ? "" : "#aaaabb"};
   }
 `;

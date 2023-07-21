@@ -45,8 +45,7 @@ export const parseLogs = (logs: string[] = []): Log[] => {
 
       const parsedLine: LogLine = JSON.parse(logLine);
 
-      LogSchema.parse(parsedLine);
-
+      x;
       // TODO Move log parsing to the render method
       const ansiLog = Anser.ansiToJson(parsedLine.log);
       return {

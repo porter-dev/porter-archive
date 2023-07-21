@@ -209,7 +209,7 @@ const Metrics: React.FC = () => {
 
   const getMetrics = async () => {
     try {
-      let shouldsum = true;
+      let shouldavg = true;
       let namespace = "default";
 
       // calculate start and end range
@@ -229,7 +229,7 @@ const Metrics: React.FC = () => {
         "<token>",
         {
           metric: selectedMetric,
-          shouldsum: false,
+          shouldavg: false,
           kind: "Ingress",
           namespace: selectedIngress?.namespace || "default",
           percentile:
@@ -261,7 +261,7 @@ const Metrics: React.FC = () => {
         "<token>",
         {
           metric: selectedMetric,
-          shouldsum: false,
+          shouldavg: false,
           kind: "Ingress",
           namespace: selectedIngress?.namespace || "default",
           percentile:

@@ -232,7 +232,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
   const getAutoscalingThreshold = async (
     metricType: "cpu_hpa_threshold" | "memory_hpa_threshold",
-    shouldsum: boolean,
+    shouldavg: boolean,
     namespace: string,
     start: number,
     end: number
@@ -244,7 +244,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         "<token>",
         {
           metric: metricType,
-          shouldsum: shouldsum,
+          shouldavg: shouldavg,
           kind: selectedController?.kind,
           name: selectedController?.metadata.name,
           namespace: namespace,
@@ -277,7 +277,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       return;
     }
     try {
-      let shouldsum = selectedPod === "All";
+      let shouldavg = selectedPod === "All";
       let namespace = currentChart.namespace;
 
       // calculate start and end range
@@ -287,14 +287,14 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
       let podNames = [] as string[];
 
-      if (!shouldsum) {
+      if (!shouldavg) {
         podNames = [selectedPod];
       }
 
       if (selectedMetric == "nginx:errors") {
         podNames = [selectedIngress?.name];
         namespace = selectedIngress?.namespace || "default";
-        shouldsum = false;
+        shouldavg = false;
       }
 
       setIsLoading((prev) => prev + 1);
@@ -306,7 +306,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         "<token>",
         {
           metric: selectedMetric,
-          shouldsum: false,
+          shouldavg: false,
           kind: selectedController?.kind,
           name: selectedController?.metadata.name,
           namespace: namespace,
@@ -334,7 +334,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         "<token>",
         {
           metric: selectedMetric,
-          shouldsum: shouldsum,
+          shouldavg: shouldavg,
           kind: selectedController?.kind,
           name: selectedController?.metadata.name,
           namespace: namespace,
@@ -351,11 +351,11 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
       setHpaData([]);
       const isHpaEnabled = currentChart?.config?.autoscaling?.enabled;
-      if (shouldsum && isHpaEnabled) {
+      if (shouldavg && isHpaEnabled) {
         if (selectedMetric === "cpu") {
           await getAutoscalingThreshold(
             "cpu_hpa_threshold",
-            shouldsum,
+            shouldavg,
             namespace,
             start,
             end
@@ -363,7 +363,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         } else if (selectedMetric === "memory") {
           await getAutoscalingThreshold(
             "memory_hpa_threshold",
-            shouldsum,
+            shouldavg,
             namespace,
             start,
             end

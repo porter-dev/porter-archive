@@ -1284,7 +1284,7 @@ const getAllReleasePods = baseApi<
 const getMetrics = baseApi<
   {
     metric: string;
-    shouldsum: boolean;
+    shouldavg: boolean;
     pods?: string[];
     kind?: string; // the controller kind
     name?: string;

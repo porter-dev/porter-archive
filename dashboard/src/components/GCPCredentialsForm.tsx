@@ -106,6 +106,19 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
         isRequired={true}
       />
 
+      {serviceAccountKey && (
+        <AppearingDiv color={projectId ? "#8590ff" : "#fcba03"}>
+          {detected.detected ? (
+            <I className="material-icons">check</I>
+          ) : (
+            <I className="material-icons">error</I>
+          )}
+          <Text color={detected.detected ? "#8590ff" : "#fcba03"}>
+            {detected.message}
+          </Text>
+        </AppearingDiv>
+      )}
+
       {projectId && (
         <>
           <Helper>Your cluster will be provisioned in GCP Project</Helper>
@@ -172,7 +185,21 @@ const Img = styled.img`
   margin-right: 15px;
 `;
 
-const HSpacer = styled.div`
-  height: 1px;
-  width: 17px;
+const AppearingDiv = styled.div<{ color?: string }>`
+  animation: floatIn 0.5s;
+  animation-fill-mode: forwards;
+  display: flex;
+  align-items: center;
+  color: ${(props) => props.color || "#ffffff44"};
+  margin-left: 10px;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
 `;

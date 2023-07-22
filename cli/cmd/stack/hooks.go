@@ -12,56 +12,71 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 )
 
-type DeployStackHook struct {
+type DeployAppHook struct {
 	Client               *api.Client
-	StackName            string
+	ApplicationName      string
 	ProjectID, ClusterID uint
 	BuildImageDriverName string
 	PorterYAML           []byte
 	Builder              string
+	BuildEventID         string
 }
 
-func (t *DeployStackHook) PreApply() error {
+func (t *DeployAppHook) PreApply() error {
 	err := config.ValidateCLIEnvironment()
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
 		return fmt.Errorf("%s: %w", errMsg, err)
 	}
+
+	buildEventId, err := createAppEvent(t.Client, t.ApplicationName, t.ProjectID, t.ClusterID)
+	if err != nil {
+		return err
+	}
+	t.BuildEventID = buildEventId
+
 	return nil
 }
 
-func (t *DeployStackHook) DataQueries() map[string]interface{} {
+func (t *DeployAppHook) DataQueries() map[string]interface{} {
 	res := map[string]interface{}{
 		"image": fmt.Sprintf("{$.%s.image}", t.BuildImageDriverName),
 	}
 	return res
 }
 
-// deploy the stack
-func (t *DeployStackHook) PostApply(driverOutput map[string]interface{}) error {
-	client := config.GetAPIClient()
-	namespace := fmt.Sprintf("porter-stack-%s", t.StackName)
+// deploy the app
+func (t *DeployAppHook) PostApply(driverOutput map[string]interface{}) error {
+	eventRequest := types.CreateOrUpdatePorterAppEventRequest{
+		Status:   "SUCCESS",
+		Type:     types.PorterAppEventType_Build,
+		Metadata: map[string]any{},
+		ID:       t.BuildEventID,
+	}
+	_, _ = t.Client.CreateOrUpdatePorterAppEvent(context.Background(), t.ProjectID, t.ClusterID, t.ApplicationName, &eventRequest)
 
-	_, err := client.GetRelease(
+	namespace := fmt.Sprintf("porter-stack-%s", t.ApplicationName)
+
+	_, err := t.Client.GetRelease(
 		context.Background(),
 		t.ProjectID,
 		t.ClusterID,
 		namespace,
-		t.StackName,
+		t.ApplicationName,
 	)
 
 	shouldCreate := err != nil
 
 	if err != nil {
-		color.New(color.FgYellow).Printf("Could not read release for stack %s (%s): attempting creation\n", t.StackName, err.Error())
+		color.New(color.FgYellow).Printf("Could not read release for app %s (%s): attempting creation\n", t.ApplicationName, err.Error())
 	} else {
-		color.New(color.FgGreen).Printf("Found release for stack %s: attempting update\n", t.StackName)
+		color.New(color.FgGreen).Printf("Found release for app %s: attempting update\n", t.ApplicationName)
 	}
 
-	return t.applyStack(client, shouldCreate, driverOutput)
+	return t.applyApp(shouldCreate, driverOutput)
 }
 
-func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driverOutput map[string]interface{}) error {
+func (t *DeployAppHook) applyApp(shouldCreate bool, driverOutput map[string]interface{}) error {
 	var imageInfo types.ImageInfo
 	image, ok := driverOutput["image"].(string)
 	// if it contains a $, then it means the query didn't resolve to anything
@@ -77,11 +92,11 @@ func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driv
 		}
 	}
 
-	_, err := client.CreatePorterApp(
+	_, err := t.Client.CreatePorterApp(
 		context.Background(),
 		t.ProjectID,
 		t.ClusterID,
-		t.StackName,
+		t.ApplicationName,
 		&types.CreatePorterAppRequest{
 			ClusterID:        t.ClusterID,
 			ProjectID:        t.ProjectID,
@@ -93,13 +108,32 @@ func (t *DeployStackHook) applyStack(client *api.Client, shouldCreate bool, driv
 	)
 	if err != nil {
 		if shouldCreate {
-			return fmt.Errorf("error creating stack %s: %w", t.StackName, err)
+			return fmt.Errorf("error creating app %s: %w", t.ApplicationName, err)
 		}
-		return fmt.Errorf("error updating stack %s: %w", t.StackName, err)
+		return fmt.Errorf("error updating app %s: %w", t.ApplicationName, err)
 	}
 
 	return nil
 }
 
-func (t *DeployStackHook) OnConsolidatedErrors(map[string]error) {}
-func (t *DeployStackHook) OnError(error)                         {}
+func (t *DeployAppHook) OnConsolidatedErrors(errors map[string]error) {
+	errorStringMap := make(map[string]string)
+	for k, v := range errors {
+		errorStringMap[k] = fmt.Sprintf("%+v", v)
+	}
+	eventRequest := types.CreateOrUpdatePorterAppEventRequest{
+		Status: "FAILED",
+		Type:   types.PorterAppEventType_Build,
+		Metadata: map[string]any{
+			"errors": errorStringMap,
+		},
+		ID: t.BuildEventID,
+	}
+	_, _ = t.Client.CreateOrUpdatePorterAppEvent(context.Background(), t.ProjectID, t.ClusterID, t.ApplicationName, &eventRequest)
+}
+
+func (t *DeployAppHook) OnError(err error) {
+	t.OnConsolidatedErrors(map[string]error{
+		"pre-apply": err,
+	})
+}

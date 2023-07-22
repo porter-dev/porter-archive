@@ -33,7 +33,7 @@ const CloudFormationForm: React.FC<Props> = ({
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [AWSAccountID, setAWSAccountID] = useState("");
   const [AWSAccountIDInputError, setAWSAccountIDInputError] = useState<string | undefined>(undefined);
-  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [currentStep, setCurrentStep] = useState<number>(1);
 
   const { currentProject } = useContext(Context);
   const markStepStarted = async (
@@ -55,7 +55,9 @@ const CloudFormationForm: React.FC<Props> = ({
       }
   ) => {
     try {
-      await api.updateOnboardingStep("<token>", { step, account_id, cloudformation_url, error_message, login_url, external_id }, {});
+      await api.updateOnboardingStep("<token>", { step, account_id, cloudformation_url, error_message, login_url, external_id }, {
+        project_id: currentProject.id,
+      });
     } catch (err) {
       // console.log(err);
     }
@@ -78,13 +80,13 @@ const CloudFormationForm: React.FC<Props> = ({
     }
     // handle case where user resets the input to empty
     if (accountId.trim().length === 0) {
-      setCurrentStep(0);
+      setCurrentStep(1);
       setAWSAccountIDInputError(undefined);
       return;
     }
     const accountIdInputError = getAccountIdInputError(accountId);
     if (accountIdInputError == null) {
-      setCurrentStep(1);
+      setCurrentStep(2);
       if (!hasSentAWSNotif) {
         setHasSentAWSNotif(true);
         markStepStarted({ step: "aws-account-id-complete", account_id: accountId });
@@ -101,7 +103,7 @@ const CloudFormationForm: React.FC<Props> = ({
         }
       }
     } else {
-      setCurrentStep(0);
+      setCurrentStep(1);
     }
     setAWSAccountIDInputError(accountIdInputError);
   };
@@ -155,9 +157,8 @@ const CloudFormationForm: React.FC<Props> = ({
   };
 
   const directToAWSLoginAndProceedStep = () => {
-    const login_url = `https://${AWSAccountID}.signin.aws.amazon.com/console`;
-    markStepStarted({ step: "aws-login-redirect-success", account_id: AWSAccountID, login_url })
-    setCurrentStep(2);
+    const login_url = `https://signin.aws.amazon.com/console`;
+    markStepStarted({ step: "aws-login-redirect-success", login_url })
     window.open(login_url, "_blank")
   }
 
@@ -180,7 +181,26 @@ const CloudFormationForm: React.FC<Props> = ({
           steps={
             [
               <>
-                <Text size={16}>1. Provide your AWS Account ID.</Text>
+                <Text size={16}>1. Log in to your AWS Account.</Text>
+                <Spacer y={0.25} />
+                <Text color="helper">Return to Porter after successful log-in.</Text>
+                <Spacer y={0.5} />
+                <AWSButtonContainer>
+                  <ButtonImg src={aws} />
+                  <Button
+                    width={"170px"}
+                    onClick={directToAWSLoginAndProceedStep}
+                    color="#1E2631"
+                    withBorder
+                  >
+                    Log in
+                  </Button>
+                </AWSButtonContainer>
+              </>,
+              <>
+                <Text size={16}>2. Provide your AWS Account ID.</Text>
+                <Spacer y={0.25} />
+                <Text color="helper">Make sure this is the ID of the account you are currently logged into, and would like to provision resources in.</Text>
                 <Spacer y={0.5} />
                 <Input
                   label={
@@ -201,30 +221,6 @@ const CloudFormationForm: React.FC<Props> = ({
                   placeholder="ex: 915037676314"
                   error={AWSAccountIDInputError}
                 />
-              </>,
-              <>
-                <Text size={16}>2. Log in to your AWS Account.</Text>
-                <Spacer y={0.25} />
-                <Text color="helper">Return to Porter after successful log-in.</Text>
-                <Spacer y={0.5} />
-                <AWSButtonContainer>
-                  <ButtonImg src={aws} />
-                  <Button
-                    width={"170px"}
-                    onClick={directToAWSLoginAndProceedStep}
-                    color="#1E2631"
-                    withBorder
-                  >
-                    Log in
-                  </Button>
-                </AWSButtonContainer>
-                {/* escape hatch for dev use only */}
-                {process.env.TRUST_ARN != null && process.env.TRUST_ARN !== "arn:aws:iam::108458755588:role/CAPIManagement" &&
-                  <>
-                    <Spacer y={0.5} />
-                    <Link onClick={() => setCurrentStep(4)} hasunderline>Skip this step</Link>
-                  </>
-                }
               </>,
               <>
                 <Text size={16}>3. Create an AWS Cloudformation Stack.</Text>

@@ -3,6 +3,8 @@ package stack
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
@@ -10,91 +12,159 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
-	"gopkg.in/yaml.v2"
+	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
+	"gopkg.in/yaml.v3"
 )
 
 type StackConf struct {
 	apiClient            *api.Client
-	rawBytes             []byte
-	parsed               *PorterStackYAML
+	parsed               *Application
 	stackName, namespace string
 	projectID, clusterID uint
 }
 
-func CreateV1BuildResources(client *api.Client, raw []byte, stackName string, projectID uint, clusterID uint) (*switchboardTypes.ResourceGroup, string, error) {
-	v1File := &switchboardTypes.ResourceGroup{
-		Version: "v1",
-		Resources: []*switchboardTypes.Resource{
-			{
-				Name:   "get-env",
-				Driver: "os-env",
-			},
-		},
-	}
+func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worker, app *Application, applicationName string, cliConf *config.CLIConfig) ([]*switchboardTypes.Resource, error) {
+	// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
 	var builder string
+	resources, builder, err := createV1BuildResources(client, app, applicationName, cliConf.Project, cliConf.Cluster)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
+	}
 
-	stackConf, err := createStackConf(client, raw, stackName, projectID, clusterID)
+	applicationBytes, err := yaml.Marshal(app)
+	if err != nil {
+		return nil, fmt.Errorf("malformed application definition: %w", err)
+	}
+
+	deployAppHook := &DeployAppHook{
+		Client:               client,
+		ApplicationName:      applicationName,
+		ProjectID:            cliConf.Project,
+		ClusterID:            cliConf.Cluster,
+		BuildImageDriverName: GetBuildImageDriverName(applicationName),
+		PorterYAML:           applicationBytes,
+		Builder:              builder,
+	}
+
+	worker.RegisterHook("deploy-app", deployAppHook)
+	return resources, nil
+}
+
+// Create app event to signfy start of build
+func createAppEvent(client *api.Client, applicationName string, projectId, clusterId uint) (string, error) {
+	var req *types.CreateOrUpdatePorterAppEventRequest
+	if os.Getenv("GITHUB_RUN_ID") != "" {
+		req = &types.CreateOrUpdatePorterAppEventRequest{
+			Status:             "PROGRESSING",
+			Type:               types.PorterAppEventType_Build,
+			TypeExternalSource: "GITHUB",
+			Metadata: map[string]any{
+				"action_run_id": os.Getenv("GITHUB_RUN_ID"),
+				"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
+			},
+		}
+
+		repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+		if len(repoNameSplit) != 2 {
+			return "", fmt.Errorf("unable to parse GITHUB_REPOSITORY")
+		}
+		req.Metadata["repo"] = repoNameSplit[1]
+
+		actionRunID := os.Getenv("GITHUB_RUN_ID")
+		if actionRunID != "" {
+			arid, err := strconv.Atoi(actionRunID)
+			if err != nil {
+				return "", fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+			}
+			req.Metadata["action_run_id"] = arid
+		}
+
+		repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
+		if repoOwnerAccountID != "" {
+			arid, err := strconv.Atoi(repoOwnerAccountID)
+			if err != nil {
+				return "", fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+			}
+			req.Metadata["github_account_id"] = arid
+		}
+	} else {
+		req = &types.CreateOrUpdatePorterAppEventRequest{
+			Status:             "PROGRESSING",
+			Type:               types.PorterAppEventType_Build,
+			TypeExternalSource: "GITHUB",
+			Metadata:           map[string]any{},
+		}
+	}
+
+	ctx := context.Background()
+	event, err := client.CreateOrUpdatePorterAppEvent(ctx, projectId, clusterId, applicationName, req)
+	if err != nil {
+		return "", fmt.Errorf("unable to create porter app build event: %w", err)
+	}
+
+	return event.ID, nil
+}
+
+func createV1BuildResources(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) ([]*switchboardTypes.Resource, string, error) {
+	var builder string
+	resources := make([]*switchboardTypes.Resource, 0)
+
+	stackConf, err := createStackConf(client, app, stackName, projectID, clusterID)
 	if err != nil {
 		return nil, "", err
 	}
 
 	var bi, pi *switchboardTypes.Resource
 
-	if stackConf.parsed.Build != nil {
-		bi, pi, builder, err = createV1BuildResourcesFromPorterYaml(stackConf)
-		if err != nil {
-			color.New(color.FgRed).Printf("Could not build using values specified in porter.yaml (%s), attempting to load stack build settings instead \n", err.Error())
-			bi, pi, builder, err = createV1BuildResourcesFromDB(client, stackConf)
-			if err != nil {
-				return nil, "", err
-			}
-		}
-	} else {
+	// look up build settings from DB if none specified in porter.yaml
+	if stackConf.parsed.Build == nil {
 		color.New(color.FgYellow).Printf("No build values specified in porter.yaml, attempting to load stack build settings instead \n")
-		bi, pi, builder, err = createV1BuildResourcesFromDB(client, stackConf)
+
+		res, err := client.GetPorterApp(context.Background(), stackConf.projectID, stackConf.clusterID, stackConf.stackName)
+		if err != nil {
+			return nil, "", fmt.Errorf("unable to read build info from DB: %w", err)
+		}
+
+		converted := convertToBuild(res)
+		stackConf.parsed.Build = &converted
+	}
+
+	// only include build and push steps if an image is not already specified
+	if stackConf.parsed.Build.Image == nil {
+		bi, pi, builder, err = createV1BuildResourcesFromPorterYaml(stackConf)
+
 		if err != nil {
 			return nil, "", err
 		}
-	}
 
-	v1File.Resources = append(v1File.Resources, bi, pi)
+		resources = append(resources, bi, pi)
 
-	preDeploy, cmd, err := createPreDeployResource(client,
-		stackConf.parsed.Release,
-		stackConf.stackName,
-		bi.Name,
-		pi.Name,
-		stackConf.projectID,
-		stackConf.clusterID,
-		stackConf.parsed.Env,
-	)
-	if err != nil {
-		return nil, "", err
-	}
-
-	if preDeploy != nil {
-		color.New(color.FgYellow).Printf("Found pre-deploy command to run before deploying apps: %s \n", cmd)
-		v1File.Resources = append(v1File.Resources, preDeploy)
-	} else {
-		color.New(color.FgYellow).Printf("No pre-deploy command found in porter.yaml or helm. \n")
-	}
-
-	return v1File, builder, nil
-}
-
-func createStackConf(client *api.Client, raw []byte, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
-	var parsed *PorterStackYAML
-	if raw == nil {
-		parsed = createDefaultPorterYaml()
-	} else {
-		parsed = &PorterStackYAML{}
-		err := yaml.Unmarshal(raw, parsed)
+		// also excluding use of pre-deploy with pre-built imges
+		preDeploy, cmd, err := createPreDeployResource(client,
+			stackConf.parsed.Release,
+			stackConf.stackName,
+			bi.Name,
+			pi.Name,
+			stackConf.projectID,
+			stackConf.clusterID,
+			stackConf.parsed.Env,
+		)
 		if err != nil {
-			errMsg := composePreviewMessage("error parsing porter.yaml", Error)
-			return nil, fmt.Errorf("%s: %w", errMsg, err)
+			return nil, "", err
+		}
+
+		if preDeploy != nil {
+			color.New(color.FgYellow).Printf("Found pre-deploy command to run before deploying apps: %s \n", cmd)
+			resources = append(resources, preDeploy)
+		} else {
+			color.New(color.FgYellow).Printf("No pre-deploy command found in porter.yaml or helm. \n")
 		}
 	}
 
+	return resources, builder, nil
+}
+
+func createStackConf(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
 	err := config.ValidateCLIEnvironment()
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
@@ -104,13 +174,12 @@ func createStackConf(client *api.Client, raw []byte, stackName string, projectID
 	releaseEnvVars := getEnvFromRelease(client, stackName, projectID, clusterID)
 	if releaseEnvVars != nil {
 		color.New(color.FgYellow).Printf("Reading build env from release\n")
-		parsed.Env = mergeStringMaps(parsed.Env, releaseEnvVars)
+		app.Env = mergeStringMaps(app.Env, releaseEnvVars)
 	}
 
 	return &StackConf{
 		apiClient: client,
-		rawBytes:  raw,
-		parsed:    parsed,
+		parsed:    app,
 		stackName: stackName,
 		projectID: projectID,
 		clusterID: clusterID,
@@ -119,42 +188,17 @@ func createStackConf(client *api.Client, raw []byte, stackName string, projectID
 }
 
 func createV1BuildResourcesFromPorterYaml(stackConf *StackConf) (*switchboardTypes.Resource, *switchboardTypes.Resource, string, error) {
-	bi, err := stackConf.parsed.Build.getV1BuildImage(stackConf.parsed.Env, stackConf.namespace)
+	bi, err := stackConf.parsed.Build.getV1BuildImage(stackConf.stackName, stackConf.parsed.Env, stackConf.namespace)
 	if err != nil {
 		return nil, nil, "", err
 	}
 
-	pi, err := stackConf.parsed.Build.getV1PushImage(stackConf.namespace)
+	pi, err := stackConf.parsed.Build.getV1PushImage(stackConf.stackName, stackConf.namespace)
 	if err != nil {
 		return nil, nil, "", err
 	}
 
 	return bi, pi, stackConf.parsed.Build.GetBuilder(), nil
-}
-
-func createV1BuildResourcesFromDB(client *api.Client, stackConf *StackConf) (*switchboardTypes.Resource, *switchboardTypes.Resource, string, error) {
-	res, err := client.GetPorterApp(context.Background(), stackConf.projectID, stackConf.clusterID, stackConf.stackName)
-	if err != nil {
-		return nil, nil, "", fmt.Errorf("unable to read build info from DB: %w", err)
-	}
-
-	if res == nil {
-		return nil, nil, "", fmt.Errorf("stack %s not found", stackConf.stackName)
-	}
-
-	build := convertToBuild(res)
-
-	bi, err := build.getV1BuildImage(stackConf.parsed.Env, stackConf.namespace)
-	if err != nil {
-		return nil, nil, "", err
-	}
-
-	pi, err := build.getV1PushImage(stackConf.namespace)
-	if err != nil {
-		return nil, nil, "", err
-	}
-
-	return bi, pi, build.GetBuilder(), nil
 }
 
 func convertToBuild(porterApp *types.PorterApp) Build {
@@ -208,12 +252,6 @@ func convertToBuild(porterApp *types.PorterApp) Build {
 		Buildpacks: buildpacks,
 		Dockerfile: dockerfile,
 		Image:      image,
-	}
-}
-
-func createDefaultPorterYaml() *PorterStackYAML {
-	return &PorterStackYAML{
-		Apps: nil,
 	}
 }
 

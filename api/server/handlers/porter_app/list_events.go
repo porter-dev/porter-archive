@@ -3,13 +3,8 @@ package porter_app
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
-	"reflect"
-	"strconv"
 
-	"github.com/bradleyfalzon/ghinstallation/v2"
-	"github.com/google/go-github/v41/github"
 	"github.com/google/uuid"
 	"github.com/gorilla/schema"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -42,10 +37,8 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	defer span.End()
 
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "cluster-id", Value: int(cluster.ID)},
-		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},
-	)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
 	if reqErr != nil {
@@ -80,7 +73,7 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	for idx, appEvent := range porterAppEvents {
 		if appEvent.Status == "PROGRESSING" {
-			pae, err := p.updateExistingAppEvent(ctx, *cluster, stackName, *appEvent)
+			pae, err := p.updateExistingAppEvent(ctx, *cluster, stackName, *appEvent, user, project)
 			if err != nil {
 				e := telemetry.Error(ctx, span, nil, "unable to update existing porter app event")
 				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
@@ -108,7 +101,14 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	p.WriteResult(w, r, res)
 }
 
-func (p *PorterAppEventListHandler) updateExistingAppEvent(ctx context.Context, cluster models.Cluster, stackName string, appEvent models.PorterAppEvent) (models.PorterAppEvent, error) {
+func (p *PorterAppEventListHandler) updateExistingAppEvent(
+	ctx context.Context,
+	cluster models.Cluster,
+	stackName string,
+	appEvent models.PorterAppEvent,
+	user *models.User,
+	project *models.Project,
+) (models.PorterAppEvent, error) {
 	ctx, span := telemetry.NewSpan(ctx, "update-porter-app-event")
 	defer span.End()
 
@@ -129,13 +129,6 @@ func (p *PorterAppEventListHandler) updateExistingAppEvent(ctx context.Context, 
 		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},
 	)
 
-	if appEvent.Type == string(types.PorterAppEventType_Build) && appEvent.TypeExternalSource == "GITHUB" {
-		err = p.updateBuildEvent_Github(ctx, &event)
-		if err != nil {
-			return models.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error updating porter app event for github build")
-		}
-	}
-
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-event-updated-status", Value: event.Status})
 
 	err = p.Repo().PorterAppEvent().UpdateEvent(ctx, &event)
@@ -148,96 +141,4 @@ func (p *PorterAppEventListHandler) updateExistingAppEvent(ctx context.Context, 
 	}
 
 	return event, nil
-}
-
-func (p *PorterAppEventListHandler) updateBuildEvent_Github(ctx context.Context, event *models.PorterAppEvent) error {
-	ctx, span := telemetry.NewSpan(ctx, "update-porter-app-build-event")
-	defer span.End()
-
-	repoOrg, ok := event.Metadata["org"].(string)
-	if !ok {
-		return telemetry.Error(ctx, span, nil, "error retrieving repo org from metadata")
-	}
-
-	repoName, ok := event.Metadata["repo"].(string)
-	if !ok {
-		return telemetry.Error(ctx, span, nil, "error retrieving repo name from metadata")
-	}
-
-	actionRunIDIface, ok := event.Metadata["action_run_id"]
-	if !ok {
-		return telemetry.Error(ctx, span, nil, "error retrieving action run id from metadata")
-	}
-	actionRunID, ok := actionRunIDIface.(float64)
-	if !ok {
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "action-run-id-type", Value: reflect.TypeOf(actionRunIDIface).String()})
-		return telemetry.Error(ctx, span, nil, "error converting action run id to int")
-	}
-
-	accountIDIface, ok := event.Metadata["github_account_id"]
-	if !ok {
-		return telemetry.Error(ctx, span, nil, "error retrieving github account id from metadata")
-	}
-	githubAccountID, ok := accountIDIface.(float64)
-	if !ok {
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "github-account-id-type", Value: reflect.TypeOf(accountIDIface).String()})
-		return telemetry.Error(ctx, span, nil, "error converting github account id to int")
-	}
-
-	// read the environment to get the environment id
-	env, err := p.Repo().GithubAppInstallation().ReadGithubAppInstallationByAccountID(int64(githubAccountID))
-	if err != nil {
-		return telemetry.Error(ctx, span, err, "error reading github environment by owner repo name")
-	}
-	if env == nil {
-		return telemetry.Error(ctx, span, nil, "github environment is nil")
-	}
-
-	ghClient, err := getGithubClientFromEnvironment(p.Config(), env.InstallationID)
-	if err != nil {
-		return telemetry.Error(ctx, span, err, "error getting github client using porter application")
-	}
-	if ghClient == nil {
-		return telemetry.Error(ctx, span, nil, "github client is nil")
-	}
-
-	actionRun, _, err := ghClient.Actions.GetWorkflowRunByID(ctx, repoOrg, repoName, int64(actionRunID))
-	if err != nil {
-		return telemetry.Error(ctx, span, err, "error getting github action run by id")
-	}
-	if actionRun == nil {
-		return telemetry.Error(ctx, span, nil, "github action run is nil")
-	}
-
-	if *actionRun.Status == "completed" {
-		if *actionRun.Conclusion == "success" {
-			event.Status = "SUCCESS"
-		} else {
-			event.Status = "FAILED"
-		}
-		event.Metadata["end_time"] = actionRun.GetUpdatedAt().Time
-	}
-
-	return nil
-}
-
-func getGithubClientFromEnvironment(config *config.Config, installationID int64) (*github.Client, error) {
-	// get the github app client
-	ghAppId, err := strconv.Atoi(config.ServerConf.GithubAppID)
-	if err != nil {
-		return nil, fmt.Errorf("malformed GITHUB_APP_ID in server configuration: %w", err)
-	}
-
-	// authenticate as github app installation
-	itr, err := ghinstallation.New(
-		http.DefaultTransport,
-		int64(ghAppId),
-		installationID,
-		config.ServerConf.GithubAppSecret,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error in creating github client from preview environment: %w", err)
-	}
-
-	return github.NewClient(&http.Client{Transport: itr}), nil
 }

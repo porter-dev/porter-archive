@@ -20,6 +20,7 @@ import Button from "components/porter/Button";
 import Icon from "components/porter/Icon";
 import Container from "components/porter/Container";
 import EventFocusView from "./events/focus-views/EventFocusView";
+import { PorterAppEvent } from "shared/types";
 
 type Props = {
   chart: any;
@@ -31,7 +32,7 @@ type Props = {
 const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) => {
   const { currentProject, currentCluster } = useContext(Context);
 
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<PorterAppEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<any>(null);
   const [page, setPage] = useState<number>(1);
@@ -59,7 +60,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
       );
 
       setNumPages(res.data.num_pages);
-      setEvents(res.data.events);
+      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)) ?? []);
     } catch (err) {
       setError(err);
     } finally {

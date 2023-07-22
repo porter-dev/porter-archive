@@ -10,10 +10,18 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/porter-dev/porter/api/server"
+	"github.com/porter-dev/porter/api/server/router"
+
+	"github.com/porter-dev/porter/api/authmanagement"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/porter-dev/porter/internal/telemetry"
 
-	"github.com/porter-dev/porter/api/server/router"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/config/loader"
 	"github.com/porter-dev/porter/internal/models"
@@ -24,8 +32,13 @@ import (
 var Version string = "dev-ce"
 
 func main() {
-	var versionFlag bool
+	g, ctx := errgroup.WithContext(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var versionFlag, authServiceFlag bool
 	flag.BoolVar(&versionFlag, "version", false, "print version and exit")
+	flag.BoolVar(&authServiceFlag, "auth", false, "run auth service instead of porter api")
 	flag.Parse()
 
 	// Exit safely when version is used
@@ -48,30 +61,66 @@ func main() {
 	}
 	config.Logger.Info().Msg("Initialed data")
 
-	config.Logger.Info().Msg("Creating API router")
-	appRouter := router.NewAPIRouter(config)
-	config.Logger.Info().Msg("Created API router")
+	tracer, err := telemetry.InitTracer(ctx, config.TelemetryConfig)
+	if err != nil {
+		config.Logger.Fatal().Err(err).Msg("Error initializing telemetry")
+	}
+	defer tracer.Shutdown()
 
-	address := fmt.Sprintf(":%d", config.ServerConf.Port)
+	if authServiceFlag {
+		g.Go(func() error {
+			a, err := authmanagement.NewService()
+			if err != nil {
+				return fmt.Errorf("failed to initialize AuthManagement server: %s", err.Error())
+			}
 
-	config.Logger.Info().Msgf("Starting server %v", address)
+			config.Logger.Info().Msgf("Starting AuthManagement server on port %d", a.Config.Port)
+			if err := a.ListenAndServe(ctx); err != nil && err != http.ErrServerClosed {
+				return fmt.Errorf("AuthManagement server failed: %s", err.Error())
+			}
+			config.Logger.Info().Msg("Shutting down AuthManagement server")
+			return nil
+		})
+	} else {
+		config.Logger.Info().Msg("Creating API router")
+		appRouter := router.NewAPIRouter(config)
+		config.Logger.Info().Msg("Created API router")
 
-	s := &http.Server{
-		Addr:         address,
-		Handler:      appRouter,
-		ReadTimeout:  config.ServerConf.TimeoutRead,
-		WriteTimeout: config.ServerConf.TimeoutWrite,
-		IdleTimeout:  config.ServerConf.TimeoutIdle,
+		p := server.PorterAPIServer{
+			Port:       config.ServerConf.Port,
+			Router:     appRouter,
+			ServerConf: config.ServerConf,
+		}
+
+		g.Go(func() error {
+			config.Logger.Info().Msgf("Starting PorterAPI server on port %d", config.ServerConf.Port)
+			if err := p.ListenAndServe(ctx); err != nil && err != http.ErrServerClosed {
+				return fmt.Errorf("PorterAPI server failed: %s", err.Error())
+			}
+			config.Logger.Info().Msg("Shutting down PorterAPI server")
+			return nil
+		})
 	}
 
-	// ignore error so that telemetry is not required
-	tracer, err := telemetry.InitTracer(context.Background(), config.TelemetryConfig)
-	if err == nil {
-		defer tracer.Shutdown()
+	termFunc := func() error {
+		termChan := make(chan os.Signal, 1)
+		signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
+
+		select {
+		case <-termChan:
+			config.Logger.Info().Msg("Process shutdown signal received")
+			cancel()
+			return nil
+		case <-ctx.Done():
+			return nil
+		}
 	}
 
-	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		config.Logger.Fatal().Err(err).Msg("Server startup failed")
+	g.Go(termFunc)
+
+	err = g.Wait()
+	if err != nil {
+		config.Logger.Fatal().Err(err).Msg("Received server error")
 	}
 }
 

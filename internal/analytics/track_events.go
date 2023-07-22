@@ -18,6 +18,7 @@ const (
 	AWSCreateIntegrationSuccess SegmentEvent = "AWS Create Integration Success"
 	AWSCreateIntegrationFailure SegmentEvent = "AWS Create Integration Failure"
 	ProvisioningAttempted       SegmentEvent = "Provisioning Attempted"
+	ProvisioningFailure         SegmentEvent = "Provisioning Failure"
 
 	ClusterProvisioningStart   SegmentEvent = "Cluster Provisioning Started"
 	ClusterProvisioningError   SegmentEvent = "Cluster Provisioning Error"
@@ -47,9 +48,12 @@ const (
 	ClusterDestroyingSuccess SegmentEvent = "Cluster Destroying Success"
 
 	// porter apps
-	StackLaunchStart    SegmentEvent = "Stack Launch Started"
-	StackLaunchComplete SegmentEvent = "Stack Launch Complete"
-	StackLaunchSuccess  SegmentEvent = "Stack Launch Success"
-	StackLaunchFailure  SegmentEvent = "Stack Launch Failure"
-	StackDeletion       SegmentEvent = "Stack Deletion"
+	StackLaunchStart      SegmentEvent = "Stack Launch Started"
+	StackLaunchComplete   SegmentEvent = "Stack Launch Complete"
+	StackLaunchSuccess    SegmentEvent = "Stack Launch Success"
+	StackLaunchFailure    SegmentEvent = "Stack Launch Failure"
+	StackDeletion         SegmentEvent = "Stack Deletion"
+	StackBuildProgressing SegmentEvent = "Stack Build Progressing"
+	StackBuildFailure     SegmentEvent = "Stack Build Failure"
+	StackBuildSuccess     SegmentEvent = "Stack Build Success"
 )

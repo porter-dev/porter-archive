@@ -582,37 +582,41 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   fileUpload={true}
                   syncedEnvGroups={syncedEnvGroups}
                 />
-                <LoadButton
-                  onClick={() => setShowEnvModal(true)}
-                >
-                  <img src={sliders} /> Load from Env Group
-                </LoadButton>
-                {showEnvModal && <EnvGroupModal
-                  setValues={(x: any) => {
-                    setFormState({ ...formState, envVariables: x });
-                  }}
-                  values={formState.envVariables}
-                  closeModal={() => setShowEnvModal(false)}
-                  syncedEnvGroups={syncedEnvGroups}
-                  setSyncedEnvGroups={setSyncedEnvGroups}
-                  namespace={"porter-stack-" + porterApp.name}
-                  newApp={true}
-                />}
-                {!!syncedEnvGroups?.length && (
+                {currentProject.env_group_enabled && (
                   <>
-                    <Spacer y={0.5} />
-                    <Text size={16}>Synced environment groups</Text >
-                    {syncedEnvGroups?.map((envGroup: any) => {
-                      return (
-                        <ExpandableEnvGroup
-                          key={envGroup?.name}
-                          envGroup={envGroup}
-                          onDelete={() => {
-                            deleteEnvGroup(envGroup);
-                          }}
-                        />
-                      );
-                    })}
+                    <LoadButton
+                      onClick={() => setShowEnvModal(true)}
+                    >
+                      <img src={sliders} /> Load from Env Group
+                    </LoadButton>
+                    {showEnvModal && <EnvGroupModal
+                      setValues={(x: any) => {
+                        setFormState({ ...formState, envVariables: x });
+                      }}
+                      values={formState.envVariables}
+                      closeModal={() => setShowEnvModal(false)}
+                      syncedEnvGroups={syncedEnvGroups}
+                      setSyncedEnvGroups={setSyncedEnvGroups}
+                      namespace={"porter-stack-" + porterApp.name}
+                      newApp={true}
+                    />}
+                    {!!syncedEnvGroups?.length && (
+                      <>
+                        <Spacer y={0.5} />
+                        <Text size={16}>Synced environment groups</Text >
+                        {syncedEnvGroups?.map((envGroup: any) => {
+                          return (
+                            <ExpandableEnvGroup
+                              key={envGroup?.name}
+                              envGroup={envGroup}
+                              onDelete={() => {
+                                deleteEnvGroup(envGroup);
+                              }}
+                            />
+                          );
+                        })}
+                      </>
+                    )}
                   </>
                 )}
               </>,

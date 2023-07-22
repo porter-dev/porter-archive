@@ -6,7 +6,7 @@ import { PorterJson } from "./schema";
 export type Service = WorkerService | WebService | JobService | ReleaseService;
 export type ServiceType = 'web' | 'worker' | 'job' | 'release';
 
-type ServiceString = {
+export type ServiceString = {
     readOnly: boolean;
     value: string;
 }
@@ -14,11 +14,31 @@ type ServiceBoolean = {
     readOnly: boolean;
     value: boolean;
 }
+export type ServiceArray<T extends ServiceString | ServiceBoolean> = {
+    key: string;
+    value: T;
+}[];
+const ServiceArray = {
+    serialize: <T extends ServiceString | ServiceBoolean>(serviceArray: ServiceArray<T>) => {
+        const map: Record<string, string> = {};
+        serviceArray.map(({ key, value }: {
+            key: string;
+            value: T;
+        }) => {
+            if (key != '') {
+                map[key] = value.value.toString();
+            }
+        });
+        return map;
+    }
+}
+
 type Ingress = {
     enabled: ServiceBoolean;
     customDomain: ServiceString;
     hosts: ServiceString;
     porterHosts: ServiceString;
+    annotations: ServiceArray<ServiceString>;
 }
 type Autoscaling = {
     enabled: ServiceBoolean,
@@ -50,6 +70,12 @@ type Health = {
     startupProbe: StartUpProbe,
     readinessProbe: ReadinessProbe,
 }
+type CloudSql = {
+    enabled: ServiceBoolean,
+    connectionName: ServiceString,
+    dbPort: ServiceString,
+    serviceAccountJSON: ServiceString,
+}
 
 
 const ServiceField = {
@@ -65,6 +91,22 @@ const ServiceField = {
             value: overrideValue ?? defaultValue,
         }
     },
+    array: (defaultMap: Record<string, string>, overrideMap?: Record<string, string>): ServiceArray<ServiceString> => {
+        const serviceMap: Record<string, ServiceString> = {};
+        for (const key in defaultMap) {
+            serviceMap[key] = ServiceField.string(defaultMap[key]);
+        }
+        for (const key in overrideMap) {
+            serviceMap[key] = ServiceField.string('', overrideMap[key]);
+        }
+        if (Object.keys(serviceMap).length == 0) {
+            return [];
+        }
+        return Object.keys(serviceMap).map((key) => ({
+            key,
+            value: serviceMap[key],
+        }));
+    }
 }
 
 type SharedServiceParams = {
@@ -74,69 +116,7 @@ type SharedServiceParams = {
     startCommand: ServiceString;
     type: ServiceType;
     canDelete: boolean;
-}
-
-export type WorkerService = SharedServiceParams & {
-    type: 'worker';
-    replicas: ServiceString;
-    autoscaling: Autoscaling;
-}
-const WorkerService = {
-    default: (name: string, porterJson?: PorterJson): WorkerService => ({
-        name,
-        cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
-        ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
-        startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
-        type: 'worker',
-        replicas: ServiceField.string('1', porterJson?.apps?.[name]?.config?.replicaCount),
-        autoscaling: {
-            enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.autoscaling?.enabled),
-            minReplicas: ServiceField.string('1', porterJson?.apps?.[name]?.config?.autoscaling?.minReplicas),
-            maxReplicas: ServiceField.string('10', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
-            targetCPUUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
-            targetMemoryUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
-        },
-        canDelete: porterJson?.apps?.[name] == null,
-    }),
-    serialize: (service: WorkerService) => {
-        return {
-            replicaCount: service.replicas.value,
-            container: {
-                command: service.startCommand.value,
-            },
-            resources: {
-                requests: {
-                    cpu: service.cpu.value + 'm',
-                    memory: service.ram.value + 'Mi',
-                }
-            },
-            autoscaling: {
-                enabled: service.autoscaling.enabled.value,
-                minReplicas: service.autoscaling.minReplicas.value,
-                maxReplicas: service.autoscaling.maxReplicas.value,
-                targetCPUUtilizationPercentage: service.autoscaling.targetCPUUtilizationPercentage.value,
-                targetMemoryUtilizationPercentage: service.autoscaling.targetMemoryUtilizationPercentage.value,
-            },
-        }
-    },
-    deserialize: (name: string, values: any, porterJson?: PorterJson): WorkerService => {
-        return {
-            name,
-            cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
-            ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
-            startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
-            type: 'worker',
-            replicas: ServiceField.string(values.replicaCount ?? '', porterJson?.apps?.[name]?.config?.replicaCount),
-            autoscaling: {
-                enabled: ServiceField.boolean(values.autoscaling?.enabled ?? false, porterJson?.apps?.[name]?.config?.autoscaling?.enabled),
-                minReplicas: ServiceField.string(values.autoscaling?.minReplicas ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.minReplicas),
-                maxReplicas: ServiceField.string(values.autoscaling?.maxReplicas ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
-                targetCPUUtilizationPercentage: ServiceField.string(values.autoscaling?.targetCPUUtilizationPercentage ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
-                targetMemoryUtilizationPercentage: ServiceField.string(values.autoscaling?.targetMemoryUtilizationPercentage ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
-            },
-            canDelete: porterJson?.apps?.[name] == null,
-        }
-    },
+    cloudsql: CloudSql;
 }
 
 export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
@@ -165,6 +145,7 @@ const WebService = {
             customDomain: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
             hosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
             porterHosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
+            annotations: ServiceField.array({}, porterJson?.apps?.[name]?.config?.ingress?.annotations)
         },
         port: ServiceField.string('3000', porterJson?.apps?.[name]?.config?.container?.port),
         canDelete: porterJson?.apps?.[name] == null,
@@ -187,7 +168,13 @@ const WebService = {
                 path: ServiceField.string('/livez', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.path),
                 periodSeconds: ServiceField.string('5', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.periodSeconds),
             },
-        }
+        },
+        cloudsql: {
+            enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
+            connectionName: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
+            dbPort: ServiceField.string('5432', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
+            serviceAccountJSON: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+        },
     }),
     serialize: (service: WebService) => {
         return {
@@ -214,6 +201,10 @@ const WebService = {
                 custom_domain: service.ingress.customDomain.value ? true : false,
                 hosts: service.ingress.customDomain.value ? [service.ingress.customDomain.value] : [],
                 porter_hosts: service.ingress.porterHosts.value ? [service.ingress.porterHosts.value] : [],
+                annotations: ServiceArray.serialize(service.ingress.annotations),
+            },
+            service: {
+                port: service.port.value,
             },
             health: {
                 startupProbe: {
@@ -234,7 +225,13 @@ const WebService = {
                     path: service.health.livenessProbe.path.value,
                     periodSeconds: service.health.livenessProbe.periodSeconds.value,
                 },
-            }
+            },
+            cloudsql: {
+                enabled: service.cloudsql.enabled.value,
+                connectionName: service.cloudsql.connectionName.value,
+                dbPort: service.cloudsql.dbPort.value,
+                serviceAccountJSON: service.cloudsql.serviceAccountJSON.value,
+            },
         }
     },
     deserialize: (name: string, values: any, porterJson?: PorterJson): WebService => {
@@ -257,6 +254,7 @@ const WebService = {
                 customDomain: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
                 hosts: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
                 porterHosts: ServiceField.string(values.ingress?.porter_hosts?.length ? values.ingress.porter_hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
+                annotations: ServiceField.array(values.ingress?.annotations ?? {}, porterJson?.apps?.[name]?.config?.ingress?.annotations),
             },
             port: ServiceField.string(values.container?.port ?? '', porterJson?.apps?.[name]?.config?.container?.port),
             canDelete: porterJson?.apps?.[name] == null,
@@ -279,7 +277,94 @@ const WebService = {
                     path: ServiceField.string(values.health?.livenessProbe?.path ?? '', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.path),
                     periodSeconds: ServiceField.string(values.health?.livenessProbe?.periodSeconds ?? '', porterJson?.apps?.[name]?.config?.health?.livenessProbe?.periodSeconds),
                 },
-            }
+            },
+            cloudsql: {
+                enabled: ServiceField.boolean(values.cloudsql?.enabled ?? false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
+                connectionName: ServiceField.string(values.cloudsql?.connectionName ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
+                dbPort: ServiceField.string(values.cloudsql?.dbPort ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
+                serviceAccountJSON: ServiceField.string(values.cloudsql?.serviceAccountJSON ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+            },
+        }
+    },
+}
+
+export type WorkerService = SharedServiceParams & {
+    type: 'worker';
+    replicas: ServiceString;
+    autoscaling: Autoscaling;
+}
+const WorkerService = {
+    default: (name: string, porterJson?: PorterJson): WorkerService => ({
+        name,
+        cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
+        ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
+        startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
+        type: 'worker',
+        replicas: ServiceField.string('1', porterJson?.apps?.[name]?.config?.replicaCount),
+        autoscaling: {
+            enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.autoscaling?.enabled),
+            minReplicas: ServiceField.string('1', porterJson?.apps?.[name]?.config?.autoscaling?.minReplicas),
+            maxReplicas: ServiceField.string('10', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
+            targetCPUUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
+            targetMemoryUtilizationPercentage: ServiceField.string('50', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
+        },
+        canDelete: porterJson?.apps?.[name] == null,
+        cloudsql: {
+            enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
+            connectionName: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
+            dbPort: ServiceField.string('5432', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
+            serviceAccountJSON: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+        },
+    }),
+    serialize: (service: WorkerService) => {
+        return {
+            replicaCount: service.replicas.value,
+            container: {
+                command: service.startCommand.value,
+            },
+            resources: {
+                requests: {
+                    cpu: service.cpu.value + 'm',
+                    memory: service.ram.value + 'Mi',
+                }
+            },
+            autoscaling: {
+                enabled: service.autoscaling.enabled.value,
+                minReplicas: service.autoscaling.minReplicas.value,
+                maxReplicas: service.autoscaling.maxReplicas.value,
+                targetCPUUtilizationPercentage: service.autoscaling.targetCPUUtilizationPercentage.value,
+                targetMemoryUtilizationPercentage: service.autoscaling.targetMemoryUtilizationPercentage.value,
+            },
+            cloudsql: {
+                enabled: service.cloudsql.enabled.value,
+                connectionName: service.cloudsql.connectionName.value,
+                dbPort: service.cloudsql.dbPort.value,
+                serviceAccountJSON: service.cloudsql.serviceAccountJSON.value,
+            },
+        }
+    },
+    deserialize: (name: string, values: any, porterJson?: PorterJson): WorkerService => {
+        return {
+            name,
+            cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
+            ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
+            startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
+            type: 'worker',
+            replicas: ServiceField.string(values.replicaCount ?? '', porterJson?.apps?.[name]?.config?.replicaCount),
+            autoscaling: {
+                enabled: ServiceField.boolean(values.autoscaling?.enabled ?? false, porterJson?.apps?.[name]?.config?.autoscaling?.enabled),
+                minReplicas: ServiceField.string(values.autoscaling?.minReplicas ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.minReplicas),
+                maxReplicas: ServiceField.string(values.autoscaling?.maxReplicas ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.maxReplicas),
+                targetCPUUtilizationPercentage: ServiceField.string(values.autoscaling?.targetCPUUtilizationPercentage ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.targetCPUUtilizationPercentage),
+                targetMemoryUtilizationPercentage: ServiceField.string(values.autoscaling?.targetMemoryUtilizationPercentage ?? '', porterJson?.apps?.[name]?.config?.autoscaling?.targetMemoryUtilizationPercentage),
+            },
+            canDelete: porterJson?.apps?.[name] == null,
+            cloudsql: {
+                enabled: ServiceField.boolean(values.cloudsql?.enabled ?? false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
+                connectionName: ServiceField.string(values.cloudsql?.connectionName ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
+                dbPort: ServiceField.string(values.cloudsql?.dbPort ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
+                serviceAccountJSON: ServiceField.string(values.cloudsql?.serviceAccountJSON ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+            },
         }
     },
 }
@@ -299,6 +384,12 @@ const JobService = {
         jobsExecuteConcurrently: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.allowConcurrent),
         cronSchedule: ServiceField.string('*/10 * * * *', porterJson?.apps?.[name]?.config?.schedule?.value),
         canDelete: porterJson?.apps?.[name] == null,
+        cloudsql: {
+            enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
+            connectionName: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
+            dbPort: ServiceField.string('5432', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
+            serviceAccountJSON: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+        },
     }),
     serialize: (service: JobService) => {
         return {
@@ -317,6 +408,12 @@ const JobService = {
                 value: service.cronSchedule.value,
             },
             paused: true,
+            cloudsql: {
+                enabled: service.cloudsql.enabled.value,
+                connectionName: service.cloudsql.connectionName.value,
+                dbPort: service.cloudsql.dbPort.value,
+                serviceAccountJSON: service.cloudsql.serviceAccountJSON.value,
+            },
         }
     },
     deserialize: (name: string, values: any, porterJson?: PorterJson): JobService => {
@@ -329,6 +426,12 @@ const JobService = {
             jobsExecuteConcurrently: ServiceField.boolean(values.allowConcurrent ?? false, porterJson?.apps?.[name]?.config?.allowConcurrent),
             cronSchedule: ServiceField.string(values.schedule?.value ?? '', porterJson?.apps?.[name]?.config?.schedule?.value),
             canDelete: porterJson?.apps?.[name] == null,
+            cloudsql: {
+                enabled: ServiceField.boolean(values.cloudsql?.enabled ?? false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
+                connectionName: ServiceField.string(values.cloudsql?.connectionName ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
+                dbPort: ServiceField.string(values.cloudsql?.dbPort ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
+                serviceAccountJSON: ServiceField.string(values.cloudsql?.serviceAccountJSON ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+            },
         }
     },
 }
@@ -344,6 +447,12 @@ const ReleaseService = {
         startCommand: ServiceField.string('', porterJson?.release?.run),
         type: 'release',
         canDelete: porterJson?.release == null,
+        cloudsql: {
+            enabled: ServiceField.boolean(false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
+            connectionName: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
+            dbPort: ServiceField.string('5432', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
+            serviceAccountJSON: ServiceField.string('', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+        },
     }),
 
     serialize: (service: ReleaseService) => {
@@ -358,6 +467,12 @@ const ReleaseService = {
                 }
             },
             paused: true, // this makes sure the release isn't run immediately. it is flipped when the porter apply runs the release in the GHA
+            cloudsql: {
+                enabled: service.cloudsql.enabled.value,
+                connectionName: service.cloudsql.connectionName.value,
+                dbPort: service.cloudsql.dbPort.value,
+                serviceAccountJSON: service.cloudsql.serviceAccountJSON.value,
+            },
         }
     },
 
@@ -369,6 +484,12 @@ const ReleaseService = {
             startCommand: ServiceField.string(values?.container?.command ?? '', porterJson?.release?.run),
             type: 'release',
             canDelete: porterJson?.release == null,
+            cloudsql: {
+                enabled: ServiceField.boolean(values.cloudsql?.enabled ?? false, porterJson?.apps?.[name]?.config?.cloudsql?.enabled),
+                connectionName: ServiceField.string(values.cloudsql?.connectionName ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.connectionName),
+                dbPort: ServiceField.string(values.cloudsql?.dbPort ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.dbPort),
+                serviceAccountJSON: ServiceField.string(values.cloudsql?.serviceAccountJSON ?? '', porterJson?.apps?.[name]?.config?.cloudsql?.serviceAccountJSON),
+            },
         }
     },
 }

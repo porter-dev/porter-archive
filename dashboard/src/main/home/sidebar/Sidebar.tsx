@@ -191,7 +191,7 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={addOns} />
             Add-ons
           </NavButton>
-          <NavButton
+          {currentProject.env_group_enabled && <NavButton
             path="/env-groups"
 
             active={
@@ -201,7 +201,7 @@ class Sidebar extends Component<PropsType, StateType> {
           >
             <Img src={sliders} />
             Env groups
-          </NavButton>
+          </NavButton>}
           {this.props.isAuthorized("integrations", "", [
             "get",
             "create",

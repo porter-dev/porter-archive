@@ -271,6 +271,7 @@ export interface ProjectType {
   simplified_view_enabled: boolean;
   azure_enabled: boolean;
   helm_values_enabled: boolean;
+  env_group_enabled: boolean;
   roles: {
     id: number;
     kind: string;
@@ -680,6 +681,20 @@ export interface PorterAppEvent {
   type_source: string;
   porter_app_id: number;
   metadata: any;
+}
+export const PorterAppEvent = {
+  toPorterAppEvent: (data: any): PorterAppEvent => {
+    return {
+      created_at: data.created_at ?? "",
+      updated_at: data.updated_at ?? "",
+      id: data.id ?? "",
+      status: data.status ?? "",
+      type: data.type ?? "",
+      type_source: data.type_source ?? "",
+      porter_app_id: data.porter_app_id ?? "",
+      metadata: data.metadata ?? {},
+    };
+  }
 }
 
 

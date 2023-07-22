@@ -13,6 +13,7 @@ type Project struct {
 	SimplifiedViewEnabled  bool    `json:"simplified_view_enabled"`
 	AzureEnabled           bool    `json:"azure_enabled"`
 	HelmValuesEnabled      bool    `json:"helm_values_enabled"`
+	EnvGroupEnabled        bool    `json:"env_group_enabled"`
 }
 
 type FeatureFlags struct {
@@ -24,6 +25,7 @@ type FeatureFlags struct {
 	SimplifiedViewEnabled      string `json:"simplified_view_enabled,omitempty"`
 	AzureEnabled               bool   `json:"azure_enabled,omitempty"`
 	HelmValuesEnabled          bool   `json:"helm_values_enabled,omitempty"`
+	EnvGroupEnabled            bool   `json:"env_group_enabled"`
 }
 
 type CreateProjectRequest struct {
@@ -124,3 +126,15 @@ type OnboardingData struct {
 }
 
 type UpdateOnboardingRequest OnboardingData
+
+type UpdateOnboardingStepRequest struct {
+	Step              string `json:"step" form:"required,max=255"`
+	Provider          string `json:"provider"`
+	AccountId         string `json:"account_id"`
+	CloudformationURL string `json:"cloudformation_url"`
+	ErrorMessage      string `json:"error_message"`
+	LoginURL          string `json:"login_url"`
+	Region            string `json:"region"`
+	// ExternalId used as a 'password' for the aws assume role chain to porter-manager role
+	ExternalId string `json:"external_id"`
+}

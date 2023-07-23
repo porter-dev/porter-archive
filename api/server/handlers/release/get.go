@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/porter-dev/porter/internal/templater/parser"
 	"github.com/stefanmcshane/helm/pkg/release"
 	"gorm.io/gorm"
@@ -33,16 +34,20 @@ func NewReleaseGetHandler(
 }
 
 func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-release")
+	defer span.End()
+
+	helmRelease, _ := ctx.Value(types.ReleaseScope).(*release.Release)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "release-name", Value: helmRelease.Name})
 
 	res := &types.Release{
 		Release: helmRelease,
 	}
 
 	// look up the release in the database; if not found, do not populate Porter fields
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	release, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
-
 	if err == nil {
 		res.PorterRelease = release.ToReleaseType()
 

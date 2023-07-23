@@ -148,6 +148,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		cloneEnvGroup(c, w, r, k8sAgent, request.EnvGroups, namespace)
 	}
 	chart, values, preDeployJobValues, err := parse(
+		ctx,
 		ParseConf{
 			PorterYaml:                porterYaml,
 			ImageInfo:                 imageInfo,
@@ -366,6 +367,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			Repo:       c.Repo(),
 			Registries: registries,
 		}
+		fmt.Println("STEFANVALUES", values)
 		// update the chart
 		_, err = helmAgent.UpgradeInstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 		if err != nil {

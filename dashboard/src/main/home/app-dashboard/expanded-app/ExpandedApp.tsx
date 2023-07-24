@@ -26,7 +26,6 @@ import Back from "components/porter/Back";
 import TabSelector from "components/TabSelector";
 import Icon from "components/porter/Icon";
 import { ChartType, CreateUpdatePorterAppOptions } from "shared/types";
-import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTab from "../build-settings/BuildSettingsTab";
 import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
@@ -49,6 +48,7 @@ import { PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porte
 import { BuildMethod, PorterApp } from "../types/porterApp";
 import HelmValuesTab from "./HelmValuesTab";
 import ProjectDeleteConsent from "main/home/project-settings/ProjectDeleteConsent";
+import PorterAppRevisionSection from "./PorterAppRevisionSection";
 
 type Props = RouteComponentProps & {};
 
@@ -913,7 +913,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               ) : (
                 <>
                   <DarkMatter />
-                  <RevisionSection
+                  <PorterAppRevisionSection
                     showRevisions={showRevisions}
                     toggleShowRevisions={() => {
                       setShowRevisions(!showRevisions);
@@ -927,7 +927,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       appData.chart.latest_version !==
                       appData.chart.chart.metadata.version
                     }
+                    updatePorterApp={updatePorterApp}
                     latestVersion={appData.chart.latest_version}
+                    appName={appData.app.name}
                   />
                   <DarkMatter antiHeight="-18px" />
                 </>

@@ -176,18 +176,17 @@ class PorterAppRevisionSection extends Component<PropsType, StateType> {
         this.setState({ loading: true, rollbackRevision: null });
 
         try {
-            const resChartData = await api.getChart(
+            await api.rollbackPorterApp(
                 "<token>",
-                {},
                 {
-                    id: currentProject.id,
-                    namespace: `porter-stack-${this.props.appName}`,
-                    cluster_id: currentCluster.id,
-                    name: this.props.appName,
                     revision: revisionNumber,
+                },
+                {
+                    project_id: currentProject.id,
+                    cluster_id: currentCluster.id,
+                    stack_name: this.props.appName,
                 }
             );
-            await this.props.updatePorterApp({ full_helm_values: yaml.dump(resChartData.data.config) });
         } catch {
             // TODO: handle error better
             setCurrentError(err.response.data);

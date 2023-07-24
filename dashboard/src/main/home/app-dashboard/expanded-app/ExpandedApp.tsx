@@ -47,8 +47,8 @@ import AnimateHeight from "react-animate-height";
 import { PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
 import HelmValuesTab from "./HelmValuesTab";
-import ProjectDeleteConsent from "main/home/project-settings/ProjectDeleteConsent";
 import PorterAppRevisionSection from "./PorterAppRevisionSection";
+import SettingsTab from "./SettingsTab";
 
 type Props = RouteComponentProps & {};
 
@@ -91,6 +91,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [workflowCheckPassed, setWorkflowCheckPassed] = useState<boolean>(
     false
   );
+  const [githubWorkflowFilename, setGithubWorkflowFilename] = useState<string>("");
   const [hasBuiltImage, setHasBuiltImage] = useState<boolean>(false);
 
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
@@ -98,7 +99,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   );
 
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
-  const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
 
   // this is what we read from their porter.yaml in github
   const [porterJson, setPorterJson] = useState<PorterJson | undefined>(undefined);
@@ -273,12 +273,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             }
           );
           setWorkflowCheckPassed(true);
+          setGithubWorkflowFilename(`porter_stack_${resPorterApp.data.name}.yml`);
         } catch (err) {
           // Handle unmerged PR
           if (err.response?.status === 404) {
             try {
               // Check for user-copied porter.yml as fallback
-              const resPorterYml = await api.getBranchContents(
+              await api.getBranchContents(
                 "<token>",
                 { dir: `./.github/workflows/porter.yml` },
                 {
@@ -291,6 +292,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 }
               );
               setWorkflowCheckPassed(true);
+              setGithubWorkflowFilename(`porter.yml`);
             } catch (err) {
               setWorkflowCheckPassed(false);
             }
@@ -304,8 +306,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  const deletePorterApp = async () => {
-    setShowDeleteOverlay(false);
+  const deletePorterApp = async (deleteGHWorkflowFile?: boolean) => {
     setDeleting(true);
     const { appName } = props.match.params as any;
     if (syncedEnvGroups) {
@@ -340,6 +341,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           name: appName,
         }
       );
+    } catch (err) {
+      // TODO: handle error
+    }
+    try {
       await api.deleteNamespace(
         "<token>",
         {},
@@ -349,24 +354,53 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           namespace: `porter-stack-${appName}`,
         }
       );
-      // intentionally do not await this promise
-      api.updateStackStep(
-        "<token>",
-        {
-          step: "stack-deletion",
-          stack_name: appName,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
-      props.history.push("/apps");
     } catch (err) {
       // TODO: handle error
-    } finally {
-      setDeleting(false);
     }
+
+    let deleteWorkflowFile = false;
+
+    if (deleteGHWorkflowFile && githubWorkflowFilename !== "" && appData?.app != null) {
+      try {
+        const res = await api.createSecretAndOpenGitHubPullRequest(
+          "<token>",
+          {
+            github_app_installation_id: appData.app.git_repo_id,
+            github_repo_owner: appData.app.repo_name.split("/")[0],
+            github_repo_name: appData.app.repo_name.split("/")[1],
+            branch: appData.app.git_branch,
+            delete_workflow_filename: githubWorkflowFilename,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            stack_name: appData.app.name,
+          }
+        );
+        if (res.data?.url) {
+          window.open(res.data.url, "_blank", "noreferrer");
+        }
+        deleteWorkflowFile = true;
+      } catch (err) {
+        // TODO: handle error
+      }
+    }
+
+    // intentionally do not await this promise
+    api.updateStackStep(
+      "<token>",
+      {
+        step: "stack-deletion",
+        stack_name: appName,
+        delete_workflow_file: deleteWorkflowFile,
+      },
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+      }
+    );
+
+    props.history.push("/apps");
   };
 
   const updatePorterApp = async (options: Partial<CreateUpdatePorterAppOptions>) => {
@@ -705,24 +739,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           />
         );
       case "settings":
-        return (
-          <>
-            <Text size={16}>Delete "{appData.app.name}"</Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              Delete this application and all of its resources.
-            </Text>
-            <Spacer y={1} />
-            <Button
-              onClick={() => {
-                setShowDeleteOverlay(true);
-              }}
-              color="#b91133"
-            >
-              Delete
-            </Button>
-          </>
-        );
+        return <SettingsTab
+          appName={appData.app.name}
+          githubWorkflowFilename={githubWorkflowFilename}
+          deleteApplication={deletePorterApp}
+        />;
       case "logs":
         return <LogSection currentChart={appData.chart} services={services} />;
       case "metrics":
@@ -991,17 +1012,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           )}
         </StyledExpandedApp>
       )}
-      {showDeleteOverlay && (
-        <ConfirmOverlay
-          message={`Are you sure you want to delete "${appData.app.name}"?`}
-          onYes={() => {
-            deletePorterApp();
-          }}
-          onNo={() => {
-            setShowDeleteOverlay(false);
-          }}
-        />
-      )}
     </>
   );
 };
@@ -1011,10 +1021,6 @@ export default withRouter(ExpandedApp);
 const A = styled.a`
   display: flex;
   align-items: center;
-`;
-
-const Underline = styled.div`
-  border-bottom: 1px solid #ffffff;
 `;
 
 const RefreshButton = styled.div`

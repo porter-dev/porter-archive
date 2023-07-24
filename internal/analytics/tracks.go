@@ -855,19 +855,35 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 	)
 }
 
-// StackBuildFailureOpts are the options for creating a track when a stack fails to build
-type StackBuildFailureOpts struct {
+// StackBuildOpts are the options for creating a track when a stack builds
+type StackBuildOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName   string
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	StackName    string
+	ErrorMessage string
+	Email        string
+	FirstName    string
+	LastName     string
+	CompanyName  string
 }
 
 // StackBuildFailureTrack returns a track for when a stack fails to build
-func StackBuildFailureTrack(opts *StackBuildFailureOpts) segmentTrack {
+func StackBuildFailureTrack(opts *StackBuildOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, StackBuildFailure),
+	)
+}
+
+// StackBuildSuccessTrack returns a track for when a stack succeeds to build
+func StackBuildSuccessTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 	additionalProps["stack_name"] = opts.StackName
 	additionalProps["email"] = opts.Email
@@ -876,6 +892,20 @@ func StackBuildFailureTrack(opts *StackBuildFailureOpts) segmentTrack {
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
-		getDefaultSegmentTrack(additionalProps, StackBuildFailure),
+		getDefaultSegmentTrack(additionalProps, StackBuildSuccess),
+	)
+}
+
+// StackBuildProgressingTrack returns a track for when a stack starts to build
+func StackBuildProgressingTrack(opts *StackBuildOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, StackBuildProgressing),
 	)
 }

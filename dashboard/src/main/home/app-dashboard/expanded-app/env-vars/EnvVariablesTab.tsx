@@ -123,39 +123,43 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
         fileUpload={true}
         syncedEnvGroups={syncedEnvGroups}
       />
-      <LoadButton
-        onClick={() => setShowEnvModal(true)}
-      >
-        <img src={sliders} /> Load from Env Group
-      </LoadButton>
-      {showEnvModal && <EnvGroupModal
-        setValues={(x: any) => {
-          if (status !== "") {
-            clearStatus();
-          }
-          setEnvVars(x);
-        }}
-        values={envVars}
-        closeModal={() => setShowEnvModal(false)}
-        syncedEnvGroups={syncedEnvGroups}
-        setSyncedEnvGroups={setSyncedEnvGroups}
-        namespace={appData.chart.namespace}
-      />}
-      {!!syncedEnvGroups?.length && (
+      {currentProject.env_group_enabled && (
         <>
-          <Spacer y={0.5} />
-          <Text size={16}>Synced environment groups</Text >
-          {syncedEnvGroups?.map((envGroup: any) => {
-            return (
-              <ExpandableEnvGroup
-                key={envGroup?.name}
-                envGroup={envGroup}
-                onDelete={() => {
-                  deleteEnvGroup(envGroup);
-                }}
-              />
-            );
-          })}
+          <LoadButton
+            onClick={() => setShowEnvModal(true)}
+          >
+            <img src={sliders} /> Load from Env Group
+          </LoadButton>
+          {showEnvModal && <EnvGroupModal
+            setValues={(x: any) => {
+              if (status !== "") {
+                clearStatus();
+              }
+              setEnvVars(x);
+            }}
+            values={envVars}
+            closeModal={() => setShowEnvModal(false)}
+            syncedEnvGroups={syncedEnvGroups}
+            setSyncedEnvGroups={setSyncedEnvGroups}
+            namespace={appData.chart.namespace}
+          />}
+          {!!syncedEnvGroups?.length && (
+            <>
+              <Spacer y={0.5} />
+              <Text size={16}>Synced environment groups</Text >
+              {syncedEnvGroups?.map((envGroup: any) => {
+                return (
+                  <ExpandableEnvGroup
+                    key={envGroup?.name}
+                    envGroup={envGroup}
+                    onDelete={() => {
+                      deleteEnvGroup(envGroup);
+                    }}
+                  />
+                );
+              })}
+            </>
+          )}
         </>
       )}
 

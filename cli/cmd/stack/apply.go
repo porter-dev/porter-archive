@@ -47,7 +47,7 @@ func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worke
 		return nil, fmt.Errorf("malformed application definition: %w", err)
 	}
 
-	deployStackHook := &DeployAppHook{
+	deployAppHook := &DeployAppHook{
 		Client:               client,
 		ApplicationName:      applicationName,
 		ProjectID:            cliConf.Project,
@@ -59,60 +59,63 @@ func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worke
 		EnvironmentMeta:      envMeta,
 	}
 
-	worker.RegisterHook("deploy-stack", deployStackHook)
-	if os.Getenv("GITHUB_RUN_ID") != "" {
-		err := createAppEvent(client, applicationName, cliConf)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+	worker.RegisterHook("deploy-app", deployAppHook)
 	return resources, nil
 }
 
 // Create app event to signfy start of build
-func createAppEvent(client *api.Client, applicationName string, cliConf *config.CLIConfig) error {
-	req := &types.CreateOrUpdatePorterAppEventRequest{
-		Status:             "PROGRESSING",
-		Type:               types.PorterAppEventType_Build,
-		TypeExternalSource: "GITHUB",
-		Metadata: map[string]any{
-			"action_run_id": os.Getenv("GITHUB_RUN_ID"),
-			"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
-		},
-	}
-
-	repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
-	if len(repoNameSplit) != 2 {
-		return fmt.Errorf("unable to parse GITHUB_REPOSITORY")
-	}
-	req.Metadata["repo"] = repoNameSplit[1]
-
-	actionRunID := os.Getenv("GITHUB_RUN_ID")
-	if actionRunID != "" {
-		arid, err := strconv.Atoi(actionRunID)
-		if err != nil {
-			return fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+func createAppEvent(client *api.Client, applicationName string, projectId, clusterId uint) (string, error) {
+	var req *types.CreateOrUpdatePorterAppEventRequest
+	if os.Getenv("GITHUB_RUN_ID") != "" {
+		req = &types.CreateOrUpdatePorterAppEventRequest{
+			Status:             "PROGRESSING",
+			Type:               types.PorterAppEventType_Build,
+			TypeExternalSource: "GITHUB",
+			Metadata: map[string]any{
+				"action_run_id": os.Getenv("GITHUB_RUN_ID"),
+				"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
+			},
 		}
-		req.Metadata["action_run_id"] = arid
-	}
 
-	repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
-	if repoOwnerAccountID != "" {
-		arid, err := strconv.Atoi(repoOwnerAccountID)
-		if err != nil {
-			return fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+		repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+		if len(repoNameSplit) != 2 {
+			return "", fmt.Errorf("unable to parse GITHUB_REPOSITORY")
 		}
-		req.Metadata["github_account_id"] = arid
+		req.Metadata["repo"] = repoNameSplit[1]
+
+		actionRunID := os.Getenv("GITHUB_RUN_ID")
+		if actionRunID != "" {
+			arid, err := strconv.Atoi(actionRunID)
+			if err != nil {
+				return "", fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+			}
+			req.Metadata["action_run_id"] = arid
+		}
+
+		repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
+		if repoOwnerAccountID != "" {
+			arid, err := strconv.Atoi(repoOwnerAccountID)
+			if err != nil {
+				return "", fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+			}
+			req.Metadata["github_account_id"] = arid
+		}
+	} else {
+		req = &types.CreateOrUpdatePorterAppEventRequest{
+			Status:             "PROGRESSING",
+			Type:               types.PorterAppEventType_Build,
+			TypeExternalSource: "GITHUB",
+			Metadata:           map[string]any{},
+		}
 	}
 
 	ctx := context.Background()
-	_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, applicationName, req)
+	event, err := client.CreateOrUpdatePorterAppEvent(ctx, projectId, clusterId, applicationName, req)
 	if err != nil {
-		return fmt.Errorf("unable to create porter app build event: %w", err)
+		return "", fmt.Errorf("unable to create porter app build event: %w", err)
 	}
 
-	return nil
+	return event.ID, nil
 }
 
 func createV1BuildResources(client *api.Client, app *Application, stackConf *StackConf, envMeta EnvironmentMeta) ([]*switchboardTypes.Resource, string, error) {
@@ -162,7 +165,6 @@ func createV1BuildResources(client *api.Client, app *Application, stackConf *Sta
 			stackConf.clusterID,
 			stackConf.parsed.Env,
 		)
-
 		if err != nil {
 			return nil, "", err
 		}

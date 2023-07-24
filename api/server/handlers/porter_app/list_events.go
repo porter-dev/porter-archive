@@ -80,9 +80,7 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		if appEvent.Status == "PROGRESSING" {
 			pae, err := p.updateExistingAppEvent(ctx, *cluster, stackName, *appEvent, user, project)
 			if err != nil {
-				e := telemetry.Error(ctx, span, nil, "unable to update existing porter app event")
-				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
-				return
+				telemetry.Error(ctx, span, nil, "unable to update existing porter app event")
 			}
 			porterAppEvents[idx] = &pae
 		}
@@ -130,14 +128,13 @@ func (p *PorterAppEventListHandler) updateExistingAppEvent(
 		telemetry.AttributeKV{Key: "porter-app-id", Value: event.PorterAppID},
 		telemetry.AttributeKV{Key: "porter-app-event-id", Value: event.ID.String()},
 		telemetry.AttributeKV{Key: "porter-app-event-status", Value: event.Status},
-		telemetry.AttributeKV{Key: "cluster-id", Value: int(cluster.ID)},
-		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},
 	)
 
+	// TODO: get rid of this block and related methods if still here after 08-04-2023
 	if appEvent.Type == string(types.PorterAppEventType_Build) && appEvent.TypeExternalSource == "GITHUB" {
 		err = p.updateBuildEvent_Github(ctx, &event, user, project, stackName)
 		if err != nil {
-			return models.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error updating porter app event for github build")
+			return appEvent, telemetry.Error(ctx, span, err, "error updating porter app event for github build")
 		}
 	}
 
@@ -223,9 +220,10 @@ func (p *PorterAppEventListHandler) updateBuildEvent_Github(
 	if *actionRun.Status == "completed" {
 		if *actionRun.Conclusion == "success" {
 			event.Status = "SUCCESS"
+			_ = TrackStackBuildStatus(p.Config(), user, project, stackName, "", "SUCCESS")
 		} else {
 			event.Status = "FAILED"
-			_ = TrackStackBuildFailure(p.Config(), user, project, stackName)
+			_ = TrackStackBuildStatus(p.Config(), user, project, stackName, "", "FAILED")
 		}
 		event.Metadata["end_time"] = actionRun.GetUpdatedAt().Time
 	}

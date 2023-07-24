@@ -104,7 +104,7 @@ const NewAddOnFlow: React.FC<Props> = ({
               capitalize={false}
               description="Select an add-on to deploy to this project."
               disableLineBreak
-              enableMultiCluster={true}
+
             />
             {
               currentTemplate ? (

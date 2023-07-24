@@ -29,7 +29,6 @@ import Loading from "components/Loading";
 import Fieldset from "components/porter/Fieldset";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Icon from "components/porter/Icon";
-import ClusterSelector from "../ClusterSelector";
 import { ClusterType } from "shared/types";
 
 type Props = {};
@@ -231,7 +230,6 @@ const AppDashboard: React.FC<Props> = ({ }) => {
         title="Applications"
         description="Web services, workers, and jobs for this project."
         disableLineBreak
-        enableMultiCluster={true}
       />
 
       {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (

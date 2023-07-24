@@ -149,7 +149,6 @@ const AppDashboard: React.FC<Props> = ({
         capitalize={false}
         description="Add-ons and supporting workloads for this project."
         disableLineBreak
-        enableMultiCluster={true}
       />
       {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />

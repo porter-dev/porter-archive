@@ -7,7 +7,7 @@ import TitleSection from "components/TitleSection";
 import Spacer from "components/porter/Spacer";
 import Tooltip from "components/porter/Tooltip";
 import Container from "components/porter/Container";
-import ClusterSelector from "../ClusterSelector";
+
 
 type PropsType = {
   image?: any;
@@ -17,7 +17,6 @@ type PropsType = {
   disableLineBreak?: boolean;
   capitalize?: boolean;
   prefix?: any;
-  enableMultiCluster?: boolean;
 };
 
 const DashboardHeader: React.FC<PropsType> = ({
@@ -28,7 +27,6 @@ const DashboardHeader: React.FC<PropsType> = ({
   disableLineBreak,
   capitalize = true,
   prefix,
-  enableMultiCluster,
 }) => {
   const context = useContext(Context);
 
@@ -55,9 +53,6 @@ const DashboardHeader: React.FC<PropsType> = ({
             <Description>{description}</Description>
           </InfoSection>
         </>
-      )}
-      {context.currentProject?.simplified_view_enabled && enableMultiCluster && (
-        <><ClusterSelector /></>
       )}
       <Spacer height="35px" />
     </>

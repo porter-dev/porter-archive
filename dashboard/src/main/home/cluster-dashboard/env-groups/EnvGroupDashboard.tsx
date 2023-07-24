@@ -152,7 +152,6 @@ const EnvGroupDashboard = (props: PropsType) => {
             description="Groups of environment variables for storing secrets and configuration."
             disableLineBreak
             capitalize={false}
-            enableMultiCluster={true}
           />
           {renderBody()}
         </>

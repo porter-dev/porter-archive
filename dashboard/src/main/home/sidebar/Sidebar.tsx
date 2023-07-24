@@ -22,8 +22,7 @@ import { getQueryParam, pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import SidebarLink from "./SidebarLink";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
-import ClusterSelector from "../ClusterSelector";
-import ClusterSideBar from "../ClusterSideBar";
+import ClusterListContainer from "./ClusterListContainer";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -277,6 +276,7 @@ class Sidebar extends Component<PropsType, StateType> {
           </CollapseButton>
 
           <ProjectSectionContainer />
+          <ClusterListContainer />
           {/* <ClusterSideBar /> */}
 
           <br />

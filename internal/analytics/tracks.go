@@ -834,11 +834,12 @@ func StackLaunchFailureTrack(opts *StackLaunchFailureOpts) segmentTrack {
 type StackDeletionOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName   string
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	StackName          string
+	Email              string
+	FirstName          string
+	LastName           string
+	CompanyName        string
+	DeleteWorkflowFile bool
 }
 
 // StackDeletionTrack returns a track for when a user deletes a stack
@@ -848,6 +849,7 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["delete_workflow_file"] = opts.DeleteWorkflowFile
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,

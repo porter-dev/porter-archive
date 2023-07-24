@@ -358,6 +358,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       // TODO: handle error
     }
 
+    let deleteWorkflowFile = false;
+
     if (deleteGHWorkflowFile && githubWorkflowFilename !== "" && appData?.app != null) {
       try {
         const res = await api.createSecretAndOpenGitHubPullRequest(
@@ -378,6 +380,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         if (res.data?.url) {
           window.open(res.data.url, "_blank", "noreferrer");
         }
+        deleteWorkflowFile = true;
       } catch (err) {
         // TODO: handle error
       }
@@ -389,6 +392,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       {
         step: "stack-deletion",
         stack_name: appName,
+        delete_workflow_file: deleteWorkflowFile,
       },
       {
         project_id: currentProject.id,

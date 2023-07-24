@@ -2467,6 +2467,7 @@ const updateStackStep = baseApi<
     step: string;
     stack_name?: string;
     error_message?: string;
+    delete_workflow_file?: boolean;
   },
   {
     project_id: number;

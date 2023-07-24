@@ -26,12 +26,14 @@ const GithubActionModal: React.FC<Props> = ({
         }
         return (
             <>
+                <Text color="helper">You may also want to remove this application's associated CI file from your repository.</Text>
+                <Spacer y={0.5} />
                 <Checkbox
                     checked={deleteGithubWorkflow}
                     toggleChecked={() => setDeleteGithubWorkflow(!deleteGithubWorkflow)}
                 >
                     <Text color="helper">
-                        Open a PR to delete this application's associated CI file (<Code>{githubWorkflowFilename}</Code>) from my repository upon deletion.
+                        Upon deletion, open a PR to remove this application's associated CI file (<Code>{githubWorkflowFilename}</Code>) from my repository.
                     </Text>
                 </Checkbox>
                 <Spacer y={1} />
@@ -44,9 +46,9 @@ const GithubActionModal: React.FC<Props> = ({
             <Text size={16}>
                 Confirm deletion
             </Text>
-            <Spacer y={1} />
+            <Spacer y={0.5} />
             <Text color="helper">Click the button below to confirm deletion. This action is irreversible.</Text>
-            <Spacer y={1} />
+            <Spacer y={0.5} />
             {renderDeleteGithubWorkflowText()}
             <Button
                 onClick={() => deleteApplication(deleteGithubWorkflow)}

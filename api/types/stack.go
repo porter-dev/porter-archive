@@ -18,6 +18,7 @@ type CreateSecretAndOpenGHPRRequest struct {
 	OpenPr                  bool   `json:"open_pr"`
 	Branch                  string `json:"branch"`
 	PorterYamlPath          string `json:"porter_yaml_path"`
+	DeleteWorkflowFilename  string `json:"delete_workflow_filename"`
 }
 
 type CreateSecretAndOpenGHPRResponse struct {

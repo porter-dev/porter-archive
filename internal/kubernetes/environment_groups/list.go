@@ -3,6 +3,7 @@ package environment_groups
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -70,7 +71,7 @@ type LinkedPorterApplication struct {
 	Namespace string
 }
 
-// LinkedApplications lists all applications that are linked to a given environment group
+// LinkedApplications lists all applications that are linked to a given environment group. Since there can be multiple linked environment groups we must check by the presence of a label on the deployment and job
 func LinkedApplications(ctx context.Context, a *kubernetes.Agent, environmentGroupName string) ([]LinkedPorterApplication, error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-linked-applications")
 	defer span.End()
@@ -82,7 +83,8 @@ func LinkedApplications(ctx context.Context, a *kubernetes.Agent, environmentGro
 
 	deployListResp, err := a.Clientset.AppsV1().Deployments(metav1.NamespaceAll).List(ctx,
 		metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("%s=%s", LabelKey_LinkedEnvironmentGroup, environmentGroupName),
+			// LabelSelector: fmt.Sprintf("%s=%s", LabelKey_LinkedEnvironmentGroup, environmentGroupName),
+			LabelSelector: LabelKey_LinkedEnvironmentGroup,
 		})
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "unable to list linked deployment applications")
@@ -90,10 +92,16 @@ func LinkedApplications(ctx context.Context, a *kubernetes.Agent, environmentGro
 
 	var apps []LinkedPorterApplication
 	for _, d := range deployListResp.Items {
-		apps = append(apps, LinkedPorterApplication{
-			Name:      d.Name,
-			Namespace: d.Namespace,
-		})
+		applicationsLinkedEnvironmentGroups := strings.Split(d.Labels[LabelKey_LinkedEnvironmentGroup], ",")
+
+		for _, linkedEnvironmentGroup := range applicationsLinkedEnvironmentGroups {
+			if linkedEnvironmentGroup == environmentGroupName {
+				apps = append(apps, LinkedPorterApplication{
+					Name:      d.Name,
+					Namespace: d.Namespace,
+				})
+			}
+		}
 	}
 
 	cronListResp, err := a.Clientset.BatchV1().CronJobs(metav1.NamespaceAll).List(ctx,

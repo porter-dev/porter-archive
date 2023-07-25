@@ -108,7 +108,7 @@ const LogSection: React.FC<Props> = ({
     if (minor < 1) {
       return false;
     }
-    if (patch < 3) {
+    if (patch <= 3) {
       return false;
     }
     return true;

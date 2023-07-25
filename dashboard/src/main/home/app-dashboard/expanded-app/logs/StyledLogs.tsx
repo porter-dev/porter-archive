@@ -124,7 +124,8 @@ const Log = styled.div`
 const LogInnerPill = styled.div<{ color: string }>`
     display: inline-block;
     vertical-align: middle;
-    width: 100px;
+    width: 120px;
+    min-width: 120px;
     padding: 0px 5px;
     height: 20px;
     color: black;

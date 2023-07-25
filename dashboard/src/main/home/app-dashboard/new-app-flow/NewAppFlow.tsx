@@ -105,9 +105,9 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [existingApps, setExistingApps] = useState<string[]>([]);
   const [appNameInputError, setAppNameInputError] = useState<string | undefined>(undefined);
 
-  const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([]);
+  const [syncedEnvGroups, setSyncedEnvGroups] = useState<NewPopulatedEnvGroup[]>([]);
   const [showEnvModal, setShowEnvModal] = useState(false);
-  const [deletedEnvGroups, setDeleteEnvGroups] = useState<PopulatedEnvGroup[]>([])
+  const [deletedEnvGroups, setDeleteEnvGroups] = useState<NewPopulatedEnvGroup[]>([])
 
   // this advances the step in the case that a user chooses a repo that doesn't have a porter.yaml
   useEffect(() => {
@@ -340,7 +340,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         git_repo_id: porterApp.git_repo_id,
         build_context: porterApp.build_context,
         image_repo_uri: porterApp.image_repo_uri,
-        env_groups: syncedEnvGroups?.map((env: PopulatedEnvGroup) => env.name),
+        enviornment_groups: syncedEnvGroups?.map((env: NewPopulatedEnvGroup) => env.name),
         user_update: true,
       }
       if (porterApp.image_repo_uri && imageTag) {

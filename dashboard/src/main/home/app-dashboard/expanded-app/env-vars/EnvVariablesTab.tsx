@@ -172,7 +172,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       <Spacer y={0.5} />
       <Button
         onClick={() => {
-          handleSaveValues();
+          updatePorterApp()
         }}
         status={status}
         loadingText={"Updating..."}

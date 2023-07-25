@@ -196,26 +196,26 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         resPorterApp?.data?.porter_yaml_path ?? "porter.yaml",
         newAppData
       );
-      // let envGroups: any[] = [];
-      // envGroups = await api
-      //   .getAllEnvGroups<any[]>(
-      //     "<token>",
-      //     {},
-      //     {
-      //       id: currentProject?.id,
-      //       cluster_id: currentCluster.id,
-      //     }
-      //   )
-      //   .then((res) => res.data);
+      let envGroups: any[] = [];
+      envGroups = await api
+        .getAllEnvGroups<any[]>(
+          "<token>",
+          {},
+          {
+            id: currentProject?.id,
+            cluster_id: currentCluster.id,
+          }
+        )
+        .then((res) => res.data);
 
-      // const populatedEnvGroups = await Promise.all(envGroups.environment_groups);
-      // console.log(populatedEnvGroups)
-      // let filteredEnvGroups: NewPopulatedEnvGroup[] = []
-      // filteredEnvGroups = populatedEnvGroups.filter(envGroup =>
-      //   envGroup.linked_applications && envGroup.linked_applications.includes(appName)
-      // );
+      const populatedEnvGroups = await Promise.all(envGroups.environment_groups);
+      console.log(populatedEnvGroups)
+      let filteredEnvGroups: NewPopulatedEnvGroup[] = []
+      filteredEnvGroups = populatedEnvGroups.filter(envGroup =>
+        envGroup.linked_applications && envGroup.linked_applications.includes(appName)
+      );
 
-      // setSyncedEnvGroups(filteredEnvGroups)
+      setSyncedEnvGroups(filteredEnvGroups)
       setPorterJson(porterJson);
       setAppData(newAppData);
       setValues(newAppData?.chart)
@@ -439,7 +439,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           git_branch: tempPorterApp.git_branch,
           buildpacks: "",
           //full_helm_values: yaml.dump(values),
-          //env_groups: syncedEnvGroups?.map((env) => env.name),
+          environment_groups: syncedEnvGroups?.map((env) => env.name),
           user_update: true,
           ...options,
         }

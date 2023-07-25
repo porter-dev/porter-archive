@@ -6,10 +6,7 @@ import Loading from "components/Loading";
 import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
-import ExpandableSection from "components/porter/ExpandableSection";
-import Fieldset from "components/porter/Fieldset";
 import Button from "components/porter/Button";
-import Select from "components/porter/Select";
 import api from "shared/api";
 import { getGithubAction } from "./utils";
 import AceEditor from "react-ace";
@@ -27,6 +24,7 @@ import {
 import {
   PartialEnvGroup,
   PopulatedEnvGroup,
+  NewPopulatedEnvGroup,
 } from "components/porter-form/types";
 import { KeyValueType } from "../../../cluster-dashboard/env-groups/EnvGroupArray";
 import { set } from "zod";
@@ -36,8 +34,8 @@ type Props = RouteComponentProps & {
   availableEnvGroups?: PartialEnvGroup[];
   setValues: (x: KeyValueType[]) => void;
   values: KeyValueType[];
-  syncedEnvGroups: PopulatedEnvGroup[];
-  setSyncedEnvGroups: (values: PopulatedEnvGroup[]) => void;
+  syncedEnvGroups: NewPopulatedEnvGroup[];
+  setSyncedEnvGroups: (values: NewPopulatedEnvGroup[]) => void;
   namespace: string;
   newApp?: boolean;
 }

@@ -2467,6 +2467,7 @@ const updateStackStep = baseApi<
     step: string;
     stack_name?: string;
     error_message?: string;
+    delete_workflow_file?: boolean;
   },
   {
     project_id: number;
@@ -2657,9 +2658,10 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
     github_app_installation_id: number;
     github_repo_owner: string;
     github_repo_name: string;
-    open_pr: boolean;
     branch: string;
-    porter_yaml_path: string;
+    open_pr?: boolean;
+    porter_yaml_path?: string;
+    delete_workflow_filename?: string;
   },
   {
     project_id: number;

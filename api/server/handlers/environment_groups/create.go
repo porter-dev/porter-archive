@@ -37,6 +37,9 @@ type UpdateEnvironmentGroupRequest struct {
 
 	// Variables are variables which should are not sensitive. All values must be a string due to a kubernetes limitation.
 	Variables map[string]string `json:"variables"`
+
+	// SecretVariables are sensitive variables. All values must be a string due to a kubernetes limitation.
+	SecretVariables map[string]string `json:"secret_variables"`
 }
 
 func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

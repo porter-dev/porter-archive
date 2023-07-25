@@ -4,22 +4,26 @@ import React, { useContext, useEffect, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import styled from "styled-components";
-import { PorterAppEvent } from "shared/types";
 import Link from "components/porter/Link";
 import BuildFailureEventFocusView from "./BuildFailureEventFocusView";
 import PreDeployEventFocusView from "./PredeployEventFocusView";
 import _ from "lodash";
+import { PorterAppDeployEvent, PorterAppEvent } from "../types";
+import DeployEventFocusView from "./DeployEventFocusView";
+import { LogFilterQueryParamOpts } from "../../../logs/types";
 
 type Props = {
     eventId: string;
     appData: any;
+    filterOpts?: LogFilterQueryParamOpts;
 };
 
-const EVENT_POLL_INTERVAL = 15000; // poll every 15 seconds
+const EVENT_POLL_INTERVAL = 5000; // poll every 5 seconds
 
 const EventFocusView: React.FC<Props> = ({
     eventId,
     appData,
+    filterOpts,
 }) => {
     const { currentProject, currentCluster } = useContext(Context);
     const [event, setEvent] = useState<PorterAppEvent | null>(null);
@@ -59,6 +63,12 @@ const EventFocusView: React.FC<Props> = ({
                 return <BuildFailureEventFocusView event={event} appData={appData} />
             case "PRE_DEPLOY":
                 return <PreDeployEventFocusView event={event} appData={appData} />
+            case "DEPLOY":
+                return <DeployEventFocusView
+                    event={event as PorterAppDeployEvent}
+                    appData={appData}
+                    filterOpts={filterOpts}
+                />
             default:
                 return null
         }

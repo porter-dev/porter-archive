@@ -123,6 +123,9 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 	if err != nil {
 		return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error retrieving porter app by name for cluster")
 	}
+	if app == nil || app.ID == 0 {
+		return types.PorterAppEvent{}, telemetry.Error(ctx, span, nil, "porter app not found")
+	}
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "porter-app-id", Value: app.ID},
 		telemetry.AttributeKV{Key: "porter-app-name", Value: porterAppName},

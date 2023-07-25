@@ -1,7 +1,6 @@
 import Spacer from "components/porter/Spacer";
 import React from "react";
 import dayjs from "dayjs";
-import { PorterAppEvent } from "shared/types";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
 import { getDuration } from "../utils";
@@ -10,6 +9,7 @@ import { AppearingView } from "./EventFocusView";
 import Icon from "components/porter/Icon";
 import loading from "assets/loading.gif";
 import Container from "components/porter/Container";
+import { PorterAppEvent } from "../types";
 
 type Props = {
   event: PorterAppEvent;
@@ -30,7 +30,8 @@ const PreDeployEventFocusView: React.FC<Props> = ({
         return (
           <Container row>
             <Icon height="16px" src={loading} />
-            <Spacer inline width="10px" /><Text size={16}>Pre-deploy in progress...</Text>
+            <Spacer inline width="10px" />
+            <Text size={16}>Pre-deploy in progress...</Text>
           </Container>
         );
     }
@@ -60,6 +61,7 @@ const PreDeployEventFocusView: React.FC<Props> = ({
           endTime: event.metadata.end_time != null ? dayjs(event.metadata.end_time).add(1, 'minute') : undefined,
         }}
         showFilter={false}
+        appName={appData.app.name}
       />
     </>
   );

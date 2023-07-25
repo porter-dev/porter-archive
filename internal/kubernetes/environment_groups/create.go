@@ -7,7 +7,6 @@ import (
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/telemetry"
-	"go.opentelemetry.io/otel/trace"
 	v1 "k8s.io/api/core/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,78 +38,22 @@ func CreateOrUpdateBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "environment-group-namespace", Value: Namespace_EnvironmentGroups})
 
-	configMap := &v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: Namespace_EnvironmentGroups,
-			Labels: map[string]string{
-				LabelKey_EnvironmentGroupName: environmentGroup.Name,
-			},
-		},
-		Data: environmentGroup.Variables,
-	}
-
-	allEnvGroups, err := a.Clientset.CoreV1().ConfigMaps(Namespace_EnvironmentGroups).List(ctx,
-		metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", LabelKey_EnvironmentGroupName, environmentGroup.Name)},
-	)
+	latestEnvironmentGroup, err := LatestBaseEnvironmentGroup(ctx, a, environmentGroup.Name)
 	if err != nil {
-		if !k8serror.IsNotFound(err) {
-			return telemetry.Error(ctx, span, err, "unable to check if environment group exists")
-		}
-
-		err = createConfigMapWithVersion(ctx, span, a, *configMap, 1)
-		if err != nil {
-			return telemetry.Error(ctx, span, err, "error creating environment group version which has no existing environment group of the same name label")
-		}
+		return telemetry.Error(ctx, span, err, "unable to get latest base environment group by name")
 	}
 
-	var highestVersionFromLabel int
-
-	for _, existingEnvGroup := range allEnvGroups.Items {
-		versionValue, ok := existingEnvGroup.Labels[LabelKey_EnvironmentGroupVersion]
-		if !ok {
-			continue
-		}
-		version, err := strconv.Atoi(versionValue)
-		if err != nil {
-			return telemetry.Error(ctx, span, err, "unable to parse environment group version which exists")
-		}
-		if version > highestVersionFromLabel {
-			highestVersionFromLabel = version
-		}
+	newEnvironmentGroup := EnvironmentGroup{
+		Name:            environmentGroup.Name,
+		Variables:       environmentGroup.Variables,
+		SecretVariables: environmentGroup.SecretVariables,
+		Version:         latestEnvironmentGroup.Version + 1,
+		CreatedAtUTC:    environmentGroup.CreatedAtUTC,
 	}
 
-	newVersion := highestVersionFromLabel + 1
-	err = createConfigMapWithVersion(ctx, span, a, *configMap, newVersion)
+	err = createVersionedEnvironmentGroupInNamespace(ctx, a, newEnvironmentGroup, Namespace_EnvironmentGroups)
 	if err != nil {
-		return telemetry.Error(ctx, span, err, "unable to create new environment group version")
-	}
-
-	return nil
-}
-
-func createConfigMapWithVersion(ctx context.Context, span trace.Span, a *kubernetes.Agent, configMap v1.ConfigMap, version int) error {
-	versionString := strconv.Itoa(version)
-	if configMap.Labels == nil {
-		configMap.Labels = make(map[string]string)
-	}
-	configMap.Labels[LabelKey_EnvironmentGroupVersion] = versionString
-
-	name, ok := configMap.Labels[LabelKey_EnvironmentGroupName]
-	if !ok {
-		return telemetry.Error(ctx, span, nil, "environment group name label not found")
-	}
-	configMap.Name = fmt.Sprintf("%s.%s", name, versionString)
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "create-cm-version", Value: versionString},
-		telemetry.AttributeKV{Key: "create-cm-label", Value: configMap.Labels[LabelKey_EnvironmentGroupName]},
-		telemetry.AttributeKV{Key: "create-cm-name", Value: configMap.Name},
-		telemetry.AttributeKV{Key: "create-cm-namespace", Value: configMap.Namespace},
-	)
-
-	_, err := a.Clientset.CoreV1().ConfigMaps(configMap.Namespace).Create(ctx, &configMap, metav1.CreateOptions{})
-	if err != nil {
-		return telemetry.Error(ctx, span, err, "unable to create environment group for non-secret variables")
+		return telemetry.Error(ctx, span, err, "unable to create new versioned environment group")
 	}
 
 	return nil
@@ -132,7 +75,7 @@ func createEnvironmentGroupInTargetNamespace(ctx context.Context, a *kubernetes.
 	if environmentGroup.Name == "" {
 		return configMapName, telemetry.Error(ctx, span, nil, "environment group name cannot be empty")
 	}
-	if environmentGroup.Version == "" {
+	if environmentGroup.Version == 0 {
 		return configMapName, telemetry.Error(ctx, span, nil, "environment group version cannot be empty")
 	}
 	if namespace == "" {
@@ -152,27 +95,91 @@ func createEnvironmentGroupInTargetNamespace(ctx context.Context, a *kubernetes.
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "environment-group-namespace", Value: namespace})
 
-	configMapName = fmt.Sprintf("%s.%s", environmentGroup.Name, environmentGroup.Version)
-	configMap := v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      configMapName,
-			Namespace: namespace,
-			Labels: map[string]string{
-				LabelKey_EnvironmentGroupName:    environmentGroup.Name,
-				LabelKey_EnvironmentGroupVersion: environmentGroup.Version,
-			},
-		},
-		Data: environmentGroup.Variables,
-	}
-
-	versionInt, err := strconv.Atoi(environmentGroup.Version)
-	if err != nil {
-		return configMapName, telemetry.Error(ctx, span, err, "unable to parse environment group version")
-	}
-	err = createConfigMapWithVersion(ctx, span, a, configMap, versionInt)
+	err = createVersionedEnvironmentGroupInNamespace(ctx, a, environmentGroup, namespace)
 	if err != nil {
 		return configMapName, telemetry.Error(ctx, span, err, "error creating environment group clone in target namespace")
 	}
 
 	return configMapName, nil
+}
+
+// createVersionedEnvironmentGroupInNamespace creates a new environment group in the target namespace. This is used to keep the configmap and secret version for an environment variable in sync
+func createVersionedEnvironmentGroupInNamespace(ctx context.Context, a *kubernetes.Agent, environmentGroup EnvironmentGroup, targetNamespace string) error {
+	ctx, span := telemetry.NewSpan(ctx, "create-environment-group-on-cluster")
+	defer span.End()
+
+	fmt.Println("STEFAN", environmentGroup.Variables, environmentGroup.SecretVariables)
+
+	configMap := v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s.%d", environmentGroup.Name, environmentGroup.Version),
+			Namespace: targetNamespace,
+			Labels: map[string]string{
+				LabelKey_EnvironmentGroupName:    environmentGroup.Name,
+				LabelKey_EnvironmentGroupVersion: strconv.Itoa(environmentGroup.Version),
+			},
+		},
+		Data: environmentGroup.Variables,
+	}
+	err := createConfigMapWithVersion(ctx, a, configMap, environmentGroup.Version)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "unable to create new environment group variables version")
+	}
+
+	secret := v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s.%d", environmentGroup.Name, environmentGroup.Version),
+			Namespace: targetNamespace,
+			Labels: map[string]string{
+				LabelKey_EnvironmentGroupName:    environmentGroup.Name,
+				LabelKey_EnvironmentGroupVersion: strconv.Itoa(environmentGroup.Version),
+			},
+		},
+		Data: environmentGroup.SecretVariables,
+	}
+
+	err = createSecretWithVersion(ctx, a, secret, environmentGroup.Version)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "unable to create new environment group secret variables version")
+	}
+
+	return nil
+}
+
+func createConfigMapWithVersion(ctx context.Context, a *kubernetes.Agent, configMap v1.ConfigMap, version int) error {
+	ctx, span := telemetry.NewSpan(ctx, "create-environment-group-configmap")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "configmap-label", Value: configMap.Labels[LabelKey_EnvironmentGroupName]},
+		telemetry.AttributeKV{Key: "configmap-version", Value: configMap.Labels[LabelKey_EnvironmentGroupVersion]},
+		telemetry.AttributeKV{Key: "configmap-name", Value: configMap.Name},
+		telemetry.AttributeKV{Key: "configmap-namespace", Value: configMap.Namespace},
+	)
+
+	_, err := a.Clientset.CoreV1().ConfigMaps(configMap.Namespace).Create(ctx, &configMap, metav1.CreateOptions{})
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "unable to create environment group configmap")
+	}
+
+	return nil
+}
+
+func createSecretWithVersion(ctx context.Context, a *kubernetes.Agent, secret v1.Secret, version int) error {
+	ctx, span := telemetry.NewSpan(ctx, "create-environment-group-secret")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "secret-label", Value: secret.Labels[LabelKey_EnvironmentGroupName]},
+		telemetry.AttributeKV{Key: "secret-version", Value: secret.Labels[LabelKey_EnvironmentGroupVersion]},
+		telemetry.AttributeKV{Key: "secret-name", Value: secret.Name},
+		telemetry.AttributeKV{Key: "secret-namespace", Value: secret.Namespace},
+	)
+
+	_, err := a.Clientset.CoreV1().Secrets(secret.Namespace).Create(ctx, &secret, metav1.CreateOptions{})
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "unable to create environment group secret")
+	}
+
+	return nil
 }

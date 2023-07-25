@@ -3,7 +3,9 @@ package environment_groups
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -25,49 +27,139 @@ type EnvironmentGroup struct {
 	// Name is the environment group name which can be found in the labels (LabelKey_EnvironmentGroupName) of the ConfigMap. This is NOT the configmap name
 	Name string
 	// Version is the environment group version which can be found in the labels (LabelKey_EnvironmentGroupVersion) of the ConfigMap. This is NOT included in the configmap name
-	Version string
+	Version int
 	// Variables are non-secret values for the EnvironmentGroup. This usually will be a ConfigMap
 	Variables map[string]string
 	// SecretVariables are secret values for the EnvironmentGroup. This usually will be a Secret on the kubernetes cluster
-	SecretVariables map[string]string
-	// CreatedAt is only used for display purposes and is in UTC Unix time
-	CreatedAt int64
+	SecretVariables map[string][]byte
+	// CreatedAtUTC is only used for display purposes and should be in UTC
+	CreatedAtUTC time.Time
 }
 
-// ListBaseEnvironmentGroups returns all environment groups stored in the porter-env-group namespace
-func ListBaseEnvironmentGroups(ctx context.Context, a *kubernetes.Agent) ([]EnvironmentGroup, error) {
-	ctx, span := telemetry.NewSpan(ctx, "list-all-env-groups")
+type environmentGroupOptions struct {
+	namespace                    string
+	environmentGroupLabelName    string
+	environmentGroupLabelVersion int
+}
+
+// EnvironmentGroupOption is a function that modifies ListEnvironmentGroups
+type EnvironmentGroupOption func(*environmentGroupOptions)
+
+// WithNamespace filters all environment groups in a given namespace
+func WithNamespace(namespace string) EnvironmentGroupOption {
+	return func(opts *environmentGroupOptions) {
+		opts.namespace = namespace
+	}
+}
+
+// WithEnvironmentGroupName filters all environment groups by name
+func WithEnvironmentGroupName(name string) EnvironmentGroupOption {
+	return func(opts *environmentGroupOptions) {
+		opts.environmentGroupLabelName = name
+	}
+}
+
+// WithEnvironmentGroupVersion filters all environment groups by version
+func WithEnvironmentGroupVersion(version int) EnvironmentGroupOption {
+	return func(opts *environmentGroupOptions) {
+		opts.environmentGroupLabelVersion = version
+	}
+}
+
+// ListEnvironmentGroups returns all environment groups stored in the provided namespace. If none is set, it will use the namespace "porter-env-group"
+func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ...EnvironmentGroupOption) ([]EnvironmentGroup, error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-env-groups")
 	defer span.End()
 
-	configMapListResp, err := a.Clientset.CoreV1().ConfigMaps(Namespace_EnvironmentGroups).List(ctx, metav1.ListOptions{})
+	var opts environmentGroupOptions
+	for _, opt := range listOpts {
+		opt(&opts)
+	}
+	if opts.namespace == "" {
+		opts.namespace = Namespace_EnvironmentGroups
+	}
+
+	var labelSelectors []string
+	if opts.environmentGroupLabelName != "" {
+		labelSelectors = append(labelSelectors, fmt.Sprintf("%s=%s", LabelKey_EnvironmentGroupName, opts.environmentGroupLabelName))
+	}
+	if opts.environmentGroupLabelVersion != 0 {
+		labelSelectors = append(labelSelectors, fmt.Sprintf("%s=%d", LabelKey_EnvironmentGroupVersion, opts.environmentGroupLabelVersion))
+	}
+	labelSelector := strings.Join(labelSelectors, ",")
+	listOptions := metav1.ListOptions{
+		LabelSelector: labelSelector,
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "namespace", Value: opts.namespace},
+		telemetry.AttributeKV{Key: "label-selector", Value: labelSelector},
+	)
+
+	configMapListResp, err := a.Clientset.CoreV1().ConfigMaps(Namespace_EnvironmentGroups).List(ctx, listOptions)
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "unable to list environment group variables")
 	}
-	// secretListResp, err := a.Clientset.CoreV1().Secrets(Namespace_EnvironmentGroups).List(ctx, metav1.ListOptions{})
-	// if err != nil {
-	// 	return nil, telemetry.Error(ctx, span, err, "unable to list environment groups secret varialbes")
-	// }
+	secretListResp, err := a.Clientset.CoreV1().Secrets(Namespace_EnvironmentGroups).List(ctx, listOptions)
+	if err != nil {
+		return nil, telemetry.Error(ctx, span, err, "unable to list environment groups secret varialbes")
+	}
 
-	// allEnvGroupNames := make(map[string]struct{})
-
-	var envGroups []EnvironmentGroup
+	allEnvGroupNames := make(map[string]EnvironmentGroup)
 	for _, cm := range configMapListResp.Items {
 		name, ok := cm.Labels[LabelKey_EnvironmentGroupName]
 		if !ok {
 			continue // missing name label, not an environment group
 		}
-		version, ok := cm.Labels[LabelKey_EnvironmentGroupVersion]
+		versionString, ok := cm.Labels[LabelKey_EnvironmentGroupVersion]
 		if !ok {
 			continue // missing version label, not an environment group
 		}
-		eg := EnvironmentGroup{
-			Name:      name,
-			Version:   version,
-			Variables: cm.Data,
-			CreatedAt: cm.CreationTimestamp.Unix(),
+		version, err := strconv.Atoi(versionString)
+		if err != nil {
+			continue // invalid version label as it should be an int, not an environment group
 		}
 
-		envGroups = append(envGroups, eg)
+		if _, ok := allEnvGroupNames[cm.Name]; !ok {
+			allEnvGroupNames[cm.Name] = EnvironmentGroup{}
+		}
+		allEnvGroupNames[cm.Name] = EnvironmentGroup{
+			Name:            name,
+			Version:         version,
+			Variables:       cm.Data,
+			SecretVariables: allEnvGroupNames[cm.Name].SecretVariables,
+			CreatedAtUTC:    cm.CreationTimestamp.Time.UTC(),
+		}
+	}
+
+	for _, secret := range secretListResp.Items {
+		name, ok := secret.Labels[LabelKey_EnvironmentGroupName]
+		if !ok {
+			continue // missing name label, not an environment group
+		}
+		versionString, ok := secret.Labels[LabelKey_EnvironmentGroupVersion]
+		if !ok {
+			continue // missing version label, not an environment group
+		}
+		version, err := strconv.Atoi(versionString)
+		if err != nil {
+			continue // invalid version label as it should be an int, not an environment group
+		}
+		if _, ok := allEnvGroupNames[secret.Name]; !ok {
+			allEnvGroupNames[secret.Name] = EnvironmentGroup{}
+		}
+		allEnvGroupNames[secret.Name] = EnvironmentGroup{
+			Name:            name,
+			Version:         version,
+			SecretVariables: secret.Data,
+			Variables:       allEnvGroupNames[secret.Name].Variables,
+			CreatedAtUTC:    secret.CreationTimestamp.Time.UTC(),
+		}
+	}
+
+	var envGroups []EnvironmentGroup
+	for _, envGroup := range allEnvGroupNames {
+		envGroups = append(envGroups, envGroup)
 	}
 
 	return envGroups, nil
@@ -91,7 +183,6 @@ func LinkedApplications(ctx context.Context, a *kubernetes.Agent, environmentGro
 
 	deployListResp, err := a.Clientset.AppsV1().Deployments(metav1.NamespaceAll).List(ctx,
 		metav1.ListOptions{
-			// LabelSelector: fmt.Sprintf("%s=%s", LabelKey_LinkedEnvironmentGroup, environmentGroupName),
 			LabelSelector: LabelKey_LinkedEnvironmentGroup,
 		})
 	if err != nil {

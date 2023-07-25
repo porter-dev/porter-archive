@@ -41,12 +41,11 @@ func SyncLatestVersionToNamespace(ctx context.Context, a *kubernetes.Agent, inp 
 		telemetry.AttributeKV{Key: "environment-group-name", Value: inp.BaseEnvironmentGroupName},
 		telemetry.AttributeKV{Key: "target-environment-namespace", Value: inp.TargetNamespace},
 	)
-	fmt.Println("STEFANHERE")
+
 	baseEnvironmentGroup, err := LatestBaseEnvironmentGroup(ctx, a, inp.BaseEnvironmentGroupName)
 	if err != nil {
 		return output, telemetry.Error(ctx, span, err, "unable to find latest environment group version")
 	}
-	fmt.Println("STEFANHERE2")
 
 	envGroupInp := EnvironmentGroupInTargetNamespaceInput{
 		Name:      baseEnvironmentGroup.Name,
@@ -58,19 +57,16 @@ func SyncLatestVersionToNamespace(ctx context.Context, a *kubernetes.Agent, inp 
 		return output, telemetry.Error(ctx, span, err, "unable to get environement group in target namespace")
 	}
 
-	fmt.Println("STEFANHERE3")
 	if targetEnvironmentGroup.Name == baseEnvironmentGroup.Name && targetEnvironmentGroup.Version == baseEnvironmentGroup.Version {
 		return SyncLatestVersionToNamespaceOutput{
 			ConfigMapName: fmt.Sprintf("%s.%s", baseEnvironmentGroup.Name, baseEnvironmentGroup.Version),
 		}, nil
 	}
 
-	fmt.Println("STEFANHERE4")
 	targetConfigmapName, err := createEnvironmentGroupInTargetNamespace(ctx, a, inp.TargetNamespace, baseEnvironmentGroup)
 	if err != nil {
 		return output, telemetry.Error(ctx, span, err, "unable to create environment group in target namespace")
 	}
-	fmt.Println("STEFANHERE5")
 
 	output = SyncLatestVersionToNamespaceOutput{
 		ConfigMapName: targetConfigmapName,

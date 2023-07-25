@@ -174,15 +174,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 	}
 
 	for serviceName := range services {
-		fmt.Println("STEFANKS", serviceName)
-
-		fmt.Println("STEFANTYPE", reflect.TypeOf(services[serviceName].Config["labels"]))
 		if len(conf.EnvironmentGroups) != 0 {
-			// if _, ok := services[serviceName].Config["configMapRefs"]; !ok {
-			// 	services[serviceName].Config["configMapRefs"] = []string{}
-			// }
-			// services[serviceName].Config["configMapRefs"] = conf.EnvironmentGroups
-
 			if _, ok := services[serviceName].Config["labels"]; !ok {
 				services[serviceName].Config["labels"] = make(map[string]string)
 			}
@@ -195,9 +187,6 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 			case map[string]string:
 				services[serviceName].Config["labels"].(map[string]string)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(conf.EnvironmentGroups, ".")
 			case any:
-				if services[serviceName].Config["labels"] == nil {
-					fmt.Println("STEFANTYPECASE", services[serviceName].Config["labels"])
-				}
 				if val, ok := services[serviceName].Config["labels"].(string); ok {
 					if val == "" {
 						services[serviceName].Config["labels"] = map[string]string{
@@ -205,12 +194,9 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 						}
 					}
 				}
-				fmt.Println("STEFANTYPECASE", services[serviceName].Config["labels"])
 			}
 		}
 	}
-
-	fmt.Println("STEFANAPPS", parsed.Apps, parsed.Services)
 
 	application := &Application{
 		Env:      parsed.Env,
@@ -224,8 +210,6 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values", err)
 	}
 	convertedValues := convertMap(values).(map[string]interface{})
-	fmt.Println("STEFANV", values)
-	fmt.Println("STEFANCV", convertedValues)
 
 	umbrellaChart, err := buildUmbrellaChart(application, conf.ServerConfig, conf.ProjectID, conf.ExistingChartDependencies)
 	if err != nil {

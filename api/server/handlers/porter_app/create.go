@@ -156,6 +156,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			ProjectID:                 cluster.ProjectID,
 			UserUpdate:                request.UserUpdate,
 			EnvGroups:                 request.EnvGroups,
+			EnvironmentGroups:         request.EnvironmentGroups,
 			Namespace:                 namespace,
 			ExistingHelmValues:        releaseValues,
 			ExistingChartDependencies: releaseDependencies,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { RouteComponentProps, useParams, withRouter } from "react-router";
+import { RouteComponentProps, useLocation, useParams, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
 
@@ -30,7 +30,6 @@ import BuildSettingsTab from "../build-settings/BuildSettingsTab";
 import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
 import { Service } from "../new-app-flow/serviceTypes";
-import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import Fieldset from "components/porter/Fieldset";
 import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
@@ -46,9 +45,10 @@ import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import { PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
+import EventFocusView from "./activity-feed/events/focus-views/EventFocusView";
 import HelmValuesTab from "./HelmValuesTab";
-import PorterAppRevisionSection from "./PorterAppRevisionSection";
 import SettingsTab from "./SettingsTab";
+import PorterAppRevisionSection from "./PorterAppRevisionSection";
 
 type Props = RouteComponentProps & {};
 
@@ -62,6 +62,7 @@ const icons = [
 
 const validTabs = [
   "activity",
+  "events",
   "overview",
   "logs",
   "metrics",
@@ -118,7 +119,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
   const [buildView, setBuildView] = useState<BuildMethod>("docker");
 
-  const { eventId, tab } = useParams<Params>();
+  const { tab } = useParams<Params>();
+  const { search } = useLocation();
+  const queryParams = new URLSearchParams(search);
+  const logFilterQueryParamOpts = {
+    revision: queryParams.get('version'),
+    output_stream: queryParams.get('output_stream'),
+    service: queryParams.get('service'),
+  }
+  const eventId = queryParams.get('event_id');
   const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
 
   useEffect(() => {
@@ -165,7 +174,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           revision: revision,
         }
       );
-
       let preDeployChartData;
       // get the pre-deploy chart
       try {
@@ -184,7 +192,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       } catch (err) {
         // that's ok if there's an error, just means there is no pre-deploy chart
       }
-
       // update apps and release
       const newAppData = {
         app: resPorterApp?.data,
@@ -207,7 +214,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           }
         )
         .then((res) => res.data);
-
       const populateEnvGroupsPromises = envGroups?.map((envGroup) =>
         api
           .getEnvGroup<PopulatedEnvGroup>(
@@ -223,11 +229,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           )
           .then((res) => res.data)
       );
-
       const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
-
       const filteredEnvGroups = populatedEnvGroups.filter(envGroup => envGroup.applications.includes(newAppData.chart.name));
-
       setSyncedEnvGroups(filteredEnvGroups)
       setPorterJson(porterJson);
       setAppData(newAppData);
@@ -249,7 +252,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         newAppData.app.builder != null && newAppData.app.builder.includes("heroku")
       );
       setPorterYaml(finalPorterYaml);
-
       // Only check GHA status if no built image is set
       const hasBuiltImage = !!resChartData.data.config?.global?.image
         ?.repository;
@@ -324,7 +326,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           }
         );
       });
-
       try {
         await Promise.all(removeApplicationToEnvGroupPromises);
       } catch (error) {
@@ -657,7 +658,18 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           chart={appData.chart}
           stackName={appData?.app?.name}
           appData={appData}
-          eventId={eventId}
+        />;
+      case "events":
+        if (eventId != null && eventId !== "") {
+          return <EventFocusView
+            eventId={eventId}
+            appData={appData}
+          />;
+        }
+        return <ActivityFeed
+          chart={appData.chart}
+          stackName={appData?.app?.name}
+          appData={appData}
         />;
       case "overview":
         return (
@@ -745,7 +757,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           deleteApplication={deletePorterApp}
         />;
       case "logs":
-        return <LogSection currentChart={appData.chart} services={services} />;
+        return <LogSection
+          currentChart={appData.chart}
+          services={services.filter(Service.isNonRelease)}
+          appName={appData.app.name}
+          filterOpts={logFilterQueryParamOpts}
+        />;
       case "metrics":
         return <MetricsSection currentChart={appData.chart} />;
       case "debug":
@@ -779,7 +796,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           chart={appData.chart}
           stackName={appData?.app?.name}
           appData={appData}
-          eventId={eventId}
         />;
     }
   };

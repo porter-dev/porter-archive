@@ -7,16 +7,12 @@ import React, {
 } from "react";
 
 import styled from "styled-components";
-import RadioFilter from "components/RadioFilter";
 
 import spinner from "assets/loading.gif";
-import filterOutline from "assets/filter-outline.svg";
-import filterOutlineWhite from "assets/filter-outline-white.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { useLogs } from "./utils";
-import { Direction } from "./types";
-import Anser from "anser";
+import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName, LogFilterQueryParamOpts } from "./types";
 import dayjs, { Dayjs } from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
@@ -30,35 +26,31 @@ import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 import { Service } from "../../new-app-flow/serviceTypes";
+import LogFilterContainer from "./LogFilterContainer";
+import StyledLogs from "./StyledLogs";
 
 type Props = {
-  currentChart?: ChartType;
+  appName: string;
+  currentChart: ChartType;
   services?: Service[];
   timeRange?: {
     startTime?: Dayjs;
     endTime?: Dayjs;
   };
   showFilter?: boolean;
-};
-
-type PodFilter = {
-  podName: string;
-  podType: string;
+  filterOpts?: LogFilterQueryParamOpts;
 };
 
 const LogSection: React.FC<Props> = ({
   currentChart,
   services,
   timeRange,
+  appName,
+  filterOpts,
   showFilter = true,
 }) => {
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
-  const [podFilter, setPodFilter] = useState<PodFilter>({
-    podName: "",
-    podType: "",
-  });
-  const [podFilterOpts, setPodFilterOpts] = useState<PodFilter[]>([]);
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [enteredSearchText, setEnteredSearchText] = useState("");
   const [searchText, setSearchText] = useState("");
@@ -69,6 +61,101 @@ const LogSection: React.FC<Props> = ({
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [logsError, setLogsError] = useState<string | undefined>(undefined);
+  const getSelectorFromServiceQueryParam = (serviceName: string | null | undefined) => {
+    if (serviceName == null) {
+      return undefined;
+    }
+    const match = services?.find(s => s.name == serviceName);
+    if (match == null) {
+      return undefined;
+    }
+    return `${match.name}-${match.type == "worker" ? "wkr" : match.type}`;
+  }
+  const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
+    revision: filterOpts?.revision ?? GenericLogFilter.getDefaultOption("revision").value,
+    output_stream: filterOpts?.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
+    pod_name: getSelectorFromServiceQueryParam(filterOpts?.service) ?? GenericLogFilter.getDefaultOption("pod_name").value,
+  });
+
+  const createVersionOptions = (number: number) => {
+    return Array.from({ length: number }, (_, index) => {
+      const version = index + 1;
+      const label = version === number ? `Version ${version} (latest)` : `Version ${version}`;
+      const value = version.toString();
+      return GenericFilterOption.of(label, value);
+    }).reverse().slice(0, 3);
+  }
+
+  const isAgentVersionUpdated = (agentImage: string | undefined) => {
+    if (agentImage == null) {
+      return false;
+    }
+    const version = agentImage.split(":").pop();
+    //make sure version is above v3.1.3
+    if (version == null) {
+      return false;
+    }
+    const versionParts = version.split(".");
+    if (versionParts.length < 3) {
+      return false;
+    }
+    const major = parseInt(versionParts[0]);
+    const minor = parseInt(versionParts[1]);
+    const patch = parseInt(versionParts[2]);
+    if (major < 3) {
+      return false;
+    }
+    if (minor < 1) {
+      return false;
+    }
+    if (patch < 3) {
+      return false;
+    }
+    return true;
+  }
+
+  const [filters, setFilters] = useState<GenericLogFilter[]>(showFilter ? [
+    {
+      name: "pod_name",
+      displayName: "Service",
+      default: GenericLogFilter.getDefaultOption("pod_name"),
+      options: services?.map(s => {
+        return GenericFilterOption.of(s.name, `${s.name}-${s.type == "worker" ? "wkr" : s.type}`)
+      }) ?? [],
+      setValue: (value: string) => {
+        setSelectedFilterValues((s) => ({
+          ...s,
+          pod_name: value,
+        }));
+      }
+    },
+    {
+      name: "revision",
+      displayName: "Version",
+      default: GenericLogFilter.getDefaultOption("revision"),
+      options: currentChart != null ? createVersionOptions(currentChart.version) : [],
+      setValue: (value: string) => {
+        setSelectedFilterValues((s) => ({
+          ...s,
+          revision: value,
+        }));
+      }
+    },
+    {
+      name: "output_stream",
+      displayName: "Output Stream",
+      default: GenericLogFilter.getDefaultOption("output_stream"),
+      options: [
+        GenericFilterOption.of("stderr", "stderr"),
+      ],
+      setValue: (value: string) => {
+        setSelectedFilterValues((s) => ({
+          ...s,
+          output_stream: value,
+        }));
+      }
+    },
+  ] : []);
 
   const notify = (message: string) => {
     setNotification(message);
@@ -78,12 +165,10 @@ const LogSection: React.FC<Props> = ({
     }, 5000);
   };
 
-  const namespace = currentChart == null ? "" : currentChart.namespace;
-
   const { logs, refresh, moveCursor, paginationInfo } = useLogs(
-    podFilter.podName,
-    podFilter.podType,
-    namespace,
+    selectedFilterValues,
+    appName,
+    currentChart == null ? "" : currentChart.namespace,
     enteredSearchText,
     notify,
     currentChart,
@@ -91,20 +176,6 @@ const LogSection: React.FC<Props> = ({
     selectedDate,
     timeRange,
   );
-
-  const refreshPodLogsValues = async () => {
-    if (currentChart == null || services == null) {
-      setPodFilterOpts([]);
-    } else {
-      const podList = services.map((service: Service) => {
-        return {
-          podName: service.name,
-          podType: service.type == "worker" ? "wkr" : service.type,
-        };
-      });
-      setPodFilterOpts(podList);
-    }
-  };
 
   useEffect(() => {
     if (!isLoading && scrollToBottomRef.current && scrollToBottomEnabled) {
@@ -116,69 +187,13 @@ const LogSection: React.FC<Props> = ({
     }
   }, [isLoading, logs, scrollToBottomRef, scrollToBottomEnabled]);
 
-  useEffect(() => {
-    if (podFilter.podName != "") {
-      setSelectedDateIfUndefined();
-      return;
-    }
-  }, [podFilter]);
 
-  useEffect(() => {
-    if (selectedDate == null) {
-      resetPodFilter();
-      return;
-    }
-  }, [selectedDate]);
-
-  const resetPodFilter = () => {
-    if (podFilter.podName != "" || podFilter.podType != "") {
-      setPodFilter({ podName: "", podType: "" });
-    }
-  };
-
-  const renderLogs = () => {
-    return logs?.map((log, i) => {
-      return (
-        <Log key={[log.lineNumber, i].join(".")}>
-          <span className="line-number">{log.lineNumber}.</span>
-          <span className="line-timestamp">
-            {log.timestamp
-              ? dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")
-              : "-"}
-          </span>
-          <LogOuter key={[log.lineNumber, i].join(".")}>
-            {log.line?.map((ansi, j) => {
-              if (ansi.clearLine) {
-                return null;
-              }
-
-              return (
-                <LogInnerSpan
-                  key={[log.lineNumber, i, j].join(".")}
-                  ansi={ansi}
-                >
-                  {ansi.content.replace(/ /g, "\u00a0")}
-                </LogInnerSpan>
-              );
-            })}
-          </LogOuter>
-        </Log>
-      );
+  const resetFilters = () => {
+    setSelectedFilterValues({
+      revision: filterOpts?.revision ?? GenericLogFilter.getDefaultOption("revision").value,
+      output_stream: filterOpts?.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
+      pod_name: getSelectorFromServiceQueryParam(filterOpts?.service) ?? GenericLogFilter.getDefaultOption("pod_name").value,
     });
-  };
-
-  const setPodFilterWithPodName = (podName: string) => {
-    if (podName == "All") {
-      resetPodFilter();
-      return;
-    }
-
-    const filtered = podFilterOpts.filter((pod) => pod.podName == podName);
-    if (filtered.length > 0) {
-      setPodFilter(filtered[0]);
-    } else {
-      resetPodFilter();
-    }
   };
 
   const onLoadPrevious = useCallback(() => {
@@ -193,6 +208,7 @@ const LogSection: React.FC<Props> = ({
   const resetSearch = () => {
     setSearchText("");
     setEnteredSearchText("");
+    resetFilters();
   };
 
   const setSelectedDateIfUndefined = () => {
@@ -202,14 +218,6 @@ const LogSection: React.FC<Props> = ({
   };
 
   const renderContents = () => {
-    const radioOptions = podFilterOpts?.map((pod) => {
-      return {
-        value: pod.podName,
-        label: pod.podName,
-      };
-    });
-    radioOptions.unshift({ value: "All", label: "All" });
-
     return (
       <>
         <FlexRow>
@@ -225,17 +233,6 @@ const LogSection: React.FC<Props> = ({
               setSelectedDate={setSelectedDate}
               resetSearch={resetSearch}
             />
-            {showFilter &&
-              <RadioFilter
-                icon={
-                  podFilter.podName == "" ? filterOutline : filterOutlineWhite
-                }
-                selected={podFilter.podName}
-                setSelected={setPodFilterWithPodName}
-                options={radioOptions}
-                name="Filter logs"
-              />
-            }
           </Flex>
           <Flex>
             <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
@@ -247,7 +244,6 @@ const LogSection: React.FC<Props> = ({
             <Spacer inline width="10px" />
             <ScrollButton
               onClick={() => {
-                refreshPodLogsValues();
                 refresh();
               }}
             >
@@ -256,6 +252,16 @@ const LogSection: React.FC<Props> = ({
             </ScrollButton>
           </Flex>
         </FlexRow>
+        <Spacer y={0.5} />
+        {showFilter &&
+          <>
+            <LogFilterContainer
+              filters={filters}
+              selectedFilterValues={selectedFilterValues}
+            />
+            <Spacer y={0.5} />
+          </>
+        }
         <LogsSectionWrapper>
           <StyledLogsSection>
             {isLoading || (logs.length == 0 && selectedDate == null) ? (
@@ -281,7 +287,11 @@ const LogSection: React.FC<Props> = ({
                 >
                   Load Previous
                 </LoadMoreButton>
-                {renderLogs()}
+                <StyledLogs
+                  logs={logs}
+                  appName={appName}
+                  filters={filters}
+                />
                 <LoadMoreButton
                   active={selectedDate && logs.length !== 0}
                   role="button"
@@ -343,7 +353,6 @@ const LogSection: React.FC<Props> = ({
             })
             .then((res) => {
               setHasPorterAgent(true);
-              refreshPodLogsValues();
               setIsPorterAgentInstalling(false);
               setIsLoading(false);
             })
@@ -352,6 +361,26 @@ const LogSection: React.FC<Props> = ({
               setLogsError(err);
               setIsLoading(false);
             });
+
+          const agentImage = res.data?.image;
+          if (!isAgentVersionUpdated(agentImage)) {
+            setFilters([
+              {
+                name: "pod_name",
+                displayName: "Service",
+                default: GenericLogFilter.getDefaultOption("pod_name"),
+                options: services?.map(s => {
+                  return GenericFilterOption.of(s.name, `${s.name}-${s.type == "worker" ? "wkr" : s.type}`)
+                }) ?? [],
+                setValue: (value: string) => {
+                  setSelectedFilterValues((s) => ({
+                    ...s,
+                    pod_name: value,
+                  }));
+                }
+              },
+            ])
+          }
         }
       })
       .catch((err) => {
@@ -480,7 +509,6 @@ const ScrollButton = styled.div`
 const Flex = styled.div`
   display: flex;
   align-items: center;
-  border-bottom: 25px solid transparent;
 `;
 
 const Message = styled.div`
@@ -544,55 +572,6 @@ const StyledLogsSection = styled.div`
   }
 `;
 
-const Log = styled.div`
-  font-family: monospace;
-  user-select: text;
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  width: 100%;
-  & > * {
-    padding-block: 5px;
-  }
-  & > .line-timestamp {
-    height: 100%;
-    color: #949effff;
-    opacity: 0.5;
-    font-family: monospace;
-    min-width: fit-content;
-    padding-inline-end: 5px;
-  }
-  & > .line-number {
-    height: 100%;
-    background: #202538;
-    display: inline-block;
-    text-align: right;
-    min-width: 45px;
-    padding-inline-end: 5px;
-    opacity: 0.3;
-    font-family: monospace;
-  }
-`;
-
-const LogOuter = styled.div`
-  display: inline-block;
-  word-wrap: anywhere;
-  flex-grow: 1;
-  font-family: monospace, sans-serif;
-  font-size: 12px;
-`;
-
-const LogInnerSpan = styled.span`
-  font-family: monospace, sans-serif;
-  font-size: 12px;
-  font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>
-    props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
-  color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
-    props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
-  background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
-    props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
-`;
-
 const LoadMoreButton = styled.div<{ active: boolean }>`
   width: 100%;
   display: ${(props) => (props.active ? "flex" : "none")};
@@ -602,39 +581,6 @@ const LoadMoreButton = styled.div<{ active: boolean }>`
   background: #1f2023;
   cursor: pointer;
   font-family: monospace;
-`;
-
-const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`
-  padding: 0 10px;
-  color: ${(props) => (props.selected ? "" : "#494b4f")};
-  border: 1px solid #494b4f;
-  height: 100%;
-  display: flex;
-  margin-left: ${(props) => (props.nudgeLeft ? "-1px" : "")};
-  align-items: center;
-  border-radius: ${(props) =>
-    props.nudgeLeft ? "0 5px 5px 0" : "5px 0 0 5px"};
-  :hover {
-    border: 1px solid #7a7b80;
-    z-index: 2;
-  }
-`;
-
-const ToggleButton = styled.div`
-  background: #26292e;
-  border-radius: 5px;
-  font-size: 13px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-`;
-
-const TimeIcon = styled.img<{ selected?: boolean }>`
-  width: 16px;
-  height: 16px;
-  z-index: 2;
-  opacity: ${(props) => (props.selected ? "" : "50%")};
 `;
 
 const NotificationWrapper = styled.div<{ active?: boolean }>`

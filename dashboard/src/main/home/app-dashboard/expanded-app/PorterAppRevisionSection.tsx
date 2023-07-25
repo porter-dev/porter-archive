@@ -151,9 +151,7 @@ class PorterAppRevisionSection extends Component<PropsType, StateType> {
 
     // Handle update of values.yaml
     componentDidUpdate(prevProps: PropsType) {
-        console.log('calling component did update')
         if (this.props.forceRefreshRevisions) {
-            console.log("force refresh revisions")
             this.props.refreshRevisionsOff();
 
             // Force refresh occurs on submit -> set current to newest
@@ -161,7 +159,6 @@ class PorterAppRevisionSection extends Component<PropsType, StateType> {
                 this.props.setRevision(this.state.revisions[0], true);
             });
         } else if (this.props.chart !== prevProps.chart) {
-            console.log("refresh history")
             this.refreshHistory();
         }
     }

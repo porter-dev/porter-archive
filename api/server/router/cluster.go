@@ -1634,6 +1634,35 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/environment-groups}
+	deleteEnvironmentGroupEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/environment-groups",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	deleteEnvironmentGroupHandler := environment_groups.NewDeleteEnvironmentGroupHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteEnvironmentGroupEndpoint,
+		Handler:  deleteEnvironmentGroupHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/environment-groups
 	listEnvironmentGroupEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

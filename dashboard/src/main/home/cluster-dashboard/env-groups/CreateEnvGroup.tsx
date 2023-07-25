@@ -191,7 +191,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
         {
           name: this.state.envGroupName,
           variables: apiEnvVariables,
-          //secret_variables: secretEnvVariables,
+          secret_variables: secretEnvVariables,
         },
         {
           id: this.context.currentProject.id,

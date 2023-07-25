@@ -26,7 +26,7 @@ import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import _, { remove, update } from "lodash";
+import _, { flatMapDepth, remove, update } from "lodash";
 import { NewPopulatedEnvGroup, PopulatedEnvGroup } from "components/porter-form/types";
 import { isAuthorized } from "shared/auth/authorization-helpers";
 import useAuth from "shared/auth/useAuth";
@@ -188,7 +188,7 @@ export const ExpandedEnvGroupFC = ({
     } else {
       try {
         const populatedEnvGroup = await api
-          .getEnvGroup<PopulatedEnvGroup>(
+          .getEnvGroup<NewPopulatedEnvGroup>(
             "<token>",
             {},
             {
@@ -415,7 +415,6 @@ export const ExpandedEnvGroupFC = ({
         }
       }
 
-      setButtonStatus("loading");
       if (
         currentCluster != null &&
         currentProject != null
@@ -444,8 +443,6 @@ export const ExpandedEnvGroupFC = ({
             stack_name: appName,
           }
         );
-        setButtonStatus("successful");
-
       } else {
         setButtonStatus("error");
       }
@@ -527,7 +524,7 @@ export const ExpandedEnvGroupFC = ({
             {
               name,
               variables: normalVariables,
-              //secret_variables: secretVariables,
+              secret_variables: secretVariables,
             },
             {
               id: currentProject.id,
@@ -535,12 +532,15 @@ export const ExpandedEnvGroupFC = ({
             }
           ).then((res) => res.data);
 
-          let promises = linkedApp.map(async (appName) => {
+          if (linkedApp) {
+            let promises = linkedApp.map(async (appName) => {
 
-            const dataFromGetPorterApp = await getPorterApp({ appName: appName });
-          });
-
+              const dataFromGetPorterApp = await getPorterApp({ appName: appName });
+            });
+          }
+          setButtonStatus("successful");
           setTimeout(() => setButtonStatus(""), 1000);
+
         }
         catch (error) {
           setButtonStatus("Couldn't update successfully");

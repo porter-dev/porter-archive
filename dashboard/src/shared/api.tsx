@@ -1665,7 +1665,7 @@ const createEnvironmentGroups = baseApi<
   {
     name: string;
     variables: Record<string, string>;
-    //secret_variables?: Record<string, string>;
+    secret_variables?: Record<string, string>;
   },
   {
     id: number;

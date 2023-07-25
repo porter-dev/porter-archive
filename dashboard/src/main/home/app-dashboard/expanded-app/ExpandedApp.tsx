@@ -1011,7 +1011,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     value: "build-settings",
                   },
                   { label: "Settings", value: "settings" },
-                  (user.email.endsWith("porter.run") || currentProject.helm_values_enabled) && { label: "Helm values", value: "helm-values" },].filter((x) => x)}
+                  (user.email.endsWith("porter.run") || currentProject.helm_values_enabled) && { label: "Helm values", value: "helm-values" },
+                ].filter((x) => x)}
                 currentTab={selectedTab}
                 setCurrentTab={(tab: string) => {
                   if (buttonStatus !== "") {

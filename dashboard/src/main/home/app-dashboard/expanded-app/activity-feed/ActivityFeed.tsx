@@ -19,6 +19,7 @@ import _ from "lodash";
 import Button from "components/porter/Button";
 import Icon from "components/porter/Icon";
 import Container from "components/porter/Container";
+import { PorterAppEvent } from "./events/types";
 
 type Props = {
   chart: any;
@@ -31,7 +32,7 @@ const EVENTS_POLL_INTERVAL = 5000; // poll every 5 seconds
 const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const { currentProject, currentCluster } = useContext(Context);
 
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<PorterAppEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<any>(null);
   const [page, setPage] = useState<number>(1);
@@ -86,7 +87,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
       );
       setError(undefined)
       setNumPages(res.data.num_pages);
-      setEvents(res.data.events);
+      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)) ?? []);
     } catch (err) {
       setError(err);
     }

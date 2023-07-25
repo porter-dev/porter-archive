@@ -14,11 +14,17 @@ export interface PorterAppEvent {
     porter_app_id: number;
     metadata: any;
 }
-export interface PorterAppDeployEvent extends PorterAppEvent {
-    type: PorterAppEventType.DEPLOY;
-    metadata: {
-        image_tag: string;
-        revision: number;
-        service_status: Record<string, string>;
-    };
+export const PorterAppEvent = {
+    toPorterAppEvent: (data: any): PorterAppEvent => {
+        return {
+            created_at: data.created_at ?? "",
+            updated_at: data.updated_at ?? "",
+            id: data.id ?? "",
+            status: data.status ?? "",
+            type: data.type ?? "",
+            type_source: data.type_source ?? "",
+            porter_app_id: data.porter_app_id ?? "",
+            metadata: data.metadata ?? {},
+        };
+    }
 }

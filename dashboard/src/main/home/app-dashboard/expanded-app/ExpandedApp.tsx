@@ -99,7 +99,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   );
 
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
-  const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
 
   // this is what we read from their porter.yaml in github
   const [porterJson, setPorterJson] = useState<PorterJson | undefined>(undefined);
@@ -287,7 +286,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           if (err.response?.status === 404) {
             try {
               // Check for user-copied porter.yml as fallback
-              const resPorterYml = await api.getBranchContents(
+              await api.getBranchContents(
                 "<token>",
                 { dir: `./.github/workflows/porter.yml` },
                 {
@@ -314,7 +313,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   };
 
   const deletePorterApp = async () => {
-    setShowDeleteOverlay(false);
     setDeleting(true);
     const { appName } = props.match.params as any;
     if (syncedEnvGroups) {
@@ -1012,17 +1010,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </>
           )}
         </StyledExpandedApp>
-      )}
-      {showDeleteOverlay && (
-        <ConfirmOverlay
-          message={`Are you sure you want to delete "${appData.app.name}"?`}
-          onYes={() => {
-            deletePorterApp();
-          }}
-          onNo={() => {
-            setShowDeleteOverlay(false);
-          }}
-        />
       )}
     </>
   );

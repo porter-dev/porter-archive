@@ -1,7 +1,6 @@
 package environment_groups
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -38,6 +37,9 @@ type UpdateEnvironmentGroupRequest struct {
 
 	// Variables are variables which should are not sensitive. All values must be a string due to a kubernetes limitation.
 	Variables map[string]string `json:"variables"`
+
+	// SecretVariables are sensitive variables. All values must be a string due to a kubernetes limitation.
+	SecretVariables map[string]string `json:"secret_variables"`
 }
 
 func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -74,25 +76,16 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	applicationsToSync, err := environment_groups.LinkedApplications(ctx, agent, envGroup.Name)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to find linked applications for environment group")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	fmt.Println("STEFANSYNCLEN", len(applicationsToSync))
-
-	for _, app := range applicationsToSync {
-		// TODO: Call porter app update
-		fmt.Println("STEFANSYNC", app)
-		// err = environment_groups.SyncApplication(ctx, agent, app)
-		// if err != nil {
-		// 	err := telemetry.Error(ctx, span, err, "unable to sync application")
-		// 	c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		// 	return
-		// }
-	}
+	// TODO: Syncing applications that are linked is currently done by the frontend. This should be done entirely
+	// applicationsToSync, err := environment_groups.LinkedApplications(ctx, agent, envGroup.Name)
+	// if err != nil {
+	// 	err := telemetry.Error(ctx, span, err, "unable to find linked applications for environment group")
+	// 	c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+	// 	return
+	// }
+	// for _, app := range applicationsToSync {
+	// 	TODO: Call porter app update
+	// }
 
 	c.WriteResult(w, r, envGroup)
 }

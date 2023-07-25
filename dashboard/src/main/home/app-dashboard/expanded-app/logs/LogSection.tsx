@@ -146,6 +146,7 @@ const LogSection: React.FC<Props> = ({
       displayName: "Output Stream",
       default: GenericLogFilter.getDefaultOption("output_stream"),
       options: [
+        GenericFilterOption.of('stdout', 'stdout'),
         GenericFilterOption.of("stderr", "stderr"),
       ],
       setValue: (value: string) => {

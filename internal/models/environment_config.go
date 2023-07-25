@@ -21,7 +21,6 @@ type EnvironmentConfig struct {
 	Auto      bool   `gorm:"default:false"`
 	IsDefault bool   `gorm:"default:false"`
 
-	PreviewEnvironments []PreviewEnvironment
 	PorterApps          []PorterApp
 }
 

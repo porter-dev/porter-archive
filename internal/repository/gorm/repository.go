@@ -54,7 +54,6 @@ type GormRepository struct {
 	porterApp                 repository.PorterAppRepository
 	porterAppEvent            repository.PorterAppEventRepository
 	environmentConfig         repository.EnvironmentConfigRepository
-	previewEnvironment        repository.PreviewEnvironmentRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -245,10 +244,6 @@ func (t *GormRepository) EnvironmentConfig() repository.EnvironmentConfigReposit
 	return t.environmentConfig
 }
 
-func (t *GormRepository) PreviewEnvironment() repository.PreviewEnvironmentRepository {
-	return t.previewEnvironment
-}
-
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -300,6 +295,5 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		porterApp:                 NewPorterAppRepository(db),
 		porterAppEvent:            NewPorterAppEventRepository(db),
 		environmentConfig:         NewEnvironmentConfigRepository(db),
-		previewEnvironment:        NewPreviewEnvironmentRepository(db),
 	}
 }

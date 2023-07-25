@@ -48,5 +48,4 @@ type Repository interface {
 	PorterApp() PorterAppRepository
 	PorterAppEvent() PorterAppEventRepository
 	EnvironmentConfig() EnvironmentConfigRepository
-	PreviewEnvironment() PreviewEnvironmentRepository
 }

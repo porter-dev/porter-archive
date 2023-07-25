@@ -407,9 +407,6 @@ const Home: React.FC<Props> = (props) => {
             <Route path="/apps/new/app">
               <NewAppFlow />
             </Route>
-            <Route path="/apps/:appName/events/:eventId">
-              <ExpandedApp />
-            </Route>
             <Route path="/apps/:appName/:tab">
               <ExpandedApp />
             </Route>

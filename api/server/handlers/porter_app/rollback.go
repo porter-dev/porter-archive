@@ -3,6 +3,7 @@ package porter_app
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -11,8 +12,10 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
+	"gopkg.in/yaml.v2"
 )
 
 type RollbackPorterAppHandler struct {
@@ -59,14 +62,35 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	helmRelease, err := helmAgent.GetRelease(ctx, stackName, 0, false)
+	k8sAgent, err := c.GetAgent(r, cluster, namespace)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error getting helm release")
+		err = telemetry.Error(ctx, span, err, "error getting k8s agent")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	imageInfo := attemptToGetImageInfoFromRelease(helmRelease.Config)
+	helmReleaseFromRequestedRevision, err := helmAgent.GetRelease(ctx, stackName, request.Revision, false)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error getting helm release for requested revision")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	latestHelmRelease, err := helmAgent.GetRelease(ctx, stackName, 0, false)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error getting latest helm release")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	valuesYaml, err := yaml.Marshal(helmReleaseFromRequestedRevision.Config)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error marshalling helm release config to yaml")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	imageInfo := attemptToGetImageInfoFromRelease(helmReleaseFromRequestedRevision.Config)
 	if imageInfo.Tag == "" {
 		imageInfo.Tag = "latest"
 	}
@@ -77,15 +101,56 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
+	injectLauncher := strings.Contains(porterApp.Builder, "heroku") ||
+		strings.Contains(porterApp.Builder, "paketo")
 
-	err = helmAgent.RollbackRelease(ctx, helmRelease.Name, request.Revision)
+	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error rolling back release")
+		err = telemetry.Error(ctx, span, err, "error listing registries")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	_, err = createPorterAppEvent(ctx, "SUCCESS", porterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+	chart, values, _, err := parse(
+		ParseConf{
+			ImageInfo:    imageInfo,
+			ServerConfig: c.Config(),
+			ProjectID:    cluster.ProjectID,
+			Namespace:    namespace,
+			SubdomainCreateOpts: SubdomainCreateOpts{
+				k8sAgent:       k8sAgent,
+				dnsRepo:        c.Repo().DNSRecord(),
+				powerDnsClient: c.Config().PowerDNSClient,
+				appRootDomain:  c.Config().ServerConf.AppRootDomain,
+				stackName:      stackName,
+			},
+			InjectLauncherToStartCommand: injectLauncher,
+			FullHelmValues:               string(valuesYaml),
+		},
+	)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error parsing helm chart")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	conf := &helm.InstallChartConfig{
+		Chart:      chart,
+		Name:       stackName,
+		Namespace:  namespace,
+		Values:     values,
+		Cluster:    cluster,
+		Repo:       c.Repo(),
+		Registries: registries,
+	}
+	_, err = helmAgent.UpgradeInstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error upgrading application")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	_, err = createPorterAppEvent(ctx, "SUCCESS", porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error creating porter app event")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

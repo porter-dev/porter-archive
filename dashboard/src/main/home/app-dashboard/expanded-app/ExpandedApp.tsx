@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { RouteComponentProps, useParams, withRouter } from "react-router";
+import { RouteComponentProps, useLocation, useParams, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
 
@@ -26,12 +26,10 @@ import Back from "components/porter/Back";
 import TabSelector from "components/TabSelector";
 import Icon from "components/porter/Icon";
 import { ChartType, CreateUpdatePorterAppOptions } from "shared/types";
-import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTab from "../build-settings/BuildSettingsTab";
 import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
 import { Service } from "../new-app-flow/serviceTypes";
-import ConfirmOverlay from "components/porter/ConfirmOverlay";
 import Fieldset from "components/porter/Fieldset";
 import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
@@ -47,8 +45,10 @@ import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import { PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
+import EventFocusView from "./activity-feed/events/focus-views/EventFocusView";
 import HelmValuesTab from "./HelmValuesTab";
-import ProjectDeleteConsent from "main/home/project-settings/ProjectDeleteConsent";
+import SettingsTab from "./SettingsTab";
+import PorterAppRevisionSection from "./PorterAppRevisionSection";
 
 type Props = RouteComponentProps & {};
 
@@ -62,6 +62,7 @@ const icons = [
 
 const validTabs = [
   "activity",
+  "events",
   "overview",
   "logs",
   "metrics",
@@ -91,6 +92,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [workflowCheckPassed, setWorkflowCheckPassed] = useState<boolean>(
     false
   );
+  const [githubWorkflowFilename, setGithubWorkflowFilename] = useState<string>("");
   const [hasBuiltImage, setHasBuiltImage] = useState<boolean>(false);
 
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
@@ -98,7 +100,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   );
 
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
-  const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
 
   // this is what we read from their porter.yaml in github
   const [porterJson, setPorterJson] = useState<PorterJson | undefined>(undefined);
@@ -118,7 +119,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
   const [buildView, setBuildView] = useState<BuildMethod>("docker");
 
-  const { eventId, tab } = useParams<Params>();
+  const { tab } = useParams<Params>();
+  const { search } = useLocation();
+  const queryParams = new URLSearchParams(search);
+  const logFilterQueryParamOpts = {
+    revision: queryParams.get('version'),
+    output_stream: queryParams.get('output_stream'),
+    service: queryParams.get('service'),
+  }
+  const eventId = queryParams.get('event_id');
   const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
 
   useEffect(() => {
@@ -165,7 +174,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           revision: revision,
         }
       );
-
       let preDeployChartData;
       // get the pre-deploy chart
       try {
@@ -184,7 +192,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       } catch (err) {
         // that's ok if there's an error, just means there is no pre-deploy chart
       }
-
       // update apps and release
       const newAppData = {
         app: resPorterApp?.data,
@@ -207,7 +214,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           }
         )
         .then((res) => res.data);
-
       const populateEnvGroupsPromises = envGroups?.map((envGroup) =>
         api
           .getEnvGroup<PopulatedEnvGroup>(
@@ -223,11 +229,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           )
           .then((res) => res.data)
       );
-
       const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
-
       const filteredEnvGroups = populatedEnvGroups.filter(envGroup => envGroup.applications.includes(newAppData.chart.name));
-
       setSyncedEnvGroups(filteredEnvGroups)
       setPorterJson(porterJson);
       setAppData(newAppData);
@@ -249,7 +252,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         newAppData.app.builder != null && newAppData.app.builder.includes("heroku")
       );
       setPorterYaml(finalPorterYaml);
-
       // Only check GHA status if no built image is set
       const hasBuiltImage = !!resChartData.data.config?.global?.image
         ?.repository;
@@ -273,12 +275,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             }
           );
           setWorkflowCheckPassed(true);
+          setGithubWorkflowFilename(`porter_stack_${resPorterApp.data.name}.yml`);
         } catch (err) {
           // Handle unmerged PR
           if (err.response?.status === 404) {
             try {
               // Check for user-copied porter.yml as fallback
-              const resPorterYml = await api.getBranchContents(
+              await api.getBranchContents(
                 "<token>",
                 { dir: `./.github/workflows/porter.yml` },
                 {
@@ -291,6 +294,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 }
               );
               setWorkflowCheckPassed(true);
+              setGithubWorkflowFilename(`porter.yml`);
             } catch (err) {
               setWorkflowCheckPassed(false);
             }
@@ -304,8 +308,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  const deletePorterApp = async () => {
-    setShowDeleteOverlay(false);
+  const deletePorterApp = async (deleteGHWorkflowFile?: boolean) => {
     setDeleting(true);
     const { appName } = props.match.params as any;
     if (syncedEnvGroups) {
@@ -323,7 +326,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           }
         );
       });
-
       try {
         await Promise.all(removeApplicationToEnvGroupPromises);
       } catch (error) {
@@ -340,6 +342,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           name: appName,
         }
       );
+    } catch (err) {
+      // TODO: handle error
+    }
+    try {
       await api.deleteNamespace(
         "<token>",
         {},
@@ -349,24 +355,53 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           namespace: `porter-stack-${appName}`,
         }
       );
-      // intentionally do not await this promise
-      api.updateStackStep(
-        "<token>",
-        {
-          step: "stack-deletion",
-          stack_name: appName,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
-      props.history.push("/apps");
     } catch (err) {
       // TODO: handle error
-    } finally {
-      setDeleting(false);
     }
+
+    let deleteWorkflowFile = false;
+
+    if (deleteGHWorkflowFile && githubWorkflowFilename !== "" && appData?.app != null) {
+      try {
+        const res = await api.createSecretAndOpenGitHubPullRequest(
+          "<token>",
+          {
+            github_app_installation_id: appData.app.git_repo_id,
+            github_repo_owner: appData.app.repo_name.split("/")[0],
+            github_repo_name: appData.app.repo_name.split("/")[1],
+            branch: appData.app.git_branch,
+            delete_workflow_filename: githubWorkflowFilename,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            stack_name: appData.app.name,
+          }
+        );
+        if (res.data?.url) {
+          window.open(res.data.url, "_blank", "noreferrer");
+        }
+        deleteWorkflowFile = true;
+      } catch (err) {
+        // TODO: handle error
+      }
+    }
+
+    // intentionally do not await this promise
+    api.updateStackStep(
+      "<token>",
+      {
+        step: "stack-deletion",
+        stack_name: appName,
+        delete_workflow_file: deleteWorkflowFile,
+      },
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+      }
+    );
+
+    props.history.push("/apps");
   };
 
   const updatePorterApp = async (options: Partial<CreateUpdatePorterAppOptions>) => {
@@ -623,7 +658,18 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           chart={appData.chart}
           stackName={appData?.app?.name}
           appData={appData}
-          eventId={eventId}
+        />;
+      case "events":
+        if (eventId != null && eventId !== "") {
+          return <EventFocusView
+            eventId={eventId}
+            appData={appData}
+          />;
+        }
+        return <ActivityFeed
+          chart={appData.chart}
+          stackName={appData?.app?.name}
+          appData={appData}
         />;
       case "overview":
         return (
@@ -705,26 +751,18 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           />
         );
       case "settings":
-        return (
-          <>
-            <Text size={16}>Delete "{appData.app.name}"</Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              Delete this application and all of its resources.
-            </Text>
-            <Spacer y={1} />
-            <Button
-              onClick={() => {
-                setShowDeleteOverlay(true);
-              }}
-              color="#b91133"
-            >
-              Delete
-            </Button>
-          </>
-        );
+        return <SettingsTab
+          appName={appData.app.name}
+          githubWorkflowFilename={githubWorkflowFilename}
+          deleteApplication={deletePorterApp}
+        />;
       case "logs":
-        return <LogSection currentChart={appData.chart} services={services} />;
+        return <LogSection
+          currentChart={appData.chart}
+          services={services.filter(Service.isNonRelease)}
+          appName={appData.app.name}
+          filterOpts={logFilterQueryParamOpts}
+        />;
       case "metrics":
         return <MetricsSection currentChart={appData.chart} />;
       case "debug":
@@ -758,7 +796,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           chart={appData.chart}
           stackName={appData?.app?.name}
           appData={appData}
-          eventId={eventId}
         />;
     }
   };
@@ -913,7 +950,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               ) : (
                 <>
                   <DarkMatter />
-                  <RevisionSection
+                  <PorterAppRevisionSection
                     showRevisions={showRevisions}
                     toggleShowRevisions={() => {
                       setShowRevisions(!showRevisions);
@@ -927,7 +964,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       appData.chart.latest_version !==
                       appData.chart.chart.metadata.version
                     }
+                    updatePorterApp={updatePorterApp}
                     latestVersion={appData.chart.latest_version}
+                    appName={appData.app.name}
                   />
                   <DarkMatter antiHeight="-18px" />
                 </>
@@ -989,17 +1028,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           )}
         </StyledExpandedApp>
       )}
-      {showDeleteOverlay && (
-        <ConfirmOverlay
-          message={`Are you sure you want to delete "${appData.app.name}"?`}
-          onYes={() => {
-            deletePorterApp();
-          }}
-          onNo={() => {
-            setShowDeleteOverlay(false);
-          }}
-        />
-      )}
     </>
   );
 };
@@ -1009,10 +1037,6 @@ export default withRouter(ExpandedApp);
 const A = styled.a`
   display: flex;
   align-items: center;
-`;
-
-const Underline = styled.div`
-  border-bottom: 1px solid #ffffff;
 `;
 
 const RefreshButton = styled.div`

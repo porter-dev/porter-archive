@@ -87,6 +87,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			DeleteWorkflowFile:     request.DeleteWorkflowFile,
 		}))
 	}
 

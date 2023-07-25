@@ -8,22 +8,23 @@ import Error from "components/porter/Error";
 import sliders from "assets/sliders.svg";
 import EnvGroupModal from "./EnvGroupModal";
 import ExpandableEnvGroup from "./ExpandableEnvGroup";
-import { PopulatedEnvGroup, PartialEnvGroup } from "../../../../../components/porter-form/types";
+import { PopulatedEnvGroup, PartialEnvGroup, NewPopulatedEnvGroup } from "../../../../../components/porter-form/types";
 import _, { isObject, differenceBy, omit } from "lodash";
 import api from "../../../../../shared/api";
 import { Context } from "../../../../../shared/Context";
+import yaml from "js-yaml";
 
 interface EnvVariablesTabProps {
   envVars: any;
   setEnvVars: (x: any) => void;
   status: React.ReactNode;
   updatePorterApp: any;
-  syncedEnvGroups: PopulatedEnvGroup[];
-  setSyncedEnvGroups: (values: PopulatedEnvGroup[]) => void;
+  syncedEnvGroups: NewPopulatedEnvGroup[];
+  setSyncedEnvGroups: (values: NewPopulatedEnvGroup[]) => void;
   clearStatus: () => void;
   appData: any;
-  deletedEnvGroups: PopulatedEnvGroup[];
-  setDeletedEnvGroups: (values: PopulatedEnvGroup[]) => void;
+  deletedEnvGroups: NewPopulatedEnvGroup[];
+  setDeletedEnvGroups: (values: NewPopulatedEnvGroup[]) => void;
 }
 
 export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
@@ -42,6 +43,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   const [envGroups, setEnvGroups] = useState<any>([])
   const { currentCluster, currentProject } = useContext(Context);
 
+  const [values, setValues] = React.useState<string>(yaml.dump(appData.chart.config));
   useEffect(() => {
     setEnvVars(envVars);
   }, [envVars]);
@@ -50,46 +52,30 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   }, []);
 
   const updateEnvGroups = async () => {
-    let envGroups: PartialEnvGroup[] = [];
+    let populateEnvGroupsPromises: NewPopulatedEnvGroup[] = [];
     try {
-      envGroups = await api
-        .listEnvGroups<PartialEnvGroup[]>(
+      populateEnvGroupsPromises = await api
+        .getAllEnvGroups<NewPopulatedEnvGroup[]>(
           "<token>",
           {},
           {
             id: currentProject.id,
-            namespace: "porter-env-group",
             cluster_id: currentCluster.id,
           }
         )
-        .then((res) => res.data);
+        .then((res) => res.data.environment_groups);
     } catch (error) {
-      // setLoading(false)
-      // setError(true);
       return;
     }
-    const populateEnvGroupsPromises = envGroups.map((envGroup) =>
-      api
-        .getEnvGroup<PopulatedEnvGroup>(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-            name: envGroup.name,
-            namespace: envGroup.namespace,
-            version: envGroup.version,
-          }
-        )
-        .then((res) => res.data)
-    );
 
     try {
       const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
       setEnvGroups(populatedEnvGroups)
+      //console.log(populatedEnvGroups)
       // setLoading(false)
-      const filteredEnvGroups = populatedEnvGroups.filter(envGroup => envGroup.applications.includes(appData.chart.name));
-
+      const filteredEnvGroups = populatedEnvGroups.filter(envGroup =>
+        envGroup.linked_applications && envGroup.linked_applications.includes(appData.chart.name)
+      );
       setSyncedEnvGroups(filteredEnvGroups)
 
     } catch (error) {
@@ -99,7 +85,31 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
     }
   }
 
-  const deleteEnvGroup = (envGroup: PopulatedEnvGroup) => {
+  const handleSaveValues = async () => {
+    const envNames = syncedEnvGroups?.map((env) => env.name);
+    const envNamesString = envNames.join(', ');
+
+    // Load the values from YAML format to an object
+    let valuesObject = yaml.load(values);
+
+    // Check if 'global' and 'labels' exist and, if not, create them
+    valuesObject.global = valuesObject.global || {};
+    valuesObject.global.labels = valuesObject.global.labels || {};
+
+    // Make the modification
+    valuesObject.global.labels['porter.run/linked-environment-group'] = envNamesString;
+
+    // Dump the updated object back to YAML format
+    const updatedValues = yaml.dump(valuesObject);
+
+    // Update the state
+    setValues(updatedValues);
+
+    console.log(updatedValues)
+    await updatePorterApp({ full_helm_values: updatedValues })
+  };
+
+  const deleteEnvGroup = (envGroup: NewPopulatedEnvGroup) => {
 
     setDeletedEnvGroups([...deletedEnvGroups, envGroup]);
     setSyncedEnvGroups(syncedEnvGroups?.filter(
@@ -162,7 +172,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       <Spacer y={0.5} />
       <Button
         onClick={() => {
-          updatePorterApp();
+          handleSaveValues();
         }}
         status={status}
         loadingText={"Updating..."}

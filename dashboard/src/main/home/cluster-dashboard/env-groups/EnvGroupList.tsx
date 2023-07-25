@@ -37,20 +37,35 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
   const updateEnvGroups = async () => {
     let { currentProject, currentCluster } = context;
     try {
-      const envGroups = await api
-        .listEnvGroups(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            namespace: namespace,
-            cluster_id: currentCluster.id,
-          }
-        )
-        .then((res) => {
-          return res.data;
-        });
-
+      let envGroups: any[] = []
+      if (currentProject?.simplified_view_enabled) {
+        envGroups = await api
+          .getAllEnvGroups(
+            "<token>",
+            {},
+            {
+              id: currentProject.id,
+              cluster_id: currentCluster.id,
+            }
+          )
+          .then((res) => {
+            return res.data?.environment_groups;
+          });
+      } else {
+        envGroups = await api
+          .listEnvGroups(
+            "<token>",
+            {},
+            {
+              id: currentProject.id,
+              namespace: namespace,
+              cluster_id: currentCluster.id,
+            }
+          )
+          .then((res) => {
+            return res.data;
+          });
+      }
       let sortedGroups = envGroups;
       switch (sortType) {
         case "Oldest":
@@ -66,9 +81,10 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
             Date.parse(a.created_at) > Date.parse(b.created_at) ? -1 : 1
           );
       }
-
+      console.log(sortedGroups)
       return sortedGroups;
     } catch (error) {
+      console.log(error)
       setIsLoading(false);
       setHasError(true);
     }

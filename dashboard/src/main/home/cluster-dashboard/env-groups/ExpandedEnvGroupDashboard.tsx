@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
 import Loading from "components/Loading";
 import Placeholder from "components/Placeholder";
+import { any } from "zod";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -43,18 +44,29 @@ const EnvGroupDashboard = (props: PropsType) => {
             return [];
           }
         }
+        let res: any[] = [];
+        if (currentProject?.simplified_view_enabled) {
+          res = await api.getAllEnvGroups(
+            "<token>",
+            {},
+            {
+              id: currentProject.id,
+              cluster_id: props.currentCluster.id,
+            }
+          );
+        } else {
 
-        const res = await api.listEnvGroups(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            namespace: currentProject?.simplified_view_enabled ? "porter-env-group" : namespace,
-            cluster_id: props.currentCluster.id,
-          }
-        );
-
-        return res.data;
+          res = await api.listEnvGroups(
+            "<token>",
+            {},
+            {
+              id: currentProject.id,
+              namespace: currentProject?.simplified_view_enabled ? "porter-env-group" : namespace,
+              cluster_id: props.currentCluster.id,
+            }
+          );
+        }
+        return currentProject?.simplified_view_enabled ? res.data?.environment_groups : res.data;
       } catch (err) {
         throw err;
       }
@@ -72,7 +84,7 @@ const EnvGroupDashboard = (props: PropsType) => {
     }
 
     const envGroup = envGroups.find((envGroup) => envGroup.name === name);
-
+    console.log(envGroup)
     setExpandedEnvGroup(envGroup);
   }, [envGroups, params]);
 

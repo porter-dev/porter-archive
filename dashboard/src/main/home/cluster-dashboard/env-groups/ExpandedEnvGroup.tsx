@@ -32,6 +32,7 @@ import { fillWithDeletedVariables } from "components/porter-form/utils";
 import DynamicLink from "components/DynamicLink";
 import DocsHelper from "components/DocsHelper";
 import Spacer from "components/porter/Spacer";
+import EnvGroups from "../stacks/ExpandedStack/components/EnvGroups";
 
 type PropsType = WithAuthProps & {
   namespace: string;
@@ -119,28 +120,47 @@ export const ExpandedEnvGroupFC = ({
     ];
   }, [currentEnvGroup]);
   const populateEnvGroup = async () => {
-    try {
-      const populatedEnvGroup = await api
-        .getEnvGroup<PopulatedEnvGroup>(
-          "<token>",
-          {},
-          {
-            name: envGroup.name,
-            id: currentProject.id,
-            namespace: namespace,
-            cluster_id: currentCluster.id,
-          }
-        )
-        .then((res) => res.data);
-      updateEnvGroup(populatedEnvGroup);
-    } catch (error) {
-      console.log(error);
+
+    if (currentProject?.simplified_view_enabled) {
+      try {
+        const populatedEnvGroup = await api
+          .getAllEnvGroups(
+            "<token>",
+            {},
+            {
+              id: currentProject.id,
+              cluster_id: currentCluster.id,
+            }
+          )
+          .then((res) => res.data.environment_groups);
+        updateEnvGroup(populatedEnvGroup.find((i: any) => i.name === envGroup.name));
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      try {
+        const populatedEnvGroup = await api
+          .getEnvGroup<PopulatedEnvGroup>(
+            "<token>",
+            {},
+            {
+              name: envGroup.name,
+              id: currentProject.id,
+              namespace: namespace,
+              cluster_id: currentCluster.id,
+            }
+          )
+          .then((res) => res.data);
+        updateEnvGroup(populatedEnvGroup);
+      } catch (error) {
+        console.log(error);
+      }
     }
   };
 
   const updateEnvGroup = (populatedEnvGroup: PopulatedEnvGroup) => {
     const variables: KeyValueType[] = Object.entries(
-      populatedEnvGroup.variables || {}
+      populatedEnvGroup?.variables || {}
     ).map(([key, value]) => ({
       key: key,
       value: value,
@@ -150,7 +170,7 @@ export const ExpandedEnvGroupFC = ({
     }));
 
     setOriginalEnvVars(
-      Object.entries(populatedEnvGroup.variables || {}).map(([key, value]) => ({
+      Object.entries(populatedEnvGroup?.variables || {}).map(([key, value]) => ({
         key,
         value,
       }))
@@ -209,109 +229,85 @@ export const ExpandedEnvGroupFC = ({
   const handleUpdateValues = async () => {
     setButtonStatus("loading");
     const name = currentEnvGroup.name;
-    let variables = currentEnvGroup.variables;
+    let variables = currentEnvGroup?.variables;
+    if (currentEnvGroup.meta_version === 2 || currentProject?.simplified_view_enabled) {
 
-    if (currentEnvGroup.meta_version === 2) {
       const secretVariables = remove(variables, (envVar) => {
         return !envVar.value.includes("PORTERSECRET") && envVar.hidden;
       }).reduce(
         (acc, variable) => ({
           ...acc,
-          [variable.key]: variable.value,
+          [variable.key]: variable?.value,
         }),
         {}
       );
 
-      const normalVariables = variables.reduce(
+      const normalVariables = variables?.reduce(
         (acc, variable) => ({
           ...acc,
-          [variable.key]: variable.value,
+          [variable.key]: variable?.value,
         }),
         {}
       );
       //Create the Env Group
-      try {
-        const updatedEnvGroup = await api
-          .updateEnvGroup<PopulatedEnvGroup>(
-            "<token>",
-            {
-              name,
-              variables: normalVariables,
-              secret_variables: secretVariables,
-            },
-            {
-              project_id: currentProject.id,
-              cluster_id: currentCluster.id,
-              namespace,
-            }
-          )
-          .then((res) => res.data);
-        if (!currentProject?.simplified_view_enabled) {
-          setButtonStatus("successful");
-        }
-        updateEnvGroup(updatedEnvGroup);
+      if (currentProject?.simplified_view_enabled) {
+        try {
+          const updatedEnvGroup = await api
+            .createEnvironmentGroups(
+              "<token>",
+              {
+                name,
+                variables: normalVariables,
+                //secret_variables: secretVariables,
+              },
+              {
+                id: currentProject.id,
+                cluster_id: currentCluster.id,
 
-        setTimeout(() => setButtonStatus(""), 1000);
-
-
-        if (currentProject?.simplified_view_enabled) {
-          setButtonStatus("loading");
-          //Clone the env group to all applications
-          try {
-            // Check if updatedEnvGroup.applications is an array and it has elements
-            if (Array.isArray(updatedEnvGroup.applications) && updatedEnvGroup.applications.length) {
-
-              for (const application of updatedEnvGroup.applications) {
-                await api.cloneEnvGroup(
-                  "<token>",
-                  {
-                    name: updatedEnvGroup.name,
-                    namespace: "porter-stack-" + application,  // Use the application's namespace
-                    clone_name: updatedEnvGroup.name,
-                    version: updatedEnvGroup.version,
-                  },
-                  {
-                    id: currentProject.id,
-                    cluster_id: currentCluster.id,
-                    namespace: "porter-env-group",
-                  }
-                );
               }
-            }
-          } catch (error) {
-            setCurrentError(error);
-          }
+            )
+            .then((res) => res.data);
+          console.log(updatedEnvGroup)
+          setButtonStatus("successful");
 
-          //Update the Stacks Env Groups with the new variables
-          try {
-            setButtonStatus("loading");
-            await api
-              .updateStacksEnvGroup<PopulatedEnvGroup>(
-                "<token>",
-                {
-                  name,
-                  variables: normalVariables,
-                  secret_variables: secretVariables,
-                  apps: updatedEnvGroup.applications,
-                },
-                {
-                  project_id: currentProject.id,
-                  cluster_id: currentCluster.id,
-                  namespace,
-                }
-              )
-            setButtonStatus("successful")
-          } catch (error) {
-            setButtonStatus("Couldn't update successfully");
-            setCurrentError(error);
-          }
+          updateEnvGroup(updatedEnvGroup);
 
+          setTimeout(() => setButtonStatus(""), 1000);
         }
-      }
-      catch (error) {
-        setButtonStatus("Couldn't update successfully");
-        setCurrentError(error);
-        setTimeout(() => setButtonStatus(""), 1000);
+        catch (error) {
+          setButtonStatus("Couldn't update successfully");
+          setCurrentError(error);
+          setTimeout(() => setButtonStatus(""), 1000);
+        }
+      } else {
+        try {
+          const updatedEnvGroup = await api
+            .updateEnvGroup<PopulatedEnvGroup>(
+              "<token>",
+              {
+                name,
+                variables: normalVariables,
+                secret_variables: secretVariables,
+              },
+              {
+                project_id: currentProject.id,
+                cluster_id: currentCluster.id,
+                namespace,
+              }
+            )
+            .then((res) => res.data);
+          if (!currentProject?.simplified_view_enabled) {
+            setButtonStatus("successful");
+          }
+          updateEnvGroup(updatedEnvGroup);
+
+          setTimeout(() => setButtonStatus(""), 1000);
+        }
+        catch (error) {
+          setButtonStatus("Couldn't update successfully");
+          setCurrentError(error);
+          setTimeout(() => setButtonStatus(""), 1000);
+        }
       }
     }
     else {

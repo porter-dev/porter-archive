@@ -128,6 +128,86 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
       });
   };
 
+  createEnv = () => {
+    this.setState({ submitStatus: "loading" });
+
+    let apiEnvVariables: Record<string, string> = {};
+    let secretEnvVariables: Record<string, string> = {};
+
+    let envVariables = this.state.envVariables;
+
+    // if (this.context.currentProject.simplified_view_enabled) {
+    //   api
+    //     .createNamespace(
+    //       "<token>",
+    //       {
+    //         name: "porter-env-group",
+    //       },
+    //       {
+    //         id: this.context.currentProject.id,
+    //         cluster_id: this.props.currentCluster.id,
+    //       }
+    //     )
+    //     .catch((error) => {
+    //       if (error.response && error.response.status === 412) {
+    //         console.log("Ignoring known 412 error");
+    //       } else {
+    //         console.error(error);
+    //       }
+    //     });
+    // }
+    envVariables
+      .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
+        // remove any collisions that are marked as deleted and are duplicates
+        let numCollisions = self.reduce((n, _envVar: KeyValueType) => {
+          return n + (_envVar.key === envVar.key ? 1 : 0);
+        }, 0);
+
+        if (numCollisions == 1) {
+          return true;
+        } else {
+          return (
+            index ===
+            self.findIndex(
+              (_envVar: KeyValueType) =>
+                _envVar.key === envVar.key && !_envVar.deleted
+            )
+          );
+        }
+      })
+      .forEach((envVar: KeyValueType) => {
+        if (!envVar.deleted) {
+          if (envVar.hidden) {
+            secretEnvVariables[envVar.key] = envVar.value;
+          } else {
+            apiEnvVariables[envVar.key] = envVar.value;
+          }
+        }
+      });
+
+    api
+      .createEnvironmentGroups(
+        "<token>",
+        {
+          name: this.state.envGroupName,
+          variables: apiEnvVariables,
+          //secret_variables: secretEnvVariables,
+        },
+        {
+          id: this.context.currentProject.id,
+          cluster_id: this.props.currentCluster.id,
+        }
+      )
+      .then((res) => {
+        this.setState({ submitStatus: "successful" });
+        // console.log(res);
+        this.props.goBack();
+      })
+      .catch((err) => {
+        this.setState({ submitStatus: "Could not create" });
+      });
+  };
+
   updateNamespaces = () => {
     let { currentProject } = this.context;
     api
@@ -233,7 +313,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
             text="Create env group"
             clearPosition={true}
             statusPosition="right"
-            onClick={this.onSubmit}
+            onClick={this?.context?.currentProject.simplified_view_enabled ? this.createEnv : this.onSubmit}
             status={
               this.isDisabled()
                 ? "Missing required fields"

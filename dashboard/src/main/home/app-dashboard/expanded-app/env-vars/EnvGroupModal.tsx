@@ -61,40 +61,39 @@ const EnvGroupModal: React.FC<Props> = ({
   const [cloneSuccess, setCloneSuccess] = useState(false);
 
   const updateEnvGroups = async () => {
-    let envGroups: PartialEnvGroup[] = [];
+    let populateEnvGroupsPromises: any[] = [];
     try {
-      envGroups = await api
-        .listEnvGroups<PartialEnvGroup[]>(
+      populateEnvGroupsPromises = await api
+        .getAllEnvGroups<any[]>(
           "<token>",
           {},
           {
             id: currentProject.id,
-            namespace: "porter-env-group",
             cluster_id: currentCluster.id,
           }
         )
-        .then((res) => res.data);
+        .then((res) => res.data.environment_groups);
     } catch (error) {
       setLoading(false)
       setError(true);
       return;
     }
 
-    const populateEnvGroupsPromises = envGroups.map((envGroup) =>
-      api
-        .getEnvGroup<PopulatedEnvGroup>(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-            name: envGroup.name,
-            namespace: envGroup.namespace,
-            version: envGroup.version,
-          }
-        )
-        .then((res) => res.data)
-    );
+    // const populateEnvGroupsPromises = envGroups.map((envGroup) =>
+    //   api
+    //     .getEnvGroup<PopulatedEnvGroup>(
+    //       "<token>",
+    //       {},
+    //       {
+    //         id: currentProject.id,
+    //         cluster_id: currentCluster.id,
+    //         name: envGroup.name,
+    //         namespace: envGroup.namespace,
+    //         version: envGroup.version,
+    //       }
+    //     )
+    //     .then((res) => res.data)
+    // );
 
     try {
       const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
@@ -122,28 +121,28 @@ const EnvGroupModal: React.FC<Props> = ({
     updateEnvGroups();
   }, []);
 
-  const cloneEnvGroup = async () => {
-    setCloneSuccess(false);
-    try {
-      await api.cloneEnvGroup(
-        "<token>",
-        {
-          name: selectedEnvGroup.name,
-          namespace: namespace,
-          clone_name: selectedEnvGroup.name,
-          version: selectedEnvGroup.version,
-        },
-        {
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-          namespace: "porter-env-group",
-        }
-      );
-      setCloneSuccess(true);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // const cloneEnvGroup = async () => {
+  //   setCloneSuccess(false);
+  //   try {
+  //     await api.cloneEnvGroup(
+  //       "<token>",
+  //       {
+  //         name: selectedEnvGroup.name,
+  //         namespace: namespace,
+  //         clone_name: selectedEnvGroup.name,
+  //         version: selectedEnvGroup.version,
+  //       },
+  //       {
+  //         id: currentProject.id,
+  //         cluster_id: currentCluster.id,
+  //         namespace: "porter-env-group",
+  //       }
+  //     );
+  //     setCloneSuccess(true);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
   const renderEnvGroupList = () => {
     if (loading) {
       return (
@@ -187,9 +186,9 @@ const EnvGroupModal: React.FC<Props> = ({
     if (shouldSync) {
 
       syncedEnvGroups.push(selectedEnvGroup);
-      if (!newApp) {
-        cloneEnvGroup();
-      }
+      // if (!newApp) {
+      //   cloneEnvGroup();
+      // }
       setSyncedEnvGroups(syncedEnvGroups);
     }
     else {

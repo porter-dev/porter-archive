@@ -22,13 +22,13 @@ const (
 // EnvironmentGroup represents a ConfigMap in the porter-env-group namespace
 type EnvironmentGroup struct {
 	// Name is the environment group name which can be found in the labels (LabelKey_EnvironmentGroupName) of the ConfigMap. This is NOT the configmap name
-	Name string
+	Name string `json:"name"`
 	// Version is the environment group version which can be found in the labels (LabelKey_EnvironmentGroupVersion) of the ConfigMap. This is NOT included in the configmap name
-	Version string
+	Version string `json:"latest_version"`
 	// Variables are non-secret values for the EnvironmentGroup. This usually will be a configmap
-	Variables map[string]string
+	Variables map[string]string `json:"variables"`
 	// CreatedAt is only used for display purposes and is in UTC Unix time
-	CreatedAt int64
+	CreatedAt int64 `json:"created_at"`
 }
 
 // ListBaseEnvironmentGroups returns all environment groups stored in the porter-env-group namespace

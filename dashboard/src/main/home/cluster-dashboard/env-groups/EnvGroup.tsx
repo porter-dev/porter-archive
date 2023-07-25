@@ -33,7 +33,7 @@ export default class EnvGroup extends Component<PropsType, StateType> {
     let name = envGroup?.name;
     let timestamp = envGroup?.created_at;
     let namespace = envGroup?.namespace;
-    let version = envGroup?.version;
+    let version = envGroup?.latest_version;
 
     return (
       <Link to={`/env-groups/${name}${window.location.search}`} target="_self">

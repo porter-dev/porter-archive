@@ -6,7 +6,7 @@ import EnvEditorModal from "main/home/modals/EnvEditorModal";
 import upload from "assets/upload.svg";
 import { MultiLineInput } from "components/porter-form/field-components/KeyValueArray";
 import { dotenv_parse } from "shared/string_utils";
-import { PopulatedEnvGroup } from "components/porter-form/types";
+import { NewPopulatedEnvGroup, PopulatedEnvGroup } from "components/porter-form/types";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 export type KeyValueType = {
@@ -24,7 +24,7 @@ type PropsType = {
   disabled?: boolean;
   fileUpload?: boolean;
   secretOption?: boolean;
-  syncedEnvGroups?: PopulatedEnvGroup[];
+  syncedEnvGroups?: NewPopulatedEnvGroup[];
 };
 
 const EnvGroupArray = ({

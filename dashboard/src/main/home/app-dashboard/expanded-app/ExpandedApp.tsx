@@ -45,7 +45,7 @@ import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
-import { PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
+import { NewPopulatedEnvGroup, PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
 import HelmValuesTab from "./HelmValuesTab";
 import ProjectDeleteConsent from "main/home/project-settings/ProjectDeleteConsent";
@@ -111,16 +111,17 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
   const [subdomain, setSubdomain] = useState<string>("");
-  const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([])
-  const [deletedEnvGroups, setDeleteEnvGroups] = useState<PopulatedEnvGroup[]>([])
+  const [syncedEnvGroups, setSyncedEnvGroups] = useState<NewPopulatedEnvGroup[]>([])
+  const [deletedEnvGroups, setDeleteEnvGroups] = useState<NewPopulatedEnvGroup[]>([])
   const [porterApp, setPorterApp] = useState<PorterApp>();
+
   // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
   const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
   const [buildView, setBuildView] = useState<BuildMethod>("docker");
 
   const { eventId, tab } = useParams<Params>();
   const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
-
+  const [values, setValues] = React.useState<string>();
   useEffect(() => {
     if (!_.isEqual(_.omitBy(porterApp, _.isEmpty), _.omitBy(tempPorterApp, _.isEmpty))) {
       setButtonStatus("");
@@ -195,42 +196,29 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         resPorterApp?.data?.porter_yaml_path ?? "porter.yaml",
         newAppData
       );
-      let envGroups: PartialEnvGroup[] = [];
-      envGroups = await api
-        .listEnvGroups<PartialEnvGroup[]>(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            namespace: "porter-env-group",
-            cluster_id: currentCluster.id,
-          }
-        )
-        .then((res) => res.data);
+      // let envGroups: any[] = [];
+      // envGroups = await api
+      //   .getAllEnvGroups<any[]>(
+      //     "<token>",
+      //     {},
+      //     {
+      //       id: currentProject?.id,
+      //       cluster_id: currentCluster.id,
+      //     }
+      //   )
+      //   .then((res) => res.data);
 
-      const populateEnvGroupsPromises = envGroups?.map((envGroup) =>
-        api
-          .getEnvGroup<PopulatedEnvGroup>(
-            "<token>",
-            {},
-            {
-              id: currentProject.id,
-              cluster_id: currentCluster.id,
-              name: envGroup.name,
-              namespace: envGroup.namespace,
-              version: envGroup.version,
-            }
-          )
-          .then((res) => res.data)
-      );
+      // const populatedEnvGroups = await Promise.all(envGroups.environment_groups);
+      // console.log(populatedEnvGroups)
+      // let filteredEnvGroups: NewPopulatedEnvGroup[] = []
+      // filteredEnvGroups = populatedEnvGroups.filter(envGroup =>
+      //   envGroup.linked_applications && envGroup.linked_applications.includes(appName)
+      // );
 
-      const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
-
-      const filteredEnvGroups = populatedEnvGroups.filter(envGroup => envGroup.applications.includes(newAppData.chart.name));
-
-      setSyncedEnvGroups(filteredEnvGroups)
+      // setSyncedEnvGroups(filteredEnvGroups)
       setPorterJson(porterJson);
       setAppData(newAppData);
+      setValues(newAppData?.chart)
       // annoying that we have to parse buildpacks like this but alas
       const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") ?? [] };
       setPorterApp(parsedPorterApp);
@@ -371,58 +359,58 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   const updatePorterApp = async (options: Partial<CreateUpdatePorterAppOptions>) => {
     //setting the EnvGroups Config Maps
-    const filteredEnvGroups = deletedEnvGroups.filter((deletedEnvGroup) => {
-      return !syncedEnvGroups.some((syncedEnvGroup) => {
-        return syncedEnvGroup.name === deletedEnvGroup.name;
-      });
-    });
-    setDeleteEnvGroups(filteredEnvGroups);
-    if (deletedEnvGroups) {
-      const removeApplicationToEnvGroupPromises = deletedEnvGroups?.map((envGroup: any) => {
-        return api.removeApplicationFromEnvGroup(
-          "<token>",
-          {
-            name: envGroup?.name,
-            app_name: appData.chart.name,
-          },
-          {
-            project_id: currentProject.id,
-            cluster_id: currentCluster.id,
-            namespace: "porter-env-group",
-          }
-        );
-      });
+    // const filteredEnvGroups = deletedEnvGroups.filter((deletedEnvGroup) => {
+    //   return !syncedEnvGroups.some((syncedEnvGroup) => {
+    //     return syncedEnvGroup.name === deletedEnvGroup.name;
+    //   });
+    // });
+    // setDeleteEnvGroups(filteredEnvGroups);
+    // if (deletedEnvGroups) {
+    //   const removeApplicationToEnvGroupPromises = deletedEnvGroups?.map((envGroup: any) => {
+    //     return api.removeApplicationFromEnvGroup(
+    //       "<token>",
+    //       {
+    //         name: envGroup?.name,
+    //         app_name: appData.chart.name,
+    //       },
+    //       {
+    //         project_id: currentProject.id,
+    //         cluster_id: currentCluster.id,
+    //         namespace: "porter-env-group",
+    //       }
+    //     );
+    //   });
 
-      try {
-        await Promise.all(removeApplicationToEnvGroupPromises);
-      } catch (error) {
-        setCurrentError(
-          "We couldn't remove the synced env group from the application, please try again."
-        );
-      }
-    }
-    const addApplicationToEnvGroupPromises = syncedEnvGroups?.map(
-      (envGroup: any) => {
-        return api.addApplicationToEnvGroup(
-          "<token>",
-          {
-            name: envGroup?.name,
-            app_name: appData.chart.name,
-          },
-          {
-            project_id: currentProject.id,
-            cluster_id: currentCluster.id,
-            namespace: "porter-env-group",
-          }
-        );
-      }
-    );
+    //   try {
+    //     await Promise.all(removeApplicationToEnvGroupPromises);
+    //   } catch (error) {
+    //     setCurrentError(
+    //       "We couldn't remove the synced env group from the application, please try again."
+    //     );
+    //   }
+    // }
+    // const addApplicationToEnvGroupPromises = syncedEnvGroups?.map(
+    //   (envGroup: any) => {
+    //     return api.addApplicationToEnvGroup(
+    //       "<token>",
+    //       {
+    //         name: envGroup?.name,
+    //         app_name: appData.chart.name,
+    //       },
+    //       {
+    //         project_id: currentProject.id,
+    //         cluster_id: currentCluster.id,
+    //         namespace: "porter-env-group",
+    //       }
+    //     );
+    //   }
+    // );
 
-    try {
-      await Promise.all(addApplicationToEnvGroupPromises);
-    } catch (error) {
-      // TODO: handle error
-    }
+    // try {
+    //   await Promise.all(addApplicationToEnvGroupPromises);
+    // } catch (error) {
+    //   // TODO: handle error
+    // }
     try {
       setButtonStatus("loading");
       if (
@@ -441,6 +429,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
+        // console.log(syncedEnvGroups?.map((env) => env.name))
         const updatedPorterApp = {
           porter_yaml: base64Encoded,
           override_release: true,
@@ -449,7 +438,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           repo_name: tempPorterApp.repo_name,
           git_branch: tempPorterApp.git_branch,
           buildpacks: "",
-          env_groups: syncedEnvGroups?.map((env) => env.name),
+          //full_helm_values: yaml.dump(values),
+          //env_groups: syncedEnvGroups?.map((env) => env.name),
           user_update: true,
           ...options,
         }

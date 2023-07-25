@@ -11,7 +11,7 @@ import (
 )
 
 type GitHubMetadata struct {
-	Repo, RepoOwner, BranchFrom, PRName string
+	Repo, RepoOwner, BranchFrom, PRName, PullRequestID string
 }
 
 type EnvironmentMeta struct {
@@ -46,7 +46,7 @@ func HandleEnvironmentConfiguration(
 			return "", envMeta, fmt.Errorf("unable to read environment config from DB: %w", err)
 		}
 
-		namespace = formatNamespaceForEnvironment(envConf.Name, ghMeta.RepoOwner, ghMeta.Repo, ghMeta.BranchFrom)
+		namespace = formatNamespaceForEnvironment(envConf.Name, ghMeta.RepoOwner, ghMeta.Repo, ghMeta.PullRequestID)
 
 		envMeta.EnvironmentConfigID = uint(eci)
 		envMeta.Namespace = namespace
@@ -58,8 +58,8 @@ func HandleEnvironmentConfiguration(
 	return namespace, envMeta, nil
 }
 
-func formatNamespaceForEnvironment(envName, repoOwner, repo, branch string) string {
-	return fmt.Sprintf("porter-env-%s-%s-%s-%s", envName, repoOwner, repo, branch)
+func formatNamespaceForEnvironment(envName, repoOwner, repo, pullRequestID string) string {
+	return fmt.Sprintf("porter-env-%s-%s-%s-%s", envName, repoOwner, repo, pullRequestID)
 }
 
 func getGitDeployMeta() (GitHubMetadata, error) {
@@ -88,6 +88,12 @@ func getGitDeployMeta() (GitHubMetadata, error) {
 		return ghMeta, fmt.Errorf("PORTER_PR_NAME not set")
 	}
 	ghMeta.PRName = prName
+
+	prIDStr := os.Getenv("PORTER_PULL_REQUEST_ID")
+	if prIDStr == "" {
+		return ghMeta, fmt.Errorf("PORTER_PULL_REQUEST_ID not set")
+	}
+	ghMeta.PullRequestID = prIDStr
 
 	return ghMeta, nil
 }

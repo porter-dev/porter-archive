@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/porter-dev/porter/internal/telemetry"
+	"gopkg.in/yaml.v3"
 
 	"github.com/pkg/errors"
 	"github.com/porter-dev/porter/internal/helm/loader"
@@ -526,6 +527,7 @@ func (a *Agent) InstallChart(
 		}
 	}
 
+	fmt.Println("STEFANCHART", conf.Chart)
 	return cmd.Run(conf.Chart, conf.Values)
 }
 
@@ -554,7 +556,6 @@ func (a *Agent) UpgradeInstallChart(
 
 	cmd := action.NewUpgrade(a.ActionConfig)
 	cmd.Install = true
-
 	if cmd.Version == "" && cmd.Devel {
 		cmd.Version = ">0.0.0-0"
 	}
@@ -581,19 +582,36 @@ func (a *Agent) UpgradeInstallChart(
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "error getting post renderer")
 	}
+	fmt.Println("STEFAN1")
 
 	if req := conf.Chart.Metadata.Dependencies; req != nil {
 		for _, dep := range req {
+			fmt.Println("STEFAN2")
 			depChart, err := loader.LoadChartPublic(ctx, dep.Repository, dep.Name, dep.Version)
 			if err != nil {
 				return nil, telemetry.Error(ctx, span, err, fmt.Sprintf("error retrieving chart dependency %s/%s-%s", dep.Repository, dep.Name, dep.Version))
 			}
 
+			fmt.Println("STEFAN3")
 			conf.Chart.AddDependency(depChart)
+			fmt.Println("STEFAN4")
 		}
 	}
 
-	return cmd.Run(conf.Name, conf.Chart, conf.Values)
+	fmt.Println("STEFAN5", conf.Chart)
+	fmt.Println("STEFAN6", conf.Values)
+	by, err := yaml.Marshal(conf.Values)
+	if err != nil {
+		fmt.Println("STEFAN7", err)
+	}
+	fmt.Println("STEFAN8", string(by))
+
+	release, err := cmd.RunWithContext(ctx, conf.Name, conf.Chart, conf.Values)
+	if err != nil {
+		return nil, telemetry.Error(ctx, span, err, "error running helm upgrade")
+	}
+
+	return release, nil
 }
 
 // UninstallChart uninstalls a chart

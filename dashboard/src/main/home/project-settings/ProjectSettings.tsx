@@ -83,6 +83,13 @@ class ProjectSettings extends Component<PropsType, StateType> {
     //   label: "Billing",
     // });
 
+    if (currentProject?.api_tokens_enabled) {
+      tabOptions.push({
+        value: "api-tokens",
+        label: "API Tokens",
+      });
+    }
+
     if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
       // if (this.context?.hasBillingEnabled) {
       //   tabOptions.push({
@@ -90,13 +97,6 @@ class ProjectSettings extends Component<PropsType, StateType> {
       //     label: "Billing",
       //   });
       // }
-
-      if (currentProject?.api_tokens_enabled) {
-        tabOptions.push({
-          value: "api-tokens",
-          label: "API Tokens",
-        });
-      }
 
       tabOptions.push({
         value: "additional-settings",

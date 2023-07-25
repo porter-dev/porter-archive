@@ -60,7 +60,7 @@ export const GenericLogFilter = {
             case 'revision':
                 return GenericFilterOption.of('All', 'all');
             case 'output_stream':
-                return GenericFilterOption.of('stdout', 'stdout');
+                return GenericFilterOption.of('All', 'all');
             case 'pod_name':
                 return GenericFilterOption.of('All', 'all');
             default:

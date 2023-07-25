@@ -52,7 +52,6 @@ type TestRepository struct {
 	porterApp                 repository.PorterAppRepository
 	porterAppEvent            repository.PorterAppEventRepository
 	environmentConfig         repository.EnvironmentConfigRepository
-	previewEnvironment        repository.PreviewEnvironmentRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -243,10 +242,6 @@ func (t *TestRepository) EnvironmentConfig() repository.EnvironmentConfigReposit
 	return t.environmentConfig
 }
 
-func (t *TestRepository) PreviewEnvironment() repository.PreviewEnvironmentRepository {
-	return t.previewEnvironment
-}
-
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -298,6 +293,5 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		porterApp:                 NewPorterAppRepository(canQuery, failingMethods...),
 		porterAppEvent:            NewPorterAppEventRepository(canQuery),
 		environmentConfig:         NewEnvironmentConfigRepository(canQuery),
-		previewEnvironment:        NewPreviewEnvironmentRepository(canQuery),
 	}
 }

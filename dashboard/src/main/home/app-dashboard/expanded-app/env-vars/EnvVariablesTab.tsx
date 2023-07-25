@@ -63,7 +63,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
             cluster_id: currentCluster.id,
           }
         )
-        .then((res) => res.data.environment_groups);
+        .then((res) => res?.data?.environment_groups);
     } catch (error) {
       return;
     }
@@ -73,7 +73,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       setEnvGroups(populatedEnvGroups)
       //console.log(populatedEnvGroups)
       // setLoading(false)
-      const filteredEnvGroups = populatedEnvGroups.filter(envGroup =>
+      const filteredEnvGroups = populatedEnvGroups?.filter(envGroup =>
         envGroup.linked_applications && envGroup.linked_applications.includes(appData.chart.name)
       );
       setSyncedEnvGroups(filteredEnvGroups)
@@ -84,30 +84,6 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       return;
     }
   }
-
-  const handleSaveValues = async () => {
-    const envNames = syncedEnvGroups?.map((env) => env.name);
-    const envNamesString = envNames.join(', ');
-
-    // Load the values from YAML format to an object
-    let valuesObject = yaml.load(values);
-
-    // Check if 'global' and 'labels' exist and, if not, create them
-    valuesObject.global = valuesObject.global || {};
-    valuesObject.global.labels = valuesObject.global.labels || {};
-
-    // Make the modification
-    valuesObject.global.labels['porter.run/linked-environment-group'] = envNamesString;
-
-    // Dump the updated object back to YAML format
-    const updatedValues = yaml.dump(valuesObject);
-
-    // Update the state
-    setValues(updatedValues);
-
-    console.log(updatedValues)
-    await updatePorterApp({ full_helm_values: updatedValues })
-  };
 
   const deleteEnvGroup = (envGroup: NewPopulatedEnvGroup) => {
 

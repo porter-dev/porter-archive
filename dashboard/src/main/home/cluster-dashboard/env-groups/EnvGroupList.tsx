@@ -67,21 +67,22 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
           });
       }
       let sortedGroups = envGroups;
-      switch (sortType) {
-        case "Oldest":
-          sortedGroups.sort((a: any, b: any) =>
-            Date.parse(a.created_at) > Date.parse(b.created_at) ? 1 : -1
-          );
-          break;
-        case "Alphabetical":
-          sortedGroups.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
-          break;
-        default:
-          sortedGroups.sort((a: any, b: any) =>
-            Date.parse(a.created_at) > Date.parse(b.created_at) ? -1 : 1
-          );
+      if (sortedGroups) {
+        switch (sortType) {
+          case "Oldest":
+            sortedGroups.sort((a: any, b: any) =>
+              Date.parse(a.created_at) > Date.parse(b.created_at) ? 1 : -1
+            );
+            break;
+          case "Alphabetical":
+            sortedGroups.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
+            break;
+          default:
+            sortedGroups.sort((a: any, b: any) =>
+              Date.parse(a.created_at) > Date.parse(b.created_at) ? -1 : 1
+            );
+        }
       }
-      console.log(sortedGroups)
       return sortedGroups;
     } catch (error) {
       console.log(error)
@@ -129,7 +130,7 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
           <i className="material-icons">error</i> Error connecting to cluster.
         </Placeholder>
       );
-    } else if (envGroups.length === 0) {
+    } else if (!envGroups || envGroups.length === 0) {
       return (
         <Placeholder height="370px">
           <i className="material-icons">category</i>

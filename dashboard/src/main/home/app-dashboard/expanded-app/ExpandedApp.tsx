@@ -203,25 +203,37 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         resPorterApp?.data?.porter_yaml_path ?? "porter.yaml",
         newAppData
       );
-      let envGroups: any[] = [];
-      envGroups = await api
+
+      const envGroups: NewPopulatedEnvGroup[] = await api
         .getAllEnvGroups<any[]>(
           "<token>",
           {},
           {
             id: currentProject?.id,
-            cluster_id: currentCluster.id,
+            cluster_id: currentCluster?.id,
           }
         )
-        .then((res) => res.data);
+        .then((res) => res?.data?.environment_groups)
+        .catch((error) => {
+          console.error("Failed to fetch environment groups:", error);
+          return [];
+        });
 
-      const populatedEnvGroups = await Promise.all(envGroups.environment_groups);
-      console.log(populatedEnvGroups)
-      let filteredEnvGroups: NewPopulatedEnvGroup[] = []
-      filteredEnvGroups = populatedEnvGroups.filter(envGroup =>
-        envGroup.linked_applications && envGroup.linked_applications.includes(appName)
-      );
-      setSyncedEnvGroups(filteredEnvGroups)
+      // if (!envGroups || envGroups.length === 0) {
+      //   setSyncedEnvGroups([]);
+      //   return;
+      // }
+
+      //const populatedEnvGroups = await Promise.all(envGroups);
+      let filteredEnvGroups: NewPopulatedEnvGroup[] = [];
+
+      if (envGroups) {
+        filteredEnvGroups = envGroups?.filter(envGroup =>
+          envGroup?.linked_applications?.length > 0 && envGroup?.linked_applications?.includes(appName)
+        );
+      }
+
+      setSyncedEnvGroups(filteredEnvGroups || []);
       setPorterJson(porterJson);
       setAppData(newAppData);
       setValues(newAppData?.chart)
@@ -293,6 +305,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       }
     } catch (err) {
+      console.log(err)
       // TODO: handle error
     } finally {
       setIsLoading(false);
@@ -375,59 +388,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   };
 
   const updatePorterApp = async (options: Partial<CreateUpdatePorterAppOptions>) => {
-    //setting the EnvGroups Config Maps
-    // const filteredEnvGroups = deletedEnvGroups.filter((deletedEnvGroup) => {
-    //   return !syncedEnvGroups.some((syncedEnvGroup) => {
-    //     return syncedEnvGroup.name === deletedEnvGroup.name;
-    //   });
-    // });
-    // setDeleteEnvGroups(filteredEnvGroups);
-    // if (deletedEnvGroups) {
-    //   const removeApplicationToEnvGroupPromises = deletedEnvGroups?.map((envGroup: any) => {
-    //     return api.removeApplicationFromEnvGroup(
-    //       "<token>",
-    //       {
-    //         name: envGroup?.name,
-    //         app_name: appData.chart.name,
-    //       },
-    //       {
-    //         project_id: currentProject.id,
-    //         cluster_id: currentCluster.id,
-    //         namespace: "porter-env-group",
-    //       }
-    //     );
-    //   });
-
-    //   try {
-    //     await Promise.all(removeApplicationToEnvGroupPromises);
-    //   } catch (error) {
-    //     setCurrentError(
-    //       "We couldn't remove the synced env group from the application, please try again."
-    //     );
-    //   }
-    // }
-    // const addApplicationToEnvGroupPromises = syncedEnvGroups?.map(
-    //   (envGroup: any) => {
-    //     return api.addApplicationToEnvGroup(
-    //       "<token>",
-    //       {
-    //         name: envGroup?.name,
-    //         app_name: appData.chart.name,
-    //       },
-    //       {
-    //         project_id: currentProject.id,
-    //         cluster_id: currentCluster.id,
-    //         namespace: "porter-env-group",
-    //       }
-    //     );
-    //   }
-    // );
-
-    // try {
-    //   await Promise.all(addApplicationToEnvGroupPromises);
-    // } catch (error) {
-    //   // TODO: handle error
-    // }
     try {
       setButtonStatus("loading");
       if (

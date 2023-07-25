@@ -26,8 +26,10 @@ type EnvironmentGroup struct {
 	Name string
 	// Version is the environment group version which can be found in the labels (LabelKey_EnvironmentGroupVersion) of the ConfigMap. This is NOT included in the configmap name
 	Version string
-	// Variables are non-secret values for the EnvironmentGroup. This usually will be a configmap
+	// Variables are non-secret values for the EnvironmentGroup. This usually will be a ConfigMap
 	Variables map[string]string
+	// SecretVariables are secret values for the EnvironmentGroup. This usually will be a Secret on the kubernetes cluster
+	SecretVariables map[string]string
 	// CreatedAt is only used for display purposes and is in UTC Unix time
 	CreatedAt int64
 }
@@ -37,13 +39,19 @@ func ListBaseEnvironmentGroups(ctx context.Context, a *kubernetes.Agent) ([]Envi
 	ctx, span := telemetry.NewSpan(ctx, "list-all-env-groups")
 	defer span.End()
 
-	listResp, err := a.Clientset.CoreV1().ConfigMaps(Namespace_EnvironmentGroups).List(ctx, metav1.ListOptions{})
+	configMapListResp, err := a.Clientset.CoreV1().ConfigMaps(Namespace_EnvironmentGroups).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, telemetry.Error(ctx, span, err, "unable to list environment groups")
+		return nil, telemetry.Error(ctx, span, err, "unable to list environment group variables")
 	}
+	// secretListResp, err := a.Clientset.CoreV1().Secrets(Namespace_EnvironmentGroups).List(ctx, metav1.ListOptions{})
+	// if err != nil {
+	// 	return nil, telemetry.Error(ctx, span, err, "unable to list environment groups secret varialbes")
+	// }
+
+	// allEnvGroupNames := make(map[string]struct{})
 
 	var envGroups []EnvironmentGroup
-	for _, cm := range listResp.Items {
+	for _, cm := range configMapListResp.Items {
 		name, ok := cm.Labels[LabelKey_EnvironmentGroupName]
 		if !ok {
 			continue // missing name label, not an environment group
@@ -92,7 +100,7 @@ func LinkedApplications(ctx context.Context, a *kubernetes.Agent, environmentGro
 
 	var apps []LinkedPorterApplication
 	for _, d := range deployListResp.Items {
-		applicationsLinkedEnvironmentGroups := strings.Split(d.Labels[LabelKey_LinkedEnvironmentGroup], ",")
+		applicationsLinkedEnvironmentGroups := strings.Split(d.Labels[LabelKey_LinkedEnvironmentGroup], ".")
 
 		for _, linkedEnvironmentGroup := range applicationsLinkedEnvironmentGroups {
 			if linkedEnvironmentGroup == environmentGroupName {

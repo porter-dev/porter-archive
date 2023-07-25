@@ -127,7 +127,6 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
               <ServiceStatusContainer>
                 <Link
                   to={`/apps/${appData.app.name}/logs?version=${event.metadata.revision}&service=${key}`}
-                // to={`/apps/${appData.app.name}/events?event_id=${event.id}&version=${event.metadata.revision}&service=${key}`}
                 >
                   <Icon height="12px" src={document} />
                   <Spacer inline x={0.5} />

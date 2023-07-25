@@ -151,7 +151,6 @@ class PorterAppRevisionSection extends Component<PropsType, StateType> {
 
     // Handle update of values.yaml
     componentDidUpdate(prevProps: PropsType) {
-        console.log('calling component did update')
         if (this.props.forceRefreshRevisions) {
             console.log("force refresh revisions")
             this.props.refreshRevisionsOff();

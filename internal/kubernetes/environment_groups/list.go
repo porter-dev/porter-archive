@@ -68,7 +68,7 @@ func WithEnvironmentGroupVersion(version int) EnvironmentGroupOption {
 
 // ListEnvironmentGroups returns all environment groups stored in the provided namespace. If none is set, it will use the namespace "porter-env-group"
 func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ...EnvironmentGroupOption) ([]EnvironmentGroup, error) {
-	ctx, span := telemetry.NewSpan(ctx, "list-env-groups")
+	ctx, span := telemetry.NewSpan(ctx, "list-environment-groups")
 	defer span.End()
 
 	var opts environmentGroupOptions

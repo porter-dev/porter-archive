@@ -23,6 +23,9 @@ const StyledLogs: React.FC<Props> = ({
         }
         switch (filter.name) {
             case "revision":
+                if (log.metadata.revision == null || log.metadata.revision === "") {
+                    return null;
+                }
                 return (
                     <LogInnerPill
                         color={getVersionTagColor(log.metadata.revision)}
@@ -33,6 +36,9 @@ const StyledLogs: React.FC<Props> = ({
                     </LogInnerPill>
                 )
             case "pod_name":
+                if (log.metadata.pod_name == null || log.metadata.pod_name === "") {
+                    return null;
+                }
                 return (
                     <LogInnerPill
                         color={"white"}
@@ -52,7 +58,7 @@ const StyledLogs: React.FC<Props> = ({
             {logs.map((log, i) => {
                 return (
                     <Log key={[log.lineNumber, i].join(".")}>
-                        <LogLabelsContainer includeLabels={log.metadata != null && filters.length !== 0}>
+                        <LogLabelsContainer>
                             <LineTimestamp className="line-timestamp">
                                 {log.timestamp
                                     ? dayjs(log.timestamp).format("MM/DD HH:mm:ss")
@@ -90,13 +96,11 @@ export default StyledLogs;
 const StyledLogsContainer = styled.div`
 `;
 
-const LogLabelsContainer = styled.div<{ includeLabels: boolean }>`
-    min-width: ${props => props.includeLabels ? "290px" : "100px"}; 
+const LogLabelsContainer = styled.div`
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 10px;
-    
 `;
 
 const LineTimestamp = styled.span`
@@ -105,16 +109,6 @@ const LineTimestamp = styled.span`
     opacity: 0.5;
     font-family: monospace;
     min-width: fit-content;
-`
-
-const LineNumber = styled.span`
-    height: 100%;
-    background: #202538;
-    display: inline-block;
-    text-align: right;
-    min-width: 45px;
-    opacity: 0.3;
-    font-family: monospace;
 `
 
 const Log = styled.div`

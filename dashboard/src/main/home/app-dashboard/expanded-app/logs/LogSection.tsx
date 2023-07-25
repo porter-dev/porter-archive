@@ -86,6 +86,34 @@ const LogSection: React.FC<Props> = ({
     }).reverse().slice(0, 3);
   }
 
+  const isAgentVersionUpdated = (agentImage: string | undefined) => {
+    if (agentImage == null) {
+      return false;
+    }
+    const version = agentImage.split(":").pop();
+    //make sure version is above v3.1.3
+    if (version == null) {
+      return false;
+    }
+    const versionParts = version.split(".");
+    if (versionParts.length < 3) {
+      return false;
+    }
+    const major = parseInt(versionParts[0]);
+    const minor = parseInt(versionParts[1]);
+    const patch = parseInt(versionParts[2]);
+    if (major < 3) {
+      return false;
+    }
+    if (minor < 1) {
+      return false;
+    }
+    if (patch < 3) {
+      return false;
+    }
+    return true;
+  }
+
   const [filters, setFilters] = useState<GenericLogFilter[]>(showFilter ? [
     {
       name: "pod_name",
@@ -333,6 +361,26 @@ const LogSection: React.FC<Props> = ({
               setLogsError(err);
               setIsLoading(false);
             });
+
+          const agentImage = res.data?.image;
+          if (!isAgentVersionUpdated(agentImage)) {
+            setFilters([
+              {
+                name: "pod_name",
+                displayName: "Service",
+                default: GenericLogFilter.getDefaultOption("pod_name"),
+                options: services?.map(s => {
+                  return GenericFilterOption.of(s.name, `${s.name}-${s.type == "worker" ? "wkr" : s.type}`)
+                }) ?? [],
+                setValue: (value: string) => {
+                  setSelectedFilterValues((s) => ({
+                    ...s,
+                    pod_name: value,
+                  }));
+                }
+              },
+            ])
+          }
         }
       })
       .catch((err) => {

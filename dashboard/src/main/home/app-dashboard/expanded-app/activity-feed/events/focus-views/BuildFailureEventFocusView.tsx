@@ -118,7 +118,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
 
     useEffect(() => {
         getBuildLogs();
-    }, [event]);
+    }, []);
 
     return (
         <>

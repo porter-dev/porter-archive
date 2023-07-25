@@ -37,6 +37,7 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
 
 export const useLogs = (
   selectedFilterValues: Record<LogFilterName, string>,
+  appName: string,
   namespace: string,
   searchParam: string,
   notify: (message: string) => void,
@@ -51,7 +52,7 @@ export const useLogs = (
 ) => {
   const isLive = !setDate;
   const logsBufferRef = useRef<PorterLog[]>([]);
-  const { currentCluster, currentProject, setCurrentError } = useContext(
+  const { currentCluster, currentProject } = useContext(
     Context
   );
   const [logs, setLogs] = useState<PorterLog[]>([]);
@@ -62,7 +63,7 @@ export const useLogs = (
 
   // if currentPodName is default value we are looking at all chart pod logs
   const currentPodSelector = selectedFilterValues.pod_name === GenericLogFilter.getDefaultOption("pod_name").value
-    ? currentChart?.name : `${currentChart?.name}-${selectedFilterValues.pod_name}`;
+    ? `${currentChart?.name ?? ''}-.*` : `${currentChart?.name}-${selectedFilterValues.pod_name}-.*`;
 
   // if we are live:
   // - start date is initially set to 2 weeks ago
@@ -156,14 +157,14 @@ export const useLogs = (
   };
 
   const setupWebsocket = (websocketKey: string) => {
-    if (namespace == "") {
+    if (namespace == "" || currentCluster == null || currentProject == null || currentChart == null) {
       return;
     }
 
     const websocketBaseURL = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki`;
 
     const q = new URLSearchParams({
-      pod_selector: currentPodSelector + "-.*",
+      pod_selector: currentPodSelector,
       namespace,
       search_param: searchParam,
       revision: currentChart.version.toString(),
@@ -209,14 +210,22 @@ export const useLogs = (
       if (log.metadata == null) {
         return true;
       }
+
+      // TODO: refactor this extremely hacky way to filter out pre-deploy logs
+      if (!currentChart?.name.endsWith("-r") && log.metadata.pod_name.startsWith(`${appName}-r`)) {
+        return false;
+      }
+
       if (selectedFilterValues.output_stream !== GenericLogFilter.getDefaultOption("output_stream").value &&
         log.metadata.output_stream !== selectedFilterValues.output_stream) {
         return false;
       }
+
       if (selectedFilterValues.revision !== GenericLogFilter.getDefaultOption("revision").value &&
         log.metadata.revision !== selectedFilterValues.revision) {
         return false;
       }
+
       return true;
     });
   };
@@ -246,7 +255,7 @@ export const useLogs = (
       end_range: endDate,
       limit,
       chart_name: "",
-      pod_selector: currentPodSelector + "-.*",
+      pod_selector: currentPodSelector,
       direction,
     };
 

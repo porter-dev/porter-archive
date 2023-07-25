@@ -746,7 +746,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "logs":
         return <LogSection
           currentChart={appData.chart}
-          services={services}
+          services={services.filter(Service.isNonRelease)}
           appName={appData.app.name}
           filterOpts={logFilterQueryParamOpts}
         />;

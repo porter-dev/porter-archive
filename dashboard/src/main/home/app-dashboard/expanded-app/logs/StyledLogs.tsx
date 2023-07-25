@@ -52,8 +52,7 @@ const StyledLogs: React.FC<Props> = ({
             {logs.map((log, i) => {
                 return (
                     <Log key={[log.lineNumber, i].join(".")}>
-                        <LogLabelsContainer includeLabels={log.metadata != null}>
-                            <LineNumber className="line-number">{log.lineNumber}.</LineNumber>
+                        <LogLabelsContainer includeLabels={log.metadata != null && filters.length !== 0}>
                             <LineTimestamp className="line-timestamp">
                                 {log.timestamp
                                     ? dayjs(log.timestamp).format("MM/DD HH:mm:ss")
@@ -92,7 +91,7 @@ const StyledLogsContainer = styled.div`
 `;
 
 const LogLabelsContainer = styled.div<{ includeLabels: boolean }>`
-    min-width: ${props => props.includeLabels ? "390px" : "100px"}; 
+    min-width: ${props => props.includeLabels ? "290px" : "100px"}; 
     display: flex;
     flex-direction: row;
     align-items: center;

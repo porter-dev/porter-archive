@@ -45,9 +45,6 @@ const EventFocusView: React.FC<Props> = ({
                 )
                 const newEvent = eventResp.data.event as PorterAppEvent;
                 setEvent(newEvent);
-                if (newEvent.status != null && newEvent.status !== "PROGRESSING") {
-                    clearInterval(intervalId);
-                }
             } catch (err) {
                 console.log(err);
             }

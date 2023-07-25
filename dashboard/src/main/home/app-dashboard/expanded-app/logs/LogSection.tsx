@@ -86,7 +86,7 @@ const LogSection: React.FC<Props> = ({
     }).reverse().slice(0, 3);
   }
 
-  const [filters, setFilters] = useState<GenericLogFilter[]>([
+  const [filters, setFilters] = useState<GenericLogFilter[]>(showFilter ? [
     {
       name: "pod_name",
       displayName: "Service",
@@ -127,7 +127,7 @@ const LogSection: React.FC<Props> = ({
         }));
       }
     },
-  ]);
+  ] : []);
 
   const notify = (message: string) => {
     setNotification(message);
@@ -139,6 +139,7 @@ const LogSection: React.FC<Props> = ({
 
   const { logs, refresh, moveCursor, paginationInfo } = useLogs(
     selectedFilterValues,
+    appName,
     currentChart == null ? "" : currentChart.namespace,
     enteredSearchText,
     notify,
@@ -158,12 +159,6 @@ const LogSection: React.FC<Props> = ({
     }
   }, [isLoading, logs, scrollToBottomRef, scrollToBottomEnabled]);
 
-  useEffect(() => {
-    if (selectedDate == null) {
-      resetFilters();
-      return;
-    }
-  }, [selectedDate]);
 
   const resetFilters = () => {
     setSelectedFilterValues({
@@ -185,6 +180,7 @@ const LogSection: React.FC<Props> = ({
   const resetSearch = () => {
     setSearchText("");
     setEnteredSearchText("");
+    resetFilters();
   };
 
   const setSelectedDateIfUndefined = () => {

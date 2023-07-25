@@ -3,6 +3,7 @@ package porter_app
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -88,6 +89,8 @@ type ParseConf struct {
 	UserUpdate bool
 	// EnvGroups used for synced env groups
 	EnvGroups []string
+	// EnvironmentGroups are used for syncing environment groups using ConfigMaps and Secrets from porter-env-groups namespace. This should be used instead of EnvGroups
+	EnvironmentGroups []string
 	// Namespace used for synced env groups
 	Namespace string
 	// ExistingHelmValues is the existing values for the helm release, if it exists
@@ -168,6 +171,14 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 
 	if parsed.Services != nil {
 		services = parsed.Services
+	}
+
+	for serviceName := range services {
+		fmt.Println("STEFANKS", serviceName)
+		if _, ok := services[serviceName].Config["labels"]; !ok {
+			services[serviceName].Config["labels"] = make(map[string]string)
+		}
+		services[serviceName].Config["labels"] = strings.Join(conf.EnvironmentGroups, ".")
 	}
 
 	fmt.Println("STEFANAPPS", parsed.Apps, parsed.Services)
@@ -300,31 +311,38 @@ func buildUmbrellaChartValues(
 
 // syncEnvironmentGroupToNamespaceIfLabelsExist will sync the latest version of the environment group to the target namespace if the service has the appropriate label.
 func syncEnvironmentGroupToNamespaceIfLabelsExist(ctx context.Context, agent *kubernetes.Agent, service *Service, targetNamespace string) error {
-	var linkedGroupName string
+	var linkedGroupNames string
+
+	fmt.Println("STEFTYPES", reflect.TypeOf(service.Config["labels"]))
 
 	// patchwork because we are not consistent with the type of labels
 	if labels, ok := service.Config["labels"].(map[string]any); ok {
 		if linkedGroup, ok := labels[environment_groups.LabelKey_LinkedEnvironmentGroup].(string); ok {
-			linkedGroupName = linkedGroup
+			linkedGroupNames = linkedGroup
 		}
 	}
 	if labels, ok := service.Config["labels"].(map[string]string); ok {
 		if linkedGroup, ok := labels[environment_groups.LabelKey_LinkedEnvironmentGroup]; ok {
-			linkedGroupName = linkedGroup
+			linkedGroupNames = linkedGroup
 		}
 	}
 
-	inp := environment_groups.SyncLatestVersionToNamespaceInput{
-		BaseEnvironmentGroupName: linkedGroupName,
-		TargetNamespace:          targetNamespace,
-	}
+	for _, linkedGroupName := range strings.Split(linkedGroupNames, ".") {
+		inp := environment_groups.SyncLatestVersionToNamespaceInput{
+			BaseEnvironmentGroupName: linkedGroupName,
+			TargetNamespace:          targetNamespace,
+		}
 
-	syncedConfigMap, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp)
-	if err != nil {
-		return fmt.Errorf("error syncing environment group: %w", err)
-	}
-	if syncedConfigMap.ConfigMapName != "" {
-		service.Config["configMapRef"] = syncedConfigMap.ConfigMapName
+		syncedConfigMap, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp)
+		if err != nil {
+			return fmt.Errorf("error syncing environment group: %w", err)
+		}
+		if syncedConfigMap.ConfigMapName != "" {
+			if service.Config["configMapRefs"] == nil {
+				service.Config["configMapRefs"] = []string{}
+			}
+			service.Config["configMapRefs"] = append(service.Config["configMapRefs"].([]any), syncedConfigMap.ConfigMapName)
+		}
 	}
 
 	return nil
@@ -827,10 +845,10 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 		return nil, err
 	}
 	services := make(map[string]*Service)
-	globalLabels, err := extractGlobalLabels(helmValues)
-	if err != nil {
-		return nil, fmt.Errorf("unable to extract global labels: %w", err)
-	}
+	// globalLabels, err := extractGlobalLabels(helmValues)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("unable to extract global labels: %w", err)
+	// }
 
 	for k, v := range values {
 		if k == "global" {
@@ -846,12 +864,12 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 			Type:   &serviceType,
 		}
 
-		if globalLabels != nil {
-			if _, ok := services[serviceName].Config["labels"]; !ok {
-				services[serviceName].Config["labels"] = make(map[string]string)
-			}
-			services[serviceName].Config["labels"] = globalLabels
-		}
+		// if globalLabels != nil {
+		// 	if _, ok := services[serviceName].Config["labels"]; !ok {
+		// 		services[serviceName].Config["labels"] = make(map[string]string)
+		// 	}
+		// 	services[serviceName].Config["labels"] = globalLabels
+		// }
 	}
 
 	return &PorterStackYAML{

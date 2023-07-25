@@ -29,7 +29,7 @@ import { Service } from "./serviceTypes";
 import GithubConnectModal from "./GithubConnectModal";
 import Link from "components/porter/Link";
 import { BuildMethod, PorterApp } from "../types/porterApp";
-import { PartialEnvGroup, PopulatedEnvGroup } from "components/porter-form/types";
+import { NewPopulatedEnvGroup, PartialEnvGroup, PopulatedEnvGroup } from "components/porter-form/types";
 import EnvGroupArrayStacks from "main/home/cluster-dashboard/env-groups/EnvGroupArrayStacks";
 import EnvGroupModal from "../expanded-app/env-vars/EnvGroupModal";
 import ExpandableEnvGroup from "../expanded-app/env-vars/ExpandableEnvGroup";
@@ -340,7 +340,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         git_repo_id: porterApp.git_repo_id,
         build_context: porterApp.build_context,
         image_repo_uri: porterApp.image_repo_uri,
-        enviornment_groups: syncedEnvGroups?.map((env: NewPopulatedEnvGroup) => env.name),
+        environment_groups: syncedEnvGroups?.map((env: NewPopulatedEnvGroup) => env.name),
         user_update: true,
       }
       if (porterApp.image_repo_uri && imageTag) {

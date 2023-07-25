@@ -5,13 +5,15 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import yaml from "js-yaml";
+import { createFinalPorterYaml, PorterYamlSchema } from "../../app-dashboard/new-app-flow/schema"
 import styled, { keyframes } from "styled-components";
 import backArrow from "assets/back_arrow.png";
 import key from "assets/key.svg";
 import loading from "assets/loading.gif";
 import leftArrow from "assets/left-arrow.svg";
 
-import { ClusterType } from "shared/types";
+import { ChartType, ClusterType, CreateUpdatePorterAppOptions } from "shared/types";
 import { Context } from "shared/Context";
 import { isAlphanumeric } from "shared/common";
 import api from "shared/api";
@@ -25,7 +27,7 @@ import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import _, { remove, update } from "lodash";
-import { PopulatedEnvGroup } from "components/porter-form/types";
+import { NewPopulatedEnvGroup, PopulatedEnvGroup } from "components/porter-form/types";
 import { isAuthorized } from "shared/auth/authorization-helpers";
 import useAuth from "shared/auth/useAuth";
 import { fillWithDeletedVariables } from "components/porter-form/utils";
@@ -33,12 +35,17 @@ import DynamicLink from "components/DynamicLink";
 import DocsHelper from "components/DocsHelper";
 import Spacer from "components/porter/Spacer";
 import EnvGroups from "../stacks/ExpandedStack/components/EnvGroups";
+import { PorterJson } from "main/home/app-dashboard/new-app-flow/schema";
+import { BuildMethod, PorterApp } from "main/home/app-dashboard/types/porterApp";
+import { Service } from "main/home/app-dashboard/new-app-flow/serviceTypes";
+import { consoleSandbox } from "@sentry/utils";
 
 type PropsType = WithAuthProps & {
   namespace: string;
   envGroup: any;
   currentCluster: ClusterType;
   closeExpanded: () => void;
+  allEnvGroups?: NewPopulatedEnvGroup[];
 };
 
 type StateType = {
@@ -62,12 +69,14 @@ type EnvGroup = {
 
 type EditableEnvGroup = Omit<PopulatedEnvGroup, "variables"> & {
   variables: KeyValueType[];
+  linked_applications: string[];
 };
 
 export const ExpandedEnvGroupFC = ({
   envGroup,
   namespace,
   closeExpanded,
+  allEnvGroups,
 }: PropsType) => {
   const {
     currentProject,
@@ -77,13 +86,24 @@ export const ExpandedEnvGroupFC = ({
   } = useContext(Context);
   const [isAuthorized] = useAuth();
 
+  const [workflowCheckPassed, setWorkflowCheckPassed] = useState<boolean>(
+    false
+  );
+  const [isLoading, setIsLoading] = useState(true);
+
   const [currentTab, setCurrentTab] = useState("variables-editor");
   const [isDeleting, setIsDeleting] = useState(false);
   const [buttonStatus, setButtonStatus] = useState("");
+  const [services, setServices] = useState<Service[]>([]);
+  const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
+  const [subdomain, setSubdomain] = useState<string>("");
+
 
   const [currentEnvGroup, setCurrentEnvGroup] = useState<EditableEnvGroup>(
     null
   );
+  const [hasBuiltImage, setHasBuiltImage] = useState<boolean>(false);
+
   const [originalEnvVars, setOriginalEnvVars] = useState<
     {
       key: string;
@@ -91,14 +111,42 @@ export const ExpandedEnvGroupFC = ({
     }[]
   >();
 
+  const fetchPorterYamlContent = async (
+    porterYaml: string,
+    appData: any
+  ) => {
+    try {
+      const res = await api.getPorterYamlContents(
+        "<token>",
+        {
+          path: porterYaml,
+        },
+        {
+          project_id: appData.app.project_id,
+          git_repo_id: appData.app.git_repo_id,
+          owner: appData.app.repo_name?.split("/")[0],
+          name: appData.app.repo_name?.split("/")[1],
+          kind: "github",
+          branch: appData.app.git_branch,
+        }
+      );
+      if (res.data == null || res.data == "") {
+        return undefined;
+      }
+      const parsedYaml = yaml.load(atob(res.data));
+      return parsedYaml
+    } catch (err) {
+      // TODO: handle error
+    }
+  };
+
   const tabOptions = useMemo(() => {
     if (!isAuthorized("env_group", "", ["get", "delete"])) {
       return [{ value: "variables-editor", label: "Environment variables" }];
     }
-
     if (
       !isAuthorized("env_group", "", ["get", "delete"]) &&
-      currentEnvGroup?.applications?.length
+      (currentProject?.simplified_view_enabled ? currentEnvGroup?.linked_applications?.length : currentEnvGroup?.applications?.length)
     ) {
       return [
         { value: "variables-editor", label: "Environment variables" },
@@ -106,7 +154,7 @@ export const ExpandedEnvGroupFC = ({
       ];
     }
 
-    if (currentEnvGroup?.applications?.length) {
+    if (currentProject?.simplified_view_enabled ? currentEnvGroup?.linked_applications?.length : currentEnvGroup?.applications?.length) {
       return [
         { value: "variables-editor", label: "Environment variables" },
         { value: "applications", label: "Linked applications" },
@@ -158,9 +206,9 @@ export const ExpandedEnvGroupFC = ({
     }
   };
 
-  const updateEnvGroup = (populatedEnvGroup: PopulatedEnvGroup) => {
+  const updateEnvGroup = (populatedEnvGroup: NewPopulatedEnvGroup) => {
     const variables: KeyValueType[] = Object.entries(
-      populatedEnvGroup?.variables || {}
+      populatedEnvGroup.variables || {}
     ).map(([key, value]) => ({
       key: key,
       value: value,
@@ -226,6 +274,227 @@ export const ExpandedEnvGroupFC = ({
       });
   };
 
+
+  const getPorterApp = async ({ appName }: { appName: string }) => {
+    try {
+      if (!currentCluster || !currentProject) {
+        return;
+      }
+      const resPorterApp = await api.getPorterApp(
+        "<token>",
+        {},
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+          name: appName,
+        }
+      );
+      const resChartData = await api.getChart(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          namespace: `porter-stack-${appName}`,
+          cluster_id: currentCluster.id,
+          name: appName,
+          revision: 0,
+        }
+      );
+
+      let preDeployChartData;
+      // get the pre-deploy chart
+      try {
+        preDeployChartData = await api.getChart(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            namespace: `porter-stack-${appName}`,
+            cluster_id: currentCluster.id,
+            name: `${appName}-r`,
+            // this is always latest because we do not tie the pre-deploy chart to the umbrella chart
+            revision: 0,
+          }
+        );
+      } catch (err) {
+        // that's ok if there's an error, just means there is no pre-deploy chart
+      }
+
+      // update apps and release
+      const newAppData = {
+        app: resPorterApp?.data,
+        chart: resChartData?.data,
+        releaseChart: preDeployChartData?.data,
+      };
+      const porterJson = await fetchPorterYamlContent(
+        resPorterApp?.data?.porter_yaml_path ?? "porter.yaml",
+        newAppData
+      );
+      // let envGroups: any[] = [];
+      // envGroups = await api
+      //   .getAllEnvGroups<any[]>(
+      //     "<token>",
+      //     {},
+      //     {
+      //       id: currentProject?.id,
+      //       cluster_id: currentCluster.id,
+      //     }
+      //   )
+      //   .then((res) => res.data);
+
+      // const populatedEnvGroups = await Promise.all(envGroups.environment_groups);
+
+      let filteredEnvGroups: NewPopulatedEnvGroup[] = []
+      filteredEnvGroups = allEnvGroups?.filter(envGroup =>
+        envGroup.linked_applications && envGroup.linked_applications.includes(appName)
+      );
+      //setValues(newAppData?.chart)
+      // annoying that we have to parse buildpacks like this but alas
+      const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") ?? [] };
+
+      const [newServices, newEnvVars] = updateServicesAndEnvVariables(
+        resChartData?.data,
+        preDeployChartData?.data,
+        porterJson,
+      );
+      const finalPorterYaml = createFinalPorterYaml(
+        newServices,
+        newEnvVars,
+        porterJson,
+        // if we are using a heroku buildpack, inject a PORT env variable
+        newAppData.app.builder != null && newAppData.app.builder.includes("heroku")
+      );
+
+
+      // Only check GHA status if no built image is set
+      const hasBuiltImage = !!resChartData.data.config?.global?.image
+        ?.repository;
+      if (hasBuiltImage || !resPorterApp.data.repo_name) {
+        setWorkflowCheckPassed(true);
+        setHasBuiltImage(true);
+      } else {
+        try {
+          await api.getBranchContents(
+            "<token>",
+            {
+              dir: `./.github/workflows/porter_stack_${resPorterApp.data.name}.yml`,
+            },
+            {
+              project_id: currentProject.id,
+              git_repo_id: resPorterApp.data.git_repo_id,
+              kind: "github",
+              owner: resPorterApp.data.repo_name.split("/")[0],
+              name: resPorterApp.data.repo_name.split("/")[1],
+              branch: resPorterApp.data.git_branch,
+            }
+          );
+          setWorkflowCheckPassed(true);
+
+        } catch (err) {
+          // Handle unmerged PR
+          if (err.response?.status === 404) {
+            try {
+              // Check for user-copied porter.yml as fallback
+              const resPorterYml = await api.getBranchContents(
+                "<token>",
+                { dir: `./.github/workflows/porter.yml` },
+                {
+                  project_id: currentProject.id,
+                  git_repo_id: resPorterApp.data.git_repo_id,
+                  kind: "github",
+                  owner: resPorterApp.data.repo_name.split("/")[0],
+                  name: resPorterApp.data.repo_name.split("/")[1],
+                  branch: resPorterApp.data.git_branch,
+                }
+              );
+              setWorkflowCheckPassed(true);
+            } catch (err) {
+              setWorkflowCheckPassed(false);
+            }
+          }
+        }
+      }
+
+      setButtonStatus("loading");
+      if (
+        currentCluster != null &&
+        currentProject != null
+      ) {
+
+        const yamlString = yaml.dump(finalPorterYaml);
+        const base64Encoded = btoa(yamlString);
+
+        const updatedPorterApp = {
+          porter_yaml: base64Encoded,
+          override_release: true,
+          build_context: newAppData?.build_context,
+          repo_name: newAppData?.repo_name,
+          git_branch: newAppData?.git_branch,
+          buildpacks: "",
+          //full_helm_values: yaml.dump(values),
+          environment_groups: filteredEnvGroups?.map((env) => env.name),
+          user_update: true,
+        }
+        await api.createPorterApp(
+          "<token>",
+          updatedPorterApp,
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+            stack_name: appName,
+          }
+        );
+        setButtonStatus("successful");
+
+      } else {
+        setButtonStatus("error");
+      }
+    } catch (err) {
+      // TODO: handle error
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateServicesAndEnvVariables = (
+    currentChart?: ChartType,
+    releaseChart?: ChartType,
+    porterJson?: PorterJson,
+  ): [Service[], KeyValueType[]] => {
+    // handle normal chart
+    const helmValues = currentChart?.config;
+    const defaultValues = (currentChart?.chart as any)?.values;
+    let newServices: Service[] = [];
+    let envVars: KeyValueType[] = [];
+
+    if (
+      (defaultValues && Object.keys(defaultValues).length > 0) ||
+      (helmValues && Object.keys(helmValues).length > 0)
+    ) {
+      newServices = Service.deserialize(helmValues, defaultValues, porterJson);
+      const { global, ...helmValuesWithoutGlobal } = helmValues;
+      if (Object.keys(helmValuesWithoutGlobal).length > 0) {
+        envVars = Service.retrieveEnvFromHelmValues(helmValuesWithoutGlobal);
+        setEnvVars(envVars);
+        const subdomain = Service.retrieveSubdomainFromHelmValues(
+          newServices,
+          helmValuesWithoutGlobal
+        );
+        setSubdomain(subdomain);
+      }
+    }
+
+    // handle release chart
+    if (releaseChart?.config || porterJson?.release) {
+      const release = Service.deserializeRelease(releaseChart?.config, porterJson);
+      newServices.push(release);
+    }
+
+    setServices(newServices);
+
+    return [newServices, envVars];
+  };
+
   const handleUpdateValues = async () => {
     setButtonStatus("loading");
     const name = currentEnvGroup.name;
@@ -252,25 +521,24 @@ export const ExpandedEnvGroupFC = ({
       //Create the Env Group
       if (currentProject?.simplified_view_enabled) {
         try {
-          const updatedEnvGroup = await api
-            .createEnvironmentGroups(
-              "<token>",
-              {
-                name,
-                variables: normalVariables,
-                //secret_variables: secretVariables,
-              },
-              {
-                id: currentProject.id,
-                cluster_id: currentCluster.id,
+          let linkedApp: string[] = currentEnvGroup?.linked_applications;
+          const updatedEnvGroup = await api.createEnvironmentGroups(
+            "<token>",
+            {
+              name,
+              variables: normalVariables,
+              //secret_variables: secretVariables,
+            },
+            {
+              id: currentProject.id,
+              cluster_id: currentCluster.id,
+            }
+          ).then((res) => res.data);
 
-              }
-            )
-            .then((res) => res.data);
-          console.log(updatedEnvGroup)
-          setButtonStatus("successful");
+          let promises = linkedApp.map(async (appName) => {
 
-          updateEnvGroup(updatedEnvGroup);
+            const dataFromGetPorterApp = await getPorterApp({ appName: appName });
+          });
 
           setTimeout(() => setButtonStatus(""), 1000);
         }
@@ -408,8 +676,6 @@ export const ExpandedEnvGroupFC = ({
           [val.key]: val.value,
         };
       }, {});
-
-      // console.log({ normalObject, secretObject });
 
       try {
         const updatedEnvGroup = await api
@@ -596,11 +862,19 @@ const EnvGroupSettings = ({
 
   const canDelete = useMemo(() => {
     // add a case for when applications is null - in this case this is a deprecated env group version
-    if (!envGroup?.applications) {
-      return true;
-    }
+    if (currentProject?.simplified_view_enabled) {
+      if (!envGroup?.linked_applications) {
+        return true;
+      }
 
-    return envGroup?.applications?.length === 0;
+      return envGroup?.linked_applications?.length === 0;
+    } else {
+      if (!envGroup?.applications) {
+        return true;
+      }
+
+      return envGroup?.applications?.length === 0;
+    }
   }, [envGroup]);
 
   const cloneEnvGroup = async () => {
@@ -622,7 +896,6 @@ const EnvGroupSettings = ({
       );
       setCloneSuccess(true);
     } catch (error) {
-      console.log(error);
       setCurrentError(error);
     }
   };
@@ -706,34 +979,67 @@ const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
           disableMargin
         />
       </HeadingWrapper>
-      {envGroup.applications.map((appName) => {
-        return (
-          <StyledCard>
-            <Flex>
-              <ContentContainer>
-                <EventInformation>
-                  <EventName>{appName}</EventName>
-                </EventInformation>
-              </ContentContainer>
-              <ActionContainer>
-                {currentProject?.simplified_view_enabled ? (<ActionButton
-                  to={`/apps/${appName}`}
-                  target="_blank"
-                >
-                  <span className="material-icons-outlined">open_in_new</span>
-                </ActionButton>)
-                  :
-                  (<ActionButton
-                    to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
+      {currentProject?.simplified_view_enabled ? (
+        envGroup.linked_applications.map((appName) => {
+          return (
+            <StyledCard>
+              <Flex>
+                <ContentContainer>
+                  <EventInformation>
+                    <EventName>{appName}</EventName>
+                  </EventInformation>
+                </ContentContainer>
+                <ActionContainer>
+                  {currentProject?.simplified_view_enabled ? (<ActionButton
+                    to={`/apps/${appName}`}
                     target="_blank"
                   >
                     <span className="material-icons-outlined">open_in_new</span>
-                  </ActionButton>)}
-              </ActionContainer>
-            </Flex>
-          </StyledCard>
-        );
-      })}
+                  </ActionButton>)
+                    :
+                    (<ActionButton
+                      to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
+                      target="_blank"
+                    >
+                      <span className="material-icons-outlined">open_in_new</span>
+                    </ActionButton>)}
+                </ActionContainer>
+              </Flex>
+            </StyledCard>
+          );
+        })
+      )
+        :
+        (envGroup.applications.map((appName) => {
+          return (
+            <StyledCard>
+              <Flex>
+                <ContentContainer>
+                  <EventInformation>
+                    <EventName>{appName}</EventName>
+                  </EventInformation>
+                </ContentContainer>
+                <ActionContainer>
+                  {currentProject?.simplified_view_enabled ? (<ActionButton
+                    to={`/apps/${appName}`}
+                    target="_blank"
+                  >
+                    <span className="material-icons-outlined">open_in_new</span>
+                  </ActionButton>)
+                    :
+                    (<ActionButton
+                      to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
+                      target="_blank"
+                    >
+                      <span className="material-icons-outlined">open_in_new</span>
+                    </ActionButton>)}
+                </ActionContainer>
+              </Flex>
+            </StyledCard>
+          );
+        }))
+      }
+
     </>
   );
 };

@@ -43,7 +43,7 @@ import ActivityFeed from "./activity-feed/ActivityFeed";
 import MetricsSection from "./MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
-import _ from "lodash";
+import _, { flatMapDepth } from "lodash";
 import AnimateHeight from "react-animate-height";
 import { NewPopulatedEnvGroup, PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";

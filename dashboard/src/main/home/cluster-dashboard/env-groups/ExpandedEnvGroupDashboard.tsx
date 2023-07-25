@@ -108,6 +108,7 @@ const EnvGroupDashboard = (props: PropsType) => {
 
     return (
       <ExpandedEnvGroup
+        allEnvGroups={envGroups}
         isAuthorized={props.isAuthorized}
         namespace={(currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "porter-env-group" : expandedEnvGroup?.namespace ?? namespace}
         currentCluster={props.currentCluster}

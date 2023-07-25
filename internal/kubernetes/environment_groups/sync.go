@@ -18,11 +18,13 @@ type SyncLatestVersionToNamespaceInput struct {
 // SyncLatestVersionToNamespaceOutput returns the literal configmap name (as opposed to the environment group name) which can be used in kubernetes manifests
 // for loading the configmap (or secret) into a deployment, or job
 type SyncLatestVersionToNamespaceOutput struct {
-	ConfigMapName string
+	// EnvironmentGroupVersionedName is the name of the secret and configmap which should be able to be used in kubernetes manifests. This must already exist as both a configmap and a secret in the given namespace before being returned.
+	// EnvironmentGroupVersionedName will be of the format "<environment-group-name>.<version>"
+	EnvironmentGroupVersionedName string
 }
 
 // SyncLatestVersionToNamespace gets the latest version of a given environment group, and makes a copy of it in the target
-// namespace. If the versions match, no changes will be made. In either case, the name of a configmap in the target namespace will be returned
+// namespace. If the versions match, no changes will be made. In either case, the name of an environment group in the target namespace will be returned
 // unless an error has occurred.
 func SyncLatestVersionToNamespace(ctx context.Context, a *kubernetes.Agent, inp SyncLatestVersionToNamespaceInput) (SyncLatestVersionToNamespaceOutput, error) {
 	ctx, span := telemetry.NewSpan(ctx, "sync-env-group-version-to-namespace")
@@ -42,10 +44,12 @@ func SyncLatestVersionToNamespace(ctx context.Context, a *kubernetes.Agent, inp 
 		telemetry.AttributeKV{Key: "target-environment-namespace", Value: inp.TargetNamespace},
 	)
 
+	fmt.Println("STEFANSYNC0")
 	baseEnvironmentGroup, err := LatestBaseEnvironmentGroup(ctx, a, inp.BaseEnvironmentGroupName)
 	if err != nil {
 		return output, telemetry.Error(ctx, span, err, "unable to find latest environment group version")
 	}
+	fmt.Println("STEFANSYNC1", baseEnvironmentGroup)
 
 	envGroupInp := EnvironmentGroupInTargetNamespaceInput{
 		Name:      baseEnvironmentGroup.Name,
@@ -57,19 +61,22 @@ func SyncLatestVersionToNamespace(ctx context.Context, a *kubernetes.Agent, inp 
 		return output, telemetry.Error(ctx, span, err, "unable to get environement group in target namespace")
 	}
 
+	fmt.Println("STEFANSYNC2", targetEnvironmentGroup.Name, baseEnvironmentGroup.Name, targetEnvironmentGroup.Version, baseEnvironmentGroup.Version)
 	if targetEnvironmentGroup.Name == baseEnvironmentGroup.Name && targetEnvironmentGroup.Version == baseEnvironmentGroup.Version {
 		return SyncLatestVersionToNamespaceOutput{
-			ConfigMapName: fmt.Sprintf("%s.%s", baseEnvironmentGroup.Name, baseEnvironmentGroup.Version),
+			EnvironmentGroupVersionedName: fmt.Sprintf("%s.%d", baseEnvironmentGroup.Name, baseEnvironmentGroup.Version),
 		}, nil
 	}
+	fmt.Println("STEFANSYNC3")
 
 	targetConfigmapName, err := createEnvironmentGroupInTargetNamespace(ctx, a, inp.TargetNamespace, baseEnvironmentGroup)
 	if err != nil {
 		return output, telemetry.Error(ctx, span, err, "unable to create environment group in target namespace")
 	}
+	fmt.Println("STEFANSYNC4")
 
 	output = SyncLatestVersionToNamespaceOutput{
-		ConfigMapName: targetConfigmapName,
+		EnvironmentGroupVersionedName: targetConfigmapName,
 	}
 
 	return output, nil

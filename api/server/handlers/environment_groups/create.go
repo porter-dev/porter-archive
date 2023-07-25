@@ -41,6 +41,18 @@ type UpdateEnvironmentGroupRequest struct {
 	// SecretVariables are sensitive variables. All values must be a string due to a kubernetes limitation.
 	SecretVariables map[string]string `json:"secret_variables"`
 }
+type UpdateEnvironmentGroupResponse struct {
+	// Name of the env group to create or update
+	Name string `json:"name"`
+
+	// Variables are variables which should are not sensitive. All values must be a string due to a kubernetes limitation.
+	Variables map[string]string `json:"variables,omitempty"`
+
+	// SecretVariables are sensitive variables. All values must be a string due to a kubernetes limitation.
+	SecretVariables map[string]string `json:"secret_variables,omitempty"`
+
+	CreatedAt time.Time `json:"created_at"`
+}
 
 func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-update-env-group")
@@ -63,10 +75,16 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
+	secrets := make(map[string][]byte)
+	for k, v := range request.SecretVariables {
+		secrets[k] = []byte(v)
+	}
+
 	envGroup := environment_groups.EnvironmentGroup{
-		Name:      request.Name,
-		Variables: request.Variables,
-		CreatedAt: time.Now().UTC().Unix(),
+		Name:            request.Name,
+		Variables:       request.Variables,
+		SecretVariables: secrets,
+		CreatedAtUTC:    time.Now().UTC(),
 	}
 
 	err = environment_groups.CreateOrUpdateBaseEnvironmentGroup(ctx, agent, envGroup)
@@ -75,6 +93,12 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
+
+	envGroupResponse := &UpdateEnvironmentGroupResponse{
+		Name:      envGroup.Name,
+		CreatedAt: envGroup.CreatedAtUTC,
+	}
+	c.WriteResult(w, r, envGroupResponse)
 
 	// TODO: Syncing applications that are linked is currently done by the frontend. This should be done entirely
 	// applicationsToSync, err := environment_groups.LinkedApplications(ctx, agent, envGroup.Name)
@@ -86,6 +110,4 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 	// for _, app := range applicationsToSync {
 	// 	TODO: Call porter app update
 	// }
-
-	c.WriteResult(w, r, envGroup)
 }

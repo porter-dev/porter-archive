@@ -326,7 +326,7 @@ func buildUmbrellaChartValues(
 func syncEnvironmentGroupToNamespaceIfLabelsExist(ctx context.Context, agent *kubernetes.Agent, service *Service, targetNamespace string) error {
 	var linkedGroupNames string
 
-	fmt.Println("STEFTYPES", reflect.TypeOf(service.Config["labels"]))
+	fmt.Println("STEFTYPES", reflect.TypeOf(service.Config["labels"]), service.Config["labels"])
 
 	// patchwork because we are not consistent with the type of labels
 	if labels, ok := service.Config["labels"].(map[string]any); ok {
@@ -346,15 +346,30 @@ func syncEnvironmentGroupToNamespaceIfLabelsExist(ctx context.Context, agent *ku
 			TargetNamespace:          targetNamespace,
 		}
 
-		syncedConfigMap, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp)
+		syncedEnvironment, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp)
 		if err != nil {
 			return fmt.Errorf("error syncing environment group: %w", err)
 		}
-		if syncedConfigMap.ConfigMapName != "" {
+		if syncedEnvironment.EnvironmentGroupVersionedName != "" {
 			if service.Config["configMapRefs"] == nil {
 				service.Config["configMapRefs"] = []string{}
 			}
-			service.Config["configMapRefs"] = append(service.Config["configMapRefs"].([]string), syncedConfigMap.ConfigMapName)
+			if service.Config["secretRefs"] == nil {
+				service.Config["secretRefs"] = []string{}
+			}
+			fmt.Println("STEFANCONFIGTYPES", reflect.TypeOf(service.Config["configMapRefs"]), reflect.TypeOf(service.Config["secretRefs"]))
+			switch service.Config["configMapRefs"].(type) {
+			case []string:
+				service.Config["configMapRefs"] = append(service.Config["configMapRefs"].([]string), syncedEnvironment.EnvironmentGroupVersionedName)
+			case []any:
+				service.Config["configMapRefs"] = append(service.Config["configMapRefs"].([]any), syncedEnvironment.EnvironmentGroupVersionedName)
+			}
+			switch service.Config["configMapRefs"].(type) {
+			case []string:
+				service.Config["secretRefs"] = append(service.Config["secretRefs"].([]string), syncedEnvironment.EnvironmentGroupVersionedName)
+			case []any:
+				service.Config["secretRefs"] = append(service.Config["secretRefs"].([]any), syncedEnvironment.EnvironmentGroupVersionedName)
+			}
 		}
 	}
 

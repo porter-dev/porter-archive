@@ -3,6 +3,7 @@ package environment_groups
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -37,9 +38,10 @@ type ListEnvironmentGroupsResponse struct {
 
 type EnvironmentGroupListItem struct {
 	Name               string            `json:"name"`
-	LatestVersion      string            `json:"latest_version"`
+	LatestVersion      int               `json:"latest_version"`
 	Variables          map[string]string `json:"variables"`
-	CreatedAt          int64             `json:"created_at"`
+	SecretVariables    map[string]string `json:"secret_variables"`
+	CreatedAtUTC       time.Time         `json:"created_at"`
 	LinkedApplications []string          `json:"linked_applications,omitempty"`
 }
 
@@ -56,9 +58,9 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	allEnvGroupVersions, err := environmentgroups.ListBaseEnvironmentGroups(ctx, agent)
+	allEnvGroupVersions, err := environmentgroups.ListEnvironmentGroups(ctx, agent, environmentgroups.WithNamespace(environmentgroups.Namespace_EnvironmentGroups))
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "unable to list environment groups")
+		err = telemetry.Error(ctx, span, err, "unable to list all environment groups")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
@@ -104,44 +106,19 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 			linkedApplications = append(linkedApplications, porterAppName)
 		}
 
+		secrets := make(map[string]string)
+		for k, v := range latestVersion.SecretVariables {
+			secrets[k] = string(v)
+		}
 		envGroups = append(envGroups, EnvironmentGroupListItem{
 			Name:               latestVersion.Name,
 			LatestVersion:      latestVersion.Version,
 			Variables:          latestVersion.Variables,
-			CreatedAt:          latestVersion.CreatedAt,
+			SecretVariables:    secrets,
+			CreatedAtUTC:       latestVersion.CreatedAtUTC,
 			LinkedApplications: linkedApplications,
 		})
 	}
 
 	c.WriteResult(w, r, ListEnvironmentGroupsResponse{EnvironmentGroups: envGroups})
-
-	// configMaps, err := agent.ListVersionedConfigMaps(request.Name, namespace)
-
-	// if err != nil && errors.Is(err, kubernetes.IsNotFoundError) {
-	// 	c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-	// 		fmt.Errorf("env group not found"),
-	// 		http.StatusNotFound,
-	// 	))
-	// 	return
-	// } else if err != nil {
-	// 	c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-	// 	return
-	// }
-
-	// res := make(types.ListEnvGroupsResponse, 0)
-
-	// for _, cm := range configMaps {
-	// 	eg, err := envgroup.ToEnvGroup(&cm)
-	// 	if err != nil {
-	// 		continue
-	// 	}
-
-	// 	res = append(res, &types.EnvGroupMeta{
-	// 		Name:      eg.Name,
-	// 		Namespace: eg.Namespace,
-	// 		Version:   eg.Version,
-	// 	})
-	// }
-
-	// c.WriteResult(w, r, res)
 }

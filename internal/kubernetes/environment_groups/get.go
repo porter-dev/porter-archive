@@ -3,12 +3,9 @@ package environment_groups
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/telemetry"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // LatestBaseEnvironmentGroup returns the most recent version of an environment group stored in the porter-env-group namespace
@@ -19,53 +16,24 @@ func LatestBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, enviro
 
 	var eg EnvironmentGroup
 
-	listResp, err := a.Clientset.CoreV1().ConfigMaps(Namespace_EnvironmentGroups).List(ctx,
-		metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("%s=%s", LabelKey_EnvironmentGroupName, environmentGroupName),
-		})
+	baseEnvironmentGroupVersions, err := ListEnvironmentGroups(ctx, a, WithEnvironmentGroupName(environmentGroupName), WithNamespace(Namespace_EnvironmentGroups))
 	if err != nil {
-		if !k8sErrors.IsNotFound(err) {
-			return eg, telemetry.Error(ctx, span, err, "unable to list environment groups by name")
-		}
+		return eg, telemetry.Error(ctx, span, err, "unable to list base environment groups")
 	}
 
-	highestVersion := 0
-	var highestVersionConfigMap EnvironmentGroup
-	for _, cm := range listResp.Items {
-		versionLabelStr, ok := cm.Labels[LabelKey_EnvironmentGroupVersion]
-		if !ok {
-			continue
-		}
-
-		versionInt, err := strconv.Atoi(versionLabelStr)
-		if err != nil {
-			telemetry.WithAttributes(span,
-				telemetry.AttributeKV{Key: "environment-group-version", Value: versionLabelStr},
-			)
-			return eg, telemetry.Error(ctx, span, err, "unable to convert version label to int")
-		}
-
-		if versionInt > highestVersion {
-			highestVersion = versionInt
-			highestVersionConfigMap = EnvironmentGroup{
-				Name:      environmentGroupName,
-				Version:   versionLabelStr,
-				Variables: cm.Data,
-				CreatedAt: cm.CreationTimestamp.Unix(),
-			}
+	var highestVersionEnvironmentGroup EnvironmentGroup
+	for _, baseEnvironmentGroup := range baseEnvironmentGroupVersions {
+		if baseEnvironmentGroup.Version > highestVersionEnvironmentGroup.Version {
+			highestVersionEnvironmentGroup = baseEnvironmentGroup
 		}
 	}
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "highest-version", Value: highestVersion},
-		telemetry.AttributeKV{Key: "highest-version-name", Value: highestVersionConfigMap.Name},
+		telemetry.AttributeKV{Key: "highest-version", Value: highestVersionEnvironmentGroup.Version},
+		telemetry.AttributeKV{Key: "highest-version-name", Value: highestVersionEnvironmentGroup.Name},
 	)
 
-	if highestVersionConfigMap.Name == "" {
-		return eg, telemetry.Error(ctx, span, nil, "unable to find the latest base environment group by the provided name")
-	}
-
-	return highestVersionConfigMap, nil
+	return highestVersionEnvironmentGroup, nil
 }
 
 // EnvironmentGroupInTargetNamespaceInput contains all information required to check if an environment group exists in a target namespace.
@@ -73,7 +41,7 @@ func LatestBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, enviro
 type EnvironmentGroupInTargetNamespaceInput struct {
 	// Name is the environment group name which can be found on the configmap label
 	Name      string
-	Version   string
+	Version   int
 	Namespace string
 }
 
@@ -88,7 +56,7 @@ func EnvironmentGroupInTargetNamespace(ctx context.Context, a *kubernetes.Agent,
 	if inp.Name == "" {
 		return eg, telemetry.Error(ctx, span, nil, "must provide an environment group name")
 	}
-	if inp.Version == "" {
+	if inp.Version == 0 {
 		return eg, telemetry.Error(ctx, span, nil, "must provide an environment group version to check for")
 	}
 	if inp.Namespace == "" {
@@ -99,37 +67,23 @@ func EnvironmentGroupInTargetNamespace(ctx context.Context, a *kubernetes.Agent,
 		telemetry.AttributeKV{Key: "environment-group-version", Value: inp.Version},
 		telemetry.AttributeKV{Key: "namespace", Value: inp.Namespace},
 	)
-
-	listResp, err := a.Clientset.CoreV1().ConfigMaps(inp.Namespace).List(ctx,
-		metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("%s=%s,%s=%s", LabelKey_EnvironmentGroupName, inp.Name, LabelKey_EnvironmentGroupVersion, inp.Version),
-		})
+	fmt.Println("STEFAN", inp.Name)
+	environmentGroups, err := ListEnvironmentGroups(ctx, a, WithEnvironmentGroupName(inp.Name), WithEnvironmentGroupVersion(inp.Version), WithNamespace(inp.Namespace))
 	if err != nil {
-		if k8sErrors.IsNotFound(err) {
-			return eg, nil
-		}
-		return eg, telemetry.Error(ctx, span, err, "unable to list environment groups by name and version in namespace")
+		return eg, telemetry.Error(ctx, span, err, "unable to list environment groups in target namespace")
 	}
+	fmt.Println("STEFAN", environmentGroups)
 
-	if len(listResp.Items) > 1 {
+	if len(environmentGroups) > 1 {
 		telemetry.WithAttributes(span,
 			telemetry.AttributeKV{Key: "expected-results", Value: 1},
-			telemetry.AttributeKV{Key: "actual-results", Value: len(listResp.Items)},
+			telemetry.AttributeKV{Key: "actual-results", Value: len(environmentGroups)},
 		)
 		return eg, telemetry.Error(ctx, span, nil, "unexpected number of versions found in namespace")
 	}
 
-	if len(listResp.Items) == 1 {
-		li := listResp.Items[0]
-		name, ok := li.Labels[LabelKey_EnvironmentGroupName]
-		if !ok {
-			return eg, telemetry.Error(ctx, span, nil, "environment group configmap missing name label")
-		}
-		version, ok := li.Labels[LabelKey_EnvironmentGroupVersion]
-		if !ok {
-			return eg, telemetry.Error(ctx, span, nil, "environment group configmap missing version label")
-		}
-		return EnvironmentGroup{Name: name, Version: version, Variables: li.Data}, nil
+	if len(environmentGroups) == 1 {
+		return environmentGroups[0], nil
 	}
 
 	return eg, nil

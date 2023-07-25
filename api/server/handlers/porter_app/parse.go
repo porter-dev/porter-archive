@@ -175,10 +175,39 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 
 	for serviceName := range services {
 		fmt.Println("STEFANKS", serviceName)
-		if _, ok := services[serviceName].Config["labels"]; !ok {
-			services[serviceName].Config["labels"] = make(map[string]string)
+
+		fmt.Println("STEFANTYPE", reflect.TypeOf(services[serviceName].Config["labels"]))
+		if len(conf.EnvironmentGroups) != 0 {
+			// if _, ok := services[serviceName].Config["configMapRefs"]; !ok {
+			// 	services[serviceName].Config["configMapRefs"] = []string{}
+			// }
+			// services[serviceName].Config["configMapRefs"] = conf.EnvironmentGroups
+
+			if _, ok := services[serviceName].Config["labels"]; !ok {
+				services[serviceName].Config["labels"] = make(map[string]string)
+			}
+			if _, ok := services[serviceName].Config["labels"].(map[string]any); ok {
+				delete(services[serviceName].Config["labels"].(map[string]any), environment_groups.LabelKey_LinkedEnvironmentGroup)
+			}
+			switch services[serviceName].Config["labels"].(type) {
+			case map[string]any:
+				services[serviceName].Config["labels"].(map[string]any)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(conf.EnvironmentGroups, ".")
+			case map[string]string:
+				services[serviceName].Config["labels"].(map[string]string)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(conf.EnvironmentGroups, ".")
+			case any:
+				if services[serviceName].Config["labels"] == nil {
+					fmt.Println("STEFANTYPECASE", services[serviceName].Config["labels"])
+				}
+				if val, ok := services[serviceName].Config["labels"].(string); ok {
+					if val == "" {
+						services[serviceName].Config["labels"] = map[string]string{
+							environment_groups.LabelKey_LinkedEnvironmentGroup: strings.Join(conf.EnvironmentGroups, "."),
+						}
+					}
+				}
+				fmt.Println("STEFANTYPECASE", services[serviceName].Config["labels"])
+			}
 		}
-		services[serviceName].Config["labels"] = strings.Join(conf.EnvironmentGroups, ".")
 	}
 
 	fmt.Println("STEFANAPPS", parsed.Apps, parsed.Services)
@@ -341,7 +370,7 @@ func syncEnvironmentGroupToNamespaceIfLabelsExist(ctx context.Context, agent *ku
 			if service.Config["configMapRefs"] == nil {
 				service.Config["configMapRefs"] = []string{}
 			}
-			service.Config["configMapRefs"] = append(service.Config["configMapRefs"].([]any), syncedConfigMap.ConfigMapName)
+			service.Config["configMapRefs"] = append(service.Config["configMapRefs"].([]string), syncedConfigMap.ConfigMapName)
 		}
 	}
 

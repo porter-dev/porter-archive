@@ -1,8 +1,9 @@
-import { PorterAppEvent } from "shared/types";
 import healthy from "assets/status-healthy.png";
-import failure from "assets/failure.png";
+import failure from "assets/failure.svg";
 import loading from "assets/loading.gif";
+import canceled from "assets/canceled.svg"
 import api from "shared/api";
+import { PorterAppEvent } from "./types";
 
 export const getDuration = (event: PorterAppEvent): string => {
     const startTimeStamp = new Date(event.metadata.start_time ?? event.created_at).getTime();
@@ -44,6 +45,8 @@ export const getStatusIcon = (status: string) => {
             return failure;
         case "PROGRESSING":
             return loading;
+        case "CANCELED":
+            return canceled;
         default:
             return loading;
     }

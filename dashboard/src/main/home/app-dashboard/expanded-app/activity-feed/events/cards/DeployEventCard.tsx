@@ -1,43 +1,145 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 
 import deploy from "assets/deploy.png";
-import refresh from "assets/refresh.png";
+import document from "assets/document.svg";
 
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Icon from "components/porter/Icon";
-import Modal from "components/porter/Modal";
-import { PorterAppEvent } from "shared/types";
-import { getDuration, getStatusIcon } from '../utils';
+import { getStatusIcon } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import styled from "styled-components";
-import Button from "components/porter/Button";
-import api from "shared/api";
 import Link from "components/porter/Link";
 import ChangeLogModal from "../../../ChangeLogModal";
+import { PorterAppDeployEvent } from "../types";
+import AnimateHeight from "react-animate-height";
 
 type Props = {
-  event: PorterAppEvent;
+  event: PorterAppDeployEvent;
   appData: any;
 };
 
 const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
-  const [loading, setLoading] = useState<boolean>(false);
   const [diffModalVisible, setDiffModalVisible] = useState(false);
   const [revertModalVisible, setRevertModalVisible] = useState(false);
+  const [serviceStatusVisible, setServiceStatusVisible] = useState(false);
 
-  const renderStatusText = (event: PorterAppEvent) => {
+  const renderStatusText = () => {
     switch (event.status) {
       case "SUCCESS":
-        return event?.metadata?.image_tag ? <Text color="#68BF8B">Deployed <Code>{event?.metadata?.image_tag}</Code></Text> : <Text color="#68BF8B">Deployment successful</Text>;
+        return event.metadata.image_tag != null ?
+          event.metadata.service_status != null ?
+            <Text color="#68BF8B">
+              Deployed <Code>{event.metadata.image_tag}</Code> to {Object.keys(event.metadata.service_status).length} service{Object.keys(event.metadata.service_status).length === 1 ? "" : "s"}
+            </Text> :
+            <Text color="#68BF8B">
+              Deployed <Code>{event.metadata.image_tag}</Code>
+            </Text>
+          :
+          <Text color="#68BF8B">
+            Deployment successful
+          </Text>;
       case "FAILED":
-        return <Text color="#FF6060">Deployment failed</Text>;
+        if (event.metadata.service_status != null) {
+          let failedServices = 0;
+          for (const key in event.metadata.service_status) {
+            if (event.metadata.service_status[key] === "FAILED") {
+              failedServices++;
+            }
+          }
+          return (
+            <Text color="#FF6060">
+              Failed to deploy <Code>{event.metadata.image_tag}</Code> to {failedServices} service{failedServices === 1 ? "" : "s"}
+            </Text>
+          );
+        } else {
+          return (
+            <Text color="#FF6060">
+              Deployment failed
+            </Text>
+          );
+        }
+      case "CANCELED":
+        if (event.metadata.service_status != null) {
+          let canceledServices = 0;
+          for (const key in event.metadata.service_status) {
+            if (event.metadata.service_status[key] === "CANCELED") {
+              canceledServices++;
+            }
+          }
+          return (
+            <Text color="#FFBF00">
+              Canceled deploy of <Code>{event.metadata.image_tag}</Code> to {canceledServices} service{canceledServices === 1 ? "" : "s"}
+            </Text>
+          );
+        } else {
+          return (
+            <Text color="#FFBF00">
+              Deployment canceled
+            </Text>
+          );
+        }
       default:
-        return <Text color="#aaaabb66">Deployment in progress...</Text>;
+        if (event.metadata.service_status != null) {
+          return (
+            <Text color="helper">
+              Deploying <Code>{event.metadata.image_tag}</Code> to {Object.keys(event.metadata.service_status).length} service{Object.keys(event.metadata.service_status).length === 1 ? "" : "s"}...
+            </Text>
+          );
+        } else {
+          return (
+            <Text color="helper">
+              Deploying <Code>{event.metadata.image_tag}</Code> to {Object.keys(event.metadata.service_status).length} service{Object.keys(event.metadata.service_status).length === 1 ? "" : "s"}...
+            </Text>
+          );
+        }
     }
   };
+
+  const renderServiceStatus = () => {
+    const serviceStatus = event.metadata.service_status;
+    if (Object.keys(serviceStatus).length === 0) {
+      return (
+        <Container row>
+          <Text color="helper">No services found.</Text>
+        </Container>
+      );
+    }
+
+    return <ServiceStatusesContainer>
+      {Object.keys(serviceStatus).map((key) => {
+        return (
+          <Container key={key} row>
+            <Spacer inline x={1} />
+            <Container row>
+              <ServiceStatusContainer>
+                <Text>{key}</Text>
+              </ServiceStatusContainer>
+              <Spacer inline x={1} />
+              <ServiceStatusContainer>
+                <Icon height="12px" src={getStatusIcon(serviceStatus[key])} />
+                <Spacer inline x={0.5} />
+                <Text color="helper">{serviceStatus[key] === "PROGRESSING" ? "DEPLOYING" : serviceStatus[key]}</Text>
+              </ServiceStatusContainer>
+              <Spacer inline x={1} />
+              <ServiceStatusContainer>
+                <Link
+                  to={`/apps/${appData.app.name}/logs?version=${event.metadata.revision}&service=${key}`}
+                // to={`/apps/${appData.app.name}/events?event_id=${event.id}&version=${event.metadata.revision}&service=${key}`}
+                >
+                  <Icon height="12px" src={document} />
+                  <Spacer inline x={0.5} />
+                  Live logs
+                </Link>
+              </ServiceStatusContainer>
+            </Container>
+          </Container>
+        );
+      })}
+    </ServiceStatusesContainer>
+  }
   return (
     <StyledEventCard>
       <Container row spaced>
@@ -50,23 +152,33 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
       <Spacer y={0.5} />
       <Container row spaced>
         <Container row>
-          <Icon height="16px" src={getStatusIcon(event.status)} />
+          <Icon height="12px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
-          {renderStatusText(event)}
-          {appData?.chart?.version !== event.metadata?.revision && (
+          {renderStatusText()}
+          {event.metadata.service_status != null &&
+            <>
+              <Spacer inline x={1} />
+              <TempWrapper>
+                <Link hasunderline onClick={() => setServiceStatusVisible(!serviceStatusVisible)}>
+                  View service status
+                </Link>
+              </TempWrapper>
+            </>
+          }
+          {appData?.chart?.version !== event.metadata.revision && (
             <>
               <Spacer inline x={1} />
               <TempWrapper>
                 <Link hasunderline onClick={() => setRevertModalVisible(true)}>
-                  Revert to version {event?.metadata?.revision}
+                  Revert to version {event.metadata.revision}
                 </Link>
 
               </TempWrapper>
             </>
           )}
-          <Spacer inline width="15px" />
+          <Spacer inline x={1} />
           <TempWrapper>
-            {event?.metadata?.revision != 1 && (<Link hasunderline onClick={() => setDiffModalVisible(true)}>
+            {event.metadata.revision != 1 && (<Link hasunderline onClick={() => setDiffModalVisible(true)}>
               View changes
             </Link>)}
             {diffModalVisible && (
@@ -91,7 +203,10 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
           </TempWrapper>
         </Container>
       </Container>
-
+      <AnimateHeight height={serviceStatusVisible ? "auto" : 0}>
+        <Spacer y={0.5} />
+        {event.metadata.service_status != null && renderServiceStatus()}
+      </AnimateHeight>
     </StyledEventCard>
   );
 };
@@ -107,20 +222,17 @@ const Code = styled.span`
   font-family: monospace;
 `;
 
-const RevertButton = styled.div<{ width?: string }>`
-  border-radius: 5px;
-  height: 30px;
-  font-size: 13px;
-  color: white;
+const ServiceStatusContainer = styled.div`
   display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0px 10px;
-  background: #ffffff11;
-  border: 1px solid #aaaabb33;
-  cursor: pointer;
-  :hover {
-    border: 1px solid #7a7b80;
-  }
-  width: 92px;
+  align-items: center;  
+  width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
+
+const ServiceStatusesContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+ `; 

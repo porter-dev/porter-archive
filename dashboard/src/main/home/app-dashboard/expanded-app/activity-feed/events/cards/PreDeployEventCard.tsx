@@ -11,11 +11,11 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Icon from "components/porter/Icon";
 
-import { PorterAppEvent } from "shared/types";
 import { getDuration, getStatusIcon, triggerWorkflow } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import Link from "components/porter/Link";
 import document from "assets/document.svg";
+import { PorterAppEvent } from "../types";
 
 type Props = {
   event: PorterAppEvent;
@@ -51,14 +51,14 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
       <Spacer y={0.5} />
       <Container row spaced>
         <Container row>
-          <Icon height="16px" src={getStatusIcon(event.status)} />
+          <Icon height="12px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText(event)}
           {(event.status !== "SUCCESS") &&
             <>
               <Spacer inline x={1} />
               <Wrapper>
-                <Link to={`/apps/${appData.app.name}/events/${event.id}`} hasunderline>
+                <Link to={`/apps/${appData.app.name}/events?event_id=${event.id}`} hasunderline>
                   <Container row>
                     <Icon src={document} height="10px" />
                     <Spacer inline width="5px" />

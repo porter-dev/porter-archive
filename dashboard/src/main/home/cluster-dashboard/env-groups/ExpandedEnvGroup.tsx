@@ -232,6 +232,18 @@ export const ExpandedEnvGroupFC = ({
 
   const deleteEnvGroup = async () => {
     const { name, stack_id } = currentEnvGroup;
+    if (currentProject?.simplified_view_enabled) {
+      return api.deleteNewEnvGroup(
+        "<token>",
+        {
+          name: name,
+        },
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      );
+    }
 
     if (stack_id?.length) {
       return api.removeStackEnvGroup(
@@ -246,6 +258,7 @@ export const ExpandedEnvGroupFC = ({
         }
       );
     }
+
 
     return api.deleteEnvGroup(
       "<token>",

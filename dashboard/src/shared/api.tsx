@@ -1784,6 +1784,19 @@ const deleteEnvGroup = baseApi<
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup`;
 });
 
+const deleteNewEnvGroup = baseApi<
+  {
+    name: string;
+  },
+  {
+    id: number;
+    cluster_id: number;
+  }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
+});
+
+
 const deleteConfigMap = baseApi<
   {
     name: string;
@@ -2881,6 +2894,7 @@ export default {
   getAllEnvGroups,
   getEnvGroup,
   deleteEnvGroup,
+  deleteNewEnvGroup,
   addApplicationToEnvGroup,
   removeApplicationFromEnvGroup,
   provisionDatabase,

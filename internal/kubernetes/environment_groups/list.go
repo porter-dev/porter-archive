@@ -96,11 +96,11 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 		telemetry.AttributeKV{Key: "label-selector", Value: labelSelector},
 	)
 
-	configMapListResp, err := a.Clientset.CoreV1().ConfigMaps(Namespace_EnvironmentGroups).List(ctx, listOptions)
+	configMapListResp, err := a.Clientset.CoreV1().ConfigMaps(opts.namespace).List(ctx, listOptions)
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "unable to list environment group variables")
 	}
-	secretListResp, err := a.Clientset.CoreV1().Secrets(Namespace_EnvironmentGroups).List(ctx, listOptions)
+	secretListResp, err := a.Clientset.CoreV1().Secrets(opts.namespace).List(ctx, listOptions)
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "unable to list environment groups secret varialbes")
 	}

@@ -22,6 +22,7 @@ type PropsType = {
   disabled?: boolean;
   fileUpload?: boolean;
   secretOption?: boolean;
+  setButtonDisabled?: (x: boolean) => void;
 };
 
 const EnvGroupArray = ({
@@ -31,9 +32,18 @@ const EnvGroupArray = ({
   disabled,
   fileUpload,
   secretOption,
+  setButtonDisabled,
 }: PropsType) => {
   const [showEditorModal, setShowEditorModal] = useState(false);
-
+  const incorrectRegex = (key: string) => {
+    var pattern = /^[a-zA-Z0-9._-]+$/;
+    if (key) {
+      // The test() method tests for a match in a string
+      setButtonDisabled(!pattern.test(key))
+      return !pattern.test(key);
+    }
+    else return false;
+  };
   useEffect(() => {
     if (!values) {
       setValues([]);
@@ -94,6 +104,7 @@ const EnvGroupArray = ({
                     }}
                     disabled={disabled || entry.locked}
                     spellCheck={false}
+                    override={incorrectRegex(entry.key)}
                   />
                   <Spacer />
 
@@ -110,6 +121,7 @@ const EnvGroupArray = ({
                       disabled={disabled || entry.locked}
                       type={entry.hidden ? "password" : "text"}
                       spellCheck={false}
+                      override={incorrectRegex(entry.key)}
                     />
                   ) : (
                     <MultiLineInput
@@ -124,6 +136,7 @@ const EnvGroupArray = ({
                       rows={entry.value?.split("\n").length}
                       disabled={disabled || entry.locked}
                       spellCheck={false}
+                      override={incorrectRegex(entry.key)}
                     />
                   )}
                   {secretOption && (
@@ -297,23 +310,19 @@ const InputWrapper = styled.div`
   align-items: center;
   margin-top: 5px;
 `;
-
-const Input = styled.input`
+const Input = styled.input<InputProps>`
   outline: none;
   border: none;
   margin-bottom: 5px;
   font-size: 13px;
   background: #ffffff11;
-  border: 1px solid #ffffff55;
+  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #ffffff55')};
   border-radius: 3px;
-  width: ${(props: { disabled?: boolean; width: string }) =>
-    props.width ? props.width : "270px"};
-  color: ${(props: { disabled?: boolean; width: string }) =>
-    props.disabled ? "#ffffff44" : "white"};
+  width: ${(props) => props.width ? props.width : "270px"};
+  color: ${(props) => props.disabled ? "#ffffff44" : "white"};
   padding: 5px 10px;
   height: 35px;
 `;
-
 const Label = styled.div`
   color: #ffffff;
   margin-bottom: 10px;
@@ -322,4 +331,45 @@ const Label = styled.div`
 const StyledInputArray = styled.div`
   margin-bottom: 15px;
   margin-top: 22px;
+`;
+
+export const MultiLineInputer = styled.textarea<InputProps>`
+  outline: none;
+  border: none;
+  margin-bottom: 5px;
+  font-size: 13px;
+  background: #ffffff11;
+  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #ffffff55')};
+  border-radius: 3px;
+  min-width: ${(props) => (props.width ? props.width : "270px")};
+  max-width: ${(props) => (props.width ? props.width : "270px")};
+  color: ${(props) => (props.disabled ? "#ffffff44" : "white")};
+  padding: 8px 10px 5px 10px;
+  min-height: 35px;
+  max-height: 100px;
+  white-space: nowrap;
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    :horizontal {
+      height: 8px;
+    }
+  }
+
+  ::-webkit-scrollbar-corner {
+    width: 10px;
+    background: #ffffff11;
+    color: white;
+  }
+
+  ::-webkit-scrollbar-track {
+    width: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: darkgrey;
+    outline: 1px solid slategrey;
+  }
 `;

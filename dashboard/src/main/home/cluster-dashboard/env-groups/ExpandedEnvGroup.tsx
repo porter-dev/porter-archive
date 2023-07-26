@@ -110,6 +110,8 @@ export const ExpandedEnvGroupFC = ({
       value: string;
     }[]
   >();
+  const [buttonDisabled, setButtonDisabled] = useState(false);
+
 
   const fetchPorterYamlContent = async (
     porterYaml: string,
@@ -319,7 +321,6 @@ export const ExpandedEnvGroupFC = ({
         setIsDeleting(true);
       });
   };
-
 
   const getPorterApp = async ({ appName }: { appName: string }) => {
     try {
@@ -866,7 +867,7 @@ const EnvGroupVariablesEditor = ({
   handleUpdateValues: () => void;
 }) => {
   const [isAuthorized] = useAuth();
-
+  const [buttonDisabled, setButtonDisabled] = useState(false)
   return (
     <TabWrapper>
       <InnerWrapper>
@@ -876,6 +877,7 @@ const EnvGroupVariablesEditor = ({
           configuration.
         </Helper>
         <EnvGroupArray
+          setButtonDisabled={setButtonDisabled}
           values={variables}
           setValues={(x: any) => {
             onChange(x);
@@ -897,7 +899,7 @@ const EnvGroupVariablesEditor = ({
           text="Update"
           onClick={() => handleUpdateValues()}
           status={buttonStatus}
-          disabled={buttonStatus == "loading"}
+          disabled={buttonStatus == "loading" || buttonDisabled}
           makeFlush={true}
           clearPosition={true}
           statusPosition="right"

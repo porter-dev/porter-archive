@@ -30,6 +30,7 @@ type PropsType = {
 const EnvGroupArray = ({
   label,
   values,
+  secret_variables,
   setValues,
   disabled,
   fileUpload,
@@ -44,9 +45,11 @@ const EnvGroupArray = ({
     }
   }, [values]);
   const isKeyOverriding = (key: string) => {
-
     if (!syncedEnvGroups) return false;
-    return syncedEnvGroups.some(envGroup => key in envGroup.variables);
+
+    return syncedEnvGroups.some(envGroup =>
+      key in envGroup.variables || key in envGroup?.secret_variables
+    );
   };
 
   const readFile = (env: string) => {

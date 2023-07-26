@@ -1,11 +1,11 @@
 import React from "react";
 import styled from "styled-components";
 
-import { PorterAppEvent, PorterAppEventType } from "shared/types";
 import BuildEventCard from "./BuildEventCard";
 import PreDeployEventCard from "./PreDeployEventCard";
 import AppEventCard from "./AppEventCard";
 import DeployEventCard from "./DeployEventCard";
+import { PorterAppDeployEvent, PorterAppEvent, PorterAppEventType } from "../types";
 
 type Props = {
   event: PorterAppEvent;
@@ -20,7 +20,7 @@ const EventCard: React.FC<Props> = ({ event, appData }) => {
       case PorterAppEventType.BUILD:
         return <BuildEventCard event={event} appData={appData} />;
       case PorterAppEventType.DEPLOY:
-        return <DeployEventCard event={event} appData={appData} />;
+        return <DeployEventCard event={event as PorterAppDeployEvent} appData={appData} />;
       case PorterAppEventType.PRE_DEPLOY:
         return <PreDeployEventCard event={event} appData={appData} />;
       default:

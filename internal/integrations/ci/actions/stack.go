@@ -20,6 +20,7 @@ type GithubPROpts struct {
 	SecretName                string
 	PorterYamlPath            string
 	Body                      string
+	DeleteWorkflowFilename    string
 }
 
 type GetStackApplyActionYAMLOpts struct {
@@ -33,26 +34,19 @@ type GetStackApplyActionYAMLOpts struct {
 
 func OpenGithubPR(opts *GithubPROpts) (*github.PullRequest, error) {
 	var pr *github.PullRequest
-	applyWorkflowYAML, err := getStackApplyActionYAML(&GetStackApplyActionYAMLOpts{
-		ServerURL:      opts.ServerURL,
-		ClusterID:      opts.ClusterID,
-		ProjectID:      opts.ProjectID,
-		StackName:      opts.StackName,
-		DefaultBranch:  opts.DefaultBranch,
-		SecretName:     opts.SecretName,
-		PorterYamlPath: opts.PorterYamlPath,
-	})
-	if err != nil {
-		return pr, err
+	var prBranchName string
+	if opts.DeleteWorkflowFilename != "" {
+		prBranchName = "porter-stack-delete"
+	} else {
+		prBranchName = "porter-stack"
 	}
 
-	prBranchName := "porter-stack"
-
-	err = createNewBranch(opts.Client,
+	err := createNewBranch(opts.Client,
 		opts.GitRepoOwner,
 		opts.GitRepoName,
 		opts.DefaultBranch,
-		prBranchName)
+		prBranchName,
+	)
 	if err != nil {
 		return pr, fmt.Errorf(
 			"error creating branch: %w",
@@ -60,23 +54,58 @@ func OpenGithubPR(opts *GithubPROpts) (*github.PullRequest, error) {
 		)
 	}
 
-	_, err = commitWorkflowFile(
-		opts.Client,
-		fmt.Sprintf("porter_stack_%s.yml", strings.ToLower(opts.StackName)),
-		applyWorkflowYAML, opts.GitRepoOwner,
-		opts.GitRepoName, prBranchName, false,
-	)
-
-	if err != nil {
-		return pr, fmt.Errorf(
-			"error committing file: %w",
-			err,
+	if opts.DeleteWorkflowFilename == "" {
+		applyWorkflowYAML, err := getStackApplyActionYAML(&GetStackApplyActionYAMLOpts{
+			ServerURL:      opts.ServerURL,
+			ClusterID:      opts.ClusterID,
+			ProjectID:      opts.ProjectID,
+			StackName:      opts.StackName,
+			DefaultBranch:  opts.DefaultBranch,
+			SecretName:     opts.SecretName,
+			PorterYamlPath: opts.PorterYamlPath,
+		})
+		if err != nil {
+			return pr, err
+		}
+		_, err = commitWorkflowFile(
+			opts.Client,
+			fmt.Sprintf("porter_stack_%s.yml", strings.ToLower(opts.StackName)),
+			applyWorkflowYAML, opts.GitRepoOwner,
+			opts.GitRepoName, prBranchName, false,
 		)
+		if err != nil {
+			return pr, fmt.Errorf(
+				"error committing file: %w",
+				err,
+			)
+		}
+	} else {
+		err = deleteGithubFile(
+			opts.Client,
+			opts.DeleteWorkflowFilename,
+			opts.GitRepoOwner,
+			opts.GitRepoName,
+			prBranchName,
+			false,
+		)
+		if err != nil {
+			return pr, fmt.Errorf(
+				"error committing deletion: %w",
+				err,
+			)
+		}
+
 	}
 
+	var prTitle string
+	if opts.DeleteWorkflowFilename != "" {
+		prTitle = fmt.Sprintf("Delete Porter Application %s", opts.StackName)
+	} else {
+		prTitle = fmt.Sprintf("Enable Porter Application %s", opts.StackName)
+	}
 	pr, _, err = opts.Client.PullRequests.Create(
 		context.Background(), opts.GitRepoOwner, opts.GitRepoName, &github.NewPullRequest{
-			Title: github.String("Enable Porter Application"),
+			Title: github.String(prTitle),
 			Base:  github.String(opts.DefaultBranch),
 			Head:  github.String(prBranchName),
 			Body:  github.String(opts.Body),

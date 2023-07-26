@@ -10,6 +10,7 @@ export interface PorterLog {
     line: AnserJsonEntry[];
     lineNumber: number;
     timestamp?: string;
+    metadata?: z.infer<typeof AgentLogMetadataSchema>;
 }
 
 export interface PaginationInfo {
@@ -31,3 +32,44 @@ export const AgentLogSchema = z.object({
     metadata: AgentLogMetadataSchema.optional(),
 });
 export type AgentLog = z.infer<typeof AgentLogSchema>;
+
+export interface GenericFilterOption {
+    label: string;
+    value: string;
+}
+export const GenericFilterOption = {
+    of: (label: string, value: string): GenericFilterOption => {
+        return { label, value };
+    }
+}
+export type LogFilterName = 'revision' | 'output_stream' | 'pod_name';
+export interface GenericLogFilter {
+    name: LogFilterName;
+    displayName: string;
+    default: GenericFilterOption;
+    options: GenericFilterOption[];
+    setValue: (value: string) => void;
+}
+export const GenericLogFilter = {
+    isDefault: (filter: GenericLogFilter, value: string) => {
+        return filter.default.value === value;
+    },
+
+    getDefaultOption: (filterName: LogFilterName) => {
+        switch (filterName) {
+            case 'revision':
+                return GenericFilterOption.of('All', 'all');
+            case 'output_stream':
+                return GenericFilterOption.of('All', 'all');
+            case 'pod_name':
+                return GenericFilterOption.of('All', 'all');
+            default:
+                return GenericFilterOption.of('All', 'all');
+        }
+    },
+}
+export type LogFilterQueryParamOpts = {
+    revision: string | null;
+    output_stream: string | null;
+    service: string | null;
+}

@@ -284,15 +284,15 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	} else {
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "upgrading-application", Value: true})
 
-		// create/update the release job chart
+		// create/update the pre-deploy job chart
 		if request.OverrideRelease {
 			if preDeployJobValues == nil {
-				releaseJobName := fmt.Sprintf("%s-r", stackName)
-				_, err := helmAgent.GetRelease(ctx, releaseJobName, 0, false)
+				preDeployJobName := fmt.Sprintf("%s-r", stackName)
+				_, err := helmAgent.GetRelease(ctx, preDeployJobName, 0, false)
 				if err == nil {
 					// handle exception where the user has chosen to delete the release job
 					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deleting-pre-deploy-job", Value: true})
-					_, err = helmAgent.UninstallChart(ctx, releaseJobName)
+					_, err = helmAgent.UninstallChart(ctx, preDeployJobName)
 					if err != nil {
 						err = telemetry.Error(ctx, span, err, "error uninstalling pre-deploy job chart")
 						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -300,8 +300,8 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					}
 				}
 			} else {
-				releaseJobName := fmt.Sprintf("%s-r", stackName)
-				helmRelease, err := helmAgent.GetRelease(ctx, releaseJobName, 0, false)
+				preDeployJobName := fmt.Sprintf("%s-r", stackName)
+				helmRelease, err := helmAgent.GetRelease(ctx, preDeployJobName, 0, false)
 				if err != nil {
 					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "creating-pre-deploy-job", Value: true})
 					conf, err := createReleaseJobChart(

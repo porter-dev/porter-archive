@@ -12,25 +12,27 @@ import ImageList from "./ImageList";
 
 type PropsType =
   | {
-    forceExpanded?: boolean;
-    selectedImageUrl: string | null;
-    selectedTag: string | null;
-    setSelectedImageUrl: (x: string) => void;
-    setSelectedTag: (x: string) => void;
-    noTagSelection?: boolean;
-    disableImageSelect?: boolean;
-    readOnly?: boolean;
-  }
+      forceExpanded?: boolean;
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      setSelectedImageUrl: (x: string) => void;
+      setSelectedTag: (x: string) => void;
+      noTagSelection?: boolean;
+      disableImageSelect?: boolean;
+      readOnly?: boolean;
+      listHeight?: string;
+    }
   | {
-    forceExpanded?: boolean;
-    selectedImageUrl: string | null;
-    selectedTag: string | null;
-    setSelectedImageUrl?: (x: string) => void;
-    setSelectedTag?: (x: string) => void;
-    noTagSelection?: boolean;
-    disableImageSelect?: boolean;
-    readOnly: true;
-  };
+      forceExpanded?: boolean;
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      setSelectedImageUrl?: (x: string) => void;
+      setSelectedTag?: (x: string) => void;
+      noTagSelection?: boolean;
+      disableImageSelect?: boolean;
+      readOnly: true;
+      listHeight?: string;
+    };
 
 type StateType = {
   isExpanded: boolean;
@@ -154,6 +156,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
               this.setState({ clickedImage: x })
             }
             readOnly
+            listHeight={this.props.listHeight}
           />
         </>
       );
@@ -186,6 +189,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
             setClickedImage={(x: ImageType) =>
               this.setState({ clickedImage: x })
             }
+            listHeight={this.props.listHeight}
           />
         ) : null}
       </div>
@@ -243,7 +247,7 @@ const ImageItem = styled.div`
   font-size: 13px;
   border-bottom: 1px solid
     ${(props: { lastItem: boolean; isSelected: boolean }) =>
-    props.lastItem ? "#00000000" : "#606166"};
+      props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   user-select: none;
   align-items: center;

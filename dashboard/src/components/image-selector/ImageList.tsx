@@ -11,29 +11,31 @@ import TagList from "./TagList";
 
 type PropsType =
   | {
-    selectedImageUrl: string | null;
-    selectedTag: string | null;
-    clickedImage: ImageType | null;
-    registry?: any;
-    noTagSelection?: boolean;
-    setSelectedImageUrl: (x: string) => void;
-    setSelectedTag: (x: string) => void;
-    setClickedImage: (x: ImageType) => void;
-    disableImageSelect?: boolean;
-    readOnly?: boolean;
-  }
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      clickedImage: ImageType | null;
+      registry?: any;
+      noTagSelection?: boolean;
+      setSelectedImageUrl: (x: string) => void;
+      setSelectedTag: (x: string) => void;
+      setClickedImage: (x: ImageType) => void;
+      disableImageSelect?: boolean;
+      readOnly?: boolean;
+      listHeight?: string;
+    }
   | {
-    selectedImageUrl: string | null;
-    selectedTag: string | null;
-    clickedImage: ImageType | null;
-    registry?: any;
-    noTagSelection?: boolean;
-    setSelectedImageUrl?: (x: string) => void;
-    setSelectedTag?: (x: string) => void;
-    setClickedImage?: (x: ImageType) => void;
-    disableImageSelect?: boolean;
-    readOnly: true;
-  };
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      clickedImage: ImageType | null;
+      registry?: any;
+      noTagSelection?: boolean;
+      setSelectedImageUrl?: (x: string) => void;
+      setSelectedTag?: (x: string) => void;
+      setClickedImage?: (x: ImageType) => void;
+      disableImageSelect?: boolean;
+      readOnly: true;
+      listHeight?: string;
+    };
 
 type StateType = {
   loading: boolean;
@@ -233,11 +235,16 @@ export default class ImageList extends Component<PropsType, StateType> {
   };
 
   renderExpanded = () => {
-    let { selectedTag, selectedImageUrl, setSelectedTag } = this.props;
+    let {
+      selectedTag,
+      selectedImageUrl,
+      setSelectedTag,
+      listHeight,
+    } = this.props;
 
     if (this.props.readOnly && this.props.clickedImage) {
       return (
-        <ExpandedWrapper>
+        <ExpandedWrapper height={listHeight}>
           <TagList
             selectedTag={selectedTag}
             selectedImageUrl={selectedImageUrl}
@@ -251,7 +258,9 @@ export default class ImageList extends Component<PropsType, StateType> {
     if (!this.props.clickedImage || this.props.noTagSelection) {
       return (
         <div>
-          <ExpandedWrapper>{this.renderImageList()}</ExpandedWrapper>
+          <ExpandedWrapper height={listHeight}>
+            {this.renderImageList()}
+          </ExpandedWrapper>
           {this.renderBackButton()}
         </div>
       );
@@ -259,7 +268,7 @@ export default class ImageList extends Component<PropsType, StateType> {
 
     return (
       <div>
-        <ExpandedWrapper>
+        <ExpandedWrapper height={listHeight}>
           <TagList
             selectedTag={selectedTag}
             selectedImageUrl={selectedImageUrl}
@@ -344,12 +353,12 @@ const LoadingWrapper = styled.div`
   color: #ffffff44;
 `;
 
-const ExpandedWrapper = styled.div`
+const ExpandedWrapper = styled.div<{ height?: string }>`
   margin-top: 10px;
   width: 100%;
   border-radius: 3px;
   border: 1px solid #ffffff44;
-  max-height: 275px;
+  max-height: ${(props) => props.height || "275px"};
   background: #ffffff11;
   overflow-y: auto;
 `;

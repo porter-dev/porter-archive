@@ -1,3 +1,20 @@
+import { z } from "zod";
+
+export const porterAppValidator = z.object({
+    name: z.string().default(""),
+    git_branch: z.string().default(""),
+    git_repo_id: z.number().default(0),
+    repo_name: z.string().default(""),
+    build_context: z.string().default("./"),
+    builder: z.string().default(""),
+    buildpacks: z
+        .preprocess((val) => String(val).split(","), z.array(z.string()))
+        .default([]),
+    dockerfile: z.string().default(""),
+    image_repo_uri: z.string().default(""),
+    porter_yaml_path: z.string().default(""),
+});
+
 export interface PorterApp {
     name: string;
     git_branch: string;
@@ -38,6 +55,6 @@ export const PorterApp = {
         ...app,
         ...values,
     }),
-}
+};
 
 export type BuildMethod = "docker" | "buildpacks";

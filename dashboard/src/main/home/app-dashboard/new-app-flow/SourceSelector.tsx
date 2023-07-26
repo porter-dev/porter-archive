@@ -1,22 +1,37 @@
 import React from "react";
 import styled from "styled-components";
+import download from "assets/download.svg";
 
-export type SourceType = "github" | "docker-registry";
+export type SourceType = "github" | "docker-registry" | "existing";
 
 interface SourceSelectorProps {
   selectedSourceType: SourceType | undefined;
   setSourceType: (sourceType: SourceType) => void;
+  allowExisting?: boolean;
 }
 
 const SourceSelector: React.FC<SourceSelectorProps> = ({
   selectedSourceType,
-  setSourceType
+  setSourceType,
+  allowExisting,
 }) => {
   return (
     <BlockList>
+      {allowExisting && (
+        <Block
+          selected={selectedSourceType === "existing"}
+          onClick={() => setSourceType("existing")}
+        >
+          <BlockIcon src={download} />
+          <BlockTitle>Import existing</BlockTitle>
+          <BlockDescription>
+            Use one of your existing apps on Porter.
+          </BlockDescription>
+        </Block>
+      )}
       <Block
-        selected={selectedSourceType === 'github'}
-        onClick={() => setSourceType('github')}
+        selected={selectedSourceType === "github"}
+        onClick={() => setSourceType("github")}
       >
         <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
         <BlockTitle>Git repository</BlockTitle>
@@ -25,8 +40,8 @@ const SourceSelector: React.FC<SourceSelectorProps> = ({
         </BlockDescription>
       </Block>
       <Block
-        selected={selectedSourceType === 'docker-registry'}
-        onClick={() => setSourceType('docker-registry')}
+        selected={selectedSourceType === "docker-registry"}
+        onClick={() => setSourceType("docker-registry")}
       >
         <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
         <BlockTitle>Docker registry</BlockTitle>
@@ -34,10 +49,9 @@ const SourceSelector: React.FC<SourceSelectorProps> = ({
           Deploy a container from an image registry.
         </BlockDescription>
       </Block>
-
     </BlockList>
   );
-}
+};
 
 export default SourceSelector;
 
@@ -58,10 +72,11 @@ const Block = styled.div<{ selected?: boolean }>`
   position: relative;
 
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
-  border: ${props => props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};
+  background: ${(props) => props.theme.clickable.bg};
+  border: ${(props) =>
+    props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};
   :hover {
-    border: ${({ selected }) => (!selected && "1px solid #7a7b80")};
+    border: ${({ selected }) => !selected && "1px solid #7a7b80"};
   }
 
   animation: fadeIn 0.3s 0s;
@@ -90,6 +105,10 @@ const BlockIcon = styled.img<{ bw?: boolean }>`
   margin-top: 30px;
   margin-bottom: 15px;
   filter: ${(props) => (props.bw ? "grayscale(1)" : "")};
+
+  .lucide-download {
+    color: #ffffff;
+  }
 `;
 
 const BlockDescription = styled.div`

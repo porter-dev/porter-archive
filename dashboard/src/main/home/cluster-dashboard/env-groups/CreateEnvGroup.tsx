@@ -42,8 +42,11 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
   }
 
   isDisabled = () => {
+    const { envGroupName } = this.state;
     return (
-      !isAlphanumeric(this.state.envGroupName) || this.state.envGroupName === ""
+      !isAlphanumeric(envGroupName) ||
+      envGroupName === "" ||
+      envGroupName.length > 15
     );
   };
 
@@ -255,11 +258,12 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
               <Warning
                 makeFlush={true}
                 highlight={
-                  !isAlphanumeric(this.state.envGroupName) &&
+                  (!isAlphanumeric(this.state.envGroupName) ||
+                    this.state.envGroupName.length > 15) &&
                   this.state.envGroupName !== ""
                 }
               >
-                Lowercase letters, numbers, and "-" only.
+                Lowercase letters, numbers, and "-" only. Maximum 15 characters.
               </Warning>
             </Subtitle>
             <DarkMatter antiHeight="-29px" />

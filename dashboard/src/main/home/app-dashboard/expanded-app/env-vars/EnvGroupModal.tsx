@@ -59,7 +59,6 @@ const EnvGroupModal: React.FC<Props> = ({
   const [cloneSuccess, setCloneSuccess] = useState(false);
 
   const updateEnvGroups = async () => {
-    setLoading(true)
     let populateEnvGroupsPromises: any[] = [];
     try {
       populateEnvGroupsPromises = await api
@@ -98,6 +97,7 @@ const EnvGroupModal: React.FC<Props> = ({
   }, [values]);
 
   useEffect(() => {
+    setLoading(true)
     if (Array.isArray(availableEnvGroups)) {
       setEnvGroups(availableEnvGroups);
       setLoading(false);
@@ -113,12 +113,12 @@ const EnvGroupModal: React.FC<Props> = ({
           <Loading />
         </LoadingWrapper>
       );
-    } else if (!envGroups?.length) {
-      return (
-        <Placeholder>
-          No environment groups found in this namespace
-        </Placeholder>
-      );
+      // } else if (!envGroups?.length) {
+      //   return (
+      //     <Placeholder>
+      //       No environment groups found in this namespace
+      //     </Placeholder>
+      //   );
     } else {
       return envGroups
         .filter((envGroup) => {
@@ -246,10 +246,19 @@ const EnvGroupModal: React.FC<Props> = ({
         >
           Load Env Group
         </Button> </>
-      ) : (<Text >
-        No selectable Env Groups
-      </Text>)}
-    </Modal>
+      ) : (
+
+        loading ? (
+          < LoadingWrapper >
+            < Loading />
+          </LoadingWrapper>)
+          : (<Text >
+            No selectable Env Groups
+          </Text>)
+
+      )
+      }
+    </Modal >
   )
 }
 

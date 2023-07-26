@@ -116,6 +116,7 @@ type SharedServiceParams = {
     startCommand: ServiceString;
     type: ServiceType;
     canDelete: boolean;
+    expanded: boolean;
     cloudsql: CloudSql;
 }
 
@@ -128,6 +129,7 @@ export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
 const WebService = {
     default: (name: string, porterJson?: PorterJson): WebService => ({
         name,
+        expanded: true,
         cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
@@ -237,6 +239,7 @@ const WebService = {
     deserialize: (name: string, values: any, porterJson?: PorterJson): WebService => {
         return {
             name,
+            expanded: false,
             cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
             ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
@@ -296,6 +299,7 @@ export type WorkerService = SharedServiceParams & {
 const WorkerService = {
     default: (name: string, porterJson?: PorterJson): WorkerService => ({
         name,
+        expanded: true,
         cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
@@ -346,6 +350,7 @@ const WorkerService = {
     deserialize: (name: string, values: any, porterJson?: PorterJson): WorkerService => {
         return {
             name,
+            expanded: false,
             cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
             ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
@@ -377,6 +382,7 @@ export type JobService = SharedServiceParams & {
 const JobService = {
     default: (name: string, porterJson?: PorterJson): JobService => ({
         name,
+        expanded: true,
         cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
@@ -419,6 +425,7 @@ const JobService = {
     deserialize: (name: string, values: any, porterJson?: PorterJson): JobService => {
         return {
             name,
+            expanded: false,
             cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
             ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
@@ -442,6 +449,7 @@ export type ReleaseService = SharedServiceParams & {
 const ReleaseService = {
     default: (name: string, porterJson?: PorterJson): ReleaseService => ({
         name,
+        expanded: true,
         cpu: ServiceField.string('100', porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.release?.run),
@@ -479,6 +487,7 @@ const ReleaseService = {
     deserialize: (name: string, values: any, porterJson?: PorterJson): ReleaseService => {
         return {
             name,
+            expanded: false,
             cpu: ServiceField.string(values?.resources?.requests?.cpu?.replace('m', ''), porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
             ram: ServiceField.string(values?.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values?.container?.command ?? '', porterJson?.release?.run),

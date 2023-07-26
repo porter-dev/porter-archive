@@ -635,7 +635,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                     setFormState({ ...formState, serviceList: [...nonRelease, ...release] });
                   }}
                   services={formState.serviceList.filter(Service.isRelease)}
-                  defaultExpanded={true}
                   limitOne={true}
                   addNewText={"Add a new pre-deploy job"}
                   prePopulateService={Service.default("pre-deploy", "release", porterJsonWithPath?.porterJson)}

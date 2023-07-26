@@ -37,15 +37,19 @@ const Main: React.FC<PropsType> = () => {
   const [userId, setUserId] = useState<number | null>(null);
   const [version, setVersion] = useState<string | null>(null);
 
+  const context = useContext(Context);
+
   useEffect(() => {
     // Get capabilities to case on user info requirements
     api.getMetadata("", {}, {})
       .then((res) => {
-        setVersion(res.data?.version);
+        if (res.data?.version !== version) {
+          setVersion(res.data?.version);
+        }
       })
       .catch((err) => console.log(err));
 
-    let { setUser, setCurrentError } = useContext(Context);
+    let { setUser, setCurrentError } = context;
     let urlParams = new URLSearchParams(window.location.search);
     let error = urlParams.get("error");
     error && setCurrentError(error);
@@ -54,20 +58,40 @@ const Main: React.FC<PropsType> = () => {
       .then((res) => {
         if (res && res?.data) {
           setUser(res.data.id, res.data.email);
-          setIsLoggedIn(true);
-          setIsEmailVerified(res.data.email_verified);
-          setInitialized(true);
-          setHasInfo(res.data.company_name && true);
-          setLoading(false);
-          setUserId(res.data.id);
+          if (!isLoggedIn) {
+            setIsLoggedIn(true);
+          }
+          if (!isEmailVerified) {
+            setIsEmailVerified(res.data.email_verified);
+          }
+          if (!initialized) {
+            setInitialized(true);
+          }
+          if (!hasInfo) {
+            setHasInfo(res.data.company_name && true);
+          }
+          if (loading) {
+            setLoading(false);
+          }
+          if (userId !== res.data.id) {
+            setUserId(res.data.id);
+          }
         } else {
-          setIsLoggedIn(false);
-          setLoading(false);
+          if (isLoggedIn) {
+            setIsLoggedIn(false);
+          }
+          if (loading) {
+            setLoading(false);
+          }
         }
       })
       .catch((err) => {
-        setIsLoggedIn(false);
-        setLoading(false);
+        if (isLoggedIn) {
+          setIsLoggedIn(false);
+        }
+        if (loading) {
+          setLoading(false);
+        }
       });
 
     api

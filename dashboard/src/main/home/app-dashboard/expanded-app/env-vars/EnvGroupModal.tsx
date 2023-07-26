@@ -189,61 +189,32 @@ const EnvGroupModal: React.FC<Props> = ({
             <><SidebarSection>
 
               <GroupEnvPreview>
-
-                <>
-                  {isObject(envGroup.variables) ? (
+                {
+                  isObject(selectedEnvGroup?.variables) || isObject(selectedEnvGroup?.secret_variables) ? (
                     <>
-                      {Object.entries({
-                        ...Object.entries(envGroup?.variables || {}).map(([key, value]) => ({ source: 'variables', key, value })),
-                        ...Object.entries(envGroup.secret_variables || {}).map(([key, value]) => ({ source: 'secret_variables', key, value })),
-                      })?.map(
-                        ({ key, value, source }, i: number) => {
-                          // Preprocess non-string env values set via raw Helm values
-                          if (typeof value === "object") {
-                            value = JSON.stringify(value);
-                          } else {
-                            value = String(value);
-                          }
-
-                          return (
-                            <InputWrapper key={i}>
-                              <KeyInput
-                                placeholder="ex: key"
-                                width="270px"
-                                value={key}
-                                disabled
-                              />
-                              <Spacer x={0.5} inline />
-                              {source === 'secret_variables' ? (
-                                <KeyInput
-                                  placeholder="ex: value"
-                                  width="270px"
-                                  value={value}
-                                  disabled
-                                  type="password"
-                                />
-                              ) : (
-                                <MultiLineInput
-                                  placeholder="ex: value"
-                                  width="270px"
-                                  value={value}
-                                  disabled
-                                  rows={value?.split("\n").length}
-                                  spellCheck={false}
-                                ></MultiLineInput>
-                              )}
-                            </InputWrapper>
-                          );
-                        }
-                      )}
+                      {[
+                        ...Object.entries(selectedEnvGroup?.variables || {}).map(([key, value]) => ({
+                          source: 'variables',
+                          key,
+                          value,
+                        })),
+                        ...Object.entries(selectedEnvGroup?.secret_variables || {}).map(([key, value]) => ({
+                          source: 'secret_variables',
+                          key,
+                          value,
+                        })),
+                      ]
+                        .map(({ key, value, source }, index) => (
+                          <div key={index}>
+                            <span className="key">{key} = </span>
+                            <span className="value">{formattedEnvironmentValue(source === 'secret_variables' ? "****" : value)}</span>
+                          </div>
+                        ))}
                     </>
                   ) : (
-                    <NoVariablesTextWrapper>
-                      This env group has no variables yet
-                    </NoVariablesTextWrapper>
-                  )}
-                </>
-
+                    <>This environment group has no variables</>
+                  )
+                }
               </GroupEnvPreview>
               {/* {clashingKeys?.length > 0 && (
                 <>
@@ -346,6 +317,12 @@ const GroupEnvPreview = styled.pre`
   white-space: pre-line;
   word-break: break-word;
   user-select: text;
+  .key {
+    color: white;
+  }
+  .value {
+    color: #3a48ca;
+  }
 `;
 const GroupModalSections = styled.div`
   margin-top: 20px;

@@ -207,7 +207,6 @@ export const ExpandedEnvGroupFC = ({
   };
 
   const updateEnvGroup = (populatedEnvGroup: NewPopulatedEnvGroup) => {
-    console.log("HERE")
     const normal_variables: KeyValueType[] = Object.entries(
       populatedEnvGroup.variables || {}
     ).map(([key, value]) => ({
@@ -384,6 +383,7 @@ export const ExpandedEnvGroupFC = ({
       );
 
       const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") ?? [] };
+      const buildView = !_.isEmpty(parsedPorterApp.dockerfile) ? "docker" : "buildpacks"
 
       const [newServices, newEnvVars] = updateServicesAndEnvVariables(
         resChartData?.data,
@@ -459,6 +459,7 @@ export const ExpandedEnvGroupFC = ({
         const updatedPorterApp = {
           porter_yaml: base64Encoded,
           override_release: true,
+          ...PorterApp.empty(),
           build_context: newAppData?.build_context,
           repo_name: newAppData?.repo_name,
           git_branch: newAppData?.git_branch,
@@ -467,6 +468,26 @@ export const ExpandedEnvGroupFC = ({
           environment_groups: filteredEnvGroups?.map((env) => env.name),
           user_update: true,
         }
+
+        if (buildView === "docker") {
+          updatedPorterApp.dockerfile = newAppData?.dockerfile;
+          updatedPorterApp.builder = "null";
+          updatedPorterApp.buildpacks = "null";
+        } else {
+          updatedPorterApp.builder = newAppData?.builder;
+          updatedPorterApp.buildpacks = newAppData?.buildpacks?.join(",");
+          updatedPorterApp.dockerfile = "null";
+        }
+        await api.createPorterApp(
+          "<token>",
+          updatedPorterApp,
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+            stack_name: appName,
+          }
+        );
+
         await api.createPorterApp(
           "<token>",
           updatedPorterApp,

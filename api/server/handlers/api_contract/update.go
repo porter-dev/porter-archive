@@ -2,9 +2,11 @@ package api_contract
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/http"
 
 	"github.com/bufbuild/connect-go"
+
 	"github.com/google/uuid"
 	helpers "github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
@@ -48,6 +50,8 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 		return
 	}
+
+	fmt.Println("apiContract: ", apiContract)
 
 	if !project.CapiProvisionerEnabled && !c.Config().EnableCAPIProvisioner {
 		// return dummy data if capi provisioner disabled in project settings, and as env var

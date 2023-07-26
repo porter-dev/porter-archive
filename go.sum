@@ -1494,8 +1494,6 @@ github.com/pmezard/go-difflib v0.0.0-20151028094244-d8ed2627bdf0/go.mod h1:iKH77
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/polyfloyd/go-errorlint v0.0.0-20210722154253-910bb7978349/go.mod h1:wi9BfjxjF/bwiZ701TzmfKu6UKC357IOAtNr0Td0Lvw=
-github.com/porter-dev/api-contracts v0.0.72 h1:jNCwEsZNIDgecrLfET6oT2sZFFVxfbHQKpK+A4eWSGs=
-github.com/porter-dev/api-contracts v0.0.72/go.mod h1:qr2L58mJLr5DUGV5OPw3REiSrQvJq6TgkKyEWP95dyU=
 github.com/porter-dev/switchboard v0.0.2 h1:ipitPZbJqsiD0WDkWfzM7KtJqRdRRVP81IMtd8EebQY=
 github.com/porter-dev/switchboard v0.0.2/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=

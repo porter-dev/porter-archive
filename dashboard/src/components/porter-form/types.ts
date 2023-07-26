@@ -240,6 +240,9 @@ export type NewPopulatedEnvGroup = {
   variables: {
     [key: string]: string;
   };
+  secret_variables: {
+    [key: string]: string;
+  };
   linked_applications: any[];
   created_at: number;
 };

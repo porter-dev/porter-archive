@@ -59,6 +59,7 @@ const EnvGroupModal: React.FC<Props> = ({
   const [cloneSuccess, setCloneSuccess] = useState(false);
 
   const updateEnvGroups = async () => {
+    setLoading(true)
     let populateEnvGroupsPromises: any[] = [];
     try {
       populateEnvGroupsPromises = await api
@@ -77,21 +78,7 @@ const EnvGroupModal: React.FC<Props> = ({
       return;
     }
 
-    // const populateEnvGroupsPromises = envGroups.map((envGroup) =>
-    //   api
-    //     .getEnvGroup<PopulatedEnvGroup>(
-    //       "<token>",
-    //       {},
-    //       {
-    //         id: currentProject.id,
-    //         cluster_id: currentCluster.id,
-    //         name: envGroup.name,
-    //         namespace: envGroup.namespace,
-    //         version: envGroup.version,
-    //       }
-    //     )
-    //     .then((res) => res.data)
-    // );
+
 
     try {
       const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
@@ -119,28 +106,6 @@ const EnvGroupModal: React.FC<Props> = ({
     updateEnvGroups();
   }, []);
 
-  // const cloneEnvGroup = async () => {
-  //   setCloneSuccess(false);
-  //   try {
-  //     await api.cloneEnvGroup(
-  //       "<token>",
-  //       {
-  //         name: selectedEnvGroup.name,
-  //         namespace: namespace,
-  //         clone_name: selectedEnvGroup.name,
-  //         version: selectedEnvGroup.version,
-  //       },
-  //       {
-  //         id: currentProject.id,
-  //         cluster_id: currentCluster.id,
-  //         namespace: "porter-env-group",
-  //       }
-  //     );
-  //     setCloneSuccess(true);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
   const renderEnvGroupList = () => {
     if (loading) {
       return (
@@ -184,9 +149,6 @@ const EnvGroupModal: React.FC<Props> = ({
     if (shouldSync) {
 
       syncedEnvGroups.push(selectedEnvGroup);
-      // if (!newApp) {
-      //   cloneEnvGroup();
-      // }
       setSyncedEnvGroups(syncedEnvGroups);
     }
     else {
@@ -227,18 +189,61 @@ const EnvGroupModal: React.FC<Props> = ({
             <><SidebarSection>
 
               <GroupEnvPreview>
-                {isObject(selectedEnvGroup?.variables) ? (
-                  <>
-                    {Object.entries(selectedEnvGroup?.variables || {})
-                      .map(
-                        ([key, value]) =>
-                          `${key}=${formattedEnvironmentValue(value)}`
-                      )
-                      .join("\n")}
-                  </>
-                ) : (
-                  <>This environment group has no variables</>
-                )}
+
+                <>
+                  {isObject(envGroup.variables) ? (
+                    <>
+                      {Object.entries({
+                        ...Object.entries(envGroup?.variables || {}).map(([key, value]) => ({ source: 'variables', key, value })),
+                        ...Object.entries(envGroup.secret_variables || {}).map(([key, value]) => ({ source: 'secret_variables', key, value })),
+                      })?.map(
+                        ({ key, value, source }, i: number) => {
+                          // Preprocess non-string env values set via raw Helm values
+                          if (typeof value === "object") {
+                            value = JSON.stringify(value);
+                          } else {
+                            value = String(value);
+                          }
+
+                          return (
+                            <InputWrapper key={i}>
+                              <KeyInput
+                                placeholder="ex: key"
+                                width="270px"
+                                value={key}
+                                disabled
+                              />
+                              <Spacer x={0.5} inline />
+                              {source === 'secret_variables' ? (
+                                <KeyInput
+                                  placeholder="ex: value"
+                                  width="270px"
+                                  value={value}
+                                  disabled
+                                  type="password"
+                                />
+                              ) : (
+                                <MultiLineInput
+                                  placeholder="ex: value"
+                                  width="270px"
+                                  value={value}
+                                  disabled
+                                  rows={value?.split("\n").length}
+                                  spellCheck={false}
+                                ></MultiLineInput>
+                              )}
+                            </InputWrapper>
+                          );
+                        }
+                      )}
+                    </>
+                  ) : (
+                    <NoVariablesTextWrapper>
+                      This env group has no variables yet
+                    </NoVariablesTextWrapper>
+                  )}
+                </>
+
               </GroupEnvPreview>
               {/* {clashingKeys?.length > 0 && (
                 <>
@@ -247,14 +252,14 @@ const EnvGroupModal: React.FC<Props> = ({
                 </>
               )} */}
             </SidebarSection>
-              <Checkbox
+              {/* <Checkbox
                 checked={shouldSync}
                 toggleChecked={() =>
                   setShouldSync((!shouldSync))
                 }
               >
                 <Text color="helper">Sync Env Group</Text>
-              </Checkbox>
+              </Checkbox> */}
             </>
           )
 

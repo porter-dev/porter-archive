@@ -207,7 +207,8 @@ export const ExpandedEnvGroupFC = ({
   };
 
   const updateEnvGroup = (populatedEnvGroup: NewPopulatedEnvGroup) => {
-    const variables: KeyValueType[] = Object.entries(
+    console.log("HERE")
+    const normal_variables: KeyValueType[] = Object.entries(
       populatedEnvGroup.variables || {}
     ).map(([key, value]) => ({
       key: key,
@@ -217,17 +218,50 @@ export const ExpandedEnvGroupFC = ({
       deleted: false,
     }));
 
-    setOriginalEnvVars(
-      Object.entries(populatedEnvGroup?.variables || {}).map(([key, value]) => ({
-        key,
-        value,
-      }))
-    );
+    if (currentProject?.simplified_view_enabled) {
+      const secret_variables: KeyValueType[] = Object.entries(
+        populatedEnvGroup.secret_variables || {}
+      ).map(([key, value]) => ({
+        key: key,
+        value: value,
+        hidden: true,
+        locked: true,
+        deleted: false,
+      }));
+      const variables = [...normal_variables, ...secret_variables];
 
-    setCurrentEnvGroup({
-      ...populatedEnvGroup,
-      variables,
-    });
+
+      setOriginalEnvVars(
+        Object.entries({
+          ...(populatedEnvGroup?.variables || {}),
+          ...(populatedEnvGroup.secret_variables || {}),
+        }).map(([key, value]) => ({
+          key,
+          value,
+        }))
+      );
+
+      setCurrentEnvGroup({
+        ...populatedEnvGroup,
+        variables,
+      });
+
+    } else {
+
+      setOriginalEnvVars(
+        Object.entries(populatedEnvGroup?.variables || {}).map(([key, value]) => ({
+          key,
+          value,
+        }))
+      );
+
+      setCurrentEnvGroup({
+        ...populatedEnvGroup,
+        normal_variables,
+      });
+
+    }
+
   };
 
   const deleteEnvGroup = async () => {
@@ -343,26 +377,12 @@ export const ExpandedEnvGroupFC = ({
         resPorterApp?.data?.porter_yaml_path ?? "porter.yaml",
         newAppData
       );
-      // let envGroups: any[] = [];
-      // envGroups = await api
-      //   .getAllEnvGroups<any[]>(
-      //     "<token>",
-      //     {},
-      //     {
-      //       id: currentProject?.id,
-      //       cluster_id: currentCluster.id,
-      //     }
-      //   )
-      //   .then((res) => res.data);
-
-      // const populatedEnvGroups = await Promise.all(envGroups.environment_groups);
 
       let filteredEnvGroups: NewPopulatedEnvGroup[] = []
       filteredEnvGroups = allEnvGroups?.filter(envGroup =>
         envGroup.linked_applications && envGroup.linked_applications.includes(appName)
       );
-      //setValues(newAppData?.chart)
-      // annoying that we have to parse buildpacks like this but alas
+
       const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") ?? [] };
 
       const [newServices, newEnvVars] = updateServicesAndEnvVariables(
@@ -529,6 +549,7 @@ export const ExpandedEnvGroupFC = ({
         {}
       );
       //Create the Env Group
+      console.log("EATING")
       if (currentProject?.simplified_view_enabled) {
         try {
           let linkedApp: string[] = currentEnvGroup?.linked_applications;
@@ -551,9 +572,21 @@ export const ExpandedEnvGroupFC = ({
               const dataFromGetPorterApp = await getPorterApp({ appName: appName });
             });
           }
+
+
+          const populatedEnvGroup = await api
+            .getAllEnvGroups(
+              "<token>",
+              {},
+              {
+                id: currentProject.id,
+                cluster_id: currentCluster.id,
+              }
+            )
+            .then((res) => res.data.environment_groups);
+          updateEnvGroup(populatedEnvGroup.find((i: any) => i.name === envGroup.name));
           setButtonStatus("successful");
           setTimeout(() => setButtonStatus(""), 1000);
-
         }
         catch (error) {
           setButtonStatus("Couldn't update successfully");

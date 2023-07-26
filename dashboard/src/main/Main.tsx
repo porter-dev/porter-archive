@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Route, Redirect, Switch } from "react-router-dom";
 
 import api from "shared/api";
@@ -27,30 +27,25 @@ type StateType = {
   version: string;
 };
 
-export default class Main extends Component<PropsType, StateType> {
-  state = {
-    loading: true,
-    isLoggedIn: false,
-    isEmailVerified: false,
-    hasInfo: false,
-    initialized: localStorage.getItem("init") === "true",
-    local: false,
-    userId: null as number,
-    version: null as string,
-  };
+const Main: React.FC<PropsType> = () => {
+  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [hasInfo, setHasInfo] = useState(false);
+  const [initialized, setInitialized] = useState(localStorage.getItem("init") === "true");
+  const [local, setLocal] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [version, setVersion] = useState<string | null>(null);
 
-  componentDidMount() {
-
+  useEffect(() => {
     // Get capabilities to case on user info requirements
     api.getMetadata("", {}, {})
       .then((res) => {
-        this.setState({
-          version: res.data?.version,
-        })
+        setVersion(res.data?.version);
       })
       .catch((err) => console.log(err));
 
-    let { setUser, setCurrentError } = this.context;
+    let { setUser, setCurrentError } = useContext(Context);
     let urlParams = new URLSearchParams(window.location.search);
     let error = urlParams.get("error");
     error && setCurrentError(error);
@@ -59,88 +54,94 @@ export default class Main extends Component<PropsType, StateType> {
       .then((res) => {
         if (res && res?.data) {
           setUser(res.data.id, res.data.email);
-          this.setState({
-            isLoggedIn: true,
-            isEmailVerified: res.data.email_verified,
-            initialized: true,
-            hasInfo: res.data.company_name && true,
-            loading: false,
-            userId: res.data.id,
-          });
+          setIsLoggedIn(true);
+          setIsEmailVerified(res.data.email_verified);
+          setInitialized(true);
+          setHasInfo(res.data.company_name && true);
+          setLoading(false);
+          setUserId(res.data.id);
         } else {
-          this.setState({ isLoggedIn: false, loading: false });
+          setIsLoggedIn(false);
+          setLoading(false);
         }
       })
-      .catch((err) => this.setState({ isLoggedIn: false, loading: false }));
+      .catch((err) => {
+        setIsLoggedIn(false);
+        setLoading(false);
+      });
 
     api
       .getMetadata("", {}, {})
       .then((res) => {
-        this.context.setEdition(res.data?.version);
-        this.setState({ local: !res.data?.provisioner });
-        this.context.setEnableGitlab(res.data?.gitlab ? true : false);
+        useContext(Context).setEdition(res.data?.version);
+        setLocal(!res.data?.provisioner);
+        useContext(Context).setEnableGitlab(res.data?.gitlab ? true : false);
       })
       .catch((err) => console.log(err));
-  }
+  }, []);
 
-  initialize = () => {
-    this.setState({ isLoggedIn: true, initialized: true });
+  const initialize = () => {
+    setIsLoggedIn(true);
+    setInitialized(true);
     localStorage.setItem("init", "true");
   };
 
-  authenticate = () => {
+  const authenticate = () => {
     api
       .checkAuth("", {}, {})
       .then((res) => {
         if (res && res?.data) {
-          this.context.setUser(res?.data?.id, res?.data?.email);
-          this.setState({
-            isLoggedIn: true,
-            isEmailVerified: res?.data?.email_verified,
-            initialized: true,
-            hasInfo: res.data.company_name && true,
-            loading: false,
-            userId: res.data.id,
-          });
+          useContext(Context).setUser(res?.data?.id, res?.data?.email);
+          setIsLoggedIn(true);
+          setIsEmailVerified(res?.data?.email_verified);
+          setInitialized(true);
+          setHasInfo(res.data.company_name && true);
+          setLoading(false);
+          setUserId(res.data.id);
         } else {
-          this.setState({ isLoggedIn: false, loading: false });
+          setIsLoggedIn(false);
+          setLoading(false);
         }
       })
-      .catch((err) => this.setState({ isLoggedIn: false, loading: false }));
+      .catch((err) => {
+        setIsLoggedIn(false);
+        setLoading(false);
+      });
   };
 
-  handleLogOut = () => {
+  const handleLogOut = () => {
     // Clears local storage for proper rendering of clusters
     // Attempt user logout
     api
       .logOutUser("<token>", {}, {})
       .then(() => {
-        this.context.clearContext();
-        this.setState({ isLoggedIn: false, initialized: true });
+        useContext(Context).clearContext();
+        setIsLoggedIn(false);
+        setInitialized(true);
         localStorage.clear();
       })
       .catch((err) =>
-        this.context.setCurrentError(err.response?.data.errors[0])
+        useContext(Context).setCurrentError(err.response?.data.errors[0])
       );
   };
 
-  renderMain = () => {
-    if (this.state.loading || !this.state.version) {
+  const renderMain = () => {
+    if (loading || !version) {
       return <Loading />;
     }
 
     // if logged in but not verified, block until email verification
     if (
-      !this.state.local &&
-      this.state.isLoggedIn &&
-      !this.state.isEmailVerified
+      !local &&
+      isLoggedIn &&
+      !isEmailVerified
     ) {
       return (
         <Switch>
           <Route
             path="/"
             render={() => {
-              return <VerifyEmail handleLogOut={this.handleLogOut} />;
+              return <VerifyEmail handleLogOut={handleLogOut} />;
             }}
           />
         </Switch>
@@ -149,10 +150,10 @@ export default class Main extends Component<PropsType, StateType> {
 
     // Handle case where new user signs up via OAuth and has not set name and company
     if (
-      this.state.version === "production" &&
-      !this.state.hasInfo && 
-      this.state.userId > 9312 &&
-      this.state.isLoggedIn
+      version === "production" &&
+      !hasInfo && 
+      userId > 9312 &&
+      isLoggedIn
     ) {
       return (
         <Switch>
@@ -161,8 +162,8 @@ export default class Main extends Component<PropsType, StateType> {
             render={() => {
               return (
                 <SetInfo 
-                  handleLogOut={this.handleLogOut}
-                  authenticate={this.authenticate}
+                  handleLogOut={handleLogOut}
+                  authenticate={authenticate}
                 />
               );
             }}
@@ -176,8 +177,8 @@ export default class Main extends Component<PropsType, StateType> {
         <Route
           path="/login"
           render={() => {
-            if (!this.state.isLoggedIn) {
-              return <Login authenticate={this.authenticate} />;
+            if (!isLoggedIn) {
+              return <Login authenticate={authenticate} />;
             } else {
               return <Redirect to="/" />;
             }
@@ -186,8 +187,8 @@ export default class Main extends Component<PropsType, StateType> {
         <Route
           path="/register"
           render={() => {
-            if (!this.state.isLoggedIn) {
-              return <Register authenticate={this.authenticate} />;
+            if (!isLoggedIn) {
+              return <Register authenticate={authenticate} />;
             } else {
               return <Redirect to="/" />;
             }
@@ -196,7 +197,7 @@ export default class Main extends Component<PropsType, StateType> {
         <Route
           path="/password/reset/finalize"
           render={() => {
-            if (!this.state.isLoggedIn) {
+            if (!isLoggedIn) {
               return <ResetPasswordFinalize />;
             } else {
               return <Redirect to="/" />;
@@ -206,7 +207,7 @@ export default class Main extends Component<PropsType, StateType> {
         <Route
           path="/password/reset"
           render={() => {
-            if (!this.state.isLoggedIn) {
+            if (!isLoggedIn) {
               return <ResetPasswordInit />;
             } else {
               return <Redirect to="/" />;
@@ -217,7 +218,7 @@ export default class Main extends Component<PropsType, StateType> {
           exact
           path="/"
           render={() => {
-            if (this.state.isLoggedIn) {
+            if (isLoggedIn) {
               return <Redirect to="/dashboard" />;
             } else {
               return <Redirect to="/login" />;
@@ -229,17 +230,17 @@ export default class Main extends Component<PropsType, StateType> {
           render={(routeProps) => {
             const baseRoute = routeProps.match.params.baseRoute;
             if (
-              this.state.isLoggedIn &&
-              this.state.initialized &&
+              isLoggedIn &&
+              initialized &&
               PorterUrls.includes(baseRoute)
             ) {
               return (
                 <Home
                   key="home"
-                  currentProject={this.context.currentProject}
-                  currentCluster={this.context.currentCluster}
+                  currentProject={useContext(Context).currentProject}
+                  currentCluster={useContext(Context).currentCluster}
                   currentRoute={baseRoute as PorterUrl}
-                  logOut={this.handleLogOut}
+                  logOut={handleLogOut}
                 />
               );
             } else {
@@ -251,14 +252,12 @@ export default class Main extends Component<PropsType, StateType> {
     );
   };
 
-  render() {
-    return (
-      <>
-        {this.renderMain()}
-        <CurrentError currentError={this.context.currentError} />
-      </>
-    );
-  }
+  return (
+    <>
+      {renderMain()}
+      <CurrentError currentError={useContext(Context).currentError} />
+    </>
+  );
 }
 
-Main.contextType = Context;
+export default Main;

@@ -212,7 +212,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             cluster_id: currentCluster?.id,
           }
         )
-        .then((res) => res?.data?.environment_groups)
+        .then((res) => res?.data?.environment_groups) ?? []
         .catch((error) => {
           console.error("Failed to fetch environment groups:", error);
           return [];

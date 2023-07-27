@@ -75,6 +75,7 @@ interface PorterJsonWithPath {
 
 const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [porterApp, setPorterApp] = useState<PorterApp>(PorterApp.empty());
+  const [hovered, setHovered] = useState(false);
 
   const [imageTag, setImageTag] = useState("latest");
   const { currentCluster, currentProject } = useContext(Context);
@@ -372,68 +373,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         props.history.push(`/apps/${porterApp.name}`);
       }
 
-
-      const filteredEnvGroups = deletedEnvGroups.filter((deletedEnvGroup) => {
-        return !syncedEnvGroups.some((syncedEnvGroup) => {
-          return syncedEnvGroup.name === deletedEnvGroup.name;
-        });
-      });
-      setDeleteEnvGroups(filteredEnvGroups);
-      if (deletedEnvGroups) {
-        const removeApplicationToEnvGroupPromises = deletedEnvGroups?.map((envGroup: any) => {
-          return api.removeApplicationFromEnvGroup(
-            "<token>",
-            {
-              name: envGroup?.name,
-              app_name: porterApp.name,
-            },
-            {
-              project_id: currentProject.id,
-              cluster_id: currentCluster.id,
-              namespace: "porter-env-group",
-            }
-          );
-        });
-
-        try {
-          await Promise.all(removeApplicationToEnvGroupPromises);
-        } catch (err: any) {
-          const errMessage =
-            err?.response?.data?.error ??
-            err?.toString() ??
-            "An error occurred while deploying your app. Please try again.";
-          setDeploymentError(errMessage);
-          updateStackStep("stack-launch-failure", errMessage);
-        }
-      }
-      const addApplicationToEnvGroupPromises = syncedEnvGroups?.map(
-        (envGroup: any) => {
-          return api.addApplicationToEnvGroup(
-            "<token>",
-            {
-              name: envGroup?.name,
-              app_name: porterApp.name,
-            },
-            {
-              project_id: currentProject.id,
-              cluster_id: currentCluster.id,
-              namespace: "porter-env-group",
-            }
-          );
-        }
-      );
-
-      try {
-        await Promise.all(addApplicationToEnvGroupPromises);
-      } catch (err: any) {
-        const errMessage =
-          err?.response?.data?.error ??
-          err?.toString() ??
-          "An error occurred while deploying your app. Please try again.";
-        setDeploymentError(errMessage);
-        updateStackStep("stack-launch-failure", errMessage);
-      }
-
       // log analytics event that we successfully deployed
       updateStackStep("stack-launch-success");
 
@@ -451,6 +390,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       setDeploying(false);
     }
   };
+  const maxEnvGroupsReached = syncedEnvGroups.length >= 4;
+
 
   return (
     <CenterWrapper>
@@ -583,11 +524,18 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 />
                 {currentProject?.env_group_enabled && (
                   <>
-                    <LoadButton
-                      onClick={() => setShowEnvModal(true)}
-                    >
-                      <img src={sliders} /> Load from Env Group
-                    </LoadButton>
+                    <TooltipWrapper
+                      onMouseOver={() => setHovered(true)}
+                      onMouseOut={() => setHovered(false)}>
+                      <LoadButton
+                        disabled={maxEnvGroupsReached}
+                        onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
+                      >
+                        <img src={sliders} /> Load from Env Group
+                      </LoadButton>
+                      <TooltipText visible={maxEnvGroupsReached && hovered}>Max 4 Env Groups allowed</TooltipText>
+                    </TooltipWrapper>
+
                     {showEnvModal && <EnvGroupModal
                       setValues={(x: any) => {
                         setFormState({ ...formState, envVariables: x });
@@ -776,11 +724,13 @@ const AddRowButton = styled.div`
     justify-content: center;
   }
 `;
-const LoadButton = styled(AddRowButton)`
-  background: none;
-  border: 1px solid #ffffff55;
+const LoadButton = styled(AddRowButton) <{ disabled?: boolean }>`
+  background: ${(props) => (props.disabled ? "#aaaaaa55" : "none")};
+  border: 1px solid ${(props) => (props.disabled ? "#aaaaaa55" : "#ffffff55")};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
+
   > i {
-    color: #ffffff44;
+    color: ${(props) => (props.disabled ? "#aaaaaa44" : "#ffffff44")};
     font-size: 16px;
     margin-left: 8px;
     margin-right: 10px;
@@ -792,5 +742,29 @@ const LoadButton = styled(AddRowButton)`
     width: 14px;
     margin-left: 10px;
     margin-right: 12px;
+    opacity: ${(props) => (props.disabled ? "0.5" : "1")};
   }
 `;
+
+const TooltipWrapper = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const TooltipText = styled.span`
+  visibility: ${(props) => (props.visible ? 'visible' : 'hidden')};
+  width: 240px;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 1;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -120px;
+  opacity: ${(props) => (props.visible ? '1' : '0')};
+  transition: opacity 0.3s;
+  font-size: 12px;
+`;
+

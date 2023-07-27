@@ -16,6 +16,7 @@ import Input from "components/porter/Input";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Link from "components/porter/Link";
+import Select from "components/porter/Select";
 
 type Props = {
   authenticate: () => void;
@@ -47,6 +48,24 @@ const Register: React.FC<Props> = ({
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
   const [buttonDisabled, setButtonDisabled] = useState(false);
 
+  const [chosenReferralOption, setChosenReferralOption] = useState<string>("");
+  const [referralOtherText, setReferralOtherText] = useState<string>("");
+
+  const referralOptions = [
+    { value: "", label: "Please select an option:" },
+    { value: "Email", label: "Email" },
+    { value: "Word of mouth", label: "Word of mouth (friend, colleague, etc.)" },
+    { value: "YC", label: "YC" },
+    { value: "YC Startup School", label: "YC Startup School" },
+    { value: "Facebook", label: "Facebook" },
+    { value: "Instagram", label: "Instagram" },
+    { value: "Twitter", label: "Twitter" },
+    { value: "Search engine", label: "Search engine (Google, Bing, etc.)" },
+    { value: "LinkedIn", label: "LinkedIn" },
+    { value: "Porter blog", label: "Porter blog" },
+    { value: "Other", label: "Other" },
+  ]
+
   const handleRegister = (): void => {
     if (!emailRegex.test(email)) {
       setEmailError(true);
@@ -70,24 +89,25 @@ const Register: React.FC<Props> = ({
 
     // Check for valid input
     if (
-      emailRegex.test(email) && 
+      emailRegex.test(email) &&
       firstName !== "" &&
       lastName !== "" &&
       password !== "" &&
       companyName !== ""
     ) {
       setButtonDisabled(true);
-      
+
       // Attempt user registration
       api
         .registerUser(
           "",
-          { 
+          {
             email: email,
             password: password,
             first_name: firstName,
             last_name: lastName,
             company_name: companyName,
+            referral_method: chosenReferralOption === "Other" ? `Other: ${referralOtherText}` : chosenReferralOption,
           },
           {}
         )
@@ -138,12 +158,12 @@ const Register: React.FC<Props> = ({
     let qs = window.location.search;
     let urlParams = new URLSearchParams(qs);
     let email = urlParams.get('email');
-    
+
     if (email) {
       setEmail(email);
       setDisabled(true);
     }
-    
+
   }, []);
 
   useEffect(() => {
@@ -314,7 +334,26 @@ const Register: React.FC<Props> = ({
               type="password"
               error={(passwordError && "")}
             />
-            <Spacer height="30px" />
+            <Spacer y={1} />
+            <Text color="helper">(Optional) How did you hear about us?</Text>
+            <Spacer y={0.5} />
+            <Select
+              width="100%"
+              options={referralOptions}
+              setValue={setChosenReferralOption}
+            />
+            {chosenReferralOption === "Other" && (
+              <>
+                <Spacer y={0.5} />
+                <FeedbackInput
+                  autoFocus={true}
+                  value={referralOtherText}
+                  onChange={(e) => setReferralOtherText(e.target.value)}
+                  placeholder="Tell us more..."
+                />
+              </>
+            )}
+            <Spacer y={1} />
             <Button disabled={buttonDisabled} onClick={handleRegister} width="100%" height="40px">
               Continue
             </Button>
@@ -323,7 +362,7 @@ const Register: React.FC<Props> = ({
         {!disabled && (
           <>
             <Spacer y={1} />
-            <Text 
+            <Text
               size={13}
               color="helper"
             >
@@ -378,6 +417,19 @@ const Jumbotron = styled.div`
 const Logo = styled.img`
   height: 24px;
   user-select: none;
+`;
+
+const FeedbackInput = styled.textarea`
+  resize: none;
+  width: 100%;
+  height: 80px;
+  outline: 0;
+  padding: 14px;
+  color: white;
+  border: 0;
+  font-size: 13px;
+  font-family: "Work Sans", sans-serif;
+  background: #aaaabb11;
 `;
 
 const StyledGoogleIcon = styled(GoogleIcon)`

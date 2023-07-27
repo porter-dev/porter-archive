@@ -205,16 +205,22 @@ func LinkedApplications(ctx context.Context, a *kubernetes.Agent, environmentGro
 
 	cronListResp, err := a.Clientset.BatchV1().CronJobs(metav1.NamespaceAll).List(ctx,
 		metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("%s=%s", LabelKey_LinkedEnvironmentGroup, environmentGroupName),
+			LabelSelector: LabelKey_LinkedEnvironmentGroup,
 		})
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "unable to list linked cronjob applications")
 	}
+
 	for _, d := range cronListResp.Items {
-		apps = append(apps, LinkedPorterApplication{
-			Name:      d.Name,
-			Namespace: d.Namespace,
-		})
+		applicationsLinkedEnvironmentGroups := strings.Split(d.Labels[LabelKey_LinkedEnvironmentGroup], ".")
+		for _, linkedEnvironmentGroup := range applicationsLinkedEnvironmentGroups {
+			if linkedEnvironmentGroup == environmentGroupName {
+				apps = append(apps, LinkedPorterApplication{
+					Name:      d.Name,
+					Namespace: d.Namespace,
+				})
+			}
+		}
 	}
 
 	return apps, nil

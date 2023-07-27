@@ -66,7 +66,7 @@ const ProjectButton: React.FC<PropsType> = (props) => {
           </RefreshButton>
           {showGHAModal && currentProject != null && (
             <ProjectSelectionModal
-              currentProject={currentProject}
+              currentProject={props.currentProject}
               projects={props.projects}
               closeModal={() => setShowGHAModal(false)}
             />

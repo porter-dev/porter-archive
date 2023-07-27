@@ -288,18 +288,9 @@ class Sidebar extends Component<PropsType, StateType> {
             <i className="material-icons">double_arrow</i>
           </CollapseButton>
 
-          {this.context?.currentProject?.simplified_view_enabled ?
+          <ProjectSectionContainer />
 
-            <>
-              <ProjectButtonContianer />
 
-            </> :
-            (
-              <>
-                <ProjectSectionContainer />
-                <br />
-              </>
-            )}
           {/* <ClusterSideBar /> */}
 
 

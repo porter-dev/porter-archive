@@ -233,7 +233,7 @@ const ClusterIconAlt = styled(ClusterIcon)`
 const StyledClusterSection = styled.div`
   position: relative;
   margin-left: 3px;
-  background: #575c8c;
+  background: #545ec7;
   border-right: 1px solid #2c2e31;
 `;
 const MainSelector = styled.div`

@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 
 import { Context } from "shared/Context";
+import ProjectButton from "./ProjectButton";
 import ProjectSection from "./ProjectSection";
 
 type PropsType = {};
@@ -16,10 +17,15 @@ export default class ProjectSectionContainer extends Component<
 
   render() {
     return (
-      <ProjectSection
-        currentProject={this.context.currentProject}
-        projects={this.context.projects}
-      />
+      this.context.currentProject?.simplified_view_enabled ?
+        (<ProjectButton
+          currentProject={this.context.currentProject}
+          projects={this.context.projects}
+        />) :
+        (<ProjectSection
+          currentProject={this.context.currentProject}
+          projects={this.context.projects}
+        />)
     );
   }
 }

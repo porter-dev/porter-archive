@@ -212,7 +212,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             cluster_id: currentCluster?.id,
           }
         )
-        .then((res) => res?.data?.environment_groups) ?? []
+        .then((res) => res?.data?.environment_groups)
         .catch((error) => {
           console.error("Failed to fetch environment groups:", error);
           return [];
@@ -225,7 +225,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
       }
 
-      setSyncedEnvGroups(filteredEnvGroups);
+      setSyncedEnvGroups(filteredEnvGroups || []);
       setPorterJson(porterJson);
       setAppData(newAppData);
       // annoying that we have to parse buildpacks like this but alas

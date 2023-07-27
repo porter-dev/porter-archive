@@ -218,13 +218,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           console.error("Failed to fetch environment groups:", error);
           return [];
         });
-
-      // if (!envGroups || envGroups.length === 0) {
-      //   setSyncedEnvGroups([]);
-      //   return;
-      // }
-
-      //const populatedEnvGroups = await Promise.all(envGroups);
       let filteredEnvGroups: NewPopulatedEnvGroup[] = [];
 
       if (envGroups) {

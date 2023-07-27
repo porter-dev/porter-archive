@@ -69,8 +69,8 @@ type EnvGroup = {
 
 type EditableEnvGroup = Omit<PopulatedEnvGroup, "variables"> & {
   variables: KeyValueType[];
-  linked_applications: string[];
-  secret_variables: KeyValueType[];
+  linked_applications?: string[];
+  secret_variables?: KeyValueType[];
 };
 
 export const ExpandedEnvGroupFC = ({
@@ -214,17 +214,18 @@ export const ExpandedEnvGroupFC = ({
   };
 
   const updateEnvGroup = (populatedEnvGroup: NewPopulatedEnvGroup) => {
-    const normal_variables: KeyValueType[] = Object.entries(
-      populatedEnvGroup.variables || {}
-    ).map(([key, value]) => ({
-      key: key,
-      value: value,
-      hidden: value.includes("PORTERSECRET"),
-      locked: value.includes("PORTERSECRET"),
-      deleted: false,
-    }));
+
 
     if (currentProject?.simplified_view_enabled) {
+      const normal_variables: KeyValueType[] = Object.entries(
+        populatedEnvGroup.variables || {}
+      ).map(([key, value]) => ({
+        key: key,
+        value: value,
+        hidden: value.includes("PORTERSECRET"),
+        locked: value.includes("PORTERSECRET"),
+        deleted: false,
+      }));
       const secret_variables: KeyValueType[] = Object.entries(
         populatedEnvGroup.secret_variables || {}
       ).map(([key, value]) => ({
@@ -253,6 +254,15 @@ export const ExpandedEnvGroupFC = ({
       });
 
     } else {
+      const variables: KeyValueType[] = Object.entries(
+        populatedEnvGroup.variables || {}
+      ).map(([key, value]) => ({
+        key: key,
+        value: value,
+        hidden: value.includes("PORTERSECRET"),
+        locked: value.includes("PORTERSECRET"),
+        deleted: false,
+      }));
 
       setOriginalEnvVars(
         Object.entries(populatedEnvGroup?.variables || {}).map(([key, value]) => ({
@@ -263,11 +273,10 @@ export const ExpandedEnvGroupFC = ({
 
       setCurrentEnvGroup({
         ...populatedEnvGroup,
-        normal_variables,
+        variables,
       });
 
     }
-
   };
 
   const deleteEnvGroup = async () => {

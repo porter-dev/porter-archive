@@ -575,11 +575,7 @@ export const ExpandedEnvGroupFC = ({
         }),
         {}
       );
-      // const mergedVariables = { ...normalVariables, ...secretVariables };
-      // variables = Object.entries(mergedVariables).map(([key, value]) => ({ key, value }));
-      // console.log(variables)
-
-      //Create the Env Group
+      
       if (currentProject?.simplified_view_enabled) {
         try {
 

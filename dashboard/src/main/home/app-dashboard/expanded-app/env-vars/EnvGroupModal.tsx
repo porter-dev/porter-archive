@@ -59,9 +59,9 @@ const EnvGroupModal: React.FC<Props> = ({
   const [cloneSuccess, setCloneSuccess] = useState(false);
 
   const updateEnvGroups = async () => {
-    let populateEnvGroupsPromises: any[] = [];
+    let populatedEnvGroups: any[] = [];
     try {
-      populateEnvGroupsPromises = await api
+      populatedEnvGroups = await api
         .getAllEnvGroups<any[]>(
           "<token>",
           {},
@@ -80,7 +80,7 @@ const EnvGroupModal: React.FC<Props> = ({
 
 
     try {
-      const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
+
       setEnvGroups(populatedEnvGroups)
       setLoading(false)
 
@@ -215,12 +215,6 @@ const EnvGroupModal: React.FC<Props> = ({
                       )
                     }
                   </GroupEnvPreview>
-                  {/* {clashingKeys?.length > 0 && (
-                <>
-                  <ClashingKeyRowDivider />
-                  {this.renderEnvGroupPreview(clashingKeys)}
-                </>
-              )} */}
                 </SidebarSection>
 
                 </>
@@ -346,13 +340,13 @@ const GroupModalSections = styled.div`
 const ColumnContainer = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: stretch; /* Ensure child elements stretch to full width */
+  align-items: stretch; 
 `;
 
 const ScrollableContainer = styled.div`
-  flex: 1; /* Allow the container to take remaining vertical space */
+  flex: 1; 
   overflow-y: auto;
-  max-height: 300px; /* Adjust the max-height as per your requirements */
+  max-height: 300px; 
 `;
 
 const SubmitButtonContainer = styled.div`

@@ -41,7 +41,7 @@ import ActivityFeed from "./activity-feed/ActivityFeed";
 import MetricsSection from "./MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
-import _, { flatMapDepth } from "lodash";
+import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import { NewPopulatedEnvGroup, PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
@@ -130,7 +130,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   }
   const eventId = queryParams.get('event_id');
   const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
-  const [values, setValues] = React.useState<string>();
   useEffect(() => {
     if (!_.isEqual(_.omitBy(porterApp, _.isEmpty), _.omitBy(tempPorterApp, _.isEmpty))) {
       setButtonStatus("");
@@ -226,10 +225,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
       }
 
-      setSyncedEnvGroups(filteredEnvGroups || []);
+      setSyncedEnvGroups(filteredEnvGroups);
       setPorterJson(porterJson);
       setAppData(newAppData);
-      setValues(newAppData?.chart)
       // annoying that we have to parse buildpacks like this but alas
       const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") ?? [] };
       setPorterApp(parsedPorterApp);
@@ -302,7 +300,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         }
       }
     } catch (err) {
-      console.log(err)
       // TODO: handle error
     } finally {
       setIsLoading(false);
@@ -403,7 +400,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
-        // console.log(syncedEnvGroups?.map((env) => env.name))
         const updatedPorterApp = {
           porter_yaml: base64Encoded,
           override_release: true,
@@ -412,7 +408,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           repo_name: tempPorterApp.repo_name,
           git_branch: tempPorterApp.git_branch,
           buildpacks: "",
-          //full_helm_values: yaml.dump(values),
           environment_groups: syncedEnvGroups?.map((env) => env.name),
           user_update: true,
           ...options,

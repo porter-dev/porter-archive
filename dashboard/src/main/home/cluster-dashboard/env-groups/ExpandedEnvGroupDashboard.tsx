@@ -14,7 +14,6 @@ import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
 import Loading from "components/Loading";
 import Placeholder from "components/Placeholder";
-import { any } from "zod";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -84,7 +83,6 @@ const EnvGroupDashboard = (props: PropsType) => {
     }
 
     const envGroup = envGroups.find((envGroup) => envGroup.name === name);
-    console.log(envGroup)
     setExpandedEnvGroup(envGroup);
   }, [envGroups, params]);
 

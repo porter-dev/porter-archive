@@ -3,6 +3,22 @@ import { overrideObjectValues } from "./utils";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterJson } from "./schema";
 
+export type ImageInfo = {
+    repository: string;
+    tag: string;
+}
+export const ImageInfo = {
+    BASE_IMAGE: {
+        repository: "public.ecr.aws/o1j4x7p4/hello-porter",
+        tag: "latest",
+    } as const,
+
+    isEquivalent: (a: ImageInfo, b: ImageInfo) => {
+        return a.repository == b.repository && a.tag == b.tag;
+    }
+}
+
+
 export type Service = WorkerService | WebService | JobService | ReleaseService;
 export type ServiceType = 'web' | 'worker' | 'job' | 'release';
 

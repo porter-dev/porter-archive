@@ -25,7 +25,7 @@ import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-gro
 import GithubActionModal from "./GithubActionModal";
 import Error from "components/porter/Error";
 import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
-import { Service } from "./serviceTypes";
+import { ImageInfo, Service } from "./serviceTypes";
 import GithubConnectModal from "./GithubConnectModal";
 import Link from "components/porter/Link";
 import { BuildMethod, PorterApp } from "../types/porterApp";
@@ -322,10 +322,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
-      const imageInfo = {
-        repository: "",
-        tag: "",
-      };
+      const imageInfo: ImageInfo = ImageInfo.BASE_IMAGE;
 
       const porterAppRequest = {
         porter_yaml: base64Encoded,
@@ -581,7 +578,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   fileUpload={true}
                   syncedEnvGroups={syncedEnvGroups}
                 />
-                {currentProject.env_group_enabled && (
+                {currentProject?.env_group_enabled && (
                   <>
                     <LoadButton
                       onClick={() => setShowEnvModal(true)}
@@ -635,7 +632,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                     setFormState({ ...formState, serviceList: [...nonRelease, ...release] });
                   }}
                   services={formState.serviceList.filter(Service.isRelease)}
-                  defaultExpanded={true}
                   limitOne={true}
                   addNewText={"Add a new pre-deploy job"}
                   prePopulateService={Service.default("pre-deploy", "release", porterJsonWithPath?.porterJson)}

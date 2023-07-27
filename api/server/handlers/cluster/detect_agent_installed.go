@@ -54,6 +54,7 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	res := &types.DetectAgentResponse{
 		Version:       getAgentVersionFromDeployment(depl),
 		ShouldUpgrade: false,
+		Image:         getImageFromDeployment(depl),
 	}
 
 	if res.Version != "v3" {
@@ -73,4 +74,11 @@ func getAgentVersionFromDeployment(depl *v1.Deployment) string {
 	}
 
 	return "v1"
+}
+
+func getImageFromDeployment(depl *v1.Deployment) string {
+	if len(depl.Spec.Template.Spec.Containers) > 0 {
+		return depl.Spec.Template.Spec.Containers[0].Image
+	}
+	return ""
 }

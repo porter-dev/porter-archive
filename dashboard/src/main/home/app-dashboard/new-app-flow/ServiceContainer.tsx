@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo } from "react";
+import React from "react";
 import AnimateHeight, { Height } from "react-animate-height";
 import styled from "styled-components";
 import _ from "lodash";
@@ -20,7 +20,6 @@ interface ServiceProps {
   chart?: any;
   editService: (service: Service) => void;
   deleteService: () => void;
-  defaultExpanded: boolean;
   setExpandedJob: (x: string) => void;
 }
 
@@ -29,12 +28,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   chart,
   deleteService,
   editService,
-  defaultExpanded,
   setExpandedJob,
 }) => {
-  const [showExpanded, setShowExpanded] = React.useState<boolean>(
-    defaultExpanded
-  );
   const [height, setHeight] = React.useState<Height>("auto");
 
   // TODO: calculate heights instead of hardcoding them
@@ -98,10 +93,10 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   return (
     <>
       <ServiceHeader
-        showExpanded={showExpanded}
-        onClick={() => setShowExpanded(!showExpanded)}
+        showExpanded={service.expanded}
+        onClick={() => editService({ ...service, expanded: !service.expanded })}
         chart={chart}
-        bordersRounded={!getHasBuiltImage() && !showExpanded}
+        bordersRounded={!getHasBuiltImage() && !service.expanded}
       >
         <ServiceTitle>
           <ActionButton>
@@ -111,14 +106,17 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {service.name.trim().length > 0 ? service.name : "New Service"}
         </ServiceTitle>
         {service.canDelete && (
-          <ActionButton onClick={deleteService}>
+          <ActionButton onClick={(e) => {
+            e.stopPropagation();
+            deleteService();
+          }}>
             <span className="material-icons">delete</span>
           </ActionButton>
         )}
       </ServiceHeader>
-      <AnimateHeight height={showExpanded ? height : 0}>
+      <AnimateHeight height={service.expanded ? height : 0}>
         <StyledSourceBox
-          showExpanded={showExpanded}
+          showExpanded={service.expanded}
           chart={chart}
           hasFooter={chart && service && getHasBuiltImage()}
         >

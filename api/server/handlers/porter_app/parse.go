@@ -273,13 +273,11 @@ func buildUmbrellaChartValues(
 		}
 	}
 
-	if imageInfo.Repository != "" && imageInfo.Tag != "" {
-		values["global"] = map[string]interface{}{
-			"image": map[string]interface{}{
-				"repository": imageInfo.Repository,
-				"tag":        imageInfo.Tag,
-			},
-		}
+	values["global"] = map[string]interface{}{
+		"image": map[string]interface{}{
+			"repository": imageInfo.Repository,
+			"tag":        imageInfo.Tag,
+		},
 	}
 
 	return values, nil

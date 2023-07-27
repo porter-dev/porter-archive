@@ -147,6 +147,13 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 		cloneEnvGroup(c, w, r, k8sAgent, request.EnvGroups, namespace)
 	}
+
+	if imageInfo.Repository == "" || imageInfo.Tag == "" {
+		err = telemetry.Error(ctx, span, nil, "incomplete image info provided: must provide both repository and tag")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
 	chart, values, preDeployJobValues, err := parse(
 		ctx,
 		ParseConf{

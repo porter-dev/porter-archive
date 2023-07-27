@@ -30,7 +30,7 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
       case "FAILED":
         return <Text color="#FF6060">Pre-deploy failed</Text>;
       default:
-        return <Text color="#aaaabb66">Pre-deploy in progress...</Text>;
+        return <Text color="helper">Pre-deploy in progress...</Text>;
     }
   };
 

@@ -552,26 +552,6 @@ export const ExpandedEnvGroupFC = ({
     return [newServices, envVars];
   };
 
-  // const pollForEnvGroup = async (name, currentProject, currentCluster, maxAttempts = 5, delay = 1000) => {
-  //   for (let i = 0; i < maxAttempts; i++) {
-  //     const populatedEnvGroup = await api.getAllEnvGroups("<token>", {}, {
-  //       id: currentProject.id,
-  //       cluster_id: currentCluster.id,
-  //     }).then(res => res.data.environment_groups);
-
-  //     const newEnvGroup = populatedEnvGroup.find((i: any) => i.name === name);
-  //     if (newEnvGroup) {
-  //       return newEnvGroup;
-  //     }
-
-  //     // Wait before polling again
-  //     await new Promise(resolve => setTimeout(resolve, delay));
-  //   }
-
-  //   throw new Error(`Environment group ${name} not ready after ${maxAttempts} attempts`);
-  // };
-
-
   const handleUpdateValues = async () => {
     setButtonStatus("loading");
     const name = currentEnvGroup.name;

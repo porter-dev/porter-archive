@@ -108,8 +108,6 @@ func createVersionedEnvironmentGroupInNamespace(ctx context.Context, a *kubernet
 	ctx, span := telemetry.NewSpan(ctx, "create-environment-group-on-cluster")
 	defer span.End()
 
-	fmt.Println("STEFAN", environmentGroup.Variables, environmentGroup.SecretVariables)
-
 	configMap := v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s.%d", environmentGroup.Name, environmentGroup.Version),

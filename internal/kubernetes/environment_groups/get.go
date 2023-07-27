@@ -2,7 +2,6 @@ package environment_groups
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -67,12 +66,11 @@ func EnvironmentGroupInTargetNamespace(ctx context.Context, a *kubernetes.Agent,
 		telemetry.AttributeKV{Key: "environment-group-version", Value: inp.Version},
 		telemetry.AttributeKV{Key: "namespace", Value: inp.Namespace},
 	)
-	fmt.Println("STEFAN", inp.Name)
+
 	environmentGroups, err := ListEnvironmentGroups(ctx, a, WithEnvironmentGroupName(inp.Name), WithEnvironmentGroupVersion(inp.Version), WithNamespace(inp.Namespace))
 	if err != nil {
 		return eg, telemetry.Error(ctx, span, err, "unable to list environment groups in target namespace")
 	}
-	fmt.Println("STEFAN", environmentGroups)
 
 	if len(environmentGroups) > 1 {
 		telemetry.WithAttributes(span,

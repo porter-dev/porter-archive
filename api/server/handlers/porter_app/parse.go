@@ -100,6 +100,8 @@ type ParseConf struct {
 	ShouldValidateHelmValues bool
 	// FullHelmValues if provided, override anything specified in porter.yaml. Used as an escape hatch for support
 	FullHelmValues string
+	// AddCustomNodeSelector is a flag to determine whether to add porter.run/workload-kind: application to the nodeselector attribute of the helm values
+	AddCustomNodeSelector bool
 }
 
 func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
@@ -175,7 +177,7 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 		Release:  parsed.Release,
 	}
 
-	values, err := buildUmbrellaChartValues(application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate)
+	values, err := buildUmbrellaChartValues(application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate, conf.AddCustomNodeSelector)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values", err)
 	}
@@ -189,7 +191,7 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 	// return the parsed release values for the release job chart, if they exist
 	var preDeployJobValues map[string]interface{}
 	if application.Release != nil && application.Release.Run != nil {
-		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate)
+		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate, conf.AddCustomNodeSelector)
 	}
 
 	return chart, convertedValues, preDeployJobValues, nil
@@ -204,6 +206,7 @@ func buildUmbrellaChartValues(
 	injectLauncher bool,
 	shouldValidateHelmValues bool,
 	userUpdate bool,
+	addCustomNodeSelector bool,
 ) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
@@ -216,7 +219,7 @@ func buildUmbrellaChartValues(
 	for name, service := range application.Services {
 		serviceType := getType(name, service)
 
-		defaultValues := getDefaultValues(service, application.Env, syncedEnv, serviceType, existingValues, name, userUpdate)
+		defaultValues := getDefaultValues(service, application.Env, syncedEnv, serviceType, existingValues, name, userUpdate, addCustomNodeSelector)
 		convertedConfig := convertMap(service.Config).(map[string]interface{})
 		helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
 
@@ -312,8 +315,8 @@ func validateHelmValues(values map[string]interface{}, shouldValidateHelmValues 
 	return ""
 }
 
-func buildPreDeployJobChartValues(release *Service, env map[string]string, synced_env []*SyncedEnvSection, imageInfo types.ImageInfo, injectLauncher bool, existingValues map[string]interface{}, name string, userUpdate bool) map[string]interface{} {
-	defaultValues := getDefaultValues(release, env, synced_env, "job", existingValues, name+"-r", userUpdate)
+func buildPreDeployJobChartValues(release *Service, env map[string]string, synced_env []*SyncedEnvSection, imageInfo types.ImageInfo, injectLauncher bool, existingValues map[string]interface{}, name string, userUpdate bool, addCustomNodeSelector bool) map[string]interface{} {
+	defaultValues := getDefaultValues(release, env, synced_env, "job", existingValues, name+"-r", userUpdate, addCustomNodeSelector)
 	convertedConfig := convertMap(release.Config).(map[string]interface{})
 	helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
 
@@ -353,7 +356,7 @@ func getType(name string, service *Service) string {
 	return "worker"
 }
 
-func getDefaultValues(service *Service, env map[string]string, synced_env []*SyncedEnvSection, appType string, existingValues map[string]interface{}, name string, userUpdate bool) map[string]interface{} {
+func getDefaultValues(service *Service, env map[string]string, synced_env []*SyncedEnvSection, appType string, existingValues map[string]interface{}, name string, userUpdate bool, addCustomNodeSelector bool) map[string]interface{} {
 	var defaultValues map[string]interface{}
 	var runCommand string
 	if service.Run != nil {
@@ -375,6 +378,13 @@ func getDefaultValues(service *Service, env map[string]string, synced_env []*Syn
 				"synced": syncedEnvs,
 			},
 		},
+		"nodeSelector": map[string]interface{}{},
+	}
+
+	if addCustomNodeSelector {
+		defaultValues["nodeSelector"] = map[string]interface{}{
+			"porter.run/workload-kind": "application",
+		}
 	}
 
 	return defaultValues

@@ -23,6 +23,8 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import SidebarLink from "./SidebarLink";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
 import ClusterListContainer from "./ClusterListContainer";
+import ProjectButtonContainer from "./ProjectButtonContainer";
+import ProjectButtonContianer from "./ProjectButtonContainer";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -176,6 +178,29 @@ class Sidebar extends Component<PropsType, StateType> {
     } else if (currentProject.simplified_view_enabled) {
       return (
         <ScrollWrapper>
+          {this.props.isAuthorized("settings", "", [
+            "get",
+            "update",
+            "delete",
+          ]) && (
+              <NavButton path={"/project-settings"}>
+                <Img src={settings} />
+                Project settings
+              </NavButton>
+            )}
+          {this.props.isAuthorized("integrations", "", [
+            "get",
+            "create",
+            "update",
+            "delete",
+          ]) && (
+              <NavButton path={"/integrations"}>
+                <Img src={integrations} />
+                Integrations
+              </NavButton>
+            )}
+          <ClusterListContainer />
+          <Spacer y={.5} />
           <NavButton
             path="/apps"
             active={window.location.pathname.startsWith("/apps")}
@@ -201,22 +226,12 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={sliders} />
             Env groups
           </NavButton>}
-          {this.props.isAuthorized("integrations", "", [
-            "get",
-            "create",
-            "update",
-            "delete",
-          ]) && (
-              <NavButton path={"/integrations"}>
-                <Img src={integrations} />
-                Integrations
-              </NavButton>
-            )}
           {this.props.isAuthorized("settings", "", [
             "get",
             "update",
             "delete",
           ]) && (
+
               <NavButton
                 path={"/cluster-dashboard"}
 
@@ -226,16 +241,6 @@ class Sidebar extends Component<PropsType, StateType> {
               >
                 <Img src={infra} />
                 Infrastructure
-              </NavButton>
-            )}
-          {this.props.isAuthorized("settings", "", [
-            "get",
-            "update",
-            "delete",
-          ]) && (
-              <NavButton path={"/project-settings"}>
-                <Img src={settings} />
-                Project settings
               </NavButton>
             )}
 
@@ -275,11 +280,21 @@ class Sidebar extends Component<PropsType, StateType> {
             <i className="material-icons">double_arrow</i>
           </CollapseButton>
 
-          <ProjectSectionContainer />
-          <ClusterListContainer />
+          {this.context?.currentProject?.simplified_view_enabled ?
+
+            <>
+              <ProjectButtonContianer />
+
+            </> :
+            (
+              <>
+                <ProjectSectionContainer />
+                <br />
+              </>
+            )}
           {/* <ClusterSideBar /> */}
 
-          <br />
+
 
           {this.renderProjectContents()}
           {this.context.featurePreview && (
@@ -300,7 +315,7 @@ export default withRouter(withAuth(Sidebar));
 
 const ScrollWrapper = styled.div`
   overflow-y: auto;
-  padding-bottom: 25px;
+  padding-bottom: 0px;
   max-height: calc(100vh - 95px);
 `;
 

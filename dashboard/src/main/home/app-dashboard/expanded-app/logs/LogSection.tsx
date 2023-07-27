@@ -265,19 +265,8 @@ const LogSection: React.FC<Props> = ({
         }
         <LogsSectionWrapper>
           <StyledLogsSection>
-            {isLoading || (logs.length == 0 && selectedDate == null) ? (
-              <Loading message="Waiting for logs..." />
-            ) : logs.length == 0 ? (
-              <>
-                <Message>
-                  No logs found.
-                  <Highlight onClick={refresh}>
-                    <i className="material-icons">autorenew</i>
-                    Refresh
-                  </Highlight>
-                </Message>
-              </>
-            ) : (
+            {isLoading && <Loading message="Waiting for logs..." />}
+            {!isLoading && logs.length !== 0 && (
               <>
                 <LoadMoreButton
                   active={
@@ -301,6 +290,18 @@ const LogSection: React.FC<Props> = ({
                   Load more
                 </LoadMoreButton>
               </>
+            )}
+            {!isLoading && logs.length === 0 && selectedDate != null && (
+              <Message>
+                No logs found for this time range.
+                <Highlight onClick={() => setSelectedDate(undefined)}>
+                  <i className="material-icons">autorenew</i>
+                  Reset
+                </Highlight>
+              </Message>
+            )}
+            {!isLoading && logs.length === 0 && selectedDate == null && (
+              <Loading message="Waiting for logs..." />
             )}
             <div ref={scrollToBottomRef} />
           </StyledLogsSection>

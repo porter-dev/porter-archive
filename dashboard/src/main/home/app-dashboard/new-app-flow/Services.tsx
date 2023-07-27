@@ -30,7 +30,6 @@ const Services: React.FC<ServicesProps> = ({
   setServices,
   addNewText,
   chart,
-  defaultExpanded = false,
   limitOne = false,
   setExpandedJob,
   prePopulateService,
@@ -109,7 +108,6 @@ const Services: React.FC<ServicesProps> = ({
                   const newServices = services.filter((_, i) => i !== index);
                   setServices(newServices);
                 }}
-                defaultExpanded={defaultExpanded}
               />
             );
           })}

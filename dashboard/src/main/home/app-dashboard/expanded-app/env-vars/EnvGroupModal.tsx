@@ -113,12 +113,6 @@ const EnvGroupModal: React.FC<Props> = ({
           <Loading />
         </LoadingWrapper>
       );
-      // } else if (!envGroups?.length) {
-      //   return (
-      //     <Placeholder>
-      //       No environment groups found in this namespace
-      //     </Placeholder>
-      //   );
     } else {
       const sortedEnvGroups = envGroups.slice().sort((a, b) => a.name.localeCompare(b.name));
 

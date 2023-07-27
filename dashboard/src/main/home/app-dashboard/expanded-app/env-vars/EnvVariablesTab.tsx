@@ -73,16 +73,12 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
     try {
       const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
       setEnvGroups(populatedEnvGroups)
-      //console.log(populatedEnvGroups)
-      // setLoading(false)
       const filteredEnvGroups = populatedEnvGroups?.filter(envGroup =>
         envGroup.linked_applications && envGroup.linked_applications.includes(appData.chart.name)
       );
       setSyncedEnvGroups(filteredEnvGroups)
 
     } catch (error) {
-      // setLoading(false)
-      // setError(true);
       return;
     }
   }
@@ -223,11 +219,6 @@ const LoadButton = styled(AddRowButton) <{ disabled?: boolean }>`
   }
 `;
 
-const InputWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  margin-top: 5px;
-`;
 
 type InputProps = {
   disabled?: boolean;
@@ -292,16 +283,6 @@ export const MultiLineInput = styled.textarea<InputProps>`
   }
 `;
 
-const Label = styled.div`
-  color: #ffffff;
-  margin-bottom: 10px;
-`;
-
-const StyledInputArray = styled.div`
-  margin-bottom: 15px;
-  margin-top: 22px;
-`;
-
 const fadeIn = keyframes`
   from {
     opacity: 0;
@@ -309,86 +290,6 @@ const fadeIn = keyframes`
   to {
     opacity: 1;
   }
-`;
-
-const StyledCard = styled.div`
-  border: 1px solid #ffffff44;
-  background: #ffffff11;
-  margin-bottom: 5px;
-  border-radius: 8px;
-  margin-top: 15px;
-  padding: 10px 14px;
-  overflow: hidden;
-  font-size: 13px;
-  animation: ${fadeIn} 0.5s;
-`;
-
-const Flex = styled.div`
-  display: flex;
-  height: 25px;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const ContentContainer = styled.div`
-  display: flex;
-  height: 40px;
-  width: 100%;
-  align-items: center;
-`;
-
-const EventInformation = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  height: 100%;
-`;
-
-const EventName = styled.div`
-  font-family: "Work Sans", sans-serif;
-  font-weight: 500;
-  color: #ffffff;
-`;
-
-const ActionContainer = styled.div`
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  height: 100%;
-`;
-
-const ActionButton = styled.button`
-  position: relative;
-  border: none;
-  background: none;
-  color: white;
-  padding: 5px;
-  width: 30px;
-  height: 30px;
-  margin-left: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  cursor: pointer;
-  color: #aaaabb;
-  border: 1px solid #ffffff00;
-
-  :hover {
-    background: #ffffff11;
-    border: 1px solid #ffffff44;
-  }
-
-  > span {
-    font-size: 20px;
-  }
-`;
-
-const NoVariablesTextWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff99;
 `;
 
 const TooltipWrapper = styled.div`

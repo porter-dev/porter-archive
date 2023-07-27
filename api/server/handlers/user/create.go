@@ -109,6 +109,7 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		FirstName:           user.FirstName,
 		LastName:            user.LastName,
 		CompanyName:         user.CompanyName,
+		ReferralMethod:      request.ReferralMethod,
 	}))
 
 	if redirect != "" {

@@ -1518,6 +1518,7 @@ const registerUser = baseApi<{
   first_name: string;
   last_name: string;
   company_name: string;
+  referral_method?: string;
 }>("POST", "/api/users");
 
 const rollbackChart = baseApi<

@@ -120,7 +120,9 @@ const EnvGroupModal: React.FC<Props> = ({
       //     </Placeholder>
       //   );
     } else {
-      return envGroups
+      const sortedEnvGroups = envGroups.slice().sort((a, b) => a.name.localeCompare(b.name));
+
+      return sortedEnvGroups
         .filter((envGroup) => {
           if (!Array.isArray(syncedEnvGroups)) {
             return true;
@@ -176,88 +178,93 @@ const EnvGroupModal: React.FC<Props> = ({
         Load env group
       </Text>
       <Spacer height="15px" />
-      {syncedEnvGroups.length != envGroups.length ? (<>
-        <Text color="helper">
-          Select an Env Group to load into your application.
-        </Text>
-        <Spacer y={0.5} />
-        <GroupModalSections>
-          <SidebarSection $expanded={!selectedEnvGroup}>
-            <EnvGroupList>{renderEnvGroupList()}</EnvGroupList>
-          </SidebarSection>
-          {selectedEnvGroup && (
-            <><SidebarSection>
+      <ColumnContainer>
 
-              <GroupEnvPreview>
-                {
-                  isObject(selectedEnvGroup?.variables) || isObject(selectedEnvGroup?.secret_variables) ? (
-                    <>
-                      {[
-                        ...Object.entries(selectedEnvGroup?.variables || {}).map(([key, value]) => ({
-                          source: 'variables',
-                          key,
-                          value,
-                        })),
-                        ...Object.entries(selectedEnvGroup?.secret_variables || {}).map(([key, value]) => ({
-                          source: 'secret_variables',
-                          key,
-                          value,
-                        })),
-                      ]
-                        .map(({ key, value, source }, index) => (
-                          <div key={index}>
-                            <span className="key">{key} = </span>
-                            <span className="value">{formattedEnvironmentValue(source === 'secret_variables' ? "****" : value)}</span>
-                          </div>
-                        ))}
-                    </>
-                  ) : (
-                    <>This environment group has no variables</>
-                  )
-                }
-              </GroupEnvPreview>
-              {/* {clashingKeys?.length > 0 && (
+        <ScrollableContainer>
+          {syncedEnvGroups.length != envGroups.length ? (<>
+            <Text color="helper">
+              Select an Env Group to load into your application.
+            </Text>
+            <Spacer y={0.5} />
+            <GroupModalSections>
+              <SidebarSection $expanded={!selectedEnvGroup}>
+                <EnvGroupList>{renderEnvGroupList()}</EnvGroupList>
+              </SidebarSection>
+              {selectedEnvGroup && (
+                <><SidebarSection>
+
+                  <GroupEnvPreview>
+                    {
+                      isObject(selectedEnvGroup?.variables) || isObject(selectedEnvGroup?.secret_variables) ? (
+                        <>
+                          {[
+                            ...Object.entries(selectedEnvGroup?.variables || {}).map(([key, value]) => ({
+                              source: 'variables',
+                              key,
+                              value,
+                            })),
+                            ...Object.entries(selectedEnvGroup?.secret_variables || {}).map(([key, value]) => ({
+                              source: 'secret_variables',
+                              key,
+                              value,
+                            })),
+                          ]
+                            .map(({ key, value, source }, index) => (
+                              <div key={index}>
+                                <span className="key">{key} = </span>
+                                <span className="value">{formattedEnvironmentValue(source === 'secret_variables' ? "****" : value)}</span>
+                              </div>
+                            ))}
+                        </>
+                      ) : (
+                        <>This environment group has no variables</>
+                      )
+                    }
+                  </GroupEnvPreview>
+                  {/* {clashingKeys?.length > 0 && (
                 <>
                   <ClashingKeyRowDivider />
                   {this.renderEnvGroupPreview(clashingKeys)}
                 </>
               )} */}
-            </SidebarSection>
-              {/* <Checkbox
-                checked={shouldSync}
-                toggleChecked={() =>
-                  setShouldSync((!shouldSync))
-                }
-              >
-                <Text color="helper">Sync Env Group</Text>
-              </Checkbox> */}
-            </>
+                </SidebarSection>
+
+                </>
+              )
+
+              }
+
+            </GroupModalSections>
+            <Spacer y={1} />
+
+            <Spacer y={1} />
+          </>
+          ) : (
+
+            loading ? (
+              < LoadingWrapper >
+                < Loading />
+              </LoadingWrapper>)
+              : (<Text >
+                No selectable Env Groups
+              </Text>)
+
           )
 
           }
+        </ScrollableContainer>
+      </ColumnContainer>
+      <SubmitButtonContainer>
 
-        </GroupModalSections>
-        <Spacer y={1} />
-
-        <Spacer y={1} />
         <Button
           onClick={onSubmit}
           disabled={!selectedEnvGroup}
         >
           Load Env Group
-        </Button> </>
-      ) : (
+        </Button>
+      </SubmitButtonContainer>
 
-        loading ? (
-          < LoadingWrapper >
-            < Loading />
-          </LoadingWrapper>)
-          : (<Text >
-            No selectable Env Groups
-          </Text>)
 
-      )
-      }
     </Modal >
   )
 }
@@ -341,4 +348,20 @@ const GroupModalSections = styled.div`
   gap: 10px;
   grid-template-columns: 1fr 1fr;
   max-height: 365px;
+`;
+const ColumnContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; /* Ensure child elements stretch to full width */
+`;
+
+const ScrollableContainer = styled.div`
+  flex: 1; /* Allow the container to take remaining vertical space */
+  overflow-y: auto;
+  max-height: 300px; /* Adjust the max-height as per your requirements */
+`;
+
+const SubmitButtonContainer = styled.div`
+  margin-top: 10px;
+  text-align: right;
 `;

@@ -111,7 +111,6 @@ export const ExpandedEnvGroupFC = ({
       value: string;
     }[]
   >();
-  const [buttonDisabled, setButtonDisabled] = useState(false);
 
 
   const fetchPorterYamlContent = async (
@@ -911,6 +910,7 @@ const EnvGroupVariablesEditor = ({
 }) => {
   const [isAuthorized] = useAuth();
   const [buttonDisabled, setButtonDisabled] = useState(false)
+
   return (
     <TabWrapper>
       <InnerWrapper>

@@ -21,7 +21,7 @@ import Container from "components/porter/Container";
 
 import SourceSettings from "./SourceSettings";
 import Services from "./Services";
-import EnvGroupArray, { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import GithubActionModal from "./GithubActionModal";
 import Error from "components/porter/Error";
 import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
@@ -581,7 +581,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   fileUpload={true}
                   syncedEnvGroups={syncedEnvGroups}
                 />
-                {currentProject.env_group_enabled && (
+                {currentProject?.env_group_enabled && (
                   <>
                     <LoadButton
                       onClick={() => setShowEnvModal(true)}

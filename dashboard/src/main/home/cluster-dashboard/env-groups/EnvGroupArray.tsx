@@ -37,13 +37,13 @@ const EnvGroupArray = ({
   const [showEditorModal, setShowEditorModal] = useState(false);
   const incorrectRegex = (key: string) => {
     var pattern = /^[a-zA-Z0-9._-]+$/;
+    if (setButtonDisabled) {
+      setButtonDisabled(!pattern.test(key))
+    }
     if (key) {
       // The test() method tests for a match in a string
-      setButtonDisabled(!pattern.test(key))
       return !pattern.test(key);
     }
-
-    setButtonDisabled(!pattern.test(key))
     return false;
   };
   useEffect(() => {

@@ -154,6 +154,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	var addCustomNodeSelector bool
+	if (cluster.ProvisionedBy == "CAPI" && cluster.CloudProvider == "GCP") || cluster.GCPIntegrationID != 0 {
+		addCustomNodeSelector = true
+	}
+
 	chart, values, preDeployJobValues, err := parse(
 		ParseConf{
 			PorterYaml:                porterYaml,
@@ -175,6 +180,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			InjectLauncherToStartCommand: injectLauncher,
 			ShouldValidateHelmValues:     shouldCreate,
 			FullHelmValues:               request.FullHelmValues,
+			AddCustomNodeSelector:        addCustomNodeSelector,
 		},
 	)
 	if err != nil {

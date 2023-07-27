@@ -554,7 +554,6 @@ func (a *Agent) UpgradeInstallChart(
 
 	cmd := action.NewUpgrade(a.ActionConfig)
 	cmd.Install = true
-
 	if cmd.Version == "" && cmd.Devel {
 		cmd.Version = ">0.0.0-0"
 	}
@@ -593,7 +592,12 @@ func (a *Agent) UpgradeInstallChart(
 		}
 	}
 
-	return cmd.Run(conf.Name, conf.Chart, conf.Values)
+	release, err := cmd.RunWithContext(ctx, conf.Name, conf.Chart, conf.Values)
+	if err != nil {
+		return nil, telemetry.Error(ctx, span, err, "error running helm upgrade")
+	}
+
+	return release, nil
 }
 
 // UninstallChart uninstalls a chart

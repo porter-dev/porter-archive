@@ -112,6 +112,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	chart, values, _, err := parse(
+		ctx,
 		ParseConf{
 			ImageInfo:    imageInfo,
 			ServerConfig: c.Config(),

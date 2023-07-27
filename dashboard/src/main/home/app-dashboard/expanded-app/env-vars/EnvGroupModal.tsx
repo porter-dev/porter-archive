@@ -6,10 +6,7 @@ import Loading from "components/Loading";
 import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
-import ExpandableSection from "components/porter/ExpandableSection";
-import Fieldset from "components/porter/Fieldset";
 import Button from "components/porter/Button";
-import Select from "components/porter/Select";
 import api from "shared/api";
 import { getGithubAction } from "./utils";
 import AceEditor from "react-ace";
@@ -27,6 +24,7 @@ import {
 import {
   PartialEnvGroup,
   PopulatedEnvGroup,
+  NewPopulatedEnvGroup,
 } from "components/porter-form/types";
 import { KeyValueType } from "../../../cluster-dashboard/env-groups/EnvGroupArray";
 import { set } from "zod";
@@ -36,8 +34,8 @@ type Props = RouteComponentProps & {
   availableEnvGroups?: PartialEnvGroup[];
   setValues: (x: KeyValueType[]) => void;
   values: KeyValueType[];
-  syncedEnvGroups: PopulatedEnvGroup[];
-  setSyncedEnvGroups: (values: PopulatedEnvGroup[]) => void;
+  syncedEnvGroups: NewPopulatedEnvGroup[];
+  setSyncedEnvGroups: (values: NewPopulatedEnvGroup[]) => void;
   namespace: string;
   newApp?: boolean;
 }
@@ -61,43 +59,28 @@ const EnvGroupModal: React.FC<Props> = ({
   const [cloneSuccess, setCloneSuccess] = useState(false);
 
   const updateEnvGroups = async () => {
-    let envGroups: PartialEnvGroup[] = [];
+    let populatedEnvGroups: any[] = [];
     try {
-      envGroups = await api
-        .listEnvGroups<PartialEnvGroup[]>(
+      populatedEnvGroups = await api
+        .getAllEnvGroups<any[]>(
           "<token>",
           {},
           {
             id: currentProject.id,
-            namespace: "porter-env-group",
             cluster_id: currentCluster.id,
           }
         )
-        .then((res) => res.data);
+        .then((res) => res.data.environment_groups);
     } catch (error) {
       setLoading(false)
       setError(true);
       return;
     }
 
-    const populateEnvGroupsPromises = envGroups.map((envGroup) =>
-      api
-        .getEnvGroup<PopulatedEnvGroup>(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-            name: envGroup.name,
-            namespace: envGroup.namespace,
-            version: envGroup.version,
-          }
-        )
-        .then((res) => res.data)
-    );
+
 
     try {
-      const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
+
       setEnvGroups(populatedEnvGroups)
       setLoading(false)
 
@@ -114,6 +97,7 @@ const EnvGroupModal: React.FC<Props> = ({
   }, [values]);
 
   useEffect(() => {
+    setLoading(true)
     if (Array.isArray(availableEnvGroups)) {
       setEnvGroups(availableEnvGroups);
       setLoading(false);
@@ -122,28 +106,6 @@ const EnvGroupModal: React.FC<Props> = ({
     updateEnvGroups();
   }, []);
 
-  const cloneEnvGroup = async () => {
-    setCloneSuccess(false);
-    try {
-      await api.cloneEnvGroup(
-        "<token>",
-        {
-          name: selectedEnvGroup.name,
-          namespace: namespace,
-          clone_name: selectedEnvGroup.name,
-          version: selectedEnvGroup.version,
-        },
-        {
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-          namespace: "porter-env-group",
-        }
-      );
-      setCloneSuccess(true);
-    } catch (error) {
-      console.log(error);
-    }
-  };
   const renderEnvGroupList = () => {
     if (loading) {
       return (
@@ -151,14 +113,10 @@ const EnvGroupModal: React.FC<Props> = ({
           <Loading />
         </LoadingWrapper>
       );
-    } else if (!envGroups?.length) {
-      return (
-        <Placeholder>
-          No environment groups found in this namespace
-        </Placeholder>
-      );
     } else {
-      return envGroups
+      const sortedEnvGroups = envGroups.slice().sort((a, b) => a.name.localeCompare(b.name));
+
+      return sortedEnvGroups
         .filter((envGroup) => {
           if (!Array.isArray(syncedEnvGroups)) {
             return true;
@@ -187,9 +145,6 @@ const EnvGroupModal: React.FC<Props> = ({
     if (shouldSync) {
 
       syncedEnvGroups.push(selectedEnvGroup);
-      if (!newApp) {
-        cloneEnvGroup();
-      }
       setSyncedEnvGroups(syncedEnvGroups);
     }
     else {
@@ -217,66 +172,88 @@ const EnvGroupModal: React.FC<Props> = ({
         Load env group
       </Text>
       <Spacer height="15px" />
-      {syncedEnvGroups.length != envGroups.length ? (<>
-        <Text color="helper">
-          Select an Env Group to load into your application.
-        </Text>
-        <Spacer y={0.5} />
-        <GroupModalSections>
-          <SidebarSection $expanded={!selectedEnvGroup}>
-            <EnvGroupList>{renderEnvGroupList()}</EnvGroupList>
-          </SidebarSection>
-          {selectedEnvGroup && (
-            <><SidebarSection>
+      <ColumnContainer>
 
-              <GroupEnvPreview>
-                {isObject(selectedEnvGroup?.variables) ? (
-                  <>
-                    {Object.entries(selectedEnvGroup?.variables || {})
-                      .map(
-                        ([key, value]) =>
-                          `${key}=${formattedEnvironmentValue(value)}`
+        <ScrollableContainer>
+          {syncedEnvGroups.length != envGroups.length ? (<>
+            <Text color="helper">
+              Select an Env Group to load into your application.
+            </Text>
+            <Spacer y={0.5} />
+            <GroupModalSections>
+              <SidebarSection $expanded={!selectedEnvGroup}>
+                <EnvGroupList>{renderEnvGroupList()}</EnvGroupList>
+              </SidebarSection>
+              {selectedEnvGroup && (
+                <><SidebarSection>
+
+                  <GroupEnvPreview>
+                    {
+                      isObject(selectedEnvGroup?.variables) || isObject(selectedEnvGroup?.secret_variables) ? (
+                        <>
+                          {[
+                            ...Object.entries(selectedEnvGroup?.variables || {}).map(([key, value]) => ({
+                              source: 'variables',
+                              key,
+                              value,
+                            })),
+                            ...Object.entries(selectedEnvGroup?.secret_variables || {}).map(([key, value]) => ({
+                              source: 'secret_variables',
+                              key,
+                              value,
+                            })),
+                          ]
+                            .map(({ key, value, source }, index) => (
+                              <div key={index}>
+                                <span className="key">{key} = </span>
+                                <span className="value">{formattedEnvironmentValue(source === 'secret_variables' ? "****" : value)}</span>
+                              </div>
+                            ))}
+                        </>
+                      ) : (
+                        <>This environment group has no variables</>
                       )
-                      .join("\n")}
-                  </>
-                ) : (
-                  <>This environment group has no variables</>
-                )}
-              </GroupEnvPreview>
-              {/* {clashingKeys?.length > 0 && (
-                <>
-                  <ClashingKeyRowDivider />
-                  {this.renderEnvGroupPreview(clashingKeys)}
+                    }
+                  </GroupEnvPreview>
+                </SidebarSection>
+
                 </>
-              )} */}
-            </SidebarSection>
-              <Checkbox
-                checked={shouldSync}
-                toggleChecked={() =>
-                  setShouldSync((!shouldSync))
-                }
-              >
-                <Text color="helper">Sync Env Group</Text>
-              </Checkbox>
-            </>
+              )
+
+              }
+
+            </GroupModalSections>
+            <Spacer y={1} />
+
+            <Spacer y={1} />
+          </>
+          ) : (
+
+            loading ? (
+              < LoadingWrapper >
+                < Loading />
+              </LoadingWrapper>)
+              : (<Text >
+                No selectable Env Groups
+              </Text>)
+
           )
 
           }
+        </ScrollableContainer>
+      </ColumnContainer>
+      <SubmitButtonContainer>
 
-        </GroupModalSections>
-        <Spacer y={1} />
-
-        <Spacer y={1} />
         <Button
           onClick={onSubmit}
           disabled={!selectedEnvGroup}
         >
           Load Env Group
-        </Button> </>
-      ) : (<Text >
-        No selectable Env Groups
-      </Text>)}
-    </Modal>
+        </Button>
+      </SubmitButtonContainer>
+
+
+    </Modal >
   )
 }
 
@@ -344,6 +321,12 @@ const GroupEnvPreview = styled.pre`
   white-space: pre-line;
   word-break: break-word;
   user-select: text;
+  .key {
+    color: white;
+  }
+  .value {
+    color: #3a48ca;
+  }
 `;
 const GroupModalSections = styled.div`
   margin-top: 20px;
@@ -353,4 +336,20 @@ const GroupModalSections = styled.div`
   gap: 10px;
   grid-template-columns: 1fr 1fr;
   max-height: 365px;
+`;
+const ColumnContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; 
+`;
+
+const ScrollableContainer = styled.div`
+  flex: 1; 
+  overflow-y: auto;
+  max-height: 300px; 
+`;
+
+const SubmitButtonContainer = styled.div`
+  margin-top: 10px;
+  text-align: right;
 `;

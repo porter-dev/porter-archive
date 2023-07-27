@@ -35,10 +35,10 @@ type UpdateEnvironmentGroupRequest struct {
 	// Name of the env group to create or update
 	Name string `json:"name"`
 
-	// Variables are variables which should are not sensitive. All values must be a string due to a kubernetes limitation.
+	// Variables are values which are not sensitive. All values must be a string due to a kubernetes limitation.
 	Variables map[string]string `json:"variables"`
 
-	// SecretVariables are sensitive variables. All values must be a string due to a kubernetes limitation.
+	// SecretVariables are sensitive values. All values must be a string due to a kubernetes limitation.
 	SecretVariables map[string]string `json:"secret_variables"`
 }
 type UpdateEnvironmentGroupResponse struct {

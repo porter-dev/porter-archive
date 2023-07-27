@@ -869,10 +869,6 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 		return nil, err
 	}
 	services := make(map[string]*Service)
-	// globalLabels, err := extractGlobalLabels(helmValues)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("unable to extract global labels: %w", err)
-	// }
 
 	for k, v := range values {
 		if k == "global" {
@@ -887,35 +883,9 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 			Config: convertMap(v).(map[string]interface{}),
 			Type:   &serviceType,
 		}
-
-		// if globalLabels != nil {
-		// 	if _, ok := services[serviceName].Config["labels"]; !ok {
-		// 		services[serviceName].Config["labels"] = make(map[string]string)
-		// 	}
-		// 	services[serviceName].Config["labels"] = globalLabels
-		// }
 	}
 
 	return &PorterStackYAML{
 		Services: services,
 	}, nil
-}
-
-func extractGlobalLabels(helmValues string) (map[string]string, error) {
-	global := struct {
-		Global struct {
-			Labels map[string]string `yaml:"labels"`
-		} `yaml:"global"`
-	}{}
-
-	err := yaml.Unmarshal([]byte(helmValues), &global)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", "error parsing global raw helm values", err)
-	}
-
-	if global.Global.Labels == nil {
-		return nil, nil
-	}
-
-	return global.Global.Labels, nil
 }

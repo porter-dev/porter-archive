@@ -105,7 +105,8 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 		return nil, telemetry.Error(ctx, span, err, "unable to list environment groups secret varialbes")
 	}
 
-	allEnvGroupNames := make(map[string]EnvironmentGroup)
+	// envGroupSet's key is the environment group's versioned name
+	envGroupSet := make(map[string]EnvironmentGroup)
 	for _, cm := range configMapListResp.Items {
 		name, ok := cm.Labels[LabelKey_EnvironmentGroupName]
 		if !ok {
@@ -120,14 +121,14 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			continue // invalid version label as it should be an int, not an environment group
 		}
 
-		if _, ok := allEnvGroupNames[cm.Name]; !ok {
-			allEnvGroupNames[cm.Name] = EnvironmentGroup{}
+		if _, ok := envGroupSet[cm.Name]; !ok {
+			envGroupSet[cm.Name] = EnvironmentGroup{}
 		}
-		allEnvGroupNames[cm.Name] = EnvironmentGroup{
+		envGroupSet[cm.Name] = EnvironmentGroup{
 			Name:            name,
 			Version:         version,
 			Variables:       cm.Data,
-			SecretVariables: allEnvGroupNames[cm.Name].SecretVariables,
+			SecretVariables: envGroupSet[cm.Name].SecretVariables,
 			CreatedAtUTC:    cm.CreationTimestamp.Time.UTC(),
 		}
 	}
@@ -145,20 +146,20 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 		if err != nil {
 			continue // invalid version label as it should be an int, not an environment group
 		}
-		if _, ok := allEnvGroupNames[secret.Name]; !ok {
-			allEnvGroupNames[secret.Name] = EnvironmentGroup{}
+		if _, ok := envGroupSet[secret.Name]; !ok {
+			envGroupSet[secret.Name] = EnvironmentGroup{}
 		}
-		allEnvGroupNames[secret.Name] = EnvironmentGroup{
+		envGroupSet[secret.Name] = EnvironmentGroup{
 			Name:            name,
 			Version:         version,
 			SecretVariables: secret.Data,
-			Variables:       allEnvGroupNames[secret.Name].Variables,
+			Variables:       envGroupSet[secret.Name].Variables,
 			CreatedAtUTC:    secret.CreationTimestamp.Time.UTC(),
 		}
 	}
 
 	var envGroups []EnvironmentGroup
-	for _, envGroup := range allEnvGroupNames {
+	for _, envGroup := range envGroupSet {
 		envGroups = append(envGroups, envGroup)
 	}
 

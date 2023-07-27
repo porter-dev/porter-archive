@@ -8,22 +8,23 @@ import Error from "components/porter/Error";
 import sliders from "assets/sliders.svg";
 import EnvGroupModal from "./EnvGroupModal";
 import ExpandableEnvGroup from "./ExpandableEnvGroup";
-import { PopulatedEnvGroup, PartialEnvGroup } from "../../../../../components/porter-form/types";
+import { PopulatedEnvGroup, PartialEnvGroup, NewPopulatedEnvGroup } from "../../../../../components/porter-form/types";
 import _, { isObject, differenceBy, omit } from "lodash";
 import api from "../../../../../shared/api";
 import { Context } from "../../../../../shared/Context";
+import yaml from "js-yaml";
 
 interface EnvVariablesTabProps {
   envVars: any;
   setEnvVars: (x: any) => void;
   status: React.ReactNode;
   updatePorterApp: any;
-  syncedEnvGroups: PopulatedEnvGroup[];
-  setSyncedEnvGroups: (values: PopulatedEnvGroup[]) => void;
+  syncedEnvGroups: NewPopulatedEnvGroup[];
+  setSyncedEnvGroups: (values: NewPopulatedEnvGroup[]) => void;
   clearStatus: () => void;
   appData: any;
-  deletedEnvGroups: PopulatedEnvGroup[];
-  setDeletedEnvGroups: (values: PopulatedEnvGroup[]) => void;
+  deletedEnvGroups: NewPopulatedEnvGroup[];
+  setDeletedEnvGroups: (values: NewPopulatedEnvGroup[]) => void;
 }
 
 export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
@@ -38,10 +39,13 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   clearStatus,
   appData,
 }) => {
+  const [hovered, setHovered] = useState(false);
+
   const [showEnvModal, setShowEnvModal] = useState(false);
   const [envGroups, setEnvGroups] = useState<any>([])
   const { currentCluster, currentProject } = useContext(Context);
 
+  const [values, setValues] = React.useState<string>(yaml.dump(appData.chart.config));
   useEffect(() => {
     setEnvVars(envVars);
   }, [envVars]);
@@ -50,62 +54,44 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   }, []);
 
   const updateEnvGroups = async () => {
-    let envGroups: PartialEnvGroup[] = [];
+    let populateEnvGroupsPromises: NewPopulatedEnvGroup[] = [];
     try {
-      envGroups = await api
-        .listEnvGroups<PartialEnvGroup[]>(
+      populateEnvGroupsPromises = await api
+        .getAllEnvGroups<NewPopulatedEnvGroup[]>(
           "<token>",
           {},
           {
             id: currentProject.id,
-            namespace: "porter-env-group",
             cluster_id: currentCluster.id,
           }
         )
-        .then((res) => res.data);
+        .then((res) => res?.data?.environment_groups);
     } catch (error) {
-      // setLoading(false)
-      // setError(true);
       return;
     }
-    const populateEnvGroupsPromises = envGroups.map((envGroup) =>
-      api
-        .getEnvGroup<PopulatedEnvGroup>(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-            name: envGroup.name,
-            namespace: envGroup.namespace,
-            version: envGroup.version,
-          }
-        )
-        .then((res) => res.data)
-    );
 
     try {
       const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
       setEnvGroups(populatedEnvGroups)
-      // setLoading(false)
-      const filteredEnvGroups = populatedEnvGroups.filter(envGroup => envGroup.applications.includes(appData.chart.name));
-
+      const filteredEnvGroups = populatedEnvGroups?.filter(envGroup =>
+        envGroup.linked_applications && envGroup.linked_applications.includes(appData.chart.name)
+      );
       setSyncedEnvGroups(filteredEnvGroups)
 
     } catch (error) {
-      // setLoading(false)
-      // setError(true);
       return;
     }
   }
 
-  const deleteEnvGroup = (envGroup: PopulatedEnvGroup) => {
+  const deleteEnvGroup = (envGroup: NewPopulatedEnvGroup) => {
 
     setDeletedEnvGroups([...deletedEnvGroups, envGroup]);
     setSyncedEnvGroups(syncedEnvGroups?.filter(
       (env) => env.name !== envGroup.name
     ))
   }
+  const maxEnvGroupsReached = syncedEnvGroups.length >= 4;
+
   return (
     <>
       <Text size={16}>Environment variables</Text>
@@ -125,11 +111,18 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       />
       {currentProject.env_group_enabled && (
         <>
-          <LoadButton
-            onClick={() => setShowEnvModal(true)}
-          >
-            <img src={sliders} /> Load from Env Group
-          </LoadButton>
+          <TooltipWrapper
+            onMouseOver={() => setHovered(true)}
+            onMouseOut={() => setHovered(false)}>
+            <LoadButton
+              disabled={maxEnvGroupsReached}
+              onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
+            >
+              <img src={sliders} /> Load from Env Group
+            </LoadButton>
+            <TooltipText visible={maxEnvGroupsReached && hovered}>Max 4 Env Groups allowed</TooltipText>
+          </TooltipWrapper>
+
           {showEnvModal && <EnvGroupModal
             setValues={(x: any) => {
               if (status !== "") {
@@ -166,7 +159,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       <Spacer y={0.5} />
       <Button
         onClick={() => {
-          updatePorterApp();
+          updatePorterApp()
         }}
         status={status}
         loadingText={"Updating..."}
@@ -204,11 +197,13 @@ const AddRowButton = styled.div`
   }
 `;
 
-const LoadButton = styled(AddRowButton)`
-  background: none;
-  border: 1px solid #ffffff55;
+const LoadButton = styled(AddRowButton) <{ disabled?: boolean }>`
+  background: ${(props) => (props.disabled ? "#aaaaaa55" : "none")};
+  border: 1px solid ${(props) => (props.disabled ? "#aaaaaa55" : "#ffffff55")};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
+
   > i {
-    color: #ffffff44;
+    color: ${(props) => (props.disabled ? "#aaaaaa44" : "#ffffff44")};
     font-size: 16px;
     margin-left: 8px;
     margin-right: 10px;
@@ -220,14 +215,10 @@ const LoadButton = styled(AddRowButton)`
     width: 14px;
     margin-left: 10px;
     margin-right: 12px;
+    opacity: ${(props) => (props.disabled ? "0.5" : "1")};
   }
 `;
 
-const InputWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  margin-top: 5px;
-`;
 
 type InputProps = {
   disabled?: boolean;
@@ -292,16 +283,6 @@ export const MultiLineInput = styled.textarea<InputProps>`
   }
 `;
 
-const Label = styled.div`
-  color: #ffffff;
-  margin-bottom: 10px;
-`;
-
-const StyledInputArray = styled.div`
-  margin-bottom: 15px;
-  margin-top: 22px;
-`;
-
 const fadeIn = keyframes`
   from {
     opacity: 0;
@@ -311,83 +292,25 @@ const fadeIn = keyframes`
   }
 `;
 
-const StyledCard = styled.div`
-  border: 1px solid #ffffff44;
-  background: #ffffff11;
-  margin-bottom: 5px;
-  border-radius: 8px;
-  margin-top: 15px;
-  padding: 10px 14px;
-  overflow: hidden;
-  font-size: 13px;
-  animation: ${fadeIn} 0.5s;
-`;
-
-const Flex = styled.div`
-  display: flex;
-  height: 25px;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const ContentContainer = styled.div`
-  display: flex;
-  height: 40px;
-  width: 100%;
-  align-items: center;
-`;
-
-const EventInformation = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  height: 100%;
-`;
-
-const EventName = styled.div`
-  font-family: "Work Sans", sans-serif;
-  font-weight: 500;
-  color: #ffffff;
-`;
-
-const ActionContainer = styled.div`
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  height: 100%;
-`;
-
-const ActionButton = styled.button`
+const TooltipWrapper = styled.div`
   position: relative;
-  border: none;
-  background: none;
-  color: white;
-  padding: 5px;
-  width: 30px;
-  height: 30px;
-  margin-left: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  cursor: pointer;
-  color: #aaaabb;
-  border: 1px solid #ffffff00;
-
-  :hover {
-    background: #ffffff11;
-    border: 1px solid #ffffff44;
-  }
-
-  > span {
-    font-size: 20px;
-  }
+  display: inline-block;
 `;
 
-const NoVariablesTextWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff99;
+const TooltipText = styled.span`
+  visibility: ${(props) => (props.visible ? 'visible' : 'hidden')};
+  width: 240px;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 1;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -120px;
+  opacity: ${(props) => (props.visible ? '1' : '0')};
+  transition: opacity 0.3s;
+  font-size: 12px;
 `;
 

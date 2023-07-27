@@ -29,7 +29,7 @@ import { ChartType, CreateUpdatePorterAppOptions } from "shared/types";
 import BuildSettingsTab from "../build-settings/BuildSettingsTab";
 import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
-import { Service } from "../new-app-flow/serviceTypes";
+import { ImageInfo, Service } from "../new-app-flow/serviceTypes";
 import Fieldset from "components/porter/Fieldset";
 import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
@@ -256,8 +256,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       );
       setPorterYaml(finalPorterYaml);
       // Only check GHA status if no built image is set
-      const hasBuiltImage = !!resChartData.data.config?.global?.image
-        ?.repository;
+      const globalImage = resChartData.data.config?.global?.image
+      const hasBuiltImage = globalImage != null &&
+        globalImage.repository != null &&
+        globalImage.tag != null &&
+        globalImage.repository !== ImageInfo.BASE_IMAGE.repository &&
+        globalImage.tag !== ImageInfo.BASE_IMAGE.tag
       if (hasBuiltImage || !resPorterApp.data.repo_name) {
         setWorkflowCheckPassed(true);
         setHasBuiltImage(true);

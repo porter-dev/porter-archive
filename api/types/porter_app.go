@@ -48,8 +48,10 @@ type CreatePorterAppRequest struct {
 	ImageInfo        ImageInfo `json:"image_info" form:"omitempty"`
 	OverrideRelease  bool      `json:"override_release"`
 	EnvGroups        []string  `json:"env_groups"`
-	UserUpdate       bool      `json:"user_update"`
-	FullHelmValues   string    `json:"full_helm_values"`
+	// EnvironmentGroups are the list of environment groups that this app is linked to. This should be used instead of EnvGroups.
+	EnvironmentGroups []string `json:"environment_groups"`
+	UserUpdate        bool     `json:"user_update"`
+	FullHelmValues    string   `json:"full_helm_values"`
 }
 
 type UpdatePorterAppRequest struct {

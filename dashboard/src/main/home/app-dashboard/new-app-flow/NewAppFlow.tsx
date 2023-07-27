@@ -578,7 +578,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   fileUpload={true}
                   syncedEnvGroups={syncedEnvGroups}
                 />
-                {currentProject.env_group_enabled && (
+                {currentProject?.env_group_enabled && (
                   <>
                     <LoadButton
                       onClick={() => setShowEnvModal(true)}

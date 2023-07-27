@@ -315,7 +315,7 @@ export default withRouter(withAuth(Sidebar));
 
 const ScrollWrapper = styled.div`
   overflow-y: auto;
-  padding-bottom: 0px;
+  padding-bottom: 25px;
   max-height: calc(100vh - 95px);
 `;
 

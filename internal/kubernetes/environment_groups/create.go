@@ -70,8 +70,8 @@ func createEnvironmentGroupInTargetNamespace(ctx context.Context, a *kubernetes.
 		telemetry.AttributeKV{Key: "target-namespace", Value: namespace},
 	)
 
-	var configMapName string
-
+	// var configMapName string
+	configMapName := fmt.Sprintf("%s.%d", environmentGroup.Name, environmentGroup.Version)
 	if environmentGroup.Name == "" {
 		return configMapName, telemetry.Error(ctx, span, nil, "environment group name cannot be empty")
 	}

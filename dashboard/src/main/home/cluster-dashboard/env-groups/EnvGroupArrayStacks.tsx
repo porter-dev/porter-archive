@@ -30,7 +30,6 @@ type PropsType = {
 const EnvGroupArray = ({
   label,
   values,
-  secret_variables,
   setValues,
   disabled,
   fileUpload,

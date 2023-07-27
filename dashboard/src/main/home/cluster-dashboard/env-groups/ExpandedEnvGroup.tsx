@@ -70,6 +70,7 @@ type EnvGroup = {
 type EditableEnvGroup = Omit<PopulatedEnvGroup, "variables"> & {
   variables: KeyValueType[];
   linked_applications: string[];
+  secret_variables: KeyValueType[];
 };
 
 export const ExpandedEnvGroupFC = ({
@@ -118,27 +119,32 @@ export const ExpandedEnvGroupFC = ({
     appData: any
   ) => {
     try {
-      const res = await api.getPorterYamlContents(
-        "<token>",
-        {
-          path: porterYaml,
-        },
-        {
-          project_id: appData.app.project_id,
-          git_repo_id: appData.app.git_repo_id,
-          owner: appData.app.repo_name?.split("/")[0],
-          name: appData.app.repo_name?.split("/")[1],
-          kind: "github",
-          branch: appData.app.git_branch,
+      if (porterYaml && appData && appData?.app?.git_repo_id) {
+        const res = await api.getPorterYamlContents(
+          "<token>",
+          {
+            path: porterYaml,
+          },
+          {
+            project_id: appData.app.project_id,
+            git_repo_id: appData.app.git_repo_id,
+            owner: appData.app.repo_name?.split("/")[0],
+            name: appData.app.repo_name?.split("/")[1],
+            kind: "github",
+            branch: appData.app.git_branch,
+          }
+        );
+        if (res.data == null || res.data == "") {
+          return undefined;
         }
-      );
-      if (res.data == null || res.data == "") {
-        return undefined;
+        const parsedYaml = yaml.load(atob(res.data));
+
+        return parsedYaml
       }
-      const parsedYaml = yaml.load(atob(res.data));
-      return parsedYaml
     } catch (err) {
       // TODO: handle error
+      console.log("No Porter Yaml")
+
     }
   };
 
@@ -479,15 +485,6 @@ export const ExpandedEnvGroupFC = ({
           updatedPorterApp.buildpacks = newAppData?.buildpacks?.join(",");
           updatedPorterApp.dockerfile = "null";
         }
-        await api.createPorterApp(
-          "<token>",
-          updatedPorterApp,
-          {
-            cluster_id: currentCluster.id,
-            project_id: currentProject.id,
-            stack_name: appName,
-          }
-        );
 
         await api.createPorterApp(
           "<token>",
@@ -547,6 +544,26 @@ export const ExpandedEnvGroupFC = ({
     return [newServices, envVars];
   };
 
+  // const pollForEnvGroup = async (name, currentProject, currentCluster, maxAttempts = 5, delay = 1000) => {
+  //   for (let i = 0; i < maxAttempts; i++) {
+  //     const populatedEnvGroup = await api.getAllEnvGroups("<token>", {}, {
+  //       id: currentProject.id,
+  //       cluster_id: currentCluster.id,
+  //     }).then(res => res.data.environment_groups);
+
+  //     const newEnvGroup = populatedEnvGroup.find((i: any) => i.name === name);
+  //     if (newEnvGroup) {
+  //       return newEnvGroup;
+  //     }
+
+  //     // Wait before polling again
+  //     await new Promise(resolve => setTimeout(resolve, delay));
+  //   }
+
+  //   throw new Error(`Environment group ${name} not ready after ${maxAttempts} attempts`);
+  // };
+
+
   const handleUpdateValues = async () => {
     setButtonStatus("loading");
     const name = currentEnvGroup.name;
@@ -570,12 +587,44 @@ export const ExpandedEnvGroupFC = ({
         }),
         {}
       );
+      // const mergedVariables = { ...normalVariables, ...secretVariables };
+      // variables = Object.entries(mergedVariables).map(([key, value]) => ({ key, value }));
+      // console.log(variables)
+
       //Create the Env Group
-      console.log("EATING")
       if (currentProject?.simplified_view_enabled) {
         try {
+
+          const normal_variables: KeyValueType[] = Object.entries(
+            normalVariables || {}
+          ).map(([key, value]) => ({
+            key: key,
+            value: value,
+            hidden: value.includes("PORTERSECRET"),
+            locked: value.includes("PORTERSECRET"),
+            deleted: false,
+          }));
+
+          const secret_variables: KeyValueType[] = Object.entries(
+            secretVariables || {}
+          ).map(([key, value]) => ({
+            key: key,
+            value: value,
+            hidden: true,
+            locked: true,
+            deleted: false,
+          }));
+          const variables = [...normal_variables, ...secret_variables];
+
+
+          setCurrentEnvGroup({
+            ...currentEnvGroup,
+            variables,
+          });
+
+
           let linkedApp: string[] = currentEnvGroup?.linked_applications;
-          const updatedEnvGroup = await api.createEnvironmentGroups(
+          await api.createEnvironmentGroups(
             "<token>",
             {
               name,
@@ -586,31 +635,23 @@ export const ExpandedEnvGroupFC = ({
               id: currentProject.id,
               cluster_id: currentCluster.id,
             }
-          ).then((res) => res.data);
-
+          );
+          //const newEnvGroup = await pollForEnvGroup(name, currentProject, currentCluster);
           if (linkedApp) {
-            let promises = linkedApp.map(async (appName) => {
-
-              const dataFromGetPorterApp = await getPorterApp({ appName: appName });
-            });
+            for (let appName of linkedApp) {
+              await getPorterApp({ appName: appName });
+            }
           }
+          const populatedEnvGroup = await api.getAllEnvGroups("<token>", {}, {
+            id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }).then(res => res.data.environment_groups);
 
+          const newEnvGroup = populatedEnvGroup.find((i: any) => i.name === name);
 
-          const populatedEnvGroup = await api
-            .getAllEnvGroups(
-              "<token>",
-              {},
-              {
-                id: currentProject.id,
-                cluster_id: currentCluster.id,
-              }
-            )
-            .then((res) => res.data.environment_groups);
-          updateEnvGroup(populatedEnvGroup.find((i: any) => i.name === envGroup.name));
+          updateEnvGroup(newEnvGroup);
           setButtonStatus("successful");
-          setTimeout(() => setButtonStatus(""), 1000);
-        }
-        catch (error) {
+        } catch (error) {
           setButtonStatus("Couldn't update successfully");
           setCurrentError(error);
           setTimeout(() => setButtonStatus(""), 1000);
@@ -773,7 +814,9 @@ export const ExpandedEnvGroupFC = ({
   };
 
   const renderTabContents = () => {
-    const { variables } = currentEnvGroup;
+    let { variables, secret_variables } = currentEnvGroup;
+
+    //const mergeVar = variables.concat(secret_variables);
 
     switch (currentTab) {
       case "variables-editor":

@@ -42,7 +42,9 @@ const EnvGroupArray = ({
       setButtonDisabled(!pattern.test(key))
       return !pattern.test(key);
     }
-    else return false;
+
+    setButtonDisabled(!pattern.test(key))
+    return false;
   };
   useEffect(() => {
     if (!values) {

@@ -79,7 +79,6 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			stackRevision, err := c.Repo().Stack().ReadStackRevision(stackResource.StackRevisionID)
 			if err != nil {
-			if err != nil {
 				err = telemetry.Error(ctx, span, err, "unable to get stack revision")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
@@ -95,9 +94,9 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			res.StackID = stack.UID
 		}
 	} else if err != gorm.ErrRecordNotFound {
-				err = telemetry.Error(ctx, span, err, "unable to get release")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
+		err = telemetry.Error(ctx, span, err, "unable to get release")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
 	} else {
 		res.PorterRelease = &types.PorterRelease{}
 	}
@@ -133,9 +132,9 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// look for the form using the dynamic client
 	dynClient, err := c.GetDynamicClient(r, cluster)
 	if err != nil {
-				err = telemetry.Error(ctx, span, err, "unable to get dynamic client")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
+		err = telemetry.Error(ctx, span, err, "unable to get dynamic client")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
 	}
 
 	parserDef := &parser.ClientConfigDefault{

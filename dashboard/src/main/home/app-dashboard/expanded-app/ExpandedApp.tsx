@@ -400,7 +400,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
-        // console.log(syncedEnvGroups?.map((env) => env.name))
         const updatedPorterApp = {
           porter_yaml: base64Encoded,
           override_release: true,

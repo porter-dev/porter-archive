@@ -25,7 +25,7 @@ import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArr
 import GithubActionModal from "./GithubActionModal";
 import Error from "components/porter/Error";
 import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
-import { Service } from "./serviceTypes";
+import { ImageInfo, Service } from "./serviceTypes";
 import GithubConnectModal from "./GithubConnectModal";
 import Link from "components/porter/Link";
 import { BuildMethod, PorterApp } from "../types/porterApp";
@@ -323,10 +323,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
       const yamlString = yaml.dump(finalPorterYaml);
       const base64Encoded = btoa(yamlString);
-      const imageInfo = {
-        repository: "",
-        tag: "",
-      };
+      const imageInfo: ImageInfo = ImageInfo.BASE_IMAGE;
 
       const porterAppRequest = {
         porter_yaml: base64Encoded,

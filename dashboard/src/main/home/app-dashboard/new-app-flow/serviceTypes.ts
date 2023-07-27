@@ -12,10 +12,6 @@ export const ImageInfo = {
         repository: "public.ecr.aws/o1j4x7p4/hello-porter",
         tag: "latest",
     } as const,
-
-    isEquivalent: (a: ImageInfo, b: ImageInfo) => {
-        return a.repository == b.repository && a.tag == b.tag;
-    }
 }
 
 

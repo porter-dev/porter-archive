@@ -9,6 +9,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 import Icon from "components/porter/Icon";
 import swap from "assets/swap.svg";
 import Spacer from "components/porter/Spacer";
+import ProjectSelectionModal from "./ProjectSelectionModal";
 
 type PropsType = RouteComponentProps & {
   currentProject: ProjectType;
@@ -19,6 +20,7 @@ const ProjectButton: React.FC<PropsType> = (props) => {
   const [expanded, setExpanded] = useState(false);
   const wrapperRef = useRef<any>(null);
   const context = useContext(Context);
+  const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
 
   const { setCurrentProject, setCurrentCluster } = context;
 
@@ -40,16 +42,6 @@ const ProjectButton: React.FC<PropsType> = (props) => {
     }
   };
 
-  const renderOptionList = () => {
-    return props.projects.map((project: ProjectType, i: number) => {
-      // Rest of the code...
-    });
-  };
-
-  const renderDropdown = () => {
-    // Rest of the code...
-  };
-
   const handleExpand = () => {
     setExpanded(!expanded);
   };
@@ -69,13 +61,20 @@ const ProjectButton: React.FC<PropsType> = (props) => {
           </ProjectIcon>
           <ProjectName>{currentProject.name}</ProjectName>
           <Spacer inline x={.5} />
-          <RefreshButton onClick={() => window.location.reload()}>
+          <RefreshButton onClick={() => setShowGHAModal(true)}>
             <img src={swap} />
           </RefreshButton>
+          {showGHAModal && currentProject != null && (
+            <ProjectSelectionModal
+              currentProject={currentProject}
+              projects={props.projects}
+              closeModal={() => setShowGHAModal(false)}
+            />
+          )}
           {/* <i className="material-icons">arrow_drop_down</i> */}
         </MainSelector>
         {/* {renderDropdown()} */}
-      </StyledProjectSection>
+      </StyledProjectSection >
     );
   }
   return (

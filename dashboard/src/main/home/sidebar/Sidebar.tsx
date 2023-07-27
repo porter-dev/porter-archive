@@ -183,10 +183,13 @@ class Sidebar extends Component<PropsType, StateType> {
             "update",
             "delete",
           ]) && (
-              <NavButton path={"/project-settings"}>
+              <NavButton path={"/project-settings"}
+                style={{ marginLeft: '25px' }}
+              >
                 <Img src={settings} />
                 Project settings
               </NavButton>
+
             )}
           {this.props.isAuthorized("integrations", "", [
             "get",
@@ -194,16 +197,19 @@ class Sidebar extends Component<PropsType, StateType> {
             "update",
             "delete",
           ]) && (
-              <NavButton path={"/integrations"}>
+              <NavButton path={"/integrations"}
+                style={{ marginLeft: '25px' }}
+              >
                 <Img src={integrations} />
                 Integrations
               </NavButton>
             )}
-          <ClusterListContainer />
+          {currentCluster && <ClusterListContainer />}
           <Spacer y={.5} />
           <NavButton
             path="/apps"
             active={window.location.pathname.startsWith("/apps")}
+            style={{ marginLeft: '25px' }}
           >
             <Img src={web} />
             Applications
@@ -211,19 +217,21 @@ class Sidebar extends Component<PropsType, StateType> {
           <NavButton
             path="/addons"
             active={window.location.pathname.startsWith("/addons")}
+            style={{ marginLeft: '25px' }}
+
           >
             <Img src={addOns} />
             Add-ons
           </NavButton>
           {currentProject.env_group_enabled && <NavButton
             path="/env-groups"
-
             active={
-
               window.location.pathname.startsWith("/env-groups")
             }
+            style={{ marginLeft: '25px' }}
           >
             <Img src={sliders} />
+
             Env groups
           </NavButton>}
           {this.props.isAuthorized("settings", "", [
@@ -234,7 +242,7 @@ class Sidebar extends Component<PropsType, StateType> {
 
               <NavButton
                 path={"/cluster-dashboard"}
-
+                style={{ marginLeft: '25px' }}
                 active={
                   window.location.pathname.startsWith("/cluster-dashboard")
                 }

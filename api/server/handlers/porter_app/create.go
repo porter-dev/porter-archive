@@ -154,7 +154,13 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	var addCustomNodeSelector bool
+	if (cluster.ProvisionedBy == "CAPI" && cluster.CloudProvider == "GCP") || cluster.GCPIntegrationID != 0 {
+		addCustomNodeSelector = true
+	}
+
 	chart, values, preDeployJobValues, err := parse(
+		ctx,
 		ParseConf{
 			PorterYaml:                porterYaml,
 			ImageInfo:                 imageInfo,
@@ -162,6 +168,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			ProjectID:                 cluster.ProjectID,
 			UserUpdate:                request.UserUpdate,
 			EnvGroups:                 request.EnvGroups,
+			EnvironmentGroups:         request.EnvironmentGroups,
 			Namespace:                 namespace,
 			ExistingHelmValues:        releaseValues,
 			ExistingChartDependencies: releaseDependencies,
@@ -175,6 +182,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			InjectLauncherToStartCommand: injectLauncher,
 			ShouldValidateHelmValues:     shouldCreate,
 			FullHelmValues:               request.FullHelmValues,
+			AddCustomNodeSelector:        addCustomNodeSelector,
 		},
 	)
 	if err != nil {
@@ -373,6 +381,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			Repo:       c.Repo(),
 			Registries: registries,
 		}
+
 		// update the chart
 		_, err = helmAgent.UpgradeInstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 		if err != nil {

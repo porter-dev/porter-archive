@@ -37,38 +37,55 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
   const updateEnvGroups = async () => {
     let { currentProject, currentCluster } = context;
     try {
-      const envGroups = await api
-        .listEnvGroups(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            namespace: namespace,
-            cluster_id: currentCluster.id,
-          }
-        )
-        .then((res) => {
-          return res.data;
-        });
-
-      let sortedGroups = envGroups;
-      switch (sortType) {
-        case "Oldest":
-          sortedGroups.sort((a: any, b: any) =>
-            Date.parse(a.created_at) > Date.parse(b.created_at) ? 1 : -1
-          );
-          break;
-        case "Alphabetical":
-          sortedGroups.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
-          break;
-        default:
-          sortedGroups.sort((a: any, b: any) =>
-            Date.parse(a.created_at) > Date.parse(b.created_at) ? -1 : 1
-          );
+      let envGroups: any[] = []
+      if (currentProject?.simplified_view_enabled) {
+        envGroups = await api
+          .getAllEnvGroups(
+            "<token>",
+            {},
+            {
+              id: currentProject.id,
+              cluster_id: currentCluster.id,
+            }
+          )
+          .then((res) => {
+            return res.data?.environment_groups;
+          });
+      } else {
+        envGroups = await api
+          .listEnvGroups(
+            "<token>",
+            {},
+            {
+              id: currentProject.id,
+              namespace: namespace,
+              cluster_id: currentCluster.id,
+            }
+          )
+          .then((res) => {
+            return res.data;
+          });
       }
-
+      let sortedGroups = envGroups;
+      if (sortedGroups) {
+        switch (sortType) {
+          case "Oldest":
+            sortedGroups.sort((a: any, b: any) =>
+              Date.parse(a.created_at) > Date.parse(b.created_at) ? 1 : -1
+            );
+            break;
+          case "Alphabetical":
+            sortedGroups.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
+            break;
+          default:
+            sortedGroups.sort((a: any, b: any) =>
+              Date.parse(a.created_at) > Date.parse(b.created_at) ? -1 : 1
+            );
+        }
+      }
       return sortedGroups;
     } catch (error) {
+      console.log(error)
       setIsLoading(false);
       setHasError(true);
     }
@@ -113,7 +130,7 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
           <i className="material-icons">error</i> Error connecting to cluster.
         </Placeholder>
       );
-    } else if (envGroups.length === 0) {
+    } else if (!envGroups || envGroups.length === 0) {
       return (
         <Placeholder height="370px">
           <i className="material-icons">category</i>

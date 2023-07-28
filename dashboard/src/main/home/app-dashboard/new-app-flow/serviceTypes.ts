@@ -110,8 +110,6 @@ const ServiceField = {
         }
     },
     array: (defaultValues: string[], overrideValues?: string[]): ServiceArray<ServiceString> => {
-        console.log(defaultValues)
-        console.log(overrideValues)
         const serviceMap: Record<string, ServiceString> = {};
         for (const val of defaultValues) {
             serviceMap[val] = ServiceField.string(val);
@@ -122,7 +120,6 @@ const ServiceField = {
         if (Object.keys(serviceMap).length == 0) {
             return [];
         }
-        console.log(serviceMap)
         return Object.values(serviceMap);
     },
     keyValueArray: (defaultMap: Record<string, string>, overrideMap?: Record<string, string>): ServiceKeyValueArray<ServiceString> => {

@@ -1,13 +1,13 @@
 import React from 'react';
-import { ServiceArray, ServiceString } from '../serviceTypes';
+import { ServiceKeyValueArray, ServiceString } from '../serviceTypes';
 import Button from 'components/porter/Button';
 import styled from 'styled-components';
 import Input from 'components/porter/Input';
 import Spacer from 'components/porter/Spacer';
 
 interface Props {
-    annotations: ServiceArray<ServiceString>;
-    onChange: (annotations: ServiceArray<ServiceString>) => void;
+    annotations: ServiceKeyValueArray<ServiceString>;
+    onChange: (annotations: ServiceKeyValueArray<ServiceString>) => void;
 }
 
 const IngressCustomAnnotations: React.FC<Props> = ({ annotations, onChange }) => {
@@ -76,7 +76,7 @@ const IngressCustomAnnotations: React.FC<Props> = ({ annotations, onChange }) =>
                     onChange(newAnnotations);
                 }}
             >
-                Add Annotation
+                + Add Annotation
             </Button>
         </IngressCustomAnnotationsContainer >
     )

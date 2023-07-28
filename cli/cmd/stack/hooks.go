@@ -65,10 +65,22 @@ func (t *DeployAppHook) PostApply(driverOutput map[string]interface{}) error {
 		color.New(color.FgGreen).Printf("Found release for app %s: attempting update\n", t.ApplicationName)
 	}
 
-	return t.applyApp(shouldCreate, driverOutput)
+	err = t.createOrUpdateApplication(shouldCreate, driverOutput)
+	if err != nil {
+		return err
+	}
+	eventRequest := types.CreateOrUpdatePorterAppEventRequest{
+		Status:   "SUCCESS",
+		Type:     types.PorterAppEventType_Build,
+		Metadata: map[string]any{},
+		ID:       t.BuildEventID,
+	}
+	_, _ = t.Client.CreateOrUpdatePorterAppEvent(context.Background(), t.ProjectID, t.ClusterID, t.ApplicationName, &eventRequest)
+
+	return nil
 }
 
-func (t *DeployAppHook) applyApp(shouldCreate bool, driverOutput map[string]interface{}) error {
+func (t *DeployAppHook) createOrUpdateApplication(shouldCreate bool, driverOutput map[string]interface{}) error {
 	var imageInfo types.ImageInfo
 	image, ok := driverOutput["image"].(string)
 	// if it contains a $, then it means the query didn't resolve to anything
@@ -104,14 +116,6 @@ func (t *DeployAppHook) applyApp(shouldCreate bool, driverOutput map[string]inte
 		}
 		return fmt.Errorf("error updating app %s: %w", t.ApplicationName, err)
 	}
-
-	eventRequest := types.CreateOrUpdatePorterAppEventRequest{
-		Status:   "SUCCESS",
-		Type:     types.PorterAppEventType_Build,
-		Metadata: map[string]any{},
-		ID:       t.BuildEventID,
-	}
-	_, _ = t.Client.CreateOrUpdatePorterAppEvent(context.Background(), t.ProjectID, t.ClusterID, t.ApplicationName, &eventRequest)
 
 	return nil
 }

@@ -176,96 +176,191 @@ class Sidebar extends Component<PropsType, StateType> {
         </ScrollWrapper>
       );
     } else if (currentProject.simplified_view_enabled) {
-      return (
-        <ScrollWrapper>
-          {this.props.isAuthorized("settings", "", [
-            "get",
-            "update",
-            "delete",
-          ]) && (
-              <NavButton path={"/project-settings"}
-                style={{ marginLeft: '25px' }}
-              >
-                <Img src={settings} />
-                Project settings
-              </NavButton>
 
-            )}
-          {this.props.isAuthorized("integrations", "", [
-            "get",
-            "create",
-            "update",
-            "delete",
-          ]) && (
-              <NavButton path={"/integrations"}
-                style={{ marginLeft: '25px' }}
-              >
-                <Img src={integrations} />
-                Integrations
-              </NavButton>
-            )}
-          {currentCluster && <ClusterListContainer />}
-          <Spacer y={.5} />
-          <NavButton
-            path="/apps"
-            active={window.location.pathname.startsWith("/apps")}
-            style={{ marginLeft: '25px' }}
-          >
-            <Img src={web} />
-            Applications
-          </NavButton>
-          <NavButton
-            path="/addons"
-            active={window.location.pathname.startsWith("/addons")}
-            style={{ marginLeft: '25px' }}
+      if (currentProject.multi_cluster) {
+        return (
+          <ScrollWrapper>
+            {this.props.isAuthorized("settings", "", [
+              "get",
+              "update",
+              "delete",
+            ]) && (
+                <NavButton path={"/project-settings"}
+                  style={{ marginLeft: '25px' }}
+                >
+                  <Img src={settings} />
+                  Project settings
+                </NavButton>
 
-          >
-            <Img src={addOns} />
-            Add-ons
-          </NavButton>
-          {currentProject.env_group_enabled && <NavButton
-            path="/env-groups"
-            active={
-              window.location.pathname.startsWith("/env-groups")
-            }
-            style={{ marginLeft: '25px' }}
-          >
-            <Img src={sliders} />
+              )}
+            {this.props.isAuthorized("integrations", "", [
+              "get",
+              "create",
+              "update",
+              "delete",
+            ]) && (
+                <NavButton path={"/integrations"}
+                  style={{ marginLeft: '25px' }}
+                >
+                  <Img src={integrations} />
+                  Integrations
+                </NavButton>
+              )}
+            {currentCluster && <ClusterListContainer />}
+            <Spacer y={.5} />
+            <NavButton
+              path="/apps"
+              active={window.location.pathname.startsWith("/apps")}
+              style={{ marginLeft: '25px' }}
+            >
+              <Img src={web} />
+              Applications
+            </NavButton>
+            <NavButton
+              path="/addons"
+              active={window.location.pathname.startsWith("/addons")}
+              style={{ marginLeft: '25px' }}
 
-            Env groups
-          </NavButton>}
-          {this.props.isAuthorized("settings", "", [
-            "get",
-            "update",
-            "delete",
-          ]) && (
+            >
+              <Img src={addOns} />
+              Add-ons
+            </NavButton>
+            {currentProject.env_group_enabled && <NavButton
+              path="/env-groups"
+              active={
+                window.location.pathname.startsWith("/env-groups")
+              }
+              style={{ marginLeft: '25px' }}
+            >
+              <Img src={sliders} />
 
-              <NavButton
-                path={"/cluster-dashboard"}
-                style={{ marginLeft: '25px' }}
-                active={
-                  window.location.pathname.startsWith("/cluster-dashboard")
-                }
-              >
-                <Img src={infra} />
-                Infrastructure
-              </NavButton>
-            )}
+              Env groups
+            </NavButton>}
+            {this.props.isAuthorized("settings", "", [
+              "get",
+              "update",
+              "delete",
+            ]) && (
 
-          {/* Hacky workaround for setting currentCluster with legacy method */}
-          <Clusters
-            setWelcome={this.props.setWelcome}
-            currentView={currentView}
-            isSelected={false}
-            forceRefreshClusters={this.props.forceRefreshClusters}
-            setRefreshClusters={this.props.setRefreshClusters}
-          />
-        </ScrollWrapper>
-      );
+                <NavButton
+                  path={"/cluster-dashboard"}
+                  style={{ marginLeft: '25px' }}
+                  active={
+                    window.location.pathname.startsWith("/cluster-dashboard")
+                  }
+                >
+                  <Img src={infra} />
+                  Infrastructure
+                </NavButton>
+              )}
+
+            {/* Hacky workaround for setting currentCluster with legacy method */}
+            <Clusters
+              setWelcome={this.props.setWelcome}
+              currentView={currentView}
+              isSelected={false}
+              forceRefreshClusters={this.props.forceRefreshClusters}
+              setRefreshClusters={this.props.setRefreshClusters}
+            />
+          </ScrollWrapper>
+        );
+      } else {
+
+        return (
+          <ScrollWrapper>
+            <Spacer y={.5} />
+            <NavButton
+              path="/apps"
+              active={window.location.pathname.startsWith("/apps")}
+              style={{ marginLeft: '25px' }}
+            >
+              <Img src={web} />
+              Applications
+            </NavButton>
+            <NavButton
+              path="/addons"
+              active={window.location.pathname.startsWith("/addons")}
+              style={{ marginLeft: '25px' }}
+
+            >
+              <Img src={addOns} />
+              Add-ons
+            </NavButton>
+            {currentProject.env_group_enabled && <NavButton
+              path="/env-groups"
+              active={
+                window.location.pathname.startsWith("/env-groups")
+              }
+              style={{ marginLeft: '25px' }}
+            >
+              <Img src={sliders} />
+
+              Env groups
+            </NavButton>}
+            {this.props.isAuthorized("settings", "", [
+              "get",
+              "update",
+              "delete",
+            ]) && (
+
+                <NavButton
+                  path={"/cluster-dashboard"}
+                  style={{ marginLeft: '25px' }}
+                  active={
+                    window.location.pathname.startsWith("/cluster-dashboard")
+                  }
+                >
+                  <Img src={infra} />
+                  Infrastructure
+                </NavButton>
+              )}
+
+            {this.props.isAuthorized("integrations", "", [
+              "get",
+              "create",
+              "update",
+              "delete",
+            ]) && (
+                <NavButton path={"/integrations"}
+                  style={{ marginLeft: '25px' }}
+                >
+                  <Img src={integrations} />
+                  Integrations
+                </NavButton>
+              )}
+
+            {this.props.isAuthorized("settings", "", [
+              "get",
+              "update",
+              "delete",
+            ]) && (
+                <NavButton path={"/project-settings"}
+                  style={{ marginLeft: '25px' }}
+                >
+                  <Img src={settings} />
+                  Project settings
+                </NavButton>
+
+              )}
+
+            {/* Hacky workaround for setting currentCluster with legacy method */}
+            <Clusters
+              setWelcome={this.props.setWelcome}
+              currentView={currentView}
+              isSelected={false}
+              forceRefreshClusters={this.props.forceRefreshClusters}
+              setRefreshClusters={this.props.setRefreshClusters}
+            />
+          </ScrollWrapper>
+        );
+
+      }
     }
 
     // Render placeholder if no project exists
     return <ProjectPlaceholder>No projects found.</ProjectPlaceholder>;
+
+
   };
 
   // SidebarBg is separate to cover retracted drawer

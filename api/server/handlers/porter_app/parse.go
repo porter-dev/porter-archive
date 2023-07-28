@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/domain"
 	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
+	"github.com/porter-dev/porter/internal/kubernetes/porter_app"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/stefanmcshane/helm/pkg/chart"
@@ -175,7 +176,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 	}
 
 	for serviceName := range services {
-		services[serviceName] = addEnvironmentGroupLabelToService(services[serviceName], conf.EnvironmentGroups)
+		services[serviceName] = addLabelsToService(services[serviceName], conf.EnvironmentGroups)
 	}
 
 	application := &Application{
@@ -185,8 +186,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 		Release:  parsed.Release,
 	}
 
-
-	values, err := buildUmbrellaChartValues(ctx, application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate, conf.Namespace,  conf.AddCustomNodeSelector)
+	values, err := buildUmbrellaChartValues(ctx, application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate, conf.Namespace, conf.AddCustomNodeSelector)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values", err)
 	}
@@ -200,7 +200,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 	// return the parsed release values for the release job chart, if they exist
 	var preDeployJobValues map[string]interface{}
 	if application.Release != nil && application.Release.Run != nil {
-		application.Release = addEnvironmentGroupLabelToService(application.Release, conf.EnvironmentGroups)
+		application.Release = addLabelsToService(application.Release, conf.EnvironmentGroups)
 		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate, conf.AddCustomNodeSelector)
 	}
 
@@ -881,25 +881,37 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 	}, nil
 }
 
-func addEnvironmentGroupLabelToService(service *Service, envGroups []string) *Service {
+// addLabelsToService always adds the "porter-application" label to the service, and if envGroups is not empty, it adds the corresponding environment group label as well.
+func addLabelsToService(service *Service, envGroups []string) *Service {
+	if _, ok := service.Config["labels"]; !ok {
+		service.Config["labels"] = make(map[string]string)
+	}
 	if len(envGroups) != 0 {
-		if _, ok := service.Config["labels"]; !ok {
-			service.Config["labels"] = make(map[string]string)
-		}
+		// delete the env group label so we can replace it
 		if _, ok := service.Config["labels"].(map[string]any); ok {
 			delete(service.Config["labels"].(map[string]any), environment_groups.LabelKey_LinkedEnvironmentGroup)
 		}
-		switch service.Config["labels"].(type) {
-		case map[string]any:
+	}
+
+	switch service.Config["labels"].(type) {
+	case map[string]any:
+		service.Config["labels"].(map[string]any)[porter_app.LabelKey_PorterApplication] = porter_app.LabelValue_PorterApplication
+		if len(envGroups) != 0 {
 			service.Config["labels"].(map[string]any)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(envGroups, ".")
-		case map[string]string:
+		}
+	case map[string]string:
+		service.Config["labels"].(map[string]string)[porter_app.LabelKey_PorterApplication] = porter_app.LabelValue_PorterApplication
+		if len(envGroups) != 0 {
 			service.Config["labels"].(map[string]string)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(envGroups, ".")
-		case any:
-			if val, ok := service.Config["labels"].(string); ok {
-				if val == "" {
-					service.Config["labels"] = map[string]string{
-						environment_groups.LabelKey_LinkedEnvironmentGroup: strings.Join(envGroups, "."),
-					}
+		}
+	case any:
+		if val, ok := service.Config["labels"].(string); ok {
+			if val == "" {
+				service.Config["labels"] = map[string]string{
+					porter_app.LabelKey_PorterApplication: porter_app.LabelValue_PorterApplication,
+				}
+				if len(envGroups) != 0 {
+					service.Config["labels"].(map[string]string)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(envGroups, ".")
 				}
 			}
 		}

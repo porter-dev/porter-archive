@@ -106,6 +106,8 @@ const WebTabs: React.FC<Props> = ({
         </Checkbox>
         <AnimateHeight height={service.ingress.enabled.value ? 'auto' : 0}>
           <Spacer y={0.5} />
+          {getApplicationURLText()}
+          <Spacer y={0.5} />
           <Text color="helper">
             Custom domains
             <a
@@ -123,8 +125,6 @@ const WebTabs: React.FC<Props> = ({
               setHeight(calculateNetworkingHeight());
             }}
           />
-          <Spacer y={0.5} />
-          {getApplicationURLText()}
           <Spacer y={0.5} />
           <Text color="helper">
             Ingress Custom Annotations
@@ -801,7 +801,7 @@ const WebTabs: React.FC<Props> = ({
     } else if (service.ingress.customDomains.length !== 0) {
       return (
         <Text color="helper">
-          {`Application URL${service.ingress.customDomains.length === 1 ? "" : "s"}: Your application will be available at the custom domain${service.ingress.customDomains.length === 1 ? "" : "s"} specified above on next deploy.`}
+          {`Application URL${service.ingress.customDomains.length === 1 ? "" : "s"}: Your application will be available at the specified custom domain${service.ingress.customDomains.length === 1 ? "" : "s"} on next deploy.`}
         </Text>
       )
     } else {

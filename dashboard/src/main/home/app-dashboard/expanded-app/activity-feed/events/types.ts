@@ -28,3 +28,11 @@ export const PorterAppEvent = {
         };
     }
 }
+export interface PorterAppDeployEvent extends PorterAppEvent {
+    type: PorterAppEventType.DEPLOY;
+    metadata: {
+        image_tag: string;
+        revision: number;
+        service_status: Record<string, string>;
+    };
+}

@@ -22,7 +22,6 @@ import ClusterSettingsModal from "./ClusterSettingsModal";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 import AzureProvisionerSettings from "components/AzureProvisionerSettings";
-import Back from "components/porter/Back";
 
 type TabEnum =
   | "nodes"
@@ -214,7 +213,6 @@ export const Dashboard: React.FunctionComponent = () => {
 
   return (
     <>
-      <Back to={`/cluster-dashboard`} />
       <DashboardHeader
         title={
           <Flex>

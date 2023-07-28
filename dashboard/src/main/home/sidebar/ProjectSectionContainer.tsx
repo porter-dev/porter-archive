@@ -8,6 +8,7 @@ type PropsType = {};
 
 type StateType = {};
 
+
 // Props in context to project section to trigger update on context change
 export default class ProjectSectionContainer extends Component<
   PropsType,

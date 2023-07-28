@@ -73,7 +73,6 @@ const Label = styled.div`
   font-size: 13px;
   color: #aaaabb;
   margin-bottom: 10px;
-  align-items: bottom;
 `;
 
 const Error = styled.div`

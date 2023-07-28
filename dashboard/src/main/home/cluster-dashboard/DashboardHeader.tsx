@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { Component } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
@@ -7,7 +7,6 @@ import TitleSection from "components/TitleSection";
 import Spacer from "components/porter/Spacer";
 import Tooltip from "components/porter/Tooltip";
 import Container from "components/porter/Container";
-
 
 type PropsType = {
   image?: any;
@@ -19,47 +18,47 @@ type PropsType = {
   prefix?: any;
 };
 
-const DashboardHeader: React.FC<PropsType> = ({
-  image,
-  title,
-  description,
-  materialIconClass,
-  disableLineBreak,
-  capitalize = true,
-  prefix,
-}) => {
-  const context = useContext(Context);
+type StateType = {};
 
-  return (
-    <>
-      <Container row>
-        {prefix}
-        <TitleSection capitalize={capitalize} icon={image} materialIconClass={materialIconClass}>
-          {title}
-        </TitleSection>
-      </Container>
+export default class DashboardHeader extends Component<PropsType, StateType> {
+  render() {
+    return (
+      <>
+        <Container row>
+          {this.props.prefix}
+          <TitleSection
+            capitalize={
+              this.props.capitalize === undefined || this.props.capitalize
+            }
+            icon={this.props.image}
+            materialIconClass={this.props.materialIconClass}
+          >
+            {this.props.title}
+          </TitleSection>
+        </Container>
 
-      {description && (
-        <>
-          <Spacer height="35px" />
-          <InfoSection>
-            <TopRow>
-              <Tooltip content="TestInfo" position="bottom" hidden={true}>
-                <InfoLabel>
-                  <i className="material-icons">info</i> Info
-                </InfoLabel>
-              </Tooltip>
-            </TopRow>
-            <Description>{description}</Description>
-          </InfoSection>
-        </>
-      )}
-      <Spacer height="35px" />
-    </>
-  );
-};
+        {this.props.description && (
+          <>
+            <Spacer height="35px" />
+            <InfoSection>
+              <TopRow>
+                <Tooltip content="TestInfo" position="bottom" hidden={true}>
+                  <InfoLabel>
+                    <i className="material-icons">info</i> Info
+                  </InfoLabel>
+                </Tooltip>
+              </TopRow>
+              <Description>{this.props.description}</Description>
+            </InfoSection>
+          </>
+        )}
+        <Spacer height="35px" />
+      </>
+    );
+  }
+}
 
-export default DashboardHeader;
+DashboardHeader.contextType = Context;
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);

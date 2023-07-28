@@ -255,7 +255,7 @@ const ProjectIconAlt = styled(ProjectIcon)`
 `;
 
 const StyledProjectSection = styled.div`
-  position: relative;P
+  position: relative;
   margin-left: 3px;
   color: ${props => props.theme.text.primary};
 `;

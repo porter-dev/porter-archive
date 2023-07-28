@@ -206,8 +206,12 @@ class Sidebar extends Component<PropsType, StateType> {
                   Integrations
                 </NavButton>
               )}
-            {currentCluster && <ClusterListContainer />}
-            <Spacer y={.5} />
+            {currentCluster &&
+              <>
+                <Spacer y={.5} />
+                <ClusterListContainer />
+              </>
+            }
             <NavButton
               path="/apps"
               active={window.location.pathname.startsWith("/apps")}

@@ -76,7 +76,7 @@ const IngressCustomAnnotations: React.FC<Props> = ({ annotations, onChange }) =>
                     onChange(newAnnotations);
                 }}
             >
-                Add Annotation
+                + Add Annotation
             </Button>
         </IngressCustomAnnotationsContainer >
     )

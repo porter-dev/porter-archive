@@ -62,7 +62,7 @@ const CustomDomains: React.FC<Props> = ({ customDomains, onChange }) => {
                     onChange(newCustomDomains);
                 }}
             >
-                Add Custom Domain
+                + Add Custom Domain
             </Button>
         </CustomDomainsContainer >
     )

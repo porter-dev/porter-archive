@@ -176,8 +176,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
       </BlockList>
       <Spacer height="15px" />
 
-      {renderPaginationButtons()} {/* Render the pagination buttons */}
-
+      {renderPaginationButtons()}
     </Modal>
   )
 }

@@ -220,12 +220,6 @@ const MainSelector = styled.div`
   cursor: pointer;
   padding: 10px 20px; // <-- Add padding-right here
   position: relative;
-  margin: 10px 0 0;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 10px 0;
-  padding-left: 20px;
-  position: relative;  // <-- Add relative positioning here
   :hover {
     > i {
       background: #ffffff22;
@@ -259,8 +253,6 @@ const RefreshButton = styled.div`
   display: flex;
   align-items: center;
   cursor: pointer;
-  position: absolute;  // <-- Add absolute positioning here
-  right: 20px;  // <-- Adjust as needed
   :hover {
     > img {
       opacity: 1;

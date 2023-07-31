@@ -6,7 +6,7 @@ import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import { Context } from "shared/Context";
-import { ProjectType } from "shared/types";
+import { DetailedClusterType, ProjectType } from "shared/types";
 import gradient from "assets/gradient.png";
 import { pushFiltered } from "shared/routing";
 import SearchBar from "components/porter/SearchBar";
@@ -14,6 +14,7 @@ import { search } from "shared/search";
 import _ from 'lodash';
 import { useMemo } from 'react';
 import api from "shared/api";
+import Button from "components/porter/Button";
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
@@ -27,21 +28,25 @@ const ProjectSelectionModal: React.FC<Props> = ({
   currentProject,
   ...props
 }) => {
-  const context = useContext(Context); // Replace 'YourContext' with your actual context
+  const context = useContext(Context);
   const { setCurrentProject, setCurrentCluster, user } = context;
   const [searchValue, setSearchValue] = useState("");
   const [clusters, setClusters] = useState<DetailedClusterType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1); // add a currentPage state, starts at 1
+  const projectsPerPage = 15
   const filteredProjects = useMemo(() => {
-    const filteredBySearch = search(projects, searchValue, {
-      keys: ["name", "id"],
-      isCaseSensitive: false,
+    const filteredBySearch = projects.filter((project) => {
+      return project.id === Number(searchValue) || project.name.toLowerCase().includes(searchValue.toLowerCase());
     });
 
-    return _.sortBy(filteredBySearch, 'name');
-  }, [projects, searchValue]);
+    // Get the projects for the current page
+    const startIndex = (currentPage - 1) * projectsPerPage;
+    const endIndex = startIndex + projectsPerPage;
 
+    return _.sortBy(filteredBySearch, 'name').slice(startIndex, endIndex);
+  }, [projects, searchValue, currentPage]);
   const updateClusterList = async (projectId: number) => {
     try {
       setLoading(true)
@@ -123,6 +128,30 @@ const ProjectSelectionModal: React.FC<Props> = ({
     }).concat(lastBlock);
   };
 
+  const renderPaginationButtons = () => {
+    const totalProjects = projects.length;
+    const totalPages = Math.ceil(totalProjects / projectsPerPage);
+
+    return (
+      <PaginationButtonsContainer>
+        <Button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
+        >
+          Previous
+        </Button>
+
+        <span>{currentPage} / {totalPages}</span>
+
+        <Button
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
+        >
+          Next
+        </Button>
+      </PaginationButtonsContainer>
+    );
+  };
 
   return (
     <Modal closeModal={closeModal} width="1000px">
@@ -146,7 +175,9 @@ const ProjectSelectionModal: React.FC<Props> = ({
         {renderBlockList()}
       </BlockList>
       <Spacer height="15px" />
-    </Modal>
+
+      {renderPaginationButtons()}
+    </Modal >
   )
 }
 
@@ -257,4 +288,11 @@ overflow: hidden;
 position: relative;
 margin-right: 10px;
 font-weight: 400;
+`;
+
+const PaginationButtonsContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
 `;

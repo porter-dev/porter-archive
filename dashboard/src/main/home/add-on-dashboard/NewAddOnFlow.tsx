@@ -48,7 +48,7 @@ const NewAddOnFlow: React.FC<Props> = ({
 
     return _.sortBy(filteredBySearch);
   }, [addOnTemplates, searchValue]);
-  
+
   const getTemplates = async () => {
     setIsLoading(true);
     const default_addon_helm_repo_url = capabilities?.default_addon_helm_repo_url;
@@ -104,17 +104,18 @@ const NewAddOnFlow: React.FC<Props> = ({
               capitalize={false}
               description="Select an add-on to deploy to this project."
               disableLineBreak
+
             />
             {
               currentTemplate ? (
-                <ExpandedTemplate 
+                <ExpandedTemplate
                   currentTemplate={currentTemplate}
                   proceed={(form?: any) => setCurrentForm(form)}
                   goBack={() => setCurrentTemplate(null)}
                 />
               ) : (
                 <>
-                  <SearchBar 
+                  <SearchBar
                     value={searchValue}
                     setValue={setSearchValue}
                     placeholder="Search available add-ons . . ."

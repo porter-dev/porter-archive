@@ -244,7 +244,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 
 		// create the app chart
-		_, err = helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+		release, err := helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error installing app chart")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -305,7 +305,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		c.WriteResult(w, r, porterApp.ToPorterAppType())
+		c.WriteResult(w, r, porterApp.ToPorterAppTypeWithRevision(release.Version))
 	} else {
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "upgrading-application", Value: true})
 
@@ -400,7 +400,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 
 		// update the chart
-		_, err = helmAgent.UpgradeInstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+		release, err := helmAgent.UpgradeInstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error upgrading application")
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
@@ -489,7 +489,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		c.WriteResult(w, r, updatedPorterApp.ToPorterAppType())
+		c.WriteResult(w, r, updatedPorterApp.ToPorterAppTypeWithRevision(release.Version))
 	}
 }
 

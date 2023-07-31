@@ -24,10 +24,7 @@ export default class ProjectSectionContainer extends Component<
         currentProject={this.context.currentProject}
         projects={this.context.projects}
       />
-      // (<ProjectSection
-      //   currentProject={this.context.currentProject}
-      //   projects={this.context.projects}
-      // />)
+     
     );
   }
 

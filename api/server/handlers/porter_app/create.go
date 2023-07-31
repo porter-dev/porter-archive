@@ -85,6 +85,8 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	shouldCreate := err != nil
 
 	porterYamlBase64 := request.PorterYAMLBase64
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
+
 	porterYaml, err := base64.StdEncoding.DecodeString(porterYamlBase64)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error decoding porter yaml")

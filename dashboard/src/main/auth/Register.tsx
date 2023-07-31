@@ -48,11 +48,11 @@ const Register: React.FC<Props> = ({
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
   const [buttonDisabled, setButtonDisabled] = useState(false);
 
-  const [chosenReferralOption, setChosenReferralOption] = useState<string>("");
+  const [chosenReferralOption, setChosenReferralOption] = useState<string>("(None provided)");
   const [referralOtherText, setReferralOtherText] = useState<string>("");
 
   const referralOptions = [
-    { value: "", label: "Please select an option:" },
+    { value: "(None provided)", label: "Please select an option:" },
     { value: "Email", label: "Email" },
     { value: "Word of mouth", label: "Word of mouth (friend, colleague, etc.)" },
     { value: "YC", label: "YC" },

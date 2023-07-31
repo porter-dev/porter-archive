@@ -28,6 +28,9 @@ type PorterApp struct {
 	// Porter YAML
 	PorterYAMLBase64 string `json:"porter_yaml,omitempty"`
 	PorterYamlPath   string `json:"porter_yaml_path,omitempty"`
+
+	// Helm
+	HelmRevisionNumber int `json:"helm_revision_number,omitempty"`
 }
 
 // swagger:model

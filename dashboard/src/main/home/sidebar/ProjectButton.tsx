@@ -169,13 +169,6 @@ const Dropdown = styled.div`
   box-shadow: 0 5px 15px 5px #00000077;
 `;
 
-const ProjectName = styled.div`
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 17px 
-`;
-
 const Letter = styled.div`
   height: 100%;
   width: 100%;
@@ -221,12 +214,12 @@ const StyledProjectSection = styled.div`
 const MainSelector = styled.div`
   display: flex;
   align-items: center;
+  justify-content: space-between; // <-- Changed from center to space-between
   margin: 10px 0 0;
   font-size: 14px;
   cursor: pointer;
-  padding: 10px 0;
-  padding-left: 20px;
-  position: relative;  // <-- Add relative positioning here
+  padding: 10px 20px; // <-- Add padding-right here
+  position: relative;
   :hover {
     > i {
       background: #ffffff22;
@@ -246,13 +239,20 @@ const MainSelector = styled.div`
   }
 `;
 
+const ProjectName = styled.div`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 17px;
+  flex-grow: 1; // <-- Add flex-grow here
+  padding-right: 20px; // <-- Add padding-right here
+`;
+
 const RefreshButton = styled.div`
   color: #ffffff;
   display: flex;
   align-items: center;
   cursor: pointer;
-  position: absolute;  // <-- Add absolute positioning here
-  right: 20px;  // <-- Adjust as needed
   :hover {
     > img {
       opacity: 1;
@@ -264,6 +264,5 @@ const RefreshButton = styled.div`
     align-items: center;
     justify-content: center;
     height: 15px;
-    
   }
 `;

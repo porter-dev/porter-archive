@@ -74,7 +74,7 @@ const ChangeLogComponent: FC<Props> = ({ oldYaml, newYaml, appData }) => {
             const commitDiffLink = `https://github.com/${appData.app.repo_name}/compare/${oldCommit}...${newCommit}`;
             changes.push(
               <ChangeBox type="E">
-                {`Tag upated: ${oldCommit} -> ${newCommit}.   `}
+                {`Tag updated: ${oldCommit} -> ${newCommit}.   `}
 
                 <Link
                   target="_blank"
@@ -87,7 +87,7 @@ const ChangeLogComponent: FC<Props> = ({ oldYaml, newYaml, appData }) => {
             );
           } else {
             <ChangeBox type="E">
-              {`Tag upated: ${oldCommit} -> ${newCommit}.   `}
+              {`Tag updated: ${oldCommit} -> ${newCommit}.   `}
             </ChangeBox>
           }
         } else {

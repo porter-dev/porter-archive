@@ -250,7 +250,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
               type="text"
               value={this.state.envGroupName}
               setValue={(x: string) => this.setState({ envGroupName: x })}
-              placeholder="ex: doctor-scientist"
+              placeholder="ex: my-env-group"
               width="100%"
             />
             {!this?.context?.currentProject?.simplified_view_enabled && (<>

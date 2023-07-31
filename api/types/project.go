@@ -14,6 +14,7 @@ type Project struct {
 	AzureEnabled           bool    `json:"azure_enabled"`
 	HelmValuesEnabled      bool    `json:"helm_values_enabled"`
 	EnvGroupEnabled        bool    `json:"env_group_enabled"`
+	MultiCluster           bool    `json:"multi_cluster"`
 }
 
 type FeatureFlags struct {
@@ -25,7 +26,8 @@ type FeatureFlags struct {
 	SimplifiedViewEnabled      string `json:"simplified_view_enabled,omitempty"`
 	AzureEnabled               bool   `json:"azure_enabled,omitempty"`
 	HelmValuesEnabled          bool   `json:"helm_values_enabled,omitempty"`
-	EnvGroupEnabled            bool   `json:"env_group_enabled"`
+	EnvGroupEnabled            bool   `json:"env_group_enabled,omitempty"`
+	MultiCluster               bool   `json:"multi_cluster,omitempty"`
 }
 
 type CreateProjectRequest struct {

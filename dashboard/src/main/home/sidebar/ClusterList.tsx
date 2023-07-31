@@ -9,6 +9,7 @@ import { ClusterType } from "shared/types";
 import { RouteComponentProps, withRouter } from "react-router";
 import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
+import { pushFiltered } from "shared/routing";
 
 const ClusterList: React.FC<PropsType> = (props) => {
   const { setCurrentCluster, user, currentCluster, currentProject } = useContext(Context);
@@ -64,6 +65,7 @@ const ClusterList: React.FC<PropsType> = (props) => {
           setExpanded(false);
           const cluster = clusters.find(c => c.name === option.value);
           setCurrentCluster(cluster);
+          pushFiltered(props, "/apps", ["project_id"], {});
         }}
       >
 
@@ -209,26 +211,10 @@ const ClusterName = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-`;
-
-
-const ClusterIcon = styled.div`
-  width: 25px;
-  min-width: 25px;
-  height: 25px;
-  border-radius: 3px;
-  overflow: hidden;
-  position: relative;
-  margin-right: 10px;
-  font-weight: 400;
-`;
-
-const ClusterIconAlt = styled(ClusterIcon)`
-  border: 1px solid #ffffff44;
   display: flex;
   align-items: center;
-  justify-content: center;
 `;
+
 
 const StyledClusterSection = styled.div`
   position: relative;

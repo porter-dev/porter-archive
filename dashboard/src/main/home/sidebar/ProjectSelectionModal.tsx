@@ -28,7 +28,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
   ...props
 }) => {
   const context = useContext(Context); // Replace 'YourContext' with your actual context
-  const { setCurrentProject, setCurrentCluster } = context;
+  const { setCurrentProject, setCurrentCluster, user } = context;
   const [searchValue, setSearchValue] = useState("");
   const [clusters, setClusters] = useState<DetailedClusterType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -65,6 +65,25 @@ const ProjectSelectionModal: React.FC<Props> = ({
     }
   };
   const renderBlockList = () => {
+    const lastBlock = user && user.isPorterUser ? (
+      <Block
+        key="initialize"
+        onClick={() =>
+          pushFiltered(props, "/new-project", ["project_id"], {
+            new_project: true,
+          })
+        }
+      >
+        <BlockTitle>Create a project</BlockTitle>
+        {/* <ProjectIcon>
+          <ProjectImage src={gradient} />
+          <Letter>{"+"}</Letter>
+        </ProjectIcon> */}
+        <BlockDescription>
+          Initialize a new project
+        </BlockDescription>
+      </Block>
+    ) : null;
 
     return filteredProjects.map((project: ProjectType, i: number) => {
       return (
@@ -78,25 +97,17 @@ const ProjectSelectionModal: React.FC<Props> = ({
             setCurrentProject(project);
 
             const clusters_list = await updateClusterList(project.id);
-            console.log(clusters_list)
+            console.log(clusters_list);
 
             if (clusters_list?.length > 0) {
-
-              setCurrentCluster(clusters_list[0])
-              pushFiltered(props, "/apps", ["project_id"], {
-
-              })
-            }
-            else {
-              pushFiltered(props, "/onboarding", ["project_id"], {
-
-              })
+              setCurrentCluster(clusters_list[0]);
+              pushFiltered(props, "/apps", ["project_id"], {});
+            } else {
+              pushFiltered(props, "/onboarding", ["project_id"], {});
             }
             closeModal();
-
           }}
         >
-
           {/* <BlockIcon src={gradient} /> */}
           <BlockTitle>{project.name}</BlockTitle>
           {/* <ProjectIcon>
@@ -109,29 +120,9 @@ const ProjectSelectionModal: React.FC<Props> = ({
           </BlockDescription>
         </Block>
       );
-    }).concat(
-      <Block
-        key="initialize"
-        onClick={() =>
-          pushFiltered(props, "/new-project", ["project_id"], {
-            new_project: true,
-          })
+    }).concat(lastBlock);
+  };
 
-        }
-      >
-
-        <BlockTitle>Create a project</BlockTitle>
-        {/* <ProjectIcon>
-          <ProjectImage src={gradient} />
-          <Letter>{"+"}</Letter>
-        </ProjectIcon> */}
-        <BlockDescription>
-          Initialize a new project
-        </BlockDescription>
-      </Block>
-    );
-
-  }
 
   return (
     <Modal closeModal={closeModal} width="1000px">
@@ -170,13 +161,15 @@ const Block = styled.div<{ selected?: boolean }>`
   font-weight: 500;
   padding: 3px 0px 12px;
   flex-direction: column;
-  align-item: center;
-  justify-content: space-between;
   height: 170px;
   cursor: pointer;
   color: #ffffff;
   position: relative;
 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   border-radius: 5px;
   background: ${props => props.theme.clickable.bg};
   border: ${props => props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};

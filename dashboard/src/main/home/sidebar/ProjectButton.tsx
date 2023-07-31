@@ -61,9 +61,10 @@ const ProjectButton: React.FC<PropsType> = (props) => {
           </ProjectIcon>
           <ProjectName>{currentProject.name}</ProjectName>
           <Spacer inline x={.5} />
-          <RefreshButton onClick={() => setShowGHAModal(true)}>
+
+          {props.projects.length > 1 && <RefreshButton onClick={() => setShowGHAModal(true)}>
             <img src={swap} />
-          </RefreshButton>
+          </RefreshButton>}
           {showGHAModal && currentProject != null && (
             <ProjectSelectionModal
               currentProject={props.currentProject}

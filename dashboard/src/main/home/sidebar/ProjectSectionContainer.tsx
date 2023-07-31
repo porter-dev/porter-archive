@@ -17,18 +17,20 @@ export default class ProjectSectionContainer extends Component<
   state = {};
 
   render() {
+
     return (
-      this.context.currentProject?.simplified_view_enabled ?
-        (<ProjectButton
-          currentProject={this.context.currentProject}
-          projects={this.context.projects}
-        />) :
-        (<ProjectSection
-          currentProject={this.context.currentProject}
-          projects={this.context.projects}
-        />)
+
+      <ProjectButton
+        currentProject={this.context.currentProject}
+        projects={this.context.projects}
+      />
+      // (<ProjectSection
+      //   currentProject={this.context.currentProject}
+      //   projects={this.context.projects}
+      // />)
     );
   }
+
 }
 
 ProjectSectionContainer.contextType = Context;

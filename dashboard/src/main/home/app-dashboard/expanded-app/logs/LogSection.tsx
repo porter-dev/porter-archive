@@ -319,7 +319,6 @@ const LogSection: React.FC<Props> = ({
   useEffect(() => {
     // determine if the agent is installed properly - if not, start by render upgrade screen
     checkForAgent();
-    resetSearch();
   }, []);
 
   useEffect(() => {

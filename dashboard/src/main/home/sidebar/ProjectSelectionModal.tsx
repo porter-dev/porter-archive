@@ -72,6 +72,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
   const renderBlockList = () => {
     const lastBlock = user && user.isPorterUser ? (
       <Block
+        isLastBlock={true}
         key="initialize"
         onClick={() =>
           pushFiltered(props, "/new-project", ["project_id"], {
@@ -154,7 +155,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
   };
 
   return (
-    <Modal closeModal={closeModal} width="1000px">
+    <Modal closeModal={closeModal} width="60vw">
       <Text size={16} style={{ marginRight: '10px' }}>
         Switch Project
       </Text>
@@ -171,12 +172,14 @@ const ProjectSelectionModal: React.FC<Props> = ({
 
       <Spacer y={1} />
 
-      <BlockList>
-        {renderBlockList()}
-      </BlockList>
-      <Spacer height="15px" />
+      <ScrollableContent>  {/* Wrap the block list and pagination buttons */}
+        <BlockList>
+          {renderBlockList()}
+        </BlockList>
+        <Spacer height="15px" />
 
-      {renderPaginationButtons()}
+        {renderPaginationButtons()}
+      </ScrollableContent>
     </Modal >
   )
 }
@@ -202,7 +205,8 @@ const Block = styled.div<{ selected?: boolean }>`
   justify-content: center;
   align-items: center;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${props => props.isLastBlock ? '#aaaabb' : props.theme.clickable.bg};
+
   border: ${props => props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};
   :hover {
     border: ${({ selected }) => (!selected && "1px solid #7a7b80")};
@@ -295,4 +299,9 @@ const PaginationButtonsContainer = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
+`;
+const ScrollableContent = styled.div`
+  overflow-y: auto; /* Enable vertical scrolling */
+  height: calc(100vh - 200px); /* Set the maximum height */
+  padding-right: 15px; /* Add some right padding to account for scrollbar */
 `;

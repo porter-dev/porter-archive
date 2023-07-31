@@ -103,6 +103,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
             <ProjectImage src={gradient} />
             <Letter>{project.name[0].toUpperCase()}</Letter>
           </ProjectIcon> */}
+
           <BlockDescription>
             Project Id: {project.id}
           </BlockDescription>
@@ -120,6 +121,10 @@ const ProjectSelectionModal: React.FC<Props> = ({
       >
 
         <BlockTitle>Create a project</BlockTitle>
+        {/* <ProjectIcon>
+          <ProjectImage src={gradient} />
+          <Letter>{"+"}</Letter>
+        </ProjectIcon> */}
         <BlockDescription>
           Initialize a new project
         </BlockDescription>
@@ -199,9 +204,22 @@ const BlockList = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 `;
 
-
+const Letter = styled.div`
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  padding-bottom: 2px;
+  font-weight: 10000;
+  font-size: 60px;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
 const BlockDescription = styled.div`
   color: #ffffff66;
+  margin-left: -10px;
   text-align: center;
   font-weight: default;
   font-size: 13px;
@@ -216,9 +234,11 @@ const BlockDescription = styled.div`
 
 const BlockTitle = styled.div`
   margin-top: 12px;
-  width: 80%;
+  width: 100%;  
+  margin-left: -10px;
   text-align: center;
-  font-size: 14px;
+  font-size: 16px;
+  justify-content: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -229,18 +249,6 @@ const Plus = styled.div`
   font-size: 15px;
 `;
 
-const Letter = styled.div`
-height: 100%;
-width: 100%;
-position: absolute;
-padding-bottom: 2px;
-font-weight: 500;
-top: 0;
-left: 0;
-display: flex;
-align-items: center;
-justify-content: center;
-`;
 
 const ProjectImage = styled.img`
 width: 100%;
@@ -248,9 +256,9 @@ height: 100%;
 `;
 
 const ProjectIcon = styled.div`
-width: 25px;
+width: 75px;
 min-width: 25px;
-height: 25px;
+height: 75px;
 border-radius: 3px;
 overflow: hidden;
 position: relative;

@@ -176,7 +176,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 	}
 
 	for serviceName := range services {
-		services[serviceName] = addLabelsToService(services[serviceName], conf.EnvironmentGroups)
+		services[serviceName] = addLabelsToService(services[serviceName], conf.EnvironmentGroups, porter_app.LabelKey_PorterApplication)
 	}
 
 	application := &Application{
@@ -200,7 +200,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 	// return the parsed release values for the release job chart, if they exist
 	var preDeployJobValues map[string]interface{}
 	if application.Release != nil && application.Release.Run != nil {
-		application.Release = addLabelsToService(application.Release, conf.EnvironmentGroups)
+		application.Release = addLabelsToService(application.Release, conf.EnvironmentGroups, porter_app.LabelKey_PorterApplicationPreDeploy)
 		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate, conf.AddCustomNodeSelector)
 	}
 
@@ -881,8 +881,8 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 	}, nil
 }
 
-// addLabelsToService always adds the "porter-application" label to the service, and if envGroups is not empty, it adds the corresponding environment group label as well.
-func addLabelsToService(service *Service, envGroups []string) *Service {
+// addLabelsToService always adds the default label to the service, and if envGroups is not empty, it adds the corresponding environment group label as well.
+func addLabelsToService(service *Service, envGroups []string, defaultLabelKey string) *Service {
 	if _, ok := service.Config["labels"]; !ok {
 		service.Config["labels"] = make(map[string]string)
 	}
@@ -895,12 +895,12 @@ func addLabelsToService(service *Service, envGroups []string) *Service {
 
 	switch service.Config["labels"].(type) {
 	case map[string]any:
-		service.Config["labels"].(map[string]any)[porter_app.LabelKey_PorterApplication] = porter_app.LabelValue_PorterApplication
+		service.Config["labels"].(map[string]any)[defaultLabelKey] = porter_app.LabelValue_PorterApplication
 		if len(envGroups) != 0 {
 			service.Config["labels"].(map[string]any)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(envGroups, ".")
 		}
 	case map[string]string:
-		service.Config["labels"].(map[string]string)[porter_app.LabelKey_PorterApplication] = porter_app.LabelValue_PorterApplication
+		service.Config["labels"].(map[string]string)[defaultLabelKey] = porter_app.LabelValue_PorterApplication
 		if len(envGroups) != 0 {
 			service.Config["labels"].(map[string]string)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(envGroups, ".")
 		}
@@ -908,7 +908,7 @@ func addLabelsToService(service *Service, envGroups []string) *Service {
 		if val, ok := service.Config["labels"].(string); ok {
 			if val == "" {
 				service.Config["labels"] = map[string]string{
-					porter_app.LabelKey_PorterApplication: porter_app.LabelValue_PorterApplication,
+					defaultLabelKey: porter_app.LabelValue_PorterApplication,
 				}
 				if len(envGroups) != 0 {
 					service.Config["labels"].(map[string]string)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(envGroups, ".")

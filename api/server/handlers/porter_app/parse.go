@@ -13,7 +13,9 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/domain"
 	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
+	"github.com/porter-dev/porter/internal/kubernetes/porter_app"
 	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/stefanmcshane/helm/pkg/chart"
 
@@ -109,18 +111,23 @@ type ParseConf struct {
 }
 
 func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
+	ctx, span := telemetry.NewSpan(ctx, "parse-porter-yaml")
+	defer span.End()
+
 	parsed := &PorterStackYAML{}
 
 	if conf.FullHelmValues != "" {
 		parsedHelmValues, err := convertHelmValuesToPorterYaml(conf.FullHelmValues)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing raw helm values", err)
+			err = telemetry.Error(ctx, span, err, "error parsing raw helm values")
+			return nil, nil, nil, err
 		}
 		parsed = parsedHelmValues
 	} else {
 		err := yaml.Unmarshal(conf.PorterYaml, parsed)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
+			err = telemetry.Error(ctx, span, err, "error parsing porter.yaml")
+			return nil, nil, nil, err
 		}
 	}
 
@@ -129,16 +136,19 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 	for i := range conf.EnvGroups {
 		cm, _, err := conf.SubdomainCreateOpts.k8sAgent.GetLatestVersionedConfigMap(conf.EnvGroups[i], conf.Namespace)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
+			err = telemetry.Error(ctx, span, err, "error getting latest versioned config map")
+			return nil, nil, nil, err
 		}
 
 		versionStr, ok := cm.ObjectMeta.Labels["version"]
 		if !ok {
-			return nil, nil, nil, fmt.Errorf("error extracting version from config map")
+			err = telemetry.Error(ctx, span, nil, "error extracting version from config map")
+			return nil, nil, nil, err
 		}
 		versionInt, err := strconv.Atoi(versionStr)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error converting version to int: %w", err)
+			err = telemetry.Error(ctx, span, err, "error converting version to int")
+			return nil, nil, nil, err
 		}
 
 		version := uint(versionInt)
@@ -162,7 +172,8 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 	}
 
 	if parsed.Apps != nil && parsed.Services != nil {
-		return nil, nil, nil, fmt.Errorf("'apps' and 'services' are synonymous but both were defined")
+		err := telemetry.Error(ctx, span, nil, "'apps' and 'services' are synonymous but both were defined")
+		return nil, nil, nil, err
 	}
 
 	var services map[string]*Service
@@ -175,28 +186,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 	}
 
 	for serviceName := range services {
-		if len(conf.EnvironmentGroups) != 0 {
-			if _, ok := services[serviceName].Config["labels"]; !ok {
-				services[serviceName].Config["labels"] = make(map[string]string)
-			}
-			if _, ok := services[serviceName].Config["labels"].(map[string]any); ok {
-				delete(services[serviceName].Config["labels"].(map[string]any), environment_groups.LabelKey_LinkedEnvironmentGroup)
-			}
-			switch services[serviceName].Config["labels"].(type) {
-			case map[string]any:
-				services[serviceName].Config["labels"].(map[string]any)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(conf.EnvironmentGroups, ".")
-			case map[string]string:
-				services[serviceName].Config["labels"].(map[string]string)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(conf.EnvironmentGroups, ".")
-			case any:
-				if val, ok := services[serviceName].Config["labels"].(string); ok {
-					if val == "" {
-						services[serviceName].Config["labels"] = map[string]string{
-							environment_groups.LabelKey_LinkedEnvironmentGroup: strings.Join(conf.EnvironmentGroups, "."),
-						}
-					}
-				}
-			}
-		}
+		services[serviceName] = addLabelsToService(services[serviceName], conf.EnvironmentGroups, porter_app.LabelKey_PorterApplication)
 	}
 
 	application := &Application{
@@ -206,21 +196,27 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 		Release:  parsed.Release,
 	}
 
-
-	values, err := buildUmbrellaChartValues(ctx, application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate, conf.Namespace,  conf.AddCustomNodeSelector)
+	values, err := buildUmbrellaChartValues(ctx, application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate, conf.Namespace, conf.AddCustomNodeSelector)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values", err)
+		err = telemetry.Error(ctx, span, err, "error building values")
+		return nil, nil, nil, err
 	}
-	convertedValues := convertMap(values).(map[string]interface{})
+	convertedValues, ok := convertMap(values).(map[string]interface{})
+	if !ok {
+		err = telemetry.Error(ctx, span, nil, "error converting values")
+		return nil, nil, nil, err
+	}
 
 	umbrellaChart, err := buildUmbrellaChart(application, conf.ServerConfig, conf.ProjectID, conf.ExistingChartDependencies)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", "error building chart", err)
+		err = telemetry.Error(ctx, span, err, "error building umbrella chart")
+		return nil, nil, nil, err
 	}
 
 	// return the parsed release values for the release job chart, if they exist
 	var preDeployJobValues map[string]interface{}
 	if application.Release != nil && application.Release.Run != nil {
+		application.Release = addLabelsToService(application.Release, conf.EnvironmentGroups, porter_app.LabelKey_PorterApplicationPreDeploy)
 		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate, conf.AddCustomNodeSelector)
 	}
 
@@ -625,6 +621,12 @@ func convertMap(m interface{}) interface{} {
 		for k, v := range m {
 			m[k] = convertMap(v)
 		}
+	case map[string]string:
+		result := map[string]interface{}{}
+		for k, v := range m {
+			result[k] = v
+		}
+		return result
 	case map[interface{}]interface{}:
 		result := map[string]interface{}{}
 		for k, v := range m {
@@ -899,4 +901,43 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 	return &PorterStackYAML{
 		Services: services,
 	}, nil
+}
+
+// addLabelsToService always adds the default label to the service, and if envGroups is not empty, it adds the corresponding environment group label as well.
+func addLabelsToService(service *Service, envGroups []string, defaultLabelKey string) *Service {
+	if _, ok := service.Config["labels"]; !ok {
+		service.Config["labels"] = make(map[string]string)
+	}
+	if len(envGroups) != 0 {
+		// delete the env group label so we can replace it
+		if _, ok := service.Config["labels"].(map[string]any); ok {
+			delete(service.Config["labels"].(map[string]any), environment_groups.LabelKey_LinkedEnvironmentGroup)
+		}
+	}
+
+	switch service.Config["labels"].(type) {
+	case map[string]string:
+		service.Config["labels"].(map[string]string)[defaultLabelKey] = porter_app.LabelValue_PorterApplication
+		if len(envGroups) != 0 {
+			service.Config["labels"].(map[string]string)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(envGroups, ".")
+		}
+	case map[string]any:
+		service.Config["labels"].(map[string]any)[defaultLabelKey] = porter_app.LabelValue_PorterApplication
+		if len(envGroups) != 0 {
+			service.Config["labels"].(map[string]any)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(envGroups, ".")
+		}
+	case any:
+		if val, ok := service.Config["labels"].(string); ok {
+			if val == "" {
+				service.Config["labels"] = map[string]string{
+					defaultLabelKey: porter_app.LabelValue_PorterApplication,
+				}
+				if len(envGroups) != 0 {
+					service.Config["labels"].(map[string]string)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(envGroups, ".")
+				}
+			}
+		}
+	}
+
+	return service
 }

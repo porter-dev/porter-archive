@@ -99,7 +99,7 @@ const NewEnvGroupForm = (props: {
         setValue={(x: string) => {
           setName(x);
         }}
-        placeholder="ex: doctor-scientist"
+        placeholder="ex: my-env-group"
         width="100%"
       />
 

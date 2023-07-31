@@ -177,7 +177,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
       <Spacer height="15px" />
 
       {renderPaginationButtons()}
-    </Modal>
+    </Modal >
   )
 }
 

@@ -62,7 +62,7 @@ const ProjectButton: React.FC<PropsType> = (props) => {
           <ProjectName>{currentProject.name}</ProjectName>
           <Spacer inline x={.5} />
 
-          {props.projects.length > 0 && <RefreshButton onClick={() => setShowGHAModal(true)}>
+          {props.projects.length > 1 && <RefreshButton onClick={() => setShowGHAModal(true)}>
             <img src={swap} />
           </RefreshButton>}
           {showGHAModal && currentProject != null && (
@@ -169,7 +169,6 @@ const Dropdown = styled.div`
   box-shadow: 0 5px 15px 5px #00000077;
 `;
 
-
 const Letter = styled.div`
   height: 100%;
   width: 100%;
@@ -221,6 +220,12 @@ const MainSelector = styled.div`
   cursor: pointer;
   padding: 10px 20px; // <-- Add padding-right here
   position: relative;
+  margin: 10px 0 0;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 10px 0;
+  padding-left: 20px;
+  position: relative;  // <-- Add relative positioning here
   :hover {
     > i {
       background: #ffffff22;
@@ -254,6 +259,8 @@ const RefreshButton = styled.div`
   display: flex;
   align-items: center;
   cursor: pointer;
+  position: absolute;  // <-- Add absolute positioning here
+  right: 20px;  // <-- Adjust as needed
   :hover {
     > img {
       opacity: 1;

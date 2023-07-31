@@ -79,17 +79,6 @@ const ClusterList: React.FC<PropsType> = (props) => {
     expanded && (
       <Dropdown>
         {renderOptionList()}
-        {/* {user?.email.includes("porter.run") && 
-        (
-          // <Option
-          //   selected={false}
-          //   lastItem={true}
-          //   onClick={() => pushFiltered(props, "/new-cluster", ["cluster_id"])}
-          // >
-          //   <ClusterIconAlt>+</ClusterIconAlt>
-          //   <ClusterLabel>Create a cluster</ClusterLabel>
-          // </Option>
-        )} */}
       </Dropdown>
     );
 

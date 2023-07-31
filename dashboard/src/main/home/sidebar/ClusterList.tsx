@@ -119,8 +119,6 @@ const ClusterList: React.FC<PropsType> = (props) => {
 
 export default withRouter(ClusterList);
 
-
-// The styled components remain the same...
 const ClusterLabel = styled.div`
   overflow: hidden;
   white-space: nowrap;

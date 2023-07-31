@@ -388,12 +388,6 @@ class Sidebar extends Component<PropsType, StateType> {
           </CollapseButton>
 
           <ProjectSectionContainer />
-
-
-          {/* <ClusterSideBar /> */}
-
-
-
           {this.renderProjectContents()}
           {this.context.featurePreview && (
             <Container row>

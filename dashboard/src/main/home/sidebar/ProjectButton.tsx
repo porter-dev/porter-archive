@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import styled from "styled-components";
 import gradient from "assets/gradient.png";
 
@@ -6,136 +6,93 @@ import { Context } from "shared/Context";
 import { ProjectType } from "shared/types";
 import { pushFiltered } from "shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
+import Icon from "components/porter/Icon";
+import swap from "assets/swap.svg";
+import Spacer from "components/porter/Spacer";
+import ProjectSelectionModal from "./ProjectSelectionModal";
 
 type PropsType = RouteComponentProps & {
   currentProject: ProjectType;
   projects: ProjectType[];
 };
 
-type StateType = {
-  expanded: boolean;
-};
+const ProjectButton: React.FC<PropsType> = (props) => {
+  const [expanded, setExpanded] = useState(false);
+  const wrapperRef = useRef<any>(null);
+  const context = useContext(Context);
+  const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
 
-class ProjectSection extends Component<PropsType, StateType> {
-  state = {
-    expanded: false,
-  };
+  const { setCurrentProject, setCurrentCluster } = context;
 
-  wrapperRef: any = React.createRef();
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
 
-  componentDidMount() {
-    document.addEventListener("mousedown", this.handleClickOutside.bind(this));
-  }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
-  componentWillUnmount() {
-    document.removeEventListener(
-      "mousedown",
-      this.handleClickOutside.bind(this)
-    );
-  }
-
-  handleClickOutside = (e: any) => {
+  const handleClickOutside = (e: any) => {
     if (
-      this.wrapperRef &&
-      this.wrapperRef.current &&
-      !this.wrapperRef.current.contains(e.target)
+      wrapperRef &&
+      wrapperRef.current &&
+      !wrapperRef.current.contains(e.target)
     ) {
-      this.setState({ expanded: false });
+      setExpanded(false);
     }
   };
 
-  renderOptionList = () => {
-    let { setCurrentProject, setCurrentCluster, currentProject } = this.context;
-    return this.props.projects.map((project: ProjectType, i: number) => {
-      return (
-        <Option
-          key={i}
-          selected={project.name === this.props.currentProject.name}
-          onClick={() => {
-            this.setState({ expanded: false });
-            if (project.id !== currentProject.id) {
-              setCurrentCluster(null);
-            }
-            setCurrentProject(project, () => {
-              pushFiltered(this.props, "/dashboard", ["project_id"]);
-            });
-          }}
+  const handleExpand = () => {
+    setExpanded(!expanded);
+  };
+
+  // Render the component
+  let { currentProject } = props;
+  if (currentProject) {
+    return (
+      <StyledProjectSection ref={wrapperRef}>
+        <MainSelector
+          onClick={handleExpand}
+          expanded={expanded}
         >
           <ProjectIcon>
             <ProjectImage src={gradient} />
-            <Letter>{project.name[0].toUpperCase()}</Letter>
+            <Letter>{currentProject.name[0].toUpperCase()}</Letter>
           </ProjectIcon>
-          <ProjectLabel>{project.name}</ProjectLabel>
-        </Option>
-      );
-    });
-  };
+          <ProjectName>{currentProject.name}</ProjectName>
+          <Spacer inline x={.5} />
 
-  renderDropdown = () => {
-    if (this.state.expanded) {
-      return (
-        <div>
-          <Dropdown>
-            {this.renderOptionList()}
-            {this.context.user?.email.includes("porter.run") && (
-              <Option
-                selected={false}
-                lastItem={true}
-                onClick={() =>
-                  pushFiltered(this.props, "/new-project", ["project_id"])
-                }
-              >
-                <ProjectIconAlt>+</ProjectIconAlt>
-                <ProjectLabel>Create a project</ProjectLabel>
-              </Option>
-            )}
-          </Dropdown>
-        </div>
-      );
-    }
-  };
-
-  handleExpand = () => {
-    this.setState({ expanded: !this.state.expanded });
-  };
-
-  render() {
-    let { currentProject } = this.props;
-    if (currentProject) {
-      return (
-        <StyledProjectSection ref={this.wrapperRef}>
-          <MainSelector
-            onClick={this.handleExpand}
-            expanded={this.state.expanded}
-          >
-            <ProjectIcon>
-              <ProjectImage src={gradient} />
-              <Letter>{currentProject.name[0].toUpperCase()}</Letter>
-            </ProjectIcon>
-            <ProjectName>{currentProject.name}</ProjectName>
-            <i className="material-icons">arrow_drop_down</i>
-          </MainSelector>
-          {this.renderDropdown()}
-        </StyledProjectSection>
-      );
-    }
-    return (
-      <InitializeButton
-        onClick={() =>
-          pushFiltered(this.props, "/new-project", ["project_id"], {
-            new_project: true,
-          })
-        }
-      >
-        <Plus>+</Plus> Create a project
-      </InitializeButton>
+          {props.projects.length > 1 && <RefreshButton onClick={() => setShowGHAModal(true)}>
+            <img src={swap} />
+          </RefreshButton>}
+          {showGHAModal && currentProject != null && (
+            <ProjectSelectionModal
+              currentProject={props.currentProject}
+              projects={props.projects}
+              closeModal={() => setShowGHAModal(false)}
+            />
+          )}
+          {/* <i className="material-icons">arrow_drop_down</i> */}
+        </MainSelector>
+        {/* {renderDropdown()} */}
+      </StyledProjectSection >
     );
   }
-}
+  return (
+    <InitializeButton
+      onClick={() =>
+        pushFiltered(props, "/new-project", ["project_id"], {
+          new_project: true,
+        })
+      }
+    >
+      <Plus>+</Plus> Create a project
+    </InitializeButton>
+  );
+};
 
-ProjectSection.contextType = Context;
+export default withRouter(ProjectButton);
 
-export default withRouter(ProjectSection);
 
 const ProjectLabel = styled.div`
   overflow: hidden;
@@ -208,7 +165,7 @@ const Dropdown = styled.div`
   border-radius: 3px;
   z-index: 999;
   overflow-y: auto;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   box-shadow: 0 5px 15px 5px #00000077;
 `;
 
@@ -216,6 +173,7 @@ const ProjectName = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  font-size: 17px 
 `;
 
 const Letter = styled.div`
@@ -223,7 +181,7 @@ const Letter = styled.div`
   width: 100%;
   position: absolute;
   padding-bottom: 2px;
-  font-weight: 500;
+  font-weight: 600;
   top: 0;
   left: 0;
   display: flex;
@@ -237,9 +195,9 @@ const ProjectImage = styled.img`
 `;
 
 const ProjectIcon = styled.div`
-  width: 25px;
+  width: 30px;
   min-width: 25px;
-  height: 25px;
+  height: 30px;
   border-radius: 3px;
   overflow: hidden;
   position: relative;
@@ -268,6 +226,7 @@ const MainSelector = styled.div`
   cursor: pointer;
   padding: 10px 0;
   padding-left: 20px;
+  position: relative;  // <-- Add relative positioning here
   :hover {
     > i {
       background: #ffffff22;
@@ -277,12 +236,34 @@ const MainSelector = styled.div`
   > i {
     margin-left: 7px;
     margin-right: 12px;
-    font-size: 20px;
+    font-size: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 20px;
     background: ${(props: { expanded: boolean }) =>
     props.expanded ? "#ffffff22" : ""};
+  }
+`;
+
+const RefreshButton = styled.div`
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: absolute;  // <-- Add absolute positioning here
+  right: 20px;  // <-- Adjust as needed
+  :hover {
+    > img {
+      opacity: 1;
+    }
+  }
+
+  > img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 15px;
+    
   }
 `;

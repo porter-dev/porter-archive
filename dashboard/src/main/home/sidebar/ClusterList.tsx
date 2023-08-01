@@ -200,9 +200,8 @@ const ClusterName = styled.div`
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
+  max-width: calc(100% - 50px); // Reserve space for the arrow drop down and some padding
 `;
-
-
 const StyledClusterSection = styled.div`
   position: relative;
   margin-left: 3px;

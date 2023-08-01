@@ -174,7 +174,7 @@ const Letter = styled.div`
   width: 100%;
   position: absolute;
   padding-bottom: 2px;
-  font-weight: 600;
+  font-weight: 500;
   top: 0;
   left: 0;
   display: flex;
@@ -197,7 +197,6 @@ const ProjectIcon = styled.div`
   margin-right: 10px;
   font-weight: 400;
 `;
-
 const ProjectIconAlt = styled(ProjectIcon)`
   border: 1px solid #ffffff44;
   display: flex;

@@ -63,7 +63,7 @@ const ProjectButton: React.FC<PropsType> = (props) => {
           <ProjectName hasMultipleProjects={props.projects.length > 1}>{currentProject.name}</ProjectName>
           <Spacer inline x={.5} />
 
-          {props.projects.length > 1 && <RefreshButton onClick={() => setShowGHAModal(true)}>
+          {props.projects.length > 0 && <RefreshButton onClick={() => setShowGHAModal(true)}>
             <img src={swap} />
           </RefreshButton>}
           {showGHAModal && currentProject != null && (
@@ -191,10 +191,10 @@ const ProjectIcon = styled.div`
   width: 25px;
   min-width: 25px;
   height: 25px;
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
   position: relative;
-  margin-right: 10px;
+  margin-right: 6px;
   font-weight: 400;
 `;
 const ProjectIconAlt = styled(ProjectIcon)`
@@ -206,7 +206,7 @@ const ProjectIconAlt = styled(ProjectIcon)`
 
 const StyledProjectSection = styled.div`
   position: relative;
-  margin-left: 3px;
+  margin-left: 2px;
   color: ${props => props.theme.text.primary};
 `;
 
@@ -243,7 +243,7 @@ const ProjectName = styled.div<{ hasMultipleProjects: boolean }>`
   text-overflow: ${props => props.hasMultipleProjects ? 'ellipsis' : 'clip'};
   flex-grow: ${props => props.hasMultipleProjects ? 1 : 0};
   padding-right: ${props => props.hasMultipleProjects ? '1px' : '0'};
-  max-width: ${props => props.hasMultipleProjects ? 'auto' : '25ch'}; // Limit to max 25 characters when no multiple projects
+  max-width: ${props => props.hasMultipleProjects ? 'auto' : '26ch'}; // Limit to max 25 characters when no multiple projects
 `;
 
 const RefreshButton = styled.div`

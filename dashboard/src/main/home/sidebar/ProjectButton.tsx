@@ -174,7 +174,7 @@ const Letter = styled.div`
   width: 100%;
   position: absolute;
   padding-bottom: 2px;
-  font-weight: 600;
+  font-weight: 500;
   top: 0;
   left: 0;
   display: flex;
@@ -188,16 +188,15 @@ const ProjectImage = styled.img`
 `;
 
 const ProjectIcon = styled.div`
-  width: 30px;
+  width: 25px;
   min-width: 25px;
-  height: 30px;
+  height: 25px;
   border-radius: 3px;
   overflow: hidden;
   position: relative;
   margin-right: 10px;
   font-weight: 400;
 `;
-
 const ProjectIconAlt = styled(ProjectIcon)`
   border: 1px solid #ffffff44;
   display: flex;
@@ -243,7 +242,6 @@ const ProjectName = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: 17px;
   flex-grow: 1; // <-- Add flex-grow here
   padding-right: 20px; // <-- Add padding-right here
 `;

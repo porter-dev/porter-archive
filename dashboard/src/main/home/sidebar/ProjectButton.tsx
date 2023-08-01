@@ -242,7 +242,6 @@ const ProjectName = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: 14px;
   flex-grow: 1; // <-- Add flex-grow here
   padding-right: 20px; // <-- Add padding-right here
 `;

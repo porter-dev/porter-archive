@@ -311,7 +311,6 @@ class Sidebar extends Component<PropsType, StateType> {
               "delete",
             ]) && (
                 <NavButton path={"/integrations"}
-
                 >
                   <Img src={integrations} />
                   Integrations

@@ -60,7 +60,12 @@ const ProjectButton: React.FC<PropsType> = (props) => {
             <ProjectImage src={gradient} />
             <Letter>{currentProject.name[0].toUpperCase()}</Letter>
           </ProjectIcon>
-          <ProjectName hasMultipleProjects={props.projects.length > 1}>{currentProject.name}</ProjectName>
+          <ProjectName
+            hasMultipleProjects={props.projects.length > 1}
+            title={currentProject.name} // Add this line
+          >
+            {currentProject.name}
+          </ProjectName>
           <Spacer inline x={.5} />
 
           {props.projects.length > 0 && <RefreshButton onClick={() => setShowGHAModal(true)}>

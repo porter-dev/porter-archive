@@ -1496,8 +1496,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/polyfloyd/go-errorlint v0.0.0-20210722154253-910bb7978349/go.mod h1:wi9BfjxjF/bwiZ701TzmfKu6UKC357IOAtNr0Td0Lvw=
 github.com/porter-dev/api-contracts v0.0.75 h1:Koje0VJLlQ1Nxw25N4IcaK1nqDlPpktAM5Jzrkd0yRA=
 github.com/porter-dev/api-contracts v0.0.75/go.mod h1:qr2L58mJLr5DUGV5OPw3REiSrQvJq6TgkKyEWP95dyU=
-github.com/porter-dev/switchboard v0.0.2 h1:ipitPZbJqsiD0WDkWfzM7KtJqRdRRVP81IMtd8EebQY=
-github.com/porter-dev/switchboard v0.0.2/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
+github.com/porter-dev/switchboard v0.0.3 h1:dBuYkiVLa5Ce7059d6qTe9a1C2XEORFEanhbtV92R+M=
+github.com/porter-dev/switchboard v0.0.3/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=
 github.com/posener/complete v1.2.3/go.mod h1:WZIdtGGp+qx0sLrYKtIRAruyNpv6hFCicSgv7Sy7s/s=
 github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c/go.mod h1:OmDBASR4679mdNQnz2pUhc2G8CO2JrUAVFDRBDP/hJE=

@@ -1518,6 +1518,7 @@ const registerUser = baseApi<{
   first_name: string;
   last_name: string;
   company_name: string;
+  referral_method?: string;
 }>("POST", "/api/users");
 
 const rollbackChart = baseApi<
@@ -1586,6 +1587,16 @@ const upgradeChartValues = baseApi<
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/upgrade`;
 });
 
+const getAllEnvGroups = baseApi<
+  {},
+  {
+    id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
+});
+
 const listEnvGroups = baseApi<
   {},
   {
@@ -1649,6 +1660,20 @@ const createEnvGroup = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup/create`;
+});
+
+const createEnvironmentGroups = baseApi<
+  {
+    name: string;
+    variables: Record<string, string>;
+    secret_variables?: Record<string, string>;
+  },
+  {
+    id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
 });
 
 const cloneEnvGroup = baseApi<
@@ -1759,6 +1784,19 @@ const deleteEnvGroup = baseApi<
 >("DELETE", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup`;
 });
+
+const deleteNewEnvGroup = baseApi<
+  {
+    name: string;
+  },
+  {
+    id: number;
+    cluster_id: number;
+  }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
+});
+
 
 const deleteConfigMap = baseApi<
   {
@@ -2692,6 +2730,7 @@ export default {
   createGitlabIntegration,
   createEmailVerification,
   createEnvironment,
+  createEnvironmentGroups,
   updateEnvironment,
   deleteEnvironment,
   createPreviewEnvironmentDeployment,
@@ -2855,8 +2894,10 @@ export default {
   updateEnvGroup,
   updateStacksEnvGroup,
   listEnvGroups,
+  getAllEnvGroups,
   getEnvGroup,
   deleteEnvGroup,
+  deleteNewEnvGroup,
   addApplicationToEnvGroup,
   removeApplicationFromEnvGroup,
   provisionDatabase,

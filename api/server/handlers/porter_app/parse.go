@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,7 +12,10 @@ import (
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/domain"
+	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
+	"github.com/porter-dev/porter/internal/kubernetes/porter_app"
 	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/stefanmcshane/helm/pkg/chart"
 
@@ -86,6 +90,8 @@ type ParseConf struct {
 	UserUpdate bool
 	// EnvGroups used for synced env groups
 	EnvGroups []string
+	// EnvironmentGroups are used for syncing environment groups using ConfigMaps and Secrets from porter-env-groups namespace. This should be used instead of EnvGroups
+	EnvironmentGroups []string
 	// Namespace used for synced env groups
 	Namespace string
 	// ExistingHelmValues is the existing values for the helm release, if it exists
@@ -100,21 +106,28 @@ type ParseConf struct {
 	ShouldValidateHelmValues bool
 	// FullHelmValues if provided, override anything specified in porter.yaml. Used as an escape hatch for support
 	FullHelmValues string
+	// AddCustomNodeSelector is a flag to determine whether to add porter.run/workload-kind: application to the nodeselector attribute of the helm values
+	AddCustomNodeSelector bool
 }
 
-func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
+func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
+	ctx, span := telemetry.NewSpan(ctx, "parse-porter-yaml")
+	defer span.End()
+
 	parsed := &PorterStackYAML{}
 
 	if conf.FullHelmValues != "" {
 		parsedHelmValues, err := convertHelmValuesToPorterYaml(conf.FullHelmValues)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing raw helm values", err)
+			err = telemetry.Error(ctx, span, err, "error parsing raw helm values")
+			return nil, nil, nil, err
 		}
 		parsed = parsedHelmValues
 	} else {
 		err := yaml.Unmarshal(conf.PorterYaml, parsed)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("%s: %w", "error parsing porter.yaml", err)
+			err = telemetry.Error(ctx, span, err, "error parsing porter.yaml")
+			return nil, nil, nil, err
 		}
 	}
 
@@ -123,16 +136,19 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 	for i := range conf.EnvGroups {
 		cm, _, err := conf.SubdomainCreateOpts.k8sAgent.GetLatestVersionedConfigMap(conf.EnvGroups[i], conf.Namespace)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("%s: %w", "error building values from porter.yaml", err)
+			err = telemetry.Error(ctx, span, err, "error getting latest versioned config map")
+			return nil, nil, nil, err
 		}
 
 		versionStr, ok := cm.ObjectMeta.Labels["version"]
 		if !ok {
-			return nil, nil, nil, fmt.Errorf("error extracting version from config map")
+			err = telemetry.Error(ctx, span, nil, "error extracting version from config map")
+			return nil, nil, nil, err
 		}
 		versionInt, err := strconv.Atoi(versionStr)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error converting version to int: %w", err)
+			err = telemetry.Error(ctx, span, err, "error converting version to int")
+			return nil, nil, nil, err
 		}
 
 		version := uint(versionInt)
@@ -156,7 +172,8 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 	}
 
 	if parsed.Apps != nil && parsed.Services != nil {
-		return nil, nil, nil, fmt.Errorf("'apps' and 'services' are synonymous but both were defined")
+		err := telemetry.Error(ctx, span, nil, "'apps' and 'services' are synonymous but both were defined")
+		return nil, nil, nil, err
 	}
 
 	var services map[string]*Service
@@ -168,6 +185,10 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 		services = parsed.Services
 	}
 
+	for serviceName := range services {
+		services[serviceName] = addLabelsToService(services[serviceName], conf.EnvironmentGroups, porter_app.LabelKey_PorterApplication)
+	}
+
 	application := &Application{
 		Env:      parsed.Env,
 		Services: services,
@@ -175,27 +196,35 @@ func parse(conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]int
 		Release:  parsed.Release,
 	}
 
-	values, err := buildUmbrellaChartValues(application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate)
+	values, err := buildUmbrellaChartValues(ctx, application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate, conf.Namespace, conf.AddCustomNodeSelector)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", "error building values", err)
+		err = telemetry.Error(ctx, span, err, "error building values")
+		return nil, nil, nil, err
 	}
-	convertedValues := convertMap(values).(map[string]interface{})
+	convertedValues, ok := convertMap(values).(map[string]interface{})
+	if !ok {
+		err = telemetry.Error(ctx, span, nil, "error converting values")
+		return nil, nil, nil, err
+	}
 
-	chart, err := buildUmbrellaChart(application, conf.ServerConfig, conf.ProjectID, conf.ExistingChartDependencies)
+	umbrellaChart, err := buildUmbrellaChart(application, conf.ServerConfig, conf.ProjectID, conf.ExistingChartDependencies)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", "error building chart", err)
+		err = telemetry.Error(ctx, span, err, "error building umbrella chart")
+		return nil, nil, nil, err
 	}
 
 	// return the parsed release values for the release job chart, if they exist
 	var preDeployJobValues map[string]interface{}
 	if application.Release != nil && application.Release.Run != nil {
-		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate)
+		application.Release = addLabelsToService(application.Release, conf.EnvironmentGroups, porter_app.LabelKey_PorterApplicationPreDeploy)
+		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate, conf.AddCustomNodeSelector)
 	}
 
-	return chart, convertedValues, preDeployJobValues, nil
+	return umbrellaChart, convertedValues, preDeployJobValues, nil
 }
 
 func buildUmbrellaChartValues(
+	ctx context.Context,
 	application *Application,
 	syncedEnv []*SyncedEnvSection,
 	imageInfo types.ImageInfo,
@@ -204,6 +233,8 @@ func buildUmbrellaChartValues(
 	injectLauncher bool,
 	shouldValidateHelmValues bool,
 	userUpdate bool,
+	namespace string,
+	addCustomNodeSelector bool,
 ) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
@@ -216,7 +247,7 @@ func buildUmbrellaChartValues(
 	for name, service := range application.Services {
 		serviceType := getType(name, service)
 
-		defaultValues := getDefaultValues(service, application.Env, syncedEnv, serviceType, existingValues, name, userUpdate)
+		defaultValues := getDefaultValues(service, application.Env, syncedEnv, serviceType, existingValues, name, userUpdate, addCustomNodeSelector)
 		convertedConfig := convertMap(service.Config).(map[string]interface{})
 		helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
 
@@ -234,7 +265,12 @@ func buildUmbrellaChartValues(
 			return nil, fmt.Errorf("error validating service \"%s\": %s", name, validateErr)
 		}
 
-		err := createSubdomainIfRequired(helm_values, opts) // modifies helm_values to add subdomains if necessary
+		err := syncEnvironmentGroupToNamespaceIfLabelsExist(ctx, opts.k8sAgent, service, namespace)
+		if err != nil {
+			return nil, fmt.Errorf("error syncing environment group to namespace: %w", err)
+		}
+
+		err = createSubdomainIfRequired(helm_values, opts) // modifies helm_values to add subdomains if necessary
 		if err != nil {
 			return nil, err
 		}
@@ -273,16 +309,67 @@ func buildUmbrellaChartValues(
 		}
 	}
 
-	if imageInfo.Repository != "" && imageInfo.Tag != "" {
-		values["global"] = map[string]interface{}{
-			"image": map[string]interface{}{
-				"repository": imageInfo.Repository,
-				"tag":        imageInfo.Tag,
-			},
-		}
+	values["global"] = map[string]interface{}{
+		"image": map[string]interface{}{
+			"repository": imageInfo.Repository,
+			"tag":        imageInfo.Tag,
+		},
 	}
 
 	return values, nil
+}
+
+// syncEnvironmentGroupToNamespaceIfLabelsExist will sync the latest version of the environment group to the target namespace if the service has the appropriate label.
+func syncEnvironmentGroupToNamespaceIfLabelsExist(ctx context.Context, agent *kubernetes.Agent, service *Service, targetNamespace string) error {
+	var linkedGroupNames string
+
+	// patchwork because we are not consistent with the type of labels
+	if labels, ok := service.Config["labels"].(map[string]any); ok {
+		if linkedGroup, ok := labels[environment_groups.LabelKey_LinkedEnvironmentGroup].(string); ok {
+			linkedGroupNames = linkedGroup
+		}
+	}
+	if labels, ok := service.Config["labels"].(map[string]string); ok {
+		if linkedGroup, ok := labels[environment_groups.LabelKey_LinkedEnvironmentGroup]; ok {
+			linkedGroupNames = linkedGroup
+		}
+	}
+
+	for _, linkedGroupName := range strings.Split(linkedGroupNames, ".") {
+		inp := environment_groups.SyncLatestVersionToNamespaceInput{
+			BaseEnvironmentGroupName: linkedGroupName,
+			TargetNamespace:          targetNamespace,
+		}
+
+		syncedEnvironment, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp)
+		if err != nil {
+			return fmt.Errorf("error syncing environment group: %w", err)
+		}
+		if syncedEnvironment.EnvironmentGroupVersionedName != "" {
+			if service.Config["configMapRefs"] == nil {
+				service.Config["configMapRefs"] = []string{}
+			}
+			if service.Config["secretRefs"] == nil {
+				service.Config["secretRefs"] = []string{}
+			}
+
+			switch service.Config["configMapRefs"].(type) {
+			case []string:
+				service.Config["configMapRefs"] = append(service.Config["configMapRefs"].([]string), syncedEnvironment.EnvironmentGroupVersionedName)
+			case []any:
+				service.Config["configMapRefs"] = append(service.Config["configMapRefs"].([]any), syncedEnvironment.EnvironmentGroupVersionedName)
+			}
+
+			switch service.Config["configMapRefs"].(type) {
+			case []string:
+				service.Config["secretRefs"] = append(service.Config["secretRefs"].([]string), syncedEnvironment.EnvironmentGroupVersionedName)
+			case []any:
+				service.Config["secretRefs"] = append(service.Config["secretRefs"].([]any), syncedEnvironment.EnvironmentGroupVersionedName)
+			}
+		}
+	}
+
+	return nil
 }
 
 // we can add to this function up later or use an alternative
@@ -314,8 +401,8 @@ func validateHelmValues(values map[string]interface{}, shouldValidateHelmValues 
 	return ""
 }
 
-func buildPreDeployJobChartValues(release *Service, env map[string]string, synced_env []*SyncedEnvSection, imageInfo types.ImageInfo, injectLauncher bool, existingValues map[string]interface{}, name string, userUpdate bool) map[string]interface{} {
-	defaultValues := getDefaultValues(release, env, synced_env, "job", existingValues, name+"-r", userUpdate)
+func buildPreDeployJobChartValues(release *Service, env map[string]string, synced_env []*SyncedEnvSection, imageInfo types.ImageInfo, injectLauncher bool, existingValues map[string]interface{}, name string, userUpdate bool, addCustomNodeSelector bool) map[string]interface{} {
+	defaultValues := getDefaultValues(release, env, synced_env, "job", existingValues, name+"-r", userUpdate, addCustomNodeSelector)
 	convertedConfig := convertMap(release.Config).(map[string]interface{})
 	helm_values := utils.DeepCoalesceValues(defaultValues, convertedConfig)
 
@@ -355,7 +442,7 @@ func getType(name string, service *Service) string {
 	return "worker"
 }
 
-func getDefaultValues(service *Service, env map[string]string, synced_env []*SyncedEnvSection, appType string, existingValues map[string]interface{}, name string, userUpdate bool) map[string]interface{} {
+func getDefaultValues(service *Service, env map[string]string, synced_env []*SyncedEnvSection, appType string, existingValues map[string]interface{}, name string, userUpdate bool, addCustomNodeSelector bool) map[string]interface{} {
 	var defaultValues map[string]interface{}
 	var runCommand string
 	if service.Run != nil {
@@ -377,6 +464,13 @@ func getDefaultValues(service *Service, env map[string]string, synced_env []*Syn
 				"synced": syncedEnvs,
 			},
 		},
+		"nodeSelector": map[string]interface{}{},
+	}
+
+	if addCustomNodeSelector {
+		defaultValues["nodeSelector"] = map[string]interface{}{
+			"porter.run/workload-kind": "application",
+		}
 	}
 
 	return defaultValues
@@ -527,6 +621,12 @@ func convertMap(m interface{}) interface{} {
 		for k, v := range m {
 			m[k] = convertMap(v)
 		}
+	case map[string]string:
+		result := map[string]interface{}{}
+		for k, v := range m {
+			result[k] = v
+		}
+		return result
 	case map[interface{}]interface{}:
 		result := map[string]interface{}{}
 		for k, v := range m {
@@ -782,6 +882,7 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 		return nil, err
 	}
 	services := make(map[string]*Service)
+
 	for k, v := range values {
 		if k == "global" {
 			continue
@@ -790,12 +891,53 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 		if serviceName == "" {
 			return nil, fmt.Errorf("invalid service key: %s. make sure that service key ends in either -web, -wkr, or -job", k)
 		}
+
 		services[serviceName] = &Service{
 			Config: convertMap(v).(map[string]interface{}),
 			Type:   &serviceType,
 		}
 	}
+
 	return &PorterStackYAML{
 		Services: services,
 	}, nil
+}
+
+// addLabelsToService always adds the default label to the service, and if envGroups is not empty, it adds the corresponding environment group label as well.
+func addLabelsToService(service *Service, envGroups []string, defaultLabelKey string) *Service {
+	if _, ok := service.Config["labels"]; !ok {
+		service.Config["labels"] = make(map[string]string)
+	}
+	if len(envGroups) != 0 {
+		// delete the env group label so we can replace it
+		if _, ok := service.Config["labels"].(map[string]any); ok {
+			delete(service.Config["labels"].(map[string]any), environment_groups.LabelKey_LinkedEnvironmentGroup)
+		}
+	}
+
+	switch service.Config["labels"].(type) {
+	case map[string]string:
+		service.Config["labels"].(map[string]string)[defaultLabelKey] = porter_app.LabelValue_PorterApplication
+		if len(envGroups) != 0 {
+			service.Config["labels"].(map[string]string)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(envGroups, ".")
+		}
+	case map[string]any:
+		service.Config["labels"].(map[string]any)[defaultLabelKey] = porter_app.LabelValue_PorterApplication
+		if len(envGroups) != 0 {
+			service.Config["labels"].(map[string]any)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(envGroups, ".")
+		}
+	case any:
+		if val, ok := service.Config["labels"].(string); ok {
+			if val == "" {
+				service.Config["labels"] = map[string]string{
+					defaultLabelKey: porter_app.LabelValue_PorterApplication,
+				}
+				if len(envGroups) != 0 {
+					service.Config["labels"].(map[string]string)[environment_groups.LabelKey_LinkedEnvironmentGroup] = strings.Join(envGroups, ".")
+				}
+			}
+		}
+	}
+
+	return service
 }

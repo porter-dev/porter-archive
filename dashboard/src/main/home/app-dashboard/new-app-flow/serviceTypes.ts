@@ -3,6 +3,18 @@ import { overrideObjectValues } from "./utils";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterJson } from "./schema";
 
+export type ImageInfo = {
+    repository: string;
+    tag: string;
+}
+export const ImageInfo = {
+    BASE_IMAGE: {
+        repository: "public.ecr.aws/o1j4x7p4/hello-porter",
+        tag: "latest",
+    } as const,
+}
+
+
 export type Service = WorkerService | WebService | JobService | ReleaseService;
 export type ServiceType = 'web' | 'worker' | 'job' | 'release';
 
@@ -14,14 +26,20 @@ type ServiceBoolean = {
     readOnly: boolean;
     value: boolean;
 }
-export type ServiceArray<T extends ServiceString | ServiceBoolean> = {
+export type ServiceArray<T extends ServiceString | ServiceBoolean> = T[];
+const ServiceArray = {
+    serialize: <T extends ServiceString | ServiceBoolean>(serviceArray: ServiceArray<T>) => {
+        return serviceArray.map((service) => service.value).filter((val) => val !== '');
+    }
+}
+export type ServiceKeyValueArray<T extends ServiceString | ServiceBoolean> = {
     key: string;
     value: T;
 }[];
-const ServiceArray = {
-    serialize: <T extends ServiceString | ServiceBoolean>(serviceArray: ServiceArray<T>) => {
+const ServiceKeyValueArray = {
+    serialize: <T extends ServiceString | ServiceBoolean>(serviceKeyValueArray: ServiceKeyValueArray<T>) => {
         const map: Record<string, string> = {};
-        serviceArray.map(({ key, value }: {
+        serviceKeyValueArray.map(({ key, value }: {
             key: string;
             value: T;
         }) => {
@@ -35,10 +53,10 @@ const ServiceArray = {
 
 type Ingress = {
     enabled: ServiceBoolean;
-    customDomain: ServiceString;
-    hosts: ServiceString;
+    customDomains: ServiceArray<ServiceString>;
+    hosts: ServiceArray<ServiceString>;
     porterHosts: ServiceString;
-    annotations: ServiceArray<ServiceString>;
+    annotations: ServiceKeyValueArray<ServiceString>;
 }
 type Autoscaling = {
     enabled: ServiceBoolean,
@@ -91,7 +109,20 @@ const ServiceField = {
             value: overrideValue ?? defaultValue,
         }
     },
-    array: (defaultMap: Record<string, string>, overrideMap?: Record<string, string>): ServiceArray<ServiceString> => {
+    array: (defaultValues: string[], overrideValues?: string[]): ServiceArray<ServiceString> => {
+        const serviceMap: Record<string, ServiceString> = {};
+        for (const val of defaultValues) {
+            serviceMap[val] = ServiceField.string(val);
+        }
+        for (const val of overrideValues ?? []) {
+            serviceMap[val] = ServiceField.string('', val);
+        }
+        if (Object.keys(serviceMap).length == 0) {
+            return [];
+        }
+        return Object.values(serviceMap);
+    },
+    keyValueArray: (defaultMap: Record<string, string>, overrideMap?: Record<string, string>): ServiceKeyValueArray<ServiceString> => {
         const serviceMap: Record<string, ServiceString> = {};
         for (const key in defaultMap) {
             serviceMap[key] = ServiceField.string(defaultMap[key]);
@@ -116,6 +147,7 @@ type SharedServiceParams = {
     startCommand: ServiceString;
     type: ServiceType;
     canDelete: boolean;
+    expanded: boolean;
     cloudsql: CloudSql;
 }
 
@@ -128,6 +160,7 @@ export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
 const WebService = {
     default: (name: string, porterJson?: PorterJson): WebService => ({
         name,
+        expanded: true,
         cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
@@ -142,10 +175,10 @@ const WebService = {
         },
         ingress: {
             enabled: ServiceField.boolean(true, porterJson?.apps?.[name]?.config?.ingress?.enabled),
-            customDomain: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
-            hosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
+            customDomains: ServiceField.array([], porterJson?.apps?.[name]?.config?.ingress?.hosts),
+            hosts: ServiceField.array([], porterJson?.apps?.[name]?.config?.ingress?.hosts),
             porterHosts: ServiceField.string('', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
-            annotations: ServiceField.array({}, porterJson?.apps?.[name]?.config?.ingress?.annotations)
+            annotations: ServiceField.keyValueArray({}, porterJson?.apps?.[name]?.config?.ingress?.annotations)
         },
         port: ServiceField.string('3000', porterJson?.apps?.[name]?.config?.container?.port),
         canDelete: porterJson?.apps?.[name] == null,
@@ -198,10 +231,10 @@ const WebService = {
             },
             ingress: {
                 enabled: service.ingress.enabled.value,
-                custom_domain: service.ingress.customDomain.value ? true : false,
-                hosts: service.ingress.customDomain.value ? [service.ingress.customDomain.value] : [],
+                custom_domain: service.ingress.customDomains.length ? true : false,
+                hosts: ServiceArray.serialize(service.ingress.customDomains),
                 porter_hosts: service.ingress.porterHosts.value ? [service.ingress.porterHosts.value] : [],
-                annotations: ServiceArray.serialize(service.ingress.annotations),
+                annotations: ServiceKeyValueArray.serialize(service.ingress.annotations),
             },
             service: {
                 port: service.port.value,
@@ -237,6 +270,7 @@ const WebService = {
     deserialize: (name: string, values: any, porterJson?: PorterJson): WebService => {
         return {
             name,
+            expanded: false,
             cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
             ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
@@ -251,10 +285,10 @@ const WebService = {
             },
             ingress: {
                 enabled: ServiceField.boolean(values.ingress?.enabled ?? false, porterJson?.apps?.[name]?.config?.ingress?.enabled),
-                customDomain: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
-                hosts: ServiceField.string(values.ingress?.hosts?.length ? values.ingress.hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.hosts[0] : undefined),
+                customDomains: ServiceField.array(values.ingress?.hosts ?? [], porterJson?.apps?.[name]?.config?.ingress?.hosts),
+                hosts: ServiceField.array(values.ingress?.hosts ?? [], porterJson?.apps?.[name]?.config?.ingress?.hosts),
                 porterHosts: ServiceField.string(values.ingress?.porter_hosts?.length ? values.ingress.porter_hosts[0] : '', porterJson?.apps?.[name]?.config?.ingress?.porter_hosts?.length ? porterJson?.apps?.[name]?.config?.ingress?.porter_hosts[0] : undefined),
-                annotations: ServiceField.array(values.ingress?.annotations ?? {}, porterJson?.apps?.[name]?.config?.ingress?.annotations),
+                annotations: ServiceField.keyValueArray(values.ingress?.annotations ?? {}, porterJson?.apps?.[name]?.config?.ingress?.annotations),
             },
             port: ServiceField.string(values.container?.port ?? '', porterJson?.apps?.[name]?.config?.container?.port),
             canDelete: porterJson?.apps?.[name] == null,
@@ -296,6 +330,7 @@ export type WorkerService = SharedServiceParams & {
 const WorkerService = {
     default: (name: string, porterJson?: PorterJson): WorkerService => ({
         name,
+        expanded: true,
         cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
@@ -346,6 +381,7 @@ const WorkerService = {
     deserialize: (name: string, values: any, porterJson?: PorterJson): WorkerService => {
         return {
             name,
+            expanded: false,
             cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
             ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
@@ -377,6 +413,7 @@ export type JobService = SharedServiceParams & {
 const JobService = {
     default: (name: string, porterJson?: PorterJson): JobService => ({
         name,
+        expanded: true,
         cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
@@ -419,6 +456,7 @@ const JobService = {
     deserialize: (name: string, values: any, porterJson?: PorterJson): JobService => {
         return {
             name,
+            expanded: false,
             cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
             ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
@@ -442,6 +480,7 @@ export type ReleaseService = SharedServiceParams & {
 const ReleaseService = {
     default: (name: string, porterJson?: PorterJson): ReleaseService => ({
         name,
+        expanded: true,
         cpu: ServiceField.string('100', porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.release?.run),
@@ -479,6 +518,7 @@ const ReleaseService = {
     deserialize: (name: string, values: any, porterJson?: PorterJson): ReleaseService => {
         return {
             name,
+            expanded: false,
             cpu: ServiceField.string(values?.resources?.requests?.cpu?.replace('m', ''), porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
             ram: ServiceField.string(values?.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values?.container?.command ?? '', porterJson?.release?.run),
@@ -613,8 +653,8 @@ export const Service = {
                 continue;
             }
             if (values.ingress.porter_hosts?.length > 0 || (values.ingress.custom_domain && values.ingress.hosts?.length > 0)) {
-                if (values.ingress.custom_domain && values.ingress.hosts?.length > 0) {
-                    // if they have a custom domain, use that
+                if (values.ingress.custom_domain && values.ingress.hosts?.length === 1) {
+                    // if they have a single custom domain, use that
                     matchedWebHost = values.ingress.hosts[0];
                 } else {
                     // otherwise, use their porter domain

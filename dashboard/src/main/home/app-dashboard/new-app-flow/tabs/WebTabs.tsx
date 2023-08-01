@@ -9,6 +9,7 @@ import AnimateHeight, { Height } from "react-animate-height";
 import { Context } from "shared/Context";
 import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, RESOURCE_HEIGHT_WITHOUT_AUTOSCALING, RESOURCE_HEIGHT_WITH_AUTOSCALING } from "./utils";
 import IngressCustomAnnotations from "./IngressCustomAnnotations";
+import CustomDomains from "./CustomDomains";
 
 interface Props {
   service: WebService;
@@ -18,10 +19,10 @@ interface Props {
 
 
 const NETWORKING_HEIGHT_WITHOUT_INGRESS = 204;
-const NETWORKING_HEIGHT_WITH_INGRESS = 425;
+const NETWORKING_HEIGHT_WITH_INGRESS = 395;
 const ADVANCED_BASE_HEIGHT = 215;
 const PROBE_INPUTS_HEIGHT = 230;
-const CUSTOM_ANNOTATION_HEIGHT = 53;
+const CUSTOM_ANNOTATION_HEIGHT = 44;
 
 const WebTabs: React.FC<Props> = ({
   service,
@@ -104,39 +105,27 @@ const WebTabs: React.FC<Props> = ({
           <Text color="helper">Expose to external traffic</Text>
         </Checkbox>
         <AnimateHeight height={service.ingress.enabled.value ? 'auto' : 0}>
-          <Spacer y={1} />
-          <Input
-            label={
-              <>
-                <span>Custom domain</span>
-                <a
-                  href="https://docs.porter.run/standard/deploying-applications/https-and-domains/custom-domains"
-                  target="_blank"
-                >
-                  &nbsp;(?)
-                </a>
-              </>
-            }
-            placeholder="ex: my-app.my-domain.com"
-            value={service.ingress.customDomain.value}
-            disabled={service.ingress.customDomain.readOnly}
-            width="300px"
-            setValue={(e) => {
-              editService({
-                ...service,
-                ingress: {
-                  ...service.ingress,
-                  customDomain: { readOnly: false, value: e },
-                },
-              });
-            }}
-            disabledTooltip={
-              "You may only edit this field in your porter.yaml."
-            }
-          />
-          <Spacer y={1} />
+          <Spacer y={0.5} />
           {getApplicationURLText()}
-          <Spacer y={1} />
+          <Spacer y={0.5} />
+          <Text color="helper">
+            Custom domains
+            <a
+              href="https://docs.porter.run/standard/deploying-applications/https-and-domains/custom-domains"
+              target="_blank"
+            >
+              &nbsp;(?)
+            </a>
+          </Text>
+          <Spacer y={0.5} />
+          <CustomDomains
+            customDomains={service.ingress.customDomains}
+            onChange={(customDomains) => {
+              editService({ ...service, ingress: { ...service.ingress, customDomains: customDomains } });
+              setHeight(calculateNetworkingHeight());
+            }}
+          />
+          <Spacer y={0.5} />
           <Text color="helper">
             Ingress Custom Annotations
             <a
@@ -443,7 +432,7 @@ const WebTabs: React.FC<Props> = ({
   };
 
   const calculateNetworkingHeight = () => {
-    return NETWORKING_HEIGHT_WITH_INGRESS + (service.ingress.annotations.length * CUSTOM_ANNOTATION_HEIGHT);
+    return NETWORKING_HEIGHT_WITH_INGRESS + (service.ingress.annotations.length * CUSTOM_ANNOTATION_HEIGHT) + (service.ingress.customDomains.length * CUSTOM_ANNOTATION_HEIGHT);
   }
 
   const renderAdvanced = () => {
@@ -788,12 +777,17 @@ const WebTabs: React.FC<Props> = ({
   };
 
   const getApplicationURLText = () => {
-    if (service.ingress.hosts.value !== "") {
+    if (service.ingress.hosts.length !== 0) {
       return (
-        <Text>Application URL:{" "}
-          <a href={Service.prefixSubdomain(service.ingress.hosts.value)} target="_blank">
-            {service.ingress.hosts.value}
-          </a>
+        <Text>{`Application URL${service.ingress.hosts.length === 1 ? "" : "s"}: `}
+          {service.ingress.hosts.map((host, i) => {
+            return (
+              <a href={Service.prefixSubdomain(host.value)} target="_blank">
+                {host.value}
+                {i !== service.ingress.hosts.length - 1 && ", "}
+              </a>
+            )
+          })}
         </Text>
       )
     } else if (service.ingress.porterHosts.value !== "") {
@@ -804,13 +798,10 @@ const WebTabs: React.FC<Props> = ({
           </a>
         </Text>
       )
-    } else if (service.ingress.customDomain.value !== "") {
+    } else if (service.ingress.customDomains.length !== 0) {
       return (
-        <Text color="helper">Application URL: Your application will be available at{" "}
-          <a href={Service.prefixSubdomain(service.ingress.customDomain.value)} target="_blank">
-            {service.ingress.customDomain.value}
-          </a>
-          {" "}on next deploy.
+        <Text color="helper">
+          {`Application URL${service.ingress.customDomains.length === 1 ? "" : "s"}: Your application will be available at the specified custom domain${service.ingress.customDomains.length === 1 ? "" : "s"} on next deploy.`}
         </Text>
       )
     } else {

@@ -10,6 +10,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import { pushFiltered } from "shared/routing";
+import SidebarLink from "./SidebarLink";
 
 const ClusterList: React.FC<PropsType> = (props) => {
   const { setCurrentCluster, user, currentCluster, currentProject } = useContext(Context);
@@ -55,6 +56,7 @@ const ClusterList: React.FC<PropsType> = (props) => {
         });
     }
   }, [currentProject]);
+  const truncate = (input: string) => input.length > 21 ? `${input.substring(0, 21)}...` : input;
 
   const renderOptionList = () =>
     options.map((option, i: number) => (
@@ -69,8 +71,7 @@ const ClusterList: React.FC<PropsType> = (props) => {
         }}
       >
 
-        <Icon src={infra} height={"13px"} />
-        <Spacer inline x={1} />
+        <Icon src={infra} height={"14px"} />
         <ClusterLabel>{option.label}</ClusterLabel>
       </Option>
     ));
@@ -90,17 +91,15 @@ const ClusterList: React.FC<PropsType> = (props) => {
           expanded={expanded}
         >
 
-          <ClusterName>
+          <NavButton>
+            <Img src={infra} />
+            <ClusterName>{truncate(currentCluster.vanity_name ? currentCluster.vanity_name : currentCluster?.name)}</ClusterName>
 
-            {/* //<Spacer inline x={.5} /> */}
-            <Icon src={infra} height={"15px"} />
-            <Spacer inline x={1} />
-            {currentCluster.vanity_name ? currentCluster.vanity_name : currentCluster?.name}
-          </ClusterName>
-          {clusters.length > 1 && <i className="material-icons">arrow_drop_down</i>}
+            {clusters.length > 1 && <i className="material-icons">arrow_drop_down</i>}
+          </NavButton>
         </MainSelector>
         {clusters.length > 1 && renderDropdown()}
-      </StyledClusterSection>
+      </StyledClusterSection >
     );
   }
 
@@ -123,6 +122,8 @@ const ClusterLabel = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  flex-grow: 1;
+  margin-left: 5px
 `;
 
 const Plus = styled.div`
@@ -200,22 +201,18 @@ const ClusterName = styled.div`
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  max-width: calc(100% - 50px); // Reserve space for the arrow drop down and some padding
+  max-width: 180px; // You can adjust this value according to your needs
 `;
-const StyledClusterSection = styled.div`
-  position: relative;
-  margin-left: 3px;
-  background: #545ec7;
-  border-right: 1px solid #2c2e31;
-`;
+
 const MainSelector = styled.div`
   display: flex;
   align-items: center;
-  margin: 10px 0 0;
+  justify-content: space-between;
+
   font-size: 14px;
   cursor: pointer;
   padding: 10px 0;
-  padding-left: 20px;
+  
   :hover {
     > i {
       background: #ffffff22;
@@ -223,8 +220,8 @@ const MainSelector = styled.div`
   }
 
   > i {
-    margin-left: 7px;
-    margin-right: 12px;
+    margin-left: 0px;
+    margin-right: 0px;
     font-size: 20px;
     display: flex;
     align-items: center;
@@ -233,4 +230,59 @@ const MainSelector = styled.div`
     background: ${(props: { expanded: boolean }) =>
     props.expanded ? "#ffffff22" : ""};
   }
+`;
+
+const StyledClusterSection = styled.div`
+  position: relative;
+  margin-left: 3px;
+  background: #545ec7;
+  border-right: 1px solid #2c2e31;
+`;
+const NavButton = styled(SidebarLink)`
+  display: flex;
+  align-items: center;
+  position: relative;
+  text-decoration: none;
+  border-radius: 5px;
+  margin-left: 16px;
+  font-size: 13px;
+  color: ${props => props.theme.text.primary};
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+
+  background: ${(props: any) => (props.active ? "#ffffff11" : "")};
+
+  :hover {
+    background: ${(props: any) => (props.active ? "#ffffff11" : "#ffffff08")};
+  }
+
+  &.active {
+    background: #ffffff11;
+
+    :hover {
+      background: #ffffff11;
+    }
+  }
+
+  :hover {
+    background: #ffffff08;
+  }
+
+  > i {
+    font-size: 18px;
+    border-radius: 0px;
+    margin-left: 2px;
+    margin-right: 0px;
+  }
+`;
+
+
+const Img = styled.img<{ enlarge?: boolean }>`
+  padding: ${(props) => (props.enlarge ? "0 0 0 1px" : "4px")};
+  height: 22px;
+  padding-top: 4px;
+  border-radius: 3px;
+  margin-right: 8px;
+  margin-left: 2px;
+  opacity: 0.8;
 `;

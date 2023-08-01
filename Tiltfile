@@ -136,6 +136,9 @@ local_resource(
     serve_env={
         "ENV_FILE": "../zarf/helm/.dashboard.env"
     },
+    deps=[
+      "dashboard/package.json",
+    ],
     resource_deps=["postgresql"],
     labels=["porter"]
 )

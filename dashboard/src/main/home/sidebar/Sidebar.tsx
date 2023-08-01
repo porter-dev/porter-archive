@@ -186,12 +186,10 @@ class Sidebar extends Component<PropsType, StateType> {
               "delete",
             ]) && (
                 <NavButton path={"/project-settings"}
-
                 >
                   <Img src={settings} />
                   Project settings
                 </NavButton>
-
               )}
             {this.props.isAuthorized("integrations", "", [
               "get",
@@ -200,7 +198,6 @@ class Sidebar extends Component<PropsType, StateType> {
               "delete",
             ]) && (
                 <NavButton path={"/integrations"}
-
                 >
                   <Img src={integrations} />
                   Integrations
@@ -215,7 +212,6 @@ class Sidebar extends Component<PropsType, StateType> {
             <NavButton
               path="/apps"
               active={window.location.pathname.startsWith("/apps")}
-
             >
               <Img src={web} />
               Applications
@@ -223,7 +219,6 @@ class Sidebar extends Component<PropsType, StateType> {
             <NavButton
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}
-
             >
               <Img src={addOns} />
               Add-ons
@@ -233,7 +228,6 @@ class Sidebar extends Component<PropsType, StateType> {
               active={
                 window.location.pathname.startsWith("/env-groups")
               }
-
             >
               <Img src={sliders} />
 
@@ -244,10 +238,8 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-
                 <NavButton
                   path={"/cluster-dashboard"}
-
                   active={
                     window.location.pathname.startsWith("/cluster-dashboard")
                   }
@@ -275,7 +267,6 @@ class Sidebar extends Component<PropsType, StateType> {
             <NavButton
               path="/apps"
               active={window.location.pathname.startsWith("/apps")}
-
             >
               <Img src={web} />
               Applications
@@ -283,7 +274,6 @@ class Sidebar extends Component<PropsType, StateType> {
             <NavButton
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}
-
             >
               <Img src={addOns} />
               Add-ons
@@ -293,10 +283,8 @@ class Sidebar extends Component<PropsType, StateType> {
               active={
                 window.location.pathname.startsWith("/env-groups")
               }
-
             >
               <Img src={sliders} />
-
               Env groups
             </NavButton>}
             {this.props.isAuthorized("settings", "", [
@@ -307,7 +295,6 @@ class Sidebar extends Component<PropsType, StateType> {
 
                 <NavButton
                   path={"/cluster-dashboard"}
-
                   active={
                     window.location.pathname.startsWith("/cluster-dashboard")
                   }

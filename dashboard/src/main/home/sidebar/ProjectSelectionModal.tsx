@@ -133,25 +133,31 @@ const ProjectSelectionModal: React.FC<Props> = ({
     const totalProjects = projects.length;
     const totalPages = Math.ceil(totalProjects / projectsPerPage);
 
-    return (
-      <PaginationButtonsContainer>
-        <Button
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
-        >
-          Previous
-        </Button>
+    // Only render pagination buttons if there are multiple pages
+    if (totalPages > 1) {
+      return (
+        <PaginationButtonsContainer>
+          <Button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
+          >
+            Previous
+          </Button>
 
-        <span>{currentPage} / {totalPages}</span>
+          <span>{currentPage} / {totalPages}</span>
 
-        <Button
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
-        >
-          Next
-        </Button>
-      </PaginationButtonsContainer>
-    );
+          <Button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
+          >
+            Next
+          </Button>
+        </PaginationButtonsContainer>
+      );
+    }
+
+    // If there is only one page, don't render the buttons
+    return null;
   };
 
   return (

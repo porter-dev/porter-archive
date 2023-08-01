@@ -69,7 +69,7 @@ const ClusterList: React.FC<PropsType> = (props) => {
         }}
       >
 
-        <Icon src={infra} height={"13px"} />
+        <Icon src={infra} height={"14px"} />
         <Spacer inline x={1} />
         <ClusterLabel>{option.label}</ClusterLabel>
       </Option>
@@ -90,13 +90,10 @@ const ClusterList: React.FC<PropsType> = (props) => {
           expanded={expanded}
         >
 
-          <ClusterName>
+          <Icon src={infra} height={"14px"} />
+          <Spacer inline x={1} />
+          <ClusterLabel> {currentCluster.vanity_name ? currentCluster.vanity_name : currentCluster?.name}</ClusterLabel>
 
-            {/* //<Spacer inline x={.5} /> */}
-            <Icon src={infra} height={"15px"} />
-            <Spacer inline x={1} />
-            {currentCluster.vanity_name ? currentCluster.vanity_name : currentCluster?.name}
-          </ClusterName>
           {clusters.length > 1 && <i className="material-icons">arrow_drop_down</i>}
         </MainSelector>
         {clusters.length > 1 && renderDropdown()}
@@ -123,6 +120,7 @@ const ClusterLabel = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  flex-grow: 1;
 `;
 
 const Plus = styled.div`
@@ -200,17 +198,13 @@ const ClusterName = styled.div`
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  max-width: calc(100% - 50px); // Reserve space for the arrow drop down and some padding
+  flex-grow: 1; // Add this line
 `;
-const StyledClusterSection = styled.div`
-  position: relative;
-  margin-left: 3px;
-  background: #545ec7;
-  border-right: 1px solid #2c2e31;
-`;
+
 const MainSelector = styled.div`
   display: flex;
   align-items: center;
+  justify-content: space-between; // Add this line
   margin: 10px 0 0;
   font-size: 14px;
   cursor: pointer;
@@ -233,4 +227,11 @@ const MainSelector = styled.div`
     background: ${(props: { expanded: boolean }) =>
     props.expanded ? "#ffffff22" : ""};
   }
+`;
+
+const StyledClusterSection = styled.div`
+  position: relative;
+  margin-left: 3px;
+  background: #545ec7;
+  border-right: 1px solid #2c2e31;
 `;

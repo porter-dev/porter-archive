@@ -22,7 +22,7 @@ const ProjectButton: React.FC<PropsType> = (props) => {
   const context = useContext(Context);
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
 
-  const { setCurrentProject, setCurrentCluster } = context;
+  const { setCurrentProject, setCurrentCluster, user } = context;
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -68,7 +68,7 @@ const ProjectButton: React.FC<PropsType> = (props) => {
           </ProjectName>
           <Spacer inline x={.5} />
 
-          {props.projects.length > 0 && <RefreshButton onClick={() => setShowGHAModal(true)}>
+          {(props.projects.length > 1 || user?.isPorterUser) && <RefreshButton onClick={() => setShowGHAModal(true)}>
             <img src={swap} />
           </RefreshButton>}
           {showGHAModal && currentProject != null && (
@@ -131,48 +131,7 @@ const InitializeButton = styled.div`
   }
 `;
 
-const Option = styled.div`
-  width: 100%;
-  border-top: 1px solid #00000000;
-  border-bottom: 1px solid
-    ${(props: { selected: boolean; lastItem?: boolean }) =>
-    props.lastItem ? "#ffffff00" : "#ffffff15"};
-  height: 45px;
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  align-items: center;
-  padding-left: 10px;
-  cursor: pointer;
-  padding-right: 10px;
-  background: ${(props: { selected: boolean; lastItem?: boolean }) =>
-    props.selected ? "#ffffff11" : ""};
-  :hover {
-    background: ${(props: { selected: boolean; lastItem?: boolean }) =>
-    props.selected ? "" : "#ffffff22"};
-  }
 
-  > i {
-    font-size: 18px;
-    margin-right: 12px;
-    margin-left: 5px;
-    color: #ffffff44;
-  }
-`;
-
-const Dropdown = styled.div`
-  position: absolute;
-  right: 13px;
-  top: calc(100% + 5px);
-  background: #26282f;
-  width: 210px;
-  max-height: 500px;
-  border-radius: 3px;
-  z-index: 999;
-  overflow-y: auto;
-  margin-bottom: 10px;
-  box-shadow: 0 5px 15px 5px #00000077;
-`;
 
 const Letter = styled.div`
   height: 100%;

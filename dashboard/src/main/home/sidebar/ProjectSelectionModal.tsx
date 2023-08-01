@@ -161,7 +161,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
   };
 
   return (
-    <Modal closeModal={closeModal} width="1000px">
+    <Modal closeModal={closeModal} width={'900px'}>
       <Text size={16} style={{ marginRight: '10px' }}>
         Switch Project
       </Text>

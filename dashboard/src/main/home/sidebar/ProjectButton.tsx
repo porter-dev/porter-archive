@@ -54,12 +54,13 @@ const ProjectButton: React.FC<PropsType> = (props) => {
         <MainSelector
           onClick={handleExpand}
           expanded={expanded}
+          hasMultipleProjects={props.projects.length > 1}
         >
           <ProjectIcon>
             <ProjectImage src={gradient} />
             <Letter>{currentProject.name[0].toUpperCase()}</Letter>
           </ProjectIcon>
-          <ProjectName>{currentProject.name}</ProjectName>
+          <ProjectName hasMultipleProjects={props.projects.length > 1}>{currentProject.name}</ProjectName>
           <Spacer inline x={.5} />
 
           {props.projects.length > 1 && <RefreshButton onClick={() => setShowGHAModal(true)}>
@@ -72,7 +73,6 @@ const ProjectButton: React.FC<PropsType> = (props) => {
               closeModal={() => setShowGHAModal(false)}
             />
           )}
-          {/* <i className="material-icons">arrow_drop_down</i> */}
         </MainSelector>
         {/* {renderDropdown()} */}
       </StyledProjectSection >
@@ -210,14 +210,14 @@ const StyledProjectSection = styled.div`
   color: ${props => props.theme.text.primary};
 `;
 
-const MainSelector = styled.div`
+const MainSelector = styled.div<{ expanded: boolean, hasMultipleProjects: boolean }>`
   display: flex;
   align-items: center;
-  justify-content: space-between; // <-- Changed from center to space-between
+  justify-content: ${props => props.hasMultipleProjects ? 'space-between' : 'flex-start'};
   margin: 10px 0 0;
   font-size: 14px;
   cursor: pointer;
-  padding: 10px 20px; // <-- Add padding-right here
+  padding: 10px 20px;
   position: relative;
   :hover {
     > i {
@@ -233,17 +233,17 @@ const MainSelector = styled.div`
     align-items: center;
     justify-content: center;
     border-radius: 20px;
-    background: ${(props: { expanded: boolean }) =>
-    props.expanded ? "#ffffff22" : ""};
+    background: ${props => props.expanded ? "#ffffff22" : ""};
   }
 `;
 
-const ProjectName = styled.div`
+const ProjectName = styled.div<{ hasMultipleProjects: boolean }>`
   overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
-  flex-grow: 1; // <-- Add flex-grow here
-  padding-right: 20px; // <-- Add padding-right here
+  text-overflow: ${props => props.hasMultipleProjects ? 'ellipsis' : 'clip'};
+  flex-grow: ${props => props.hasMultipleProjects ? 1 : 0};
+  padding-right: ${props => props.hasMultipleProjects ? '1px' : '0'};
+  max-width: ${props => props.hasMultipleProjects ? 'auto' : '25ch'}; // Limit to max 25 characters when no multiple projects
 `;
 
 const RefreshButton = styled.div`
@@ -261,6 +261,6 @@ const RefreshButton = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 15px;
+    height: 14px;
   }
 `;

@@ -12,19 +12,21 @@ import Helper from "components/form-components/Helper";
 import TabSelector from "components/TabSelector";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 
 interface GithubAppAccessData {
   username?: string;
   accounts?: string[];
 }
 
-const tabOptions = [{ label: "Integrations", value: "integrations" }];
+const tabOptions = [{ label: "Integrations", value: "integrations" }, { label: "Metadata", value: "metadata" }];
 
 const AccountSettingsModal = () => {
-  const { setCurrentModal } = useContext(Context);
+  const { setCurrentModal, currentProject } = useContext(Context);
   const [accessLoading, setAccessLoading] = useState(true);
   const [accessError, setAccessError] = useState(false);
   const [accessData, setAccessData] = useState<GithubAppAccessData>({});
+  const [clusters, setClusters] = useState<ClusterType[]>([]);
 
   const [currentTab, setCurrentTab] = useState("integrations");
 
@@ -40,7 +42,111 @@ const AccountSettingsModal = () => {
         setAccessLoading(false);
       });
   }, []);
+  useEffect(() => {
+    if (currentProject) {
+      api
+        .getClusters("<token>", {}, { id: currentProject?.id })
+        .then((res) => {
+          if (res.data) {
+            let clusters = res.data;
+            clusters.sort((a: any, b: any) => a.id - b.id);
+            if (clusters.length > 0) {
+              let options = clusters.map((item: { name: any; vanity_name: string; }) => ({
+                label: (item.vanity_name ? item.vanity_name : item.name),
+                value: item.name
+              }));
+              setClusters(clusters);
+            }
+          }
+        });
+    }
+  }, [currentProject]);
 
+  const renderTabs = () => {
+    switch (currentTab) {
+      case "integrations":
+        return <>
+          <Heading>
+            <GitIcon src={github} /> GitHub
+          </Heading>
+          {
+            accessLoading ? (
+              <LoadingWrapper>
+                {" "}
+                <Loading />
+              </LoadingWrapper>
+            ) : (
+              <>
+                {accessError && (
+                  <ListWrapper>
+                    <Helper>
+                      No connected repositories found.
+                      <Spacer inline width="5px" />
+                      <Link target="_blank" to={"/api/integrations/github-app/oauth"} hasunderline>
+                        Authorize Porter to view your repositories
+                      </Link>
+                    </Helper>
+                  </ListWrapper>
+                )}
+
+                {/* Will be styled (and show what account is connected) later */}
+                {!accessError && accessData.username && (
+                  <Placeholder>
+                    <User>
+                      You are currently authorized as <B>{accessData.username}</B> and
+                      have access to:
+                    </User>
+                    {!accessData.accounts || accessData.accounts?.length == 0 ? (
+                      <ListWrapper>
+                        <Helper>
+                          No connected repositories found.
+                          <Spacer inline width="5px" />
+                          <Link
+                            target="_blank"
+                            to={"/api/integrations/github-app/install"}
+                            hasunderline
+                          >
+                            Install Porter in your repositories
+                          </Link>
+                        </Helper>
+                      </ListWrapper>
+                    ) : (
+                      <>
+                        <List>
+                          {accessData.accounts.map((name, i) => {
+                            return (
+                              <React.Fragment key={i}>
+                                <Row
+                                  isLastItem={i === accessData.accounts.length - 1}
+                                >
+                                  <i className="material-icons">bookmark</i>
+                                  {name}
+                                </Row>
+                              </React.Fragment>
+                            );
+                          })}
+                        </List>
+                        <br />
+                        Don't see the right repos?{" "}
+                        <Link target="_blank" to={"/api/integrations/github-app/install"} hasunderline>
+                          Install Porter in more repositories
+                        </Link>
+                      </>
+                    )}
+                  </Placeholder>
+                )}
+              </>
+            )
+          }
+        </>;
+      case "metadata":
+        return <>
+          <Spacer y={1} />
+          <Text>MetaData</Text>
+        </>
+
+    }
+  }
   return (
     <>
       <TabSelector
@@ -48,80 +154,12 @@ const AccountSettingsModal = () => {
         currentTab={currentTab}
         setCurrentTab={(value: string) => setCurrentTab(value)}
       />
+      {renderTabs()}
 
-      <Heading>
-        <GitIcon src={github} /> GitHub
-      </Heading>
-      {accessLoading ? (
-        <LoadingWrapper>
-          {" "}
-          <Loading />
-        </LoadingWrapper>
-      ) : (
-        <>
-          {accessError && (
-            <ListWrapper>
-              <Helper>
-                No connected repositories found.
-                <Spacer inline width="5px" />
-                <Link target="_blank" to={"/api/integrations/github-app/oauth"} hasunderline>
-                  Authorize Porter to view your repositories
-                </Link>
-              </Helper>
-            </ListWrapper>
-          )}
-
-          {/* Will be styled (and show what account is connected) later */}
-          {!accessError && accessData.username && (
-            <Placeholder>
-              <User>
-                You are currently authorized as <B>{accessData.username}</B> and
-                have access to:
-              </User>
-              {!accessData.accounts || accessData.accounts?.length == 0 ? (
-                <ListWrapper>
-                  <Helper>
-                    No connected repositories found.
-                    <Spacer inline width="5px" />
-                    <Link 
-                      target="_blank"
-                      to={"/api/integrations/github-app/install"}
-                      hasunderline
-                    >
-                      Install Porter in your repositories
-                    </Link>
-                  </Helper>
-                </ListWrapper>
-              ) : (
-                <>
-                  <List>
-                    {accessData.accounts.map((name, i) => {
-                      return (
-                        <React.Fragment key={i}>
-                          <Row
-                            isLastItem={i === accessData.accounts.length - 1}
-                          >
-                            <i className="material-icons">bookmark</i>
-                            {name}
-                          </Row>
-                        </React.Fragment>
-                      );
-                    })}
-                  </List>
-                  <br />
-                  Don't see the right repos?{" "}
-                  <Link target="_blank" to={"/api/integrations/github-app/install"} hasunderline>
-                    Install Porter in more repositories
-                  </Link>
-                </>
-              )}
-            </Placeholder>
-          )}
-        </>
-      )}
     </>
+
   );
-};
+}
 
 export default AccountSettingsModal;
 

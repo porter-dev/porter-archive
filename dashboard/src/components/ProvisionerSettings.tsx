@@ -808,7 +808,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       <StyledForm>{renderForm()}</StyledForm>
       <Button
         // disabled={isDisabled()}
-        disabled={true}
+        disabled={currentCluster ? true : isDisabled()}
         onClick={createCluster}
         status={getStatus()}
       >

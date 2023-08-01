@@ -188,9 +188,9 @@ const ProjectImage = styled.img`
 `;
 
 const ProjectIcon = styled.div`
-  width: 30px;
+  width: 25px;
   min-width: 25px;
-  height: 30px;
+  height: 25px;
   border-radius: 3px;
   overflow: hidden;
   position: relative;
@@ -243,7 +243,7 @@ const ProjectName = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: 17px;
+  font-size: 14px;
   flex-grow: 1; // <-- Add flex-grow here
   padding-right: 20px; // <-- Add padding-right here
 `;

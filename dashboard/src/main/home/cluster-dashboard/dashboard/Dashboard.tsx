@@ -158,7 +158,7 @@ export const Dashboard: React.FunctionComponent = () => {
         }
       );
       if (res.data) {
-        const { ingress_ip, ingress_error, name } = res.data;
+        const { ingress_ip, ingress_error } = res.data;
         setIngressIp(ingress_ip);
         setIngressError(ingress_error);
       }

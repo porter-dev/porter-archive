@@ -66,11 +66,11 @@ const EnvGroupModal: React.FC<Props> = ({
           "<token>",
           {},
           {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
+            id: currentProject?.id,
+            cluster_id: currentCluster?.id,
           }
         )
-        .then((res) => res.data.environment_groups);
+        .then((res) => res.data?.environment_groups);
     } catch (error) {
       setLoading(false)
       setError(true);
@@ -114,27 +114,26 @@ const EnvGroupModal: React.FC<Props> = ({
         </LoadingWrapper>
       );
     } else {
-      const sortedEnvGroups = envGroups.slice().sort((a, b) => a.name.localeCompare(b.name));
+      const sortedEnvGroups = envGroups?.slice().sort((a, b) => a.name.localeCompare(b.name));
 
-      return sortedEnvGroups
-        .filter((envGroup) => {
-          if (!Array.isArray(syncedEnvGroups)) {
-            return true;
-          }
-          return !syncedEnvGroups.find(
-            (syncedEnvGroup) => syncedEnvGroup.name === envGroup.name
-          );
-        })
+      return sortedEnvGroups?.filter((envGroup) => {
+        if (!Array.isArray(syncedEnvGroups)) {
+          return true;
+        }
+        return !syncedEnvGroups?.find(
+          (syncedEnvGroup) => syncedEnvGroup?.name === envGroup?.name
+        );
+      })
         .map((envGroup: any, i: number) => {
           return (
             <EnvGroupRow
               key={i}
               isSelected={selectedEnvGroup === envGroup}
-              lastItem={i === envGroups.length - 1}
+              lastItem={i === envGroups?.length - 1}
               onClick={() => setSelectedEnvGroup(envGroup)}
             >
               <img src={sliders} />
-              {envGroup.name}
+              {envGroup?.name}
             </EnvGroupRow>
           );
         });
@@ -175,7 +174,7 @@ const EnvGroupModal: React.FC<Props> = ({
       <ColumnContainer>
 
         <ScrollableContainer>
-          {syncedEnvGroups.length != envGroups.length ? (<>
+          {syncedEnvGroups?.length != envGroups?.length ? (<>
             <Text color="helper">
               Select an Env Group to load into your application.
             </Text>

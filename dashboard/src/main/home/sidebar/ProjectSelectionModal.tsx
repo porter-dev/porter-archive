@@ -35,15 +35,24 @@ const ProjectSelectionModal: React.FC<Props> = ({
   const [clusters, setClusters] = useState<DetailedClusterType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState<number>(1); // add a currentPage state, starts at 1
-  const projectsPerPage = 11
   const filteredProjects = useMemo(() => {
     const filteredBySearch = projects.filter((project) => {
       return project.id === Number(searchValue) || project.name.toLowerCase().includes(searchValue.toLowerCase());
     });
 
-    return _.sortBy(filteredBySearch, 'name').slice(startIndex, endIndex);
-  }, [projects, searchValue, currentPage]);
+    // sort and return all the projects
+    const sortedProjects = _.sortBy(filteredBySearch, 'name');
+
+    // move the selected project to the top
+    const selectedProjectIndex = sortedProjects.findIndex(project => project.id === currentProject.id);
+    if (selectedProjectIndex !== -1) {
+      const selectedProject = sortedProjects.splice(selectedProjectIndex, 1)[0];
+      sortedProjects.unshift(selectedProject);
+    }
+
+    return sortedProjects;
+  }, [projects, searchValue, currentProject]);
+
   const updateClusterList = async (projectId: number) => {
     try {
       setLoading(true)
@@ -67,30 +76,9 @@ const ProjectSelectionModal: React.FC<Props> = ({
     }
   };
   const renderBlockList = () => {
-    const lastBlock = user && user.isPorterUser ? (
-      <Block
-        isLastBlock={true}
-        key="initialize"
-        onClick={() =>
-          pushFiltered(props, "/new-project", ["project_id"], {
-            new_project: true,
-          })
-        }
-      >
-        <BlockTitle>Create a project</BlockTitle>
-        {/* <ProjectIcon>
-          <ProjectImage src={gradient} />
-          <Letter>{"+"}</Letter>
-        </ProjectIcon> */}
-        <BlockDescription>
-          Initialize a new project
-        </BlockDescription>
-      </Block>
-    ) : null;
-
     return filteredProjects.map((project: ProjectType, i: number) => {
       return (
-        <Block
+        <IdContainer
           key={i}
           selected={project.id === currentProject.id}
           onClick={async () => {
@@ -121,44 +109,13 @@ const ProjectSelectionModal: React.FC<Props> = ({
           <BlockDescription>
             Project Id: {project.id}
           </BlockDescription>
-        </Block>
+        </IdContainer>
       );
-    }).concat(lastBlock);
-  };
-
-  const renderPaginationButtons = () => {
-    const totalProjects = projects.length;
-    const totalPages = Math.ceil(totalProjects / projectsPerPage);
-
-    // Only render pagination buttons if there are multiple pages
-    if (totalPages > 1) {
-      return (
-        <PaginationButtonsContainer>
-          <Button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
-          >
-            Previous
-          </Button>
-
-          <span>{currentPage} / {totalPages}</span>
-
-          <Button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
-          >
-            Next
-          </Button>
-        </PaginationButtonsContainer>
-      );
-    }
-
-    // If there is only one page, don't render the buttons
-    return null;
+    });
   };
 
   return (
-    <Modal closeModal={closeModal} width={'900px'}>
+    <Modal closeModal={closeModal} width={'600px'}>
       <Text size={16} style={{ marginRight: '10px' }}>
         Switch Project
       </Text>
@@ -176,23 +133,22 @@ const ProjectSelectionModal: React.FC<Props> = ({
 
         <Spacer inline x={1} />
 
-        <Button onClick={() =>
+        {user.isPorterUser && <Button onClick={() =>
           pushFiltered(props, "/new-project", ["project_id"], {
             new_project: true,
           })} height="30px" width="130px">
           <I className="material-icons">add</I> New Project
-        </Button>
+        </Button>}
       </Container>
 
       <Spacer y={1} />
 
-      <ScrollableContent>  {/* Wrap the block list and pagination buttons */}
-        <BlockList>
+      <ScrollableContent>  {/* Wrap the block list */}
+        {/* <BlockList>
           {renderBlockList()}
-        </BlockList>
+        </BlockList> */}
+        {renderBlockList()}
         <Spacer height="15px" />
-
-        {renderPaginationButtons()}
       </ScrollableContent>
     </Modal >
   )
@@ -200,68 +156,82 @@ const ProjectSelectionModal: React.FC<Props> = ({
 
 export default withRouter(ProjectSelectionModal);
 
-const Block = styled.div<{ selected?: boolean }>`
-  align-items: center;
-  user-select: none;
-  display: flex;
-  font-size: 13px;
-  overflow: hidden;
-  font-weight: 500;
-  padding: 3px 0px 12px;
-  flex-direction: column;
-  height: 170px;
-  cursor: pointer;
-  color: #ffffff;
-  position: relative;
+// const Block = styled.div<{ selected?: boolean }>`
+//   align-items: center;
+//   user-select: none;
+//   display: flex;
+//   font-size: 13px;
+//   overflow: hidden;
+//   font-weight: 500;
+//   padding: 3px 0px 12px;
+//   flex-direction: column;
+//   height: 170px;
+//   cursor: pointer;
+//   color: #ffffff;
+//   position: relative;
 
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  border-radius: 5px;
-  background: ${props => props.isLastBlock ? '#aaaabb' : props.theme.clickable.bg};
+//   display: flex;
+//   flex-direction: column;
+//   justify-content: center;
+//   align-items: center;
+//   border-radius: 5px;
+//   background: ${props => props.isLastBlock ? '#aaaabb' : props.theme.clickable.bg};
 
-  border: ${props => props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};
-  :hover {
-    border: ${({ selected }) => (!selected && "1px solid #7a7b80")};
-  }
+//   border: ${props => props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};
+//   :hover {
+//     border: ${({ selected }) => (!selected && "1px solid #7a7b80")};
+//   }
 
-  animation: fadeIn 0.3s 0s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
+//   animation: fadeIn 0.3s 0s;
+//   @keyframes fadeIn {
+//     from {
+//       opacity: 0;
+//     }
+//     to {
+//       opacity: 1;
+//     }
+//   }
+// `;
 
-const BlockList = styled.div`
-  overflow: visible;
-  margin-top: 6px;
-  display: grid;
-  grid-column-gap: 25px;
-  grid-row-gap: 25px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-`;
+// const BlockList = styled.div`
+//   overflow: visible;
+//   margin-top: 6px;
+//   display: grid;
+//   grid-column-gap: 25px;
+//   grid-row-gap: 25px;
+//   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+// `;
 
-const Letter = styled.div`
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  padding-bottom: 2px;
-  font-weight: 10000;
-  font-size: 60px;
-  top: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
+const IdContainer = styled.div`
+    color: #ffffff;
+    border-radius: 5px;
+    padding: 5px;
+    display: block;
+    width: 100%;
+    border-radius: 5px;
+    border: 1px solid ${({ theme }) => theme.border};
+    margin-bottom: 10px;
+    margin-top: 5px;
+      border: ${props => props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};
+      :hover {
+        border: ${({ selected }) => (!selected && "1px solid #7a7b80")};
+      }
+    
+      animation: fadeIn 0.3s 0s;
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+    `;
+
 const BlockDescription = styled.div`
   color: #ffffff66;
   margin-left: -10px;
+  margin-top: 4px;
   text-align: center;
   font-weight: default;
   font-size: 13px;
@@ -285,38 +255,9 @@ const BlockTitle = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
 `;
-
-const Plus = styled.div`
-  margin-right: 10px;
-  font-size: 15px;
-`;
-
-
-const ProjectImage = styled.img`
-width: 100%;
-height: 100%;
-`;
-
-const ProjectIcon = styled.div`
-width: 75px;
-min-width: 25px;
-height: 75px;
-border-radius: 3px;
-overflow: hidden;
-position: relative;
-margin-right: 10px;
-font-weight: 400;
-`;
-
-const PaginationButtonsContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-`;
 const ScrollableContent = styled.div`
   overflow-y: auto; /* Enable vertical scrolling */
-  height: calc(100vh - 200px); /* Set the maximum height */
+  height: calc(100vh - 500px); /* Set the maximum height */
   padding-right: 15px; /* Add some right padding to account for scrollbar */
 `;
 const I = styled.i`

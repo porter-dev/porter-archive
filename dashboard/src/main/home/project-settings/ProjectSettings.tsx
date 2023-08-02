@@ -17,6 +17,7 @@ import _ from "lodash";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import ProjectDeleteConsent from "./ProjectDeleteConsent";
+import Metadata from "./Metadata";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 
@@ -74,7 +75,6 @@ class ProjectSettings extends Component<PropsType, StateType> {
     if (this.state.projectName !== currentProject.name) {
       this.setState({ projectName: currentProject.name });
     }
-
     const tabOptions = [];
     tabOptions.push({ value: "manage-access", label: "Manage access" });
     // ? Disabled for now https://discord.com/channels/542888846271184896/1059277393031856208/1059277395913351258
@@ -82,7 +82,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
     //   value: "billing",
     //   label: "Billing",
     // });
-
+    tabOptions.push({ value: "metadata", label: "Metadata" });
     if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
       // if (this.context?.hasBillingEnabled) {
       //   tabOptions.push({
@@ -128,6 +128,9 @@ class ProjectSettings extends Component<PropsType, StateType> {
 
     if (this.state.currentTab === "manage-access") {
       return <InvitePage />;
+    }
+    else if (this.state.currentTab == "metadata") {
+      return <Metadata />
     } else if (this.state.currentTab === "api-tokens") {
       return <APITokensSection />;
     } else if (this.state.currentTab === "billing") {

@@ -31,9 +31,14 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
       case "SUCCESS":
         return event.metadata.image_tag != null ?
           event.metadata.service_status != null ?
-            <Text color="#68BF8B">
-              Deployed <Code>{event.metadata.image_tag}</Code> to {Object.keys(event.metadata.service_status).length} service{Object.keys(event.metadata.service_status).length === 1 ? "" : "s"}
-            </Text> :
+            <StatusTextContainer>
+              <Text color="#68BF8B">
+                Deployed <Code>{event.metadata.image_tag}</Code> to
+              </Text>
+              <Spacer inline x={0.25} />
+              {renderServiceDropdownCta(Object.keys(event.metadata.service_status).length, "#68BF8B")}
+            </StatusTextContainer>
+            :
             <Text color="#68BF8B">
               Deployed <Code>{event.metadata.image_tag}</Code>
             </Text>
@@ -50,9 +55,13 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
             }
           }
           return (
-            <Text color="#FF6060">
-              Failed to deploy <Code>{event.metadata.image_tag}</Code> to {failedServices} service{failedServices === 1 ? "" : "s"}
-            </Text>
+            <StatusTextContainer>
+              <Text color="#FF6060">
+                Failed to deploy <Code>{event.metadata.image_tag}</Code> to
+              </Text>
+              <Spacer inline x={0.25} />
+              {renderServiceDropdownCta(failedServices, "#FF6060")}
+            </StatusTextContainer>
           );
         } else {
           return (
@@ -70,9 +79,13 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
             }
           }
           return (
-            <Text color="#FFBF00">
-              Canceled deploy of <Code>{event.metadata.image_tag}</Code> to {canceledServices} service{canceledServices === 1 ? "" : "s"}
-            </Text>
+            <StatusTextContainer>
+              <Text color="#FFBF00">
+                Canceled deploy of <Code>{event.metadata.image_tag}</Code> to
+              </Text>
+              <Spacer inline x={0.25} />
+              {renderServiceDropdownCta(canceledServices, "#FFBF00")}
+            </StatusTextContainer>
           );
         } else {
           return (
@@ -84,14 +97,18 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
       default:
         if (event.metadata.service_status != null) {
           return (
-            <Text color="helper">
-              Deploying <Code>{event.metadata.image_tag}</Code> to {Object.keys(event.metadata.service_status).length} service{Object.keys(event.metadata.service_status).length === 1 ? "" : "s"}...
-            </Text>
+            <StatusTextContainer>
+              <Text color="helper">
+                Deploying <Code>{event.metadata.image_tag}</Code> to
+              </Text>
+              <Spacer inline x={0.25} />
+              {renderServiceDropdownCta(Object.keys(event.metadata.service_status).length)}
+            </StatusTextContainer>
           );
         } else {
           return (
             <Text color="helper">
-              Deploying <Code>{event.metadata.image_tag}</Code> to {Object.keys(event.metadata.service_status).length} service{Object.keys(event.metadata.service_status).length === 1 ? "" : "s"}...
+              Deploying <Code>{event.metadata.image_tag}</Code>...
             </Text>
           );
         }
@@ -130,7 +147,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
                 >
                   <Icon height="12px" src={document} />
                   <Spacer inline x={0.5} />
-                  Live logs
+                  Logs
                 </Link>
               </ServiceStatusContainer>
             </Container>
@@ -139,6 +156,18 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
       })}
     </ServiceStatusesContainer>
   }
+
+  const renderServiceDropdownCta = (numServices: number, color?: string) => {
+    return (
+      <ServiceStatusDropdownCtaContainer >
+        <Link color={color} onClick={() => setServiceStatusVisible(!serviceStatusVisible)}>
+          <ServiceStatusDropdownIcon className="material-icons" serviceStatusVisible={serviceStatusVisible}>arrow_drop_down</ServiceStatusDropdownIcon>
+          {numServices} service{numServices === 1 ? "" : "s"}
+        </Link>
+      </ServiceStatusDropdownCtaContainer>
+    )
+  }
+
   return (
     <StyledEventCard>
       <Container row spaced>
@@ -154,16 +183,6 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
           <Icon height="12px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText()}
-          {event.metadata.service_status != null &&
-            <>
-              <Spacer inline x={1} />
-              <TempWrapper>
-                <Link hasunderline onClick={() => setServiceStatusVisible(!serviceStatusVisible)}>
-                  View service status
-                </Link>
-              </TempWrapper>
-            </>
-          }
           {appData?.chart?.version !== event.metadata.revision && (
             <>
               <Spacer inline x={1} />
@@ -234,4 +253,30 @@ const ServiceStatusesContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
- `; 
+ `;
+
+const ServiceStatusDropdownCtaContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 5px;
+  :hover {
+    background: #ffffff11;
+  }
+`;
+
+const ServiceStatusDropdownIcon = styled.i`
+  margin-left: -5px;
+  font-size: 20px;
+  border-radius: 20px;
+  transform: ${(props: { serviceStatusVisible: boolean }) =>
+    props.serviceStatusVisible ? "" : "rotate(-90deg)"};
+  transition: transform 0.1s ease;
+`
+
+const StatusTextContainer = styled.div`
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+`;

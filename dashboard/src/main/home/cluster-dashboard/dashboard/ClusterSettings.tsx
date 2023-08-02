@@ -221,7 +221,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
 
   let overrideAWSClusterNameSection =
     currentCluster?.aws_integration_id &&
-    currentCluster?.aws_integration_id != 0 ? (
+      currentCluster?.aws_integration_id != 0 ? (
       <InputRow
         type="text"
         value={newAWSClusterID}
@@ -347,7 +347,6 @@ const ClusterSettings: React.FC<Props> = (props) => {
         {props.ingressIp && (
           <>{configureUrl(props.ingressIp, props.ingressError)}</>
         )}
-
         <DarkMatter />
         {enableAgentIntegration}
         <DarkMatter />

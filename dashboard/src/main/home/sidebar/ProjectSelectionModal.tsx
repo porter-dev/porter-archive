@@ -15,6 +15,7 @@ import _ from 'lodash';
 import { useMemo } from 'react';
 import api from "shared/api";
 import Button from "components/porter/Button";
+import Container from "components/porter/Container";
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
@@ -35,15 +36,11 @@ const ProjectSelectionModal: React.FC<Props> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1); // add a currentPage state, starts at 1
-  const projectsPerPage = 15
+  const projectsPerPage = 11
   const filteredProjects = useMemo(() => {
     const filteredBySearch = projects.filter((project) => {
       return project.id === Number(searchValue) || project.name.toLowerCase().includes(searchValue.toLowerCase());
     });
-
-    // Get the projects for the current page
-    const startIndex = (currentPage - 1) * projectsPerPage;
-    const endIndex = startIndex + projectsPerPage;
 
     return _.sortBy(filteredBySearch, 'name').slice(startIndex, endIndex);
   }, [projects, searchValue, currentPage]);
@@ -95,7 +92,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
       return (
         <Block
           key={i}
-          selected={project.name === currentProject.name}
+          selected={project.id === currentProject.id}
           onClick={async () => {
             // if (project.id !== currentProject.id) {
             //   setCurrentCluster(null);
@@ -167,14 +164,25 @@ const ProjectSelectionModal: React.FC<Props> = ({
       </Text>
       <Spacer y={1} />
 
-      <SearchBar
-        value={searchValue}
-        setValue={(x) => {
-          setSearchValue(x);
-        }}
-        placeholder="Search projects..."
-        width="100%"
-      />
+      <Container row spaced>
+        <SearchBar
+          value={searchValue}
+          setValue={(x) => {
+            setSearchValue(x);
+          }}
+          placeholder="Search projects..."
+          width="100%"
+        />
+
+        <Spacer inline x={1} />
+
+        <Button onClick={() =>
+          pushFiltered(props, "/new-project", ["project_id"], {
+            new_project: true,
+          })} height="30px" width="130px">
+          <I className="material-icons">add</I> New Project
+        </Button>
+      </Container>
 
       <Spacer y={1} />
 
@@ -310,4 +318,12 @@ const ScrollableContent = styled.div`
   overflow-y: auto; /* Enable vertical scrolling */
   height: calc(100vh - 200px); /* Set the maximum height */
   padding-right: 15px; /* Add some right padding to account for scrollbar */
+`;
+const I = styled.i`
+  color: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin-right: 5px;
+  justify-content: center;
 `;

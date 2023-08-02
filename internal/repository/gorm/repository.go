@@ -53,6 +53,7 @@ type GormRepository struct {
 	awsAssumeRoleChainer      repository.AWSAssumeRoleChainer
 	porterApp                 repository.PorterAppRepository
 	porterAppEvent            repository.PorterAppEventRepository
+	revision repository.RevisionRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -239,6 +240,10 @@ func (t *GormRepository) PorterAppEvent() repository.PorterAppEventRepository {
 	return t.porterAppEvent
 }
 
+func (t *GormRepository) Revision() repository.RevisionRepository {
+	return t.revision
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -289,5 +294,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		awsAssumeRoleChainer:      NewAWSAssumeRoleChainer(db),
 		porterApp:                 NewPorterAppRepository(db),
 		porterAppEvent:            NewPorterAppEventRepository(db),
+		revision: NewRevisionRepository(db),
 	}
 }

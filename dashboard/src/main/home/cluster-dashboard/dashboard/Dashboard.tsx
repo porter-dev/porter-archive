@@ -44,8 +44,8 @@ export const Dashboard: React.FunctionComponent = () => {
   const [selectedClusterVersion, setSelectedClusterVersion] = useState(null);
   const [showProvisionerStatus, setShowProvisionerStatus] = useState(false);
   const [provisionFailureReason, setProvisionFailureReason] = useState("");
-  const [ingressIp, setIngressIp] = useState(null);
-  const [ingressError, setIngressError] = useState(null);
+  const [ingressIp, setIngressIp] = useState("");
+  const [ingressError, setIngressError] = useState("");
   const [cloudProvider, setCloudProvider] = useState("azure");
 
   const context = useContext(Context);
@@ -158,7 +158,7 @@ export const Dashboard: React.FunctionComponent = () => {
         }
       );
       if (res.data) {
-        const { ingress_ip, ingress_error } = res.data;
+        const { ingress_ip, ingress_error, name } = res.data;
         setIngressIp(ingress_ip);
         setIngressError(ingress_error);
       }
@@ -168,6 +168,10 @@ export const Dashboard: React.FunctionComponent = () => {
   useEffect(() => {
     updateClusterWithDetailedData();
   }, []);
+
+  useEffect(() => {
+    updateClusterWithDetailedData();
+  }, [context.currentCluster]);
 
   const renderContents = () => {
     if (context.currentProject?.capi_provisioner_enabled) {

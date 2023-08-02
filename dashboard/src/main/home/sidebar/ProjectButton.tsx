@@ -58,7 +58,10 @@ const ProjectButton: React.FC<PropsType> = (props) => {
             closeModal={() => setShowGHAModal(false)}
           />
         )}
-        <MainSelector onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowGHAModal(true)} >
+        <MainSelector
+          projectsLength={props.projects.length}
+          isPorterUser={user.isPorterUser}
+          onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowGHAModal(true)} >
           <ProjectIcon>
             <ProjectImage src={gradient} />
             <Letter>{currentProject.name[0].toUpperCase()}</Letter>
@@ -211,11 +214,11 @@ const StyledProjectSection = styled.div`
 const MainSelector = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between; // <-- Changed from center to space-between
+  justify-content: space-between;
   margin: 10px 0 0;
   font-size: 14px;
-  cursor: pointer;
-  padding: 10px 20px; // <-- Add padding-right here
+  cursor: ${props => (props.projectsLength > 1 || props.isPorterUser) ? "pointer" : "default"};
+  padding: 10px 20px;
   position: relative;
   :hover {
     > i {

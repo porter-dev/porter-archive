@@ -100,7 +100,7 @@ const Metadata: React.FC<Props> = ({
                     {registries?.length > 0 &&
                         registries.map((registry, index) =>
                             <>
-                                <Icon src={globe} /> <IdTextWithCopy key={index} id={registry.id} name={registry.name} icon={gear} />
+                                <IdTextWithCopy key={index} id={registry.id} name={registry.name} icon={gear} />
                             </>
                         )
                     }

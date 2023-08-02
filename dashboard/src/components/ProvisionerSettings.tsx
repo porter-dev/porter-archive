@@ -103,7 +103,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
-  const [machineType, setMachineType] = useState("t3.xlarge");
+  const [machineType, setMachineType] = useState("t3.medium");
   const [guardDutyEnabled, setGuardDutyEnabled] = useState<boolean>(false);
   const [kmsEncryptionEnabled, setKmsEncryptionEnabled] = useState<boolean>(
     false
@@ -879,7 +879,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       <StyledForm>{renderForm()}</StyledForm>
       <Button
         // disabled={isDisabled()}
-        disabled={user?.email === "admin@porter.run" ? false : (currentCluster ? true : isDisabled())}
+        disabled={
+          user?.email === "admin@porter.run"
+            ? false
+            : currentCluster
+            ? true
+            : isDisabled()
+        }
         onClick={createCluster}
         status={getStatus()}
       >

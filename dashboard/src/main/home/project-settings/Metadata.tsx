@@ -119,7 +119,7 @@ const IdContainer = styled.div`
     display: block;
     width: 100%;
     border-radius: 5px;
-    background: ${(props) => props.theme.clickable.bg};
+    background: ${(props) => props.theme.fg};
     border: 1px solid ${({ theme }) => theme.border};
     margin-bottom: 10px;
     margin-top: 5px;

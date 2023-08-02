@@ -170,7 +170,8 @@ const IdContainer = styled.div`
       :hover {
         border: ${({ selected }) => (!selected && "1px solid #7a7b80")};
       }
-    
+      cursor: pointer;
+
       animation: fadeIn 0.3s 0s;
       @keyframes fadeIn {
         from {

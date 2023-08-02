@@ -13,13 +13,15 @@ import TabSelector from "components/TabSelector";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-
+import CopyToClipboard from "components/CopyToClipboard";
+import copy from "assets/copy-left.svg"
+import Icon from "components/porter/Icon";
 interface GithubAppAccessData {
   username?: string;
   accounts?: string[];
 }
 
-const tabOptions = [{ label: "Integrations", value: "integrations" }, { label: "Metadata", value: "metadata" }];
+const tabOptions = [{ label: "Integrations", value: "integrations" }];
 
 const AccountSettingsModal = () => {
   const { setCurrentModal, currentProject } = useContext(Context);
@@ -27,9 +29,17 @@ const AccountSettingsModal = () => {
   const [accessError, setAccessError] = useState(false);
   const [accessData, setAccessData] = useState<GithubAppAccessData>({});
   const [clusters, setClusters] = useState<ClusterType[]>([]);
+  const [registries, setRegistries] = useState<any[]>(null);
 
   const [currentTab, setCurrentTab] = useState("integrations");
-
+  const IdTextWithCopy = ({ id }: { id: number }) => (
+    <IdContainer>
+      {id}
+      <CopyToClipboard text={id.toString()}>
+        <img src={copy} alt="copy" style={{ cursor: "pointer", marginLeft: "5px", width: "10px", height: "10px" }} />
+      </CopyToClipboard>
+    </IdContainer>
+  );
   useEffect(() => {
     api
       .getGithubAccounts("<token>", {}, {})
@@ -44,6 +54,15 @@ const AccountSettingsModal = () => {
   }, []);
   useEffect(() => {
     if (currentProject) {
+      const project_id = currentProject.id;
+
+      api
+        .getProjectRegistries("<token>", {}, { id: project_id })
+        .then((res: any) => {
+          setRegistries(res.data);
+        })
+        .catch((err: any) => console.log(err));
+
       api
         .getClusters("<token>", {}, { id: currentProject?.id })
         .then((res) => {
@@ -142,9 +161,32 @@ const AccountSettingsModal = () => {
       case "metadata":
         return <>
           <Spacer y={1} />
-          <Text>MetaData</Text>
-        </>
+          <div>
+            <Text>Project Id: </Text>
+            <IdTextWithCopy id={currentProject?.id} />
+          </div>
 
+          {clusters?.length > 0 &&
+            <>
+              <Text>Cluster ids:</Text>
+              {clusters.map((cluster, index) =>
+                <div key={index}>
+                  <IdTextWithCopy id={cluster.id} />
+                </div>
+              )}
+            </>}
+
+
+          {registries?.length > 0 &&
+            <>
+              <Text>Registry ids:</Text>
+              {registries.map((registry, index) =>
+                <div key={index}>
+                  <IdTextWithCopy id={registry.id} />
+                </div>
+              )}
+            </>}
+        </>
     }
   }
   return (
@@ -234,4 +276,13 @@ const Placeholder = styled.div`
   margin-left: 0px;
   line-height: 1.6em;
   user-select: none;
+`;
+
+const IdContainer = styled.div`
+  background: #171a21;
+  border-radius: 5px;
+  padding: 5px;
+  display: block; // Changed from inline-block to block for new line
+  width: 100%; // Span the entire width
+  margin: 0; // No margin between each IdContainer
 `;

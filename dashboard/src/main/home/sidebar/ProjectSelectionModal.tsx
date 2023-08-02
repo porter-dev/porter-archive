@@ -156,52 +156,6 @@ const ProjectSelectionModal: React.FC<Props> = ({
 
 export default withRouter(ProjectSelectionModal);
 
-// const Block = styled.div<{ selected?: boolean }>`
-//   align-items: center;
-//   user-select: none;
-//   display: flex;
-//   font-size: 13px;
-//   overflow: hidden;
-//   font-weight: 500;
-//   padding: 3px 0px 12px;
-//   flex-direction: column;
-//   height: 170px;
-//   cursor: pointer;
-//   color: #ffffff;
-//   position: relative;
-
-//   display: flex;
-//   flex-direction: column;
-//   justify-content: center;
-//   align-items: center;
-//   border-radius: 5px;
-//   background: ${props => props.isLastBlock ? '#aaaabb' : props.theme.clickable.bg};
-
-//   border: ${props => props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};
-//   :hover {
-//     border: ${({ selected }) => (!selected && "1px solid #7a7b80")};
-//   }
-
-//   animation: fadeIn 0.3s 0s;
-//   @keyframes fadeIn {
-//     from {
-//       opacity: 0;
-//     }
-//     to {
-//       opacity: 1;
-//     }
-//   }
-// `;
-
-// const BlockList = styled.div`
-//   overflow: visible;
-//   margin-top: 6px;
-//   display: grid;
-//   grid-column-gap: 25px;
-//   grid-row-gap: 25px;
-//   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-// `;
-
 const IdContainer = styled.div`
     color: #ffffff;
     border-radius: 5px;

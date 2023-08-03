@@ -166,7 +166,7 @@ func castServiceConfig(service *Service, serviceType porterv1.ServiceType) (*por
 			return nil, fmt.Errorf("error unmarshaling web service config: %w", err)
 		}
 
-		service.Config = &porterv1.Service_WebConfig{
+		validSevice.Config = &porterv1.Service_WebConfig{
 			WebConfig: webConfig,
 		}
 
@@ -177,7 +177,7 @@ func castServiceConfig(service *Service, serviceType porterv1.ServiceType) (*por
 			return nil, fmt.Errorf("Error unmarshaling worker service config: %w", err)
 		}
 
-		service.Config = &porterv1.Service_WorkerConfig{
+		validSevice.Config = &porterv1.Service_WorkerConfig{
 			WorkerConfig: workerConfig,
 		}
 
@@ -188,7 +188,7 @@ func castServiceConfig(service *Service, serviceType porterv1.ServiceType) (*por
 			return nil, fmt.Errorf("Error unmarshaling job service config: %w", err)
 		}
 
-		service.Config = &porterv1.Service_JobConfig{
+		validSevice.Config = &porterv1.Service_JobConfig{
 			JobConfig: jobConfig,
 		}
 	}

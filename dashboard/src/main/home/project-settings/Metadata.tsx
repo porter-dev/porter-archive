@@ -116,6 +116,7 @@ const IdContainer = styled.div`
     color: #aaaabb;
     border-radius: 5px;
     padding: 5px;
+    padding-left: 10px;
     display: block;
     width: 100%;
     border-radius: 5px;

@@ -4,6 +4,20 @@
       - production
 name: Deploy Porter to Production
 jobs:
+  slack-notification:
+    name: Slack Notification
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Slack Notification
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.PORTER_PROD_NOTIFICATIONS_SLACK_WEBHOOK }}
+        SLACK_TITLE: 'Production Deploy Started :rocket:'
+        SLACK_MESSAGE: '@here'
+        SLACK_COLOR: '#8590ff'
+        MSG_MINIMAL: true
+        SLACK_USERNAME: 'Production Deploy Bot'
   build-go:
     runs-on: ubuntu-latest
     steps:

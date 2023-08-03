@@ -370,5 +370,34 @@ func getStackRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/validate -> porter_app.NewValidatePorterAppHandler
+	validatePorterAppEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/validate", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	validatePorterAppHandler := porter_app.NewValidatePorterAppHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: validatePorterAppEndpoint,
+		Handler:  validatePorterAppHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

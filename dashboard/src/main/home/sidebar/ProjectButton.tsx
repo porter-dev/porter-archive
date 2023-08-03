@@ -51,33 +51,29 @@ const ProjectButton: React.FC<PropsType> = (props) => {
   if (currentProject) {
     return (
       <StyledProjectSection ref={wrapperRef}>
+        {showGHAModal && currentProject != null && (
+          <ProjectSelectionModal
+            currentProject={props.currentProject}
+            projects={props.projects}
+            closeModal={() => setShowGHAModal(false)}
+          />
+        )}
         <MainSelector
-          onClick={handleExpand}
-          expanded={expanded}
-          hasMultipleProjects={props.projects.length > 1}
-        >
+          projectsLength={props.projects.length}
+          isPorterUser={user.isPorterUser}
+          onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowGHAModal(true)} >
           <ProjectIcon>
             <ProjectImage src={gradient} />
             <Letter>{currentProject.name[0].toUpperCase()}</Letter>
           </ProjectIcon>
-          <ProjectName
-            hasMultipleProjects={props.projects.length > 1}
-            title={currentProject.name} // Add this line
-          >
-            {currentProject.name}
-          </ProjectName>
+          <ProjectName>{currentProject.name}</ProjectName>
           <Spacer inline x={.5} />
 
-          {(props.projects.length > 1 || user?.isPorterUser) && <RefreshButton onClick={() => setShowGHAModal(true)}>
+          {(props.projects.length > 1 || user.isPorterUser) && <RefreshButton>
             <img src={swap} />
           </RefreshButton>}
-          {showGHAModal && currentProject != null && (
-            <ProjectSelectionModal
-              currentProject={props.currentProject}
-              projects={props.projects}
-              closeModal={() => setShowGHAModal(false)}
-            />
-          )}
+
+          {/* <i className="material-icons">arrow_drop_down</i> */}
         </MainSelector>
         {/* {renderDropdown()} */}
       </StyledProjectSection >
@@ -131,7 +127,48 @@ const InitializeButton = styled.div`
   }
 `;
 
+const Option = styled.div`
+  width: 100%;
+  border-top: 1px solid #00000000;
+  border-bottom: 1px solid
+    ${(props: { selected: boolean; lastItem?: boolean }) =>
+    props.lastItem ? "#ffffff00" : "#ffffff15"};
+  height: 45px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  align-items: center;
+  padding-left: 10px;
+  cursor: pointer;
+  padding-right: 10px;
+  background: ${(props: { selected: boolean; lastItem?: boolean }) =>
+    props.selected ? "#ffffff11" : ""};
+  :hover {
+    background: ${(props: { selected: boolean; lastItem?: boolean }) =>
+    props.selected ? "" : "#ffffff22"};
+  }
 
+  > i {
+    font-size: 18px;
+    margin-right: 12px;
+    margin-left: 5px;
+    color: #ffffff44;
+  }
+`;
+
+const Dropdown = styled.div`
+  position: absolute;
+  right: 13px;
+  top: calc(100% + 5px);
+  background: #26282f;
+  width: 210px;
+  max-height: 500px;
+  border-radius: 3px;
+  z-index: 999;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  box-shadow: 0 5px 15px 5px #00000077;
+`;
 
 const Letter = styled.div`
   height: 100%;
@@ -155,10 +192,10 @@ const ProjectIcon = styled.div`
   width: 25px;
   min-width: 25px;
   height: 25px;
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
   position: relative;
-  margin-right: 6px;
+  margin-right: 10px;
   font-weight: 400;
 `;
 const ProjectIconAlt = styled(ProjectIcon)`
@@ -170,17 +207,17 @@ const ProjectIconAlt = styled(ProjectIcon)`
 
 const StyledProjectSection = styled.div`
   position: relative;
-  margin-left: 2px;
+  margin-left: 3px;
   color: ${props => props.theme.text.primary};
 `;
 
-const MainSelector = styled.div<{ expanded: boolean, hasMultipleProjects: boolean }>`
+const MainSelector = styled.div`
   display: flex;
   align-items: center;
-  justify-content: ${props => props.hasMultipleProjects ? 'space-between' : 'flex-start'};
+  justify-content: space-between;
   margin: 10px 0 0;
   font-size: 14px;
-  cursor: pointer;
+  cursor: ${props => (props.projectsLength > 1 || props.isPorterUser) ? "pointer" : "default"};
   padding: 10px 20px;
   position: relative;
   :hover {
@@ -197,17 +234,16 @@ const MainSelector = styled.div<{ expanded: boolean, hasMultipleProjects: boolea
     align-items: center;
     justify-content: center;
     border-radius: 20px;
-    background: ${props => props.expanded ? "#ffffff22" : ""};
+    background: "#ffffff22" 
   }
 `;
 
-const ProjectName = styled.div<{ hasMultipleProjects: boolean }>`
+const ProjectName = styled.div`
   overflow: hidden;
   white-space: nowrap;
-  text-overflow: ${props => props.hasMultipleProjects ? 'ellipsis' : 'clip'};
-  flex-grow: ${props => props.hasMultipleProjects ? 1 : 0};
-  padding-right: ${props => props.hasMultipleProjects ? '1px' : '0'};
-  max-width: ${props => props.hasMultipleProjects ? 'auto' : '26ch'}; // Limit to max 25 characters when no multiple projects
+  text-overflow: ellipsis;
+  flex-grow: 1; // <-- Add flex-grow here
+  padding-right: 20px; // <-- Add padding-right here
 `;
 
 const RefreshButton = styled.div`
@@ -225,6 +261,6 @@ const RefreshButton = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 14px;
+    height: 15px;
   }
 `;

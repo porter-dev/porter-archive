@@ -17,7 +17,9 @@ import CopyToClipboard from "components/CopyToClipboard";
 import copy from "assets/copy-left.svg"
 import Icon from "components/porter/Icon";
 import { ClusterType } from "shared/types";
-
+import globe from "assets/globe.svg"
+import infra from "assets/infra.png";
+import gear from "assets/gear.svg"
 type Props = {
 };
 
@@ -28,18 +30,20 @@ const Metadata: React.FC<Props> = ({
     const [clusters, setClusters] = useState<ClusterType[]>([]);
     const [registries, setRegistries] = useState<any[]>(null);
     // Add name as a property of the component
-    const IdTextWithCopy = ({ id, name }: { id: number, name: string }) => (
+    const IdTextWithCopy = ({ id, name, icon }: { id: number, name: string, icon: any }) => (
         <IdContainer>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.8em', marginRight: '10px' }}> {name}</span>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8em', marginRight: '5px' }}>Id: {id}</span>
+            <Container>
+                <Icon src={icon} height={"14px"} />
+                <IconWithName>{name}</IconWithName>
+                <CopyContainer>
+                    <IdText>Id: {id}</IdText>
                     <CopyToClipboard text={id.toString()}>
-                        <img src={copy} alt="copy" style={{ cursor: "pointer", marginLeft: "5px", marginRight: "5px", width: "10px", height: "10px" }} />
+                        <CopyIcon src={copy} alt="copy" />
                     </CopyToClipboard>
-                </div>
-            </div>
+                </CopyContainer>
+            </Container>
         </IdContainer>
+
     );
 
 
@@ -74,26 +78,30 @@ const Metadata: React.FC<Props> = ({
 
     return (
         <>
-            <Text>Project Id: </Text>
-            <IdTextWithCopy id={currentProject?.id} name={currentProject?.name} /> {/* Assuming currentProject has name field */}
-            <Spacer y={1} />
+            <Text>Project</Text>
+            <IdTextWithCopy id={currentProject?.id} name={currentProject?.name} icon={globe} /> {/* Assuming currentProject has name field */}
+            <Spacer y={.5} />
             {clusters?.length > 0 && <>
-                <Text>Cluster Ids:</Text>
+                <Text>Clusters</Text>
                 {clusters?.length > 0 &&
                     clusters.map((cluster, index) =>
-                        <IdTextWithCopy key={index} id={cluster.id} name={cluster.name} />
+                        <>
+                            <IdTextWithCopy key={index} id={cluster.id} name={cluster.name} icon={infra} />
+                        </>
                     )
                 }
             </>
             }
-            <Spacer y={1} />
+            <Spacer y={.5} />
 
             {registries?.length > 0 &&
                 <>
-                    <Text>Registry Ids:</Text>
+                    <Text>Registries</Text>
                     {registries?.length > 0 &&
                         registries.map((registry, index) =>
-                            <IdTextWithCopy key={index} id={registry.id} name={registry.name} />
+                            <>
+                                <IdTextWithCopy key={index} id={registry.id} name={registry.name} icon={gear} />
+                            </>
                         )
                     }
                 </>}
@@ -108,9 +116,11 @@ const IdContainer = styled.div`
     color: #aaaabb;
     border-radius: 5px;
     padding: 5px;
+    padding-left: 10px;
     display: block;
     width: 100%;
     border-radius: 5px;
+    background: ${(props) => props.theme.fg};
     border: 1px solid ${({ theme }) => theme.border};
     margin-bottom: 10px;
     margin-top: 5px;
@@ -122,3 +132,34 @@ const IdContainer = styled.div`
 // background: ${({ theme }) => theme.fg}};
 // border: 1px solid ${({ theme }) => theme.border};
 // `;
+
+const Container = styled.div`
+  padding: 5px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+`;
+
+const IconWithName = styled.span`
+  font-size: 0.8em;
+  margin-left: 10px;
+`;
+
+const CopyContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+`;
+
+const IdText = styled.span`
+  font-size: 0.8em;
+  margin-right: 5px;
+`;
+
+const CopyIcon = styled.img`
+  cursor: pointer;
+  margin-left: 5px;
+  margin-right: 5px;
+  width: 10px;
+  height: 10px;
+`;

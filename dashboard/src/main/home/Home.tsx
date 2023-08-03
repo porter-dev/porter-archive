@@ -328,9 +328,14 @@ const Home: React.FC<Props> = (props) => {
   };
 
   const handleDelete = async () => {
+    if (currentProject?.id == null) {
+      return;
+    }
+
     localStorage.removeItem(currentProject.id + "-cluster");
     try {
-      await api.deleteProject("<token>", {}, { id: currentProject?.id });
+      await api.updateOnboardingStep("<token>", { step: "project-delete" }, { project_id: currentProject.id });
+      await api.deleteProject("<token>", {}, { id: currentProject.id });
       projectOverlayCall();
     } catch (error) {
       console.log(error);

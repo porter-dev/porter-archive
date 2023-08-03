@@ -134,7 +134,8 @@ local_resource(
     serve_cmd="npm start",
     serve_dir="dashboard",
     serve_env={
-        "ENV_FILE": "../zarf/helm/.dashboard.env"
+        "ENV_FILE": "../zarf/helm/.dashboard.env",
+        "NODE_OPTIONS":"--openssl-legacy-provider"
     },
     deps=[
       "dashboard/package.json",

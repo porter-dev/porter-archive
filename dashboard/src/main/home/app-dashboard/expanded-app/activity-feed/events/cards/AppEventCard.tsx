@@ -44,23 +44,24 @@ const AppEventCard: React.FC<Props> = ({ event, appData }) => {
         }
       )
 
-      const updatedLogs = logResp.data.logs.map((l: { line: string; timestamp: string; }, index: number) => {
-        try {
-          return {
-            line: JSON.parse(l.line)?.log ?? Anser.ansiToJson(l.line),
-            lineNumber: index + 1,
-            timestamp: l.timestamp,
+      if (logResp.data?.logs != null) {
+        const updatedLogs = logResp.data.logs.map((l: { line: string; timestamp: string; }, index: number) => {
+          try {
+            return {
+              line: JSON.parse(l.line)?.log ?? Anser.ansiToJson(l.line),
+              lineNumber: index + 1,
+              timestamp: l.timestamp,
+            }
+          } catch (err) {
+            return {
+              line: Anser.ansiToJson(l.line),
+              lineNumber: index + 1,
+              timestamp: l.timestamp,
+            }
           }
-        } catch (err) {
-          return {
-            line: Anser.ansiToJson(l.line),
-            lineNumber: index + 1,
-            timestamp: l.timestamp,
-          }
-        }
-      });
-
-      setLogs(updatedLogs);
+        });
+        setLogs(updatedLogs);
+      }
     } catch (error) {
       console.log(error);
     }

@@ -1,20 +1,17 @@
 import React, { useState } from "react";
-
-
 import deploy from "assets/deploy.png";
-import document from "assets/document.svg";
-
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Icon from "components/porter/Icon";
-import { getStatusIcon } from '../utils';
+import { getStatusColor, getStatusIcon } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import styled from "styled-components";
 import Link from "components/porter/Link";
 import ChangeLogModal from "../../../ChangeLogModal";
 import { PorterAppDeployEvent } from "../types";
 import AnimateHeight from "react-animate-height";
+import ServiceStatusDetail from "./ServiceStatusDetail";
 
 type Props = {
   event: PorterAppDeployEvent;
@@ -32,18 +29,18 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
         return event.metadata.image_tag != null ?
           event.metadata.service_status != null ?
             <StatusTextContainer>
-              <Text color="#68BF8B">
+              <Text color={getStatusColor(event.status)}>
                 Deployed <Code>{event.metadata.image_tag}</Code> to
               </Text>
               <Spacer inline x={0.25} />
-              {renderServiceDropdownCta(Object.keys(event.metadata.service_status).length, "#68BF8B")}
+              {renderServiceDropdownCta(Object.keys(event.metadata.service_status).length, getStatusColor(event.status))}
             </StatusTextContainer>
             :
-            <Text color="#68BF8B">
+            <Text color={getStatusColor(event.status)}>
               Deployed <Code>{event.metadata.image_tag}</Code>
             </Text>
           :
-          <Text color="#68BF8B">
+          <Text color={getStatusColor(event.status)}>
             Deployment successful
           </Text>;
       case "FAILED":
@@ -56,16 +53,16 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
           }
           return (
             <StatusTextContainer>
-              <Text color="#FF6060">
+              <Text color={getStatusColor(event.status)}>
                 Failed to deploy <Code>{event.metadata.image_tag}</Code> to
               </Text>
               <Spacer inline x={0.25} />
-              {renderServiceDropdownCta(failedServices, "#FF6060")}
+              {renderServiceDropdownCta(failedServices, getStatusColor(event.status))}
             </StatusTextContainer>
           );
         } else {
           return (
-            <Text color="#FF6060">
+            <Text color={getStatusColor(event.status)}>
               Deployment failed
             </Text>
           );
@@ -80,16 +77,16 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
           }
           return (
             <StatusTextContainer>
-              <Text color="#FFBF00">
+              <Text color={getStatusColor(event.status)}>
                 Canceled deploy of <Code>{event.metadata.image_tag}</Code> to
               </Text>
               <Spacer inline x={0.25} />
-              {renderServiceDropdownCta(canceledServices, "#FFBF00")}
+              {renderServiceDropdownCta(canceledServices, getStatusColor(event.status))}
             </StatusTextContainer>
           );
         } else {
           return (
-            <Text color="#FFBF00">
+            <Text color={getStatusColor(event.status)}>
               Deployment canceled
             </Text>
           );
@@ -98,64 +95,22 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
         if (event.metadata.service_status != null) {
           return (
             <StatusTextContainer>
-              <Text color="helper">
+              <Text color={getStatusColor(event.status)}>
                 Deploying <Code>{event.metadata.image_tag}</Code> to
               </Text>
               <Spacer inline x={0.25} />
-              {renderServiceDropdownCta(Object.keys(event.metadata.service_status).length)}
+              {renderServiceDropdownCta(Object.keys(event.metadata.service_status).length, getStatusColor(event.status))}
             </StatusTextContainer>
           );
         } else {
           return (
-            <Text color="helper">
+            <Text color={getStatusColor(event.status)}>
               Deploying <Code>{event.metadata.image_tag}</Code>...
             </Text>
           );
         }
     }
   };
-
-  const renderServiceStatus = () => {
-    const serviceStatus = event.metadata.service_status;
-    if (Object.keys(serviceStatus).length === 0) {
-      return (
-        <Container row>
-          <Text color="helper">No services found.</Text>
-        </Container>
-      );
-    }
-
-    return <ServiceStatusesContainer>
-      {Object.keys(serviceStatus).map((key) => {
-        return (
-          <Container key={key} row>
-            <Spacer inline x={1} />
-            <Container row>
-              <ServiceStatusContainer>
-                <Text>{key}</Text>
-              </ServiceStatusContainer>
-              <Spacer inline x={1} />
-              <ServiceStatusContainer>
-                <Icon height="12px" src={getStatusIcon(serviceStatus[key])} />
-                <Spacer inline x={0.5} />
-                <Text color="helper">{serviceStatus[key] === "PROGRESSING" ? "DEPLOYING" : serviceStatus[key]}</Text>
-              </ServiceStatusContainer>
-              <Spacer inline x={1} />
-              <ServiceStatusContainer>
-                <Link
-                  to={`/apps/${appData.app.name}/logs?version=${event.metadata.revision}&service=${key}`}
-                >
-                  <Icon height="12px" src={document} />
-                  <Spacer inline x={0.5} />
-                  Logs
-                </Link>
-              </ServiceStatusContainer>
-            </Container>
-          </Container>
-        );
-      })}
-    </ServiceStatusesContainer>
-  }
 
   const renderServiceDropdownCta = (numServices: number, color?: string) => {
     return (
@@ -223,7 +178,11 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
       </Container>
       <AnimateHeight height={serviceStatusVisible ? "auto" : 0}>
         <Spacer y={0.5} />
-        {event.metadata.service_status != null && renderServiceStatus()}
+        {event.metadata.service_status != null && <ServiceStatusDetail
+          serviceStatusMap={event.metadata.service_status}
+          appName={appData.app.name}
+          revision={event.metadata.revision}
+        />}
       </AnimateHeight>
     </StyledEventCard>
   );
@@ -239,21 +198,6 @@ const TempWrapper = styled.div`
 const Code = styled.span`
   font-family: monospace;
 `;
-
-const ServiceStatusContainer = styled.div`
-  display: flex;
-  align-items: center;  
-  width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const ServiceStatusesContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
- `;
 
 const ServiceStatusDropdownCtaContainer = styled.div`
   display: flex;

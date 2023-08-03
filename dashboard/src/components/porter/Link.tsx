@@ -80,4 +80,5 @@ const StyledLink = styled(DynamicLink) <{ hasunderline?: boolean, color?: string
   display: inline-flex;
   font-size: 13px;
   cursor: pointer;
+  align-items: center;
 `;

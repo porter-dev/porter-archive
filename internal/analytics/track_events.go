@@ -7,6 +7,7 @@ const (
 	UserCreate      SegmentEvent = "New User"
 	UserVerifyEmail SegmentEvent = "User Verified Email"
 	ProjectCreate   SegmentEvent = "New Project Event"
+	ProjectDelete   SegmentEvent = "Project Deleted"
 
 	CostConsentOpened           SegmentEvent = "Cost Consent Opened"
 	CostConsentComplete         SegmentEvent = "Cost Consent Complete"

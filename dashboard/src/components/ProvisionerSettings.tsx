@@ -394,8 +394,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     setIsReadOnly(
       props.clusterId &&
-        (currentCluster.status === "UPDATING" ||
-          currentCluster.status === "UPDATING_UNAVAILABLE")
+      (currentCluster.status === "UPDATING" ||
+        currentCluster.status === "UPDATING_UNAVAILABLE")
     );
     setClusterName(
       `${currentProject.name}-cluster-${Math.random()
@@ -446,7 +446,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
         setLoadBalancerType(
           eksValues.loadBalancer.loadBalancerType?.toString() ===
-            "LOAD_BALANCER_TYPE_ALB"
+          "LOAD_BALANCER_TYPE_ALB"
         );
         setwafV2ARN(eksValues.loadBalancer.wafv2Arn);
         setWaf2Enabled(eksValues.loadBalancer.enableWafv2);
@@ -880,11 +880,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       <Button
         // disabled={isDisabled()}
         disabled={
-          user?.email === "admin@porter.run"
+          user?.email === "admin@porter.run" || currentProject?.id === 7760 || currentProject?.id === 7257 || currentProject?.id === 7645
             ? false
             : currentCluster
-            ? true
-            : isDisabled()
+              ? true
+              : isDisabled()
         }
         onClick={createCluster}
         status={getStatus()}
@@ -905,7 +905,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
     margin-right: 7px;
     margin-left: -7px;
     transform: ${(props) =>
-      props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
   }
 `;
 

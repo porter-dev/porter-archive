@@ -119,18 +119,40 @@ func UserVerifyEmailTrack(opts *UserVerifyEmailTrackOpts) segmentTrack {
 	)
 }
 
-// ProjectCreateTrackOpts are the options for creating a track when a project is created
-type ProjectCreateTrackOpts struct {
+// ProjectCreateDeleteTrackOpts are the options for creating a track when a project is created or deleted
+type ProjectCreateDeleteTrackOpts struct {
 	*ProjectScopedTrackOpts
+
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
 }
 
 // ProjectCreateTrack returns a track for when a project is created
-func ProjectCreateTrack(opts *ProjectCreateTrackOpts) segmentTrack {
+func ProjectCreateTrack(opts *ProjectCreateDeleteTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
+
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, ProjectCreate),
+	)
+}
+
+// ProjectDeleteTrack returns a track for when a project is deleted
+func ProjectDeleteTrack(opts *ProjectCreateDeleteTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ProjectDelete),
 	)
 }
 

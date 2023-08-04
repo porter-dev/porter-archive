@@ -16,12 +16,13 @@ import ServiceStatusDetail from "./ServiceStatusDetail";
 type Props = {
   event: PorterAppDeployEvent;
   appData: any;
+  showServiceStatusDetail?: boolean;
 };
 
-const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
+const DeployEventCard: React.FC<Props> = ({ event, appData, showServiceStatusDetail = false }) => {
   const [diffModalVisible, setDiffModalVisible] = useState(false);
   const [revertModalVisible, setRevertModalVisible] = useState(false);
-  const [serviceStatusVisible, setServiceStatusVisible] = useState(false);
+  const [serviceStatusVisible, setServiceStatusVisible] = useState(showServiceStatusDetail);
 
   const renderStatusText = () => {
     switch (event.status) {

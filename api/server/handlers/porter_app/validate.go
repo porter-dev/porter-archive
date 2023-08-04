@@ -8,7 +8,7 @@ import (
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
-	"github.com/porter-dev/porter/api/server/handlers/porter_app/validation"
+	"github.com/porter-dev/porter/api/server/handlers/porter_app/conversion"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -18,9 +18,10 @@ import (
 )
 
 type ValidatePorterAppRequest struct {
-	AppName          string `json:"app_name"`
-	PorterYAMLBase64 string `json:"porter_yaml"`
-	LatestCommit     string `json:"latest_commit"`
+	DeploymentTargetID uint   `json:"deployment_target_id"`
+	AppName            string `json:"app_name"`
+	PorterYAMLBase64   string `json:"porter_yaml"`
+	LatestCommit       string `json:"latest_commit"`
 }
 
 type ValidatePorterAppHandler struct {
@@ -66,7 +67,7 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	// validate the porter yaml
-	apps, err := validation.ConvertAppsFromYaml(porterYaml)
+	apps, err := conversion.AppProtoFromYaml(porterYaml)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error extracting apps from porter yaml")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -82,9 +83,9 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	// validate the app
 	validateRequest := connect.NewRequest(&porterv1.ValidatePorterAppRequest{
-		ProjectId:   int64(project.ID),
-		ClusterId:   int64(cluster.ID),
-		Application: target,
+		ProjectId:          int64(project.ID),
+		DeploymentTargetId: int64(request.DeploymentTargetID),
+		Application:        target,
 	})
 
 	validation, err := c.Config().ClusterControlPlaneClient.ValidatePorterApp(ctx, validateRequest)

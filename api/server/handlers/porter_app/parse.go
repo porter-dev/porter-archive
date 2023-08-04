@@ -110,7 +110,7 @@ type ParseConf struct {
 	AddCustomNodeSelector bool
 }
 
-func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]interface{}, []string, error) {
+func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
 	ctx, span := telemetry.NewSpan(ctx, "parse-porter-yaml")
 	defer span.End()
 
@@ -120,14 +120,14 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 		parsedHelmValues, err := convertHelmValuesToPorterYaml(conf.FullHelmValues)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error parsing raw helm values")
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, err
 		}
 		parsed = parsedHelmValues
 	} else {
 		err := yaml.Unmarshal(conf.PorterYaml, parsed)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error parsing porter.yaml")
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 
@@ -137,18 +137,18 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 		cm, _, err := conf.SubdomainCreateOpts.k8sAgent.GetLatestVersionedConfigMap(conf.EnvGroups[i], conf.Namespace)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error getting latest versioned config map")
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, err
 		}
 
 		versionStr, ok := cm.ObjectMeta.Labels["version"]
 		if !ok {
 			err = telemetry.Error(ctx, span, nil, "error extracting version from config map")
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, err
 		}
 		versionInt, err := strconv.Atoi(versionStr)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error converting version to int")
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, err
 		}
 
 		version := uint(versionInt)
@@ -173,11 +173,10 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 
 	if parsed.Apps != nil && parsed.Services != nil {
 		err := telemetry.Error(ctx, span, nil, "'apps' and 'services' are synonymous but both were defined")
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	var services map[string]*Service
-	serviceNames := make([]string, 0)
 	if parsed.Apps != nil {
 		services = parsed.Apps
 	}
@@ -188,7 +187,6 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 
 	for serviceName := range services {
 		services[serviceName] = addLabelsToService(services[serviceName], conf.EnvironmentGroups, porter_app.LabelKey_PorterApplication)
-		serviceNames = append(serviceNames, serviceName)
 	}
 
 	application := &Application{
@@ -201,18 +199,18 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 	values, err := buildUmbrellaChartValues(ctx, application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate, conf.Namespace, conf.AddCustomNodeSelector)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error building values")
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 	convertedValues, ok := convertMap(values).(map[string]interface{})
 	if !ok {
 		err = telemetry.Error(ctx, span, nil, "error converting values")
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	umbrellaChart, err := buildUmbrellaChart(application, conf.ServerConfig, conf.ProjectID, conf.ExistingChartDependencies)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error building umbrella chart")
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// return the parsed release values for the release job chart, if they exist
@@ -222,7 +220,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate, conf.AddCustomNodeSelector)
 	}
 
-	return umbrellaChart, convertedValues, preDeployJobValues, serviceNames, nil
+	return umbrellaChart, convertedValues, preDeployJobValues, nil
 }
 
 func buildUmbrellaChartValues(
@@ -942,4 +940,50 @@ func addLabelsToService(service *Service, envGroups []string, defaultLabelKey st
 	}
 
 	return service
+}
+
+func getServiceDeploymentMetadataFromValues(values map[string]interface{}, status string) map[string]types.ServiceDeploymentMetadata {
+	serviceDeploymentMap := make(map[string]types.ServiceDeploymentMetadata)
+
+	for key := range values {
+		if key != "global" {
+			serviceName, _ := getServiceNameAndTypeFromHelmName(key)
+			externalURI := getServiceExternalURIFromServiceValues(values[key].(map[string]interface{}))
+			serviceDeploymentMap[serviceName] = types.ServiceDeploymentMetadata{
+				ExternalURI: externalURI,
+				Status:      status,
+			}
+		}
+	}
+	return serviceDeploymentMap
+}
+
+func getServiceExternalURIFromServiceValues(serviceValues map[string]interface{}) string {
+	ingressMap, err := getNestedMap(serviceValues, "ingress")
+	if err == nil {
+		enabledVal, enabledExists := ingressMap["enabled"]
+		if enabledExists {
+			enabled, eOK := enabledVal.(bool)
+			if eOK && enabled {
+				customDomVal, customDomExists := ingressMap["custom_domain"]
+				if customDomExists {
+					customDomain, cOK := customDomVal.(bool)
+					if cOK && customDomain {
+						hostsExists, hostsExistsOK := ingressMap["hosts"]
+						if hostsExistsOK {
+							if hosts, hostsOK := hostsExists.([]interface{}); hostsOK && len(hosts) == 1 {
+								return hosts[0].(string)
+							}
+						}
+					}
+				}
+
+				if porterHosts, ok := ingressMap["porter_hosts"].([]interface{}); ok && len(porterHosts) == 1 {
+					return porterHosts[0].(string)
+				}
+			}
+		}
+	}
+
+	return ""
 }

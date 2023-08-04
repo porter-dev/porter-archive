@@ -11,6 +11,7 @@ type Props = {
   target?: string;
   hasunderline?: boolean;
   color?: string;
+  hoverColor?: string;
 };
 
 const Link: React.FC<Props> = ({
@@ -20,9 +21,10 @@ const Link: React.FC<Props> = ({
   target,
   hasunderline,
   color,
+  hoverColor,
 }) => {
   return (
-    <LinkWrapper>
+    <LinkWrapper hoverColor={hoverColor} color={color}>
       {to ? (
         <StyledLink to={to} target={target} color={color}>
           {children}
@@ -61,9 +63,11 @@ const Underline = styled.div<{ color?: string }>`
   background: ${(props) => props.color ?? "#ffffff"};
 `;
 
-const LinkWrapper = styled.span`
-  position: relative;
+const StyledLink = styled(DynamicLink) <{ hasunderline?: boolean, color?: string }>`
+  color: ${(props) => props.color ?? "#ffffff"};
   display: inline-flex;
+  font-size: 13px;
+  cursor: pointer;
   align-items: center;
 `;
 
@@ -75,10 +79,21 @@ const Div = styled.span<{ color?: string }>`
   align-items: center;
 `;
 
-const StyledLink = styled(DynamicLink) <{ hasunderline?: boolean, color?: string }>`
-  color: ${(props) => props.color ?? "#ffffff"};
+const LinkWrapper = styled.span<{ hoverColor?: string, color?: string }>`
+  position: relative;
   display: inline-flex;
-  font-size: 13px;
-  cursor: pointer;
   align-items: center;
+  :hover {
+    ${StyledLink} {
+      color: ${props => props.hoverColor ?? props.color ?? "#ffffff"};
+    }
+
+    ${Div} {
+      color: ${props => props.hoverColor ?? props.color ?? "#ffffff"};
+    }
+
+    ${Underline} {
+      background-color: ${props => props.hoverColor ?? props.color ?? "#ffffff"};
+    }
+  };
 `;

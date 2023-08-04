@@ -3,6 +3,7 @@ package porter_app
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -164,7 +165,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		addCustomNodeSelector = true
 	}
 
-	chart, values, preDeployJobValues, serviceNames, err := parse(
+	chart, values, preDeployJobValues, err := parse(
 		ctx,
 		ParseConf{
 			PorterYaml:                porterYaml,
@@ -297,7 +298,8 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		_, err = createPorterAppDeployEvent(ctx, serviceNames, "PROGRESSING", porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, "PROGRESSING")
+		_, err = createPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, "PROGRESSING", porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating porter app event")
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
@@ -481,7 +483,8 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		_, err = createPorterAppDeployEvent(ctx, serviceNames, "PROGRESSING", updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, "PROGRESSING")
+		_, err = createPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, "PROGRESSING", updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating porter app event")
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
@@ -496,7 +499,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 // createPorterAppDeployEvent creates an event for use in the activity feed
 func createPorterAppDeployEvent(
 	ctx context.Context,
-	serviceNames []string,
+	serviceStatusMap map[string]types.ServiceDeploymentMetadata,
 	status string,
 	appID uint,
 	revision int,
@@ -509,11 +512,6 @@ func createPorterAppDeployEvent(
 	// mark all pending deployments from the deploy event of the previous revision as canceled
 	updatePreviousPorterAppDeployEvent(ctx, appID, revision, repo)
 
-	// create a map of service names to their status
-	serviceStatuses := make(map[string]string)
-	for _, serviceName := range serviceNames {
-		serviceStatuses[serviceName] = status
-	}
 	event := models.PorterAppEvent{
 		ID:                 uuid.New(),
 		Status:             status,
@@ -521,9 +519,9 @@ func createPorterAppDeployEvent(
 		TypeExternalSource: "KUBERNETES",
 		PorterAppID:        appID,
 		Metadata: map[string]any{
-			"revision":       revision,
-			"image_tag":      tag,
-			"service_status": serviceStatuses,
+			"revision":                    revision,
+			"image_tag":                   tag,
+			"service_deployment_metadata": serviceStatusMap,
 		},
 	}
 
@@ -563,22 +561,39 @@ func updatePreviousPorterAppDeployEvent(ctx context.Context, appID uint, revisio
 	if matchEvent.Status != "PROGRESSING" {
 		return
 	}
-	serviceStatus, ok := matchEvent.Metadata["service_status"]
+	serviceStatus, ok := matchEvent.Metadata["service_deployment_metadata"]
 	if !ok {
-		_ = telemetry.Error(ctx, span, nil, "service status not found in deploy event metadata")
+		_ = telemetry.Error(ctx, span, nil, "service deployment metadata not found in deploy event metadata")
 		return
 	}
-	serviceStatusMap, ok := serviceStatus.(map[string]interface{})
+	serviceDeploymentGenericMap, ok := serviceStatus.(map[string]interface{})
 	if !ok {
-		_ = telemetry.Error(ctx, span, nil, "service status not a map[string]interface")
+		_ = telemetry.Error(ctx, span, nil, "service deployment metadata is not map[string]interface{}")
 		return
 	}
-	for serviceName := range serviceStatusMap {
-		if serviceStatusMap[serviceName] == "PROGRESSING" {
-			serviceStatusMap[serviceName] = "CANCELED"
+	serviceDeploymentMap := make(map[string]types.ServiceDeploymentMetadata)
+	for k, v := range serviceDeploymentGenericMap {
+		by, err := json.Marshal(v)
+		if err != nil {
+			_ = telemetry.Error(ctx, span, nil, "unable to marshal")
+			return
+		}
+
+		var serviceDeploymentMetadata types.ServiceDeploymentMetadata
+		err = json.Unmarshal(by, &serviceDeploymentMetadata)
+		if err != nil {
+			_ = telemetry.Error(ctx, span, nil, "unable to unmarshal")
+			return
+		}
+		serviceDeploymentMap[k] = serviceDeploymentMetadata
+	}
+	for key, serviceDeploymentMetadata := range serviceDeploymentMap {
+		if serviceDeploymentMetadata.Status == "PROGRESSING" {
+			serviceDeploymentMetadata.Status = "CANCELED"
+			serviceDeploymentMap[key] = serviceDeploymentMetadata
 		}
 	}
-	matchEvent.Metadata["service_status"] = serviceStatusMap
+	matchEvent.Metadata["service_deployment_metadata"] = serviceDeploymentMap
 	matchEvent.Status = "CANCELED"
 	err = repo.UpdateEvent(ctx, &matchEvent)
 	if err != nil {

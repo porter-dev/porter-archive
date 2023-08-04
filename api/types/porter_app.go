@@ -119,3 +119,11 @@ type CreateOrUpdatePorterAppEventRequest struct {
 	TypeExternalSource string         `json:"type_source,omitempty"`
 	Metadata           map[string]any `json:"metadata,omitempty"`
 }
+
+// ServiceDeploymentMetadata contains information about a service when it deploys
+type ServiceDeploymentMetadata struct {
+	// Status is the status of the service deployment
+	Status string `json:"status"`
+	// ExternalURI is the external URI of a service (if it is web)
+	ExternalURI string `json:"external_uri"`
+}

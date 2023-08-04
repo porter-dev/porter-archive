@@ -27,13 +27,13 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
     switch (event.status) {
       case "SUCCESS":
         return event.metadata.image_tag != null ?
-          event.metadata.service_status != null ?
+          event.metadata.service_deployment_metadata != null ?
             <StatusTextContainer>
               <Text color={getStatusColor(event.status)}>
                 Deployed <Code>{event.metadata.image_tag}</Code> to
               </Text>
               <Spacer inline x={0.25} />
-              {renderServiceDropdownCta(Object.keys(event.metadata.service_status).length, getStatusColor(event.status))}
+              {renderServiceDropdownCta(Object.keys(event.metadata.service_deployment_metadata).length, getStatusColor(event.status))}
             </StatusTextContainer>
             :
             <Text color={getStatusColor(event.status)}>
@@ -44,10 +44,10 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
             Deployment successful
           </Text>;
       case "FAILED":
-        if (event.metadata.service_status != null) {
+        if (event.metadata.service_deployment_metadata != null) {
           let failedServices = 0;
-          for (const key in event.metadata.service_status) {
-            if (event.metadata.service_status[key] === "FAILED") {
+          for (const key in event.metadata.service_deployment_metadata) {
+            if (event.metadata.service_deployment_metadata[key].status === "FAILED") {
               failedServices++;
             }
           }
@@ -68,10 +68,10 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
           );
         }
       case "CANCELED":
-        if (event.metadata.service_status != null) {
+        if (event.metadata.service_deployment_metadata != null) {
           let canceledServices = 0;
-          for (const key in event.metadata.service_status) {
-            if (event.metadata.service_status[key] === "CANCELED") {
+          for (const key in event.metadata.service_deployment_metadata) {
+            if (event.metadata.service_deployment_metadata[key].status === "CANCELED") {
               canceledServices++;
             }
           }
@@ -92,14 +92,14 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
           );
         }
       default:
-        if (event.metadata.service_status != null) {
+        if (event.metadata.service_deployment_metadata != null) {
           return (
             <StatusTextContainer>
               <Text color={getStatusColor(event.status)}>
                 Deploying <Code>{event.metadata.image_tag}</Code> to
               </Text>
               <Spacer inline x={0.25} />
-              {renderServiceDropdownCta(Object.keys(event.metadata.service_status).length, getStatusColor(event.status))}
+              {renderServiceDropdownCta(Object.keys(event.metadata.service_deployment_metadata).length, getStatusColor(event.status))}
             </StatusTextContainer>
           );
         } else {
@@ -178,8 +178,8 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
       </Container>
       <AnimateHeight height={serviceStatusVisible ? "auto" : 0}>
         <Spacer y={0.5} />
-        {event.metadata.service_status != null && <ServiceStatusDetail
-          serviceStatusMap={event.metadata.service_status}
+        {event.metadata.service_deployment_metadata != null && <ServiceStatusDetail
+          serviceDeploymentMetadata={event.metadata.service_deployment_metadata}
           appName={appData.app.name}
           revision={event.metadata.revision}
         />}

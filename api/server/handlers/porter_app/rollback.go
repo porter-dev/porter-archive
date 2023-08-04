@@ -111,7 +111,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	chart, values, _, serviceNames, err := parse(
+	chart, values, _, err := parse(
 		ctx,
 		ParseConf{
 			ImageInfo:    imageInfo,
@@ -151,7 +151,8 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	_, err = createPorterAppDeployEvent(ctx, serviceNames, "PROGRESSING", porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+	serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, "PROGRESSING")
+	_, err = createPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, "PROGRESSING", porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error creating porter app event")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

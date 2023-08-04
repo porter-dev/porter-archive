@@ -5,48 +5,79 @@ import React from 'react'
 import styled from 'styled-components';
 import { getStatusColor, getStatusIcon } from '../utils';
 import Link from 'components/porter/Link';
-import globe from "assets/globe.svg";
+import { PorterAppDeployEvent } from "../types";
+import { Service } from 'main/home/app-dashboard/new-app-flow/serviceTypes';
 
 type Props = {
-    serviceStatusMap: Record<string, string>;
+    serviceDeploymentMetadata: PorterAppDeployEvent["metadata"]["service_deployment_metadata"];
     appName: string;
     revision: number;
 }
 
 const ServiceStatusDetail: React.FC<Props> = ({
-    serviceStatusMap,
+    serviceDeploymentMetadata,
     appName,
     revision,
 }) => {
+    const convertEventStatusToCopy = (status: string) => {
+        switch (status) {
+            case "PROGRESSING":
+                return "DEPLOYING";
+            case "SUCCESS":
+                return "DEPLOYED";
+            case "FAILED":
+                return "FAILED";
+            case "CANCELED":
+                return "CANCELED";
+            default:
+                return "UNKNOWN";
+        }
+    };
+
     return (
         <ServiceStatusTable>
             <tbody>
-                {Object.keys(serviceStatusMap).map((key) => {
+                {Object.keys(serviceDeploymentMetadata).map((key) => {
+                    const deploymentMetadata = serviceDeploymentMetadata[key];
                     return (
                         <ServiceStatusTableRow key={key}>
-                            <ServiceStatusTableData width={"50px"}>
-                                <Icon height="12px" src={globe} />
-                            </ServiceStatusTableData>
                             <ServiceStatusTableData width={"100px"}>
                                 <Text>{key}</Text>
                             </ServiceStatusTableData>
-                            <ServiceStatusTableData width={"100px"}>
-                                <Icon height="12px" src={getStatusIcon(serviceStatusMap[key])} />
+                            <ServiceStatusTableData width={"120px"}>
+                                <Icon height="12px" src={getStatusIcon(deploymentMetadata.status)} />
                                 <Spacer inline x={0.5} />
-                                <Text color={getStatusColor(serviceStatusMap[key])}>{serviceStatusMap[key] === "PROGRESSING" ? "DEPLOYING" : serviceStatusMap[key]}</Text>
+                                <Text color={getStatusColor(deploymentMetadata.status)}>{convertEventStatusToCopy(serviceDeploymentMetadata[key].status)}</Text>
                             </ServiceStatusTableData>
                             <ServiceStatusTableData>
-                                <ServiceLink
+                                <Link
                                     to={`/apps/${appName}/logs?version=${revision}&service=${key}`}
+                                    hasunderline
+                                    hoverColor="#949eff"
                                 >
-                                    [Logs]
-                                </ServiceLink>
+                                    Logs
+                                </Link>
                                 <Spacer inline x={0.5} />
-                                <ServiceLink
+                                <Link
                                     to={`/apps/${appName}/logs?version=${revision}&service=${key}`}
+                                    hasunderline
+                                    hoverColor="#949eff"
                                 >
-                                    [Metrics]
-                                </ServiceLink>
+                                    Metrics
+                                </Link>
+                                {deploymentMetadata.external_uri !== "" &&
+                                    <>
+                                        <Spacer inline x={0.5} />
+                                        <Link
+                                            to={Service.prefixSubdomain(deploymentMetadata.external_uri)}
+                                            hasunderline
+                                            hoverColor="#949eff"
+                                            target={"_blank"}
+                                        >
+                                            External Link
+                                        </Link>
+                                    </>
+                                }
                             </ServiceStatusTableData>
                         </ServiceStatusTableRow>
                     );
@@ -65,7 +96,7 @@ const ServiceStatusTable = styled.table`
 
 const ServiceStatusTableRow = styled.tr`
   display: flex;
-  align-items: center;
+  align-items: center;  
 `;
 
 const ServiceStatusTableData = styled.td`
@@ -73,11 +104,8 @@ const ServiceStatusTableData = styled.td`
   display: flex;
   align-items: center;
   ${(props) => props.width && `width: ${props.width};`}
-  border-right: 2px solid #ffffff11;
-`;
 
-const ServiceLink = styled(Link)`
-  :hover {
-    color: #8590ff;  
+  &:not(:last-child) {
+    border-right: 2px solid #ffffff11;
   }
 `;

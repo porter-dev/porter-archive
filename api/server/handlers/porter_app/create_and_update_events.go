@@ -2,6 +2,7 @@ package porter_app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -162,7 +163,7 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 	if eventType == string(types.PorterAppEventType_Deploy) {
 		// Agent has no way to know what the porter app event id is, so update the deploy event if it exists
 		if _, ok := requestMetadata["deploy_status"]; ok {
-			return p.maybeUpdateDeployEvent(ctx, porterAppName, app.ID, requestMetadata), nil
+			return p.updateDeployEvent(ctx, porterAppName, app.ID, requestMetadata), nil
 		}
 	}
 
@@ -237,7 +238,10 @@ func (p *CreateUpdatePorterAppEventHandler) updateExistingAppEvent(ctx context.C
 	return existingAppEvent.ToPorterAppEvent(), nil
 }
 
-func (p *CreateUpdatePorterAppEventHandler) maybeUpdateDeployEvent(ctx context.Context, appName string, appID uint, requestMetadata map[string]any) types.PorterAppEvent {
+// updateDeployEvent attempts to update the deploy event with the deploy status of each service
+// if the deploy event is not found, or the update metadata is misformatted, then an empty event is returned
+// if an event match was found and updated, then it is returned
+func (p *CreateUpdatePorterAppEventHandler) updateDeployEvent(ctx context.Context, appName string, appID uint, requestMetadata map[string]any) types.PorterAppEvent {
 	ctx, span := telemetry.NewSpan(ctx, "update-deploy-event")
 	defer span.End()
 
@@ -297,34 +301,58 @@ func (p *CreateUpdatePorterAppEventHandler) maybeUpdateDeployEvent(ctx context.C
 		return types.PorterAppEvent{}
 	}
 
-	serviceStatus, ok := matchEvent.Metadata["service_status"]
+	serviceStatus, ok := matchEvent.Metadata["service_deployment_metadata"]
 	if !ok {
-		_ = telemetry.Error(ctx, span, nil, "service status not found in deploy event metadata")
+		_ = telemetry.Error(ctx, span, nil, "service deployment metadata not found in deploy event metadata")
 		return types.PorterAppEvent{}
 	}
-	serviceStatusMap, ok := serviceStatus.(map[string]interface{})
+	serviceDeploymentGenericMap, ok := serviceStatus.(map[string]interface{})
 	if !ok {
-		_ = telemetry.Error(ctx, span, nil, "service status not a map[string]interface")
+		_ = telemetry.Error(ctx, span, nil, "service deployment metadata is not map[string]interface{}")
 		return types.PorterAppEvent{}
 	}
-	if _, ok := serviceStatusMap[serviceName]; !ok {
-		_ = telemetry.Error(ctx, span, nil, fmt.Sprintf("service status not found for service %s", serviceName))
+	serviceDeploymentMap := make(map[string]types.ServiceDeploymentMetadata)
+	for k, v := range serviceDeploymentGenericMap {
+		by, err := json.Marshal(v)
+		if err != nil {
+			_ = telemetry.Error(ctx, span, nil, "unable to marshal")
+			return types.PorterAppEvent{}
+		}
+
+		var serviceDeploymentMetadata types.ServiceDeploymentMetadata
+		err = json.Unmarshal(by, &serviceDeploymentMetadata)
+		if err != nil {
+			_ = telemetry.Error(ctx, span, nil, "unable to unmarshal")
+			return types.PorterAppEvent{}
+		}
+		serviceDeploymentMap[k] = serviceDeploymentMetadata
+	}
+	serviceDeploymentMetadata, ok := serviceDeploymentMap[serviceName]
+	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "deployment metadata not found for service")
 		return types.PorterAppEvent{}
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "existing-status", Value: serviceStatusMap[serviceName]})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "existing-status", Value: serviceDeploymentMetadata.Status})
+
 	// only update service status if it has not been updated yet
-	if serviceStatusMap[serviceName] == "PROGRESSING" {
-		serviceStatusMap[serviceName] = newStatusStr
+	if serviceDeploymentMetadata.Status == "PROGRESSING" {
+		// update the map with the new status
+		serviceDeploymentMetadata.Status = newStatusStr
+		serviceDeploymentMap[serviceName] = serviceDeploymentMetadata
 
+		// update the deploy event with new map and status if all services are done
+		// note: this assumes that all services are reported 'done' sequentially
+		// if two service statuses are updated at the same time, we might miss updating the parent deploy event
+		matchEvent.Metadata["service_deployment_metadata"] = serviceDeploymentMap
 		allServicesDone := true
 		anyServicesFailed := false
-		for _, status := range serviceStatusMap {
-			if status == "PROGRESSING" {
+		for _, deploymentMetadata := range serviceDeploymentMap {
+			if deploymentMetadata.Status == "PROGRESSING" {
 				allServicesDone = false
 				break
 			}
-			if status == "FAILED" {
+			if deploymentMetadata.Status == "FAILED" {
 				anyServicesFailed = true
 			}
 		}
@@ -336,7 +364,6 @@ func (p *CreateUpdatePorterAppEventHandler) maybeUpdateDeployEvent(ctx context.C
 			}
 		}
 
-		matchEvent.Metadata["service_status"] = serviceStatusMap
 		err = p.Repo().PorterAppEvent().UpdateEvent(ctx, &matchEvent)
 		if err != nil {
 			_ = telemetry.Error(ctx, span, err, "error updating deploy event")

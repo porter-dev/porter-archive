@@ -180,7 +180,6 @@ func castServiceConfig(service *Service, serviceType porterv1.ServiceType) (*por
 		validSevice.Config = &porterv1.Service_WorkerConfig{
 			WorkerConfig: workerConfig,
 		}
-
 	case porterv1.ServiceType_SERVICE_TYPE_JOB:
 		jobConfig := &porterv1.JobServiceConfig{}
 		err := helpers.UnmarshalContractObject(configBytes, jobConfig)

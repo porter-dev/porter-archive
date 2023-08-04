@@ -26,6 +26,19 @@ type Props = {
 };
 
 const HIDDEN_CHARTS = ["porter-agent", "loki"];
+// const ALLOW_LIST = [
+
+//   "metabase",
+//   "mongodb",
+//   "mysql",
+//   "redis",
+//   "tailscale-relay",
+
+//   "mezmo",
+//   "agent",
+//   "datadog"];
+const DATA_STORES = ["elasticsearch", "mongodb", "postgresql", "mysql", "redis"];
+const APPS = ["agent", "datadog", "tailscale-relay", "metabase",];
 
 const NewAddOnFlow: React.FC<Props> = ({
 }) => {
@@ -75,6 +88,9 @@ const NewAddOnFlow: React.FC<Props> = ({
       sortedVersionData.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
       sortedVersionData = sortedVersionData.filter(
         (template: any) => !HIDDEN_CHARTS.includes(template?.name)
+      );
+      sortedVersionData = sortedVersionData.filter(
+        (template: any) => DATA_STORES.includes(template?.name) || APPS.includes(template?.name)
       );
       setAddOnTemplates(sortedVersionData);
     } catch (error) {

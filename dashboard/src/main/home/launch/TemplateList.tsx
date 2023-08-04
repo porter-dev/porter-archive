@@ -11,7 +11,7 @@ import semver from "semver";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
-
+import fire from "assets/fire.svg"
 type Props = {
   helm_repo_id?: number;
   templates?: PorterTemplate[];
@@ -139,6 +139,7 @@ const TemplateList: React.FC<Props> = ({
             key={name}
             onClick={() => setCurrentTemplate(template)}
           >
+            <FireIcon src={fire} size="15px" top="10px" right="10px" />
             {renderIcon(icon, template.name)}
             <TemplateTitle>{name}</TemplateTitle>
             <TemplateDescription>{description}</TemplateDescription>
@@ -150,6 +151,28 @@ const TemplateList: React.FC<Props> = ({
 };
 
 export default TemplateList;
+
+const FireIcon = styled.img<{ size?: string, top?: string, right?: string }>`
+  height: ${props => props.size || '25px'};
+  position: absolute;
+  top: ${props => props.top || 'auto'};
+  right: ${props => props.right || 'auto'};
+  
+  &:hover::after {
+    content: "Popular";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    color: black;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+  }
+`;
 
 const Placeholder = styled.div`
   padding-top: 200px;

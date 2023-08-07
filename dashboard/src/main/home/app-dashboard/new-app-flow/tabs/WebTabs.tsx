@@ -360,7 +360,7 @@ const WebTabs: React.FC<Props> = ({
           setValue={(e) => {
             editService({ ...service, ram: { readOnly: false, value: e * 1024 } });
           }}
-          disabled={true}
+          disabled={service.ram.readOnly}
           step={0.01}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />

@@ -925,7 +925,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   { label: "Overview", value: "overview" },
                   hasBuiltImage && { label: "Logs", value: "logs" },
                   hasBuiltImage && { label: "Metrics", value: "metrics" },
-                  { label: "Debug", value: "debug" },
+                  hasBuiltImage && { label: "Debug", value: "debug" },
                   {
                     label: "Environment",
                     value: "environment",

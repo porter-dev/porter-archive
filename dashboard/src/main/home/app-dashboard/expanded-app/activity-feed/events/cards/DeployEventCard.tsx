@@ -177,14 +177,16 @@ const DeployEventCard: React.FC<Props> = ({ event, appData, showServiceStatusDet
           </TempWrapper>
         </Container>
       </Container>
-      <AnimateHeight height={serviceStatusVisible ? "auto" : 0}>
-        <Spacer y={0.5} />
-        {event.metadata.service_deployment_metadata != null && <ServiceStatusDetail
-          serviceDeploymentMetadata={event.metadata.service_deployment_metadata}
-          appName={appData.app.name}
-          revision={event.metadata.revision}
-        />}
-      </AnimateHeight>
+      {event.metadata.service_deployment_metadata != null &&
+        <AnimateHeight height={serviceStatusVisible ? "auto" : 0}>
+          <Spacer y={0.5} />
+          <ServiceStatusDetail
+            serviceDeploymentMetadata={event.metadata.service_deployment_metadata}
+            appName={appData.app.name}
+            revision={event.metadata.revision}
+          />
+        </AnimateHeight>
+      }
     </StyledEventCard>
   );
 };

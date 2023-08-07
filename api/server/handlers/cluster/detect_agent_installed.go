@@ -40,8 +40,7 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	depl, err := agent.GetPorterAgent()
-
+	_, err = agent.GetPorterAgent()
 	if targetErr := kubernetes.IsNotFoundError; err != nil && errors.Is(err, targetErr) {
 		http.NotFound(w, r)
 		return
@@ -50,12 +49,7 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// detect the version of the agent which is installed
-	res := &types.DetectAgentResponse{
-		Version:       getAgentVersionFromDeployment(depl),
-		ShouldUpgrade: false,
-		Image:         getImageFromDeployment(depl),
-	}
+	res := GetAgentVersion(agent)
 
 	if res.Version != "v3" {
 		res.ShouldUpgrade = true
@@ -64,6 +58,19 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	res.Version = "v" + strings.TrimPrefix(res.Version, "v")
 
 	c.WriteResult(w, r, res)
+}
+
+func GetAgentVersion(agent *kubernetes.Agent) *types.DetectAgentResponse {
+	depl, err := agent.GetPorterAgent()
+	if err != nil {
+		return nil
+	}
+
+	return &types.DetectAgentResponse{
+		Version:       getAgentVersionFromDeployment(depl),
+		ShouldUpgrade: false,
+		Image:         getImageFromDeployment(depl),
+	}
 }
 
 func getAgentVersionFromDeployment(depl *v1.Deployment) string {

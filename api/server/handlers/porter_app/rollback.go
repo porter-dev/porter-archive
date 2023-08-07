@@ -38,6 +38,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-rollback-porter-app")
 	defer span.End()
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
 
 	request := &types.RollbackPorterAppRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -151,8 +152,14 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, "PROGRESSING")
-	_, err = createPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, "PROGRESSING", porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+	// Only create the PROGRESSING event if the cluster's agent is updated, because only the updated agent can update the status
+	// TODO: remove dependence on porter email once we are ready to release this feature
+	if isPorterAgentUpdated(k8sAgent, 3, 1, 6) && strings.HasSuffix(user.Email, "porter.run") {
+		serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, "PROGRESSING")
+		_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, "PROGRESSING", porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+	} else {
+		_, err = createOldPorterAppDeployEvent(ctx, "SUCCESS", porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+	}
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error creating porter app event")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

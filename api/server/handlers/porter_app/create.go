@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -48,6 +50,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
 
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-porter-app")
 	defer span.End()
@@ -298,8 +301,14 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, "PROGRESSING")
-		_, err = createPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, "PROGRESSING", porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		// Only create the PROGRESSING event if the cluster's agent is updated, because only the updated agent can update the status
+		// TODO: remove dependence on porter email once we are ready to release this feature
+		if isPorterAgentUpdated(k8sAgent, 3, 1, 6) && strings.HasSuffix(user.Email, "porter.run") {
+			serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, "PROGRESSING")
+			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, "PROGRESSING", porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		} else {
+			_, err = createOldPorterAppDeployEvent(ctx, "SUCCESS", porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		}
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating porter app event")
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
@@ -483,8 +492,14 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, "PROGRESSING")
-		_, err = createPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, "PROGRESSING", updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		// Only create the PROGRESSING event if the cluster's agent is updated, because only the updated agent can update the status
+		// TODO: remove dependence on porter email once we are ready to release this feature
+		if isPorterAgentUpdated(k8sAgent, 3, 1, 6) && strings.HasSuffix(user.Email, "porter.run") {
+			serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, "PROGRESSING")
+			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, "PROGRESSING", updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		} else {
+			_, err = createOldPorterAppDeployEvent(ctx, "SUCCESS", updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		}
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating porter app event")
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
@@ -496,8 +511,39 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// createPorterAppDeployEvent creates an event for use in the activity feed
-func createPorterAppDeployEvent(
+// createOldPorterAppDeployEvent creates an event for use in the activity feed
+// TODO: remove this method and all call-sites if this span no longer exists in telemetry for 4 consecutive weeks
+func createOldPorterAppDeployEvent(ctx context.Context, status string, appID uint, revision int, tag string, repo repository.PorterAppEventRepository) (*models.PorterAppEvent, error) {
+	ctx, span := telemetry.NewSpan(ctx, "create-old-porter-app-deploy-event")
+	defer span.End()
+
+	event := models.PorterAppEvent{
+		ID:                 uuid.New(),
+		Status:             status,
+		Type:               "DEPLOY",
+		TypeExternalSource: "KUBERNETES",
+		PorterAppID:        appID,
+		Metadata: map[string]any{
+			"revision":  revision,
+			"image_tag": tag,
+		},
+	}
+
+	err := repo.CreateEvent(ctx, &event)
+	if err != nil {
+		return nil, err
+	}
+
+	if event.ID == uuid.Nil {
+		return nil, err
+	}
+
+	return &event, nil
+}
+
+// createNewPorterAppDeployEvent creates an event for use in the activity feed, supplemented with information about the
+// deployed services in serviceStatusMap as well as the image tag being deployed
+func createNewPorterAppDeployEvent(
 	ctx context.Context,
 	serviceStatusMap map[string]types.ServiceDeploymentMetadata,
 	status string,
@@ -506,7 +552,7 @@ func createPorterAppDeployEvent(
 	tag string,
 	repo repository.PorterAppEventRepository,
 ) (*models.PorterAppEvent, error) {
-	ctx, span := telemetry.NewSpan(ctx, "create-porter-app-deploy-event")
+	ctx, span := telemetry.NewSpan(ctx, "create-new-porter-app-deploy-event")
 	defer span.End()
 
 	// mark all pending deployments from the deploy event of the previous revision as canceled
@@ -689,4 +735,38 @@ func cloneEnvGroup(c *CreatePorterAppHandler, w http.ResponseWriter, r *http.Req
 			return
 		}
 	}
+}
+
+func isPorterAgentUpdated(agent *kubernetes.Agent, major, minor, patch int) bool {
+	res := cluster.GetAgentVersion(agent)
+	image := res.Image
+	parsed := strings.Split(image, ":")
+
+	if len(parsed) != 2 {
+		return false
+	}
+
+	tag := parsed[1]
+	if tag == "dev" {
+		return true
+	}
+
+	parsedTag := strings.Split(tag, ".")
+	if len(parsedTag) != 3 {
+		return false
+	}
+
+	parsedMajor, _ := strconv.Atoi(parsedTag[0])
+	parsedMinor, _ := strconv.Atoi(parsedTag[1])
+	parsedPatch, _ := strconv.Atoi(parsedTag[2])
+	if parsedMajor < major {
+		return false
+	}
+	if parsedMinor < minor {
+		return false
+	}
+	if parsedPatch < patch {
+		return false
+	}
+	return true
 }

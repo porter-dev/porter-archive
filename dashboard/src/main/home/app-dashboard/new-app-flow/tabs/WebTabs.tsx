@@ -31,12 +31,13 @@ const WebTabs: React.FC<Props> = ({
   editService,
   setHeight,
 }) => {
+  const UPPER_BOUND = .75;
   const [currentTab, setCurrentTab] = React.useState<string>("main");
   const { currentCluster } = useContext(Context);
   const context = useContext(Context);
   const [nodeList, setNodeList] = useState([]);
-  const [maxCPU, setMaxCPU] = useState(2); //default is set to a t3 medium 
-  const [maxRAM, setMaxRAM] = useState(4); //default is set to a t3 medium
+  const [maxCPU, setMaxCPU] = useState(2 * UPPER_BOUND); //default is set to a t3 medium 
+  const [maxRAM, setMaxRAM] = useState(4 * UPPER_BOUND); //default is set to a t3 medium
 
   const awsInstanceLimits: any = {
 
@@ -112,10 +113,9 @@ const WebTabs: React.FC<Props> = ({
               }
             });
 
-            setMaxCPU(largestInstanceType.vCPUs);
-            setMaxRAM(largestInstanceType.RAM);
+            setMaxCPU(largestInstanceType.vCPUs * UPPER_BOUND);
+            setMaxRAM(largestInstanceType.RAM * UPPER_BOUND);
 
-            console.log(data);
           }
         }
       })

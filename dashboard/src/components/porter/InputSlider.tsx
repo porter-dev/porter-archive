@@ -1,9 +1,10 @@
 import React from 'react';
-import Slider from '@material-ui/core/Slider';
+import Slider, { Mark } from '@material-ui/core/Slider';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import styled from 'styled-components';
 import { withStyles } from '@material-ui/core/styles';
+import Container from './Container';
 
 
 type InputSliderProps = {
@@ -48,6 +49,13 @@ const InputSlider: React.FC<InputSliderProps> = ({
   width,
 
 }) => {
+  const marks: Mark[] = [
+
+    {
+      value: max,
+      label: max.toString(),
+    },
+  ];
 
   return (
     <SliderContainer width={width}>
@@ -68,6 +76,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
               setValue(newValue as number);
             }}
             disabled={disabled}
+            marks={marks}
             step={step ? step : 1}
             style={{
               color: disabled ? "gray" : color,
@@ -88,7 +97,8 @@ const InputSlider: React.FC<InputSliderProps> = ({
           )}
         </div>
       </DisabledTooltip>
-    </SliderContainer>
+
+    </SliderContainer >
   );
 };
 
@@ -97,7 +107,7 @@ export default InputSlider;
 
 const SliderContainer = styled.div<{ width?: string }>`
   width: ${({ width }) => width || '600px'};
-  margin: 10px 0;
+  margin: 1px 0;
 `;
 
 const Label = styled.div<{ color?: string }>`
@@ -138,6 +148,27 @@ const DisabledTooltip = withStyles(theme => ({
 const StyledSlider = withStyles({
   root: {
     height: '8px', // Adjust the height here
+  },
+  mark: {
+    backgroundColor: '#fff',  // mark color
+    height: 4, // size of the mark
+    width: 1, // size of the mark
+    borderRadius: '50%', // to make the mark circular
+    marginTop: 6,
+    marginLeft: -1,
+  },
+  markActive: {
+    backgroundColor: '#fff',  // mark color when active
+  },
+  markLabel: {
+    color: '#6e717d',
+    fontSize: '12px',
+    marginRight: 5,
+
+  },
+  markLabelActive: {
+    color: '#6e717d',
+    marginRight: 5,
   },
   thumb: {
     height: 16, // Size of the thumb

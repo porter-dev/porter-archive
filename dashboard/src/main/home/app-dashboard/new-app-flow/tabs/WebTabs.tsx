@@ -17,6 +17,7 @@ interface Props {
   service: WebService;
   editService: (service: WebService) => void;
   setHeight: (height: Height) => void;
+  chart?: any;
 }
 
 
@@ -30,6 +31,7 @@ const WebTabs: React.FC<Props> = ({
   service,
   editService,
   setHeight,
+  chart,
 }) => {
   const UPPER_BOUND = .75;
   const [currentTab, setCurrentTab] = React.useState<string>("main");
@@ -42,47 +44,88 @@ const WebTabs: React.FC<Props> = ({
 
   useEffect(() => {
     const { currentCluster, currentProject } = context;
-    api
-      .getClusterNodes(
-        "<token>",
-        {},
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-        }
-      )
-      .then(({ data }) => {
-        if (data) {
-          setNodeList(data);
 
-          data.forEach(node => {
-            if (node.labels['porter.run/workload-kind']) {
-              const instanceType = node.labels['beta.kubernetes.io/instance-type'];
-              api
-                .getInstanceDetails(
-                  "<token>",
-                  {
-                    instanceType: instanceType,
-                  },
-                  {
-                    cluster_id: currentCluster.id,
-                    project_id: currentProject.id,
-                  }
-                )
-                .then(({ data }) => {
-                  setMaxCPU(data?.Msg?.vcpu * UPPER_BOUND);
-                  setMaxRAM((data?.Msg?.ram / 1024) * UPPER_BOUND);
-                }).catch(() => {
-                  setError(error)
-                });
-            }
-          })
-        }
-      })
-      .catch(() => {
-        console.log({ error: true });
-      })
+    if (!currentCluster || !currentProject) {
+      return;
+    }
+
+    const serviceName = service?.name;
+    var instanceType = ""
+    if (chart?.config?.[serviceName + "-web"].nodeSelector?.["beta.kubernetes.io/instance-type"]) {
+      instanceType = chart?.config?.[serviceName + "-web"].nodeSelector?.["beta.kubernetes.io/instance-type"]
+    }
+
+    if (instanceType == "") {
+      api
+        .getClusterNodes(
+          "<token>",
+          {},
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+          }
+        )
+        .then(({ data }) => {
+          if (data) {
+            setNodeList(data);
+
+            data.forEach(node => {
+              if (node.labels['porter.run/workload-kind']) {
+                instanceType = node.labels['beta.kubernetes.io/instance-type']
+              }
+            });
+
+            // Call the second api function here
+            api
+              .getInstanceDetails(
+                "<token>",
+                {
+                  instanceType: instanceType,
+                },
+                {
+                  cluster_id: currentCluster.id,
+                  project_id: currentProject.id,
+                }
+              )
+              .then(({ data }) => {
+                const cpu = data?.Msg?.vcpu || 2;
+                const ram = data?.Msg?.ram || 4 * 1024;
+                setMaxCPU(cpu * UPPER_BOUND);
+                setMaxRAM((ram / 1024) * UPPER_BOUND);
+              }).catch((error) => {
+                setError(error)
+              });
+
+          }
+        })
+        .catch((error) => {
+          setError(error)
+        })
+    } else {
+      api
+        .getInstanceDetails(
+          "<token>",
+          {
+            instanceType: instanceType,
+          },
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+          }
+        )
+        .then(({ data }) => {
+          const cpu = data?.Msg?.vcpu || 2;
+          const ram = data?.Msg?.ram || 4 * 1024;
+          setMaxCPU(cpu * UPPER_BOUND);
+          setMaxRAM((ram / 1024) * UPPER_BOUND);
+        }).catch((error) => {
+          setError(error)
+        });
+
+    }
+
   }, []);
+
 
   const renderMain = () => {
     setHeight(159);

@@ -41,6 +41,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             service={service}
             editService={editService}
             setHeight={setHeight}
+            chart={chart}
           />
         );
       case "worker":

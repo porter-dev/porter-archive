@@ -11,6 +11,7 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
+	"github.com/porter-dev/porter/internal/models"
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
 	"gopkg.in/yaml.v3"
@@ -175,6 +176,15 @@ func createStackConf(client *api.Client, app *Application, stackName string, pro
 	if releaseEnvVars != nil {
 		color.New(color.FgYellow).Printf("Reading build env from release\n")
 		app.Env = mergeStringMaps(app.Env, releaseEnvVars)
+	}
+
+	ctx := context.Background()
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
+	agent, err := c.GetAgent(r, cluster, "")
+	if err != nil {
+		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
+		return nil, fmt.Errorf("%s: %w", errMsg, err)
 	}
 
 	return &StackConf{

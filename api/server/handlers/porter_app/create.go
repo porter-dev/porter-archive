@@ -586,6 +586,8 @@ func createNewPorterAppDeployEvent(
 	return &event, nil
 }
 
+// updatePreviousPorterAppDeployEvent updates the previous deploy event to change the event status as well as all service statuses to CANCELED
+// if it is still in the PROGRESSING state. This is done to prevent the activity feed from showing an old deploy event as still in progress.
 func updatePreviousPorterAppDeployEvent(ctx context.Context, appID uint, revision int, repo repository.PorterAppEventRepository) {
 	ctx, span := telemetry.NewSpan(ctx, "update-previous-porter-app-deploy-event")
 	defer span.End()
@@ -737,8 +739,9 @@ func cloneEnvGroup(c *CreatePorterAppHandler, w http.ResponseWriter, r *http.Req
 	}
 }
 
+// isPorterAgentUpdated checks if the agent version is at least the version specified by the major, minor, and patch arguments
 func isPorterAgentUpdated(agent *kubernetes.Agent, major, minor, patch int) bool {
-	res := cluster.GetAgentVersion(agent)
+	res := cluster.GetAgentVersionResponse(agent)
 	image := res.Image
 	parsed := strings.Split(image, ":")
 

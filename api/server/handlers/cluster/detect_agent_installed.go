@@ -49,7 +49,7 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	res := GetAgentVersion(agent)
+	res := GetAgentVersionResponse(agent)
 
 	if res.Version != "v3" {
 		res.ShouldUpgrade = true
@@ -60,7 +60,7 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	c.WriteResult(w, r, res)
 }
 
-func GetAgentVersion(agent *kubernetes.Agent) *types.DetectAgentResponse {
+func GetAgentVersionResponse(agent *kubernetes.Agent) *types.DetectAgentResponse {
 	depl, err := agent.GetPorterAgent()
 	if err != nil {
 		return nil

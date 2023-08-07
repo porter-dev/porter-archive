@@ -46,7 +46,7 @@ const AWSCostConsent: React.FC<Props> = ({
           noWrapper
           expandText="[+] Show details"
           collapseText="[-] Hide details"
-          Header={<Cost>$315.94 / mo</Cost>}
+          Header={<Cost>$224.58 / mo</Cost>}
           ExpandedSection={
             <>
               <Spacer height="15px" />
@@ -59,15 +59,15 @@ const AWSCostConsent: React.FC<Props> = ({
                 <Spacer height="15px" />
                 <Tab />+ Monitoring workloads: t3.large instance (1) = $60.74/mo
                 <Spacer height="15px" />
-                <Tab />+ Application workloads: t3.xlarge instance (1) =
-                $121.47/mo
+                <Tab />+ Application workloads: t3.medium instance (1) =
+                $30.1/mo
               </Fieldset>
             </>
           }
         />
         <Spacer y={1} />
         <Text color="helper">
-          The base AWS infrastructure covers up to 4 vCPU and 16GB of RAM.
+          The base AWS infrastructure covers up to 2 vCPU and 4GB of RAM.
           Separate from the AWS cost, Porter charges based on your resource
           usage.
         </Text>
@@ -93,12 +93,12 @@ const AWSCostConsent: React.FC<Props> = ({
         <Spacer y={0.5} />
         <Text color="helper">
           All AWS resources will be automatically deleted when you delete your
-          Porter project. Please enter the AWS base cost ("315.94") below to
+          Porter project. Please enter the AWS base cost ("224.58") below to
           proceed:
         </Text>
         <Spacer y={1} />
         <Input
-          placeholder="315.94"
+          placeholder="224.58"
           value={confirmCost}
           setValue={setConfirmCost}
           width="100%"
@@ -106,7 +106,7 @@ const AWSCostConsent: React.FC<Props> = ({
         />
         <Spacer y={1} />
         <Button
-          disabled={confirmCost !== "315.94"}
+          disabled={confirmCost !== "224.58"}
           onClick={() => {
             setShowCostConfirmModal(false);
             setConfirmCost("");

@@ -741,7 +741,10 @@ func cloneEnvGroup(c *CreatePorterAppHandler, w http.ResponseWriter, r *http.Req
 
 // isPorterAgentUpdated checks if the agent version is at least the version specified by the major, minor, and patch arguments
 func isPorterAgentUpdated(agent *kubernetes.Agent, major, minor, patch int) bool {
-	res := cluster.GetAgentVersionResponse(agent)
+	res, err := cluster.GetAgentVersionResponse(agent)
+	if err != nil {
+		return false
+	}
 	image := res.Image
 	parsed := strings.Split(image, ":")
 

@@ -1,5 +1,5 @@
 import Input from "components/porter/Input";
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
@@ -10,6 +10,8 @@ import { Context } from "shared/Context";
 import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, RESOURCE_HEIGHT_WITHOUT_AUTOSCALING, RESOURCE_HEIGHT_WITH_AUTOSCALING } from "./utils";
 import IngressCustomAnnotations from "./IngressCustomAnnotations";
 import CustomDomains from "./CustomDomains";
+import InputSlider from "components/porter/InputSlider";
+import api from "shared/api";
 
 interface Props {
   service: WebService;
@@ -31,6 +33,96 @@ const WebTabs: React.FC<Props> = ({
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>("main");
   const { currentCluster } = useContext(Context);
+  const context = useContext(Context);
+  const [nodeList, setNodeList] = useState([]);
+  const [maxCPU, setMaxCPU] = useState(2); //default is set to a t3 medium 
+  const [maxRAM, setMaxRAM] = useState(4); //default is set to a t3 medium
+
+  const awsInstanceLimits: any = {
+
+    "t3a": {
+      "nano": { "vCPU": 2, "Mem (GiB)": 0.5 },
+      "micro": { "vCPU": 2, "Mem (GiB)": 1 },
+      "small": { "vCPU": 2, "Mem (GiB)": 2 },
+      "medium": { "vCPU": 2, "Mem (GiB)": 4 },
+      "large": { "vCPU": 2, "Mem (GiB)": 8 },
+      "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
+      "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 }
+    },
+    "t3": {
+      "nano": { "vCPU": 2, "Mem (GiB)": 0.5 },
+      "micro": { "vCPU": 2, "Mem (GiB)": 1 },
+      "small": { "vCPU": 2, "Mem (GiB)": 2 },
+      "medium": { "vCPU": 2, "Mem (GiB)": 4 },
+      "large": { "vCPU": 2, "Mem (GiB)": 8 },
+      "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
+      "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 }
+    },
+    "t2": {
+      "nano": { "vCPU": 1, "Mem (GiB)": 0.5 },
+      "micro": { "vCPU": 1, "Mem (GiB)": 1 },
+      "small": { "vCPU": 1, "Mem (GiB)": 2 },
+      "medium": { "vCPU": 2, "Mem (GiB)": 4 },
+      "large": { "vCPU": 2, "Mem (GiB)": 8 },
+      "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
+      "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 }
+    },
+    "c6i": {
+      "large": { "vCPU": 2, "Mem (GiB)": 4 },
+      "xlarge": { "vCPU": 4, "Mem (GiB)": 8 },
+      "2xlarge": { "vCPU": 8, "Mem (GiB)": 16 },
+      "4xlarge": { "vCPU": 16, "Mem (GiB)": 32 },
+      "8xlarge": { "vCPU": 32, "Mem (GiB)": 64 },
+    },
+    "g4dn": {
+      "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
+      "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 },
+      "4xlarge": { "vCPU": 16, "Mem (GiB)": 64 },
+      "8xlarge": { "vCPU": 32, "Mem (GiB)": 128 },
+    },
+  };
+
+  useEffect(() => {
+    const { currentCluster, currentProject } = context;
+    api
+      .getClusterNodes(
+        "<token>",
+        {},
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      )
+      .then(({ data }) => {
+        if (data) {
+          if (data) {
+            setNodeList(data);
+
+            let largestInstanceType = {
+              vCPUs: 2,
+              RAM: 4,
+            };
+
+            data.forEach(node => {
+              const instanceType = node.labels['beta.kubernetes.io/instance-type'];
+              if (awsInstanceLimits[instanceType]) {
+                if (awsInstanceLimits[instanceType].vCPUs > largestInstanceType.vCPUs) {
+                  largestInstanceType = awsInstanceLimits[instanceType];
+                }
+              }
+            });
+
+            setMaxCPU(largestInstanceType.vCPUs);
+            setMaxRAM(largestInstanceType.RAM);
+
+            console.log(data);
+          }
+        }
+      })
+      .catch(() => {
+        console.log({ error: true });
+      })
+  }, []);
 
   const renderMain = () => {
     setHeight(159);
@@ -243,27 +335,33 @@ const WebTabs: React.FC<Props> = ({
     return (
       <>
         <Spacer y={1} />
-        <Input
-          label="CPUs (Millicores)"
-          placeholder="ex: 500"
-          value={service.cpu.value}
-          disabled={service.cpu.readOnly}
-          width="300px"
+        <InputSlider
+          label="CPUs: "
+          unit="(Cores)"
+          min={0}
+          max={maxCPU}
+          color={"#3a48ca"}
+          value={(service.cpu.value / 1000).toString()}
           setValue={(e) => {
-            editService({ ...service, cpu: { readOnly: false, value: e } });
+            editService({ ...service, cpu: { readOnly: false, value: e * 1000 } });
           }}
+          step={0.01}
+          disabled={service.cpu.readOnly}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
-        <Input
-          label="RAM (MB)"
-          placeholder="ex: 1"
-          value={service.ram.value}
-          disabled={service.ram.readOnly}
-          width="300px"
+        <InputSlider
+          label="RAM: "
+          unit="(GiB)"
+          min={0}
+          max={maxRAM}
+          color={"#3a48ca"}
+          value={(service.ram.value / 1024).toString()}
           setValue={(e) => {
-            editService({ ...service, ram: { readOnly: false, value: e } });
+            editService({ ...service, ram: { readOnly: false, value: e * 1024 } });
           }}
+          disabled={true}
+          step={0.01}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
@@ -360,9 +458,11 @@ const WebTabs: React.FC<Props> = ({
             }
           />
           <Spacer y={1} />
-          <Input
-            label="Target CPU utilization (%)"
-            placeholder="ex: 50"
+          <InputSlider
+            label="Target CPU utilization: "
+            unit="(%)"
+            min={0}
+            max={100}
             value={service.autoscaling.targetCPUUtilizationPercentage.value}
             disabled={
               service.autoscaling.targetCPUUtilizationPercentage.readOnly ||
@@ -385,9 +485,11 @@ const WebTabs: React.FC<Props> = ({
             }
           />
           <Spacer y={1} />
-          <Input
-            label="Target RAM utilization (%)"
-            placeholder="ex: 50"
+          <InputSlider
+            label="Target RAM utilization: "
+            unit="(%)"
+            min={0}
+            max={100}
             value={service.autoscaling.targetMemoryUtilizationPercentage.value}
             disabled={
               service.autoscaling.targetMemoryUtilizationPercentage.readOnly ||

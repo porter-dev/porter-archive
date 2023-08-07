@@ -116,7 +116,7 @@ func reportBuildStatus(ctx context.Context, request *types.CreateOrUpdatePorterA
 }
 
 // createNewAppEvent will create a new app event for the given porter app name. If the app event is an agent event, then it will be created only if there is no existing event which has the agent ID. In the case that an existing event is found, that will be returned instead
-func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Context, cluster models.Cluster, porterAppName string, status string, eventType string, externalSource string, requestMetadata map[string]any) (types.PorterAppEvent, error) {
+func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Context, cluster models.Cluster, porterAppName string, status types.PorterAppEventStatus, eventType string, externalSource string, requestMetadata map[string]any) (types.PorterAppEvent, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-porter-app-event")
 	defer span.End()
 
@@ -169,7 +169,7 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 
 	event := models.PorterAppEvent{
 		ID:                 uuid.New(),
-		Status:             status,
+		Status:             string(status),
 		Type:               eventType,
 		TypeExternalSource: externalSource,
 		PorterAppID:        app.ID,
@@ -221,7 +221,7 @@ func (p *CreateUpdatePorterAppEventHandler) updateExistingAppEvent(ctx context.C
 	}
 
 	if submittedEvent.Status != "" {
-		existingAppEvent.Status = submittedEvent.Status
+		existingAppEvent.Status = string(submittedEvent.Status)
 	}
 
 	if submittedEvent.Metadata != nil {
@@ -291,7 +291,20 @@ func (p *CreateUpdatePorterAppEventHandler) updateDeployEvent(ctx context.Contex
 		_ = telemetry.Error(ctx, span, nil, "deploy status not a string")
 		return types.PorterAppEvent{}
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "new-status", Value: newStatusStr})
+	var porterAppEventStatus types.PorterAppEventStatus
+	switch newStatusStr {
+	case string(types.PorterAppEventStatus_Success):
+		porterAppEventStatus = types.PorterAppEventStatus_Success
+	case string(types.PorterAppEventStatus_Failed):
+		porterAppEventStatus = types.PorterAppEventStatus_Failed
+	case string(types.PorterAppEventStatus_Progressing):
+		porterAppEventStatus = types.PorterAppEventStatus_Progressing
+	default:
+		_ = telemetry.Error(ctx, span, nil, "deploy status not valid")
+		return types.PorterAppEvent{}
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "new-status", Value: porterAppEventStatus})
 
 	matchEvent, err := p.Repo().PorterAppEvent().ReadDeployEventByRevision(ctx, appID, revisionFloat64)
 	if err != nil {
@@ -301,8 +314,8 @@ func (p *CreateUpdatePorterAppEventHandler) updateDeployEvent(ctx context.Contex
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-deployment-event", Value: false})
 
-	// first check to see if the event is empty, meaning there was no match found
-	if matchEvent.ID == uuid.Nil || matchEvent.Status != "PROGRESSING" {
+	// first check to see if the event is empty, meaning there was no match found, or not progressing, meaning it has already been updated
+	if matchEvent.ID == uuid.Nil || matchEvent.Status != string(types.PorterAppEventStatus_Progressing) {
 		return types.PorterAppEvent{}
 	}
 
@@ -341,9 +354,9 @@ func (p *CreateUpdatePorterAppEventHandler) updateDeployEvent(ctx context.Contex
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "existing-status", Value: serviceDeploymentMetadata.Status})
 
 	// only update service status if it has not been updated yet
-	if serviceDeploymentMetadata.Status == "PROGRESSING" {
+	if serviceDeploymentMetadata.Status == types.PorterAppEventStatus_Progressing {
 		// update the map with the new status
-		serviceDeploymentMetadata.Status = newStatusStr
+		serviceDeploymentMetadata.Status = porterAppEventStatus
 		serviceDeploymentMap[serviceName] = serviceDeploymentMetadata
 
 		// update the deploy event with new map and status if all services are done
@@ -353,19 +366,19 @@ func (p *CreateUpdatePorterAppEventHandler) updateDeployEvent(ctx context.Contex
 		allServicesDone := true
 		anyServicesFailed := false
 		for _, deploymentMetadata := range serviceDeploymentMap {
-			if deploymentMetadata.Status == "PROGRESSING" {
+			if deploymentMetadata.Status == types.PorterAppEventStatus_Progressing {
 				allServicesDone = false
 				break
 			}
-			if deploymentMetadata.Status == "FAILED" {
+			if deploymentMetadata.Status == types.PorterAppEventStatus_Failed {
 				anyServicesFailed = true
 			}
 		}
 		if allServicesDone {
 			if anyServicesFailed {
-				matchEvent.Status = "FAILED"
+				matchEvent.Status = string(types.PorterAppEventStatus_Failed)
 			} else {
-				matchEvent.Status = "SUCCESS"
+				matchEvent.Status = string(types.PorterAppEventStatus_Success)
 			}
 		}
 

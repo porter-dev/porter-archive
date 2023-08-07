@@ -942,7 +942,7 @@ func addLabelsToService(service *Service, envGroups []string, defaultLabelKey st
 	return service
 }
 
-func getServiceDeploymentMetadataFromValues(values map[string]interface{}, status string) map[string]types.ServiceDeploymentMetadata {
+func getServiceDeploymentMetadataFromValues(values map[string]interface{}, status types.PorterAppEventStatus) map[string]types.ServiceDeploymentMetadata {
 	serviceDeploymentMap := make(map[string]types.ServiceDeploymentMetadata)
 
 	for key := range values {

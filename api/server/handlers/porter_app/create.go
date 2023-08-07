@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -17,10 +16,10 @@ import (
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
-	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/features"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
@@ -301,13 +300,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		// Only create the PROGRESSING event if the cluster's agent is updated, because only the updated agent can update the status
-		// TODO: remove dependence on porter email once we are ready to release this feature
-		if isPorterAgentUpdated(k8sAgent, 3, 1, 6) && strings.HasSuffix(user.Email, "porter.run") {
-			serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, "PROGRESSING")
-			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, "PROGRESSING", porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		if features.AreAgentDeployEventsEnabled(user.Email, k8sAgent) {
+			serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, types.PorterAppEventStatus_Progressing)
+			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, types.PorterAppEventStatus_Progressing, porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		} else {
-			_, err = createOldPorterAppDeployEvent(ctx, "SUCCESS", porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+			_, err = createOldPorterAppDeployEvent(ctx, types.PorterAppEventStatus_Success, porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		}
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating porter app event")
@@ -492,13 +489,11 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		// Only create the PROGRESSING event if the cluster's agent is updated, because only the updated agent can update the status
-		// TODO: remove dependence on porter email once we are ready to release this feature
-		if isPorterAgentUpdated(k8sAgent, 3, 1, 6) && strings.HasSuffix(user.Email, "porter.run") {
-			serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, "PROGRESSING")
-			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, "PROGRESSING", updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		if features.AreAgentDeployEventsEnabled(user.Email, k8sAgent) {
+			serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, types.PorterAppEventStatus_Progressing)
+			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, types.PorterAppEventStatus_Progressing, updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		} else {
-			_, err = createOldPorterAppDeployEvent(ctx, "SUCCESS", updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+			_, err = createOldPorterAppDeployEvent(ctx, types.PorterAppEventStatus_Success, updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		}
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating porter app event")
@@ -513,13 +508,13 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 // createOldPorterAppDeployEvent creates an event for use in the activity feed
 // TODO: remove this method and all call-sites if this span no longer exists in telemetry for 4 consecutive weeks
-func createOldPorterAppDeployEvent(ctx context.Context, status string, appID uint, revision int, tag string, repo repository.PorterAppEventRepository) (*models.PorterAppEvent, error) {
+func createOldPorterAppDeployEvent(ctx context.Context, status types.PorterAppEventStatus, appID uint, revision int, tag string, repo repository.PorterAppEventRepository) (*models.PorterAppEvent, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-old-porter-app-deploy-event")
 	defer span.End()
 
 	event := models.PorterAppEvent{
 		ID:                 uuid.New(),
-		Status:             status,
+		Status:             string(status),
 		Type:               "DEPLOY",
 		TypeExternalSource: "KUBERNETES",
 		PorterAppID:        appID,
@@ -546,7 +541,7 @@ func createOldPorterAppDeployEvent(ctx context.Context, status string, appID uin
 func createNewPorterAppDeployEvent(
 	ctx context.Context,
 	serviceStatusMap map[string]types.ServiceDeploymentMetadata,
-	status string,
+	status types.PorterAppEventStatus,
 	appID uint,
 	revision int,
 	tag string,
@@ -560,7 +555,7 @@ func createNewPorterAppDeployEvent(
 
 	event := models.PorterAppEvent{
 		ID:                 uuid.New(),
-		Status:             status,
+		Status:             string(status),
 		Type:               "DEPLOY",
 		TypeExternalSource: "KUBERNETES",
 		PorterAppID:        appID,
@@ -606,7 +601,7 @@ func updatePreviousPorterAppDeployEvent(ctx context.Context, appID uint, revisio
 		_ = telemetry.Error(ctx, span, nil, "could not find previous deploy event")
 		return
 	}
-	if matchEvent.Status != "PROGRESSING" {
+	if matchEvent.Status != string(types.PorterAppEventStatus_Progressing) {
 		return
 	}
 	serviceStatus, ok := matchEvent.Metadata["service_deployment_metadata"]
@@ -636,13 +631,13 @@ func updatePreviousPorterAppDeployEvent(ctx context.Context, appID uint, revisio
 		serviceDeploymentMap[k] = serviceDeploymentMetadata
 	}
 	for key, serviceDeploymentMetadata := range serviceDeploymentMap {
-		if serviceDeploymentMetadata.Status == "PROGRESSING" {
-			serviceDeploymentMetadata.Status = "CANCELED"
+		if serviceDeploymentMetadata.Status == types.PorterAppEventStatus_Progressing {
+			serviceDeploymentMetadata.Status = types.PorterAppEventStatus_Canceled
 			serviceDeploymentMap[key] = serviceDeploymentMetadata
 		}
 	}
 	matchEvent.Metadata["service_deployment_metadata"] = serviceDeploymentMap
-	matchEvent.Status = "CANCELED"
+	matchEvent.Status = string(types.PorterAppEventStatus_Canceled)
 	err = repo.UpdateEvent(ctx, &matchEvent)
 	if err != nil {
 		_ = telemetry.Error(ctx, span, err, "error updating deploy event")
@@ -737,42 +732,4 @@ func cloneEnvGroup(c *CreatePorterAppHandler, w http.ResponseWriter, r *http.Req
 			return
 		}
 	}
-}
-
-// isPorterAgentUpdated checks if the agent version is at least the version specified by the major, minor, and patch arguments
-func isPorterAgentUpdated(agent *kubernetes.Agent, major, minor, patch int) bool {
-	res, err := cluster.GetAgentVersionResponse(agent)
-	if err != nil {
-		return false
-	}
-	image := res.Image
-	parsed := strings.Split(image, ":")
-
-	if len(parsed) != 2 {
-		return false
-	}
-
-	tag := parsed[1]
-	if tag == "dev" {
-		return true
-	}
-
-	parsedTag := strings.Split(tag, ".")
-	if len(parsedTag) != 3 {
-		return false
-	}
-
-	parsedMajor, _ := strconv.Atoi(parsedTag[0])
-	parsedMinor, _ := strconv.Atoi(parsedTag[1])
-	parsedPatch, _ := strconv.Atoi(parsedTag[2])
-	if parsedMajor < major {
-		return false
-	}
-	if parsedMinor < minor {
-		return false
-	}
-	if parsedPatch < patch {
-		return false
-	}
-	return true
 }

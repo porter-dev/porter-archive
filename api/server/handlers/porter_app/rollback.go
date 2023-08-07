@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/features"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
@@ -152,13 +153,11 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Only create the PROGRESSING event if the cluster's agent is updated, because only the updated agent can update the status
-	// TODO: remove dependence on porter email once we are ready to release this feature
-	if isPorterAgentUpdated(k8sAgent, 3, 1, 6) && strings.HasSuffix(user.Email, "porter.run") {
-		serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, "PROGRESSING")
-		_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, "PROGRESSING", porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+	if features.AreAgentDeployEventsEnabled(user.Email, k8sAgent) {
+		serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, types.PorterAppEventStatus_Progressing)
+		_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, types.PorterAppEventStatus_Progressing, porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 	} else {
-		_, err = createOldPorterAppDeployEvent(ctx, "SUCCESS", porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		_, err = createOldPorterAppDeployEvent(ctx, types.PorterAppEventStatus_Success, porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 	}
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error creating porter app event")

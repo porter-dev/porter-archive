@@ -38,50 +38,7 @@ const WebTabs: React.FC<Props> = ({
   const [nodeList, setNodeList] = useState([]);
   const [maxCPU, setMaxCPU] = useState(2 * UPPER_BOUND); //default is set to a t3 medium 
   const [maxRAM, setMaxRAM] = useState(4 * UPPER_BOUND); //default is set to a t3 medium
-
-  const awsInstanceLimits: any = {
-
-    "t3a": {
-      "nano": { "vCPU": 2, "Mem (GiB)": 0.5 },
-      "micro": { "vCPU": 2, "Mem (GiB)": 1 },
-      "small": { "vCPU": 2, "Mem (GiB)": 2 },
-      "medium": { "vCPU": 2, "Mem (GiB)": 4 },
-      "large": { "vCPU": 2, "Mem (GiB)": 8 },
-      "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
-      "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 }
-    },
-    "t3": {
-      "nano": { "vCPU": 2, "Mem (GiB)": 0.5 },
-      "micro": { "vCPU": 2, "Mem (GiB)": 1 },
-      "small": { "vCPU": 2, "Mem (GiB)": 2 },
-      "medium": { "vCPU": 2, "Mem (GiB)": 4 },
-      "large": { "vCPU": 2, "Mem (GiB)": 8 },
-      "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
-      "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 }
-    },
-    "t2": {
-      "nano": { "vCPU": 1, "Mem (GiB)": 0.5 },
-      "micro": { "vCPU": 1, "Mem (GiB)": 1 },
-      "small": { "vCPU": 1, "Mem (GiB)": 2 },
-      "medium": { "vCPU": 2, "Mem (GiB)": 4 },
-      "large": { "vCPU": 2, "Mem (GiB)": 8 },
-      "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
-      "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 }
-    },
-    "c6i": {
-      "large": { "vCPU": 2, "Mem (GiB)": 4 },
-      "xlarge": { "vCPU": 4, "Mem (GiB)": 8 },
-      "2xlarge": { "vCPU": 8, "Mem (GiB)": 16 },
-      "4xlarge": { "vCPU": 16, "Mem (GiB)": 32 },
-      "8xlarge": { "vCPU": 32, "Mem (GiB)": 64 },
-    },
-    "g4dn": {
-      "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
-      "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 },
-      "4xlarge": { "vCPU": 16, "Mem (GiB)": 64 },
-      "8xlarge": { "vCPU": 32, "Mem (GiB)": 128 },
-    },
-  };
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const { currentCluster, currentProject } = context;
@@ -96,27 +53,30 @@ const WebTabs: React.FC<Props> = ({
       )
       .then(({ data }) => {
         if (data) {
-          if (data) {
-            setNodeList(data);
+          setNodeList(data);
 
-            let largestInstanceType = {
-              vCPUs: 2,
-              RAM: 4,
-            };
-
-            data.forEach(node => {
+          data.forEach(node => {
+            if (node.labels['porter.run/workload-kind']) {
               const instanceType = node.labels['beta.kubernetes.io/instance-type'];
-              if (awsInstanceLimits[instanceType]) {
-                if (awsInstanceLimits[instanceType].vCPUs > largestInstanceType.vCPUs) {
-                  largestInstanceType = awsInstanceLimits[instanceType];
-                }
-              }
-            });
-
-            setMaxCPU(largestInstanceType.vCPUs * UPPER_BOUND);
-            setMaxRAM(largestInstanceType.RAM * UPPER_BOUND);
-
-          }
+              api
+                .getInstanceDetails(
+                  "<token>",
+                  {
+                    instanceType: instanceType,
+                  },
+                  {
+                    cluster_id: currentCluster.id,
+                    project_id: currentProject.id,
+                  }
+                )
+                .then(({ data }) => {
+                  setMaxCPU(data?.Msg?.vcpu * UPPER_BOUND);
+                  setMaxRAM((data?.Msg?.ram / 1024) * UPPER_BOUND);
+                }).catch(() => {
+                  setError(error)
+                });
+            }
+          })
         }
       })
       .catch(() => {
@@ -337,7 +297,7 @@ const WebTabs: React.FC<Props> = ({
         <Spacer y={1} />
         <InputSlider
           label="CPUs: "
-          unit="(Cores)"
+          unit="Cores"
           min={0}
           max={maxCPU}
           color={"#3a48ca"}
@@ -352,7 +312,7 @@ const WebTabs: React.FC<Props> = ({
         <Spacer y={1} />
         <InputSlider
           label="RAM: "
-          unit="(GiB)"
+          unit="GiB"
           min={0}
           max={maxRAM}
           color={"#3a48ca"}
@@ -460,7 +420,7 @@ const WebTabs: React.FC<Props> = ({
           <Spacer y={1} />
           <InputSlider
             label="Target CPU utilization: "
-            unit="(%)"
+            unit="%"
             min={0}
             max={100}
             value={service.autoscaling.targetCPUUtilizationPercentage.value}
@@ -487,7 +447,7 @@ const WebTabs: React.FC<Props> = ({
           <Spacer y={1} />
           <InputSlider
             label="Target RAM utilization: "
-            unit="(%)"
+            unit="%"
             min={0}
             max={100}
             value={service.autoscaling.targetMemoryUtilizationPercentage.value}

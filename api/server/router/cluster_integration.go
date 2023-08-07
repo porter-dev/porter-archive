@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/go-chi/chi/v5"
 	awsClusterInt "github.com/porter-dev/porter/api/server/handlers/cluster_integration/aws"
+	"github.com/porter-dev/porter/api/server/handlers/ec2"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
@@ -79,6 +80,35 @@ func getClusterIntegrationRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: getAWSClusterInfoEndpoint,
 		Handler:  getAWSClusterInfoHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/integrations/aws/info/details -> awsClusterInt.NewGetClusterInfoHandler
+	getAWSInstanceInfoEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/aws/info/details",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getAWSInstanceInfoHandler := ec2.NewGetAWSInstanceInfoHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getAWSInstanceInfoEndpoint,
+		Handler:  getAWSInstanceInfoHandler,
 		Router:   r,
 	})
 

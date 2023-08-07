@@ -56,6 +56,17 @@ const getAWSIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/aws`
 );
 
+const getInstanceDetails = baseApi<
+  {
+  },
+  {
+    project_id: number,
+    cluster_id: number,
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/integrations/aws/info/details`;
+});
+
 const getGCPIntegration = baseApi<{}, { project_id: number }>(
   "GET",
   ({ project_id }) => `/api/projects/${project_id}/integrations/gcp`
@@ -2902,6 +2913,7 @@ export default {
   removeApplicationFromEnvGroup,
   provisionDatabase,
   preflightCheckAWSUsage,
+  getInstanceDetails,
   getDatabases,
   getPreviousLogsForContainer,
   upgradePorterAgent,

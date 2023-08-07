@@ -71,6 +71,7 @@ const validTabs = [
   "build-settings",
   "settings",
   "helm-values",
+  "job-history",
 ] as const;
 const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
@@ -123,7 +124,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const { tab } = useParams<Params>();
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
-  const logFilterQueryParamOpts = {
+  const queryParamOpts = {
     revision: queryParams.get('version'),
     output_stream: queryParams.get('output_stream'),
     service: queryParams.get('service'),
@@ -683,9 +684,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "logs":
         return <LogSection
           currentChart={appData.chart}
-          services={services.filter(Service.isNonRelease)}
+          services={services.filter(svc => Service.isNonRelease(svc) && !Service.isJob(svc))}
           appName={appData.app.name}
-          filterOpts={logFilterQueryParamOpts}
+          filterOpts={queryParamOpts}
         />;
       case "metrics":
         return <MetricsSection currentChart={appData.chart} />;
@@ -714,7 +715,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           currentChart={appData.chart}
           updatePorterApp={updatePorterApp}
           buttonStatus={buttonStatus}
-        />
+        />;
+      case "job-history":
+        return <ExpandedJob
+          appName={appData.app.name}
+          jobName={queryParamOpts.service}
+          goBack={() => setExpandedJob(null)}
+        />;
       default:
         return <ActivityFeed
           chart={appData.chart}
@@ -723,16 +730,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         />;
     }
   };
-
-  if (expandedJob) {
-    return (
-      <ExpandedJob
-        appName={appData.app.name}
-        jobName={expandedJob}
-        goBack={() => setExpandedJob(null)}
-      />
-    );
-  }
 
   return (
     <>

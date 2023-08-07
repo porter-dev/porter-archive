@@ -947,11 +947,16 @@ func getServiceDeploymentMetadataFromValues(values map[string]interface{}, statu
 
 	for key := range values {
 		if key != "global" {
-			serviceName, _ := getServiceNameAndTypeFromHelmName(key)
+			serviceName, serviceType := getServiceNameAndTypeFromHelmName(key)
 			externalURI := getServiceExternalURIFromServiceValues(values[key].(map[string]interface{}))
+			// jobs don't technically have a deployment, so hardcode the deployment status to success
+			if serviceType == "job" {
+				status = types.PorterAppEventStatus_Success
+			}
 			serviceDeploymentMap[serviceName] = types.ServiceDeploymentMetadata{
 				ExternalURI: externalURI,
 				Status:      status,
+				Type:        serviceType,
 			}
 		}
 	}

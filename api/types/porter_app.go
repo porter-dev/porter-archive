@@ -140,4 +140,6 @@ type ServiceDeploymentMetadata struct {
 	Status PorterAppEventStatus `json:"status"`
 	// ExternalURI is the external URI of a service (if it is web)
 	ExternalURI string `json:"external_uri"`
+	// Type is the type of the service - one of web, worker, or job
+	Type string `json:"type"`
 }

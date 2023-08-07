@@ -32,6 +32,7 @@ export const PorterAppEvent = {
 interface PorterAppServiceDeploymentMetadata {
     status: string;
     external_uri: string;
+    type: string;
 }
 export interface PorterAppDeployEvent extends PorterAppEvent {
     type: PorterAppEventType.DEPLOY;

@@ -50,21 +50,36 @@ const ServiceStatusDetail: React.FC<Props> = ({
                                 <Text color={getStatusColor(deploymentMetadata.status)}>{convertEventStatusToCopy(serviceDeploymentMetadata[key].status)}</Text>
                             </ServiceStatusTableData>
                             <ServiceStatusTableData>
-                                <Link
-                                    to={`/apps/${appName}/logs?version=${revision}&service=${key}`}
-                                    hasunderline
-                                    hoverColor="#949eff"
-                                >
-                                    Logs
-                                </Link>
-                                <Spacer inline x={0.5} />
-                                <Link
-                                    to={`/apps/${appName}/logs?version=${revision}&service=${key}`}
-                                    hasunderline
-                                    hoverColor="#949eff"
-                                >
-                                    Metrics
-                                </Link>
+                                {deploymentMetadata.type !== "job" &&
+                                    <>
+                                        <Link
+                                            to={`/apps/${appName}/logs?version=${revision}&service=${key}`}
+                                            hasunderline
+                                            hoverColor="#949eff"
+                                        >
+                                            Logs
+                                        </Link>
+                                        <Spacer inline x={0.5} />
+                                        <Link
+                                            to={`/apps/${appName}/logs?version=${revision}&service=${key}`}
+                                            hasunderline
+                                            hoverColor="#949eff"
+                                        >
+                                            Metrics
+                                        </Link>
+                                    </>
+                                }
+                                {deploymentMetadata.type === "job" &&
+                                    <>
+                                        <Link
+                                            to={`/apps/${appName}/job-history?service=${key}`}
+                                            hasunderline
+                                            hoverColor="#949eff"
+                                        >
+                                            History
+                                        </Link>
+                                    </>
+                                }
                                 {deploymentMetadata.external_uri !== "" &&
                                     <>
                                         <Spacer inline x={0.5} />

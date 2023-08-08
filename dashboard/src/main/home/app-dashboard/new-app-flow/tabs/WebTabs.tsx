@@ -1,5 +1,5 @@
 import Input from "components/porter/Input";
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
@@ -7,16 +7,20 @@ import Checkbox from "components/porter/Checkbox";
 import { Service, WebService } from "../serviceTypes";
 import AnimateHeight, { Height } from "react-animate-height";
 import { Context } from "shared/Context";
-import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, RESOURCE_HEIGHT_WITHOUT_AUTOSCALING, RESOURCE_HEIGHT_WITH_AUTOSCALING } from "./utils";
+import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, RESOURCE_HEIGHT_WITHOUT_AUTOSCALING, RESOURCE_HEIGHT_WITH_AUTOSCALING, AWS_INSTANCE_LIMITS, MILI_TO_CORE, MIB_TO_GIB } from "./utils";
 import IngressCustomAnnotations from "./IngressCustomAnnotations";
 import CustomDomains from "./CustomDomains";
+import InputSlider from "components/porter/InputSlider";
+import api from "shared/api";
 
 interface Props {
   service: WebService;
   editService: (service: WebService) => void;
   setHeight: (height: Height) => void;
+  chart?: any;
+  maxRAM: number;
+  maxCPU: number;
 }
-
 
 const NETWORKING_HEIGHT_WITHOUT_INGRESS = 204;
 const NETWORKING_HEIGHT_WITH_INGRESS = 395;
@@ -28,6 +32,8 @@ const WebTabs: React.FC<Props> = ({
   service,
   editService,
   setHeight,
+  maxRAM,
+  maxCPU,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>("main");
   const { currentCluster } = useContext(Context);
@@ -243,27 +249,33 @@ const WebTabs: React.FC<Props> = ({
     return (
       <>
         <Spacer y={1} />
-        <Input
-          label="CPUs (Millicores)"
-          placeholder="ex: 500"
-          value={service.cpu.value}
-          disabled={service.cpu.readOnly}
-          width="300px"
+        <InputSlider
+          label="CPUs: "
+          unit="Cores"
+          min={0}
+          max={maxCPU}
+          color={"#3a48ca"}
+          value={(service.cpu.value / MILI_TO_CORE).toString()}
           setValue={(e) => {
-            editService({ ...service, cpu: { readOnly: false, value: e } });
+            editService({ ...service, cpu: { readOnly: false, value: e * MILI_TO_CORE } });
           }}
+          step={0.01}
+          disabled={service.cpu.readOnly}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
-        <Input
-          label="RAM (MB)"
-          placeholder="ex: 1"
-          value={service.ram.value}
-          disabled={service.ram.readOnly}
-          width="300px"
+        <InputSlider
+          label="RAM: "
+          unit="GiB"
+          min={0}
+          max={maxRAM}
+          color={"#3a48ca"}
+          value={(service.ram.value / MIB_TO_GIB).toString()}
           setValue={(e) => {
-            editService({ ...service, ram: { readOnly: false, value: e } });
+            editService({ ...service, ram: { readOnly: false, value: e * MIB_TO_GIB } });
           }}
+          disabled={service.ram.readOnly}
+          step={0.01}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
@@ -360,9 +372,11 @@ const WebTabs: React.FC<Props> = ({
             }
           />
           <Spacer y={1} />
-          <Input
-            label="Target CPU utilization (%)"
-            placeholder="ex: 50"
+          <InputSlider
+            label="Target CPU utilization: "
+            unit="%"
+            min={0}
+            max={100}
             value={service.autoscaling.targetCPUUtilizationPercentage.value}
             disabled={
               service.autoscaling.targetCPUUtilizationPercentage.readOnly ||
@@ -385,9 +399,11 @@ const WebTabs: React.FC<Props> = ({
             }
           />
           <Spacer y={1} />
-          <Input
-            label="Target RAM utilization (%)"
-            placeholder="ex: 50"
+          <InputSlider
+            label="Target RAM utilization: "
+            unit="%"
+            min={0}
+            max={100}
             value={service.autoscaling.targetMemoryUtilizationPercentage.value}
             disabled={
               service.autoscaling.targetMemoryUtilizationPercentage.readOnly ||

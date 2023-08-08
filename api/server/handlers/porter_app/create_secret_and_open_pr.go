@@ -37,7 +37,7 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
 		return
@@ -95,7 +95,7 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Client:                 client,
 			GitRepoOwner:           request.GithubRepoOwner,
 			GitRepoName:            request.GithubRepoName,
-			StackName:              stackName,
+			StackName:              appName,
 			ProjectID:              project.ID,
 			ClusterID:              cluster.ID,
 			ServerURL:              c.Config().ServerConf.ServerURL,
@@ -131,7 +131,7 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if request.DeleteWorkflowFilename == "" {
 			// update DB with the PR url
-			porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+			porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to get porter app db: %w", err)))
 				return

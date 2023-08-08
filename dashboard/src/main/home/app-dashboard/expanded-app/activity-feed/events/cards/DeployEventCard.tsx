@@ -91,7 +91,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appData }) => {
         } else {
           return (
             <Text color="helper">
-              Deploying <Code>{event.metadata.image_tag}</Code> to {Object.keys(event.metadata.service_status).length} service{Object.keys(event.metadata.service_status).length === 1 ? "" : "s"}...
+              Deploying <Code>{event.metadata.image_tag}</Code>...
             </Text>
           );
         }

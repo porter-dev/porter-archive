@@ -94,6 +94,13 @@ const WebTabs: React.FC<Props> = ({
       "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 },
       "4xlarge": { "vCPU": 16, "Mem (GiB)": 64 },
       "8xlarge": { "vCPU": 32, "Mem (GiB)": 128 },
+    },
+    "r6a": {
+      "large": { "vCPU": 2, "Mem (GiB)": 16 },
+      "xlarge": { "vCPU": 4, "Mem (GiB)": 32 },
+      "2xlarge": { "vCPU": 8, "Mem (GiB)": 64 },
+      "4xlarge": { "vCPU": 16, "Mem (GiB)": 128 },
+      "8xlarge": { "vCPU": 32, "Mem (GiB)": 256 },
     }
   }
   useEffect(() => {

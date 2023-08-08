@@ -109,52 +109,52 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
         fileUpload={true}
         syncedEnvGroups={syncedEnvGroups}
       />
-      {currentProject.env_group_enabled && (
-        <>
-          <TooltipWrapper
-            onMouseOver={() => setHovered(true)}
-            onMouseOut={() => setHovered(false)}>
-            <LoadButton
-              disabled={maxEnvGroupsReached}
-              onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
-            >
-              <img src={sliders} /> Load from Env Group
-            </LoadButton>
-            <TooltipText visible={maxEnvGroupsReached && hovered}>Max 4 Env Groups allowed</TooltipText>
-          </TooltipWrapper>
 
-          {showEnvModal && <EnvGroupModal
-            setValues={(x: any) => {
-              if (status !== "") {
-                clearStatus();
-              }
-              setEnvVars(x);
-            }}
-            values={envVars}
-            closeModal={() => setShowEnvModal(false)}
-            syncedEnvGroups={syncedEnvGroups}
-            setSyncedEnvGroups={setSyncedEnvGroups}
-            namespace={appData.chart.namespace}
-          />}
-          {!!syncedEnvGroups?.length && (
-            <>
-              <Spacer y={0.5} />
-              <Text size={16}>Synced environment groups</Text >
-              {syncedEnvGroups?.map((envGroup: any) => {
-                return (
-                  <ExpandableEnvGroup
-                    key={envGroup?.name}
-                    envGroup={envGroup}
-                    onDelete={() => {
-                      deleteEnvGroup(envGroup);
-                    }}
-                  />
-                );
-              })}
-            </>
-          )}
-        </>
-      )}
+      <>
+        <TooltipWrapper
+          onMouseOver={() => setHovered(true)}
+          onMouseOut={() => setHovered(false)}>
+          <LoadButton
+            disabled={maxEnvGroupsReached}
+            onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
+          >
+            <img src={sliders} /> Load from Env Group
+          </LoadButton>
+          <TooltipText visible={maxEnvGroupsReached && hovered}>Max 4 Env Groups allowed</TooltipText>
+        </TooltipWrapper>
+
+        {showEnvModal && <EnvGroupModal
+          setValues={(x: any) => {
+            if (status !== "") {
+              clearStatus();
+            }
+            setEnvVars(x);
+          }}
+          values={envVars}
+          closeModal={() => setShowEnvModal(false)}
+          syncedEnvGroups={syncedEnvGroups}
+          setSyncedEnvGroups={setSyncedEnvGroups}
+          namespace={appData.chart.namespace}
+        />}
+        {!!syncedEnvGroups?.length && (
+          <>
+            <Spacer y={0.5} />
+            <Text size={16}>Synced environment groups</Text >
+            {syncedEnvGroups?.map((envGroup: any) => {
+              return (
+                <ExpandableEnvGroup
+                  key={envGroup?.name}
+                  envGroup={envGroup}
+                  onDelete={() => {
+                    deleteEnvGroup(envGroup);
+                  }}
+                />
+              );
+            })}
+          </>
+        )}
+      </>
+
 
       <Spacer y={0.5} />
       <Button

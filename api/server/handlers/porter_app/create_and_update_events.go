@@ -48,14 +48,14 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		return
 	}
 
-	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
 		e := telemetry.Error(ctx, span, reqErr, "error parsing stack name from url")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 		return
 	}
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "porter-app-name", Value: stackName},
+		telemetry.AttributeKV{Key: "porter-app-name", Value: appName},
 		telemetry.AttributeKV{Key: "porter-app-event-type", Value: string(request.Type)},
 		telemetry.AttributeKV{Key: "porter-app-event-status", Value: request.Status},
 		telemetry.AttributeKV{Key: "porter-app-event-external-source", Value: request.TypeExternalSource},
@@ -63,11 +63,11 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	)
 
 	if request.Type == types.PorterAppEventType_Build {
-		reportBuildStatus(ctx, request, p.Config(), user, project, stackName)
+		reportBuildStatus(ctx, request, p.Config(), user, project, appName)
 	}
 
 	if request.ID == "" {
-		event, err := p.createNewAppEvent(ctx, *cluster, stackName, request.Status, string(request.Type), request.TypeExternalSource, request.Metadata)
+		event, err := p.createNewAppEvent(ctx, *cluster, appName, request.Status, string(request.Type), request.TypeExternalSource, request.Metadata)
 		if err != nil {
 			e := telemetry.Error(ctx, span, err, "error creating new app event")
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
@@ -77,7 +77,7 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		return
 	}
 
-	event, err := p.updateExistingAppEvent(ctx, *cluster, stackName, *request)
+	event, err := p.updateExistingAppEvent(ctx, *cluster, appName, *request)
 	if err != nil {
 		e := telemetry.Error(ctx, span, err, "error creating new app event")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))

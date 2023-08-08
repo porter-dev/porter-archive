@@ -20,6 +20,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	utils "github.com/porter-dev/porter/api/utils/porter_app"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/models"
@@ -58,14 +59,14 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
 		err := telemetry.Error(ctx, span, reqErr, "error getting stack name from url")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	namespace := fmt.Sprintf("porter-stack-%s", stackName)
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "application-name", Value: stackName})
+	namespace := utils.NamespaceFromPorterAppName(appName)
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "application-name", Value: appName})
 
 	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespace)
 	if err != nil {
@@ -81,7 +82,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	helmRelease, err := helmAgent.GetRelease(ctx, stackName, 0, false)
+	helmRelease, err := helmAgent.GetRelease(ctx, appName, 0, false)
 	shouldCreate := err != nil
 
 	porterYamlBase64 := request.PorterYAMLBase64
@@ -131,7 +132,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	if request.Builder == "" {
 		// attempt to get builder from db
-		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
 		if err == nil {
 			request.Builder = app.Builder
 		}
@@ -167,6 +168,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	chart, values, preDeployJobValues, err := parse(
 		ctx,
 		ParseConf{
+			PorterAppName:             appName,
 			PorterYaml:                porterYaml,
 			ImageInfo:                 imageInfo,
 			ServerConfig:              c.Config(),
@@ -182,7 +184,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 				dnsRepo:        c.Repo().DNSRecord(),
 				powerDnsClient: c.Config().PowerDNSClient,
 				appRootDomain:  c.Config().ServerConf.AppRootDomain,
-				stackName:      stackName,
+				stackName:      appName,
 			},
 			InjectLauncherToStartCommand: injectLauncher,
 			ShouldValidateHelmValues:     shouldCreate,
@@ -205,7 +207,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installing-pre-deploy-job", Value: true})
 			conf, err := createReleaseJobChart(
 				ctx,
-				stackName,
+				appName,
 				preDeployJobValues,
 				c.Config().ServerConf.DefaultApplicationHelmRepoURL,
 				registries,
@@ -224,7 +226,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "install-pre-deploy-job-error", Value: err})
 				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				_, uninstallChartErr := helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", stackName))
+				_, uninstallChartErr := helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", appName))
 				if uninstallChartErr != nil {
 					uninstallChartErr = telemetry.Error(ctx, span, err, "error uninstalling pre-deploy job chart after failed install")
 					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(uninstallChartErr, http.StatusInternalServerError))
@@ -235,7 +237,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		conf := &helm.InstallChartConfig{
 			Chart:      chart,
-			Name:       stackName,
+			Name:       appName,
 			Namespace:  namespace,
 			Values:     values,
 			Cluster:    cluster,
@@ -249,7 +251,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			err = telemetry.Error(ctx, span, err, "error installing app chart")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
-			_, err = helmAgent.UninstallChart(ctx, stackName)
+			_, err = helmAgent.UninstallChart(ctx, appName)
 			if err != nil {
 				err = telemetry.Error(ctx, span, err, "error uninstalling app chart after failed install")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -258,7 +260,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		existing, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+		existing, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error reading app from DB")
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
@@ -272,7 +274,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 
 		app := &models.PorterApp{
-			Name:      stackName,
+			Name:      appName,
 			ClusterID: cluster.ID,
 			ProjectID: project.ID,
 			RepoName:  request.RepoName,
@@ -312,7 +314,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		// create/update the pre-deploy job chart
 		if request.OverrideRelease {
 			if preDeployJobValues == nil {
-				preDeployJobName := fmt.Sprintf("%s-r", stackName)
+				preDeployJobName := fmt.Sprintf("%s-r", appName)
 				_, err := helmAgent.GetRelease(ctx, preDeployJobName, 0, false)
 				if err == nil {
 					// handle exception where the user has chosen to delete the release job
@@ -326,13 +328,13 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					}
 				}
 			} else {
-				preDeployJobName := fmt.Sprintf("%s-r", stackName)
+				preDeployJobName := fmt.Sprintf("%s-r", appName)
 				helmRelease, err := helmAgent.GetRelease(ctx, preDeployJobName, 0, false)
 				if err != nil {
 					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "creating-pre-deploy-job", Value: true})
 					conf, err := createReleaseJobChart(
 						ctx,
-						stackName,
+						appName,
 						preDeployJobValues,
 						c.Config().ServerConf.DefaultApplicationHelmRepoURL,
 						registries,
@@ -351,7 +353,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 						err = telemetry.Error(ctx, span, err, "error installing pre-deploy job chart")
 						telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "install-pre-deploy-job-error", Value: err})
 						c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-						_, uninstallChartErr := helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", stackName))
+						_, uninstallChartErr := helmAgent.UninstallChart(ctx, fmt.Sprintf("%s-r", appName))
 						if uninstallChartErr != nil {
 							uninstallChartErr = telemetry.Error(ctx, span, err, "error uninstalling pre-deploy job chart after failed install")
 							c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(uninstallChartErr, http.StatusInternalServerError))
@@ -391,7 +393,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		// update the app chart
 		conf := &helm.InstallChartConfig{
 			Chart:      chart,
-			Name:       stackName,
+			Name:       appName,
 			Namespace:  namespace,
 			Values:     values,
 			Cluster:    cluster,
@@ -409,7 +411,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 
 		// update the DB entry
-		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+		app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error reading app from DB")
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
@@ -533,8 +535,8 @@ func createReleaseJobChart(
 		return nil, err
 	}
 
-	releaseName := fmt.Sprintf("%s-r", stackName)
-	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+	releaseName := utils.PredeployJobNameFromPorterAppName(stackName)
+	namespace := utils.NamespaceFromPorterAppName(stackName)
 
 	return &helm.InstallChartConfig{
 		Chart:      chart,

@@ -13,6 +13,7 @@ type Props = {
   type?: string;
   error?: string;
   children?: React.ReactNode;
+  autoFocus?: boolean;
 };
 
 const SearchBar: React.FC<Props> = ({
@@ -25,6 +26,7 @@ const SearchBar: React.FC<Props> = ({
   type,
   error,
   children,
+  autoFocus,
 }) => {
   return (
     <Block width={width}>
@@ -44,6 +46,7 @@ const SearchBar: React.FC<Props> = ({
           onChange={e => setValue(e.target.value)}
           placeholder={placeholder}
           type={type || "text"}
+          autoFocus={autoFocus}
         />
         {
           error && (

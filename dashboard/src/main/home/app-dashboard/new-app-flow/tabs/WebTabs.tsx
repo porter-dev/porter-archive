@@ -20,6 +20,17 @@ interface Props {
   chart?: any;
 }
 
+interface InstanceDetails {
+  vCPU: number;
+  "Mem (GiB)": number;
+}
+
+interface InstanceTypes {
+  [key: string]: {
+    [size: string]: InstanceDetails;
+  };
+}
+
 
 const NETWORKING_HEIGHT_WITHOUT_INGRESS = 204;
 const NETWORKING_HEIGHT_WITH_INGRESS = 395;
@@ -42,6 +53,49 @@ const WebTabs: React.FC<Props> = ({
   const [maxRAM, setMaxRAM] = useState(4 * UPPER_BOUND); //default is set to a t3 medium
   const [error, setError] = useState(false);
 
+  const awsInstanceLimits: InstanceTypes = {
+    "t3a": {
+      "nano": { "vCPU": 2, "Mem (GiB)": 0.5 },
+      "micro": { "vCPU": 2, "Mem (GiB)": 1 },
+      "small": { "vCPU": 2, "Mem (GiB)": 2 },
+      "medium": { "vCPU": 2, "Mem (GiB)": 4 },
+      "large": { "vCPU": 2, "Mem (GiB)": 8 },
+      "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
+      "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 }
+    },
+    "t3": {
+      "nano": { "vCPU": 2, "Mem (GiB)": 0.5 },
+      "micro": { "vCPU": 2, "Mem (GiB)": 1 },
+      "small": { "vCPU": 2, "Mem (GiB)": 2 },
+      "medium": { "vCPU": 2, "Mem (GiB)": 4 },
+      "large": { "vCPU": 2, "Mem (GiB)": 8 },
+      "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
+      "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 }
+    },
+    "t2": {
+      "nano": { "vCPU": 1, "Mem (GiB)": 0.5 },
+      "micro": { "vCPU": 1, "Mem (GiB)": 1 },
+      "small": { "vCPU": 1, "Mem (GiB)": 2 },
+      "medium": { "vCPU": 2, "Mem (GiB)": 4 },
+      "large": { "vCPU": 2, "Mem (GiB)": 8 },
+      "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
+      "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 }
+    },
+    "c6i": {
+      "large": { "vCPU": 2, "Mem (GiB)": 4 },
+      "xlarge": { "vCPU": 4, "Mem (GiB)": 8 },
+      "2xlarge": { "vCPU": 8, "Mem (GiB)": 16 },
+      "4xlarge": { "vCPU": 16, "Mem (GiB)": 32 },
+      "8xlarge": { "vCPU": 32, "Mem (GiB)": 64 },
+      "12xlarge": { "vCPU": 48, "Mem (GiB)": 96 },
+    },
+    "g4dn": {
+      "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
+      "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 },
+      "4xlarge": { "vCPU": 16, "Mem (GiB)": 64 },
+      "8xlarge": { "vCPU": 32, "Mem (GiB)": 128 },
+    }
+  }
   useEffect(() => {
     const { currentCluster, currentProject } = context;
 
@@ -50,9 +104,16 @@ const WebTabs: React.FC<Props> = ({
     }
 
     const serviceName = service?.name;
-    var instanceType = ""
+    var instanceType = "";
     if (chart?.config?.[serviceName + "-web"].nodeSelector?.["beta.kubernetes.io/instance-type"]) {
       instanceType = chart?.config?.[serviceName + "-web"].nodeSelector?.["beta.kubernetes.io/instance-type"]
+      const [instanceClass, instanceSize] = instanceType.split('.');
+      let currentInstance = awsInstanceLimits[instanceClass][instanceSize];
+
+      largestInstanceType.vCPUs = currentInstance.vCPU;
+      largestInstanceType.RAM = currentInstance["Mem (GiB)"];
+      setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
+      setMaxRAM(currentInstance["Mem (GiB)"] * UPPER_BOUND);
     }
 
     if (instanceType == "") {
@@ -69,61 +130,35 @@ const WebTabs: React.FC<Props> = ({
           if (data) {
             setNodeList(data);
 
+            let largestInstanceType = {
+              vCPUs: 2,
+              RAM: 4,
+            };
+
             data.forEach(node => {
               if (node.labels['porter.run/workload-kind']) {
-                instanceType = node.labels['beta.kubernetes.io/instance-type']
+                var instanceType: string = node.labels['beta.kubernetes.io/instance-type'];
+                const [instanceClass, instanceSize] = instanceType.split('.');
+                if (instanceClass && instanceSize) {
+                  if (awsInstanceLimits[instanceClass] && awsInstanceLimits[instanceClass][instanceSize]) {
+                    let currentInstance = awsInstanceLimits[instanceClass][instanceSize];
+                    largestInstanceType.vCPUs = currentInstance.vCPU;
+                    largestInstanceType.RAM = currentInstance["Mem (GiB)"];
+
+                  }
+                }
               }
             });
 
-            // Call the second api function here
-            api
-              .getInstanceDetails(
-                "<token>",
-                {
-                  instanceType: instanceType,
-                },
-                {
-                  cluster_id: currentCluster.id,
-                  project_id: currentProject.id,
-                }
-              )
-              .then(({ data }) => {
-                const cpu = data?.Msg?.vcpu || 2;
-                const ram = data?.Msg?.ram || 4 * 1024;
-                setMaxCPU(cpu * UPPER_BOUND);
-                setMaxRAM((ram / 1024) * UPPER_BOUND);
-              }).catch((error) => {
-                setError(error)
-              });
+            setMaxCPU(largestInstanceType.vCPUs * UPPER_BOUND);
+            setMaxRAM(largestInstanceType.RAM * UPPER_BOUND);
 
+            console.log(data);
           }
-        })
-        .catch((error) => {
-          setError(error)
-        })
-    } else {
-      api
-        .getInstanceDetails(
-          "<token>",
-          {
-            instanceType: instanceType,
-          },
-          {
-            cluster_id: currentCluster.id,
-            project_id: currentProject.id,
-          }
-        )
-        .then(({ data }) => {
-          const cpu = data?.Msg?.vcpu || 2;
-          const ram = data?.Msg?.ram || 4 * 1024;
-          setMaxCPU(cpu * UPPER_BOUND);
-          setMaxRAM((ram / 1024) * UPPER_BOUND);
         }).catch((error) => {
           setError(error)
         });
-
     }
-
   }, []);
 
 

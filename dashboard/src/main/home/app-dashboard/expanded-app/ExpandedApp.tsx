@@ -301,7 +301,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           }
         }
       }
-      history.push(`/apps/${appName}/${DEFAULT_TAB}`);
     } catch (err) {
       // TODO: handle error
     } finally {
@@ -452,6 +451,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         "An error occurred while deploying your app. Please try again.";
       setButtonStatus(<Error message={errMessage} />);
     }
+
+    // redirect to the default tab
+    history.push(`/apps/${appData.app.name}/${DEFAULT_TAB}`);
   };
 
   const fetchPorterYamlContent = async (

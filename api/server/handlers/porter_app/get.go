@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type GetPorterAppHandler struct {
@@ -29,6 +30,9 @@ func NewGetPorterAppHandler(
 
 func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(ctx, "serve-get-porter-app")
+	defer span.End()
+
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {

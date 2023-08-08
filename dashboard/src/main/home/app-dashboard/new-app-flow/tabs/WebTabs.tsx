@@ -89,7 +89,7 @@ const WebTabs: React.FC<Props> = ({
                   if (AWS_INSTANCE_LIMITS[instanceClass] && AWS_INSTANCE_LIMITS[instanceClass][instanceSize]) {
                     let currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
                     largestInstanceType.vCPUs = currentInstance.vCPU;
-                    largestInstanceType.RAM = currentInstance["Mem (GiB)"];
+                    largestInstanceType.RAM = currentInstance.RAM;
 
                   }
                 }

@@ -5,7 +5,7 @@ export const RESOURCE_HEIGHT_WITH_AUTOSCALING = 820;
 
 interface InstanceDetails {
     vCPU: number;
-    "Mem (GiB)": number;
+    "RAM": number;
 }
 
 interface InstanceTypes {
@@ -16,68 +16,68 @@ interface InstanceTypes {
 
 export const AWS_INSTANCE_LIMITS: InstanceTypes = {
     "t3a": {
-        "nano": { "vCPU": 2, "Mem (GiB)": 0.5 },
-        "micro": { "vCPU": 2, "Mem (GiB)": 1 },
-        "small": { "vCPU": 2, "Mem (GiB)": 2 },
-        "medium": { "vCPU": 2, "Mem (GiB)": 4 },
-        "large": { "vCPU": 2, "Mem (GiB)": 8 },
-        "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
-        "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 }
+        "nano": { "vCPU": 2, "RAM": 0.5 },
+        "micro": { "vCPU": 2, "RAM": 1 },
+        "small": { "vCPU": 2, "RAM": 2 },
+        "medium": { "vCPU": 2, "RAM": 4 },
+        "large": { "vCPU": 2, "RAM": 8 },
+        "xlarge": { "vCPU": 4, "RAM": 16 },
+        "2xlarge": { "vCPU": 8, "RAM": 32 }
     },
     "t3": {
-        "nano": { "vCPU": 2, "Mem (GiB)": 0.5 },
-        "micro": { "vCPU": 2, "Mem (GiB)": 1 },
-        "small": { "vCPU": 2, "Mem (GiB)": 2 },
-        "medium": { "vCPU": 2, "Mem (GiB)": 4 },
-        "large": { "vCPU": 2, "Mem (GiB)": 8 },
-        "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
-        "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 }
+        "nano": { "vCPU": 2, "RAM": 0.5 },
+        "micro": { "vCPU": 2, "RAM": 1 },
+        "small": { "vCPU": 2, "RAM": 2 },
+        "medium": { "vCPU": 2, "RAM": 4 },
+        "large": { "vCPU": 2, "RAM": 8 },
+        "xlarge": { "vCPU": 4, "RAM": 16 },
+        "2xlarge": { "vCPU": 8, "RAM": 32 }
     },
     "t2": {
-        "nano": { "vCPU": 1, "Mem (GiB)": 0.5 },
-        "micro": { "vCPU": 1, "Mem (GiB)": 1 },
-        "small": { "vCPU": 1, "Mem (GiB)": 2 },
-        "medium": { "vCPU": 2, "Mem (GiB)": 4 },
-        "large": { "vCPU": 2, "Mem (GiB)": 8 },
-        "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
-        "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 }
+        "nano": { "vCPU": 1, "RAM": 0.5 },
+        "micro": { "vCPU": 1, "RAM": 1 },
+        "small": { "vCPU": 1, "RAM": 2 },
+        "medium": { "vCPU": 2, "RAM": 4 },
+        "large": { "vCPU": 2, "RAM": 8 },
+        "xlarge": { "vCPU": 4, "RAM": 16 },
+        "2xlarge": { "vCPU": 8, "RAM": 32 }
     },
     "c6i": {
-        "large": { "vCPU": 2, "Mem (GiB)": 4 },
-        "xlarge": { "vCPU": 4, "Mem (GiB)": 8 },
-        "2xlarge": { "vCPU": 8, "Mem (GiB)": 16 },
-        "4xlarge": { "vCPU": 16, "Mem (GiB)": 32 },
-        "8xlarge": { "vCPU": 32, "Mem (GiB)": 64 },
-        "12xlarge": { "vCPU": 48, "Mem (GiB)": 96 },
+        "large": { "vCPU": 2, "RAM": 4 },
+        "xlarge": { "vCPU": 4, "RAM": 8 },
+        "2xlarge": { "vCPU": 8, "RAM": 16 },
+        "4xlarge": { "vCPU": 16, "RAM": 32 },
+        "8xlarge": { "vCPU": 32, "RAM": 64 },
+        "12xlarge": { "vCPU": 48, "RAM": 96 },
     },
     "g4dn": {
-        "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
-        "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 },
-        "4xlarge": { "vCPU": 16, "Mem (GiB)": 64 },
-        "8xlarge": { "vCPU": 32, "Mem (GiB)": 128 },
+        "xlarge": { "vCPU": 4, "RAM": 16 },
+        "2xlarge": { "vCPU": 8, "RAM": 32 },
+        "4xlarge": { "vCPU": 16, "RAM": 64 },
+        "8xlarge": { "vCPU": 32, "RAM": 128 },
     },
     "r6a": {
-        "large": { "vCPU": 2, "Mem (GiB)": 16 },
-        "xlarge": { "vCPU": 4, "Mem (GiB)": 32 },
-        "2xlarge": { "vCPU": 8, "Mem (GiB)": 64 },
-        "4xlarge": { "vCPU": 16, "Mem (GiB)": 128 },
-        "8xlarge": { "vCPU": 32, "Mem (GiB)": 256 },
+        "large": { "vCPU": 2, "RAM": 16 },
+        "xlarge": { "vCPU": 4, "RAM": 32 },
+        "2xlarge": { "vCPU": 8, "RAM": 64 },
+        "4xlarge": { "vCPU": 16, "RAM": 128 },
+        "8xlarge": { "vCPU": 32, "RAM": 256 },
     },
     "c5": {
-        "large": { "vCPU": 2, "Mem (GiB)": 4 },
-        "xlarge": { "vCPU": 4, "Mem (GiB)": 8 },
-        "2xlarge": { "vCPU": 8, "Mem (GiB)": 16 },
-        "4xlarge": { "vCPU": 16, "Mem (GiB)": 32 },
+        "large": { "vCPU": 2, "RAM": 4 },
+        "xlarge": { "vCPU": 4, "RAM": 8 },
+        "2xlarge": { "vCPU": 8, "RAM": 16 },
+        "4xlarge": { "vCPU": 16, "RAM": 32 },
     },
     "m5": {
-        "large": { "vCPU": 2, "Mem (GiB)": 8 },
-        "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
-        "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 },
-        "4xlarge": { "vCPU": 16, "Mem (GiB)": 64 },
+        "large": { "vCPU": 2, "RAM": 8 },
+        "xlarge": { "vCPU": 4, "RAM": 16 },
+        "2xlarge": { "vCPU": 8, "RAM": 32 },
+        "4xlarge": { "vCPU": 16, "RAM": 64 },
     },
     "x2gd": {
-        "medium": { "vCPU": 1, "Mem (GiB)": 16 },
-        "large": { "vCPU": 2, "Mem (GiB)": 32 },
-        "xlarge": { "vCPU": 4, "Mem (GiB)": 64 },
+        "medium": { "vCPU": 1, "RAM": 16 },
+        "large": { "vCPU": 2, "RAM": 32 },
+        "xlarge": { "vCPU": 4, "RAM": 64 },
     }
 }

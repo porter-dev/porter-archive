@@ -6,22 +6,17 @@ import (
 	"net/http"
 	"time"
 
-	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
-
+	"connectrpc.com/connect"
+	grpcreflect "connectrpc.com/grpcreflect"
+	otelconnect "connectrpc.com/otelconnect"
+	"github.com/joeshaw/envdecode"
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/ee/integrations/vault"
+	"github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/credentials"
 	"github.com/porter-dev/porter/internal/repository/gorm"
-
-	"github.com/porter-dev/porter/api/server/shared/config/env"
-	"github.com/porter-dev/porter/internal/adapter"
-
-	"github.com/porter-dev/porter/internal/repository"
-
-	"github.com/joeshaw/envdecode"
-
-	"github.com/bufbuild/connect-go"
-	otelconnect "github.com/bufbuild/connect-opentelemetry-go"
-	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )

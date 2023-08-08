@@ -3,7 +3,7 @@ package telemetry
 import (
 	"context"
 
-	"github.com/honeycombio/otel-launcher-go/launcher"
+	"github.com/honeycombio/otel-config-go/otelconfig"
 )
 
 // TracerConfig contains all config for setting up an otel tracer
@@ -38,14 +38,14 @@ func InitTracer(ctx context.Context, conf TracerConfig) (Tracer, error) {
 
 	bsp := NewBaggageSpanProcessor()
 
-	lnchr, err := launcher.ConfigureOpenTelemetry(
-		launcher.WithServiceName(conf.ServiceName),
-		launcher.WithExporterEndpoint(conf.CollectorURL),
-		launcher.WithSpanProcessor(bsp),
-		launcher.WithLogLevel("DEBUG"),
-		launcher.WithMetricsEnabled(false),  // can turn this on later
-		launcher.WithExporterInsecure(true), // TODO: disable this before production usage
-		// launcher.WithHeaders() // TODO: add in information about runtime environment
+	lnchr, err := otelconfig.ConfigureOpenTelemetry(
+		otelconfig.WithServiceName(conf.ServiceName),
+		otelconfig.WithExporterEndpoint(conf.CollectorURL),
+		otelconfig.WithSpanProcessor(bsp),
+		otelconfig.WithLogLevel("DEBUG"),
+		otelconfig.WithMetricsEnabled(false),  // can turn this on later
+		otelconfig.WithExporterInsecure(true), // TODO: disable this before production usage
+		// otelconfig.WithHeaders() // TODO: add in information about runtime environment
 	)
 	if err != nil {
 		return tracer, err

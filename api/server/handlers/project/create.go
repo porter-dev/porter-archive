@@ -44,7 +44,6 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		CapiProvisionerEnabled: true,
 		SimplifiedViewEnabled:  true,
 		HelmValuesEnabled:      false,
-		EnvGroupEnabled:        true,
 		MultiCluster:           false,
 	}
 

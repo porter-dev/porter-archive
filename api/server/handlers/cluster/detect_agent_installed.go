@@ -46,7 +46,7 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	res, err := GetAgentVersionResponse(agent)
-	if targetErr := kubernetes.IsNotFoundError; err != nil && errors.Is(err, targetErr) {
+	if err != nil && errors.Is(err, kubernetes.IsNotFoundError) {
 		err = telemetry.Error(ctx, span, err, "porter agent not found")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
 		return

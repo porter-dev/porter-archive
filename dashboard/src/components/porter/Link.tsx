@@ -1,8 +1,6 @@
 import DynamicLink from "components/DynamicLink";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import styled from "styled-components";
-
-import Icon from "components/porter/Icon";
 
 type Props = {
   to?: string;
@@ -20,7 +18,7 @@ const Link: React.FC<Props> = ({
   children,
   target,
   hasunderline,
-  color,
+  color = "#ffffff",
   hoverColor,
 }) => {
   return (
@@ -54,46 +52,46 @@ const Svg = styled.svg`
   stroke-width: 2;
 `;
 
-const Underline = styled.div<{ color?: string }>`
+const Underline = styled.div<{ color: string }>`
   position: absolute;
   left: 0px;
   bottom: -2px;
   height: 1px;
   width: 100%;
-  background: ${(props) => props.color ?? "#ffffff"};
+  background: ${(props) => props.color};
 `;
 
-const StyledLink = styled(DynamicLink) <{ hasunderline?: boolean, color?: string }>`
-  color: ${(props) => props.color ?? "#ffffff"};
+const StyledLink = styled(DynamicLink) <{ hasunderline?: boolean, color: string }>`
+  color: ${(props) => props.color};
   display: inline-flex;
   font-size: 13px;
   cursor: pointer;
   align-items: center;
 `;
 
-const Div = styled.span<{ color?: string }>`
-  color: ${(props) => props.color ?? "#ffffff"};
+const Div = styled.span<{ color: string }>`
+  color: ${(props) => props.color};
   cursor: pointer;
   font-size: 13px;
   display: inline-flex;
   align-items: center;
 `;
 
-const LinkWrapper = styled.span<{ hoverColor?: string, color?: string }>`
+const LinkWrapper = styled.span<{ hoverColor?: string, color: string }>`
   position: relative;
   display: inline-flex;
   align-items: center;
   :hover {
     ${StyledLink} {
-      color: ${props => props.hoverColor ?? props.color ?? "#ffffff"};
+      color: ${({ hoverColor, color }) => hoverColor ?? color};
     }
 
     ${Div} {
-      color: ${props => props.hoverColor ?? props.color ?? "#ffffff"};
+      color: ${({ hoverColor, color }) => hoverColor ?? color};
     }
 
     ${Underline} {
-      background-color: ${props => props.hoverColor ?? props.color ?? "#ffffff"};
+      background-color: ${({ hoverColor, color }) => hoverColor ?? color};
     }
   };
 `;

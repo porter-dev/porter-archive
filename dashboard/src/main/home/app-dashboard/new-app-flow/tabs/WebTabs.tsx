@@ -48,7 +48,7 @@ const WebTabs: React.FC<Props> = ({
       return;
     }
 
-    const serviceName = service?.name;
+    const serviceName = service.name;
     var instanceType = "";
 
     //first check if there is a nodeSelector for the given application (Can be null)

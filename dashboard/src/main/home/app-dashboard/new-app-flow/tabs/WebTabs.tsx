@@ -112,17 +112,18 @@ const WebTabs: React.FC<Props> = ({
 
     const serviceName = service?.name;
     var instanceType = "";
+
+    //first check if there is a nodeSelector for the given application (Can be null)
     if (chart?.config?.[serviceName + "-web"].nodeSelector?.["beta.kubernetes.io/instance-type"]) {
       instanceType = chart?.config?.[serviceName + "-web"].nodeSelector?.["beta.kubernetes.io/instance-type"]
       const [instanceClass, instanceSize] = instanceType.split('.');
       let currentInstance = awsInstanceLimits[instanceClass][instanceSize];
-
-      largestInstanceType.vCPUs = currentInstance.vCPU;
-      largestInstanceType.RAM = currentInstance["Mem (GiB)"];
       setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
       setMaxRAM(currentInstance["Mem (GiB)"] * UPPER_BOUND);
     }
 
+
+    //Query the given nodes if no instance type is specified
     if (instanceType == "") {
       api
         .getClusterNodes(

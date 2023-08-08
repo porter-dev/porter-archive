@@ -15,6 +15,7 @@ type Project struct {
 	HelmValuesEnabled      bool    `json:"helm_values_enabled"`
 	EnvGroupEnabled        bool    `json:"env_group_enabled"`
 	MultiCluster           bool    `json:"multi_cluster"`
+	FullAddOns             bool    `json:"full_add_ons"`
 }
 
 type FeatureFlags struct {
@@ -28,6 +29,7 @@ type FeatureFlags struct {
 	HelmValuesEnabled          bool   `json:"helm_values_enabled,omitempty"`
 	EnvGroupEnabled            bool   `json:"env_group_enabled,omitempty"`
 	MultiCluster               bool   `json:"multi_cluster,omitempty"`
+	FullAddOns                 bool   `json:"full_add_ons,omitempty"`
 }
 
 type CreateProjectRequest struct {

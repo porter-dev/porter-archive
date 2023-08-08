@@ -31,7 +31,7 @@ const APPS = ["agent", "datadog", "tailscale-relay", "metabase", "mezmo"];
 const POPULAR = ["datadog", "metabase", "postgresql"];
 const NewAddOnFlow: React.FC<Props> = ({
 }) => {
-  const { capabilities, currentProject, currentCluster } = useContext(Context);
+  const { capabilities, currentProject, currentCluster, user } = useContext(Context);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchValue, setSearchValue] = useState("");
   const [addOnTemplates, setAddOnTemplates] = useState<any[]>([]);
@@ -39,7 +39,7 @@ const NewAddOnFlow: React.FC<Props> = ({
   const [currentForm, setCurrentForm] = useState<any>(null);
 
 
-  const filteredTemplates = useMemo(() => {
+  const allFilteredTemplates = useMemo(() => {
     const filteredBySearch = search(
       addOnTemplates ?? [],
       searchValue,
@@ -53,13 +53,19 @@ const NewAddOnFlow: React.FC<Props> = ({
   }, [addOnTemplates, searchValue]);
 
   const appTemplates = useMemo(() => {
-    return filteredTemplates.filter(template => template.tags.includes("APP"));
-  }, [filteredTemplates]);
+    return allFilteredTemplates.filter(template => template.tags.includes("APP"));
+  }, [allFilteredTemplates]);
 
   const dataStoreTemplates = useMemo(() => {
-    return filteredTemplates.filter(template => template.tags.includes("DATA_STORE"));
-  }, [filteredTemplates]);
+    return allFilteredTemplates.filter(template => template.tags.includes("DATA_STORE"));
+  }, [allFilteredTemplates]);
 
+  const filteredTemplates = useMemo(() => {
+    return _.differenceBy(
+      allFilteredTemplates,
+      [...appTemplates, ...dataStoreTemplates]
+    );
+  }, [allFilteredTemplates, appTemplates, dataStoreTemplates]);
 
   const getTemplates = async () => {
     setIsLoading(true);
@@ -89,12 +95,6 @@ const NewAddOnFlow: React.FC<Props> = ({
         (template: any) => !HIDDEN_CHARTS.includes(template?.name)
       );
       sortedVersionData = sortedVersionData
-        .filter(
-          (template: any) =>
-            DATA_STORES.includes(template?.name) ||
-            APPS.includes(template?.name) ||
-            POPULAR.includes(template?.name) // Include the POPULAR filter check
-        )
         .map((template: any) => {
           let templateTags = [];
 
@@ -199,6 +199,22 @@ const NewAddOnFlow: React.FC<Props> = ({
                         templates={dataStoreTemplates} // This is where you provide only DATA_STORE templates
                         setCurrentTemplate={(x) => setCurrentTemplate(x)}
                       />
+
+                      {filteredTemplates?.length > 0 && user?.isPorterUser &&
+                        <>
+                          <div>
+                            <Text color="#fff" size={15}>All Add-Ons</Text>
+                          </div>
+                          <div>
+                            <Text color="helper">Full list of add-ons (Not Managed by Porter)</Text>
+                          </div>
+
+                          <TemplateList
+                            templates={filteredTemplates} // This is where you provide only DATA_STORE templates
+                            setCurrentTemplate={(x) => setCurrentTemplate(x)}
+                          />
+                        </>
+                      }
                     </>
                   )}
                 </>
@@ -214,31 +230,31 @@ const NewAddOnFlow: React.FC<Props> = ({
 export default NewAddOnFlow;
 
 const PlaceholderIcon = styled.img`
-  height: 13px;
-  margin-right: 12px;
-  opacity: 0.65;
-`;
+      height: 13px;
+      margin-right: 12px;
+      opacity: 0.65;
+      `;
 
 const DarkMatter = styled.div`
-  width: 100%;
-  margin-top: -35px;
-`;
+      width: 100%;
+      margin-top: -35px;
+      `;
 
 const I = styled.i`
-  font-size: 16px;
-  padding: 4px;
-  cursor: pointer;
-  border-radius: 50%;
-  margin-right: 15px;
-  background: ${props => props.theme.fg};
-  color: ${props => props.theme.text.primary};
-  border: 1px solid ${props => props.theme.border};
-  :hover {
-    filter: brightness(150%);
+      font-size: 16px;
+      padding: 4px;
+      cursor: pointer;
+      border-radius: 50%;
+      margin-right: 15px;
+      background: ${props => props.theme.fg};
+      color: ${props => props.theme.text.primary};
+      border: 1px solid ${props => props.theme.border};
+      :hover {
+        filter: brightness(150%);
   }
-`;
+      `;
 
 const StyledTemplateComponent = styled.div`
-  width: 100%;
-  height: 100%;
-`;
+      width: 100%;
+      height: 100%;
+      `;

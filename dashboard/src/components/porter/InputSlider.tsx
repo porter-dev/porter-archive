@@ -90,7 +90,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
                 left: 0,
                 right: 0,
                 bottom: 0,
-                cursor: 'not-allowed',  // you can customize the cursor appearance
+                cursor: 'not-allowed',
                 zIndex: 1
               }}
             />
@@ -147,18 +147,18 @@ const DisabledTooltip = withStyles(theme => ({
 
 const StyledSlider = withStyles({
   root: {
-    height: '8px', // Adjust the height here
+    height: '8px', //height of the track
   },
   mark: {
     backgroundColor: '#fff',  // mark color
     height: 4, // size of the mark
     width: 1, // size of the mark
-    borderRadius: '50%', // to make the mark circular
+    borderRadius: '50%',
     marginTop: 6,
     marginLeft: -1,
   },
   markActive: {
-    backgroundColor: '#fff',  // mark color when active
+    backgroundColor: '#fff',
   },
   markLabel: {
     color: '#6e717d',
@@ -192,13 +192,13 @@ const StyledSlider = withStyles({
     borderRadius: 4,
   },
   valueLabel: {
-    top: -22, // Adjust as needed
+    top: -22,
     '& *': {
       background: 'transparent',
       border: 'none', // remove the default border
     },
   },
-  disabled: {}, // This is necessary to reference it in other styles
+  disabled: {},
 })(Slider);
 
 

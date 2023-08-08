@@ -34,7 +34,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   setExpandedJob,
 }) => {
   const [height, setHeight] = React.useState<Height>("auto");
-  const [nodeList, setNodeList] = useState([]);
+
   const UPPER_BOUND = .75;
 
   const [maxCPU, setMaxCPU] = useState(2 * UPPER_BOUND); //default is set to a t3 medium 
@@ -47,17 +47,20 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     if (!currentCluster || !currentProject) {
       return;
     }
-
-    const serviceName = service?.name;
     var instanceType = "";
 
-    //first check if there is a nodeSelector for the given application (Can be null)
-    if (chart?.config?.[serviceName + "-web"]?.nodeSelector?.["beta.kubernetes.io/instance-type"]) {
-      instanceType = chart?.config?.[serviceName + "-web"]?.nodeSelector?.["beta.kubernetes.io/instance-type"]
-      const [instanceClass, instanceSize] = instanceType.split('.');
-      let currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
-      setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
-      setMaxRAM(currentInstance.RAM * UPPER_BOUND);
+
+    if (service) {
+      const serviceName = service.name;
+
+      //first check if there is a nodeSelector for the given application (Can be null)
+      if (chart?.config?.[serviceName + service.type]?.nodeSelector?.["beta.kubernetes.io/instance-type"]) {
+        instanceType = chart?.config?.[serviceName + "-web"]?.nodeSelector?.["beta.kubernetes.io/instance-type"]
+        const [instanceClass, instanceSize] = instanceType.split('.');
+        const currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
+        setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
+        setMaxRAM(currentInstance.RAM * UPPER_BOUND);
+      }
     }
     //Query the given nodes if no instance type is specified
     if (instanceType == "") {
@@ -72,7 +75,6 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         )
         .then(({ data }) => {
           if (data) {
-            setNodeList(data);
 
             let largestInstanceType = {
               vCPUs: 2,

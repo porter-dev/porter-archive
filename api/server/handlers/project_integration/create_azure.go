@@ -5,7 +5,7 @@ import (
 
 	"github.com/porter-dev/porter/internal/telemetry"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 

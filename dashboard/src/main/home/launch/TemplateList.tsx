@@ -130,16 +130,19 @@ const TemplateList: React.FC<Props> = ({
   return (
     <TemplateListWrapper>
       {(templates || templateList)?.map((template: PorterTemplate) => {
-        let { name, icon, description } = template;
+        let { name, icon, description, tags } = template;
         if (hardcodedNames[name]) {
           name = hardcodedNames[name];
         }
+
+        const isPopular = tags?.includes("POPULAR");
+
         return (
           <TemplateBlock
             key={name}
             onClick={() => setCurrentTemplate(template)}
           >
-            <FireIcon src={fire} size="15px" top="10px" right="10px" />
+            {isPopular && <FireIcon src={fire} size="15px" top="10px" right="10px" />}
             {renderIcon(icon, template.name)}
             <TemplateTitle>{name}</TemplateTitle>
             <TemplateDescription>{description}</TemplateDescription>

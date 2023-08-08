@@ -173,6 +173,7 @@ export interface PorterTemplate {
   description: string;
   icon: string;
   repo_url?: string;
+  tags?: string[]
 }
 
 export interface ExpandedPorterTemplate {

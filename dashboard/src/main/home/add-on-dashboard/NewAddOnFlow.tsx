@@ -26,20 +26,9 @@ type Props = {
 };
 
 const HIDDEN_CHARTS = ["porter-agent", "loki"];
-// const ALLOW_LIST = [
-
-//   "metabase",
-//   "mongodb",
-//   "mysql",
-//   "redis",
-//   "tailscale-relay",
-
-//   "mezmo",
-//   "agent",
-//   "datadog"];
 const DATA_STORES = ["elasticsearch", "mongodb", "postgresql", "mysql", "redis"];
 const APPS = ["agent", "datadog", "tailscale-relay", "metabase", "mezmo"];
-
+const POPULAR = ["datadog", "metabase", "postgresql"];
 const NewAddOnFlow: React.FC<Props> = ({
 }) => {
   const { capabilities, currentProject, currentCluster } = useContext(Context);
@@ -64,11 +53,11 @@ const NewAddOnFlow: React.FC<Props> = ({
   }, [addOnTemplates, searchValue]);
 
   const appTemplates = useMemo(() => {
-    return filteredTemplates.filter(template => template.tag === "APP");
+    return filteredTemplates.filter(template => template.tags.includes("APP"));
   }, [filteredTemplates]);
 
   const dataStoreTemplates = useMemo(() => {
-    return filteredTemplates.filter(template => template.tag === "DATA_STORE");
+    return filteredTemplates.filter(template => template.tags.includes("DATA_STORE"));
   }, [filteredTemplates]);
 
 
@@ -101,15 +90,27 @@ const NewAddOnFlow: React.FC<Props> = ({
       );
       sortedVersionData = sortedVersionData
         .filter(
-          (template: any) => DATA_STORES.includes(template?.name) || APPS.includes(template?.name)
+          (template: any) =>
+            DATA_STORES.includes(template?.name) ||
+            APPS.includes(template?.name) ||
+            POPULAR.includes(template?.name) // Include the POPULAR filter check
         )
         .map((template: any) => {
+          let templateTags = [];
+
           if (DATA_STORES.includes(template.name)) {
-            return { ...template, tag: "DATA_STORE" };
-          } else if (APPS.includes(template.name)) {
-            return { ...template, tag: "APP" };
+            templateTags.push("DATA_STORE");
           }
-          return template; // This line is not really needed unless there's another category beyond DATA_STORE and APP
+
+          if (APPS.includes(template.name)) {
+            templateTags.push("APP");
+          }
+
+          if (POPULAR.includes(template.name)) {
+            templateTags.push("POPULAR"); // Here we add the POPULAR tag
+          }
+
+          return { ...template, tags: templateTags };
         });
       setAddOnTemplates(sortedVersionData);
     } catch (error) {
@@ -171,12 +172,29 @@ const NewAddOnFlow: React.FC<Props> = ({
                     <>
                       <DarkMatter />
 
-                      {appTemplates?.length > 0 && <><Spacer y={1.5} /><Text color="#fff" size={14} >Application Addons </Text></>}
+                      {appTemplates?.length > 0 &&
+                        <>
+                          <Spacer y={1.5} />
+                          <div>
+                            <Text color="#fff" size={15}>Apps and Services</Text>
+                          </div>
+                          <div>
+                            <Text color="helper">For logging, metrics, etc.</Text>
+                          </div>
+                        </>}
                       <TemplateList
                         templates={appTemplates} // This is where you provide only APP templates
                         setCurrentTemplate={(x) => setCurrentTemplate(x)}
                       />
-                      {dataStoreTemplates?.length > 0 && <Text color="#fff" size={14} > Preproduction Datastore addons </Text>}
+                      {dataStoreTemplates?.length > 0 &&
+                        <>
+                          <div>
+                            <Text color="#fff" size={15}>Pre-Production Datastores</Text>
+                          </div>
+                          <div>
+                            <Text color="helper">Datastore addons are NOT PRODUCTION GRADE. Use for dev environments ONLY.</Text>
+                          </div>
+                        </>}
                       <TemplateList
                         templates={dataStoreTemplates} // This is where you provide only DATA_STORE templates
                         setCurrentTemplate={(x) => setCurrentTemplate(x)}

@@ -22,7 +22,7 @@ type InputSliderProps = {
 };
 
 const ValueLabelComponent: React.FC<any> = (props) => {
-  const { children, open, value } = props;
+  const { children, value } = props;
 
   return (
     <StyledTooltip

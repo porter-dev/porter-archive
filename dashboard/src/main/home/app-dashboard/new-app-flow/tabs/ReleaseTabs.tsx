@@ -47,7 +47,7 @@ const ReleaseTabs: React.FC<Props> = ({
     };
 
     const renderResources = () => {
-        setHeight(244);
+        setHeight(292);
         return (
             <>
                 <Spacer y={1} />

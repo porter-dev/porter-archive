@@ -62,5 +62,22 @@ export const AWS_INSTANCE_LIMITS: InstanceTypes = {
         "2xlarge": { "vCPU": 8, "Mem (GiB)": 64 },
         "4xlarge": { "vCPU": 16, "Mem (GiB)": 128 },
         "8xlarge": { "vCPU": 32, "Mem (GiB)": 256 },
+    },
+    "c5": {
+        "large": { "vCPU": 2, "Mem (GiB)": 4 },
+        "xlarge": { "vCPU": 4, "Mem (GiB)": 8 },
+        "2xlarge": { "vCPU": 8, "Mem (GiB)": 16 },
+        "4xlarge": { "vCPU": 16, "Mem (GiB)": 32 },
+    },
+    "m5": {
+        "large": { "vCPU": 2, "Mem (GiB)": 8 },
+        "xlarge": { "vCPU": 4, "Mem (GiB)": 16 },
+        "2xlarge": { "vCPU": 8, "Mem (GiB)": 32 },
+        "4xlarge": { "vCPU": 16, "Mem (GiB)": 64 },
+    },
+    "x2gd": {
+        "medium": { "vCPU": 1, "Mem (GiB)": 16 },
+        "large": { "vCPU": 2, "Mem (GiB)": 32 },
+        "xlarge": { "vCPU": 4, "Mem (GiB)": 64 },
     }
 }

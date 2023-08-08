@@ -1,6 +1,6 @@
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
 import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
@@ -52,6 +52,24 @@ const ProjectSelectionModal: React.FC<Props> = ({
 
     return sortedProjects;
   }, [projects, searchValue, currentProject]);
+  useEffect(() => {
+    // Check if window is defined to avoid issues during server-side rendering
+    if (typeof window !== 'undefined') {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape" || e.keyCode === 27) {
+          closeModal();
+        }
+      };
+
+      // Add the event listener when the component mounts
+      window.addEventListener('keydown', handleKeyDown);
+
+      // Return a cleanup function to remove the event listener when the component unmounts
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [closeModal]);
 
   const updateClusterList = async (projectId: number) => {
     try {
@@ -82,9 +100,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
           key={i}
           selected={project.id === currentProject.id}
           onClick={async () => {
-            // if (project.id !== currentProject.id) {
-            //   setCurrentCluster(null);
-            // }
+
             setCurrentProject(project);
 
             const clusters_list = await updateClusterList(project.id);
@@ -101,10 +117,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
         >
           {/* <BlockIcon src={gradient} /> */}
           <BlockTitle>{project.name}</BlockTitle>
-          {/* <ProjectIcon>
-            <ProjectImage src={gradient} />
-            <Letter>{project.name[0].toUpperCase()}</Letter>
-          </ProjectIcon> */}
+
 
           <BlockDescription>
             Project Id: {project.id}
@@ -129,6 +142,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
           }}
           placeholder="Search projects..."
           width="100%"
+          autoFocus={true}
         />
 
         <Spacer inline x={1} />

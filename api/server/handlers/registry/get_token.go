@@ -9,9 +9,9 @@ import (
 
 	"github.com/porter-dev/porter/internal/telemetry"
 
+	"connectrpc.com/connect"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/bufbuild/connect-go"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"

@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"net/http"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 
 	"github.com/google/uuid"
 	helpers "github.com/porter-dev/api-contracts/generated/go/helpers"

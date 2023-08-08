@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { RouteComponentProps, useLocation, useParams, withRouter } from "react-router";
+import { RouteComponentProps, useHistory, useLocation, useParams, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
 
@@ -43,7 +43,7 @@ import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
-import { NewPopulatedEnvGroup, PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
+import { NewPopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
 import EventFocusView from "./activity-feed/events/focus-views/EventFocusView";
 import HelmValuesTab from "./HelmValuesTab";
@@ -120,6 +120,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
   const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
   const [buildView, setBuildView] = useState<BuildMethod>("docker");
+
+  const history = useHistory();
 
   const { tab } = useParams<Params>();
   const { search } = useLocation();
@@ -299,6 +301,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           }
         }
       }
+      history.push(`/apps/${appName}/${DEFAULT_TAB}`);
     } catch (err) {
       // TODO: handle error
     } finally {

@@ -9,7 +9,7 @@ import AnimateHeight, { Height } from "react-animate-height";
 import cronstrue from 'cronstrue';
 import Link from "components/porter/Link";
 import { Context } from "shared/Context";
-import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, MIB_TO_GIB } from "./utils";
+import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, MIB_TO_GIB, MILI_TO_CORE } from "./utils";
 import InputSlider from "components/porter/InputSlider";
 
 interface Props {

@@ -1,7 +1,7 @@
 export const DATABASE_HEIGHT_ENABLED = 374;
 export const DATABASE_HEIGHT_DISABLED = 119;
 export const RESOURCE_HEIGHT_WITHOUT_AUTOSCALING = 422;
-export const RESOURCE_HEIGHT_WITH_AUTOSCALING = 820;
+export const RESOURCE_HEIGHT_WITH_AUTOSCALING = 809;
 export const MIB_TO_GIB = 1024;
 export const MILI_TO_CORE = 1000;
 interface InstanceDetails {

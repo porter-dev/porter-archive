@@ -30,13 +30,13 @@ func NewGetPorterAppHandler(
 func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
 		return
 	}
 
-	app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+	app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

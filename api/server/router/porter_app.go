@@ -11,21 +11,21 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewStackScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+func NewPorterAppScopedRegisterer(children ...*router.Registerer) *router.Registerer {
 	return &router.Registerer{
-		GetRoutes: GetStackScopedRoutes,
+		GetRoutes: GetPorterAppScopedRoutes,
 		Children:  children,
 	}
 }
 
-func GetStackScopedRoutes(
+func GetPorterAppScopedRoutes(
 	r chi.Router,
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 	children ...*router.Registerer,
 ) []*router.Route {
-	routes, projPath := getStackRoutes(r, config, basePath, factory)
+	routes, projPath := getPorterAppRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
 		r.Route(projPath.RelativePath, func(r chi.Router) {
@@ -40,13 +40,13 @@ func GetStackScopedRoutes(
 	return routes
 }
 
-func getStackRoutes(
+func getPorterAppRoutes(
 	r chi.Router,
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) ([]*router.Route, *types.Path) {
-	relPath := "/stacks"
+	relPath := "/applications"
 
 	newPath := &types.Path{
 		Parent:       basePath,
@@ -55,14 +55,14 @@ func getStackRoutes(
 
 	var routes []*router.Route
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> porter_app.NewPorterAppGetHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/applications/{name} -> porter_app.NewPorterAppGetHandler
 	getPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamStackName),
+				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -83,14 +83,14 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/releases/{version} -> porter_app.NewPorterAppReleaseGetHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/applications/{name}/releases/{version} -> porter_app.NewPorterAppReleaseGetHandler
 	getPorterAppHelmReleaseEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}/releases/{%s}", relPath, types.URLParamStackName, types.URLParamReleaseVersion),
+				RelativePath: fmt.Sprintf("%s/{%s}/releases/{%s}", relPath, types.URLParamPorterAppName, types.URLParamReleaseVersion),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -111,14 +111,14 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/release-history -> porter_app.NewPorterAppHelmReleaseHistoryGetHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/applications/{name}/release-history -> porter_app.NewPorterAppHelmReleaseHistoryGetHandler
 	getPorterAppHelmReleaseHistoryGetEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}/release-history", relPath, types.URLParamStackName),
+				RelativePath: fmt.Sprintf("%s/{%s}/release-history", relPath, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -139,14 +139,14 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/releases/{version}/pods/all -> porter_app.NewPorterAppPodsGetHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/applications/{name}/releases/{version}/pods/all -> porter_app.NewPorterAppPodsGetHandler
 	getPorterAppPodsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}/releases/{%s}/pods/all", relPath, types.URLParamStackName, types.URLParamReleaseVersion),
+				RelativePath: fmt.Sprintf("%s/{%s}/releases/{%s}/pods/all", relPath, types.URLParamPorterAppName, types.URLParamReleaseVersion),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -167,7 +167,7 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> porter_app.NewPorterAppListHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/applications -> porter_app.NewPorterAppListHandler
 	listPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
@@ -195,14 +195,14 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/stacks -> release.NewDeletePorterAppByNameHandler
+	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/applications/{porter_app_name} -> release.NewDeletePorterAppByNameHandler
 	deletePorterAppByNameEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbDelete,
 			Method: types.HTTPVerbDelete,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamStackName),
+				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -224,14 +224,14 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack} -> porter_app.NewCreatePorterAppHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/applications/{porter_app_name} -> porter_app.NewCreatePorterAppHandler
 	createPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamStackName),
+				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -253,14 +253,14 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack}/rollback -> porter_app.NewRollbackPorterAppHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/applications/{porter_app_name}/rollback -> porter_app.NewRollbackPorterAppHandler
 	rollbackPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}/rollback", relPath, types.URLParamStackName),
+				RelativePath: fmt.Sprintf("%s/{%s}/rollback", relPath, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -282,14 +282,14 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{stack}/pr -> porter_app.NewOpenStackPRHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/applications/{porter_app_name}/pr -> porter_app.NewOpenStackPRHandler
 	createSecretAndOpenGitHubPullRequestEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}/pr", relPath, types.URLParamStackName),
+				RelativePath: fmt.Sprintf("%s/{%s}/pr", relPath, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -311,14 +311,14 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/events -> porter_app.NewPorterAppEventListHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/applications/{porter_app_name}/events -> porter_app.NewPorterAppEventListHandler
 	listPorterAppEventsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}/events", relPath, types.URLParamStackName),
+				RelativePath: fmt.Sprintf("%s/{%s}/events", relPath, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -339,14 +339,14 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/events -> porter_app.NewCreatePorterAppEventHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/applications/{name}/events -> porter_app.NewCreatePorterAppEventHandler
 	createPorterAppEventEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}/events", relPath, types.URLParamStackName),
+				RelativePath: fmt.Sprintf("%s/{%s}/events", relPath, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -396,7 +396,7 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/stacks/analytics -> porter_app.NewPorterAppAnalyticsHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/applications/analytics -> porter_app.NewPorterAppAnalyticsHandler
 	porterAppAnalyticsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
@@ -425,7 +425,7 @@ func getStackRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/logs -> cluster.NewGetChartLogsWithinTimeRangeHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/applications/logs -> cluster.NewGetChartLogsWithinTimeRangeHandler
 	getChartLogsWithinTimeRangeEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,

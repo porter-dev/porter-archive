@@ -37,7 +37,7 @@ func (c *PorterAppHelmReleaseHistoryGetHandler) ServeHTTP(w http.ResponseWriter,
 	ctx, span := telemetry.NewSpan(ctx, "serve-get-porter-app-helm-release-history")
 	defer span.End()
 
-	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
 		err := telemetry.Error(ctx, span, reqErr, "error getting stack name from url")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))

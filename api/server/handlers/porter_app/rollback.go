@@ -46,14 +46,14 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
 		err := telemetry.Error(ctx, span, reqErr, "error getting stack name from url")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "stack-name", Value: stackName})
-	namespace := utils.NamespaceFromPorterAppName(stackName)
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "stack-name", Value: appName})
+	namespace := utils.NamespaceFromPorterAppName(appName)
 
 	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespace)
 	if err != nil {
@@ -69,14 +69,14 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	helmReleaseFromRequestedRevision, err := helmAgent.GetRelease(ctx, stackName, request.Revision, false)
+	helmReleaseFromRequestedRevision, err := helmAgent.GetRelease(ctx, appName, request.Revision, false)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error getting helm release for requested revision")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	latestHelmRelease, err := helmAgent.GetRelease(ctx, stackName, 0, false)
+	latestHelmRelease, err := helmAgent.GetRelease(ctx, appName, 0, false)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error getting latest helm release")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -95,7 +95,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		imageInfo.Tag = "latest"
 	}
 
-	porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+	porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error getting porter app")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -114,7 +114,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	chart, values, _, err := parse(
 		ctx,
 		ParseConf{
-			PorterAppName: stackName,
+			PorterAppName: appName,
 			ImageInfo:     imageInfo,
 			ServerConfig:  c.Config(),
 			ProjectID:     cluster.ProjectID,
@@ -124,7 +124,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 				dnsRepo:        c.Repo().DNSRecord(),
 				powerDnsClient: c.Config().PowerDNSClient,
 				appRootDomain:  c.Config().ServerConf.AppRootDomain,
-				stackName:      stackName,
+				stackName:      appName,
 			},
 			InjectLauncherToStartCommand: injectLauncher,
 			FullHelmValues:               string(valuesYaml),
@@ -138,7 +138,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	conf := &helm.InstallChartConfig{
 		Chart:      chart,
-		Name:       stackName,
+		Name:       appName,
 		Namespace:  namespace,
 		Values:     values,
 		Cluster:    cluster,

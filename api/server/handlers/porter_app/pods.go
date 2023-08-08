@@ -38,7 +38,7 @@ func (c *PorterAppPodsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	ctx, span := telemetry.NewSpan(ctx, "serve-get-porter-app-pods")
 	defer span.End()
 
-	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
 		err := telemetry.Error(ctx, span, reqErr, "error getting stack name from url")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))

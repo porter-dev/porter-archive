@@ -31,7 +31,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	releaseRegisterer := NewReleaseScopedRegisterer()
 	namespaceRegisterer := NewNamespaceScopedRegisterer(releaseRegisterer)
 	clusterIntegrationRegisterer := NewClusterIntegrationScopedRegisterer()
-	stackRegisterer := NewStackScopedRegisterer()
+	stackRegisterer := NewPorterAppScopedRegisterer()
 	clusterRegisterer := NewClusterScopedRegisterer(namespaceRegisterer, clusterIntegrationRegisterer, stackRegisterer)
 	infraRegisterer := NewInfraScopedRegisterer()
 	gitInstallationRegisterer := NewGitInstallationScopedRegisterer()

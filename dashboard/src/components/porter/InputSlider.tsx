@@ -61,7 +61,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
     <SliderContainer width={width}>
       <LabelContainer>
         {label && <Label>{label}</Label>}
-        <Value>{value + ` ${unit}`}</Value>
+        <Value>{`${value} ${unit}`}</Value>
       </LabelContainer>
       <DisabledTooltip title={disabled ? disabledTooltip || '' : ''} arrow>
 

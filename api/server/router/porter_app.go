@@ -83,6 +83,90 @@ func getStackRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/releases/{version} -> porter_app.NewPorterAppReleaseGetHandler
+	getPorterAppHelmReleaseEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/releases/{%s}", relPath, types.URLParamStackName, types.URLParamReleaseVersion),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getPorterAppHelmReleaseHandler := porter_app.NewPorterAppHelmReleaseGetHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getPorterAppHelmReleaseEndpoint,
+		Handler:  getPorterAppHelmReleaseHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/release-history -> porter_app.NewPorterAppHelmReleaseHistoryGetHandler
+	getPorterAppHelmReleaseHistoryGetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/release-history", relPath, types.URLParamStackName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getPorterAppHelmReleaseHistoryGetHandler := porter_app.NewPorterAppHelmReleaseHistoryGetHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getPorterAppHelmReleaseHistoryGetEndpoint,
+		Handler:  getPorterAppHelmReleaseHistoryGetHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name}/releases/{version}/pods/all -> porter_app.NewPorterAppPodsGetHandler
+	getPorterAppPodsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/releases/{%s}/pods/all", relPath, types.URLParamStackName, types.URLParamReleaseVersion),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getPorterAppPodsHandler := porter_app.NewPorterAppPodsGetHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getPorterAppPodsEndpoint,
+		Handler:  getPorterAppPodsHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> porter_app.NewPorterAppListHandler
 	listPorterAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -1,7 +1,6 @@
 package porter_app
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	utils "github.com/porter-dev/porter/api/utils/porter_app"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -53,7 +53,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "stack-name", Value: stackName})
-	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+	namespace := utils.NamespaceFromPorterAppName(stackName)
 
 	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespace)
 	if err != nil {
@@ -114,10 +114,11 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	chart, values, _, err := parse(
 		ctx,
 		ParseConf{
-			ImageInfo:    imageInfo,
-			ServerConfig: c.Config(),
-			ProjectID:    cluster.ProjectID,
-			Namespace:    namespace,
+			PorterAppName: stackName,
+			ImageInfo:     imageInfo,
+			ServerConfig:  c.Config(),
+			ProjectID:     cluster.ProjectID,
+			Namespace:     namespace,
 			SubdomainCreateOpts: SubdomainCreateOpts{
 				k8sAgent:       k8sAgent,
 				dnsRepo:        c.Repo().DNSRecord(),

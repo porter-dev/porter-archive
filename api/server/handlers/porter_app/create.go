@@ -20,6 +20,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	utils "github.com/porter-dev/porter/api/utils/porter_app"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/models"
@@ -64,7 +65,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+	namespace := utils.NamespaceFromPorterAppName(stackName)
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "application-name", Value: stackName})
 
 	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespace)
@@ -167,6 +168,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	chart, values, preDeployJobValues, err := parse(
 		ctx,
 		ParseConf{
+			PorterAppName:             stackName,
 			PorterYaml:                porterYaml,
 			ImageInfo:                 imageInfo,
 			ServerConfig:              c.Config(),
@@ -533,8 +535,8 @@ func createReleaseJobChart(
 		return nil, err
 	}
 
-	releaseName := fmt.Sprintf("%s-r", stackName)
-	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+	releaseName := utils.PredeployJobNameFromPorterAppName(stackName)
+	namespace := utils.NamespaceFromPorterAppName(stackName)
 
 	return &helm.InstallChartConfig{
 		Chart:      chart,

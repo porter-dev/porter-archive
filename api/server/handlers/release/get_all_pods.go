@@ -1,6 +1,7 @@
 package release
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm/grapher"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/stefanmcshane/helm/pkg/release"
 	v1 "k8s.io/api/core/v1"
 )
@@ -34,8 +36,12 @@ func NewGetAllPodsHandler(
 }
 
 func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(ctx, "serve-get-all-pods-for-release")
+	defer span.End()
+
+	helmRelease, _ := ctx.Value(types.ReleaseScope).(*release.Release)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
@@ -44,18 +50,35 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pods, err := GetPodsForRelease(ctx, helmRelease, agent)
+	if err != nil {
+		err = fmt.Errorf("error getting pods: %w", err)
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	c.WriteResult(w, r, pods)
+}
+
+func GetPodsForRelease(ctx context.Context, helmRelease *release.Release, k8sAgent *kubernetes.Agent) ([]v1.Pod, error) {
+	ctx, span := telemetry.NewSpan(ctx, "get-all-pods-for-release")
+	defer span.End()
+
 	yamlArr := grapher.ImportMultiDocYAML([]byte(helmRelease.Manifest))
 	controllers := grapher.ParseControllers(yamlArr)
 	pods := make([]v1.Pod, 0)
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "num-controllers", Value: len(controllers)})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: helmRelease.Namespace})
+
 	// get current status of each controller
 	for _, controller := range controllers {
 		controller.Namespace = helmRelease.Namespace
-		_, selector, err := getController(controller, agent)
+		_, selector, err := getController(controller, k8sAgent)
 		if err != nil {
-			err = fmt.Errorf("error getting controller %s: %w", controller.Name, err)
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "controller-name", Value: controller.Name})
+			err = telemetry.Error(ctx, span, err, "error getting controller")
+			return nil, err
 		}
 
 		selectors := make([]string, 0)
@@ -74,11 +97,10 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				})
 			}
 
-			jobPods, err := getPodsForJobs(agent, helmRelease.Namespace, jobLabels)
+			jobPods, err := getPodsForJobs(k8sAgent, helmRelease.Namespace, jobLabels)
 			if err != nil {
-				err = fmt.Errorf("error getting cronjob pods in namespace %s with labels %+v : %w", helmRelease.Namespace, jobLabels, err)
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
+				err = telemetry.Error(ctx, span, err, "error getting cronjob pods")
+				return nil, err
 			}
 
 			pods = append(pods, jobPods...)
@@ -94,20 +116,18 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		podList, err := agent.GetPodsByLabel(strings.Join(selectors, ","), helmRelease.Namespace)
+		podList, err := k8sAgent.GetPodsByLabel(strings.Join(selectors, ","), helmRelease.Namespace)
 		if err != nil {
-			err = fmt.Errorf("error getting pods in namespace %s with labels %+v : %w", helmRelease.Namespace, strings.Join(selectors, ","), err)
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
+			err = telemetry.Error(ctx, span, err, "error getting pods")
+			return nil, err
 		}
 
 		pods = append(pods, podList.Items...)
 
-		podList, err = agent.GetPodsByLabel(strings.Join(selectors, ","), "default")
+		podList, err = k8sAgent.GetPodsByLabel(strings.Join(selectors, ","), "default")
 		if err != nil {
-			err = fmt.Errorf("error getting pods in namespace %s with labels %+v : %w", helmRelease.Namespace, strings.Join(selectors, ","), err)
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
+			err = telemetry.Error(ctx, span, err, "error getting pods")
+			return nil, err
 		}
 
 		pods = append(pods, podList.Items...)
@@ -121,16 +141,15 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Val: fmt.Sprintf("%d", helmRelease.Version),
 	})
 
-	jobPods, err := getPodsForJobs(agent, helmRelease.Namespace, labels)
+	jobPods, err := getPodsForJobs(k8sAgent, helmRelease.Namespace, labels)
 	if err != nil {
-		err = fmt.Errorf("error getting cronjob pods in namespace %s with labels %+v : %w", helmRelease.Namespace, labels, err)
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+		err = telemetry.Error(ctx, span, err, "error getting cronjob pods")
+		return nil, err
 	}
 
 	pods = append(pods, jobPods...)
 
-	c.WriteResult(w, r, pods)
+	return pods, nil
 }
 
 func getPodsForJobs(agent *kubernetes.Agent, namespace string, labels []kubernetes.Label) ([]v1.Pod, error) {

@@ -89,14 +89,24 @@ const NewAddOnFlow: React.FC<Props> = ({
       sortedVersionData = sortedVersionData.filter(
         (template: any) => !HIDDEN_CHARTS.includes(template?.name)
       );
-      sortedVersionData = sortedVersionData.filter(
-        (template: any) => DATA_STORES.includes(template?.name) || APPS.includes(template?.name)
-      );
+      sortedVersionData = sortedVersionData
+        .filter(
+          (template: any) => DATA_STORES.includes(template?.name) || APPS.includes(template?.name)
+        )
+        .map((template: any) => {
+          if (DATA_STORES.includes(template.name)) {
+            return { ...template, tag: "DATA_STORE" };
+          } else if (APPS.includes(template.name)) {
+            return { ...template, tag: "APP" };
+          }
+          return template; // This line is not really needed unless there's another category beyond DATA_STORE and APP
+        });
       setAddOnTemplates(sortedVersionData);
     } catch (error) {
       setIsLoading(false);
     }
   };
+
 
   useEffect(() => {
     getTemplates();
@@ -150,6 +160,13 @@ const NewAddOnFlow: React.FC<Props> = ({
                   {isLoading ? <Loading offset="-150px" /> : (
                     <>
                       <DarkMatter />
+                      <Spacer y={1} />
+                      <Text color="#fff" size={14} >Application Addons </Text>
+                      <TemplateList
+                        templates={filteredTemplates}
+                        setCurrentTemplate={(x) => setCurrentTemplate(x)}
+                      />
+                      <Text color="#fff" size={14} > Preproduction Datastore addons </Text>
                       <TemplateList
                         templates={filteredTemplates}
                         setCurrentTemplate={(x) => setCurrentTemplate(x)}
@@ -162,7 +179,7 @@ const NewAddOnFlow: React.FC<Props> = ({
           </>
         )
       }
-    </StyledTemplateComponent>
+    </StyledTemplateComponent >
   );
 };
 

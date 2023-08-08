@@ -270,7 +270,7 @@ const TemplateBlock = styled.div`
 const TemplateListWrapper = styled.div`
   overflow: visible;
   margin-top: 35px;
-  padding-bottom: 150px;
+  padding-bottom: 50px;
   display: grid;
   grid-column-gap: 25px;
   grid-row-gap: 25px;

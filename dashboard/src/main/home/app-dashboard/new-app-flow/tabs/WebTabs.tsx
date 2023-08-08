@@ -18,6 +18,8 @@ interface Props {
   editService: (service: WebService) => void;
   setHeight: (height: Height) => void;
   chart?: any;
+  maxRAM: number;
+  maxCPU: number;
 }
 
 const NETWORKING_HEIGHT_WITHOUT_INGRESS = 204;
@@ -30,81 +32,11 @@ const WebTabs: React.FC<Props> = ({
   service,
   editService,
   setHeight,
-  chart,
+  maxRAM,
+  maxCPU,
 }) => {
-  const UPPER_BOUND = .75;
   const [currentTab, setCurrentTab] = React.useState<string>("main");
   const { currentCluster } = useContext(Context);
-  const context = useContext(Context);
-  const [nodeList, setNodeList] = useState([]);
-  const [maxCPU, setMaxCPU] = useState(2 * UPPER_BOUND); //default is set to a t3 medium 
-  const [maxRAM, setMaxRAM] = useState(4 * UPPER_BOUND); //default is set to a t3 medium
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    const { currentCluster, currentProject } = context;
-
-    if (!currentCluster || !currentProject) {
-      return;
-    }
-
-    const serviceName = service.name;
-    var instanceType = "";
-
-    //first check if there is a nodeSelector for the given application (Can be null)
-    if (chart?.config?.[serviceName + "-web"].nodeSelector?.["beta.kubernetes.io/instance-type"]) {
-      instanceType = chart?.config?.[serviceName + "-web"].nodeSelector?.["beta.kubernetes.io/instance-type"]
-      const [instanceClass, instanceSize] = instanceType.split('.');
-      let currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
-      setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
-      setMaxRAM(currentInstance["Mem (GiB)"] * UPPER_BOUND);
-    }
-
-
-    //Query the given nodes if no instance type is specified
-    if (instanceType == "") {
-      api
-        .getClusterNodes(
-          "<token>",
-          {},
-          {
-            cluster_id: currentCluster.id,
-            project_id: currentProject.id,
-          }
-        )
-        .then(({ data }) => {
-          if (data) {
-            setNodeList(data);
-
-            let largestInstanceType = {
-              vCPUs: 2,
-              RAM: 4,
-            };
-
-            data.forEach(node => {
-              if (node.labels['porter.run/workload-kind']) {
-                var instanceType: string = node.labels['beta.kubernetes.io/instance-type'];
-                const [instanceClass, instanceSize] = instanceType.split('.');
-                if (instanceClass && instanceSize) {
-                  if (AWS_INSTANCE_LIMITS[instanceClass] && AWS_INSTANCE_LIMITS[instanceClass][instanceSize]) {
-                    let currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
-                    largestInstanceType.vCPUs = currentInstance.vCPU;
-                    largestInstanceType.RAM = currentInstance.RAM;
-
-                  }
-                }
-              }
-            });
-
-            setMaxCPU(largestInstanceType.vCPUs * UPPER_BOUND);
-            setMaxRAM(largestInstanceType.RAM * UPPER_BOUND);
-          }
-        }).catch((error) => {
-          setError(error)
-        });
-    }
-  }, []);
-
 
   const renderMain = () => {
     setHeight(159);

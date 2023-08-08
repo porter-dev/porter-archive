@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import AnimateHeight, { Height } from "react-animate-height";
 import styled from "styled-components";
 import _ from "lodash";
@@ -14,6 +14,9 @@ import JobTabs from "./tabs/JobTabs";
 import { Service } from "./serviceTypes";
 import StatusFooter from "../expanded-app/StatusFooter";
 import ReleaseTabs from "./tabs/ReleaseTabs";
+import { Context } from "shared/Context";
+import { AWS_INSTANCE_LIMITS } from "./tabs/utils";
+import api from "shared/api";
 
 interface ServiceProps {
   service: Service;
@@ -31,7 +34,74 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   setExpandedJob,
 }) => {
   const [height, setHeight] = React.useState<Height>("auto");
+  const [nodeList, setNodeList] = useState([]);
+  const UPPER_BOUND = .75;
 
+  const [maxCPU, setMaxCPU] = useState(2 * UPPER_BOUND); //default is set to a t3 medium 
+  const [maxRAM, setMaxRAM] = useState(4 * UPPER_BOUND); //default is set to a t3 medium
+  const [error, setError] = useState(false);
+  const context = useContext(Context);
+
+  useEffect(() => {
+    const { currentCluster, currentProject } = context;
+    if (!currentCluster || !currentProject) {
+      return;
+    }
+
+    const serviceName = service?.name;
+    var instanceType = "";
+
+    //first check if there is a nodeSelector for the given application (Can be null)
+    if (chart?.config?.[serviceName + "-web"]?.nodeSelector?.["beta.kubernetes.io/instance-type"]) {
+      instanceType = chart?.config?.[serviceName + "-web"]?.nodeSelector?.["beta.kubernetes.io/instance-type"]
+      const [instanceClass, instanceSize] = instanceType.split('.');
+      let currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
+      setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
+      setMaxRAM(currentInstance.RAM * UPPER_BOUND);
+    }
+    //Query the given nodes if no instance type is specified
+    if (instanceType == "") {
+      api
+        .getClusterNodes(
+          "<token>",
+          {},
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+          }
+        )
+        .then(({ data }) => {
+          if (data) {
+            setNodeList(data);
+
+            let largestInstanceType = {
+              vCPUs: 2,
+              RAM: 4,
+            };
+
+            data.forEach(node => {
+              if (node.labels['porter.run/workload-kind']) {
+                var instanceType: string = node.labels['beta.kubernetes.io/instance-type'];
+                const [instanceClass, instanceSize] = instanceType.split('.');
+                if (instanceClass && instanceSize) {
+                  if (AWS_INSTANCE_LIMITS[instanceClass] && AWS_INSTANCE_LIMITS[instanceClass][instanceSize]) {
+                    let currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
+                    largestInstanceType.vCPUs = currentInstance.vCPU;
+                    largestInstanceType.RAM = currentInstance.RAM;
+
+                  }
+                }
+              }
+            });
+
+            setMaxCPU(largestInstanceType.vCPUs * UPPER_BOUND);
+            setMaxRAM(largestInstanceType.RAM * UPPER_BOUND);
+          }
+        }).catch((error) => {
+          setError(error)
+        });
+    }
+  }, []);
   // TODO: calculate heights instead of hardcoding them
   const renderTabs = (service: Service) => {
     switch (service.type) {
@@ -41,7 +111,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             service={service}
             editService={editService}
             setHeight={setHeight}
-            chart={chart}
+            maxCPU={maxCPU}
+            maxRAM={maxRAM}
           />
         );
       case "worker":
@@ -50,6 +121,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             service={service}
             editService={editService}
             setHeight={setHeight}
+            maxCPU={maxCPU}
+            maxRAM={maxRAM}
           />
         );
       case "job":
@@ -58,6 +131,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             service={service}
             editService={editService}
             setHeight={setHeight}
+            maxCPU={maxCPU}
+            maxRAM={maxRAM}
           />
         );
       case "release":
@@ -66,6 +141,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             service={service}
             editService={editService}
             setHeight={setHeight}
+            maxCPU={maxCPU}
+            maxRAM={maxRAM}
           />
         );
     }

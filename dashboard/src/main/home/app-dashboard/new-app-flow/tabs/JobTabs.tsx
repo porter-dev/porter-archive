@@ -9,7 +9,7 @@ import AnimateHeight, { Height } from "react-animate-height";
 import cronstrue from 'cronstrue';
 import Link from "components/porter/Link";
 import { Context } from "shared/Context";
-import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED } from "./utils";
+import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, MIB_TO_GIB } from "./utils";
 import InputSlider from "components/porter/InputSlider";
 
 interface Props {
@@ -88,9 +88,9 @@ const JobTabs: React.FC<Props> = ({
           min={0}
           max={maxCPU}
           color={"#3a48ca"}
-          value={(service.cpu.value / 1000).toString()}
+          value={(service.cpu.value / MILI_TO_CORE).toString()}
           setValue={(e) => {
-            editService({ ...service, cpu: { readOnly: false, value: e * 1000 } });
+            editService({ ...service, cpu: { readOnly: false, value: e * MILI_TO_CORE } });
           }}
           step={0.01}
           disabled={service.cpu.readOnly}
@@ -103,9 +103,9 @@ const JobTabs: React.FC<Props> = ({
           min={0}
           max={maxRAM}
           color={"#3a48ca"}
-          value={(service.ram.value / 1024).toString()}
+          value={(service.ram.value / MIB_TO_GIB).toString()}
           setValue={(e) => {
-            editService({ ...service, ram: { readOnly: false, value: e * 1024 } });
+            editService({ ...service, ram: { readOnly: false, value: e * MIB_TO_GIB } });
           }}
           disabled={service.ram.readOnly}
           step={0.01}

@@ -7,7 +7,7 @@ import Checkbox from "components/porter/Checkbox";
 import { Service, WebService } from "../serviceTypes";
 import AnimateHeight, { Height } from "react-animate-height";
 import { Context } from "shared/Context";
-import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, RESOURCE_HEIGHT_WITHOUT_AUTOSCALING, RESOURCE_HEIGHT_WITH_AUTOSCALING, AWS_INSTANCE_LIMITS } from "./utils";
+import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, RESOURCE_HEIGHT_WITHOUT_AUTOSCALING, RESOURCE_HEIGHT_WITH_AUTOSCALING, AWS_INSTANCE_LIMITS, MILI_TO_CORE, MIB_TO_GIB } from "./utils";
 import IngressCustomAnnotations from "./IngressCustomAnnotations";
 import CustomDomains from "./CustomDomains";
 import InputSlider from "components/porter/InputSlider";
@@ -255,9 +255,9 @@ const WebTabs: React.FC<Props> = ({
           min={0}
           max={maxCPU}
           color={"#3a48ca"}
-          value={(service.cpu.value / 1000).toString()}
+          value={(service.cpu.value / MILI_TO_CORE).toString()}
           setValue={(e) => {
-            editService({ ...service, cpu: { readOnly: false, value: e * 1000 } });
+            editService({ ...service, cpu: { readOnly: false, value: e * MILI_TO_CORE } });
           }}
           step={0.01}
           disabled={service.cpu.readOnly}
@@ -270,9 +270,9 @@ const WebTabs: React.FC<Props> = ({
           min={0}
           max={maxRAM}
           color={"#3a48ca"}
-          value={(service.ram.value / 1024).toString()}
+          value={(service.ram.value / MIB_TO_GIB).toString()}
           setValue={(e) => {
-            editService({ ...service, ram: { readOnly: false, value: e * 1024 } });
+            editService({ ...service, ram: { readOnly: false, value: e * MIB_TO_GIB } });
           }}
           disabled={service.ram.readOnly}
           step={0.01}

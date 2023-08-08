@@ -53,7 +53,6 @@ const ProjectSelectionModal: React.FC<Props> = ({
     return sortedProjects;
   }, [projects, searchValue, currentProject]);
   useEffect(() => {
-    // Check if window is defined to avoid issues during server-side rendering
     if (typeof window !== 'undefined') {
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Escape" || e.keyCode === 27) {
@@ -61,10 +60,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
         }
       };
 
-      // Add the event listener when the component mounts
       window.addEventListener('keydown', handleKeyDown);
-
-      // Return a cleanup function to remove the event listener when the component unmounts
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
       };

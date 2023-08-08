@@ -38,7 +38,7 @@ const HIDDEN_CHARTS = ["porter-agent", "loki"];
 //   "agent",
 //   "datadog"];
 const DATA_STORES = ["elasticsearch", "mongodb", "postgresql", "mysql", "redis"];
-const APPS = ["agent", "datadog", "tailscale-relay", "metabase",];
+const APPS = ["agent", "datadog", "tailscale-relay", "metabase", "mezmo"];
 
 const NewAddOnFlow: React.FC<Props> = ({
 }) => {
@@ -48,6 +48,7 @@ const NewAddOnFlow: React.FC<Props> = ({
   const [addOnTemplates, setAddOnTemplates] = useState<any[]>([]);
   const [currentTemplate, setCurrentTemplate] = useState<any>(null);
   const [currentForm, setCurrentForm] = useState<any>(null);
+
 
   const filteredTemplates = useMemo(() => {
     const filteredBySearch = search(
@@ -61,6 +62,15 @@ const NewAddOnFlow: React.FC<Props> = ({
 
     return _.sortBy(filteredBySearch);
   }, [addOnTemplates, searchValue]);
+
+  const appTemplates = useMemo(() => {
+    return filteredTemplates.filter(template => template.tag === "APP");
+  }, [filteredTemplates]);
+
+  const dataStoreTemplates = useMemo(() => {
+    return filteredTemplates.filter(template => template.tag === "DATA_STORE");
+  }, [filteredTemplates]);
+
 
   const getTemplates = async () => {
     setIsLoading(true);
@@ -160,15 +170,15 @@ const NewAddOnFlow: React.FC<Props> = ({
                   {isLoading ? <Loading offset="-150px" /> : (
                     <>
                       <DarkMatter />
-                      <Spacer y={1} />
-                      <Text color="#fff" size={14} >Application Addons </Text>
+
+                      {appTemplates?.length > 0 && <><Spacer y={1.5} /><Text color="#fff" size={14} >Application Addons </Text></>}
                       <TemplateList
-                        templates={filteredTemplates}
+                        templates={appTemplates} // This is where you provide only APP templates
                         setCurrentTemplate={(x) => setCurrentTemplate(x)}
                       />
-                      <Text color="#fff" size={14} > Preproduction Datastore addons </Text>
+                      {dataStoreTemplates?.length > 0 && <Text color="#fff" size={14} > Preproduction Datastore addons </Text>}
                       <TemplateList
-                        templates={filteredTemplates}
+                        templates={dataStoreTemplates} // This is where you provide only DATA_STORE templates
                         setCurrentTemplate={(x) => setCurrentTemplate(x)}
                       />
                     </>

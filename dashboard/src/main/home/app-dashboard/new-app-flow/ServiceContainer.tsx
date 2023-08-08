@@ -53,8 +53,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       const serviceName = service.name;
 
       //first check if there is a nodeSelector for the given application (Can be null)
-      if (chart?.config?.[serviceName + service.type]?.nodeSelector?.["beta.kubernetes.io/instance-type"]) {
-        instanceType = chart?.config?.[serviceName + "-web"]?.nodeSelector?.["beta.kubernetes.io/instance-type"]
+      if (chart?.config?.[`${serviceName}-${service.type}`]?.nodeSelector?.["beta.kubernetes.io/instance-type"]) {
+        instanceType = chart?.config?.[`${serviceName}-${service.type}`]?.nodeSelector?.["beta.kubernetes.io/instance-type"]
         const [instanceClass, instanceSize] = instanceType.split('.');
         const currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
         setMaxCPU(currentInstance.vCPU * UPPER_BOUND);

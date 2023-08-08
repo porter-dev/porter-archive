@@ -18,7 +18,7 @@ import (
 )
 
 type ValidatePorterAppRequest struct {
-	DeploymentTargetID uint   `json:"deployment_target_id"`
+	DeploymentTargetID string `json:"deployment_target_id"`
 	AppName            string `json:"app_name"`
 	PorterYAMLBase64   string `json:"porter_yaml"`
 	LatestCommit       string `json:"latest_commit"`
@@ -84,7 +84,7 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	// validate the app
 	validateRequest := connect.NewRequest(&porterv1.ValidatePorterAppRequest{
 		ProjectId:          int64(project.ID),
-		DeploymentTargetId: int64(request.DeploymentTargetID),
+		DeploymentTargetId: request.DeploymentTargetID,
 		Application:        target,
 	})
 

@@ -519,50 +519,50 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   fileUpload={true}
                   syncedEnvGroups={syncedEnvGroups}
                 />
-                {currentProject?.env_group_enabled && (
-                  <>
-                    <TooltipWrapper
-                      onMouseOver={() => setHovered(true)}
-                      onMouseOut={() => setHovered(false)}>
-                      <LoadButton
-                        disabled={maxEnvGroupsReached}
-                        onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
-                      >
-                        <img src={sliders} /> Load from Env Group
-                      </LoadButton>
-                      <TooltipText visible={maxEnvGroupsReached && hovered}>Max 4 Env Groups allowed</TooltipText>
-                    </TooltipWrapper>
 
-                    {showEnvModal && <EnvGroupModal
-                      setValues={(x: any) => {
-                        setFormState({ ...formState, envVariables: x });
-                      }}
-                      values={formState.envVariables}
-                      closeModal={() => setShowEnvModal(false)}
-                      syncedEnvGroups={syncedEnvGroups}
-                      setSyncedEnvGroups={setSyncedEnvGroups}
-                      namespace={"porter-stack-" + porterApp.name}
-                      newApp={true}
-                    />}
-                    {!!syncedEnvGroups?.length && (
-                      <>
-                        <Spacer y={0.5} />
-                        <Text size={16}>Synced environment groups</Text >
-                        {syncedEnvGroups?.map((envGroup: any) => {
-                          return (
-                            <ExpandableEnvGroup
-                              key={envGroup?.name}
-                              envGroup={envGroup}
-                              onDelete={() => {
-                                deleteEnvGroup(envGroup);
-                              }}
-                            />
-                          );
-                        })}
-                      </>
-                    )}
-                  </>
-                )}
+                <>
+                  <TooltipWrapper
+                    onMouseOver={() => setHovered(true)}
+                    onMouseOut={() => setHovered(false)}>
+                    <LoadButton
+                      disabled={maxEnvGroupsReached}
+                      onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
+                    >
+                      <img src={sliders} /> Load from Env Group
+                    </LoadButton>
+                    <TooltipText visible={maxEnvGroupsReached && hovered}>Max 4 Env Groups allowed</TooltipText>
+                  </TooltipWrapper>
+
+                  {showEnvModal && <EnvGroupModal
+                    setValues={(x: any) => {
+                      setFormState({ ...formState, envVariables: x });
+                    }}
+                    values={formState.envVariables}
+                    closeModal={() => setShowEnvModal(false)}
+                    syncedEnvGroups={syncedEnvGroups}
+                    setSyncedEnvGroups={setSyncedEnvGroups}
+                    namespace={"porter-stack-" + porterApp.name}
+                    newApp={true}
+                  />}
+                  {!!syncedEnvGroups?.length && (
+                    <>
+                      <Spacer y={0.5} />
+                      <Text size={16}>Synced environment groups</Text >
+                      {syncedEnvGroups?.map((envGroup: any) => {
+                        return (
+                          <ExpandableEnvGroup
+                            key={envGroup?.name}
+                            envGroup={envGroup}
+                            onDelete={() => {
+                              deleteEnvGroup(envGroup);
+                            }}
+                          />
+                        );
+                      })}
+                    </>
+                  )}
+                </>
+
               </>,
               formState.selectedSourceType == "github" &&
               <>

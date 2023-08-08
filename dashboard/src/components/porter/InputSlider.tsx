@@ -106,7 +106,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
 export default InputSlider;
 
 const SliderContainer = styled.div<{ width?: string }>`
-  width: ${({ width }) => width || '600px'};
+  width: ${({ width }) => width || '300px'};
   margin: 1px 0;
 `;
 

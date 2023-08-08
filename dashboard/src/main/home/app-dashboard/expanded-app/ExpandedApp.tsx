@@ -149,7 +149,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
   const getPorterApp = async ({ revision }: { revision: number }) => {
-    setIsLoading(true);
     const { appName } = props.match.params as any;
     try {
       if (!currentCluster || !currentProject) {

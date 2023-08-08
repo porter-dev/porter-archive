@@ -304,7 +304,7 @@ func (p *CreateUpdatePorterAppEventHandler) updateDeployEvent(ctx context.Contex
 		return types.PorterAppEvent{}
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "new-status", Value: porterAppEventStatus})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "new-status", Value: string(porterAppEventStatus)})
 
 	matchEvent, err := p.Repo().PorterAppEvent().ReadDeployEventByRevision(ctx, appID, revisionFloat64)
 	if err != nil {

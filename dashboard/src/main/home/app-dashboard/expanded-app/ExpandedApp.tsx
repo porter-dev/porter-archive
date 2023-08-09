@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { RouteComponentProps, useLocation, useParams, withRouter } from "react-router";
+import { RouteComponentProps, useHistory, useLocation, useParams, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
 
@@ -43,7 +43,7 @@ import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
-import { NewPopulatedEnvGroup, PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
+import { NewPopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
 import EventFocusView from "./activity-feed/events/focus-views/EventFocusView";
 import HelmValuesTab from "./HelmValuesTab";
@@ -71,6 +71,7 @@ const validTabs = [
   "build-settings",
   "settings",
   "helm-values",
+  "job-history",
 ] as const;
 const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
@@ -120,10 +121,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
   const [buildView, setBuildView] = useState<BuildMethod>("docker");
 
+  const history = useHistory();
+
   const { tab } = useParams<Params>();
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
-  const logFilterQueryParamOpts = {
+  const queryParamOpts = {
     revision: queryParams.get('version'),
     output_stream: queryParams.get('output_stream'),
     service: queryParams.get('service'),
@@ -148,7 +151,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
   const getPorterApp = async ({ revision }: { revision: number }) => {
-    setIsLoading(true);
     const { appName } = props.match.params as any;
     try {
       if (!currentCluster || !currentProject) {
@@ -449,6 +451,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         "An error occurred while deploying your app. Please try again.";
       setButtonStatus(<Error message={errMessage} />);
     }
+
+    // redirect to the default tab
+    history.push(`/apps/${appData.app.name}/${DEFAULT_TAB}`);
   };
 
   const fetchPorterYamlContent = async (
@@ -683,9 +688,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "logs":
         return <LogSection
           currentChart={appData.chart}
-          services={services.filter(Service.isNonRelease)}
+          services={services.filter(svc => Service.isNonRelease(svc) && !Service.isJob(svc))}
           appName={appData.app.name}
-          filterOpts={logFilterQueryParamOpts}
+          filterOpts={queryParamOpts}
         />;
       case "metrics":
         return <MetricsSection currentChart={appData.chart} />;
@@ -714,7 +719,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           currentChart={appData.chart}
           updatePorterApp={updatePorterApp}
           buttonStatus={buttonStatus}
-        />
+        />;
+      case "job-history":
+        return <ExpandedJob
+          appName={appData.app.name}
+          jobName={queryParamOpts.service}
+          goBack={() => setExpandedJob(null)}
+        />;
       default:
         return <ActivityFeed
           chart={appData.chart}
@@ -723,16 +734,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         />;
     }
   };
-
-  if (expandedJob) {
-    return (
-      <ExpandedJob
-        appName={appData.app.name}
-        jobName={expandedJob}
-        goBack={() => setExpandedJob(null)}
-      />
-    );
-  }
 
   return (
     <>

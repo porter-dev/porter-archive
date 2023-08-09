@@ -19,7 +19,7 @@ import _ from "lodash";
 import Button from "components/porter/Button";
 import Icon from "components/porter/Icon";
 import Container from "components/porter/Container";
-import { PorterAppEvent } from "./events/types";
+import { PorterAppEvent, PorterAppEventType } from "./events/types";
 
 type Props = {
   chart: any;
@@ -68,6 +68,14 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
       setLoading(false);
       setShouldAnimate(false);
     }
+  };
+
+  const getLatestDeployEventIndex = () => {
+    const deployEvents = events.filter((event) => event.type === PorterAppEventType.DEPLOY);
+    if (deployEvents.length === 0) {
+      return -1;
+    }
+    return events.indexOf(deployEvents[0]);
   };
 
   const updateEvents = async () => {
@@ -209,7 +217,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
               <Spacer x={0.5} />
               <Text>{feedDate(event.created_at).split(", ")[1]}</Text>
             </Time>
-            <EventCard appData={appData} event={event} key={i} />
+            <EventCard appData={appData} event={event} key={i} isLatestDeployEvent={i === getLatestDeployEventIndex()} />
           </EventWrapper>
         );
       })}

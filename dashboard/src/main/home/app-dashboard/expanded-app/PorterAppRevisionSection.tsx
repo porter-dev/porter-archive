@@ -485,6 +485,7 @@ const RevisionHeader = styled.div`
     border-radius: 20px;
     transform: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
         props.showRevisions ? "" : "rotate(-90deg)"};
+    transition: transform 0.1s ease;
   }
 `;
 

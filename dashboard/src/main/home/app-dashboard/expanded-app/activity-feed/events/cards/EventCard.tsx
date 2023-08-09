@@ -10,9 +10,10 @@ import { PorterAppDeployEvent, PorterAppEvent, PorterAppEventType } from "../typ
 type Props = {
   event: PorterAppEvent;
   appData: any;
+  isLatestDeployEvent?: boolean;
 };
 
-const EventCard: React.FC<Props> = ({ event, appData }) => {
+const EventCard: React.FC<Props> = ({ event, appData, isLatestDeployEvent }) => {
   const renderEventCard = (event: PorterAppEvent) => {
     switch (event.type) {
       case PorterAppEventType.APP_EVENT:
@@ -20,7 +21,7 @@ const EventCard: React.FC<Props> = ({ event, appData }) => {
       case PorterAppEventType.BUILD:
         return <BuildEventCard event={event} appData={appData} />;
       case PorterAppEventType.DEPLOY:
-        return <DeployEventCard event={event as PorterAppDeployEvent} appData={appData} />;
+        return <DeployEventCard event={event as PorterAppDeployEvent} appData={appData} showServiceStatusDetail={isLatestDeployEvent} />;
       case PorterAppEventType.PRE_DEPLOY:
         return <PreDeployEventCard event={event} appData={appData} />;
       default:

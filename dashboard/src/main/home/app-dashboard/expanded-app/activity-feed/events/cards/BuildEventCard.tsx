@@ -15,7 +15,7 @@ import api from "shared/api";
 import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
 import JSZip from "jszip";
 import Anser, { AnserJsonEntry } from "anser";
-import { getDuration, getStatusIcon, triggerWorkflow } from '../utils';
+import { getDuration, getStatusColor, getStatusIcon, triggerWorkflow } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import document from "assets/document.svg";
 import { PorterAppEvent } from "../types";
@@ -29,11 +29,11 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return <Text color="#68BF8B">Build succeeded</Text>;
+        return <Text color={getStatusColor(event.status)}>Build succeeded</Text>;
       case "FAILED":
-        return <Text color="#FF6060">Build failed</Text>;
+        return <Text color={getStatusColor(event.status)}>Build failed</Text>;
       default:
-        return <Text color="helper">Build in progress...</Text>;
+        return <Text color={getStatusColor(event.status)}>Build in progress...</Text>;
     }
   };
 

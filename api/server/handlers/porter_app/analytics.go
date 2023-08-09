@@ -100,9 +100,9 @@ func TrackStackBuildStatus(
 	project *models.Project,
 	stackName string,
 	errorMessage string,
-	status string,
+	status types.PorterAppEventStatus,
 ) error {
-	if status == "PROGRESSING" {
+	if status == types.PorterAppEventStatus_Progressing {
 		return config.AnalyticsClient.Track(analytics.StackBuildProgressingTrack(&analytics.StackBuildOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			StackName:              stackName,
@@ -113,7 +113,7 @@ func TrackStackBuildStatus(
 		}))
 	}
 
-	if status == "SUCCESS" {
+	if status == types.PorterAppEventStatus_Success {
 		return config.AnalyticsClient.Track(analytics.StackBuildSuccessTrack(&analytics.StackBuildOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			StackName:              stackName,
@@ -124,7 +124,7 @@ func TrackStackBuildStatus(
 		}))
 	}
 
-	if status == "FAILED" {
+	if status == types.PorterAppEventStatus_Failed {
 		return config.AnalyticsClient.Track(analytics.StackBuildFailureTrack(&analytics.StackBuildOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			StackName:              stackName,

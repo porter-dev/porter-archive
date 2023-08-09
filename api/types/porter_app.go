@@ -106,16 +106,40 @@ const (
 	PorterAppEventType_AppEvent PorterAppEventType = "APP_EVENT"
 )
 
+// PorterAppEventStatus is an alias for a string that represents a Porter Stack Event Status
+type PorterAppEventStatus string
+
+const (
+	// PorterAppEventStatus_Success represents a Porter Stack Event that was successful
+	PorterAppEventStatus_Success PorterAppEventStatus = "SUCCESS"
+	// PorterAppEventStatus_Failed represents a Porter Stack Event that failed
+	PorterAppEventStatus_Failed PorterAppEventStatus = "FAILED"
+	// PorterAppEventStatus_Progressing represents a Porter Stack Event that is in progress
+	PorterAppEventStatus_Progressing PorterAppEventStatus = "PROGRESSING"
+	// PorterAppEventStatus_Canceled represents a Porter Stack Event that has been canceled
+	PorterAppEventStatus_Canceled PorterAppEventStatus = "CANCELED"
+)
+
 // PorterAppEvent represents a simplified event for creating a Porter stack app event
 // swagger:model
 type CreateOrUpdatePorterAppEventRequest struct {
 	// ID, if supplied, will be assumed to be an update event
 	ID string `json:"id"`
 	// Status contains the accepted status' of a given event such as SUCCESS, FAILED, PROGRESSING, etc.
-	Status string `json:"status,omitempty"`
+	Status PorterAppEventStatus `json:"status,omitempty"`
 	// Type represents a supported Porter Stack Event
 	Type PorterAppEventType `json:"type"`
 	// TypeExternalSource represents an external event source such as Github, or Gitlab. This is not always required but will commonly be see in build events
 	TypeExternalSource string         `json:"type_source,omitempty"`
 	Metadata           map[string]any `json:"metadata,omitempty"`
+}
+
+// ServiceDeploymentMetadata contains information about a service when it deploys
+type ServiceDeploymentMetadata struct {
+	// Status is the status of the service deployment
+	Status PorterAppEventStatus `json:"status"`
+	// ExternalURI is the external URI of a service (if it is web)
+	ExternalURI string `json:"external_uri"`
+	// Type is the type of the service - one of web, worker, or job
+	Type string `json:"type"`
 }

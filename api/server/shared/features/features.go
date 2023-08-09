@@ -26,7 +26,6 @@ func isPorterAgentUpdated(agent *kubernetes.Agent, major, minor, patch int) bool
 		return true
 	}
 
-	// check if 'v' is a prefix
 	if !strings.HasPrefix(tag, "v") {
 		return false
 	}

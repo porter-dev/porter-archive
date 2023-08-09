@@ -19,7 +19,7 @@ const Icon: React.FC<Props> = ({
 
 export default Icon;
 
-const StyledIcon = styled.img<{ 
+const StyledIcon = styled.img<{
   height?: string;
   opacity?: number;
 }>`

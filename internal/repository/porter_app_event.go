@@ -14,4 +14,5 @@ type PorterAppEventRepository interface {
 	CreateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error
 	UpdateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error
 	ReadEvent(ctx context.Context, id uuid.UUID) (models.PorterAppEvent, error)
+	ReadDeployEventByRevision(ctx context.Context, porterAppID uint, revision float64) (models.PorterAppEvent, error)
 }

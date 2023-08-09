@@ -19,6 +19,7 @@ import { timeFormat } from "d3-time-format";
 import AnimateHeight, { Height } from "react-animate-height";
 import { ControllerTabPodType } from "./status/ControllerTab";
 import _ from "lodash";
+import Link from "components/porter/Link";
 
 type Props = RouteComponentProps & {
   chart: any;
@@ -274,16 +275,18 @@ const StatusFooter: React.FC<Props> = ({
               Last run succeeded at 12:39 PM on 4/13/23
             </Text>
             */}
-            <Button
-              onClick={() => setExpandedJob(service.name)}
-              height="30px"
-              width="87px"
-              color="#ffffff11"
-              withBorder
-            >
-              <I className="material-icons">open_in_new</I>
-              History
-            </Button>
+            <Link to={`/apps/${chart.name}/job-history?service=${service.name}`}>
+              <Button
+                onClick={() => { }}
+                height="30px"
+                width="87px"
+                color="#ffffff11"
+                withBorder
+              >
+                <I className="material-icons">open_in_new</I>
+                History
+              </Button>
+            </Link>
           </Container>
         )}
       </StyledStatusFooter>

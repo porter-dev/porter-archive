@@ -944,3 +944,55 @@ func addLabelsToService(service *Service, envGroups []string, defaultLabelKey st
 
 	return service
 }
+
+func getServiceDeploymentMetadataFromValues(values map[string]interface{}, status types.PorterAppEventStatus) map[string]types.ServiceDeploymentMetadata {
+	serviceDeploymentMap := make(map[string]types.ServiceDeploymentMetadata)
+
+	for key := range values {
+		if key != "global" {
+			serviceName, serviceType := getServiceNameAndTypeFromHelmName(key)
+			externalURI := getServiceExternalURIFromServiceValues(values[key].(map[string]interface{}))
+			// jobs don't technically have a deployment, so hardcode the deployment status to success
+			serviceStatus := status
+			if serviceType == "job" {
+				serviceStatus = types.PorterAppEventStatus_Success
+			}
+			serviceDeploymentMap[serviceName] = types.ServiceDeploymentMetadata{
+				ExternalURI: externalURI,
+				Status:      serviceStatus,
+				Type:        serviceType,
+			}
+		}
+	}
+	return serviceDeploymentMap
+}
+
+func getServiceExternalURIFromServiceValues(serviceValues map[string]interface{}) string {
+	ingressMap, err := getNestedMap(serviceValues, "ingress")
+	if err == nil {
+		enabledVal, enabledExists := ingressMap["enabled"]
+		if enabledExists {
+			enabled, eOK := enabledVal.(bool)
+			if eOK && enabled {
+				customDomVal, customDomExists := ingressMap["custom_domain"]
+				if customDomExists {
+					customDomain, cOK := customDomVal.(bool)
+					if cOK && customDomain {
+						hostsExists, hostsExistsOK := ingressMap["hosts"]
+						if hostsExistsOK {
+							if hosts, hostsOK := hostsExists.([]interface{}); hostsOK && len(hosts) == 1 {
+								return hosts[0].(string)
+							}
+						}
+					}
+				}
+
+				if porterHosts, ok := ingressMap["porter_hosts"].([]interface{}); ok && len(porterHosts) == 1 {
+					return porterHosts[0].(string)
+				}
+			}
+		}
+	}
+
+	return ""
+}

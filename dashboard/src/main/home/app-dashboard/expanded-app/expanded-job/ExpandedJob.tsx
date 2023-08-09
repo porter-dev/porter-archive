@@ -30,11 +30,11 @@ type Props = RouteComponentProps & {
   goBack: () => void;
 };
 
-const ExpandedJob: React.FC<Props> = ({ 
+const ExpandedJob: React.FC<Props> = ({
   appName,
   jobName,
   goBack,
-  ...props 
+  ...props
 }) => {
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
@@ -55,7 +55,6 @@ const ExpandedJob: React.FC<Props> = ({
       )}
       {!isLoading && !expandedRun && (
         <StyledExpandedApp>
-          <Back onClick={goBack} />
           <Container row>
             <Icon src={history} />
             <Text size={21}>Run history for "{jobName}"</Text>

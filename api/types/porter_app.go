@@ -143,3 +143,15 @@ type ServiceDeploymentMetadata struct {
 	// Type is the type of the service - one of web, worker, or job
 	Type string `json:"type"`
 }
+type ListEnvironmentGroupsResponse struct {
+	EnvironmentGroups []EnvironmentGroupListItem `json:"environment_groups,omitempty"`
+}
+
+type EnvironmentGroupListItem struct {
+	Name               string            `json:"name"`
+	LatestVersion      int               `json:"latest_version"`
+	Variables          map[string]string `json:"variables"`
+	SecretVariables    map[string]string `json:"secret_variables"`
+	CreatedAtUTC       time.Time         `json:"created_at"`
+	LinkedApplications []string          `json:"linked_applications,omitempty"`
+}

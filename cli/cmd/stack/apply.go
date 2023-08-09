@@ -172,9 +172,13 @@ func createStackConf(client *api.Client, app *Application, stackName string, pro
 	}
 
 	releaseEnvVars := getEnvFromRelease(client, stackName, projectID, clusterID)
-	if releaseEnvVars != nil {
+	releaseEnvGroupVars := getEnvGroupFromRelease(client, stackName, projectID, clusterID)
+	// releaseEnvVars will override releaseEnvGroupVars
+	totalEnv := mergeStringMaps(releaseEnvGroupVars, releaseEnvVars)
+
+	if totalEnv != nil {
 		color.New(color.FgYellow).Printf("Reading build env from release\n")
-		app.Env = mergeStringMaps(app.Env, releaseEnvVars)
+		app.Env = mergeStringMaps(app.Env, totalEnv)
 	}
 
 	return &StackConf{
@@ -253,6 +257,58 @@ func convertToBuild(porterApp *types.PorterApp) Build {
 		Dockerfile: dockerfile,
 		Image:      image,
 	}
+}
+
+func getEnvGroupFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) map[string]string {
+	var envGroups []string
+	envVarsGroupStringMap := make(map[string]string)
+
+	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+	release, err := client.GetRelease(
+		context.Background(),
+		projectID,
+		clusterID,
+		namespace,
+		stackName,
+	)
+
+	if err == nil && release != nil {
+		for _, val := range release.Config {
+			// Check if the value is a map
+			if appConfig, ok := val.(map[string]interface{}); ok {
+				if labels, ok := appConfig["labels"]; ok {
+					if labelsMap, ok := labels.(map[string]interface{}); ok {
+						if envGroup, ok := labelsMap["porter.run/linked-environment-group"]; ok {
+							envGroups = append(envGroups, fmt.Sprintf("%v", envGroup))
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if envGroups == nil {
+		return envVarsGroupStringMap
+	} else {
+		envGroupList, err := client.ListEnvGroups(context.Background(),
+			projectID,
+			clusterID)
+		if err == nil {
+			for _, groupName := range envGroups {
+				for _, envGroupItem := range envGroupList.EnvironmentGroups {
+					if envGroupItem.Name == groupName {
+						for k, v := range envGroupItem.Variables {
+							envVarsGroupStringMap[k] = v
+						}
+						for k, v := range envGroupItem.SecretVariables {
+							envVarsGroupStringMap[k] = v
+						}
+					}
+				}
+			}
+		}
+	}
+	return envVarsGroupStringMap
 }
 
 func getEnvFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) map[string]string {

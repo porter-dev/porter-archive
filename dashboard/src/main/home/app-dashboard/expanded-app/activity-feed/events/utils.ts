@@ -52,6 +52,21 @@ export const getStatusIcon = (status: string) => {
     }
 };
 
+export const getStatusColor = (status: string) => {
+    switch (status) {
+        case "SUCCESS":
+            return "#68BF8B";
+        case "FAILED":
+            return "#FF6060";
+        case "PROGRESSING":
+            return "#6e9df5";
+        case "CANCELED":
+            return "#FFBF00";
+        default:
+            return "#6e9df5";
+    }
+};
+
 export const triggerWorkflow = async (appData: any) => {
     try {
         const res = await api.reRunGHWorkflow(

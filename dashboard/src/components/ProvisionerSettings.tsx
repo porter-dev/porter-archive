@@ -906,6 +906,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
     margin-left: -7px;
     transform: ${(props) =>
     props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+    transition: transform 0.1s ease;
   }
 `;
 

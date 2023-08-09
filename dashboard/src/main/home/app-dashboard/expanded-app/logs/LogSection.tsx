@@ -91,6 +91,9 @@ const LogSection: React.FC<Props> = ({
       return false;
     }
     const version = agentImage.split(":").pop();
+    if (version === "dev") {
+      return true;
+    }
     //make sure version is above v3.1.3
     if (version == null) {
       return false;

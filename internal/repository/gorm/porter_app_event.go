@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strconv"
 	"time"
@@ -96,6 +97,30 @@ func (repo *PorterAppEventRepository) ReadEvent(ctx context.Context, id uuid.UUI
 	strID := id.String()
 
 	if err := repo.db.Where("id = ?", strID).First(&appEvent).Error; err != nil {
+		return appEvent, err
+	}
+
+	return appEvent, nil
+}
+
+func (repo *PorterAppEventRepository) ReadDeployEventByRevision(ctx context.Context, porterAppID uint, revision float64) (models.PorterAppEvent, error) {
+	appEvent := models.PorterAppEvent{}
+
+	if porterAppID == 0 {
+		return appEvent, errors.New("invalid porter app ID supplied")
+	}
+
+	// Convert porterAppID to string
+	strAppID := strconv.Itoa(int(porterAppID))
+
+	// Convert revision to JSON number string
+	revJSON, err := json.Marshal(revision)
+	if err != nil {
+		return appEvent, errors.New("unable to marshal revision")
+	}
+	strRevision := string(revJSON)
+
+	if err := repo.db.Where("porter_app_id = ? AND type = 'DEPLOY' AND metadata->>'revision' = ?", strAppID, strRevision).First(&appEvent).Error; err != nil {
 		return appEvent, err
 	}
 

@@ -3,6 +3,7 @@ package porter_app
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -18,6 +19,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/features"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	utils "github.com/porter-dev/porter/api/utils/porter_app"
@@ -48,6 +50,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
 
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-porter-app")
 	defer span.End()
@@ -205,7 +208,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		// create the release job chart if it does not exist (only done by front-end currently, where we set overrideRelease=true)
 		if request.OverrideRelease && preDeployJobValues != nil {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "installing-pre-deploy-job", Value: true})
-			conf, err := createReleaseJobChart(
+			conf, err := createPreDeployJobChart(
 				ctx,
 				appName,
 				preDeployJobValues,
@@ -299,7 +302,12 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		_, err = createPorterAppEvent(ctx, "SUCCESS", porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		if features.AreAgentDeployEventsEnabled(user.Email, k8sAgent) {
+			serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, types.PorterAppEventStatus_Progressing)
+			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, types.PorterAppEventStatus_Progressing, porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		} else {
+			_, err = createOldPorterAppDeployEvent(ctx, types.PorterAppEventStatus_Success, porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		}
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating porter app event")
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
@@ -332,7 +340,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 				helmRelease, err := helmAgent.GetRelease(ctx, preDeployJobName, 0, false)
 				if err != nil {
 					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "creating-pre-deploy-job", Value: true})
-					conf, err := createReleaseJobChart(
+					conf, err := createPreDeployJobChart(
 						ctx,
 						appName,
 						preDeployJobValues,
@@ -483,7 +491,12 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		_, err = createPorterAppEvent(ctx, "SUCCESS", updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		if features.AreAgentDeployEventsEnabled(user.Email, k8sAgent) {
+			serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, types.PorterAppEventStatus_Progressing)
+			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, types.PorterAppEventStatus_Progressing, updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		} else {
+			_, err = createOldPorterAppDeployEvent(ctx, types.PorterAppEventStatus_Success, updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		}
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating porter app event")
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
@@ -495,11 +508,15 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// createPorterAppEvent creates an event for use in the activity feed
-func createPorterAppEvent(ctx context.Context, status string, appID uint, revision int, tag string, repo repository.PorterAppEventRepository) (*models.PorterAppEvent, error) {
+// createOldPorterAppDeployEvent creates an event for use in the activity feed
+// TODO: remove this method and all call-sites if this span no longer exists in telemetry for 4 consecutive weeks
+func createOldPorterAppDeployEvent(ctx context.Context, status types.PorterAppEventStatus, appID uint, revision int, tag string, repo repository.PorterAppEventRepository) (*models.PorterAppEvent, error) {
+	ctx, span := telemetry.NewSpan(ctx, "create-old-porter-app-deploy-event")
+	defer span.End()
+
 	event := models.PorterAppEvent{
 		ID:                 uuid.New(),
-		Status:             status,
+		Status:             string(status),
 		Type:               "DEPLOY",
 		TypeExternalSource: "KUBERNETES",
 		PorterAppID:        appID,
@@ -521,7 +538,117 @@ func createPorterAppEvent(ctx context.Context, status string, appID uint, revisi
 	return &event, nil
 }
 
-func createReleaseJobChart(
+// createNewPorterAppDeployEvent creates an event for use in the activity feed, supplemented with information about the
+// deployed services in serviceStatusMap as well as the image tag being deployed
+func createNewPorterAppDeployEvent(
+	ctx context.Context,
+	serviceStatusMap map[string]types.ServiceDeploymentMetadata,
+	status types.PorterAppEventStatus,
+	appID uint,
+	revision int,
+	tag string,
+	repo repository.PorterAppEventRepository,
+) (*models.PorterAppEvent, error) {
+	ctx, span := telemetry.NewSpan(ctx, "create-new-porter-app-deploy-event")
+	defer span.End()
+
+	// mark all pending deployments from the deploy event of the previous revision as canceled
+	updatePreviousPorterAppDeployEvent(ctx, appID, revision, repo)
+
+	event := models.PorterAppEvent{
+		ID:                 uuid.New(),
+		Status:             string(status),
+		Type:               "DEPLOY",
+		TypeExternalSource: "KUBERNETES",
+		PorterAppID:        appID,
+		Metadata: map[string]any{
+			"revision":                    revision,
+			"image_tag":                   tag,
+			"service_deployment_metadata": serviceStatusMap,
+		},
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "revision", Value: revision}, telemetry.AttributeKV{Key: "image-tag", Value: tag})
+
+	err := repo.CreateEvent(ctx, &event)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error creating porter app event")
+		return nil, err
+	}
+
+	if event.ID == uuid.Nil {
+		return nil, telemetry.Error(ctx, span, nil, "event id for newly created app event is nil")
+	}
+
+	return &event, nil
+}
+
+// updatePreviousPorterAppDeployEvent updates the previous deploy event to change the event status as well as all service statuses to CANCELED
+// if it is still in the PROGRESSING state. This is done to prevent the activity feed from showing an old deploy event as still in progress.
+func updatePreviousPorterAppDeployEvent(ctx context.Context, appID uint, revision int, repo repository.PorterAppEventRepository) {
+	ctx, span := telemetry.NewSpan(ctx, "update-previous-porter-app-deploy-event")
+	defer span.End()
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-previous-event", Value: false}, telemetry.AttributeKV{Key: "new-revision", Value: revision})
+	if revision <= 1 {
+		return
+	}
+	revisionFloat64 := float64(revision - 1)
+	matchEvent, err := repo.ReadDeployEventByRevision(ctx, appID, revisionFloat64)
+	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "error reading deploy event by revision")
+		return
+	}
+	if matchEvent.ID == uuid.Nil {
+		_ = telemetry.Error(ctx, span, nil, "could not find previous deploy event")
+		return
+	}
+	if matchEvent.Status != string(types.PorterAppEventStatus_Progressing) {
+		return
+	}
+	serviceStatus, ok := matchEvent.Metadata["service_deployment_metadata"]
+	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "service deployment metadata not found in deploy event metadata")
+		return
+	}
+	serviceDeploymentGenericMap, ok := serviceStatus.(map[string]interface{})
+	if !ok {
+		_ = telemetry.Error(ctx, span, nil, "service deployment metadata is not map[string]interface{}")
+		return
+	}
+	serviceDeploymentMap := make(map[string]types.ServiceDeploymentMetadata)
+	for k, v := range serviceDeploymentGenericMap {
+		by, err := json.Marshal(v)
+		if err != nil {
+			_ = telemetry.Error(ctx, span, nil, "unable to marshal")
+			return
+		}
+
+		var serviceDeploymentMetadata types.ServiceDeploymentMetadata
+		err = json.Unmarshal(by, &serviceDeploymentMetadata)
+		if err != nil {
+			_ = telemetry.Error(ctx, span, nil, "unable to unmarshal")
+			return
+		}
+		serviceDeploymentMap[k] = serviceDeploymentMetadata
+	}
+	for key, serviceDeploymentMetadata := range serviceDeploymentMap {
+		if serviceDeploymentMetadata.Status == types.PorterAppEventStatus_Progressing {
+			serviceDeploymentMetadata.Status = types.PorterAppEventStatus_Canceled
+			serviceDeploymentMap[key] = serviceDeploymentMetadata
+		}
+	}
+	matchEvent.Metadata["service_deployment_metadata"] = serviceDeploymentMap
+	matchEvent.Status = string(types.PorterAppEventStatus_Canceled)
+	err = repo.UpdateEvent(ctx, &matchEvent)
+	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "error updating deploy event")
+		return
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "updating-previous-event", Value: true})
+}
+
+func createPreDeployJobChart(
 	ctx context.Context,
 	stackName string,
 	values map[string]interface{},

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
@@ -20,11 +19,10 @@ type PorterStackYAML struct {
 	Image        *Image                  `yaml:"image"`
 	Build        *Build                  `yaml:"build"`
 	Env          map[string]string       `yaml:"env"`
-	SyncedEnv    []*SyncedEnvSection     `yaml:"synced_env"`
 	Apps         map[string]Service      `yaml:"apps" validate:"required_without=Applications Services"`
 	Services     map[string]Service      `yaml:"services" validate:"required_without=Applications Apps"`
 
-	Release *Service `yaml:"release"`
+	Predeploy *Service `yaml:"predeploy"`
 }
 
 // Application represents a single app in a Porter YAML file
@@ -35,7 +33,7 @@ type Application struct {
 	Build    *Build             `yaml:"build"`
 	Env      map[string]string  `yaml:"env"`
 
-	Release *Service `yaml:"release"`
+	Predeploy *Service `yaml:"predeploy"`
 }
 
 // Build represents the build settings for a Porter app
@@ -50,22 +48,38 @@ type Build struct {
 
 // Service represents a single service in a porter app
 type Service struct {
-	Run    string      `yaml:"run"`
-	Config interface{} `yaml:"config"`
-	Type   string      `yaml:"type" validate:"required, oneof=web worker job"`
+	Run             string      `yaml:"run"`
+	Type            string      `yaml:"type" validate:"required, oneof=web worker job"`
+	Instances       int         `yaml:"instances"`
+	CpuCores        float32     `yaml:"cpuCores"`
+	RamMegabytes    int         `yaml:"ramMegabytes"`
+	Port            int         `yaml:"port"`
+	Autoscaling     AutoScaling `yaml:"autoscaling" validate:"exluded_if=Type job"`
+	Domains         []Domains   `yaml:"domains" validate:"exluded_unless=Type web"`
+	HealthCheck     HealthCheck `yaml:"healthCheck" validate:"exluded_unless=Type web"`
+	AllowConcurrent bool        `yaml:"allowConcurrent" validate:"exluded_unless=Type job"`
+	Cron            string      `yaml:"cron" validate:"exluded_unless=Type job"`
 }
 
-type SyncedEnvSection struct {
-	Name    string                `json:"name" yaml:"name"`
-	Version uint                  `json:"version" yaml:"version"`
-	Keys    []SyncedEnvSectionKey `json:"keys" yaml:"keys"`
+// AutoScaling represents the autoscaling settings for web services
+type AutoScaling struct {
+	MinInstances           *int `yaml:"minInstances"`
+	MaxInstances           *int `yaml:"maxInstances"`
+	CpuThresholdPercent    int  `yaml:"cpuThresholdPercent"`
+	MemoryThresholdPercent int  `yaml:"memoryThresholdPercent"`
 }
 
-type SyncedEnvSectionKey struct {
-	Name   string `json:"name" yaml:"name"`
-	Secret bool   `json:"secret" yaml:"secret"`
+// Domains are the custom domains for a web service
+type Domains struct {
+	Name string `yaml:"name"`
 }
 
+// HealthCheck is the health check settings for a web service
+type HealthCheck struct {
+	HttpPath string `yaml:"httpPath"`
+}
+
+// Image is the repository and tag for an app's build image
 type Image struct {
 	Repository string `yaml:"repository"`
 	Tag        string `yaml:"tag"`
@@ -118,12 +132,12 @@ func AppProtoFromYaml(file []byte) (map[string]*porterv1.PorterApp, error) {
 		}
 		validApp.Services = services
 
-		if app.Release != nil {
-			release, err := serviceProtoFromConfig(*app.Release, porterv1.ServiceType_SERVICE_TYPE_JOB)
+		if app.Predeploy != nil {
+			predeploy, err := serviceProtoFromConfig(*app.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
 			if err != nil {
-				return nil, telemetry.Error(ctx, span, err, "error casting release config")
+				return nil, telemetry.Error(ctx, span, err, "error casting predeploy config")
 			}
-			validApp.Release = release
+			validApp.Predeploy = predeploy
 		}
 
 		validatedApps[app.Name] = validApp
@@ -154,11 +168,11 @@ func yamlToApplication(porterYaml PorterStackYAML) (Application, error) {
 	}
 
 	application = Application{
-		Name:     porterYaml.Name,
-		Env:      porterYaml.Env,
-		Services: services,
-		Build:    porterYaml.Build,
-		Release:  porterYaml.Release,
+		Name:      porterYaml.Name,
+		Env:       porterYaml.Env,
+		Services:  services,
+		Build:     porterYaml.Build,
+		Predeploy: porterYaml.Predeploy,
 	}
 
 	return application, nil
@@ -193,54 +207,71 @@ func protoEnumFromType(name string, service Service) (porterv1.ServiceType, erro
 }
 
 func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {
-	configYaml, err := yaml.Marshal(service.Config)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to marshal service config: %w", err)
-	}
-
-	configBytes, err := yaml.YAMLToJSON(configYaml)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to convert service config to JSON: %w", err)
-	}
-
 	validSevice := &porterv1.Service{
-		Run:  service.Run,
-		Type: serviceType,
-	}
-
-	if service.Config == nil {
-		return validSevice, nil
+		Run:          service.Run,
+		Type:         serviceType,
+		Instances:    int32(service.Instances),
+		CpuCores:     service.CpuCores,
+		RamMegabytes: int32(service.RamMegabytes),
+		Port:         int32(service.Port),
 	}
 
 	switch serviceType {
 	case porterv1.ServiceType_SERVICE_TYPE_UNSPECIFIED:
 		return nil, fmt.Errorf("Service type unspecified")
 	case porterv1.ServiceType_SERVICE_TYPE_WEB:
-		webConfig := &porterv1.WebServiceConfig{}
-		err := helpers.UnmarshalContractObject(configBytes, webConfig)
-		if err != nil {
-			return nil, fmt.Errorf("error unmarshaling web service config: %w", err)
+		webConfig := &porterv1.WebServiceConfig{
+			HealthCheck: &porterv1.HealthCheck{
+				HttpPath: service.HealthCheck.HttpPath,
+			},
 		}
+
+		autoscaling := &porterv1.Autoscaling{
+			CpuThresholdPercent:    int32(service.Autoscaling.CpuThresholdPercent),
+			MemoryThresholdPercent: int32(service.Autoscaling.MemoryThresholdPercent),
+		}
+
+		if service.Autoscaling.MinInstances != nil {
+			autoscaling.MinInstances = int32(*service.Autoscaling.MinInstances)
+		}
+		if service.Autoscaling.MaxInstances != nil {
+			autoscaling.MaxInstances = int32(*service.Autoscaling.MaxInstances)
+		}
+		webConfig.Autoscaling = autoscaling
+
+		domains := make([]*porterv1.Domain, 0)
+		for _, domain := range service.Domains {
+			domains = append(domains, &porterv1.Domain{
+				Name: domain.Name,
+			})
+		}
+		webConfig.Domains = domains
 
 		validSevice.Config = &porterv1.Service_WebConfig{
 			WebConfig: webConfig,
 		}
-
 	case porterv1.ServiceType_SERVICE_TYPE_WORKER:
 		workerConfig := &porterv1.WorkerServiceConfig{}
-		err := helpers.UnmarshalContractObject(configBytes, workerConfig)
-		if err != nil {
-			return nil, fmt.Errorf("Error unmarshaling worker service config: %w", err)
+		autoscaling := &porterv1.Autoscaling{
+			CpuThresholdPercent:    int32(service.Autoscaling.CpuThresholdPercent),
+			MemoryThresholdPercent: int32(service.Autoscaling.MemoryThresholdPercent),
 		}
+
+		if service.Autoscaling.MinInstances != nil {
+			autoscaling.MinInstances = int32(*service.Autoscaling.MinInstances)
+		}
+		if service.Autoscaling.MaxInstances != nil {
+			autoscaling.MaxInstances = int32(*service.Autoscaling.MaxInstances)
+		}
+		workerConfig.Autoscaling = autoscaling
 
 		validSevice.Config = &porterv1.Service_WorkerConfig{
 			WorkerConfig: workerConfig,
 		}
 	case porterv1.ServiceType_SERVICE_TYPE_JOB:
-		jobConfig := &porterv1.JobServiceConfig{}
-		err := helpers.UnmarshalContractObject(configBytes, jobConfig)
-		if err != nil {
-			return nil, fmt.Errorf("Error unmarshaling job service config: %w", err)
+		jobConfig := &porterv1.JobServiceConfig{
+			AllowConcurrent: service.AllowConcurrent,
+			Cron:            service.Cron,
 		}
 
 		validSevice.Config = &porterv1.Service_JobConfig{
@@ -273,11 +304,11 @@ func appsFromApplicationGroup(porterYaml PorterStackYAML) ([]Application, error)
 		}
 
 		apps = append(apps, Application{
-			Name:     name,
-			Env:      app.Env,
-			Services: app.Services,
-			Build:    app.Build,
-			Release:  app.Release,
+			Name:      name,
+			Env:       app.Env,
+			Services:  app.Services,
+			Build:     app.Build,
+			Predeploy: app.Predeploy,
 		})
 	}
 

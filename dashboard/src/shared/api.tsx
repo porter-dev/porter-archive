@@ -172,7 +172,7 @@ const getPorterApps = baseApi<
   }
 >("GET", (pathParams) => {
   let { project_id, cluster_id } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications`;
 });
 
 const getPorterApp = baseApi<
@@ -184,7 +184,7 @@ const getPorterApp = baseApi<
   }
 >("GET", (pathParams) => {
   let { project_id, cluster_id, name } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${name}`;
 });
 
 const getPorterAppEvent = baseApi<
@@ -208,7 +208,7 @@ const createPorterApp = baseApi<
   }
 >("POST", (pathParams) => {
   let { project_id, cluster_id, stack_name } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}`;
 });
 
 const deletePorterApp = baseApi<
@@ -220,7 +220,7 @@ const deletePorterApp = baseApi<
   }
 >("DELETE", (pathParams) => {
   let { project_id, cluster_id, name } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${name}`;
 });
 
 const rollbackPorterApp = baseApi<
@@ -234,7 +234,7 @@ const rollbackPorterApp = baseApi<
   }
 >("POST", (pathParams) => {
   let { project_id, cluster_id, stack_name } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/rollback`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/rollback`;
 });
 
 const getLogsWithinTimeRange = baseApi<
@@ -255,7 +255,7 @@ const getLogsWithinTimeRange = baseApi<
 >(
   "GET",
   ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/stacks/logs`
+    `/api/projects/${project_id}/clusters/${cluster_id}/applications/logs`
 );
 
 const getFeedEvents = baseApi<
@@ -268,7 +268,7 @@ const getFeedEvents = baseApi<
   }
 >("GET", (pathParams) => {
   let { project_id, cluster_id, stack_name, page } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/events?page=${page || 1}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/events?page=${page || 1}`;
 });
 
 const createEnvironment = baseApi<
@@ -2513,7 +2513,7 @@ const updateStackStep = baseApi<
   }
 >("POST", (pathParams) => {
   let { project_id, cluster_id } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/analytics`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/analytics`;
 });
 
 // STACKS
@@ -2709,7 +2709,7 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
 >(
   "POST",
   ({ project_id, cluster_id, stack_name }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/pr`
+    `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/pr`
 );
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -2746,14 +2746,18 @@ export default {
   createPasswordResetVerify,
   createPasswordResetFinalize,
   createProject,
-  // PORTER APP
+  // ------------ PORTER APP -----------
   getPorterApps,
   getPorterApp,
   getPorterAppEvent,
   createPorterApp,
   deletePorterApp,
   rollbackPorterApp,
+  createSecretAndOpenGitHubPullRequest,
   getLogsWithinTimeRange,
+  getFeedEvents,
+  updateStackStep,
+  // -----------------------------------
   createConfigMap,
   deleteCluster,
   deleteConfigMap,
@@ -2930,10 +2934,8 @@ export default {
   createContract,
   getContracts,
   deleteContract,
-  createSecretAndOpenGitHubPullRequest,
   // TRACKING
   updateOnboardingStep,
-  updateStackStep,
   // STACKS
   listStacks,
   getStack,
@@ -2947,7 +2949,6 @@ export default {
   removeStackAppResource,
   addStackEnvGroup,
   removeStackEnvGroup,
-  getFeedEvents,
 
   // STATUS
   getGithubStatus,

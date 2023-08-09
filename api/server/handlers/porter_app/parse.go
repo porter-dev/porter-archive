@@ -8,6 +8,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	porterAppUtils "github.com/porter-dev/porter/api/utils/porter_app"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -77,6 +78,8 @@ type SubdomainCreateOpts struct {
 }
 
 type ParseConf struct {
+	// PorterAppName is the name of the porter app
+	PorterAppName string
 	// PorterYaml is the raw porter yaml which is used to build the values + chart for helm upgrade
 	PorterYaml []byte
 	// ImageInfo contains the repository and tag of the image to use for the helm upgrade. Kept separate from the PorterYaml because the image info
@@ -217,7 +220,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 	var preDeployJobValues map[string]interface{}
 	if application.Release != nil && application.Release.Run != nil {
 		application.Release = addLabelsToService(application.Release, conf.EnvironmentGroups, porter_app.LabelKey_PorterApplicationPreDeploy)
-		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate, conf.AddCustomNodeSelector)
+		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, porterAppUtils.PredeployJobNameFromPorterAppName(conf.PorterAppName), conf.UserUpdate, conf.AddCustomNodeSelector)
 	}
 
 	return umbrellaChart, convertedValues, preDeployJobValues, nil
@@ -940,4 +943,56 @@ func addLabelsToService(service *Service, envGroups []string, defaultLabelKey st
 	}
 
 	return service
+}
+
+func getServiceDeploymentMetadataFromValues(values map[string]interface{}, status types.PorterAppEventStatus) map[string]types.ServiceDeploymentMetadata {
+	serviceDeploymentMap := make(map[string]types.ServiceDeploymentMetadata)
+
+	for key := range values {
+		if key != "global" {
+			serviceName, serviceType := getServiceNameAndTypeFromHelmName(key)
+			externalURI := getServiceExternalURIFromServiceValues(values[key].(map[string]interface{}))
+			// jobs don't technically have a deployment, so hardcode the deployment status to success
+			serviceStatus := status
+			if serviceType == "job" {
+				serviceStatus = types.PorterAppEventStatus_Success
+			}
+			serviceDeploymentMap[serviceName] = types.ServiceDeploymentMetadata{
+				ExternalURI: externalURI,
+				Status:      serviceStatus,
+				Type:        serviceType,
+			}
+		}
+	}
+	return serviceDeploymentMap
+}
+
+func getServiceExternalURIFromServiceValues(serviceValues map[string]interface{}) string {
+	ingressMap, err := getNestedMap(serviceValues, "ingress")
+	if err == nil {
+		enabledVal, enabledExists := ingressMap["enabled"]
+		if enabledExists {
+			enabled, eOK := enabledVal.(bool)
+			if eOK && enabled {
+				customDomVal, customDomExists := ingressMap["custom_domain"]
+				if customDomExists {
+					customDomain, cOK := customDomVal.(bool)
+					if cOK && customDomain {
+						hostsExists, hostsExistsOK := ingressMap["hosts"]
+						if hostsExistsOK {
+							if hosts, hostsOK := hostsExists.([]interface{}); hostsOK && len(hosts) == 1 {
+								return hosts[0].(string)
+							}
+						}
+					}
+				}
+
+				if porterHosts, ok := ingressMap["porter_hosts"].([]interface{}); ok && len(porterHosts) == 1 {
+					return porterHosts[0].(string)
+				}
+			}
+		}
+	}
+
+	return ""
 }

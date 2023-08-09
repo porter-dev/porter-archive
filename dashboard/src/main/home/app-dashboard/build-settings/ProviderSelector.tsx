@@ -87,6 +87,7 @@ const ProviderSelectorStyles = {
         margin-right: 10px;
         z-index: 0;
         transform: ${(props) => (props.isOpen ? "rotate(180deg)" : "")};
+        transition: transform 0.1s ease;
       }
     `,
     Button: styled.div`

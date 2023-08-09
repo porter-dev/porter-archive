@@ -67,7 +67,6 @@ type Project struct {
 	SimplifiedViewEnabled  bool
 	AzureEnabled           bool
 	HelmValuesEnabled      bool
-	EnvGroupEnabled        bool
 	MultiCluster           bool `gorm:"default:false"`
 	FullAddOns             bool `gorm:"default:false"`
 }
@@ -93,7 +92,6 @@ func (p *Project) ToProjectType() *types.Project {
 		SimplifiedViewEnabled:  p.SimplifiedViewEnabled,
 		AzureEnabled:           p.AzureEnabled,
 		HelmValuesEnabled:      p.HelmValuesEnabled,
-		EnvGroupEnabled:        p.EnvGroupEnabled,
 		MultiCluster:           p.MultiCluster,
 		FullAddOns:             p.FullAddOns,
 	}

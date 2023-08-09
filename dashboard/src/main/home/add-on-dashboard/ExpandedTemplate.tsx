@@ -65,7 +65,7 @@ const ExpandedTemplate: React.FC<Props> = ({
     <StyledExpandedTemplate>
       <Container row spaced>
         <Container row>
-          <Button 
+          {!currentProject?.simplified_view_enabled && <Button
             onClick={goBack}
             alt
           >
@@ -73,6 +73,7 @@ const ExpandedTemplate: React.FC<Props> = ({
             <Spacer inline x={1} />
             Select template
           </Button>
+          }
           <Spacer x={1} inline />
           <Icon src={hardcodedIcons[currentTemplate.name] || currentTemplate.icon} />
           <Text size={16}>
@@ -89,16 +90,12 @@ const ExpandedTemplate: React.FC<Props> = ({
       <Spacer height="15px" />
       {
         isLoading ? <Loading offset="-150px" /> : (
-          markdown ? (
-            <MarkdownWrapper>
-              <Markdown>{markdown}</Markdown>
-            </MarkdownWrapper>
-          ) : (
-            <>
-              <Spacer y={0.5} />
-              <Text>{currentTemplate.description}</Text>
-            </>
-          )
+
+          <>
+            <Spacer y={0.5} />
+            <Text>{currentTemplate.description}</Text>
+          </>
+
         )
       }
     </StyledExpandedTemplate>

@@ -21,6 +21,7 @@ import Back from "components/porter/Back";
 import Fieldset from "components/porter/Fieldset";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
+import Select from "components/porter/Select";
 
 type Props = {
 };
@@ -28,7 +29,19 @@ type Props = {
 const HIDDEN_CHARTS = ["porter-agent", "loki"];
 const DATA_STORES = ["elasticsearch", "mongodb", "postgresql", "mysql", "redis"];
 const APPS = ["agent", "datadog", "tailscale-relay", "metabase", "mezmo"];
+const LOGGING = ["agent"]
+const ANALYITCS = ["datadog", "metabase", "mezmo"]
+const SECURITY = ["tailscale-relay"]
 const POPULAR = ["datadog", "metabase", "postgresql"];
+
+const TAG_MAPPING = {
+  "DATA_STORE": DATA_STORES,
+  "APP": APPS,
+  "POPULAR": POPULAR,
+  "LOGGING": LOGGING,
+  "ANALYITCS": ANALYITCS,
+  "SECURITY": SECURITY
+};
 const NewAddOnFlow: React.FC<Props> = ({
 }) => {
   const { capabilities, currentProject, currentCluster, user } = useContext(Context);
@@ -37,7 +50,7 @@ const NewAddOnFlow: React.FC<Props> = ({
   const [addOnTemplates, setAddOnTemplates] = useState<any[]>([]);
   const [currentTemplate, setCurrentTemplate] = useState<any>(null);
   const [currentForm, setCurrentForm] = useState<any>(null);
-
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   const allFilteredTemplates = useMemo(() => {
     const filteredBySearch = search(
@@ -94,24 +107,18 @@ const NewAddOnFlow: React.FC<Props> = ({
       sortedVersionData = sortedVersionData.filter(
         (template: any) => !HIDDEN_CHARTS.includes(template?.name)
       );
-      sortedVersionData = sortedVersionData
-        .map((template: any) => {
-          let templateTags = [];
+      sortedVersionData = sortedVersionData.map((template: any) => {
+        let templateTags = [];
 
-          if (DATA_STORES.includes(template.name)) {
-            templateTags.push("DATA_STORE");
+        // Assign tags based on TAG_MAPPING
+        for (let tag in TAG_MAPPING) {
+          if (TAG_MAPPING[tag].includes(template.name)) {
+            templateTags.push(tag);
           }
+        }
 
-          if (APPS.includes(template.name)) {
-            templateTags.push("APP");
-          }
-
-          if (POPULAR.includes(template.name)) {
-            templateTags.push("POPULAR"); // Here we add the POPULAR tag
-          }
-
-          return { ...template, tags: templateTags };
-        });
+        return { ...template, tags: templateTags };
+      });
       setAddOnTemplates(sortedVersionData);
     } catch (error) {
       setIsLoading(false);
@@ -152,15 +159,25 @@ const NewAddOnFlow: React.FC<Props> = ({
                 />
               ) : (
                 <>
-                  <SearchBar
-                    value={searchValue}
-                    setValue={setSearchValue}
-                    placeholder="Search available add-ons . . ."
-                    width="100%"
-                  />
+                  <Container row>
+                    <SearchBar
+                      value={searchValue}
+                      setValue={setSearchValue}
+                      placeholder="Search available add-ons . . ."
+                      width="100%"
+                    />
+                    <Spacer inline x={1} />
+                    {/* <Select
+                      width={"150px"}
+                      options={[
+                        { label: "Filter...", value: "" },
+                        { label: "Worker", value: "worker" },
+                        { label: "Cron Job", value: "job" },]}
+                      height={"25px"} /> */}
+                  </Container>
                   <Spacer y={1} />
 
-                  {filteredTemplates.length === 0 && (
+                  {allFilteredTemplates.length === 0 && (
                     <Fieldset>
                       <Container row>
                         <PlaceholderIcon src={notFound} />
@@ -179,7 +196,7 @@ const NewAddOnFlow: React.FC<Props> = ({
                             <Text color="#fff" size={15}>Apps and Services</Text>
                           </div>
                           <div>
-                            <Text color="helper">For logging, metrics, etc.</Text>
+                            <Text color="helper">For developer productivity</Text>
                           </div>
                         </>}
                       <TemplateList
@@ -200,13 +217,13 @@ const NewAddOnFlow: React.FC<Props> = ({
                         setCurrentTemplate={(x) => setCurrentTemplate(x)}
                       />
 
-                      {filteredTemplates?.length > 0 && user?.isPorterUser &&
+                      {filteredTemplates?.length > 0 && currentProject?.full_add_ons &&
                         <>
                           <div>
                             <Text color="#fff" size={15}>All Add-Ons</Text>
                           </div>
                           <div>
-                            <Text color="helper">Full list of add-ons (Not Managed by Porter)</Text>
+                            <Text color="helper">Full list of add-ons</Text>
                           </div>
 
                           <TemplateList

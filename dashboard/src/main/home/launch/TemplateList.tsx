@@ -12,6 +12,7 @@ import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
 import fire from "assets/fire.svg"
+import Spacer from "components/porter/Spacer";
 type Props = {
   helm_repo_id?: number;
   templates?: PorterTemplate[];
@@ -27,7 +28,13 @@ const TemplateList: React.FC<Props> = ({
   const [hasError, setHasError] = useState(false);
   const [templateList, setTemplateList] = useState<PorterTemplate[]>(null);
   const { currentProject, setCurrentError } = useContext(Context);
-
+  const DISPLAY_TAGS_MAP = {
+    "ANALYITCS": { label: "Analytics", color: "#4cc9f0" },
+    "SECURITY": { label: "Security", color: "#da1e37" },
+    "DATA_STORE": { label: "Data Warehouse", color: "#7209b7" },
+    "LOGGING": { label: "Logging", color: "#b5179e" }
+    // You can add more here in the future as needed
+  };
   useEffect(() => {
     let isSubscribed = true;
     if (!currentProject || !helm_repo_id) {
@@ -135,21 +142,32 @@ const TemplateList: React.FC<Props> = ({
           name = hardcodedNames[name];
         }
 
-        const isPopular = tags?.includes("POPULAR");
-
         return (
           <TemplateBlock
             key={name}
             onClick={() => setCurrentTemplate(template)}
           >
-            {isPopular && <FireIcon src={fire} size="15px" top="10px" right="10px" />}
+            {tags?.includes("POPULAR") && <FireIcon src={fire} size="15px" top="10px" right="10px" />}
             {renderIcon(icon, template.name)}
             <TemplateTitle>{name}</TemplateTitle>
             <TemplateDescription>{description}</TemplateDescription>
+            <Spacer y={0.5} />
+
+            {Object.keys(DISPLAY_TAGS_MAP).map(tagKey => (
+              tags?.includes(tagKey) &&
+              <Tag
+                bottom="10px"
+                left="12px"
+                style={{ background: DISPLAY_TAGS_MAP[tagKey].color }}
+              >
+                {DISPLAY_TAGS_MAP[tagKey].label}
+              </Tag>
+            ))}
           </TemplateBlock>
         );
       })}
     </TemplateListWrapper>
+
   );
 };
 
@@ -175,6 +193,17 @@ const FireIcon = styled.img<{ size?: string, top?: string, right?: string }>`
     font-weight: bold;
     text-align: center;
   }
+`;
+
+const Tag = styled.div<{ size?: string, bottom?: string, left?: string }>`
+  position: absolute;
+  bottom: ${props => props.bottom || 'auto'};
+  left: ${props => props.left || 'auto'};
+  font-size: 10px;
+  background: #480ca8;
+  padding: 5px;
+  border-radius: 4px; 
+  opacity: 0.7;
 `;
 
 const Placeholder = styled.div`

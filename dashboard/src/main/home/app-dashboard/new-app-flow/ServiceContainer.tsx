@@ -81,7 +81,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             };
 
             data.forEach(node => {
-              if (node.labels['porter.run/workload-kind']) {
+              if (node.labels['porter.run/workload-kind'] == "application") {
                 var instanceType: string = node.labels['beta.kubernetes.io/instance-type'];
                 const [instanceClass, instanceSize] = instanceType.split('.');
                 if (instanceClass && instanceSize) {

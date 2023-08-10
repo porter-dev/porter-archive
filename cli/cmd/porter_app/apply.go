@@ -178,7 +178,6 @@ func createStackConf(client *api.Client, app *Application, stackName string, pro
 	totalEnv := mergeStringMaps(releaseEnvGroupVars, releaseEnvVars)
 
 	if totalEnv != nil {
-		color.New(color.FgHiRed).Println("All Env Group Vars: ", totalEnv)
 		color.New(color.FgYellow).Printf("Reading build env from release\n")
 		app.Env = mergeStringMaps(app.Env, totalEnv)
 	}

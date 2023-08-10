@@ -21,7 +21,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
-	porterapp "github.com/porter-dev/porter/cli/cmd/porterapp"
+	porter_app "github.com/porter-dev/porter/cli/cmd/porter_app"
 	"github.com/porter-dev/porter/cli/cmd/preview"
 	previewV2Beta1 "github.com/porter-dev/porter/cli/cmd/preview/v2beta1"
 	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
@@ -158,7 +158,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		}
 	} else if previewVersion.Version == "v1stack" || previewVersion.Version == "" {
 
-		parsed, err := porterapp.ValidateAndMarshal(fileBytes)
+		parsed, err := porter_app.ValidateAndMarshal(fileBytes)
 		if err != nil {
 			return fmt.Errorf("error parsing porter.yaml: %w", err)
 		}
@@ -175,7 +175,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 
 		if parsed.Applications != nil {
 			for appName, app := range parsed.Applications {
-				resources, err := porterapp.CreateApplicationDeploy(client, worker, app, appName, cliConf)
+				resources, err := porter_app.CreateApplicationDeploy(client, worker, app, appName, cliConf)
 				if err != nil {
 					return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 				}
@@ -192,7 +192,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 				return fmt.Errorf("'apps' and 'services' are synonymous but both were defined")
 			}
 
-			var services map[string]*porterapp.Service
+			var services map[string]*porter_app.Service
 			if parsed.Apps != nil {
 				services = parsed.Apps
 			}
@@ -201,7 +201,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 				services = parsed.Services
 			}
 
-			app := &porterapp.Application{
+			app := &porter_app.Application{
 				Env:      parsed.Env,
 				Services: services,
 				Build:    parsed.Build,
@@ -212,7 +212,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 				return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 			}
 
-			resources, err := porterapp.CreateApplicationDeploy(client, worker, app, appName, cliConf)
+			resources, err := porter_app.CreateApplicationDeploy(client, worker, app, appName, cliConf)
 			if err != nil {
 				return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 			}

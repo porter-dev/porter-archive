@@ -305,7 +305,7 @@ const WorkerTabs: React.FC<Props> = ({
   return (
     <>
       <TabSelector
-        options={currentCluster?.cloud_provider === "GCP" ?
+        options={currentCluster?.cloud_provider === "GCP" || (currentCluster?.service === "gke") ?
           [
             { label: 'Main', value: 'main' },
             { label: 'Resources', value: 'resources' },

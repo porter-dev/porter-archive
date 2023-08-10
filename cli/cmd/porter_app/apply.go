@@ -1,4 +1,4 @@
-package stack
+package porter_app
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
+	"github.com/porter-dev/porter/internal/telemetry"
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
 	"gopkg.in/yaml.v3"
@@ -172,9 +173,13 @@ func createStackConf(client *api.Client, app *Application, stackName string, pro
 	}
 
 	releaseEnvVars := getEnvFromRelease(client, stackName, projectID, clusterID)
-	if releaseEnvVars != nil {
+	releaseEnvGroupVars := getEnvGroupFromRelease(client, stackName, projectID, clusterID)
+	// releaseEnvVars will override releaseEnvGroupVars
+	totalEnv := mergeStringMaps(releaseEnvGroupVars, releaseEnvVars)
+
+	if totalEnv != nil {
 		color.New(color.FgYellow).Printf("Reading build env from release\n")
-		app.Env = mergeStringMaps(app.Env, releaseEnvVars)
+		app.Env = mergeStringMaps(app.Env, totalEnv)
 	}
 
 	return &StackConf{
@@ -253,6 +258,72 @@ func convertToBuild(porterApp *types.PorterApp) Build {
 		Dockerfile: dockerfile,
 		Image:      image,
 	}
+}
+
+func getEnvGroupFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) map[string]string {
+	var envGroups []string
+	envVarsGroupStringMap := make(map[string]string)
+
+	ctx, span := telemetry.NewSpan(context.Background(), "get-env-from-release")
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: projectID},
+		telemetry.AttributeKV{Key: "stack-name", Value: stackName},
+	)
+	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+	release, err := client.GetRelease(
+		ctx,
+		projectID,
+		clusterID,
+		namespace,
+		stackName,
+	)
+	if err != nil {
+		telemetry.Error(ctx, span, err, "error getting env groups from release")
+		span.End()
+		return envVarsGroupStringMap
+	}
+	if err == nil && release != nil {
+		for _, val := range release.Config {
+			// Check if the value is a map
+			if appConfig, ok := val.(map[string]interface{}); ok {
+				if labels, ok := appConfig["labels"]; ok {
+					if labelsMap, ok := labels.(map[string]interface{}); ok {
+						if envGroup, ok := labelsMap["porter.run/linked-environment-group"]; ok {
+							envGroups = append(envGroups, fmt.Sprintf("%v", envGroup))
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if envGroups == nil {
+		return envVarsGroupStringMap
+	}
+	envGroupList, err := client.ListEnvGroups(
+		ctx,
+		projectID,
+		clusterID)
+	if err != nil {
+		telemetry.Error(ctx, span, err, "error getting env groups during build")
+		span.End()
+		return envVarsGroupStringMap
+	}
+	if err == nil {
+		for _, groupName := range envGroups {
+			for _, envGroupItem := range envGroupList.EnvironmentGroups {
+				if envGroupItem.Name == groupName {
+					for k, v := range envGroupItem.Variables {
+						envVarsGroupStringMap[k] = v
+					}
+					for k, v := range envGroupItem.SecretVariables {
+						envVarsGroupStringMap[k] = v
+					}
+				}
+			}
+		}
+	}
+	return envVarsGroupStringMap
 }
 
 func getEnvFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) map[string]string {

@@ -128,7 +128,7 @@ func (c *Client) CreateOrUpdatePorterAppEvent(
 	return *resp, err
 }
 
-// List Env Groups (List all Env Groups for a given cluster)
+// ListEnvGroups (List all Env Groups for a given cluster)
 func (c *Client) ListEnvGroups(
 	ctx context.Context,
 	projectID, clusterID uint,

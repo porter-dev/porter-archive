@@ -11,6 +11,7 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
+	"github.com/porter-dev/porter/internal/telemetry"
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
 	"gopkg.in/yaml.v3"
@@ -263,15 +264,24 @@ func getEnvGroupFromRelease(client *api.Client, stackName string, projectID uint
 	var envGroups []string
 	envVarsGroupStringMap := make(map[string]string)
 
+	ctx, span := telemetry.NewSpan(context.Background(), "get-env-from-release")
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: projectID},
+		telemetry.AttributeKV{Key: "stack-name", Value: stackName},
+	)
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 	release, err := client.GetRelease(
-		context.Background(),
+		ctx,
 		projectID,
 		clusterID,
 		namespace,
 		stackName,
 	)
-
+	if err != nil {
+		telemetry.Error(ctx, span, err, "error getting env groups from release")
+		span.End()
+		return envVarsGroupStringMap
+	}
 	if err == nil && release != nil {
 		for _, val := range release.Config {
 			// Check if the value is a map
@@ -289,20 +299,25 @@ func getEnvGroupFromRelease(client *api.Client, stackName string, projectID uint
 
 	if envGroups == nil {
 		return envVarsGroupStringMap
-	} else {
-		envGroupList, err := client.ListEnvGroups(context.Background(),
-			projectID,
-			clusterID)
-		if err == nil {
-			for _, groupName := range envGroups {
-				for _, envGroupItem := range envGroupList.EnvironmentGroups {
-					if envGroupItem.Name == groupName {
-						for k, v := range envGroupItem.Variables {
-							envVarsGroupStringMap[k] = v
-						}
-						for k, v := range envGroupItem.SecretVariables {
-							envVarsGroupStringMap[k] = v
-						}
+	}
+	envGroupList, err := client.ListEnvGroups(
+		ctx,
+		projectID,
+		clusterID)
+	if err != nil {
+		telemetry.Error(ctx, span, err, "error getting env groups during build")
+		span.End()
+		return envVarsGroupStringMap
+	}
+	if err == nil {
+		for _, groupName := range envGroups {
+			for _, envGroupItem := range envGroupList.EnvironmentGroups {
+				if envGroupItem.Name == groupName {
+					for k, v := range envGroupItem.Variables {
+						envVarsGroupStringMap[k] = v
+					}
+					for k, v := range envGroupItem.SecretVariables {
+						envVarsGroupStringMap[k] = v
 					}
 				}
 			}

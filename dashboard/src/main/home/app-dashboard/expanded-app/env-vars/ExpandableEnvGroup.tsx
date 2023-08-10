@@ -40,50 +40,50 @@ const ExpandableEnvGroup: React.FC<{
           <>
             {isObject(envGroup.variables) ? (
               <>
-                {Object.entries(envGroup.variables || {})?.map(
-                  ([key, value], i: number) => {
-                    // Preprocess non-string env values set via raw Helm values
-                    if (typeof value === "object") {
-                      value = JSON.stringify(value);
-                    } else {
-                      value = String(value);
-                    }
-
-                    return (
-                      <InputWrapper key={i}>
-                        <KeyInput
-                          placeholder="ex: key"
-                          width="270px"
-                          value={key}
-                          disabled
-                        />
-                        <Spacer x={.5} inline />
-                        {value?.includes("PORTERSECRET") ? (
-                          <KeyInput
-                            placeholder="ex: value"
-                            width="270px"
-                            value={value}
-                            disabled
-                            type={
-                              value.includes("PORTERSECRET")
-                                ? "password"
-                                : "text"
-                            }
-                          />
-                        ) : (
-                          <MultiLineInput
-                            placeholder="ex: value"
-                            width="270px"
-                            value={value}
-                            disabled
-                            rows={value?.split("\n").length}
-                            spellCheck={false}
-                          ></MultiLineInput>
-                        )}
-                      </InputWrapper>
-                    );
+                {[
+                  ...Object.entries(envGroup?.variables || {}).map(([key, value]) => ({
+                    key,
+                    value,
+                    source: 'variables',
+                  })),
+                  ...Object.entries(envGroup.secret_variables || {}).map(([key, value]) => ({
+                    key,
+                    value,
+                    source: 'secret_variables',
+                  })),
+                ].map(({ key, value, source }, i: number) => {
+                  // Preprocess non-string env values set via raw Helm values
+                  if (typeof value === "object") {
+                    value = JSON.stringify(value);
+                  } else {
+                    value = String(value);
                   }
-                )}
+
+                  return (
+                    <InputWrapper key={i}>
+                      <KeyInput placeholder="ex: key" width="270px" value={key} disabled />
+                      <Spacer x={0.5} inline />
+                      {source === 'secret_variables' ? (
+                        <KeyInput
+                          placeholder="ex: value"
+                          width="270px"
+                          value={value}
+                          disabled
+                          type="password"
+                        />
+                      ) : (
+                        <MultiLineInput
+                          placeholder="ex: value"
+                          width="270px"
+                          value={value}
+                          disabled
+                          rows={value?.split("\n").length}
+                          spellCheck={false}
+                        ></MultiLineInput>
+                      )}
+                    </InputWrapper>
+                  );
+                })}
               </>
             ) : (
               <NoVariablesTextWrapper>

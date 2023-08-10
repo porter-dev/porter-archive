@@ -233,6 +233,19 @@ export type PopulatedEnvGroup = {
   meta_version: number;
   stack_id?: string;
 };
+
+export type NewPopulatedEnvGroup = {
+  name: string;
+  current_version: number;
+  variables: {
+    [key: string]: string;
+  };
+  secret_variables: {
+    [key: string]: string;
+  };
+  linked_applications: any[];
+  created_at: number;
+};
 export interface KeyValueArrayFieldState {
   values: {
     key: string;

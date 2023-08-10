@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { RouteComponentProps, useParams, withRouter } from "react-router";
+import { RouteComponentProps, useHistory, useLocation, useParams, withRouter } from "react-router";
 import styled from "styled-components";
 import yaml from "js-yaml";
 
@@ -26,12 +26,10 @@ import Back from "components/porter/Back";
 import TabSelector from "components/TabSelector";
 import Icon from "components/porter/Icon";
 import { ChartType, CreateUpdatePorterAppOptions } from "shared/types";
-import RevisionSection from "main/home/cluster-dashboard/expanded-chart/RevisionSection";
 import BuildSettingsTab from "../build-settings/BuildSettingsTab";
 import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
-import { Service } from "../new-app-flow/serviceTypes";
-import ConfirmOverlay from "components/porter/ConfirmOverlay";
+import { ImageInfo, Service } from "../new-app-flow/serviceTypes";
 import Fieldset from "components/porter/Fieldset";
 import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
@@ -45,10 +43,12 @@ import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
 import _ from "lodash";
 import AnimateHeight from "react-animate-height";
-import { PartialEnvGroup, PopulatedEnvGroup } from "../../../../components/porter-form/types";
+import { NewPopulatedEnvGroup } from "../../../../components/porter-form/types";
 import { BuildMethod, PorterApp } from "../types/porterApp";
+import EventFocusView from "./activity-feed/events/focus-views/EventFocusView";
 import HelmValuesTab from "./HelmValuesTab";
-import ProjectDeleteConsent from "main/home/project-settings/ProjectDeleteConsent";
+import SettingsTab from "./SettingsTab";
+import PorterAppRevisionSection from "./PorterAppRevisionSection";
 
 type Props = RouteComponentProps & {};
 
@@ -62,6 +62,7 @@ const icons = [
 
 const validTabs = [
   "activity",
+  "events",
   "overview",
   "logs",
   "metrics",
@@ -70,6 +71,7 @@ const validTabs = [
   "build-settings",
   "settings",
   "helm-values",
+  "job-history",
 ] as const;
 const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
@@ -91,6 +93,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [workflowCheckPassed, setWorkflowCheckPassed] = useState<boolean>(
     false
   );
+  const [githubWorkflowFilename, setGithubWorkflowFilename] = useState<string>("");
   const [hasBuiltImage, setHasBuiltImage] = useState<boolean>(false);
 
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
@@ -98,7 +101,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   );
 
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
-  const [showDeleteOverlay, setShowDeleteOverlay] = useState<boolean>(false);
 
   // this is what we read from their porter.yaml in github
   const [porterJson, setPorterJson] = useState<PorterJson | undefined>(undefined);
@@ -111,16 +113,26 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [envVars, setEnvVars] = useState<KeyValueType[]>([]);
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
   const [subdomain, setSubdomain] = useState<string>("");
-  const [syncedEnvGroups, setSyncedEnvGroups] = useState<PopulatedEnvGroup[]>([])
-  const [deletedEnvGroups, setDeleteEnvGroups] = useState<PopulatedEnvGroup[]>([])
+  const [syncedEnvGroups, setSyncedEnvGroups] = useState<NewPopulatedEnvGroup[]>([])
+  const [deletedEnvGroups, setDeleteEnvGroups] = useState<NewPopulatedEnvGroup[]>([])
   const [porterApp, setPorterApp] = useState<PorterApp>();
+
   // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
   const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
   const [buildView, setBuildView] = useState<BuildMethod>("docker");
 
-  const { eventId, tab } = useParams<Params>();
-  const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
+  const history = useHistory();
 
+  const { tab } = useParams<Params>();
+  const { search } = useLocation();
+  const queryParams = new URLSearchParams(search);
+  const queryParamOpts = {
+    revision: queryParams.get('version'),
+    output_stream: queryParams.get('output_stream'),
+    service: queryParams.get('service'),
+  }
+  const eventId = queryParams.get('event_id');
+  const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
   useEffect(() => {
     if (!_.isEqual(_.omitBy(porterApp, _.isEmpty), _.omitBy(tempPorterApp, _.isEmpty))) {
       setButtonStatus("");
@@ -139,7 +151,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
 
   // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
   const getPorterApp = async ({ revision }: { revision: number }) => {
-    setIsLoading(true);
     const { appName } = props.match.params as any;
     try {
       if (!currentCluster || !currentProject) {
@@ -165,7 +176,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           revision: revision,
         }
       );
-
       let preDeployChartData;
       // get the pre-deploy chart
       try {
@@ -184,7 +194,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       } catch (err) {
         // that's ok if there's an error, just means there is no pre-deploy chart
       }
-
       // update apps and release
       const newAppData = {
         app: resPorterApp?.data,
@@ -195,40 +204,30 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         resPorterApp?.data?.porter_yaml_path ?? "porter.yaml",
         newAppData
       );
-      let envGroups: PartialEnvGroup[] = [];
-      envGroups = await api
-        .listEnvGroups<PartialEnvGroup[]>(
+
+      const envGroups: NewPopulatedEnvGroup[] = await api
+        .getAllEnvGroups<any[]>(
           "<token>",
           {},
           {
-            id: currentProject.id,
-            namespace: "porter-env-group",
-            cluster_id: currentCluster.id,
+            id: currentProject?.id,
+            cluster_id: currentCluster?.id,
           }
         )
-        .then((res) => res.data);
+        .then((res) => res?.data?.environment_groups)
+        .catch((error) => {
+          console.error("Failed to fetch environment groups:", error);
+          return [];
+        });
+      let filteredEnvGroups: NewPopulatedEnvGroup[] = [];
 
-      const populateEnvGroupsPromises = envGroups?.map((envGroup) =>
-        api
-          .getEnvGroup<PopulatedEnvGroup>(
-            "<token>",
-            {},
-            {
-              id: currentProject.id,
-              cluster_id: currentCluster.id,
-              name: envGroup.name,
-              namespace: envGroup.namespace,
-              version: envGroup.version,
-            }
-          )
-          .then((res) => res.data)
-      );
+      if (envGroups) {
+        filteredEnvGroups = envGroups?.filter(envGroup =>
+          envGroup?.linked_applications?.length > 0 && envGroup?.linked_applications?.includes(appName)
+        );
+      }
 
-      const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
-
-      const filteredEnvGroups = populatedEnvGroups.filter(envGroup => envGroup.applications.includes(newAppData.chart.name));
-
-      setSyncedEnvGroups(filteredEnvGroups)
+      setSyncedEnvGroups(filteredEnvGroups || []);
       setPorterJson(porterJson);
       setAppData(newAppData);
       // annoying that we have to parse buildpacks like this but alas
@@ -249,10 +248,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         newAppData.app.builder != null && newAppData.app.builder.includes("heroku")
       );
       setPorterYaml(finalPorterYaml);
-
       // Only check GHA status if no built image is set
-      const hasBuiltImage = !!resChartData.data.config?.global?.image
-        ?.repository;
+      const globalImage = resChartData.data.config?.global?.image
+      const hasBuiltImage = globalImage != null &&
+        globalImage.repository != null &&
+        globalImage.tag != null &&
+        globalImage.repository !== ImageInfo.BASE_IMAGE.repository &&
+        globalImage.tag !== ImageInfo.BASE_IMAGE.tag
       if (hasBuiltImage || !resPorterApp.data.repo_name) {
         setWorkflowCheckPassed(true);
         setHasBuiltImage(true);
@@ -273,12 +275,13 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             }
           );
           setWorkflowCheckPassed(true);
+          setGithubWorkflowFilename(`porter_stack_${resPorterApp.data.name}.yml`);
         } catch (err) {
           // Handle unmerged PR
           if (err.response?.status === 404) {
             try {
               // Check for user-copied porter.yml as fallback
-              const resPorterYml = await api.getBranchContents(
+              await api.getBranchContents(
                 "<token>",
                 { dir: `./.github/workflows/porter.yml` },
                 {
@@ -291,6 +294,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                 }
               );
               setWorkflowCheckPassed(true);
+              setGithubWorkflowFilename(`porter.yml`);
             } catch (err) {
               setWorkflowCheckPassed(false);
             }
@@ -304,32 +308,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  const deletePorterApp = async () => {
-    setShowDeleteOverlay(false);
+  const deletePorterApp = async (deleteGHWorkflowFile?: boolean) => {
     setDeleting(true);
     const { appName } = props.match.params as any;
-    if (syncedEnvGroups) {
-      const removeApplicationToEnvGroupPromises = syncedEnvGroups?.map((envGroup: any) => {
-        return api.removeApplicationFromEnvGroup(
-          "<token>",
-          {
-            name: envGroup?.name,
-            app_name: appData.chart.name,
-          },
-          {
-            project_id: currentProject.id,
-            cluster_id: currentCluster.id,
-            namespace: "porter-env-group",
-          }
-        );
-      });
-
-      try {
-        await Promise.all(removeApplicationToEnvGroupPromises);
-      } catch (error) {
-        // TODO: Handle error
-      }
-    }
     try {
       await api.deletePorterApp(
         "<token>",
@@ -340,6 +321,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           name: appName,
         }
       );
+    } catch (err) {
+      // TODO: handle error
+    }
+    try {
       await api.deleteNamespace(
         "<token>",
         {},
@@ -349,80 +334,56 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           namespace: `porter-stack-${appName}`,
         }
       );
-      // intentionally do not await this promise
-      api.updateStackStep(
-        "<token>",
-        {
-          step: "stack-deletion",
-          stack_name: appName,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
-      props.history.push("/apps");
     } catch (err) {
       // TODO: handle error
-    } finally {
-      setDeleting(false);
     }
-  };
 
-  const updatePorterApp = async (options: Partial<CreateUpdatePorterAppOptions>) => {
-    //setting the EnvGroups Config Maps
-    const filteredEnvGroups = deletedEnvGroups.filter((deletedEnvGroup) => {
-      return !syncedEnvGroups.some((syncedEnvGroup) => {
-        return syncedEnvGroup.name === deletedEnvGroup.name;
-      });
-    });
-    setDeleteEnvGroups(filteredEnvGroups);
-    if (deletedEnvGroups) {
-      const removeApplicationToEnvGroupPromises = deletedEnvGroups?.map((envGroup: any) => {
-        return api.removeApplicationFromEnvGroup(
+    let deleteWorkflowFile = false;
+
+    if (deleteGHWorkflowFile && githubWorkflowFilename !== "" && appData?.app != null) {
+      try {
+        const res = await api.createSecretAndOpenGitHubPullRequest(
           "<token>",
           {
-            name: envGroup?.name,
-            app_name: appData.chart.name,
+            github_app_installation_id: appData.app.git_repo_id,
+            github_repo_owner: appData.app.repo_name.split("/")[0],
+            github_repo_name: appData.app.repo_name.split("/")[1],
+            branch: appData.app.git_branch,
+            delete_workflow_filename: githubWorkflowFilename,
           },
           {
             project_id: currentProject.id,
             cluster_id: currentCluster.id,
-            namespace: "porter-env-group",
+            stack_name: appData.app.name,
           }
         );
-      });
-
-      try {
-        await Promise.all(removeApplicationToEnvGroupPromises);
-      } catch (error) {
-        setCurrentError(
-          "We couldn't remove the synced env group from the application, please try again."
-        );
+        if (res.data?.url) {
+          window.open(res.data.url, "_blank", "noreferrer");
+        }
+        deleteWorkflowFile = true;
+      } catch (err) {
+        // TODO: handle error
       }
     }
-    const addApplicationToEnvGroupPromises = syncedEnvGroups?.map(
-      (envGroup: any) => {
-        return api.addApplicationToEnvGroup(
-          "<token>",
-          {
-            name: envGroup?.name,
-            app_name: appData.chart.name,
-          },
-          {
-            project_id: currentProject.id,
-            cluster_id: currentCluster.id,
-            namespace: "porter-env-group",
-          }
-        );
+
+    // intentionally do not await this promise
+    api.updateStackStep(
+      "<token>",
+      {
+        step: "stack-deletion",
+        stack_name: appName,
+        delete_workflow_file: deleteWorkflowFile,
+      },
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
       }
     );
 
-    try {
-      await Promise.all(addApplicationToEnvGroupPromises);
-    } catch (error) {
-      // TODO: handle error
-    }
+    props.history.push("/apps");
+  };
+
+  const updatePorterApp = async (options: Partial<CreateUpdatePorterAppOptions>) => {
     try {
       setButtonStatus("loading");
       if (
@@ -449,7 +410,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           repo_name: tempPorterApp.repo_name,
           git_branch: tempPorterApp.git_branch,
           buildpacks: "",
-          env_groups: syncedEnvGroups?.map((env) => env.name),
+          environment_groups: syncedEnvGroups?.map((env) => env.name),
           user_update: true,
           ...options,
         }
@@ -490,6 +451,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         "An error occurred while deploying your app. Please try again.";
       setButtonStatus(<Error message={errMessage} />);
     }
+
+    // redirect to the default tab
+    history.push(`/apps/${appData.app.name}/${DEFAULT_TAB}`);
   };
 
   const fetchPorterYamlContent = async (
@@ -623,7 +587,18 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           chart={appData.chart}
           stackName={appData?.app?.name}
           appData={appData}
-          eventId={eventId}
+        />;
+      case "events":
+        if (eventId != null && eventId !== "") {
+          return <EventFocusView
+            eventId={eventId}
+            appData={appData}
+          />;
+        }
+        return <ActivityFeed
+          chart={appData.chart}
+          stackName={appData?.app?.name}
+          appData={appData}
         />;
       case "overview":
         return (
@@ -705,26 +680,18 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           />
         );
       case "settings":
-        return (
-          <>
-            <Text size={16}>Delete "{appData.app.name}"</Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              Delete this application and all of its resources.
-            </Text>
-            <Spacer y={1} />
-            <Button
-              onClick={() => {
-                setShowDeleteOverlay(true);
-              }}
-              color="#b91133"
-            >
-              Delete
-            </Button>
-          </>
-        );
+        return <SettingsTab
+          appName={appData.app.name}
+          githubWorkflowFilename={githubWorkflowFilename}
+          deleteApplication={deletePorterApp}
+        />;
       case "logs":
-        return <LogSection currentChart={appData.chart} services={services} />;
+        return <LogSection
+          currentChart={appData.chart}
+          services={services.filter(svc => Service.isNonRelease(svc) && !Service.isJob(svc))}
+          appName={appData.app.name}
+          filterOpts={queryParamOpts}
+        />;
       case "metrics":
         return <MetricsSection currentChart={appData.chart} />;
       case "debug":
@@ -752,26 +719,21 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           currentChart={appData.chart}
           updatePorterApp={updatePorterApp}
           buttonStatus={buttonStatus}
-        />
+        />;
+      case "job-history":
+        return <ExpandedJob
+          appName={appData.app.name}
+          jobName={queryParamOpts.service}
+          goBack={() => setExpandedJob(null)}
+        />;
       default:
         return <ActivityFeed
           chart={appData.chart}
           stackName={appData?.app?.name}
           appData={appData}
-          eventId={eventId}
         />;
     }
   };
-
-  if (expandedJob) {
-    return (
-      <ExpandedJob
-        appName={appData.app.name}
-        jobName={expandedJob}
-        goBack={() => setExpandedJob(null)}
-      />
-    );
-  }
 
   return (
     <>
@@ -913,7 +875,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               ) : (
                 <>
                   <DarkMatter />
-                  <RevisionSection
+                  <PorterAppRevisionSection
                     showRevisions={showRevisions}
                     toggleShowRevisions={() => {
                       setShowRevisions(!showRevisions);
@@ -927,7 +889,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                       appData.chart.latest_version !==
                       appData.chart.chart.metadata.version
                     }
+                    updatePorterApp={updatePorterApp}
                     latestVersion={appData.chart.latest_version}
+                    appName={appData.app.name}
                   />
                   <DarkMatter antiHeight="-18px" />
                 </>
@@ -989,17 +953,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           )}
         </StyledExpandedApp>
       )}
-      {showDeleteOverlay && (
-        <ConfirmOverlay
-          message={`Are you sure you want to delete "${appData.app.name}"?`}
-          onYes={() => {
-            deletePorterApp();
-          }}
-          onNo={() => {
-            setShowDeleteOverlay(false);
-          }}
-        />
-      )}
     </>
   );
 };
@@ -1009,10 +962,6 @@ export default withRouter(ExpandedApp);
 const A = styled.a`
   display: flex;
   align-items: center;
-`;
-
-const Underline = styled.div`
-  border-bottom: 1px solid #ffffff;
 `;
 
 const RefreshButton = styled.div`

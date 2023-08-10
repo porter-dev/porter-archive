@@ -11,15 +11,15 @@ DB_PORT=5432
 
 # Required for accessing cluster control plane. If ENABLE_CAPI_PROVISIONER=false, nothing in this section will be used
 
-ENABLE_CAPI_PROVISIONER=false
+ENABLE_CAPI_PROVISIONER=true
 NATS_URL=nats:4222
 CLUSTER_CONTROL_PLANE_ADDRESS=http://ccp-web:7833
 
-# Github Login OAuth
+# Github Login OAuth. More information found at https://docs.porter.run/enterprise/self-hosted/integrations/github#setting-up-github-repository-integrations
 
 GITHUB_LOGIN_ENABLED=false
 
-# Github App for repo deployments, and preview environments. Remove these if you are not using preview environments or deploying from a repo locally
+# Github App for repo deployments, and preview environments. Remove these if you are not using preview environments or deploying from a repo locally.
 
 GITHUB_APP_CLIENT_ID=<github_app_id>
 GITHUB_APP_CLIENT_SECRET=<github_secret>
@@ -33,8 +33,11 @@ GITHUB_APP_SECRET_PATH=<path_to_secret>
 
 # Optional parameters
 
-HELM_APP_REPO_URL=https://charts.getporter.dev
-HELM_ADD_ON_REPO_URL=https://charts.getporter.dev
+# HELM_APP_REPO_URL=http://chartmuseum:8080 can be used to test charts using porter-charts with Tilt
+
+HELM_APP_REPO_URL=http://chartmuseum:8080
+#HELM_APP_REPO_URL=https://charts.getporter.dev
+#HELM_ADD_ON_REPO_URL=https://charts.getporter.dev
 
 # SERVER_URL must be set to your ngrok url, If you are using ngrok for your github app setup on the backend
 

@@ -1,4 +1,4 @@
-package stack
+package porter_app
 
 func CopyEnv(env map[string]string) map[string]string {
 	envCopy := make(map[string]string)

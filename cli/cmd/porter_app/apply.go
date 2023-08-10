@@ -1,4 +1,4 @@
-package stack
+package porter_app
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
+	"github.com/porter-dev/porter/internal/telemetry"
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
 	"gopkg.in/yaml.v3"
@@ -36,7 +37,7 @@ func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worke
 		return nil, fmt.Errorf("malformed application definition: %w", err)
 	}
 
-	deployStackHook := &DeployAppHook{
+	deployAppHook := &DeployAppHook{
 		Client:               client,
 		ApplicationName:      applicationName,
 		ProjectID:            cliConf.Project,
@@ -46,60 +47,63 @@ func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worke
 		Builder:              builder,
 	}
 
-	worker.RegisterHook("deploy-stack", deployStackHook)
-	if os.Getenv("GITHUB_RUN_ID") != "" {
-		err := createAppEvent(client, applicationName, cliConf)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+	worker.RegisterHook("deploy-app", deployAppHook)
 	return resources, nil
 }
 
 // Create app event to signfy start of build
-func createAppEvent(client *api.Client, applicationName string, cliConf *config.CLIConfig) error {
-	req := &types.CreateOrUpdatePorterAppEventRequest{
-		Status:             "PROGRESSING",
-		Type:               types.PorterAppEventType_Build,
-		TypeExternalSource: "GITHUB",
-		Metadata: map[string]any{
-			"action_run_id": os.Getenv("GITHUB_RUN_ID"),
-			"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
-		},
-	}
-
-	repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
-	if len(repoNameSplit) != 2 {
-		return fmt.Errorf("unable to parse GITHUB_REPOSITORY")
-	}
-	req.Metadata["repo"] = repoNameSplit[1]
-
-	actionRunID := os.Getenv("GITHUB_RUN_ID")
-	if actionRunID != "" {
-		arid, err := strconv.Atoi(actionRunID)
-		if err != nil {
-			return fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+func createAppEvent(client *api.Client, applicationName string, projectId, clusterId uint) (string, error) {
+	var req *types.CreateOrUpdatePorterAppEventRequest
+	if os.Getenv("GITHUB_RUN_ID") != "" {
+		req = &types.CreateOrUpdatePorterAppEventRequest{
+			Status:             "PROGRESSING",
+			Type:               types.PorterAppEventType_Build,
+			TypeExternalSource: "GITHUB",
+			Metadata: map[string]any{
+				"action_run_id": os.Getenv("GITHUB_RUN_ID"),
+				"org":           os.Getenv("GITHUB_REPOSITORY_OWNER"),
+			},
 		}
-		req.Metadata["action_run_id"] = arid
-	}
 
-	repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
-	if repoOwnerAccountID != "" {
-		arid, err := strconv.Atoi(repoOwnerAccountID)
-		if err != nil {
-			return fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+		repoNameSplit := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
+		if len(repoNameSplit) != 2 {
+			return "", fmt.Errorf("unable to parse GITHUB_REPOSITORY")
 		}
-		req.Metadata["github_account_id"] = arid
+		req.Metadata["repo"] = repoNameSplit[1]
+
+		actionRunID := os.Getenv("GITHUB_RUN_ID")
+		if actionRunID != "" {
+			arid, err := strconv.Atoi(actionRunID)
+			if err != nil {
+				return "", fmt.Errorf("unable to parse GITHUB_RUN_ID as int: %w", err)
+			}
+			req.Metadata["action_run_id"] = arid
+		}
+
+		repoOwnerAccountID := os.Getenv("GITHUB_REPOSITORY_OWNER_ID")
+		if repoOwnerAccountID != "" {
+			arid, err := strconv.Atoi(repoOwnerAccountID)
+			if err != nil {
+				return "", fmt.Errorf("unable to parse GITHUB_REPOSITORY_OWNER_ID as int: %w", err)
+			}
+			req.Metadata["github_account_id"] = arid
+		}
+	} else {
+		req = &types.CreateOrUpdatePorterAppEventRequest{
+			Status:             "PROGRESSING",
+			Type:               types.PorterAppEventType_Build,
+			TypeExternalSource: "GITHUB",
+			Metadata:           map[string]any{},
+		}
 	}
 
 	ctx := context.Background()
-	_, err := client.CreateOrUpdatePorterAppEvent(ctx, cliConf.Project, cliConf.Cluster, applicationName, req)
+	event, err := client.CreateOrUpdatePorterAppEvent(ctx, projectId, clusterId, applicationName, req)
 	if err != nil {
-		return fmt.Errorf("unable to create porter app build event: %w", err)
+		return "", fmt.Errorf("unable to create porter app build event: %w", err)
 	}
 
-	return nil
+	return event.ID, nil
 }
 
 func createV1BuildResources(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) ([]*switchboardTypes.Resource, string, error) {
@@ -118,7 +122,6 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 		color.New(color.FgYellow).Printf("No build values specified in porter.yaml, attempting to load stack build settings instead \n")
 
 		res, err := client.GetPorterApp(context.Background(), stackConf.projectID, stackConf.clusterID, stackConf.stackName)
-
 		if err != nil {
 			return nil, "", fmt.Errorf("unable to read build info from DB: %w", err)
 		}
@@ -147,7 +150,6 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 			stackConf.clusterID,
 			stackConf.parsed.Env,
 		)
-
 		if err != nil {
 			return nil, "", err
 		}
@@ -164,7 +166,6 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 }
 
 func createStackConf(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
-
 	err := config.ValidateCLIEnvironment()
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
@@ -172,9 +173,13 @@ func createStackConf(client *api.Client, app *Application, stackName string, pro
 	}
 
 	releaseEnvVars := getEnvFromRelease(client, stackName, projectID, clusterID)
-	if releaseEnvVars != nil {
+	releaseEnvGroupVars := getEnvGroupFromRelease(client, stackName, projectID, clusterID)
+	// releaseEnvVars will override releaseEnvGroupVars
+	totalEnv := mergeStringMaps(releaseEnvGroupVars, releaseEnvVars)
+
+	if totalEnv != nil {
 		color.New(color.FgYellow).Printf("Reading build env from release\n")
-		app.Env = mergeStringMaps(app.Env, releaseEnvVars)
+		app.Env = mergeStringMaps(app.Env, totalEnv)
 	}
 
 	return &StackConf{
@@ -253,6 +258,72 @@ func convertToBuild(porterApp *types.PorterApp) Build {
 		Dockerfile: dockerfile,
 		Image:      image,
 	}
+}
+
+func getEnvGroupFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) map[string]string {
+	var envGroups []string
+	envVarsGroupStringMap := make(map[string]string)
+
+	ctx, span := telemetry.NewSpan(context.Background(), "get-env-from-release")
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: projectID},
+		telemetry.AttributeKV{Key: "stack-name", Value: stackName},
+	)
+	namespace := fmt.Sprintf("porter-stack-%s", stackName)
+	release, err := client.GetRelease(
+		ctx,
+		projectID,
+		clusterID,
+		namespace,
+		stackName,
+	)
+	if err != nil {
+		telemetry.Error(ctx, span, err, "error getting env groups from release")
+		span.End()
+		return envVarsGroupStringMap
+	}
+	if err == nil && release != nil {
+		for _, val := range release.Config {
+			// Check if the value is a map
+			if appConfig, ok := val.(map[string]interface{}); ok {
+				if labels, ok := appConfig["labels"]; ok {
+					if labelsMap, ok := labels.(map[string]interface{}); ok {
+						if envGroup, ok := labelsMap["porter.run/linked-environment-group"]; ok {
+							envGroups = append(envGroups, fmt.Sprintf("%v", envGroup))
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if envGroups == nil {
+		return envVarsGroupStringMap
+	}
+	envGroupList, err := client.ListEnvGroups(
+		ctx,
+		projectID,
+		clusterID)
+	if err != nil {
+		telemetry.Error(ctx, span, err, "error getting env groups during build")
+		span.End()
+		return envVarsGroupStringMap
+	}
+	if err == nil {
+		for _, groupName := range envGroups {
+			for _, envGroupItem := range envGroupList.EnvironmentGroups {
+				if envGroupItem.Name == groupName {
+					for k, v := range envGroupItem.Variables {
+						envVarsGroupStringMap[k] = v
+					}
+					for k, v := range envGroupItem.SecretVariables {
+						envVarsGroupStringMap[k] = v
+					}
+				}
+			}
+		}
+	}
+	return envVarsGroupStringMap
 }
 
 func getEnvFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) map[string]string {

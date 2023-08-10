@@ -7,18 +7,23 @@ import AnimateHeight, { Height } from "react-animate-height";
 import { Context } from "shared/Context";
 import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
-import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED } from "./utils";
+import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, MIB_TO_GIB, MILI_TO_CORE } from "./utils";
+import InputSlider from "components/porter/InputSlider";
 
 interface Props {
     service: ReleaseService;
     editService: (service: ReleaseService) => void;
     setHeight: (height: Height) => void;
+    maxRAM: number;
+    maxCPU: number;
 }
 
 const ReleaseTabs: React.FC<Props> = ({
     service,
     editService,
     setHeight,
+    maxRAM,
+    maxCPU,
 }) => {
     const [currentTab, setCurrentTab] = React.useState<string>('main');
     const { currentCluster } = useContext(Context);
@@ -42,27 +47,37 @@ const ReleaseTabs: React.FC<Props> = ({
     };
 
     const renderResources = () => {
-        setHeight(244);
+        setHeight(292);
         return (
             <>
                 <Spacer y={1} />
-                <Input
-                    label="CPU (Millicores)"
-                    placeholder="ex: 0.5"
-                    value={service.cpu.value}
+                <InputSlider
+                    label="CPUs: "
+                    unit="Cores"
+                    min={0}
+                    max={maxCPU}
+                    color={"#3a48ca"}
+                    value={(service.cpu.value / MILI_TO_CORE).toString()}
+                    setValue={(e) => {
+                        editService({ ...service, cpu: { readOnly: false, value: e * MILI_TO_CORE } });
+                    }}
+                    step={0.01}
                     disabled={service.cpu.readOnly}
-                    width="300px"
-                    setValue={(e) => { editService({ ...service, cpu: { readOnly: false, value: e } }) }}
                     disabledTooltip={"You may only edit this field in your porter.yaml."}
                 />
                 <Spacer y={1} />
-                <Input
-                    label="RAM (MB)"
-                    placeholder="ex: 1"
-                    value={service.ram.value}
+                <InputSlider
+                    label="RAM: "
+                    unit="GiB"
+                    min={0}
+                    max={maxRAM}
+                    color={"#3a48ca"}
+                    value={(service.ram.value / MIB_TO_GIB).toString()}
+                    setValue={(e) => {
+                        editService({ ...service, ram: { readOnly: false, value: e * MIB_TO_GIB } });
+                    }}
                     disabled={service.ram.readOnly}
-                    width="300px"
-                    setValue={(e) => { editService({ ...service, ram: { readOnly: false, value: e } }) }}
+                    step={0.01}
                     disabledTooltip={"You may only edit this field in your porter.yaml."}
                 />
             </>
@@ -163,7 +178,7 @@ const ReleaseTabs: React.FC<Props> = ({
     return (
         <>
             <TabSelector
-                options={currentCluster?.cloud_provider === "GCP" ?
+                options={currentCluster?.cloud_provider === "GCP" || (currentCluster?.service === "gke") ?
                     [
                         { label: 'Main', value: 'main' },
                         { label: 'Resources', value: 'resources' },

@@ -67,6 +67,8 @@ type Project struct {
 	SimplifiedViewEnabled  bool
 	AzureEnabled           bool
 	HelmValuesEnabled      bool
+	MultiCluster           bool `gorm:"default:false"`
+	ValidateApplyV2        bool `gorm:"default:false"`
 }
 
 // ToProjectType generates an external types.Project to be shared over REST
@@ -90,5 +92,7 @@ func (p *Project) ToProjectType() *types.Project {
 		SimplifiedViewEnabled:  p.SimplifiedViewEnabled,
 		AzureEnabled:           p.AzureEnabled,
 		HelmValuesEnabled:      p.HelmValuesEnabled,
+		MultiCluster:           p.MultiCluster,
+		ValidateApplyV2:        p.ValidateApplyV2,
 	}
 }

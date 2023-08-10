@@ -38,7 +38,7 @@ func (c *GetGHATemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	_, workflowYAML, err := createGitAction(
-		ctx, 
+		ctx,
 		c.Config(),
 		user.ID,
 		cluster.ProjectID,

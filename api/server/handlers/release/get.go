@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/porter-dev/porter/internal/templater/parser"
 	"github.com/stefanmcshane/helm/pkg/release"
 	"gorm.io/gorm"
@@ -33,16 +34,20 @@ func NewReleaseGetHandler(
 }
 
 func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-release")
+	defer span.End()
+
+	helmRelease, _ := ctx.Value(types.ReleaseScope).(*release.Release)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "release-name", Value: helmRelease.Name})
 
 	res := &types.Release{
 		Release: helmRelease,
 	}
 
 	// look up the release in the database; if not found, do not populate Porter fields
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	release, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
-
 	if err == nil {
 		res.PorterRelease = release.ToReleaseType()
 
@@ -56,7 +61,8 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if release.BuildConfig != 0 {
 			bc, err := c.Repo().BuildConfig().GetBuildConfig(release.BuildConfig)
 			if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				err = telemetry.Error(ctx, span, err, "unable to get build config")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 
@@ -66,26 +72,30 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if release.StackResourceID != 0 {
 			stackResource, err := c.Repo().Stack().ReadStackResource(release.StackResourceID)
 			if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				err = telemetry.Error(ctx, span, err, "unable to get stack resource")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 
 			stackRevision, err := c.Repo().Stack().ReadStackRevision(stackResource.StackRevisionID)
 			if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				err = telemetry.Error(ctx, span, err, "unable to get stack revision")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 
 			stack, err := c.Repo().Stack().ReadStackByID(cluster.ProjectID, stackRevision.StackID)
 			if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				err = telemetry.Error(ctx, span, err, "unable to get stack")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 
 			res.StackID = stack.UID
 		}
 	} else if err != gorm.ErrRecordNotFound {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "unable to get release")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	} else {
 		res.PorterRelease = &types.PorterRelease{}
@@ -122,7 +132,8 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// look for the form using the dynamic client
 	dynClient, err := c.GetDynamicClient(r, cluster)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "unable to get dynamic client")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

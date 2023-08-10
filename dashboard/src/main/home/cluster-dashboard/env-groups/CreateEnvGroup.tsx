@@ -42,8 +42,11 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
   }
 
   isDisabled = () => {
+    const { envGroupName } = this.state;
     return (
-      !isAlphanumeric(this.state.envGroupName) || this.state.envGroupName === ""
+      !isAlphanumeric(envGroupName) ||
+      envGroupName === "" ||
+      envGroupName.length > 15
     );
   };
 
@@ -128,6 +131,65 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
       });
   };
 
+  createEnv = () => {
+    this.setState({ submitStatus: "loading" });
+
+    let apiEnvVariables: Record<string, string> = {};
+    let secretEnvVariables: Record<string, string> = {};
+
+    let envVariables = this.state.envVariables;
+    envVariables
+      .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
+        // remove any collisions that are marked as deleted and are duplicates
+        let numCollisions = self.reduce((n, _envVar: KeyValueType) => {
+          return n + (_envVar.key === envVar.key ? 1 : 0);
+        }, 0);
+
+        if (numCollisions == 1) {
+          return true;
+        } else {
+          return (
+            index ===
+            self.findIndex(
+              (_envVar: KeyValueType) =>
+                _envVar.key === envVar.key && !_envVar.deleted
+            )
+          );
+        }
+      })
+      .forEach((envVar: KeyValueType) => {
+        if (!envVar.deleted) {
+          if (envVar.hidden) {
+            secretEnvVariables[envVar.key] = envVar.value;
+          } else {
+            apiEnvVariables[envVar.key] = envVar.value;
+          }
+        }
+      });
+
+    api
+      .createEnvironmentGroups(
+        "<token>",
+        {
+          name: this.state.envGroupName,
+          variables: apiEnvVariables,
+          secret_variables: secretEnvVariables,
+        },
+        {
+          id: this.context.currentProject.id,
+          cluster_id: this.props.currentCluster.id,
+        }
+      )
+      .then((res) => {
+        this.setState({ submitStatus: "successful" });
+        // console.log(res);
+        this.props.goBack();
+      })
+      .catch((err) => {
+        this.setState({ submitStatus: "Could not create" });
+      });
+  };
+
   updateNamespaces = () => {
     let { currentProject } = this.context;
     api
@@ -175,11 +237,12 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
               <Warning
                 makeFlush={true}
                 highlight={
-                  !isAlphanumeric(this.state.envGroupName) &&
+                  (!isAlphanumeric(this.state.envGroupName) ||
+                    this.state.envGroupName.length > 15) &&
                   this.state.envGroupName !== ""
                 }
               >
-                Lowercase letters, numbers, and "-" only.
+                Lowercase letters, numbers, and "-" only. Maximum 15 characters.
               </Warning>
             </Subtitle>
             <DarkMatter antiHeight="-29px" />
@@ -187,7 +250,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
               type="text"
               value={this.state.envGroupName}
               setValue={(x: string) => this.setState({ envGroupName: x })}
-              placeholder="ex: doctor-scientist"
+              placeholder="ex: my-env-group"
               width="100%"
             />
             {!this?.context?.currentProject?.simplified_view_enabled && (<>
@@ -233,7 +296,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
             text="Create env group"
             clearPosition={true}
             statusPosition="right"
-            onClick={this.onSubmit}
+            onClick={this?.context?.currentProject.simplified_view_enabled ? this.createEnv : this.onSubmit}
             status={
               this.isDisabled()
                 ? "Missing required fields"

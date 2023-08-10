@@ -87,24 +87,54 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			DeleteWorkflowFile:     request.DeleteWorkflowFile,
 		}))
 	}
 
 	v.WriteResult(w, r, user.ToUserType())
 }
 
-func TrackStackBuildFailure(
+func TrackStackBuildStatus(
 	config *config.Config,
 	user *models.User,
 	project *models.Project,
 	stackName string,
+	errorMessage string,
+	status types.PorterAppEventStatus,
 ) error {
-	return config.AnalyticsClient.Track(analytics.StackBuildFailureTrack(&analytics.StackBuildFailureOpts{
-		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
-		StackName:              stackName,
-		Email:                  user.Email,
-		FirstName:              user.FirstName,
-		LastName:               user.LastName,
-		CompanyName:            user.CompanyName,
-	}))
+	if status == types.PorterAppEventStatus_Progressing {
+		return config.AnalyticsClient.Track(analytics.StackBuildProgressingTrack(&analytics.StackBuildOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			StackName:              stackName,
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+		}))
+	}
+
+	if status == types.PorterAppEventStatus_Success {
+		return config.AnalyticsClient.Track(analytics.StackBuildSuccessTrack(&analytics.StackBuildOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			StackName:              stackName,
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+		}))
+	}
+
+	if status == types.PorterAppEventStatus_Failed {
+		return config.AnalyticsClient.Track(analytics.StackBuildFailureTrack(&analytics.StackBuildOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			StackName:              stackName,
+			ErrorMessage:           errorMessage,
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+		}))
+	}
+
+	return nil
 }

@@ -15,10 +15,10 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	artifactregistry "cloud.google.com/go/artifactregistry/apiv1beta2"
+	"connectrpc.com/connect"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/bufbuild/connect-go"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/internal/models"

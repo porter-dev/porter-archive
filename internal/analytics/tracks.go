@@ -80,10 +80,11 @@ func (p segmentProperties) addAdditionalProperties(props map[string]interface{})
 type UserCreateTrackOpts struct {
 	*UserScopedTrackOpts
 
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	Email          string
+	FirstName      string
+	LastName       string
+	CompanyName    string
+	ReferralMethod string
 }
 
 // UserCreateTrack returns a track for when a user is created
@@ -92,6 +93,7 @@ func UserCreateTrack(opts *UserCreateTrackOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["referral_method"] = opts.ReferralMethod
 
 	return getSegmentUserTrack(
 		opts.UserScopedTrackOpts,
@@ -117,18 +119,40 @@ func UserVerifyEmailTrack(opts *UserVerifyEmailTrackOpts) segmentTrack {
 	)
 }
 
-// ProjectCreateTrackOpts are the options for creating a track when a project is created
-type ProjectCreateTrackOpts struct {
+// ProjectCreateDeleteTrackOpts are the options for creating a track when a project is created or deleted
+type ProjectCreateDeleteTrackOpts struct {
 	*ProjectScopedTrackOpts
+
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
 }
 
 // ProjectCreateTrack returns a track for when a project is created
-func ProjectCreateTrack(opts *ProjectCreateTrackOpts) segmentTrack {
+func ProjectCreateTrack(opts *ProjectCreateDeleteTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
+
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, ProjectCreate),
+	)
+}
+
+// ProjectDeleteTrack returns a track for when a project is deleted
+func ProjectDeleteTrack(opts *ProjectCreateDeleteTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ProjectDelete),
 	)
 }
 
@@ -834,11 +858,12 @@ func StackLaunchFailureTrack(opts *StackLaunchFailureOpts) segmentTrack {
 type StackDeletionOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName   string
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	StackName          string
+	Email              string
+	FirstName          string
+	LastName           string
+	CompanyName        string
+	DeleteWorkflowFile bool
 }
 
 // StackDeletionTrack returns a track for when a user deletes a stack
@@ -848,6 +873,7 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["delete_workflow_file"] = opts.DeleteWorkflowFile
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -855,19 +881,35 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 	)
 }
 
-// StackBuildFailureOpts are the options for creating a track when a stack fails to build
-type StackBuildFailureOpts struct {
+// StackBuildOpts are the options for creating a track when a stack builds
+type StackBuildOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName   string
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	StackName    string
+	ErrorMessage string
+	Email        string
+	FirstName    string
+	LastName     string
+	CompanyName  string
 }
 
 // StackBuildFailureTrack returns a track for when a stack fails to build
-func StackBuildFailureTrack(opts *StackBuildFailureOpts) segmentTrack {
+func StackBuildFailureTrack(opts *StackBuildOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, StackBuildFailure),
+	)
+}
+
+// StackBuildSuccessTrack returns a track for when a stack succeeds to build
+func StackBuildSuccessTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 	additionalProps["stack_name"] = opts.StackName
 	additionalProps["email"] = opts.Email
@@ -876,6 +918,20 @@ func StackBuildFailureTrack(opts *StackBuildFailureOpts) segmentTrack {
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
-		getDefaultSegmentTrack(additionalProps, StackBuildFailure),
+		getDefaultSegmentTrack(additionalProps, StackBuildSuccess),
+	)
+}
+
+// StackBuildProgressingTrack returns a track for when a stack starts to build
+func StackBuildProgressingTrack(opts *StackBuildOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, StackBuildProgressing),
 	)
 }

@@ -77,9 +77,9 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                         (provider === "gcp" && !currentProject?.azure_enabled)
                       )
                     ) {
-                      // openCostConsentModal(provider);
-                      setSelectedProvider(provider);
-                      setCurrentStep("credentials");
+                      openCostConsentModal(provider);
+                      // setSelectedProvider(provider);
+                      // setCurrentStep("credentials");
                     }
                   }}
                 >

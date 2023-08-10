@@ -13,6 +13,8 @@ type Project struct {
 	SimplifiedViewEnabled  bool    `json:"simplified_view_enabled"`
 	AzureEnabled           bool    `json:"azure_enabled"`
 	HelmValuesEnabled      bool    `json:"helm_values_enabled"`
+	MultiCluster           bool    `json:"multi_cluster"`
+	ValidateApplyV2        bool    `json:"validate_apply_v2"`
 }
 
 type FeatureFlags struct {
@@ -24,6 +26,8 @@ type FeatureFlags struct {
 	SimplifiedViewEnabled      string `json:"simplified_view_enabled,omitempty"`
 	AzureEnabled               bool   `json:"azure_enabled,omitempty"`
 	HelmValuesEnabled          bool   `json:"helm_values_enabled,omitempty"`
+	MultiCluster               bool   `json:"multi_cluster,omitempty"`
+	ValidateApplyV2            bool   `json:"validate_apply_v2"`
 }
 
 type CreateProjectRequest struct {

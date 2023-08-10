@@ -75,6 +75,10 @@ export const MetricsHeader = styled.div`
   align-items: center;
   overflow: visible;
   justify-content: space-between;
+  background: ${(props) => props.theme.clickable.bg};
+  border: 1px solid #494b4f;
+  border-radius: 5px;
+  padding: 20px;
 `;
 
 export const DropdownOverlay = styled.div`
@@ -172,6 +176,11 @@ export const StyledMetricsSection = styled.div`
   width: 100%;
   min-height: 480px;
   height: calc(100vh - 350px);
+  border: 2px solid #ffffff15;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  background: ${(props) => props.theme.fg};
   display: flex;
   flex-direction: column;
   position: relative;

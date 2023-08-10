@@ -53,18 +53,44 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   }, [currentChart, currentCluster, currentProject]);
 
   return (
-    <MetricsBase
-      services={controllerOptions.map((c) => ({
-        name: c.metadata.name,
-        kind: c.kind,
-        namespace: c.metadata.namespace,
-      }))}
-      timeRangeOptions={["1H", "6H", "1D", "1M"]}
-      initialMetricsOptions={["cpu", "memory", "network"]}
-      autoscaling_enabled={currentChart?.config?.autoscaling?.enabled}
-      project_id={currentProject ? currentProject.id : 0}
-      cluster_id={currentCluster ? currentCluster.id : 0}
-    />
+    <>
+      <MetricsBase
+        services={controllerOptions.map((c) => ({
+          name: c.metadata.name,
+          kind: c.kind,
+          namespace: c.metadata.namespace,
+        }))}
+        timeRangeOptions={["1H", "6H", "1D"]}
+        initialMetricsOptions={["cpu", "memory", "network"]}
+        autoscaling_enabled={currentChart?.config?.autoscaling?.enabled}
+        project_id={currentProject ? currentProject.id : 0}
+        cluster_id={currentCluster ? currentCluster.id : 0}
+      />
+      <MetricsBase
+        services={controllerOptions.map((c) => ({
+          name: c.metadata.name,
+          kind: c.kind,
+          namespace: c.metadata.namespace,
+        }))}
+        timeRangeOptions={["1H", "6H", "1D"]}
+        initialMetricsOptions={["memory", "network", "cpu"]}
+        autoscaling_enabled={currentChart?.config?.autoscaling?.enabled}
+        project_id={currentProject ? currentProject.id : 0}
+        cluster_id={currentCluster ? currentCluster.id : 0}
+      />
+      <MetricsBase
+        services={controllerOptions.map((c) => ({
+          name: c.metadata.name,
+          kind: c.kind,
+          namespace: c.metadata.namespace,
+        }))}
+        timeRangeOptions={["1H", "6H", "1D"]}
+        initialMetricsOptions={["network", "cpu", "memory"]}
+        autoscaling_enabled={currentChart?.config?.autoscaling?.enabled}
+        project_id={currentProject ? currentProject.id : 0}
+        cluster_id={currentCluster ? currentCluster.id : 0}
+      />
+    </>
   );
 };
 

@@ -23,7 +23,6 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	"github.com/porter-dev/porter/cli/cmd/preview"
 	previewV2Beta1 "github.com/porter-dev/porter/cli/cmd/preview/v2beta1"
-	stack "github.com/porter-dev/porter/cli/cmd/stack"
 	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"

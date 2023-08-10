@@ -942,6 +942,24 @@ func addLabelsToService(service *Service, envGroups []string, defaultLabelKey st
 		}
 	}
 
+	if _, ok := service.Config["podLabels"]; !ok {
+		service.Config["podLabels"] = make(map[string]string)
+	}
+	switch service.Config["podLabels"].(type) {
+	case map[string]string:
+		service.Config["podLabels"].(map[string]string)[defaultLabelKey] = porter_app.LabelValue_PorterApplication
+	case map[string]any:
+		service.Config["podLabels"].(map[string]any)[defaultLabelKey] = porter_app.LabelValue_PorterApplication
+	case any:
+		if val, ok := service.Config["podLabels"].(string); ok {
+			if val == "" {
+				service.Config["podLabels"] = map[string]string{
+					defaultLabelKey: porter_app.LabelValue_PorterApplication,
+				}
+			}
+		}
+	}
+
 	return service
 }
 

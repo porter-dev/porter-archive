@@ -1,4 +1,4 @@
-package porter-app
+package porter_app
 
 import (
 	"context"

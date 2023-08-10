@@ -127,3 +127,22 @@ func (c *Client) CreateOrUpdatePorterAppEvent(
 
 	return *resp, err
 }
+
+// ListEnvGroups (List all Env Groups for a given cluster)
+func (c *Client) ListEnvGroups(
+	ctx context.Context,
+	projectID, clusterID uint,
+) (types.ListEnvironmentGroupsResponse, error) {
+	resp := &types.ListEnvironmentGroupsResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/environment-groups",
+			projectID, clusterID,
+		),
+		nil,
+		resp,
+	)
+
+	return *resp, err
+}

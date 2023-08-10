@@ -6,19 +6,24 @@ import TabSelector from "components/TabSelector";
 import Checkbox from "components/porter/Checkbox";
 import { WorkerService } from "../serviceTypes";
 import AnimateHeight, { Height } from "react-animate-height";
-import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, RESOURCE_HEIGHT_WITHOUT_AUTOSCALING, RESOURCE_HEIGHT_WITH_AUTOSCALING } from "./utils";
+import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, MIB_TO_GIB, MILI_TO_CORE, RESOURCE_HEIGHT_WITHOUT_AUTOSCALING, RESOURCE_HEIGHT_WITH_AUTOSCALING } from "./utils";
 import { Context } from "shared/Context";
+import InputSlider from "components/porter/InputSlider";
 
 interface Props {
   service: WorkerService;
   editService: (service: WorkerService) => void;
   setHeight: (height: Height) => void;
+  maxRAM: number;
+  maxCPU: number;
 }
 
 const WorkerTabs: React.FC<Props> = ({
   service,
   editService,
   setHeight,
+  maxCPU,
+  maxRAM,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>('main');
   const { currentCluster } = useContext(Context);
@@ -46,23 +51,33 @@ const WorkerTabs: React.FC<Props> = ({
     return (
       <>
         <Spacer y={1} />
-        <Input
-          label="CPUs (Millicores)"
-          placeholder="ex: 500"
-          value={service.cpu.value}
+        <InputSlider
+          label="CPUs: "
+          unit="Cores"
+          min={0}
+          max={maxCPU}
+          color={"#3a48ca"}
+          value={(service.cpu.value / MILI_TO_CORE).toString()}
+          setValue={(e) => {
+            editService({ ...service, cpu: { readOnly: false, value: e * MILI_TO_CORE } });
+          }}
+          step={0.01}
           disabled={service.cpu.readOnly}
-          width="300px"
-          setValue={(e) => { editService({ ...service, cpu: { readOnly: false, value: e } }) }}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
-        <Input
-          label="RAM (MB)"
-          placeholder="ex: 1"
-          value={service.ram.value}
+        <InputSlider
+          label="RAM: "
+          unit="GiB"
+          min={0}
+          max={maxRAM}
+          color={"#3a48ca"}
+          value={(service.ram.value / MIB_TO_GIB).toString()}
+          setValue={(e) => {
+            editService({ ...service, ram: { readOnly: false, value: e * MIB_TO_GIB } });
+          }}
           disabled={service.ram.readOnly}
-          width="300px"
-          setValue={(e) => { editService({ ...service, ram: { readOnly: false, value: e } }) }}
+          step={0.01}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
         <Spacer y={1} />
@@ -136,9 +151,11 @@ const WorkerTabs: React.FC<Props> = ({
             }
           />
           <Spacer y={1} />
-          <Input
-            label="Target CPU utilization (%)"
-            placeholder="ex: 50"
+          <InputSlider
+            label="Target CPU utilization: "
+            unit="%"
+            min={0}
+            max={100}
             value={service.autoscaling.targetCPUUtilizationPercentage.value}
             disabled={
               service.autoscaling.targetCPUUtilizationPercentage.readOnly ||
@@ -161,9 +178,11 @@ const WorkerTabs: React.FC<Props> = ({
             }
           />
           <Spacer y={1} />
-          <Input
-            label="Target RAM utilization (%)"
-            placeholder="ex: 50"
+          <InputSlider
+            label="Target RAM utilization: "
+            unit="%"
+            min={0}
+            max={100}
             value={service.autoscaling.targetMemoryUtilizationPercentage.value}
             disabled={
               service.autoscaling.targetMemoryUtilizationPercentage.readOnly ||
@@ -286,7 +305,7 @@ const WorkerTabs: React.FC<Props> = ({
   return (
     <>
       <TabSelector
-        options={currentCluster?.cloud_provider === "GCP" ?
+        options={currentCluster?.cloud_provider === "GCP" || (currentCluster?.service === "gke") ?
           [
             { label: 'Main', value: 'main' },
             { label: 'Resources', value: 'resources' },

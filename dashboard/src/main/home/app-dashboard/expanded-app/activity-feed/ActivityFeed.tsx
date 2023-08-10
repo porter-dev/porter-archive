@@ -19,17 +19,17 @@ import _ from "lodash";
 import Button from "components/porter/Button";
 import Icon from "components/porter/Icon";
 import Container from "components/porter/Container";
-import EventFocusView from "./events/focus-views/EventFocusView";
-import { PorterAppEvent } from "shared/types";
+import { PorterAppEvent, PorterAppEventType } from "./events/types";
 
 type Props = {
   chart: any;
   stackName: string;
   appData: any;
-  eventId?: string;
 };
 
-const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) => {
+const EVENTS_POLL_INTERVAL = 5000; // poll every 5 seconds
+
+const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const { currentProject, currentCluster } = useContext(Context);
 
   const [events, setEvents] = useState<PorterAppEvent[]>([]);
@@ -39,6 +39,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
   const [numPages, setNumPages] = useState<number>(0);
   const [hasPorterAgent, setHasPorterAgent] = useState(false);
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
+  const [shouldAnimate, setShouldAnimate] = useState(true);
 
   const getEvents = async () => {
     setLoading(true)
@@ -65,8 +66,40 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
       setError(err);
     } finally {
       setLoading(false);
+      setShouldAnimate(false);
     }
   };
+
+  const getLatestDeployEventIndex = () => {
+    const deployEvents = events.filter((event) => event.type === PorterAppEventType.DEPLOY);
+    if (deployEvents.length === 0) {
+      return -1;
+    }
+    return events.indexOf(deployEvents[0]);
+  };
+
+  const updateEvents = async () => {
+    if (!currentProject || !currentCluster) {
+      return;
+    }
+    try {
+      const res = await api.getFeedEvents(
+        "<token>",
+        {},
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+          stack_name: stackName,
+          page,
+        }
+      );
+      setError(undefined)
+      setNumPages(res.data.num_pages);
+      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)) ?? []);
+    } catch (err) {
+      setError(err);
+    }
+  }
 
   useEffect(() => {
     const checkForAgent = async () => {
@@ -92,10 +125,12 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
     if (!hasPorterAgent) {
       checkForAgent();
     } else {
+      const intervalId = setInterval(updateEvents, EVENTS_POLL_INTERVAL);
       getEvents();
+      return () => clearInterval(intervalId);
     }
 
-  }, [currentProject, currentCluster, hasPorterAgent, page, eventId]);
+  }, [currentProject, currentCluster, hasPorterAgent, page]);
 
   const installAgent = async () => {
     const project_id = currentProject?.id;
@@ -140,13 +175,6 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
     );
   }
 
-  if (eventId != null) {
-    return <EventFocusView
-      eventId={eventId}
-      appData={appData}
-    />;
-  }
-
   if (!loading && !hasPorterAgent) {
     return (
       <Fieldset>
@@ -178,18 +206,18 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData, eventId }) =
   }
 
   return (
-    <StyledActivityFeed>
+    <StyledActivityFeed shouldAnimate={shouldAnimate}>
       {events.map((event, i) => {
         return (
           <EventWrapper isLast={i === events.length - 1} key={i}>
-            {i !== events.length - 1 && events.length > 1 && <Line />}
-            <Dot />
-            <Time>
+            {i !== events.length - 1 && events.length > 1 && <Line shouldAnimate={shouldAnimate} />}
+            <Dot shouldAnimate={shouldAnimate} />
+            <Time shouldAnimate={shouldAnimate}>
               <Text>{feedDate(event.created_at).split(", ")[0]}</Text>
               <Spacer x={0.5} />
               <Text>{feedDate(event.created_at).split(", ")[1]}</Text>
             </Time>
-            <EventCard appData={appData} event={event} key={i} />
+            <EventCard appData={appData} event={event} key={i} isLatestDeployEvent={i === getLatestDeployEventIndex()} />
           </EventWrapper>
         );
       })}
@@ -224,26 +252,26 @@ const I = styled.i`
   margin-right: 5px;
 `;
 
-const Time = styled.div`
-  opacity: 0;
-  animation: fadeIn 0.3s 0.1s;
-  animation-fill-mode: forwards;
+const Time = styled.div<{ shouldAnimate: boolean }>`
+  opacity: ${(props) => props.shouldAnimate ? "0" : "1"};
+  ${(props) => props.shouldAnimate && "animation: fadeIn 0.3s 0.1s;"}
+  ${(props) => props.shouldAnimate && "animation-fill-mode: forwards;"}
   width: 90px;
 `;
 
-const Line = styled.div`
+const Line = styled.div<{ shouldAnimate: boolean }>`
   width: 1px;
   height: calc(100% + 30px);
   background: #414141;
   position: absolute;
   left: 3px;
   top: 36px;
-  opacity: 0;
-  animation: fadeIn 0.3s 0.1s;
-  animation-fill-mode: forwards;
+  opacity: ${(props) => props.shouldAnimate ? "0" : "1"};
+  ${(props) => props.shouldAnimate && "animation: fadeIn 0.3s 0.1s;"}
+  ${(props) => props.shouldAnimate && "animation-fill-mode: forwards;"}
 `;
 
-const Dot = styled.div`
+const Dot = styled.div<{ shouldAnimate: boolean }>`
   width: 7px;
   height: 7px;
   background: #fff;
@@ -251,9 +279,9 @@ const Dot = styled.div`
   position: absolute;
   left: 0;
   top: 36px;
-  opacity: 0;
-  animation: fadeIn 0.3s 0.1s;
-  animation-fill-mode: forwards;
+  opacity: ${(props) => props.shouldAnimate ? "0" : "1"};
+  ${(props) => props.shouldAnimate && "animation: fadeIn 0.3s 0.1s;"}
+  ${(props) => props.shouldAnimate && "animation-fill-mode: forwards;"}
 `;
 
 const EventWrapper = styled.div<{
@@ -266,9 +294,9 @@ const EventWrapper = styled.div<{
   margin-bottom: ${(props) => (props.isLast ? "" : "25px")};
 `;
 
-const StyledActivityFeed = styled.div`
+const StyledActivityFeed = styled.div<{ shouldAnimate: boolean }>`
   width: 100%;
-  animation: fadeIn 0.3s 0s;
+  ${(props) => props.shouldAnimate && "animation: fadeIn 0.3s 0s;"}
   @keyframes fadeIn {
     from {
       opacity: 0;

@@ -33,3 +33,7 @@ func (repo *PorterAppEventRepository) UpdateEvent(ctx context.Context, appEvent 
 func (repo *PorterAppEventRepository) ReadEvent(ctx context.Context, id uuid.UUID) (models.PorterAppEvent, error) {
 	return models.PorterAppEvent{}, errors.New("cannot read database")
 }
+
+func (repo *PorterAppEventRepository) ReadDeployEventByRevision(ctx context.Context, porterAppID uint, revision float64) (models.PorterAppEvent, error) {
+	return models.PorterAppEvent{}, errors.New("cannot read database")
+}

@@ -45,7 +45,7 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	user, _ := ctx.Value(types.UserScope).(*models.User)
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
 		e := telemetry.Error(ctx, span, nil, "error parsing stack name from url")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
@@ -61,7 +61,7 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	app, err := p.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
+	app, err := p.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -77,8 +77,8 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	for idx, appEvent := range porterAppEvents {
-		if appEvent.Status == "PROGRESSING" {
-			pae, err := p.updateExistingAppEvent(ctx, *cluster, stackName, *appEvent, user, project)
+		if appEvent.Status == string(types.PorterAppEventStatus_Progressing) {
+			pae, err := p.updateExistingAppEvent(ctx, *cluster, appName, *appEvent, user, project)
 			if err != nil {
 				telemetry.Error(ctx, span, nil, "unable to update existing porter app event")
 			}
@@ -219,11 +219,11 @@ func (p *PorterAppEventListHandler) updateBuildEvent_Github(
 
 	if *actionRun.Status == "completed" {
 		if *actionRun.Conclusion == "success" {
-			event.Status = "SUCCESS"
-			_ = TrackStackBuildStatus(p.Config(), user, project, stackName, "", "SUCCESS")
+			event.Status = string(types.PorterAppEventStatus_Success)
+			_ = TrackStackBuildStatus(p.Config(), user, project, stackName, "", types.PorterAppEventStatus_Success)
 		} else {
-			event.Status = "FAILED"
-			_ = TrackStackBuildStatus(p.Config(), user, project, stackName, "", "FAILED")
+			event.Status = string(types.PorterAppEventStatus_Failed)
+			_ = TrackStackBuildStatus(p.Config(), user, project, stackName, "", types.PorterAppEventStatus_Failed)
 		}
 		event.Metadata["end_time"] = actionRun.GetUpdatedAt().Time
 	}

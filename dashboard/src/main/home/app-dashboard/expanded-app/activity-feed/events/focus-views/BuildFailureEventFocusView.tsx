@@ -6,12 +6,12 @@ import styled from "styled-components";
 import Anser, { AnserJsonEntry } from "anser";
 import JSZip from "jszip";
 import dayjs from "dayjs";
-import { PorterAppEvent } from "shared/types";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
 import { getDuration } from "../utils";
 import Link from "components/porter/Link";
 import { PorterLog } from "../../../logs/types";
+import { PorterAppEvent } from "../types";
 
 type Props = {
     event: PorterAppEvent;
@@ -24,7 +24,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
 }) => {
     const [logs, setLogs] = useState<PorterLog[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
+    const scrollToBottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!isLoading && scrollToBottomRef.current) {
@@ -118,7 +118,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
 
     useEffect(() => {
         getBuildLogs();
-    }, [event]);
+    }, []);
 
     return (
         <>

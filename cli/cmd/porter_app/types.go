@@ -1,4 +1,4 @@
-package stack
+package porter_app
 
 type PorterStackYAML struct {
 	Applications map[string]*Application `yaml:"applications" validate:"required_without=Services Apps"`

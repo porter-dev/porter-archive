@@ -1,11 +1,13 @@
 import React, { Component } from "react";
 
 import { Context } from "shared/Context";
+import ProjectButton from "./ProjectButton";
 import ProjectSection from "./ProjectSection";
 
 type PropsType = {};
 
 type StateType = {};
+
 
 // Props in context to project section to trigger update on context change
 export default class ProjectSectionContainer extends Component<
@@ -15,13 +17,17 @@ export default class ProjectSectionContainer extends Component<
   state = {};
 
   render() {
+
     return (
-      <ProjectSection
+
+      <ProjectButton
         currentProject={this.context.currentProject}
         projects={this.context.projects}
       />
+     
     );
   }
+
 }
 
 ProjectSectionContainer.contextType = Context;

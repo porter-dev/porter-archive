@@ -37,7 +37,7 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	stackName, reqErr := requestutils.GetURLParamString(r, types.URLParamStackName)
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
 		return
@@ -54,46 +54,56 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// generate porter jwt token
-	jwt, err := token.GetTokenForAPI(user.ID, project.ID)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting token for API: %w", err)))
-		return
-	}
-	encoded, err := jwt.EncodeToken(c.Config().TokenConf)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error encoding API token: %w", err)))
-		return
-	}
+	var secretName string
+	if request.DeleteWorkflowFilename == "" {
+		// generate porter jwt token
+		jwt, err := token.GetTokenForAPI(user.ID, project.ID)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error getting token for API: %w", err)))
+			return
+		}
+		encoded, err := jwt.EncodeToken(c.Config().TokenConf)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error encoding API token: %w", err)))
+			return
+		}
 
-	// create porter secret
-	secretName := fmt.Sprintf("PORTER_STACK_%d_%d", project.ID, cluster.ID)
-	err = actions.CreateGithubSecret(
-		client,
-		secretName,
-		encoded,
-		request.GithubRepoOwner,
-		request.GithubRepoName,
-	)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error generating secret: %w", err)))
-		return
+		// create porter secret
+		secretName = fmt.Sprintf("PORTER_STACK_%d_%d", project.ID, cluster.ID)
+		err = actions.CreateGithubSecret(
+			client,
+			secretName,
+			encoded,
+			request.GithubRepoOwner,
+			request.GithubRepoName,
+		)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error generating secret: %w", err)))
+			return
+		}
 	}
 
 	var pr *github.PullRequest
-	if request.OpenPr {
+	var prRequestBody string
+	if request.DeleteWorkflowFilename == "" {
+		prRequestBody = "Hello 👋 from Porter! Please merge this PR to finish setting up your application."
+	} else {
+		prRequestBody = "Please merge this PR to delete the workflow file associated with your application."
+	}
+	if request.OpenPr || request.DeleteWorkflowFilename != "" {
 		pr, err = actions.OpenGithubPR(&actions.GithubPROpts{
-			Client:         client,
-			GitRepoOwner:   request.GithubRepoOwner,
-			GitRepoName:    request.GithubRepoName,
-			StackName:      stackName,
-			ProjectID:      project.ID,
-			ClusterID:      cluster.ID,
-			ServerURL:      c.Config().ServerConf.ServerURL,
-			DefaultBranch:  request.Branch,
-			SecretName:     secretName,
-			PorterYamlPath: request.PorterYamlPath,
-			Body:           "Hello 👋 from Porter! Please merge this PR to finish setting up your application.",
+			Client:                 client,
+			GitRepoOwner:           request.GithubRepoOwner,
+			GitRepoName:            request.GithubRepoName,
+			StackName:              appName,
+			ProjectID:              project.ID,
+			ClusterID:              cluster.ID,
+			ServerURL:              c.Config().ServerConf.ServerURL,
+			DefaultBranch:          request.Branch,
+			SecretName:             secretName,
+			PorterYamlPath:         request.PorterYamlPath,
+			Body:                   prRequestBody,
+			DeleteWorkflowFilename: request.DeleteWorkflowFilename,
 		})
 	}
 
@@ -119,19 +129,21 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			URL: pr.GetHTMLURL(),
 		}
 
-		// update DB with the PR url
-		porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, stackName)
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to get porter app db: %w", err)))
-			return
-		}
+		if request.DeleteWorkflowFilename == "" {
+			// update DB with the PR url
+			porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to get porter app db: %w", err)))
+				return
+			}
 
-		porterApp.PullRequestURL = pr.GetHTMLURL()
+			porterApp.PullRequestURL = pr.GetHTMLURL()
 
-		_, err = c.Repo().PorterApp().UpdatePorterApp(porterApp)
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to write pr url to porter app db: %w", err)))
-			return
+			_, err = c.Repo().PorterApp().UpdatePorterApp(porterApp)
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("unable to write pr url to porter app db: %w", err)))
+				return
+			}
 		}
 	}
 

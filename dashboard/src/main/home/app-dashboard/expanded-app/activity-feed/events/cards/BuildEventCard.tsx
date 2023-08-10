@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 
 import build from "assets/build.png";
@@ -11,11 +11,14 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import Icon from "components/porter/Icon";
+import api from "shared/api";
 import { Log } from "main/home/cluster-dashboard/expanded-chart/logs-section/useAgentLogs";
-import { PorterAppEvent } from "shared/types";
-import { getDuration, getStatusIcon, triggerWorkflow } from '../utils';
+import JSZip from "jszip";
+import Anser, { AnserJsonEntry } from "anser";
+import { getDuration, getStatusColor, getStatusIcon, triggerWorkflow } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import document from "assets/document.svg";
+import { PorterAppEvent } from "../types";
 
 type Props = {
   event: PorterAppEvent;
@@ -26,11 +29,11 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return <Text color="#68BF8B">Build succeeded</Text>;
+        return <Text color={getStatusColor(event.status)}>Build succeeded</Text>;
       case "FAILED":
-        return <Text color="#FF6060">Build failed</Text>;
+        return <Text color={getStatusColor(event.status)}>Build failed</Text>;
       default:
-        return <Text color="#aaaabb66">Build in progress...</Text>;
+        return <Text color={getStatusColor(event.status)}>Build in progress...</Text>;
     }
   };
 
@@ -41,7 +44,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
       case "FAILED":
         return (
           <Wrapper>
-            <Link to={`/apps/${appData.app.name}/events/${event.id}`} hasunderline>
+            <Link to={`/apps/${appData.app.name}/events?event_id=${event.id}`} hasunderline>
               <Container row>
                 <Icon src={document} height="10px" />
                 <Spacer inline width="5px" />
@@ -91,7 +94,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appData }) => {
       <Spacer y={0.5} />
       <Container row spaced>
         <Container row>
-          <Icon height="16px" src={getStatusIcon(event.status)} />
+          <Icon height="12px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText(event)}
           <Spacer inline x={1} />

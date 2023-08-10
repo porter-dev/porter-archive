@@ -942,7 +942,7 @@ func addLabelsToService(service *Service, envGroups []string, defaultLabelKey st
 		}
 	}
 
-	// add pod labels if service type is not job
+	// add pod labels if service type is not job, because the job chart doesn't support podLabels in values.yaml
 	if service.Type != nil && *service.Type != "job" {
 		if _, ok := service.Config["podLabels"]; !ok {
 			service.Config["podLabels"] = make(map[string]string)

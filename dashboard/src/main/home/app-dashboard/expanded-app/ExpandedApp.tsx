@@ -149,6 +149,126 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   }, [currentCluster]);
 
+  useEffect(() => {
+    const checkForWorkflow = async () => {
+      if (workflowCheckPassed) {
+        clearInterval(workflowInterval);
+        return;
+      }
+
+      const { appName } = props.match.params as any;
+
+      if (currentProject == null || currentCluster == null) {
+        return;
+      }
+
+      try {
+        const porterAppTableData = await api.getPorterApp(
+          "<token>",
+          {},
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+            name: appName,
+          }
+        );
+
+        try {
+          await api.getBranchContents(
+            "<token>",
+            {
+              dir: `./.github/workflows/porter_stack_${appName}.yml`,
+            },
+            {
+              project_id: currentProject.id,
+              git_repo_id: porterAppTableData.data.git_repo_id,
+              kind: "github",
+              owner: porterAppTableData.data.repo_name.split("/")[0],
+              name: porterAppTableData.data.repo_name.split("/")[1],
+              branch: porterAppTableData.data.git_branch,
+            }
+          );
+          setWorkflowCheckPassed(true);
+          setGithubWorkflowFilename(`porter_stack_${appName}.yml`);
+        } catch (parentErr) {
+          if (parentErr.response?.status === 404 && porterAppTableData?.data?.repo_name) {
+            try {
+              // Check for user-copied porter.yml as fallback
+              await api.getBranchContents(
+                "<token>",
+                { dir: `./.github/workflows/porter.yml` },
+                {
+                  project_id: currentProject.id,
+                  git_repo_id: porterAppTableData.data.git_repo_id,
+                  kind: "github",
+                  owner: porterAppTableData.data.repo_name.split("/")[0],
+                  name: porterAppTableData.data.repo_name.split("/")[1],
+                  branch: porterAppTableData.data.git_branch,
+                }
+              );
+              setWorkflowCheckPassed(true);
+              setGithubWorkflowFilename(`porter.yml`);
+            } catch (childErr) {
+              setWorkflowCheckPassed(false);
+            }
+          }
+        }
+
+      } catch (err) {
+        // Handle unmerged PR
+
+      }
+    }
+    const workflowInterval = setInterval(checkForWorkflow, 5000);
+    return () => clearInterval(workflowInterval);
+  }, []);
+
+  useEffect(() => {
+    const checkForBuiltImage = async () => {
+      console.log('checking for built image')
+      console.log('here is hasBuiltImage', hasBuiltImage)
+      if (hasBuiltImage) {
+        clearInterval(builtImageInterval);
+        return;
+      }
+
+      const { appName } = props.match.params as any;
+
+      if (currentProject == null || currentCluster == null || appName == null) {
+        return;
+      }
+
+      try {
+        const resChartData = await api.getChart(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            namespace: `porter-stack-${appName}`,
+            cluster_id: currentCluster.id,
+            name: appName,
+            revision: 0,
+          }
+        );
+        const globalImage = resChartData.data.config?.global?.image
+        const updateHasBuiltImage = globalImage != null &&
+          globalImage.repository != null &&
+          globalImage.tag != null &&
+          globalImage.repository !== ImageInfo.BASE_IMAGE.repository &&
+          globalImage.tag !== ImageInfo.BASE_IMAGE.tag
+
+        if (updateHasBuiltImage) {
+          setWorkflowCheckPassed(true);
+          setHasBuiltImage(true);
+        }
+      } catch (err) {
+        // do nothing
+      }
+    }
+    const builtImageInterval = setInterval(checkForBuiltImage, 5000);
+    return () => clearInterval(builtImageInterval);
+  }, []);
+
   // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
   const getPorterApp = async ({ revision }: { revision: number }) => {
     const { appName } = props.match.params as any;
@@ -248,59 +368,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         newAppData.app.builder != null && newAppData.app.builder.includes("heroku")
       );
       setPorterYaml(finalPorterYaml);
-      // Only check GHA status if no built image is set
-      const globalImage = resChartData.data.config?.global?.image
-      const hasBuiltImage = globalImage != null &&
-        globalImage.repository != null &&
-        globalImage.tag != null &&
-        globalImage.repository !== ImageInfo.BASE_IMAGE.repository &&
-        globalImage.tag !== ImageInfo.BASE_IMAGE.tag
-      if (hasBuiltImage || !resPorterApp.data.repo_name) {
-        setWorkflowCheckPassed(true);
-        setHasBuiltImage(true);
-      } else {
-        try {
-          await api.getBranchContents(
-            "<token>",
-            {
-              dir: `./.github/workflows/porter_stack_${resPorterApp.data.name}.yml`,
-            },
-            {
-              project_id: currentProject.id,
-              git_repo_id: resPorterApp.data.git_repo_id,
-              kind: "github",
-              owner: resPorterApp.data.repo_name.split("/")[0],
-              name: resPorterApp.data.repo_name.split("/")[1],
-              branch: resPorterApp.data.git_branch,
-            }
-          );
-          setWorkflowCheckPassed(true);
-          setGithubWorkflowFilename(`porter_stack_${resPorterApp.data.name}.yml`);
-        } catch (err) {
-          // Handle unmerged PR
-          if (err.response?.status === 404) {
-            try {
-              // Check for user-copied porter.yml as fallback
-              await api.getBranchContents(
-                "<token>",
-                { dir: `./.github/workflows/porter.yml` },
-                {
-                  project_id: currentProject.id,
-                  git_repo_id: resPorterApp.data.git_repo_id,
-                  kind: "github",
-                  owner: resPorterApp.data.repo_name.split("/")[0],
-                  name: resPorterApp.data.repo_name.split("/")[1],
-                  branch: resPorterApp.data.git_branch,
-                }
-              );
-              setWorkflowCheckPassed(true);
-              setGithubWorkflowFilename(`porter.yml`);
-            } catch (err) {
-              setWorkflowCheckPassed(false);
-            }
-          }
-        }
-      }
     } catch (err) {
       // TODO: handle error
     } finally {

@@ -31,7 +31,13 @@ const ExpandedTemplate: React.FC<Props> = ({
   const [values, setValues] = useState("");
   const [markdown, setMarkdown] = useState<any>(null);
   const [keywords, setKeywords] = useState<any[]>([]);
-
+  const DISPLAY_TAGS_MAP = {
+    "ANALYITCS": { label: "Analytics", color: "#4cc9f0" },
+    "SECURITY": { label: "Security", color: "#da1e37" },
+    "DATA_STORE": { label: "Data Warehouse", color: "#7209b7" },
+    "LOGGING": { label: "Logging", color: "#b5179e" }
+    // You can add more here in the future as needed
+  };
   const getTemplateInfo = async () => {
     setIsLoading(true);
     let params = {
@@ -64,38 +70,46 @@ const ExpandedTemplate: React.FC<Props> = ({
   return (
     <StyledExpandedTemplate>
       <Container row spaced>
-        <Container row>
-          {!currentProject?.simplified_view_enabled && <Button
-            onClick={goBack}
-            alt
-          >
-            <I className="material-icons">first_page</I>
-            <Spacer inline x={1} />
-            Select template
-          </Button>
-          }
-          <Spacer x={1} inline />
+        <TitleContainer >
           <Icon src={hardcodedIcons[currentTemplate.name] || currentTemplate.icon} />
-          <Text size={16}>
-            <Capitalize>
-              {hardcodedNames[currentTemplate.name] || currentTemplate.name}
-            </Capitalize>
-          </Text>
-        </Container>
+
+          <TitleContainer>
+            <Text size={16}>
+              <Capitalize>
+                {hardcodedNames[currentTemplate.name] || currentTemplate.name}
+              </Capitalize>
+            </Text>
+            <Text color={"helper"} size={12}>
+              {currentTemplate.description}
+            </Text>
+          </TitleContainer>
+        </TitleContainer>
+
         <Button onClick={() => proceed(form)}>
           <AddI className="material-icons">add</AddI>
           Deploy add-on
         </Button>
       </Container>
+      {/* {Object.keys(DISPLAY_TAGS_MAP).map(tagKey => (
+        currentTemplate.tags?.includes(tagKey) &&
+        <Tag
+          style={{ background: DISPLAY_TAGS_MAP[tagKey].color }}
+        >
+          {DISPLAY_TAGS_MAP[tagKey].label}
+        </Tag>))} */}
       <Spacer height="15px" />
       {
         isLoading ? <Loading offset="-150px" /> : (
-
-          <>
-            <Spacer y={0.5} />
-            <Text>{currentTemplate.description}</Text>
-          </>
-
+          markdown ? (
+            <MarkdownWrapper>
+              <Markdown>{markdown}</Markdown>
+            </MarkdownWrapper>
+          ) : (
+            <>
+              <Spacer y={0.5} />
+              <Text>{currentTemplate.description}</Text>
+            </>
+          )
         )
       }
     </StyledExpandedTemplate>
@@ -129,8 +143,12 @@ const MarkdownWrapper = styled.div`
 `;
 
 const Icon = styled.img`
-  height: 22px;
+  height: 46px;
   margin-right: 15px;
+  border-radius: 10px;            
+  background: ${(props) => props.theme.fg};
+  padding: 10px;              
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const Capitalize = styled.span`
@@ -154,4 +172,23 @@ const AddI = styled.i`
 const StyledExpandedTemplate = styled.div`
   width: 100%;
   height: 100%;
+`;
+
+const Tag = styled.div<{ size?: string, right?: string, bottom?: string, left?: string }>`
+  position: absolute;
+  bottom: ${props => props.bottom || 'auto'};
+  left: ${props => props.left || 'auto'};
+  right: ${props => props.right || 'auto'};
+  font-size: 10px;
+  background: #480ca8;
+  padding: 5px;
+  margin-left: 2px;
+  border-radius: 4px; 
+  opacity: 0.7;
+`;
+
+const TitleContainer = styled.div`
+display: flex;
+flex-direction: row;
+align-items: center;  /* This will vertically align the items in the center */
 `;

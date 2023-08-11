@@ -28,8 +28,8 @@ type Props = {
 
 const HIDDEN_CHARTS = ["porter-agent", "loki"];
 const DATA_STORES = ["elasticsearch", "mongodb", "postgresql", "mysql", "redis"];
-const APPS = ["agent", "datadog", "tailscale-relay", "metabase", "mezmo"];
-const LOGGING = ["agent"]
+const APPS = ["LogDNA", "datadog", "tailscale-relay", "metabase", "mezmo"];
+const LOGGING = ["LogDNA"]
 const ANALYITCS = ["datadog", "metabase", "mezmo"]
 const SECURITY = ["tailscale-relay"]
 const POPULAR = ["datadog", "metabase", "postgresql"];

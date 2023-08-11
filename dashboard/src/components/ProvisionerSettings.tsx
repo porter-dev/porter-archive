@@ -880,7 +880,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       <Button
         // disabled={isDisabled()}
         disabled={
-          user?.email === "admin@porter.run" || currentProject?.id === 7760 || currentProject?.id === 7257 || currentProject?.id === 7645
+          user?.email === "admin@porter.run" || currentProject?.enable_reprovision
             ? false
             : currentCluster
               ? true

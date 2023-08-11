@@ -274,6 +274,7 @@ export interface ProjectType {
   helm_values_enabled: boolean;
   multi_cluster: boolean;
   full_add_ons: boolean;
+  enable_reprovision: boolean;
   roles: {
     id: number;
     kind: string;

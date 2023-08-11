@@ -45,7 +45,11 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		SimplifiedViewEnabled:  true,
 		HelmValuesEnabled:      false,
 		MultiCluster:           false,
+<<<<<<< HEAD
 		FullAddOns:             false,
+=======
+		EnableReprovision:      false,
+>>>>>>> master
 	}
 
 	var err error

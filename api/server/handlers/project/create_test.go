@@ -46,7 +46,11 @@ func TestCreateProjectSuccessful(t *testing.T) {
 		SimplifiedViewEnabled:  true,
 		HelmValuesEnabled:      false,
 		MultiCluster:           false,
+<<<<<<< HEAD
 		FullAddOns:             false,
+=======
+		EnableReprovision:      false,
+>>>>>>> master
 	}
 
 	gotProject := &types.CreateProjectResponse{}

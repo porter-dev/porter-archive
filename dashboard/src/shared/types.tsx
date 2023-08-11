@@ -273,6 +273,7 @@ export interface ProjectType {
   azure_enabled: boolean;
   helm_values_enabled: boolean;
   multi_cluster: boolean;
+  enable_reprovision: boolean;
   roles: {
     id: number;
     kind: string;

@@ -46,6 +46,7 @@ func TestCreateProjectSuccessful(t *testing.T) {
 		SimplifiedViewEnabled:  true,
 		HelmValuesEnabled:      false,
 		MultiCluster:           false,
+		EnableReprovision:      false,
 	}
 
 	gotProject := &types.CreateProjectResponse{}

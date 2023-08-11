@@ -18,7 +18,6 @@ interface AppEventModalProps {
     porterAppName: string;
     timestamp: string;
     expandedAppEventMessage: string;
-
 }
 const AppEventModal: React.FC<AppEventModalProps> = ({ logs, porterAppName, setModalVisible, timestamp, expandedAppEventMessage }) => {
     const scrollToBottomRef = useRef<HTMLDivElement>(null);

@@ -118,7 +118,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [porterApp, setPorterApp] = useState<PorterApp>();
 
   // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
-  const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
+  const [tempPorterApp, setTempPorterApp] = useState<PorterApp>(PorterApp.empty());
   const [buildView, setBuildView] = useState<BuildMethod>("docker");
 
   const history = useHistory();
@@ -674,7 +674,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             setTempPorterApp={(attrs: Partial<PorterApp>) => setTempPorterApp(PorterApp.setAttributes(tempPorterApp, attrs))}
             clearStatus={() => setButtonStatus("")}
             updatePorterApp={updatePorterApp}
-            setShowUnsavedChangesBanner={setShowUnsavedChangesBanner}
             buildView={buildView}
             setBuildView={setBuildView}
           />
@@ -688,7 +687,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "logs":
         return <LogSection
           currentChart={appData.chart}
-          services={services.filter(svc => Service.isNonRelease(svc) && !Service.isJob(svc))}
+          services={services.filter(svc => Service.isNonRelease(svc))}
           appName={appData.app.name}
           filterOpts={queryParamOpts}
         />;

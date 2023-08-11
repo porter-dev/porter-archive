@@ -150,7 +150,7 @@ const Icon = styled.img`
         height: 46px;
         margin-right: 15px;
         border-radius: 10px;
-        background: ${(props) => props.theme.fg};
+        background: ${(props) => props.theme.clickable.bg};
         padding: 10px;
         box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         `;

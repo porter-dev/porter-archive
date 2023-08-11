@@ -95,10 +95,7 @@ func (p *Project) ToProjectType() *types.Project {
 		AzureEnabled:           p.AzureEnabled,
 		HelmValuesEnabled:      p.HelmValuesEnabled,
 		MultiCluster:           p.MultiCluster,
-<<<<<<< HEAD
-=======
 		EnableReprovision:      p.EnableReprovision,
 		ValidateApplyV2:        p.ValidateApplyV2,
->>>>>>> master
 	}
 }

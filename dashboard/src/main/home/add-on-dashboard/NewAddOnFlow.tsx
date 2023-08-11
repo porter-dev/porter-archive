@@ -28,8 +28,8 @@ type Props = {
 
 const HIDDEN_CHARTS = ["porter-agent", "loki"];
 const DATA_STORES = ["elasticsearch", "mongodb", "postgresql", "mysql", "redis"];
-const APPS = ["LogDNA", "datadog", "tailscale-relay", "metabase", "mezmo"];
-const LOGGING = ["LogDNA"]
+const APPS = ["logdna", "datadog", "tailscale-relay", "metabase", "mezmo"];
+const LOGGING = ["logdna"]
 const ANALYITCS = ["datadog", "metabase", "mezmo"]
 const SECURITY = ["tailscale-relay"]
 const POPULAR = ["datadog", "metabase", "postgresql"];
@@ -66,11 +66,11 @@ const NewAddOnFlow: React.FC<Props> = ({
   }, [addOnTemplates, searchValue]);
 
   const appTemplates = useMemo(() => {
-    return allFilteredTemplates.filter(template => template.tags.includes("APP"));
+    return allFilteredTemplates.filter(template => template.tags?.includes("APP"));
   }, [allFilteredTemplates]);
 
   const dataStoreTemplates = useMemo(() => {
-    return allFilteredTemplates.filter(template => template.tags.includes("DATA_STORE"));
+    return allFilteredTemplates.filter(template => template.tags?.includes("DATA_STORE"));
   }, [allFilteredTemplates]);
 
   const filteredTemplates = useMemo(() => {
@@ -107,6 +107,7 @@ const NewAddOnFlow: React.FC<Props> = ({
       sortedVersionData = sortedVersionData.filter(
         (template: any) => !HIDDEN_CHARTS.includes(template?.name)
       );
+
       sortedVersionData = sortedVersionData.map((template: any) => {
         let templateTags = [];
 

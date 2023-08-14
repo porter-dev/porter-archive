@@ -17,4 +17,8 @@ tasks:
       ignore_error: false
       silent: true
  
-
+  lint:
+    desc: Run all available linters. This mimics any checks performed in Pull Request pre-merge checks
+    cmd: golangci-lint run -c .github/golangci-lint.yaml
+    env:
+      GOWORK: off

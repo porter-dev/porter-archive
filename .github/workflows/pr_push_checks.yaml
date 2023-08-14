@@ -26,7 +26,6 @@ jobs:
         with:
           go-version-file: go.mod
           cache: false
-          go-version: "1.20.5"
       - name: Run Go tests
         run: go test ./${{ matrix.folder }}/...
   linting:
@@ -35,7 +34,6 @@ jobs:
     steps:
       - uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
           cache: false
       - uses: actions/checkout@v3
       - name: Setup Go Cache

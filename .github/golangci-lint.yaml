@@ -13,8 +13,8 @@ linters-settings:
     rules:
       - name: exported
         severity: error
-  # gocyclo:
-  #   min-complexity: 15
+  gocyclo:
+    min-complexity: 15
   gomoddirectives:
     replace-local: false
   gosec:

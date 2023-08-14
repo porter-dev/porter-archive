@@ -114,18 +114,18 @@ const NewAddOnFlow: React.FC<Props> = ({
         (template: any) => !HIDDEN_CHARTS.includes(template?.name)
       );
 
-      // sortedVersionData = sortedVersionData.map((template: any) => {
-      //   let templateTags = [];
+      sortedVersionData = sortedVersionData.map((template: any) => {
+        let templateTags = [];
 
-      //   // Assign tags based on TAG_MAPPING
-      //   for (let tag in TAG_MAPPING) {
-      //     if (TAG_MAPPING[tag].includes(template.name)) {
-      //       templateTags.push(tag);
-      //     }
-      //   }
+        // Assign tags based on TAG_MAPPING
+        for (let tag in TAG_MAPPING) {
+          if (TAG_MAPPING[tag].includes(template.name)) {
+            templateTags.push(tag);
+          }
+        }
 
-      //   return { ...template, tags: templateTags };
-      // });
+        return { ...template, tags: templateTags };
+      });
       setAddOnTemplates(sortedVersionData);
     } catch (error) {
       setIsLoading(false);

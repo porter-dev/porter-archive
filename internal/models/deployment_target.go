@@ -9,7 +9,7 @@ type DeploymentTarget struct {
 	gorm.Model
 
 	// ID is a UUID for the Revision
-	ID uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"` 
+	ID uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
 
 	// ClusterID is the ID of the cluster that is being targeted.
 	ClusterID int `json:"cluster_id"`
@@ -17,6 +17,9 @@ type DeploymentTarget struct {
 	// ProjectID is the ID of the project that the target belongs to.
 	ProjectID int `json:"project_id"`
 
-	// Selector is the identifier to target, such as a namespace or a label selector.
+	// Selector is the identifier to target.
 	Selector string `json:"selector"`
+
+	// SelectorType is the kind of selector (i.e. NAMESPACE or LABEL).
+	SelectorType string `json:"selector_type"`
 }

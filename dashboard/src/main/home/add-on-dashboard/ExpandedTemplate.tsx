@@ -179,7 +179,7 @@ const Tag = styled.div<{ size?: string, right?: string, bottom?: string, left?: 
           background: #480ca8;
           padding: 5px;
           border-radius: 4px;
-          opacity: 0.7;
+          opacity: 0.85;
           `;
 
 const TitleContainer = styled.div`

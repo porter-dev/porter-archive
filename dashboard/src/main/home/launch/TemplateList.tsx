@@ -139,7 +139,9 @@ const TemplateList: React.FC<Props> = ({
         return (
           <TemplateBlock
             key={name}
-            onClick={() => setCurrentTemplate(template)}
+            onClick={() => {
+              setCurrentTemplate(template);
+            }}
           >
             {/* {tags?.includes("POPULAR") && <FireIcon src={fire} size="15px" top="10px" right="10px" />} */}
             {renderIcon(icon, template.name)}
@@ -197,8 +199,8 @@ const Tag = styled.div<{ size?: string, bottom?: string, left?: string }>`
   background: linear-gradient(45deg, rgba(88, 24, 219, 1) 0%, rgba(72, 12, 168, 1) 100%); // added gradient for shiny effect
   padding: 5px;
   border-radius: 4px; 
-  opacity: 0.7;
-  // box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1)
+  opacity: 0.85;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1)
 `;
 
 const Placeholder = styled.div`
@@ -272,7 +274,7 @@ const TemplateBlock = styled.div`
   flex-direction: column;
   align-item: center;
   justify-content: space-between;
-  height: 170px;
+  height: 180px;
   cursor: pointer;
   color: #ffffff;
   position: relative;
@@ -299,7 +301,7 @@ const TemplateListWrapper = styled.div`
   margin-top: 15px;
   padding-bottom: 50px;
   display: grid;
-  grid-column-gap: 25px;
-  grid-row-gap: 25px;
+  grid-column-gap: 30px;
+  grid-row-gap: 30px;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 `;

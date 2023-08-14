@@ -56,7 +56,7 @@ const templateBlacklist = [
   "umbrella",
 ];
 
-const AppDashboard: React.FC<Props> = ({
+const AddOnDashboard: React.FC<Props> = ({
 }) => {
 
   const { currentProject, currentCluster } = useContext(Context);
@@ -264,7 +264,7 @@ const AppDashboard: React.FC<Props> = ({
   );
 };
 
-export default AppDashboard;
+export default AddOnDashboard;
 
 const PlaceholderIcon = styled.img`
   height: 13px;

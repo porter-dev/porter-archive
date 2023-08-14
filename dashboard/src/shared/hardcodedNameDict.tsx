@@ -70,13 +70,13 @@ const hardcodedIcons: { [key: string]: string } = {
 };
 
 const DISPLAY_TAGS_MAP = {
-  "ANALYITCS": { label: "Analytics", color: "#2F97C1" },
-  "NETWORKING": { label: "Networking", color: "#EE6352" },
-  "DATA_BASE": { label: "Database", color: "#49A078" },
+  "ANALYITCS": { label: "Analytics", color: "#1CCAD8" },
+  "NETWORKING": { label: "Networking", color: "#FF680A" },
+  "DATA_BASE": { label: "Database", color: "#5FAD56" },
   "LOGGING": { label: "Logging", color: "#F72585" },
-  "MONITORING": { label: "Monitoring", color: "#7B4B94" },
-  "CACHE": { label: "Cache", color: "#E54B4B" },
-  "SEARCH": { label: "Search", color: "#FFC145" },
+  "MONITORING": { label: "Monitoring", color: "#774B9E" },
+  "CACHE": { label: "Cache", color: "#F72C25" },
+  "SEARCH": { label: "Search", color: "#F7B32B" },
   "MISC": { label: "Misc.", color: "#616163" },
 };
 

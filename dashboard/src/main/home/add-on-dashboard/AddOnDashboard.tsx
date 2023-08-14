@@ -161,15 +161,19 @@ const AppDashboard: React.FC<Props> = ({
           isLoading ?
             (<Loading offset="-150px" />) : (
               // <Fieldset>
-
-
-              <Link to="/addons/new">
-                <Button onClick={() => { }} height="50px" width="100%">
-                  <I className="material-icons">add</I> Deploy new add-on
-                </Button>
-
-              </Link>
-
+              (
+                <CentralContainer>
+                  <Text size={16}>
+                    No add-ons have been deployed yet.
+                  </Text>
+                  <Spacer y={1} />
+                  <Link to="/addons/new">
+                    <Button onClick={() => { }} height="40px" >
+                      <I className="material-icons">add</I> Deploy new add-on
+                    </Button>
+                  </Link>
+                </CentralContainer>
+              )
 
               // </Fieldset >
             )
@@ -361,4 +365,13 @@ const I = styled.i`
 const StyledAppDashboard = styled.div`
   width: 100%;
   height: 100%;
+`;
+
+const CentralContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;  /* vertically centered */
+  align-items: center;      /* horizontally centered */
+  height: 20vh;            /* full viewport height */
+
 `;

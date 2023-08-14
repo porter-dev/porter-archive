@@ -109,17 +109,21 @@ func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIn
 }
 
 type QueryOpts struct {
-	Metric           string   `schema:"metric"`
-	ShouldSum        bool     `schema:"shouldsum"`
-	Kind             string   `schema:"kind"`
-	PodList          []string `schema:"pods"`
-	Name             string   `schema:"name"`
-	Namespace        string   `schema:"namespace"`
-	NginxStatusLevel uint     `schema:"nginx_status_level"`
-	StartRange       uint     `schema:"startrange"`
-	EndRange         uint     `schema:"endrange"`
-	Resolution       string   `schema:"resolution"`
-	Percentile       float64  `schema:"percentile"`
+	// the name of the metric being queried for
+	Metric    string   `schema:"metric"`
+	ShouldSum bool     `schema:"shouldsum"`
+	Kind      string   `schema:"kind"`
+	PodList   []string `schema:"pods"`
+	Name      string   `schema:"name"`
+	Namespace string   `schema:"namespace"`
+	// a prefix [1,2,3,4,5] used to scope nginx requests by when querying for status code responses
+	NginxStatusLevel uint `schema:"nginx_status_level"`
+	// start time (in unix timestamp) for prometheus results
+	StartRange uint `schema:"startrange"`
+	// end time time (in unix timestamp) for prometheus results
+	EndRange   uint    `schema:"endrange"`
+	Resolution string  `schema:"resolution"`
+	Percentile float64 `schema:"percentile"`
 }
 
 func QueryPrometheus(

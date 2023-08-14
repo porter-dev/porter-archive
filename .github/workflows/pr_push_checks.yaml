@@ -50,7 +50,7 @@ jobs:
           version: latest
           args: -c .github/golangci-lint.yaml --verbose
           skip-pkg-cache: true
-
+          only-new-issues: true # this is needed until the following is merged: https://github.com/golangci/golangci-lint-action/issues/820
   build-npm:
     name: Running smoke test npm build
     runs-on: ubuntu-latest

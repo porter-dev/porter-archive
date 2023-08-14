@@ -123,7 +123,7 @@ func AppProtoFromYaml(file []byte) (map[string]*porterv1.PorterApp, error) {
 			if err != nil {
 				return nil, telemetry.Error(ctx, span, err, "error casting release config")
 			}
-			validApp.Release = release
+			validApp.Predeploy = release
 		}
 
 		validatedApps[app.Name] = validApp

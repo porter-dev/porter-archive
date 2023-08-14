@@ -68,11 +68,9 @@ func Test_getNginxStatusQuery(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			query, err := getNginxStatusQuery(tt.input.opts, tt.input.selectionRegex)
-			if query != tt.expected.query {
-				t.Errorf("got %s, want %s", query, tt.expected.query)
-			}
 			if tt.expected.err == nil {
 				assert.Nil(t, err, "expected nil, got %v", err)
+				assert.Equal(t, tt.expected.query, query, "got %s, want %s", query, tt.expected.query)
 			} else {
 				if assert.Error(t, err) {
 					assert.Equal(t, tt.expected.err, err)

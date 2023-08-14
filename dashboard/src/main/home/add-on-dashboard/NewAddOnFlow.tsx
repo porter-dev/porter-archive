@@ -30,9 +30,11 @@ const HIDDEN_CHARTS = ["porter-agent", "loki"];
 const DATA_STORES = ["elasticsearch", "mongodb", "postgresql", "mysql", "redis"];
 const APPS = ["logdna", "datadog", "tailscale-relay", "metabase", "mezmo"];
 const LOGGING = ["logdna"]
-const ANALYITCS = ["datadog", "metabase", "mezmo"]
-const SECURITY = ["tailscale-relay"]
+const ANALYITCS = ["metabase", "mezmo"]
+const NETWORKING = ["tailscale-relay"]
 const POPULAR = ["datadog", "metabase", "postgresql"];
+const MONITORING = ["datadog"]
+const DATA_BASE = ["postgresql", "mysql", "mongodb"]
 
 const TAG_MAPPING = {
   "DATA_STORE": DATA_STORES,
@@ -40,7 +42,11 @@ const TAG_MAPPING = {
   "POPULAR": POPULAR,
   "LOGGING": LOGGING,
   "ANALYITCS": ANALYITCS,
-  "SECURITY": SECURITY
+  "NETWORKING": NETWORKING,
+  "MONITORING": MONITORING,
+  "CACHE": ["redis"],
+  "SEARCH": ["elasticsearch"],
+  "DATA_BASE": DATA_BASE,
 };
 const NewAddOnFlow: React.FC<Props> = ({
 }) => {
@@ -108,18 +114,18 @@ const NewAddOnFlow: React.FC<Props> = ({
         (template: any) => !HIDDEN_CHARTS.includes(template?.name)
       );
 
-      sortedVersionData = sortedVersionData.map((template: any) => {
-        let templateTags = [];
+      // sortedVersionData = sortedVersionData.map((template: any) => {
+      //   let templateTags = [];
 
-        // Assign tags based on TAG_MAPPING
-        for (let tag in TAG_MAPPING) {
-          if (TAG_MAPPING[tag].includes(template.name)) {
-            templateTags.push(tag);
-          }
-        }
+      //   // Assign tags based on TAG_MAPPING
+      //   for (let tag in TAG_MAPPING) {
+      //     if (TAG_MAPPING[tag].includes(template.name)) {
+      //       templateTags.push(tag);
+      //     }
+      //   }
 
-        return { ...template, tags: templateTags };
-      });
+      //   return { ...template, tags: templateTags };
+      // });
       setAddOnTemplates(sortedVersionData);
     } catch (error) {
       setIsLoading(false);
@@ -210,7 +216,7 @@ const NewAddOnFlow: React.FC<Props> = ({
                             <Text color="#fff" size={15}>Pre-Production Datastores</Text>
                           </div>
                           <div>
-                            <Text color="helper">Datastore addons are NOT PRODUCTION GRADE. Use for dev environments ONLY.</Text>
+                            <Text color="helper">Pre-production datastores are not highly available and use ephemeral storage.</Text>
                           </div>
                         </>}
                       <TemplateList

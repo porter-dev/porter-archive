@@ -97,5 +97,6 @@ func (p *Project) ToProjectType() *types.Project {
 		MultiCluster:           p.MultiCluster,
 		EnableReprovision:      p.EnableReprovision,
 		ValidateApplyV2:        p.ValidateApplyV2,
+		FullAddOns:             p.FullAddOns,
 	}
 }

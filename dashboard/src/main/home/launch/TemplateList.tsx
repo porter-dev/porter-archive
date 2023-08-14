@@ -30,10 +30,12 @@ const TemplateList: React.FC<Props> = ({
   const { currentProject, setCurrentError } = useContext(Context);
   const DISPLAY_TAGS_MAP = {
     "ANALYITCS": { label: "Analytics", color: "#4cc9f0" },
-    "SECURITY": { label: "Security", color: "#da1e37" },
-    "DATA_STORE": { label: "Data Warehouse", color: "#7209b7" },
-    "LOGGING": { label: "Logging", color: "#b5179e" }
-    // You can add more here in the future as needed
+    "NETWORKING": { label: "Networking", color: "#ff6b35" },
+    "DATA_BASE": { label: "Database", color: "#007200" },
+    "LOGGING": { label: "Logging", color: "#b5179e" },
+    "MONITORING": { label: "Monitoring", color: "#7209b7" },
+    "CACHE": { label: "Cache", color: "#da1e37" },
+    "SEARCH": { label: "Search", color: "#fed10b" },
   };
   useEffect(() => {
     let isSubscribed = true;
@@ -147,7 +149,7 @@ const TemplateList: React.FC<Props> = ({
             key={name}
             onClick={() => setCurrentTemplate(template)}
           >
-            {tags?.includes("POPULAR") && <FireIcon src={fire} size="15px" top="10px" right="10px" />}
+            {/* {tags?.includes("POPULAR") && <FireIcon src={fire} size="15px" top="10px" right="10px" />} */}
             {renderIcon(icon, template.name)}
             <TemplateTitle>{name}</TemplateTitle>
             <TemplateDescription>{description}</TemplateDescription>

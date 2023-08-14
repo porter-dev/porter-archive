@@ -13,6 +13,7 @@ import Text from "components/porter/Text";
 import Markdown from "markdown-to-jsx";
 
 import { hardcodedNames, hardcodedIcons } from "shared/hardcodedNameDict";
+import Icon from "components/porter/Icon";
 
 type Props = {
   currentTemplate: any;
@@ -33,10 +34,12 @@ const ExpandedTemplate: React.FC<Props> = ({
   const [keywords, setKeywords] = useState<any[]>([]);
   const DISPLAY_TAGS_MAP = {
     "ANALYITCS": { label: "Analytics", color: "#4cc9f0" },
-    "SECURITY": { label: "Security", color: "#da1e37" },
-    "DATA_STORE": { label: "Data Warehouse", color: "#7209b7" },
-    "LOGGING": { label: "Logging", color: "#b5179e" }
-    // You can add more here in the future as needed
+    "NETWORKING": { label: "Networking", color: "#ff6b35" },
+    "DATA_BASE": { label: "Database", color: "#007200" },
+    "LOGGING": { label: "Logging", color: "#b5179e" },
+    "MONITORING": { label: "Monitoring", color: "#7209b7" },
+    "CACHE": { label: "Cache", color: "#da1e37" },
+    "SEARCH": { label: "Search", color: "#fed10b" },
   };
   const getTemplateInfo = async () => {
     setIsLoading(true);
@@ -71,7 +74,7 @@ const ExpandedTemplate: React.FC<Props> = ({
     <StyledExpandedTemplate>
       <Container row spaced>
         <Container row>
-          <Icon src={hardcodedIcons[currentTemplate.name] || currentTemplate.icon} />
+          <TitleIcon src={hardcodedIcons[currentTemplate.name] || currentTemplate.icon} />
 
           <TitleContainer >
             <Container row spaced>
@@ -93,6 +96,7 @@ const ExpandedTemplate: React.FC<Props> = ({
               {currentTemplate.description}
             </Text>
           </TitleContainer>
+
         </Container>
 
         <Button onClick={() => proceed(form)}>
@@ -100,6 +104,10 @@ const ExpandedTemplate: React.FC<Props> = ({
           Deploy add-on
         </Button>
       </Container>
+      {currentTemplate.tags?.includes("DATA_STORE") && <><Spacer y={1} />
+        <i className="material-icons" style={{ marginTop: '2px', marginRight: '2px', fontSize: '12px', color: '#fcba03' }}>error_outline</i>
+        <Text color={"#d6b43e"} >For development use only. Does not support persistance and should not be used in production grade applications</Text>
+      </>}
 
       <Spacer height="15px" />
       {
@@ -116,7 +124,7 @@ const ExpandedTemplate: React.FC<Props> = ({
           )
         )
       }
-    </StyledExpandedTemplate>
+    </StyledExpandedTemplate >
   );
 };
 
@@ -146,7 +154,7 @@ const MarkdownWrapper = styled.div`
         padding-bottom: 80px;
         `;
 
-const Icon = styled.img`
+const TitleIcon = styled.img`
         height: 46px;
         margin-right: 15px;
         border-radius: 10px;
@@ -160,8 +168,11 @@ const Capitalize = styled.span`
         `;
 
 const I = styled.i`
-        color: white;
-        font-size: 16px;
+  font-size: 18px;
+  margin-right: 10px;
+  float: left;
+  color: "#fcba03"};
+
         `;
 
 const AddI = styled.i`

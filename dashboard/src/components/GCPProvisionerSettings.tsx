@@ -19,6 +19,7 @@ import {
   AKS,
   AKSNodePool,
   NodePoolType,
+  GKE,
 } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
@@ -51,13 +52,10 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     currentCluster,
     setCurrentCluster,
     setShouldRefreshClusters,
-    setHasFinishedOnboarding,
   } = useContext(Context);
   const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [region, setRegion] = useState(locationOptions[0].value);
-  const [machineType, setMachineType] = useState("Standard_A2_v2");
-  const [isExpanded, setIsExpanded] = useState(false);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
   const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
@@ -135,39 +133,17 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
-        kind: EnumKubernetesKind.AKS,
-        cloudProvider: EnumCloudProvider.AZURE,
+        kind: EnumKubernetesKind.GKE,
+        cloudProvider: EnumCloudProvider.GCP,
         cloudProviderCredentialsId: props.credentialId,
         kindValues: {
-          case: "aksKind",
-          value: new AKS({
-            // clusterName: clusterName,
-            // clusterVersion: clusterVersion || "v1.24.9",
-            // cidrRange: cidrRange || "10.78.0.0/16",
-            // location: region,
-            // nodePools: [
-            //   new AKSNodePool({
-            //     instanceType: "Standard_A2_v2",
-            //     minInstances: 1,
-            //     maxInstances: 3,
-            //     nodePoolType: NodePoolType.SYSTEM,
-            //     mode: "User",
-            //   }),
-            //   new AKSNodePool({
-            //     instanceType: "Standard_A4_v2",
-            //     minInstances: 1,
-            //     maxInstances: 3,
-            //     nodePoolType: NodePoolType.MONITORING,
-            //     mode: "User",
-            //   }),
-            //   new AKSNodePool({
-            //     instanceType: machineType,
-            //     minInstances: minInstances || 1,
-            //     maxInstances: maxInstances || 10,
-            //     nodePoolType: NodePoolType.APPLICATION,
-            //     mode: "User",
-            //   }),
-            // ],
+          case: "gkeKind",
+          value: new GKE({
+            clusterName: clusterName,
+            clusterVersion: clusterVersion || "v1.24.9",
+            cidrRange: cidrRange || "10.78.0.0/16",
+            region: region,
+            nodePools: [],
           }),
         },
       }),
@@ -313,59 +289,6 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           setActiveValue={setRegion}
           label="📍 Google Cloud Region"
         />
-        {user?.isPorterUser && (
-          <Heading>
-            <ExpandHeader
-              onClick={() => setIsExpanded(!isExpanded)}
-              isExpanded={isExpanded}
-            >
-              <i className="material-icons">arrow_drop_down</i>
-              Advanced settings
-            </ExpandHeader>
-          </Heading>
-        )}
-        {isExpanded && (
-          <>
-            <SelectRow
-              options={clusterVersionOptions}
-              width="350px"
-              disabled={isReadOnly}
-              value={clusterVersion}
-              scrollBuffer={true}
-              dropdownMaxHeight="240px"
-              setActiveValue={setClusterVersion}
-              label="Cluster version"
-            />
-            <SelectRow
-              options={machineTypeOptions}
-              width="350px"
-              disabled={isReadOnly}
-              value={machineType}
-              scrollBuffer={true}
-              dropdownMaxHeight="240px"
-              setActiveValue={setMachineType}
-              label="Machine type"
-            />
-            <InputRow
-              width="350px"
-              type="number"
-              disabled={isReadOnly}
-              value={maxInstances}
-              setValue={(x: number) => setMaxInstances(x)}
-              label="Maximum number of application EC2 instances"
-              placeholder="ex: 1"
-            />
-            <InputRow
-              width="350px"
-              type="string"
-              disabled={isReadOnly}
-              value={cidrRange}
-              setValue={(x: string) => setCidrRange(x)}
-              label="VPC CIDR range"
-              placeholder="ex: 10.78.0.0/16"
-            />
-          </>
-        )}
       </>
     );
   };
@@ -386,18 +309,6 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
 export default withRouter(GCPProvisionerSettings);
 
-const ExpandHeader = styled.div<{ isExpanded: boolean }>`
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  > i {
-    margin-right: 7px;
-    margin-left: -7px;
-    transform: ${(props) =>
-    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
-    transition: transform 0.1s ease;
-  }
-`;
 
 const StyledForm = styled.div`
   position: relative;

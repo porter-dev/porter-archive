@@ -50,6 +50,12 @@ func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
+	if (request.PodSelector != "" && request.ChartName != "") || (request.PodSelector == "" && request.ChartName == "") {
+		err := telemetry.Error(ctx, span, nil, "must provide either pod selector or chart name")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
 		_ = telemetry.Error(ctx, span, err, "unable to get agent")
@@ -74,11 +80,6 @@ func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	var podSelector string
 	if request.ChartName == "" {
-		if request.PodSelector == "" {
-			err = telemetry.Error(ctx, span, nil, "must provide either chart name or pod selector")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
 		podSelector = request.PodSelector
 	} else {
 		// get the pod values which will be used to get the correct pod selector
@@ -111,13 +112,14 @@ func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http
 				for _, pod := range pods {
 					if pod.GetCreationTimestamp().Time.After(request.StartRange) && pod.GetCreationTimestamp().Time.Before(request.EndRange) {
 						if latestPod == nil || pod.GetCreationTimestamp().Time.After(latestPod.GetCreationTimestamp().Time) {
-							latestPod = &pod
+							copyPod := pod
+							latestPod = &copyPod
 						}
 					}
 				}
 			}
 			if latestPod == nil {
-				err = telemetry.Error(ctx, span, nil, "no pods found within timerange")
+				err = telemetry.Error(ctx, span, nil, "unable to retrieve logs for latest job")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
 				return
 			}

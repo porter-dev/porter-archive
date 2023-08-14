@@ -3,6 +3,7 @@ package prometheus
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -108,16 +109,21 @@ func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIn
 }
 
 type QueryOpts struct {
-	Metric     string   `schema:"metric"`
-	ShouldSum  bool     `schema:"shouldsum"`
-	Kind       string   `schema:"kind"`
-	PodList    []string `schema:"pods"`
-	Name       string   `schema:"name"`
-	Namespace  string   `schema:"namespace"`
-	StartRange uint     `schema:"startrange"`
-	EndRange   uint     `schema:"endrange"`
-	Resolution string   `schema:"resolution"`
-	Percentile float64  `schema:"percentile"`
+	// the name of the metric being queried for
+	Metric    string   `schema:"metric"`
+	ShouldSum bool     `schema:"shouldsum"`
+	Kind      string   `schema:"kind"`
+	PodList   []string `schema:"pods"`
+	Name      string   `schema:"name"`
+	Namespace string   `schema:"namespace"`
+	// a prefix [1,2,3,4,5] used to scope nginx requests by when querying for status code responses
+	NginxStatusLevel uint `schema:"nginx_status_level"`
+	// start time (in unix timestamp) for prometheus results
+	StartRange uint `schema:"startrange"`
+	// end time time (in unix timestamp) for prometheus results
+	EndRange   uint    `schema:"endrange"`
+	Resolution string  `schema:"resolution"`
+	Percentile float64 `schema:"percentile"`
 }
 
 func QueryPrometheus(
@@ -161,6 +167,11 @@ func QueryPrometheus(
 		query = fmt.Sprintf(`%s / %s OR on() vector(0)`, num, denom)
 	} else if opts.Metric == "nginx:latency-histogram" {
 		query = fmt.Sprintf(`histogram_quantile(%f, (sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{status!="404",status!="500",exported_namespace=~"%s",ingress=~"%s"}[5m])) OR sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{status!="404",status!="500",namespace=~"%s",ingress=~"%s"}[5m]))) by (le, ingress))`, opts.Percentile, opts.Namespace, selectionRegex, opts.Namespace, selectionRegex)
+	} else if opts.Metric == "nginx:status" {
+		query, err = getNginxStatusQuery(opts, selectionRegex)
+		if err != nil {
+			return nil, err
+		}
 	} else if opts.Metric == "cpu_hpa_threshold" {
 		// get the name of the kube hpa metric
 		metricName, hpaMetricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")
@@ -226,6 +237,23 @@ func QueryPrometheus(
 	}
 
 	return parseQuery(rawQuery, opts.Metric)
+}
+
+func getNginxStatusQuery(opts *QueryOpts, selectionRegex string) (string, error) {
+	supportedLevels := map[int]bool{
+		1: true,
+		2: true,
+		3: true,
+		4: true,
+		5: true,
+	}
+
+	if !supportedLevels[int(opts.NginxStatusLevel)] {
+		return "", errors.New("invalid nginx status level specified")
+	}
+
+	query := fmt.Sprintf(`round(sum by (ingress)(irate(nginx_ingress_controller_requests{exported_namespace=~"%s",ingress="%s",service="%s",status=~"%d.."}[5m])), 0.001)`, opts.Namespace, selectionRegex, opts.Name, opts.NginxStatusLevel)
+	return query, nil
 }
 
 type promRawQuery struct {

@@ -158,8 +158,8 @@ const TitleIcon = styled.img`
         height: 46px;
         margin-right: 15px;
         border-radius: 10px;
-        background: ${(props) => props.theme.clickable.bg};
-        padding: 10px;
+        background: #272727;
+        padding: 8px;
         box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         `;
 
@@ -167,13 +167,6 @@ const Capitalize = styled.span`
         text-transform: capitalize;
         `;
 
-const I = styled.i`
-  font-size: 18px;
-  margin-right: 10px;
-  float: left;
-  color: "#fcba03"};
-
-        `;
 
 const AddI = styled.i`
         color: white;

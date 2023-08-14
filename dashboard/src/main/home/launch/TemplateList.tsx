@@ -206,6 +206,7 @@ const Tag = styled.div<{ size?: string, bottom?: string, left?: string }>`
   padding: 5px;
   border-radius: 4px; 
   opacity: 0.7;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const Placeholder = styled.div`

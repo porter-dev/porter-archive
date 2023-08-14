@@ -25,7 +25,6 @@ func RepoIndexToPorterChartList(index *repo.IndexFile, repoURL string) types.Lis
 	index.SortEntries()
 
 	porterCharts := make(types.ListTemplatesResponse, 0)
-	fmt.Println("INdex Entries Keywords: ", index.Entries.keywords)
 
 	for _, entryVersions := range index.Entries {
 		indexChart := entryVersions[0]
@@ -41,6 +40,7 @@ func RepoIndexToPorterChartList(index *repo.IndexFile, repoURL string) types.Lis
 			Icon:        indexChart.Icon,
 			Versions:    versions,
 			RepoURL:     repoURL,
+			Tags:        indexChart.Keywords,
 		}
 
 		porterCharts = append(porterCharts, porterChart)

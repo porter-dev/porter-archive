@@ -279,11 +279,13 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
             width="350px"
             type="string"
             disabled={isReadOnly}
-            value={cidrRange}
-            setValue={(x: string) => setCidrRange(x)}
+            value={clusterNetworking.cidrRange}
+            setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, cidrRange: x }))}
             label="VPC CIDR range"
             placeholder="ex: 10.78.0.0/16"
           />
+          <Spacer y={0.25} />
+          <Text color="helper">The following ranges will be used: {clusterNetworking.cidrRange}, {clusterNetworking.controlPlaneCidr}, {clusterNetworking.serviceCidr}, {clusterNetworking.podCidr}</Text>
         </>
       );
     }

@@ -69,4 +69,15 @@ const hardcodedIcons: { [key: string]: string } = {
   "porter-agent": lightning,
 };
 
-export { hardcodedNames, hardcodedIcons };
+const DISPLAY_TAGS_MAP = {
+  "ANALYITCS": { label: "Analytics", color: "#2F97C1" },
+  "NETWORKING": { label: "Networking", color: "#EE6352" },
+  "DATA_BASE": { label: "Database", color: "#49A078" },
+  "LOGGING": { label: "Logging", color: "#F72585" },
+  "MONITORING": { label: "Monitoring", color: "#7B4B94" },
+  "CACHE": { label: "Cache", color: "#E54B4B" },
+  "SEARCH": { label: "Search", color: "#FFC145" },
+  "MISC": { label: "Misc.", color: "#616163" },
+};
+
+export { hardcodedNames, hardcodedIcons, DISPLAY_TAGS_MAP };

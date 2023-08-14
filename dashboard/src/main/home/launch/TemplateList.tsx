@@ -4,7 +4,7 @@ import api from "shared/api";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
-import { hardcodedIcons, hardcodedNames } from "shared/hardcodedNameDict";
+import { DISPLAY_TAGS_MAP, hardcodedIcons, hardcodedNames } from "shared/hardcodedNameDict";
 import { PorterTemplate } from "shared/types";
 import semver from "semver";
 
@@ -28,15 +28,7 @@ const TemplateList: React.FC<Props> = ({
   const [hasError, setHasError] = useState(false);
   const [templateList, setTemplateList] = useState<PorterTemplate[]>(null);
   const { currentProject, setCurrentError } = useContext(Context);
-  const DISPLAY_TAGS_MAP = {
-    "ANALYITCS": { label: "Analytics", color: "#4cc9f0" },
-    "NETWORKING": { label: "Networking", color: "#ff6b35" },
-    "DATA_BASE": { label: "Database", color: "#007200" },
-    "LOGGING": { label: "Logging", color: "#b5179e" },
-    "MONITORING": { label: "Monitoring", color: "#7209b7" },
-    "CACHE": { label: "Cache", color: "#da1e37" },
-    "SEARCH": { label: "Search", color: "#fed10b" },
-  };
+
   useEffect(() => {
     let isSubscribed = true;
     if (!currentProject || !helm_repo_id) {
@@ -202,11 +194,11 @@ const Tag = styled.div<{ size?: string, bottom?: string, left?: string }>`
   bottom: ${props => props.bottom || 'auto'};
   left: ${props => props.left || 'auto'};
   font-size: 10px;
-  background: #480ca8;
+  background: linear-gradient(45deg, rgba(88, 24, 219, 1) 0%, rgba(72, 12, 168, 1) 100%); // added gradient for shiny effect
   padding: 5px;
   border-radius: 4px; 
   opacity: 0.7;
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  // box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1)
 `;
 
 const Placeholder = styled.div`

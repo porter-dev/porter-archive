@@ -12,7 +12,7 @@ import Container from "components/porter/Container";
 import Text from "components/porter/Text";
 import Markdown from "markdown-to-jsx";
 
-import { hardcodedNames, hardcodedIcons } from "shared/hardcodedNameDict";
+import { hardcodedNames, hardcodedIcons, DISPLAY_TAGS_MAP } from "shared/hardcodedNameDict";
 import Icon from "components/porter/Icon";
 
 type Props = {
@@ -32,15 +32,6 @@ const ExpandedTemplate: React.FC<Props> = ({
   const [values, setValues] = useState("");
   const [markdown, setMarkdown] = useState<any>(null);
   const [keywords, setKeywords] = useState<any[]>([]);
-  const DISPLAY_TAGS_MAP = {
-    "ANALYITCS": { label: "Analytics", color: "#4cc9f0" },
-    "NETWORKING": { label: "Networking", color: "#ff6b35" },
-    "DATA_BASE": { label: "Database", color: "#007200" },
-    "LOGGING": { label: "Logging", color: "#b5179e" },
-    "MONITORING": { label: "Monitoring", color: "#7209b7" },
-    "CACHE": { label: "Cache", color: "#da1e37" },
-    "SEARCH": { label: "Search", color: "#fed10b" },
-  };
   const getTemplateInfo = async () => {
     setIsLoading(true);
     let params = {

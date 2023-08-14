@@ -169,7 +169,7 @@ const AppDashboard: React.FC<Props> = ({
                   <Spacer y={1} />
                   <Link to="/addons/new">
                     <Button onClick={() => { }} height="40px" >
-                      <I className="material-icons">add</I> Deploy new add-on
+                      <I className="material-icons">add</I> Deploy add-on
                     </Button>
                   </Link>
                 </CentralContainer>

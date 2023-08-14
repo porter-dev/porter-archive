@@ -668,5 +668,3 @@ export interface CreateUpdatePorterAppOptions {
   override_release?: boolean;
   full_helm_values?: string;
 }
-
-

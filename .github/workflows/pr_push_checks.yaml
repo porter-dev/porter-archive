@@ -26,11 +26,33 @@ jobs:
         with:
           go-version-file: go.mod
           cache: false
-          go-version: '1.20.5'
-      - name: Run Go vet
-        run: go vet ./${{ matrix.folder }}/...
+          go-version: "1.20.5"
       - name: Run Go tests
         run: go test ./${{ matrix.folder }}/...
+  linting:
+    name: Go Linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+          cache: false
+      - uses: actions/checkout@v3
+      - name: Setup Go Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: porter-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: porter-go-`
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: -c .github/golangci-lint.yaml --verbose
+          skip-pkg-cache: true
+
   build-npm:
     name: Running smoke test npm build
     runs-on: ubuntu-latest

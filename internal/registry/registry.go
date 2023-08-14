@@ -159,7 +159,6 @@ func (r *Registry) ListRepositories(
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "registry-uri", Value: r.URL})
 
 		if strings.Contains(r.URL, ".azurecr.") || strings.Contains(r.URL, "-docker.pkg.dev") {
-
 			req := connect.NewRequest(&porterv1.ListRepositoriesForRegistryRequest{
 				ProjectId:   int64(r.ProjectID),
 				RegistryUri: r.URL,

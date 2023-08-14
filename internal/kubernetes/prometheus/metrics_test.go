@@ -25,7 +25,6 @@ func Test_getNginxStatusQuery(t *testing.T) {
 			err   error
 		}
 	}{
-		// the table itself
 		{
 			"missing status level",
 			input{

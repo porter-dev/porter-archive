@@ -13,6 +13,7 @@ import Helper from "components/form-components/Helper";
 import AzureCredentialForm from "components/AzureCredentialForm";
 import AWSCostConsent from "./AWSCostConsent";
 import AzureCostConsent from "./AzureCostConsent";
+import GCPCostConsent from "./GCPCostConsent";
 
 const providers = ["aws", "gcp", "azure"];
 
@@ -120,6 +121,31 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
               }}
             />
           )) ||
+            ((selectedProvider === "gcp" && (
+              <GCPCostConsent
+                setCurrentStep={setCurrentStep}
+                setShowCostConfirmModal={setShowCostConfirmModal}
+                markCostConsentComplete={() => {
+                  try {
+                    markStepCostConsent("cost-consent-complete", "gcp");
+                  } catch (err) {
+                    console.log(err);
+                  }
+
+                  if (currentProject != null) {
+                    try {
+                      api.inviteAdmin(
+                        "<token>",
+                        {},
+                        { project_id: currentProject.id }
+                      );
+                    } catch (err) {
+                      console.log(err);
+                    }
+                  }
+                }}
+              />
+            ))) ||
             (selectedProvider === "azure" && (
               <AzureCostConsent
                 setCurrentStep={setCurrentStep}

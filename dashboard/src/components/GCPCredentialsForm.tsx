@@ -1,6 +1,4 @@
-import React, { useContext, useState } from "react";
-import InputRow from "components/form-components/InputRow";
-import SaveButton from "components/SaveButton";
+import React, { useContext, useState, useEffect } from "react";
 import gcp from "assets/gcp.png";
 
 import { Context } from "shared/Context";
@@ -28,6 +26,11 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
   const [serviceAccountKey, setServiceAccountKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [detected, setDetected] = useState<Detected | undefined>(undefined);
+
+  useEffect(() => {
+    setDetected(undefined);
+  }, []);
 
   interface FailureState {
     condition: boolean;
@@ -39,6 +42,11 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
       errorMessage: "Project ID is required",
     },
   ]
+
+  type Detected = {
+    detected: boolean;
+    message: string;
+  };
 
   const saveCredentials = async () => {
     failureStates.forEach((failureState) => {
@@ -73,7 +81,22 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
   const handleLoadJSON = (serviceAccountJSONFile: string) => {
     setServiceAccountKey(serviceAccountJSONFile)
     const serviceAccountCredentials = JSON.parse(serviceAccountJSONFile);
+
+    if (!serviceAccountCredentials.project_id) {
+      setIsContinueEnabled(false);
+      setProjectId("")
+      setDetected({
+        detected: false,
+        message: `Invalid GCP service account credentials. No project ID detected in uploaded file. Please try again.`,
+      });
+      return
+    }
+
     setProjectId(serviceAccountCredentials.project_id);
+    setDetected({
+      detected: true,
+      message: `Your cluster will be provisioned in Google Project: ${serviceAccountCredentials.project_id}`,
+    });
     setIsContinueEnabled(true);
   }
 
@@ -106,7 +129,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
         isRequired={true}
       />
 
-      {serviceAccountKey && (
+      {detected && serviceAccountKey && (
         <AppearingDiv color={projectId ? "#8590ff" : "#fcba03"}>
           {detected.detected ? (
             <I className="material-icons">check</I>
@@ -119,13 +142,8 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
         </AppearingDiv>
       )}
 
-      {projectId && (
-        <>
-          <Helper>Your cluster will be provisioned in GCP Project</Helper>
-          <Text size={16}>{projectId}</Text>
-          <Spacer y={0.5} />
-        </>
-      )}
+      <Spacer y={0.5} />
+
       <Button
         disabled={!isContinueEnabled}
         onClick={saveCredentials}
@@ -202,4 +220,9 @@ const AppearingDiv = styled.div<{ color?: string }>`
       transform: translateY(0px);
     }
   }
+`;
+
+const I = styled.i`
+  font-size: 18px;
+  margin-right: 5px;
 `;

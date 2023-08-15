@@ -205,106 +205,127 @@ const AppDashboard: React.FC<Props> = ({ }) => {
       {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (
-        <>
-          <Container row spaced>
-            <SearchBar
-              value={searchValue}
-              setValue={(x) => {
-                if (x === "open_sesame") {
-                  setFeaturePreview(true);
-                }
-                setSearchValue(x);
-              }}
-              placeholder="Search applications . . ."
-              width="100%"
-            />
-            <Spacer inline x={2} />
-            <Toggle
-              items={[
-                { label: <ToggleIcon src={grid} />, value: "grid" },
-                { label: <ToggleIcon src={list} />, value: "list" },
-              ]}
-              active={view}
-              setActive={setView}
-            />
-            <Spacer inline x={2} />
-            <PorterLink to="/apps/new/app">
-              <Button onClick={async () => updateStackStartedStep()} height="30px" width="160px">
-                <I className="material-icons">add</I> New application
-              </Button>
-            </PorterLink>
-          </Container>
-          <Spacer y={1} />
-          {!isLoading && filteredApps.length === 0 && (
-            <Fieldset>
-              <Container row>
-                <PlaceholderIcon src={notFound} />
-                <Text color="helper">No applications were found.</Text>
-              </Container>
-            </Fieldset>
-          )}
-          {isLoading ? (
-            <Loading offset="-150px" />
-          ) : view === "grid" ? (
-            <GridList>
-              {(filteredApps ?? []).map((app: any, i: number) => {
-                if (!namespaceBlacklist.includes(app.name)) {
-                  return (
-                    <Link to={`/apps/${app.name}`} key={i}>
-                      <Block>
-                        <Container row>
-                          {renderIcon(app["buildpacks"])}
-                          <Spacer inline width="12px" />
-                          <Text size={14}>{app.name}</Text>
-                          <Spacer inline x={2} />
-                        </Container>
-                        <StatusIcon src={healthy} />
-                        {renderSource(app)}
-                        <Container row>
-                          <SmallIcon opacity="0.4" src={time} />
-                          <Text size={13} color="#ffffff44">{app.last_deployed}</Text>
-                        </Container>
-                      </Block>
-                    </Link>
-                  );
-                }
-              })}
-            </GridList>
-          ) : (
-            <List>
-              {(filteredApps ?? []).map((app: any, i: number) => {
-                if (!namespaceBlacklist.includes(app.name)) {
-                  return (
-                    <Link to={`/apps/${app.name}`} key={i}>
-                      <Row>
-                        <Container row>
-                          <Spacer inline width="1px" />
-                          {renderIcon(app["buildpacks"], "larger")}
-                          <Spacer inline width="12px" />
-                          <Text size={14}>
-                            {app.name}
-                          </Text>
-                          <Spacer inline x={1} />
-                          <Icon height="16px" src={healthy} />
-                        </Container>
-                        <Spacer height="15px" />
-                        <Container row>
+        filteredApps.length === 0 ? (
+          isLoading ?
+            (<Loading offset="-150px" />) : (
+              <Fieldset>
+
+                <CentralContainer>
+                  <Text size={16}>
+                    No apps have been deployed yet.
+                  </Text>
+                  <Spacer y={1} />
+
+                  <Text color={"helper"}>
+                    Get started by deploying your app
+                  </Text>
+                  <Spacer y={.5} />
+                  <Link to="/addons/new">
+                    <Button onClick={() => { }} height="40px" >
+                      Deploy app <Spacer inline x={1} /> <i className="material-icons">east</i>
+                    </Button>
+                  </Link>
+                </CentralContainer>
+
+
+              </Fieldset >
+            )
+        ) : (
+          <>
+            <Container row spaced>
+              <SearchBar
+                value={searchValue}
+                setValue={(x) => {
+                  if (x === "open_sesame") {
+                    setFeaturePreview(true);
+                  }
+                  setSearchValue(x);
+                }}
+                placeholder="Search applications . . ."
+                width="100%"
+              />
+              <Spacer inline x={2} />
+              <Toggle
+                items={[
+                  { label: <ToggleIcon src={grid} />, value: "grid" },
+                  { label: <ToggleIcon src={list} />, value: "list" },
+                ]}
+                active={view}
+                setActive={setView}
+              />
+              <Spacer inline x={2} />
+              <PorterLink to="/apps/new/app">
+                <Button onClick={async () => updateStackStartedStep()} height="30px" width="160px">
+                  <I className="material-icons">add</I> New application
+                </Button>
+              </PorterLink>
+            </Container>
+            <Spacer y={1} />
+
+            {isLoading ? (
+              <Loading offset="-150px" />
+            ) : view === "grid" ? (
+              <GridList>
+                {(filteredApps ?? []).map((app: any, i: number) => {
+                  if (!namespaceBlacklist.includes(app.name)) {
+                    return (
+                      <Link to={`/apps/${app.name}`} key={i}>
+                        <Block>
+                          <Container row>
+                            {renderIcon(app["buildpacks"])}
+                            <Spacer inline width="12px" />
+                            <Text size={14}>{app.name}</Text>
+                            <Spacer inline x={2} />
+                          </Container>
+                          <StatusIcon src={healthy} />
                           {renderSource(app)}
-                          <Spacer inline x={1} />
-                          <SmallIcon opacity="0.4" src={time} />
-                          <Text size={13} color="#ffffff44">
-                            {app.last_deployed}
-                          </Text>
-                        </Container>
-                      </Row>
-                    </Link>
-                  );
-                }
-              })}
-            </List>
-          )}
-        </>
-      )}
+                          <Container row>
+                            <SmallIcon opacity="0.4" src={time} />
+                            <Text size={13} color="#ffffff44">{app.last_deployed}</Text>
+                          </Container>
+                        </Block>
+                      </Link>
+                    );
+                  }
+                })}
+              </GridList>
+            ) : (
+              <List>
+                {(filteredApps ?? []).map((app: any, i: number) => {
+                  if (!namespaceBlacklist.includes(app.name)) {
+                    return (
+                      <Link to={`/apps/${app.name}`} key={i}>
+                        <Row>
+                          <Container row>
+                            <Spacer inline width="1px" />
+                            {renderIcon(app["buildpacks"], "larger")}
+                            <Spacer inline width="12px" />
+                            <Text size={14}>
+                              {app.name}
+                            </Text>
+                            <Spacer inline x={1} />
+                            <Icon height="16px" src={healthy} />
+                          </Container>
+                          <Spacer height="15px" />
+                          <Container row>
+                            {renderSource(app)}
+                            <Spacer inline x={1} />
+                            <SmallIcon opacity="0.4" src={time} />
+                            <Text size={13} color="#ffffff44">
+                              {app.last_deployed}
+                            </Text>
+                          </Container>
+                        </Row>
+                      </Link>
+                    );
+                  }
+                })}
+              </List>
+            )}
+          </>
+        )
+      )
+      }
       <Spacer y={5} />
     </StyledAppDashboard>
   );
@@ -402,4 +423,11 @@ const I = styled.i`
 const StyledAppDashboard = styled.div`
   width: 100%;
   height: 100%;
+`;
+
+const CentralContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  align-items: left;   
 `;

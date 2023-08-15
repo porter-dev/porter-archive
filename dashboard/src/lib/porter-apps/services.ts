@@ -12,24 +12,28 @@ import {
 } from "./values";
 import { Service, ServiceType } from "@porter-dev/api-contracts";
 
+// ServiceString is a string value in a service that can be read-only or editable
 export const serviceStringValidator = z.object({
   readOnly: z.boolean(),
   value: z.string(),
 });
 export type ServiceString = z.infer<typeof serviceStringValidator>;
 
+// ServiceNumber is a number value in a service that can be read-only or editable
 export const serviceNumberValidator = z.object({
   readOnly: z.boolean(),
   value: z.number(),
 });
 export type ServiceNumber = z.infer<typeof serviceNumberValidator>;
 
+// ServiceBoolean is a boolean value in a service that can be read-only or editable
 export const serviceBooleanValidator = z.object({
   readOnly: z.boolean(),
   value: z.boolean(),
 });
 export type ServiceBoolean = z.infer<typeof serviceBooleanValidator>;
 
+// ServiceArray is an array of ServiceStrings
 const serviceArrayValidator = z.array(
   z.object({
     key: z.string(),
@@ -38,6 +42,7 @@ const serviceArrayValidator = z.array(
 );
 export type ServiceArray = z.infer<typeof serviceArrayValidator>;
 
+// ServiceField is a helper to create a ServiceString, ServiceNumber, or ServiceBoolean
 export const ServiceField = {
   string: (defaultValue: string, overrideValue?: string): ServiceString => {
     return {
@@ -59,6 +64,8 @@ export const ServiceField = {
   },
 };
 
+// serviceValidator is the validator for a ClientService
+// This is used to validate a service when creating or updating an app
 export const serviceValidator = z.object({
   run: serviceStringValidator,
   instances: serviceNumberValidator,
@@ -90,6 +97,8 @@ export const serviceValidator = z.object({
 
 export type ClientService = z.infer<typeof serviceValidator>;
 
+// SerializedService is just the values of a Service without any override information
+// This is used as an intermediate step to convert a ClientService to a protobuf Service
 export type SerializedService = {
   run: string;
   instances: number;
@@ -116,6 +125,9 @@ export type SerializedService = {
       };
 };
 
+// serializeService converts a ClientService to a SerializedService
+// A SerializedService holds just the values of a ClientService
+// These values can be used to create a protobuf Service
 export function serializeService(service: ClientService): SerializedService {
   return match(service.config)
     .with({ type: "web" }, (config) =>
@@ -169,25 +181,27 @@ export function serializeService(service: ClientService): SerializedService {
     .exhaustive();
 }
 
+// deserializeService converts a SerializedService to a ClientService
+// A deserialized ClientService represents the state of a service in the UI and which fields are editable
 export function deserializeService(
   service: SerializedService,
-  existing?: SerializedService
+  override?: SerializedService
 ): ClientService {
   const baseService = {
-    run: ServiceField.string(service.run, existing?.run),
-    instances: ServiceField.number(service.instances, existing?.instances),
-    port: ServiceField.number(service.port, existing?.port),
-    cpuCores: ServiceField.number(service.cpuCores, existing?.cpuCores),
+    run: ServiceField.string(service.run, override?.run),
+    instances: ServiceField.number(service.instances, override?.instances),
+    port: ServiceField.number(service.port, override?.port),
+    cpuCores: ServiceField.number(service.cpuCores, override?.cpuCores),
     ramMegabytes: ServiceField.number(
       service.ramMegabytes,
-      existing?.ramMegabytes
+      override?.ramMegabytes
     ),
   };
 
   return match(service.config)
     .with({ type: "web" }, (config) => {
-      const existingWebConfig =
-        existing?.config.type == "web" ? existing.config : undefined;
+      const overrideWebConfig =
+        override?.config.type == "web" ? override.config : undefined;
 
       return {
         ...baseService,
@@ -195,17 +209,17 @@ export function deserializeService(
           type: "web" as const,
           autoscaling: deserializeAutoscaling({
             autoscaling: config.autoscaling,
-            existing: existingWebConfig?.autoscaling,
+            override: overrideWebConfig?.autoscaling,
           }),
           healthCheck: deserializeHealthCheck({
             health: config.healthCheck,
-            existing: existingWebConfig?.healthCheck,
+            override: overrideWebConfig?.healthCheck,
           }),
           domains: config.domains.map((domain) => ({
             name: ServiceField.string(
               domain.name,
-              existingWebConfig?.domains.find(
-                (existingDomain) => existingDomain.name == domain.name
+              overrideWebConfig?.domains.find(
+                (overrideDomain) => overrideDomain.name == domain.name
               )?.name
             ),
           })),
@@ -213,8 +227,8 @@ export function deserializeService(
       };
     })
     .with({ type: "worker" }, (config) => {
-      const existingWorkerConfig =
-        existing?.config.type == "worker" ? existing.config : undefined;
+      const overrideWorkerConfig =
+        override?.config.type == "worker" ? override.config : undefined;
 
       return {
         ...baseService,
@@ -222,14 +236,14 @@ export function deserializeService(
           type: "worker" as const,
           autoscaling: deserializeAutoscaling({
             autoscaling: config.autoscaling,
-            existing: existingWorkerConfig?.autoscaling,
+            override: overrideWorkerConfig?.autoscaling,
           }),
         },
       };
     })
     .with({ type: "job" }, (config) => {
-      const existingJobConfig =
-        existing?.config.type == "job" ? existing.config : undefined;
+      const overrideJobConfig =
+        override?.config.type == "job" ? override.config : undefined;
 
       return {
         ...baseService,
@@ -237,15 +251,16 @@ export function deserializeService(
           type: "job" as const,
           allowConcurrent: ServiceField.boolean(
             config.allowConcurrent,
-            existingJobConfig?.allowConcurrent
+            overrideJobConfig?.allowConcurrent
           ),
-          cron: ServiceField.string(config.cron, existingJobConfig?.cron),
+          cron: ServiceField.string(config.cron, overrideJobConfig?.cron),
         },
       };
     })
     .exhaustive();
 }
 
+// getServiceTypeEnumProto converts the type of a ClientService to the protobuf ServiceType enum
 export const getServiceTypeEnumProto = (type: "web" | "worker" | "job") => {
   return match(type)
     .with("web", () => ServiceType.WEB)
@@ -254,6 +269,8 @@ export const getServiceTypeEnumProto = (type: "web" | "worker" | "job") => {
     .exhaustive();
 };
 
+// getServiceProto converts a SerializedService to the protobuf Service
+// This is used as an intermediate step to convert a ClientService to a protobuf Service
 export function getServiceProto(service: SerializedService) {
   return match(service.config)
     .with(
@@ -301,6 +318,8 @@ export function getServiceProto(service: SerializedService) {
     .exhaustive();
 }
 
+// getSerializedServiceFromProto converts a protobuf Service to a SerializedService
+// This is used as an intermediate step to convert a protobuf Service to a ClientService
 export function getSerializedServiceFromProto(
   service: Service
 ): SerializedService {

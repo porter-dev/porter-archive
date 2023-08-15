@@ -11,6 +11,7 @@ import {
 } from "./services";
 import { PorterApp } from "@porter-dev/api-contracts";
 
+// buildValidator is used to validate inputs for build setting fields
 export const buildValidator = z.object({
   context: z.string().default("./"),
   method: z.enum(["pack", "docker", "registry"]),
@@ -20,6 +21,7 @@ export const buildValidator = z.object({
 });
 export type BuildOptions = z.infer<typeof buildValidator>;
 
+// sourceValidator is used to validate inputs for source setting fields
 export const sourceValidator = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("github"),
@@ -35,6 +37,7 @@ export const sourceValidator = z.discriminatedUnion("type", [
 ]);
 export type SourceOptions = z.infer<typeof sourceValidator>;
 
+// porterAppValidator is the representation of a Porter app on the client, and is used to validate inputs for app setting fields
 export const porterAppValidator = z.object({
   name: z.string(),
   services: z.record(z.string(), serviceValidator),
@@ -50,12 +53,14 @@ export const porterAppValidator = z.object({
 });
 export type ClientPorterApp = z.infer<typeof porterAppValidator>;
 
+// porterAppFormValidator is used to validate inputs when creating + updating an app
 export const porterAppFormValidator = z.object({
   app: porterAppValidator,
   source: sourceValidator,
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
+// porterClientAppFromProto converts a PorterApp proto object to a ClientPorterApp
 export function porterClientAppFromProto(
   proto: PorterApp,
   buildpacks?: Buildpack[]

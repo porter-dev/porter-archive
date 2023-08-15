@@ -4,14 +4,15 @@ import api from "shared/api";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
-import { hardcodedIcons, hardcodedNames } from "shared/hardcodedNameDict";
+import { DISPLAY_TAGS_MAP, hardcodedIcons, hardcodedNames } from "shared/hardcodedNameDict";
 import { PorterTemplate } from "shared/types";
 import semver from "semver";
 
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
-
+import fire from "assets/fire.svg"
+import Spacer from "components/porter/Spacer";
 type Props = {
   helm_repo_id?: number;
   templates?: PorterTemplate[];
@@ -130,26 +131,77 @@ const TemplateList: React.FC<Props> = ({
   return (
     <TemplateListWrapper>
       {(templates || templateList)?.map((template: PorterTemplate) => {
-        let { name, icon, description } = template;
+        let { name, icon, description, tags } = template;
         if (hardcodedNames[name]) {
           name = hardcodedNames[name];
         }
+
         return (
           <TemplateBlock
             key={name}
-            onClick={() => setCurrentTemplate(template)}
+            onClick={() => {
+              setCurrentTemplate(template);
+            }}
           >
+            {/* {tags?.includes("POPULAR") && <FireIcon src={fire} size="15px" top="10px" right="10px" />} */}
             {renderIcon(icon, template.name)}
             <TemplateTitle>{name}</TemplateTitle>
             <TemplateDescription>{description}</TemplateDescription>
+            <Spacer y={0.5} />
+
+            {Object.keys(DISPLAY_TAGS_MAP).map(tagKey => (
+              tags?.includes(tagKey) &&
+              <Tag
+                bottom="10px"
+                left="12px"
+                style={{ background: DISPLAY_TAGS_MAP[tagKey].color }}
+              >
+                {DISPLAY_TAGS_MAP[tagKey].label}
+              </Tag>
+            ))}
           </TemplateBlock>
         );
       })}
     </TemplateListWrapper>
+
   );
 };
 
 export default TemplateList;
+
+const FireIcon = styled.img<{ size?: string, top?: string, right?: string }>`
+  height: ${props => props.size || '25px'};
+  position: absolute;
+  top: ${props => props.top || 'auto'};
+  right: ${props => props.right || 'auto'};
+  
+  &:hover::after {
+    content: "Popular";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    color: black;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+  }
+`;
+
+const Tag = styled.div<{ size?: string, bottom?: string, left?: string }>`
+  position: absolute;
+  bottom: ${props => props.bottom || 'auto'};
+  left: ${props => props.left || 'auto'};
+  font-size: 10px;
+  background: linear-gradient(45deg, rgba(88, 24, 219, 1) 0%, rgba(72, 12, 168, 1) 100%); // added gradient for shiny effect
+  padding: 5px;
+  border-radius: 4px; 
+  opacity: 0.85;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1)
+`;
 
 const Placeholder = styled.div`
   padding-top: 200px;
@@ -222,7 +274,7 @@ const TemplateBlock = styled.div`
   flex-direction: column;
   align-item: center;
   justify-content: space-between;
-  height: 170px;
+  height: 180px;
   cursor: pointer;
   color: #ffffff;
   position: relative;
@@ -246,10 +298,10 @@ const TemplateBlock = styled.div`
 
 const TemplateListWrapper = styled.div`
   overflow: visible;
-  margin-top: 35px;
-  padding-bottom: 150px;
+  margin-top: 15px;
+  padding-bottom: 50px;
   display: grid;
-  grid-column-gap: 25px;
-  grid-row-gap: 25px;
+  grid-column-gap: 30px;
+  grid-row-gap: 30px;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 `;

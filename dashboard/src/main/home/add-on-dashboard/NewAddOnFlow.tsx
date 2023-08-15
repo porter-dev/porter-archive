@@ -204,7 +204,7 @@ const NewAddOnFlow: React.FC<Props> = ({
                             <Text color="#fff" size={15}>Apps and Services</Text>
                           </div>
                           <div>
-                            <Text color="helper">For developer productivity</Text>
+                            <Text color="helper">For developer productivity.</Text>
                           </div>
                         </>}
                       <TemplateList

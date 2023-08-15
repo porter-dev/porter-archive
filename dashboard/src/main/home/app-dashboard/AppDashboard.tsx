@@ -208,17 +208,27 @@ const AppDashboard: React.FC<Props> = ({ }) => {
         filteredApps.length === 0 ? (
           isLoading ?
             (<Loading offset="-150px" />) : (
-              <CentralContainer>
-                <Text size={16}>
-                  No apps have been deployed yet.
-                </Text>
-                <Spacer y={1} />
-                <PorterLink to="/apps/new/app">
-                  <Button onClick={async () => updateStackStartedStep()} height="40px">
-                    <I className="material-icons">add</I> Deploy application
-                  </Button>
-                </PorterLink>
-              </CentralContainer>
+              <Fieldset>
+
+                <CentralContainer>
+                  <Text size={16}>
+                    No apps have been deployed yet.
+                  </Text>
+                  <Spacer y={1} />
+
+                  <Text color={"helper"}>
+                    Get started by deploying your app
+                  </Text>
+                  <Spacer y={.5} />
+                  <Link to="/addons/new">
+                    <Button onClick={() => { }} height="40px" >
+                      Deploy app <Spacer inline x={1} /> <i className="material-icons">east</i>
+                    </Button>
+                  </Link>
+                </CentralContainer>
+
+
+              </Fieldset >
             )
         ) : (
           <>
@@ -414,11 +424,10 @@ const StyledAppDashboard = styled.div`
   width: 100%;
   height: 100%;
 `;
+
 const CentralContainer = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: center;  /* vertically centered */
-  align-items: center;      /* horizontally centered */
-  height: 20vh;            /* full viewport height */
-
+  justify-content: left;
+  align-items: left;   
 `;

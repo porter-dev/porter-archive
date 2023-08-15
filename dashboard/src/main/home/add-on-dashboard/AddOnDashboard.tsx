@@ -160,22 +160,27 @@ const AddOnDashboard: React.FC<Props> = ({
 
           isLoading ?
             (<Loading offset="-150px" />) : (
-              // <Fieldset>
-              (
+              <Fieldset>
+
                 <CentralContainer>
                   <Text size={16}>
                     No add-ons have been deployed yet.
                   </Text>
                   <Spacer y={1} />
+
+                  <Text color={"helper"}>
+                    Deploy from our suite of curated add-ons.
+                  </Text>
+                  <Spacer y={.5} />
                   <Link to="/addons/new">
                     <Button onClick={() => { }} height="40px" >
-                      <I className="material-icons">add</I> Deploy add-on
+                      Deploy add-ons <Spacer inline x={1} /> <i className="material-icons">east</i>
                     </Button>
                   </Link>
                 </CentralContainer>
-              )
 
-              // </Fieldset >
+
+              </Fieldset >
             )
         ) : (
           <>
@@ -370,8 +375,6 @@ const StyledAppDashboard = styled.div`
 const CentralContainer = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: center;  /* vertically centered */
-  align-items: center;      /* horizontally centered */
-  height: 20vh;            /* full viewport height */
-
+  justify-content: left;  /* vertically centered */
+  align-items: left;      /* horizontally centered */
 `;

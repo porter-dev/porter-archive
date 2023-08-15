@@ -22,6 +22,7 @@ import ClusterSettingsModal from "./ClusterSettingsModal";
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 import AzureProvisionerSettings from "components/AzureProvisionerSettings";
+import GCPProvisionerSettings from "components/GCPProvisionerSettings";
 
 type TabEnum =
   | "nodes"
@@ -81,6 +82,16 @@ export const Dashboard: React.FunctionComponent = () => {
             )}
             {context.currentCluster.cloud_provider == "Azure" && (
               <AzureProvisionerSettings
+                selectedClusterVersion={selectedClusterVersion}
+                provisionerError={provisionFailureReason}
+                clusterId={context.currentCluster.id}
+                credentialId={
+                  context.currentCluster.cloud_provider_credential_identifier
+                }
+              />
+            )}
+            {context.currentCluster.cloud_provider == "GCP" && (
+              <GCPProvisionerSettings
                 selectedClusterVersion={selectedClusterVersion}
                 provisionerError={provisionFailureReason}
                 clusterId={context.currentCluster.id}

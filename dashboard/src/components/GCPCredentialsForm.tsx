@@ -66,6 +66,10 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
         {
           project_id: currentProject.id,
         });
+      if (gcpIntegrationResponse.data.cloud_provider_credentials_id == "") {
+        setErrorMessage("Unable to store cluster credentials. Please try again later.")
+        return;
+      }
       const gcpCloudProviderCredentialID = gcpIntegrationResponse.data.cloud_provider_credentials_id;
       proceed(gcpCloudProviderCredentialID)
 

@@ -17,7 +17,9 @@ import {
   EnumCloudProvider,
   Cluster,
   GKE,
-  GKENetwork
+  GKENetwork,
+  GKENodePool,
+  GKENodePoolType
 } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
@@ -151,7 +153,28 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
               podCidr: defaultClusterNetworking.podCidr,
               serviceCidr: defaultClusterNetworking.serviceCidr,
             }),
-            nodePools: [],
+            nodePools: [
+              new GKENodePool({
+                instanceType: "custom-2-4096",
+                minInstances: 1,
+                maxInstances: 1,
+                nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_MONITORING
+              }),
+
+              new GKENodePool({
+                instanceType: "custom-2-4096",
+                minInstances: 1,
+                maxInstances: 2,
+                nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_SYSTEM
+              }),
+              new GKENodePool({
+                instanceType: "custom-2-4096",
+                minInstances: 1, // TODO: make these customizable before merging
+                maxInstances: 10, // TODO: make these customizable before merging
+                nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION
+              }),
+
+            ],
           }),
         },
       }),
@@ -160,8 +183,6 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     if (props.clusterId) {
       data["cluster"]["clusterId"] = props.clusterId;
     }
-    console.log("STEFAN", data)
-    return
 
     try {
       setIsReadOnly(true);
@@ -171,6 +192,8 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       if (!props.clusterId) {
         markStepStarted("provisioning-started");
       }
+
+      console.log("STEFAN", data);
 
       const res = await api.createContract("<token>", data, {
         project_id: currentProject.id,
@@ -209,7 +232,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         setErrorDetails(errMessage)
       } else {
         setErrorMessage(DEFAULT_ERROR_MESSAGE);
-        setErrorDetails("")
+        setErrorDetails(errMessage)
       }
     } finally {
       setIsReadOnly(false);
@@ -233,18 +256,20 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
-      contract.cluster.gkeKind.nodePools.map((nodePool: any) => {
-        if (nodePool.nodePoolType === "NODE_POOL_TYPE_APPLICATION") {
-          setMinInstances(nodePool.minInstances);
-          setMaxInstances(nodePool.maxInstances);
-        }
-      });
+      if (contract.cluster.gkeKind.nodePools) {
+        contract.cluster.gkeKind.nodePools.map((nodePool: any) => {
+          if (nodePool.nodePoolType === "NODE_POOL_TYPE_APPLICATION") {
+            setMinInstances(nodePool.minInstances);
+            setMaxInstances(nodePool.maxInstances);
+          }
+        });
+      }
       setCreateStatus("");
       setClusterName(contract.cluster.gkeKind.clusterName);
-      setRegion(contract.cluster.gkeKind.location);
+      setRegion(contract.cluster.gkeKind.region);
       setClusterVersion(contract.cluster.gkeKind.clusterVersion);
       let cn = new GKENetwork({
-        cidrRange: contract.cluster.gkeKind.clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
+        cidrRange: contract.cluster.gkeKind.clusterNetworking?.cidrRange || defaultClusterNetworking.cidrRange,
         controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
         podCidr: defaultClusterNetworking.podCidr,
         serviceCidr: defaultClusterNetworking.serviceCidr,
@@ -337,10 +362,10 @@ const StyledForm = styled.div`
 
 const DEFAULT_ERROR_MESSAGE =
   "An error occurred while provisioning your infrastructure. Please try again.";
-const AZURE_CORE_QUOTA_ERROR_MESSAGE =
-  "Your Azure subscription has reached a vCPU core quota in the location";
-const AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE =
-  "Your Azure subscription is missing required resource providers";
+// const AZURE_CORE_QUOTA_ERROR_MESSAGE =
+//   "Your Azure subscription has reached a vCPU core quota in the location";
+// const AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE =
+//   "Your Azure subscription is missing required resource providers";
 
 const errorMessageToModal = (errorMessage: string) => {
   switch (errorMessage) {

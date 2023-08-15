@@ -225,7 +225,7 @@ const NewAddOnFlow: React.FC<Props> = ({
                         setCurrentTemplate={(x) => setCurrentTemplate(x)}
                       />
 
-                      {filteredTemplates?.length > 0 && currentProject?.full_add_ons &&
+                      {filteredTemplates?.length > 0 && (currentProject?.full_add_ons || user.isPorterUser) &&
                         <>
                           <div>
                             <Text color="#fff" size={15}>All Add-Ons</Text>

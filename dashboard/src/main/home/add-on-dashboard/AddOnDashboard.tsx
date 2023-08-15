@@ -375,6 +375,6 @@ const StyledAppDashboard = styled.div`
 const CentralContainer = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: left;  /* vertically centered */
-  align-items: left;      /* horizontally centered */
+  justify-content: left;
+  align-items: left;   
 `;

@@ -220,11 +220,11 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                     Get started by deploying your app
                   </Text>
                   <Spacer y={.5} />
-                  <Link to="/addons/new">
-                    <Button onClick={() => { }} height="40px" >
+                  <PorterLink to="/apps/new/app">
+                    <Button onClick={async () => updateStackStartedStep()} height="40px">
                       Deploy app <Spacer inline x={1} /> <i className="material-icons">east</i>
                     </Button>
-                  </Link>
+                  </PorterLink>
                 </CentralContainer>
 
 

@@ -2,12 +2,12 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
 
-export type SelectorPropsType = {
-  activeValue: string;
+export type SelectorPropsType<T> = {
+  activeValue: T;
   refreshOptions?: () => void;
-  options: { value: string; label: string; icon?: any }[];
+  options: { value: T; label: string; icon?: any }[];
   addButton?: boolean;
-  setActiveValue: (x: string) => void;
+  setActiveValue: (x: T) => void;
   width: string;
   height?: string;
   disabled?: boolean;
@@ -22,7 +22,7 @@ export type SelectorPropsType = {
 
 type StateType = {};
 
-export default class Selector extends Component<SelectorPropsType, StateType> {
+export default class Selector<T> extends Component<SelectorPropsType<T>, StateType> {
   state = {
     expanded: false,
     showTooltip: false,

@@ -261,7 +261,9 @@ export function deserializeService(
 }
 
 // getServiceTypeEnumProto converts the type of a ClientService to the protobuf ServiceType enum
-export const getServiceTypeEnumProto = (type: "web" | "worker" | "job") => {
+export const serviceTypeEnumProto = (
+  type: "web" | "worker" | "job"
+): ServiceType => {
   return match(type)
     .with("web", () => ServiceType.WEB)
     .with("worker", () => ServiceType.WORKER)
@@ -269,16 +271,16 @@ export const getServiceTypeEnumProto = (type: "web" | "worker" | "job") => {
     .exhaustive();
 };
 
-// getServiceProto converts a SerializedService to the protobuf Service
+// serviceProto converts a SerializedService to the protobuf Service
 // This is used as an intermediate step to convert a ClientService to a protobuf Service
-export function getServiceProto(service: SerializedService) {
+export function serviceProto(service: SerializedService): Service {
   return match(service.config)
     .with(
       { type: "web" },
       (config) =>
         new Service({
           ...service,
-          type: getServiceTypeEnumProto(config.type),
+          type: serviceTypeEnumProto(config.type),
           config: {
             value: {
               ...config,
@@ -292,7 +294,7 @@ export function getServiceProto(service: SerializedService) {
       (config) =>
         new Service({
           ...service,
-          type: getServiceTypeEnumProto(config.type),
+          type: serviceTypeEnumProto(config.type),
           config: {
             value: {
               ...config,
@@ -306,7 +308,7 @@ export function getServiceProto(service: SerializedService) {
       (config) =>
         new Service({
           ...service,
-          type: getServiceTypeEnumProto(config.type),
+          type: serviceTypeEnumProto(config.type),
           config: {
             value: {
               ...config,
@@ -318,9 +320,9 @@ export function getServiceProto(service: SerializedService) {
     .exhaustive();
 }
 
-// getSerializedServiceFromProto converts a protobuf Service to a SerializedService
+// serializedServiceFromProto converts a protobuf Service to a SerializedService
 // This is used as an intermediate step to convert a protobuf Service to a ClientService
-export function getSerializedServiceFromProto(
+export function serializedServiceFromProto(
   service: Service
 ): SerializedService {
   const config = service.config;

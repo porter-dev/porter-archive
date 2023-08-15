@@ -1,8 +1,14 @@
 import { z } from "zod";
-import { ServiceField, serviceNumberValidator, serviceStringValidator } from "./services";
+import {
+  ServiceField,
+  serviceBooleanValidator,
+  serviceNumberValidator,
+  serviceStringValidator,
+} from "./services";
 
 // Autoscaling
 export const autoscalingValidator = z.object({
+  enabled: serviceBooleanValidator,
   minInstances: serviceNumberValidator,
   maxInstances: serviceNumberValidator,
   cpuThresholdPercent: serviceNumberValidator,
@@ -10,6 +16,7 @@ export const autoscalingValidator = z.object({
 });
 export type ClientAutoscaling = z.infer<typeof autoscalingValidator>;
 export type SerializedAutoscaling = {
+  enabled: boolean;
   minInstances: number;
   maxInstances: number;
   cpuThresholdPercent: number;
@@ -23,6 +30,7 @@ export function serializeAutoscaling({
 }): SerializedAutoscaling | undefined {
   return (
     autoscaling && {
+      enabled: autoscaling.enabled.value,
       minInstances: autoscaling.minInstances.value,
       maxInstances: autoscaling.maxInstances.value,
       cpuThresholdPercent: autoscaling.cpuThresholdPercent.value,
@@ -43,6 +51,7 @@ export function deserializeAutoscaling({
   }
 
   return {
+    enabled: ServiceField.boolean(autoscaling.enabled, override?.enabled),
     minInstances: ServiceField.number(
       autoscaling.minInstances,
       override?.minInstances
@@ -64,10 +73,12 @@ export function deserializeAutoscaling({
 
 // Health Check
 export const healthcheckValidator = z.object({
+  enabled: serviceBooleanValidator,
   httpPath: serviceStringValidator,
 });
 export type ClientHealthCheck = z.infer<typeof healthcheckValidator>;
 export type SerializedHealthcheck = {
+  enabled: boolean;
   httpPath: string;
 };
 
@@ -78,6 +89,7 @@ export function serializeHealth({
 }): SerializedHealthcheck | undefined {
   return (
     health && {
+      enabled: health.enabled.value,
       httpPath: health.httpPath.value,
     }
   );
@@ -94,6 +106,7 @@ export function deserializeHealthCheck({
   }
 
   return {
+    enabled: ServiceField.boolean(health.enabled, override?.enabled),
     httpPath: ServiceField.string(health.httpPath, override?.httpPath),
   };
 }

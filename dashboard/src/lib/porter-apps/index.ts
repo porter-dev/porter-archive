@@ -6,7 +6,7 @@ import {
 import { z } from "zod";
 import {
   deserializeService,
-  getSerializedServiceFromProto,
+  serializedServiceFromProto,
   serviceValidator,
 } from "./services";
 import { PorterApp } from "@porter-dev/api-contracts";
@@ -68,7 +68,7 @@ export function porterClientAppFromProto(
   const services = Object.fromEntries(
     Object.entries(proto.services).map(([name, service]) => [
       name,
-      deserializeService(getSerializedServiceFromProto(service)),
+      deserializeService(serializedServiceFromProto(service)),
     ])
   );
 
@@ -108,7 +108,7 @@ export function porterClientAppFromProto(
           },
         }),
     ...(predeploy && {
-      predeploy: deserializeService(getSerializedServiceFromProto(predeploy)),
+      predeploy: deserializeService(serializedServiceFromProto(predeploy)),
     }),
     image,
   };

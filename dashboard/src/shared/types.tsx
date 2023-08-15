@@ -273,6 +273,7 @@ export interface ProjectType {
   azure_enabled: boolean;
   helm_values_enabled: boolean;
   multi_cluster: boolean;
+  full_add_ons: boolean;
   enable_reprovision: boolean;
   roles: {
     id: number;
@@ -667,5 +668,3 @@ export interface CreateUpdatePorterAppOptions {
   override_release?: boolean;
   full_helm_values?: string;
 }
-
-

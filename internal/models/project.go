@@ -68,6 +68,7 @@ type Project struct {
 	AzureEnabled           bool
 	HelmValuesEnabled      bool
 	MultiCluster           bool `gorm:"default:false"`
+	FullAddOns             bool `gorm:"default:false"`
 	ValidateApplyV2        bool `gorm:"default:false"`
 	EnableReprovision      bool `gorm:"default:false"`
 }
@@ -96,5 +97,6 @@ func (p *Project) ToProjectType() *types.Project {
 		MultiCluster:           p.MultiCluster,
 		EnableReprovision:      p.EnableReprovision,
 		ValidateApplyV2:        p.ValidateApplyV2,
+		FullAddOns:             p.FullAddOns,
 	}
 }

@@ -11,8 +11,8 @@ type AppRevision struct {
 	// ID is a UUID for the AppRevision
 	ID uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
 
-	// Base64Application is the PorterApp as json encoded in base64
-	Base64Application string `json:"base64_application"`
+	// Base64App is the PorterApp as json encoded in base64
+	Base64App string `json:"base64_app"`
 
 	// Status is the status of the apply that happened for this revision.
 	Status string `json:"status"`

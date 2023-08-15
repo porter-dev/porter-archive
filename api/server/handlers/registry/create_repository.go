@@ -48,7 +48,8 @@ func (p *RegistryCreateRepositoryHandler) ServeHTTP(w http.ResponseWriter, r *ht
 
 	// parse the name from the registry
 	nameSpl := strings.Split(request.ImageRepoURI, "/")
-	repoName := strings.ToLower(strings.ReplaceAll(nameSpl[len(nameSpl)-1], "_", "-"))
+	sanitizedName := strings.ReplaceAll(strings.ReplaceAll(nameSpl[len(nameSpl)-1], "_", "-"), ".", "-")
+	repoName := strings.ToLower(sanitizedName)
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "repo-name", Value: repoName},
 		telemetry.AttributeKV{Key: "registry-id", Value: reg.ID},

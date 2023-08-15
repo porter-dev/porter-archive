@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// AppRevision represents the full spec for a revision of a porter app
 type AppRevision struct {
 	gorm.Model
 

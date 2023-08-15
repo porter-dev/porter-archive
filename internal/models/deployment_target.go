@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// DeploymentTarget represents a deployment target on a given cluster
 type DeploymentTarget struct {
 	gorm.Model
 

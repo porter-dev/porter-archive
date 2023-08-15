@@ -26,28 +26,14 @@ import Select from "components/porter/Select";
 type Props = {
 };
 
-const HIDDEN_CHARTS = ["porter-agent", "loki"];
-// const DATA_STORES = ["elasticsearch", "mongodb", "postgresql", "mysql", "redis"];
-// const APPS = ["logdna", "datadog", "tailscale-relay", "metabase", "mezmo"];
-// const LOGGING = ["logdna"]
-// const ANALYITCS = ["metabase", "mezmo"]
-// const NETWORKING = ["tailscale-relay"]
-// const POPULAR = ["datadog", "metabase", "postgresql"];
-// const MONITORING = ["datadog"]
-// const DATA_BASE = ["postgresql", "mysql", "mongodb"]
+const HIDDEN_CHARTS = ["porter-agent", "loki", "agent"];
 
-// const TAG_MAPPING = {
-//   "DATA_STORE": DATA_STORES,
-//   "APP": APPS,
-//   "POPULAR": POPULAR,
-//   "LOGGING": LOGGING,
-//   "ANALYITCS": ANALYITCS,
-//   "NETWORKING": NETWORKING,
-//   "MONITORING": MONITORING,
-//   "CACHE": ["redis"],
-//   "SEARCH": ["elasticsearch"],
-//   "DATA_BASE": DATA_BASE,
-// };
+//For Charts that don't exist locally we need to add them in manually
+const TAG_MAPPING = {
+  "DATA_STORE": ["mysql"],
+  "DATA_BASE": ["mysql"]
+}
+
 const NewAddOnFlow: React.FC<Props> = ({
 }) => {
   const { capabilities, currentProject, currentCluster, user } = useContext(Context);
@@ -115,18 +101,18 @@ const NewAddOnFlow: React.FC<Props> = ({
         (template: any) => !HIDDEN_CHARTS.includes(template?.name)
       );
 
-      // sortedVersionData = sortedVersionData.map((template: any) => {
-      //   let templateTags = [];
+      sortedVersionData = sortedVersionData.map((template: any) => {
+        let testTemplate: string[] = template?.tags || []
+        console.log(testTemplate)
+        // Assign tags based on TAG_MAPPING
+        for (let tag in TAG_MAPPING) {
+          if (TAG_MAPPING[tag].includes(template.name)) {
+            testTemplate?.push(tag);
+          }
+        }
 
-      //   // Assign tags based on TAG_MAPPING
-      //   for (let tag in TAG_MAPPING) {
-      //     if (TAG_MAPPING[tag].includes(template.name)) {
-      //       templateTags.push(tag);
-      //     }
-      //   }
-
-      //   return { ...template, tags: templateTags };
-      // });
+        return { ...template, tags: testTemplate };
+      });
       setAddOnTemplates(sortedVersionData);
     } catch (error) {
       setIsLoading(false);

@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+
 	"github.com/cli/cli/git"
 	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
@@ -109,6 +111,21 @@ func init() {
 }
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) (err error) {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.Apply(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	fileBytes, err := ioutil.ReadFile(porterYAML)
 	if err != nil {
 		stackName := os.Getenv("PORTER_STACK_NAME")

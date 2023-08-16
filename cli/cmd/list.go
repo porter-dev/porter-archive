@@ -6,6 +6,8 @@ import (
 	"os"
 	"text/tabwriter"
 
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
@@ -90,7 +92,22 @@ func init() {
 }
 
 func listAll(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	err := writeReleases(client, "all")
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.ListAll(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	err = writeReleases(client, "all")
 	if err != nil {
 		return err
 	}
@@ -99,7 +116,22 @@ func listAll(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []s
 }
 
 func listApps(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	err := writeReleases(client, "application")
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.ListApps(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	err = writeReleases(client, "application")
 	if err != nil {
 		return err
 	}
@@ -108,7 +140,22 @@ func listApps(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []
 }
 
 func listJobs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	err := writeReleases(client, "job")
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.ListJobs(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	err = writeReleases(client, "job")
 	if err != nil {
 		return err
 	}

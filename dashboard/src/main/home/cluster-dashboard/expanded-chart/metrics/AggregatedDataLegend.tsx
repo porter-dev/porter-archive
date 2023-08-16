@@ -7,18 +7,27 @@ import { AggregatedDataColors } from "./utils";
 
 interface AggregatedDataLegendProps {
   data: NormalizedMetricsData[];
+  hideAvg: boolean;
 }
 
-const AggregatedDataLegend = ({ data }: AggregatedDataLegendProps) => {
+const AggregatedDataLegend = ({ data, hideAvg }: AggregatedDataLegendProps) => {
   const min = stats.min(data.map((d) => d.value));
   const avg = stats.mean(data.map((d) => d.value));
   const max = stats.max(data.map((d) => d.value));
 
-  const aggregatedData = {
-    min,
-    avg,
-    max,
-  };
+  let aggregatedData = {};
+  if (hideAvg) {
+    aggregatedData = {
+      min,
+      max,
+    }
+  } else {
+    aggregatedData = {
+      min,
+      avg,
+      max,
+    }
+  }
 
   return (
     <AggregatedDataContainer>

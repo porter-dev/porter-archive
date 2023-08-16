@@ -92,7 +92,7 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 
 		if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
 			if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-				repoSuffix = utils.SanitizedRepoSuffix(repoOwner, repoName)
+				repoSuffix = utils.SlugifyRepoSuffix(repoOwner, repoName)
 			}
 		}
 

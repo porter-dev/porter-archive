@@ -20,11 +20,11 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
-	cliUtils "github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	porter_app "github.com/porter-dev/porter/cli/cmd/porter_app"
 	"github.com/porter-dev/porter/cli/cmd/preview"
 	previewV2Beta1 "github.com/porter-dev/porter/cli/cmd/preview/v2beta1"
+	cliUtils "github.com/porter-dev/porter/cli/cmd/utils"
 	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -653,7 +653,7 @@ func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, c
 
 	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
 		if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-			repoSuffix = cliUtils.SanitizedRepoSuffix(repoOwner, repoName)
+			repoSuffix = cliUtils.SlugifyRepoSuffix(repoOwner, repoName)
 		}
 	}
 

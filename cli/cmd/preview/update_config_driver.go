@@ -115,7 +115,7 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 
 	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
 		if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-			repoSuffix = cliUtils.SanitizedRepoSuffix(repoOwner, repoName)
+			repoSuffix = cliUtils.SlugifyRepoSuffix(repoOwner, repoName)
 		}
 	}
 

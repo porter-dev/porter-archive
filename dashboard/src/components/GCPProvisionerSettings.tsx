@@ -40,6 +40,8 @@ const defaultClusterNetworking = new GKENetwork({
   serviceCidr: "10.75.0.0/16",
 });
 
+const defaultClusterVersion = "1.25";
+
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
@@ -64,7 +66,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
   const [clusterNetworking, setClusterNetworking] = useState(defaultClusterNetworking);
-  const [clusterVersion, setClusterVersion] = useState("v1.24.9");
+  const [clusterVersion, setClusterVersion] = useState(defaultClusterVersion);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
@@ -145,7 +147,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           case: "gkeKind",
           value: new GKE({
             clusterName: clusterName,
-            clusterVersion: clusterVersion || "v1.24.9",
+            clusterVersion: clusterVersion || defaultClusterVersion,
             region: region,
             network: new GKENetwork({
               cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,

@@ -172,8 +172,8 @@ type UpdateRegistryRequest struct {
 }
 
 type GetRegistryTokenResponse struct {
-	Token     string     `json:"token"`
-	ExpiresAt *time.Time `json:"expires_at"`
+	Token     string    `json:"token"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 type GetRegistryACRTokenRequest struct {

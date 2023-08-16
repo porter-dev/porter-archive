@@ -91,7 +91,7 @@ func (a *AuthGetter) GetGCRCredentials(serverURL string, projID uint) (user stri
 		a.Cache.Set(serverURL, &AuthEntry{
 			AuthorizationToken: token,
 			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
+			ExpiresAt:          tokenResp.ExpiresAt,
 			ProxyEndpoint:      serverURL,
 		})
 	}
@@ -136,7 +136,7 @@ func (a *AuthGetter) GetGARCredentials(serverURL string, projID uint) (user stri
 		a.Cache.Set(serverURL, &AuthEntry{
 			AuthorizationToken: token,
 			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
+			ExpiresAt:          tokenResp.ExpiresAt,
 			ProxyEndpoint:      serverURL,
 		})
 	}
@@ -163,7 +163,7 @@ func (a *AuthGetter) GetDOCRCredentials(serverURL string, projID uint) (user str
 
 		token = tokenResp.Token
 
-		if t := *tokenResp.ExpiresAt; len(token) > 0 && !t.IsZero() {
+		if t := tokenResp.ExpiresAt; len(token) > 0 && !t.IsZero() {
 			// set the token in cache
 			a.Cache.Set(serverURL, &AuthEntry{
 				AuthorizationToken: token,
@@ -215,7 +215,7 @@ func (a *AuthGetter) GetECRCredentials(serverURL string, projID uint) (user stri
 		a.Cache.Set(serverURL, &AuthEntry{
 			AuthorizationToken: token,
 			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
+			ExpiresAt:          tokenResp.ExpiresAt,
 			ProxyEndpoint:      serverURL,
 		})
 	}
@@ -242,7 +242,7 @@ func (a *AuthGetter) GetDockerHubCredentials(serverURL string, projID uint) (use
 		a.Cache.Set(serverURL, &AuthEntry{
 			AuthorizationToken: token,
 			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
+			ExpiresAt:          tokenResp.ExpiresAt,
 			ProxyEndpoint:      serverURL,
 		})
 	}
@@ -269,7 +269,7 @@ func (a *AuthGetter) GetACRCredentials(serverURL string, projID uint) (user stri
 		a.Cache.Set(serverURL, &AuthEntry{
 			AuthorizationToken: token,
 			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
+			ExpiresAt:          tokenResp.ExpiresAt,
 			ProxyEndpoint:      serverURL,
 		})
 	}

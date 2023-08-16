@@ -544,7 +544,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Input
                 width="350px"
                 type="string"
-                disabled={true}
                 value={cidrRange}
                 setValue={(x: string) => setCidrRange(x)}
                 label="VPC CIDR range"

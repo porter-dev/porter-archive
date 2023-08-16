@@ -224,16 +224,9 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     } catch (err) {
       const errMessage = err.response.data.error.replace("unknown: ", "");
       setIsClicked(false);
-      if (errMessage.includes("resource provider")) {
-        setErrorMessage(AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE);
-        setErrorDetails(errMessage)
-      } else if (errMessage.includes("quota")) {
-        setErrorMessage(AZURE_CORE_QUOTA_ERROR_MESSAGE)
-        setErrorDetails(errMessage)
-      } else {
-        setErrorMessage(DEFAULT_ERROR_MESSAGE);
-        setErrorDetails(errMessage)
-      }
+      // TODO: handle different error conditions here from preflights
+      setErrorMessage(DEFAULT_ERROR_MESSAGE);
+      setErrorDetails(errMessage)
     } finally {
       setIsReadOnly(false);
       setIsClicked(false);
@@ -362,10 +355,6 @@ const StyledForm = styled.div`
 
 const DEFAULT_ERROR_MESSAGE =
   "An error occurred while provisioning your infrastructure. Please try again.";
-// const AZURE_CORE_QUOTA_ERROR_MESSAGE =
-//   "Your Azure subscription has reached a vCPU core quota in the location";
-// const AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE =
-//   "Your Azure subscription is missing required resource providers";
 
 const errorMessageToModal = (errorMessage: string) => {
   switch (errorMessage) {

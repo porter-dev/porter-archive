@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
@@ -182,12 +184,25 @@ func init() {
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
 
 func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.CreateFull(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	// check the kind
 	if _, exists := supportedKinds[args[0]]; !exists {
 		return fmt.Errorf("%s is not a supported type: specify web, job, or worker", args[0])
 	}
-
-	var err error
 
 	fullPath, err := filepath.Abs(localPath)
 	if err != nil {

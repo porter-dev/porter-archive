@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
@@ -175,6 +177,21 @@ func init() {
 }
 
 func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.BatchImageUpdate(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	color.New(color.FgGreen).Println("Updating all jobs which use the image:", imageRepoURI)
 
 	return client.UpdateBatchImage(
@@ -191,6 +208,21 @@ func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 
 // waits for a job with a given name/namespace
 func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.WaitForJob(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	return wait.WaitForJob(client, &wait.WaitOpts{
 		ProjectID: cliConf.Project,
 		ClusterID: cliConf.Cluster,
@@ -200,6 +232,21 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 }
 
 func runJob(authRes *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.RunJob(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	color.New(color.FgGreen).Printf("Running job %s in namespace %s\n", name, namespace)
 
 	waitForSuccessfulDeploy = true
@@ -216,7 +263,7 @@ func runJob(authRes *types.GetAuthenticatedUserResponse, client *api.Client, arg
 		},
 	}
 
-	err := updateAgent.UpdateImageAndValues(map[string]interface{}{
+	err = updateAgent.UpdateImageAndValues(map[string]interface{}{
 		"paused": false,
 	})
 	if err != nil {

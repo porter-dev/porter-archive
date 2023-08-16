@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/spf13/cobra"
@@ -71,6 +73,21 @@ type getReleaseInfo struct {
 }
 
 func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.Get(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	rel, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0])
 	if err != nil {
 		return err
@@ -110,6 +127,21 @@ func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 }
 
 func getValues(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.GetValues(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	rel, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0])
 	if err != nil {
 		return err

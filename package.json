@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@porter-dev/api-contracts": "^0.0.85"
+  }
+}

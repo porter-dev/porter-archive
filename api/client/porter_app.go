@@ -172,3 +172,55 @@ func (c *Client) ParseYAML(
 
 	return resp, err
 }
+
+// ValidatePorterApp takes in a base64 encoded app definition that is potentially partial and returns a complete definition
+// using any previous app revisions and defaults
+func (c *Client) ValidatePorterApp(
+	ctx context.Context,
+	projectID, clusterID uint,
+	base64AppProto string,
+) (*porter_app.ValidatePorterAppResponse, error) {
+	resp := &porter_app.ValidatePorterAppResponse{}
+
+	req := &porter_app.ValidatePorterAppRequest{
+		Base64AppProto:     base64AppProto,
+		DeploymentTargetId: "f2a9c4d5-2d02-43d4-a75b-9eb611bd59a8", // defaults to default deployment target
+		CommitSHA:          "",                                     // TODO: implement when build is supported
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/validate",
+			projectID, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// ApplyPorterApp takes in a base64 encoded app definition and applies it to the cluster
+func (c *Client) ApplyPorterApp(
+	ctx context.Context,
+	projectID, clusterID uint,
+	base64AppProto string,
+) (*porter_app.ApplyPorterAppResponse, error) {
+	resp := &porter_app.ApplyPorterAppResponse{}
+
+	req := &porter_app.ApplyPorterAppRequest{
+		Base64AppProto:     base64AppProto,
+		DeploymentTargetId: "f2a9c4d5-2d02-43d4-a75b-9eb611bd59a8", // defaults to default deployment target
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/apply",
+			projectID, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}

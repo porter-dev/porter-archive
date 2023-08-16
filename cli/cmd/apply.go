@@ -20,6 +20,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
+	cliUtils "github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	porter_app "github.com/porter-dev/porter/cli/cmd/porter_app"
 	"github.com/porter-dev/porter/cli/cmd/preview"
@@ -652,7 +653,7 @@ func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, c
 
 	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
 		if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-			repoSuffix = strings.ToLower(strings.ReplaceAll(fmt.Sprintf("%s-%s", repoOwner, repoName), "_", "-"))
+			repoSuffix = cliUtils.SanitizedRepoSuffix(repoOwner, repoName)
 		}
 	}
 

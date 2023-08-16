@@ -1,11 +1,11 @@
-package preview
+package utils
 
 import (
 	"fmt"
 	"strings"
 )
 
-func sanitizedRepoSuffix(repoOwner, repoName string) string {
+func SanitizedRepoSuffix(repoOwner, repoName string) string {
 	initialSuffix := fmt.Sprintf("%s-%s", repoOwner, repoName)
 	sanitizedSuffix := strings.ReplaceAll(strings.ReplaceAll(initialSuffix, "_", "-"), ".", "-")
 	return strings.ToLower(sanitizedSuffix)

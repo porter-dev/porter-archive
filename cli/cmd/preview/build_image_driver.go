@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/docker"
+	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
@@ -105,7 +106,7 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 
 	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
 		if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-			repoSuffix = sanitizedRepoSuffix(repoOwner, repoName)
+			repoSuffix = utils.SanitizedRepoSuffix(repoOwner, repoName)
 		}
 	}
 

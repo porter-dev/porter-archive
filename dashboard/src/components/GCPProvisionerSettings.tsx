@@ -195,8 +195,6 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         markStepStarted("provisioning-started");
       }
 
-      console.log("STEFAN", data);
-
       const res = await api.createContract("<token>", data, {
         project_id: currentProject.id,
       });

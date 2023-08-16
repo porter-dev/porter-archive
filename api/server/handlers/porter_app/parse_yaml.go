@@ -69,14 +69,14 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 	}
 
 	if request.Base64Yaml == "" {
-		err := telemetry.Error(ctx, span, nil, "b64_yaml is empty")
+		err := telemetry.Error(ctx, span, nil, "b64 yaml is empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
 	yaml, err := base64.StdEncoding.DecodeString(request.Base64Yaml)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error decoding b64_yaml")
+		err := telemetry.Error(ctx, span, err, "error decoding b64 yaml")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
@@ -93,7 +93,7 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 	if appProto == nil {
-		err := telemetry.Error(ctx, span, nil, "app_proto is nil")
+		err := telemetry.Error(ctx, span, nil, "app proto is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

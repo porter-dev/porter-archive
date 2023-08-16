@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
@@ -101,6 +103,21 @@ func init() {
 }
 
 func stackAddEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.StackAddEnvGroup(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	envGroupName := args[0]
 
 	if len(envGroupName) == 0 {
@@ -171,6 +188,21 @@ func stackAddEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 }
 
 func stackRemoveEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.StackRemoveEnvGroup(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	envGroupName := args[0]
 
 	if len(envGroupName) == 0 {

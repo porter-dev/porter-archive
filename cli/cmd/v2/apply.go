@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/fatih/color"
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
@@ -21,7 +22,7 @@ func Apply(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, p
 		return fmt.Errorf("porter yaml is empty")
 	}
 
-	porterYaml, err := os.ReadFile(porterYamlPath)
+	porterYaml, err := os.ReadFile(filepath.Clean(porterYamlPath))
 	if err != nil {
 		return fmt.Errorf("could not read porter yaml file: %w", err)
 	}
@@ -47,7 +48,7 @@ func Apply(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, p
 		return fmt.Errorf("unable to unmarshal app: %w", err)
 	}
 
-	color.New(color.FgGreen).Printf("Successfully parsed Porter YAML file %+v\n", appProto)
+	color.New(color.FgGreen).Printf("Successfully parsed Porter YAML file %+v\n", appProto) // nolint:errcheck,gosec
 
 	return nil
 }

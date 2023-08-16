@@ -10,7 +10,6 @@ import (
 
 	"github.com/porter-dev/porter/internal/telemetry"
 
-	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -19,11 +18,12 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
+// ParsePorterYAMLToProtoHandler is the handler for the /app/parse endpoint
 type ParsePorterYAMLToProtoHandler struct {
 	handlers.PorterHandlerReadWriter
-	authz.KubernetesAgentGetter
 }
 
+// NewParsePorterYAMLToProtoHandler returns a new ParsePorterYAMLToProtoHandler
 func NewParsePorterYAMLToProtoHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -31,18 +31,20 @@ func NewParsePorterYAMLToProtoHandler(
 ) *ParsePorterYAMLToProtoHandler {
 	return &ParsePorterYAMLToProtoHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
-		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
+// ParsePorterYAMLToProtoRequest is the request object for the /app/parse endpoint
 type ParsePorterYAMLToProtoRequest struct {
 	Base64Yaml string `json:"b64_yaml"`
 }
 
+// ParsePorterYAMLToProtoResponse is the response object for the /app/parse endpoint
 type ParsePorterYAMLToProtoResponse struct {
 	Base64AppProto string `json:"b64_app_proto"`
 }
 
+// ServeHTTP receives a base64-encoded porter.yaml, parses the version, and then translates it into a base64-encoded app proto object
 func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-parse-porter-yaml")
 	defer span.End()
@@ -58,12 +60,6 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 	request := &ParsePorterYAMLToProtoRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding request")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	if request == nil {
-		err := telemetry.Error(ctx, span, nil, "request is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}

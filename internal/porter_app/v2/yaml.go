@@ -25,9 +25,6 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
 	}
-	if porterYaml == nil {
-		return nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
-	}
 
 	appProto := &porterv1.PorterApp{
 		Name: porterYaml.Name,
@@ -112,7 +109,7 @@ type Service struct {
 	RamMegabytes    int         `yaml:"ramMegabytes"`
 	Port            int         `yaml:"port"`
 	Autoscaling     AutoScaling `yaml:"autoscaling" validate:"excluded_if=Type job"`
-	Domains         []Domains   `yaml:"domains" validate:"exlcuded_unless=Type web"`
+	Domains         []Domains   `yaml:"domains" validate:"excluded_unless=Type web"`
 	HealthCheck     HealthCheck `yaml:"healthCheck" validate:"excluded_unless=Type web"`
 	AllowConcurrent bool        `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
 	Cron            string      `yaml:"cron" validate:"excluded_unless=Type job"`

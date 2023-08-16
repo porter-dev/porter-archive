@@ -527,7 +527,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       )}
       {data.length > 0 && isLoading === 0 && (
         <>
-          <AggregatedDataLegend data={data} />
+          <AggregatedDataLegend data={data} hideAvg={false} />
           {currentChart?.config?.autoscaling?.enabled &&
             ["cpu", "memory"].includes(selectedMetric) && (
               <CheckboxRow

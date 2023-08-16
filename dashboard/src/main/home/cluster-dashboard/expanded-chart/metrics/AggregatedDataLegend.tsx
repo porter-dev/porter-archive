@@ -23,7 +23,7 @@ const AggregatedDataLegend = ({ data }: AggregatedDataLegendProps) => {
   return (
     <AggregatedDataContainer>
       {Object.entries(aggregatedData).map(([key, value]) => (
-        <AggregatedDataItem>
+        <AggregatedDataItem key={key}>
           <DataBar color={AggregatedDataColors[key]} />
           {key.toUpperCase()}: {Math.round(value * 10000) / 10000}
         </AggregatedDataItem>

@@ -76,6 +76,7 @@ require (
 	github.com/glebarez/sqlite v1.6.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/honeycombio/otel-config-go v1.11.0
+	github.com/matryer/is v1.4.0
 	github.com/nats-io/nats.go v1.24.0
 	github.com/open-policy-agent/opa v0.44.0
 	github.com/porter-dev/api-contracts v0.0.85
@@ -230,7 +231,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/btree v1.1.2 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-cmp v0.5.9
 	github.com/google/go-containerregistry v0.9.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect

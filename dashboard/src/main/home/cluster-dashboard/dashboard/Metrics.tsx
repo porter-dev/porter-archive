@@ -358,7 +358,7 @@ const Metrics: React.FC = () => {
       )}
       {data.length > 0 && isLoading === 0 && (
         <>
-          <AggregatedDataLegend data={data} />
+          <AggregatedDataLegend data={data} hideAvg={false} />
           <ParentSize>
             {({ width, height }) => (
               <AreaChart

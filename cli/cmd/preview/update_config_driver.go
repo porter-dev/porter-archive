@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
+	cliUtils "github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -114,7 +115,7 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 
 	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
 		if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-			repoSuffix = strings.ToLower(strings.ReplaceAll(fmt.Sprintf("%s-%s", repoOwner, repoName), "_", "-"))
+			repoSuffix = cliUtils.SlugifyRepoSuffix(repoOwner, repoName)
 		}
 	}
 

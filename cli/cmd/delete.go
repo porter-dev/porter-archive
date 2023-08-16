@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
@@ -112,6 +114,21 @@ func init() {
 }
 
 func deleteDeployment(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.DeleteDeployment(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	projectID := cliConf.Project
 
 	if projectID == 0 {
@@ -143,6 +160,21 @@ func deleteDeployment(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 }
 
 func deleteApp(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.DeleteApp(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	name := args[0]
 
 	resp, err := client.GetRelease(
@@ -172,6 +204,21 @@ func deleteApp(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 }
 
 func deleteJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.DeleteJob(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	name := args[0]
 
 	resp, err := client.GetRelease(

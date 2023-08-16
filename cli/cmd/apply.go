@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+
 	"github.com/cli/cli/git"
 	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
@@ -24,6 +26,7 @@ import (
 	porter_app "github.com/porter-dev/porter/cli/cmd/porter_app"
 	"github.com/porter-dev/porter/cli/cmd/preview"
 	previewV2Beta1 "github.com/porter-dev/porter/cli/cmd/preview/v2beta1"
+	cliUtils "github.com/porter-dev/porter/cli/cmd/utils"
 	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -109,6 +112,21 @@ func init() {
 }
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) (err error) {
+	ctx := context.Background()
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.Apply(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	fileBytes, err := ioutil.ReadFile(porterYAML)
 	if err != nil {
 		stackName := os.Getenv("PORTER_STACK_NAME")
@@ -652,7 +670,7 @@ func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, c
 
 	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
 		if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-			repoSuffix = strings.ToLower(strings.ReplaceAll(fmt.Sprintf("%s-%s", repoOwner, repoName), "_", "-"))
+			repoSuffix = cliUtils.SlugifyRepoSuffix(repoOwner, repoName)
 		}
 	}
 

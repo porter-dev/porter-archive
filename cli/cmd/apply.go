@@ -119,8 +119,9 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	}
 
 	if project.ValidateApplyV2 {
-		err = v2.Apply(ctx)
+		err = v2.Apply(ctx, cliConf, client, porterYAML)
 		if err != nil {
+			color.New(color.FgRed).Fprintf(os.Stderr, "Error: %s\n", err.Error())
 			return err
 		}
 		return nil

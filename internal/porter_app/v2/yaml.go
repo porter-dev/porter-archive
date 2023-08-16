@@ -20,8 +20,6 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 		return nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
 	}
 
-	fmt.Println("-")
-
 	porterYaml := &PorterYAML{}
 	err := yaml.Unmarshal(porterYamlBytes, porterYaml)
 	if err != nil {
@@ -30,8 +28,6 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 	if porterYaml == nil {
 		return nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
 	}
-
-	fmt.Println("-")
 
 	appProto := &porterv1.PorterApp{
 		Name: porterYaml.Name,
@@ -59,11 +55,8 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 		return nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
 	}
 
-	fmt.Println("-")
-
 	services := make(map[string]*porterv1.Service, 0)
 	for name, service := range porterYaml.Services {
-		fmt.Println(name)
 		serviceType, err := protoEnumFromType(name, service)
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "error getting service type")
@@ -79,7 +72,6 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 	appProto.Services = services
 
 	if porterYaml.Predeploy != nil {
-		fmt.Println("predeploy")
 		predeployProto, err := serviceProtoFromConfig(*porterYaml.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "error casting predeploy config")

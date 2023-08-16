@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/fatih/color"
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
-
-	"github.com/porter-dev/porter/cli/cmd/config"
-
-	api "github.com/porter-dev/porter/api/client"
-
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/cli/cmd/config"
 )
 
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
@@ -49,7 +47,7 @@ func Apply(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, p
 		return fmt.Errorf("unable to unmarshal app: %w", err)
 	}
 
-	fmt.Printf("Successfully parsed Porter YAML file %+v\n", appProto)
+	color.New(color.FgGreen).Printf("Successfully parsed Porter YAML file %+v\n", appProto)
 
 	return nil
 }

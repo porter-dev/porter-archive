@@ -1,25 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-import ParentSize from "@visx/responsive/lib/components/ParentSize";
 
 import settings from "assets/settings.svg";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { ChartTypeWithExtendedConfig, StorageType } from "shared/types";
+import { ChartTypeWithExtendedConfig } from "shared/types";
 
 import TabSelector from "components/TabSelector";
-import Loading from "components/Loading";
 import SelectRow from "components/form-components/SelectRow";
-import AreaChart from "./metrics/AreaChart";
+import MetricsChart from "./metrics/MetricsChart";
 import { MetricNormalizer } from "../../cluster-dashboard/expanded-chart/metrics/MetricNormalizer";
-import {
-  AvailableMetrics,
-  GenericMetricResponse,
-  NormalizedMetricsData,
-} from "../../cluster-dashboard/expanded-chart/metrics/types";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import AggregatedDataLegend from "../../cluster-dashboard/expanded-chart/metrics/AggregatedDataLegend";
-
 type PropsType = {
   currentChart: ChartTypeWithExtendedConfig;
 };
@@ -42,64 +32,18 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   currentChart,
 }) => {
   const [pods, setPods] = useState([]);
-  const [selectedPod, setSelectedPod] = useState("");
   const [controllerOptions, setControllerOptions] = useState([]);
   const [selectedController, setSelectedController] = useState(null);
   const [ingressOptions, setIngressOptions] = useState([]);
   const [selectedIngress, setSelectedIngress] = useState(null);
   const [selectedRange, setSelectedRange] = useState("1H");
   const [selectedMetric, setSelectedMetric] = useState("cpu");
-  const [selectedMetricLabel, setSelectedMetricLabel] = useState(
-    "CPU Utilization (vCPUs)"
-  );
-  const [dropdownExpanded, setDropdownExpanded] = useState(false);
-  const [data, setData] = useState<NormalizedMetricsData[]>([]);
-  const [isAggregated, setIsAggregated] = useState<boolean>(false);
-  const [aggregatedData, setAggregatedData] = useState<
-    Record<string, NormalizedMetricsData[]>
-  >({});
   const [showMetricsSettings, setShowMetricsSettings] = useState(false);
-  const [metricsOptions, setMetricsOptions] = useState([
-    { value: "cpu", label: "CPU Utilization (vCPUs)" },
-    { value: "memory", label: "RAM Utilization (Mi)" },
-    { value: "network", label: "Network Received Bytes (Ki)" },
-  ]);
   const [isLoading, setIsLoading] = useState(0);
-  const [hpaData, setHpaData] = useState<NormalizedMetricsData[]>([]);
-  const [hpaEnabled, setHpaEnabled] = useState(false);
-  const [showHpaToggle, setShowHpaToggle] = useState(false);
 
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
-
-  // Add or remove hpa replicas chart option when current chart is updated
-  useEffect(() => {
-    const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"];
-    const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled;
-    if (isHpaEnabled) {
-      setMetricsOptions((prev) => {
-        if (prev.find((option) => option.value === "hpa_replicas")) {
-          return [...prev];
-        }
-        return [
-          ...prev,
-          { value: "hpa_replicas", label: "Number of replicas" },
-        ];
-      });
-    } else {
-      setMetricsOptions((prev) => {
-        const hpaReplicasOptionIndex = prev.findIndex(
-          (option) => option.value === "hpa_replicas"
-        );
-        const options = [...prev];
-        if (hpaReplicasOptionIndex > -1) {
-          options.splice(hpaReplicasOptionIndex, 1);
-        }
-        return [...options];
-      });
-    }
-  }, [selectedController, currentChart]);
 
   useEffect(() => {
     if (currentChart?.chart?.metadata?.name == "ingress-nginx") {
@@ -115,16 +59,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           }
         )
         .then((res) => {
-          setMetricsOptions((prev) => {
-            return [
-              ...prev,
-              {
-                value: "nginx:errors",
-                label: "5XX Error Percentage",
-              },
-            ];
-          });
-
           const ingressOptions = res.data.map((ingress: any) => ({
             value: ingress,
             label: ingress.name,
@@ -219,9 +153,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           pods.push({ value: name, label: name });
         });
         setPods(pods);
-        setSelectedPod("All");
-
-        getMetrics();
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));
@@ -232,289 +163,48 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       });
   };
 
-  const getAutoscalingThreshold = async (
-    metricType: "cpu_hpa_threshold" | "memory_hpa_threshold",
-    shouldsum: boolean,
-    namespace: string,
-    start: number,
-    end: number
-  ) => {
-    setIsLoading((prev) => prev + 1);
-    setHpaData([]);
-    try {
-      const res = await api.getMetrics(
-        "<token>",
-        {
-          metric: metricType,
-          shouldsum: shouldsum,
-          kind: selectedController?.kind,
-          name: selectedController?.metadata.name,
-          namespace: namespace,
-          startrange: start,
-          endrange: end,
-          resolution: resolutions[selectedRange],
-          pods: [],
-        },
-        {
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
-
-      if (!Array.isArray(res.data) || !res.data[0]?.results) {
-        return;
-      }
-      const autoscalingMetrics = new MetricNormalizer(res.data, metricType);
-      setHpaData(autoscalingMetrics.getParsedData());
-      return;
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading((prev) => prev - 1);
-    }
-  };
-
-  const getMetrics = async () => {
-    if (pods?.length == 0) {
-      return;
-    }
-    try {
-      let shouldsum = selectedPod === "All";
-      let namespace = currentChart.namespace;
-
-      // calculate start and end range
-      const d = new Date();
-      const end = Math.round(d.getTime() / 1000);
-      const start = end - secondsBeforeNow[selectedRange];
-
-      let podNames = [] as string[];
-
-      if (!shouldsum) {
-        podNames = [selectedPod];
-      }
-
-      if (selectedMetric == "nginx:errors") {
-        podNames = [selectedIngress?.name];
-        namespace = selectedIngress?.namespace || "default";
-        shouldsum = false;
-      }
-
-      setIsLoading((prev) => prev + 1);
-      setData([]);
-      setAggregatedData({});
-      setIsAggregated(shouldsum)
-
-      // Get aggregated metrics
-      const allPodsRes = await api.getMetrics(
-        "<token>",
-        {
-          metric: selectedMetric,
-          shouldsum: false,
-          kind: selectedController?.kind,
-          name: selectedController?.metadata.name,
-          namespace: namespace,
-          startrange: start,
-          endrange: end,
-          resolution: resolutions[selectedRange],
-          pods: [],
-        },
-        {
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
-
-      const allPodsData: GenericMetricResponse[] = allPodsRes.data ?? [];
-      const allPodsMetrics = allPodsData.flatMap((d) => d.results);
-      const allPodsMetricsNormalized = new MetricNormalizer(
-        [{ results: allPodsMetrics }],
-        selectedMetric as AvailableMetrics,
-      );
-      const allPodsAggregatedData = allPodsMetricsNormalized.getAggregatedData()
-      let data: NormalizedMetricsData[] = []
-      if (shouldsum) {
-        setData(allPodsAggregatedData["avg"])
-        delete allPodsAggregatedData["avg"]
-      }
-      setAggregatedData(allPodsAggregatedData);
-
-
-      setHpaData([]);
-      const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"];
-      const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled;
-      setShowHpaToggle(isHpaEnabled);
-      setHpaEnabled(isHpaEnabled);
-      if (shouldsum && isHpaEnabled) {
-        if (selectedMetric === "cpu") {
-          await getAutoscalingThreshold(
-            "cpu_hpa_threshold",
-            shouldsum,
-            namespace,
-            start,
-            end
-          );
-        } else if (selectedMetric === "memory") {
-          await getAutoscalingThreshold(
-            "memory_hpa_threshold",
-            shouldsum,
-            namespace,
-            start,
-            end
-          );
-        }
-      }
-
-      if (!shouldsum) {
-        const res = await api.getMetrics(
-          "<token>",
-          {
-            metric: selectedMetric,
-            shouldsum: shouldsum,
-            kind: selectedController?.kind,
-            name: selectedController?.metadata.name,
-            namespace: namespace,
-            startrange: start,
-            endrange: end,
-            resolution: resolutions[selectedRange],
-            pods: podNames,
-          },
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-          }
-        );
-
-        const metrics = new MetricNormalizer(
-          res.data,
-          selectedMetric as AvailableMetrics
-        );
-        // transform the metrics to expected form
-        setData(metrics.getParsedData());
-      }
-    } catch (error) {
-      setCurrentError(JSON.stringify(error));
-    } finally {
-      setIsLoading((prev) => prev - 1);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedMetric && selectedRange && selectedPod && selectedController) {
-      getMetrics();
-    }
-  }, [
-    selectedMetric,
-    selectedRange,
-    selectedPod,
-    selectedController,
-    selectedIngress,
-  ]);
-
   const renderMetricsSettings = () => {
     if (showMetricsSettings && true) {
       if (selectedMetric == "nginx:errors") {
         return (
           <>
-            <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
-            <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
-              <Label>Additional Settings</Label>
               <SelectRow
+                displayFlex={true}
                 label="Target Ingress"
                 value={selectedIngress}
                 setActiveValue={(x: any) => setSelectedIngress(x)}
                 options={ingressOptions}
                 width="100%"
               />
-            </DropdownAlt>
           </>
         );
       }
 
       return (
         <>
-          <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
-          <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
-            <Label>Additional Settings</Label>
-            <SelectRow
-              label="Target Controller"
-              value={selectedController}
-              setActiveValue={(x: any) => setSelectedController(x)}
-              options={controllerOptions}
-              width="100%"
-            />
-            <SelectRow
-              label="Target Pod"
-              value={selectedPod}
-              setActiveValue={(x: any) => setSelectedPod(x)}
-              options={pods}
-              width="100%"
-            />
-          </DropdownAlt>
+          <SelectRow
+            displayFlex={true}
+            label="Service"
+            value={selectedController}
+            setActiveValue={(x: any) => setSelectedController(x)}
+            options={controllerOptions}
+            width="100%"
+          />
         </>
       );
     }
   };
 
-  const renderDropdown = () => {
-    if (dropdownExpanded) {
-      return (
-        <>
-          <DropdownOverlay onClick={() => setDropdownExpanded(false)} />
-          <Dropdown
-            dropdownWidth="230px"
-            dropdownMaxHeight="200px"
-            onClick={() => setDropdownExpanded(false)}
-          >
-            {renderOptionList()}
-          </Dropdown>
-        </>
-      );
-    }
-  };
-
-  const renderOptionList = () => {
-    return metricsOptions.map(
-      (option: { value: string; label: string }, i: number) => {
-        return (
-          <Option
-            key={i}
-            selected={option.value === selectedMetric}
-            onClick={() => {
-              setSelectedMetric(option.value);
-              setSelectedMetricLabel(option.label);
-            }}
-            lastItem={i === metricsOptions.length - 1}
-          >
-            {option.label}
-          </Option>
-        );
-      }
-    );
-  };
 
   return (
     <StyledMetricsSection>
       <MetricsHeader>
         <Flex>
-          <MetricSelector
-            onClick={() => setDropdownExpanded(!dropdownExpanded)}
-          >
-            <MetricsLabel>{selectedMetricLabel}</MetricsLabel>
-            <i className="material-icons">arrow_drop_down</i>
-            {renderDropdown()}
-          </MetricSelector>
-          <Relative>
-            <IconWrapper onClick={() => setShowMetricsSettings(true)}>
-              <SettingsIcon src={settings} />
-            </IconWrapper>
-            {renderMetricsSettings()}
-          </Relative>
-
-          <Highlight color={"#7d7d81"} onClick={getMetrics}>
-            <i className="material-icons">autorenew</i>
-          </Highlight>
+          {renderMetricsSettings()}
         </Flex>
         <RangeWrapper>
+          <Relative>
+          </Relative>
           <TabSelector
             noBuffer={true}
             options={[
@@ -528,48 +218,59 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           />
         </RangeWrapper>
       </MetricsHeader>
-      {isLoading > 0 && <Loading />}
-      {data.length === 0 && isLoading === 0 && (
-        <Message>
-          No data available yet.
-          <Highlight color={"#8590ff"} onClick={getMetrics}>
-            <i className="material-icons">autorenew</i>
-            Refresh
-          </Highlight>
-        </Message>
+      <MetricsChart
+        currentChart={currentChart}
+        selectedController={selectedController}
+        selectedIngress={selectedIngress}
+        selectedMetric="cpu"
+        selectedMetricLabel="CPU Utilization (vCPUs)"
+        selectedPod="All"
+        selectedRange={selectedRange}
+        pods={pods}
+      />
+      <MetricsChart
+        currentChart={currentChart}
+        selectedController={selectedController}
+        selectedIngress={selectedIngress}
+        selectedMetric="memory"
+        selectedMetricLabel="RAM Utilization (Mi)"
+        selectedPod="All"
+        selectedRange={selectedRange}
+        pods={pods}
+      />
+      <MetricsChart
+        currentChart={currentChart}
+        selectedController={selectedController}
+        selectedIngress={selectedIngress}
+        selectedMetric="network"
+        selectedMetricLabel="Network Received Bytes (Ki)"
+        selectedPod="All"
+        selectedRange={selectedRange}
+        pods={pods}
+      />
+      {currentChart?.config?.autoscaling?.enabled && (
+        <MetricsChart
+          currentChart={currentChart}
+          selectedController={selectedController}
+          selectedIngress={selectedIngress}
+          selectedMetric="hpa_replicas"
+          selectedMetricLabel="Number of replicas"
+          selectedPod="All"
+          selectedRange={selectedRange}
+          pods={pods}
+        />
       )}
-      {data.length > 0 && isLoading === 0 && (
-        <>
-          {showHpaToggle &&
-            ["cpu", "memory"].includes(selectedMetric) && (
-              <CheckboxRow
-                toggle={() => setHpaEnabled((prev: any) => !prev)}
-                checked={hpaEnabled}
-                label="Show Autoscaling Threshold"
-              />
-            )}
-          <ParentSize>
-            {({ width, height }) => (
-              <AreaChart
-                dataKey={selectedMetricLabel}
-                aggregatedData={aggregatedData}
-                isAggregated={isAggregated}
-                data={data}
-                hpaData={hpaData}
-                hpaEnabled={
-                  hpaEnabled && ["cpu", "memory"].includes(selectedMetric)
-                }
-                width={width}
-                height={height - 10}
-                resolution={selectedRange}
-                margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
-              />
-            )}
-          </ParentSize>
-          <RowWrapper>
-            <AggregatedDataLegend data={data} hideAvg={isAggregated} />
-          </RowWrapper>
-        </>
+      {currentChart?.chart?.metadata?.name == "ingress-nginx" && (
+        <MetricsChart
+          currentChart={currentChart}
+          selectedController={selectedController}
+          selectedIngress={selectedIngress}
+          selectedMetric="nginx:errors"
+          selectedMetricLabel="5XX Error Percentage"
+          selectedPod="All"
+          selectedRange={selectedRange}
+          pods={pods}
+        />
       )}
     </StyledMetricsSection>
   );
@@ -577,44 +278,12 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
 export default MetricsSection;
 
-const RowWrapper = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-`;
-
-const Highlight = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 8px;
-  color: ${(props: { color: string }) => props.color};
-  cursor: pointer;
-
-  > i {
-    font-size: 20px;
-    margin-right: 3px;
-  }
-`;
-
 const Label = styled.div`
   font-weight: bold;
 `;
 
 const Relative = styled.div`
   position: relative;
-`;
-
-const Message = styled.div`
-  display: flex;
-  height: 100%;
-  width: calc(100% - 150px);
-  align-items: center;
-  justify-content: center;
-  margin-left: 75px;
-  text-align: center;
-  color: #ffffff44;
-  font-size: 13px;
 `;
 
 const IconWrapper = styled.div`
@@ -716,54 +385,9 @@ const RangeWrapper = styled.div`
   margin-top: -8px;
 `;
 
-const MetricSelector = styled.div`
-  font-size: 13px;
-  font-weight: 500;
-  position: relative;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  border-radius: 5px;
-  :hover {
-    > i {
-      background: #ffffff22;
-    }
-  }
-
-  > i {
-    border-radius: 20px;
-    font-size: 20px;
-    margin-left: 10px;
-  }
-`;
-
-const MetricsLabel = styled.div`
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  max-width: 200px;
-`;
-
 const StyledMetricsSection = styled.div`
   width: 100%;
-  min-height: 480px;
-  height: calc(100vh - 350px);
   display: flex;
   flex-direction: column;
   position: relative;
-  font-size: 13px;
-  animation: floatIn 0.3s;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
-  @keyframes floatIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0px);
-    }
-  }
 `;

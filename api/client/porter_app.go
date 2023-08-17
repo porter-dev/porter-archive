@@ -211,7 +211,7 @@ func (c *Client) ApplyPorterApp(
 
 	req := &porter_app.ApplyPorterAppRequest{
 		Base64AppProto:     base64AppProto,
-		DeploymentTargetId: deploymentTarget, // defaults to default deployment target
+		DeploymentTargetId: deploymentTarget,
 	}
 
 	err := c.postRequest(

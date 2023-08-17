@@ -34,13 +34,13 @@ func Apply(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, p
 		return fmt.Errorf("error calling parse yaml endpoint: %w", err)
 	}
 
-	if resp.Base64AppProto == "" {
+	if resp.B64AppProto == "" {
 		return fmt.Errorf("b64 app proto is empty")
 	}
 
-	decoded, err := base64.StdEncoding.DecodeString(resp.Base64AppProto)
+	decoded, err := base64.StdEncoding.DecodeString(resp.B64AppProto)
 	if err != nil {
-		return fmt.Errorf("unable to decode base64 app: %w", err)
+		return fmt.Errorf("unable to decode b64 app: %w", err)
 	}
 
 	err = helpers.UnmarshalContractObject(decoded, appProto)

@@ -36,12 +36,12 @@ func NewParsePorterYAMLToProtoHandler(
 
 // ParsePorterYAMLToProtoRequest is the request object for the /app/parse endpoint
 type ParsePorterYAMLToProtoRequest struct {
-	Base64Yaml string `json:"b64_yaml"`
+	B64Yaml string `json:"b64_yaml"`
 }
 
 // ParsePorterYAMLToProtoResponse is the response object for the /app/parse endpoint
 type ParsePorterYAMLToProtoResponse struct {
-	Base64AppProto string `json:"b64_app_proto"`
+	B64AppProto string `json:"b64_app_proto"`
 }
 
 // ServeHTTP receives a base64-encoded porter.yaml, parses the version, and then translates it into a base64-encoded app proto object
@@ -64,13 +64,13 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	if request.Base64Yaml == "" {
+	if request.B64Yaml == "" {
 		err := telemetry.Error(ctx, span, nil, "b64 yaml is empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
-	yaml, err := base64.StdEncoding.DecodeString(request.Base64Yaml)
+	yaml, err := base64.StdEncoding.DecodeString(request.B64Yaml)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error decoding b64 yaml")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -104,7 +104,7 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 	b64 := base64.StdEncoding.EncodeToString(by)
 
 	response := &ParsePorterYAMLToProtoResponse{
-		Base64AppProto: b64,
+		B64AppProto: b64,
 	}
 
 	c.WriteResult(w, r, response)

@@ -158,7 +158,7 @@ func (c *Client) ParseYAML(
 	resp := &porter_app.ParsePorterYAMLToProtoResponse{}
 
 	req := &porter_app.ParsePorterYAMLToProtoRequest{
-		Base64Yaml: b64Yaml,
+		B64Yaml: b64Yaml,
 	}
 
 	err := c.getRequest(

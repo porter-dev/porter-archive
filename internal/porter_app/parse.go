@@ -11,10 +11,13 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// PorterYAMLVersion is a struct used to unmarshal the version field of a Porter YAML file
-type PorterYAMLVersion struct {
-	Version string `yaml:"version"`
-}
+// PorterYamlVersion is a string type for the version of the porter yaml
+type PorterYamlVersion string
+
+const (
+	// PorterYamlVersion_V2 is the v2 version of the porter yaml
+	PorterYamlVersion_V2 PorterYamlVersion = "v2"
+)
 
 // ParseYAML converts a Porter YAML file into a PorterApp proto object
 func ParseYAML(ctx context.Context, porterYaml []byte) (*porterv1.PorterApp, error) {
@@ -25,7 +28,7 @@ func ParseYAML(ctx context.Context, porterYaml []byte) (*porterv1.PorterApp, err
 		return nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
 	}
 
-	version := &PorterYAMLVersion{}
+	version := &yamlVersion{}
 	err := yaml.Unmarshal(porterYaml, version)
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
@@ -33,7 +36,7 @@ func ParseYAML(ctx context.Context, porterYaml []byte) (*porterv1.PorterApp, err
 
 	var appProto *porterv1.PorterApp
 	switch version.Version {
-	case "v2":
+	case PorterYamlVersion_V2:
 		appProto, err = v2.AppProtoFromYaml(ctx, porterYaml)
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "error converting v2 yaml to proto")
@@ -47,4 +50,9 @@ func ParseYAML(ctx context.Context, porterYaml []byte) (*porterv1.PorterApp, err
 	}
 
 	return appProto, nil
+}
+
+// yamlVersion is a struct used to unmarshal the version field of a Porter YAML file
+type yamlVersion struct {
+	Version PorterYamlVersion `yaml:"version"`
 }

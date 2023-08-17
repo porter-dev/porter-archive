@@ -70,6 +70,7 @@ export type AvailableMetrics =
   | "network"
   | "nginx:errors"
   | "nginx:latency"
+  | "nginx:status"
   | "cpu_hpa_threshold"
   | "memory_hpa_threshold"
   | "hpa_replicas";

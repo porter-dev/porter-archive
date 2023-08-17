@@ -42,6 +42,9 @@ export class MetricNormalizer {
     if (this.kind.includes("nginx:errors")) {
       return this.parseNGINXErrorsMetrics(this.metric_results);
     }
+    if (this.kind.includes("nginx:status")) {
+      return this.parseNGINXStatusMetrics(this.metric_results);
+    }
     if (
       this.kind.includes("nginx:latency") ||
       this.kind.includes("nginx:latency-histogram")
@@ -122,6 +125,17 @@ export class MetricNormalizer {
       return {
         date: d.date,
         value: parseFloat(d.error_pct),
+      };
+    });
+  }
+
+  private parseNGINXStatusMetrics(
+    arr: MetricsNGINXErrorsDataResponse["results"]
+  ) {
+    return arr.map((d) => {
+      return {
+        date: d.date,
+        value: parseFloat(d.status_code),
       };
     });
   }

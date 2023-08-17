@@ -269,13 +269,14 @@ type promRawQuery struct {
 }
 
 type promParsedSingletonQueryResult struct {
-	Date     interface{} `json:"date,omitempty"`
-	CPU      interface{} `json:"cpu,omitempty"`
-	Replicas interface{} `json:"replicas,omitempty"`
-	Memory   interface{} `json:"memory,omitempty"`
-	Bytes    interface{} `json:"bytes,omitempty"`
-	ErrorPct interface{} `json:"error_pct,omitempty"`
-	Latency  interface{} `json:"latency,omitempty"`
+	Date       interface{} `json:"date,omitempty"`
+	CPU        interface{} `json:"cpu,omitempty"`
+	Replicas   interface{} `json:"replicas,omitempty"`
+	Memory     interface{} `json:"memory,omitempty"`
+	Bytes      interface{} `json:"bytes,omitempty"`
+	ErrorPct   interface{} `json:"error_pct,omitempty"`
+	Latency    interface{} `json:"latency,omitempty"`
+	StatusCode interface{} `json:"status_code,omitempty"`
 }
 
 type promParsedSingletonQuery struct {
@@ -313,6 +314,8 @@ func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, er
 				singletonResult.Bytes = values[1]
 			} else if metric == "nginx:errors" {
 				singletonResult.ErrorPct = values[1]
+			} else if metric == "nginx:status" {
+				singletonResult.StatusCode = values[1]
 			} else if metric == "cpu_hpa_threshold" {
 				singletonResult.CPU = values[1]
 			} else if metric == "memory_hpa_threshold" {

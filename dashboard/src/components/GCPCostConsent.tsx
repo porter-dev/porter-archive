@@ -26,7 +26,7 @@ const GCPCostConsent: React.FC<Props> = ({
 }) => {
   const [confirmCost, setConfirmCost] = useState("");
 
-  const costTotal = "224.58";
+  const costTotal = "253.00";
   return (
     <>
       <Modal
@@ -52,16 +52,15 @@ const GCPCostConsent: React.FC<Props> = ({
             <>
               <Spacer height="15px" />
               <Fieldset background="#1b1d2688">
-                • Amazon Elastic Kubernetes Service (EKS) = $73/mo
+                • Google Kubernetes Engine Management (GKE) = $73/mo
                 <Spacer height="15px" />
-                • Amazon EC2:
+                • GKE Compute:
                 <Spacer height="15px" />
-                <Tab />+ System workloads: t3.medium instance (2) = $60.74/mo
+                <Tab />+ System workloads (2) = $90/mo
                 <Spacer height="15px" />
-                <Tab />+ Monitoring workloads: t3.large instance (1) = $60.74/mo
+                <Tab />+ Monitoring workloads (1) = $45/mo
                 <Spacer height="15px" />
-                <Tab />+ Application workloads: t3.medium instance (1) =
-                $30.1/mo
+                <Tab />+ Application workloads (1) = $45/mo
               </Fieldset>
             </>
           }

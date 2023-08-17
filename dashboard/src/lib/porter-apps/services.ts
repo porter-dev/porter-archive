@@ -9,6 +9,7 @@ import {
   deserializeHealthCheck,
   serializeAutoscaling,
   serializeHealth,
+  domainsValidator,
 } from "./values";
 import { Service, ServiceType } from "@porter-dev/api-contracts";
 
@@ -67,6 +68,9 @@ export const ServiceField = {
 // serviceValidator is the validator for a ClientService
 // This is used to validate a service when creating or updating an app
 export const serviceValidator = z.object({
+  expanded: z.boolean().default(false).optional(),
+  canDelete: z.boolean().default(true).optional(),
+  name: serviceStringValidator,
   run: serviceStringValidator,
   instances: serviceNumberValidator,
   port: serviceNumberValidator,
@@ -75,17 +79,14 @@ export const serviceValidator = z.object({
   config: z.discriminatedUnion("type", [
     z.object({
       type: z.literal("web"),
-      autoscaling: autoscalingValidator.optional(),
-      domains: z.array(
-        z.object({
-          name: serviceStringValidator,
-        })
-      ),
-      healthCheck: healthcheckValidator.optional(),
+      autoscaling: autoscalingValidator,
+      ingressEnabled: z.boolean().default(false).optional(),
+      domains: domainsValidator,
+      healthCheck: healthcheckValidator,
     }),
     z.object({
       type: z.literal("worker"),
-      autoscaling: autoscalingValidator.optional(),
+      autoscaling: autoscalingValidator,
     }),
     z.object({
       type: z.literal("job"),
@@ -100,6 +101,7 @@ export type ClientService = z.infer<typeof serviceValidator>;
 // SerializedService is just the values of a Service without any override information
 // This is used as an intermediate step to convert a ClientService to a protobuf Service
 export type SerializedService = {
+  name: string;
   run: string;
   instances: number;
   port: number;
@@ -111,12 +113,12 @@ export type SerializedService = {
         domains: {
           name: string;
         }[];
-        autoscaling?: SerializedAutoscaling;
-        healthCheck?: SerializedHealthcheck;
+        autoscaling: SerializedAutoscaling;
+        healthCheck: SerializedHealthcheck;
       }
     | {
         type: "worker";
-        autoscaling?: SerializedAutoscaling;
+        autoscaling: SerializedAutoscaling;
       }
     | {
         type: "job";
@@ -132,6 +134,7 @@ export function serializeService(service: ClientService): SerializedService {
   return match(service.config)
     .with({ type: "web" }, (config) =>
       Object.freeze({
+        name: service.name.value,
         run: service.run.value,
         instances: service.instances.value,
         port: service.port.value,
@@ -151,6 +154,7 @@ export function serializeService(service: ClientService): SerializedService {
     )
     .with({ type: "worker" }, (config) =>
       Object.freeze({
+        name: service.name.value,
         run: service.run.value,
         instances: service.instances.value,
         port: service.port.value,
@@ -166,6 +170,7 @@ export function serializeService(service: ClientService): SerializedService {
     )
     .with({ type: "job" }, (config) =>
       Object.freeze({
+        name: service.name.value,
         run: service.run.value,
         instances: service.instances.value,
         port: service.port.value,
@@ -188,6 +193,7 @@ export function deserializeService(
   override?: SerializedService
 ): ClientService {
   const baseService = {
+    name: ServiceField.string(service.name, override?.name),
     run: ServiceField.string(service.run, override?.run),
     instances: ServiceField.number(service.instances, override?.instances),
     port: ServiceField.number(service.port, override?.port),
@@ -322,9 +328,13 @@ export function serviceProto(service: SerializedService): Service {
 
 // serializedServiceFromProto converts a protobuf Service to a SerializedService
 // This is used as an intermediate step to convert a protobuf Service to a ClientService
-export function serializedServiceFromProto(
-  service: Service
-): SerializedService {
+export function serializedServiceFromProto({
+  service,
+  name,
+}: {
+  service: Service;
+  name: string;
+}): SerializedService {
   const config = service.config;
   if (!config.case) {
     throw new Error("No case found on service config");
@@ -333,20 +343,26 @@ export function serializedServiceFromProto(
   return match(config)
     .with({ case: "webConfig" }, ({ value }) => ({
       ...service,
+      name,
       config: {
         type: "web" as const,
+        autoscaling: value.autoscaling ? value.autoscaling : { enabled: false },
+        healthCheck: value.healthCheck ? value.healthCheck : { enabled: false },
         ...value,
       },
     }))
     .with({ case: "workerConfig" }, ({ value }) => ({
       ...service,
+      name,
       config: {
         type: "worker" as const,
+        autoscaling: value.autoscaling ? value.autoscaling : { enabled: false },
         ...value,
       },
     }))
     .with({ case: "jobConfig" }, ({ value }) => ({
       ...service,
+      name,
       config: {
         type: "job" as const,
         ...value,

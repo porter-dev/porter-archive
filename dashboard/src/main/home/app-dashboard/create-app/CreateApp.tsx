@@ -1,6 +1,7 @@
 import React, { useContext, useEffect } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import web from "assets/web.png";
+import AnimateHeight from "react-animate-height";
 
 import styled from "styled-components";
 import { useForm, Controller, FormProvider } from "react-hook-form";
@@ -16,6 +17,8 @@ import { PorterAppFormData } from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
 import Button from "components/porter/Button";
+import RepoSettings from "./RepoSettings";
+import ImageSettings from "./ImageSettings";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -53,6 +56,7 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
   const name = watch("app.name");
   const source = watch("source");
   const build = watch("app.build");
+  const services = watch("app.services") ?? [];
 
   useEffect(() => {
     if (name) {
@@ -92,9 +96,7 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
                   </Text>
                   <Spacer y={0.5} />
                   <ControlledInput
-                    id={"name"}
                     placeholder="ex: academic-sophon"
-                    autoComplete="off"
                     type="text"
                     {...register("app.name")}
                   />
@@ -126,24 +128,20 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
                       />
                     )}
                   />
-                  {/* todo(ianedwards): add back in the following as form comes together */}
-                  {/* {source?.type ? (
-                    source.type === "github" ? (
-                      <RepoSettings
-                        build={build}
-                        source={source}
-                        projectId={currentProject.id}
-                      />
-                    ) : (
-                      <div></div>
-                    )
-                  ) : null} */}
-                </>,
-                <>
-                  <ErrorText hasError={true}>
-                    Deploying apps in this flow is not supported for your
-                    project. Contact support@porter.run for more information.
-                  </ErrorText>
+                  <AnimateHeight height={source ? "auto" : 0}>
+                    <Spacer y={1} />
+                    {source?.type ? (
+                      source.type === "github" ? (
+                        <RepoSettings
+                          build={build}
+                          source={source}
+                          projectId={currentProject.id}
+                        />
+                      ) : (
+                        <ImageSettings />
+                      )
+                    ) : null}
+                  </AnimateHeight>
                 </>,
                 <>
                   <Button

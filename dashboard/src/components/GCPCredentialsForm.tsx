@@ -127,7 +127,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
       <UploadArea
         setValue={(x: string) => handleLoadJSON(x)}
         label="🔒 GCP Key Data (JSON)"
-        placeholder="Choose a file or drag it here."
+        placeholder="Drag a GCP Service Account JSON here, or click to browse."
         width="100%"
         height="100%"
         isRequired={true}

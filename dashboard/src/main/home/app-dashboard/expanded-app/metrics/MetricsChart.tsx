@@ -235,6 +235,7 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
         selectedPod,
         selectedController,
         selectedIngress,
+        pods,
     ]);
 
     return (

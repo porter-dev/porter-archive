@@ -51,6 +51,7 @@ type TestRepository struct {
 	awsAssumeRoleChainer      repository.AWSAssumeRoleChainer
 	porterApp                 repository.PorterAppRepository
 	porterAppEvent            repository.PorterAppEventRepository
+	deploymentTarget          repository.DeploymentTargetRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -237,6 +238,10 @@ func (t *TestRepository) PorterAppEvent() repository.PorterAppEventRepository {
 	return t.porterAppEvent
 }
 
+func (t *TestRepository) DeploymentTarget() repository.DeploymentTargetRepository {
+	return t.deploymentTarget
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -287,5 +292,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		awsAssumeRoleChainer:      NewAWSAssumeRoleChainer(),
 		porterApp:                 NewPorterAppRepository(canQuery, failingMethods...),
 		porterAppEvent:            NewPorterAppEventRepository(canQuery),
+		deploymentTarget:          NewDeploymentTargetRepository(),
 	}
 }

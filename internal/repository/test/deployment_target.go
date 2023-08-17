@@ -7,13 +7,12 @@ import (
 	"github.com/porter-dev/porter/internal/repository"
 )
 
-// DeploymentTargetRepository uses gorm.DB for querying the database
+// DeploymentTargetRepository is a test repository that implements repository.DeploymentTargetRepository
 type DeploymentTargetRepository struct {
 	canQuery bool
 }
 
-// NewDeploymentTargetRepository returns a DeploymentTargetRepository which uses
-// gorm.DB for querying the database
+// NewDeploymentTargetRepository returns the test DeploymentTargetRepository
 func NewDeploymentTargetRepository() repository.DeploymentTargetRepository {
 	return &DeploymentTargetRepository{canQuery: false}
 }

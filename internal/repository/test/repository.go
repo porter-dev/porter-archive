@@ -238,6 +238,7 @@ func (t *TestRepository) PorterAppEvent() repository.PorterAppEventRepository {
 	return t.porterAppEvent
 }
 
+// DeploymentTarget returns a test DeploymentTargetRepository
 func (t *TestRepository) DeploymentTarget() repository.DeploymentTargetRepository {
 	return t.deploymentTarget
 }

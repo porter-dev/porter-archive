@@ -25,7 +25,7 @@ type ApplyPorterAppHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-// NewApplyPorterAppHandler returns a new ApplyPorterAppHandler
+// NewApplyPorterAppHandler handles POST requests to the endpoint /apps/apply
 func NewApplyPorterAppHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -36,24 +36,30 @@ func NewApplyPorterAppHandler(
 	}
 }
 
-// ApplyPorterAppRequest is the request object for the /apps/validate endpoint
+// ApplyPorterAppRequest is the request object for the /apps/apply endpoint
 type ApplyPorterAppRequest struct {
 	Base64AppProto     string `json:"b64_app_proto"`
 	DeploymentTargetId string `json:"deployment_target_id"`
 }
 
-// ApplyPorterAppResponse is the response object for the /apps/validate endpoint
+// ApplyPorterAppResponse is the response object for the /apps/apply endpoint
 type ApplyPorterAppResponse struct {
 	AppRevisionId string                 `json:"app_revision_id"`
 	CLIAction     porterv1.EnumCLIAction `json:"cli_action"`
 }
 
-// ServeHTTP receives a base64-encoded porter.yaml, parses the version, and then translates it into a base64-encoded app proto object
+// ServeHTTP translates the request into a ApplyPorterApp request, forwards to the cluster control plane, and returns the response
 func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-apply-porter-app")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
+	)
 
 	if !project.ValidateApplyV2 {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
@@ -89,17 +95,13 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if appProto.Name == "" {
-		err := telemetry.Error(ctx, span, nil, "app proto name is empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appProto.Name})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetId})
 
 	validateReq := connect.NewRequest(&porterv1.ApplyPorterAppRequest{
-		ProjectId:           int64(project.ID),
-		DeploymentTargetId:  request.DeploymentTargetId,
-		App:                 appProto,
-		PorterAppRevisionId: "",
+		ProjectId:          int64(project.ID),
+		DeploymentTargetId: request.DeploymentTargetId,
+		App:                appProto,
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.ApplyPorterApp(ctx, validateReq)
 	if err != nil {
@@ -125,11 +127,15 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "resp-app-revision-id", Value: ccpResp.Msg.PorterAppRevisionId})
+
 	if ccpResp.Msg.CliAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_UNSPECIFIED {
 		err := telemetry.Error(ctx, span, err, "ccp resp cli action is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cli-action", Value: ccpResp.Msg.CliAction.String()})
 
 	response := &ApplyPorterAppResponse{
 		AppRevisionId: ccpResp.Msg.PorterAppRevisionId,

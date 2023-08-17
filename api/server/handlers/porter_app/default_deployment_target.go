@@ -15,7 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-// DefaultDeploymentTargetHandler is the handler for the /app/parse endpoint
+// DefaultDeploymentTargetHandler handles requests to the /apps/default-deployment-target endpoint
 type DefaultDeploymentTargetHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -54,18 +54,25 @@ func (c *DefaultDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
+	)
+
 	defaultDeploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(project.ID, cluster.ID, DeploymentTargetSelector_Default, DeploymentTargetSelectorType_Default)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting default target from repo")
+		err := telemetry.Error(ctx, span, err, "error getting default deployment target from repo")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
 	if defaultDeploymentTarget.ID == uuid.Nil {
-		err := telemetry.Error(ctx, span, err, "default target not found")
+		err := telemetry.Error(ctx, span, err, "default deployment target not found")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: defaultDeploymentTarget.ID.String()})
 
 	response := &DefaultDeploymentTargetResponse{
 		DeploymentTargetID: defaultDeploymentTarget.ID.String(),

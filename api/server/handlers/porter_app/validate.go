@@ -20,7 +20,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-// ValidatePorterAppHandler is the handler for the /app/parse endpoint
+// ValidatePorterAppHandler is handles requests to the /apps/validate endpoint
 type ValidatePorterAppHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -48,12 +48,18 @@ type ValidatePorterAppResponse struct {
 	ValidatedBase64AppProto string `json:"validate_b64_app_proto"`
 }
 
-// ServeHTTP receives a base64-encoded porter.yaml, parses the version, and then translates it into a base64-encoded app proto object
+// ServeHTTP translates requests into protobuf objects and forwards them to the cluster control plane, returning the result
 func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-validate-porter-app")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
+	)
 
 	if !project.ValidateApplyV2 {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
@@ -88,6 +94,18 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+
+	if appProto.Name == "" {
+		err := telemetry.Error(ctx, span, err, "app proto name is empty")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "app-name", Value: appProto.Name},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetId},
+		telemetry.AttributeKV{Key: "commit-sha", Value: request.CommitSHA},
+	)
 
 	validateReq := connect.NewRequest(&porterv1.ValidatePorterAppRequest{
 		ProjectId:          int64(project.ID),

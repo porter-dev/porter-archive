@@ -1,6 +1,9 @@
 package gorm
 
 import (
+	"errors"
+
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -23,6 +26,10 @@ func (repo *DeploymentTargetRepository) DeploymentTargetBySelectorAndSelectorTyp
 
 	if err := repo.db.Where("project_id = ? AND cluster_id = ? AND selector = ? AND selector_type = ?", projectID, clusterID, selector, selectorType).Limit(1).Find(&deploymentTarget).Error; err != nil {
 		return nil, err
+	}
+
+	if deploymentTarget.ID == uuid.Nil {
+		return nil, errors.New("deployment target not found")
 	}
 
 	return deploymentTarget, nil

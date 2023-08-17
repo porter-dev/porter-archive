@@ -237,7 +237,7 @@ func (c *Client) DefaultDeploymentTarget(
 
 	err := c.getRequest(
 		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/default-deployment-target",
+			"/projects/%d/clusters/%d/default-deployment-target",
 			projectID, clusterID,
 		),
 		req,

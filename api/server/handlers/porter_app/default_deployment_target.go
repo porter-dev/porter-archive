@@ -15,7 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-// DefaultDeploymentTargetHandler handles requests to the /apps/default-deployment-target endpoint
+// DefaultDeploymentTargetHandler handles requests to the /default-deployment-target endpoint
 type DefaultDeploymentTargetHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -31,10 +31,10 @@ func NewDefaultDeploymentTargetHandler(
 	}
 }
 
-// DefaultDeploymentTargetRequest is the request object for the /apps/default-deployment-target endpoint
+// DefaultDeploymentTargetRequest is the request object for the /default-deployment-target endpoint
 type DefaultDeploymentTargetRequest struct{}
 
-// DefaultDeploymentTargetResponse is the response object for the /apps/default-deployment-target endpoint
+// DefaultDeploymentTargetResponse is the response object for the /default-deployment-target endpoint
 type DefaultDeploymentTargetResponse struct {
 	DeploymentTargetID string `json:"deployment_target_id"`
 }

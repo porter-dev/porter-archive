@@ -629,14 +629,14 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/default-deployment-target -> porter_app.NewDefaultDeploymentTargetHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/default-deployment-target -> porter_app.NewDefaultDeploymentTargetHandler
 	defaultDeploymentTargetEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/apps/default-deployment-target",
+				RelativePath: "/default-deployment-target",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

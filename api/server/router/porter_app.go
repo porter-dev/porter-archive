@@ -617,7 +617,7 @@ func getPorterAppRoutes(
 		},
 	)
 
-	applyPorterAppHandler := porter_app.NewValidatePorterAppHandler(
+	applyPorterAppHandler := porter_app.NewApplyPorterAppHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -626,6 +626,35 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: applyPorterAppEndpoint,
 		Handler:  applyPorterAppHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/default-deployment-target -> porter_app.NewDefaultDeploymentTargetHandler
+	defaultDeploymentTargetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/apps/default-deployment-target",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	defaultDeploymentTargetHandler := porter_app.NewDefaultDeploymentTargetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: defaultDeploymentTargetEndpoint,
+		Handler:  defaultDeploymentTargetHandler,
 		Router:   r,
 	})
 

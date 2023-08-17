@@ -36,7 +36,16 @@ func Apply(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, p
 		return errors.New("b64 app proto is empty")
 	}
 
-	validateResp, err := client.ValidatePorterApp(ctx, cliConf.Project, cliConf.Cluster, parseResp.Base64AppProto)
+	targetResp, err := client.DefaultDeploymentTarget(ctx, cliConf.Project, cliConf.Cluster)
+	if err != nil {
+		return fmt.Errorf("error calling default deployment target endpoint: %w", err)
+	}
+
+	if targetResp.DeploymentTargetID == "" {
+		return errors.New("deployment target id is empty")
+	}
+
+	validateResp, err := client.ValidatePorterApp(ctx, cliConf.Project, cliConf.Cluster, parseResp.B64AppProto, targetResp.DeploymentTargetID)
 	if err != nil {
 		return fmt.Errorf("error calling validate endpoint: %w", err)
 	}
@@ -45,7 +54,7 @@ func Apply(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, p
 		return errors.New("validated b64 app proto is empty")
 	}
 
-	applyResp, err := client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, validateResp.ValidatedBase64AppProto)
+	applyResp, err := client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, validateResp.ValidatedBase64AppProto, targetResp.DeploymentTargetID)
 	if err != nil {
 		return fmt.Errorf("error calling apply endpoint: %w", err)
 	}
@@ -57,7 +66,7 @@ func Apply(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, p
 		return errors.New("cli action is unknown")
 	}
 
-	color.New(color.FgGreen).Printf("Successfully applied Porter YAML as revision %v, next action: %v\n", applyResp.AppRevisionId, porterv1.EnumCLIAction_ENUM_CLI_ACTION_UNSPECIFIED) // nolint:errcheck,gosec
+	color.New(color.FgGreen).Printf("Successfully applied Porter YAML as revision %v, next action: %v\n", applyResp.AppRevisionId, applyResp.CLIAction) // nolint:errcheck,gosec
 
 	return nil
 }

@@ -50,7 +50,7 @@ type ApplyPorterAppResponse struct {
 
 // ServeHTTP receives a base64-encoded porter.yaml, parses the version, and then translates it into a base64-encoded app proto object
 func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-parse-porter-yaml")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-apply-porter-app")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
@@ -76,7 +76,7 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error decoding base  yaml")
+		err := telemetry.Error(ctx, span, err, "error decoding base yaml")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
@@ -85,6 +85,12 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	err = helpers.UnmarshalContractObject(decoded, appProto)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error unmarshalling app proto")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	if appProto.Name == "" {
+		err := telemetry.Error(ctx, span, nil, "app proto name is empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}

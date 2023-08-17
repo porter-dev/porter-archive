@@ -3,6 +3,7 @@ import styled from "styled-components";
 
 import aws from "assets/aws.png";
 import azure from "assets/azure.png";
+import gcp from "assets/gcp.png";
 
 import Heading from "components/form-components/Heading";
 import Helper from "./form-components/Helper";
@@ -11,6 +12,7 @@ import Text from "./porter/Text";
 import Spacer from "./porter/Spacer";
 import Container from "./porter/Container";
 import AzureProvisionerSettings from "./AzureProvisionerSettings";
+import GCPProvisionerSettings from "./GCPProvisionerSettings";
 
 type Props = {
   goBack: () => void;
@@ -61,6 +63,25 @@ const ProvisionerForm: React.FC<Props> = ({
           </Text>
           <Spacer y={1} />
           <AzureProvisionerSettings credentialId={credentialId} />
+        </>
+      )}
+      {provider === "gcp" && (
+        <>
+          <Container row>
+            <BackButton width="155px" onClick={goBack}>
+              <i className="material-icons">first_page</i>
+              Set credentials
+            </BackButton>
+            <Spacer inline width="17px" />
+            <Img src={gcp} />
+            <Text size={16}>Configure settings</Text>
+          </Container>
+          <Spacer y={1} />
+          <Text color="helper">
+            Configure settings for your GCP environment.
+          </Text>
+          <Spacer y={1} />
+          <GCPProvisionerSettings credentialId={credentialId} />
         </>
       )}
     </>

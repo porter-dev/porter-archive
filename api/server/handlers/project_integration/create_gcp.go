@@ -2,7 +2,6 @@ package project_integration
 
 import (
 	"encoding/base64"
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -45,7 +44,6 @@ func (p *CreateGCPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if project.CapiProvisionerEnabled {
-		fmt.Println(request.GCPKeyData)
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "capi-provisioner-enabled", Value: true})
 
 		b64Key := base64.StdEncoding.EncodeToString([]byte(request.GCPKeyData))
@@ -63,7 +61,7 @@ func (p *CreateGCPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		ccpCredentialsResponse, err := p.Config().ClusterControlPlaneClient.UpdateCloudProviderCredentials(ctx, ccpCredentialsInput)
 		if err != nil {
-			e := telemetry.Error(ctx, span, err, "ailed to update cloud provider credentials")
+			e := telemetry.Error(ctx, span, err, "failed to update cloud provider credentials")
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 			return
 		}

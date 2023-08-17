@@ -900,7 +900,7 @@ func (r *Registry) CreateRepository(
 	}
 
 	if project.CapiProvisionerEnabled {
-		// no need to create repository if pushing to ACR
+		// no need to create repository if pushing to ACR or GAR
 		if strings.Contains(r.URL, ".azurecr.") || strings.Contains(r.URL, "-docker.pkg.dev") {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "skipping-create-repo", Value: true})
 			return nil

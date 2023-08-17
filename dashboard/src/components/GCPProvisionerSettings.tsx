@@ -199,8 +199,10 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         project_id: currentProject.id,
       });
 
+      setErrorMessage("");
+      setErrorDetails("");
+
       // Only refresh and set clusters on initial create
-      // if (!props.clusterId) {
       setShouldRefreshClusters(true);
       api
         .getClusters("<token>", {}, { id: currentProject.id })
@@ -217,10 +219,10 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           });
         })
         .catch((err) => {
-          console.error(err);
+          setErrorMessage("Error fetching clusters");
+          setErrorDetails(err)
         });
-      setErrorMessage("");
-      setErrorDetails("")
+
     } catch (err) {
       const errMessage = err.response.data.error.replace("unknown: ", "");
       setIsClicked(false);

@@ -763,8 +763,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                         </ErrorInLine>
                       )}
 
-                      <Spacer y={1} />
-                      {/* <Checkbox
+                    <Spacer y={1} />
+                    {/* <Checkbox
               checked={accessS3Logs}
               disabled={isReadOnly}
               toggleChecked={() => {
@@ -777,7 +777,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             >
               <Text color="helper">Access Logs to S3</Text>
             </Checkbox> */}
-                      <Spacer y={1} />
+                      {/*<Spacer y={1} />*/}
                       <Checkbox
                         checked={wafV2Enabled}
                         disabled={isReadOnly}
@@ -820,25 +820,87 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                             </>
                           </FlexCenter>
 
-                          {(wafV2ARN == undefined || wafV2ARN?.length == 0) && (
-                            <ErrorInLine>
-                              <i className="material-icons">error</i>
-                              {"Required if WafV2 is enabled"}
-                            </ErrorInLine>
-                          )}
-                        </>
-                      )}
-                      <Spacer y={1} />
-                    </>
-                  )}
-                </>
-              )}
-            </>
-          )
-        }
+                        {(wafV2ARN == undefined || wafV2ARN?.length == 0) && (
+                          <ErrorInLine>
+                            <i className="material-icons">error</i>
+                            {"Required if WafV2 is enabled"}
+                          </ErrorInLine>
+                        )}
+                      </>
+                    )}
+                    <Spacer y={1} />
+                  </>
+                )}
+
+                <FlexCenter>
+                  <>
+                    <Checkbox
+                        checked={guardDutyEnabled}
+                        disabled={isReadOnly}
+                        toggleChecked={() => {
+                          setGuardDutyEnabled(!guardDutyEnabled);
+                        }}
+                        disabledTooltip={
+                          "Wait for provisioning to complete before editing this field."
+                        }
+                    >
+                      <Text color="helper">
+                        Install AWS GuardDuty agent on this cluster - see details to fully enable monitoring
+                      </Text>
+                      <Spacer x={.5} inline/>
+                      <Tooltip
+                          children={<Icon src={info} />}
+                          content={
+                            "In addition to installing the agent, you must enable GuardDuty through your AWS Console and enable EKS Protection in the EKS Protection tab of the Guard Duty console."
+                          }
+                          position="right"
+                      />
+                    </Checkbox>
+                  </>
+                </FlexCenter>
+                <Spacer y={1} />
+                <FlexCenter>
+                  <>
+                    <Checkbox
+                      checked={kmsEncryptionEnabled}
+                      disabled={isReadOnly || currentCluster != null}
+                      toggleChecked={() => {
+                        setKmsEncryptionEnabled(!kmsEncryptionEnabled);
+                      }}
+                      disabledTooltip={
+                        "Encryption is only supported at cluster creation."
+                      }
+                    >
+                      <Text color="helper">
+                        Enable KMS encryption for this cluster
+                      </Text>
+                      <Spacer x={.5} inline/>
+                      <Tooltip
+                          children={<Icon src={info} />}
+                          content={
+                            "KMS encryption can never be disabled. Deletion of the KMS key will permanently place this cluster in a degraded state."
+                          }
+                          position="right"
+                      />
+                    </Checkbox>
+                  </>
+                </FlexCenter>
+                {kmsEncryptionEnabled && (
+                  <ErrorInLine>
+                    <i className="material-icons">error</i>
+                    {
+                      "KMS encryption can never be disabled. Deletion of the KMS key will permanently place this cluster in a degraded state."
+                    }
+                  </ErrorInLine>
+                )}
+                <Spacer y={1} />
+              </>
+            )}
+          </>
+        )}
       </>
-    )
-  }
+    );
+  };
 
   const renderForm = () => {
     // Render simplified form if initial create
@@ -862,7 +924,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             setActiveValue={setAwsRegion}
             label="📍 AWS region"
           />
-          {user?.isPorterUser && renderAdvancedSettings()}
+          {(user?.isPorterUser || !currentProject?.simplified_view_enabled) &&
+            renderAdvancedSettings()}
         </>
       );
     }
@@ -882,7 +945,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           label="📍 AWS region"
         />
         {renderAdvancedSettings()}
-
       </>
     );
   };
@@ -893,11 +955,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       <Button
         // disabled={isDisabled()}
         disabled={
-          user?.email === "admin@porter.run" || currentProject?.enable_reprovision
+          user?.email === "admin@porter.run" ||
+          currentProject?.enable_reprovision
             ? false
             : currentCluster
-              ? true
-              : isDisabled()
+            ? true
+            : isDisabled()
         }
         onClick={createCluster}
         status={getStatus()}
@@ -918,7 +981,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
     margin-right: 7px;
     margin-left: -7px;
     transform: ${(props) =>
-    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+      props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
     transition: transform 0.1s ease;
   }
 `;

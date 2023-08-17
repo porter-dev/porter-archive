@@ -164,35 +164,33 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   };
 
   const renderMetricsSettings = () => {
-    if (showMetricsSettings && true) {
-      if (selectedMetric == "nginx:errors") {
-        return (
-          <>
-              <SelectRow
-                displayFlex={true}
-                label="Target Ingress"
-                value={selectedIngress}
-                setActiveValue={(x: any) => setSelectedIngress(x)}
-                options={ingressOptions}
-                width="100%"
-              />
-          </>
-        );
-      }
-
+    if (selectedMetric == "nginx:errors") {
       return (
         <>
-          <SelectRow
-            displayFlex={true}
-            label="Service"
-            value={selectedController}
-            setActiveValue={(x: any) => setSelectedController(x)}
-            options={controllerOptions}
-            width="100%"
-          />
+            <SelectRow
+              displayFlex={true}
+              label="Target Ingress"
+              value={selectedIngress}
+              setActiveValue={(x: any) => setSelectedIngress(x)}
+              options={ingressOptions}
+              width="100%"
+            />
         </>
       );
     }
+
+    return (
+      <>
+        <SelectRow
+          displayFlex={true}
+          label="Service"
+          value={selectedController}
+          setActiveValue={(x: any) => setSelectedController(x)}
+          options={controllerOptions}
+          width="100%"
+        />
+      </>
+    );
   };
 
 

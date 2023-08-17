@@ -2,23 +2,30 @@ import React from "react";
 import styled from "styled-components";
 import Tooltip from "./Tooltip";
 
+/*
+ *
+ * ControlledInput is a wrapper around an input that allows for
+ * onChange and onBlur handlers to be passed in by the higher level form component.
+ * This is particular useful if using the "register" method from react-hook-form
+ *
+ */
 export const ControlledInput = React.forwardRef<
   HTMLInputElement,
   {
-    id: string;
-    name: string;
-    label?: string;
-    type: React.HTMLInputTypeAttribute;
-    autoComplete: string;
-    placeholder?: string;
-    defaultValue?: string;
-    onChange: React.ChangeEventHandler<HTMLInputElement>;
-    onBlur: React.FocusEventHandler<HTMLInputElement>;
-    width?: string;
-    height?: string;
-    error?: string;
-    disabled?: boolean;
-    disabledTooltip?: string;
+    id: string; // id is the id attribute of the input
+    name: string; // name is the name attribute of the input
+    label?: string; // label is used to render a label above the input. If not provided, no label is rendered
+    type: React.HTMLInputTypeAttribute; // type is the type attribute of the input (text, password, etc.)
+    placeholder?: string; // placeholder is the placeholder attribute of the input. If not provided, no placeholder is rendered
+    defaultValue?: string; // defaultValue is the default value of the input. If not provided, the input is empty by default
+    onChange: React.ChangeEventHandler<HTMLInputElement>; // onChange is the onChange handler of the input, called when the input value changes
+    onBlur: React.FocusEventHandler<HTMLInputElement>; // onBlur is the onBlur handler of the input, called when the input loses focus
+    autoComplete?: string; // autoComplete is the autoComplete attribute of the input. If not provided, no autoComplete is rendered
+    width?: string; // width is the width of the input. If not provided, the width is 200px by default
+    height?: string; // height is the height of the input. If not provided, the height is 35px by default
+    error?: string; // error is the error message to display below the input. If not provided, no error is rendered
+    disabled?: boolean; // disabled is whether or not the input is disabled. If not provided, the input is not disabled by default
+    disabledTooltip?: string; // disabledTooltip is the tooltip to display when hovering over the input if it is disabled. If not provided, no tooltip is rendered
   }
 >(
   (
@@ -27,7 +34,7 @@ export const ControlledInput = React.forwardRef<
       name,
       label,
       type,
-      autoComplete,
+      autoComplete = "off",
       placeholder,
       defaultValue,
       onChange,

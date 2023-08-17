@@ -120,7 +120,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 	}
 
 	if project.ValidateApplyV2 {
-		err = v2.Apply(ctx)
+		err = v2.Apply(ctx, cliConf, client, porterYAML)
 		if err != nil {
 			return err
 		}

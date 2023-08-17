@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/porter-dev/porter/api/server/handlers/porter_app"
+
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -145,4 +147,28 @@ func (c *Client) ListEnvGroups(
 	)
 
 	return *resp, err
+}
+
+// ParseYAML takes in a base64 encoded porter yaml and returns an app proto
+func (c *Client) ParseYAML(
+	ctx context.Context,
+	projectID, clusterID uint,
+	b64Yaml string,
+) (*porter_app.ParsePorterYAMLToProtoResponse, error) {
+	resp := &porter_app.ParsePorterYAMLToProtoResponse{}
+
+	req := &porter_app.ParsePorterYAMLToProtoRequest{
+		B64Yaml: b64Yaml,
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/parse",
+			projectID, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
 }

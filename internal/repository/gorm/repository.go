@@ -240,6 +240,7 @@ func (t *GormRepository) PorterAppEvent() repository.PorterAppEventRepository {
 	return t.porterAppEvent
 }
 
+// DeploymentTarget returns the DeploymentTargetRepository interface implemented by gorm
 func (t *GormRepository) DeploymentTarget() repository.DeploymentTargetRepository {
 	return t.deploymentTarget
 }

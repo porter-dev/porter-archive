@@ -40,7 +40,7 @@ export type SourceOptions = z.infer<typeof sourceValidator>;
 // porterAppValidator is the representation of a Porter app on the client, and is used to validate inputs for app setting fields
 export const porterAppValidator = z.object({
   name: z.string(),
-  services: z.record(z.string(), serviceValidator),
+  services: serviceValidator.array(),
   env: z.record(z.string(), z.string()),
   build: buildValidator,
   predeploy: serviceValidator.optional(),
@@ -65,11 +65,8 @@ export function porterClientAppFromProto(
   proto: PorterApp,
   buildpacks?: Buildpack[]
 ): ClientPorterApp {
-  const services = Object.fromEntries(
-    Object.entries(proto.services).map(([name, service]) => [
-      name,
-      deserializeService(serializedServiceFromProto(service)),
-    ])
+  const services = Object.entries(proto.services).map(([name, service]) =>
+    deserializeService(serializedServiceFromProto({ name, service }))
   );
 
   const { name, env, build, predeploy, image } = proto;
@@ -108,7 +105,9 @@ export function porterClientAppFromProto(
           },
         }),
     ...(predeploy && {
-      predeploy: deserializeService(serializedServiceFromProto(predeploy)),
+      predeploy: deserializeService(
+        serializedServiceFromProto({ name: "predeploy", service: predeploy })
+      ),
     }),
     image,
   };

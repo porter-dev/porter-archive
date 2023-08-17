@@ -12,7 +12,6 @@ import Tooltip from "./Tooltip";
 export const ControlledInput = React.forwardRef<
   HTMLInputElement,
   {
-    id: string; // id is the id attribute of the input
     name: string; // name is the name attribute of the input
     label?: string; // label is used to render a label above the input. If not provided, no label is rendered
     type: React.HTMLInputTypeAttribute; // type is the type attribute of the input (text, password, etc.)
@@ -30,7 +29,6 @@ export const ControlledInput = React.forwardRef<
 >(
   (
     {
-      id,
       name,
       label,
       type,
@@ -52,7 +50,6 @@ export const ControlledInput = React.forwardRef<
         <Block width={width}>
           {label && <Label>{label}</Label>}
           <StyledInput
-            id={id}
             name={name}
             type={type}
             autoComplete={autoComplete}
@@ -78,7 +75,6 @@ export const ControlledInput = React.forwardRef<
       <Block width={width}>
         {label && <Label>{label}</Label>}
         <StyledInput
-          id={id}
           name={name}
           type={type}
           autoComplete={autoComplete}

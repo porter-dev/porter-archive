@@ -26,6 +26,7 @@ const GCPCostConsent: React.FC<Props> = ({
 }) => {
   const [confirmCost, setConfirmCost] = useState("");
 
+  const costTotal = "224.58";
   return (
     <>
       <Modal
@@ -35,18 +36,18 @@ const GCPCostConsent: React.FC<Props> = ({
         }}
       >
         <Text size={16}>Base GCP cost consent</Text>
-        {/* <Spacer height="15px" />
+        <Spacer height="15px" />
         <Text color="helper">
-          Porter will create the underlying infrastructure in your own AWS
-          account. You will be separately charged by AWS for this
-          infrastructure. The cost for this base infrastructure is as follows:
+          Porter will create the underlying infrastructure in your own GCP project.
+          You will be separately charged by GCP for this infrastructure.
+          The cost for this base infrastructure is as follows:
         </Text>
         <Spacer y={1} />
         <ExpandableSection
           noWrapper
           expandText="[+] Show details"
           collapseText="[-] Hide details"
-          Header={<Cost>$224.58 / mo</Cost>}
+          Header={<Cost>${costTotal} / mo</Cost>}
           ExpandedSection={
             <>
               <Spacer height="15px" />
@@ -67,8 +68,8 @@ const GCPCostConsent: React.FC<Props> = ({
         />
         <Spacer y={1} />
         <Text color="helper">
-          The base AWS infrastructure covers up to 2 vCPU and 4GB of RAM.
-          Separate from the AWS cost, Porter charges based on your resource
+          The base GCP infrastructure covers up to 2 vCPU and 4GB of RAM.
+          Separate from the GCP cost, Porter charges based on your resource
           usage.
         </Text>
         <Spacer inline width="5px" />
@@ -78,7 +79,7 @@ const GCPCostConsent: React.FC<Props> = ({
         </Link>
         <Spacer y={0.5} />
         <Text color="helper">
-          You can use your AWS credits to pay for the underlying infrastructure,
+          You can use your GCP credits to pay for the underlying infrastructure,
           and if you are a startup with less than 5M in funding, you may qualify
           for our startup program that gives you $10k in credits.
         </Text>
@@ -92,21 +93,21 @@ const GCPCostConsent: React.FC<Props> = ({
         </Link>
         <Spacer y={0.5} />
         <Text color="helper">
-          All AWS resources will be automatically deleted when you delete your
-          Porter project. Please enter the AWS base cost ("224.58") below to
+          All GCP resources will be automatically deleted when you delete your
+          Porter project. Please enter the GCP base cost ("{costTotal}") below to
           proceed:
         </Text>
         <Spacer y={1} />
         <Input
-          placeholder="224.58"
+          placeholder={costTotal}
           value={confirmCost}
           setValue={setConfirmCost}
           width="100%"
           height="40px"
-        /> */}
+        />
         <Spacer y={1} />
         <Button
-          // disabled={confirmCost !== "224.58"}
+          disabled={confirmCost !== costTotal}
           onClick={() => {
             setShowCostConfirmModal(false);
             setConfirmCost("");

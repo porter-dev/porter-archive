@@ -13,8 +13,11 @@ import { Onboarding as OnboardingSaveType } from "./types";
 import lightning from "assets/lightning.png";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
+type Props = {
+  multiCluster?: boolean;
+};
 
-const Onboarding = () => {
+const Onboarding = (multiCluster: any) => {
   const context = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   useSteps(isLoading);
@@ -112,7 +115,7 @@ const Onboarding = () => {
     return () => {
       OFState.actions.clearState();
     };
-  }, [context.currentProject]);
+  }, [context.currentProject, context]);
 
   useEffect(() => {
     if (context?.user?.email) {
@@ -140,7 +143,7 @@ const Onboarding = () => {
 
       const hasClusters = Array.isArray(clusters) && clusters.length;
 
-      if (hasClusters && !context.hasFinishedOnboarding) {
+      if (hasClusters && !context.hasFinishedOnboarding && !multiCluster) {
         setCurrentModal("SkipOnboardingModal", { skipOnboarding });
       }
     } catch (error) {

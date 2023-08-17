@@ -11,10 +11,14 @@ import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import { pushFiltered } from "shared/routing";
 import SidebarLink from "./SidebarLink";
+import { OFState } from "main/home/onboarding/state";
+import ProvisionClusterModal from "./ProvisionClusterModal";
+
 
 const ClusterList: React.FC<PropsType> = (props) => {
-  const { setCurrentCluster, user, currentCluster, currentProject } = useContext(Context);
+  const { setCurrentCluster, user, currentCluster, currentProject, setHasFinishedOnboarding } = useContext(Context);
   const [expanded, setExpanded] = useState<boolean>(false);
+  const [clusterModalVisible, setClusterModalVisible] = useState<boolean>(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [clusters, setClusters] = useState<ClusterType[]>([]);
   const [options, setOptions] = useState<any[]>([]);
@@ -74,13 +78,29 @@ const ClusterList: React.FC<PropsType> = (props) => {
         <Icon src={infra} height={"14px"} />
         <ClusterLabel>{option.label}</ClusterLabel>
       </Option>
+
     ));
 
   const renderDropdown = () =>
     expanded && (
-      <Dropdown>
-        {renderOptionList()}
-      </Dropdown>
+      <>
+        <Dropdown>
+          {renderOptionList()}
+
+          {/* Connect Cluster Option */}
+          <Option
+            onClick={() => {
+              setClusterModalVisible(true)
+              setExpanded(false);
+
+            }}>
+
+            Connect Cluster
+          </Option>
+
+        </Dropdown>
+
+      </>
     );
 
   if (currentCluster) {
@@ -95,10 +115,15 @@ const ClusterList: React.FC<PropsType> = (props) => {
             <Img src={infra} />
             <ClusterName>{truncate(currentCluster.vanity_name ? currentCluster.vanity_name : currentCluster?.name)}</ClusterName>
 
-            {clusters.length > 1 && <i className="material-icons">arrow_drop_down</i>}
+            {clusters.length > 1 || user.isPorterUser && <i className="material-icons">arrow_drop_down</i>}
           </NavButton>
         </MainSelector>
-        {clusters.length > 1 && renderDropdown()}
+        {(clusters.length > 1 || user.isPorterUser) && renderDropdown()}
+        {
+          clusterModalVisible && <ProvisionClusterModal
+            modalVisible={clusterModalVisible}
+            setModalVisible={setClusterModalVisible} />
+        }
       </StyledClusterSection >
     );
   }
@@ -156,7 +181,7 @@ const Option = styled.div`
   width: 100%;
   border-top: 1px solid #00000000;
   border-bottom: 1px solid
-    ${(props: { selected: boolean; lastItem?: boolean }) =>
+    ${(props: { selected?: boolean; lastItem?: boolean }) =>
     props.lastItem ? "#ffffff00" : "#ffffff15"};
   height: 45px;
   display: flex;
@@ -166,11 +191,11 @@ const Option = styled.div`
   padding-left: 10px;
   cursor: pointer;
   padding-right: 10px;
-  background: ${(props: { selected: boolean; lastItem?: boolean }) =>
+  background: ${(props: { selected?: boolean; lastItem?: boolean }) =>
     props.selected ? "#ffffff11" : ""};
   :hover {
-    background: ${(props: { selected: boolean; lastItem?: boolean }) =>
-    props.selected ? "" : "#ffffff22"};
+    background: ${(props: { selected?: boolean; lastItem?: boolean }) =>
+    props?.selected ? "" : "#ffffff22"};
   }
 
   > i {

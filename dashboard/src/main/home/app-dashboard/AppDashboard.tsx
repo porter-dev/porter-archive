@@ -221,8 +221,8 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                   </Text>
                   <Spacer y={.5} />
                   <PorterLink to="/apps/new/app">
-                    <Button onClick={async () => updateStackStartedStep()} height="40px">
-                      Deploy app <Spacer inline x={1} /> <i className="material-icons">east</i>
+                    <Button onClick={async () => updateStackStartedStep()} height="35px">
+                      Deploy app <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
                     </Button>
                   </PorterLink>
                 </CentralContainer>

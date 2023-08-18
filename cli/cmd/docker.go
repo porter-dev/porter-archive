@@ -18,7 +18,7 @@ var configureCmd = &cobra.Command{
 	Use:   "configure",
 	Short: "Configures the host's Docker instance",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, dockerConfig)
+		err := checkLoginAndRun(cmd.Context(), args, dockerConfig)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -31,6 +31,6 @@ func init() {
 	dockerCmd.AddCommand(configureCmd)
 }
 
-func dockerConfig(user *ptypes.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func dockerConfig(user *ptypes.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	return config.SetDockerConfig(client)
 }

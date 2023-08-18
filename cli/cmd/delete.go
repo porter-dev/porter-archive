@@ -34,7 +34,7 @@ deleting a configuration:
 		color.New(color.FgGreen, color.Bold).Sprintf("porter delete"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteDeployment)
+		err := checkLoginAndRun(cmd.Context(), args, deleteDeployment)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -48,7 +48,7 @@ var deleteAppsCmd = &cobra.Command{
 	Short:   "Deletes an existing app",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteApp)
+		err := checkLoginAndRun(cmd.Context(), args, deleteApp)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -62,7 +62,7 @@ var deleteJobsCmd = &cobra.Command{
 	Short:   "Deletes an existing job",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteJob)
+		err := checkLoginAndRun(cmd.Context(), args, deleteJob)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -76,7 +76,7 @@ var deleteAddonsCmd = &cobra.Command{
 	Short:   "Deletes an existing addon",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteAddon)
+		err := checkLoginAndRun(cmd.Context(), args, deleteAddon)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -90,7 +90,7 @@ var deleteHelmCmd = &cobra.Command{
 	Short:   "Deletes an existing helm repo",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteHelm)
+		err := checkLoginAndRun(cmd.Context(), args, deleteHelm)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -113,7 +113,7 @@ func init() {
 	rootCmd.AddCommand(deleteCmd)
 }
 
-func deleteDeployment(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteDeployment(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -159,7 +159,7 @@ func deleteDeployment(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 	)
 }
 
-func deleteApp(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteApp(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -203,7 +203,7 @@ func deleteApp(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 	return nil
 }
 
-func deleteJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteJob(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -247,7 +247,7 @@ func deleteJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 	return nil
 }
 
-func deleteAddon(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteAddon(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	name := args[0]
 
 	resp, err := client.GetRelease(
@@ -276,7 +276,7 @@ func deleteAddon(_ *types.GetAuthenticatedUserResponse, client *api.Client, args
 	return nil
 }
 
-func deleteHelm(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteHelm(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	name := args[0]
 
 	resp, err := client.ListHelmRepos(context.Background(), cliConf.Project)

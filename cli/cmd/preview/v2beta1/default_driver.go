@@ -20,7 +20,7 @@ package v2beta1
 // 	Vars      map[string]string
 // 	Env       map[string]string
 // 	Builds    []*types.Build
-// 	APIClient *api.Client
+// 	APIClient api.Client
 // 	Namespace string
 
 // 	allErrors []error

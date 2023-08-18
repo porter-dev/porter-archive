@@ -26,7 +26,7 @@ var bluegreenCmd = &cobra.Command{
 	Use:   "blue-green-switch",
 	Short: "Automatically switches the traffic of a blue-green deployment once the new application is ready.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, bluegreenSwitch)
+		err := checkLoginAndRun(cmd.Context(), args, bluegreenSwitch)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -61,7 +61,7 @@ func init() {
 	)
 }
 
-func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)

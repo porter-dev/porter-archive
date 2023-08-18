@@ -213,7 +213,7 @@ func (d *UpdateConfigDriver) getConfig(resource *models.Resource) (*preview.Upda
 	return config, nil
 }
 
-func (d *UpdateConfigDriver) assignOutput(resource *models.Resource, client *api.Client) error {
+func (d *UpdateConfigDriver) assignOutput(resource *models.Resource, client api.Client) error {
 	release, err := client.GetRelease(
 		context.Background(),
 		d.target.Project,

@@ -15,7 +15,7 @@ import (
 
 // CreateAgent handles the creation of a new application on Porter
 type CreateAgent struct {
-	Client     *api.Client
+	Client     api.Client
 	CreateOpts *CreateOpts
 }
 

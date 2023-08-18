@@ -23,7 +23,7 @@ var listCmd = &cobra.Command{
 	Short: "List applications, addons or jobs.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 || (args[0] == "all") {
-			err := checkLoginAndRun(args, listAll)
+			err := checkLoginAndRun(cmd.Context(), args, listAll)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -38,7 +38,7 @@ var listAppsCmd = &cobra.Command{
 	Aliases: []string{"applications", "app", "application"},
 	Short:   "Lists applications in a specific namespace, or across all namespaces",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listApps)
+		err := checkLoginAndRun(cmd.Context(), args, listApps)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -50,7 +50,7 @@ var listJobsCmd = &cobra.Command{
 	Aliases: []string{"job"},
 	Short:   "Lists jobs in a specific namespace, or across all namespaces",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listJobs)
+		err := checkLoginAndRun(cmd.Context(), args, listJobs)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -62,7 +62,7 @@ var listAddonsCmd = &cobra.Command{
 	Aliases: []string{"addon"},
 	Short:   "Lists addons in a specific namespace, or across all namespaces",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listAddons)
+		err := checkLoginAndRun(cmd.Context(), args, listAddons)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -91,7 +91,7 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 }
 
-func listAll(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listAll(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -115,7 +115,7 @@ func listAll(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []s
 	return nil
 }
 
-func listApps(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listApps(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -139,7 +139,7 @@ func listApps(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []
 	return nil
 }
 
-func listJobs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listJobs(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -163,7 +163,7 @@ func listJobs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []
 	return nil
 }
 
-func listAddons(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listAddons(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	err := writeReleases(client, "addon")
 	if err != nil {
 		return err
@@ -172,7 +172,7 @@ func listAddons(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	return nil
 }
 
-func writeReleases(client *api.Client, kind string) error {
+func writeReleases(client api.Client, kind string) error {
 	var namespaces []string
 	var releases []*release.Release
 

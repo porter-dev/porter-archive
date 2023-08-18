@@ -17,7 +17,7 @@ type WaitOpts struct {
 }
 
 // WaitForJob waits for a job with a given name/namespace to complete its run
-func WaitForJob(client *api.Client, opts *WaitOpts) error {
+func WaitForJob(client api.Client, opts *WaitOpts) error {
 	// get the job release
 	jobRelease, err := client.GetRelease(context.Background(), opts.ProjectID, opts.ClusterID, opts.Namespace, opts.Name)
 	if err != nil {

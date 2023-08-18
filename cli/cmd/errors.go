@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -18,10 +19,20 @@ var (
 	ErrCannotConnect error = errors.New("Unable to connect to the Porter server.")
 )
 
-func checkLoginAndRun(args []string, runner func(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error) error {
-	client := config.GetAPIClient()
+func checkLoginAndRun(ctx context.Context, args []string, runner func(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error) error {
+	config, err := config.InitAndLoadConfig()
+	if err != nil {
+		return fmt.Errorf("error loading porter config: %w", err)
+	}
 
-	user, err := client.AuthCheck(context.Background())
+	client := api.NewClientWithConfig(ctx, api.NewClientInput{
+		BaseURL:        fmt.Sprintf("%s/api", config.Host),
+		BearerToken:    config.Token,
+		CookieFileName: "cookie.json",
+		CLIConfig:      config,
+	})
+
+	user, err := client.AuthCheck(ctx)
 	if err != nil {
 		red := color.New(color.FgRed)
 

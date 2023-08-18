@@ -4,13 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/fatih/color"
-	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/util/homedir"
@@ -19,7 +17,7 @@ import (
 var home = homedir.HomeDir()
 
 // config is a shared object used by all commands
-var config = &CLIConfig{}
+// var config = &CLIConfig{}
 
 // CLIConfig is the set of shared configuration options for the CLI commands.
 // This config is used by viper: calling Set() function for any parameter will
@@ -45,78 +43,28 @@ type CLIConfig struct {
 // 2. env
 // 3. config
 // 4. default
-//
-// It populates the shared config object above
-func InitAndLoadConfig() {
-	initAndLoadConfig(config)
+func InitAndLoadConfig() (CLIConfig, error) {
+	return initAndLoadConfig()
 }
 
-func InitAndLoadNewConfig() *CLIConfig {
-	newConfig := &CLIConfig{}
+func initAndLoadConfig() (CLIConfig, error) {
+	var config CLIConfig
 
-	initAndLoadConfig(newConfig)
-
-	return newConfig
-}
-
-func initAndLoadConfig(_config *CLIConfig) {
-	initFlagSet()
-
-	// check that the .porter folder exists; create if not
-	porterDir := filepath.Join(home, ".porter")
-
-	if _, err := os.Stat(porterDir); os.IsNotExist(err) {
-		os.Mkdir(porterDir, 0o700)
-	} else if err != nil {
-		color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+	porterDir, err := getOrCreatePorterDirectoryAndConfig()
+	if err != nil {
+		return config, fmt.Errorf("unable to get or create porter directory: %w", err)
 	}
-
 	viper.SetConfigName("porter")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(porterDir)
 
-	// Bind the flagset initialized above
-	viper.BindPFlags(utils.DriverFlagSet)
-	viper.BindPFlags(utils.DefaultFlagSet)
-	viper.BindPFlags(utils.RegistryFlagSet)
-	viper.BindPFlags(utils.HelmRepoFlagSet)
-
-	// Bind the environment variables with prefix "PORTER_"
-	viper.SetEnvPrefix("PORTER")
-	viper.BindEnv("host")
-	viper.BindEnv("project")
-	viper.BindEnv("cluster")
-	viper.BindEnv("token")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// create blank config file
-			err := ioutil.WriteFile(filepath.Join(home, ".porter", "porter.yaml"), []byte{}, 0o644)
-			if err != nil {
-				color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err)
-				os.Exit(1)
-			}
-		} else {
-			// Config file was found but another error was produced
-			color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(1)
-		}
-	}
-
-	// unmarshal the config into the shared config struct
-	viper.Unmarshal(_config)
-}
-
-// initFlagSet initializes the shared flags used by multiple commands
-func initFlagSet() {
 	utils.DriverFlagSet.StringVar(
 		&config.Driver,
 		"driver",
 		"local",
 		"driver to use (local or docker)",
 	)
+	viper.BindPFlags(utils.DriverFlagSet)
 
 	utils.DefaultFlagSet.StringVar(
 		&config.Host,
@@ -152,6 +100,7 @@ func initFlagSet() {
 		0,
 		"registry ID of connected Porter registry",
 	)
+	viper.BindPFlags(utils.RegistryFlagSet)
 
 	utils.HelmRepoFlagSet.UintVar(
 		&config.HelmRepo,
@@ -159,6 +108,60 @@ func initFlagSet() {
 		0,
 		"helm repo ID of connected Porter Helm repository",
 	)
+	viper.BindPFlags(utils.HelmRepoFlagSet)
+	viper.BindPFlags(utils.DefaultFlagSet)
+
+	viper.SetEnvPrefix("PORTER")
+	viper.BindEnv("host")
+	viper.BindEnv("project")
+	viper.BindEnv("cluster")
+	viper.BindEnv("token")
+
+	err = createAndLoadPorterYaml(porterDir)
+	if err != nil {
+		return config, fmt.Errorf("unable to load porter config: %w", err)
+	}
+
+	err = viper.Unmarshal(&config)
+	if err != nil {
+		return config, fmt.Errorf("unable to unmarshal porter config: %w", err)
+	}
+
+	return config, nil
+}
+
+// getOrCreatePorterDirectoryAndConfig checks that the .porter folder exists; create if not
+func getOrCreatePorterDirectoryAndConfig() (string, error) {
+	porterDir := filepath.Join(home, ".porter")
+
+	_, err := os.Stat(porterDir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return "", fmt.Errorf("error reading porter directory: %w", err)
+		}
+		err = os.Mkdir(porterDir, 0o700)
+		if err != nil {
+			return "", fmt.Errorf("error creating porter directory: %w", err)
+		}
+	}
+	return porterDir, nil
+}
+
+// createAndLoadPorterYaml loads a porter.yaml config into Viper if it exists, or creates the file if it does not
+func createAndLoadPorterYaml(porterDir string) error {
+	err := viper.ReadInConfig()
+	if err != nil {
+		_, ok := err.(viper.ConfigFileNotFoundError)
+		if !ok {
+			return fmt.Errorf("unknown error reading ~/.porter/porter.yaml config: %w", err)
+		}
+
+		err := os.WriteFile(filepath.Join(porterDir, "porter.yaml"), []byte{}, 0o644)
+		if err != nil {
+			return fmt.Errorf("unable to create ~/.porter/porter.yaml config: %w", err)
+		}
+	}
+	return nil
 }
 
 func GetCLIConfig() *CLIConfig {
@@ -169,15 +172,19 @@ func GetCLIConfig() *CLIConfig {
 	return config
 }
 
-func GetAPIClient() *api.Client {
-	config := GetCLIConfig()
+// func GetAPIClient() api.Client {
+// 	ctx := context.Background()
 
-	if token := config.Token; token != "" {
-		return api.NewClientWithToken(config.Host+"/api", token)
-	}
+// 	config := GetCLIConfig()
 
-	return api.NewClient(config.Host+"/api", "cookie.json")
-}
+// 	client := api.NewClientWithConfig(ctx, api.NewClientInput{
+// 		BaseURL:        fmt.Sprintf("%s/api", config.Host),
+// 		BearerToken:    config.Token,
+// 		CookieFileName: "cookie.json",
+// 	})
+
+// 	return client
+// }
 
 func (c *CLIConfig) SetDriver(driver string) error {
 	viper.Set("driver", driver)

@@ -71,7 +71,7 @@ specify it as follows:
 		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --method docker --dockerfile ./docker/prod.Dockerfile"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, updateFull)
+		err := checkLoginAndRun(cmd.Context(), args, updateFull)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -99,7 +99,7 @@ destination path for a .env file. For example:
 		color.New(color.FgGreen, color.Bold).Sprintf("porter update get-env --app example-app --file .env"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, updateGetEnv)
+		err := checkLoginAndRun(cmd.Context(), args, updateGetEnv)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -141,7 +141,7 @@ for the application:
 		color.New(color.FgGreen, color.Bold).Sprintf("porter update build --app example-app --method docker --dockerfile ./prod.Dockerfile"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, updateBuild)
+		err := checkLoginAndRun(cmd.Context(), args, updateBuild)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -181,7 +181,7 @@ linked it via "porter connect".
 		color.New(color.FgGreen, color.Bold).Sprintf("porter update push --app nginx --tag new-tag"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, updatePush)
+		err := checkLoginAndRun(cmd.Context(), args, updatePush)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -211,7 +211,7 @@ the image that the application uses if no --values file is specified:
 		color.New(color.FgGreen, color.Bold).Sprintf("porter update config --app example-app --tag custom-tag"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, updateUpgrade)
+		err := checkLoginAndRun(cmd.Context(), args, updateUpgrade)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -232,7 +232,7 @@ var updateSetEnvGroupCmd = &cobra.Command{
 	Short: "Sets the desired value of an environment variable in an env group in the form VAR=VALUE.",
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, updateSetEnvGroup)
+		err := checkLoginAndRun(cmd.Context(), args, updateSetEnvGroup)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -244,7 +244,7 @@ var updateUnsetEnvGroupCmd = &cobra.Command{
 	Short: "Removes an environment variable from an env group.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, updateUnsetEnvGroup)
+		err := checkLoginAndRun(cmd.Context(), args, updateUnsetEnvGroup)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -442,7 +442,7 @@ func init() {
 	updateCmd.AddCommand(updateEnvGroupCmd)
 }
 
-func updateFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func updateFull(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -512,7 +512,7 @@ func updateFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	return nil
 }
 
-func updateGetEnv(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func updateGetEnv(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	updateAgent, err := updateGetAgent(client)
 	if err != nil {
 		return err
@@ -536,7 +536,7 @@ func updateGetEnv(_ *types.GetAuthenticatedUserResponse, client *api.Client, arg
 	return updateAgent.WriteBuildEnv(getEnvFileDest)
 }
 
-func updateBuild(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func updateBuild(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -560,7 +560,7 @@ func updateBuild(_ *types.GetAuthenticatedUserResponse, client *api.Client, args
 	return updateBuildWithAgent(updateAgent)
 }
 
-func updatePush(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func updatePush(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	if app == "" {
 		if len(args) == 0 {
 			return fmt.Errorf("please provide the docker image name")
@@ -619,7 +619,7 @@ func updatePush(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	return updatePushWithAgent(updateAgent)
 }
 
-func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -659,7 +659,7 @@ func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client *api.Client, ar
 	return nil
 }
 
-func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	if len(normalEnvGroupVars) == 0 && len(secretEnvGroupVars) == 0 && len(args) == 0 {
 		return fmt.Errorf("please provide one or more variables to update")
 	}
@@ -767,7 +767,7 @@ func validateVarValue(in string) (string, string, error) {
 	return key, value, nil
 }
 
-func updateUnsetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func updateUnsetEnvGroup(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("required variable name")
 	}
@@ -819,7 +819,7 @@ func updateUnsetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Clie
 }
 
 // HELPER METHODS
-func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
+func updateGetAgent(client api.Client) (*deploy.DeployAgent, error) {
 	var buildMethod deploy.DeployBuildType
 
 	if method != "" {
@@ -1095,7 +1095,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 	return nil
 }
 
-func checkDeploymentStatus(client *api.Client) error {
+func checkDeploymentStatus(client api.Client) error {
 	color.New(color.FgBlue).Println("waiting for deployment to be ready, this may take a few minutes and will time out if it takes longer than 30 minutes")
 
 	sharedConf := &PorterRunSharedConfig{

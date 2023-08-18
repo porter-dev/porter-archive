@@ -1,6 +1,9 @@
 package helper
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/docker/docker-credential-helpers/credentials"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/config"
@@ -17,18 +20,22 @@ type PorterHelper struct {
 	Cache      docker.CredentialsCache
 }
 
-func NewPorterHelper(debug bool) *PorterHelper {
+func NewPorterHelper(debug bool) (*PorterHelper, error) {
+	ctx := context.Background()
+
 	// get the current project ID
-	cliConfig := config.InitAndLoadNewConfig()
+	cliConfig, err := config.InitAndLoadConfig()
+	if err != nil {
+		return nil, fmt.Errorf("error loading porter config: %w", err)
+	}
+
 	cache := docker.NewFileCredentialsCache()
 
-	var client *api.Client
-
-	if token := cliConfig.Token; token != "" {
-		client = api.NewClientWithToken(cliConfig.Host+"/api", token)
-	} else {
-		client = api.NewClient(cliConfig.Host+"/api", "cookie.json")
-	}
+	client := api.NewClientWithConfig(ctx, api.NewClientInput{
+		BaseURL:        fmt.Sprintf("%s/api", cliConfig.Host),
+		BearerToken:    cliConfig.Token,
+		CookieFileName: "cookie.json",
+	})
 
 	return &PorterHelper{
 		Debug:     debug,
@@ -39,7 +46,7 @@ func NewPorterHelper(debug bool) *PorterHelper {
 			ProjectID: cliConfig.Project,
 		},
 		Cache: cache,
-	}
+	}, nil
 }
 
 // Add appends credentials to the store.

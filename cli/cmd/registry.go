@@ -27,7 +27,7 @@ var registryListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists the registries linked to a project",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listRegistries)
+		err := checkLoginAndRun(cmd.Context(), args, listRegistries)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -39,7 +39,7 @@ var registryDeleteCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Deletes the registry with the given id",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteRegistry)
+		err := checkLoginAndRun(cmd.Context(), args, deleteRegistry)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -56,7 +56,7 @@ var registryReposListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists the repositories in an image registry",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listRepos)
+		err := checkLoginAndRun(cmd.Context(), args, listRepos)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -74,7 +74,7 @@ var registryImageListCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Lists the images the specified image repository",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listImages)
+		err := checkLoginAndRun(cmd.Context(), args, listImages)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -96,7 +96,7 @@ func init() {
 	registryImageCmd.AddCommand(registryImageListCmd)
 }
 
-func listRegistries(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listRegistries(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	pID := cliConf.Project
 
 	// get the list of namespaces
@@ -130,7 +130,7 @@ func listRegistries(user *types.GetAuthenticatedUserResponse, client *api.Client
 	return nil
 }
 
-func deleteRegistry(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteRegistry(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Are you sure you'd like to delete the registry with id %s? %s `,
@@ -160,7 +160,7 @@ func deleteRegistry(user *types.GetAuthenticatedUserResponse, client *api.Client
 	return nil
 }
 
-func listRepos(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listRepos(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	pID := cliConf.Project
 	rID := cliConf.Registry
 
@@ -190,7 +190,7 @@ func listRepos(user *types.GetAuthenticatedUserResponse, client *api.Client, arg
 	return nil
 }
 
-func listImages(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listImages(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	pID := cliConf.Project
 	rID := cliConf.Registry
 	repoName := args[0]

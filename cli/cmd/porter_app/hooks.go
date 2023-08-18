@@ -13,7 +13,7 @@ import (
 )
 
 type DeployAppHook struct {
-	Client               *api.Client
+	Client               api.Client
 	ApplicationName      string
 	ProjectID, ClusterID uint
 	BuildImageDriverName string

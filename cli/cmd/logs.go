@@ -17,7 +17,7 @@ var logsCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Logs the output from a given application.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, logs)
+		err := checkLoginAndRun(cmd.Context(), args, logs)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -45,7 +45,7 @@ func init() {
 	)
 }
 
-func logs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func logs(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	podsSimple, err := getPods(client, namespace, args[0])
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())

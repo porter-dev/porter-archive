@@ -55,7 +55,7 @@ var appRunCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(2),
 	Short: "Runs a command inside a connected cluster container.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, appRun)
+		err := checkLoginAndRun(cmd.Context(), args, appRun)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -68,7 +68,7 @@ var appRunCleanupCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Short: "Delete any lingering ephemeral pods that were created with \"porter app run\".",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, appCleanup)
+		err := checkLoginAndRun(cmd.Context(), args, appCleanup)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -81,7 +81,7 @@ var appUpdateTagCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Short: "Updates the image tag for an application.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, appUpdateTag)
+		err := checkLoginAndRun(cmd.Context(), args, appUpdateTag)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -150,7 +150,7 @@ func init() {
 	appCmd.AddCommand(appUpdateTagCmd)
 }
 
-func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func appRun(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	execArgs := args[1:]
 
 	color.New(color.FgGreen).Println("Attempting to run", strings.Join(execArgs, " "), "for application", args[0])
@@ -264,7 +264,7 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 	return appExecuteRunEphemeral(config, appNamespace, selectedPod.Name, selectedContainerName, execArgs)
 }
 
-func appCleanup(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+func appCleanup(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) error {
 	config := &AppPorterRunSharedConfig{
 		Client: client,
 	}
@@ -353,7 +353,7 @@ func appGetEphemeralPods(namespace string, clientset *kubernetes.Clientset) ([]s
 }
 
 type AppPorterRunSharedConfig struct {
-	Client     *api.Client
+	Client     api.Client
 	RestConf   *rest.Config
 	Clientset  *kubernetes.Clientset
 	RestClient *rest.RESTClient
@@ -411,7 +411,7 @@ type appPodSimple struct {
 	ContainerNames []string
 }
 
-func appGetPods(client *api.Client, namespace, releaseName string) ([]appPodSimple, error) {
+func appGetPods(client api.Client, namespace, releaseName string) ([]appPodSimple, error) {
 	pID := cliConf.Project
 	cID := cliConf.Cluster
 
@@ -1038,7 +1038,7 @@ func appCreateEphemeralPodFromExisting(
 	)
 }
 
-func appUpdateTag(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func appUpdateTag(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	namespace := fmt.Sprintf("porter-stack-%s", args[0])
 	if appTag == "" {
 		appTag = "latest"

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/docker/docker-credential-helpers/credentials"
+	"github.com/fatih/color"
 	"github.com/porter-dev/porter/cmd/docker-credential-porter/helper"
 )
 
@@ -23,7 +24,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	helper := helper.NewPorterHelper(Version == "dev")
+	helper, err := helper.NewPorterHelper(Version == "dev")
+	if err != nil {
+		color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
 
 	credentials.Serve(helper)
 }

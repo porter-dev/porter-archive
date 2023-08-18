@@ -13,7 +13,7 @@ import (
 
 // DOCR creates a DOCR integration
 func DOCR(
-	client *api.Client,
+	client api.Client,
 	projectID uint,
 ) (uint, error) {
 	// if project ID is 0, ask the user to set the project ID or create a project
@@ -76,7 +76,7 @@ Registry URL: `))
 	return reg.ID, nil
 }
 
-func triggerDigitalOceanOAuth(client *api.Client, projectID uint) (*types.OAuthIntegration, error) {
+func triggerDigitalOceanOAuth(client api.Client, projectID uint) (*types.OAuthIntegration, error) {
 	var doAuth *types.OAuthIntegration
 
 	oauthURL := fmt.Sprintf("%s/projects/%d/oauth/digitalocean", client.BaseURL, projectID)

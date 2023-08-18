@@ -27,7 +27,7 @@ var clusterListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists the linked clusters in the current project",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listClusters)
+		err := checkLoginAndRun(cmd.Context(), args, listClusters)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -39,7 +39,7 @@ var clusterDeleteCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Deletes the cluster with the given id",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteCluster)
+		err := checkLoginAndRun(cmd.Context(), args, deleteCluster)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -56,7 +56,7 @@ var clusterNamespaceListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists the namespaces in a cluster",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listNamespaces)
+		err := checkLoginAndRun(cmd.Context(), args, listNamespaces)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -73,7 +73,7 @@ func init() {
 	clusterNamespaceCmd.AddCommand(clusterNamespaceListCmd)
 }
 
-func listClusters(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listClusters(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	resp, err := client.ListProjectClusters(context.Background(), cliConf.Project)
 	if err != nil {
 		return err
@@ -101,7 +101,7 @@ func listClusters(user *types.GetAuthenticatedUserResponse, client *api.Client, 
 	return nil
 }
 
-func deleteCluster(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteCluster(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Are you sure you'd like to delete the cluster with id %s? %s `,
@@ -131,7 +131,7 @@ func deleteCluster(user *types.GetAuthenticatedUserResponse, client *api.Client,
 	return nil
 }
 
-func listNamespaces(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listNamespaces(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	pID := cliConf.Project
 
 	// get the service account based on the cluster id

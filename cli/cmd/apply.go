@@ -72,7 +72,7 @@ applying a configuration:
 		color.New(color.FgGreen, color.Bold).Sprintf("porter apply -f porter.yaml"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, apply)
+		err := checkLoginAndRun(cmd.Context(), args, apply)
 		if err != nil {
 			if strings.Contains(err.Error(), "Forbidden") {
 				color.New(color.FgRed).Fprintf(os.Stderr, "You may have to update your GitHub secret token")
@@ -111,7 +111,7 @@ func init() {
 	applyCmd.MarkFlagRequired("file")
 }
 
-func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) (err error) {
+func apply(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) (err error) {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -429,7 +429,7 @@ func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboard
 }
 
 // Simple apply for addons
-func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
+func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
 	addonConfig, err := d.getAddonConfig(resource)
 	if err != nil {
 		return nil, fmt.Errorf("error getting addon config for resource %s: %w", resource.Name, err)
@@ -483,7 +483,7 @@ func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client *
 	return resource, nil
 }
 
-func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboardModels.Resource, client *api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
+func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboardModels.Resource, client api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
 	if resource == nil {
 		return nil, fmt.Errorf("nil resource")
 	}
@@ -659,7 +659,7 @@ func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboa
 	return resource, err
 }
 
-func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*switchboardModels.Resource, error) {
+func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, client api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*switchboardModels.Resource, error) {
 	// create new release
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", d.source.Name, resource.Name)
 
@@ -731,7 +731,7 @@ func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, c
 	return resource, handleSubdomainCreate(subdomain, err)
 }
 
-func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*switchboardModels.Resource, error) {
+func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, client api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*switchboardModels.Resource, error) {
 	color.New(color.FgGreen).Println("Updating existing release:", resource.Name)
 
 	if len(appConf.Build.Env) > 0 {
@@ -810,7 +810,7 @@ func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, c
 	return resource, nil
 }
 
-func (d *DeployDriver) assignOutput(resource *switchboardModels.Resource, client *api.Client) error {
+func (d *DeployDriver) assignOutput(resource *switchboardModels.Resource, client api.Client) error {
 	release, err := client.GetRelease(
 		context.Background(),
 		d.target.Project,
@@ -866,13 +866,13 @@ func (d *DeployDriver) getAddonConfig(resource *switchboardModels.Resource) (map
 }
 
 type DeploymentHook struct {
-	client                                                                    *api.Client
+	client                                                                    api.Client
 	resourceGroup                                                             *switchboardTypes.ResourceGroup
 	gitInstallationID, projectID, clusterID, prID, actionID, envID            uint
 	branchFrom, branchInto, namespace, repoName, repoOwner, prName, commitSHA string
 }
 
-func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
+func NewDeploymentHook(client api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
 	res := &DeploymentHook{
 		client:        client,
 		resourceGroup: resourceGroup,
@@ -1286,11 +1286,11 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 }
 
 type CloneEnvGroupHook struct {
-	client   *api.Client
+	client   api.Client
 	resGroup *switchboardTypes.ResourceGroup
 }
 
-func NewCloneEnvGroupHook(client *api.Client, resourceGroup *switchboardTypes.ResourceGroup) *CloneEnvGroupHook {
+func NewCloneEnvGroupHook(client api.Client, resourceGroup *switchboardTypes.ResourceGroup) *CloneEnvGroupHook {
 	return &CloneEnvGroupHook{
 		client:   client,
 		resGroup: resourceGroup,
@@ -1410,7 +1410,7 @@ func isSystemNamespace(namespace string) bool {
 
 type ErrorEmitterHook struct{}
 
-func NewErrorEmitterHook(*api.Client, *switchboardTypes.ResourceGroup) *ErrorEmitterHook {
+func NewErrorEmitterHook(api.Client, *switchboardTypes.ResourceGroup) *ErrorEmitterHook {
 	return &ErrorEmitterHook{}
 }
 

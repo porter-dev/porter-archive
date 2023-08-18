@@ -21,7 +21,7 @@ import (
 
 // ECR creates an ECR integration
 func ECR(
-	client *api.Client,
+	client api.Client,
 	projectID uint,
 ) (uint, error) {
 	// if project ID is 0, ask the user to set the project ID or create a project
@@ -79,7 +79,7 @@ Would you like to proceed? %s `,
 }
 
 func ecrManual(
-	client *api.Client,
+	client api.Client,
 	projectID uint,
 	region string,
 ) (uint, error) {
@@ -119,7 +119,7 @@ func ecrManual(
 	return linkRegistry(client, projectID, integration.ID)
 }
 
-func linkRegistry(client *api.Client, projectID uint, intID uint) (uint, error) {
+func linkRegistry(client api.Client, projectID uint, intID uint) (uint, error) {
 	// create the registry
 	// query for registry name
 	regName, err := utils.PromptPlaintext(fmt.Sprintf(`Give this registry a name: `))

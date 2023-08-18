@@ -37,7 +37,7 @@ var stackEnvGroupAddCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Add an env group to a stack",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, stackAddEnvGroup)
+		err := checkLoginAndRun(cmd.Context(), args, stackAddEnvGroup)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -49,7 +49,7 @@ var stackEnvGroupRemoveCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Remove an existing env group from a stack",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, stackRemoveEnvGroup)
+		err := checkLoginAndRun(cmd.Context(), args, stackRemoveEnvGroup)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -102,7 +102,7 @@ func init() {
 	stackEnvGroupCmd.AddCommand(stackEnvGroupRemoveCmd)
 }
 
-func stackAddEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func stackAddEnvGroup(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -187,7 +187,7 @@ func stackAddEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 	return nil
 }
 
-func stackRemoveEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func stackRemoveEnvGroup(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)

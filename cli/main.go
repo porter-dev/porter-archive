@@ -33,5 +33,9 @@ func main() {
 		defer sentry.Flush(2 * time.Second)
 	}
 
-	cmd.Execute()
+	err := cmd.Execute()
+	if err != nil {
+		color.New(color.FgRed).Fprintf(os.Stderr, "error executing command: %s\n", err)
+		os.Exit(1)
+	}
 }

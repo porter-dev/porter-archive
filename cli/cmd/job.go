@@ -43,7 +43,7 @@ use the --namespace flag:
 		color.New(color.FgGreen, color.Bold).Sprintf("porter job update-images --namespace custom-namespace --image-repo-uri my-image.registry.io --tag newtag"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, batchImageUpdate)
+		err := checkLoginAndRun(cmd.Context(), args, batchImageUpdate)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -73,7 +73,7 @@ use the --namespace flag:
 		color.New(color.FgGreen, color.Bold).Sprintf("porter job wait --name job-example --namespace custom-namespace"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, waitForJob)
+		err := checkLoginAndRun(cmd.Context(), args, waitForJob)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -103,7 +103,7 @@ use the --namespace flag:
 		color.New(color.FgGreen, color.Bold).Sprintf("porter job run --name job-example --namespace custom-namespace"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, runJob)
+		err := checkLoginAndRun(cmd.Context(), args, runJob)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -176,7 +176,7 @@ func init() {
 	runJobCmd.MarkPersistentFlagRequired("name")
 }
 
-func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -207,7 +207,7 @@ func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 }
 
 // waits for a job with a given name/namespace
-func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func waitForJob(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -231,7 +231,7 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	})
 }
 
-func runJob(authRes *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func runJob(authRes *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)

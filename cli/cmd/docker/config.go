@@ -28,7 +28,7 @@ func NewAgentFromEnv() (*Agent, error) {
 	}, nil
 }
 
-func NewAgentWithAuthGetter(client *api.Client, projID uint) (*Agent, error) {
+func NewAgentWithAuthGetter(client api.Client, projID uint) (*Agent, error) {
 	agent, err := NewAgentFromEnv()
 	if err != nil {
 		return nil, err

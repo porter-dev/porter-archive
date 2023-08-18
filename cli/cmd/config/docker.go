@@ -19,7 +19,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/github"
 )
 
-func SetDockerConfig(client *api.Client) error {
+func SetDockerConfig(client api.Client) error {
 	pID := GetCLIConfig().Project
 
 	// get all registries that should be added

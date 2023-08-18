@@ -48,7 +48,7 @@ var runCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(2),
 	Short: "Runs a command inside a connected cluster container.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, run)
+		err := checkLoginAndRun(cmd.Context(), args, run)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -61,7 +61,7 @@ var cleanupCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Short: "Delete any lingering ephemeral pods that were created with \"porter run\".",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, cleanup)
+		err := checkLoginAndRun(cmd.Context(), args, cleanup)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -128,7 +128,7 @@ func init() {
 	runCmd.AddCommand(cleanupCmd)
 }
 
-func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func run(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	execArgs := args[1:]
 
 	color.New(color.FgGreen).Println("Running", strings.Join(execArgs, " "), "for release", args[0])
@@ -243,7 +243,7 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 	return executeRunEphemeral(config, namespace, selectedPod.Name, selectedContainerName, execArgs)
 }
 
-func cleanup(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+func cleanup(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) error {
 	config := &PorterRunSharedConfig{
 		Client: client,
 	}
@@ -332,7 +332,7 @@ func getEphemeralPods(namespace string, clientset *kubernetes.Clientset) ([]stri
 }
 
 type PorterRunSharedConfig struct {
-	Client     *api.Client
+	Client     api.Client
 	RestConf   *rest.Config
 	Clientset  *kubernetes.Clientset
 	RestClient *rest.RESTClient
@@ -390,7 +390,7 @@ type podSimple struct {
 	ContainerNames []string
 }
 
-func getPods(client *api.Client, namespace, releaseName string) ([]podSimple, error) {
+func getPods(client api.Client, namespace, releaseName string) ([]podSimple, error) {
 	pID := cliConf.Project
 	cID := cliConf.Cluster
 

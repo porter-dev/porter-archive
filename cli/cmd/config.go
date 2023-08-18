@@ -38,7 +38,7 @@ var configSetProjectCmd = &cobra.Command{
 	Short: "Saves the project id in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			err := checkLoginAndRun(args, listAndSetProject)
+			err := checkLoginAndRun(cmd.Context(), args, listAndSetProject)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -65,7 +65,7 @@ var configSetClusterCmd = &cobra.Command{
 	Short: "Saves the cluster id in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			err := checkLoginAndRun(args, listAndSetCluster)
+			err := checkLoginAndRun(cmd.Context(), args, listAndSetCluster)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -92,7 +92,7 @@ var configSetRegistryCmd = &cobra.Command{
 	Short: "Saves the registry id in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			err := checkLoginAndRun(args, listAndSetRegistry)
+			err := checkLoginAndRun(cmd.Context(), args, listAndSetRegistry)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -181,7 +181,7 @@ func printConfig() error {
 	return nil
 }
 
-func listAndSetProject(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listAndSetProject(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Color("cyan")
 	s.Suffix = " Loading list of projects"
@@ -222,7 +222,7 @@ func listAndSetProject(_ *types.GetAuthenticatedUserResponse, client *api.Client
 	return nil
 }
 
-func listAndSetCluster(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listAndSetCluster(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Color("cyan")
 	s.Suffix = " Loading list of clusters"
@@ -262,7 +262,7 @@ func listAndSetCluster(_ *types.GetAuthenticatedUserResponse, client *api.Client
 	return nil
 }
 
-func listAndSetRegistry(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listAndSetRegistry(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Color("cyan")
 	s.Suffix = " Loading list of registries"

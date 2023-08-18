@@ -44,7 +44,7 @@ type CredentialsCache interface {
 
 // AuthGetter retrieves
 type AuthGetter struct {
-	Client    *api.Client
+	Client    api.Client
 	Cache     CredentialsCache
 	ProjectID uint
 }

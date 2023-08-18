@@ -48,7 +48,7 @@ var logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "Logs a user out of a given Porter server",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, logout)
+		err := checkLoginAndRun(cmd.Context(), args, logout)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -73,7 +73,12 @@ func init() {
 }
 
 func login() error {
-	client := api.NewClientWithToken(cliConf.Host+"/api", cliConf.Token)
+	ctx := context.Background()
+
+	client := api.NewClientWithConfig(ctx, api.NewClientInput{
+		BaseURL:     fmt.Sprintf("%s/api", cliConf.Host),
+		BearerToken: cliConf.Token,
+	})
 
 	user, err := client.AuthCheck(context.Background())
 
@@ -136,7 +141,10 @@ func login() error {
 		return err
 	}
 
-	client = api.NewClientWithToken(cliConf.Host+"/api", token)
+	client = api.NewClientWithConfig(ctx, api.NewClientInput{
+		BaseURL:     fmt.Sprintf("%s/api", cliConf.Host),
+		BearerToken: token,
+	})
 
 	user, err = client.AuthCheck(context.Background())
 
@@ -150,7 +158,7 @@ func login() error {
 	return setProjectForUser(client, user.ID)
 }
 
-func setProjectForUser(client *api.Client, userID uint) error {
+func setProjectForUser(client api.Client, userID uint) error {
 	// get a list of projects, and set the current project
 	resp, err := client.ListUserProjects(context.Background())
 	if err != nil {
@@ -253,7 +261,7 @@ func register() error {
 	return nil
 }
 
-func logout(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func logout(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	err := client.Logout(context.Background())
 	if err != nil {
 		return err

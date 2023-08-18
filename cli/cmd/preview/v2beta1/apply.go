@@ -18,7 +18,7 @@ import (
 // )
 
 type PreviewApplier struct {
-	apiClient *api.Client
+	apiClient api.Client
 	rawBytes  []byte
 	namespace string
 	parsed    *PorterYAML
@@ -28,7 +28,7 @@ type PreviewApplier struct {
 	// envGroups    map[string]*apiTypes.EnvGroup
 }
 
-func NewApplier(client *api.Client, raw []byte, namespace string) (*PreviewApplier, error) {
+func NewApplier(client api.Client, raw []byte, namespace string) (*PreviewApplier, error) {
 	// replace all instances of ${{ porter.env.FOO }} with { .get-env.FOO }
 	re := regexp.MustCompile(`\$\{\{\s*porter\.env\.(.*)\s*\}\}`)
 	raw = re.ReplaceAll(raw, []byte("{.get-env.$1}"))

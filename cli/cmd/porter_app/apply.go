@@ -18,13 +18,13 @@ import (
 )
 
 type StackConf struct {
-	apiClient            *api.Client
+	apiClient            api.Client
 	parsed               *Application
 	stackName, namespace string
 	projectID, clusterID uint
 }
 
-func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worker, app *Application, applicationName string, cliConf *config.CLIConfig) ([]*switchboardTypes.Resource, error) {
+func CreateApplicationDeploy(client api.Client, worker *switchboardWorker.Worker, app *Application, applicationName string, cliConf *config.CLIConfig) ([]*switchboardTypes.Resource, error) {
 	// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
 	var builder string
 	resources, builder, err := createV1BuildResources(client, app, applicationName, cliConf.Project, cliConf.Cluster)
@@ -52,7 +52,7 @@ func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worke
 }
 
 // Create app event to signfy start of build
-func createAppEvent(client *api.Client, applicationName string, projectId, clusterId uint) (string, error) {
+func createAppEvent(client api.Client, applicationName string, projectId, clusterId uint) (string, error) {
 	var req *types.CreateOrUpdatePorterAppEventRequest
 	if os.Getenv("GITHUB_RUN_ID") != "" {
 		req = &types.CreateOrUpdatePorterAppEventRequest{
@@ -106,7 +106,7 @@ func createAppEvent(client *api.Client, applicationName string, projectId, clust
 	return event.ID, nil
 }
 
-func createV1BuildResources(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) ([]*switchboardTypes.Resource, string, error) {
+func createV1BuildResources(client api.Client, app *Application, stackName string, projectID uint, clusterID uint) ([]*switchboardTypes.Resource, string, error) {
 	var builder string
 	resources := make([]*switchboardTypes.Resource, 0)
 
@@ -165,7 +165,7 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 	return resources, builder, nil
 }
 
-func createStackConf(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
+func createStackConf(client api.Client, app *Application, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
 	err := config.ValidateCLIEnvironment()
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
@@ -260,7 +260,7 @@ func convertToBuild(porterApp *types.PorterApp) Build {
 	}
 }
 
-func getEnvGroupFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) map[string]string {
+func getEnvGroupFromRelease(client api.Client, stackName string, projectID uint, clusterID uint) map[string]string {
 	var envGroups []string
 	envVarsGroupStringMap := make(map[string]string)
 
@@ -326,7 +326,7 @@ func getEnvGroupFromRelease(client *api.Client, stackName string, projectID uint
 	return envVarsGroupStringMap
 }
 
-func getEnvFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) map[string]string {
+func getEnvFromRelease(client api.Client, stackName string, projectID uint, clusterID uint) map[string]string {
 	var envVarsStringMap map[string]string
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 	release, err := client.GetRelease(

@@ -22,7 +22,7 @@ import (
 // Kubeconfig creates a service account for a project by parsing the local
 // kubeconfig and resolving actions that must be performed.
 func Kubeconfig(
-	client *api.Client,
+	client api.Client,
 	kubeconfigPath string,
 	contexts []string,
 	projectID uint,

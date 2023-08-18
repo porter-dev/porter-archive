@@ -70,7 +70,7 @@ To deploy an application from a Docker registry, use "--source registry" and pas
 		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source registry --image gcr.io/snowflake-12345/example-app:latest"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, createFull)
+		err := checkLoginAndRun(cmd.Context(), args, createFull)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -183,7 +183,7 @@ func init() {
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
 
-func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func createFull(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)

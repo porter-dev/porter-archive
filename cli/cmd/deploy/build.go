@@ -16,7 +16,7 @@ import (
 type BuildAgent struct {
 	*SharedOpts
 
-	APIClient   *api.Client
+	APIClient   api.Client
 	ImageRepo   string
 	Env         map[string]string
 	ImageExists bool

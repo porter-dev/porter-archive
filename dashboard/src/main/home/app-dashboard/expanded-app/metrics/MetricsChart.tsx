@@ -91,7 +91,7 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
 
             let kind = selectedController?.kind
             if (selectedMetric == "nginx:status") {
-                kind = "Ingress"
+                kind = "Ingress";
             }
 
             const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
@@ -99,7 +99,7 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
 
             setIsLoading((prev) => prev + 1);
             setAggregatedData({});
-            setIsAggregated(shouldsum)
+            setIsAggregated(shouldsum);
             setShowHpaToggle(isHpaEnabled);
             setHpaEnabled(isHpaEnabled);
 
@@ -145,13 +145,13 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                         cluster_id: currentCluster.id,
                     }
                 );
-                requests.push(metricsRequest)
+                requests.push(metricsRequest);
             }
 
             if (shouldsum && isHpaEnabled && ["cpu", "memory"].includes(selectedMetric)) {
-                let hpaMetricType = "cpu_hpa_threshold"
+                let hpaMetricType = "cpu_hpa_threshold";
                 if (selectedMetric === "memory") {
-                    hpaMetricType = "memory_hpa_threshold"
+                    hpaMetricType = "memory_hpa_threshold";
                 }
                 const hpaMetricsRequest = api.getMetrics(
                     "<token>",
@@ -170,8 +170,8 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                         id: currentProject.id,
                         cluster_id: currentCluster.id,
                     }
-                )
-                requests.push(hpaMetricsRequest)
+                );
+                requests.push(hpaMetricsRequest);
             }
 
             axios

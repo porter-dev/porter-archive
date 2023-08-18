@@ -65,10 +65,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     { value: "network", label: "Network Received Bytes (Ki)" },
   ]);
   const [isLoading, setIsLoading] = useState(0);
-  const [hpaData, setHpaData] = useState([]);
-  const [hpaEnabled, setHpaEnabled] = useState(
-    currentChart?.config?.autoscaling?.enabled
-  );
+  const [hpaData, setHpaData] = useState<NormalizedMetricsData[]>([]);
+  const [hpaEnabled, setHpaEnabled] = useState(false);
+  const [showHpaToggle, setShowHpaToggle] = useState(false);
 
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
@@ -76,7 +75,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
   // Add or remove hpa replicas chart option when current chart is updated
   useEffect(() => {
-    if (currentChart?.config?.autoscaling?.enabled) {
+    const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"];
+    const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled;
+    if (isHpaEnabled) {
       setMetricsOptions((prev) => {
         if (prev.find((option) => option.value === "hpa_replicas")) {
           return [...prev];
@@ -98,7 +99,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         return [...options];
       });
     }
-  }, [currentChart]);
+  }, [selectedController, currentChart]);
 
   useEffect(() => {
     if (currentChart?.chart?.metadata?.name == "ingress-nginx") {
@@ -337,6 +338,32 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       }
       setAggregatedData(allPodsAggregatedData);
 
+
+      setHpaData([]);
+      const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"];
+      const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled;
+      setShowHpaToggle(isHpaEnabled);
+      setHpaEnabled(isHpaEnabled);
+      if (shouldsum && isHpaEnabled) {
+        if (selectedMetric === "cpu") {
+          await getAutoscalingThreshold(
+            "cpu_hpa_threshold",
+            shouldsum,
+            namespace,
+            start,
+            end
+          );
+        } else if (selectedMetric === "memory") {
+          await getAutoscalingThreshold(
+            "memory_hpa_threshold",
+            shouldsum,
+            namespace,
+            start,
+            end
+          );
+        }
+      }
+
       if (!shouldsum) {
         const res = await api.getMetrics(
           "<token>",
@@ -356,28 +383,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
             cluster_id: currentCluster.id,
           }
         );
-
-        setHpaData([]);
-        const isHpaEnabled = currentChart?.config?.autoscaling?.enabled;
-        if (shouldsum && isHpaEnabled) {
-          if (selectedMetric === "cpu") {
-            await getAutoscalingThreshold(
-              "cpu_hpa_threshold",
-              shouldsum,
-              namespace,
-              start,
-              end
-            );
-          } else if (selectedMetric === "memory") {
-            await getAutoscalingThreshold(
-              "memory_hpa_threshold",
-              shouldsum,
-              namespace,
-              start,
-              end
-            );
-          }
-        }
 
         const metrics = new MetricNormalizer(
           res.data,
@@ -535,7 +540,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       )}
       {data.length > 0 && isLoading === 0 && (
         <>
-          {currentChart?.config?.autoscaling?.enabled &&
+          {showHpaToggle &&
             ["cpu", "memory"].includes(selectedMetric) && (
               <CheckboxRow
                 toggle={() => setHpaEnabled((prev: any) => !prev)}

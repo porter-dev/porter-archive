@@ -703,6 +703,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               setEnvVars(envVars);
               //onAppUpdate(services, envVars.filter((e) => e.key !== "" || e.value !== ""));
             }}
+            setShowUnsavedChangesBanner={setShowUnsavedChangesBanner}
             syncedEnvGroups={syncedEnvGroups}
             status={buttonStatus}
             updatePorterApp={updatePorterApp}

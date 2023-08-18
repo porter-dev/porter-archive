@@ -10,7 +10,7 @@ import { ChartTypeWithExtendedConfig, StorageType } from "shared/types";
 import TabSelector from "components/TabSelector";
 import Loading from "components/Loading";
 import SelectRow from "components/form-components/SelectRow";
-import AreaChart from "../../cluster-dashboard/expanded-chart/metrics/AreaChart";
+import AreaChart from "./metrics/AreaChart";
 import { MetricNormalizer } from "../../cluster-dashboard/expanded-chart/metrics/MetricNormalizer";
 import {
   AvailableMetrics,
@@ -54,6 +54,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   );
   const [dropdownExpanded, setDropdownExpanded] = useState(false);
   const [data, setData] = useState<NormalizedMetricsData[]>([]);
+  const [isAggregated, setIsAggregated] = useState<boolean>(false);
   const [aggregatedData, setAggregatedData] = useState<
     Record<string, NormalizedMetricsData[]>
   >({});
@@ -64,10 +65,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     { value: "network", label: "Network Received Bytes (Ki)" },
   ]);
   const [isLoading, setIsLoading] = useState(0);
-  const [hpaData, setHpaData] = useState([]);
-  const [hpaEnabled, setHpaEnabled] = useState(
-    currentChart?.config?.autoscaling?.enabled
-  );
+  const [hpaData, setHpaData] = useState<NormalizedMetricsData[]>([]);
+  const [hpaEnabled, setHpaEnabled] = useState(false);
+  const [showHpaToggle, setShowHpaToggle] = useState(false);
 
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
@@ -75,7 +75,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
   // Add or remove hpa replicas chart option when current chart is updated
   useEffect(() => {
-    if (currentChart?.config?.autoscaling?.enabled) {
+    const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"];
+    const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled;
+    if (isHpaEnabled) {
       setMetricsOptions((prev) => {
         if (prev.find((option) => option.value === "hpa_replicas")) {
           return [...prev];
@@ -97,7 +99,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         return [...options];
       });
     }
-  }, [currentChart]);
+  }, [selectedController, currentChart]);
 
   useEffect(() => {
     if (currentChart?.chart?.metadata?.name == "ingress-nginx") {
@@ -300,6 +302,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       setIsLoading((prev) => prev + 1);
       setData([]);
       setAggregatedData({});
+      setIsAggregated(shouldsum)
 
       // Get aggregated metrics
       const allPodsRes = await api.getMetrics(
@@ -325,32 +328,22 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       const allPodsMetrics = allPodsData.flatMap((d) => d.results);
       const allPodsMetricsNormalized = new MetricNormalizer(
         [{ results: allPodsMetrics }],
-        selectedMetric as AvailableMetrics
+        selectedMetric as AvailableMetrics,
       );
-      setAggregatedData(allPodsMetricsNormalized.getAggregatedData());
-      //
+      const allPodsAggregatedData = allPodsMetricsNormalized.getAggregatedData()
+      let data: NormalizedMetricsData[] = []
+      if (shouldsum) {
+        setData(allPodsAggregatedData["avg"])
+        delete allPodsAggregatedData["avg"]
+      }
+      setAggregatedData(allPodsAggregatedData);
 
-      const res = await api.getMetrics(
-        "<token>",
-        {
-          metric: selectedMetric,
-          shouldsum: shouldsum,
-          kind: selectedController?.kind,
-          name: selectedController?.metadata.name,
-          namespace: namespace,
-          startrange: start,
-          endrange: end,
-          resolution: resolutions[selectedRange],
-          pods: podNames,
-        },
-        {
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
 
       setHpaData([]);
-      const isHpaEnabled = currentChart?.config?.autoscaling?.enabled;
+      const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"];
+      const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled;
+      setShowHpaToggle(isHpaEnabled);
+      setHpaEnabled(isHpaEnabled);
       if (shouldsum && isHpaEnabled) {
         if (selectedMetric === "cpu") {
           await getAutoscalingThreshold(
@@ -371,13 +364,33 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         }
       }
 
-      const metrics = new MetricNormalizer(
-        res.data,
-        selectedMetric as AvailableMetrics
-      );
+      if (!shouldsum) {
+        const res = await api.getMetrics(
+          "<token>",
+          {
+            metric: selectedMetric,
+            shouldsum: shouldsum,
+            kind: selectedController?.kind,
+            name: selectedController?.metadata.name,
+            namespace: namespace,
+            startrange: start,
+            endrange: end,
+            resolution: resolutions[selectedRange],
+            pods: podNames,
+          },
+          {
+            id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        );
 
-      // transform the metrics to expected form
-      setData(metrics.getParsedData());
+        const metrics = new MetricNormalizer(
+          res.data,
+          selectedMetric as AvailableMetrics
+        );
+        // transform the metrics to expected form
+        setData(metrics.getParsedData());
+      }
     } catch (error) {
       setCurrentError(JSON.stringify(error));
     } finally {
@@ -527,7 +540,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       )}
       {data.length > 0 && isLoading === 0 && (
         <>
-          {currentChart?.config?.autoscaling?.enabled &&
+          {showHpaToggle &&
             ["cpu", "memory"].includes(selectedMetric) && (
               <CheckboxRow
                 toggle={() => setHpaEnabled((prev: any) => !prev)}
@@ -540,6 +553,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               <AreaChart
                 dataKey={selectedMetricLabel}
                 aggregatedData={aggregatedData}
+                isAggregated={isAggregated}
                 data={data}
                 hpaData={hpaData}
                 hpaEnabled={
@@ -553,7 +567,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
             )}
           </ParentSize>
           <RowWrapper>
-            <AggregatedDataLegend data={data} />
+            <AggregatedDataLegend data={data} hideAvg={isAggregated} />
           </RowWrapper>
         </>
       )}

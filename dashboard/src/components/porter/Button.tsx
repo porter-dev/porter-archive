@@ -5,7 +5,7 @@ import loading from "assets/loading.gif";
 
 type Props = {
   children: React.ReactNode;
-  onClick: () => void;
+  onClick?: () => void;
   disabled?: boolean;
   status?: React.ReactNode;
   helperText?: string;
@@ -18,6 +18,7 @@ type Props = {
   withBorder?: boolean;
   rounded?: boolean;
   alt?: boolean;
+  type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
 };
 
 const Button: React.FC<Props> = ({
@@ -35,6 +36,7 @@ const Button: React.FC<Props> = ({
   withBorder,
   rounded,
   alt,
+  type,
 }) => {
   const renderStatus = () => {
     switch (status) {
@@ -53,13 +55,13 @@ const Button: React.FC<Props> = ({
           </StatusWrapper>
         );
       case "":
-        return helperText && (
-          <StatusWrapper success={false}>{helperText}</StatusWrapper>
-        )
-      default:
         return (
-          <StatusWrapper success={false}>{status}</StatusWrapper>
+          helperText && (
+            <StatusWrapper success={false}>{helperText}</StatusWrapper>
+          )
         );
+      default:
+        return <StatusWrapper success={false}>{status}</StatusWrapper>;
     }
   };
 
@@ -67,13 +69,18 @@ const Button: React.FC<Props> = ({
     <Wrapper>
       <StyledButton
         disabled={disabled}
-        onClick={() => !disabled && onClick()}
+        onClick={() => {
+          if (!disabled && onClick) {
+            onClick();
+          }
+        }}
         width={width}
         height={height}
         color={color}
         withBorder={withBorder || alt}
         rounded={rounded || alt}
         alt={alt}
+        type={type}
       >
         <Text>{children}</Text>
       </StyledButton>
@@ -119,7 +126,7 @@ const StatusWrapper = styled.div<{
     font-size: 18px;
     margin-right: 10px;
     float: left;
-    color: ${props => props.success ? "#4797ff" : "#fcba03"};
+    color: ${(props) => (props.success ? "#4797ff" : "#fcba03")};
   }
 `;
 
@@ -134,37 +141,39 @@ const Text = styled.div`
 `;
 
 const StyledButton = styled.button<{
-  disabled: boolean;
-  width: string;
-  height: string;
-  color: string;
-  withBorder: boolean;
-  rounded: boolean;
-  alt: boolean;
+  disabled?: boolean;
+  width?: string;
+  height?: string;
+  color?: string;
+  withBorder?: boolean;
+  rounded?: boolean;
+  alt?: boolean;
 }>`
-  height: ${props => props.height || "35px"};
-  width: ${props => props.width || "auto"};
-  min-width: ${props => props.width || ""};
+  height: ${(props) => props.height || "35px"};
+  width: ${(props) => props.width || "auto"};
+  min-width: ${(props) => props.width || ""};
   font-size: 13px;
-  cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   padding: 15px;
   border: none;
   outline: none;
   color: white;
-  opacity: ${props => props.disabled && props.withBorder ? "0.5" : "1"};
-  background: ${props => {
+  opacity: ${(props) => (props.disabled && props.withBorder ? "0.5" : "1")};
+  background: ${(props) => {
     if (props.alt || props.color === "fg") {
       return props.theme.fg;
     }
-    return (props.disabled && !props.color) ? "#aaaabb" : (props.color || props.theme.button);
+    return props.disabled && !props.color
+      ? "#aaaabb"
+      : props.color || props.theme.button;
   }};
   display: flex;
   ailgn-items: center;
   justify-content: center;
-  border-radius: ${props => props.rounded ? "50px" : "5px"};
-  border: ${props => props.withBorder ? "1px solid #494b4f" : "none"};
+  border-radius: ${(props) => (props.rounded ? "50px" : "5px")};
+  border: ${(props) => (props.withBorder ? "1px solid #494b4f" : "none")};
 
   :hover {
-    filter: ${props => props.disabled ? "" : "brightness(120%)"};
+    filter: ${(props) => (props.disabled ? "" : "brightness(120%)")};
   }
 `;

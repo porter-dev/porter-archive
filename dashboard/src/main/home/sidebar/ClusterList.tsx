@@ -121,8 +121,7 @@ const ClusterList: React.FC<PropsType> = (props) => {
         {(clusters.length > 1 || user.isPorterUser) && renderDropdown()}
         {
           clusterModalVisible && <ProvisionClusterModal
-            modalVisible={clusterModalVisible}
-            setModalVisible={setClusterModalVisible} />
+            closeModal={() => setClusterModalVisible(false)} />
         }
       </StyledClusterSection >
     );

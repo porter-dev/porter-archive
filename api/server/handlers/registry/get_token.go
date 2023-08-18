@@ -67,7 +67,7 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 		resp := &types.GetRegistryTokenResponse{
 			Token:     ecrResponse.Msg.Token,
-			ExpiresAt: &expiry,
+			ExpiresAt: expiry,
 		}
 
 		c.WriteResult(w, r, resp)
@@ -82,7 +82,7 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	var token string
-	var expiresAt *time.Time
+	var expiresAt time.Time
 
 	for _, reg := range regs {
 		if reg.AWSIntegrationID != 0 {
@@ -123,8 +123,11 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 					return
 				}
 
+				if output == nil || output.AuthorizationData == nil || len(output.AuthorizationData) == 0 {
+					continue
+				}
 				token = *output.AuthorizationData[0].AuthorizationToken
-				expiresAt = output.AuthorizationData[0].ExpiresAt
+				expiresAt = *output.AuthorizationData[0].ExpiresAt
 			}
 		}
 	}
@@ -172,7 +175,7 @@ func (c *RegistryGetGCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	var token string
-	var expiresAt *time.Time
+	var expiresAt time.Time
 
 	for _, reg := range regs {
 		if reg.GCPIntegrationID != 0 && strings.Contains(reg.URL, request.ServerURL) {
@@ -191,7 +194,7 @@ func (c *RegistryGetGCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			}
 
 			token = oauthTok.AccessToken
-			expiresAt = &oauthTok.Expiry
+			expiresAt = oauthTok.Expiry
 			break
 		}
 	}
@@ -238,8 +241,43 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	if len(regs) == 0 {
+		e := telemetry.Error(ctx, span, err, "no registries found")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusNotFound))
+		return
+	}
+
+	if proj.CapiProvisionerEnabled {
+		regInput := connect.NewRequest(&porterv1.TokenForRegistryRequest{
+			ProjectId:   int64(proj.ID),
+			RegistryUri: regs[0].URL,
+		})
+		regOutput, err := c.Config().ClusterControlPlaneClient.TokenForRegistry(ctx, regInput)
+		if err != nil {
+			e := telemetry.Error(ctx, span, err, "error getting gar token")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+		if regOutput == nil || regOutput.Msg == nil {
+			e := telemetry.Error(ctx, span, err, "error reading gar token")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+		if regOutput.Msg.Token == "" {
+			e := telemetry.Error(ctx, span, err, "no token for for registry")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+		resp := &types.GetRegistryTokenResponse{
+			Token:     regOutput.Msg.Token,
+			ExpiresAt: regOutput.Msg.Expiry.AsTime(),
+		}
+		c.WriteResult(w, r, resp)
+		return
+	}
+
 	var token string
-	var expiresAt *time.Time
+	var expiresAt time.Time
 
 	for _, reg := range regs {
 		if reg.GCPIntegrationID != 0 && strings.Contains(reg.URL, request.ServerURL) {
@@ -257,8 +295,11 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(e))
 			}
 
+			if oauthTok == nil {
+				continue
+			}
 			token = oauthTok.AccessToken
-			expiresAt = &oauthTok.Expiry
+			expiresAt = oauthTok.Expiry
 			break
 		}
 	}
@@ -302,7 +343,7 @@ func (c *RegistryGetDOCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	var token string
-	var expiresAt *time.Time
+	var expiresAt time.Time
 
 	for _, reg := range regs {
 		if reg.DOIntegrationID != 0 && strings.Contains(reg.URL, request.ServerURL) {
@@ -323,7 +364,7 @@ func (c *RegistryGetDOCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			}
 
 			token = tok
-			expiresAt = expiry
+			expiresAt = *expiry
 			break
 		}
 	}
@@ -361,7 +402,7 @@ func (c *RegistryGetDockerhubTokenHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 
 	var token string
-	var expiresAt *time.Time
+	var expiresAt time.Time
 
 	for _, reg := range regs {
 		if reg.BasicIntegrationID != 0 && strings.Contains(reg.URL, "index.docker.io") {
@@ -375,7 +416,7 @@ func (c *RegistryGetDockerhubTokenHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 			// we'll just set an arbitrary 30-day expiry time (this is not enforced)
 			timeExpires := time.Now().Add(30 * 24 * 3600 * time.Second)
-			expiresAt = &timeExpires
+			expiresAt = timeExpires
 		}
 	}
 
@@ -435,7 +476,7 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	var token string
-	var expiresAt *time.Time
+	var expiresAt time.Time
 
 	var matchingReg *models.Registry
 	for _, reg := range regs {
@@ -482,7 +523,7 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 		// we'll just set an arbitrary 30-day expiry time (this is not enforced)
 		timeExpires := time.Now().UTC().Add(30 * 24 * time.Hour)
-		expiresAt = &timeExpires
+		expiresAt = timeExpires
 	}
 
 	if matchingReg.AzureIntegrationID != 0 {
@@ -499,7 +540,7 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		token = base64.StdEncoding.EncodeToString([]byte(string(username) + ":" + string(pw)))
 		// we'll just set an arbitrary 30-day expiry time (this is not enforced)
 		timeExpires := time.Now().UTC().Add(30 * 24 * time.Hour)
-		expiresAt = &timeExpires
+		expiresAt = timeExpires
 	}
 
 	if token == "" {

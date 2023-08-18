@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/porter-dev/porter/api/server/handlers/porter_app"
+
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -145,4 +147,102 @@ func (c *Client) ListEnvGroups(
 	)
 
 	return *resp, err
+}
+
+// ParseYAML takes in a base64 encoded porter yaml and returns an app proto
+func (c *Client) ParseYAML(
+	ctx context.Context,
+	projectID, clusterID uint,
+	b64Yaml string,
+) (*porter_app.ParsePorterYAMLToProtoResponse, error) {
+	resp := &porter_app.ParsePorterYAMLToProtoResponse{}
+
+	req := &porter_app.ParsePorterYAMLToProtoRequest{
+		B64Yaml: b64Yaml,
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/parse",
+			projectID, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// ValidatePorterApp takes in a base64 encoded app definition that is potentially partial and returns a complete definition
+// using any previous app revisions and defaults
+func (c *Client) ValidatePorterApp(
+	ctx context.Context,
+	projectID, clusterID uint,
+	base64AppProto string,
+	deploymentTarget string,
+) (*porter_app.ValidatePorterAppResponse, error) {
+	resp := &porter_app.ValidatePorterAppResponse{}
+
+	req := &porter_app.ValidatePorterAppRequest{
+		Base64AppProto:     base64AppProto,
+		DeploymentTargetId: deploymentTarget,
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/validate",
+			projectID, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// ApplyPorterApp takes in a base64 encoded app definition and applies it to the cluster
+func (c *Client) ApplyPorterApp(
+	ctx context.Context,
+	projectID, clusterID uint,
+	base64AppProto string,
+	deploymentTarget string,
+) (*porter_app.ApplyPorterAppResponse, error) {
+	resp := &porter_app.ApplyPorterAppResponse{}
+
+	req := &porter_app.ApplyPorterAppRequest{
+		Base64AppProto:     base64AppProto,
+		DeploymentTargetId: deploymentTarget,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/apply",
+			projectID, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// DefaultDeploymentTarget returns the default deployment target for a given project and cluster
+func (c *Client) DefaultDeploymentTarget(
+	ctx context.Context,
+	projectID, clusterID uint,
+) (*porter_app.DefaultDeploymentTargetResponse, error) {
+	resp := &porter_app.DefaultDeploymentTargetResponse{}
+
+	req := &porter_app.DefaultDeploymentTargetRequest{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/default-deployment-target",
+			projectID, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
 }

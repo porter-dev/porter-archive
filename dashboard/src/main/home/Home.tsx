@@ -40,6 +40,7 @@ import Button from "components/porter/Button";
 import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
 import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
 import ExpandedJob from "./app-dashboard/expanded-app/expanded-job/ExpandedJob";
+import CreateApp from "./app-dashboard/create-app/CreateApp";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -192,7 +193,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -410,7 +411,7 @@ const Home: React.FC<Props> = (props) => {
 
           <Switch>
             <Route path="/apps/new/app">
-              <NewAppFlow />
+              {currentProject?.validate_apply_v2 ? <CreateApp /> : <NewAppFlow />}
             </Route>
             <Route path="/apps/:appName/:tab">
               <ExpandedApp />

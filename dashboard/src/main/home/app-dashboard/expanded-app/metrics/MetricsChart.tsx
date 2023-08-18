@@ -90,6 +90,10 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
             }
 
             let kind = selectedController?.kind
+            if (selectedMetric == "nginx:status") {
+                kind = "Ingress"
+            }
+
             const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
             const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
 

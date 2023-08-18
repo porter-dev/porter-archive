@@ -10,6 +10,8 @@ import time from "assets/time.png";
 import healthy from "assets/status-healthy.png";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
+import letter from "assets/vector.svg";
+import calendar from "assets/calendar-number.svg";
 import notFound from "assets/not-found.png";
 
 import { Context } from "shared/Context";
@@ -57,6 +59,8 @@ const AppDashboard: React.FC<Props> = ({ }) => {
   const [error, setError] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("grid");
+  const [sort, setSort] = useState("calendar");
+
   const [isLoading, setIsLoading] = useState(true);
   const [shouldLoadTime, setShouldLoadTime] = useState(true);
 
@@ -66,8 +70,14 @@ const AppDashboard: React.FC<Props> = ({ }) => {
       isCaseSensitive: false,
     });
 
-    return _.sortBy(filteredBySearch);
-  }, [apps, searchValue]);
+    if (sort === "letter") {
+      return _.sortBy(filteredBySearch, ["name"]);
+    } else if (sort === "calendar") {
+      return _.sortBy(filteredBySearch, ["last_deployed"]).reverse(); // Assuming that the latest date should come first.
+    }
+
+    return filteredBySearch; // default
+  }, [apps, searchValue, sort]);
 
   const getApps = async () => {
     setIsLoading(true);
@@ -247,12 +257,23 @@ const AppDashboard: React.FC<Props> = ({ }) => {
               <Spacer inline x={2} />
               <Toggle
                 items={[
+                  { label: <ToggleIcon src={calendar} />, value: "calendar" },
+                  { label: <ToggleIcon src={letter} />, value: "letter" },
+                ]}
+                active={sort}
+                setActive={setSort}
+              />
+              <Spacer inline x={1} />
+
+              <Toggle
+                items={[
                   { label: <ToggleIcon src={grid} />, value: "grid" },
                   { label: <ToggleIcon src={list} />, value: "list" },
                 ]}
                 active={view}
                 setActive={setView}
               />
+
               <Spacer inline x={2} />
               <PorterLink to="/apps/new/app">
                 <Button onClick={async () => updateStackStartedStep()} height="30px" width="160px">

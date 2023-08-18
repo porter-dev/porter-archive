@@ -59,7 +59,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
   const [error, setError] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("grid");
-  const [sort, setSort] = useState("calendar");
+  const [sort, setSort] = useState<"calendar" | "letter">("calendar");
 
   const [isLoading, setIsLoading] = useState(true);
   const [shouldLoadTime, setShouldLoadTime] = useState(true);

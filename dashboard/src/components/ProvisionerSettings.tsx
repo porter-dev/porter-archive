@@ -832,7 +832,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                     </>
                   )}
                   <FlexCenter>
-                    <>
                       <Checkbox
                           checked={guardDutyEnabled}
                           disabled={isReadOnly}
@@ -855,11 +854,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                             position="right"
                         />
                       </Checkbox>
-                    </>
                   </FlexCenter>
                   <Spacer y={1} />
                   <FlexCenter>
-                    <>
                       <Checkbox
                           checked={kmsEncryptionEnabled}
                           disabled={isReadOnly || currentCluster != null}
@@ -882,7 +879,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                             position="right"
                         />
                       </Checkbox>
-                    </>
                   </FlexCenter>
                   {kmsEncryptionEnabled && (
                       <ErrorInLine>

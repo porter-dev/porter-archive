@@ -1316,6 +1316,7 @@ const getMetrics = baseApi<
     name?: string;
     percentile?: number;
     namespace: string;
+    nginx_status_level?: number;
     startrange: number;
     endrange: number;
     resolution: string;

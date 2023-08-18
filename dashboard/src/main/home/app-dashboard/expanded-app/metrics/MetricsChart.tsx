@@ -55,6 +55,7 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
         Record<string, NormalizedMetricsData[]>
     >({});
     const [data, setData] = useState<NormalizedMetricsData[]>([]);
+    const [areaData, setAreaData] = useState<Record<string, NormalizedMetricsData[]>>({});
     const [hpaData, setHpaData] = useState<NormalizedMetricsData[]>([]);
     const [hpaEnabled, setHpaEnabled] = useState(false);
     const [showHpaToggle, setShowHpaToggle] = useState(false);
@@ -65,9 +66,22 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
     );
 
     const getMetrics = async () => {
+        if (selectedMetric == "nginx:status") {
+            getNginxMetrics();
+        } else {
+            getAppMetrics();
+        }
+    };
+
+    const getAppMetrics = async () => {
         if (pods?.length == 0) {
             return;
         }
+
+        if (selectedMetric == "nginx:status") {
+            return;
+        }
+
         try {
             let shouldsum = selectedPod === "All";
             let namespace = currentChart.namespace;
@@ -189,6 +203,7 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                         setData(allPodsAggregatedData["avg"])
                         delete allPodsAggregatedData["avg"]
                     }
+
                     setAggregatedData(allPodsAggregatedData);
 
                     if (!shouldsum) {
@@ -223,12 +238,87 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
         }
     };
 
+    const getNginxMetrics = async () => {
+        const name = selectedController?.metadata.name
+        if (name.length === undefined) {
+            return
+        }
+
+        if (selectedMetric != "nginx:status") {
+            return;
+        }
+
+        let requests = [];
+        const namespace = currentChart.namespace;
+        const kind = "Ingress";
+
+        // calculate start and end range
+        const d = new Date();
+        const end = Math.round(d.getTime() / 1000);
+        const start = end - secondsBeforeNow[selectedRange];
+
+        try {
+            setIsLoading((prev) => prev + 1);
+            for (let i = 1; i <= 5; i++) {
+                requests.push(api.getMetrics(
+                    "<token>",
+                    {
+                        metric: selectedMetric,
+                        shouldsum: false,
+                        kind: kind,
+                        name: selectedController?.metadata.name,
+                        namespace: namespace,
+                        startrange: start,
+                        endrange: end,
+                        resolution: resolutions[selectedRange],
+                        pods: [],
+                        nginx_status_level: i,
+                    },
+                    {
+                        id: currentProject.id,
+                        cluster_id: currentCluster.id,
+                    }
+                ));
+            }
+            axios
+                .all(requests)
+                .then((responses) => {
+                    let aggregatedMetrics: Record<string, NormalizedMetricsData[]> = {}
+                    for (let i = 0; i <= 4; i++) {
+                        const metrics = new MetricNormalizer(
+                            responses[i].data,
+                            selectedMetric as AvailableMetrics
+                        );
+                        let index = `${i+1}xx`
+                        aggregatedMetrics[index] = metrics.getParsedData()
+                    }
+
+                    setAreaData(aggregatedMetrics);
+                })
+                .catch(error => {
+                    setCurrentError(JSON.stringify(error));
+                })
+        } catch (error) {
+            setCurrentError(JSON.stringify(error));
+        } finally {
+            setIsLoading((prev) => prev - 1);
+        }
+    }
+
     useEffect(() => {
-        if (selectedMetric && selectedRange && selectedPod && selectedController) {
-            getMetrics();
+        if (selectedRange && selectedController) {
+            getNginxMetrics();
         }
     }, [
-        selectedMetric,
+        selectedRange,
+        selectedController,
+    ]);
+
+    useEffect(() => {
+        if (selectedRange && selectedPod && selectedController) {
+            getAppMetrics();
+        }
+    }, [
         selectedRange,
         selectedPod,
         selectedController,

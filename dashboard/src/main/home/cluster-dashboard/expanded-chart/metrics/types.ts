@@ -55,6 +55,7 @@ export type GenericMetricResponse = {
     bytes: string;
     error_pct: string;
     replicas: string;
+    status_code: string;
     latency: string;
   }[];
 };

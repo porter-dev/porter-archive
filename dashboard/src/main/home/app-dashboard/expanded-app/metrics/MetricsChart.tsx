@@ -376,7 +376,7 @@ const RowWrapper = styled.div`
 const StyledMetricsChart = styled.div`
   width: 100%;
   min-height: 240px;
-  height: calc(100vh - 800px);
+  height: calc(100vh - 700px);
   display: flex;
   flex-direction: column;
   position: relative;

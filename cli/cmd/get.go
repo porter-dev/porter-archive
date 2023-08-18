@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/porter-dev/porter/cli/cmd/config"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
 
 	api "github.com/porter-dev/porter/api/client"
@@ -72,7 +73,7 @@ type getReleaseInfo struct {
 	RevisionID   int       `json:"revision_id" yaml:"revision_id"`
 }
 
-func get(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -126,7 +127,7 @@ func get(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string
 	return nil
 }
 
-func getValues(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)

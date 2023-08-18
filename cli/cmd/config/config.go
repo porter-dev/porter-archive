@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/util/homedir"
@@ -164,13 +165,13 @@ func createAndLoadPorterYaml(porterDir string) error {
 	return nil
 }
 
-func GetCLIConfig() *CLIConfig {
-	if config == nil {
-		panic("GetCLIConfig() called before initialisation")
-	}
+// func GetCLIConfig() *CLIConfig {
+// 	if config == nil {
+// 		panic("GetCLIConfig() called before initialisation")
+// 	}
 
-	return config
-}
+// 	return config
+// }
 
 // func GetAPIClient() api.Client {
 // 	ctx := context.Background()
@@ -194,7 +195,7 @@ func (c *CLIConfig) SetDriver(driver string) error {
 		return err
 	}
 
-	config.Driver = driver
+	c.Driver = driver
 
 	return nil
 }
@@ -217,20 +218,20 @@ func (c *CLIConfig) SetHost(host string) error {
 
 	color.New(color.FgGreen).Printf("Set the current host as %s\n", host)
 
-	config.Host = host
-	config.Project = 0
-	config.Cluster = 0
-	config.Token = ""
+	c.Host = host
+	c.Project = 0
+	c.Cluster = 0
+	c.Token = ""
 
 	return nil
 }
 
-func (c *CLIConfig) SetProject(projectID uint) error {
+func (c *CLIConfig) SetProject(ctx context.Context, apiClient api.Client, projectID uint) error {
 	viper.Set("project", projectID)
 
 	color.New(color.FgGreen).Printf("Set the current project as %d\n", projectID)
 
-	if config.Kubeconfig != "" || viper.IsSet("kubeconfig") {
+	if c.Kubeconfig != "" || viper.IsSet("kubeconfig") {
 		color.New(color.FgYellow).Println("Please change local kubeconfig if needed")
 	}
 
@@ -239,16 +240,13 @@ func (c *CLIConfig) SetProject(projectID uint) error {
 		return err
 	}
 
-	config.Project = projectID
+	c.Project = projectID
 
-	client := GetAPIClient()
-	if client != nil {
-		resp, err := client.ListProjectClusters(context.Background(), projectID)
-		if err == nil {
-			clusters := *resp
-			if len(clusters) == 1 {
-				c.SetCluster(clusters[0].ID)
-			}
+	resp, err := apiClient.ListProjectClusters(context.Background(), projectID)
+	if err == nil {
+		clusters := *resp
+		if len(clusters) == 1 {
+			c.SetCluster(clusters[0].ID)
 		}
 	}
 
@@ -260,7 +258,7 @@ func (c *CLIConfig) SetCluster(clusterID uint) error {
 
 	color.New(color.FgGreen).Printf("Set the current cluster as %d\n", clusterID)
 
-	if config.Kubeconfig != "" || viper.IsSet("kubeconfig") {
+	if c.Kubeconfig != "" || viper.IsSet("kubeconfig") {
 		color.New(color.FgYellow).Println("Please change local kubeconfig if needed")
 	}
 
@@ -269,7 +267,7 @@ func (c *CLIConfig) SetCluster(clusterID uint) error {
 		return err
 	}
 
-	config.Cluster = clusterID
+	c.Cluster = clusterID
 
 	return nil
 }
@@ -281,7 +279,7 @@ func (c *CLIConfig) SetToken(token string) error {
 		return err
 	}
 
-	config.Token = token
+	c.Token = token
 
 	return nil
 }
@@ -294,7 +292,7 @@ func (c *CLIConfig) SetRegistry(registryID uint) error {
 		return err
 	}
 
-	config.Registry = registryID
+	c.Registry = registryID
 
 	return nil
 }
@@ -307,7 +305,7 @@ func (c *CLIConfig) SetHelmRepo(helmRepoID uint) error {
 		return err
 	}
 
-	config.HelmRepo = helmRepoID
+	c.HelmRepo = helmRepoID
 
 	return nil
 }
@@ -330,21 +328,22 @@ func (c *CLIConfig) SetKubeconfig(kubeconfig string) error {
 		return err
 	}
 
-	config.Kubeconfig = kubeconfig
+	c.Kubeconfig = kubeconfig
 
 	return nil
 }
 
-func ValidateCLIEnvironment() error {
-	if GetCLIConfig().Token == "" {
+// ValidateCLIEnvironment checks that all required variables are present for running the CLI
+func (c *CLIConfig) ValidateCLIEnvironment() error {
+	if c.Token == "" {
 		return fmt.Errorf("no auth token present, please run 'porter auth login' to authenticate")
 	}
 
-	if GetCLIConfig().Project == 0 {
+	if c.Project == 0 {
 		return fmt.Errorf("no project selected, please run 'porter config set-project' to select a project")
 	}
 
-	if GetCLIConfig().Cluster == 0 {
+	if c.Cluster == 0 {
 		return fmt.Errorf("no cluster selected, please run 'porter config set-cluster' to select a cluster")
 	}
 

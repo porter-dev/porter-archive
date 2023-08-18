@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"os"
 
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/connect"
 	"github.com/spf13/cobra"
 )
@@ -137,7 +139,7 @@ func init() {
 	connectCmd.AddCommand(connectHelmRepoCmd)
 }
 
-func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) error {
+func runConnectKubeconfig(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
 	isLocal := false
 
 	if cliConf.Driver == "local" {
@@ -158,7 +160,7 @@ func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client api.Clie
 	return cliConf.SetCluster(id)
 }
 
-func runConnectECR(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) error {
+func runConnectECR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
 	regID, err := connect.ECR(
 		client,
 		cliConf.Project,
@@ -170,7 +172,7 @@ func runConnectECR(_ *types.GetAuthenticatedUserResponse, client api.Client, _ [
 	return cliConf.SetRegistry(regID)
 }
 
-func runConnectGCR(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) error {
+func runConnectGCR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
 	regID, err := connect.GCR(
 		client,
 		cliConf.Project,
@@ -182,7 +184,7 @@ func runConnectGCR(_ *types.GetAuthenticatedUserResponse, client api.Client, _ [
 	return cliConf.SetRegistry(regID)
 }
 
-func runConnectGAR(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) error {
+func runConnectGAR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
 	regID, err := connect.GAR(
 		client,
 		cliConf.Project,
@@ -194,7 +196,7 @@ func runConnectGAR(_ *types.GetAuthenticatedUserResponse, client api.Client, _ [
 	return cliConf.SetRegistry(regID)
 }
 
-func runConnectDOCR(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) error {
+func runConnectDOCR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
 	regID, err := connect.DOCR(
 		client,
 		cliConf.Project,
@@ -206,7 +208,7 @@ func runConnectDOCR(_ *types.GetAuthenticatedUserResponse, client api.Client, _ 
 	return cliConf.SetRegistry(regID)
 }
 
-func runConnectDockerhub(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) error {
+func runConnectDockerhub(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
 	regID, err := connect.Dockerhub(
 		client,
 		cliConf.Project,
@@ -218,7 +220,7 @@ func runConnectDockerhub(_ *types.GetAuthenticatedUserResponse, client api.Clien
 	return cliConf.SetRegistry(regID)
 }
 
-func runConnectRegistry(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) error {
+func runConnectRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
 	regID, err := connect.Registry(
 		client,
 		cliConf.Project,
@@ -230,7 +232,7 @@ func runConnectRegistry(_ *types.GetAuthenticatedUserResponse, client api.Client
 	return cliConf.SetRegistry(regID)
 }
 
-func runConnectHelmRepo(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) error {
+func runConnectHelmRepo(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
 	hrID, err := connect.HelmRepo(
 		client,
 		cliConf.Project,

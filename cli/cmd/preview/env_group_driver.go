@@ -6,6 +6,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/internal/integrations/preview"
@@ -18,22 +19,28 @@ type EnvGroupDriver struct {
 	lookupTable *map[string]drivers.Driver
 	target      *preview.Target
 	config      *preview.EnvGroupDriverConfig
+	apiClient   api.Client
+	cliConfig   config.CLIConfig
 }
 
-func NewEnvGroupDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
-	driver := &EnvGroupDriver{
-		lookupTable: opts.DriverLookupTable,
-		output:      make(map[string]interface{}),
+func NewEnvGroupDriver(apiClient api.Client, cliConfig config.CLIConfig) func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+	return func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+		driver := &EnvGroupDriver{
+			lookupTable: opts.DriverLookupTable,
+			output:      make(map[string]interface{}),
+			apiClient:   apiClient,
+			cliConfig:   cliConfig,
+		}
+
+		target, err := GetTarget(resource.Name, resource.Target, apiClient, cliConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		driver.target = target
+
+		return driver, nil
 	}
-
-	target, err := GetTarget(resource.Name, resource.Target)
-	if err != nil {
-		return nil, err
-	}
-
-	driver.target = target
-
-	return driver, nil
 }
 
 func (d *EnvGroupDriver) ShouldApply(resource *models.Resource) bool {
@@ -48,8 +55,6 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 
 	d.config = driverConfig
 
-	client := config.GetAPIClient()
-
 	for _, group := range d.config.EnvGroups {
 		if group.Name == "" {
 			return nil, fmt.Errorf("env group name cannot be empty")
@@ -62,7 +67,7 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 			group.Namespace = d.target.Namespace
 		}
 
-		envGroupResp, err := client.GetEnvGroup(
+		envGroupResp, err := d.apiClient.GetEnvGroup(
 			context.Background(),
 			d.target.Project,
 			d.target.Cluster,
@@ -73,7 +78,7 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 		)
 
 		if err != nil && err.Error() == "env group not found" {
-			newEnvGroup, err := client.CreateEnvGroup(
+			newEnvGroup, err := d.apiClient.CreateEnvGroup(
 				context.Background(), d.target.Project, d.target.Cluster, group.Namespace,
 				&types.CreateEnvGroupRequest{
 					Name:      group.Name,

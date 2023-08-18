@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )
@@ -45,7 +47,7 @@ func init() {
 	)
 }
 
-func logs(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func logs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	podsSimple, err := getPods(client, namespace, args[0])
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())

@@ -14,12 +14,12 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
-	cliConfig "github.com/porter-dev/porter/cli/cmd/config"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )
 
-var cliConf = cliConfig.GetCLIConfig()
+// var cliConf = cliConfig.GetCLIConfig()
 
 var configCmd = &cobra.Command{
 	Use:   "config",
@@ -181,7 +181,7 @@ func printConfig() error {
 	return nil
 }
 
-func listAndSetProject(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Color("cyan")
 	s.Suffix = " Loading list of projects"
@@ -222,7 +222,7 @@ func listAndSetProject(_ *types.GetAuthenticatedUserResponse, client api.Client,
 	return nil
 }
 
-func listAndSetCluster(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Color("cyan")
 	s.Suffix = " Loading list of clusters"
@@ -262,7 +262,7 @@ func listAndSetCluster(_ *types.GetAuthenticatedUserResponse, client api.Client,
 	return nil
 }
 
-func listAndSetRegistry(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func listAndSetRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Color("cyan")
 	s.Suffix = " Loading list of registries"

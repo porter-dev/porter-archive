@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -19,9 +18,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/github"
 )
 
-func SetDockerConfig(client api.Client) error {
-	pID := GetCLIConfig().Project
-
+func SetDockerConfig(client api.Client, pID uint) error {
 	// get all registries that should be added
 	regToAdd := make([]string, 0)
 
@@ -77,10 +74,11 @@ func SetDockerConfig(client api.Client) error {
 	}
 
 	// read the file bytes
-	configBytes, err := ioutil.ReadFile(dockerConfigFile)
-	if err != nil {
-		return err
-	}
+	// // TODO: STEFAN - figure out why we are parsing the ~/.docker/config.json into the CLI config. Are we using the variables somewhere?
+	// configBytes, err := ioutil.ReadFile(dockerConfigFile)
+	// if err != nil {
+	// 	return err
+	// }
 
 	// check if the docker credential helper exists
 	if !commandExists("docker-credential-porter") {
@@ -110,11 +108,11 @@ func SetDockerConfig(client api.Client) error {
 		Filename: dockerConfigFile,
 	}
 
-	err = json.Unmarshal(configBytes, GetCLIConfig())
-
-	if err != nil {
-		return err
-	}
+	// // TODO: STEFAN - figure out why we are parsing the ~/.docker/config.json into the CLI config. Are we using the variables somewhere?
+	// err = json.Unmarshal(configBytes, GetCLIConfig())
+	// if err != nil {
+	// 	return err
+	// }
 
 	if configFile.CredentialHelpers == nil {
 		configFile.CredentialHelpers = make(map[string]string)
@@ -138,7 +136,7 @@ func SetDockerConfig(client api.Client) error {
 
 			if !isAuthenticated {
 				// get a dockerhub token from the Porter API
-				tokenResp, err := client.GetDockerhubAuthorizationToken(context.Background(), GetCLIConfig().Project)
+				tokenResp, err := client.GetDockerhubAuthorizationToken(context.Background(), pID)
 				if err != nil {
 					return err
 				}

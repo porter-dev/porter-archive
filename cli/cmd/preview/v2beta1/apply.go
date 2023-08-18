@@ -11,24 +11,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// const (
-// 	constantsEnvGroup = "preview-env-constants"
-
-// 	defaultCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789~`!@#$%^&*()_+-={}[]"
-// )
-
 type PreviewApplier struct {
 	apiClient api.Client
+	cliConfig config.CLIConfig
 	rawBytes  []byte
 	namespace string
 	parsed    *PorterYAML
-
-	// variablesMap map[string]string
-	// osEnv        map[string]string
-	// envGroups    map[string]*apiTypes.EnvGroup
 }
 
-func NewApplier(client api.Client, raw []byte, namespace string) (*PreviewApplier, error) {
+func NewApplier(client api.Client, cliConfig config.CLIConfig, raw []byte, namespace string) (*PreviewApplier, error) {
 	// replace all instances of ${{ porter.env.FOO }} with { .get-env.FOO }
 	re := regexp.MustCompile(`\$\{\{\s*porter\.env\.(.*)\s*\}\}`)
 	raw = re.ReplaceAll(raw, []byte("{.get-env.$1}"))
@@ -41,13 +32,7 @@ func NewApplier(client api.Client, raw []byte, namespace string) (*PreviewApplie
 		return nil, fmt.Errorf("%s: %w", errMsg, err)
 	}
 
-	// err = validator.ValidatePorterYAML(parsed)
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	err = config.ValidateCLIEnvironment()
+	err = cliConfig.ValidateCLIEnvironment()
 
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
@@ -56,6 +41,7 @@ func NewApplier(client api.Client, raw []byte, namespace string) (*PreviewApplie
 
 	return &PreviewApplier{
 		apiClient: client,
+		cliConfig: cliConfig,
 		rawBytes:  raw,
 		namespace: namespace,
 		parsed:    parsed,
@@ -69,12 +55,12 @@ func (a *PreviewApplier) Apply() error {
 	// errors that are caused by the namespace not existing
 	nsList, err := a.apiClient.GetK8sNamespaces(
 		context.Background(),
-		config.GetCLIConfig().Project,
-		config.GetCLIConfig().Cluster,
+		a.cliConfig.Project,
+		a.cliConfig.Cluster,
 	)
 	if err != nil {
 		errMsg := composePreviewMessage(fmt.Sprintf("error listing namespaces for project '%d', cluster '%d'",
-			config.GetCLIConfig().Project, config.GetCLIConfig().Cluster), Error)
+			a.cliConfig.Project, a.cliConfig.Cluster), Error)
 		return fmt.Errorf("%s: %w", errMsg, err)
 	}
 
@@ -96,9 +82,9 @@ func (a *PreviewApplier) Apply() error {
 
 	printInfoMessage(fmt.Sprintf("Applying porter.yaml with the following attributes:\n"+
 		"\tHost: %s\n\tProject ID: %d\n\tCluster ID: %d\n\tNamespace: %s",
-		config.GetCLIConfig().Host,
-		config.GetCLIConfig().Project,
-		config.GetCLIConfig().Cluster,
+		a.cliConfig.Host,
+		a.cliConfig.Project,
+		a.cliConfig.Cluster,
 		a.namespace),
 	)
 

@@ -8,6 +8,7 @@ import (
 
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +27,7 @@ func init() {
 	rootCmd.AddCommand(kubectlCmd)
 }
 
-func runKubectl(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	_, err := exec.LookPath("kubectl")
 	if err != nil {
 		return fmt.Errorf("error finding kubectl: %w", err)

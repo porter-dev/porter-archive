@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/porter-dev/porter/cli/cmd/config"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
 
 	"github.com/fatih/color"
@@ -113,7 +114,7 @@ func init() {
 	rootCmd.AddCommand(deleteCmd)
 }
 
-func deleteDeployment(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func deleteDeployment(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -159,7 +160,7 @@ func deleteDeployment(_ *types.GetAuthenticatedUserResponse, client api.Client, 
 	)
 }
 
-func deleteApp(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func deleteApp(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -203,7 +204,7 @@ func deleteApp(_ *types.GetAuthenticatedUserResponse, client api.Client, args []
 	return nil
 }
 
-func deleteJob(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func deleteJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -247,7 +248,7 @@ func deleteJob(_ *types.GetAuthenticatedUserResponse, client api.Client, args []
 	return nil
 }
 
-func deleteAddon(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func deleteAddon(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	name := args[0]
 
 	resp, err := client.GetRelease(
@@ -276,7 +277,7 @@ func deleteAddon(_ *types.GetAuthenticatedUserResponse, client api.Client, args 
 	return nil
 }
 
-func deleteHelm(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func deleteHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	name := args[0]
 
 	resp, err := client.ListHelmRepos(context.Background(), cliConf.Project)

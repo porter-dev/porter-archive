@@ -12,6 +12,7 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 	batchv1 "k8s.io/api/batch/v1"
@@ -128,7 +129,7 @@ func init() {
 	runCmd.AddCommand(cleanupCmd)
 }
 
-func run(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func run(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	execArgs := args[1:]
 
 	color.New(color.FgGreen).Println("Running", strings.Join(execArgs, " "), "for release", args[0])
@@ -243,7 +244,7 @@ func run(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string
 	return executeRunEphemeral(config, namespace, selectedPod.Name, selectedContainerName, execArgs)
 }
 
-func cleanup(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) error {
+func cleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
 	config := &PorterRunSharedConfig{
 		Client: client,
 	}

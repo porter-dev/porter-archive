@@ -12,6 +12,7 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 	batchv1 "k8s.io/api/batch/v1"
@@ -150,7 +151,7 @@ func init() {
 	appCmd.AddCommand(appUpdateTagCmd)
 }
 
-func appRun(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	execArgs := args[1:]
 
 	color.New(color.FgGreen).Println("Attempting to run", strings.Join(execArgs, " "), "for application", args[0])
@@ -158,12 +159,12 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client api.Client, args []str
 	appNamespace = fmt.Sprintf("porter-stack-%s", args[0])
 
 	if len(execArgs) > 0 {
-		res, err := client.GetPorterApp(context.Background(), cliConf.Project, cliConf.Cluster, args[0])
+		res, err := client.GetPorterApp(context.Background(), cliConfig.Project, cliConfig.Cluster, args[0])
 		if err != nil {
 			return fmt.Errorf("Unable to run command: %w", err)
 		}
 		if res.Name == "" {
-			return fmt.Errorf("An application named \"%s\" was not found in your project (ID: %d). Please check your spelling and try again.", args[0], cliConf.Project)
+			return fmt.Errorf("An application named \"%s\" was not found in your project (ID: %d). Please check your spelling and try again.", args[0], cliConfig.Project)
 		}
 
 		if res.Builder != "" &&
@@ -176,7 +177,7 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client api.Client, args []str
 		}
 	}
 
-	podsSimple, err := appGetPods(client, appNamespace, args[0])
+	podsSimple, err := appGetPods(ctx, cliConfig, client, appNamespace, args[0])
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())
 	}
@@ -248,7 +249,8 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client api.Client, args []str
 	}
 
 	config := &AppPorterRunSharedConfig{
-		Client: client,
+		Client:    client,
+		CLIConfig: cliConfig,
 	}
 
 	err = config.setSharedConfig()
@@ -264,9 +266,10 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client api.Client, args []str
 	return appExecuteRunEphemeral(config, appNamespace, selectedPod.Name, selectedContainerName, execArgs)
 }
 
-func appCleanup(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) error {
+func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
 	config := &AppPorterRunSharedConfig{
-		Client: client,
+		Client:    client,
+		CLIConfig: cliConfig,
 	}
 
 	err := config.setSharedConfig()
@@ -357,13 +360,14 @@ type AppPorterRunSharedConfig struct {
 	RestConf   *rest.Config
 	Clientset  *kubernetes.Clientset
 	RestClient *rest.RESTClient
+	CLIConfig  config.CLIConfig
 }
 
 func (p *AppPorterRunSharedConfig) setSharedConfig() error {
-	pID := cliConf.Project
-	cID := cliConf.Cluster
+	pID := p.CLIConfig.Project
+	cID := p.CLIConfig.Cluster
 
-	kubeResp, err := p.Client.GetKubeconfig(context.Background(), pID, cID, cliConf.Kubeconfig)
+	kubeResp, err := p.Client.GetKubeconfig(context.Background(), pID, cID, p.CLIConfig.Kubeconfig)
 	if err != nil {
 		return err
 	}
@@ -411,11 +415,11 @@ type appPodSimple struct {
 	ContainerNames []string
 }
 
-func appGetPods(client api.Client, namespace, releaseName string) ([]appPodSimple, error) {
-	pID := cliConf.Project
-	cID := cliConf.Cluster
+func appGetPods(ctx context.Context, cliConfig config.CLIConfig, client api.Client, namespace, releaseName string) ([]appPodSimple, error) {
+	pID := cliConfig.Project
+	cID := cliConfig.Cluster
 
-	resp, err := client.GetK8sAllPods(context.TODO(), pID, cID, namespace, releaseName)
+	resp, err := client.GetK8sAllPods(ctx, pID, cID, namespace, releaseName)
 	if err != nil {
 		return nil, err
 	}
@@ -1038,12 +1042,12 @@ func appCreateEphemeralPodFromExisting(
 	)
 }
 
-func appUpdateTag(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func appUpdateTag(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	namespace := fmt.Sprintf("porter-stack-%s", args[0])
 	if appTag == "" {
 		appTag = "latest"
 	}
-	release, err := client.GetRelease(context.TODO(), cliConf.Project, cliConf.Cluster, namespace, args[0])
+	release, err := client.GetRelease(ctx, cliConfig.Project, cliConfig.Cluster, namespace, args[0])
 	if err != nil {
 		return fmt.Errorf("Unable to find application %s", args[0])
 	}
@@ -1056,8 +1060,8 @@ func appUpdateTag(_ *types.GetAuthenticatedUserResponse, client api.Client, args
 		Tag:        appTag,
 	}
 	createUpdatePorterAppRequest := &types.CreatePorterAppRequest{
-		ClusterID:       cliConf.Cluster,
-		ProjectID:       cliConf.Project,
+		ClusterID:       cliConfig.Cluster,
+		ProjectID:       cliConfig.Project,
 		ImageInfo:       imageInfo,
 		OverrideRelease: false,
 	}
@@ -1065,9 +1069,9 @@ func appUpdateTag(_ *types.GetAuthenticatedUserResponse, client api.Client, args
 	color.New(color.FgGreen).Printf("Updating application %s to build using tag \"%s\"\n", args[0], appTag)
 
 	_, err = client.CreatePorterApp(
-		context.Background(),
-		cliConf.Project,
-		cliConf.Cluster,
+		ctx,
+		cliConfig.Project,
+		cliConfig.Cluster,
 		args[0],
 		createUpdatePorterAppRequest,
 	)

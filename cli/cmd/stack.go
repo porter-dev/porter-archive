@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/porter-dev/porter/cli/cmd/config"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
 
 	"github.com/fatih/color"
@@ -102,7 +103,7 @@ func init() {
 	stackEnvGroupCmd.AddCommand(stackEnvGroupRemoveCmd)
 }
 
-func stackAddEnvGroup(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -187,7 +188,7 @@ func stackAddEnvGroup(_ *types.GetAuthenticatedUserResponse, client api.Client, 
 	return nil
 }
 
-func stackRemoveEnvGroup(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func stackRemoveEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)

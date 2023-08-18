@@ -183,7 +183,7 @@ func init() {
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
 
-func createFull(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)

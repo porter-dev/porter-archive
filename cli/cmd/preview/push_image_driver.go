@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/mitchellh/mapstructure"
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
@@ -21,22 +22,28 @@ type PushDriver struct {
 	config      *preview.PushDriverConfig
 	lookupTable *map[string]drivers.Driver
 	output      map[string]interface{}
+	apiClient   api.Client
+	cliConfig   config.CLIConfig
 }
 
-func NewPushDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
-	driver := &PushDriver{
-		lookupTable: opts.DriverLookupTable,
-		output:      make(map[string]interface{}),
+func NewPushDriver(apiClient api.Client, cliConfig config.CLIConfig) func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+	return func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+		driver := &PushDriver{
+			lookupTable: opts.DriverLookupTable,
+			output:      make(map[string]interface{}),
+			apiClient:   apiClient,
+			cliConfig:   cliConfig,
+		}
+
+		target, err := GetTarget(resource.Name, resource.Target, apiClient, cliConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		driver.target = target
+
+		return driver, nil
 	}
-
-	target, err := GetTarget(resource.Name, resource.Target)
-	if err != nil {
-		return nil, err
-	}
-
-	driver.target = target
-
-	return driver, nil
 }
 
 func (d *PushDriver) ShouldApply(resource *models.Resource) bool {
@@ -57,14 +64,12 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 		return resource, nil
 	}
 
-	client := config.GetAPIClient()
-
-	agent, err := docker.NewAgentWithAuthGetter(client, d.target.Project)
+	agent, err := docker.NewAgentWithAuthGetter(d.apiClient, d.target.Project)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = client.GetRelease(
+	_, err = d.apiClient.GetRelease(
 		context.Background(),
 		d.target.Project,
 		d.target.Cluster,
@@ -75,7 +80,7 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 	shouldCreate := err != nil
 
 	if shouldCreate {
-		regList, err := client.ListRegistries(context.Background(), d.target.Project)
+		regList, err := d.apiClient.ListRegistries(context.Background(), d.target.Project)
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +108,7 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 		}
 
 		createAgent := &deploy.CreateAgent{
-			Client: client,
+			Client: d.apiClient,
 			CreateOpts: &deploy.CreateOpts{
 				SharedOpts:  sharedOpts,
 				ReleaseName: d.target.AppName,
@@ -117,7 +122,7 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 			return nil, err
 		}
 
-		err = client.CreateRepository(
+		err = d.apiClient.CreateRepository(
 			context.Background(),
 			sharedOpts.ProjectID,
 			regID,

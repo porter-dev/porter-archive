@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/porter-dev/porter/cli/cmd/config"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
 
 	"github.com/fatih/color"
@@ -61,10 +62,8 @@ func init() {
 	)
 }
 
-func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
-	ctx := context.Background()
-
-	project, err := client.GetProject(ctx, cliConf.Project)
+func bluegreenSwitch(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+	project, err := client.GetProject(ctx, cliConfig.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
 	}
@@ -78,7 +77,7 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client api.Client, a
 	}
 
 	// get the web release
-	webRelease, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, app)
+	webRelease, err := client.GetRelease(context.Background(), cliConfig.Project, cliConfig.Cluster, namespace, app)
 	if err != nil {
 		return err
 	}

@@ -19,17 +19,16 @@ var (
 	ErrCannotConnect error = errors.New("Unable to connect to the Porter server.")
 )
 
-func checkLoginAndRun(ctx context.Context, args []string, runner func(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error) error {
-	config, err := config.InitAndLoadConfig()
+func checkLoginAndRun(ctx context.Context, args []string, runner func(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error) error {
+	cliConf, err := config.InitAndLoadConfig()
 	if err != nil {
 		return fmt.Errorf("error loading porter config: %w", err)
 	}
 
 	client := api.NewClientWithConfig(ctx, api.NewClientInput{
-		BaseURL:        fmt.Sprintf("%s/api", config.Host),
-		BearerToken:    config.Token,
+		BaseURL:        fmt.Sprintf("%s/api", cliConf.Host),
+		BearerToken:    cliConf.Token,
 		CookieFileName: "cookie.json",
-		CLIConfig:      config,
 	})
 
 	user, err := client.AuthCheck(ctx)
@@ -50,7 +49,7 @@ func checkLoginAndRun(ctx context.Context, args []string, runner func(user *type
 		return err
 	}
 
-	err = runner(user, client, args)
+	err = runner(ctx, user, client, cliConf, args)
 
 	if err != nil {
 		red := color.New(color.FgRed)
@@ -65,7 +64,7 @@ func checkLoginAndRun(ctx context.Context, args []string, runner func(user *type
 			return nil
 		}
 
-		cliErrors.GetErrorHandler().HandleError(err)
+		cliErrors.GetErrorHandler(cliConf).HandleError(err)
 
 		return err
 	}

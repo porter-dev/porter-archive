@@ -442,7 +442,7 @@ func init() {
 	updateCmd.AddCommand(updateEnvGroupCmd)
 }
 
-func updateFull(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -512,7 +512,7 @@ func updateFull(_ *types.GetAuthenticatedUserResponse, client api.Client, args [
 	return nil
 }
 
-func updateGetEnv(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func updateGetEnv(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	updateAgent, err := updateGetAgent(client)
 	if err != nil {
 		return err
@@ -536,7 +536,7 @@ func updateGetEnv(_ *types.GetAuthenticatedUserResponse, client api.Client, args
 	return updateAgent.WriteBuildEnv(getEnvFileDest)
 }
 
-func updateBuild(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func updateBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -560,7 +560,7 @@ func updateBuild(_ *types.GetAuthenticatedUserResponse, client api.Client, args 
 	return updateBuildWithAgent(updateAgent)
 }
 
-func updatePush(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	if app == "" {
 		if len(args) == 0 {
 			return fmt.Errorf("please provide the docker image name")
@@ -619,7 +619,7 @@ func updatePush(_ *types.GetAuthenticatedUserResponse, client api.Client, args [
 	return updatePushWithAgent(updateAgent)
 }
 
-func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func updateUpgrade(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -659,7 +659,7 @@ func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client api.Client, arg
 	return nil
 }
 
-func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func updateSetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	if len(normalEnvGroupVars) == 0 && len(secretEnvGroupVars) == 0 && len(args) == 0 {
 		return fmt.Errorf("please provide one or more variables to update")
 	}
@@ -767,7 +767,7 @@ func validateVarValue(in string) (string, string, error) {
 	return key, value, nil
 }
 
-func updateUnsetEnvGroup(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func updateUnsetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("required variable name")
 	}

@@ -24,7 +24,13 @@ type StackConf struct {
 	projectID, clusterID uint
 }
 
-func CreateApplicationDeploy(client api.Client, worker *switchboardWorker.Worker, app *Application, applicationName string, cliConf *config.CLIConfig) ([]*switchboardTypes.Resource, error) {
+func CreateApplicationDeploy(client api.Client, worker *switchboardWorker.Worker, app *Application, applicationName string, cliConf config.CLIConfig) ([]*switchboardTypes.Resource, error) {
+	err := cliConf.ValidateCLIEnvironment()
+	if err != nil {
+		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
+		return nil, fmt.Errorf("%s: %w", errMsg, err)
+	}
+
 	// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
 	var builder string
 	resources, builder, err := createV1BuildResources(client, app, applicationName, cliConf.Project, cliConf.Cluster)
@@ -39,6 +45,7 @@ func CreateApplicationDeploy(client api.Client, worker *switchboardWorker.Worker
 
 	deployAppHook := &DeployAppHook{
 		Client:               client,
+		CLIConfig:            cliConf,
 		ApplicationName:      applicationName,
 		ProjectID:            cliConf.Project,
 		ClusterID:            cliConf.Cluster,
@@ -166,12 +173,6 @@ func createV1BuildResources(client api.Client, app *Application, stackName strin
 }
 
 func createStackConf(client api.Client, app *Application, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
-	err := config.ValidateCLIEnvironment()
-	if err != nil {
-		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
-		return nil, fmt.Errorf("%s: %w", errMsg, err)
-	}
-
 	releaseEnvVars := getEnvFromRelease(client, stackName, projectID, clusterID)
 	releaseEnvGroupVars := getEnvGroupFromRelease(client, stackName, projectID, clusterID)
 	// releaseEnvVars will override releaseEnvGroupVars

@@ -20,10 +20,11 @@ type DeployAppHook struct {
 	PorterYAML           []byte
 	Builder              string
 	BuildEventID         string
+	CLIConfig            config.CLIConfig
 }
 
 func (t *DeployAppHook) PreApply() error {
-	err := config.ValidateCLIEnvironment()
+	err := t.CLIConfig.ValidateCLIEnvironment()
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
 		return fmt.Errorf("%s: %w", errMsg, err)

@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +27,7 @@ func init() {
 	rootCmd.AddCommand(helmCmd)
 }
 
-func runHelm(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func runHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	_, err := exec.LookPath("helm")
 	if err != nil {
 		return fmt.Errorf("error finding helm: %w", err)

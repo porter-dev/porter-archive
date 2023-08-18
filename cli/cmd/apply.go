@@ -111,23 +111,21 @@ func init() {
 	applyCmd.MarkFlagRequired("file")
 }
 
-func apply(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string) (err error) {
-	ctx := context.Background()
-
-	project, err := client.GetProject(ctx, cliConf.Project)
+func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) (err error) {
+	project, err := client.GetProject(ctx, cliConfig.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
 	}
 
 	if project.ValidateApplyV2 {
-		err = v2.Apply(ctx, cliConf, client, porterYAML)
+		err = v2.Apply(ctx, cliConfig, client, porterYAML)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	fileBytes, err := ioutil.ReadFile(porterYAML)
+	fileBytes, err := os.ReadFile(porterYAML)
 	if err != nil {
 		stackName := os.Getenv("PORTER_STACK_NAME")
 		if stackName == "" {
@@ -151,7 +149,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string)
 	if previewVersion.Version == "v2beta1" {
 		ns := os.Getenv("PORTER_NAMESPACE")
 
-		applier, err := previewV2Beta1.NewApplier(client, fileBytes, ns)
+		applier, err := previewV2Beta1.NewApplier(client, cliConfig, fileBytes, ns)
 		if err != nil {
 			return err
 		}
@@ -193,7 +191,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string)
 
 		if parsed.Applications != nil {
 			for appName, app := range parsed.Applications {
-				resources, err := porter_app.CreateApplicationDeploy(client, worker, app, appName, cliConf)
+				resources, err := porter_app.CreateApplicationDeploy(client, worker, app, appName, cliConfig)
 				if err != nil {
 					return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 				}
@@ -230,7 +228,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string)
 				return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 			}
 
-			resources, err := porter_app.CreateApplicationDeploy(client, worker, app, appName, cliConf)
+			resources, err := porter_app.CreateApplicationDeploy(client, worker, app, appName, cliConfig)
 			if err != nil {
 				return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 			}
@@ -251,12 +249,12 @@ func apply(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string)
 		name     string
 		funcName func(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error)
 	}{
-		{"deploy", NewDeployDriver},
-		{"build-image", preview.NewBuildDriver},
-		{"push-image", preview.NewPushDriver},
-		{"update-config", preview.NewUpdateConfigDriver},
+		{"deploy", NewDeployDriver(client, cliConfig)},
+		{"build-image", preview.NewBuildDriver(client, cliConfig)},
+		{"push-image", preview.NewPushDriver(client, cliConfig)},
+		{"update-config", preview.NewUpdateConfigDriver(client, cliConfig)},
 		{"random-string", preview.NewRandomStringDriver},
-		{"env-group", preview.NewEnvGroupDriver},
+		{"env-group", preview.NewEnvGroupDriver(client, cliConfig)},
 		{"os-env", preview.NewOSEnvDriver},
 	}
 	for _, driver := range drivers {
@@ -277,7 +275,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string)
 			return
 		}
 
-		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
+		deploymentHook, err := NewDeploymentHook(cliConfig, client, resGroup, deplNamespace)
 		if err != nil {
 			err = fmt.Errorf("error creating deployment hook: %w", err)
 			return err
@@ -297,7 +295,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client api.Client, _ []string)
 		return err
 	}
 
-	cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
+	cloneEnvGroupHook := NewCloneEnvGroupHook(client, cliConfig, resGroup)
 	err = worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
 	if err != nil {
 		err = fmt.Errorf("error registering clone env group hook: %w", err)
@@ -373,30 +371,36 @@ type DeployDriver struct {
 	output      map[string]interface{}
 	lookupTable *map[string]drivers.Driver
 	logger      *zerolog.Logger
+	cliConfig   config.CLIConfig
+	apiClient   api.Client
 }
 
-func NewDeployDriver(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
-	driver := &DeployDriver{
-		lookupTable: opts.DriverLookupTable,
-		logger:      opts.Logger,
-		output:      make(map[string]interface{}),
+func NewDeployDriver(apiClient api.Client, cliConfig config.CLIConfig) func(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+	return func(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+		driver := &DeployDriver{
+			lookupTable: opts.DriverLookupTable,
+			logger:      opts.Logger,
+			output:      make(map[string]interface{}),
+			cliConfig:   cliConfig,
+			apiClient:   apiClient,
+		}
+
+		target, err := preview.GetTarget(resource.Name, resource.Target, apiClient, cliConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		driver.target = target
+
+		source, err := preview.GetSource(target.Project, resource.Name, resource.Source, apiClient)
+		if err != nil {
+			return nil, err
+		}
+
+		driver.source = source
+
+		return driver, nil
 	}
-
-	target, err := preview.GetTarget(resource.Name, resource.Target)
-	if err != nil {
-		return nil, err
-	}
-
-	driver.target = target
-
-	source, err := preview.GetSource(target.Project, resource.Name, resource.Source)
-	if err != nil {
-		return nil, err
-	}
-
-	driver.source = source
-
-	return driver, nil
 }
 
 func (d *DeployDriver) ShouldApply(_ *switchboardModels.Resource) bool {
@@ -405,9 +409,8 @@ func (d *DeployDriver) ShouldApply(_ *switchboardModels.Resource) bool {
 
 func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboardModels.Resource, error) {
 	ctx := context.Background()
-	client := config.GetAPIClient()
 
-	_, err := client.GetRelease(
+	_, err := d.apiClient.GetRelease(
 		ctx,
 		d.target.Project,
 		d.target.Cluster,
@@ -422,10 +425,10 @@ func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboard
 	}
 
 	if d.source.IsApplication {
-		return d.applyApplication(ctx, resource, client, shouldCreate)
+		return d.applyApplication(ctx, resource, d.apiClient, shouldCreate)
 	}
 
-	return d.applyAddon(resource, client, shouldCreate)
+	return d.applyAddon(resource, d.apiClient, shouldCreate)
 }
 
 // Simple apply for addons
@@ -544,7 +547,7 @@ func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboa
 
 	if appConfig.Build.UseCache {
 		// set the docker config so that pack caching can use the repo credentials
-		err := config.SetDockerConfig(client)
+		err := config.SetDockerConfig(client, d.target.Project)
 		if err != nil {
 			return nil, err
 		}
@@ -870,13 +873,15 @@ type DeploymentHook struct {
 	resourceGroup                                                             *switchboardTypes.ResourceGroup
 	gitInstallationID, projectID, clusterID, prID, actionID, envID            uint
 	branchFrom, branchInto, namespace, repoName, repoOwner, prName, commitSHA string
+	cliConfig                                                                 config.CLIConfig
 }
 
-func NewDeploymentHook(client api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
+func NewDeploymentHook(cliConfig config.CLIConfig, client api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
 	res := &DeploymentHook{
 		client:        client,
 		resourceGroup: resourceGroup,
 		namespace:     namespace,
+		cliConfig:     cliConfig,
 	}
 
 	ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID")
@@ -895,13 +900,13 @@ func NewDeploymentHook(client api.Client, resourceGroup *switchboardTypes.Resour
 
 	res.prID = uint(prID)
 
-	res.projectID = cliConf.Project
+	res.projectID = cliConfig.Project
 
 	if res.projectID == 0 {
 		return nil, fmt.Errorf("project id must be set")
 	}
 
-	res.clusterID = cliConf.Cluster
+	res.clusterID = cliConfig.Cluster
 
 	if res.clusterID == 0 {
 		return nil, fmt.Errorf("cluster id must be set")
@@ -1171,8 +1176,8 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 	}
 
 	for _, res := range t.resourceGroup.Resources {
-		releaseType := getReleaseType(t.projectID, res)
-		releaseName := getReleaseName(res)
+		releaseType := getReleaseType(t.projectID, res, t.client)
+		releaseName := getReleaseName(res, t.client, t.cliConfig)
 
 		if releaseType != "" && releaseName != "" {
 			req.SuccessfulResources = append(req.SuccessfulResources, &types.SuccessfullyDeployedResource{
@@ -1270,8 +1275,8 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 		for _, res := range t.resourceGroup.Resources {
 			if _, ok := allErrors[res.Name]; !ok {
 				req.SuccessfulResources = append(req.SuccessfulResources, &types.SuccessfullyDeployedResource{
-					ReleaseName: getReleaseName(res),
-					ReleaseType: getReleaseType(t.projectID, res),
+					ReleaseName: getReleaseName(res, t.client, t.cliConfig),
+					ReleaseType: getReleaseType(t.projectID, res, t.client),
 				})
 			}
 		}
@@ -1286,14 +1291,16 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 }
 
 type CloneEnvGroupHook struct {
-	client   api.Client
-	resGroup *switchboardTypes.ResourceGroup
+	client    api.Client
+	resGroup  *switchboardTypes.ResourceGroup
+	cliConfig config.CLIConfig
 }
 
-func NewCloneEnvGroupHook(client api.Client, resourceGroup *switchboardTypes.ResourceGroup) *CloneEnvGroupHook {
+func NewCloneEnvGroupHook(client api.Client, cliConfig config.CLIConfig, resourceGroup *switchboardTypes.ResourceGroup) *CloneEnvGroupHook {
 	return &CloneEnvGroupHook{
-		client:   client,
-		resGroup: resourceGroup,
+		client:    client,
+		cliConfig: cliConfig,
+		resGroup:  resourceGroup,
 	}
 }
 
@@ -1311,7 +1318,7 @@ func (t *CloneEnvGroupHook) PreApply() error {
 		}
 
 		if appConf != nil && len(appConf.EnvGroups) > 0 {
-			target, err := preview.GetTarget(res.Name, res.Target)
+			target, err := preview.GetTarget(res.Name, res.Target, t.client, t.cliConfig)
 			if err != nil {
 				return err
 			}
@@ -1376,10 +1383,10 @@ func (t *CloneEnvGroupHook) OnError(error) {}
 
 func (t *CloneEnvGroupHook) OnConsolidatedErrors(map[string]error) {}
 
-func getReleaseName(res *switchboardTypes.Resource) string {
+func getReleaseName(res *switchboardTypes.Resource, apiClient api.Client, cliConfig config.CLIConfig) string {
 	// can ignore the error because this method is called once
 	// GetTarget has alrealy been called and validated previously
-	target, _ := preview.GetTarget(res.Name, res.Target)
+	target, _ := preview.GetTarget(res.Name, res.Target, apiClient, cliConfig)
 
 	if target.AppName != "" {
 		return target.AppName
@@ -1388,10 +1395,10 @@ func getReleaseName(res *switchboardTypes.Resource) string {
 	return res.Name
 }
 
-func getReleaseType(projectID uint, res *switchboardTypes.Resource) string {
+func getReleaseType(projectID uint, res *switchboardTypes.Resource, apiClient api.Client) string {
 	// can ignore the error because this method is called once
 	// GetSource has alrealy been called and validated previously
-	source, _ := preview.GetSource(projectID, res.Name, res.Source)
+	source, _ := preview.GetSource(projectID, res.Name, res.Source, apiClient)
 
 	if source != nil && source.Name != "" {
 		return source.Name

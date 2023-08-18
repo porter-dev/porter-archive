@@ -15,7 +15,6 @@ import (
 
 	"github.com/gorilla/schema"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/cli/cmd/config"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -30,8 +29,8 @@ type Client struct {
 	// cfToken is a cloudflare token for accessing the API
 	cfToken string
 
-	// Config contains all config read from flags, environment variables, or porter.yaml config. This is used to automatically pull hosts, projectIDs, clusterIDs etc. in API calls
-	Config config.CLIConfig
+	// // Config contains all config read from flags, environment variables, or porter.yaml config. This is used to automatically pull hosts, projectIDs, clusterIDs etc. in API calls
+	// Config config.CLIConfig
 }
 
 // NewClientInput contains all information required to create a new API Client
@@ -50,8 +49,8 @@ type NewClientInput struct {
 	// If one is found, it will be added to all API calls.
 	CloudflareToken string
 
-	// CLIConfig contains all config read from flags, environment variables, or porter.yaml config. This is used to automatically pull hosts, projectIDs, clusterIDs etc. in API calls
-	CLIConfig config.CLIConfig
+	// // CLIConfig contains all config read from flags, environment variables, or porter.yaml config. This is used to automatically pull hosts, projectIDs, clusterIDs etc. in API calls
+	// CLIConfig config.CLIConfig
 }
 
 // NewClientWithConfig creates a new API client with the provided config
@@ -61,7 +60,7 @@ func NewClientWithConfig(ctx context.Context, input NewClientInput) Client {
 		HTTPClient: &http.Client{
 			Timeout: time.Minute,
 		},
-		Config: input.CLIConfig,
+		// Config: input.CLIConfig,
 	}
 	if cfToken := os.Getenv("PORTER_CF_ACCESS_TOKEN"); cfToken != "" {
 		client.cfToken = cfToken
@@ -72,6 +71,7 @@ func NewClientWithConfig(ctx context.Context, input NewClientInput) Client {
 			Token: input.BearerToken,
 		}
 	}
+	return client
 }
 
 // NewClient constructs a new client based on a set of options

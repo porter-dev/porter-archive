@@ -6,6 +6,7 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/porter-dev/porter/cli/cmd/config"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
 
 	"github.com/fatih/color"
@@ -91,7 +92,7 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 }
 
-func listAll(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -115,7 +116,7 @@ func listAll(_ *types.GetAuthenticatedUserResponse, client api.Client, args []st
 	return nil
 }
 
-func listApps(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -139,7 +140,7 @@ func listApps(_ *types.GetAuthenticatedUserResponse, client api.Client, args []s
 	return nil
 }
 
-func listJobs(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func listJobs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	ctx := context.Background()
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -163,7 +164,7 @@ func listJobs(_ *types.GetAuthenticatedUserResponse, client api.Client, args []s
 	return nil
 }
 
-func listAddons(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func listAddons(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	err := writeReleases(client, "addon")
 	if err != nil {
 		return err

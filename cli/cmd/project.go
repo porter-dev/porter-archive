@@ -11,6 +11,7 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )
@@ -66,7 +67,7 @@ func init() {
 	projectCmd.AddCommand(listProjectCmd)
 }
 
-func createProject(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func createProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	resp, err := client.CreateProject(context.Background(), &types.CreateProjectRequest{
 		Name: args[0],
 	})
@@ -92,7 +93,7 @@ func listProjects(user *types.GetAuthenticatedUserResponse, client api.Client, a
 
 	fmt.Fprintf(w, "%s\t%s\n", "ID", "NAME")
 
-	currProjectID := cliConf.Project
+	currProjectID := client.Config.Project
 
 	for _, project := range projects {
 		if currProjectID == project.ID {
@@ -107,7 +108,7 @@ func listProjects(user *types.GetAuthenticatedUserResponse, client api.Client, a
 	return nil
 }
 
-func deleteProject(_ *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func deleteProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Are you sure you'd like to delete the project with id %s? %s `,
@@ -146,7 +147,7 @@ func setProjectCluster(ctx context.Context, client api.Client, projectID uint) e
 	clusters := *resp
 
 	if len(clusters) > 0 {
-		cliConf.SetCluster(clusters[0].ID)
+		client.Config.SetCluster(clusters[0].ID)
 	}
 
 	return nil

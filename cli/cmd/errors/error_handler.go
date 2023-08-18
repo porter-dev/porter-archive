@@ -22,7 +22,9 @@ func (h *standardErrorHandler) HandleError(err error) {
 	color.New(color.FgRed).Fprintf(os.Stderr, "error: %s\n", err.Error())
 }
 
-type sentryErrorHandler struct{}
+type sentryErrorHandler struct {
+	cliConfig config.CLIConfig
+}
 
 func (h *sentryErrorHandler) HandleError(err error) {
 	if SentryDSN != "" {
@@ -30,9 +32,9 @@ func (h *sentryErrorHandler) HandleError(err error) {
 
 		localHub.ConfigureScope(func(scope *sentry.Scope) {
 			scope.SetTags(map[string]string{
-				"host":    config.GetCLIConfig().Host,
-				"project": fmt.Sprintf("%d", config.GetCLIConfig().Project),
-				"cluster": fmt.Sprintf("%d", config.GetCLIConfig().Cluster),
+				"host":    h.cliConfig.Host,
+				"project": fmt.Sprintf("%d", h.cliConfig.Project),
+				"cluster": fmt.Sprintf("%d", h.cliConfig.Cluster),
 			})
 		})
 
@@ -43,9 +45,11 @@ func (h *sentryErrorHandler) HandleError(err error) {
 	color.New(color.FgRed).Fprintf(os.Stderr, "error: %s\n", err.Error())
 }
 
-func GetErrorHandler() errorHandler {
+func GetErrorHandler(cliConf config.CLIConfig) errorHandler {
 	if SentryDSN != "" {
-		return &sentryErrorHandler{}
+		return &sentryErrorHandler{
+			cliConfig: cliConf,
+		}
 	}
 
 	return &standardErrorHandler{}

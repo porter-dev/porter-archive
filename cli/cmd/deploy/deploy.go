@@ -32,7 +32,7 @@ const (
 type DeployAgent struct {
 	App string
 
-	Client         *client.Client
+	Client         client.Client
 	Opts           *DeployOpts
 	Release        *types.GetReleaseResponse
 	agent          *docker.Agent
@@ -53,7 +53,7 @@ type DeployOpts struct {
 
 // NewDeployAgent creates a new DeployAgent given a Porter API client, application
 // name, and DeployOpts.
-func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*DeployAgent, error) {
+func NewDeployAgent(client client.Client, app string, opts *DeployOpts) (*DeployAgent, error) {
 	deployAgent := &DeployAgent{
 		App:    app,
 		Opts:   opts,
@@ -421,7 +421,7 @@ type SyncedEnvSectionKey struct {
 // GetEnvForRelease gets the env vars for a standard Porter template config. These env
 // vars are found at `container.env.normal` and `container.env.synced`.
 func GetEnvForRelease(
-	client *client.Client,
+	client client.Client,
 	config map[string]interface{},
 	projID, clusterID uint,
 	namespace string,
@@ -453,7 +453,7 @@ func GetEnvForRelease(
 }
 
 func GetNormalEnv(
-	client *client.Client,
+	client client.Client,
 	config map[string]interface{},
 	projID, clusterID uint,
 	namespace string,
@@ -487,7 +487,7 @@ func GetNormalEnv(
 }
 
 func GetSyncedEnv(
-	client *client.Client,
+	client client.Client,
 	config map[string]interface{},
 	projID, clusterID uint,
 	namespace string,

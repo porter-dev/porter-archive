@@ -11,7 +11,6 @@ import AggregatedDataLegend from "../../../cluster-dashboard/expanded-chart/metr
 import AreaChart from "./AreaChart";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import Loading from "components/Loading";
-import TabSelector from "components/TabSelector";
 import { AvailableMetrics, GenericMetricResponse, NormalizedMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
 import { MetricNormalizer } from "../../../cluster-dashboard/expanded-chart/metrics/MetricNormalizer";
 

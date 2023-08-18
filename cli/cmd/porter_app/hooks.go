@@ -29,8 +29,9 @@ func (t *DeployAppHook) PreApply() error {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
 		return fmt.Errorf("%s: %w", errMsg, err)
 	}
+	ctx := context.TODO() // switchboard blocks being able to change this for now
 
-	buildEventId, err := createAppEvent(t.Client, t.ApplicationName, t.ProjectID, t.ClusterID)
+	buildEventId, err := createAppEvent(ctx, t.Client, t.ApplicationName, t.ProjectID, t.ClusterID)
 	if err != nil {
 		return err
 	}
@@ -48,10 +49,11 @@ func (t *DeployAppHook) DataQueries() map[string]interface{} {
 
 // deploy the app
 func (t *DeployAppHook) PostApply(driverOutput map[string]interface{}) error {
+	ctx := context.TODO() // switchboard blocks being able to change this for now
 	namespace := fmt.Sprintf("porter-stack-%s", t.ApplicationName)
 
 	_, err := t.Client.GetRelease(
-		context.Background(),
+		ctx,
 		t.ProjectID,
 		t.ClusterID,
 		namespace,
@@ -66,7 +68,7 @@ func (t *DeployAppHook) PostApply(driverOutput map[string]interface{}) error {
 		color.New(color.FgGreen).Printf("Found release for app %s: attempting update\n", t.ApplicationName)
 	}
 
-	err = t.createOrUpdateApplication(shouldCreate, driverOutput)
+	err = t.createOrUpdateApplication(ctx, shouldCreate, driverOutput)
 	if err != nil {
 		return err
 	}
@@ -76,12 +78,12 @@ func (t *DeployAppHook) PostApply(driverOutput map[string]interface{}) error {
 		Metadata: map[string]any{},
 		ID:       t.BuildEventID,
 	}
-	_, _ = t.Client.CreateOrUpdatePorterAppEvent(context.Background(), t.ProjectID, t.ClusterID, t.ApplicationName, &eventRequest)
+	_, _ = t.Client.CreateOrUpdatePorterAppEvent(ctx, t.ProjectID, t.ClusterID, t.ApplicationName, &eventRequest)
 
 	return nil
 }
 
-func (t *DeployAppHook) createOrUpdateApplication(shouldCreate bool, driverOutput map[string]interface{}) error {
+func (t *DeployAppHook) createOrUpdateApplication(ctx context.Context, shouldCreate bool, driverOutput map[string]interface{}) error {
 	var imageInfo types.ImageInfo
 	image, ok := driverOutput["image"].(string)
 	// if it contains a $, then it means the query didn't resolve to anything
@@ -98,7 +100,7 @@ func (t *DeployAppHook) createOrUpdateApplication(shouldCreate bool, driverOutpu
 	}
 
 	_, err := t.Client.CreatePorterApp(
-		context.Background(),
+		ctx,
 		t.ProjectID,
 		t.ClusterID,
 		t.ApplicationName,
@@ -122,6 +124,8 @@ func (t *DeployAppHook) createOrUpdateApplication(shouldCreate bool, driverOutpu
 }
 
 func (t *DeployAppHook) OnConsolidatedErrors(errors map[string]error) {
+	ctx := context.TODO() // switchboard blocks being able to change this for now
+
 	errorStringMap := make(map[string]string)
 	for k, v := range errors {
 		errorStringMap[k] = fmt.Sprintf("%+v", v)
@@ -134,7 +138,7 @@ func (t *DeployAppHook) OnConsolidatedErrors(errors map[string]error) {
 		},
 		ID: t.BuildEventID,
 	}
-	_, _ = t.Client.CreateOrUpdatePorterAppEvent(context.Background(), t.ProjectID, t.ClusterID, t.ApplicationName, &eventRequest)
+	_, _ = t.Client.CreateOrUpdatePorterAppEvent(ctx, t.ProjectID, t.ClusterID, t.ApplicationName, &eventRequest)
 }
 
 func (t *DeployAppHook) OnError(err error) {

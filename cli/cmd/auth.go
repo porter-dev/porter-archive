@@ -24,7 +24,7 @@ var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Authorizes a user for a given Porter server",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := login()
+		err := login(cmd.Context())
 		if err != nil {
 			color.Red("Error logging in: %s\n", err.Error())
 			os.Exit(1)
@@ -36,7 +36,7 @@ var registerCmd = &cobra.Command{
 	Use:   "register",
 	Short: "Creates a user for a given Porter server",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := register()
+		err := register(cmd.Context())
 		if err != nil {
 			color.Red("Error registering: %s\n", err.Error())
 			os.Exit(1)
@@ -72,9 +72,7 @@ func init() {
 	)
 }
 
-func login() error {
-	ctx := context.Background()
-
+func login(ctx context.Context) error {
 	cliConf, err := config.InitAndLoadConfig()
 	if err != nil {
 		return fmt.Errorf("error loading porter config: %w", err)
@@ -115,7 +113,7 @@ func login() error {
 					return err
 				}
 
-				err = setProjectCluster(ctx, client, projID)
+				err = setProjectCluster(ctx, client, cliConf, projID)
 
 				if err != nil {
 					return err
@@ -151,7 +149,7 @@ func login() error {
 		BearerToken: token,
 	})
 
-	user, err = client.AuthCheck(context.Background())
+	user, err = client.AuthCheck(ctx)
 
 	if err != nil {
 		color.Red("Invalid token.")
@@ -163,9 +161,9 @@ func login() error {
 	return setProjectForUser(ctx, client, cliConf, user.ID)
 }
 
-func setProjectForUser(ctx context.Context, client api.Client, config config.CLIConfig, userID uint) error {
+func setProjectForUser(ctx context.Context, client api.Client, config config.CLIConfig, _ uint) error {
 	// get a list of projects, and set the current project
-	resp, err := client.ListUserProjects(context.Background())
+	resp, err := client.ListUserProjects(ctx)
 	if err != nil {
 		return err
 	}
@@ -173,9 +171,9 @@ func setProjectForUser(ctx context.Context, client api.Client, config config.CLI
 	projects := *resp
 
 	if len(projects) > 0 {
-		config.SetProject(ctx, client, projects[0].ID)
+		config.SetProject(ctx, client, projects[0].ID) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
-		err = setProjectCluster(ctx, client, projects[0].ID)
+		err = setProjectCluster(ctx, client, config, projects[0].ID)
 
 		if err != nil {
 			return err
@@ -216,7 +214,7 @@ func loginManual(ctx context.Context, cliConf config.CLIConfig, client api.Clien
 	color.New(color.FgGreen).Println("Successfully logged in!")
 
 	// get a list of projects, and set the current project
-	resp, err := client.ListUserProjects(context.Background())
+	resp, err := client.ListUserProjects(ctx)
 	if err != nil {
 		return err
 	}
@@ -224,9 +222,9 @@ func loginManual(ctx context.Context, cliConf config.CLIConfig, client api.Clien
 	projects := *resp
 
 	if len(projects) > 0 {
-		cliConf.SetProject(ctx, client, projects[0].ID)
+		cliConf.SetProject(ctx, client, projects[0].ID) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
-		err = setProjectCluster(ctx, client, projects[0].ID)
+		err = setProjectCluster(ctx, client, cliConf, projects[0].ID)
 
 		if err != nil {
 			return err
@@ -236,9 +234,7 @@ func loginManual(ctx context.Context, cliConf config.CLIConfig, client api.Clien
 	return nil
 }
 
-func register() error {
-	ctx := context.Background()
-
+func register(ctx context.Context) error {
 	config, err := config.InitAndLoadConfig()
 	if err != nil {
 		return fmt.Errorf("error loading porter config: %w", err)
@@ -275,7 +271,7 @@ func register() error {
 }
 
 func logout(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	err := client.Logout(context.Background())
+	err := client.Logout(ctx)
 	if err != nil {
 		return err
 	}

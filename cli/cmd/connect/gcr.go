@@ -15,6 +15,7 @@ import (
 
 // GCR creates a GCR integration
 func GCR(
+	ctx context.Context,
 	client api.Client,
 	projectID uint,
 ) (uint, error) {
@@ -39,7 +40,7 @@ Key file location: `))
 
 		// create the gcp integration
 		integration, err := client.CreateGCPIntegration(
-			context.Background(),
+			ctx,
 			projectID,
 			&types.CreateGCPRequest{
 				GCPKeyData: string(bytes),
@@ -65,7 +66,7 @@ Registry URL: `))
 		}
 
 		reg, err := client.CreateRegistry(
-			context.Background(),
+			ctx,
 			projectID,
 			&types.CreateRegistryRequest{
 				Name:             regName,

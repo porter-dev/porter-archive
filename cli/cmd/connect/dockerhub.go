@@ -13,6 +13,7 @@ import (
 )
 
 func Dockerhub(
+	ctx context.Context,
 	client api.Client,
 	projectID uint,
 ) (uint, error) {
@@ -46,7 +47,7 @@ func Dockerhub(
 
 	// create the basic auth integration
 	integration, err := client.CreateBasicAuthIntegration(
-		context.Background(),
+		ctx,
 		projectID,
 		&types.CreateBasicRequest{
 			Username: username,
@@ -60,7 +61,7 @@ func Dockerhub(
 	color.New(color.FgGreen).Printf("created basic auth integration with id %d\n", integration.ID)
 
 	reg, err := client.CreateRegistry(
-		context.Background(),
+		ctx,
 		projectID,
 		&types.CreateRegistryRequest{
 			URL:                fmt.Sprintf("index.docker.io/%s", repoName),

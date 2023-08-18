@@ -26,7 +26,8 @@ type PushDriver struct {
 	cliConfig   config.CLIConfig
 }
 
-func NewPushDriver(apiClient api.Client, cliConfig config.CLIConfig) func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+// NewPushDriver extends switchboard with image pushing to registries
+func NewPushDriver(ctx context.Context, apiClient api.Client, cliConfig config.CLIConfig) func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
 	return func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
 		driver := &PushDriver{
 			lookupTable: opts.DriverLookupTable,
@@ -35,7 +36,7 @@ func NewPushDriver(apiClient api.Client, cliConfig config.CLIConfig) func(resour
 			cliConfig:   cliConfig,
 		}
 
-		target, err := GetTarget(resource.Name, resource.Target, apiClient, cliConfig)
+		target, err := GetTarget(ctx, resource.Name, resource.Target, apiClient, cliConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -51,6 +52,8 @@ func (d *PushDriver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) {
+	ctx := context.TODO() // switchboard blocks changing this for now
+
 	pushDriverConfig, err := d.getConfig(resource)
 	if err != nil {
 		return nil, err
@@ -64,13 +67,13 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 		return resource, nil
 	}
 
-	agent, err := docker.NewAgentWithAuthGetter(d.apiClient, d.target.Project)
+	agent, err := docker.NewAgentWithAuthGetter(ctx, d.apiClient, d.target.Project)
 	if err != nil {
 		return nil, err
 	}
 
 	_, err = d.apiClient.GetRelease(
-		context.Background(),
+		ctx,
 		d.target.Project,
 		d.target.Cluster,
 		d.target.Namespace,
@@ -80,7 +83,7 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 	shouldCreate := err != nil
 
 	if shouldCreate {
-		regList, err := d.apiClient.ListRegistries(context.Background(), d.target.Project)
+		regList, err := d.apiClient.ListRegistries(ctx, d.target.Project)
 		if err != nil {
 			return nil, err
 		}
@@ -117,13 +120,13 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 			},
 		}
 
-		regID, imageURL, err := createAgent.GetImageRepoURL(d.target.AppName, sharedOpts.Namespace)
+		regID, imageURL, err := createAgent.GetImageRepoURL(ctx, d.target.AppName, sharedOpts.Namespace)
 		if err != nil {
 			return nil, err
 		}
 
 		err = d.apiClient.CreateRepository(
-			context.Background(),
+			ctx,
 			sharedOpts.ProjectID,
 			regID,
 			&types.CreateRegistryRepositoryRequest{
@@ -136,7 +139,7 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 		}
 	}
 
-	err = agent.PushImage(d.config.Push.Image)
+	err = agent.PushImage(ctx, d.config.Push.Image)
 	if err != nil {
 		return nil, err
 	}

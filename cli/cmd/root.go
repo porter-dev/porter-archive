@@ -28,12 +28,12 @@ var home = homedir.HomeDir()
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() error {
+func Execute(ctx context.Context) error {
 	rootCmd.PersistentFlags().AddFlagSet(utils.DefaultFlagSet)
 
 	if cfg.Version != "dev" {
 		ghClient := github.NewClient(nil)
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
 		release, _, err := ghClient.Repositories.GetLatestRelease(ctx, "porter-dev", "porter")
 		if err == nil {

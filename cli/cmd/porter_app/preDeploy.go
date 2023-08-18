@@ -12,12 +12,12 @@ import (
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 )
 
-func createPreDeployResource(client api.Client, release *Service, stackName, buildResourceName, pushResourceName string, projectID, clusterID uint, env map[string]string) (*switchboardTypes.Resource, string, error) {
+func createPreDeployResource(ctx context.Context, client api.Client, release *Service, stackName, buildResourceName, pushResourceName string, projectID, clusterID uint, env map[string]string) (*switchboardTypes.Resource, string, error) {
 	var finalCmd string
 	if release != nil && release.Run != nil {
 		finalCmd = *release.Run
 	} else {
-		finalCmd = getPredeployStartCommandFromRelease(client, stackName, projectID, clusterID)
+		finalCmd = getPredeployStartCommandFromRelease(ctx, client, stackName, projectID, clusterID)
 		if finalCmd == "" {
 			return nil, "", nil
 		}
@@ -64,11 +64,11 @@ func createPreDeployResource(client api.Client, release *Service, stackName, bui
 	}, finalCmd, nil
 }
 
-func getPredeployStartCommandFromRelease(client api.Client, stackName string, projectID uint, clusterID uint) string {
+func getPredeployStartCommandFromRelease(ctx context.Context, client api.Client, stackName string, projectID uint, clusterID uint) string {
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 	releaseName := fmt.Sprintf("%s-r", stackName)
 	release, err := client.GetRelease(
-		context.Background(),
+		ctx,
 		projectID,
 		clusterID,
 		namespace,

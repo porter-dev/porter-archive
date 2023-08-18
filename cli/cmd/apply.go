@@ -125,7 +125,7 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 		return nil
 	}
 
-	fileBytes, err := os.ReadFile(porterYAML)
+	fileBytes, err := os.ReadFile(porterYAML) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 	if err != nil {
 		stackName := os.Getenv("PORTER_STACK_NAME")
 		if stackName == "" {
@@ -191,7 +191,7 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 
 		if parsed.Applications != nil {
 			for appName, app := range parsed.Applications {
-				resources, err := porter_app.CreateApplicationDeploy(client, worker, app, appName, cliConfig)
+				resources, err := porter_app.CreateApplicationDeploy(ctx, client, worker, app, appName, cliConfig)
 				if err != nil {
 					return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 				}
@@ -228,7 +228,7 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 				return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 			}
 
-			resources, err := porter_app.CreateApplicationDeploy(client, worker, app, appName, cliConfig)
+			resources, err := porter_app.CreateApplicationDeploy(ctx, client, worker, app, appName, cliConfig)
 			if err != nil {
 				return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 			}
@@ -249,12 +249,12 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 		name     string
 		funcName func(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error)
 	}{
-		{"deploy", NewDeployDriver(client, cliConfig)},
-		{"build-image", preview.NewBuildDriver(client, cliConfig)},
-		{"push-image", preview.NewPushDriver(client, cliConfig)},
-		{"update-config", preview.NewUpdateConfigDriver(client, cliConfig)},
+		{"deploy", NewDeployDriver(ctx, client, cliConfig)},
+		{"build-image", preview.NewBuildDriver(ctx, client, cliConfig)},
+		{"push-image", preview.NewPushDriver(ctx, client, cliConfig)},
+		{"update-config", preview.NewUpdateConfigDriver(ctx, client, cliConfig)},
 		{"random-string", preview.NewRandomStringDriver},
-		{"env-group", preview.NewEnvGroupDriver(client, cliConfig)},
+		{"env-group", preview.NewEnvGroupDriver(ctx, client, cliConfig)},
 		{"os-env", preview.NewOSEnvDriver},
 	}
 	for _, driver := range drivers {
@@ -365,6 +365,7 @@ func hasDeploymentHookEnvVars() bool {
 	return true
 }
 
+// DeployDriver contains all information needed for deploying with switchboard
 type DeployDriver struct {
 	source      *previewInt.Source
 	target      *previewInt.Target
@@ -375,7 +376,8 @@ type DeployDriver struct {
 	apiClient   api.Client
 }
 
-func NewDeployDriver(apiClient api.Client, cliConfig config.CLIConfig) func(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+// NewDeployDriver creates a deployment driver for use with switchboard
+func NewDeployDriver(ctx context.Context, apiClient api.Client, cliConfig config.CLIConfig) func(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
 	return func(resource *switchboardModels.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
 		driver := &DeployDriver{
 			lookupTable: opts.DriverLookupTable,
@@ -385,14 +387,14 @@ func NewDeployDriver(apiClient api.Client, cliConfig config.CLIConfig) func(reso
 			apiClient:   apiClient,
 		}
 
-		target, err := preview.GetTarget(resource.Name, resource.Target, apiClient, cliConfig)
+		target, err := preview.GetTarget(ctx, resource.Name, resource.Target, apiClient, cliConfig)
 		if err != nil {
 			return nil, err
 		}
 
 		driver.target = target
 
-		source, err := preview.GetSource(target.Project, resource.Name, resource.Source, apiClient)
+		source, err := preview.GetSource(ctx, target.Project, resource.Name, resource.Source, apiClient)
 		if err != nil {
 			return nil, err
 		}
@@ -403,13 +405,14 @@ func NewDeployDriver(apiClient api.Client, cliConfig config.CLIConfig) func(reso
 	}
 }
 
+// ShouldApply extends switchboard
 func (d *DeployDriver) ShouldApply(_ *switchboardModels.Resource) bool {
 	return true
 }
 
+// Apply extends switchboard
 func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboardModels.Resource, error) {
-	ctx := context.Background()
-
+	ctx := context.TODO() // blocked from switchboard for now
 	_, err := d.apiClient.GetRelease(
 		ctx,
 		d.target.Project,
@@ -428,11 +431,11 @@ func (d *DeployDriver) Apply(resource *switchboardModels.Resource) (*switchboard
 		return d.applyApplication(ctx, resource, d.apiClient, shouldCreate)
 	}
 
-	return d.applyAddon(resource, d.apiClient, shouldCreate)
+	return d.applyAddon(ctx, resource, d.apiClient, shouldCreate)
 }
 
 // Simple apply for addons
-func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
+func (d *DeployDriver) applyAddon(ctx context.Context, resource *switchboardModels.Resource, client api.Client, shouldCreate bool) (*switchboardModels.Resource, error) {
 	addonConfig, err := d.getAddonConfig(resource)
 	if err != nil {
 		return nil, fmt.Errorf("error getting addon config for resource %s: %w", resource.Name, err)
@@ -440,7 +443,7 @@ func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client a
 
 	if shouldCreate {
 		err := client.DeployAddon(
-			context.Background(),
+			ctx,
 			d.target.Project,
 			d.target.Cluster,
 			d.target.Namespace,
@@ -464,7 +467,7 @@ func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client a
 		}
 
 		err = client.UpgradeRelease(
-			context.Background(),
+			ctx,
 			d.target.Project,
 			d.target.Cluster,
 			d.target.Namespace,
@@ -479,7 +482,7 @@ func (d *DeployDriver) applyAddon(resource *switchboardModels.Resource, client a
 		}
 	}
 
-	if err = d.assignOutput(resource, client); err != nil {
+	if err = d.assignOutput(ctx, resource, client); err != nil {
 		return nil, err
 	}
 
@@ -547,20 +550,20 @@ func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboa
 
 	if appConfig.Build.UseCache {
 		// set the docker config so that pack caching can use the repo credentials
-		err := config.SetDockerConfig(client, d.target.Project)
+		err := config.SetDockerConfig(ctx, client, d.target.Project)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if shouldCreate {
-		resource, err = d.createApplication(resource, client, sharedOpts, appConfig)
+		resource, err = d.createApplication(ctx, resource, client, sharedOpts, appConfig)
 
 		if err != nil {
 			return nil, fmt.Errorf("error creating app from resource %s: %w", resourceName, err)
 		}
 	} else if !appConfig.OnlyCreate {
-		resource, err = d.updateApplication(resource, client, sharedOpts, appConfig)
+		resource, err = d.updateApplication(ctx, resource, client, sharedOpts, appConfig)
 
 		if err != nil {
 			return nil, fmt.Errorf("error updating application from resource %s: %w", resourceName, err)
@@ -569,7 +572,7 @@ func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboa
 		color.New(color.FgYellow).Printf("Skipping creation for resource %s as onlyCreate is set to true\n", resourceName)
 	}
 
-	if err = d.assignOutput(resource, client); err != nil {
+	if err = d.assignOutput(ctx, resource, client); err != nil {
 		return nil, err
 	}
 
@@ -595,7 +598,7 @@ func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboa
 			predeployEventResponseID = eventResponse.ID
 		}
 
-		err = wait.WaitForJob(client, &wait.WaitOpts{
+		err = wait.WaitForJob(ctx, client, &wait.WaitOpts{
 			ProjectID: d.target.Project,
 			ClusterID: d.target.Cluster,
 			Namespace: d.target.Namespace,
@@ -623,7 +626,7 @@ func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboa
 
 			if appConfig.OnlyCreate {
 				deleteJobErr := client.DeleteRelease(
-					context.Background(),
+					ctx,
 					d.target.Project,
 					d.target.Cluster,
 					d.target.Namespace,
@@ -662,7 +665,7 @@ func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboa
 	return resource, err
 }
 
-func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, client api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*switchboardModels.Resource, error) {
+func (d *DeployDriver) createApplication(ctx context.Context, resource *switchboardModels.Resource, client api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*switchboardModels.Resource, error) {
 	// create new release
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", d.source.Name, resource.Name)
 
@@ -701,17 +704,17 @@ func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, c
 	var err error
 
 	if appConf.Build.Method == "registry" {
-		subdomain, err = createAgent.CreateFromRegistry(appConf.Build.Image, appConf.Values)
+		subdomain, err = createAgent.CreateFromRegistry(ctx, appConf.Build.Image, appConf.Values)
 	} else {
 		// if useCache is set, create the image repository first
 		if appConf.Build.UseCache {
-			regID, imageURL, err := createAgent.GetImageRepoURL(resource.Name, sharedOpts.Namespace)
+			regID, imageURL, err := createAgent.GetImageRepoURL(ctx, resource.Name, sharedOpts.Namespace)
 			if err != nil {
 				return nil, err
 			}
 
 			err = client.CreateRepository(
-				context.Background(),
+				ctx,
 				sharedOpts.ProjectID,
 				regID,
 				&types.CreateRegistryRepositoryRequest{
@@ -724,7 +727,7 @@ func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, c
 			}
 		}
 
-		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig)
+		subdomain, err = createAgent.CreateFromDocker(ctx, appConf.Values, sharedOpts.OverrideTag, buildConfig)
 	}
 
 	if err != nil {
@@ -734,14 +737,14 @@ func (d *DeployDriver) createApplication(resource *switchboardModels.Resource, c
 	return resource, handleSubdomainCreate(subdomain, err)
 }
 
-func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, client api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*switchboardModels.Resource, error) {
+func (d *DeployDriver) updateApplication(ctx context.Context, resource *switchboardModels.Resource, client api.Client, sharedOpts *deploy.SharedOpts, appConf *previewInt.ApplicationConfig) (*switchboardModels.Resource, error) {
 	color.New(color.FgGreen).Println("Updating existing release:", resource.Name)
 
 	if len(appConf.Build.Env) > 0 {
 		sharedOpts.AdditionalEnv = appConf.Build.Env
 	}
 
-	updateAgent, err := deploy.NewDeployAgent(client, resource.Name, &deploy.DeployOpts{
+	updateAgent, err := deploy.NewDeployAgent(ctx, client, resource.Name, &deploy.DeployOpts{
 		SharedOpts: sharedOpts,
 		Local:      appConf.Build.Method != "registry",
 	})
@@ -751,7 +754,7 @@ func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, c
 
 	// if the build method is registry, we do not trigger a build
 	if appConf.Build.Method != "registry" {
-		buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
+		buildEnv, err := updateAgent.GetBuildEnv(ctx, &deploy.GetBuildEnvOpts{
 			UseNewConfig: true,
 			NewConfig:    appConf.Values,
 		})
@@ -774,14 +777,14 @@ func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, c
 			}
 		}
 
-		err = updateAgent.Build(buildConfig)
+		err = updateAgent.Build(ctx, buildConfig)
 
 		if err != nil {
 			return nil, err
 		}
 
 		if !appConf.Build.UseCache {
-			err = updateAgent.Push()
+			err = updateAgent.Push(ctx)
 
 			if err != nil {
 				return nil, err
@@ -805,7 +808,7 @@ func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, c
 		}
 	}
 
-	err = updateAgent.UpdateImageAndValues(appConf.Values)
+	err = updateAgent.UpdateImageAndValues(ctx, appConf.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -813,9 +816,9 @@ func (d *DeployDriver) updateApplication(resource *switchboardModels.Resource, c
 	return resource, nil
 }
 
-func (d *DeployDriver) assignOutput(resource *switchboardModels.Resource, client api.Client) error {
+func (d *DeployDriver) assignOutput(ctx context.Context, resource *switchboardModels.Resource, client api.Client) error {
 	release, err := client.GetRelease(
-		context.Background(),
+		ctx,
 		d.target.Project,
 		d.target.Cluster,
 		d.target.Namespace,
@@ -830,6 +833,7 @@ func (d *DeployDriver) assignOutput(resource *switchboardModels.Resource, client
 	return nil
 }
 
+// Output extends switchboard
 func (d *DeployDriver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
@@ -868,6 +872,7 @@ func (d *DeployDriver) getAddonConfig(resource *switchboardModels.Resource) (map
 	})
 }
 
+// DeploymentHook contains all information needed for deploying with switchboard
 type DeploymentHook struct {
 	client                                                                    api.Client
 	resourceGroup                                                             *switchboardTypes.ResourceGroup
@@ -876,6 +881,7 @@ type DeploymentHook struct {
 	cliConfig                                                                 config.CLIConfig
 }
 
+// NewDeploymentHook creates a new deployment using switchboard
 func NewDeploymentHook(cliConfig config.CLIConfig, client api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
 	res := &DeploymentHook{
 		client:        client,
@@ -949,13 +955,16 @@ func (t *DeploymentHook) isBranchDeploy() bool {
 	return t.branchFrom != "" && t.branchInto != "" && t.branchFrom == t.branchInto
 }
 
+// PreApply extends switchboard
 func (t *DeploymentHook) PreApply() error {
+	ctx := context.TODO() // switchboard blocks changing this for now
+
 	if isSystemNamespace(t.namespace) {
 		color.New(color.FgYellow).Printf("attempting to deploy to system namespace '%s'\n", t.namespace)
 	}
 
 	envList, err := t.client.ListEnvironments(
-		context.Background(), t.projectID, t.clusterID,
+		ctx, t.projectID, t.clusterID,
 	)
 	if err != nil {
 		return err
@@ -979,7 +988,7 @@ func (t *DeploymentHook) PreApply() error {
 	}
 
 	nsList, err := t.client.GetK8sNamespaces(
-		context.Background(), t.projectID, t.clusterID,
+		ctx, t.projectID, t.clusterID,
 	)
 	if err != nil {
 		return fmt.Errorf("error fetching namespaces: %w", err)
@@ -1009,7 +1018,7 @@ func (t *DeploymentHook) PreApply() error {
 		}
 
 		// create the new namespace
-		_, err := t.client.CreateNewK8sNamespace(context.Background(), t.projectID, t.clusterID, createNS)
+		_, err := t.client.CreateNewK8sNamespace(ctx, t.projectID, t.clusterID, createNS)
 
 		if err != nil && !strings.Contains(err.Error(), "namespace already exists") {
 			// ignore the error if the namespace already exists
@@ -1023,7 +1032,7 @@ func (t *DeploymentHook) PreApply() error {
 
 	if t.isBranchDeploy() {
 		_, deplErr = t.client.GetDeployment(
-			context.Background(),
+			ctx,
 			t.projectID, t.clusterID, t.envID,
 			&types.GetDeploymentRequest{
 				Branch: t.branchFrom,
@@ -1031,7 +1040,7 @@ func (t *DeploymentHook) PreApply() error {
 		)
 	} else {
 		_, deplErr = t.client.GetDeployment(
-			context.Background(),
+			ctx,
 			t.projectID, t.clusterID, t.envID,
 			&types.GetDeploymentRequest{
 				PRNumber: t.prID,
@@ -1062,7 +1071,7 @@ func (t *DeploymentHook) PreApply() error {
 		}
 
 		_, err = t.client.CreateDeployment(
-			context.Background(),
+			ctx,
 			t.projectID, t.clusterID, createReq,
 		)
 	} else if err == nil {
@@ -1082,12 +1091,13 @@ func (t *DeploymentHook) PreApply() error {
 			updateReq.PRNumber = 0
 		}
 
-		_, err = t.client.UpdateDeployment(context.Background(), t.projectID, t.clusterID, updateReq)
+		_, err = t.client.UpdateDeployment(ctx, t.projectID, t.clusterID, updateReq)
 	}
 
 	return err
 }
 
+// DataQueries extends switchboard
 func (t *DeploymentHook) DataQueries() map[string]interface{} {
 	res := make(map[string]interface{})
 
@@ -1148,7 +1158,10 @@ func (t *DeploymentHook) DataQueries() map[string]interface{} {
 	return res
 }
 
+// PostApply extends switchboard
 func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
+	ctx := context.TODO() // switchboard blocks changing this for now
+
 	subdomains := make([]string, 0)
 
 	for _, data := range populatedData {
@@ -1176,8 +1189,8 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 	}
 
 	for _, res := range t.resourceGroup.Resources {
-		releaseType := getReleaseType(t.projectID, res, t.client)
-		releaseName := getReleaseName(res, t.client, t.cliConfig)
+		releaseType := getReleaseType(ctx, t.projectID, res, t.client)
+		releaseName := getReleaseName(ctx, res, t.client, t.cliConfig)
 
 		if releaseType != "" && releaseName != "" {
 			req.SuccessfulResources = append(req.SuccessfulResources, &types.SuccessfullyDeployedResource{
@@ -1188,17 +1201,20 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 	}
 
 	// finalize the deployment
-	_, err := t.client.FinalizeDeployment(context.Background(), t.projectID, t.clusterID, req)
+	_, err := t.client.FinalizeDeployment(ctx, t.projectID, t.clusterID, req)
 
 	return err
 }
 
+// OnError extends switchboard
 func (t *DeploymentHook) OnError(error) {
+	ctx := context.TODO() // switchboard blocks changing this for now
+
 	var deplErr error
 
 	if t.isBranchDeploy() {
 		_, deplErr = t.client.GetDeployment(
-			context.Background(),
+			ctx,
 			t.projectID, t.clusterID, t.envID,
 			&types.GetDeploymentRequest{
 				Branch: t.branchFrom,
@@ -1206,7 +1222,7 @@ func (t *DeploymentHook) OnError(error) {
 		)
 	} else {
 		_, deplErr = t.client.GetDeployment(
-			context.Background(),
+			ctx,
 			t.projectID, t.clusterID, t.envID,
 			&types.GetDeploymentRequest{
 				PRNumber: t.prID,
@@ -1233,16 +1249,19 @@ func (t *DeploymentHook) OnError(error) {
 		}
 
 		// FIXME: try to use the error with a custom logger
-		t.client.UpdateDeploymentStatus(context.Background(), t.projectID, t.clusterID, req)
+		t.client.UpdateDeploymentStatus(ctx, t.projectID, t.clusterID, req) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 	}
 }
 
+// OnConsolidatedErrors extends switchboard
 func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
+	ctx := context.TODO() // switchboard blocks changing this for now
+
 	var deplErr error
 
 	if t.isBranchDeploy() {
 		_, deplErr = t.client.GetDeployment(
-			context.Background(),
+			ctx,
 			t.projectID, t.clusterID, t.envID,
 			&types.GetDeploymentRequest{
 				Branch: t.branchFrom,
@@ -1250,7 +1269,7 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 		)
 	} else {
 		_, deplErr = t.client.GetDeployment(
-			context.Background(),
+			ctx,
 			t.projectID, t.clusterID, t.envID,
 			&types.GetDeploymentRequest{
 				PRNumber: t.prID,
@@ -1275,8 +1294,8 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 		for _, res := range t.resourceGroup.Resources {
 			if _, ok := allErrors[res.Name]; !ok {
 				req.SuccessfulResources = append(req.SuccessfulResources, &types.SuccessfullyDeployedResource{
-					ReleaseName: getReleaseName(res, t.client, t.cliConfig),
-					ReleaseType: getReleaseType(t.projectID, res, t.client),
+					ReleaseName: getReleaseName(ctx, res, t.client, t.cliConfig),
+					ReleaseType: getReleaseType(ctx, t.projectID, res, t.client),
 				})
 			}
 		}
@@ -1286,16 +1305,18 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 		}
 
 		// FIXME: handle the error
-		t.client.FinalizeDeploymentWithErrors(context.Background(), t.projectID, t.clusterID, req)
+		t.client.FinalizeDeploymentWithErrors(ctx, t.projectID, t.clusterID, req) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 	}
 }
 
+// CloneEnvGroupHook contains all information needed to clone an env group
 type CloneEnvGroupHook struct {
 	client    api.Client
 	resGroup  *switchboardTypes.ResourceGroup
 	cliConfig config.CLIConfig
 }
 
+// NewCloneEnvGroupHook wraps switchboard for cloning env groups
 func NewCloneEnvGroupHook(client api.Client, cliConfig config.CLIConfig, resourceGroup *switchboardTypes.ResourceGroup) *CloneEnvGroupHook {
 	return &CloneEnvGroupHook{
 		client:    client,
@@ -1305,6 +1326,8 @@ func NewCloneEnvGroupHook(client api.Client, cliConfig config.CLIConfig, resourc
 }
 
 func (t *CloneEnvGroupHook) PreApply() error {
+	ctx := context.TODO() // switchboard blocks changing this for now
+
 	for _, res := range t.resGroup.Resources {
 		if res.Driver == "env-group" {
 			continue
@@ -1318,7 +1341,7 @@ func (t *CloneEnvGroupHook) PreApply() error {
 		}
 
 		if appConf != nil && len(appConf.EnvGroups) > 0 {
-			target, err := preview.GetTarget(res.Name, res.Target, t.client, t.cliConfig)
+			target, err := preview.GetTarget(ctx, res.Name, res.Target, t.client, t.cliConfig)
 			if err != nil {
 				return err
 			}
@@ -1329,7 +1352,7 @@ func (t *CloneEnvGroupHook) PreApply() error {
 				}
 
 				_, err := t.client.GetEnvGroup(
-					context.Background(),
+					ctx,
 					target.Project,
 					target.Cluster,
 					target.Namespace,
@@ -1351,7 +1374,7 @@ func (t *CloneEnvGroupHook) PreApply() error {
 							group.Name, group.Namespace, target.Namespace)
 
 					_, err = t.client.CloneEnvGroup(
-						context.Background(), target.Project, target.Cluster, group.Namespace,
+						ctx, target.Project, target.Cluster, group.Namespace,
 						&types.CloneEnvGroupRequest{
 							SourceName:      group.Name,
 							TargetNamespace: target.Namespace,
@@ -1383,10 +1406,10 @@ func (t *CloneEnvGroupHook) OnError(error) {}
 
 func (t *CloneEnvGroupHook) OnConsolidatedErrors(map[string]error) {}
 
-func getReleaseName(res *switchboardTypes.Resource, apiClient api.Client, cliConfig config.CLIConfig) string {
+func getReleaseName(ctx context.Context, res *switchboardTypes.Resource, apiClient api.Client, cliConfig config.CLIConfig) string {
 	// can ignore the error because this method is called once
 	// GetTarget has alrealy been called and validated previously
-	target, _ := preview.GetTarget(res.Name, res.Target, apiClient, cliConfig)
+	target, _ := preview.GetTarget(ctx, res.Name, res.Target, apiClient, cliConfig)
 
 	if target.AppName != "" {
 		return target.AppName
@@ -1395,10 +1418,10 @@ func getReleaseName(res *switchboardTypes.Resource, apiClient api.Client, cliCon
 	return res.Name
 }
 
-func getReleaseType(projectID uint, res *switchboardTypes.Resource, apiClient api.Client) string {
+func getReleaseType(ctx context.Context, projectID uint, res *switchboardTypes.Resource, apiClient api.Client) string {
 	// can ignore the error because this method is called once
 	// GetSource has alrealy been called and validated previously
-	source, _ := preview.GetSource(projectID, res.Name, res.Source, apiClient)
+	source, _ := preview.GetSource(ctx, projectID, res.Name, res.Source, apiClient)
 
 	if source != nil && source.Name != "" {
 		return source.Name
@@ -1417,6 +1440,7 @@ func isSystemNamespace(namespace string) bool {
 
 type ErrorEmitterHook struct{}
 
+// NewErrorEmitterHook handles switchboard errors
 func NewErrorEmitterHook(api.Client, *switchboardTypes.ResourceGroup) *ErrorEmitterHook {
 	return &ErrorEmitterHook{}
 }

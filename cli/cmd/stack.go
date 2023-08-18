@@ -103,9 +103,7 @@ func init() {
 	stackEnvGroupCmd.AddCommand(stackEnvGroupRemoveCmd)
 }
 
-func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	ctx := context.Background()
-
+func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -129,7 +127,7 @@ func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 		return fmt.Errorf("one or more variables are required to create the env group")
 	}
 
-	listStacks, err := client.ListStacks(context.Background(), cliConf.Project, cliConf.Cluster, namespace)
+	listStacks, err := client.ListStacks(ctx, cliConf.Project, cliConf.Cluster, namespace)
 	if err != nil {
 		return err
 	}
@@ -170,7 +168,7 @@ func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	}
 
 	err = client.AddEnvGroupToStack(
-		context.Background(), cliConf.Project, cliConf.Cluster, namespace, stackID,
+		ctx, cliConf.Project, cliConf.Cluster, namespace, stackID,
 		&types.CreateStackEnvGroupRequest{
 			Name:               envGroupName,
 			Variables:          normalVariables,
@@ -188,9 +186,7 @@ func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	return nil
 }
 
-func stackRemoveEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	ctx := context.Background()
-
+func stackRemoveEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -212,7 +208,7 @@ func stackRemoveEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserRespo
 		return fmt.Errorf("empty stack name")
 	}
 
-	listStacks, err := client.ListStacks(context.Background(), cliConf.Project, cliConf.Cluster, namespace)
+	listStacks, err := client.ListStacks(ctx, cliConf.Project, cliConf.Cluster, namespace)
 	if err != nil {
 		return err
 	}
@@ -231,7 +227,7 @@ func stackRemoveEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserRespo
 		return fmt.Errorf("stack not found")
 	}
 
-	err = client.RemoveEnvGroupFromStack(context.Background(), cliConf.Project, cliConf.Cluster, namespace, stackID,
+	err = client.RemoveEnvGroupFromStack(ctx, cliConf.Project, cliConf.Cluster, namespace, stackID,
 		envGroupName)
 
 	if err != nil {

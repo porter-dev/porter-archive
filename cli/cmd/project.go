@@ -67,8 +67,8 @@ func init() {
 	projectCmd.AddCommand(listProjectCmd)
 }
 
-func createProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	resp, err := client.CreateProject(context.Background(), &types.CreateProjectRequest{
+func createProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	resp, err := client.CreateProject(ctx, &types.CreateProjectRequest{
 		Name: args[0],
 	})
 	if err != nil {
@@ -77,11 +77,11 @@ func createProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 
 	color.New(color.FgGreen).Printf("Created project with name %s and id %d\n", args[0], resp.ID)
 
-	return cliConf.SetProject(resp.ID)
+	return cliConf.SetProject(ctx, client, resp.ID)
 }
 
-func listProjects(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
-	resp, err := client.ListUserProjects(context.Background())
+func listProjects(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	resp, err := client.ListUserProjects(ctx)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func listProjects(user *types.GetAuthenticatedUserResponse, client api.Client, a
 
 	fmt.Fprintf(w, "%s\t%s\n", "ID", "NAME")
 
-	currProjectID := client.Config.Project
+	currProjectID := cliConf.Project
 
 	for _, project := range projects {
 		if currProjectID == project.ID {
@@ -126,7 +126,7 @@ func deleteProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 			return err
 		}
 
-		err = client.DeleteProject(context.Background(), uint(id))
+		err = client.DeleteProject(ctx, uint(id))
 
 		if err != nil {
 			return err
@@ -138,7 +138,7 @@ func deleteProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 	return nil
 }
 
-func setProjectCluster(ctx context.Context, client api.Client, projectID uint) error {
+func setProjectCluster(ctx context.Context, client api.Client, cliConf config.CLIConfig, projectID uint) error {
 	resp, err := client.ListProjectClusters(ctx, projectID)
 	if err != nil {
 		return err
@@ -147,7 +147,7 @@ func setProjectCluster(ctx context.Context, client api.Client, projectID uint) e
 	clusters := *resp
 
 	if len(clusters) > 0 {
-		client.Config.SetCluster(clusters[0].ID)
+		cliConf.SetCluster(clusters[0].ID)
 	}
 
 	return nil

@@ -20,6 +20,7 @@ type PorterHelper struct {
 	Cache      docker.CredentialsCache
 }
 
+// NewPorterHelper creates a docker credential helper
 func NewPorterHelper(debug bool) (*PorterHelper, error) {
 	ctx := context.Background()
 
@@ -64,7 +65,8 @@ func (p *PorterHelper) Delete(serverURL string) error {
 // Get retrieves credentials from the store.
 // It returns username and secret as strings.
 func (p *PorterHelper) Get(serverURL string) (user string, secret string, err error) {
-	return p.AuthGetter.GetCredentials(serverURL)
+	ctx := context.TODO() // docker credentials.Serve interface blocks changing this for now
+	return p.AuthGetter.GetCredentials(ctx, serverURL)
 }
 
 // List returns the stored serverURLs and their associated usernames.

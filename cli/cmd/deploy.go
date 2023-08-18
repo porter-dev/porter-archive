@@ -442,9 +442,7 @@ func init() {
 	updateCmd.AddCommand(updateEnvGroupCmd)
 }
 
-func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	ctx := context.Background()
-
+func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -476,25 +474,22 @@ func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 
 	color.New(color.FgGreen).Println("Deploying app:", app)
 
-	updateAgent, err := updateGetAgent(client)
+	updateAgent, err := updateGetAgent(ctx, client, cliConf)
 	if err != nil {
 		return err
 	}
 
-	err = updateBuildWithAgent(updateAgent)
-
+	err = updateBuildWithAgent(ctx, updateAgent)
 	if err != nil {
 		return err
 	}
 
-	err = updatePushWithAgent(updateAgent)
-
+	err = updatePushWithAgent(ctx, updateAgent)
 	if err != nil {
 		return err
 	}
 
-	err = updateUpgradeWithAgent(updateAgent)
-
+	err = updateUpgradeWithAgent(ctx, updateAgent)
 	if err != nil {
 		return err
 	}
@@ -503,7 +498,7 @@ func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 		// solves timing issue where replicasets were not on the cluster, before our initial check
 		time.Sleep(10 * time.Second)
 
-		err := checkDeploymentStatus(client)
+		err := checkDeploymentStatus(ctx, client, cliConf)
 		if err != nil {
 			return err
 		}
@@ -512,13 +507,13 @@ func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 	return nil
 }
 
-func updateGetEnv(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	updateAgent, err := updateGetAgent(client)
+func updateGetEnv(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	updateAgent, err := updateGetAgent(ctx, client, cliConf)
 	if err != nil {
 		return err
 	}
 
-	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
+	buildEnv, err := updateAgent.GetBuildEnv(ctx, &deploy.GetBuildEnvOpts{
 		UseNewConfig: false,
 	})
 	if err != nil {
@@ -527,7 +522,6 @@ func updateGetEnv(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 
 	// set the environment variables in the process
 	err = updateAgent.SetBuildEnv(buildEnv)
-
 	if err != nil {
 		return err
 	}
@@ -536,9 +530,7 @@ func updateGetEnv(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 	return updateAgent.WriteBuildEnv(getEnvFileDest)
 }
 
-func updateBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	ctx := context.Background()
-
+func updateBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -552,15 +544,15 @@ func updateBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cli
 		return nil
 	}
 
-	updateAgent, err := updateGetAgent(client)
+	updateAgent, err := updateGetAgent(ctx, client, cliConf)
 	if err != nil {
 		return err
 	}
 
-	return updateBuildWithAgent(updateAgent)
+	return updateBuildWithAgent(ctx, updateAgent)
 }
 
-func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	if app == "" {
 		if len(args) == 0 {
 			return fmt.Errorf("please provide the docker image name")
@@ -568,7 +560,7 @@ func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 
 		image := args[0]
 
-		registries, err := client.ListRegistries(context.Background(), cliConf.Project)
+		registries, err := client.ListRegistries(ctx, cliConf.Project)
 		if err != nil {
 			return err
 		}
@@ -587,7 +579,7 @@ func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 			return fmt.Errorf("could not find registry for image: %s", image)
 		}
 
-		err = client.CreateRepository(context.Background(), cliConf.Project, regID,
+		err = client.CreateRepository(ctx, cliConf.Project, regID,
 			&types.CreateRegistryRepositoryRequest{
 				ImageRepoURI: strings.Split(image, ":")[0],
 			},
@@ -597,12 +589,12 @@ func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 			return err
 		}
 
-		agent, err := docker.NewAgentWithAuthGetter(client, cliConf.Project)
+		agent, err := docker.NewAgentWithAuthGetter(ctx, client, cliConf.Project)
 		if err != nil {
 			return err
 		}
 
-		err = agent.PushImage(image)
+		err = agent.PushImage(ctx, image)
 
 		if err != nil {
 			return err
@@ -611,17 +603,15 @@ func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 		return nil
 	}
 
-	updateAgent, err := updateGetAgent(client)
+	updateAgent, err := updateGetAgent(ctx, client, cliConf)
 	if err != nil {
 		return err
 	}
 
-	return updatePushWithAgent(updateAgent)
+	return updatePushWithAgent(ctx, updateAgent)
 }
 
-func updateUpgrade(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	ctx := context.Background()
-
+func updateUpgrade(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -635,12 +625,12 @@ func updateUpgrade(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 		return nil
 	}
 
-	updateAgent, err := updateGetAgent(client)
+	updateAgent, err := updateGetAgent(ctx, client, cliConf)
 	if err != nil {
 		return err
 	}
 
-	err = updateUpgradeWithAgent(updateAgent)
+	err = updateUpgradeWithAgent(ctx, updateAgent)
 
 	if err != nil {
 		return err
@@ -650,7 +640,7 @@ func updateUpgrade(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 		// solves timing issue where replicasets were not on the cluster, before our initial check
 		time.Sleep(10 * time.Second)
 
-		err := checkDeploymentStatus(client)
+		err := checkDeploymentStatus(ctx, client, cliConf)
 		if err != nil {
 			return err
 		}
@@ -659,7 +649,7 @@ func updateUpgrade(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 	return nil
 }
 
-func updateSetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+func updateSetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	if len(normalEnvGroupVars) == 0 && len(secretEnvGroupVars) == 0 && len(args) == 0 {
 		return fmt.Errorf("please provide one or more variables to update")
 	}
@@ -670,7 +660,7 @@ func updateSetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 	s.Suffix = fmt.Sprintf(" Fetching env group '%s' in namespace '%s'", name, namespace)
 	s.Start()
 
-	envGroupResp, err := client.GetEnvGroup(context.Background(), cliConf.Project, cliConf.Cluster, namespace,
+	envGroupResp, err := client.GetEnvGroup(ctx, cliConf.Project, cliConf.Cluster, namespace,
 		&types.GetEnvGroupRequest{
 			Name: name, Version: version,
 		},
@@ -743,7 +733,7 @@ func updateSetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 	s.Start()
 
 	_, err = client.CreateEnvGroup(
-		context.Background(), cliConf.Project, cliConf.Cluster, namespace, newEnvGroup,
+		ctx, cliConf.Project, cliConf.Cluster, namespace, newEnvGroup,
 	)
 
 	s.Stop()
@@ -767,7 +757,7 @@ func validateVarValue(in string) (string, string, error) {
 	return key, value, nil
 }
 
-func updateUnsetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+func updateUnsetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("required variable name")
 	}
@@ -778,7 +768,7 @@ func updateUnsetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserRespo
 	s.Suffix = fmt.Sprintf(" Fetching env group '%s' in namespace '%s'", name, namespace)
 	s.Start()
 
-	envGroupResp, err := client.GetEnvGroup(context.Background(), cliConf.Project, cliConf.Cluster, namespace,
+	envGroupResp, err := client.GetEnvGroup(ctx, cliConf.Project, cliConf.Cluster, namespace,
 		&types.GetEnvGroupRequest{
 			Name: name, Version: version,
 		},
@@ -804,7 +794,7 @@ func updateUnsetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserRespo
 	s.Start()
 
 	_, err = client.CreateEnvGroup(
-		context.Background(), cliConf.Project, cliConf.Cluster, namespace, newEnvGroup,
+		ctx, cliConf.Project, cliConf.Cluster, namespace, newEnvGroup,
 	)
 
 	s.Stop()
@@ -819,7 +809,7 @@ func updateUnsetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserRespo
 }
 
 // HELPER METHODS
-func updateGetAgent(client api.Client) (*deploy.DeployAgent, error) {
+func updateGetAgent(ctx context.Context, client api.Client, cliConf config.CLIConfig) (*deploy.DeployAgent, error) {
 	var buildMethod deploy.DeployBuildType
 
 	if method != "" {
@@ -836,7 +826,7 @@ func updateGetAgent(client api.Client) (*deploy.DeployAgent, error) {
 	}
 
 	// initialize the update agent
-	return deploy.NewDeployAgent(client, app, &deploy.DeployOpts{
+	return deploy.NewDeployAgent(ctx, client, app, &deploy.DeployOpts{
 		SharedOpts: &deploy.SharedOpts{
 			ProjectID:       cliConf.Project,
 			ClusterID:       cliConf.Cluster,
@@ -852,22 +842,22 @@ func updateGetAgent(client api.Client) (*deploy.DeployAgent, error) {
 	})
 }
 
-func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
+func updateBuildWithAgent(ctx context.Context, updateAgent *deploy.DeployAgent) error {
 	// build the deployment
 	color.New(color.FgGreen).Println("Building docker image for", app)
 
 	if stream {
-		updateAgent.StreamEvent(types.SubEvent{
+		_ = updateAgent.StreamEvent(ctx, types.SubEvent{
 			EventID: "build",
 			Name:    "Build",
 			Index:   100,
 			Status:  types.EventStatusInProgress,
 			Info:    "",
-		})
+		}) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 	}
 
 	if useCache {
-		err := config.SetDockerConfig(updateAgent.Client)
+		err := config.SetDockerConfig(ctx, updateAgent.Client, updateAgent.Opts.ProjectID)
 		if err != nil {
 			return err
 		}
@@ -879,14 +869,14 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 		return err
 	}
 
-	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
+	buildEnv, err := updateAgent.GetBuildEnv(ctx, &deploy.GetBuildEnvOpts{
 		UseNewConfig: true,
 		NewConfig:    valuesObj,
 	})
 	if err != nil {
 		if stream {
 			// another concern: is it safe to ignore the error here?
-			updateAgent.StreamEvent(types.SubEvent{
+			updateAgent.StreamEvent(ctx, types.SubEvent{ //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 				EventID: "build",
 				Name:    "Build",
 				Index:   110,
@@ -902,7 +892,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 
 	if err != nil {
 		if stream {
-			updateAgent.StreamEvent(types.SubEvent{
+			updateAgent.StreamEvent(ctx, types.SubEvent{ //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 				EventID: "build",
 				Name:    "Build",
 				Index:   120,
@@ -913,9 +903,9 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 		return err
 	}
 
-	if err := updateAgent.Build(nil); err != nil {
+	if err := updateAgent.Build(ctx, nil); err != nil {
 		if stream {
-			updateAgent.StreamEvent(types.SubEvent{
+			updateAgent.StreamEvent(ctx, types.SubEvent{ //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 				EventID: "build",
 				Name:    "Build",
 				Index:   130,
@@ -927,7 +917,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	}
 
 	if stream {
-		updateAgent.StreamEvent(types.SubEvent{
+		updateAgent.StreamEvent(ctx, types.SubEvent{ //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 			EventID: "build",
 			Name:    "Build",
 			Index:   140,
@@ -939,7 +929,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	return nil
 }
 
-func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
+func updatePushWithAgent(ctx context.Context, updateAgent *deploy.DeployAgent) error {
 	if useCache {
 		color.New(color.FgGreen).Println("Skipping image push for", app, "as use-cache is set")
 
@@ -950,18 +940,19 @@ func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
 	color.New(color.FgGreen).Println("Pushing new image for", app)
 
 	if stream {
-		updateAgent.StreamEvent(types.SubEvent{
-			EventID: "push",
-			Name:    "Push",
-			Index:   200,
-			Status:  types.EventStatusInProgress,
-			Info:    "",
-		})
+		updateAgent.StreamEvent( //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
+			ctx, types.SubEvent{
+				EventID: "push",
+				Name:    "Push",
+				Index:   200,
+				Status:  types.EventStatusInProgress,
+				Info:    "",
+			})
 	}
 
-	if err := updateAgent.Push(); err != nil {
+	if err := updateAgent.Push(ctx); err != nil {
 		if stream {
-			updateAgent.StreamEvent(types.SubEvent{
+			updateAgent.StreamEvent(ctx, types.SubEvent{ //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 				EventID: "push",
 				Name:    "Push",
 				Index:   210,
@@ -973,7 +964,7 @@ func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
 	}
 
 	if stream {
-		updateAgent.StreamEvent(types.SubEvent{
+		updateAgent.StreamEvent(ctx, types.SubEvent{ //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 			EventID: "push",
 			Name:    "Push",
 			Index:   220,
@@ -985,12 +976,12 @@ func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
 	return nil
 }
 
-func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
+func updateUpgradeWithAgent(ctx context.Context, updateAgent *deploy.DeployAgent) error {
 	// push the deployment
 	color.New(color.FgGreen).Println("Upgrading configuration for", app)
 
 	if stream {
-		updateAgent.StreamEvent(types.SubEvent{
+		updateAgent.StreamEvent(ctx, types.SubEvent{ //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 			EventID: "upgrade",
 			Name:    "Upgrade",
 			Index:   300,
@@ -1009,7 +1000,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 
 	if err != nil {
 		if stream {
-			updateAgent.StreamEvent(types.SubEvent{
+			updateAgent.StreamEvent(ctx, types.SubEvent{ //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 				EventID: "upgrade",
 				Name:    "Upgrade",
 				Index:   310,
@@ -1022,6 +1013,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 
 	if len(updateAgent.Opts.AdditionalEnv) > 0 {
 		syncedEnv, err := deploy.GetSyncedEnv(
+			ctx,
 			updateAgent.Client,
 			updateAgent.Release.Config,
 			updateAgent.Opts.ProjectID,
@@ -1065,11 +1057,11 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 		})
 	}
 
-	err = updateAgent.UpdateImageAndValues(valuesObj)
+	err = updateAgent.UpdateImageAndValues(ctx, valuesObj)
 
 	if err != nil {
 		if stream {
-			updateAgent.StreamEvent(types.SubEvent{
+			updateAgent.StreamEvent(ctx, types.SubEvent{ //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 				EventID: "upgrade",
 				Name:    "Upgrade",
 				Index:   320,
@@ -1081,7 +1073,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 	}
 
 	if stream {
-		updateAgent.StreamEvent(types.SubEvent{
+		updateAgent.StreamEvent(ctx, types.SubEvent{ //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 			EventID: "upgrade",
 			Name:    "Upgrade",
 			Index:   330,
@@ -1095,14 +1087,15 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 	return nil
 }
 
-func checkDeploymentStatus(client api.Client) error {
+func checkDeploymentStatus(ctx context.Context, client api.Client, cliConfig config.CLIConfig) error {
 	color.New(color.FgBlue).Println("waiting for deployment to be ready, this may take a few minutes and will time out if it takes longer than 30 minutes")
 
 	sharedConf := &PorterRunSharedConfig{
-		Client: client,
+		Client:    client,
+		CLIConfig: cliConfig,
 	}
 
-	err := sharedConf.setSharedConfig()
+	err := sharedConf.setSharedConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("could not retrieve kubernetes credentials: %w", err)
 	}
@@ -1112,7 +1105,7 @@ func checkDeploymentStatus(client api.Client) error {
 	success := false
 
 	depls, err := sharedConf.Clientset.AppsV1().Deployments(namespace).List(
-		context.Background(),
+		ctx,
 		metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("app.kubernetes.io/instance=%s", app),
 		},
@@ -1148,7 +1141,7 @@ func checkDeploymentStatus(client api.Client) error {
 	}
 
 	pods, err := sharedConf.Clientset.CoreV1().Pods(namespace).List(
-		context.Background(), metav1.ListOptions{
+		ctx, metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("app.kubernetes.io/instance=%s", app),
 		},
 	)
@@ -1167,7 +1160,7 @@ func checkDeploymentStatus(client api.Client) error {
 			for _, ref := range pod.OwnerReferences {
 				if ref.Kind == "ReplicaSet" {
 					rs, err := sharedConf.Clientset.AppsV1().ReplicaSets(namespace).Get(
-						context.Background(),
+						ctx,
 						ref.Name,
 						metav1.GetOptions{},
 					)
@@ -1194,7 +1187,7 @@ func checkDeploymentStatus(client api.Client) error {
 	for time.Now().Before(timeWait) {
 		// refresh the client every 10 minutes
 		if time.Now().After(prevRefresh.Add(10 * time.Minute)) {
-			err = sharedConf.setSharedConfig()
+			err = sharedConf.setSharedConfig(ctx)
 
 			if err != nil {
 				return fmt.Errorf("could not retrieve kube credentials: %s", err.Error())
@@ -1204,7 +1197,7 @@ func checkDeploymentStatus(client api.Client) error {
 		}
 
 		rs, err := sharedConf.Clientset.AppsV1().ReplicaSets(namespace).Get(
-			context.Background(),
+			ctx,
 			rsName,
 			metav1.GetOptions{},
 		)

@@ -42,10 +42,10 @@ type NewClientInput struct {
 	// If both CookieFileName and BearerToken are specified, BearerToken will be preferred
 	CookieFileName string
 
-	// BearerToken uses a JWT to authenticate with the Porter API. If both BearerToken and CookieFileName are specifed, BearerToken will be used
+	// BearerToken uses a JWT to authenticate with the Porter API. If both BearerToken and CookieFileName are specified, BearerToken will be used
 	BearerToken string
 
-	// CloudflareToken allows for authenticating with a Porter API behind Cloudflare Zero Trust. If not specifed, we will check PORTER_CF_ACCESS_TOKEN for a token.
+	// CloudflareToken allows for authenticating with a Porter API behind Cloudflare Zero Trust. If not specified, we will check PORTER_CF_ACCESS_TOKEN for a token.
 	// If one is found, it will be added to all API calls.
 	CloudflareToken string
 

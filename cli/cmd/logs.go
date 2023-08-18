@@ -48,7 +48,7 @@ func init() {
 }
 
 func logs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	podsSimple, err := getPods(client, namespace, args[0])
+	podsSimple, err := getPods(ctx, client, cliConfig, namespace, args[0])
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())
 	}
@@ -97,16 +97,17 @@ func logs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api
 	}
 
 	config := &PorterRunSharedConfig{
-		Client: client,
+		Client:    client,
+		CLIConfig: cliConfig,
 	}
 
-	err = config.setSharedConfig()
+	err = config.setSharedConfig(ctx)
 
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
 
-	_, err = pipePodLogsToStdout(config, namespace, selectedPod.Name, selectedContainerName, follow)
+	_, err = pipePodLogsToStdout(ctx, config, namespace, selectedPod.Name, selectedContainerName, follow)
 
 	return err
 }

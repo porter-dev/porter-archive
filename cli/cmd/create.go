@@ -183,9 +183,7 @@ func init() {
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
 
-func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	ctx := context.Background()
-
+func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -266,13 +264,13 @@ func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 
 	if source == "local" {
 		if useCache {
-			regID, imageURL, err := createAgent.GetImageRepoURL(name, namespace)
+			regID, imageURL, err := createAgent.GetImageRepoURL(ctx, name, namespace)
 			if err != nil {
 				return err
 			}
 
 			err = client.CreateRepository(
-				context.Background(),
+				ctx,
 				cliConf.Project,
 				regID,
 				&types.CreateRegistryRepositoryRequest{
@@ -284,21 +282,21 @@ func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 				return err
 			}
 
-			err = config.SetDockerConfig(createAgent.Client)
+			err = config.SetDockerConfig(ctx, createAgent.Client, project.ID)
 
 			if err != nil {
 				return err
 			}
 		}
 
-		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default", nil)
+		subdomain, err := createAgent.CreateFromDocker(ctx, valuesObj, "default", nil)
 
 		return handleSubdomainCreate(subdomain, err)
 	} else if source == "github" {
-		return createFromGithub(createAgent, valuesObj)
+		return createFromGithub(ctx, createAgent, valuesObj)
 	}
 
-	subdomain, err := createAgent.CreateFromRegistry(image, valuesObj)
+	subdomain, err := createAgent.CreateFromRegistry(ctx, image, valuesObj)
 
 	return handleSubdomainCreate(subdomain, err)
 }
@@ -317,7 +315,7 @@ func handleSubdomainCreate(subdomain string, err error) error {
 	return nil
 }
 
-func createFromGithub(createAgent *deploy.CreateAgent, overrideValues map[string]interface{}) error {
+func createFromGithub(ctx context.Context, createAgent *deploy.CreateAgent, overrideValues map[string]interface{}) error {
 	fullPath, err := filepath.Abs(localPath)
 	if err != nil {
 		return err
@@ -343,10 +341,12 @@ func createFromGithub(createAgent *deploy.CreateAgent, overrideValues map[string
 		return fmt.Errorf("remote is not a Github repository")
 	}
 
-	subdomain, err := createAgent.CreateFromGithub(&deploy.GithubOpts{
-		Branch: gitBranch,
-		Repo:   remoteRepo,
-	}, overrideValues)
+	subdomain, err := createAgent.CreateFromGithub(
+		ctx,
+		&deploy.GithubOpts{
+			Branch: gitBranch,
+			Repo:   remoteRepo,
+		}, overrideValues)
 
 	return handleSubdomainCreate(subdomain, err)
 }

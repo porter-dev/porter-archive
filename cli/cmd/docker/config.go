@@ -11,8 +11,7 @@ const label = "CreatedByPorterCLI"
 
 // NewAgentFromEnv creates a new Docker agent using the environment variables set
 // on the host
-func NewAgentFromEnv() (*Agent, error) {
-	ctx := context.Background()
+func NewAgentFromEnv(ctx context.Context) (*Agent, error) {
 	cli, err := client.NewClientWithOpts(
 		client.FromEnv,
 		client.WithAPIVersionNegotiation(),
@@ -23,13 +22,13 @@ func NewAgentFromEnv() (*Agent, error) {
 
 	return &Agent{
 		Client: cli,
-		ctx:    ctx,
 		label:  label,
 	}, nil
 }
 
-func NewAgentWithAuthGetter(client api.Client, projID uint) (*Agent, error) {
-	agent, err := NewAgentFromEnv()
+// NewAgentWithAuthGetter returns a docker agent which can connect to a given registry
+func NewAgentWithAuthGetter(ctx context.Context, client api.Client, projID uint) (*Agent, error) {
+	agent, err := NewAgentFromEnv(ctx)
 	if err != nil {
 		return nil, err
 	}

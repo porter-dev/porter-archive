@@ -19,6 +19,7 @@ type PreviewApplier struct {
 	parsed    *PorterYAML
 }
 
+// NewApplier returns an applier for preview environments
 func NewApplier(client api.Client, cliConfig config.CLIConfig, raw []byte, namespace string) (*PreviewApplier, error) {
 	// replace all instances of ${{ porter.env.FOO }} with { .get-env.FOO }
 	re := regexp.MustCompile(`\$\{\{\s*porter\.env\.(.*)\s*\}\}`)
@@ -54,7 +55,7 @@ func (a *PreviewApplier) Apply() error {
 	// this is a sanity check to ensure that the user does not see any internal
 	// errors that are caused by the namespace not existing
 	nsList, err := a.apiClient.GetK8sNamespaces(
-		context.Background(),
+		context.TODO(), // can not change because of switchboard
 		a.cliConfig.Project,
 		a.cliConfig.Cluster,
 	)
@@ -265,7 +266,7 @@ func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
 // 	if len(constantsMap) > 0 {
 // 		// we need to create these constants in the env group
 // 		_, err := a.apiClient.CreateEnvGroup(
-// 			context.Background(),
+// 			ctx,
 // 			config.GetCLIConfig().Project,
 // 			config.GetCLIConfig().Cluster,
 // 			a.namespace,
@@ -291,7 +292,7 @@ func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
 
 // func (a *PreviewApplier) constantExistsInEnvGroup(name string) (*bool, error) {
 // 	apiResponse, err := a.apiClient.GetEnvGroup(
-// 		context.Background(),
+// 		ctx,
 // 		config.GetCLIConfig().Project,
 // 		config.GetCLIConfig().Cluster,
 // 		a.namespace,
@@ -329,7 +330,7 @@ func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
 // 		}
 
 // 		envGroup, err := a.apiClient.GetEnvGroup(
-// 			context.Background(),
+// 			ctx,
 // 			config.GetCLIConfig().Project,
 // 			config.GetCLIConfig().Cluster,
 // 			a.namespace,
@@ -351,7 +352,7 @@ func (a *PreviewApplier) DowngradeToV1() (*types.ResourceGroup, error) {
 
 // 			// clone the env group
 // 			envGroup, err := a.apiClient.CloneEnvGroup(
-// 				context.Background(),
+// 				ctx,
 // 				config.GetCLIConfig().Project,
 // 				config.GetCLIConfig().Cluster,
 // 				egNS,

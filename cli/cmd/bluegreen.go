@@ -77,7 +77,7 @@ func bluegreenSwitch(ctx context.Context, _ *types.GetAuthenticatedUserResponse,
 	}
 
 	// get the web release
-	webRelease, err := client.GetRelease(context.Background(), cliConfig.Project, cliConfig.Cluster, namespace, app)
+	webRelease, err := client.GetRelease(ctx, cliConfig.Project, cliConfig.Cluster, namespace, app)
 	if err != nil {
 		return err
 	}
@@ -90,11 +90,11 @@ func bluegreenSwitch(ctx context.Context, _ *types.GetAuthenticatedUserResponse,
 	currActiveImage := deploy.GetCurrActiveBlueGreenImage(webRelease.Config)
 
 	sharedConf := &PorterRunSharedConfig{
-		Client: client,
+		Client:    client,
+		CLIConfig: cliConfig,
 	}
 
-	err = sharedConf.setSharedConfig()
-
+	err = sharedConf.setSharedConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
@@ -110,7 +110,7 @@ func bluegreenSwitch(ctx context.Context, _ *types.GetAuthenticatedUserResponse,
 	for time.Now().Before(timeWait) {
 		// refresh the client every 10 minutes
 		if time.Now().After(prevRefresh.Add(10 * time.Minute)) {
-			err = sharedConf.setSharedConfig()
+			err = sharedConf.setSharedConfig(ctx)
 
 			if err != nil {
 				return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
@@ -120,7 +120,7 @@ func bluegreenSwitch(ctx context.Context, _ *types.GetAuthenticatedUserResponse,
 		}
 
 		depls, err := sharedConf.Clientset.AppsV1().Deployments(namespace).List(
-			context.Background(),
+			ctx,
 			metav1.ListOptions{
 				LabelSelector: fmt.Sprintf("app.kubernetes.io/instance=%s", app),
 			},
@@ -145,13 +145,13 @@ func bluegreenSwitch(ctx context.Context, _ *types.GetAuthenticatedUserResponse,
 					// push the deployment
 					color.New(color.FgGreen).Printf("Switching traffic for app %s\n", app)
 
-					deployAgent, err := updateGetAgent(client)
+					deployAgent, err := updateGetAgent(ctx, client, cliConfig)
 					if err != nil {
 						return err
 					}
 
 					if currActiveImage == "" {
-						err = deployAgent.UpdateImageAndValues(map[string]interface{}{
+						err = deployAgent.UpdateImageAndValues(ctx, map[string]interface{}{
 							"bluegreen": map[string]interface{}{
 								"enabled":                  true,
 								"disablePrimaryDeployment": true,
@@ -160,7 +160,7 @@ func bluegreenSwitch(ctx context.Context, _ *types.GetAuthenticatedUserResponse,
 							},
 						})
 					} else {
-						err = deployAgent.UpdateImageAndValues(map[string]interface{}{
+						err = deployAgent.UpdateImageAndValues(ctx, map[string]interface{}{
 							"bluegreen": map[string]interface{}{
 								"enabled":                  true,
 								"disablePrimaryDeployment": true,
@@ -198,19 +198,21 @@ func bluegreenSwitch(ctx context.Context, _ *types.GetAuthenticatedUserResponse,
 	// wait 30 seconds before removing old deployment
 	time.Sleep(30 * time.Second)
 
-	deployAgent, err := updateGetAgent(client)
+	deployAgent, err := updateGetAgent(ctx, client, cliConfig)
 	if err != nil {
 		return err
 	}
 
-	err = deployAgent.UpdateImageAndValues(map[string]interface{}{
-		"bluegreen": map[string]interface{}{
-			"enabled":                  true,
-			"disablePrimaryDeployment": true,
-			"activeImageTag":           tag,
-			"imageTags":                []string{tag},
-		},
-	})
+	err = deployAgent.UpdateImageAndValues( //nolint - do not want to change logic. New linter error
+		ctx,
+		map[string]interface{}{
+			"bluegreen": map[string]interface{}{
+				"enabled":                  true,
+				"disablePrimaryDeployment": true,
+				"activeImageTag":           tag,
+				"imageTags":                []string{tag},
+			},
+		})
 
 	return nil
 }

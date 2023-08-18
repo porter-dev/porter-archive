@@ -27,13 +27,13 @@ func init() {
 	rootCmd.AddCommand(kubectlCmd)
 }
 
-func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	_, err := exec.LookPath("kubectl")
 	if err != nil {
 		return fmt.Errorf("error finding kubectl: %w", err)
 	}
 
-	tmpFile, err := downloadTempKubeconfig(client)
+	tmpFile, err := downloadTempKubeconfig(ctx, client, cliConf)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 	return nil
 }
 
-func downloadTempKubeconfig(client api.Client) (string, error) {
+func downloadTempKubeconfig(ctx context.Context, client api.Client, cliConf config.CLIConfig) (string, error) {
 	tmpFile, err := os.CreateTemp("", "porter_kubeconfig_*.yaml")
 	if err != nil {
 		return "", fmt.Errorf("error creating temp file for kubeconfig: %w", err)
@@ -66,7 +66,7 @@ func downloadTempKubeconfig(client api.Client) (string, error) {
 
 	defer tmpFile.Close()
 
-	resp, err := client.GetKubeconfig(context.Background(), cliConf.Project, cliConf.Cluster, cliConf.Kubeconfig)
+	resp, err := client.GetKubeconfig(ctx, cliConf.Project, cliConf.Cluster, cliConf.Kubeconfig)
 	if err != nil {
 		return "", fmt.Errorf("error fetching kubeconfig for cluster: %w", err)
 	}

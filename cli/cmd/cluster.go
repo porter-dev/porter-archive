@@ -11,6 +11,7 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )
@@ -73,8 +74,8 @@ func init() {
 	clusterNamespaceCmd.AddCommand(clusterNamespaceListCmd)
 }
 
-func listClusters(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
-	resp, err := client.ListProjectClusters(context.Background(), cliConf.Project)
+func listClusters(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	resp, err := client.ListProjectClusters(ctx, cliConf.Project)
 	if err != nil {
 		return err
 	}
@@ -101,7 +102,7 @@ func listClusters(user *types.GetAuthenticatedUserResponse, client api.Client, a
 	return nil
 }
 
-func deleteCluster(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func deleteCluster(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Are you sure you'd like to delete the cluster with id %s? %s `,
@@ -119,7 +120,7 @@ func deleteCluster(user *types.GetAuthenticatedUserResponse, client api.Client, 
 			return err
 		}
 
-		err = client.DeleteProjectCluster(context.Background(), cliConf.Project, uint(id))
+		err = client.DeleteProjectCluster(ctx, cliConf.Project, uint(id))
 
 		if err != nil {
 			return err
@@ -131,7 +132,7 @@ func deleteCluster(user *types.GetAuthenticatedUserResponse, client api.Client, 
 	return nil
 }
 
-func listNamespaces(user *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
+func listNamespaces(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	pID := cliConf.Project
 
 	// get the service account based on the cluster id
@@ -139,7 +140,7 @@ func listNamespaces(user *types.GetAuthenticatedUserResponse, client api.Client,
 
 	// get the list of namespaces
 	namespaceList, err := client.GetK8sNamespaces(
-		context.Background(),
+		ctx,
 		pID,
 		cID,
 	)

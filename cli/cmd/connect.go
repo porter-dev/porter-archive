@@ -139,7 +139,7 @@ func init() {
 	connectCmd.AddCommand(connectHelmRepoCmd)
 }
 
-func runConnectKubeconfig(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
+func runConnectKubeconfig(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, _ []string) error {
 	isLocal := false
 
 	if cliConf.Driver == "local" {
@@ -147,6 +147,7 @@ func runConnectKubeconfig(ctx context.Context, _ *types.GetAuthenticatedUserResp
 	}
 
 	id, err := connect.Kubeconfig(
+		ctx,
 		client,
 		kubeconfigPath,
 		*contexts,
@@ -160,8 +161,9 @@ func runConnectKubeconfig(ctx context.Context, _ *types.GetAuthenticatedUserResp
 	return cliConf.SetCluster(id)
 }
 
-func runConnectECR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
+func runConnectECR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, _ []string) error {
 	regID, err := connect.ECR(
+		ctx,
 		client,
 		cliConf.Project,
 	)
@@ -172,8 +174,9 @@ func runConnectECR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 	return cliConf.SetRegistry(regID)
 }
 
-func runConnectGCR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
+func runConnectGCR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, _ []string) error {
 	regID, err := connect.GCR(
+		ctx,
 		client,
 		cliConf.Project,
 	)
@@ -184,8 +187,9 @@ func runConnectGCR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 	return cliConf.SetRegistry(regID)
 }
 
-func runConnectGAR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
+func runConnectGAR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, _ []string) error {
 	regID, err := connect.GAR(
+		ctx,
 		client,
 		cliConf.Project,
 	)
@@ -196,8 +200,9 @@ func runConnectGAR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 	return cliConf.SetRegistry(regID)
 }
 
-func runConnectDOCR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
+func runConnectDOCR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, _ []string) error {
 	regID, err := connect.DOCR(
+		ctx,
 		client,
 		cliConf.Project,
 	)
@@ -208,8 +213,9 @@ func runConnectDOCR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, 
 	return cliConf.SetRegistry(regID)
 }
 
-func runConnectDockerhub(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
+func runConnectDockerhub(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, _ []string) error {
 	regID, err := connect.Dockerhub(
+		ctx,
 		client,
 		cliConf.Project,
 	)
@@ -220,8 +226,9 @@ func runConnectDockerhub(ctx context.Context, _ *types.GetAuthenticatedUserRespo
 	return cliConf.SetRegistry(regID)
 }
 
-func runConnectRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
+func runConnectRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, _ []string) error {
 	regID, err := connect.Registry(
+		ctx,
 		client,
 		cliConf.Project,
 	)
@@ -232,8 +239,9 @@ func runConnectRegistry(ctx context.Context, _ *types.GetAuthenticatedUserRespon
 	return cliConf.SetRegistry(regID)
 }
 
-func runConnectHelmRepo(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
+func runConnectHelmRepo(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, _ []string) error {
 	hrID, err := connect.HelmRepo(
+		ctx,
 		client,
 		cliConf.Project,
 	)

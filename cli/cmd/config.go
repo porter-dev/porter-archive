@@ -37,6 +37,17 @@ var configSetProjectCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1),
 	Short: "Saves the project id in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {
+		cliConf, err := config.InitAndLoadConfig()
+		if err != nil {
+			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred loading config: %v\n", err) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
+			os.Exit(1)
+		}
+		client := api.NewClientWithConfig(cmd.Context(), api.NewClientInput{
+			BaseURL:        fmt.Sprintf("%s/api", cliConf.Host),
+			BearerToken:    cliConf.Token,
+			CookieFileName: "cookie.json",
+		})
+
 		if len(args) == 0 {
 			err := checkLoginAndRun(cmd.Context(), args, listAndSetProject)
 			if err != nil {
@@ -49,8 +60,7 @@ var configSetProjectCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			err = cliConf.SetProject(uint(projID))
-
+			err = cliConf.SetProject(cmd.Context(), client, uint(projID))
 			if err != nil {
 				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 				os.Exit(1)
@@ -64,6 +74,11 @@ var configSetClusterCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1),
 	Short: "Saves the cluster id in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {
+		cliConf, err := config.InitAndLoadConfig()
+		if err != nil {
+			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred loading config: %v\n", err) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
+			os.Exit(1)
+		}
 		if len(args) == 0 {
 			err := checkLoginAndRun(cmd.Context(), args, listAndSetCluster)
 			if err != nil {
@@ -91,6 +106,12 @@ var configSetRegistryCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1),
 	Short: "Saves the registry id in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {
+		cliConf, err := config.InitAndLoadConfig()
+		if err != nil {
+			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred loading config: %v\n", err) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
+			os.Exit(1)
+		}
+
 		if len(args) == 0 {
 			err := checkLoginAndRun(cmd.Context(), args, listAndSetRegistry)
 			if err != nil {
@@ -118,6 +139,12 @@ var configSetHelmRepoCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Saves the helm repo id in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {
+		cliConf, err := config.InitAndLoadConfig()
+		if err != nil {
+			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred loading config: %v\n", err) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
+			os.Exit(1)
+		}
+
 		hrID, err := strconv.ParseUint(args[0], 10, 64)
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
@@ -138,7 +165,12 @@ var configSetHostCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Saves the host in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := cliConf.SetHost(args[0])
+		cliConf, err := config.InitAndLoadConfig()
+		if err != nil {
+			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred loading config: %v\n", err) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
+			os.Exit(1)
+		}
+		err = cliConf.SetHost(args[0])
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 			os.Exit(1)
@@ -151,7 +183,12 @@ var configSetKubeconfigCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Saves the path to kubeconfig in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := cliConf.SetKubeconfig(args[0])
+		cliConf, err := config.InitAndLoadConfig()
+		if err != nil {
+			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred loading config: %v\n", err) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
+			os.Exit(1)
+		}
+		err = cliConf.SetKubeconfig(args[0])
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
 			os.Exit(1)
@@ -181,13 +218,13 @@ func printConfig() error {
 	return nil
 }
 
-func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Color("cyan")
 	s.Suffix = " Loading list of projects"
 	s.Start()
 
-	resp, err := client.ListUserProjects(context.Background())
+	resp, err := client.ListUserProjects(ctx)
 
 	s.Stop()
 
@@ -217,18 +254,21 @@ func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 		projID = uint64((*resp)[0].ID)
 	}
 
-	cliConf.SetProject(uint(projID))
+	err = cliConf.SetProject(ctx, client, uint(projID))
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Color("cyan")
 	s.Suffix = " Loading list of clusters"
 	s.Start()
 
-	resp, err := client.ListProjectClusters(context.Background(), cliConf.Project)
+	resp, err := client.ListProjectClusters(ctx, cliConf.Project)
 
 	s.Stop()
 
@@ -262,13 +302,13 @@ func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 	return nil
 }
 
-func listAndSetRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+func listAndSetRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Color("cyan")
 	s.Suffix = " Loading list of registries"
 	s.Start()
 
-	resp, err := client.ListRegistries(context.Background(), cliConf.Project)
+	resp, err := client.ListRegistries(ctx, cliConf.Project)
 
 	s.Stop()
 

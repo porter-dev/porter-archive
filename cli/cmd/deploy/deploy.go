@@ -53,7 +53,7 @@ type DeployOpts struct {
 
 // NewDeployAgent creates a new DeployAgent given a Porter API client, application
 // name, and DeployOpts.
-func NewDeployAgent(client client.Client, app string, opts *DeployOpts) (*DeployAgent, error) {
+func NewDeployAgent(ctx context.Context, client client.Client, app string, opts *DeployOpts) (*DeployAgent, error) {
 	deployAgent := &DeployAgent{
 		App:    app,
 		Opts:   opts,
@@ -75,7 +75,7 @@ func NewDeployAgent(client client.Client, app string, opts *DeployOpts) (*Deploy
 	))
 
 	// get docker agent
-	agent, err := docker.NewAgentWithAuthGetter(client, opts.ProjectID)
+	agent, err := docker.NewAgentWithAuthGetter(ctx, client, opts.ProjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -134,10 +134,10 @@ func NewDeployAgent(client client.Client, app string, opts *DeployOpts) (*Deploy
 
 	deployAgent.tag = opts.OverrideTag
 
-	err = coalesceEnvGroups(deployAgent.Client, deployAgent.Opts.ProjectID, deployAgent.Opts.ClusterID,
+	err = coalesceEnvGroups(ctx, deployAgent.Client, deployAgent.Opts.ProjectID, deployAgent.Opts.ClusterID,
 		deployAgent.Opts.Namespace, deployAgent.Opts.EnvGroups, deployAgent.Release.Config)
 
-	deployAgent.imageExists = deployAgent.agent.CheckIfImageExists(deployAgent.imageRepo, deployAgent.tag)
+	deployAgent.imageExists = deployAgent.agent.CheckIfImageExists(ctx, deployAgent.imageRepo, deployAgent.tag)
 
 	return deployAgent, err
 }
@@ -154,7 +154,7 @@ type GetBuildEnvOpts struct {
 //  2. container.env.build from the release config
 //  3. container.env.synced from the release config
 //  4. any additional env var that was passed into the DeployAgent as opts.SharedOpts.AdditionalEnv
-func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, error) {
+func (d *DeployAgent) GetBuildEnv(ctx context.Context, opts *GetBuildEnvOpts) (map[string]string, error) {
 	conf := d.Release.Config
 
 	if opts.UseNewConfig {
@@ -163,7 +163,7 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 		}
 	}
 
-	env, err := GetEnvForRelease(d.Client, conf, d.Opts.ProjectID, d.Opts.ClusterID, d.Opts.Namespace)
+	env, err := GetEnvForRelease(ctx, d.Client, conf, d.Opts.ProjectID, d.Opts.ClusterID, d.Opts.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +240,7 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 
 // Build uses the deploy agent options to build a new container image from either
 // buildpack or docker.
-func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
+func (d *DeployAgent) Build(ctx context.Context, overrideBuildConfig *types.BuildConfig) error {
 	// retrieve current image to use for cache
 	currImageSection := d.Release.Config["image"].(map[string]interface{})
 	currentTag := currImageSection["tag"].(string)
@@ -263,7 +263,7 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
 		}
 
 		zipResp, err := d.Client.GetRepoZIPDownloadURL(
-			context.Background(),
+			ctx,
 			d.Opts.ProjectID,
 			int64(d.Release.GitActionConfig.GitRepoID),
 			"github",
@@ -294,7 +294,7 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
 		}
 	}
 
-	currTag, err := d.pullCurrentReleaseImage()
+	currTag, err := d.pullCurrentReleaseImage(ctx)
 
 	// if image is not found, don't return an error
 	if err != nil && err != docker.PullImageErrNotFound {
@@ -311,6 +311,7 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
 
 	if d.Opts.Method == DeployBuildTypeDocker {
 		return buildAgent.BuildDocker(
+			ctx,
 			d.agent,
 			basePath,
 			buildCtx,
@@ -326,21 +327,21 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
 		buildConfig = overrideBuildConfig
 	}
 
-	return buildAgent.BuildPack(d.agent, buildCtx, d.tag, currTag, buildConfig)
+	return buildAgent.BuildPack(ctx, d.agent, buildCtx, d.tag, currTag, buildConfig)
 }
 
 // Push pushes a local image to the remote repository linked in the release
-func (d *DeployAgent) Push() error {
-	return d.agent.PushImage(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
+func (d *DeployAgent) Push(ctx context.Context) error {
+	return d.agent.PushImage(ctx, fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
 }
 
 // UpdateImageAndValues updates the current image for a release, along with new
 // configuration passed in via overrrideValues. If overrideValues is nil, it just
 // reuses the configuration set for the application. If overrideValues is not nil,
 // it will merge the overriding values with the existing configuration.
-func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}) error {
+func (d *DeployAgent) UpdateImageAndValues(ctx context.Context, overrideValues map[string]interface{}) error {
 	// we should fetch the latest release and its config
-	release, err := d.Client.GetRelease(context.TODO(), d.Opts.ProjectID, d.Opts.ClusterID, d.Opts.Namespace, d.App)
+	release, err := d.Client.GetRelease(ctx, d.Opts.ProjectID, d.Opts.ClusterID, d.Opts.Namespace, d.App)
 	if err != nil {
 		return err
 	}
@@ -396,7 +397,7 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 	}
 
 	return d.Client.UpgradeRelease(
-		context.Background(),
+		ctx,
 		d.Opts.ProjectID,
 		d.Opts.ClusterID,
 		d.Release.Namespace,
@@ -421,6 +422,7 @@ type SyncedEnvSectionKey struct {
 // GetEnvForRelease gets the env vars for a standard Porter template config. These env
 // vars are found at `container.env.normal` and `container.env.synced`.
 func GetEnvForRelease(
+	ctx context.Context,
 	client client.Client,
 	config map[string]interface{},
 	projID, clusterID uint,
@@ -440,7 +442,7 @@ func GetEnvForRelease(
 
 	// next, get the env vars specified by "container.env.synced"
 	// look for container.env.synced
-	syncedEnv, err := GetSyncedEnv(client, config, projID, clusterID, namespace, true)
+	syncedEnv, err := GetSyncedEnv(ctx, client, config, projID, clusterID, namespace, true)
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching container.env.synced variables: %w", err)
 	}
@@ -487,6 +489,7 @@ func GetNormalEnv(
 }
 
 func GetSyncedEnv(
+	ctx context.Context,
 	client client.Client,
 	config map[string]interface{},
 	projID, clusterID uint,
@@ -590,7 +593,7 @@ func GetSyncedEnv(
 
 		for _, syncedEG := range syncedArr {
 			// for each synced environment group, get the environment group from the client
-			eg, err := client.GetEnvGroup(context.Background(), projID, clusterID, namespace,
+			eg, err := client.GetEnvGroup(ctx, projID, clusterID, namespace,
 				&types.GetEnvGroupRequest{
 					Name: syncedEG.Name,
 				},
@@ -638,7 +641,7 @@ func (d *DeployAgent) getReleaseImage() (string, error) {
 	return repoStr, nil
 }
 
-func (d *DeployAgent) pullCurrentReleaseImage() (string, error) {
+func (d *DeployAgent) pullCurrentReleaseImage(ctx context.Context) (string, error) {
 	// pull the currently deployed image to use cache, if possible
 	imageConfig, err := GetNestedMap(d.Release.Config, "image")
 	if err != nil {
@@ -665,7 +668,7 @@ func (d *DeployAgent) pullCurrentReleaseImage() (string, error) {
 
 	fmt.Printf("attempting to pull image: %s\n", fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
 
-	return tagStr, d.agent.PullImage(fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
+	return tagStr, d.agent.PullImage(ctx, fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
 }
 
 func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
@@ -706,9 +709,10 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 	return res, nil
 }
 
-func (d *DeployAgent) StreamEvent(event types.SubEvent) error {
+// StreamEvent streams events from the deploy agent
+func (d *DeployAgent) StreamEvent(ctx context.Context, event types.SubEvent) error {
 	return d.Client.CreateEvent(
-		context.Background(),
+		ctx,
 		d.Opts.ProjectID, d.Opts.ClusterID,
 		d.Release.Namespace, d.Release.Name,
 		&types.UpdateReleaseStepsRequest{

@@ -18,13 +18,14 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/github"
 )
 
-func SetDockerConfig(client api.Client, pID uint) error {
+// SetDockerConfig sets up the docker config.json
+func SetDockerConfig(ctx context.Context, client api.Client, pID uint) error {
 	// get all registries that should be added
 	regToAdd := make([]string, 0)
 
 	// get the list of namespaces
 	resp, err := client.ListRegistries(
-		context.Background(),
+		ctx,
 		pID,
 	)
 	if err != nil {
@@ -82,7 +83,7 @@ func SetDockerConfig(client api.Client, pID uint) error {
 
 	// check if the docker credential helper exists
 	if !commandExists("docker-credential-porter") {
-		err := downloadCredMatchingRelease()
+		err := downloadCredMatchingRelease(ctx)
 		if err != nil {
 			color.New(color.FgRed).Println("Failed to download credential helper binary:", err.Error())
 			os.Exit(1)
@@ -97,7 +98,7 @@ func SetDockerConfig(client api.Client, pID uint) error {
 	err = cmdVersionCred.Run()
 
 	if err != nil || writer.Version != Version {
-		err := downloadCredMatchingRelease()
+		err := downloadCredMatchingRelease(ctx)
 		if err != nil {
 			color.New(color.FgRed).Println("Failed to download credential helper binary:", err.Error())
 			os.Exit(1)
@@ -136,7 +137,7 @@ func SetDockerConfig(client api.Client, pID uint) error {
 
 			if !isAuthenticated {
 				// get a dockerhub token from the Porter API
-				tokenResp, err := client.GetDockerhubAuthorizationToken(context.Background(), pID)
+				tokenResp, err := client.GetDockerhubAuthorizationToken(ctx, pID)
 				if err != nil {
 					return err
 				}
@@ -174,7 +175,7 @@ func commandExists(cmd string) bool {
 	return err == nil
 }
 
-func downloadCredMatchingRelease() error {
+func downloadCredMatchingRelease(ctx context.Context) error {
 	// download the porter cred helper
 	z := &github.ZIPReleaseGetter{
 		AssetName:           "docker-credential-porter",
@@ -191,5 +192,5 @@ func downloadCredMatchingRelease() error {
 		},
 	}
 
-	return z.GetRelease(Version)
+	return z.GetRelease(ctx, Version)
 }

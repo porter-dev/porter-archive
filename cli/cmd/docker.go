@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"os"
 
 	api "github.com/porter-dev/porter/api/client"
@@ -31,6 +32,6 @@ func init() {
 	dockerCmd.AddCommand(configureCmd)
 }
 
-func dockerConfig(user *ptypes.GetAuthenticatedUserResponse, client api.Client, args []string) error {
-	return config.SetDockerConfig(client)
+func dockerConfig(ctx context.Context, user *ptypes.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	return config.SetDockerConfig(ctx, client, cliConf.Project)
 }

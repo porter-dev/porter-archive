@@ -65,7 +65,10 @@ func initAndLoadConfig() (CLIConfig, error) {
 		"local",
 		"driver to use (local or docker)",
 	)
-	viper.BindPFlags(utils.DriverFlagSet)
+	err = viper.BindPFlags(utils.DriverFlagSet)
+	if err != nil {
+		return config, err
+	}
 
 	utils.DefaultFlagSet.StringVar(
 		&config.Host,
@@ -101,7 +104,10 @@ func initAndLoadConfig() (CLIConfig, error) {
 		0,
 		"registry ID of connected Porter registry",
 	)
-	viper.BindPFlags(utils.RegistryFlagSet)
+	err = viper.BindPFlags(utils.RegistryFlagSet)
+	if err != nil {
+		return config, err
+	}
 
 	utils.HelmRepoFlagSet.UintVar(
 		&config.HelmRepo,
@@ -109,14 +115,32 @@ func initAndLoadConfig() (CLIConfig, error) {
 		0,
 		"helm repo ID of connected Porter Helm repository",
 	)
-	viper.BindPFlags(utils.HelmRepoFlagSet)
-	viper.BindPFlags(utils.DefaultFlagSet)
+	err = viper.BindPFlags(utils.HelmRepoFlagSet)
+	if err != nil {
+		return config, err
+	}
+	err = viper.BindPFlags(utils.DefaultFlagSet)
+	if err != nil {
+		return config, err
+	}
 
 	viper.SetEnvPrefix("PORTER")
-	viper.BindEnv("host")
-	viper.BindEnv("project")
-	viper.BindEnv("cluster")
-	viper.BindEnv("token")
+	err = viper.BindEnv("host")
+	if err != nil {
+		return config, err
+	}
+	err = viper.BindEnv("project")
+	if err != nil {
+		return config, err
+	}
+	err = viper.BindEnv("cluster")
+	if err != nil {
+		return config, err
+	}
+	err = viper.BindEnv("token")
+	if err != nil {
+		return config, err
+	}
 
 	err = createAndLoadPorterYaml(porterDir)
 	if err != nil {
@@ -157,7 +181,7 @@ func createAndLoadPorterYaml(porterDir string) error {
 			return fmt.Errorf("unknown error reading ~/.porter/porter.yaml config: %w", err)
 		}
 
-		err := os.WriteFile(filepath.Join(porterDir, "porter.yaml"), []byte{}, 0o644)
+		err := os.WriteFile(filepath.Join(porterDir, "porter.yaml"), []byte{}, 0o644) //nolint:gosec // do not want to change program logic. Should be addressed later
 		if err != nil {
 			return fmt.Errorf("unable to create ~/.porter/porter.yaml config: %w", err)
 		}
@@ -174,7 +198,7 @@ func createAndLoadPorterYaml(porterDir string) error {
 // }
 
 // func GetAPIClient() api.Client {
-// 	ctx := context.Background()
+// 	ctx := ctx
 
 // 	config := GetCLIConfig()
 
@@ -226,6 +250,7 @@ func (c *CLIConfig) SetHost(host string) error {
 	return nil
 }
 
+// SetProject sets a project for all API commands
 func (c *CLIConfig) SetProject(ctx context.Context, apiClient api.Client, projectID uint) error {
 	viper.Set("project", projectID)
 
@@ -242,11 +267,11 @@ func (c *CLIConfig) SetProject(ctx context.Context, apiClient api.Client, projec
 
 	c.Project = projectID
 
-	resp, err := apiClient.ListProjectClusters(context.Background(), projectID)
+	resp, err := apiClient.ListProjectClusters(ctx, projectID)
 	if err == nil {
 		clusters := *resp
 		if len(clusters) == 1 {
-			c.SetCluster(clusters[0].ID)
+			_ = c.SetCluster(clusters[0].ID)
 		}
 	}
 

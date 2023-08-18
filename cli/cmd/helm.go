@@ -27,13 +27,13 @@ func init() {
 	rootCmd.AddCommand(helmCmd)
 }
 
-func runHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+func runHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	_, err := exec.LookPath("helm")
 	if err != nil {
 		return fmt.Errorf("error finding helm: %w", err)
 	}
 
-	tmpFile, err := downloadTempKubeconfig(client)
+	tmpFile, err := downloadTempKubeconfig(ctx, client, cliConf)
 	if err != nil {
 		return err
 	}

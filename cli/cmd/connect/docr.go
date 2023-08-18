@@ -13,6 +13,7 @@ import (
 
 // DOCR creates a DOCR integration
 func DOCR(
+	ctx context.Context,
 	client api.Client,
 	projectID uint,
 ) (uint, error) {
@@ -64,7 +65,7 @@ Registry URL: `))
 	}
 
 	reg, err := client.CreateRegistry(
-		context.Background(),
+		ctx,
 		projectID,
 		&types.CreateRegistryRequest{
 			Name:            regName,

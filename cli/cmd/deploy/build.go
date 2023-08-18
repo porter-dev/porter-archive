@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -24,6 +25,7 @@ type BuildAgent struct {
 
 // BuildDocker uses the local Docker daemon to build the image
 func (b *BuildAgent) BuildDocker(
+	ctx context.Context,
 	dockerAgent *docker.Agent,
 	basePath,
 	buildCtx,
@@ -52,15 +54,17 @@ func (b *BuildAgent) BuildDocker(
 	}
 
 	return dockerAgent.BuildLocal(
+		ctx,
 		opts,
 	)
 }
 
 // BuildPack uses the cloud-native buildpack client to build a container image
-func (b *BuildAgent) BuildPack(dockerAgent *docker.Agent, dst, tag, prevTag string, buildConfig *types.BuildConfig) error {
+func (b *BuildAgent) BuildPack(ctx context.Context, dockerAgent *docker.Agent, dst, tag, prevTag string, buildConfig *types.BuildConfig) error {
 	// retag the image with "pack-cache" tag so that it doesn't re-pull from the registry
 	if b.ImageExists {
 		err := dockerAgent.TagImage(
+			ctx,
 			fmt.Sprintf("%s:%s", b.ImageRepo, prevTag),
 			fmt.Sprintf("%s:%s", b.ImageRepo, "pack-cache"),
 		)
@@ -81,7 +85,7 @@ func (b *BuildAgent) BuildPack(dockerAgent *docker.Agent, dst, tag, prevTag stri
 	}
 
 	// call builder
-	return packAgent.Build(opts, buildConfig, fmt.Sprintf("%s:%s", b.ImageRepo, "pack-cache"))
+	return packAgent.Build(ctx, opts, buildConfig, fmt.Sprintf("%s:%s", b.ImageRepo, "pack-cache"))
 }
 
 // ResolveDockerPaths returns a path to the dockerfile that is either relative or absolute, and a path

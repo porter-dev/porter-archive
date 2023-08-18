@@ -177,9 +177,7 @@ func init() {
 	runJobCmd.MarkPersistentFlagRequired("name")
 }
 
-func batchImageUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	ctx := context.Background()
-
+func batchImageUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -196,7 +194,7 @@ func batchImageUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	color.New(color.FgGreen).Println("Updating all jobs which use the image:", imageRepoURI)
 
 	return client.UpdateBatchImage(
-		context.TODO(),
+		ctx,
 		cliConf.Project,
 		cliConf.Cluster,
 		namespace,
@@ -208,9 +206,7 @@ func batchImageUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 }
 
 // waits for a job with a given name/namespace
-func waitForJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	ctx := context.Background()
-
+func waitForJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -224,7 +220,7 @@ func waitForJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 		return nil
 	}
 
-	return wait.WaitForJob(client, &wait.WaitOpts{
+	return wait.WaitForJob(ctx, client, &wait.WaitOpts{
 		ProjectID: cliConf.Project,
 		ClusterID: cliConf.Cluster,
 		Namespace: namespace,
@@ -232,9 +228,7 @@ func waitForJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 	})
 }
 
-func runJob(authRes *types.GetAuthenticatedUserResponse, client api.Client, args []string) error {
-	ctx := context.Background()
-
+func runJob(ctx context.Context, authRes *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -264,14 +258,16 @@ func runJob(authRes *types.GetAuthenticatedUserResponse, client api.Client, args
 		},
 	}
 
-	err = updateAgent.UpdateImageAndValues(map[string]interface{}{
-		"paused": false,
-	})
+	err = updateAgent.UpdateImageAndValues(
+		ctx,
+		map[string]interface{}{
+			"paused": false,
+		})
 	if err != nil {
 		return fmt.Errorf("error running job: %w", err)
 	}
 
-	err = waitForJob(authRes, client, args)
+	err = waitForJob(ctx, authRes, client, cliConf, args)
 
 	if err != nil {
 		return fmt.Errorf("error waiting for job to complete: %w", err)

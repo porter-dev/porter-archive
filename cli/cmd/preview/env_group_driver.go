@@ -23,7 +23,8 @@ type EnvGroupDriver struct {
 	cliConfig   config.CLIConfig
 }
 
-func NewEnvGroupDriver(apiClient api.Client, cliConfig config.CLIConfig) func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+// NewEnvGroupDriver extends switchboard with environment groups
+func NewEnvGroupDriver(ctx context.Context, apiClient api.Client, cliConfig config.CLIConfig) func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
 	return func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
 		driver := &EnvGroupDriver{
 			lookupTable: opts.DriverLookupTable,
@@ -32,7 +33,7 @@ func NewEnvGroupDriver(apiClient api.Client, cliConfig config.CLIConfig) func(re
 			cliConfig:   cliConfig,
 		}
 
-		target, err := GetTarget(resource.Name, resource.Target, apiClient, cliConfig)
+		target, err := GetTarget(ctx, resource.Name, resource.Target, apiClient, cliConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -48,6 +49,8 @@ func (d *EnvGroupDriver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, error) {
+	ctx := context.TODO() // switchboard blocks changing this for now
+
 	driverConfig, err := d.getConfig(resource)
 	if err != nil {
 		return nil, err
@@ -68,7 +71,7 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 		}
 
 		envGroupResp, err := d.apiClient.GetEnvGroup(
-			context.Background(),
+			ctx,
 			d.target.Project,
 			d.target.Cluster,
 			group.Namespace,
@@ -79,7 +82,7 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 
 		if err != nil && err.Error() == "env group not found" {
 			newEnvGroup, err := d.apiClient.CreateEnvGroup(
-				context.Background(), d.target.Project, d.target.Cluster, group.Namespace,
+				ctx, d.target.Project, d.target.Cluster, group.Namespace,
 				&types.CreateEnvGroupRequest{
 					Name:      group.Name,
 					Variables: group.Variables,

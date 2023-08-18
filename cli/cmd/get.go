@@ -73,9 +73,7 @@ type getReleaseInfo struct {
 	RevisionID   int       `json:"revision_id" yaml:"revision_id"`
 }
 
-func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	ctx := context.Background()
-
+func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -89,7 +87,7 @@ func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.
 		return nil
 	}
 
-	rel, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0])
+	rel, err := client.GetRelease(ctx, cliConf.Project, cliConf.Cluster, namespace, args[0])
 	if err != nil {
 		return err
 	}
@@ -127,9 +125,7 @@ func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.
 	return nil
 }
 
-func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
-	ctx := context.Background()
-
+func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -143,7 +139,7 @@ func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clien
 		return nil
 	}
 
-	rel, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0])
+	rel, err := client.GetRelease(ctx, cliConf.Project, cliConf.Cluster, namespace, args[0])
 	if err != nil {
 		return err
 	}

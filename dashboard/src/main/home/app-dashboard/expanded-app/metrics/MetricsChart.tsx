@@ -339,7 +339,7 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                 </Flex>
             </MetricsHeader>
             {isLoading > 0 && <Loading />}
-            {data.length === 0 && isLoading === 0 && (
+            {(data.length === 0 && Object.keys(areaData).length === 0) && isLoading === 0 && (
                 <Message>
                     No data available yet.
                     <Highlight color={"#8590ff"} onClick={getMetrics}>

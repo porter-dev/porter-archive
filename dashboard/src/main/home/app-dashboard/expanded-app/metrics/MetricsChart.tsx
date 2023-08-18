@@ -8,6 +8,7 @@ import { ChartTypeWithExtendedConfig } from "shared/types";
 import { Context } from "shared/Context";
 
 import AggregatedDataLegend from "../../../cluster-dashboard/expanded-chart/metrics/AggregatedDataLegend";
+import StatusCodeDataLegend from "../../../cluster-dashboard/expanded-chart/metrics/StatusCodeDataLegend";
 import AreaChart from "./AreaChart";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import Loading from "components/Loading";
@@ -282,7 +283,7 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
             axios
                 .all(requests)
                 .then((responses) => {
-                    let aggregatedMetrics: Record<string, NormalizedMetricsData[]> = {}
+                    let aggregatedMetrics: Record<string, NormalizedMetricsData[]> = {};
                     for (let i = 0; i <= 4; i++) {
                         const metrics = new MetricNormalizer(
                             responses[i].data,
@@ -376,9 +377,21 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                             />
                         )}
                     </ParentSize>
-                    <RowWrapper>
-                        <AggregatedDataLegend data={data} hideAvg={isAggregated} />
-                    </RowWrapper>
+                    {data.length > 0 && (
+                        <RowWrapper>
+                            <AggregatedDataLegend data={data} hideAvg={isAggregated} />
+                        </RowWrapper>
+                    )}
+                </>
+            )}
+
+            {Object.keys(areaData).length > 0 && isLoading === 0 && (
+                <>
+                    {Object.keys(areaData).length > 0 && (
+                        <RowWrapper>
+                            <StatusCodeDataLegend />
+                        </RowWrapper>
+                    )}
                 </>
             )}
         </StyledMetricsChart>

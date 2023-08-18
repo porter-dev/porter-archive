@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
+import axios from "axios"; 
 import styled from "styled-components";
 
 import api from "shared/api";
@@ -63,48 +64,6 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
         Context
     );
 
-    const getAutoscalingThreshold = async (
-        metricType: "cpu_hpa_threshold" | "memory_hpa_threshold",
-        shouldsum: boolean,
-        namespace: string,
-        start: number,
-        end: number
-    ) => {
-        setIsLoading((prev) => prev + 1);
-
-        try {
-            const res = await api.getMetrics(
-                "<token>",
-                {
-                    metric: metricType,
-                    shouldsum: shouldsum,
-                    kind: selectedController?.kind,
-                    name: selectedController?.metadata.name,
-                    namespace: namespace,
-                    startrange: start,
-                    endrange: end,
-                    resolution: resolutions[selectedRange],
-                    pods: [],
-                },
-                {
-                    id: currentProject.id,
-                    cluster_id: currentCluster.id,
-                }
-            );
-
-            if (!Array.isArray(res.data) || !res.data[0]?.results) {
-                return;
-            }
-            const autoscalingMetrics = new MetricNormalizer(res.data, metricType);
-            setHpaData(autoscalingMetrics.getParsedData());
-            return;
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsLoading((prev) => prev - 1);
-        }
-    };
-
     const getMetrics = async () => {
         if (pods?.length == 0) {
             return;
@@ -130,17 +89,22 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                 shouldsum = false;
             }
 
+            let kind = selectedController?.kind
+            const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
+            const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
+
             setIsLoading((prev) => prev + 1);
             setAggregatedData({});
             setIsAggregated(shouldsum)
+            setShowHpaToggle(isHpaEnabled);
+            setHpaEnabled(isHpaEnabled);
 
-            // Get aggregated metrics
-            const allPodsRes = await api.getMetrics(
+            const aggregatedMetricsRequest = api.getMetrics(
                 "<token>",
                 {
                     metric: selectedMetric,
                     shouldsum: false,
-                    kind: selectedController?.kind,
+                    kind: kind,
                     name: selectedController?.metadata.name,
                     namespace: namespace,
                     startrange: start,
@@ -154,68 +118,100 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                 }
             );
 
-            const allPodsData: GenericMetricResponse[] = allPodsRes.data ?? [];
-            const allPodsMetrics = allPodsData.flatMap((d) => d.results);
-            const allPodsMetricsNormalized = new MetricNormalizer(
-                [{ results: allPodsMetrics }],
-                selectedMetric as AvailableMetrics,
-            );
-            const allPodsAggregatedData = allPodsMetricsNormalized.getAggregatedData()
-            if (shouldsum) {
-                setData(allPodsAggregatedData["avg"])
-                delete allPodsAggregatedData["avg"]
+            let requests = [
+                aggregatedMetricsRequest,
+            ];
+
+            if (!shouldsum) {
+                const metricsRequest = api.getMetrics(
+                    "<token>",
+                    {
+                        metric: selectedMetric,
+                        shouldsum: shouldsum,
+                        kind: kind,
+                        name: selectedController?.metadata.name,
+                        namespace: namespace,
+                        startrange: start,
+                        endrange: end,
+                        resolution: resolutions[selectedRange],
+                        pods: podNames,
+                    },
+                    {
+                        id: currentProject.id,
+                        cluster_id: currentCluster.id,
+                    }
+                );
+                requests.push(metricsRequest)
             }
-            setAggregatedData(allPodsAggregatedData);
 
-            const res = await api.getMetrics(
-                "<token>",
-                {
-                    metric: selectedMetric,
-                    shouldsum: shouldsum,
-                    kind: kind,
-                    name: selectedController?.metadata.name,
-                    namespace: namespace,
-                    startrange: start,
-                    endrange: end,
-                    resolution: resolutions[selectedRange],
-                    pods: podNames,
-                },
-                {
-                    id: currentProject.id,
-                    cluster_id: currentCluster.id,
+            if (shouldsum && isHpaEnabled && ["cpu", "memory"].includes(selectedMetric)) {
+                let hpaMetricType = "cpu_hpa_threshold"
+                if (selectedMetric === "memory") {
+                    hpaMetricType = "memory_hpa_threshold"
                 }
-            );
-
-            const metrics = new MetricNormalizer(
-                res.data,
-                selectedMetric as AvailableMetrics
-            );
-            // transform the metrics to expected form
-            setData(metrics.getParsedData());
-
-            const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
-            const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
-            setShowHpaToggle(isHpaEnabled);
-            setHpaEnabled(isHpaEnabled);
-            if (shouldsum && isHpaEnabled) {
-                if (selectedMetric === "cpu") {
-                    await getAutoscalingThreshold(
-                        "cpu_hpa_threshold",
-                        shouldsum,
-                        namespace,
-                        start,
-                        end
-                    );
-                } else if (selectedMetric === "memory") {
-                    await getAutoscalingThreshold(
-                        "memory_hpa_threshold",
-                        shouldsum,
-                        namespace,
-                        start,
-                        end
-                    );
-                }
+                const hpaMetricsRequest = api.getMetrics(
+                    "<token>",
+                    {
+                        metric: hpaMetricType,
+                        shouldsum: shouldsum,
+                        kind: kind,
+                        name: selectedController?.metadata.name,
+                        namespace: namespace,
+                        startrange: start,
+                        endrange: end,
+                        resolution: resolutions[selectedRange],
+                        pods: [],
+                    },
+                    {
+                        id: currentProject.id,
+                        cluster_id: currentCluster.id,
+                    }
+                )
+                requests.push(hpaMetricsRequest)
             }
+
+            axios
+                .all(requests)
+                .then((responses) => {
+                    const allPodsRes = responses[0];
+                    const allPodsData: GenericMetricResponse[] = allPodsRes.data ?? [];
+                    const allPodsMetrics = allPodsData.flatMap((d) => d.results);
+                    const allPodsMetricsNormalized = new MetricNormalizer(
+                        [{ results: allPodsMetrics }],
+                        selectedMetric as AvailableMetrics,
+                    );
+                    const allPodsAggregatedData = allPodsMetricsNormalized.getAggregatedData()
+                    if (shouldsum) {
+                        setData(allPodsAggregatedData["avg"])
+                        delete allPodsAggregatedData["avg"]
+                    }
+                    setAggregatedData(allPodsAggregatedData);
+
+                    if (!shouldsum) {
+                        const res = responses[1];
+                        const metrics = new MetricNormalizer(
+                            res.data,
+                            selectedMetric as AvailableMetrics
+                        );
+                        setData(metrics.getParsedData());
+                    }
+
+                    if (shouldsum && isHpaEnabled && ["cpu", "memory"].includes(selectedMetric)) {
+                        let hpaMetricType = "cpu_hpa_threshold"
+                        if (selectedMetric === "memory") {
+                            hpaMetricType = "memory_hpa_threshold"
+                        }
+                        const hpaRes = responses[1];
+                        if (!Array.isArray(hpaRes.data) || !hpaRes.data[0]?.results) {
+                            return;
+                        }
+                        const autoscalingMetrics = new MetricNormalizer(hpaRes.data, hpaMetricType as AvailableMetrics);
+                        setHpaData(autoscalingMetrics.getParsedData());
+                    }
+                })
+                .catch(error => {
+                    setCurrentError(JSON.stringify(error));
+                })
         } catch (error) {
             setCurrentError(JSON.stringify(error));
         } finally {

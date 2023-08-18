@@ -173,8 +173,8 @@ const AddOnDashboard: React.FC<Props> = ({
                   </Text>
                   <Spacer y={.5} />
                   <Link to="/addons/new">
-                    <Button onClick={() => { }} height="40px" >
-                      Deploy add-ons <Spacer inline x={1} /> <i className="material-icons">east</i>
+                    <Button onClick={() => { }} height="35px" >
+                      Deploy add-ons <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
                     </Button>
                   </Link>
                 </CentralContainer>

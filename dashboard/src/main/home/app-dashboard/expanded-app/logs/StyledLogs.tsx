@@ -148,6 +148,7 @@ const LogInnerPill = styled.div<{ color: string }>`
 `
 
 const LogOuter = styled.div`
+  user-select: text;
   display: inline-block;
   word-wrap: anywhere;
   flex-grow: 1;
@@ -156,6 +157,7 @@ const LogOuter = styled.div`
 `;
 
 const LogInnerSpan = styled.span`
+  user-select: text;
   font-family: monospace, sans-serif;
   font-size: 12px;
   font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>

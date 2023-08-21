@@ -18,6 +18,7 @@ import (
 	goerrors "errors"
 
 	"github.com/porter-dev/porter/api/server/shared/websocket"
+	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/registry"
 	"github.com/porter-dev/porter/internal/repository"
@@ -31,6 +32,7 @@ import (
 	netv1 "k8s.io/api/networking/v1"
 	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -1983,6 +1985,55 @@ func (a *Agent) CreateImagePullSecrets(
 	return res, nil
 }
 
+func (a *Agent) RunCommandOnPod(p *v1.Pod, args []string) error {
+	container := p.Spec.Containers[0].Name
+
+	newPod, err := a.createEphemeralPodFromExisting(p, container, args)
+	if err != nil {
+		return err
+	}
+	podName := newPod.ObjectMeta.Name
+
+	// delete the ephemeral pod no matter what
+	defer a.DeletePod(podName, newPod.Namespace)
+
+	err, _ = a.waitForPod(newPod)
+	if err != nil {
+		return err
+	}
+
+	// refresh pod info for latest status
+	newPod, err = a.Clientset.CoreV1().
+		Pods(newPod.Namespace).
+		Get(context.Background(), newPod.Name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	req := a.Clientset.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Name(podName).
+		Namespace(newPod.Namespace).
+		SubResource("attach")
+
+	req.Param("stdin", "true")
+	req.Param("stdout", "true")
+	req.Param("tty", "true")
+	req.Param("container", container)
+
+	restConf, err := a.RESTClientGetter.ToRESTConfig()
+	if err != nil {
+		return err
+	}
+
+	_, err = remotecommand.NewSPDYExecutor(restConf, "POST", req.URL())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // helper that waits for pod to be ready
 func (a *Agent) waitForPod(pod *v1.Pod) (error, bool) {
 	var (
@@ -2056,4 +2107,91 @@ func isPodReady(pod *v1.Pod) bool {
 
 func isPodExited(pod *v1.Pod) bool {
 	return pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed
+}
+
+func (a *Agent) createEphemeralPodFromExisting(
+	existing *v1.Pod,
+	container string,
+	args []string,
+) (*v1.Pod, error) {
+	newPod := existing.DeepCopy()
+
+	// only copy the pod spec, overwrite metadata
+	newPod.ObjectMeta = metav1.ObjectMeta{
+		Name:      strings.ToLower(fmt.Sprintf("%s-copy-%s", existing.ObjectMeta.Name, utils.String(4))),
+		Namespace: existing.ObjectMeta.Namespace,
+	}
+
+	newPod.Status = v1.PodStatus{}
+
+	// set restart policy to never
+	newPod.Spec.RestartPolicy = v1.RestartPolicyNever
+
+	// change the command in the pod to the passed in pod command
+	cmdRoot := args[0]
+	cmdArgs := make([]string, 0)
+
+	// annotate with the ephemeral pod tag
+	newPod.Labels = make(map[string]string)
+	newPod.Labels["porter/ephemeral-pod"] = "true"
+
+	if len(args) > 1 {
+		cmdArgs = args[1:]
+	}
+
+	for i := 0; i < len(newPod.Spec.Containers); i++ {
+		if newPod.Spec.Containers[i].Name == container {
+			newPod.Spec.Containers[i].Command = []string{cmdRoot}
+			newPod.Spec.Containers[i].Args = cmdArgs
+			newPod.Spec.Containers[i].TTY = true
+			newPod.Spec.Containers[i].Stdin = true
+			newPod.Spec.Containers[i].StdinOnce = true
+
+			var newCpu int
+			if newPod.Spec.Containers[i].Resources.Requests.Cpu() != nil && newPod.Spec.Containers[i].Resources.Requests.Cpu().MilliValue() > 500 {
+				newCpu = 500
+			}
+			if newCpu != 0 {
+				newPod.Spec.Containers[i].Resources.Limits[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", newCpu))
+				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", newCpu))
+
+				for j := 0; j < len(newPod.Spec.Containers[i].Env); j++ {
+					if newPod.Spec.Containers[i].Env[j].Name == "PORTER_RESOURCES_CPU" {
+						newPod.Spec.Containers[i].Env[j].Value = fmt.Sprintf("%dm", newCpu)
+						break
+					}
+				}
+			}
+
+			var newMemory int
+			if newPod.Spec.Containers[i].Resources.Requests.Memory() != nil && newPod.Spec.Containers[i].Resources.Requests.Memory().Value() > 1000*1024*1024 {
+				newMemory = 1000
+			}
+			if newMemory != 0 {
+				newPod.Spec.Containers[i].Resources.Limits[v1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dMi", newMemory))
+				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dMi", newMemory))
+
+				for j := 0; j < len(newPod.Spec.Containers[i].Env); j++ {
+					if newPod.Spec.Containers[i].Env[j].Name == "PORTER_RESOURCES_RAM" {
+						newPod.Spec.Containers[i].Env[j].Value = fmt.Sprintf("%dMi", newMemory)
+						break
+					}
+				}
+			}
+		}
+
+		// remove health checks and probes
+		newPod.Spec.Containers[i].LivenessProbe = nil
+		newPod.Spec.Containers[i].ReadinessProbe = nil
+		newPod.Spec.Containers[i].StartupProbe = nil
+	}
+
+	newPod.Spec.NodeName = ""
+
+	// create the pod and return it
+	return a.Clientset.CoreV1().Pods(existing.ObjectMeta.Namespace).Create(
+		context.Background(),
+		newPod,
+		metav1.CreateOptions{},
+	)
 }

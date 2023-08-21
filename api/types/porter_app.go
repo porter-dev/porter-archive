@@ -68,6 +68,10 @@ type UpdatePorterAppRequest struct {
 	PullRequestURL string `json:"pull_request_url"`
 }
 
+type RunPorterAppCommandRequest struct {
+	Command string `json:"command" form:"required"`
+}
+
 type RollbackPorterAppRequest struct {
 	Revision int `json:"revision" form:"required"`
 }

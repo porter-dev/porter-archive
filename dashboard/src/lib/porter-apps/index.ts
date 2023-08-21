@@ -33,6 +33,10 @@ export const sourceValidator = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("docker-registry"),
     image_repo_uri: z.string(),
+    // add branch and repo as undefined to allow for easy checks on changes to the source type
+    // (i.e. we want to remove the services if any source fields change)
+    git_branch: z.undefined(),
+    git_repo_name: z.undefined(),
   }),
 ]);
 export type SourceOptions = z.infer<typeof sourceValidator>;

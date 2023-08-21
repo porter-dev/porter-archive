@@ -252,7 +252,7 @@ func getNginxStatusQuery(opts *QueryOpts, selectionRegex string) (string, error)
 		return "", errors.New("invalid nginx status level specified")
 	}
 
-	query := fmt.Sprintf(`round(sum by (ingress)(irate(nginx_ingress_controller_requests{exported_namespace=~"%s",ingress="%s",service="%s",status=~"%d.."}[5m])), 0.001)`, opts.Namespace, selectionRegex, opts.Name, opts.NginxStatusLevel)
+	query := fmt.Sprintf(`round(sum by (ingress)(increase(nginx_ingress_controller_requests{exported_namespace=~"%s",ingress="%s",service="%s",status=~"%d.."}[5m])), 0.001)`, opts.Namespace, selectionRegex, opts.Name, opts.NginxStatusLevel)
 	return query, nil
 }
 

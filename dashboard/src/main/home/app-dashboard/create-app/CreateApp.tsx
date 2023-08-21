@@ -11,6 +11,7 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Link from "components/porter/Link";
+import EnvGroupArrayStacks from "main/home/cluster-dashboard/env-groups/EnvGroupArrayStacks";
 
 import { Context } from "shared/Context";
 import {
@@ -28,6 +29,11 @@ import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
 import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
+import {
+  defaultSerialized,
+  deserializeService,
+} from "lib/porter-apps/services";
+import EnvVariables from "../validate-apply/app-settings/EnvVariables";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -137,20 +143,20 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
           })
           .parseAsync(res.data);
         const proto = PorterApp.fromJsonString(atob(data.b64_app_proto));
+
         const { services, predeploy } = defaultServicesWithOverrides({
           overrides: proto,
         });
 
         if (services.length) {
-          setValue("app.services", services);
+          const defaultServices = predeploy
+            ? [...services, predeploy]
+            : services;
+          setValue("app.services", defaultServices);
           setDetectedServices({
             detected: true,
             count: services.length,
           });
-        }
-
-        if (predeploy) {
-          setValue("app.predeploy", predeploy);
         }
       } catch (err) {
         // silent failure for now
@@ -168,14 +174,14 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
     // set step to 2 if source is filled out
     if (source?.type && source.type === "github") {
       if (source.git_repo_name && source.git_branch) {
-        setStep((prev) => Math.max(prev, 3));
+        setStep((prev) => Math.max(prev, 5));
       }
     }
 
     // set step to 3 if source is filled out
     if (source?.type && source.type === "docker-registry") {
       if (image && image.tag) {
-        setStep((prev) => Math.max(prev, 3));
+        setStep((prev) => Math.max(prev, 5));
       }
     }
   }, [
@@ -319,16 +325,45 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
                   />
                 </>,
                 <>
-                  <Button
-                    status={isSubmitting && "loading"}
-                    loadingText={"Deploying..."}
-                    width={"120px"}
-                    disabled={true}
-                  >
-                    Deploy app
-                  </Button>
+                  <Text size={16}>Environment variables (optional)</Text>
+                  <Spacer y={0.5} />
+                  <Text color="helper">
+                    Specify environment variables shared among all services.
+                  </Text>
+                  <EnvVariables />
                 </>,
-              ]}
+                source.type === "github" && (
+                  <>
+                    <Text size={16}>Pre-deploy job (optional)</Text>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      You may add a pre-deploy job to perform an operation
+                      before your application services deploy each time, like a
+                      database migration.
+                    </Text>
+                    <Spacer y={0.5} />
+                    <ServiceList
+                      limitOne={true}
+                      addNewText={"Add a new pre-deploy job"}
+                      prePopulateService={deserializeService(
+                        defaultSerialized({
+                          name: "pre-deploy",
+                          type: "predeploy",
+                        })
+                      )}
+                      isPredeploy
+                    />
+                  </>
+                ),
+                <Button
+                  status={isSubmitting && "loading"}
+                  loadingText={"Deploying..."}
+                  width={"120px"}
+                  disabled={true}
+                >
+                  Deploy app
+                </Button>,
+              ].filter((x) => x)}
             />
           </FormProvider>
           <Spacer y={3} />

@@ -44,12 +44,14 @@ type ServiceListProps = {
   defaultExpanded?: boolean;
   limitOne?: boolean;
   prePopulateService?: ClientService;
+  isPredeploy?: boolean;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
   addNewText,
   limitOne = false,
   prePopulateService,
+  isPredeploy = false,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
@@ -120,6 +122,14 @@ const ServiceList: React.FC<ServiceListProps> = ({
       {services.length > 0 && (
         <ServicesContainer>
           {services.map((service, idx) => {
+            if (isPredeploy && service.config.type !== "predeploy") {
+              return null;
+            }
+
+            if (!isPredeploy && service.config.type === "predeploy") {
+              return null;
+            }
+
             return (
               <ServiceContainer
                 index={idx}

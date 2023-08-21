@@ -45,7 +45,6 @@ export const porterAppValidator = z.object({
   services: serviceValidator.array(),
   env: z.record(z.string(), z.string()),
   build: buildValidator,
-  predeploy: serviceValidator.optional(),
   image: z
     .object({
       repository: z.string(),
@@ -88,11 +87,12 @@ export function defaultServicesWithOverrides({
     ? deserializeService(
         defaultSerialized({
           name: "pre-deploy",
-          type: "job",
+          type: "predeploy",
         }),
         serializedServiceFromProto({
           name: "pre-deploy",
           service: overrides.predeploy,
+          isPredeploy: true,
         })
       )
     : undefined;

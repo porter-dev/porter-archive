@@ -85,6 +85,7 @@ const Resources: React.FC<ResourcesProps> = ({
       />
       {match(service.config)
         .with({ type: "job" }, () => null)
+        .with({ type: "predeploy" }, () => null)
         .otherwise((config) => (
           <>
             <Spacer y={1} />

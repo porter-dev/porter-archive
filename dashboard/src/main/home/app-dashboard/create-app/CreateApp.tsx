@@ -131,8 +131,6 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
           }
         );
 
-        console.log("res.data", res.data);
-
         const data = await z
           .object({
             b64_app_proto: z.string(),
@@ -142,7 +140,6 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
         const { services, predeploy } = defaultServicesWithOverrides({
           overrides: proto,
         });
-        console.log("services", services);
 
         if (services.length) {
           setValue("app.services", services);

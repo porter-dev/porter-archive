@@ -9,6 +9,7 @@ type Props = {
   shouldCreateCred: () => void;
   isLink?: boolean;
   linkHref?: string;
+  setTargetARN: (targetARN: string) => void;
 };
 
 type GenericCredential = {
@@ -41,7 +42,10 @@ const CredentialList: React.FunctionComponent<Props> = (props) => {
         return (
           <PreviewRow
             key={cred.id}
-            onClick={() => props.selectCredential(cred.id)}
+            onClick={() => {
+              props.setTargetARN(cred.display_name)
+              props.selectCredential(cred.id)
+            }}
           >
             <Flex>
               <i className="material-icons">account_circle</i>

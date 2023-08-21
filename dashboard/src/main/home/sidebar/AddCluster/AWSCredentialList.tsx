@@ -10,6 +10,7 @@ import Description from "components/Description";
 
 type Props = {
   selectCredential: (aws_integration_id: number) => void;
+  setTargetARN: (target_arn: string) => void;
 };
 
 type AWSCredential = {
@@ -22,6 +23,7 @@ type AWSCredential = {
 
 const AWSCredentialsList: React.FunctionComponent<Props> = ({
   selectCredential,
+  setTargetARN,
 }) => {
   const { currentProject, setCurrentError } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
@@ -91,6 +93,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
             };
           })}
           selectCredential={selectCredential}
+          setTargetARN={setTargetARN}
           shouldCreateCred={() => setShouldCreateCred(false)}
           addNewText="Add New AWS Credential"
         />

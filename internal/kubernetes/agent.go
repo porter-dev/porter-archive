@@ -1985,6 +1985,7 @@ func (a *Agent) CreateImagePullSecrets(
 	return res, nil
 }
 
+// RunCommandOnPod creates an ephemeral pod from the given pod with the given args as its start command.
 func (a *Agent) RunCommandOnPod(ctx context.Context, p *v1.Pod, args []string) error {
 	container := p.Spec.Containers[0].Name
 

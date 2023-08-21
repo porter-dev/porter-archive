@@ -68,6 +68,7 @@ type UpdatePorterAppRequest struct {
 	PullRequestURL string `json:"pull_request_url"`
 }
 
+// RunPorterAppCommandRequest represents a request to run a command on a pod of a porter app
 type RunPorterAppCommandRequest struct {
 	Command string `json:"command" form:"required"`
 }

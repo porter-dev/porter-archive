@@ -17,11 +17,13 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// RunPorterAppCommandHandler runs a command on a porter app
 type RunPorterAppCommandHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
+// NewRunPorterAppCommandHandler returns a new RunPorterAppCommandHandler
 func NewRunPorterAppCommandHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

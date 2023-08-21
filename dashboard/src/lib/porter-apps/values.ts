@@ -1,10 +1,76 @@
 import { z } from "zod";
-import {
-  ServiceField,
-  serviceBooleanValidator,
-  serviceNumberValidator,
-  serviceStringValidator,
-} from "./services";
+
+// ServiceString is a string value in a service that can be read-only or editable
+export const serviceStringValidator = z.object({
+  readOnly: z.boolean(),
+  value: z.string(),
+});
+export type ServiceString = z.infer<typeof serviceStringValidator>;
+
+// ServiceNumber is a number value in a service that can be read-only or editable
+export const serviceNumberValidator = z.object({
+  readOnly: z.boolean(),
+  value: z.number(),
+});
+export type ServiceNumber = z.infer<typeof serviceNumberValidator>;
+
+// ServiceBoolean is a boolean value in a service that can be read-only or editable
+export const serviceBooleanValidator = z.object({
+  readOnly: z.boolean(),
+  value: z.boolean(),
+});
+export type ServiceBoolean = z.infer<typeof serviceBooleanValidator>;
+
+// ServiceArray is an array of ServiceStrings
+const serviceArrayValidator = z.array(
+  z.object({
+    key: z.string(),
+    value: serviceStringValidator,
+  })
+);
+export type ServiceArray = z.infer<typeof serviceArrayValidator>;
+
+const getNumericValue = (
+  defaultValue: number,
+  overrideValue?: number,
+  validAsZero = false
+) => {
+  if (!overrideValue) {
+    return defaultValue;
+  }
+
+  if (!validAsZero && overrideValue === 0) {
+    return defaultValue;
+  }
+
+  return overrideValue;
+};
+
+// ServiceField is a helper to create a ServiceString, ServiceNumber, or ServiceBoolean
+export const ServiceField = {
+  string: (defaultValue: string, overrideValue?: string): ServiceString => {
+    return {
+      readOnly: !!overrideValue,
+      value: overrideValue ?? defaultValue,
+    };
+  },
+  number: (
+    defaultValue: number,
+    overrideValue?: number,
+    validAsZero = false
+  ): ServiceNumber => {
+    return {
+      readOnly: !!overrideValue || (validAsZero && overrideValue === 0),
+      value: getNumericValue(defaultValue, overrideValue, validAsZero),
+    };
+  },
+  boolean: (defaultValue: boolean, overrideValue?: boolean): ServiceBoolean => {
+    return {
+      readOnly: overrideValue != null,
+      value: overrideValue ?? defaultValue,
+    };
+  },
+};
 
 // Autoscaling
 export const autoscalingValidator = z.object({
@@ -26,45 +92,49 @@ export type SerializedAutoscaling = {
 export function serializeAutoscaling({
   autoscaling,
 }: {
-  autoscaling: ClientAutoscaling;
-}): SerializedAutoscaling {
-  return {
-    enabled: autoscaling.enabled.value,
-    minInstances: autoscaling.minInstances?.value,
-    maxInstances: autoscaling.maxInstances?.value,
-    cpuThresholdPercent: autoscaling.cpuThresholdPercent?.value,
-    memoryThresholdPercent: autoscaling.memoryThresholdPercent?.value,
-  };
+  autoscaling?: ClientAutoscaling;
+}): SerializedAutoscaling | undefined {
+  return (
+    autoscaling && {
+      enabled: autoscaling.enabled.value,
+      minInstances: autoscaling.minInstances?.value,
+      maxInstances: autoscaling.maxInstances?.value,
+      cpuThresholdPercent: autoscaling.cpuThresholdPercent?.value,
+      memoryThresholdPercent: autoscaling.memoryThresholdPercent?.value,
+    }
+  );
 }
 
 export function deserializeAutoscaling({
   autoscaling,
   override,
 }: {
-  autoscaling: SerializedAutoscaling;
+  autoscaling?: SerializedAutoscaling;
   override?: SerializedAutoscaling;
-}): ClientAutoscaling {
-  return {
-    enabled: ServiceField.boolean(autoscaling.enabled, override?.enabled),
-    minInstances: autoscaling.minInstances
-      ? ServiceField.number(autoscaling.minInstances, override?.minInstances)
-      : undefined,
-    maxInstances: autoscaling.maxInstances
-      ? ServiceField.number(autoscaling.maxInstances, override?.maxInstances)
-      : undefined,
-    cpuThresholdPercent: autoscaling.cpuThresholdPercent
-      ? ServiceField.number(
-          autoscaling.cpuThresholdPercent,
-          override?.cpuThresholdPercent
-        )
-      : undefined,
-    memoryThresholdPercent: autoscaling.memoryThresholdPercent
-      ? ServiceField.number(
-          autoscaling.memoryThresholdPercent,
-          override?.memoryThresholdPercent
-        )
-      : undefined,
-  };
+}): ClientAutoscaling | undefined {
+  return (
+    autoscaling && {
+      enabled: ServiceField.boolean(autoscaling.enabled, override?.enabled),
+      minInstances: autoscaling.minInstances
+        ? ServiceField.number(autoscaling.minInstances, override?.minInstances)
+        : undefined,
+      maxInstances: autoscaling.maxInstances
+        ? ServiceField.number(autoscaling.maxInstances, override?.maxInstances)
+        : undefined,
+      cpuThresholdPercent: autoscaling.cpuThresholdPercent
+        ? ServiceField.number(
+            autoscaling.cpuThresholdPercent,
+            override?.cpuThresholdPercent
+          )
+        : undefined,
+      memoryThresholdPercent: autoscaling.memoryThresholdPercent
+        ? ServiceField.number(
+            autoscaling.memoryThresholdPercent,
+            override?.memoryThresholdPercent
+          )
+        : undefined,
+    }
+  );
 }
 
 // Health Check
@@ -81,26 +151,30 @@ export type SerializedHealthcheck = {
 export function serializeHealth({
   health,
 }: {
-  health: ClientHealthCheck;
-}): SerializedHealthcheck {
-  return {
-    enabled: health.enabled.value,
-    httpPath: health.httpPath?.value,
-  };
+  health?: ClientHealthCheck;
+}): SerializedHealthcheck | undefined {
+  return (
+    health && {
+      enabled: health.enabled.value,
+      httpPath: health.httpPath?.value,
+    }
+  );
 }
 export function deserializeHealthCheck({
   health,
   override,
 }: {
-  health: SerializedHealthcheck;
+  health?: SerializedHealthcheck;
   override?: SerializedHealthcheck;
-}) {
-  return {
-    enabled: ServiceField.boolean(health.enabled, override?.enabled),
-    httpPath: health.httpPath
-      ? ServiceField.string(health.httpPath, override?.httpPath)
-      : undefined,
-  };
+}): ClientHealthCheck | undefined {
+  return (
+    health && {
+      enabled: ServiceField.boolean(health.enabled, override?.enabled),
+      httpPath: health.httpPath
+        ? ServiceField.string(health.httpPath, override?.httpPath)
+        : undefined,
+    }
+  );
 }
 
 // Domains

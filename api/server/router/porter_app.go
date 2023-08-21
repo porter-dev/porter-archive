@@ -542,11 +542,11 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/app/parse -> porter_app.NewParsePorterYAMLToProtoHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/parse -> porter_app.NewParsePorterYAMLToProtoHandler
 	parsePorterYAMLToProtoEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
+			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
 				RelativePath: "/apps/parse",

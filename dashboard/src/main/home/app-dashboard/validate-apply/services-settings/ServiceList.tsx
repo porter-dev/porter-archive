@@ -12,8 +12,12 @@ import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
 import { z } from "zod";
-import { ClientPorterApp, PorterAppFormData } from "lib/porter-apps";
-import { ClientService } from "lib/porter-apps/services";
+import { PorterAppFormData } from "lib/porter-apps";
+import {
+  ClientService,
+  defaultSerialized,
+  deserializeService,
+} from "lib/porter-apps/services";
 import {
   Controller,
   useFieldArray,
@@ -106,75 +110,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   };
 
   const onSubmit = handleSubmit(async (data) => {
-    const config: ClientService["config"] = match(data.type)
-      .with("web", () => ({
-        type: "web" as const,
-        domains: [],
-        autoscaling: {
-          enabled: {
-            readOnly: false,
-            value: false,
-          },
-        },
-        healthCheck: {
-          enabled: {
-            readOnly: false,
-            value: false,
-          },
-        },
-      }))
-      .with("worker", () => ({
-        type: "worker" as const,
-        autoscaling: {
-          enabled: {
-            readOnly: false,
-            value: false,
-          },
-        },
-      }))
-      .with("job", () => ({
-        type: "job" as const,
-        allowConcurrent: {
-          readOnly: false,
-          value: true,
-        },
-        cron: {
-          readOnly: false,
-          value: "",
-        },
-      }))
-      .exhaustive();
-
-    append({
-      expanded: true,
-      canDelete: true,
-      name: {
-        readOnly: false,
-        value: data.name,
-      },
-      run: {
-        readOnly: false,
-        value: "",
-      },
-      instances: {
-        readOnly: false,
-        value: 1,
-      },
-      cpuCores: {
-        readOnly: false,
-        value: 0.1,
-      },
-      ramMegabytes: {
-        readOnly: false,
-        value: 256,
-      },
-      port: {
-        readOnly: false,
-        value: 3000,
-      },
-      config,
-    });
-
+    append(deserializeService(defaultSerialized(data)));
     reset();
     setShowAddServiceModal(false);
   });

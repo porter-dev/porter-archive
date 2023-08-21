@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo } from "react";
+import React, { useCallback, useContext, useEffect, useMemo } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import web from "assets/web.png";
 import AnimateHeight from "react-animate-height";
@@ -13,7 +13,10 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Link from "components/porter/Link";
 
 import { Context } from "shared/Context";
-import { PorterAppFormData } from "lib/porter-apps";
+import {
+  PorterAppFormData,
+  defaultServicesWithOverrides,
+} from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
 import Button from "components/porter/Button";
@@ -21,12 +24,20 @@ import RepoSettings from "./RepoSettings";
 import ImageSettings from "./ImageSettings";
 import Container from "components/porter/Container";
 import ServiceList from "../validate-apply/services-settings/ServiceList";
+import { useQuery } from "@tanstack/react-query";
+import api from "shared/api";
+import { z } from "zod";
+import { PorterApp } from "@porter-dev/api-contracts";
 
 type CreateAppProps = {} & RouteComponentProps;
 
 const CreateApp: React.FC<CreateAppProps> = ({}) => {
-  const { currentProject } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const [step, setStep] = React.useState(0);
+  const [detectedServices, setDetectedServices] = React.useState<{
+    detected: boolean;
+    count: number;
+  }>({ detected: false, count: 0 });
 
   const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",
@@ -61,6 +72,93 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
   const build = watch("app.build");
   const image = watch("app.image");
 
+  const { data } = useQuery(
+    [
+      "getPorterYamlContents",
+      currentProject?.id,
+      source.git_branch,
+      source.git_repo_name,
+    ],
+    async () => {
+      if (!currentProject) {
+        return;
+      }
+      if (source.type !== "github") {
+        return;
+      }
+      const res = await api.getPorterYamlContents(
+        "<token>",
+        {
+          path: source.porter_yaml_path,
+        },
+        {
+          project_id: currentProject.id,
+          git_repo_id: source.git_repo_id,
+          kind: "github",
+          owner: source.git_repo_name.split("/")[0],
+          name: source.git_repo_name.split("/")[1],
+          branch: source.git_branch,
+        }
+      );
+
+      return z.string().parseAsync(res.data);
+    },
+    {
+      enabled:
+        source.type === "github" &&
+        Boolean(source.git_repo_name) &&
+        Boolean(source.git_branch),
+    }
+  );
+
+  const detectServices = useCallback(
+    async ({
+      b64Yaml,
+      projectId,
+      clusterId,
+    }: {
+      b64Yaml: string;
+      projectId: number;
+      clusterId: number;
+    }) => {
+      try {
+        const res = await api.parsePorterYaml(
+          "<token>",
+          { b64_yaml: b64Yaml },
+          {
+            project_id: projectId,
+            cluster_id: clusterId,
+          }
+        );
+
+        const data = await z
+          .object({
+            b64_app_proto: z.string(),
+          })
+          .parseAsync(res.data);
+        const proto = PorterApp.fromJsonString(atob(data.b64_app_proto));
+        const { services, predeploy } = defaultServicesWithOverrides({
+          overrides: proto,
+        });
+
+        if (services.length) {
+          setValue("app.services", services);
+          setDetectedServices({
+            detected: true,
+            count: services.length,
+          });
+        }
+
+        if (predeploy) {
+          setValue("app.predeploy", predeploy);
+        }
+      } catch (err) {
+        // silent failure for now
+      }
+    },
+    []
+  );
+
   useEffect(() => {
     // set step to 1 if name is filled out
     if (name) {
@@ -91,7 +189,25 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
   // reset services when source changes
   useEffect(() => {
     setValue("app.services", []);
+    setDetectedServices({
+      detected: false,
+      count: 0,
+    });
   }, [source?.type, source?.git_repo_name, source?.git_branch, image?.tag]);
+
+  useEffect(() => {
+    if (!currentProject || !currentCluster) {
+      return;
+    }
+
+    if (data) {
+      detectServices({
+        b64Yaml: data,
+        projectId: currentProject.id,
+        clusterId: currentCluster.id,
+      });
+    }
+  }, [data]);
 
   if (!currentProject) {
     return null;
@@ -171,6 +287,30 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
                 <>
                   <Container row>
                     <Text size={16}>Application services</Text>
+                    {detectedServices.detected && (
+                      <AppearingDiv
+                        color={
+                          detectedServices.detected ? "#8590ff" : "#fcba03"
+                        }
+                      >
+                        {detectedServices.count > 0 ? (
+                          <I className="material-icons">check</I>
+                        ) : (
+                          <I className="material-icons">error</I>
+                        )}
+                        <Text
+                          color={
+                            detectedServices.detected ? "#8590ff" : "#fcba03"
+                          }
+                        >
+                          {detectedServices.count > 0
+                            ? `Detected ${detectedServices.count} service${
+                                detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
+                            : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
+                        </Text>
+                      </AppearingDiv>
+                    )}
                   </Container>
                   <Spacer y={0.5} />
                   <ServiceList
@@ -243,4 +383,28 @@ const Icon = styled.img`
       transform: translateY(0px);
     }
   }
+`;
+
+const AppearingDiv = styled.div<{ color?: string }>`
+  animation: floatIn 0.5s;
+  animation-fill-mode: forwards;
+  display: flex;
+  align-items: center;
+  color: ${(props) => props.color || "#ffffff44"};
+  margin-left: 10px;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;
+
+const I = styled.i`
+  font-size: 18px;
+  margin-right: 5px;
 `;

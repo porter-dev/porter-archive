@@ -161,7 +161,7 @@ func (c *Client) ParseYAML(
 		B64Yaml: b64Yaml,
 	}
 
-	err := c.getRequest(
+	err := c.postRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/parse",
 			projectID, clusterID,

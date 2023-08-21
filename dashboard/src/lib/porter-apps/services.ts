@@ -10,60 +10,12 @@ import {
   serializeAutoscaling,
   serializeHealth,
   domainsValidator,
+  serviceStringValidator,
+  serviceNumberValidator,
+  serviceBooleanValidator,
+  ServiceField,
 } from "./values";
 import { Service, ServiceType } from "@porter-dev/api-contracts";
-
-// ServiceString is a string value in a service that can be read-only or editable
-export const serviceStringValidator = z.object({
-  readOnly: z.boolean(),
-  value: z.string(),
-});
-export type ServiceString = z.infer<typeof serviceStringValidator>;
-
-// ServiceNumber is a number value in a service that can be read-only or editable
-export const serviceNumberValidator = z.object({
-  readOnly: z.boolean(),
-  value: z.number(),
-});
-export type ServiceNumber = z.infer<typeof serviceNumberValidator>;
-
-// ServiceBoolean is a boolean value in a service that can be read-only or editable
-export const serviceBooleanValidator = z.object({
-  readOnly: z.boolean(),
-  value: z.boolean(),
-});
-export type ServiceBoolean = z.infer<typeof serviceBooleanValidator>;
-
-// ServiceArray is an array of ServiceStrings
-const serviceArrayValidator = z.array(
-  z.object({
-    key: z.string(),
-    value: serviceStringValidator,
-  })
-);
-export type ServiceArray = z.infer<typeof serviceArrayValidator>;
-
-// ServiceField is a helper to create a ServiceString, ServiceNumber, or ServiceBoolean
-export const ServiceField = {
-  string: (defaultValue: string, overrideValue?: string): ServiceString => {
-    return {
-      readOnly: !!overrideValue,
-      value: overrideValue ?? defaultValue,
-    };
-  },
-  number: (defaultValue: number, overrideValue?: number): ServiceNumber => {
-    return {
-      readOnly: !!overrideValue,
-      value: overrideValue ?? defaultValue,
-    };
-  },
-  boolean: (defaultValue: boolean, overrideValue?: boolean): ServiceBoolean => {
-    return {
-      readOnly: !!overrideValue,
-      value: overrideValue ?? defaultValue,
-    };
-  },
-};
 
 // serviceValidator is the validator for a ClientService
 // This is used to validate a service when creating or updating an app
@@ -79,14 +31,14 @@ export const serviceValidator = z.object({
   config: z.discriminatedUnion("type", [
     z.object({
       type: z.literal("web"),
-      autoscaling: autoscalingValidator,
+      autoscaling: autoscalingValidator.optional(),
       ingressEnabled: z.boolean().default(false).optional(),
       domains: domainsValidator,
-      healthCheck: healthcheckValidator,
+      healthCheck: healthcheckValidator.optional(),
     }),
     z.object({
       type: z.literal("worker"),
-      autoscaling: autoscalingValidator,
+      autoscaling: autoscalingValidator.optional(),
     }),
     z.object({
       type: z.literal("job"),
@@ -113,12 +65,12 @@ export type SerializedService = {
         domains: {
           name: string;
         }[];
-        autoscaling: SerializedAutoscaling;
-        healthCheck: SerializedHealthcheck;
+        autoscaling?: SerializedAutoscaling;
+        healthCheck?: SerializedHealthcheck;
       }
     | {
         type: "worker";
-        autoscaling: SerializedAutoscaling;
+        autoscaling?: SerializedAutoscaling;
       }
     | {
         type: "job";
@@ -126,6 +78,63 @@ export type SerializedService = {
         cron: string;
       };
 };
+
+export function defaultSerialized({
+  name,
+  type,
+}: {
+  name: string;
+  type: "web" | "worker" | "job";
+}): SerializedService {
+  const baseService = {
+    name,
+    run: "",
+    instances: 1,
+    port: 3000,
+    cpuCores: 0.1,
+    ramMegabytes: 256,
+  };
+
+  const defaultAutoscaling: SerializedAutoscaling = {
+    enabled: false,
+    minInstances: 1,
+    maxInstances: 10,
+    cpuThresholdPercent: 50,
+    memoryThresholdPercent: 50,
+  };
+
+  const defaultHealthCheck: SerializedHealthcheck = {
+    enabled: false,
+    httpPath: "/healthz",
+  };
+
+  return match(type)
+    .with("web", () => ({
+      ...baseService,
+      config: {
+        type: "web" as const,
+        autoscaling: defaultAutoscaling,
+        healthCheck: defaultHealthCheck,
+        domains: [],
+      },
+    }))
+    .with("worker", () => ({
+      ...baseService,
+      config: {
+        type: "worker" as const,
+        autoscaling: defaultAutoscaling,
+      },
+    }))
+    .with("job", () => ({
+      ...baseService,
+      config: {
+        type: "job" as const,
+        allowConcurrent: false,
+        cron: "",
+      },
+    }))
+    .exhaustive();
+}
 
 // serializeService converts a ClientService to a SerializedService
 // A SerializedService holds just the values of a ClientService
@@ -142,10 +151,14 @@ export function serializeService(service: ClientService): SerializedService {
         ramMegabytes: service.ramMegabytes.value,
         config: {
           type: "web" as const,
-          autoscaling: serializeAutoscaling({
-            autoscaling: config.autoscaling,
-          }),
-          healthCheck: serializeHealth({ health: config.healthCheck }),
+          autoscaling: config.autoscaling
+            ? serializeAutoscaling({
+                autoscaling: config.autoscaling,
+              })
+            : undefined,
+          healthCheck: config.healthCheck
+            ? serializeHealth({ health: config.healthCheck })
+            : undefined,
           domains: config.domains.map((domain) => ({
             name: domain.name.value,
           })),
@@ -162,9 +175,11 @@ export function serializeService(service: ClientService): SerializedService {
         ramMegabytes: service.ramMegabytes.value,
         config: {
           type: "worker" as const,
-          autoscaling: serializeAutoscaling({
-            autoscaling: config.autoscaling,
-          }),
+          autoscaling: config.autoscaling
+            ? serializeAutoscaling({
+                autoscaling: config.autoscaling,
+              })
+            : undefined,
         },
       })
     )
@@ -193,6 +208,8 @@ export function deserializeService(
   override?: SerializedService
 ): ClientService {
   const baseService = {
+    expanded: true,
+    canDelete: !override,
     name: ServiceField.string(service.name, override?.name),
     run: ServiceField.string(service.run, override?.run),
     instances: ServiceField.number(service.instances, override?.instances),
@@ -213,14 +230,18 @@ export function deserializeService(
         ...baseService,
         config: {
           type: "web" as const,
-          autoscaling: deserializeAutoscaling({
-            autoscaling: config.autoscaling,
-            override: overrideWebConfig?.autoscaling,
-          }),
-          healthCheck: deserializeHealthCheck({
-            health: config.healthCheck,
-            override: overrideWebConfig?.healthCheck,
-          }),
+          autoscaling: config.autoscaling
+            ? deserializeAutoscaling({
+                autoscaling: config.autoscaling,
+                override: overrideWebConfig?.autoscaling,
+              })
+            : undefined,
+          healthCheck: config.healthCheck
+            ? deserializeHealthCheck({
+                health: config.healthCheck,
+                override: overrideWebConfig?.healthCheck,
+              })
+            : undefined,
           domains: config.domains.map((domain) => ({
             name: ServiceField.string(
               domain.name,
@@ -240,10 +261,12 @@ export function deserializeService(
         ...baseService,
         config: {
           type: "worker" as const,
-          autoscaling: deserializeAutoscaling({
-            autoscaling: config.autoscaling,
-            override: overrideWorkerConfig?.autoscaling,
-          }),
+          autoscaling: config.autoscaling
+            ? deserializeAutoscaling({
+                autoscaling: config.autoscaling,
+                override: overrideWorkerConfig?.autoscaling,
+              })
+            : undefined,
         },
       };
     })
@@ -346,8 +369,8 @@ export function serializedServiceFromProto({
       name,
       config: {
         type: "web" as const,
-        autoscaling: value.autoscaling ? value.autoscaling : { enabled: false },
-        healthCheck: value.healthCheck ? value.healthCheck : { enabled: false },
+        autoscaling: value.autoscaling ? value.autoscaling : undefined,
+        healthCheck: value.healthCheck ? value.healthCheck : undefined,
         ...value,
       },
     }))
@@ -356,7 +379,7 @@ export function serializedServiceFromProto({
       name,
       config: {
         type: "worker" as const,
-        autoscaling: value.autoscaling ? value.autoscaling : { enabled: false },
+        autoscaling: value.autoscaling ? value.autoscaling : undefined,
         ...value,
       },
     }))

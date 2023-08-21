@@ -1,10 +1,76 @@
 import { z } from "zod";
-import {
-  ServiceField,
-  serviceBooleanValidator,
-  serviceNumberValidator,
-  serviceStringValidator,
-} from "./services";
+
+// ServiceString is a string value in a service that can be read-only or editable
+export const serviceStringValidator = z.object({
+  readOnly: z.boolean(),
+  value: z.string(),
+});
+export type ServiceString = z.infer<typeof serviceStringValidator>;
+
+// ServiceNumber is a number value in a service that can be read-only or editable
+export const serviceNumberValidator = z.object({
+  readOnly: z.boolean(),
+  value: z.number(),
+});
+export type ServiceNumber = z.infer<typeof serviceNumberValidator>;
+
+// ServiceBoolean is a boolean value in a service that can be read-only or editable
+export const serviceBooleanValidator = z.object({
+  readOnly: z.boolean(),
+  value: z.boolean(),
+});
+export type ServiceBoolean = z.infer<typeof serviceBooleanValidator>;
+
+// ServiceArray is an array of ServiceStrings
+const serviceArrayValidator = z.array(
+  z.object({
+    key: z.string(),
+    value: serviceStringValidator,
+  })
+);
+export type ServiceArray = z.infer<typeof serviceArrayValidator>;
+
+const getNumericValue = (
+  defaultValue: number,
+  overrideValue?: number,
+  validAsZero = false
+) => {
+  if (!overrideValue) {
+    return defaultValue;
+  }
+
+  if (!validAsZero && overrideValue === 0) {
+    return defaultValue;
+  }
+
+  return overrideValue;
+};
+
+// ServiceField is a helper to create a ServiceString, ServiceNumber, or ServiceBoolean
+export const ServiceField = {
+  string: (defaultValue: string, overrideValue?: string): ServiceString => {
+    return {
+      readOnly: !!overrideValue,
+      value: overrideValue ?? defaultValue,
+    };
+  },
+  number: (
+    defaultValue: number,
+    overrideValue?: number,
+    validAsZero = false
+  ): ServiceNumber => {
+    return {
+      readOnly: !!overrideValue || (validAsZero && overrideValue === 0),
+      value: getNumericValue(defaultValue, overrideValue, validAsZero),
+    };
+  },
+  boolean: (defaultValue: boolean, overrideValue?: boolean): ServiceBoolean => {
+    return {
+      readOnly: overrideValue != null,
+      value: overrideValue ?? defaultValue,
+    };
+  },
+};
 
 // Autoscaling
 export const autoscalingValidator = z.object({

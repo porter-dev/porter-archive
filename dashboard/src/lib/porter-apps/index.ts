@@ -1,10 +1,8 @@
-import {
-  BUILDPACK_TO_NAME,
-  Buildpack,
-  buildpackSchema,
-} from "main/home/app-dashboard/types/buildpack";
+import { buildpackSchema } from "main/home/app-dashboard/types/buildpack";
 import { z } from "zod";
 import {
+  ClientService,
+  defaultSerialized,
   deserializeService,
   serializedServiceFromProto,
   serviceValidator,
@@ -64,57 +62,43 @@ export const porterAppFormValidator = z.object({
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
-// porterClientAppFromProto converts a PorterApp proto object to a ClientPorterApp
-export function porterClientAppFromProto(
-  proto: PorterApp,
-  buildpacks?: Buildpack[]
-): ClientPorterApp {
-  const services = Object.entries(proto.services).map(([name, service]) =>
-    deserializeService(serializedServiceFromProto({ name, service }))
-  );
+export function defaultServicesWithOverrides({
+  overrides,
+}: {
+  overrides?: PorterApp;
+}): {
+  services: ClientService[];
+  predeploy?: ClientService;
+} {
+  const services = overrides?.services
+    ? Object.entries(overrides.services)
+        .map(([name, service]) => serializedServiceFromProto({ name, service }))
+        .map((svc) =>
+          deserializeService(
+            defaultSerialized({
+              name: svc.name,
+              type: svc.config.type,
+            }),
+            svc
+          )
+        )
+    : [];
 
-  const { name, env, build, predeploy, image } = proto;
-
-  const validBuildpacks =
-    build?.buildpacks.map((bp) => {
-      const buildpack = buildpacks?.find((b) => b.buildpack === bp);
-      return buildpack
-        ? buildpack
-        : {
-            name: BUILDPACK_TO_NAME[bp],
-            buildpack: bp,
-          };
-    }) ?? [];
-
-  const app = {
-    name,
-    services,
-    env,
-    ...(build
-      ? {
-          build: {
-            ...build,
-            buildpacks: validBuildpacks,
-            method:
-              build.method === "pack" ? ("pack" as const) : ("docker" as const),
-          },
-        }
-      : {
-          build: {
-            context: "./",
-            method: "pack" as const,
-            buildpacks: [],
-            builder: "",
-            dockerfile: "",
-          },
+  const predeploy = overrides?.predeploy
+    ? deserializeService(
+        defaultSerialized({
+          name: "pre-deploy",
+          type: "job",
         }),
-    ...(predeploy && {
-      predeploy: deserializeService(
-        serializedServiceFromProto({ name: "predeploy", service: predeploy })
-      ),
-    }),
-    image,
-  };
+        serializedServiceFromProto({
+          name: "pre-deploy",
+          service: overrides.predeploy,
+        })
+      )
+    : undefined;
 
-  return app;
+  return {
+    services,
+    predeploy,
+  };
 }

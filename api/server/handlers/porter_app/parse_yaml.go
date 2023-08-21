@@ -18,7 +18,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-// ParsePorterYAMLToProtoHandler is the handler for the /app/parse endpoint
+// ParsePorterYAMLToProtoHandler is the handler for the /apps/parse endpoint
 type ParsePorterYAMLToProtoHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -34,12 +34,12 @@ func NewParsePorterYAMLToProtoHandler(
 	}
 }
 
-// ParsePorterYAMLToProtoRequest is the request object for the /app/parse endpoint
+// ParsePorterYAMLToProtoRequest is the request object for the /apps/parse endpoint
 type ParsePorterYAMLToProtoRequest struct {
 	B64Yaml string `json:"b64_yaml"`
 }
 
-// ParsePorterYAMLToProtoResponse is the response object for the /app/parse endpoint
+// ParsePorterYAMLToProtoResponse is the response object for the /apps/parse endpoint
 type ParsePorterYAMLToProtoResponse struct {
 	B64AppProto string `json:"b64_app_proto"`
 }

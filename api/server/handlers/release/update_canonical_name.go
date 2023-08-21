@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/stefanmcshane/helm/pkg/release"
 	"gorm.io/gorm"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -35,11 +36,16 @@ func NewUpdateCanonicalNameHandler(
 }
 
 func (c *UpdateCanonicalNameHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "change-canonical-name")
+	defer span.End()
+
 	name, _ := requestutils.GetURLParamString(r, types.URLParamReleaseName)
 	// namespace, _ := requestutils.GetURLParamString(r, types.URLParamNamespace)
 
-	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	helmRelease, _ := ctx.Value(types.ReleaseScope).(*release.Release)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "release-name", Value: helmRelease.Name})
 
 	request := &types.UpdateCanonicalNameRequest{}
 
@@ -50,10 +56,12 @@ func (c *UpdateCanonicalNameHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	release, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = telemetry.Error(ctx, span, err, "unable to get release")
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("release %s not found", name)))
 			return
 		}
 
+		err = telemetry.Error(ctx, span, err, "unable to get release resource")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -61,6 +69,7 @@ func (c *UpdateCanonicalNameHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	if release.CanonicalName != request.CanonicalName {
 		if request.CanonicalName != "" {
 			if errStrs := validation.IsDNS1123Label(request.CanonicalName); len(errStrs) > 0 {
+				err = telemetry.Error(ctx, span, err, "canonical name is incorrect")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("invalid canonical name"), http.StatusBadRequest))
 				return
 			}
@@ -71,6 +80,7 @@ func (c *UpdateCanonicalNameHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		release, err = c.Repo().Release().UpdateRelease(release)
 
 		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error updating chart")
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}

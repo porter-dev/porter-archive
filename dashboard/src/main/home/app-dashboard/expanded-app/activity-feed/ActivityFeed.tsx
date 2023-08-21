@@ -276,9 +276,9 @@ const Dot = styled.div<{ shouldAnimate: boolean }>`
   height: 7px;
   background: #fff;
   border-radius: 50%;
-  position: absolute;
-  left: 0;
-  top: 36px;
+  margin-left: -29px;
+  margin-right: 20px;
+  z-index: 1;
   opacity: ${(props) => props.shouldAnimate ? "0" : "1"};
   ${(props) => props.shouldAnimate && "animation: fadeIn 0.3s 0.1s;"}
   ${(props) => props.shouldAnimate && "animation-fill-mode: forwards;"}

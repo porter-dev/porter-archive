@@ -56,8 +56,8 @@ func (c *UpdateCanonicalNameHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	release, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			telemetry.Error(ctx, span, err, "unable to get release")
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("release %s not found", name)))
+			err = telemetry.Error(ctx, span, err, "unable to get release")
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("release %s not found: %s", name, err)))
 			return
 		}
 
@@ -69,8 +69,8 @@ func (c *UpdateCanonicalNameHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	if release.CanonicalName != request.CanonicalName {
 		if request.CanonicalName != "" {
 			if errStrs := validation.IsDNS1123Label(request.CanonicalName); len(errStrs) > 0 {
-				telemetry.Error(ctx, span, err, "canonical name is incorrect")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("invalid canonical name"), http.StatusBadRequest))
+				err = telemetry.Error(ctx, span, err, "canonical name is incorrect")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("invalid canonical name %s", err), http.StatusBadRequest))
 				return
 			}
 		}

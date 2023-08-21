@@ -151,14 +151,10 @@ export function serializeService(service: ClientService): SerializedService {
         ramMegabytes: service.ramMegabytes.value,
         config: {
           type: "web" as const,
-          autoscaling: config.autoscaling
-            ? serializeAutoscaling({
-                autoscaling: config.autoscaling,
-              })
-            : undefined,
-          healthCheck: config.healthCheck
-            ? serializeHealth({ health: config.healthCheck })
-            : undefined,
+          autoscaling: serializeAutoscaling({
+            autoscaling: config.autoscaling,
+          }),
+          healthCheck: serializeHealth({ health: config.healthCheck }),
           domains: config.domains.map((domain) => ({
             name: domain.name.value,
           })),
@@ -175,11 +171,9 @@ export function serializeService(service: ClientService): SerializedService {
         ramMegabytes: service.ramMegabytes.value,
         config: {
           type: "worker" as const,
-          autoscaling: config.autoscaling
-            ? serializeAutoscaling({
-                autoscaling: config.autoscaling,
-              })
-            : undefined,
+          autoscaling: serializeAutoscaling({
+            autoscaling: config.autoscaling,
+          }),
         },
       })
     )
@@ -230,18 +224,14 @@ export function deserializeService(
         ...baseService,
         config: {
           type: "web" as const,
-          autoscaling: config.autoscaling
-            ? deserializeAutoscaling({
-                autoscaling: config.autoscaling,
-                override: overrideWebConfig?.autoscaling,
-              })
-            : undefined,
-          healthCheck: config.healthCheck
-            ? deserializeHealthCheck({
-                health: config.healthCheck,
-                override: overrideWebConfig?.healthCheck,
-              })
-            : undefined,
+          autoscaling: deserializeAutoscaling({
+            autoscaling: config.autoscaling,
+            override: overrideWebConfig?.autoscaling,
+          }),
+          healthCheck: deserializeHealthCheck({
+            health: config.healthCheck,
+            override: overrideWebConfig?.healthCheck,
+          }),
           domains: config.domains.map((domain) => ({
             name: ServiceField.string(
               domain.name,
@@ -261,12 +251,10 @@ export function deserializeService(
         ...baseService,
         config: {
           type: "worker" as const,
-          autoscaling: config.autoscaling
-            ? deserializeAutoscaling({
-                autoscaling: config.autoscaling,
-                override: overrideWorkerConfig?.autoscaling,
-              })
-            : undefined,
+          autoscaling: deserializeAutoscaling({
+            autoscaling: config.autoscaling,
+            override: overrideWorkerConfig?.autoscaling,
+          }),
         },
       };
     })

@@ -92,45 +92,49 @@ export type SerializedAutoscaling = {
 export function serializeAutoscaling({
   autoscaling,
 }: {
-  autoscaling: ClientAutoscaling;
-}): SerializedAutoscaling {
-  return {
-    enabled: autoscaling.enabled.value,
-    minInstances: autoscaling.minInstances?.value,
-    maxInstances: autoscaling.maxInstances?.value,
-    cpuThresholdPercent: autoscaling.cpuThresholdPercent?.value,
-    memoryThresholdPercent: autoscaling.memoryThresholdPercent?.value,
-  };
+  autoscaling?: ClientAutoscaling;
+}): SerializedAutoscaling | undefined {
+  return (
+    autoscaling && {
+      enabled: autoscaling.enabled.value,
+      minInstances: autoscaling.minInstances?.value,
+      maxInstances: autoscaling.maxInstances?.value,
+      cpuThresholdPercent: autoscaling.cpuThresholdPercent?.value,
+      memoryThresholdPercent: autoscaling.memoryThresholdPercent?.value,
+    }
+  );
 }
 
 export function deserializeAutoscaling({
   autoscaling,
   override,
 }: {
-  autoscaling: SerializedAutoscaling;
+  autoscaling?: SerializedAutoscaling;
   override?: SerializedAutoscaling;
-}): ClientAutoscaling {
-  return {
-    enabled: ServiceField.boolean(autoscaling.enabled, override?.enabled),
-    minInstances: autoscaling.minInstances
-      ? ServiceField.number(autoscaling.minInstances, override?.minInstances)
-      : undefined,
-    maxInstances: autoscaling.maxInstances
-      ? ServiceField.number(autoscaling.maxInstances, override?.maxInstances)
-      : undefined,
-    cpuThresholdPercent: autoscaling.cpuThresholdPercent
-      ? ServiceField.number(
-          autoscaling.cpuThresholdPercent,
-          override?.cpuThresholdPercent
-        )
-      : undefined,
-    memoryThresholdPercent: autoscaling.memoryThresholdPercent
-      ? ServiceField.number(
-          autoscaling.memoryThresholdPercent,
-          override?.memoryThresholdPercent
-        )
-      : undefined,
-  };
+}): ClientAutoscaling | undefined {
+  return (
+    autoscaling && {
+      enabled: ServiceField.boolean(autoscaling.enabled, override?.enabled),
+      minInstances: autoscaling.minInstances
+        ? ServiceField.number(autoscaling.minInstances, override?.minInstances)
+        : undefined,
+      maxInstances: autoscaling.maxInstances
+        ? ServiceField.number(autoscaling.maxInstances, override?.maxInstances)
+        : undefined,
+      cpuThresholdPercent: autoscaling.cpuThresholdPercent
+        ? ServiceField.number(
+            autoscaling.cpuThresholdPercent,
+            override?.cpuThresholdPercent
+          )
+        : undefined,
+      memoryThresholdPercent: autoscaling.memoryThresholdPercent
+        ? ServiceField.number(
+            autoscaling.memoryThresholdPercent,
+            override?.memoryThresholdPercent
+          )
+        : undefined,
+    }
+  );
 }
 
 // Health Check
@@ -147,26 +151,30 @@ export type SerializedHealthcheck = {
 export function serializeHealth({
   health,
 }: {
-  health: ClientHealthCheck;
-}): SerializedHealthcheck {
-  return {
-    enabled: health.enabled.value,
-    httpPath: health.httpPath?.value,
-  };
+  health?: ClientHealthCheck;
+}): SerializedHealthcheck | undefined {
+  return (
+    health && {
+      enabled: health.enabled.value,
+      httpPath: health.httpPath?.value,
+    }
+  );
 }
 export function deserializeHealthCheck({
   health,
   override,
 }: {
-  health: SerializedHealthcheck;
+  health?: SerializedHealthcheck;
   override?: SerializedHealthcheck;
-}) {
-  return {
-    enabled: ServiceField.boolean(health.enabled, override?.enabled),
-    httpPath: health.httpPath
-      ? ServiceField.string(health.httpPath, override?.httpPath)
-      : undefined,
-  };
+}): ClientHealthCheck | undefined {
+  return (
+    health && {
+      enabled: ServiceField.boolean(health.enabled, override?.enabled),
+      httpPath: health.httpPath
+        ? ServiceField.string(health.httpPath, override?.httpPath)
+        : undefined,
+    }
+  );
 }
 
 // Domains

@@ -62,29 +62,29 @@ export const porterAppFormValidator = z.object({
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
+// defaultServicesWithOverrides is used to generate the default services for an app from porter.yaml
+// this method is only called when a porter.yaml is present and has services defined
 export function defaultServicesWithOverrides({
   overrides,
 }: {
-  overrides?: PorterApp;
+  overrides: PorterApp;
 }): {
   services: ClientService[];
   predeploy?: ClientService;
 } {
-  const services = overrides?.services
-    ? Object.entries(overrides.services)
-        .map(([name, service]) => serializedServiceFromProto({ name, service }))
-        .map((svc) =>
-          deserializeService(
-            defaultSerialized({
-              name: svc.name,
-              type: svc.config.type,
-            }),
-            svc
-          )
-        )
-    : [];
+  const services = Object.entries(overrides.services)
+    .map(([name, service]) => serializedServiceFromProto({ name, service }))
+    .map((svc) =>
+      deserializeService(
+        defaultSerialized({
+          name: svc.name,
+          type: svc.config.type,
+        }),
+        svc
+      )
+    );
 
-  const predeploy = overrides?.predeploy
+  const predeploy = overrides.predeploy
     ? deserializeService(
         defaultSerialized({
           name: "pre-deploy",

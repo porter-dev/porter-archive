@@ -5,6 +5,10 @@ import Loading from "components/Loading";
 
 import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
+import AWSCredentialsList from "./AddCluster/AWSCredentialList";
+import { InfraCredentials } from "shared/types";
+import ProvisionerSettings from "components/ProvisionerSettings";
+import Spacer from "components/porter/Spacer";
 
 
 type Props = RouteComponentProps & {
@@ -16,15 +20,29 @@ const ProvisionClusterModal: React.FC<Props> = ({
     closeModal,
 
 }) => {
-
+    const [currentCredential, setCurrentCredential] = useState<InfraCredentials>(
+        null
+    );
+    let aws_integration_id_string: string;
     return (
-        <Modal closeModal={closeModal}>
+        <Modal closeModal={closeModal} width={"900px"}>
             <Text size={16}>
-                Load env group
+                Provision A New Cluster
             </Text>
+            <Spacer y={1} />
+            {currentCredential ? (<>
+                <ProvisionerSettings credentialId={String(currentCredential.aws_integration_id)} />
 
-
-
+            </>) : (
+                < AWSCredentialsList
+                    selectCredential={
+                        (i) =>
+                            setCurrentCredential({
+                                aws_integration_id: i,
+                            })
+                    }
+                />)
+            }
         </Modal >
     )
 }

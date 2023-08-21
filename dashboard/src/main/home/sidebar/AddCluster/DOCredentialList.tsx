@@ -4,34 +4,33 @@ import api from "shared/api";
 import styled from "styled-components";
 import Loading from "components/Loading";
 import Placeholder from "components/OldPlaceholder";
-import AWSCredentialForm from "./AWSCredentialForm";
 import CredentialList from "./CredentialList";
 import Description from "components/Description";
 
 type Props = {
-  selectCredential: (aws_integration_id: number) => void;
+  selectCredential: (do_integration_id: number) => void;
 };
 
-type AWSCredential = {
+type DOCredential = {
   created_at: string;
   id: number;
   user_id: number;
   project_id: number;
-  aws_arn: string;
+  target_email: string;
+  target_id: string;
 };
 
-const AWSCredentialsList: React.FunctionComponent<Props> = ({
+const DOCredentialsList: React.FunctionComponent<Props> = ({
   selectCredential,
 }) => {
   const { currentProject, setCurrentError } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
-  const [awsCredentials, setAWSCredentials] = useState<AWSCredential[]>(null);
-  const [shouldCreateCred, setShouldCreateCred] = useState(false);
+  const [doCredentials, setDOCredentials] = useState<DOCredential[]>(null);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     api
-      .getAWSIntegration(
+      .getOAuthIds(
         "<token>",
         {},
         {
@@ -43,7 +42,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           throw Error("Data is not an array");
         }
 
-        setAWSCredentials(data);
+        setDOCredentials(data);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -67,15 +66,6 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
   }
 
   const renderContents = () => {
-    if (shouldCreateCred) {
-      return (
-        <AWSCredentialForm
-          setCreatedCredential={selectCredential}
-          cancel={() => { }}
-        />
-      );
-    }
-
     return (
       <>
         <Description>
@@ -83,26 +73,31 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           credential:
         </Description>
         <CredentialList
-          credentials={awsCredentials.map((cred) => {
+          credentials={doCredentials.map((cred) => {
             return {
               id: cred.id,
-              display_name: cred.aws_arn,
+              display_name:
+                cred.target_email && cred.target_id
+                  ? `${cred.target_email} (${cred.target_id})`
+                  : "",
               created_at: cred.created_at,
             };
           })}
           selectCredential={selectCredential}
-          shouldCreateCred={() => setShouldCreateCred(false)}
-          addNewText="Add New AWS Credential"
+          shouldCreateCred={() => {}}
+          addNewText="Add New DO Credential"
+          isLink={true}
+          linkHref={`/api/projects/${currentProject?.id}/oauth/digitalocean`}
         />
       </>
     );
   };
 
-  return <AWSCredentialWrapper>{renderContents()}</AWSCredentialWrapper>;
+  return <DOCredentialWrapper>{renderContents()}</DOCredentialWrapper>;
 };
 
-export default AWSCredentialsList;
+export default DOCredentialsList;
 
-const AWSCredentialWrapper = styled.div`
+const DOCredentialWrapper = styled.div`
   margin-top: 20px;
 `;

@@ -4,34 +4,36 @@ import api from "shared/api";
 import styled from "styled-components";
 import Loading from "components/Loading";
 import Placeholder from "components/OldPlaceholder";
-import AWSCredentialForm from "./AWSCredentialForm";
+import AzureCredentialForm from "./AzureCredentialForm";
 import CredentialList from "./CredentialList";
 import Description from "components/Description";
 
 type Props = {
-  selectCredential: (aws_integration_id: number) => void;
+  selectCredential: (azure_integration_id: number) => void;
 };
 
-type AWSCredential = {
+type AzureCredential = {
   created_at: string;
   id: number;
   user_id: number;
   project_id: number;
-  aws_arn: string;
+  azure_client_id: string;
 };
 
-const AWSCredentialsList: React.FunctionComponent<Props> = ({
+const AzureCredentialsList: React.FunctionComponent<Props> = ({
   selectCredential,
 }) => {
   const { currentProject, setCurrentError } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
-  const [awsCredentials, setAWSCredentials] = useState<AWSCredential[]>(null);
+  const [azCredentials, setAzureCredentials] = useState<AzureCredential[]>(
+    null
+  );
   const [shouldCreateCred, setShouldCreateCred] = useState(false);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     api
-      .getAWSIntegration(
+      .getAzureIntegration(
         "<token>",
         {},
         {
@@ -43,7 +45,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           throw Error("Data is not an array");
         }
 
-        setAWSCredentials(data);
+        setAzureCredentials(data);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -69,9 +71,9 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
   const renderContents = () => {
     if (shouldCreateCred) {
       return (
-        <AWSCredentialForm
+        <AzureCredentialForm
           setCreatedCredential={selectCredential}
-          cancel={() => { }}
+          cancel={() => {}}
         />
       );
     }
@@ -83,26 +85,26 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           credential:
         </Description>
         <CredentialList
-          credentials={awsCredentials.map((cred) => {
+          credentials={azCredentials.map((cred) => {
             return {
               id: cred.id,
-              display_name: cred.aws_arn,
+              display_name: cred.azure_client_id,
               created_at: cred.created_at,
             };
           })}
           selectCredential={selectCredential}
-          shouldCreateCred={() => setShouldCreateCred(false)}
-          addNewText="Add New AWS Credential"
+          shouldCreateCred={() => setShouldCreateCred(true)}
+          addNewText="Add New Azure Credential"
         />
       </>
     );
   };
 
-  return <AWSCredentialWrapper>{renderContents()}</AWSCredentialWrapper>;
+  return <AzureCredentialWrapper>{renderContents()}</AzureCredentialWrapper>;
 };
 
-export default AWSCredentialsList;
+export default AzureCredentialsList;
 
-const AWSCredentialWrapper = styled.div`
+const AzureCredentialWrapper = styled.div`
   margin-top: 20px;
 `;

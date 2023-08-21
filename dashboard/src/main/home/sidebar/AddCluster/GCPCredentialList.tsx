@@ -4,34 +4,34 @@ import api from "shared/api";
 import styled from "styled-components";
 import Loading from "components/Loading";
 import Placeholder from "components/OldPlaceholder";
-import AWSCredentialForm from "./AWSCredentialForm";
+import GCPCredentialForm from "./GCPCredentialForm";
 import CredentialList from "./CredentialList";
 import Description from "components/Description";
 
 type Props = {
-  selectCredential: (aws_integration_id: number) => void;
+  selectCredential: (gcp_integration_id: number) => void;
 };
 
-type AWSCredential = {
+type GCPCredential = {
   created_at: string;
   id: number;
   user_id: number;
   project_id: number;
-  aws_arn: string;
+  gcp_sa_email: string;
 };
 
-const AWSCredentialsList: React.FunctionComponent<Props> = ({
+const GCPCredentialsList: React.FunctionComponent<Props> = ({
   selectCredential,
 }) => {
   const { currentProject, setCurrentError } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
-  const [awsCredentials, setAWSCredentials] = useState<AWSCredential[]>(null);
+  const [gcpCredentials, setGCPCredentials] = useState<GCPCredential[]>(null);
   const [shouldCreateCred, setShouldCreateCred] = useState(false);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     api
-      .getAWSIntegration(
+      .getGCPIntegration(
         "<token>",
         {},
         {
@@ -43,7 +43,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           throw Error("Data is not an array");
         }
 
-        setAWSCredentials(data);
+        setGCPCredentials(data);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -69,9 +69,9 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
   const renderContents = () => {
     if (shouldCreateCred) {
       return (
-        <AWSCredentialForm
+        <GCPCredentialForm
           setCreatedCredential={selectCredential}
-          cancel={() => { }}
+          cancel={() => {}}
         />
       );
     }
@@ -83,26 +83,26 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           credential:
         </Description>
         <CredentialList
-          credentials={awsCredentials.map((cred) => {
+          credentials={gcpCredentials.map((cred) => {
             return {
               id: cred.id,
-              display_name: cred.aws_arn,
+              display_name: cred.gcp_sa_email,
               created_at: cred.created_at,
             };
           })}
           selectCredential={selectCredential}
-          shouldCreateCred={() => setShouldCreateCred(false)}
-          addNewText="Add New AWS Credential"
+          shouldCreateCred={() => setShouldCreateCred(true)}
+          addNewText="Add New GCP Credential"
         />
       </>
     );
   };
 
-  return <AWSCredentialWrapper>{renderContents()}</AWSCredentialWrapper>;
+  return <GCPCredentialWrapper>{renderContents()}</GCPCredentialWrapper>;
 };
 
-export default AWSCredentialsList;
+export default GCPCredentialsList;
 
-const AWSCredentialWrapper = styled.div`
+const GCPCredentialWrapper = styled.div`
   margin-top: 20px;
 `;

@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/stefanmcshane/helm/pkg/release"
 	"gorm.io/gorm"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
@@ -35,7 +36,9 @@ func NewUpdateCanonicalNameHandler(
 
 func (c *UpdateCanonicalNameHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name, _ := requestutils.GetURLParamString(r, types.URLParamReleaseName)
-	namespace, _ := requestutils.GetURLParamString(r, types.URLParamNamespace)
+	// namespace, _ := requestutils.GetURLParamString(r, types.URLParamNamespace)
+
+	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	request := &types.UpdateCanonicalNameRequest{}
@@ -44,7 +47,7 @@ func (c *UpdateCanonicalNameHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	release, err := c.Repo().Release().ReadRelease(cluster.ID, name, namespace)
+	release, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("release %s not found", name)))

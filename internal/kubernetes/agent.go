@@ -1988,7 +1988,7 @@ func (a *Agent) CreateImagePullSecrets(
 func (a *Agent) RunCommandOnPod(ctx context.Context, p *v1.Pod, args []string) error {
 	container := p.Spec.Containers[0].Name
 
-	newPod, err := a.createEphemeralPodFromExisting(p, container, args)
+	newPod, err := a.createEphemeralPodFromExisting(ctx, p, container, args)
 	if err != nil {
 		return err
 	}
@@ -2107,6 +2107,7 @@ func isPodExited(pod *v1.Pod) bool {
 }
 
 func (a *Agent) createEphemeralPodFromExisting(
+	ctx context.Context,
 	existing *v1.Pod,
 	container string,
 	args []string,
@@ -2187,7 +2188,7 @@ func (a *Agent) createEphemeralPodFromExisting(
 
 	// create the pod and return it
 	return a.Clientset.CoreV1().Pods(existing.ObjectMeta.Namespace).Create(
-		context.Background(),
+		ctx,
 		newPod,
 		metav1.CreateOptions{},
 	)

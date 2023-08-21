@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import web from "assets/web.png";
 import AnimateHeight from "react-animate-height";
@@ -19,6 +19,8 @@ import SourceSelector from "../new-app-flow/SourceSelector";
 import Button from "components/porter/Button";
 import RepoSettings from "./RepoSettings";
 import ImageSettings from "./ImageSettings";
+import Container from "components/porter/Container";
+import ServiceList from "../validate-apply/services-settings/ServiceList";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -26,7 +28,7 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
   const { currentProject } = useContext(Context);
   const [step, setStep] = React.useState(0);
 
-  const methods = useForm<PorterAppFormData>({
+  const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",
     defaultValues: {
       app: {
@@ -50,23 +52,46 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
     register,
     control,
     watch,
+    setValue,
     formState: { isSubmitting },
-  } = methods;
+  } = porterAppFormMethods;
 
   const name = watch("app.name");
   const source = watch("source");
   const build = watch("app.build");
-  const services = watch("app.services") ?? [];
+  const image = watch("app.image");
 
   useEffect(() => {
+    // set step to 1 if name is filled out
     if (name) {
       setStep((prev) => Math.max(prev, 1));
     }
 
-    if (source?.type) {
-      setStep((prev) => Math.max(prev, 2));
+    // set step to 2 if source is filled out
+    if (source?.type && source.type === "github") {
+      if (source.git_repo_name && source.git_branch) {
+        setStep((prev) => Math.max(prev, 3));
+      }
     }
-  }, [name, source?.type]);
+
+    // set step to 3 if source is filled out
+    if (source?.type && source.type === "docker-registry") {
+      if (image && image.tag) {
+        setStep((prev) => Math.max(prev, 3));
+      }
+    }
+  }, [
+    name,
+    source?.type,
+    source?.git_repo_name,
+    source?.git_branch,
+    image?.tag,
+  ]);
+
+  // reset services when source changes
+  useEffect(() => {
+    setValue("app.services", []);
+  }, [source?.type, source?.git_repo_name, source?.git_branch, image?.tag]);
 
   if (!currentProject) {
     return null;
@@ -84,7 +109,7 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
             disableLineBreak
           />
           <DarkMatter />
-          <FormProvider {...methods}>
+          <FormProvider {...porterAppFormMethods}>
             <VerticalSteps
               currentStep={step}
               steps={[
@@ -142,6 +167,16 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
                       )
                     ) : null}
                   </AnimateHeight>
+                </>,
+                <>
+                  <Container row>
+                    <Text size={16}>Application services</Text>
+                  </Container>
+                  <Spacer y={0.5} />
+                  <ServiceList
+                    defaultExpanded={true}
+                    addNewText={"Add a new service"}
+                  />
                 </>,
                 <>
                   <Button

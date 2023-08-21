@@ -26,7 +26,9 @@ const prefixSubdomain = (subdomain: string) => {
 };
 
 const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
-  const { register, control } = useFormContext<PorterAppFormData>();
+  const { register, control, watch } = useFormContext<PorterAppFormData>();
+
+  const ingressEnabled = watch(`app.services.${index}.config.ingressEnabled`);
 
   const getApplicationURLText = () => {
     if (service.config.domains.length !== 0) {
@@ -84,23 +86,25 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
           </Checkbox>
         )}
       />
-      <AnimateHeight height={service.config.ingressEnabled ? "auto" : 0}>
-        <Spacer y={0.5} />
-        {getApplicationURLText()}
-        <Spacer y={0.5} />
-        <Text color="helper">
-          Custom domains
-          <a
-            href="https://docs.porter.run/standard/deploying-applications/https-and-domains/custom-domains"
-            target="_blank"
-          >
-            &nbsp;(?)
-          </a>
-        </Text>
-        <Spacer y={0.5} />
-        <CustomDomains index={index} customDomains={service.config.domains} />
-        <Spacer y={0.5} />
-      </AnimateHeight>
+      {ingressEnabled && (
+        <>
+          <Spacer y={0.5} />
+          {getApplicationURLText()}
+          <Spacer y={0.5} />
+          <Text color="helper">
+            Custom domains
+            <a
+              href="https://docs.porter.run/standard/deploying-applications/https-and-domains/custom-domains"
+              target="_blank"
+            >
+              &nbsp;(?)
+            </a>
+          </Text>
+          <Spacer y={0.5} />
+          <CustomDomains index={index} customDomains={service.config.domains} />
+          <Spacer y={0.5} />
+        </>
+      )}
     </>
   );
 };

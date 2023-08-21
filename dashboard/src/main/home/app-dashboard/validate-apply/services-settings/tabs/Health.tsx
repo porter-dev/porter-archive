@@ -18,7 +18,11 @@ type HealthProps = {
 };
 
 const Health: React.FC<HealthProps> = ({ index, service }) => {
-  const { register, control } = useFormContext<PorterAppFormData>();
+  const { register, control, watch } = useFormContext<PorterAppFormData>();
+
+  const healthCheckEnabled = watch(
+    `app.services.${index}.config.healthCheck.enabled`
+  );
 
   return (
     <>
@@ -56,18 +60,20 @@ const Health: React.FC<HealthProps> = ({ index, service }) => {
           </Checkbox>
         )}
       />
-      <AnimateHeight
-        height={service.config.healthCheck?.enabled.value ? "auto" : 0}
-      >
-        <Spacer y={0.5} />
-        <ControlledInput
-          type="text"
-          label="Health Check Endpoint "
-          placeholder="ex: /healthz"
-          {...register(`app.services.${index}.config.healthCheck.httpPath.value`)}
-        />
-        <Spacer y={0.5} />
-      </AnimateHeight>
+      {healthCheckEnabled.value && (
+        <>
+          <Spacer y={0.5} />
+          <ControlledInput
+            type="text"
+            label="Health Check Endpoint "
+            placeholder="ex: /healthz"
+            {...register(
+              `app.services.${index}.config.healthCheck.httpPath.value`
+            )}
+          />
+          <Spacer y={0.5} />
+        </>
+      )}
     </>
   );
 };

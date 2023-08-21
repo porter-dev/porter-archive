@@ -23,7 +23,11 @@ const Resources: React.FC<ResourcesProps> = ({
   maxRAM,
   service,
 }) => {
-  const { control, register } = useFormContext<PorterAppFormData>();
+  const { control, register, watch } = useFormContext<PorterAppFormData>();
+
+  const autoscalingEnabled = watch(
+    `app.services.${index}.config.autoscaling.enabled`
+  );
 
   return (
     <>
@@ -123,102 +127,103 @@ const Resources: React.FC<ResourcesProps> = ({
                 </Checkbox>
               )}
             />
-            <AnimateHeight
-              height={config.autoscaling.enabled.value ? "auto" : 0}
-            >
-              <Spacer y={1} />
-              <ControlledInput
-                type="text"
-                label="Min instances"
-                placeholder="ex: 1"
-                disabled={
-                  config.autoscaling.minInstances?.readOnly ??
-                  !config.autoscaling?.enabled.value
-                }
-                width="300px"
-                disabledTooltip={
-                  config.autoscaling?.minInstances?.readOnly
-                    ? "You may only edit this field in your porter.yaml."
-                    : "Enable autoscaling to specify min instances."
-                }
-                {...register(
-                  `app.services.${index}.config.autoscaling.minInstances.value`
-                )}
-              />
-              <Spacer y={1} />
-              <ControlledInput
-                type="text"
-                label="Max instances"
-                placeholder="ex: 10"
-                disabled={
-                  config.autoscaling?.maxInstances?.readOnly ??
-                  !config.autoscaling?.enabled.value
-                }
-                width="300px"
-                disabledTooltip={
-                  config.autoscaling?.maxInstances?.readOnly
-                    ? "You may only edit this field in your porter.yaml."
-                    : "Enable autoscaling to specify max instances."
-                }
-                {...register(
-                  `app.services.${index}.config.autoscaling.maxInstances.value`
-                )}
-              />
-              <Spacer y={1} />
-              <Controller
-                name={`app.services.${index}.config.autoscaling.cpuThresholdPercent`}
-                control={control}
-                render={({ field: { value, onChange } }) => (
-                  <InputSlider
-                    label="CPU threshold: "
-                    unit="%"
-                    min={0}
-                    max={100}
-                    value={value?.value.toString() ?? "50"}
-                    disabled={value?.readOnly || !config.autoscaling?.enabled}
-                    width="300px"
-                    setValue={(e) => {
-                      onChange({
-                        ...value,
-                        value: e,
-                      });
-                    }}
-                    disabledTooltip={
-                      value?.readOnly
-                        ? "You may only edit this field in your porter.yaml."
-                        : "Enable autoscaling to specify CPU threshold."
-                    }
-                  />
-                )}
-              />
-              <Spacer y={1} />
-              <Controller
-                name={`app.services.${index}.config.autoscaling.memoryThresholdPercent`}
-                control={control}
-                render={({ field: { value, onChange } }) => (
-                  <InputSlider
-                    label="RAM threshold: "
-                    unit="%"
-                    min={0}
-                    max={100}
-                    value={value?.value.toString() ?? "50"}
-                    disabled={value?.readOnly || !config.autoscaling?.enabled}
-                    width="300px"
-                    setValue={(e) => {
-                      onChange({
-                        ...value,
-                        value: e,
-                      });
-                    }}
-                    disabledTooltip={
-                      value?.readOnly
-                        ? "You may only edit this field in your porter.yaml."
-                        : "Enable autoscaling to specify RAM threshold."
-                    }
-                  />
-                )}
-              />
-            </AnimateHeight>
+
+            {autoscalingEnabled.value && (
+              <>
+                <Spacer y={1} />
+                <ControlledInput
+                  type="text"
+                  label="Min instances"
+                  placeholder="ex: 1"
+                  disabled={
+                    config.autoscaling.minInstances?.readOnly ??
+                    !config.autoscaling?.enabled.value
+                  }
+                  width="300px"
+                  disabledTooltip={
+                    config.autoscaling?.minInstances?.readOnly
+                      ? "You may only edit this field in your porter.yaml."
+                      : "Enable autoscaling to specify min instances."
+                  }
+                  {...register(
+                    `app.services.${index}.config.autoscaling.minInstances.value`
+                  )}
+                />
+                <Spacer y={1} />
+                <ControlledInput
+                  type="text"
+                  label="Max instances"
+                  placeholder="ex: 10"
+                  disabled={
+                    config.autoscaling?.maxInstances?.readOnly ??
+                    !config.autoscaling?.enabled.value
+                  }
+                  width="300px"
+                  disabledTooltip={
+                    config.autoscaling?.maxInstances?.readOnly
+                      ? "You may only edit this field in your porter.yaml."
+                      : "Enable autoscaling to specify max instances."
+                  }
+                  {...register(
+                    `app.services.${index}.config.autoscaling.maxInstances.value`
+                  )}
+                />
+                <Spacer y={1} />
+                <Controller
+                  name={`app.services.${index}.config.autoscaling.cpuThresholdPercent`}
+                  control={control}
+                  render={({ field: { value, onChange } }) => (
+                    <InputSlider
+                      label="CPU threshold: "
+                      unit="%"
+                      min={0}
+                      max={100}
+                      value={value?.value.toString() ?? "50"}
+                      disabled={value?.readOnly || !config.autoscaling?.enabled}
+                      width="300px"
+                      setValue={(e) => {
+                        onChange({
+                          ...value,
+                          value: e,
+                        });
+                      }}
+                      disabledTooltip={
+                        value?.readOnly
+                          ? "You may only edit this field in your porter.yaml."
+                          : "Enable autoscaling to specify CPU threshold."
+                      }
+                    />
+                  )}
+                />
+                <Spacer y={1} />
+                <Controller
+                  name={`app.services.${index}.config.autoscaling.memoryThresholdPercent`}
+                  control={control}
+                  render={({ field: { value, onChange } }) => (
+                    <InputSlider
+                      label="RAM threshold: "
+                      unit="%"
+                      min={0}
+                      max={100}
+                      value={value?.value.toString() ?? "50"}
+                      disabled={value?.readOnly || !config.autoscaling?.enabled}
+                      width="300px"
+                      setValue={(e) => {
+                        onChange({
+                          ...value,
+                          value: e,
+                        });
+                      }}
+                      disabledTooltip={
+                        value?.readOnly
+                          ? "You may only edit this field in your porter.yaml."
+                          : "Enable autoscaling to specify RAM threshold."
+                      }
+                    />
+                  )}
+                />
+              </>
+            )}
           </>
         ))}
     </>

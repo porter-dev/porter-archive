@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import AnimateHeight, { Height } from "react-animate-height";
 import styled from "styled-components";
 import _ from "lodash";
+import convert from "convert";
 
 import web from "assets/web.png";
 import worker from "assets/worker.png";
@@ -46,7 +47,10 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"] * UPPER_BOUND
   ); //default is set to a t3 medium
   const [maxRAM, setMaxRAM] = useState(
-    AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"] * UPPER_BOUND
+    Math.round(
+      convert(AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"], "GiB").to("MB") *
+        UPPER_BOUND
+    )
   ); //default is set to a t3 medium
   const context = useContext(Context);
 
@@ -131,7 +135,11 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             });
 
             setMaxCPU(Math.fround(largestInstanceType.vCPUs * UPPER_BOUND));
-            setMaxRAM(Math.round(largestInstanceType.RAM * UPPER_BOUND));
+            setMaxRAM(
+              Math.round(
+                convert(largestInstanceType.RAM, "GiB").to("MB") * UPPER_BOUND
+              )
+            );
           }
         })
         .catch((error) => {});

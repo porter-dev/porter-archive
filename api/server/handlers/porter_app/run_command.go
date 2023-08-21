@@ -99,7 +99,7 @@ func (c *RunPorterAppCommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		execArgs = append([]string{"/cnb/lifecycle/launcher"}, execArgs...)
 	}
 
-	err = k8sAgent.RunCommandOnPod(&selectedPod, execArgs)
+	err = k8sAgent.RunCommandOnPod(ctx, &selectedPod, execArgs)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error running command on pod")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

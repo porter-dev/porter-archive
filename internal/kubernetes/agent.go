@@ -1985,7 +1985,7 @@ func (a *Agent) CreateImagePullSecrets(
 	return res, nil
 }
 
-func (a *Agent) RunCommandOnPod(p *v1.Pod, args []string) error {
+func (a *Agent) RunCommandOnPod(ctx context.Context, p *v1.Pod, args []string) error {
 	container := p.Spec.Containers[0].Name
 
 	newPod, err := a.createEphemeralPodFromExisting(p, container, args)
@@ -1993,9 +1993,6 @@ func (a *Agent) RunCommandOnPod(p *v1.Pod, args []string) error {
 		return err
 	}
 	podName := newPod.ObjectMeta.Name
-
-	// delete the ephemeral pod no matter what
-	defer a.DeletePod(podName, newPod.Namespace)
 
 	err, _ = a.waitForPod(newPod)
 	if err != nil {
@@ -2005,7 +2002,7 @@ func (a *Agent) RunCommandOnPod(p *v1.Pod, args []string) error {
 	// refresh pod info for latest status
 	newPod, err = a.Clientset.CoreV1().
 		Pods(newPod.Namespace).
-		Get(context.Background(), newPod.Name, metav1.GetOptions{})
+		Get(ctx, newPod.Name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

@@ -243,6 +243,16 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         selectedRange={selectedRange}
         pods={pods}
       />
+      <MetricsChart
+        currentChart={currentChart}
+        selectedController={selectedController}
+        selectedIngress={selectedIngress}
+        selectedMetric="nginx:status"
+        selectedMetricLabel="Nginx Status Codes"
+        selectedPod="All"
+        selectedRange={selectedRange}
+        pods={pods}
+      />
       {currentChart?.config?.autoscaling?.enabled && (
         <MetricsChart
           currentChart={currentChart}

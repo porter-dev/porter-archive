@@ -234,6 +234,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
     if (width == 0 || height == 0 || width < 10) {
         return null;
     }
+
     const hpaGraphTooltipGlyphPosition =
         (hpaEnabled &&
             tooltipData?.tooltipHpaData &&

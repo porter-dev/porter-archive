@@ -1,8 +1,6 @@
 import React from "react";
-import * as stats from "simple-statistics";
 import styled from "styled-components";
 import chroma from "chroma-js";
-import { NormalizedMetricsData } from "./types";
 import { StatusCodeDataColors } from "./utils";
 
 interface StatusCodeDataLegendProps {}

@@ -1,3 +1,12 @@
+// these match log colors
+export const StatusCodeDataColors: Record<string, string> = {
+    "1xx": "#4B4F7C", // gray
+    "2xx": "#FFFFFF", // white
+    "3xx": "#54B835", // green
+    "4xx": "#BBBB3C", // yellow
+    "5xx": "#9C20A5", // purple
+};
+
 type RGB = {
     r: number;
     g: number;

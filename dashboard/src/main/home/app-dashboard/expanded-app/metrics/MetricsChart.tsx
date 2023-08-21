@@ -8,8 +8,9 @@ import { ChartTypeWithExtendedConfig } from "shared/types";
 import { Context } from "shared/Context";
 
 import AggregatedDataLegend from "../../../cluster-dashboard/expanded-chart/metrics/AggregatedDataLegend";
-import StatusCodeDataLegend from "../../../cluster-dashboard/expanded-chart/metrics/StatusCodeDataLegend";
+import StatusCodeDataLegend from "./StatusCodeDataLegend";
 import AreaChart from "./AreaChart";
+import StackedAreaChart from "./StackedAreaChart";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import Loading from "components/Loading";
 import { AvailableMetrics, GenericMetricResponse, NormalizedMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
@@ -289,8 +290,8 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                             responses[i].data,
                             selectedMetric as AvailableMetrics
                         );
-                        let index = `${i+1}xx`
-                        aggregatedMetrics[index] = metrics.getParsedData()
+                        const metrixIndex = `${i+1}xx`;
+                        aggregatedMetrics[metrixIndex] = metrics.getParsedData()
                     }
 
                     setAreaData(aggregatedMetrics);
@@ -377,21 +378,28 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                             />
                         )}
                     </ParentSize>
-                    {data.length > 0 && (
-                        <RowWrapper>
-                            <AggregatedDataLegend data={data} hideAvg={isAggregated} />
-                        </RowWrapper>
-                    )}
+                    <RowWrapper>
+                        <AggregatedDataLegend data={data} hideAvg={isAggregated} />
+                    </RowWrapper>
                 </>
             )}
 
             {Object.keys(areaData).length > 0 && isLoading === 0 && (
                 <>
-                    {Object.keys(areaData).length > 0 && (
-                        <RowWrapper>
-                            <StatusCodeDataLegend />
-                        </RowWrapper>
-                    )}
+                    <ParentSize>
+                        {({ width, height }) => (
+                            <StackedAreaChart
+                                data={areaData}
+                                width={width}
+                                height={height - 10}
+                                resolution={selectedRange}
+                                margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
+                            />
+                        )}
+                    </ParentSize>
+                    <RowWrapper>
+                        <StatusCodeDataLegend />
+                    </RowWrapper>
                 </>
             )}
         </StyledMetricsChart>

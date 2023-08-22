@@ -96,7 +96,7 @@ func (c *CurrentAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if len(porterApps) > 1 {
-		err := telemetry.Error(ctx, span, err, "multiple porter apps returned: multi-cluster not supported")
+		err := telemetry.Error(ctx, span, err, "multiple porter apps returned; unable to determine which one to use")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}

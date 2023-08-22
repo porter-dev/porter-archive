@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import ServiceContainer from "./ServiceContainer";
 import styled from "styled-components";
 import Spacer from "components/porter/Spacer";
@@ -17,6 +17,7 @@ import {
   ClientService,
   defaultSerialized,
   deserializeService,
+  isPredeployService,
 } from "lib/porter-apps/services";
 import {
   Controller,
@@ -25,7 +26,6 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { ControlledInput } from "components/porter/ControlledInput";
-import { match } from "ts-pattern";
 
 const addServiceFormValidator = z.object({
   name: z
@@ -44,12 +44,14 @@ type ServiceListProps = {
   defaultExpanded?: boolean;
   limitOne?: boolean;
   prePopulateService?: ClientService;
+  isPredeploy?: boolean;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
   addNewText,
   limitOne = false,
   prePopulateService,
+  isPredeploy = false,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
@@ -69,7 +71,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
       type: "web",
     },
   });
-  const { append, remove, update, fields: services } = useFieldArray({
+  const { append, remove, update, fields } = useFieldArray({
     control: appControl,
     name: "app.services",
   });
@@ -81,8 +83,21 @@ const ServiceList: React.FC<ServiceListProps> = ({
     false
   );
 
+  const services = useMemo(() => {
+    // if predeploy, only show predeploy services
+    // if not predeploy, only show non-predeploy services
+    return fields.map((svc, idx) => {
+      const predeploy = isPredeployService(svc);
+      return {
+        svc,
+        idx,
+        included: isPredeploy ? predeploy : !predeploy,
+      };
+    });
+  }, [fields]);
+
   const isServiceNameDuplicate = (name: string) => {
-    return services.some((s) => s.name.value === name);
+    return services.some(({ svc: s }) => s.name.value === name);
   };
 
   const maybeRenderAddServicesButton = () => {
@@ -119,16 +134,16 @@ const ServiceList: React.FC<ServiceListProps> = ({
     <>
       {services.length > 0 && (
         <ServicesContainer>
-          {services.map((service, idx) => {
-            return (
+          {services.map(({ svc, idx, included }) => {
+            return included ? (
               <ServiceContainer
                 index={idx}
-                key={service.id}
-                service={service}
+                key={svc.id}
+                service={svc}
                 update={update}
                 remove={remove}
               />
-            );
+            ) : null;
           })}
         </ServicesContainer>
       )}

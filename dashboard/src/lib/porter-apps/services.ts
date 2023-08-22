@@ -17,6 +17,8 @@ import {
 } from "./values";
 import { Service, ServiceType } from "@porter-dev/api-contracts";
 
+type ClientServiceType = "web" | "worker" | "job" | "predeploy";
+
 // serviceValidator is the validator for a ClientService
 // This is used to validate a service when creating or updating an app
 export const serviceValidator = z.object({
@@ -44,6 +46,9 @@ export const serviceValidator = z.object({
       type: z.literal("job"),
       allowConcurrent: serviceBooleanValidator,
       cron: serviceStringValidator,
+    }),
+    z.object({
+      type: z.literal("predeploy"),
     }),
   ]),
 });
@@ -76,15 +81,22 @@ export type SerializedService = {
         type: "job";
         allowConcurrent: boolean;
         cron: string;
+      }
+    | {
+        type: "predeploy";
       };
 };
+
+export function isPredeployService(service: SerializedService | ClientService) {
+  return service.config.type == "predeploy";
+}
 
 export function defaultSerialized({
   name,
   type,
 }: {
   name: string;
-  type: "web" | "worker" | "job";
+  type: ClientServiceType;
 }): SerializedService {
   const baseService = {
     name,
@@ -131,6 +143,12 @@ export function defaultSerialized({
         type: "job" as const,
         allowConcurrent: false,
         cron: "",
+      },
+    }))
+    .with("predeploy", () => ({
+      ...baseService,
+      config: {
+        type: "predeploy" as const,
       },
     }))
     .exhaustive();
@@ -189,6 +207,19 @@ export function serializeService(service: ClientService): SerializedService {
           type: "job" as const,
           allowConcurrent: config.allowConcurrent.value,
           cron: config.cron.value,
+        },
+      })
+    )
+    .with({ type: "predeploy" }, () =>
+      Object.freeze({
+        name: service.name.value,
+        run: service.run.value,
+        instances: service.instances.value,
+        port: service.port.value,
+        cpuCores: service.cpuCores.value,
+        ramMegabytes: service.ramMegabytes.value,
+        config: {
+          type: "predeploy" as const,
         },
       })
     )
@@ -274,17 +305,22 @@ export function deserializeService(
         },
       };
     })
+    .with({ type: "predeploy" }, () => ({
+      ...baseService,
+      config: {
+        type: "predeploy" as const,
+      },
+    }))
     .exhaustive();
 }
 
 // getServiceTypeEnumProto converts the type of a ClientService to the protobuf ServiceType enum
-export const serviceTypeEnumProto = (
-  type: "web" | "worker" | "job"
-): ServiceType => {
+export const serviceTypeEnumProto = (type: ClientServiceType): ServiceType => {
   return match(type)
     .with("web", () => ServiceType.WEB)
     .with("worker", () => ServiceType.WORKER)
     .with("job", () => ServiceType.JOB)
+    .with("predeploy", () => ServiceType.JOB)
     .exhaustive();
 };
 
@@ -334,6 +370,18 @@ export function serviceProto(service: SerializedService): Service {
           },
         })
     )
+    .with(
+      { type: "predeploy" },
+      (config) =>
+        new Service({
+          ...service,
+          type: serviceTypeEnumProto(config.type),
+          config: {
+            value: {},
+            case: "jobConfig",
+          },
+        })
+    )
     .exhaustive();
 }
 
@@ -342,9 +390,11 @@ export function serviceProto(service: SerializedService): Service {
 export function serializedServiceFromProto({
   service,
   name,
+  isPredeploy,
 }: {
   service: Service;
   name: string;
+  isPredeploy?: boolean;
 }): SerializedService {
   const config = service.config;
   if (!config.case) {
@@ -375,7 +425,7 @@ export function serializedServiceFromProto({
       ...service,
       name,
       config: {
-        type: "job" as const,
+        type: isPredeploy ? ("predeploy" as const) : ("job" as const),
         ...value,
       },
     }))

@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
-import axios from "axios"; 
+import axios from "axios";
 import styled from "styled-components";
 
 import api from "shared/api";
@@ -290,7 +290,7 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                             responses[i].data,
                             selectedMetric as AvailableMetrics
                         );
-                        const metrixIndex = `${i+1}xx`;
+                        const metrixIndex = `${i + 1}xx`;
                         aggregatedMetrics[metrixIndex] = metrics.getParsedData()
                     }
 
@@ -334,10 +334,6 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                     <MetricSelector>
                         <MetricsLabel>{selectedMetricLabel}</MetricsLabel>
                     </MetricSelector>
-
-                    <Highlight color={"#7d7d81"} onClick={getMetrics}>
-                        <i className="material-icons">autorenew</i>
-                    </Highlight>
                 </Flex>
             </MetricsHeader>
             {isLoading > 0 && <Loading />}

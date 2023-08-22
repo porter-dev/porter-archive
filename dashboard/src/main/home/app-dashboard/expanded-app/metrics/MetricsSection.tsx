@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
 import api from "shared/api";
@@ -9,6 +9,7 @@ import TabSelector from "components/TabSelector";
 import SelectRow from "components/form-components/SelectRow";
 import MetricsChart from "./MetricsChart";
 import { getServiceNameFromControllerName } from "./utils";
+import { Metric, MetricType } from "./types";
 type PropsType = {
   currentChart: ChartTypeWithExtendedConfig;
   appName: string;
@@ -42,10 +43,13 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   const [selectedRange, setSelectedRange] = useState("1H");
   const [selectedMetric, setSelectedMetric] = useState("cpu");
   const [isLoading, setIsLoading] = useState(0);
+  const [metrics, setMetrics] = useState<Metric[]>([]);
 
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
+
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
   useEffect(() => {
     if (currentChart?.chart?.metadata?.name === "ingress-nginx") {
@@ -116,10 +120,11 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   }, [currentChart, currentCluster, currentProject]);
 
   useEffect(() => {
-    getPods();
+    getControllerPods();
+    refreshMetrics();
   }, [selectedController]);
 
-  const getPods = () => {
+  const getControllerPods = () => {
     let selectors = [] as string[];
     let ml =
       selectedController?.spec?.selector?.matchLabels ||
@@ -171,6 +176,30 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       });
   };
 
+  const refreshMetrics = async () => {
+    const newMetrics = [] as Metric[];
+    const metricTypes: MetricType[] = ["cpu", "memory", "network", "nginx:status"];
+
+    const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
+    const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
+
+    if (isHpaEnabled) {
+      metricTypes.push("hpa_replicas");
+    }
+
+    if (currentChart?.chart?.metadata?.name == "ingress-nginx") {
+      metricTypes.push("nginx:errors");
+    }
+
+    metricTypes.forEach((metricType) => {
+      if (metricType === "nginx:status") {
+      }
+    });
+
+
+    setMetrics(newMetrics);
+  }
+
   const renderHpaChart = () => {
     const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
     const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
@@ -210,7 +239,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               width="100%"
             />
           }
-          <Highlight color={"#7d7d81"} onClick={() => ({})}>
+          <Highlight color={"#7d7d81"} onClick={() => forceUpdate()}>
             <i className="material-icons">autorenew</i>
           </Highlight>
         </Flex>
@@ -283,6 +312,21 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           pods={pods}
         />
       )}
+      {metrics.map((metric: Metric, i: number) => {
+        return (
+          <MetricsChart
+            key={i}
+            currentChart={currentChart}
+            selectedController={selectedController}
+            selectedIngress={selectedIngress}
+            selectedMetric={metric.type}
+            selectedMetricLabel={metric.label}
+            selectedPod={"All"}
+            selectedRange={selectedRange}
+            pods={pods}
+          />
+        );
+      })}
     </StyledMetricsSection>
   );
 };

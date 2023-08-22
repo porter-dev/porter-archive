@@ -1,10 +1,8 @@
-import {
-  BUILDPACK_TO_NAME,
-  Buildpack,
-  buildpackSchema,
-} from "main/home/app-dashboard/types/buildpack";
+import { buildpackSchema } from "main/home/app-dashboard/types/buildpack";
 import { z } from "zod";
 import {
+  ClientService,
+  defaultSerialized,
   deserializeService,
   serializedServiceFromProto,
   serviceValidator,
@@ -33,6 +31,10 @@ export const sourceValidator = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("docker-registry"),
     image_repo_uri: z.string(),
+    // add branch and repo as undefined to allow for easy checks on changes to the source type
+    // (i.e. we want to remove the services if any source fields change)
+    git_branch: z.undefined(),
+    git_repo_name: z.undefined(),
   }),
 ]);
 export type SourceOptions = z.infer<typeof sourceValidator>;
@@ -60,57 +62,43 @@ export const porterAppFormValidator = z.object({
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
-// porterClientAppFromProto converts a PorterApp proto object to a ClientPorterApp
-export function porterClientAppFromProto(
-  proto: PorterApp,
-  buildpacks?: Buildpack[]
-): ClientPorterApp {
-  const services = Object.entries(proto.services).map(([name, service]) =>
-    deserializeService(serializedServiceFromProto({ name, service }))
-  );
-
-  const { name, env, build, predeploy, image } = proto;
-
-  const validBuildpacks =
-    build?.buildpacks.map((bp) => {
-      const buildpack = buildpacks?.find((b) => b.buildpack === bp);
-      return buildpack
-        ? buildpack
-        : {
-            name: BUILDPACK_TO_NAME[bp],
-            buildpack: bp,
-          };
-    }) ?? [];
-
-  const app = {
-    name,
-    services,
-    env,
-    ...(build
-      ? {
-          build: {
-            ...build,
-            buildpacks: validBuildpacks,
-            method:
-              build.method === "pack" ? ("pack" as const) : ("docker" as const),
-          },
-        }
-      : {
-          build: {
-            context: "./",
-            method: "pack" as const,
-            buildpacks: [],
-            builder: "",
-            dockerfile: "",
-          },
+// defaultServicesWithOverrides is used to generate the default services for an app from porter.yaml
+// this method is only called when a porter.yaml is present and has services defined
+export function defaultServicesWithOverrides({
+  overrides,
+}: {
+  overrides: PorterApp;
+}): {
+  services: ClientService[];
+  predeploy?: ClientService;
+} {
+  const services = Object.entries(overrides.services)
+    .map(([name, service]) => serializedServiceFromProto({ name, service }))
+    .map((svc) =>
+      deserializeService(
+        defaultSerialized({
+          name: svc.name,
+          type: svc.config.type,
         }),
-    ...(predeploy && {
-      predeploy: deserializeService(
-        serializedServiceFromProto({ name: "predeploy", service: predeploy })
-      ),
-    }),
-    image,
-  };
+        svc
+      )
+    );
 
-  return app;
+  const predeploy = overrides.predeploy
+    ? deserializeService(
+        defaultSerialized({
+          name: "pre-deploy",
+          type: "job",
+        }),
+        serializedServiceFromProto({
+          name: "pre-deploy",
+          service: overrides.predeploy,
+        })
+      )
+    : undefined;
+
+  return {
+    services,
+    predeploy,
+  };
 }

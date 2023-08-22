@@ -227,7 +227,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                   <Spacer y={1} />
 
                   <Text color={"helper"}>
-                    Get started by deploying your app
+                    Get started by deploying your app.
                   </Text>
                   <Spacer y={.5} />
                   <PorterLink to="/apps/new/app">

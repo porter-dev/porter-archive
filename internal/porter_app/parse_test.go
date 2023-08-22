@@ -60,13 +60,7 @@ var result_nobuild = &porterv1.PorterApp{
 			RamMegabytes: 256,
 			Config: &porterv1.Service_WorkerConfig{
 				WorkerConfig: &porterv1.WorkerServiceConfig{
-					Autoscaling: &porterv1.Autoscaling{
-						Enabled:                false,
-						MinInstances:           0,
-						MaxInstances:           0,
-						CpuThresholdPercent:    0,
-						MemoryThresholdPercent: 0,
-					},
+					Autoscaling: nil,
 				},
 			},
 			Type: 2,

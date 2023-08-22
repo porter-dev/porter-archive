@@ -91,7 +91,9 @@ export const useLogs = (
     nextCursor: null,
   });
 
-  currentPod = currentChart.name;
+  if (currentPod === "") {
+    currentPod = currentChart.name;
+  }
   namespace = currentChart.namespace;
 
   // if we are live:

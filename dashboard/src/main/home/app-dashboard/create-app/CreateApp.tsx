@@ -22,11 +22,13 @@ import ImageSettings from "./ImageSettings";
 import Container from "components/porter/Container";
 import ServiceList from "../validate-apply/services-settings/ServiceList";
 import {
+  ClientService,
   defaultSerialized,
   deserializeService,
 } from "lib/porter-apps/services";
 import EnvVariables from "../validate-apply/app-settings/EnvVariables";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
+import { valueExists } from "shared/util";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -111,7 +113,7 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
   useEffect(() => {
     if (servicesFromYaml && !detectedServices.detected) {
       const { services, predeploy } = servicesFromYaml;
-      setValue("app.services", predeploy ? [...services, predeploy] : services);
+      setValue("app.services", [...services, predeploy].filter(valueExists));
       setDetectedServices({
         detected: true,
         count: services.length,

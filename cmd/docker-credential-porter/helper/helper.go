@@ -32,11 +32,14 @@ func NewPorterHelper(debug bool) (*PorterHelper, error) {
 
 	cache := docker.NewFileCredentialsCache()
 
-	client := api.NewClientWithConfig(ctx, api.NewClientInput{
+	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
 		BaseURL:        fmt.Sprintf("%s/api", cliConfig.Host),
 		BearerToken:    cliConfig.Token,
 		CookieFileName: "cookie.json",
 	})
+	if err != nil {
+		return nil, fmt.Errorf("unable to get porter API client: %w", err)
+	}
 
 	return &PorterHelper{
 		Debug:     debug,

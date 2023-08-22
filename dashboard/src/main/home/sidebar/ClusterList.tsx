@@ -59,7 +59,7 @@ const ClusterList: React.FC<PropsType> = (props) => {
           }
         });
     }
-  }, [currentProject]);
+  }, [currentProject, currentCluster]);
   const truncate = (input: string) => input.length > 21 ? `${input.substring(0, 21)}...` : input;
 
   const renderOptionList = () =>
@@ -115,7 +115,7 @@ const ClusterList: React.FC<PropsType> = (props) => {
             <Img src={infra} />
             <ClusterName>{truncate(currentCluster.vanity_name ? currentCluster.vanity_name : currentCluster?.name)}</ClusterName>
 
-            {clusters.length > 1 || user.isPorterUser && <i className="material-icons">arrow_drop_down</i>}
+            {(clusters.length > 1 || user.isPorterUser) && <i className="material-icons">arrow_drop_down</i>}
           </NavButton>
         </MainSelector>
         {(clusters.length > 1 || user.isPorterUser) && renderDropdown()}

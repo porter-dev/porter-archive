@@ -71,7 +71,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
       return (
         <AWSCredentialForm
           setCreatedCredential={selectCredential}
-          cancel={() => { }}
+          cancel={() => {}}
         />
       );
     }
@@ -91,7 +91,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
             };
           })}
           selectCredential={selectCredential}
-          shouldCreateCred={() => setShouldCreateCred(false)}
+          shouldCreateCred={() => setShouldCreateCred(true)}
           addNewText="Add New AWS Credential"
         />
       </>

@@ -34,7 +34,11 @@ const ProvisionClusterModal: React.FC<Props> = ({
             </Text>
             <Spacer y={1} />
             {currentCredential && targetArn ? (<>
-                <ProvisionerSettings credentialId={targetArn} />
+                <ProvisionerSettings
+                    credentialId={targetArn}
+                    closeModal={closeModal}
+                />
+
                 {/* <ProvisionerForm
                     goBack={() => setCurrentStep("credentials")}
                     credentialId={String(currentCredential.aws_integration_id)}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
-import { Route, RouteComponentProps, Switch, useLocation, withRouter } from "react-router";
+import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 import styled, { ThemeProvider } from "styled-components";
 import { createPortal } from "react-dom";
 
@@ -188,7 +188,7 @@ const Home: React.FC<Props> = (props) => {
         return;
       }
 
-      if ((res?.data && res?.data.current_step !== "clean_up")) {
+      if (res?.data && res?.data.current_step !== "clean_up") {
         setHasFinishedOnboarding(false);
       } else {
         setHasFinishedOnboarding(true);

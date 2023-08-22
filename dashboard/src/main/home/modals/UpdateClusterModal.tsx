@@ -5,6 +5,9 @@ import close from "assets/close.png";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
+import { OFState } from "main/home/onboarding/state";
+import { Onboarding as OnboardingSaveType } from "../onboarding/types"
+
 
 import SaveButton from "components/SaveButton";
 import InputRow from "components/form-components/InputRow";
@@ -33,6 +36,80 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
     console.log(err);
   };
 
+
+  // getData = async ({
+  //   id: project_id,
+  //   name: project_name,
+  // }: {
+  //   id: number;
+  //   name: string;
+  // }): Promise<OnboardingSaveType> => {
+  //   let odata = null;
+
+  //   // Get general onboarding data
+  //   try {
+  //     const response = await api.getOnboardingState(
+  //       "<token>",
+  //       {},
+  //       { project_id: project_id }
+  //     );
+
+  //     if (response.data) {
+  //       odata = response.data;
+  //     }
+  //   } catch (error) {
+  //     console.error(
+  //       "Gouldn't get any previous state, going with a brand new onboarding!"
+  //     );
+  //   }
+
+  //   let registry_connection_data = null;
+  //   if (odata?.registry_connection_id) {
+  //     // Get subflows data
+  //     try {
+  //       const response = await api.getOnboardingRegistry(
+  //         "<token>",
+  //         {},
+  //         {
+  //           project_id: project_id,
+  //           registry_connection_id: odata.registry_connection_id,
+  //         }
+  //       );
+  //       //console.log(response);
+  //       if (response.data) {
+  //         registry_connection_data = response.data;
+  //       }
+  //     } catch (error) {
+  //       console.error("Couldn't get registry connection data");
+  //     }
+  //   }
+  //   let provision_connection_data = null;
+  //   if (odata?.registry_infra_id) {
+  //     try {
+  //       const response = await api.getOnboardingInfra(
+  //         "<token>",
+  //         {},
+  //         {
+  //           project_id: project_id,
+  //           registry_infra_id: odata.registry_infra_id,
+  //         }
+  //       );
+
+  //       if (response.data) {
+  //         provision_connection_data = response.data;
+  //       }
+  //     } catch (error) {
+  //       console.error("Couldn't get infra data");
+  //     }
+  //   }
+  //   return {
+  //     project_id,
+  //     project_name,
+  //     ...(odata || {}),
+  //     ...({ registry_connection_data } || {}),
+  //     ...({ provision_connection_data } || {}),
+  //   };
+  // };
   handleDelete = () => {
     let { currentProject, currentCluster } = this.context;
     this.setState({ status: "loading" });
@@ -72,6 +149,20 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
             console.log("destroyed provisioned infra:", currentCluster.infra_id)
           )
           .catch(console.log);
+
+
+        // this.getData(this.context.currentProject).then((data: OnboardingSaveType) => {
+        //   OFState.actions.initializeState(data);
+        // });
+        // OFState.actions.clearState();
+        api.saveOnboardingState(
+          "<token>",
+          {
+            "current_step": "connect_source"
+          },
+          {
+            project_id: currentProject.id,
+          })
 
         this.props.setRefreshClusters(true);
         this.setState({ status: "successful", showDeleteOverlay: false });

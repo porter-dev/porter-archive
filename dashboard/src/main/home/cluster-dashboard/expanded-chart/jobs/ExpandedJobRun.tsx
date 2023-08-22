@@ -252,7 +252,7 @@ const ExpandedJobRun = ({
           isFullscreen={false}
           setIsFullscreen={() => { }}
           overridingPodName={pods[0]?.metadata?.name || jobRun.metadata?.name}
-          currentChart={jobRun.metadata?.name}
+          currentChart={jobRun.metadata?.name || currentChart}
           initData={initData}
         />
       </JobLogsWrapper>

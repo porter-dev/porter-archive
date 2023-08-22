@@ -17,6 +17,8 @@ import {
 } from "./values";
 import { Service, ServiceType } from "@porter-dev/api-contracts";
 
+type ClientServiceType = "web" | "worker" | "job" | "predeploy";
+
 // serviceValidator is the validator for a ClientService
 // This is used to validate a service when creating or updating an app
 export const serviceValidator = z.object({
@@ -85,12 +87,16 @@ export type SerializedService = {
       };
 };
 
+export function isPredeployService(service: SerializedService | ClientService) {
+  return service.config.type == "predeploy";
+}
+
 export function defaultSerialized({
   name,
   type,
 }: {
   name: string;
-  type: "web" | "worker" | "job" | "predeploy";
+  type: ClientServiceType;
 }): SerializedService {
   const baseService = {
     name,
@@ -309,9 +315,7 @@ export function deserializeService(
 }
 
 // getServiceTypeEnumProto converts the type of a ClientService to the protobuf ServiceType enum
-export const serviceTypeEnumProto = (
-  type: "web" | "worker" | "job" | "predeploy"
-): ServiceType => {
+export const serviceTypeEnumProto = (type: ClientServiceType): ServiceType => {
   return match(type)
     .with("web", () => ServiceType.WEB)
     .with("worker", () => ServiceType.WORKER)

@@ -254,18 +254,17 @@ func (c *Client) CurrentAppRevision(
 	ctx context.Context,
 	projectID uint, clusterID uint,
 	appName string, deploymentTarget string,
-) (*porter_app.CurrentAppRevisionResponse, error) {
-	resp := &porter_app.CurrentAppRevisionResponse{}
+) (*porter_app.LatestAppRevisionResponse, error) {
+	resp := &porter_app.LatestAppRevisionResponse{}
 
-	req := &porter_app.CurrentAppRevisionRequest{
-		AppName:            appName,
+	req := &porter_app.LatestAppRevisionRequest{
 		DeploymentTargetID: deploymentTarget,
 	}
 
 	err := c.getRequest(
 		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/current-app-revision",
-			projectID, clusterID,
+			"/projects/%d/clusters/%d/apps/%s/latest",
+			projectID, clusterID, appName,
 		),
 		req,
 		resp,

@@ -658,14 +658,14 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/current-app-revision -> porter_app.NewCurrentAppRevisionHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/latest -> porter_app.NewCurrentAppRevisionHandler
 	currentAppRevisionEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/apps/current-app-revision",
+				RelativePath: fmt.Sprintf("/apps/{%s}/latest", types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -675,7 +675,7 @@ func getPorterAppRoutes(
 		},
 	)
 
-	currentAppRevisionHandler := porter_app.NewCurrentAppRevisionHandler(
+	currentAppRevisionHandler := porter_app.NewLatestAppRevisionHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

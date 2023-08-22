@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
+
 	"connectrpc.com/connect"
 
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
@@ -21,37 +23,36 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-// CurrentAppRevisionHandler handles requests to the /apps/current-app-revision endpoint
-type CurrentAppRevisionHandler struct {
+// LatestAppRevisionHandler handles requests to the /apps/{porter_app_name}/latest endpoint
+type LatestAppRevisionHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-// NewCurrentAppRevisionHandler returns a new CurrentAppRevisionHandler
-func NewCurrentAppRevisionHandler(
+// NewLatestAppRevisionHandler returns a new LatestAppRevisionHandler
+func NewLatestAppRevisionHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *CurrentAppRevisionHandler {
-	return &CurrentAppRevisionHandler{
+) *LatestAppRevisionHandler {
+	return &LatestAppRevisionHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-// CurrentAppRevisionRequest is the request object for the /apps/current-app-revision endpoint
-type CurrentAppRevisionRequest struct {
-	AppName            string `schema:"app_name"`
+// LatestAppRevisionRequest is the request object for the /apps/{porter_app_name}/latest endpoint
+type LatestAppRevisionRequest struct {
 	DeploymentTargetID string `schema:"deployment_target_id"`
 }
 
-// CurrentAppRevisionResponse is the response object for the /apps/current-app-revision endpoint
-type CurrentAppRevisionResponse struct {
+// LatestAppRevisionResponse is the response object for the /apps/{porter_app_name}/latest endpoint
+type LatestAppRevisionResponse struct {
 	B64AppProto string `json:"b64_app_proto"`
 }
 
 // ServeHTTP translates the request into a CurrentAppRevision grpc request, forwards to the cluster control plane, and returns the response.
 // Multi-cluster projects are not supported, as they may have multiple porter-apps with the same name in the same project.
-func (c *CurrentAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-current-app-revision")
+func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-latest-app-revision")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
@@ -62,19 +63,21 @@ func (c *CurrentAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
 	)
 
-	request := &CurrentAppRevisionRequest{}
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
+	if reqErr != nil {
+		e := telemetry.Error(ctx, span, reqErr, "error parsing stack name from url")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
+		return
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
+
+	request := &LatestAppRevisionRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding request")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-
-	if request.AppName == "" {
-		err := telemetry.Error(ctx, span, nil, "app name is required")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: request.AppName})
 
 	_, err := uuid.Parse(request.DeploymentTargetID)
 	if err != nil {
@@ -84,7 +87,7 @@ func (c *CurrentAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
 
-	porterApps, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(project.ID, request.AppName)
+	porterApps, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(project.ID, appName)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting porter app from repo")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -109,7 +112,7 @@ func (c *CurrentAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	currentAppRevisionReq := connect.NewRequest(&porterv1.CurrentAppRevisionRequest{
 		ProjectId:          int64(project.ID),
-		PorterAppId:        int64(porterApps[0].ID),
+		AppId:              int64(porterApps[0].ID),
 		DeploymentTargetId: request.DeploymentTargetID,
 	})
 
@@ -141,7 +144,7 @@ func (c *CurrentAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	b64 := base64.StdEncoding.EncodeToString(encoded)
 
-	response := &CurrentAppRevisionResponse{
+	response := &LatestAppRevisionResponse{
 		B64AppProto: b64,
 	}
 

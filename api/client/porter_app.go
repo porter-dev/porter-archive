@@ -188,7 +188,7 @@ func (c *Client) ValidatePorterApp(
 		DeploymentTargetId: deploymentTarget,
 	}
 
-	err := c.getRequest(
+	err := c.postRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/validate",
 			projectID, clusterID,

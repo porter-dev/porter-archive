@@ -117,7 +117,7 @@ const StackedAreaChart: React.FunctionComponent<StackedAreaChartProps> = ({
                     yScale={yScaleConfig}
                     height={height}
                     width={width}
-                    margin={{ top: 50, right: 0, bottom: 50, left: 50 }}
+                    margin={{ top: 0, right: 0, bottom: 20, left: 50 }}
 
                 >
                     <GridRows

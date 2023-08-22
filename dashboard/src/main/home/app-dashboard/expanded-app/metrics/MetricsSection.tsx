@@ -12,6 +12,7 @@ import { getServiceNameFromControllerName } from "./utils";
 type PropsType = {
   currentChart: ChartTypeWithExtendedConfig;
   appName: string;
+  serviceName?: string;
 };
 
 export const resolutions: { [range: string]: string } = {
@@ -31,6 +32,7 @@ export const secondsBeforeNow: { [range: string]: number } = {
 const MetricsSection: React.FunctionComponent<PropsType> = ({
   currentChart,
   appName,
+  serviceName,
 }) => {
   const [pods, setPods] = useState([]);
   const [controllerOptions, setControllerOptions] = useState([]);
@@ -95,7 +97,14 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         });
 
         setControllerOptions(controllerOptions);
-        setSelectedController(controllerOptions[0]?.value);
+        const controllerOption = controllerOptions.find(
+          (option: any) => option.label === serviceName
+        );
+        if (controllerOption) {
+          setSelectedController(controllerOption.value);
+        } else {
+          setSelectedController(controllerOptions[0]?.value);
+        }
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));

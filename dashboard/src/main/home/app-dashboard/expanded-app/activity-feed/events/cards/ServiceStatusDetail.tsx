@@ -61,7 +61,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                                         </Link>
                                         <Spacer inline x={0.5} />
                                         <Link
-                                            to={`/apps/${appName}/logs?version=${revision}&service=${key}`}
+                                            to={`/apps/${appName}/metrics?service=${key}`}
                                             hasunderline
                                             hoverColor="#949eff"
                                         >

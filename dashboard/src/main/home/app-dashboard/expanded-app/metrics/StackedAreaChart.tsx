@@ -1,20 +1,16 @@
 import _ from "lodash";
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import styled from "styled-components";
 import { AreaSeries, AreaStack, Tooltip, XYChart } from "@visx/xychart";
 import { AxisBottom, AxisLeft } from "@visx/axis"; 
 import { curveMonotoneX as visxCurve } from "@visx/curve";
-import { localPoint } from "@visx/event";
 import { GridColumns, GridRows } from "@visx/grid";
 import { scaleLinear, scaleTime } from "@visx/scale";
-import { Bar, Line } from "@visx/shape";
-import { defaultStyles, TooltipWithBounds, useTooltip } from "@visx/tooltip";
 import { bisector, extent, max } from "d3-array";
 import { timeFormat } from "d3-time-format";
 
 import { default as areaTheme } from "./themes/area";
 import { NormalizedNginxStatusMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
-import { StatusCodeDataColors } from "./utils";
 
 var globalData: NormalizedNginxStatusMetricsData[];
 
@@ -39,6 +35,8 @@ const formats: { [range: string]: (date: Date) => string } = {
     "1D": hourFormat,
     "1M": dayFormat,
 };
+
+type StatusCode = "1xx" | "2xx" | "3xx" | "4xx" | "5xx";
 
 // accessors
 const getDate = (d: NormalizedNginxStatusMetricsData) => new Date(d.date * 1000);
@@ -77,6 +75,7 @@ const StackedAreaChart: React.FunctionComponent<StackedAreaChartProps> = ({
     height,
     margin = { top: 0, right: 0, bottom: 0, left: 0 },
 }) => {
+    globalData = data;
 
     const svgContainer = useRef();
     // bounds
@@ -207,44 +206,48 @@ const StackedAreaChart: React.FunctionComponent<StackedAreaChartProps> = ({
                         })}
                     />
                     <Tooltip<NormalizedMetricsData>
-                        showHorizontalCrosshair={true}
+                        showHorizontalCrosshair={false}
                         showVerticalCrosshair={true}
                         snapTooltipToDatumX={true}
                         snapTooltipToDatumY={true}
                         showDatumGlyph={true}
+                        applyPositionStyle={true}
+                        style={{ 
+                            background: 'rgb(38, 39, 47)',
+                            borderRadius: '3px',
+                            boxShadow: 'rgba(33, 33, 33, 0.2) 0px 1px 2px',
+                            color: 'rgb(170, 170, 187)',
+                            fontSize: '14px',
+                            lineHeight: '1em',
+                            padding: '0.3rem 0.5rem',
+                            pointerEvents: 'none',
+                        }}
                         renderTooltip={({ tooltipData, colorScale }) => (
                             <>
                                 {/** date */}
-                                {(tooltipData?.nearestDatum?.datum &&
+                                <TooltipDate>{(tooltipData?.nearestDatum?.datum &&
                                     getDateAsString(tooltipData?.nearestDatum?.datum)) ||
-                                    "No date"}
-                                <br />
-                                <br />
+                                    "No date"}</TooltipDate>
+                                
                                 {/** temperatures */}
                                 {((Object.keys(tooltipData?.datumByKey ?? {})).filter((city) => city) as StatusCode[]).map((statusCode) => {
-                                    const temperature =
+                                    const rps =
                                         tooltipData?.nearestDatum?.datum &&
-                                        getValue(
-                                            tooltipData?.nearestDatum?.datum
+                                        getStatusValue(
+                                            tooltipData?.nearestDatum?.datum, statusCode
                                         );
 
                                     return (
-                                        <div key={statusCode}>
-                                            <em
-                                                style={{
-                                                    color: colorScale?.(statusCode),
+                                        <TooltipDataRow key={statusCode} color={colorScale?.(statusCode)} style={{
                                                     textDecoration:
                                                         tooltipData?.nearestDatum?.key === statusCode
                                                             ? "underline"
                                                             : undefined
                                                 }}
-                                            >
-                                                {statusCode}
-                                            </em>{" "}
-                                            {temperature == null || Number.isNaN(temperature)
+                                            >{statusCode} AVG Requests Per Minute: {rps == null || Number.isNaN(rps)
                                                 ? "–"
-                                                : `${temperature} AVG RPS`}
-                                        </div>
+                                                : rps}
+                                        </TooltipDataRow>
                                     );
                                 })}
                             </>
@@ -270,3 +273,13 @@ const StackedAreaChart: React.FunctionComponent<StackedAreaChartProps> = ({
 };
 
 export default StackedAreaChart;
+
+const TooltipDate = styled.div`
+  text-align: center;
+  margin-bottom: 8px;
+`;
+
+const TooltipDataRow = styled.div<{ color?: string }>`
+  color: ${(props) => props.color ?? accentColor};
+  margin-bottom: 4px;
+`;

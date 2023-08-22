@@ -1,22 +1,23 @@
 import _ from "lodash";
 import React, { useMemo, useRef } from "react";
+import styled from "styled-components";
 import { AreaSeries, AreaStack, Tooltip, XYChart } from "@visx/xychart";
 import { AxisBottom, AxisLeft } from "@visx/axis"; 
-import { scaleLinear, scaleTime } from "@visx/scale";
 import { curveMonotoneX as visxCurve } from "@visx/curve";
+import { GridColumns, GridRows } from "@visx/grid";
+import { scaleLinear, scaleTime } from "@visx/scale";
 import { bisector, extent, max } from "d3-array";
 import { timeFormat } from "d3-time-format";
-import { GridColumns, GridRows } from "@visx/grid";
 
 import { default as areaTheme } from "./themes/area";
-import { NormalizedMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
+import { NormalizedNginxStatusMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
+
+var globalData: NormalizedNginxStatusMetricsData[];
 
 export const background = "#3b697800";
 export const background2 = "#20405100";
 export const accentColor = "#949eff";
 export const accentColorDark = "#949eff";
-
-type StatusCode = "1xx" | "2xx" | "3xx" | "4xx" | "5xx";
 
 // util
 const formatDate = timeFormat("%H:%M:%S %b %d, '%y");
@@ -35,18 +36,31 @@ const formats: { [range: string]: (date: Date) => string } = {
     "1M": dayFormat,
 };
 
-// accessors
-const getDate = (d: NormalizedMetricsData) => new Date(d.date * 1000);
-const getDateAsString = (d: NormalizedMetricsData) => formatDate(getDate(d));
-const getValue = (d: NormalizedMetricsData) =>
-    d?.value && Number(d.value?.toFixed(4));
+type StatusCode = "1xx" | "2xx" | "3xx" | "4xx" | "5xx";
 
-const bisectDate = bisector<NormalizedMetricsData, Date>(
+// accessors
+const getDate = (d: NormalizedNginxStatusMetricsData) => new Date(d.date * 1000);
+const getDateAsString = (d: NormalizedNginxStatusMetricsData) => formatDate(getDate(d));
+const getStatusValue = (d: NormalizedNginxStatusMetricsData, level: string) =>{
+    const statusLevel = level as keyof NormalizedNginxStatusMetricsData;
+    return d?[statusLevel] && Number(d[statusLevel]?.toFixed(4)) : 0;
+}
+const get1xxValue = (d: NormalizedNginxStatusMetricsData) => getStatusValue(d, "1xx");
+const get2xxValue = (d: NormalizedNginxStatusMetricsData) => getStatusValue(d, "2xx");
+const get3xxValue = (d: NormalizedNginxStatusMetricsData) => getStatusValue(d, "3xx");
+const get4xxValue = (d: NormalizedNginxStatusMetricsData) => getStatusValue(d, "4xx");
+const get5xxValue = (d: NormalizedNginxStatusMetricsData) => getStatusValue(d, "5xx");
+
+const getMaxValue = (d: NormalizedNginxStatusMetricsData) =>
+    max([get1xxValue(d), get2xxValue(d), get3xxValue(d), get4xxValue(d), get5xxValue(d)]) || 0;
+
+const bisectDate = bisector<NormalizedNginxStatusMetricsData, Date>(
     (d) => new Date(d.date * 1000)
 ).left;
 
 export type StackedAreaChartProps = {
-    data: Record<string, NormalizedMetricsData[]>;
+    data: NormalizedNginxStatusMetricsData[];
+    dataKey: string;
     resolution: string;
     width: number;
     height: number;
@@ -55,11 +69,13 @@ export type StackedAreaChartProps = {
 
 const StackedAreaChart: React.FunctionComponent<StackedAreaChartProps> = ({
     data,
+    dataKey,
     resolution,
     width,
     height,
     margin = { top: 0, right: 0, bottom: 0, left: 0 },
 }) => {
+    globalData = data;
 
     const svgContainer = useRef();
     // bounds
@@ -72,12 +88,13 @@ const StackedAreaChart: React.FunctionComponent<StackedAreaChartProps> = ({
             scaleTime({
                 range: [margin.left, innerWidth + margin.left],
                 domain: extent(
-                    data["1xx"],
+                    globalData,
                     getDate
                 ) as [Date, Date],
             }),
         [margin.left, width, height, data]
     );
+
     const valueScale = useMemo(
         () =>
             scaleLinear({
@@ -86,8 +103,8 @@ const StackedAreaChart: React.FunctionComponent<StackedAreaChartProps> = ({
                     0,
                     1.25 *
                     max(
-                        data["1xx"],
-                        getValue
+                        globalData,
+                        getMaxValue
                     ),
                 ],
                 nice: true,
@@ -141,37 +158,37 @@ const StackedAreaChart: React.FunctionComponent<StackedAreaChartProps> = ({
                     <AreaStack curve={visxCurve}>
                         <AreaSeries
                             dataKey="1xx"
-                            data={data["1xx"]}
+                            data={data}
                             xAccessor={getDate}
-                            yAccessor={getValue}
+                            yAccessor={get1xxValue}
                             fillOpacity={0.4}
                         />
                         <AreaSeries
                             dataKey="2xx"
-                            data={data["2xx"]}
+                            data={data}
                             xAccessor={getDate}
-                            yAccessor={getValue}
+                            yAccessor={get2xxValue}
                             fillOpacity={0.4}
                         />
                         <AreaSeries
                             dataKey="3xx"
-                            data={data["3xx"]}
+                            data={data}
                             xAccessor={getDate}
-                            yAccessor={getValue}
+                            yAccessor={get3xxValue}
                             fillOpacity={0.4}
                         />
                         <AreaSeries
                             dataKey="4xx"
-                            data={data["4xx"]}
+                            data={data}
                             xAccessor={getDate}
-                            yAccessor={getValue}
+                            yAccessor={get4xxValue}
                             fillOpacity={0.4}
                         />
                         <AreaSeries
                             dataKey="5xx"
-                            data={data["5xx"]}
+                            data={data}
                             xAccessor={getDate}
-                            yAccessor={getValue}
+                            yAccessor={get5xxValue}
                             fillOpacity={0.4}
                         />
                     </AreaStack>
@@ -189,44 +206,48 @@ const StackedAreaChart: React.FunctionComponent<StackedAreaChartProps> = ({
                         })}
                     />
                     <Tooltip<NormalizedMetricsData>
-                        showHorizontalCrosshair={true}
+                        showHorizontalCrosshair={false}
                         showVerticalCrosshair={true}
                         snapTooltipToDatumX={true}
                         snapTooltipToDatumY={true}
                         showDatumGlyph={true}
+                        applyPositionStyle={true}
+                        style={{ 
+                            background: 'rgb(38, 39, 47)',
+                            borderRadius: '3px',
+                            boxShadow: 'rgba(33, 33, 33, 0.2) 0px 1px 2px',
+                            color: 'rgb(170, 170, 187)',
+                            fontSize: '14px',
+                            lineHeight: '1em',
+                            padding: '0.3rem 0.5rem',
+                            pointerEvents: 'none',
+                        }}
                         renderTooltip={({ tooltipData, colorScale }) => (
                             <>
                                 {/** date */}
-                                {(tooltipData?.nearestDatum?.datum &&
+                                <TooltipDate>{(tooltipData?.nearestDatum?.datum &&
                                     getDateAsString(tooltipData?.nearestDatum?.datum)) ||
-                                    "No date"}
-                                <br />
-                                <br />
+                                    "No date"}</TooltipDate>
+                                
                                 {/** temperatures */}
                                 {((Object.keys(tooltipData?.datumByKey ?? {})).filter((city) => city) as StatusCode[]).map((statusCode) => {
-                                    const temperature =
+                                    const rps =
                                         tooltipData?.nearestDatum?.datum &&
-                                        getValue(
-                                            tooltipData?.nearestDatum?.datum
+                                        getStatusValue(
+                                            tooltipData?.nearestDatum?.datum, statusCode
                                         );
 
                                     return (
-                                        <div key={statusCode}>
-                                            <em
-                                                style={{
-                                                    color: colorScale?.(statusCode),
+                                        <TooltipDataRow key={statusCode} color={colorScale?.(statusCode)} style={{
                                                     textDecoration:
                                                         tooltipData?.nearestDatum?.key === statusCode
                                                             ? "underline"
                                                             : undefined
                                                 }}
-                                            >
-                                                {statusCode}
-                                            </em>{" "}
-                                            {temperature == null || Number.isNaN(temperature)
+                                            >{statusCode} AVG Requests Per Minute: {rps == null || Number.isNaN(rps)
                                                 ? "–"
-                                                : `${temperature} AVG RPS`}
-                                        </div>
+                                                : rps}
+                                        </TooltipDataRow>
                                     );
                                 })}
                             </>
@@ -252,3 +273,13 @@ const StackedAreaChart: React.FunctionComponent<StackedAreaChartProps> = ({
 };
 
 export default StackedAreaChart;
+
+const TooltipDate = styled.div`
+  text-align: center;
+  margin-bottom: 8px;
+`;
+
+const TooltipDataRow = styled.div<{ color?: string }>`
+  color: ${(props) => props.color ?? accentColor};
+  margin-bottom: 4px;
+`;

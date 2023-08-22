@@ -38,6 +38,18 @@ export type MetricsNGINXLatencyDataResponse = {
   }[];
 };
 
+export type MetricsNGINXStatusDataResponse = {
+  pod?: string;
+  results: {
+    "1xx": string;
+    "2xx": string;
+    "3xx": string;
+    "4xx": string;
+    "5xx": string;
+    date: number;
+  }[];
+}
+
 export type MetricsHpaReplicasDataResponse = {
   pod?: string;
   results: {
@@ -49,13 +61,17 @@ export type MetricsHpaReplicasDataResponse = {
 export type GenericMetricResponse = {
   pod?: string;
   results: {
+    "1xx": string;
+    "2xx": string;
+    "3xx": string;
+    "4xx": string;
+    "5xx": string;
     date: number;
     cpu: string;
     memory: string;
     bytes: string;
     error_pct: string;
     replicas: string;
-    status_code: string;
     latency: string;
   }[];
 };
@@ -63,6 +79,15 @@ export type GenericMetricResponse = {
 export type NormalizedMetricsData = {
   date: number; // unix timestamp
   value: number; // value
+};
+
+export type NormalizedNginxStatusMetricsData = {
+  date: number; // unix timestamp
+  "1xx": number;
+  "2xx": number;
+  "3xx": number;
+  "4xx": number;
+  "5xx": number;
 };
 
 export type AvailableMetrics =

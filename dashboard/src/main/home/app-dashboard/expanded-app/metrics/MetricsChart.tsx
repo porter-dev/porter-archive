@@ -13,7 +13,7 @@ import AreaChart from "./AreaChart";
 import StackedAreaChart from "./StackedAreaChart";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import Loading from "components/Loading";
-import { AvailableMetrics, GenericMetricResponse, NormalizedMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
+import { AvailableMetrics, GenericMetricResponse, NormalizedMetricsData, NormalizedNginxStatusMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
 import { MetricNormalizer } from "../../../cluster-dashboard/expanded-chart/metrics/MetricNormalizer";
 
 export const resolutions: { [range: string]: string } = {
@@ -56,7 +56,7 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
         Record<string, NormalizedMetricsData[]>
     >({});
     const [data, setData] = useState<NormalizedMetricsData[]>([]);
-    const [areaData, setAreaData] = useState<Record<string, NormalizedMetricsData[]>>({});
+    const [areaData, setAreaData] = useState<NormalizedNginxStatusMetricsData[]>([]);
     const [hpaData, setHpaData] = useState<NormalizedMetricsData[]>([]);
     const [hpaEnabled, setHpaEnabled] = useState(false);
     const [showHpaToggle, setShowHpaToggle] = useState(false);
@@ -93,10 +93,6 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
             const start = end - secondsBeforeNow[selectedRange];
 
             let podNames = [] as string[];
-
-            if (!shouldsum) {
-                podNames = [selectedPod];
-            }
 
             if (selectedMetric == "nginx:errors") {
                 podNames = [selectedIngress?.name];
@@ -140,28 +136,6 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
             let requests = [
                 aggregatedMetricsRequest,
             ];
-
-            if (!shouldsum) {
-                const metricsRequest = api.getMetrics(
-                    "<token>",
-                    {
-                        metric: selectedMetric,
-                        shouldsum: shouldsum,
-                        kind: kind,
-                        name: selectedController?.metadata.name,
-                        namespace: namespace,
-                        startrange: start,
-                        endrange: end,
-                        resolution: resolutions[selectedRange],
-                        pods: podNames,
-                    },
-                    {
-                        id: currentProject.id,
-                        cluster_id: currentCluster.id,
-                    }
-                );
-                requests.push(metricsRequest);
-            }
 
             if (shouldsum && isHpaEnabled && ["cpu", "memory"].includes(selectedMetric)) {
                 let hpaMetricType = "cpu_hpa_threshold";
@@ -207,15 +181,6 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
 
                     setAggregatedData(allPodsAggregatedData);
 
-                    if (!shouldsum) {
-                        const res = responses[1];
-                        const metrics = new MetricNormalizer(
-                            res.data,
-                            selectedMetric as AvailableMetrics
-                        );
-                        setData(metrics.getParsedData());
-                    }
-
                     if (shouldsum && isHpaEnabled && ["cpu", "memory"].includes(selectedMetric)) {
                         let hpaMetricType = "cpu_hpa_threshold"
                         if (selectedMetric === "memory") {
@@ -260,45 +225,30 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
 
         try {
             setIsLoading((prev) => prev + 1);
-            for (let i = 1; i <= 5; i++) {
-                requests.push(api.getMetrics(
-                    "<token>",
-                    {
-                        metric: selectedMetric,
-                        shouldsum: false,
-                        kind: kind,
-                        name: selectedController?.metadata.name,
-                        namespace: namespace,
-                        startrange: start,
-                        endrange: end,
-                        resolution: resolutions[selectedRange],
-                        pods: [],
-                        nginx_status_level: i,
-                    },
-                    {
-                        id: currentProject.id,
-                        cluster_id: currentCluster.id,
-                    }
-                ));
-            }
-            axios
-                .all(requests)
-                .then((responses) => {
-                    let aggregatedMetrics: Record<string, NormalizedMetricsData[]> = {};
-                    for (let i = 0; i <= 4; i++) {
-                        const metrics = new MetricNormalizer(
-                            responses[i].data,
-                            selectedMetric as AvailableMetrics
-                        );
-                        const metrixIndex = `${i + 1}xx`;
-                        aggregatedMetrics[metrixIndex] = metrics.getParsedData()
-                    }
+            const response = await api.getMetrics(
+                "<token>",
+                {
+                    metric: selectedMetric,
+                    shouldsum: false,
+                    kind: kind,
+                    name: selectedController?.metadata.name,
+                    namespace: namespace,
+                    startrange: start,
+                    endrange: end,
+                    resolution: resolutions[selectedRange],
+                    pods: [],
+                },
+                {
+                    id: currentProject.id,
+                    cluster_id: currentCluster.id,
+                }
+            );
+            const metrics = new MetricNormalizer(
+                response.data,
+                selectedMetric as AvailableMetrics
+            );
 
-                    setAreaData(aggregatedMetrics);
-                })
-                .catch(error => {
-                    setCurrentError(JSON.stringify(error));
-                })
+            setAreaData(metrics.getNginxStatusData());
         } catch (error) {
             setCurrentError(JSON.stringify(error));
         } finally {
@@ -385,6 +335,7 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                     <ParentSize>
                         {({ width, height }) => (
                             <StackedAreaChart
+                                dataKey={selectedMetricLabel}
                                 data={areaData}
                                 width={width}
                                 height={height - 10}

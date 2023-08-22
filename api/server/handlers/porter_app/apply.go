@@ -20,7 +20,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-// ApplyPorterAppHandler is the handler for the /app/parse endpoint
+// ApplyPorterAppHandler is the handler for the /apps/parse endpoint
 type ApplyPorterAppHandler struct {
 	handlers.PorterHandlerReadWriter
 }

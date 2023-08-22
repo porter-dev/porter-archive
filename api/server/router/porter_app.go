@@ -454,6 +454,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/applications/{porter_app_name}/run -> porter_app.NewRunPorterAppCommandHandler
+	runPorterAppCommandEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/run", relPath, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	runPorterAppCommandHandler := porter_app.NewRunPorterAppCommandHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: runPorterAppCommandEndpoint,
+		Handler:  runPorterAppCommandHandler,
+		Router:   r,
+	})
+
 	// TODO: remove these three endpoints once these three 'stacks' routes are no longer used in telemetry
 
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/stacks/{name} -> porter_app.NewPorterAppGetHandler
@@ -546,7 +575,7 @@ func getPorterAppRoutes(
 	parsePorterYAMLToProtoEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
+			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
 				RelativePath: "/apps/parse",

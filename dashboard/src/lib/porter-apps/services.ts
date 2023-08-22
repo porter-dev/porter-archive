@@ -10,60 +10,14 @@ import {
   serializeAutoscaling,
   serializeHealth,
   domainsValidator,
+  serviceStringValidator,
+  serviceNumberValidator,
+  serviceBooleanValidator,
+  ServiceField,
 } from "./values";
 import { Service, ServiceType } from "@porter-dev/api-contracts";
 
-// ServiceString is a string value in a service that can be read-only or editable
-export const serviceStringValidator = z.object({
-  readOnly: z.boolean(),
-  value: z.string(),
-});
-export type ServiceString = z.infer<typeof serviceStringValidator>;
-
-// ServiceNumber is a number value in a service that can be read-only or editable
-export const serviceNumberValidator = z.object({
-  readOnly: z.boolean(),
-  value: z.number(),
-});
-export type ServiceNumber = z.infer<typeof serviceNumberValidator>;
-
-// ServiceBoolean is a boolean value in a service that can be read-only or editable
-export const serviceBooleanValidator = z.object({
-  readOnly: z.boolean(),
-  value: z.boolean(),
-});
-export type ServiceBoolean = z.infer<typeof serviceBooleanValidator>;
-
-// ServiceArray is an array of ServiceStrings
-const serviceArrayValidator = z.array(
-  z.object({
-    key: z.string(),
-    value: serviceStringValidator,
-  })
-);
-export type ServiceArray = z.infer<typeof serviceArrayValidator>;
-
-// ServiceField is a helper to create a ServiceString, ServiceNumber, or ServiceBoolean
-export const ServiceField = {
-  string: (defaultValue: string, overrideValue?: string): ServiceString => {
-    return {
-      readOnly: !!overrideValue,
-      value: overrideValue ?? defaultValue,
-    };
-  },
-  number: (defaultValue: number, overrideValue?: number): ServiceNumber => {
-    return {
-      readOnly: !!overrideValue,
-      value: overrideValue ?? defaultValue,
-    };
-  },
-  boolean: (defaultValue: boolean, overrideValue?: boolean): ServiceBoolean => {
-    return {
-      readOnly: !!overrideValue,
-      value: overrideValue ?? defaultValue,
-    };
-  },
-};
+type ClientServiceType = "web" | "worker" | "job" | "predeploy";
 
 // serviceValidator is the validator for a ClientService
 // This is used to validate a service when creating or updating an app
@@ -79,19 +33,22 @@ export const serviceValidator = z.object({
   config: z.discriminatedUnion("type", [
     z.object({
       type: z.literal("web"),
-      autoscaling: autoscalingValidator,
+      autoscaling: autoscalingValidator.optional(),
       ingressEnabled: z.boolean().default(false).optional(),
       domains: domainsValidator,
-      healthCheck: healthcheckValidator,
+      healthCheck: healthcheckValidator.optional(),
     }),
     z.object({
       type: z.literal("worker"),
-      autoscaling: autoscalingValidator,
+      autoscaling: autoscalingValidator.optional(),
     }),
     z.object({
       type: z.literal("job"),
       allowConcurrent: serviceBooleanValidator,
       cron: serviceStringValidator,
+    }),
+    z.object({
+      type: z.literal("predeploy"),
     }),
   ]),
 });
@@ -113,19 +70,89 @@ export type SerializedService = {
         domains: {
           name: string;
         }[];
-        autoscaling: SerializedAutoscaling;
-        healthCheck: SerializedHealthcheck;
+        autoscaling?: SerializedAutoscaling;
+        healthCheck?: SerializedHealthcheck;
       }
     | {
         type: "worker";
-        autoscaling: SerializedAutoscaling;
+        autoscaling?: SerializedAutoscaling;
       }
     | {
         type: "job";
         allowConcurrent: boolean;
         cron: string;
+      }
+    | {
+        type: "predeploy";
       };
 };
+
+export function isPredeployService(service: SerializedService | ClientService) {
+  return service.config.type == "predeploy";
+}
+
+export function defaultSerialized({
+  name,
+  type,
+}: {
+  name: string;
+  type: ClientServiceType;
+}): SerializedService {
+  const baseService = {
+    name,
+    run: "",
+    instances: 1,
+    port: 3000,
+    cpuCores: 0.1,
+    ramMegabytes: 256,
+  };
+
+  const defaultAutoscaling: SerializedAutoscaling = {
+    enabled: false,
+    minInstances: 1,
+    maxInstances: 10,
+    cpuThresholdPercent: 50,
+    memoryThresholdPercent: 50,
+  };
+
+  const defaultHealthCheck: SerializedHealthcheck = {
+    enabled: false,
+    httpPath: "/healthz",
+  };
+
+  return match(type)
+    .with("web", () => ({
+      ...baseService,
+      config: {
+        type: "web" as const,
+        autoscaling: defaultAutoscaling,
+        healthCheck: defaultHealthCheck,
+        domains: [],
+      },
+    }))
+    .with("worker", () => ({
+      ...baseService,
+      config: {
+        type: "worker" as const,
+        autoscaling: defaultAutoscaling,
+      },
+    }))
+    .with("job", () => ({
+      ...baseService,
+      config: {
+        type: "job" as const,
+        allowConcurrent: false,
+        cron: "",
+      },
+    }))
+    .with("predeploy", () => ({
+      ...baseService,
+      config: {
+        type: "predeploy" as const,
+      },
+    }))
+    .exhaustive();
+}
 
 // serializeService converts a ClientService to a SerializedService
 // A SerializedService holds just the values of a ClientService
@@ -183,6 +210,19 @@ export function serializeService(service: ClientService): SerializedService {
         },
       })
     )
+    .with({ type: "predeploy" }, () =>
+      Object.freeze({
+        name: service.name.value,
+        run: service.run.value,
+        instances: service.instances.value,
+        port: service.port.value,
+        cpuCores: service.cpuCores.value,
+        ramMegabytes: service.ramMegabytes.value,
+        config: {
+          type: "predeploy" as const,
+        },
+      })
+    )
     .exhaustive();
 }
 
@@ -193,6 +233,8 @@ export function deserializeService(
   override?: SerializedService
 ): ClientService {
   const baseService = {
+    expanded: true,
+    canDelete: !override,
     name: ServiceField.string(service.name, override?.name),
     run: ServiceField.string(service.run, override?.run),
     instances: ServiceField.number(service.instances, override?.instances),
@@ -263,17 +305,22 @@ export function deserializeService(
         },
       };
     })
+    .with({ type: "predeploy" }, () => ({
+      ...baseService,
+      config: {
+        type: "predeploy" as const,
+      },
+    }))
     .exhaustive();
 }
 
 // getServiceTypeEnumProto converts the type of a ClientService to the protobuf ServiceType enum
-export const serviceTypeEnumProto = (
-  type: "web" | "worker" | "job"
-): ServiceType => {
+export const serviceTypeEnumProto = (type: ClientServiceType): ServiceType => {
   return match(type)
     .with("web", () => ServiceType.WEB)
     .with("worker", () => ServiceType.WORKER)
     .with("job", () => ServiceType.JOB)
+    .with("predeploy", () => ServiceType.JOB)
     .exhaustive();
 };
 
@@ -323,6 +370,18 @@ export function serviceProto(service: SerializedService): Service {
           },
         })
     )
+    .with(
+      { type: "predeploy" },
+      (config) =>
+        new Service({
+          ...service,
+          type: serviceTypeEnumProto(config.type),
+          config: {
+            value: {},
+            case: "jobConfig",
+          },
+        })
+    )
     .exhaustive();
 }
 
@@ -331,9 +390,11 @@ export function serviceProto(service: SerializedService): Service {
 export function serializedServiceFromProto({
   service,
   name,
+  isPredeploy,
 }: {
   service: Service;
   name: string;
+  isPredeploy?: boolean;
 }): SerializedService {
   const config = service.config;
   if (!config.case) {
@@ -346,8 +407,8 @@ export function serializedServiceFromProto({
       name,
       config: {
         type: "web" as const,
-        autoscaling: value.autoscaling ? value.autoscaling : { enabled: false },
-        healthCheck: value.healthCheck ? value.healthCheck : { enabled: false },
+        autoscaling: value.autoscaling ? value.autoscaling : undefined,
+        healthCheck: value.healthCheck ? value.healthCheck : undefined,
         ...value,
       },
     }))
@@ -356,7 +417,7 @@ export function serializedServiceFromProto({
       name,
       config: {
         type: "worker" as const,
-        autoscaling: value.autoscaling ? value.autoscaling : { enabled: false },
+        autoscaling: value.autoscaling ? value.autoscaling : undefined,
         ...value,
       },
     }))
@@ -364,7 +425,7 @@ export function serializedServiceFromProto({
       ...service,
       name,
       config: {
-        type: "job" as const,
+        type: isPredeploy ? ("predeploy" as const) : ("job" as const),
         ...value,
       },
     }))

@@ -116,7 +116,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
 
 
           <BlockDescription>
-            Project Id: {project.id}
+            Project ID: {project.id}
           </BlockDescription>
         </IdContainer>
       );

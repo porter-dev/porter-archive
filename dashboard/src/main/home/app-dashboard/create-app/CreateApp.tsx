@@ -19,14 +19,28 @@ import SourceSelector from "../new-app-flow/SourceSelector";
 import Button from "components/porter/Button";
 import RepoSettings from "./RepoSettings";
 import ImageSettings from "./ImageSettings";
+import Container from "components/porter/Container";
+import ServiceList from "../validate-apply/services-settings/ServiceList";
+import {
+  ClientService,
+  defaultSerialized,
+  deserializeService,
+} from "lib/porter-apps/services";
+import EnvVariables from "../validate-apply/app-settings/EnvVariables";
+import { usePorterYaml } from "lib/hooks/usePorterYaml";
+import { valueExists } from "shared/util";
 
 type CreateAppProps = {} & RouteComponentProps;
 
 const CreateApp: React.FC<CreateAppProps> = ({}) => {
   const { currentProject } = useContext(Context);
   const [step, setStep] = React.useState(0);
+  const [detectedServices, setDetectedServices] = React.useState<{
+    detected: boolean;
+    count: number;
+  }>({ detected: false, count: 0 });
 
-  const methods = useForm<PorterAppFormData>({
+  const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",
     defaultValues: {
       app: {
@@ -50,23 +64,62 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
     register,
     control,
     watch,
+    setValue,
     formState: { isSubmitting },
-  } = methods;
+  } = porterAppFormMethods;
 
   const name = watch("app.name");
   const source = watch("source");
   const build = watch("app.build");
-  const services = watch("app.services") ?? [];
+  const image = watch("app.image");
+  const servicesFromYaml = usePorterYaml(source);
 
   useEffect(() => {
+    // set step to 1 if name is filled out
     if (name) {
       setStep((prev) => Math.max(prev, 1));
     }
 
-    if (source?.type) {
-      setStep((prev) => Math.max(prev, 2));
+    // set step to 2 if source is filled out
+    if (source?.type && source.type === "github") {
+      if (source.git_repo_name && source.git_branch) {
+        setStep((prev) => Math.max(prev, 5));
+      }
     }
-  }, [name, source?.type]);
+
+    // set step to 3 if source is filled out
+    if (source?.type && source.type === "docker-registry") {
+      if (image && image.tag) {
+        setStep((prev) => Math.max(prev, 5));
+      }
+    }
+  }, [
+    name,
+    source?.type,
+    source?.git_repo_name,
+    source?.git_branch,
+    image?.tag,
+  ]);
+
+  // reset services when source changes
+  useEffect(() => {
+    setValue("app.services", []);
+    setDetectedServices({
+      detected: false,
+      count: 0,
+    });
+  }, [source?.type, source?.git_repo_name, source?.git_branch, image?.tag]);
+
+  useEffect(() => {
+    if (servicesFromYaml && !detectedServices.detected) {
+      const { services, predeploy } = servicesFromYaml;
+      setValue("app.services", [...services, predeploy].filter(valueExists));
+      setDetectedServices({
+        detected: true,
+        count: services.length,
+      });
+    }
+  }, [servicesFromYaml, detectedServices.detected]);
 
   if (!currentProject) {
     return null;
@@ -84,7 +137,7 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
             disableLineBreak
           />
           <DarkMatter />
-          <FormProvider {...methods}>
+          <FormProvider {...porterAppFormMethods}>
             <VerticalSteps
               currentStep={step}
               steps={[
@@ -144,16 +197,79 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
                   </AnimateHeight>
                 </>,
                 <>
-                  <Button
-                    status={isSubmitting && "loading"}
-                    loadingText={"Deploying..."}
-                    width={"120px"}
-                    disabled={true}
-                  >
-                    Deploy app
-                  </Button>
+                  <Container row>
+                    <Text size={16}>Application services</Text>
+                    {detectedServices.detected && (
+                      <AppearingDiv
+                        color={
+                          detectedServices.detected ? "#8590ff" : "#fcba03"
+                        }
+                      >
+                        {detectedServices.count > 0 ? (
+                          <I className="material-icons">check</I>
+                        ) : (
+                          <I className="material-icons">error</I>
+                        )}
+                        <Text
+                          color={
+                            detectedServices.detected ? "#8590ff" : "#fcba03"
+                          }
+                        >
+                          {detectedServices.count > 0
+                            ? `Detected ${detectedServices.count} service${
+                                detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
+                            : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
+                        </Text>
+                      </AppearingDiv>
+                    )}
+                  </Container>
+                  <Spacer y={0.5} />
+                  <ServiceList
+                    defaultExpanded={true}
+                    addNewText={"Add a new service"}
+                  />
                 </>,
-              ]}
+                <>
+                  <Text size={16}>Environment variables (optional)</Text>
+                  <Spacer y={0.5} />
+                  <Text color="helper">
+                    Specify environment variables shared among all services.
+                  </Text>
+                  <EnvVariables />
+                </>,
+                source.type === "github" && (
+                  <>
+                    <Text size={16}>Pre-deploy job (optional)</Text>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      You may add a pre-deploy job to perform an operation
+                      before your application services deploy each time, like a
+                      database migration.
+                    </Text>
+                    <Spacer y={0.5} />
+                    <ServiceList
+                      limitOne={true}
+                      addNewText={"Add a new pre-deploy job"}
+                      prePopulateService={deserializeService(
+                        defaultSerialized({
+                          name: "pre-deploy",
+                          type: "predeploy",
+                        })
+                      )}
+                      isPredeploy
+                    />
+                  </>
+                ),
+                <Button
+                  status={isSubmitting && "loading"}
+                  loadingText={"Deploying..."}
+                  width={"120px"}
+                  disabled={true}
+                >
+                  Deploy app
+                </Button>,
+              ].filter((x) => x)}
             />
           </FormProvider>
           <Spacer y={3} />
@@ -208,4 +324,28 @@ const Icon = styled.img`
       transform: translateY(0px);
     }
   }
+`;
+
+const AppearingDiv = styled.div<{ color?: string }>`
+  animation: floatIn 0.5s;
+  animation-fill-mode: forwards;
+  display: flex;
+  align-items: center;
+  color: ${(props) => props.color || "#ffffff44"};
+  margin-left: 10px;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;
+
+const I = styled.i`
+  font-size: 18px;
+  margin-right: 5px;
 `;

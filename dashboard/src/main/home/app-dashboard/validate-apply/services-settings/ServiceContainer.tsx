@@ -160,12 +160,15 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         />
       ))
       .with({ config: { type: "job" } }, (svc) => (
+        <JobTabs index={index} service={svc} maxCPU={maxCPU} maxRAM={maxRAM} />
+      ))
+      .with({ config: { type: "predeploy" } }, (svc) => (
         <JobTabs
           index={index}
           service={svc}
           maxCPU={maxCPU}
           maxRAM={maxRAM}
-          isPredeploy={isPredeploy}
+          isPredeploy
         />
       ))
       .exhaustive();
@@ -178,6 +181,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       case "worker":
         return <Icon src={worker} />;
       case "job":
+        return <Icon src={job} />;
+      case "predeploy":
         return <Icon src={job} />;
     }
   };

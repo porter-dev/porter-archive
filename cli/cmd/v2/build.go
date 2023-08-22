@@ -1,4 +1,4 @@
-package build
+package v2
 
 import (
 	"context"
@@ -14,41 +14,47 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/docker"
 
 	api "github.com/porter-dev/porter/api/client"
-	"github.com/porter-dev/porter/cli/cmd/config"
 )
 
-type Settings struct {
-	ProjectID       uint
-	AppName         string
-	BuildContext    string
-	BuildDockerfile string
-	BuildMethod     string
-	Builder         string
-	BuildPacks      []string
-	ImageTag        string
+const (
+	buildMethodPack   = "pack"
+	buildMethodDocker = "docker"
+)
+
+// buildInput is the input struct for the build method
+type buildInput struct {
+	ProjectID uint
+	// AppName is the name of the application being built and is used to name the repository
+	AppName      string
+	BuildContext string
+	Dockerfile   string
+	BuildMethod  string
+	// Builder is the image containing the components necessary to build the application in a pack build
+	Builder    string
+	BuildPacks []string
+	// ImageTag is the tag to apply to the new image
+	ImageTag string
+	// CurrentImageTag is used in docker build to cache from
 	CurrentImageTag string
 	RepositoryURL   string
 }
 
-type BuildInput struct {
-	Settings Settings
-}
-
-func Run(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, settings Settings) error {
-	if settings.ProjectID == 0 {
+// build will create an image repository if it does not exist, and then build and push the image
+func build(ctx context.Context, client *api.Client, inp buildInput) error {
+	if inp.ProjectID == 0 {
 		return errors.New("must specify a project id")
 	}
-	projectID := settings.ProjectID
+	projectID := inp.ProjectID
 
-	if settings.ImageTag == "" {
+	if inp.ImageTag == "" {
 		return errors.New("must specify an image tag")
 	}
-	tag := settings.ImageTag
+	tag := inp.ImageTag
 
-	if settings.RepositoryURL == "" {
+	if inp.RepositoryURL == "" {
 		return errors.New("must specify a registry url")
 	}
-	imageURL := strings.TrimPrefix(settings.RepositoryURL, "https://")
+	imageURL := strings.TrimPrefix(inp.RepositoryURL, "https://")
 
 	err := createImageRepositoryIfNotExists(ctx, client, projectID, imageURL)
 	if err != nil {
@@ -60,8 +66,8 @@ func Run(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, set
 		return fmt.Errorf("error getting docker agent: %w", err)
 	}
 
-	switch settings.BuildMethod {
-	case "docker":
+	switch inp.BuildMethod {
+	case buildMethodDocker:
 		basePath, err := filepath.Abs(".")
 		if err != nil {
 			return fmt.Errorf("error getting absolute path: %w", err)
@@ -69,17 +75,17 @@ func Run(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, set
 
 		buildCtx, dockerfilePath, isDockerfileInCtx, err := resolveDockerPaths(
 			basePath,
-			settings.BuildContext,
-			settings.BuildDockerfile,
+			inp.BuildContext,
+			inp.Dockerfile,
 		)
 		if err != nil {
 			return fmt.Errorf("error resolving docker paths: %w", err)
 		}
 
 		opts := &docker.BuildOpts{
-			ImageRepo:         settings.RepositoryURL,
+			ImageRepo:         inp.RepositoryURL,
 			Tag:               tag,
-			CurrentTag:        settings.CurrentImageTag,
+			CurrentTag:        inp.CurrentImageTag,
 			BuildContext:      buildCtx,
 			DockerfilePath:    dockerfilePath,
 			IsDockerfileInCtx: isDockerfileInCtx,
@@ -91,18 +97,18 @@ func Run(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, set
 		if err != nil {
 			return fmt.Errorf("error building image with docker: %w", err)
 		}
-	case "pack":
+	case buildMethodPack:
 		packAgent := &pack.Agent{}
 
 		opts := &docker.BuildOpts{
 			ImageRepo:    imageURL,
 			Tag:          tag,
-			BuildContext: settings.BuildContext,
+			BuildContext: inp.BuildContext,
 		}
 
 		buildConfig := &types.BuildConfig{
-			Builder:    settings.Builder,
-			Buildpacks: settings.BuildPacks,
+			Builder:    inp.Builder,
+			Buildpacks: inp.BuildPacks,
 		}
 
 		err := packAgent.Build(opts, buildConfig, "")
@@ -110,7 +116,7 @@ func Run(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, set
 			return fmt.Errorf("error building image with pack: %w", err)
 		}
 	default:
-		return fmt.Errorf("invalid build method: %s", settings.BuildMethod)
+		return fmt.Errorf("invalid build method: %s", inp.BuildMethod)
 	}
 
 	err = dockerAgent.PushImage(fmt.Sprintf("%s:%s", imageURL, tag))

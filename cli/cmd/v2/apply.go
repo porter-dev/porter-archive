@@ -8,10 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/porter-dev/api-contracts/generated/go/helpers"
-	"github.com/porter-dev/porter/cli/cmd/v2/build"
-
 	"github.com/fatih/color"
+	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/config"
@@ -68,7 +66,6 @@ func Apply(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, p
 	}
 
 	if applyResp.CLIAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_BUILD {
-
 		buildSettings, err := buildSettingsFromBase64AppProto(base64AppProto)
 		if err != nil {
 			return fmt.Errorf("error building settings from base64 app proto: %w", err)
@@ -91,7 +88,7 @@ func Apply(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, p
 		buildSettings.CurrentImageTag = currentImageTag
 		buildSettings.ProjectID = cliConf.Project
 
-		err = build.Run(ctx, cliConf, client, buildSettings)
+		err = build(ctx, client, buildSettings)
 		if err != nil {
 			return fmt.Errorf("error building app: %w", err)
 		}
@@ -110,8 +107,8 @@ func Apply(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, p
 	return nil
 }
 
-func buildSettingsFromBase64AppProto(base64AppProto string) (build.Settings, error) {
-	var buildSettings build.Settings
+func buildSettingsFromBase64AppProto(base64AppProto string) (buildInput, error) {
+	var buildSettings buildInput
 
 	decoded, err := base64.StdEncoding.DecodeString(base64AppProto)
 	if err != nil {
@@ -136,15 +133,15 @@ func buildSettingsFromBase64AppProto(base64AppProto string) (build.Settings, err
 		return buildSettings, fmt.Errorf("app does not contain image settings")
 	}
 
-	return build.Settings{
-		AppName:         app.Name,
-		BuildContext:    app.Build.Context,
-		BuildDockerfile: app.Build.Dockerfile,
-		BuildMethod:     app.Build.Method,
-		Builder:         app.Build.Builder,
-		BuildPacks:      app.Build.Buildpacks,
-		ImageTag:        app.Image.Tag,
-		RepositoryURL:   app.Image.Repository,
+	return buildInput{
+		AppName:       app.Name,
+		BuildContext:  app.Build.Context,
+		Dockerfile:    app.Build.Dockerfile,
+		BuildMethod:   app.Build.Method,
+		Builder:       app.Build.Builder,
+		BuildPacks:    app.Build.Buildpacks,
+		ImageTag:      app.Image.Tag,
+		RepositoryURL: app.Image.Repository,
 	}, nil
 }
 
@@ -160,6 +157,10 @@ func imageTagFromBase64AppProto(base64AppProto string) (string, error) {
 	err = helpers.UnmarshalContractObject(decoded, app)
 	if err != nil {
 		return image, fmt.Errorf("unable to unmarshal app for revision: %w", err)
+	}
+
+	if app.Image == nil {
+		return image, fmt.Errorf("app does not contain image settings")
 	}
 
 	if app.Image.Tag == "" {

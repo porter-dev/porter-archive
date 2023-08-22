@@ -44,6 +44,8 @@ func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string
 	return app, nil
 }
 
+// ReadPorterAppsByProjectIDAndName returns a list of PorterApps by project ID and name. Multiple apps can have the same name and project id
+// if they are in different clusters.
 func (repo *PorterAppRepository) ReadPorterAppsByProjectIDAndName(projectID uint, name string) ([]*models.PorterApp, error) {
 	apps := []*models.PorterApp{}
 

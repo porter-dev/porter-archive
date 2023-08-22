@@ -21,6 +21,7 @@ func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string
 	return nil, errors.New("cannot write database")
 }
 
+// ReadPorterAppsByProjectIDAndName is a test method that is not implemented
 func (repo *PorterAppRepository) ReadPorterAppsByProjectIDAndName(projectID uint, name string) ([]*models.PorterApp, error) {
 	return nil, errors.New("cannot write database")
 }

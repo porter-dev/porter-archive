@@ -692,7 +692,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           filterOpts={queryParamOpts}
         />;
       case "metrics":
-        return <MetricsSection currentChart={appData.chart} appName={appData.app.name} />;
+        return <MetricsSection currentChart={appData.chart} appName={appData.app.name} serviceName={queryParamOpts.service} />;
       case "debug":
         return <StatusSectionFC currentChart={appData.chart} />;
       case "environment":

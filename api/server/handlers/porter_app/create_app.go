@@ -31,14 +31,19 @@ func NewCreateAppHandler(
 	}
 }
 
+// EnumSourceType is an enum for the type of source used by an app
 type EnumSourceType int32
 
 const (
+	// EnumSourceType_Unspecified is the default value when the source type is not specified
 	EnumSourceType_Unspecified EnumSourceType = iota
+	// EnumSourceType_Github is the source type for a github repo
 	EnumSourceType_Github
+	// EnumSourceType_DockerRegistry is the source type for an app using an image from a docker registry
 	EnumSourceType_DockerRegistry
 )
 
+// SourceKind is a string type specifying the source type of an app
 type SourceKind string
 
 const (
@@ -46,6 +51,7 @@ const (
 	SourceKindDockerRegistry SourceKind = "docker-registry"
 )
 
+// Image is the image used by an app with a docker registry source
 type Image struct {
 	Repository string `json:"repository"`
 	Tag        string `json:"tag"`

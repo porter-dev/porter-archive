@@ -7,8 +7,8 @@ import { ChartTypeWithExtendedConfig } from "shared/types";
 
 import TabSelector from "components/TabSelector";
 import SelectRow from "components/form-components/SelectRow";
-import MetricsChart from "./metrics/MetricsChart";
-import { getServiceNameFromControllerName } from "./metrics/utils";
+import MetricsChart from "./MetricsChart";
+import { getServiceNameFromControllerName } from "./utils";
 type PropsType = {
   currentChart: ChartTypeWithExtendedConfig;
   appName: string;

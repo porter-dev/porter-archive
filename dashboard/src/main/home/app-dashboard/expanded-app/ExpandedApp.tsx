@@ -38,7 +38,7 @@ import { EnvVariablesTab } from "./env-vars/EnvVariablesTab";
 import GHABanner from "./GHABanner";
 import LogSection from "./logs/LogSection";
 import ActivityFeed from "./activity-feed/ActivityFeed";
-import MetricsSection from "./MetricsSection";
+import MetricsSection from "./metrics/MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
 import _ from "lodash";

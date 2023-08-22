@@ -210,6 +210,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               width="100%"
             />
           }
+          <Highlight color={"#7d7d81"} onClick={() => ({})}>
+            <i className="material-icons">autorenew</i>
+          </Highlight>
         </Flex>
         <RangeWrapper>
           <Relative>
@@ -315,4 +318,20 @@ const StyledMetricsSection = styled.div`
   display: flex;
   flex-direction: column;
   position: relative;
+`;
+
+const Highlight = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  margin-bottom: 15px;
+  margin-top: 20px;
+  color: ${(props: { color: string }) => props.color};
+  cursor: pointer;
+
+  > i {
+    font-size: 20px;
+    margin-right: 3px;
+  }
 `;

@@ -78,10 +78,13 @@ func login(ctx context.Context) error {
 		return fmt.Errorf("error loading porter config: %w", err)
 	}
 
-	client := api.NewClientWithConfig(ctx, api.NewClientInput{
+	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
 		BaseURL:     fmt.Sprintf("%s/api", cliConf.Host),
 		BearerToken: cliConf.Token,
 	})
+	if err != nil {
+		return fmt.Errorf("error creating porter API client: %w", err)
+	}
 
 	user, err := client.AuthCheck(ctx)
 
@@ -144,10 +147,13 @@ func login(ctx context.Context) error {
 		return err
 	}
 
-	client = api.NewClientWithConfig(ctx, api.NewClientInput{
+	client, err = api.NewClientWithConfig(ctx, api.NewClientInput{
 		BaseURL:     fmt.Sprintf("%s/api", cliConf.Host),
 		BearerToken: token,
 	})
+	if err != nil {
+		return fmt.Errorf("error creating porter API client: %w", err)
+	}
 
 	user, err = client.AuthCheck(ctx)
 
@@ -240,10 +246,13 @@ func register(ctx context.Context) error {
 		return fmt.Errorf("error loading porter config: %w", err)
 	}
 
-	client := api.NewClientWithConfig(ctx, api.NewClientInput{
+	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
 		BaseURL:     fmt.Sprintf("%s/api", config.Host),
 		BearerToken: config.Token,
 	})
+	if err != nil {
+		return fmt.Errorf("error creating porter API client: %w", err)
+	}
 
 	fmt.Println("Please register your admin account with an email and password:")
 

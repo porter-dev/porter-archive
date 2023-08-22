@@ -25,11 +25,14 @@ func checkLoginAndRun(ctx context.Context, args []string, runner func(ctx contex
 		return fmt.Errorf("error loading porter config: %w", err)
 	}
 
-	client := api.NewClientWithConfig(ctx, api.NewClientInput{
+	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
 		BaseURL:        fmt.Sprintf("%s/api", cliConf.Host),
 		BearerToken:    cliConf.Token,
 		CookieFileName: "cookie.json",
 	})
+	if err != nil {
+		return fmt.Errorf("error creating porter API client: %w", err)
+	}
 
 	user, err := client.AuthCheck(ctx)
 	if err != nil {

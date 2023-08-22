@@ -26,7 +26,7 @@ func main() {
 
 	helper, err := helper.NewPorterHelper(Version == "dev")
 	if err != nil {
-		color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err) //nolint:errcheck,gosec
+		color.New(color.FgRed).Fprintf(os.Stderr, "%s\n", err.Error()) //nolint:errcheck,gosec
 		os.Exit(1)
 	}
 

@@ -39,14 +39,18 @@ var configSetProjectCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		cliConf, err := config.InitAndLoadConfig()
 		if err != nil {
-			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred loading config: %v\n", err) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
+			color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred loading config: %s\n", err.Error()) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 			os.Exit(1)
 		}
-		client := api.NewClientWithConfig(cmd.Context(), api.NewClientInput{
+		client, err := api.NewClientWithConfig(cmd.Context(), api.NewClientInput{
 			BaseURL:        fmt.Sprintf("%s/api", cliConf.Host),
 			BearerToken:    cliConf.Token,
 			CookieFileName: "cookie.json",
 		})
+		if err != nil {
+			_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "error creating porter API client: %s\n", err.Error())
+			os.Exit(1)
+		}
 
 		if len(args) == 0 {
 			err := checkLoginAndRun(cmd.Context(), args, listAndSetProject)
@@ -56,13 +60,13 @@ var configSetProjectCmd = &cobra.Command{
 		} else {
 			projID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
-				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
+				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %s\n", err.Error())
 				os.Exit(1)
 			}
 
 			err = cliConf.SetProject(cmd.Context(), client, uint(projID))
 			if err != nil {
-				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
+				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %s\n", err.Error())
 				os.Exit(1)
 			}
 		}

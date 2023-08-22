@@ -23,11 +23,15 @@ var openCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		client := api.NewClientWithConfig(ctx, api.NewClientInput{
+		client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
 			BaseURL:        fmt.Sprintf("%s/api", cliConf.Host),
 			BearerToken:    cliConf.Token,
 			CookieFileName: "cookie.json",
 		})
+		if err != nil {
+			_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "error creating porter API client: %v\n", err)
+			os.Exit(1)
+		}
 
 		user, err := client.AuthCheck(ctx)
 		if err != nil {

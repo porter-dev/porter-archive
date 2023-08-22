@@ -35,10 +35,10 @@ func NewCreateAppHandler(
 type SourceType string
 
 const (
-	// SourceTypeGithub is the source kind for a github repo
-	SourceTypeGithub SourceType = "github"
-	// SourceTypeDockerRegistry is the source kind for an app using an image from a docker registry
-	SourceTypeDockerRegistry SourceType = "docker-registry"
+	// SourceType_Github is the source kind for a github repo
+	SourceType_Github SourceType = "github"
+	// SourceType_DockerRegistry is the source kind for an app using an image from a docker registry
+	SourceType_DockerRegistry SourceType = "docker-registry"
 )
 
 // Image is the image used by an app with a docker registry source
@@ -116,7 +116,7 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var porterApp *types.PorterApp
 	switch request.SourceType {
-	case SourceTypeGithub:
+	case SourceType_Github:
 		if request.GitRepoID == 0 {
 			err := telemetry.Error(ctx, span, nil, "git repo id is required")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -158,7 +158,7 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		porterApp = app.ToPorterAppType()
-	case SourceTypeDockerRegistry:
+	case SourceType_DockerRegistry:
 		if request.Image == nil {
 			err := telemetry.Error(ctx, span, nil, "image is required")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))

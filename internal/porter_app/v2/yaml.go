@@ -97,7 +97,6 @@ type Build struct {
 	Builder    string   `yaml:"builder" validate:"required_if=Method pack"`
 	Buildpacks []string `yaml:"buildpacks"`
 	Dockerfile string   `yaml:"dockerfile" validate:"required_if=Method docker"`
-	Image      string   `yaml:"image" validate:"required_if=Method registry"`
 }
 
 // Service represents a single service in a porter app

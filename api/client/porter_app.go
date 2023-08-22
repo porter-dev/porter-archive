@@ -206,12 +206,14 @@ func (c *Client) ApplyPorterApp(
 	projectID, clusterID uint,
 	base64AppProto string,
 	deploymentTarget string,
+	appRevisionID string,
 ) (*porter_app.ApplyPorterAppResponse, error) {
 	resp := &porter_app.ApplyPorterAppResponse{}
 
 	req := &porter_app.ApplyPorterAppRequest{
 		Base64AppProto:     base64AppProto,
 		DeploymentTargetId: deploymentTarget,
+		AppRevisionID:      appRevisionID,
 	}
 
 	err := c.postRequest(
@@ -238,6 +240,31 @@ func (c *Client) DefaultDeploymentTarget(
 	err := c.getRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/default-deployment-target",
+			projectID, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// CurrentAppRevision returns the currently deployed app revision for a given project, app name and deployment target
+func (c *Client) CurrentAppRevision(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string, deploymentTarget string,
+) (*porter_app.CurrentAppRevisionResponse, error) {
+	resp := &porter_app.CurrentAppRevisionResponse{}
+
+	req := &porter_app.CurrentAppRevisionRequest{
+		AppName:            appName,
+		DeploymentTargetID: deploymentTarget,
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/current-app-revision",
 			projectID, clusterID,
 		),
 		req,

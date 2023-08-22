@@ -40,6 +40,7 @@ func NewApplyPorterAppHandler(
 type ApplyPorterAppRequest struct {
 	Base64AppProto     string `json:"b64_app_proto"`
 	DeploymentTargetId string `json:"deployment_target_id"`
+	AppRevisionID      string `json:"app_revision_id"`
 }
 
 // ApplyPorterAppResponse is the response object for the /apps/apply endpoint
@@ -74,36 +75,55 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if request.Base64AppProto == "" {
-		err := telemetry.Error(ctx, span, nil, "b64 yaml is empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
+	var appRevisionID string
+	var appProto *porterv1.PorterApp
+	var deploymentTargetID string
+
+	if request.AppRevisionID != "" {
+		appRevisionID = request.AppRevisionID
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-revision-id", Value: request.AppRevisionID})
+	} else {
+		if request.Base64AppProto == "" {
+			err := telemetry.Error(ctx, span, nil, "b64 yaml is empty")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error decoding base yaml")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		appProto = &porterv1.PorterApp{}
+		err = helpers.UnmarshalContractObject(decoded, appProto)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error unmarshalling app proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		if request.DeploymentTargetId == "" {
+			err := telemetry.Error(ctx, span, err, "deployment target id is empty")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+		deploymentTargetID = request.DeploymentTargetId
+
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "app-name", Value: appProto.Name},
+			telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetId},
+		)
 	}
 
-	decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error decoding base yaml")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	appProto := &porterv1.PorterApp{}
-	err = helpers.UnmarshalContractObject(decoded, appProto)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error unmarshalling app proto")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appProto.Name})
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetId})
-
-	validateReq := connect.NewRequest(&porterv1.ApplyPorterAppRequest{
-		ProjectId:          int64(project.ID),
-		DeploymentTargetId: request.DeploymentTargetId,
-		App:                appProto,
+	applyReq := connect.NewRequest(&porterv1.ApplyPorterAppRequest{
+		ProjectId:           int64(project.ID),
+		DeploymentTargetId:  deploymentTargetID,
+		App:                 appProto,
+		PorterAppRevisionId: appRevisionID,
 	})
-	ccpResp, err := c.Config().ClusterControlPlaneClient.ApplyPorterApp(ctx, validateReq)
+	ccpResp, err := c.Config().ClusterControlPlaneClient.ApplyPorterApp(ctx, applyReq)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error calling ccp apply porter app")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

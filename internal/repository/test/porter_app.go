@@ -21,6 +21,10 @@ func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string
 	return nil, errors.New("cannot write database")
 }
 
+func (repo *PorterAppRepository) ReadPorterAppsByProjectIDAndName(projectID uint, name string) ([]*models.PorterApp, error) {
+	return nil, errors.New("cannot write database")
+}
+
 func (repo *PorterAppRepository) CreatePorterApp(app *models.PorterApp) (*models.PorterApp, error) {
 	return nil, errors.New("cannot write database")
 }

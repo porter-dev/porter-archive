@@ -60,13 +60,13 @@ var configSetProjectCmd = &cobra.Command{
 		} else {
 			projID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
-				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %s\n", err.Error())
+				_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %s\n", err.Error())
 				os.Exit(1)
 			}
 
 			err = cliConf.SetProject(cmd.Context(), client, uint(projID))
 			if err != nil {
-				color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %s\n", err.Error())
+				_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %s\n", err.Error())
 				os.Exit(1)
 			}
 		}

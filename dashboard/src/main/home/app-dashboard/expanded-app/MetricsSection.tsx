@@ -8,8 +8,10 @@ import { ChartTypeWithExtendedConfig } from "shared/types";
 import TabSelector from "components/TabSelector";
 import SelectRow from "components/form-components/SelectRow";
 import MetricsChart from "./metrics/MetricsChart";
+import { getServiceNameFromControllerName } from "./metrics/utils";
 type PropsType = {
   currentChart: ChartTypeWithExtendedConfig;
+  appName: string;
 };
 
 export const resolutions: { [range: string]: string } = {
@@ -28,10 +30,11 @@ export const secondsBeforeNow: { [range: string]: number } = {
 
 const MetricsSection: React.FunctionComponent<PropsType> = ({
   currentChart,
+  appName,
 }) => {
   const [pods, setPods] = useState([]);
   const [controllerOptions, setControllerOptions] = useState([]);
-  const [selectedController, setSelectedController] = useState(null);
+  const [selectedController, setSelectedController] = useState<any>();
   const [ingressOptions, setIngressOptions] = useState([]);
   const [selectedIngress, setSelectedIngress] = useState(null);
   const [selectedRange, setSelectedRange] = useState("1H");
@@ -43,7 +46,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   );
 
   useEffect(() => {
-    if (currentChart?.chart?.metadata?.name == "ingress-nginx") {
+    if (currentChart?.chart?.metadata?.name === "ingress-nginx") {
       setIsLoading((prev) => prev + 1);
 
       api
@@ -88,8 +91,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       )
       .then((res) => {
         const controllerOptions = res.data.map((controller: any) => {
-          let name = controller?.metadata?.name;
-          return { value: controller, label: name };
+          return { value: controller, label: getServiceNameFromControllerName(controller?.metadata?.name, appName) };
         });
 
         setControllerOptions(controllerOptions);
@@ -160,10 +162,28 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       });
   };
 
-  const renderMetricsSettings = () => {
-    if (selectedMetric == "nginx:errors") {
-      return (
-        <>
+  const renderHpaChart = () => {
+    const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
+    const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
+    return isHpaEnabled ? (
+      <MetricsChart
+        currentChart={currentChart}
+        selectedController={selectedController}
+        selectedIngress={selectedIngress}
+        selectedMetric="hpa_replicas"
+        selectedMetricLabel="Number of replicas"
+        selectedPod="All"
+        selectedRange={selectedRange}
+        pods={pods}
+      />
+    ) : null
+  };
+
+  return (
+    <StyledMetricsSection>
+      <MetricsHeader>
+        <Flex>
+          {selectedMetric === "nginx:errors" ?
             <SelectRow
               displayFlex={true}
               label="Target Ingress"
@@ -171,31 +191,16 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               setActiveValue={(x: any) => setSelectedIngress(x)}
               options={ingressOptions}
               width="100%"
+            /> :
+            <SelectRow
+              displayFlex={true}
+              label="Service"
+              value={selectedController}
+              setActiveValue={(x: any) => setSelectedController(x)}
+              options={controllerOptions}
+              width="100%"
             />
-        </>
-      );
-    }
-
-    return (
-      <>
-        <SelectRow
-          displayFlex={true}
-          label="Service"
-          value={selectedController}
-          setActiveValue={(x: any) => setSelectedController(x)}
-          options={controllerOptions}
-          width="100%"
-        />
-      </>
-    );
-  };
-
-
-  return (
-    <StyledMetricsSection>
-      <MetricsHeader>
-        <Flex>
-          {renderMetricsSettings()}
+          }
         </Flex>
         <RangeWrapper>
           <Relative>
@@ -253,18 +258,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         selectedRange={selectedRange}
         pods={pods}
       />
-      {currentChart?.config?.autoscaling?.enabled && (
-        <MetricsChart
-          currentChart={currentChart}
-          selectedController={selectedController}
-          selectedIngress={selectedIngress}
-          selectedMetric="hpa_replicas"
-          selectedMetricLabel="Number of replicas"
-          selectedPod="All"
-          selectedRange={selectedRange}
-          pods={pods}
-        />
-      )}
+      {renderHpaChart()}
       {currentChart?.chart?.metadata?.name == "ingress-nginx" && (
         <MetricsChart
           currentChart={currentChart}

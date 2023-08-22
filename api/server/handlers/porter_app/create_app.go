@@ -31,6 +31,21 @@ func NewCreateAppHandler(
 	}
 }
 
+type EnumSourceType int32
+
+const (
+	EnumSourceType_Unspecified EnumSourceType = iota
+	EnumSourceType_Github
+	EnumSourceType_DockerRegistry
+)
+
+type SourceKind string
+
+const (
+	SourceKindGithub         SourceKind = "github"
+	SourceKindDockerRegistry SourceKind = "docker-registry"
+)
+
 type Image struct {
 	Repository string `json:"repository"`
 	Tag        string `json:"tag"`
@@ -38,15 +53,16 @@ type Image struct {
 
 // CreateAppRequest is the request object for the /apps/create endpoint
 type CreateAppRequest struct {
-	Name           string `json:"name"`
-	SourceType     string `json:"source_type"`
-	GitBranch      string `json:"git_branch"`
-	GitRepoName    string `json:"git_repo_name"`
-	GitRepoID      uint   `json:"git_repo_id"`
-	PorterYamlPath string `json:"porter_yaml_path"`
-	Image          *Image `json:"image,omitempty"`
+	Name           string     `json:"name"`
+	EnumSourceType SourceKind `json:"source_type"`
+	GitBranch      string     `json:"git_branch"`
+	GitRepoName    string     `json:"git_repo_name"`
+	GitRepoID      uint       `json:"git_repo_id"`
+	PorterYamlPath string     `json:"porter_yaml_path"`
+	Image          *Image     `json:"image,omitempty"`
 }
 
+// CreateGithubAppInput is the input for creating an app with a github source
 type CreateGithubAppInput struct {
 	ProjectID           uint
 	ClusterID           uint
@@ -58,6 +74,7 @@ type CreateGithubAppInput struct {
 	PorterAppRepository repository.PorterAppRepository
 }
 
+// CreateDockerRegistryAppInput is the input for creating an app with a docker registry source
 type CreateDockerRegistryAppInput struct {
 	ProjectID           uint
 	ClusterID           uint
@@ -67,25 +84,12 @@ type CreateDockerRegistryAppInput struct {
 	PorterAppRepository repository.PorterAppRepository
 }
 
-type SourceType int32
-
-const (
-	SourceType_Unspecified SourceType = iota
-	SourceType_Github
-	SourceType_DockerRegistry
-)
-
 func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-app")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
-		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
-	)
 
 	if !project.ValidateApplyV2 {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
@@ -106,13 +110,13 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if request.SourceType == "" {
+	if request.EnumSourceType == "" {
 		err := telemetry.Error(ctx, span, nil, "source type is required")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
-	source, err := sourceEnumFromType(request.SourceType)
+	source, err := sourceEnumFromType(request.EnumSourceType)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting source type")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -121,7 +125,7 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var porterApp models.PorterApp
 	switch source {
-	case SourceType_Github:
+	case EnumSourceType_Github:
 		if request.GitRepoID == 0 {
 			err := telemetry.Error(ctx, span, nil, "git repo id is required")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -157,7 +161,7 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
-	case SourceType_DockerRegistry:
+	case EnumSourceType_DockerRegistry:
 		if request.Image == nil {
 			err := telemetry.Error(ctx, span, nil, "image is required")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -231,13 +235,13 @@ func createDockerRegistryApp(ctx context.Context, input CreateDockerRegistryAppI
 	return *porterApp, nil
 }
 
-func sourceEnumFromType(sourceType string) (SourceType, error) {
+func sourceEnumFromType(sourceType SourceKind) (EnumSourceType, error) {
 	switch sourceType {
-	case "github":
-		return SourceType_Github, nil
-	case "docker-registry":
-		return SourceType_DockerRegistry, nil
+	case SourceKindGithub:
+		return EnumSourceType_Github, nil
+	case SourceKindDockerRegistry:
+		return EnumSourceType_DockerRegistry, nil
 	default:
-		return SourceType_Unspecified, fmt.Errorf("invalid source type: %s", sourceType)
+		return EnumSourceType_Unspecified, fmt.Errorf("invalid source type: %s", sourceType)
 	}
 }

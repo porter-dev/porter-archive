@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo } from "react";
+import React, { useContext, useEffect } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import web from "assets/web.png";
 import AnimateHeight from "react-animate-height";
@@ -11,13 +11,9 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Link from "components/porter/Link";
-import EnvGroupArrayStacks from "main/home/cluster-dashboard/env-groups/EnvGroupArrayStacks";
 
 import { Context } from "shared/Context";
-import {
-  PorterAppFormData,
-  defaultServicesWithOverrides,
-} from "lib/porter-apps";
+import { PorterAppFormData } from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
 import Button from "components/porter/Button";
@@ -25,20 +21,19 @@ import RepoSettings from "./RepoSettings";
 import ImageSettings from "./ImageSettings";
 import Container from "components/porter/Container";
 import ServiceList from "../validate-apply/services-settings/ServiceList";
-import { useQuery } from "@tanstack/react-query";
-import api from "shared/api";
-import { z } from "zod";
-import { PorterApp } from "@porter-dev/api-contracts";
 import {
+  ClientService,
   defaultSerialized,
   deserializeService,
 } from "lib/porter-apps/services";
 import EnvVariables from "../validate-apply/app-settings/EnvVariables";
+import { usePorterYaml } from "lib/hooks/usePorterYaml";
+import { valueExists } from "shared/util";
 
 type CreateAppProps = {} & RouteComponentProps;
 
 const CreateApp: React.FC<CreateAppProps> = ({}) => {
-  const { currentProject, currentCluster } = useContext(Context);
+  const { currentProject } = useContext(Context);
   const [step, setStep] = React.useState(0);
   const [detectedServices, setDetectedServices] = React.useState<{
     detected: boolean;
@@ -77,93 +72,7 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
   const source = watch("source");
   const build = watch("app.build");
   const image = watch("app.image");
-
-  const { data } = useQuery(
-    [
-      "getPorterYamlContents",
-      currentProject?.id,
-      source.git_branch,
-      source.git_repo_name,
-    ],
-    async () => {
-      if (!currentProject) {
-        return;
-      }
-      if (source.type !== "github") {
-        return;
-      }
-      const res = await api.getPorterYamlContents(
-        "<token>",
-        {
-          path: source.porter_yaml_path,
-        },
-        {
-          project_id: currentProject.id,
-          git_repo_id: source.git_repo_id,
-          kind: "github",
-          owner: source.git_repo_name.split("/")[0],
-          name: source.git_repo_name.split("/")[1],
-          branch: source.git_branch,
-        }
-      );
-
-      return z.string().parseAsync(res.data);
-    },
-    {
-      enabled:
-        source.type === "github" &&
-        Boolean(source.git_repo_name) &&
-        Boolean(source.git_branch),
-    }
-  );
-
-  const detectServices = useCallback(
-    async ({
-      b64Yaml,
-      projectId,
-      clusterId,
-    }: {
-      b64Yaml: string;
-      projectId: number;
-      clusterId: number;
-    }) => {
-      try {
-        const res = await api.parsePorterYaml(
-          "<token>",
-          { b64_yaml: b64Yaml },
-          {
-            project_id: projectId,
-            cluster_id: clusterId,
-          }
-        );
-
-        const data = await z
-          .object({
-            b64_app_proto: z.string(),
-          })
-          .parseAsync(res.data);
-        const proto = PorterApp.fromJsonString(atob(data.b64_app_proto));
-
-        const { services, predeploy } = defaultServicesWithOverrides({
-          overrides: proto,
-        });
-
-        if (services.length) {
-          const defaultServices = predeploy
-            ? [...services, predeploy]
-            : services;
-          setValue("app.services", defaultServices);
-          setDetectedServices({
-            detected: true,
-            count: services.length,
-          });
-        }
-      } catch (err) {
-        // silent failure for now
-      }
-    },
-    []
-  );
+  const servicesFromYaml = usePorterYaml(source);
 
   useEffect(() => {
     // set step to 1 if name is filled out
@@ -202,18 +111,15 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
   }, [source?.type, source?.git_repo_name, source?.git_branch, image?.tag]);
 
   useEffect(() => {
-    if (!currentProject || !currentCluster) {
-      return;
-    }
-
-    if (data) {
-      detectServices({
-        b64Yaml: data,
-        projectId: currentProject.id,
-        clusterId: currentCluster.id,
+    if (servicesFromYaml && !detectedServices.detected) {
+      const { services, predeploy } = servicesFromYaml;
+      setValue("app.services", [...services, predeploy].filter(valueExists));
+      setDetectedServices({
+        detected: true,
+        count: services.length,
       });
     }
-  }, [data]);
+  }, [servicesFromYaml, detectedServices.detected]);
 
   if (!currentProject) {
     return null;

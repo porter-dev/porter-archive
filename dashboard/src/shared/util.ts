@@ -6,3 +6,7 @@ export const isJSON = (value: string): boolean => {
     return false;
   }
 };
+
+export function valueExists<T>(value: T | null | undefined): value is T {
+  return !!value;
+}

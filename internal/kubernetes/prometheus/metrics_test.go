@@ -1,7 +1,6 @@
 package prometheus
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,41 +25,16 @@ func Test_getNginxStatusQuery(t *testing.T) {
 		}
 	}{
 		{
-			"missing status level",
-			input{
-				&QueryOpts{},
-				"process-app-web",
-			},
-			output{
-				"",
-				errors.New("invalid nginx status level specified"),
-			},
-		},
-		{
-			"invalid status level",
-			input{
-				&QueryOpts{
-					NginxStatusLevel: 18,
-				},
-				"process-app-web",
-			},
-			output{
-				"",
-				errors.New("invalid nginx status level specified"),
-			},
-		},
-		{
 			"valid status level",
 			input{
 				&QueryOpts{
-					Name:             "process-app-web",
-					Namespace:        "app-namespace",
-					NginxStatusLevel: 2,
+					Name:      "process-app-web",
+					Namespace: "app-namespace",
 				},
 				"process-app-web",
 			},
 			output{
-				`round(sum by (ingress)(irate(nginx_ingress_controller_requests{exported_namespace=~"app-namespace",ingress="process-app-web",service="process-app-web",status=~"2.."}[5m])), 0.001)`,
+				`round(sum by (status_code, ingress)(label_replace(increase(nginx_ingress_controller_requests{exported_namespace=~"app-namespace",ingress="process-app-web",service="process-app-web"}[2m]), "status_code", "${1}xx", "status", "(.)..")), 0.001)`,
 				nil,
 			},
 		},

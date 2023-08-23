@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
@@ -116,8 +117,6 @@ type QueryOpts struct {
 	PodList   []string `schema:"pods"`
 	Name      string   `schema:"name"`
 	Namespace string   `schema:"namespace"`
-	// a prefix [1,2,3,4,5] used to scope nginx requests by when querying for status code responses
-	NginxStatusLevel uint `schema:"nginx_status_level"`
 	// start time (in unix timestamp) for prometheus results
 	StartRange uint `schema:"startrange"`
 	// end time time (in unix timestamp) for prometheus results
@@ -240,19 +239,7 @@ func QueryPrometheus(
 }
 
 func getNginxStatusQuery(opts *QueryOpts, selectionRegex string) (string, error) {
-	supportedLevels := map[int]bool{
-		1: true,
-		2: true,
-		3: true,
-		4: true,
-		5: true,
-	}
-
-	if !supportedLevels[int(opts.NginxStatusLevel)] {
-		return "", errors.New("invalid nginx status level specified")
-	}
-
-	query := fmt.Sprintf(`round(sum by (ingress)(irate(nginx_ingress_controller_requests{exported_namespace=~"%s",ingress="%s",service="%s",status=~"%d.."}[5m])), 0.001)`, opts.Namespace, selectionRegex, opts.Name, opts.NginxStatusLevel)
+	query := fmt.Sprintf(`round(sum by (status_code, ingress)(label_replace(increase(nginx_ingress_controller_requests{exported_namespace=~"%s",ingress="%s",service="%s"}[2m]), "status_code", "${1}xx", "status", "(.)..")), 0.001)`, opts.Namespace, selectionRegex, opts.Name)
 	return query, nil
 }
 
@@ -260,7 +247,8 @@ type promRawQuery struct {
 	Data struct {
 		Result []struct {
 			Metric struct {
-				Pod string `json:"pod,omitempty"`
+				Pod        string `json:"pod,omitempty"`
+				StatusCode string `json:"status_code,omitempty"`
 			} `json:"metric,omitempty"`
 
 			Values [][]interface{} `json:"values"`
@@ -269,13 +257,18 @@ type promRawQuery struct {
 }
 
 type promParsedSingletonQueryResult struct {
-	Date     interface{} `json:"date,omitempty"`
-	CPU      interface{} `json:"cpu,omitempty"`
-	Replicas interface{} `json:"replicas,omitempty"`
-	Memory   interface{} `json:"memory,omitempty"`
-	Bytes    interface{} `json:"bytes,omitempty"`
-	ErrorPct interface{} `json:"error_pct,omitempty"`
-	Latency  interface{} `json:"latency,omitempty"`
+	Date          interface{} `json:"date,omitempty"`
+	CPU           interface{} `json:"cpu,omitempty"`
+	Replicas      interface{} `json:"replicas,omitempty"`
+	Memory        interface{} `json:"memory,omitempty"`
+	Bytes         interface{} `json:"bytes,omitempty"`
+	ErrorPct      interface{} `json:"error_pct,omitempty"`
+	Latency       interface{} `json:"latency,omitempty"`
+	StatusCode1xx interface{} `json:"1xx,omitempty"`
+	StatusCode2xx interface{} `json:"2xx,omitempty"`
+	StatusCode3xx interface{} `json:"3xx,omitempty"`
+	StatusCode4xx interface{} `json:"4xx,omitempty"`
+	StatusCode5xx interface{} `json:"5xx,omitempty"`
 }
 
 type promParsedSingletonQuery struct {
@@ -284,6 +277,10 @@ type promParsedSingletonQuery struct {
 }
 
 func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, error) {
+	if metric == "nginx:status" {
+		return parseNginxStatusQuery(rawQuery)
+	}
+
 	rawQueryObj := &promRawQuery{}
 
 	err := json.Unmarshal(rawQuery, rawQueryObj)
@@ -330,6 +327,62 @@ func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, er
 
 		res = append(res, singleton)
 	}
+
+	return res, nil
+}
+
+func parseNginxStatusQuery(rawQuery []byte) ([]*promParsedSingletonQuery, error) {
+	rawQueryObj := &promRawQuery{}
+
+	err := json.Unmarshal(rawQuery, rawQueryObj)
+	if err != nil {
+		return nil, err
+	}
+
+	singletonResultsByDate := make(map[string]*promParsedSingletonQueryResult, 0)
+	keys := make([]string, 0)
+	for _, result := range rawQueryObj.Data.Result {
+		for _, values := range result.Values {
+			date := values[0]
+			dateKey := fmt.Sprintf("%v", date)
+
+			if _, ok := singletonResultsByDate[dateKey]; !ok {
+				keys = append(keys, dateKey)
+				singletonResultsByDate[dateKey] = &promParsedSingletonQueryResult{
+					Date: date,
+				}
+			}
+
+			switch result.Metric.StatusCode {
+			case "1xx":
+				singletonResultsByDate[dateKey].StatusCode1xx = values[1]
+			case "2xx":
+				singletonResultsByDate[dateKey].StatusCode2xx = values[1]
+			case "3xx":
+				singletonResultsByDate[dateKey].StatusCode3xx = values[1]
+			case "4xx":
+				singletonResultsByDate[dateKey].StatusCode4xx = values[1]
+			case "5xx":
+				singletonResultsByDate[dateKey].StatusCode5xx = values[1]
+			default:
+				return nil, errors.New("invalid nginx status code")
+			}
+		}
+	}
+
+	sort.Strings(keys)
+
+	singletonResults := make([]promParsedSingletonQueryResult, 0)
+	for _, k := range keys {
+		singletonResults = append(singletonResults, *singletonResultsByDate[k])
+	}
+
+	singleton := &promParsedSingletonQuery{
+		Results: singletonResults,
+	}
+
+	res := make([]*promParsedSingletonQuery, 0)
+	res = append(res, singleton)
 
 	return res, nil
 }

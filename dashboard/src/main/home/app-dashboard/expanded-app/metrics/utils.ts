@@ -1,3 +1,12 @@
+// these match log colors
+export const StatusCodeDataColors: Record<string, string> = {
+    "1xx": "#4B4F7C", // gray
+    "2xx": "#FFFFFF", // white
+    "3xx": "#54B835", // green
+    "4xx": "#BBBB3C", // yellow
+    "5xx": "#9C20A5", // purple
+};
+
 type RGB = {
     r: number;
     g: number;
@@ -55,3 +64,24 @@ export function pickColor(
 
     return rgbToHex(rgb);
 }
+
+export const getServiceNameFromControllerName = (controllerName: string, porterAppName: string): string => {
+    const prefix = `${porterAppName}-`;
+
+    if (!controllerName.startsWith(prefix)) {
+        return "";
+    }
+
+    controllerName = controllerName.substring(prefix.length);
+
+    const suffixes = ["-web", "-wkr", "-job"];
+    let index = -1;
+
+    for (const suffix of suffixes) {
+        const newIndex = controllerName.lastIndexOf(suffix);
+        index = Math.max(index, newIndex);
+    }
+
+    return index !== -1 ? controllerName.substring(0, index) : controllerName;
+}
+

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import api from "shared/api";
@@ -7,12 +7,13 @@ import { ChartType } from "shared/types";
 
 import TabSelector from "components/TabSelector";
 import SelectRow from "components/form-components/SelectRow";
-import MetricsChart from "./MetricsChart";
-import { getServiceNameFromControllerName, MetricNormalizer } from "./utils";
+import { getServiceNameFromControllerName, MetricNormalizer, resolutions, secondsBeforeNow } from "./utils";
 import { Metric, MetricType, NginxStatusMetric } from "./types";
 import { match } from "ts-pattern";
 import { AvailableMetrics, NormalizedMetricsData } from "main/home/cluster-dashboard/expanded-chart/metrics/types";
-import MetricsChart2 from "./MetricsChart2";
+import MetricsChart from "./MetricsChart";
+import { useQuery } from "@tanstack/react-query";
+import Loading from "components/Loading";
 
 type PropsType = {
   currentChart: ChartType;
@@ -20,73 +21,32 @@ type PropsType = {
   serviceName?: string;
 };
 
-export const resolutions: { [range: string]: string } = {
-  "1H": "1s",
-  "6H": "15s",
-  "1D": "15s",
-  "1M": "5h",
-};
-
-export const secondsBeforeNow: { [range: string]: number } = {
-  "1H": 60 * 60,
-  "6H": 60 * 60 * 6,
-  "1D": 60 * 60 * 24,
-  "1M": 60 * 60 * 24 * 30,
-};
-
 const MetricsSection: React.FunctionComponent<PropsType> = ({
   currentChart,
   appName,
   serviceName,
 }) => {
-  const [controllerOptions, setControllerOptions] = useState([]);
-  const [selectedController, setSelectedController] = useState<any>();
-  const [ingressOptions, setIngressOptions] = useState([]);
-  const [selectedIngress, setSelectedIngress] = useState(null);
+  const [selectedController, setSelectedController] = useState<any>(null);
   const [selectedRange, setSelectedRange] = useState("1H");
-  const [isLoading, setIsLoading] = useState(0);
-  const [metrics, setMetrics] = useState<Metric[]>([]);
 
-  const { currentCluster, currentProject, setCurrentError } = useContext(
+  const { currentCluster, currentProject } = useContext(
     Context
   );
 
-  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
-
-  useEffect(() => {
-    if (currentChart?.chart?.metadata?.name === "ingress-nginx") {
-      setIsLoading((prev) => prev + 1);
-
-      api
-        .getNGINXIngresses(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-          }
-        )
-        .then((res) => {
-          const ingressOptions = res.data.map((ingress: any) => ({
-            value: ingress,
-            label: ingress.name,
-          }));
-          setIngressOptions(ingressOptions);
-          setSelectedIngress(ingressOptions[0]?.value);
-          // iterate through the controllers to get the list of pods
-        })
-        .catch((err) => {
-          setCurrentError(JSON.stringify(err));
-        })
-        .finally(() => {
-          setIsLoading((prev) => prev - 1);
-        });
-    }
-
-    setIsLoading((prev) => prev + 1);
-
-    api
-      .getChartControllers(
+  const { data: controllerOptions, isLoading: isControllerListLoading } = useQuery(
+    [
+      "getChartControllers",
+      currentProject?.id,
+      currentChart.name,
+      currentChart.namespace,
+      currentCluster?.id,
+      currentChart.version,
+    ],
+    async () => {
+      if (currentProject?.id == null || currentCluster?.id == null) {
+        return;
+      }
+      const res = await api.getChartControllers(
         "<token>",
         {},
         {
@@ -96,60 +56,53 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           cluster_id: currentCluster.id,
           revision: currentChart.version,
         }
-      )
-      .then((res) => {
-        const controllerOptions = res.data.map((controller: any) => {
-          return { value: controller, label: getServiceNameFromControllerName(controller?.metadata?.name, appName) };
-        });
+      );
 
-        setControllerOptions(controllerOptions);
-        const controllerOption = controllerOptions.find(
-          (option: any) => option.label === serviceName
-        );
-        if (controllerOption) {
-          setSelectedController(controllerOption.value);
-        } else {
-          setSelectedController(controllerOptions[0]?.value);
-        }
-      })
-      .catch((err) => {
-        setCurrentError(JSON.stringify(err));
-        setControllerOptions([]);
-      })
-      .finally(() => {
-        setIsLoading((prev) => prev - 1);
+      const controllerOptions = res.data.map((controller: any) => {
+        return { value: controller, label: getServiceNameFromControllerName(controller?.metadata?.name, appName) };
       });
-  }, [currentChart, currentCluster, currentProject]);
 
-  useEffect(() => {
-    refreshMetrics();
-  }, [selectedController]);
-
-  const refreshMetrics = async () => {
-    if (currentProject?.id == null || currentCluster?.id == null) {
-      return;
+      return controllerOptions;
     }
-    const newMetrics = [] as Metric[];
-    const metricTypes: MetricType[] = ["cpu", "memory", "network", "nginx:status"];
+  );
 
-    const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
-    const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
+  const { data: metricsData, isLoading: isMetricsDataLoading, refetch } = useQuery(
+    [
+      "getMetrics",
+      currentProject?.id,
+      currentCluster?.id,
+      selectedController?.metadata?.name,
+      selectedRange,
+    ],
+    async () => {
+      if (currentProject?.id == null || currentCluster?.id == null) {
+        return;
+      }
+      const metrics = [] as Metric[];
+      const metricTypes: MetricType[] = ["cpu", "memory", "network"];
 
-    if (isHpaEnabled) {
-      metricTypes.push("hpa_replicas");
-    }
+      const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
+      const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
 
-    if (currentChart?.chart?.metadata?.name == "ingress-nginx") {
-      metricTypes.push("nginx:errors");
-    }
+      if (isHpaEnabled) {
+        metricTypes.push("hpa_replicas");
+      }
 
-    const d = new Date();
-    const end = Math.round(d.getTime() / 1000);
-    const start = end - secondsBeforeNow[selectedRange];
+      if (currentChart?.chart?.metadata?.name == "ingress-nginx") {
+        metricTypes.push("nginx:errors");
+      }
 
-    for (const metricType of metricTypes) {
-      const kind = metricType === "nginx:status" ? "Ingress" : selectedController?.kind
-      try {
+      if (currentChart?.config?.[serviceName]?.ingress?.enabled) {
+        metricTypes.push("nginx:status")
+      }
+
+      const d = new Date();
+      const end = Math.round(d.getTime() / 1000);
+      const start = end - secondsBeforeNow[selectedRange];
+
+      for (const metricType of metricTypes) {
+        const kind = metricType === "nginx:status" ? "Ingress" : selectedController?.kind
+
         const aggregatedMetricsResponse = await api.getMetrics(
           "<token>",
           {
@@ -175,15 +128,15 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         if (metricType === "nginx:status") {
           const nginxMetric: NginxStatusMetric = {
             type: metricType,
-            label: "Nginx Status Codes",
+            label: "Throughput",
             areaData: metricsNormalizer.getNginxStatusData(),
           }
-          newMetrics.push(nginxMetric)
+          metrics.push(nginxMetric)
         } else {
           const [data, allPodsAggregatedData] = metricsNormalizer.getAggregatedData();
           const hpaData: NormalizedMetricsData[] = [];
 
-          if (isHpaEnabled && ["cpu", "memory"].includes(metricType)) {
+          if (isHpaEnabled) {
             let hpaMetricType = "cpu_hpa_threshold"
             if (metricType === "memory") {
               hpaMetricType = "memory_hpa_threshold"
@@ -243,38 +196,51 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
             }))
             .with("nginx:errors", () => ({
               type: metricType,
-              label: "Nginx Errors",
+              label: "5XX Error Percentage",
               data: data,
               aggregatedData: allPodsAggregatedData,
               hpaData,
             }))
             .exhaustive();
-          newMetrics.push(metric);
+          metrics.push(metric);
         }
-      } catch (err) {
-        console.log(err);
-      }
-    };
+      };
+      return metrics;
+    },
+    {
+      enabled: selectedController != null,
+    }
+  );
 
-    setMetrics(newMetrics);
+  useEffect(() => {
+    if (controllerOptions == null) {
+      return;
+    }
+    const controllerOption = controllerOptions.find(
+      (option: any) => option.label === serviceName
+    );
+    if (controllerOption) {
+      setSelectedController(controllerOption.value);
+    } else {
+      setSelectedController(controllerOptions[0]?.value);
+    }
+  }, [controllerOptions]);
+
+  const renderMetrics = () => {
+    if (metricsData == null) {
+      return <Loading />;
+    }
+    return metricsData.map((metric: Metric, i: number) => {
+      return (
+        <MetricsChart
+          key={i}
+          metric={metric}
+          selectedRange={selectedRange}
+          isLoading={isMetricsDataLoading}
+        />
+      );
+    })
   }
-
-  const renderHpaChart = () => {
-    const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
-    const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
-    return isHpaEnabled ? (
-      <MetricsChart
-        currentChart={currentChart}
-        selectedController={selectedController}
-        selectedIngress={selectedIngress}
-        selectedMetric="hpa_replicas"
-        selectedMetricLabel="Number of replicas"
-        selectedPod="All"
-        selectedRange={selectedRange}
-        pods={[]}
-      />
-    ) : null
-  };
 
   return (
     <StyledMetricsSection>
@@ -286,9 +252,10 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
             value={selectedController}
             setActiveValue={(x: any) => setSelectedController(x)}
             options={controllerOptions}
-            width="100%"
+            width="200px"
+            isLoading={isControllerListLoading}
           />
-          <Highlight color={"#7d7d81"} onClick={() => forceUpdate()}>
+          <Highlight color={"#7d7d81"} onClick={() => refetch()}>
             <i className="material-icons">autorenew</i>
           </Highlight>
         </Flex>
@@ -308,68 +275,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           />
         </RangeWrapper>
       </MetricsHeader>
-      <MetricsChart
-        currentChart={currentChart}
-        selectedController={selectedController}
-        selectedIngress={selectedIngress}
-        selectedMetric="cpu"
-        selectedMetricLabel="CPU Utilization (vCPUs)"
-        selectedPod="All"
-        selectedRange={selectedRange}
-        pods={[]}
-      />
-      <MetricsChart
-        currentChart={currentChart}
-        selectedController={selectedController}
-        selectedIngress={selectedIngress}
-        selectedMetric="memory"
-        selectedMetricLabel="RAM Utilization (Mi)"
-        selectedPod="All"
-        selectedRange={selectedRange}
-        pods={[]}
-      />
-      <MetricsChart
-        currentChart={currentChart}
-        selectedController={selectedController}
-        selectedIngress={selectedIngress}
-        selectedMetric="network"
-        selectedMetricLabel="Network Received Bytes (Ki)"
-        selectedPod="All"
-        selectedRange={selectedRange}
-        pods={[]}
-      />
-      <MetricsChart
-        currentChart={currentChart}
-        selectedController={selectedController}
-        selectedIngress={selectedIngress}
-        selectedMetric="nginx:status"
-        selectedMetricLabel="Nginx Status Codes"
-        selectedPod="All"
-        selectedRange={selectedRange}
-        pods={[]}
-      />
-      {renderHpaChart()}
-      {currentChart?.chart?.metadata?.name == "ingress-nginx" && (
-        <MetricsChart
-          currentChart={currentChart}
-          selectedController={selectedController}
-          selectedIngress={selectedIngress}
-          selectedMetric="nginx:errors"
-          selectedMetricLabel="5XX Error Percentage"
-          selectedPod="All"
-          selectedRange={selectedRange}
-          pods={[]}
-        />
-      )}
-      {metrics.map((metric: Metric, i: number) => {
-        return (
-          <MetricsChart2
-            key={i}
-            metric={metric}
-            selectedRange={selectedRange}
-          />
-        );
-      })}
+      {renderMetrics()}
     </StyledMetricsSection>
   );
 };

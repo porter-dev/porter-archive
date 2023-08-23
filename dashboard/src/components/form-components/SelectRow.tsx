@@ -16,6 +16,7 @@ type PropsType<T> = {
   doc?: string;
   disabled?: boolean;
   selectorProps?: Partial<SelectorPropsType<T>>;
+  isLoading?: boolean;
 };
 
 export default function SelectRow<T>(props: PropsType<T>) {
@@ -40,6 +41,7 @@ export default function SelectRow<T>(props: PropsType<T>) {
           width={props.width || "270px"}
           dropdownWidth={props.width}
           dropdownMaxHeight={props.dropdownMaxHeight}
+          isLoading={props.isLoading}
           {...(props.selectorProps || {})}
         />
       </SelectWrapper>

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/porter-dev/porter/cli/cmd/config"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
 
 	api "github.com/porter-dev/porter/api/client"
@@ -22,7 +23,7 @@ var getCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Fetches a release.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, get)
+		err := checkLoginAndRun(cmd.Context(), args, get)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -35,7 +36,7 @@ var getValuesCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Fetches the Helm values for a release.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, getValues)
+		err := checkLoginAndRun(cmd.Context(), args, getValues)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -72,9 +73,7 @@ type getReleaseInfo struct {
 	RevisionID   int       `json:"revision_id" yaml:"revision_id"`
 }
 
-func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	ctx := context.Background()
-
+func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -88,7 +87,7 @@ func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 		return nil
 	}
 
-	rel, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0])
+	rel, err := client.GetRelease(ctx, cliConf.Project, cliConf.Cluster, namespace, args[0])
 	if err != nil {
 		return err
 	}
@@ -126,9 +125,7 @@ func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 	return nil
 }
 
-func getValues(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	ctx := context.Background()
-
+func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -142,7 +139,7 @@ func getValues(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 		return nil
 	}
 
-	rel, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0])
+	rel, err := client.GetRelease(ctx, cliConf.Project, cliConf.Cluster, namespace, args[0])
 	if err != nil {
 		return err
 	}

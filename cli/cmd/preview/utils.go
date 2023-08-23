@@ -6,12 +6,14 @@ import (
 	"os"
 	"strconv"
 
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/internal/integrations/preview"
 )
 
-func GetSource(projectID uint, resourceName string, input map[string]interface{}) (*preview.Source, error) {
+// GetSource extends switchboard
+func GetSource(ctx context.Context, projectID uint, resourceName string, input map[string]interface{}, apiClient api.Client) (*preview.Source, error) {
 	output := &preview.Source{}
 
 	// first read from env vars
@@ -59,9 +61,7 @@ func GetSource(projectID uint, resourceName string, input map[string]interface{}
 		output.Version = "latest"
 	}
 
-	apiClient := config.GetAPIClient()
-
-	serverMetadata, err := apiClient.GetPorterInstanceMetadata(context.Background())
+	serverMetadata, err := apiClient.GetPorterInstanceMetadata(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching Porter instance metadata: %w", err)
 	}
@@ -73,7 +73,7 @@ func GetSource(projectID uint, resourceName string, input map[string]interface{}
 			output.Repo = "https://charts.getporter.dev"
 		}
 
-		values, err := existsInRepo(projectID, output.Name, output.Version, output.Repo)
+		values, err := existsInRepo(ctx, projectID, output.Name, output.Version, output.Repo, apiClient)
 
 		if err == nil {
 			output.SourceValues = values
@@ -88,7 +88,7 @@ func GetSource(projectID uint, resourceName string, input map[string]interface{}
 			output.Repo = "https://chart-addons.getporter.dev"
 		}
 
-		values, err = existsInRepo(projectID, output.Name, output.Version, output.Repo)
+		values, err = existsInRepo(ctx, projectID, output.Name, output.Version, output.Repo, apiClient)
 
 		if err == nil {
 			output.SourceValues = values
@@ -100,7 +100,7 @@ func GetSource(projectID uint, resourceName string, input map[string]interface{}
 			"Helm repositories", resourceName)
 	} else {
 		// we look in the passed-in repo
-		values, err := existsInRepo(projectID, output.Name, output.Version, output.Repo)
+		values, err := existsInRepo(ctx, projectID, output.Name, output.Version, output.Repo, apiClient)
 
 		if err == nil {
 			output.SourceValues = values
@@ -114,7 +114,8 @@ func GetSource(projectID uint, resourceName string, input map[string]interface{}
 		resourceName, output.Name, output.Repo)
 }
 
-func GetTarget(resourceName string, input map[string]interface{}) (*preview.Target, error) {
+// GetTarget extends switchboard
+func GetTarget(ctx context.Context, resourceName string, input map[string]interface{}, apiClient api.Client, cliConfig config.CLIConfig) (*preview.Target, error) {
 	output := &preview.Target{}
 
 	// first read from env vars
@@ -187,11 +188,11 @@ func GetTarget(resourceName string, input map[string]interface{}) (*preview.Targ
 	// lastly, just put in the defaults
 
 	if output.Project == 0 {
-		output.Project = config.GetCLIConfig().Project
+		output.Project = cliConfig.Project
 	}
 
 	if output.Cluster == 0 {
-		output.Cluster = config.GetCLIConfig().Cluster
+		output.Cluster = cliConfig.Cluster
 	}
 
 	if output.Namespace == "" {
@@ -199,10 +200,8 @@ func GetTarget(resourceName string, input map[string]interface{}) (*preview.Targ
 	}
 
 	if output.RegistryURL == "" {
-		apiClient := config.GetAPIClient()
-
-		if config.GetCLIConfig().Registry == 0 {
-			regList, err := apiClient.ListRegistries(context.Background(), output.Project)
+		if cliConfig.Registry == 0 {
+			regList, err := apiClient.ListRegistries(ctx, output.Project)
 			if err != nil {
 				return nil, fmt.Errorf("for resource '%s', error listing registries in project: %w", resourceName, err)
 			}
@@ -213,7 +212,7 @@ func GetTarget(resourceName string, input map[string]interface{}) (*preview.Targ
 
 			output.RegistryURL = (*regList)[0].URL
 		} else {
-			reg, err := apiClient.GetRegistry(context.Background(), output.Project, config.GetCLIConfig().Registry)
+			reg, err := apiClient.GetRegistry(ctx, output.Project, cliConfig.Registry)
 			if err != nil {
 				return nil, fmt.Errorf("for resource '%s', error getting registry from CLI config: %w", resourceName, err)
 			}
@@ -225,9 +224,9 @@ func GetTarget(resourceName string, input map[string]interface{}) (*preview.Targ
 	return output, nil
 }
 
-func existsInRepo(projectID uint, name, version, url string) (map[string]interface{}, error) {
-	chart, err := config.GetAPIClient().GetTemplate(
-		context.Background(),
+func existsInRepo(ctx context.Context, projectID uint, name, version, url string, apiClient api.Client) (map[string]interface{}, error) {
+	chart, err := apiClient.GetTemplate(
+		ctx,
 		projectID,
 		name, version,
 		&types.GetTemplateRequest{

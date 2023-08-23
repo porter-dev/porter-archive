@@ -1,8 +1,10 @@
 package client
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -25,7 +27,59 @@ type Client struct {
 	CookieFilePath string
 	Token          string
 
+	// cfToken is a cloudflare token for accessing the API
 	cfToken string
+
+	// // Config contains all config read from flags, environment variables, or porter.yaml config. This is used to automatically pull hosts, projectIDs, clusterIDs etc. in API calls
+	// Config config.CLIConfig
+}
+
+// NewClientInput contains all information required to create a new API Client
+type NewClientInput struct {
+	// BaseURL is the url for the API. This usually ends with /api, and should not end with a /
+	BaseURL string
+
+	// CookieFileName allows you to authenticate with a cookie file, if one is present in the porter directory.
+	// If both CookieFileName and BearerToken are specified, BearerToken will be preferred
+	CookieFileName string
+
+	// BearerToken uses a JWT to authenticate with the Porter API. If both BearerToken and CookieFileName are specified, BearerToken will be used
+	BearerToken string
+
+	// CloudflareToken allows for authenticating with a Porter API behind Cloudflare Zero Trust. If not specified, we will check PORTER_CF_ACCESS_TOKEN for a token.
+	// If one is found, it will be added to all API calls.
+	CloudflareToken string
+}
+
+// NewClientWithConfig creates a new API client with the provided config
+func NewClientWithConfig(ctx context.Context, input NewClientInput) (Client, error) {
+	client := Client{
+		BaseURL: input.BaseURL,
+		HTTPClient: &http.Client{
+			Timeout: time.Minute,
+		},
+	}
+	if cfToken := os.Getenv("PORTER_CF_ACCESS_TOKEN"); cfToken != "" {
+		client.cfToken = cfToken
+	}
+
+	if input.BearerToken != "" {
+		client.Token = input.BearerToken
+		return client, nil
+	}
+
+	if input.CookieFileName != "" {
+		client.CookieFilePath = input.CookieFileName
+		cookie, err := client.getCookie()
+		if err != nil {
+			return client, fmt.Errorf("error getting cooking from path: %w", err)
+		}
+		if cookie == nil {
+			return client, errors.New("no cookie found at location")
+		}
+		return client, nil
+	}
+	return client, errors.New("unable to create an API session with cookie nor token")
 }
 
 // NewClient constructs a new client based on a set of options
@@ -45,23 +99,6 @@ func NewClient(baseURL string, cookieFileName string) *Client {
 
 	if cookie != nil {
 		client.Cookie = cookie
-	}
-
-	// look for a cloudflare access token specifically for Porter
-	if cfToken := os.Getenv("PORTER_CF_ACCESS_TOKEN"); cfToken != "" {
-		client.cfToken = cfToken
-	}
-
-	return client
-}
-
-func NewClientWithToken(baseURL, token string) *Client {
-	client := &Client{
-		BaseURL: baseURL,
-		Token:   token,
-		HTTPClient: &http.Client{
-			Timeout: time.Minute,
-		},
 	}
 
 	// look for a cloudflare access token specifically for Porter

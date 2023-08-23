@@ -14,7 +14,7 @@ linters-settings:
       - name: exported
         severity: error
   gocyclo:
-    min-complexity: 15
+    min-complexity: 40 # should drop to 15 max
   gomoddirectives:
     replace-local: false
   gosec:

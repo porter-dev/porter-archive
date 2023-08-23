@@ -6,7 +6,6 @@ import AggregatedDataLegend from "../../../cluster-dashboard/expanded-chart/metr
 import StatusCodeDataLegend from "./StatusCodeDataLegend";
 import AreaChart from "./AreaChart";
 import StackedAreaChart from "./StackedAreaChart";
-import CheckboxRow from "components/form-components/CheckboxRow";
 import Loading from "components/Loading";
 import { AggregatedMetric, Metric, NginxStatusMetric, isNginxMetric } from "./types";
 
@@ -14,14 +13,15 @@ type PropsType = {
     metric: Metric;
     selectedRange: string;
     isLoading: boolean;
+    showAutoscalingLine: boolean;
 };
 
 const MetricsChart: React.FunctionComponent<PropsType> = ({
     metric,
     selectedRange,
     isLoading,
+    showAutoscalingLine,
 }) => {
-    const [showAutoscalingLine, setShowAutoscalingLine] = useState(false);
     // TODO: fix the type-filtering here
     const renderMetric = (metric: Metric) => {
         if (isNginxMetric(metric)) {
@@ -39,13 +39,6 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
         }
         return (
             <>
-                {metric.hpaData.length > 0 &&
-                    <CheckboxRow
-                        toggle={() => setShowAutoscalingLine((prev: any) => !prev)}
-                        checked={showAutoscalingLine}
-                        label="Show Autoscaling Threshold"
-                    />
-                }
                 <ParentSize>
                     {({ width, height }) => (
                         <AreaChart
@@ -54,7 +47,7 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                             isAggregated={true}
                             data={metric.data}
                             hpaData={metric.hpaData}
-                            hpaEnabled={showAutoscalingLine}
+                            hpaEnabled={showAutoscalingLine && metric.hpaData.length > 0}
                             width={width}
                             height={height - 10}
                             resolution={selectedRange}

@@ -14,6 +14,7 @@ import { AvailableMetrics, NormalizedMetricsData } from "main/home/cluster-dashb
 import MetricsChart from "./MetricsChart";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "components/Loading";
+import CheckboxRow from "components/CheckboxRow";
 
 type PropsType = {
   currentChart: ChartType;
@@ -28,6 +29,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 }) => {
   const [selectedController, setSelectedController] = useState<any>(null);
   const [selectedRange, setSelectedRange] = useState("1H");
+  const [showAutoscalingThresholds, setShowAutoscalingThresholds] = useState(false);
 
   const { currentCluster, currentProject } = useContext(
     Context
@@ -227,7 +229,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   }, [controllerOptions]);
 
   const renderMetrics = () => {
-    if (metricsData == null) {
+    if (metricsData == null || isMetricsDataLoading) {
       return <Loading />;
     }
     return metricsData.map((metric: Metric, i: number) => {
@@ -237,9 +239,26 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           metric={metric}
           selectedRange={selectedRange}
           isLoading={isMetricsDataLoading}
+          showAutoscalingLine={showAutoscalingThresholds}
         />
       );
     })
+  }
+
+  const renderShowAutoscalingThresholdsCheckbox = () => {
+    const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
+    const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
+
+    if (!isHpaEnabled) {
+      return null;
+    }
+    return (
+      <CheckboxRow
+        toggle={() => setShowAutoscalingThresholds(!showAutoscalingThresholds)}
+        checked={showAutoscalingThresholds}
+        label="Show Autoscaling Thresholds"
+      />
+    )
   }
 
   return (
@@ -258,6 +277,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           <Highlight color={"#7d7d81"} onClick={() => refetch()}>
             <i className="material-icons">autorenew</i>
           </Highlight>
+          {renderShowAutoscalingThresholdsCheckbox()}
         </Flex>
         <RangeWrapper>
           <Relative>

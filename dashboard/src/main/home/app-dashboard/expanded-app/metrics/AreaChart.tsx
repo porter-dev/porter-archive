@@ -1,7 +1,5 @@
 import _ from "lodash";
 import React, { useCallback, useMemo, useRef } from "react";
-import chroma from "chroma-js";
-import * as stats from "simple-statistics";
 import styled from "styled-components";
 import { AreaClosed, Bar, Line, LinePath } from "@visx/shape";
 import { curveMonotoneX } from "@visx/curve";
@@ -18,7 +16,6 @@ import { bisector, extent, max } from "d3-array";
 import { timeFormat } from "d3-time-format";
 import { NormalizedMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
 import { AggregatedDataColors } from "../../../cluster-dashboard/expanded-chart/metrics/utils";
-import { pickColor } from "./utils";
 
 var globalData: NormalizedMetricsData[];
 
@@ -237,6 +234,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
     if (width == 0 || height == 0 || width < 10) {
         return null;
     }
+
     const hpaGraphTooltipGlyphPosition =
         (hpaEnabled &&
             tooltipData?.tooltipHpaData &&

@@ -34,7 +34,7 @@ func Test_getNginxStatusQuery(t *testing.T) {
 				"process-app-web",
 			},
 			output{
-				`round(sum by (status_code, ingress)(label_replace(increase(nginx_ingress_controller_requests{exported_namespace=~"app-namespace",ingress="process-app-web",service="process-app-web"}[2m]), "status_code", "${1}xx", "status", "(.)..")) by (status_code, ingress), 0.001)`,
+				`round(sum by (status_code, ingress)(label_replace(increase(nginx_ingress_controller_requests{exported_namespace=~"app-namespace",ingress="process-app-web",service="process-app-web"}[2m]), "status_code", "${1}xx", "status", "(.)..")), 0.001)`,
 				nil,
 			},
 		},

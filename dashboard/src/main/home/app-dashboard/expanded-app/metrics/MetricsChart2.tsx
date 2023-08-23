@@ -15,7 +15,7 @@ import CheckboxRow from "components/form-components/CheckboxRow";
 import Loading from "components/Loading";
 import { AvailableMetrics, GenericMetricResponse, NormalizedMetricsData, NormalizedNginxStatusMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
 import { MetricNormalizer } from "./utils";
-import { Metric } from "./types";
+import { AggregatedMetric, Metric, NginxStatusMetric, isNginxMetric } from "./types";
 
 export const resolutions: { [range: string]: string } = {
   "1H": "1s",
@@ -38,12 +38,19 @@ type PropsType = {
 const MetricsChart2: React.FunctionComponent<PropsType> = ({
   metric,
 }) => {
-  const renderAggregatedMetric = () => {
+  // TODO: fix the type-filtering here
+  const renderMetric = (metric: Metric) => {
+    if (isNginxMetric(metric)) {
+      return renderNginxMetric(metric);
+    }
+    return renderAggregatedMetric(metric as AggregatedMetric);
+  }
+  const renderAggregatedMetric = (metric: AggregatedMetric) => {
     if (metric)
       return null;
   }
 
-  const renderNginxMetric = () => {
+  const renderNginxMetric = (metric: NginxStatusMetric) => {
     return null;
   }
 
@@ -56,8 +63,7 @@ const MetricsChart2: React.FunctionComponent<PropsType> = ({
           </MetricSelector>
         </Flex>
       </MetricsHeader>
-      {metric.type === "nginx:status" && renderNginxMetric()}
-      {metric.type !== "nginx:status" && renderAggregatedMetric()}
+      {renderMetric(metric)}
       {(data.length === 0 && Object.keys(areaData).length === 0) && (
         <Message>
           No data available yet.

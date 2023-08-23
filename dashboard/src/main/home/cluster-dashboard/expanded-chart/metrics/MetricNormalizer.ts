@@ -6,10 +6,12 @@ import {
   MetricsMemoryDataResponse,
   MetricsNetworkDataResponse,
   MetricsNGINXErrorsDataResponse,
+  MetricsNGINXStatusDataResponse,
   AvailableMetrics,
   MetricsHpaReplicasDataResponse,
   MetricsNGINXLatencyDataResponse,
   NormalizedMetricsData,
+  NormalizedNginxStatusMetricsData,
 } from "./types";
 
 /**
@@ -52,6 +54,14 @@ export class MetricNormalizer {
       return this.parseHpaReplicaMetrics(this.metric_results);
     }
     return [];
+  }
+
+  getNginxStatusData(): NormalizedNginxStatusMetricsData[] {
+    if (this.kind.includes("nginx:status")) {
+      return this.parseNGINXStatusMetrics(this.metric_results);
+    }
+
+    return []
   }
 
   getAggregatedData(): Record<string, NormalizedMetricsData[]> {
@@ -122,6 +132,21 @@ export class MetricNormalizer {
       return {
         date: d.date,
         value: parseFloat(d.error_pct),
+      };
+    });
+  }
+
+  private parseNGINXStatusMetrics(
+    arr: MetricsNGINXStatusDataResponse["results"]
+  ) {
+    return arr.map((d) => {
+      return {
+        date: d.date,
+        "1xx": parseInt(d["1xx"]),
+        "2xx": parseInt(d["2xx"]),
+        "3xx": parseInt(d["3xx"]),
+        "4xx": parseInt(d["4xx"]),
+        "5xx": parseInt(d["5xx"]),
       };
     });
   }

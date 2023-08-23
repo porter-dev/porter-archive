@@ -26,4 +26,7 @@ type AppRevision struct {
 
 	// PorterAppID is the ID of the PorterApp that the revision belongs to.
 	PorterAppID int `json:"porter_app_id"`
+
+	// RevisionNumber is the number of the revision respective to that porter_app_id and deployment_target_id
+	RevisionNumber int `json:"revision_number"`
 }

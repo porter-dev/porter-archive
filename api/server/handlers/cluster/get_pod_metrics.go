@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -31,31 +32,39 @@ func NewGetPodMetricsHandler(
 }
 
 func (c *GetPodMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(ctx, "service-get-pod-metrics")
+	defer span.End()
+
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
 	request := &types.GetPodMetricsRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error getting k8s agent")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	// get prometheus service
 	promSvc, found, err := prometheus.GetPrometheusService(agent.Clientset)
-
 	if err != nil || !found {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error getting prometheus service")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	rawQuery, err := prometheus.QueryPrometheus(agent.Clientset, promSvc, &request.QueryOpts)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error querying prometheus")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

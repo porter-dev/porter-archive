@@ -33,11 +33,14 @@ export const secondsBeforeNow: { [range: string]: number } = {
 
 type PropsType = {
   metric: Metric;
+  selectedRange: string;
 };
 
 const MetricsChart2: React.FunctionComponent<PropsType> = ({
   metric,
+  selectedRange,
 }) => {
+  const [showAutoscalingLine, setShowAutoscalingLine] = useState(false);
   // TODO: fix the type-filtering here
   const renderMetric = (metric: Metric) => {
     if (isNginxMetric(metric)) {
@@ -46,12 +49,73 @@ const MetricsChart2: React.FunctionComponent<PropsType> = ({
     return renderAggregatedMetric(metric as AggregatedMetric);
   }
   const renderAggregatedMetric = (metric: AggregatedMetric) => {
-    if (metric)
-      return null;
+    if (metric.data.length === 0) {
+      return (
+        <Message>
+          No data available yet.
+        </Message>
+      )
+    }
+    return (
+      <>
+        {metric.hpaData.length > 0 &&
+          <CheckboxRow
+            toggle={() => setShowAutoscalingLine((prev: any) => !prev)}
+            checked={showAutoscalingLine}
+            label="Show Autoscaling Threshold"
+          />
+        }
+        <ParentSize>
+          {({ width, height }) => (
+            <AreaChart
+              dataKey={metric.label}
+              aggregatedData={metric.aggregatedData}
+              isAggregated={true}
+              data={metric.data}
+              hpaData={metric.hpaData}
+              hpaEnabled={showAutoscalingLine}
+              width={width}
+              height={height - 10}
+              resolution={selectedRange}
+              margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
+            />
+          )}
+        </ParentSize>
+        <RowWrapper>
+          <AggregatedDataLegend data={metric.data} hideAvg={true} />
+        </RowWrapper>
+      </>
+    )
   }
 
   const renderNginxMetric = (metric: NginxStatusMetric) => {
-    return null;
+    if (metric.areaData.length === 0) {
+      return (
+        <Message>
+          No data available yet.
+        </Message>
+      );
+    }
+
+    return (
+      <>
+        <ParentSize>
+          {({ width, height }) => (
+            <StackedAreaChart
+              dataKey={metric.label}
+              data={metric.areaData}
+              width={width}
+              height={height - 10}
+              resolution={selectedRange}
+              margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
+            />
+          )}
+        </ParentSize>
+        <RowWrapper>
+          <StatusCodeDataLegend />
+        </RowWrapper>
+      </>
+    )
   }
 
   return (
@@ -64,64 +128,6 @@ const MetricsChart2: React.FunctionComponent<PropsType> = ({
         </Flex>
       </MetricsHeader>
       {renderMetric(metric)}
-      {(data.length === 0 && Object.keys(areaData).length === 0) && (
-        <Message>
-          No data available yet.
-        </Message>
-      )}
-      {data.length > 0 && (
-        <>
-          {showHpaToggle &&
-            ["cpu", "memory"].includes(selectedMetric) && (
-              <CheckboxRow
-                toggle={() => setHpaEnabled((prev: any) => !prev)}
-                checked={hpaEnabled}
-                label="Show Autoscaling Threshold"
-              />
-            )}
-          <ParentSize>
-            {({ width, height }) => (
-              <AreaChart
-                dataKey={selectedMetricLabel}
-                aggregatedData={aggregatedData}
-                isAggregated={isAggregated}
-                data={data}
-                hpaData={hpaData}
-                hpaEnabled={
-                  hpaEnabled && ["cpu", "memory"].includes(selectedMetric)
-                }
-                width={width}
-                height={height - 10}
-                resolution={selectedRange}
-                margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
-              />
-            )}
-          </ParentSize>
-          <RowWrapper>
-            <AggregatedDataLegend data={data} hideAvg={isAggregated} />
-          </RowWrapper>
-        </>
-      )}
-
-      {Object.keys(areaData).length > 0 && isLoading === 0 && (
-        <>
-          <ParentSize>
-            {({ width, height }) => (
-              <StackedAreaChart
-                dataKey={selectedMetricLabel}
-                data={areaData}
-                width={width}
-                height={height - 10}
-                resolution={selectedRange}
-                margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
-              />
-            )}
-          </ParentSize>
-          <RowWrapper>
-            <StatusCodeDataLegend />
-          </RowWrapper>
-        </>
-      )}
     </StyledMetricsChart>
   );
 };

@@ -12,6 +12,7 @@ import { getServiceNameFromControllerName, MetricNormalizer } from "./utils";
 import { Metric, MetricType, NginxStatusMetric } from "./types";
 import { match } from "ts-pattern";
 import { AvailableMetrics, NormalizedMetricsData } from "main/home/cluster-dashboard/expanded-chart/metrics/types";
+import MetricsChart2 from "./MetricsChart2";
 
 type PropsType = {
   currentChart: ChartType;
@@ -362,16 +363,10 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       )}
       {metrics.map((metric: Metric, i: number) => {
         return (
-          <MetricsChart
+          <MetricsChart2
             key={i}
-            currentChart={currentChart}
-            selectedController={selectedController}
-            selectedIngress={selectedIngress}
-            selectedMetric={metric.type}
-            selectedMetricLabel={metric.label}
-            selectedPod={"All"}
+            metric={metric}
             selectedRange={selectedRange}
-            pods={[]}
           />
         );
       })}

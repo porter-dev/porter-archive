@@ -11,6 +11,7 @@ import {
   serviceValidator,
 } from "./services";
 import { PorterApp, Service } from "@porter-dev/api-contracts";
+import { match } from "ts-pattern";
 
 // buildValidator is used to validate inputs for build setting fields
 export const buildValidator = z.object({
@@ -33,11 +34,14 @@ export const sourceValidator = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("docker-registry"),
-    image_repo_uri: z.string(),
     // add branch and repo as undefined to allow for easy checks on changes to the source type
     // (i.e. we want to remove the services if any source fields change)
     git_branch: z.undefined(),
     git_repo_name: z.undefined(),
+    image: z.object({
+      repository: z.string(),
+      tag: z.string().default("latest"),
+    }),
   }),
 ]);
 export type SourceOptions = z.infer<typeof sourceValidator>;
@@ -48,12 +52,6 @@ export const porterAppValidator = z.object({
   services: serviceValidator.array(),
   env: z.record(z.string(), z.string()),
   build: buildValidator,
-  image: z
-    .object({
-      repository: z.string(),
-      tag: z.string(),
-    })
-    .optional(),
 });
 export type ClientPorterApp = z.infer<typeof porterAppValidator>;
 
@@ -106,7 +104,9 @@ export function defaultServicesWithOverrides({
   };
 }
 
-export function clientAppToProto(app: ClientPorterApp): PorterApp {
+export function clientAppToProto(data: PorterAppFormData): PorterApp {
+  const { app, source } = data;
+
   const services = app.services
     .filter((s) => !isPredeployService(s))
     .reduce((acc: Record<string, Service>, svc) => {
@@ -116,27 +116,40 @@ export function clientAppToProto(app: ClientPorterApp): PorterApp {
 
   const predeploy = app.services.find((s) => isPredeployService(s));
 
-  const proto = new PorterApp({
-    name: app.name,
-    services,
-    env: app.env,
-    build: {
-      context: app.build.context,
-      method: app.build.method,
-      buildpacks: app.build.buildpacks.map((b) => b.buildpack),
-      builder: app.build.builder,
-      dockerfile: app.build.dockerfile,
-    },
-    ...(app.image && {
-      image: {
-        repository: app.image.repository,
-        tag: app.image.tag,
-      },
-    }),
-    ...(predeploy && {
-      predeploy: serviceProto(serializeService(predeploy)),
-    }),
-  });
+  const proto = match(source)
+    .with(
+      { type: "github" },
+      () =>
+        new PorterApp({
+          name: app.name,
+          services,
+          env: app.env,
+          build: {
+            context: app.build.context,
+            method: app.build.method,
+            buildpacks: app.build.buildpacks.map((b) => b.buildpack),
+            builder: app.build.builder,
+            dockerfile: app.build.dockerfile,
+          },
+          ...(predeploy && {
+            predeploy: serviceProto(serializeService(predeploy)),
+          }),
+        })
+    )
+    .with(
+      { type: "docker-registry" },
+      (src) =>
+        new PorterApp({
+          name: app.name,
+          services,
+          env: app.env,
+          image: {
+            repository: src.image.repository,
+            tag: src.image.tag,
+          },
+        })
+    )
+    .exhaustive();
 
   return proto;
 }

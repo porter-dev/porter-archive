@@ -3,15 +3,18 @@ import styled from "styled-components";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { ChartTypeWithExtendedConfig } from "shared/types";
+import { ChartType } from "shared/types";
 
 import TabSelector from "components/TabSelector";
 import SelectRow from "components/form-components/SelectRow";
 import MetricsChart from "./MetricsChart";
-import { getServiceNameFromControllerName } from "./utils";
-import { Metric, MetricType } from "./types";
+import { getServiceNameFromControllerName, MetricNormalizer } from "./utils";
+import { Metric, MetricType, NginxStatusMetric } from "./types";
+import { match } from "ts-pattern";
+import { AvailableMetrics, NormalizedMetricsData } from "main/home/cluster-dashboard/expanded-chart/metrics/types";
+
 type PropsType = {
-  currentChart: ChartTypeWithExtendedConfig;
+  currentChart: ChartType;
   appName: string;
   serviceName?: string;
 };
@@ -41,7 +44,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   const [ingressOptions, setIngressOptions] = useState([]);
   const [selectedIngress, setSelectedIngress] = useState(null);
   const [selectedRange, setSelectedRange] = useState("1H");
-  const [selectedMetric, setSelectedMetric] = useState("cpu");
   const [isLoading, setIsLoading] = useState(0);
   const [metrics, setMetrics] = useState<Metric[]>([]);
 
@@ -120,63 +122,13 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   }, [currentChart, currentCluster, currentProject]);
 
   useEffect(() => {
-    getControllerPods();
     refreshMetrics();
   }, [selectedController]);
 
-  const getControllerPods = () => {
-    let selectors = [] as string[];
-    let ml =
-      selectedController?.spec?.selector?.matchLabels ||
-      selectedController?.spec?.selector;
-    let i = 1;
-    let selector = "";
-    for (var key in ml) {
-      selector += key + "=" + ml[key];
-      if (i != Object.keys(ml).length) {
-        selector += ",";
-      }
-      i += 1;
-    }
-
-    selectors.push(selector);
-
-    if (selectors[0] === "") {
+  const refreshMetrics = async () => {
+    if (currentProject?.id == null || currentCluster?.id == null) {
       return;
     }
-
-    setIsLoading((prev) => prev + 1);
-
-    api
-      .getMatchingPods(
-        "<token>",
-        {
-          namespace: selectedController?.metadata?.namespace,
-          selectors,
-        },
-        {
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      )
-      .then((res) => {
-        let pods = [{ value: "All", label: "All (Summed)" }] as any[];
-        res?.data?.forEach((pod: any) => {
-          let name = pod?.metadata?.name;
-          pods.push({ value: name, label: name });
-        });
-        setPods(pods);
-      })
-      .catch((err) => {
-        setCurrentError(JSON.stringify(err));
-        return;
-      })
-      .finally(() => {
-        setIsLoading((prev) => prev - 1);
-      });
-  };
-
-  const refreshMetrics = async () => {
     const newMetrics = [] as Metric[];
     const metricTypes: MetricType[] = ["cpu", "memory", "network", "nginx:status"];
 
@@ -191,11 +143,118 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       metricTypes.push("nginx:errors");
     }
 
-    metricTypes.forEach((metricType) => {
-      if (metricType === "nginx:status") {
-      }
-    });
+    const d = new Date();
+    const end = Math.round(d.getTime() / 1000);
+    const start = end - secondsBeforeNow[selectedRange];
 
+    for (const metricType of metricTypes) {
+      const kind = metricType === "nginx:status" ? "Ingress" : selectedController?.kind
+      try {
+        const aggregatedMetricsResponse = await api.getMetrics(
+          "<token>",
+          {
+            metric: metricType,
+            shouldsum: false,
+            kind: kind,
+            name: selectedController?.metadata.name,
+            namespace: currentChart.namespace,
+            startrange: start,
+            endrange: end,
+            resolution: resolutions[selectedRange],
+            pods: [],
+          },
+          {
+            id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        );
+        const metricsNormalizer = new MetricNormalizer(
+          [{ results: (aggregatedMetricsResponse.data ?? []).flatMap((d: any) => d.results) }],
+          metricType,
+        );
+        if (metricType === "nginx:status") {
+          const nginxMetric: NginxStatusMetric = {
+            type: metricType,
+            label: "Nginx Status Codes",
+            areaData: metricsNormalizer.getNginxStatusData(),
+          }
+          newMetrics.push(nginxMetric)
+        } else {
+          const [data, allPodsAggregatedData] = metricsNormalizer.getAggregatedData();
+          const hpaData: NormalizedMetricsData[] = [];
+
+          if (isHpaEnabled && ["cpu", "memory"].includes(metricType)) {
+            let hpaMetricType = "cpu_hpa_threshold"
+            if (metricType === "memory") {
+              hpaMetricType = "memory_hpa_threshold"
+            }
+
+            const hpaRes = await api.getMetrics(
+              "<token>",
+              {
+                metric: hpaMetricType,
+                shouldsum: true,
+                kind: kind,
+                name: selectedController?.metadata.name,
+                namespace: currentChart.namespace,
+                startrange: start,
+                endrange: end,
+                resolution: resolutions[selectedRange],
+                pods: [],
+              },
+              {
+                id: currentProject.id,
+                cluster_id: currentCluster.id,
+              }
+            );
+
+            const autoscalingMetrics = new MetricNormalizer(hpaRes.data, hpaMetricType as AvailableMetrics);
+            hpaData.push(...autoscalingMetrics.getParsedData());
+          }
+
+          const metric: Metric = match(metricType)
+            .with("cpu", () => ({
+              type: metricType,
+              label: "CPU Utilization (vCPUs)",
+              data: data,
+              aggregatedData: allPodsAggregatedData,
+              hpaData,
+            }))
+            .with("memory", () => ({
+              type: metricType,
+              label: "RAM Utilization (Mi)",
+              data: data,
+              aggregatedData: allPodsAggregatedData,
+              hpaData,
+            }))
+            .with("network", () => ({
+              type: metricType,
+              label: "Network Received Bytes (Ki)",
+              data: data,
+              aggregatedData: allPodsAggregatedData,
+              hpaData,
+            }))
+            .with("hpa_replicas", () => ({
+              type: metricType,
+              label: "Number of replicas",
+              data: data,
+              aggregatedData: allPodsAggregatedData,
+              hpaData,
+            }))
+            .with("nginx:errors", () => ({
+              type: metricType,
+              label: "Nginx Errors",
+              data: data,
+              aggregatedData: allPodsAggregatedData,
+              hpaData,
+            }))
+            .exhaustive();
+          newMetrics.push(metric);
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
 
     setMetrics(newMetrics);
   }
@@ -221,24 +280,14 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     <StyledMetricsSection>
       <MetricsHeader>
         <Flex>
-          {selectedMetric === "nginx:errors" ?
-            <SelectRow
-              displayFlex={true}
-              label="Target Ingress"
-              value={selectedIngress}
-              setActiveValue={(x: any) => setSelectedIngress(x)}
-              options={ingressOptions}
-              width="100%"
-            /> :
-            <SelectRow
-              displayFlex={true}
-              label="Service"
-              value={selectedController}
-              setActiveValue={(x: any) => setSelectedController(x)}
-              options={controllerOptions}
-              width="100%"
-            />
-          }
+          <SelectRow
+            displayFlex={true}
+            label="Service"
+            value={selectedController}
+            setActiveValue={(x: any) => setSelectedController(x)}
+            options={controllerOptions}
+            width="100%"
+          />
           <Highlight color={"#7d7d81"} onClick={() => forceUpdate()}>
             <i className="material-icons">autorenew</i>
           </Highlight>

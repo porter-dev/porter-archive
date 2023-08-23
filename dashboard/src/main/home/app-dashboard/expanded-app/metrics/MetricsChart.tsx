@@ -14,7 +14,7 @@ import StackedAreaChart from "./StackedAreaChart";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import Loading from "components/Loading";
 import { AvailableMetrics, GenericMetricResponse, NormalizedMetricsData, NormalizedNginxStatusMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
-import { MetricNormalizer } from "../../../cluster-dashboard/expanded-chart/metrics/MetricNormalizer";
+import { MetricNormalizer } from "./utils";
 
 export const resolutions: { [range: string]: string } = {
     "1H": "1s",
@@ -173,15 +173,11 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                         [{ results: allPodsMetrics }],
                         selectedMetric as AvailableMetrics,
                     );
-                    const allPodsAggregatedData = allPodsMetricsNormalized.getAggregatedData()
-                    if (shouldsum) {
-                        setData(allPodsAggregatedData["avg"])
-                        delete allPodsAggregatedData["avg"]
-                    }
-
+                    const [data, allPodsAggregatedData] = allPodsMetricsNormalized.getAggregatedData()
+                    setData(data)
                     setAggregatedData(allPodsAggregatedData);
 
-                    if (shouldsum && isHpaEnabled && ["cpu", "memory"].includes(selectedMetric)) {
+                    if (isHpaEnabled && ["cpu", "memory"].includes(selectedMetric)) {
                         let hpaMetricType = "cpu_hpa_threshold"
                         if (selectedMetric === "memory") {
                             hpaMetricType = "memory_hpa_threshold"

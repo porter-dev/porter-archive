@@ -32,6 +32,7 @@ export const secondsBeforeNow: { [range: string]: number } = {
 
 type PropsType = {
     currentChart: ChartTypeWithExtendedConfig;
+    isHpaEnabled: boolean;
     pods: any[];
     selectedController: any;
     selectedIngress: any;
@@ -43,6 +44,7 @@ type PropsType = {
 
 const MetricsChart: React.FunctionComponent<PropsType> = ({
     currentChart,
+    isHpaEnabled,
     pods,
     selectedController,
     selectedIngress,
@@ -59,7 +61,6 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
     const [areaData, setAreaData] = useState<NormalizedNginxStatusMetricsData[]>([]);
     const [hpaData, setHpaData] = useState<NormalizedMetricsData[]>([]);
     const [hpaEnabled, setHpaEnabled] = useState(false);
-    const [showHpaToggle, setShowHpaToggle] = useState(false);
     const [isLoading, setIsLoading] = useState(0);
 
     const { currentCluster, currentProject, setCurrentError } = useContext(
@@ -109,13 +110,9 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
                 kind = "Ingress";
             }
 
-            const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
-            const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
-
             setIsLoading((prev) => prev + 1);
             setAggregatedData({});
             setIsAggregated(shouldsum);
-            setShowHpaToggle(isHpaEnabled);
             setHpaEnabled(isHpaEnabled);
 
             const aggregatedMetricsRequest = api.getMetrics(
@@ -338,7 +335,7 @@ const MetricsChart: React.FunctionComponent<PropsType> = ({
             )}
             {data.length > 0 && isLoading === 0 && (
                 <>
-                    {showHpaToggle &&
+                    {isHpaEnabled &&
                         ["cpu", "memory"].includes(selectedMetric) && (
                             <CheckboxRow
                                 toggle={() => setHpaEnabled((prev: any) => !prev)}

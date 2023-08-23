@@ -171,16 +171,45 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       });
   };
 
+  const getServiceName = (): string => {
+    return selectedController?.metadata.labels["app.kubernetes.io/name"]
+  };
+
+  const isHpaEnabled = (): boolean => {
+    const serviceName: string = getServiceName()
+    return currentChart?.config?.[serviceName]?.autoscaling?.enabled
+  };
+
+  const isWebService = (): boolean => {
+    const serviceName: string = getServiceName()
+    return currentChart?.config?.[serviceName]?.ingress?.enabled
+  };
+
   const renderHpaChart = () => {
-    const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
-    const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
-    return isHpaEnabled ? (
+    return isHpaEnabled() ? (
       <MetricsChart
         currentChart={currentChart}
+        isHpaEnabled={isHpaEnabled()}
         selectedController={selectedController}
         selectedIngress={selectedIngress}
         selectedMetric="hpa_replicas"
         selectedMetricLabel="Number of replicas"
+        selectedPod="All"
+        selectedRange={selectedRange}
+        pods={pods}
+      />
+    ) : null
+  };
+
+  const renderThroughputChart = () => {
+    return isWebService() ? (
+      <MetricsChart
+        currentChart={currentChart}
+        isHpaEnabled={isHpaEnabled()}
+        selectedController={selectedController}
+        selectedIngress={selectedIngress}
+        selectedMetric="nginx:status"
+        selectedMetricLabel="Throughput"
         selectedPod="All"
         selectedRange={selectedRange}
         pods={pods}
@@ -229,6 +258,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       </MetricsHeader>
       <MetricsChart
         currentChart={currentChart}
+        isHpaEnabled={isHpaEnabled()}
         selectedController={selectedController}
         selectedIngress={selectedIngress}
         selectedMetric="cpu"
@@ -239,6 +269,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       />
       <MetricsChart
         currentChart={currentChart}
+        isHpaEnabled={isHpaEnabled()}
         selectedController={selectedController}
         selectedIngress={selectedIngress}
         selectedMetric="memory"
@@ -249,6 +280,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       />
       <MetricsChart
         currentChart={currentChart}
+        isHpaEnabled={isHpaEnabled()}
         selectedController={selectedController}
         selectedIngress={selectedIngress}
         selectedMetric="network"
@@ -257,20 +289,12 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         selectedRange={selectedRange}
         pods={pods}
       />
-      <MetricsChart
-        currentChart={currentChart}
-        selectedController={selectedController}
-        selectedIngress={selectedIngress}
-        selectedMetric="nginx:status"
-        selectedMetricLabel="Throughput"
-        selectedPod="All"
-        selectedRange={selectedRange}
-        pods={pods}
-      />
+      {renderThroughputChart()}
       {renderHpaChart()}
       {currentChart?.chart?.metadata?.name == "ingress-nginx" && (
         <MetricsChart
           currentChart={currentChart}
+          isHpaEnabled={isHpaEnabled()}
           selectedController={selectedController}
           selectedIngress={selectedIngress}
           selectedMetric="nginx:errors"

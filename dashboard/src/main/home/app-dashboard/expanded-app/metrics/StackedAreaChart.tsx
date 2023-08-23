@@ -9,15 +9,11 @@ import { scaleLinear, scaleTime } from "@visx/scale";
 import { bisector, extent, max } from "d3-array";
 import { timeFormat } from "d3-time-format";
 
+import { ColorTheme } from "./utils";
 import { default as areaTheme } from "./themes/area";
 import { NormalizedNginxStatusMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
 
 var globalData: NormalizedNginxStatusMetricsData[];
-
-export const background = "#3b697800";
-export const background2 = "#20405100";
-export const accentColor = "#949eff";
-export const accentColorDark = "#949eff";
 
 // util
 const formatDate = timeFormat("%H:%M:%S %b %d, '%y");
@@ -212,6 +208,12 @@ const StackedAreaChart: React.FunctionComponent<StackedAreaChartProps> = ({
                         snapTooltipToDatumY={true}
                         showDatumGlyph={true}
                         applyPositionStyle={true}
+                        verticalCrosshairStyle={{
+                            pointerEvents: 'none',
+                            stroke: ColorTheme.accentColorDark,
+                            strokeDasharray: '5,2',
+                            strokeWidth: '2',
+                        }}
                         style={{ 
                             background: 'rgb(38, 39, 47)',
                             borderRadius: '3px',
@@ -280,6 +282,6 @@ const TooltipDate = styled.div`
 `;
 
 const TooltipDataRow = styled.div<{ color?: string }>`
-  color: ${(props) => props.color ?? accentColor};
+  color: ${(props) => props.color ?? ColorTheme.accentColor};
   margin-bottom: 4px;
 `;

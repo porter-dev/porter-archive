@@ -24,6 +24,13 @@ export const StatusCodeDataColors: Record<string, string> = {
     "5xx": "#9C20A5", // purple
 };
 
+export const ColorTheme = {
+    background: "#3b697800",
+    background2: "#20405100",
+    accentColor: "#949eff",
+    accentColorDark: "#949eff",
+}
+
 type RGB = {
     r: number;
     g: number;

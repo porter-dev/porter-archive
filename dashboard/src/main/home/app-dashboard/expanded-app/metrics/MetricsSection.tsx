@@ -11,7 +11,7 @@ import { getServiceNameFromControllerName, MetricNormalizer, resolutions, second
 import { Metric, MetricType, NginxStatusMetric } from "./types";
 import { match } from "ts-pattern";
 import { AvailableMetrics, NormalizedMetricsData } from "main/home/cluster-dashboard/expanded-chart/metrics/types";
-import MetricsChart from "./MetricsChart";
+import MetricsChart from "./MetricsChart2";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "components/Loading";
 

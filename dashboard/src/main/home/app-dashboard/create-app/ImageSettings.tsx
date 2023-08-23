@@ -6,14 +6,13 @@ import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import ImageSelector from "components/image-selector/ImageSelector";
 import { Controller, useFormContext } from "react-hook-form";
-import { ClientPorterApp, PorterAppFormData } from "lib/porter-apps";
+import { PorterAppFormData } from "lib/porter-apps";
 
 const ImageSettings: React.FC = ({}) => {
   const { control } = useFormContext<PorterAppFormData>();
 
   return (
     <StyledSourceBox>
-
       <Subtitle>
         Specify the container image you would like to connect to this template.
         <Spacer inline width="5px" />
@@ -31,23 +30,23 @@ const ImageSettings: React.FC = ({}) => {
       <DarkMatter antiHeight="-4px" />
       {/* // todo(ianedwards): rewrite image selector to be more easily controllable by form */}
       <Controller
-        name="app.image"
+        name="source.image"
         control={control}
         render={({ field: { onChange, value } }) => (
           <ImageSelector
-            selectedTag={value?.tag || ""}
+            selectedTag={value?.tag || "latest"}
             selectedImageUrl={value?.repository || ""}
             setSelectedImageUrl={(imageUrl) => {
-              onChange((prev: ClientPorterApp["image"]) => ({
-                ...prev,
+              onChange({
+                tag: value?.tag ?? "latest",
                 repository: imageUrl,
-              }));
+              });
             }}
             setSelectedTag={(tag) => {
-              onChange((prev: ClientPorterApp["image"]) => ({
-                ...prev,
+              onChange({
+                ...value,
                 tag,
-              }));
+              });
             }}
             forceExpanded={true}
           />

@@ -18,8 +18,7 @@ import (
 // NewDefaultAgent returns an agent using Application Default Credentials. If these are not
 // set and the gcloud utility is installed on the machine, this will spawn a setup process
 // to link these credentials.
-func NewDefaultAgent() (*gcp.Agent, error) {
-	ctx := context.Background()
+func NewDefaultAgent(ctx context.Context) (*gcp.Agent, error) {
 	creds, err := setupDefaultCredentials(ctx)
 	if err != nil {
 		return nil, err

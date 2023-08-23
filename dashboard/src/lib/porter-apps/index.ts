@@ -4,10 +4,13 @@ import {
   ClientService,
   defaultSerialized,
   deserializeService,
+  isPredeployService,
+  serializeService,
   serializedServiceFromProto,
+  serviceProto,
   serviceValidator,
 } from "./services";
-import { PorterApp } from "@porter-dev/api-contracts";
+import { PorterApp, Service } from "@porter-dev/api-contracts";
 
 // buildValidator is used to validate inputs for build setting fields
 export const buildValidator = z.object({
@@ -45,7 +48,6 @@ export const porterAppValidator = z.object({
   services: serviceValidator.array(),
   env: z.record(z.string(), z.string()),
   build: buildValidator,
-  predeploy: serviceValidator.optional(),
   image: z
     .object({
       repository: z.string(),
@@ -88,11 +90,12 @@ export function defaultServicesWithOverrides({
     ? deserializeService(
         defaultSerialized({
           name: "pre-deploy",
-          type: "job",
+          type: "predeploy",
         }),
         serializedServiceFromProto({
           name: "pre-deploy",
           service: overrides.predeploy,
+          isPredeploy: true,
         })
       )
     : undefined;
@@ -101,4 +104,39 @@ export function defaultServicesWithOverrides({
     services,
     predeploy,
   };
+}
+
+export function clientAppToProto(app: ClientPorterApp): PorterApp {
+  const services = app.services
+    .filter((s) => !isPredeployService(s))
+    .reduce((acc: Record<string, Service>, svc) => {
+      acc[svc.name.value] = serviceProto(serializeService(svc));
+      return acc;
+    }, {});
+
+  const predeploy = app.services.find((s) => isPredeployService(s));
+
+  const proto = new PorterApp({
+    name: app.name,
+    services,
+    env: app.env,
+    build: {
+      context: app.build.context,
+      method: app.build.method,
+      buildpacks: app.build.buildpacks.map((b) => b.buildpack),
+      builder: app.build.builder,
+      dockerfile: app.build.dockerfile,
+    },
+    ...(app.image && {
+      image: {
+        repository: app.image.repository,
+        tag: app.image.tag,
+      },
+    }),
+    ...(predeploy && {
+      predeploy: serviceProto(serializeService(predeploy)),
+    }),
+  });
+
+  return proto;
 }

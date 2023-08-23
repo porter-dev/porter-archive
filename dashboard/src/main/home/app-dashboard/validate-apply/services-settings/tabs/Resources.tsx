@@ -7,7 +7,6 @@ import InputSlider from "components/porter/InputSlider";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
-import AnimateHeight from "react-animate-height";
 import { match } from "ts-pattern";
 
 type ResourcesProps = {
@@ -85,6 +84,7 @@ const Resources: React.FC<ResourcesProps> = ({
       />
       {match(service.config)
         .with({ type: "job" }, () => null)
+        .with({ type: "predeploy" }, () => null)
         .otherwise((config) => (
           <>
             <Spacer y={1} />
@@ -136,7 +136,7 @@ const Resources: React.FC<ResourcesProps> = ({
                   label="Min instances"
                   placeholder="ex: 1"
                   disabled={
-                    config.autoscaling.minInstances?.readOnly ??
+                    config.autoscaling?.minInstances?.readOnly ??
                     !config.autoscaling?.enabled.value
                   }
                   width="300px"

@@ -16,7 +16,7 @@ interface Props {
   index: number;
   service: ClientService & {
     config: {
-      type: "job";
+      type: "job" | "predeploy";
     };
   };
   chart?: any;

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo } from "react";
+import React, { useContext, useEffect } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import web from "assets/web.png";
 import AnimateHeight from "react-animate-height";
@@ -13,10 +13,7 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Link from "components/porter/Link";
 
 import { Context } from "shared/Context";
-import {
-  PorterAppFormData,
-  defaultServicesWithOverrides,
-} from "lib/porter-apps";
+import { PorterAppFormData } from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
 import Button from "components/porter/Button";
@@ -24,15 +21,19 @@ import RepoSettings from "./RepoSettings";
 import ImageSettings from "./ImageSettings";
 import Container from "components/porter/Container";
 import ServiceList from "../validate-apply/services-settings/ServiceList";
-import { useQuery } from "@tanstack/react-query";
-import api from "shared/api";
-import { z } from "zod";
-import { PorterApp } from "@porter-dev/api-contracts";
+import {
+  ClientService,
+  defaultSerialized,
+  deserializeService,
+} from "lib/porter-apps/services";
+import EnvVariables from "../validate-apply/app-settings/EnvVariables";
+import { usePorterYaml } from "lib/hooks/usePorterYaml";
+import { valueExists } from "shared/util";
 
 type CreateAppProps = {} & RouteComponentProps;
 
 const CreateApp: React.FC<CreateAppProps> = ({}) => {
-  const { currentProject, currentCluster } = useContext(Context);
+  const { currentProject } = useContext(Context);
   const [step, setStep] = React.useState(0);
   const [detectedServices, setDetectedServices] = React.useState<{
     detected: boolean;
@@ -71,93 +72,7 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
   const source = watch("source");
   const build = watch("app.build");
   const image = watch("app.image");
-
-  const { data } = useQuery(
-    [
-      "getPorterYamlContents",
-      currentProject?.id,
-      source.git_branch,
-      source.git_repo_name,
-    ],
-    async () => {
-      if (!currentProject) {
-        return;
-      }
-      if (source.type !== "github") {
-        return;
-      }
-      const res = await api.getPorterYamlContents(
-        "<token>",
-        {
-          path: source.porter_yaml_path,
-        },
-        {
-          project_id: currentProject.id,
-          git_repo_id: source.git_repo_id,
-          kind: "github",
-          owner: source.git_repo_name.split("/")[0],
-          name: source.git_repo_name.split("/")[1],
-          branch: source.git_branch,
-        }
-      );
-
-      return z.string().parseAsync(res.data);
-    },
-    {
-      enabled:
-        source.type === "github" &&
-        Boolean(source.git_repo_name) &&
-        Boolean(source.git_branch),
-    }
-  );
-
-  const detectServices = useCallback(
-    async ({
-      b64Yaml,
-      projectId,
-      clusterId,
-    }: {
-      b64Yaml: string;
-      projectId: number;
-      clusterId: number;
-    }) => {
-      try {
-        const res = await api.parsePorterYaml(
-          "<token>",
-          { b64_yaml: b64Yaml },
-          {
-            project_id: projectId,
-            cluster_id: clusterId,
-          }
-        );
-
-        const data = await z
-          .object({
-            b64_app_proto: z.string(),
-          })
-          .parseAsync(res.data);
-        const proto = PorterApp.fromJsonString(atob(data.b64_app_proto));
-        const { services, predeploy } = defaultServicesWithOverrides({
-          overrides: proto,
-        });
-
-        if (services.length) {
-          setValue("app.services", services);
-          setDetectedServices({
-            detected: true,
-            count: services.length,
-          });
-        }
-
-        if (predeploy) {
-          setValue("app.predeploy", predeploy);
-        }
-      } catch (err) {
-        // silent failure for now
-      }
-    },
-    []
-  );
+  const servicesFromYaml = usePorterYaml(source);
 
   useEffect(() => {
     // set step to 1 if name is filled out
@@ -168,14 +83,14 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
     // set step to 2 if source is filled out
     if (source?.type && source.type === "github") {
       if (source.git_repo_name && source.git_branch) {
-        setStep((prev) => Math.max(prev, 3));
+        setStep((prev) => Math.max(prev, 5));
       }
     }
 
     // set step to 3 if source is filled out
     if (source?.type && source.type === "docker-registry") {
       if (image && image.tag) {
-        setStep((prev) => Math.max(prev, 3));
+        setStep((prev) => Math.max(prev, 5));
       }
     }
   }, [
@@ -196,18 +111,15 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
   }, [source?.type, source?.git_repo_name, source?.git_branch, image?.tag]);
 
   useEffect(() => {
-    if (!currentProject || !currentCluster) {
-      return;
-    }
-
-    if (data) {
-      detectServices({
-        b64Yaml: data,
-        projectId: currentProject.id,
-        clusterId: currentCluster.id,
+    if (servicesFromYaml && !detectedServices.detected) {
+      const { services, predeploy } = servicesFromYaml;
+      setValue("app.services", [...services, predeploy].filter(valueExists));
+      setDetectedServices({
+        detected: true,
+        count: services.length,
       });
     }
-  }, [data]);
+  }, [servicesFromYaml, detectedServices.detected]);
 
   if (!currentProject) {
     return null;
@@ -319,16 +231,45 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
                   />
                 </>,
                 <>
-                  <Button
-                    status={isSubmitting && "loading"}
-                    loadingText={"Deploying..."}
-                    width={"120px"}
-                    disabled={true}
-                  >
-                    Deploy app
-                  </Button>
+                  <Text size={16}>Environment variables (optional)</Text>
+                  <Spacer y={0.5} />
+                  <Text color="helper">
+                    Specify environment variables shared among all services.
+                  </Text>
+                  <EnvVariables />
                 </>,
-              ]}
+                source.type === "github" && (
+                  <>
+                    <Text size={16}>Pre-deploy job (optional)</Text>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      You may add a pre-deploy job to perform an operation
+                      before your application services deploy each time, like a
+                      database migration.
+                    </Text>
+                    <Spacer y={0.5} />
+                    <ServiceList
+                      limitOne={true}
+                      addNewText={"Add a new pre-deploy job"}
+                      prePopulateService={deserializeService(
+                        defaultSerialized({
+                          name: "pre-deploy",
+                          type: "predeploy",
+                        })
+                      )}
+                      isPredeploy
+                    />
+                  </>
+                ),
+                <Button
+                  status={isSubmitting && "loading"}
+                  loadingText={"Deploying..."}
+                  width={"120px"}
+                  disabled={true}
+                >
+                  Deploy app
+                </Button>,
+              ].filter((x) => x)}
             />
           </FormProvider>
           <Spacer y={3} />

@@ -793,6 +793,69 @@ const parsePorterYaml = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/parse`;
 });
 
+const getDefaultDeploymentTarget = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/default-deployment-target`;
+});
+
+const validatePorterApp = baseApi<
+  {
+    b64_app_proto: string;
+    deployment_target_id: string;
+    commit_sha: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/validate`;
+});
+
+const createApp = baseApi<
+  | {
+      name: string;
+      type: "github";
+      git_repo_id: number;
+      git_branch: string;
+      git_repo_name: string;
+      porter_yaml_path: string;
+    }
+  | {
+      name: string;
+      type: "docker-registry";
+      image: {
+        repository: string;
+        tag: string;
+      };
+    },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/create`;
+});
+
+const applyApp = baseApi<
+  {
+    deployment_target_id: string;
+    b64_app_proto?: string;
+    app_revision_id?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/apply`;
+});
+
 const getGitlabProcfileContents = baseApi<
   {
     path: string;
@@ -2860,6 +2923,10 @@ export default {
   getProcfileContents,
   getPorterYamlContents,
   parsePorterYaml,
+  getDefaultDeploymentTarget,
+  validatePorterApp,
+  createApp,
+  applyApp,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,

@@ -11,10 +11,12 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// GetBranchHeadHandler is the handler for the /{branch}/head endpoint
 type GetBranchHeadHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
+// NewGetBranchHeadHandler handles GET requests to /{branch}/head
 func NewGetBranchHeadHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

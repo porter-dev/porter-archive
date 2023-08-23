@@ -69,6 +69,18 @@ func (c *GetBranchHeadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if branch == nil {
+		err = telemetry.Error(ctx, span, nil, "branch does not exist")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
+		return
+	}
+
+	if branch.Commit == nil || branch.Commit.SHA == nil {
+		err = telemetry.Error(ctx, span, nil, "branch head does not exist")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
+		return
+	}
+
 	response := &GetBranchHeadResponse{
 		CommitSHA: *branch.Commit.SHA,
 	}

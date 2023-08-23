@@ -39,7 +39,7 @@ func (c *GetBranchHeadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	if !ok {
 		err := telemetry.Error(ctx, span, nil, "could not get owner and name from request")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -58,14 +58,14 @@ func (c *GetBranchHeadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	client, err := GetGithubAppClientFromRequest(c.Config(), r)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "could not get github app client")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	branch, _, err := client.Repositories.GetBranch(ctx, owner, name, branchName, true)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "could not get branch")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

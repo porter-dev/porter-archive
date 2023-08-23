@@ -18,7 +18,6 @@ import (
 	goerrors "errors"
 
 	"github.com/porter-dev/porter/api/server/shared/websocket"
-	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/registry"
 	"github.com/porter-dev/porter/internal/repository"
@@ -2117,7 +2116,7 @@ func (a *Agent) createEphemeralPodFromExisting(
 
 	// only copy the pod spec, overwrite metadata
 	newPod.ObjectMeta = metav1.ObjectMeta{
-		Name:      strings.ToLower(fmt.Sprintf("%s-copy-%s", existing.ObjectMeta.Name, utils.String(4))),
+		Name:      strings.ToLower(fmt.Sprintf("%s-copy-%s", existing.ObjectMeta.Name, RandomString(4))),
 		Namespace: existing.ObjectMeta.Namespace,
 	}
 

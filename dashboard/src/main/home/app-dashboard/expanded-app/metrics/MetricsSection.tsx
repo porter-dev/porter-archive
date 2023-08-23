@@ -80,7 +80,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       if (currentProject?.id == null || currentCluster?.id == null) {
         return;
       }
-      const metrics = [] as Metric[];
+      const metrics: Metric[] = [];
       const metricTypes: MetricType[] = ["cpu", "memory", "network"];
 
       const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
@@ -123,6 +123,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
             cluster_id: currentCluster.id,
           }
         );
+        // TODO: type the response to this
         const metricsNormalizer = new MetricNormalizer(
           [{ results: (aggregatedMetricsResponse.data ?? []).flatMap((d: any) => d.results) }],
           metricType,
@@ -235,7 +236,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     return metricsData.map((metric: Metric, i: number) => {
       return (
         <MetricsChart
-          key={i}
+          key={metric.type}
           metric={metric}
           selectedRange={selectedRange}
           isLoading={isMetricsDataLoading}

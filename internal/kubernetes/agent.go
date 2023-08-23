@@ -2115,8 +2115,12 @@ func (a *Agent) createEphemeralPodFromExisting(
 	newPod := existing.DeepCopy()
 
 	// only copy the pod spec, overwrite metadata
+	suffix, err := RandomString(4)
+	if err != nil {
+		return nil, err
+	}
 	newPod.ObjectMeta = metav1.ObjectMeta{
-		Name:      strings.ToLower(fmt.Sprintf("%s-copy-%s", existing.ObjectMeta.Name, RandomString(4))),
+		Name:      strings.ToLower(fmt.Sprintf("%s-copy-%s", existing.ObjectMeta.Name, suffix)),
 		Namespace: existing.ObjectMeta.Namespace,
 	}
 

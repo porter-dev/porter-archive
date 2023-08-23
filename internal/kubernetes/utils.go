@@ -1,26 +1,27 @@
 package kubernetes
 
 import (
-	"math/rand"
-	"time"
+	"crypto/rand"
+	"math/big"
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyz" +
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-var seededRand *rand.Rand = rand.New(
-	rand.NewSource(time.Now().UnixNano()))
-
-func stringWithCharset(length int, charset string) string {
+func stringWithCharset(length int, charset string) (string, error) {
 	b := make([]byte, length)
 	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
+		idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", err
+		}
+		b[i] = charset[idx.Int64()]
 	}
-	return string(b)
+	return string(b), nil
 }
 
 // RandomString returns a random string, pulling from a standard alphanumeric charset
 // [a-zA-Z0-9]
-func RandomString(length int) string {
+func RandomString(length int) (string, error) {
 	return stringWithCharset(length, charset)
 }

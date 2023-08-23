@@ -278,7 +278,7 @@ type promParsedSingletonQuery struct {
 
 func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, error) {
 	if metric == "nginx:status" {
-		return parseNginxStatusQuery(rawQuery, metric)
+		return parseNginxStatusQuery(rawQuery)
 	}
 
 	rawQueryObj := &promRawQuery{}
@@ -331,7 +331,7 @@ func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, er
 	return res, nil
 }
 
-func parseNginxStatusQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, error) {
+func parseNginxStatusQuery(rawQuery []byte) ([]*promParsedSingletonQuery, error) {
 	rawQueryObj := &promRawQuery{}
 
 	err := json.Unmarshal(rawQuery, rawQueryObj)

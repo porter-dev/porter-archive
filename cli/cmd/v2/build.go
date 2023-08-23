@@ -40,7 +40,7 @@ type buildInput struct {
 }
 
 // build will create an image repository if it does not exist, and then build and push the image
-func build(ctx context.Context, client *api.Client, inp buildInput) error {
+func build(ctx context.Context, client api.Client, inp buildInput) error {
 	if inp.ProjectID == 0 {
 		return errors.New("must specify a project id")
 	}
@@ -61,7 +61,7 @@ func build(ctx context.Context, client *api.Client, inp buildInput) error {
 		return fmt.Errorf("error creating image repository: %w", err)
 	}
 
-	dockerAgent, err := docker.NewAgentWithAuthGetter(client, projectID)
+	dockerAgent, err := docker.NewAgentWithAuthGetter(ctx, client, projectID)
 	if err != nil {
 		return fmt.Errorf("error getting docker agent: %w", err)
 	}
@@ -92,6 +92,7 @@ func build(ctx context.Context, client *api.Client, inp buildInput) error {
 		}
 
 		err = dockerAgent.BuildLocal(
+			ctx,
 			opts,
 		)
 		if err != nil {
@@ -111,7 +112,7 @@ func build(ctx context.Context, client *api.Client, inp buildInput) error {
 			Buildpacks: inp.BuildPacks,
 		}
 
-		err := packAgent.Build(opts, buildConfig, "")
+		err := packAgent.Build(ctx, opts, buildConfig, "")
 		if err != nil {
 			return fmt.Errorf("error building image with pack: %w", err)
 		}
@@ -119,7 +120,7 @@ func build(ctx context.Context, client *api.Client, inp buildInput) error {
 		return fmt.Errorf("invalid build method: %s", inp.BuildMethod)
 	}
 
-	err = dockerAgent.PushImage(fmt.Sprintf("%s:%s", imageURL, tag))
+	err = dockerAgent.PushImage(ctx, fmt.Sprintf("%s:%s", imageURL, tag))
 	if err != nil {
 		return fmt.Errorf("error pushing image url: %w\n", err)
 	}
@@ -127,7 +128,7 @@ func build(ctx context.Context, client *api.Client, inp buildInput) error {
 	return nil
 }
 
-func createImageRepositoryIfNotExists(ctx context.Context, client *api.Client, projectID uint, imageURL string) error {
+func createImageRepositoryIfNotExists(ctx context.Context, client api.Client, projectID uint, imageURL string) error {
 	if projectID == 0 {
 		return errors.New("must specify a project id")
 	}

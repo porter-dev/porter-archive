@@ -8,6 +8,7 @@ type PropsType<T> = {
   value: T;
   setActiveValue: (x: T) => void;
   options: { value: T; label: string }[];
+  displayFlex?: boolean;
   dropdownLabel?: string;
   width?: string;
   dropdownMaxHeight?: string;
@@ -19,9 +20,9 @@ type PropsType<T> = {
 
 export default function SelectRow<T>(props: PropsType<T>) {
   return (
-    <StyledSelectRow>
+    <StyledSelectRow displayFlex={props.displayFlex}>
       <Wrapper>
-        <Label>{props.label}</Label>
+        <Label displayFlex={props.displayFlex}>{props.label}</Label>
         {props.doc ? (
           <a href={props.doc} target="_blank">
             <i className="material-icons">help_outline</i>
@@ -65,13 +66,16 @@ const Wrapper = styled.div`
   }
 `;
 
-const Label = styled.div`
+const Label = styled.div<{ displayFlex?: boolean }>`
   color: #ffffff;
-  margin-bottom: 10px;
   font-size: 13px;
+  margin-bottom: 10px;
+  margin-top: ${props => props.displayFlex ? "10px" : 0};
+  margin-right: ${props => props.displayFlex ? "10px" : 0};
 `;
 
-const StyledSelectRow = styled.div`
+const StyledSelectRow = styled.div<{ displayFlex?: boolean }>`
+  display: ${props => props.displayFlex ? "flex" : "block"};
   margin-bottom: 15px;
   margin-top: 20px;
 `;

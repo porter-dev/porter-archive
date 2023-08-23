@@ -803,6 +803,24 @@ const getDefaultDeploymentTarget = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/default-deployment-target`;
 });
 
+const getBranchHead = baseApi<
+  {},
+  {
+    project_id: number;
+    git_repo_id: number;
+    kind: string;
+    owner: string;
+    name: string;
+    branch: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/head`;
+});
+
 const validatePorterApp = baseApi<
   {
     b64_app_proto: string;
@@ -2924,6 +2942,7 @@ export default {
   getPorterYamlContents,
   parsePorterYaml,
   getDefaultDeploymentTarget,
+  getBranchHead,
   validatePorterApp,
   createApp,
   applyApp,

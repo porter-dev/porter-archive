@@ -14,11 +14,7 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Link from "components/porter/Link";
 
 import { Context } from "shared/Context";
-import {
-  PorterAppFormData,
-  SourceOptions,
-  clientAppToProto,
-} from "lib/porter-apps";
+import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
 import Button from "components/porter/Button";
@@ -34,12 +30,12 @@ import EnvVariables from "../validate-apply/app-settings/EnvVariables";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import { valueExists } from "shared/util";
 import api from "shared/api";
-import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import Error from "components/porter/Error";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { useAppValidation } from "lib/hooks/useAppValidation";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -92,45 +88,19 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const source = watch("source");
   const build = watch("app.build");
   const image = watch("source.image");
+
   const servicesFromYaml = usePorterYaml(source);
   const deploymentTarget = useDefaultDeploymentTarget();
   const { updateAppStep } = useAppAnalytics(name);
+  const { validateApp } = useAppValidation({
+    deploymentTargetID: deploymentTarget?.deployment_target_id,
+  });
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      if (!currentProject || !currentCluster) {
-        return;
-      }
-
-      if (!deploymentTarget) {
-        return;
-      }
-
-      const proto = clientAppToProto(data);
-      const res = await api.validatePorterApp(
-        "<token>",
-        {
-          b64_app_proto: btoa(proto.toJsonString()),
-          deployment_target_id: deploymentTarget.deployment_target_id,
-          commit_sha: "",
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
-
-      const validAppData = await z
-        .object({
-          validate_b64_app_proto: z.string(),
-        })
-        .parseAsync(res.data);
-
-      const validatedAppProto = PorterApp.fromJsonString(
-        atob(validAppData.validate_b64_app_proto)
-      );
-
+      const validatedAppProto = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
+
       if (source?.type === "github") {
         setShowGHAModal(true);
         return;

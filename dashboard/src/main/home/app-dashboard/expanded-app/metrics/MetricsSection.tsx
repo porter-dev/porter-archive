@@ -38,7 +38,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   appName,
   serviceName,
 }) => {
-  const [pods, setPods] = useState([]);
   const [controllerOptions, setControllerOptions] = useState([]);
   const [selectedController, setSelectedController] = useState<any>();
   const [ingressOptions, setIngressOptions] = useState([]);
@@ -271,7 +270,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         selectedMetricLabel="Number of replicas"
         selectedPod="All"
         selectedRange={selectedRange}
-        pods={pods}
+        pods={[]}
       />
     ) : null
   };
@@ -316,7 +315,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         selectedMetricLabel="CPU Utilization (vCPUs)"
         selectedPod="All"
         selectedRange={selectedRange}
-        pods={pods}
+        pods={[]}
       />
       <MetricsChart
         currentChart={currentChart}
@@ -326,7 +325,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         selectedMetricLabel="RAM Utilization (Mi)"
         selectedPod="All"
         selectedRange={selectedRange}
-        pods={pods}
+        pods={[]}
       />
       <MetricsChart
         currentChart={currentChart}
@@ -336,7 +335,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         selectedMetricLabel="Network Received Bytes (Ki)"
         selectedPod="All"
         selectedRange={selectedRange}
-        pods={pods}
+        pods={[]}
       />
       <MetricsChart
         currentChart={currentChart}
@@ -346,7 +345,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         selectedMetricLabel="Nginx Status Codes"
         selectedPod="All"
         selectedRange={selectedRange}
-        pods={pods}
+        pods={[]}
       />
       {renderHpaChart()}
       {currentChart?.chart?.metadata?.name == "ingress-nginx" && (
@@ -358,7 +357,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           selectedMetricLabel="5XX Error Percentage"
           selectedPod="All"
           selectedRange={selectedRange}
-          pods={pods}
+          pods={[]}
         />
       )}
       {metrics.map((metric: Metric, i: number) => {
@@ -372,7 +371,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
             selectedMetricLabel={metric.label}
             selectedPod={"All"}
             selectedRange={selectedRange}
-            pods={pods}
+            pods={[]}
           />
         );
       })}

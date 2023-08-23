@@ -18,103 +18,106 @@ import { MetricNormalizer } from "./utils";
 import { Metric } from "./types";
 
 export const resolutions: { [range: string]: string } = {
-    "1H": "1s",
-    "6H": "15s",
-    "1D": "15s",
-    "1M": "5h",
+  "1H": "1s",
+  "6H": "15s",
+  "1D": "15s",
+  "1M": "5h",
 };
 
 export const secondsBeforeNow: { [range: string]: number } = {
-    "1H": 60 * 60,
-    "6H": 60 * 60 * 6,
-    "1D": 60 * 60 * 24,
-    "1M": 60 * 60 * 24 * 30,
+  "1H": 60 * 60,
+  "6H": 60 * 60 * 6,
+  "1D": 60 * 60 * 24,
+  "1M": 60 * 60 * 24 * 30,
 };
 
 type PropsType = {
-    metric: Metric;
+  metric: Metric;
 };
 
 const MetricsChart2: React.FunctionComponent<PropsType> = ({
-    metric,
+  metric,
 }) => {
+  const renderAggregatedMetric = () => {
+    if (metric)
+      return null;
+  }
 
-    const renderAggregatedMetric = () => {
+  const renderNginxMetric = () => {
+    return null;
+  }
 
-    }
-    return (
-        <StyledMetricsChart>
-            <MetricsHeader>
-                <Flex>
-                    <MetricSelector>
-                        <MetricsLabel>{metric.label}</MetricsLabel>
-                    </MetricSelector>
-                </Flex>
-            </MetricsHeader>
-            {(data.length === 0 && Object.keys(areaData).length === 0) && isLoading === 0 && (
-                <Message>
-                    No data available yet.
-                    <Highlight color={"#8590ff"} onClick={getMetrics}>
-                        <i className="material-icons">autorenew</i>
-                        Refresh
-                    </Highlight>
-                </Message>
+  return (
+    <StyledMetricsChart>
+      <MetricsHeader>
+        <Flex>
+          <MetricSelector>
+            <MetricsLabel>{metric.label}</MetricsLabel>
+          </MetricSelector>
+        </Flex>
+      </MetricsHeader>
+      {metric.type === "nginx:status" && renderNginxMetric()}
+      {metric.type !== "nginx:status" && renderAggregatedMetric()}
+      {(data.length === 0 && Object.keys(areaData).length === 0) && (
+        <Message>
+          No data available yet.
+        </Message>
+      )}
+      {data.length > 0 && (
+        <>
+          {showHpaToggle &&
+            ["cpu", "memory"].includes(selectedMetric) && (
+              <CheckboxRow
+                toggle={() => setHpaEnabled((prev: any) => !prev)}
+                checked={hpaEnabled}
+                label="Show Autoscaling Threshold"
+              />
             )}
-            {data.length > 0 && (
-                <>
-                    {showHpaToggle &&
-                        ["cpu", "memory"].includes(selectedMetric) && (
-                            <CheckboxRow
-                                toggle={() => setHpaEnabled((prev: any) => !prev)}
-                                checked={hpaEnabled}
-                                label="Show Autoscaling Threshold"
-                            />
-                        )}
-                    <ParentSize>
-                        {({ width, height }) => (
-                            <AreaChart
-                                dataKey={selectedMetricLabel}
-                                aggregatedData={aggregatedData}
-                                isAggregated={isAggregated}
-                                data={data}
-                                hpaData={hpaData}
-                                hpaEnabled={
-                                    hpaEnabled && ["cpu", "memory"].includes(selectedMetric)
-                                }
-                                width={width}
-                                height={height - 10}
-                                resolution={selectedRange}
-                                margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
-                            />
-                        )}
-                    </ParentSize>
-                    <RowWrapper>
-                        <AggregatedDataLegend data={data} hideAvg={isAggregated} />
-                    </RowWrapper>
-                </>
+          <ParentSize>
+            {({ width, height }) => (
+              <AreaChart
+                dataKey={selectedMetricLabel}
+                aggregatedData={aggregatedData}
+                isAggregated={isAggregated}
+                data={data}
+                hpaData={hpaData}
+                hpaEnabled={
+                  hpaEnabled && ["cpu", "memory"].includes(selectedMetric)
+                }
+                width={width}
+                height={height - 10}
+                resolution={selectedRange}
+                margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
+              />
             )}
+          </ParentSize>
+          <RowWrapper>
+            <AggregatedDataLegend data={data} hideAvg={isAggregated} />
+          </RowWrapper>
+        </>
+      )}
 
-            {Object.keys(areaData).length > 0 && isLoading === 0 && (
-                <>
-                    <ParentSize>
-                        {({ width, height }) => (
-                            <StackedAreaChart
-                                dataKey={selectedMetricLabel}
-                                data={areaData}
-                                width={width}
-                                height={height - 10}
-                                resolution={selectedRange}
-                                margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
-                            />
-                        )}
-                    </ParentSize>
-                    <RowWrapper>
-                        <StatusCodeDataLegend />
-                    </RowWrapper>
-                </>
+      {Object.keys(areaData).length > 0 && isLoading === 0 && (
+        <>
+          <ParentSize>
+            {({ width, height }) => (
+              <StackedAreaChart
+                dataKey={selectedMetricLabel}
+                data={areaData}
+                width={width}
+                height={height - 10}
+                resolution={selectedRange}
+                margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
+              />
             )}
-        </StyledMetricsChart>
-    );
+          </ParentSize>
+          <RowWrapper>
+            <StatusCodeDataLegend />
+          </RowWrapper>
+        </>
+      )}
+    </StyledMetricsChart>
+  );
 };
 
 export default MetricsChart2;

@@ -50,7 +50,7 @@ type Image struct {
 // CreateAppRequest is the request object for the /apps/create endpoint
 type CreateAppRequest struct {
 	Name           string     `json:"name"`
-	Type           SourceType `json:"type"`
+	SourceType     SourceType `json:"type"`
 	GitBranch      string     `json:"git_branch"`
 	GitRepoName    string     `json:"git_repo_name"`
 	GitRepoID      uint       `json:"git_repo_id"`
@@ -107,15 +107,15 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: request.Name})
 
-	if request.Type == "" {
+	if request.SourceType == "" {
 		err := telemetry.Error(ctx, span, nil, "source type is required")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "source-type", Value: request.Type})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "source-type", Value: request.SourceType})
 
 	var porterApp *types.PorterApp
-	switch request.Type {
+	switch request.SourceType {
 	case SourceType_Github:
 		if request.GitRepoID == 0 {
 			err := telemetry.Error(ctx, span, nil, "git repo id is required")

@@ -150,54 +150,53 @@ const ServiceList: React.FC<ServiceListProps> = ({
       {maybeRenderAddServicesButton()}
       {showAddServiceModal && (
         <Modal closeModal={() => setShowAddServiceModal(false)} width="500px">
-          <form onSubmit={onSubmit}>
-            <Text size={16}>{addNewText}</Text>
-            <Spacer y={1} />
-            <Text color="helper">Select a service type:</Text>
-            <Spacer y={0.5} />
-            <Container row>
-              <ServiceIcon>
-                {serviceType === "web" && <img src={web} />}
-                {serviceType === "worker" && <img src={worker} />}
-                {serviceType === "job" && <img src={job} />}
-              </ServiceIcon>
-              <Controller
-                name="type"
-                control={control}
-                render={({ field: { onChange } }) => (
-                  <Select
-                    value={serviceType}
-                    width="100%"
-                    setValue={(value: string) => onChange(value)}
-                    options={[
-                      { label: "Web", value: "web" },
-                      { label: "Worker", value: "worker" },
-                      { label: "Cron Job", value: "job" },
-                    ]}
-                  />
-                )}
-              />
-            </Container>
-            <Spacer y={1} />
-            <Text color="helper">Name this service:</Text>
-            <Spacer y={0.5} />
-            <ControlledInput
-              type="text"
-              placeholder="ex: my-service"
-              width="100%"
-              error={errors.name?.message}
-              {...register("name")}
+          <Text size={16}>{addNewText}</Text>
+          <Spacer y={1} />
+          <Text color="helper">Select a service type:</Text>
+          <Spacer y={0.5} />
+          <Container row>
+            <ServiceIcon>
+              {serviceType === "web" && <img src={web} />}
+              {serviceType === "worker" && <img src={worker} />}
+              {serviceType === "job" && <img src={job} />}
+            </ServiceIcon>
+            <Controller
+              name="type"
+              control={control}
+              render={({ field: { onChange } }) => (
+                <Select
+                  value={serviceType}
+                  width="100%"
+                  setValue={(value: string) => onChange(value)}
+                  options={[
+                    { label: "Web", value: "web" },
+                    { label: "Worker", value: "worker" },
+                    { label: "Cron Job", value: "job" },
+                  ]}
+                />
+              )}
             />
-            <Spacer y={1} />
-            <Button
-              type="submit"
-              disabled={
-                isServiceNameDuplicate(serviceName) || serviceName?.length > 61
-              }
-            >
-              <I className="material-icons">add</I> Add service
-            </Button>
-          </form>
+          </Container>
+          <Spacer y={1} />
+          <Text color="helper">Name this service:</Text>
+          <Spacer y={0.5} />
+          <ControlledInput
+            type="text"
+            placeholder="ex: my-service"
+            width="100%"
+            error={errors.name?.message}
+            {...register("name")}
+          />
+          <Spacer y={1} />
+          <Button
+            type="button"
+            onClick={onSubmit}
+            disabled={
+              isServiceNameDuplicate(serviceName) || serviceName?.length > 61
+            }
+          >
+            <I className="material-icons">add</I> Add service
+          </Button>
         </Modal>
       )}
     </>

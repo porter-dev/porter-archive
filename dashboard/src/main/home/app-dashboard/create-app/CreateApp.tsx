@@ -78,8 +78,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         }
       );
 
-      console.log(res.data);
-
       const apps = await z
         .object({
           name: z.string(),

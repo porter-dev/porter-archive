@@ -272,10 +272,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       setCreateStatus("");
       setClusterName(contract.cluster.aksKind.clusterName);
       setAzureLocation(contract.cluster.aksKind.location);
-      // v1.24.9 is no longer supported, will remove this once seamless is upgraded
-      if (contract.cluster.aksKind.clusterVersion != "v1.24.9") {
-          setClusterVersion(contract.cluster.aksKind.clusterVersion);
-      }
+      setClusterVersion(contract.cluster.aksKind.clusterVersion);
       setCidrRange(contract.cluster.aksKind.cidrRange);
     }
   }, [props.selectedClusterVersion]);

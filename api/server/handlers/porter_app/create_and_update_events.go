@@ -415,5 +415,12 @@ func getServiceNameFromPodName(podName, porterAppName string) string {
 		return podName[:index]
 	}
 
+	// if the suffix wasn't found, it's possible that the service name was too long to keep the entire suffix. example: postgres-snowflake-connector-postgres-snowflake-service-wk8gnst
+	// if this is the case, find the service name by removing everything after the last dash
+	index = strings.LastIndex(podName, "-")
+	if index != -1 {
+		return podName[:index]
+	}
+
 	return ""
 }

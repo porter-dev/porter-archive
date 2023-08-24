@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -22,13 +22,21 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// createCmd represents the "porter create" base command when called
-// without any subcommands
-var createCmd = &cobra.Command{
-	Use:   "create [kind]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Creates a new application with name given by the --app flag.",
-	Long: fmt.Sprintf(`
+var (
+	name        string
+	values      string
+	source      string
+	image       string
+	registryURL string
+	forceBuild  bool
+)
+
+func registerCommand_Create(cliConf config.CLIConfig) *cobra.Command {
+	createCmd := &cobra.Command{
+		Use:   "create [kind]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Creates a new application with name given by the --app flag.",
+		Long: fmt.Sprintf(`
 %s
 
 Creates a new application with name given by the --app flag and a "kind", which can be one of
@@ -62,32 +70,20 @@ To deploy an application from a Docker registry, use "--source registry" and pas
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter create\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --values values.yaml"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --path ./path/to/app"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source github"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source registry --image gcr.io/snowflake-12345/example-app:latest"),
-	),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, createFull)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-var (
-	name        string
-	values      string
-	source      string
-	image       string
-	registryURL string
-	forceBuild  bool
-)
-
-func init() {
-	rootCmd.AddCommand(createCmd)
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter create\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --values values.yaml"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --path ./path/to/app"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source github"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source registry --image gcr.io/snowflake-12345/example-app:latest"),
+		),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, createFull)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
 	createCmd.PersistentFlags().StringVar(
 		&name,
@@ -179,13 +175,12 @@ func init() {
 	)
 
 	createCmd.PersistentFlags().MarkDeprecated("force-build", "--force-build is deprecated")
+	return createCmd
 }
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
 
-func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	ctx := context.Background()
-
+func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -266,13 +261,13 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 	if source == "local" {
 		if useCache {
-			regID, imageURL, err := createAgent.GetImageRepoURL(name, namespace)
+			regID, imageURL, err := createAgent.GetImageRepoURL(ctx, name, namespace)
 			if err != nil {
 				return err
 			}
 
 			err = client.CreateRepository(
-				context.Background(),
+				ctx,
 				cliConf.Project,
 				regID,
 				&types.CreateRegistryRepositoryRequest{
@@ -284,21 +279,21 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 				return err
 			}
 
-			err = config.SetDockerConfig(createAgent.Client)
+			err = config.SetDockerConfig(ctx, createAgent.Client, project.ID)
 
 			if err != nil {
 				return err
 			}
 		}
 
-		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default", nil)
+		subdomain, err := createAgent.CreateFromDocker(ctx, valuesObj, "default", nil)
 
 		return handleSubdomainCreate(subdomain, err)
 	} else if source == "github" {
-		return createFromGithub(createAgent, valuesObj)
+		return createFromGithub(ctx, createAgent, valuesObj)
 	}
 
-	subdomain, err := createAgent.CreateFromRegistry(image, valuesObj)
+	subdomain, err := createAgent.CreateFromRegistry(ctx, image, valuesObj)
 
 	return handleSubdomainCreate(subdomain, err)
 }
@@ -317,7 +312,7 @@ func handleSubdomainCreate(subdomain string, err error) error {
 	return nil
 }
 
-func createFromGithub(createAgent *deploy.CreateAgent, overrideValues map[string]interface{}) error {
+func createFromGithub(ctx context.Context, createAgent *deploy.CreateAgent, overrideValues map[string]interface{}) error {
 	fullPath, err := filepath.Abs(localPath)
 	if err != nil {
 		return err
@@ -343,10 +338,12 @@ func createFromGithub(createAgent *deploy.CreateAgent, overrideValues map[string
 		return fmt.Errorf("remote is not a Github repository")
 	}
 
-	subdomain, err := createAgent.CreateFromGithub(&deploy.GithubOpts{
-		Branch: gitBranch,
-		Repo:   remoteRepo,
-	}, overrideValues)
+	subdomain, err := createAgent.CreateFromGithub(
+		ctx,
+		&deploy.GithubOpts{
+			Branch: gitBranch,
+			Repo:   remoteRepo,
+		}, overrideValues)
 
 	return handleSubdomainCreate(subdomain, err)
 }

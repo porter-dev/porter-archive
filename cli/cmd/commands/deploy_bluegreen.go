@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/porter-dev/porter/cli/cmd/config"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
 
 	"github.com/fatih/color"
@@ -18,23 +19,21 @@ import (
 	intstrutil "k8s.io/apimachinery/pkg/util/intstr"
 )
 
-var deployCmd = &cobra.Command{
-	Use: "deploy",
-}
+func registerCommand_Deploy(cliConf config.CLIConfig) *cobra.Command {
+	deployCmd := &cobra.Command{
+		Use: "deploy",
+	}
 
-var bluegreenCmd = &cobra.Command{
-	Use:   "blue-green-switch",
-	Short: "Automatically switches the traffic of a blue-green deployment once the new application is ready.",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, bluegreenSwitch)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(deployCmd)
+	bluegreenCmd := &cobra.Command{
+		Use:   "blue-green-switch",
+		Short: "Automatically switches the traffic of a blue-green deployment once the new application is ready.",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, bluegreenSwitch)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 	deployCmd.AddCommand(bluegreenCmd)
 
 	bluegreenCmd.PersistentFlags().StringVar(
@@ -59,12 +58,11 @@ func init() {
 		"",
 		"The namespace of the jobs.",
 	)
+	return deployCmd
 }
 
-func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	ctx := context.Background()
-
-	project, err := client.GetProject(ctx, cliConf.Project)
+func bluegreenSwitch(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+	project, err := client.GetProject(ctx, cliConfig.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
 	}
@@ -78,7 +76,7 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 	}
 
 	// get the web release
-	webRelease, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, app)
+	webRelease, err := client.GetRelease(ctx, cliConfig.Project, cliConfig.Cluster, namespace, app)
 	if err != nil {
 		return err
 	}
@@ -91,11 +89,11 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 	currActiveImage := deploy.GetCurrActiveBlueGreenImage(webRelease.Config)
 
 	sharedConf := &PorterRunSharedConfig{
-		Client: client,
+		Client:    client,
+		CLIConfig: cliConfig,
 	}
 
-	err = sharedConf.setSharedConfig()
-
+	err = sharedConf.setSharedConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
@@ -111,7 +109,7 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 	for time.Now().Before(timeWait) {
 		// refresh the client every 10 minutes
 		if time.Now().After(prevRefresh.Add(10 * time.Minute)) {
-			err = sharedConf.setSharedConfig()
+			err = sharedConf.setSharedConfig(ctx)
 
 			if err != nil {
 				return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
@@ -121,7 +119,7 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 		}
 
 		depls, err := sharedConf.Clientset.AppsV1().Deployments(namespace).List(
-			context.Background(),
+			ctx,
 			metav1.ListOptions{
 				LabelSelector: fmt.Sprintf("app.kubernetes.io/instance=%s", app),
 			},
@@ -146,13 +144,13 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 					// push the deployment
 					color.New(color.FgGreen).Printf("Switching traffic for app %s\n", app)
 
-					deployAgent, err := updateGetAgent(client)
+					deployAgent, err := updateGetAgent(ctx, client, cliConfig)
 					if err != nil {
 						return err
 					}
 
 					if currActiveImage == "" {
-						err = deployAgent.UpdateImageAndValues(map[string]interface{}{
+						err = deployAgent.UpdateImageAndValues(ctx, map[string]interface{}{
 							"bluegreen": map[string]interface{}{
 								"enabled":                  true,
 								"disablePrimaryDeployment": true,
@@ -161,7 +159,7 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 							},
 						})
 					} else {
-						err = deployAgent.UpdateImageAndValues(map[string]interface{}{
+						err = deployAgent.UpdateImageAndValues(ctx, map[string]interface{}{
 							"bluegreen": map[string]interface{}{
 								"enabled":                  true,
 								"disablePrimaryDeployment": true,
@@ -199,19 +197,21 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 	// wait 30 seconds before removing old deployment
 	time.Sleep(30 * time.Second)
 
-	deployAgent, err := updateGetAgent(client)
+	deployAgent, err := updateGetAgent(ctx, client, cliConfig)
 	if err != nil {
 		return err
 	}
 
-	err = deployAgent.UpdateImageAndValues(map[string]interface{}{
-		"bluegreen": map[string]interface{}{
-			"enabled":                  true,
-			"disablePrimaryDeployment": true,
-			"activeImageTag":           tag,
-			"imageTags":                []string{tag},
-		},
-	})
+	err = deployAgent.UpdateImageAndValues( //nolint - do not want to change logic. New linter error
+		ctx,
+		map[string]interface{}{
+			"bluegreen": map[string]interface{}{
+				"enabled":                  true,
+				"disablePrimaryDeployment": true,
+				"activeImageTag":           tag,
+				"imageTags":                []string{tag},
+			},
+		})
 
 	return nil
 }

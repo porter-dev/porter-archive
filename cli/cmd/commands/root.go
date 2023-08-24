@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -11,37 +11,24 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/fatih/color"
 	"github.com/google/go-github/v41/github"
-	"github.com/porter-dev/porter/cli/cmd/config"
-	"github.com/porter-dev/porter/cli/cmd/utils"
-	"github.com/spf13/cobra"
+	cfg "github.com/porter-dev/porter/cli/cmd/config"
 	"k8s.io/client-go/util/homedir"
 )
-
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "porter",
-	Short: "Porter is a dashboard for managing Kubernetes clusters.",
-	Long:  `Porter is a tool for creating, versioning, and updating Kubernetes deployments using a visual dashboard. For more information, visit github.com/porter-dev/porter`,
-}
 
 var home = homedir.HomeDir()
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	Setup()
-
-	rootCmd.PersistentFlags().AddFlagSet(utils.DefaultFlagSet)
-
-	if config.Version != "dev" {
+func Execute(ctx context.Context) error {
+	if cfg.Version != "dev" {
 		ghClient := github.NewClient(nil)
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
 		release, _, err := ghClient.Repositories.GetLatestRelease(ctx, "porter-dev", "porter")
 		if err == nil {
 			release.GetURL()
 			// we do not care for an error here because we do not want to block the user here
-			constraint, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(config.Version, "v")))
+			constraint, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(cfg.Version, "v")))
 			if err == nil {
 				latestRelease, err := semver.NewVersion(strings.TrimPrefix(release.GetTagName(), "v"))
 				if err == nil {
@@ -59,12 +46,14 @@ func Execute() {
 		}
 	}
 
+	rootCmd, err := RegisterCommands()
+	if err != nil {
+		return fmt.Errorf("error setting up commands")
+	}
+
 	if err := rootCmd.Execute(); err != nil {
 		color.New(color.FgRed).Println(err)
 		os.Exit(1)
 	}
-}
-
-func Setup() {
-	config.InitAndLoadConfig()
+	return nil
 }

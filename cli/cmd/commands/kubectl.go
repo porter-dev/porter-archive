@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -8,31 +8,31 @@ import (
 
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/spf13/cobra"
 )
 
-var kubectlCmd = &cobra.Command{
-	Use:   "kubectl",
-	Short: "Use kubectl to interact with a Porter cluster",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, runKubectl)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
+func registerCommand_Kubectl(cliConf config.CLIConfig) *cobra.Command {
+	kubectlCmd := &cobra.Command{
+		Use:   "kubectl",
+		Short: "Use kubectl to interact with a Porter cluster",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runKubectl)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+	return kubectlCmd
 }
 
-func init() {
-	rootCmd.AddCommand(kubectlCmd)
-}
-
-func runKubectl(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	_, err := exec.LookPath("kubectl")
 	if err != nil {
 		return fmt.Errorf("error finding kubectl: %w", err)
 	}
 
-	tmpFile, err := downloadTempKubeconfig(client)
+	tmpFile, err := downloadTempKubeconfig(ctx, client, cliConf)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func runKubectl(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	return nil
 }
 
-func downloadTempKubeconfig(client *api.Client) (string, error) {
+func downloadTempKubeconfig(ctx context.Context, client api.Client, cliConf config.CLIConfig) (string, error) {
 	tmpFile, err := os.CreateTemp("", "porter_kubeconfig_*.yaml")
 	if err != nil {
 		return "", fmt.Errorf("error creating temp file for kubeconfig: %w", err)
@@ -65,7 +65,7 @@ func downloadTempKubeconfig(client *api.Client) (string, error) {
 
 	defer tmpFile.Close()
 
-	resp, err := client.GetKubeconfig(context.Background(), cliConf.Project, cliConf.Cluster, cliConf.Kubeconfig)
+	resp, err := client.GetKubeconfig(ctx, cliConf.Project, cliConf.Cluster, cliConf.Kubeconfig)
 	if err != nil {
 		return "", fmt.Errorf("error fetching kubeconfig for cluster: %w", err)
 	}

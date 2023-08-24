@@ -121,6 +121,10 @@ export const usePorterYaml = (source: SourceOptions) => {
         clusterId: currentCluster.id,
       });
     }
+
+    if (!data && detectedServices) {
+      setDetectedServices(null);
+    }
   }, [data]);
 
   return detectedServices;

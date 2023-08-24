@@ -22,7 +22,8 @@ import (
 // Kubeconfig creates a service account for a project by parsing the local
 // kubeconfig and resolving actions that must be performed.
 func Kubeconfig(
-	client *api.Client,
+	ctx context.Context,
+	client api.Client,
 	kubeconfigPath string,
 	contexts []string,
 	projectID uint,
@@ -41,7 +42,7 @@ func Kubeconfig(
 
 	// send kubeconfig to client
 	resp, err := client.CreateProjectCandidates(
-		context.Background(),
+		ctx,
 		projectID,
 		&types.CreateClusterCandidateRequest{
 			Kubeconfig: string(rawBytes),
@@ -166,6 +167,7 @@ func Kubeconfig(
 					}
 				case types.GCPKeyData:
 					err := resolveGCPKeyAction(
+						ctx,
 						cc.Server,
 						cc.Name,
 						allResolver,
@@ -189,7 +191,7 @@ func Kubeconfig(
 			}
 
 			resp, err := client.CreateProjectCluster(
-				context.Background(),
+				ctx,
 				projectID,
 				cc.ID,
 				allResolver,
@@ -203,7 +205,7 @@ func Kubeconfig(
 			cluster = &clExt
 		} else {
 			resp, err := client.GetProjectCluster(
-				context.Background(),
+				ctx,
 				projectID,
 				cc.CreatedClusterID,
 			)
@@ -306,6 +308,7 @@ func resolveTokenDataAction(
 
 // resolves a gcp key data action
 func resolveGCPKeyAction(
+	ctx context.Context,
 	endpoint string,
 	clusterName string,
 	resolver *types.ClusterResolverAll,
@@ -325,7 +328,7 @@ Would you like to proceed? %s `,
 	}
 
 	if userResp := strings.ToLower(userResp); userResp == "y" || userResp == "yes" {
-		agent, err := gcpLocal.NewDefaultAgent()
+		agent, err := gcpLocal.NewDefaultAgent(ctx)
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return resolveGCPKeyActionManual(endpoint, clusterName, resolver)

@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/porter-dev/porter/cli/cmd/config"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
 
 	api "github.com/porter-dev/porter/api/client"
@@ -15,36 +16,34 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// getCmd represents the "porter get" base command when called
-// without any subcommands
-var getCmd = &cobra.Command{
-	Use:   "get [release]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Fetches a release.",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, get)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-// getValuesCmd represents the "porter get values" command
-var getValuesCmd = &cobra.Command{
-	Use:   "values [release]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Fetches the Helm values for a release.",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, getValues)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
 var output string
 
-func init() {
+func registerCommand_Get(cliConf config.CLIConfig) *cobra.Command {
+	getCmd := &cobra.Command{
+		Use:   "get [release]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Fetches a release.",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, get)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+
+	// getValuesCmd represents the "porter get values" command
+	getValuesCmd := &cobra.Command{
+		Use:   "values [release]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Fetches the Helm values for a release.",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, getValues)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+
 	getCmd.PersistentFlags().StringVar(
 		&namespace,
 		"namespace",
@@ -61,7 +60,7 @@ func init() {
 
 	getCmd.AddCommand(getValuesCmd)
 
-	rootCmd.AddCommand(getCmd)
+	return getCmd
 }
 
 type getReleaseInfo struct {
@@ -72,9 +71,7 @@ type getReleaseInfo struct {
 	RevisionID   int       `json:"revision_id" yaml:"revision_id"`
 }
 
-func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	ctx := context.Background()
-
+func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -88,7 +85,7 @@ func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 		return nil
 	}
 
-	rel, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0])
+	rel, err := client.GetRelease(ctx, cliConf.Project, cliConf.Cluster, namespace, args[0])
 	if err != nil {
 		return err
 	}
@@ -126,9 +123,7 @@ func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 	return nil
 }
 
-func getValues(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	ctx := context.Background()
-
+func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -142,7 +137,7 @@ func getValues(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 		return nil
 	}
 
-	rel, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0])
+	rel, err := client.GetRelease(ctx, cliConf.Project, cliConf.Cluster, namespace, args[0])
 	if err != nil {
 		return err
 	}

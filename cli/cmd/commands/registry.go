@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -11,78 +11,75 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )
 
-// registryCmd represents the "porter registry" base command when called
-// without any subcommands
-var registryCmd = &cobra.Command{
-	Use:     "registry",
-	Aliases: []string{"registries"},
-	Short:   "Commands that read from a connected registry",
-}
+func registerCommand_Registry(cliConf config.CLIConfig) *cobra.Command {
+	registryCmd := &cobra.Command{
+		Use:     "registry",
+		Aliases: []string{"registries"},
+		Short:   "Commands that read from a connected registry",
+	}
 
-var registryListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Lists the registries linked to a project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listRegistries)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	registryListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "Lists the registries linked to a project",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listRegistries)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var registryDeleteCmd = &cobra.Command{
-	Use:   "delete [id]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Deletes the registry with the given id",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteRegistry)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	registryDeleteCmd := &cobra.Command{
+		Use:   "delete [id]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Deletes the registry with the given id",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteRegistry)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var registryReposCmd = &cobra.Command{
-	Use:     "repo",
-	Aliases: []string{"repos", "repository", "repositories"},
-	Short:   "Commands that perform operations on image registry repositories",
-}
+	registryReposCmd := &cobra.Command{
+		Use:     "repo",
+		Aliases: []string{"repos", "repository", "repositories"},
+		Short:   "Commands that perform operations on image registry repositories",
+	}
 
-var registryReposListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Lists the repositories in an image registry",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listRepos)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	registryReposListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "Lists the repositories in an image registry",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listRepos)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var registryImageCmd = &cobra.Command{
-	Use:     "image",
-	Aliases: []string{"images"},
-	Short:   "Commands that perform operations on image in a repository",
-}
+	registryImageCmd := &cobra.Command{
+		Use:     "image",
+		Aliases: []string{"images"},
+		Short:   "Commands that perform operations on image in a repository",
+	}
 
-var registryImageListCmd = &cobra.Command{
-	Use:   "list [repo_name]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Lists the images the specified image repository",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listImages)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(registryCmd)
+	registryImageListCmd := &cobra.Command{
+		Use:   "list [repo_name]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Lists the images the specified image repository",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listImages)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
 	registryCmd.PersistentFlags().AddFlagSet(utils.RegistryFlagSet)
 
@@ -94,14 +91,16 @@ func init() {
 
 	registryCmd.AddCommand(registryImageCmd)
 	registryImageCmd.AddCommand(registryImageListCmd)
+
+	return registryCmd
 }
 
-func listRegistries(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listRegistries(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	pID := cliConf.Project
 
 	// get the list of namespaces
 	resp, err := client.ListRegistries(
-		context.Background(),
+		ctx,
 		pID,
 	)
 	if err != nil {
@@ -130,7 +129,7 @@ func listRegistries(user *types.GetAuthenticatedUserResponse, client *api.Client
 	return nil
 }
 
-func deleteRegistry(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteRegistry(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Are you sure you'd like to delete the registry with id %s? %s `,
@@ -148,7 +147,7 @@ func deleteRegistry(user *types.GetAuthenticatedUserResponse, client *api.Client
 			return err
 		}
 
-		err = client.DeleteProjectRegistry(context.Background(), cliConf.Project, uint(id))
+		err = client.DeleteProjectRegistry(ctx, cliConf.Project, uint(id))
 
 		if err != nil {
 			return err
@@ -160,13 +159,13 @@ func deleteRegistry(user *types.GetAuthenticatedUserResponse, client *api.Client
 	return nil
 }
 
-func listRepos(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listRepos(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	pID := cliConf.Project
 	rID := cliConf.Registry
 
 	// get the list of namespaces
 	resp, err := client.ListRegistryRepositories(
-		context.Background(),
+		ctx,
 		pID,
 		rID,
 	)
@@ -190,14 +189,14 @@ func listRepos(user *types.GetAuthenticatedUserResponse, client *api.Client, arg
 	return nil
 }
 
-func listImages(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func listImages(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	pID := cliConf.Project
 	rID := cliConf.Registry
 	repoName := args[0]
 
 	// get the list of namespaces
 	resp, err := client.ListImages(
-		context.Background(),
+		ctx,
 		pID,
 		rID,
 		repoName,

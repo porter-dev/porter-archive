@@ -46,8 +46,11 @@ type LatestAppRevisionRequest struct {
 
 // LatestAppRevisionResponse is the response object for the /apps/{porter_app_name}/latest endpoint
 type LatestAppRevisionResponse struct {
-	B64AppProto    string `json:"b64_app_proto"`
-	Status         string `json:"status"`
+	// B64AppProto is the base64 encoded app proto definition
+	B64AppProto string `json:"b64_app_proto"`
+	// Status is the status of the revision
+	Status string `json:"status"`
+	// RevisionNumber is the revision number with respect to the app and deployment target
 	RevisionNumber uint64 `json:"revision_number"`
 }
 

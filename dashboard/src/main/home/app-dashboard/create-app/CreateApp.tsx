@@ -307,10 +307,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             <Error message={"Service settings are not properly configured."} />
           );
         }
-
-        if (appErrors.includes("image")) {
-          return <Error message={"App image is not properly set."} />;
-        }
       }
       return <Error message={"App could not be deployed as defined."} />;
     }

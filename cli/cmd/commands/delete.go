@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -15,11 +15,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// deleteCmd represents the "porter delete" base command
-var deleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Deletes a deployment",
-	Long: fmt.Sprintf(`
+func registerCommand_Delete(cliConf config.CLIConfig) *cobra.Command {
+	deleteCmd := &cobra.Command{
+		Use:   "delete",
+		Short: "Deletes a deployment",
+		Long: fmt.Sprintf(`
 %s
 
 Destroys a deployment, which is read based on env variables.
@@ -31,74 +31,73 @@ deleting a configuration:
   PORTER_CLUSTER              Cluster ID that contains the project
   PORTER_PROJECT              Project ID that contains the application
 	`,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter delete\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter delete"),
-	),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, deleteDeployment)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter delete\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter delete"),
+		),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteDeployment)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-// deleteAppsCmd represents the "porter delete apps" subcommand
-var deleteAppsCmd = &cobra.Command{
-	Use:     "apps",
-	Aliases: []string{"app", "applications", "application"},
-	Short:   "Deletes an existing app",
-	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, deleteApp)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	// deleteAppsCmd represents the "porter delete apps" subcommand
+	deleteAppsCmd := &cobra.Command{
+		Use:     "apps",
+		Aliases: []string{"app", "applications", "application"},
+		Short:   "Deletes an existing app",
+		Args:    cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteApp)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-// deleteJobsCmd represents the "porter delete jobs" subcommand
-var deleteJobsCmd = &cobra.Command{
-	Use:     "jobs",
-	Aliases: []string{"job"},
-	Short:   "Deletes an existing job",
-	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, deleteJob)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	// deleteJobsCmd represents the "porter delete jobs" subcommand
+	deleteJobsCmd := &cobra.Command{
+		Use:     "jobs",
+		Aliases: []string{"job"},
+		Short:   "Deletes an existing job",
+		Args:    cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteJob)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-// deleteAddonsCmd represents the "porter delete addons" subcommand
-var deleteAddonsCmd = &cobra.Command{
-	Use:     "addons",
-	Aliases: []string{"addon"},
-	Short:   "Deletes an existing addon",
-	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, deleteAddon)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	// deleteAddonsCmd represents the "porter delete addons" subcommand
+	deleteAddonsCmd := &cobra.Command{
+		Use:     "addons",
+		Aliases: []string{"addon"},
+		Short:   "Deletes an existing addon",
+		Args:    cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteAddon)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-// deleteHelmCmd represents the "porter delete helm" subcommand
-var deleteHelmCmd = &cobra.Command{
-	Use:     "helm",
-	Aliases: []string{"helmrepo", "helmrepos"},
-	Short:   "Deletes an existing helm repo",
-	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, deleteHelm)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	// deleteHelmCmd represents the "porter delete helm" subcommand
+	deleteHelmCmd := &cobra.Command{
+		Use:     "helm",
+		Aliases: []string{"helmrepo", "helmrepos"},
+		Short:   "Deletes an existing helm repo",
+		Args:    cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteHelm)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-func init() {
 	deleteCmd.PersistentFlags().StringVar(
 		&namespace,
 		"namespace",
@@ -111,7 +110,7 @@ func init() {
 	deleteCmd.AddCommand(deleteAddonsCmd)
 	deleteCmd.AddCommand(deleteHelmCmd)
 
-	rootCmd.AddCommand(deleteCmd)
+	return deleteCmd
 }
 
 func deleteDeployment(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {

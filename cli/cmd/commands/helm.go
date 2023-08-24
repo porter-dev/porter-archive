@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -12,19 +12,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var helmCmd = &cobra.Command{
-	Use:   "helm",
-	Short: "Use helm to interact with a Porter cluster",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, runHelm)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+func registerCommand_Helm(cliConf config.CLIConfig) *cobra.Command {
+	helmCmd := &cobra.Command{
+		Use:   "helm",
+		Short: "Use helm to interact with a Porter cluster",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runHelm)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-func init() {
-	rootCmd.AddCommand(helmCmd)
+	return helmCmd
 }
 
 func runHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {

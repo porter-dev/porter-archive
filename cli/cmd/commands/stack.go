@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -16,49 +16,45 @@ import (
 
 var linkedApps []string
 
-// stackCmd represents the "porter stack" base command when called
-// without any subcommands
-var stackCmd = &cobra.Command{
-	Use:     "stack",
-	Aliases: []string{"stacks"},
-	Short:   "Commands that control Porter Stacks",
-}
+func registerCommand_Stack(cliConf config.CLIConfig) *cobra.Command {
+	stackCmd := &cobra.Command{
+		Use:     "stack",
+		Aliases: []string{"stacks"},
+		Short:   "Commands that control Porter Stacks",
+	}
 
-var stackEnvGroupCmd = &cobra.Command{
-	Use:     "env-group",
-	Aliases: []string{"eg", "envgroup", "env-groups", "envgroups"},
-	Short:   "Commands to add or remove an env group in a stack",
-	Run: func(cmd *cobra.Command, args []string) {
-		color.New(color.FgRed).Fprintln(os.Stderr, "need to specify an operation to continue")
-	},
-}
+	stackEnvGroupCmd := &cobra.Command{
+		Use:     "env-group",
+		Aliases: []string{"eg", "envgroup", "env-groups", "envgroups"},
+		Short:   "Commands to add or remove an env group in a stack",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, _ = color.New(color.FgRed).Fprintln(os.Stderr, "need to specify an operation to continue")
+		},
+	}
 
-var stackEnvGroupAddCmd = &cobra.Command{
-	Use:   "add [name]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Add an env group to a stack",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, stackAddEnvGroup)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	stackEnvGroupAddCmd := &cobra.Command{
+		Use:   "add [name]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Add an env group to a stack",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, stackAddEnvGroup)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var stackEnvGroupRemoveCmd = &cobra.Command{
-	Use:   "remove [name]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Remove an existing env group from a stack",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, stackRemoveEnvGroup)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(stackCmd)
+	stackEnvGroupRemoveCmd := &cobra.Command{
+		Use:   "remove [name]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Remove an existing env group from a stack",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, stackRemoveEnvGroup)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
 	stackCmd.AddCommand(stackEnvGroupCmd)
 
@@ -101,6 +97,8 @@ func init() {
 
 	stackEnvGroupCmd.AddCommand(stackEnvGroupAddCmd)
 	stackEnvGroupCmd.AddCommand(stackEnvGroupRemoveCmd)
+
+	return stackCmd
 }
 
 func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {

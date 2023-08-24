@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -12,25 +12,14 @@ import (
 	"github.com/fatih/color"
 	"github.com/google/go-github/v41/github"
 	cfg "github.com/porter-dev/porter/cli/cmd/config"
-	"github.com/porter-dev/porter/cli/cmd/utils"
-	"github.com/spf13/cobra"
 	"k8s.io/client-go/util/homedir"
 )
-
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "porter",
-	Short: "Porter is a dashboard for managing Kubernetes clusters.",
-	Long:  `Porter is a tool for creating, versioning, and updating Kubernetes deployments using a visual dashboard. For more information, visit github.com/porter-dev/porter`,
-}
 
 var home = homedir.HomeDir()
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute(ctx context.Context) error {
-	rootCmd.PersistentFlags().AddFlagSet(utils.DefaultFlagSet)
-
 	if cfg.Version != "dev" {
 		ghClient := github.NewClient(nil)
 		ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
@@ -55,6 +44,11 @@ func Execute(ctx context.Context) error {
 				}
 			}
 		}
+	}
+
+	rootCmd, err := RegisterCommands()
+	if err != nil {
+		return fmt.Errorf("error setting up commands")
 	}
 
 	if err := rootCmd.Execute(); err != nil {

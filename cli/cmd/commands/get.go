@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -16,36 +16,34 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// getCmd represents the "porter get" base command when called
-// without any subcommands
-var getCmd = &cobra.Command{
-	Use:   "get [release]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Fetches a release.",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, get)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-// getValuesCmd represents the "porter get values" command
-var getValuesCmd = &cobra.Command{
-	Use:   "values [release]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Fetches the Helm values for a release.",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, getValues)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
 var output string
 
-func init() {
+func registerCommand_Get(cliConf config.CLIConfig) *cobra.Command {
+	getCmd := &cobra.Command{
+		Use:   "get [release]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Fetches a release.",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, get)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+
+	// getValuesCmd represents the "porter get values" command
+	getValuesCmd := &cobra.Command{
+		Use:   "values [release]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Fetches the Helm values for a release.",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, getValues)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+
 	getCmd.PersistentFlags().StringVar(
 		&namespace,
 		"namespace",
@@ -62,7 +60,7 @@ func init() {
 
 	getCmd.AddCommand(getValuesCmd)
 
-	rootCmd.AddCommand(getCmd)
+	return getCmd
 }
 
 type getReleaseInfo struct {

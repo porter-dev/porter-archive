@@ -1,9 +1,11 @@
-package cmd
+package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/fatih/color"
 
@@ -15,50 +17,48 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var authCmd = &cobra.Command{
-	Use:   "auth",
-	Short: "Commands for authenticating to a Porter server",
-}
-
-var loginCmd = &cobra.Command{
-	Use:   "login",
-	Short: "Authorizes a user for a given Porter server",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := login(cmd.Context())
-		if err != nil {
-			color.Red("Error logging in: %s\n", err.Error())
-			os.Exit(1)
-		}
-	},
-}
-
-var registerCmd = &cobra.Command{
-	Use:   "register",
-	Short: "Creates a user for a given Porter server",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := register(cmd.Context())
-		if err != nil {
-			color.Red("Error registering: %s\n", err.Error())
-			os.Exit(1)
-		}
-	},
-}
-
-var logoutCmd = &cobra.Command{
-	Use:   "logout",
-	Short: "Logs a user out of a given Porter server",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, logout)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
 var manual bool = false
 
-func init() {
-	rootCmd.AddCommand(authCmd)
+func registerCommand_Auth(cliConf config.CLIConfig) *cobra.Command {
+	authCmd := &cobra.Command{
+		Use:   "auth",
+		Short: "Commands for authenticating to a Porter server",
+	}
+
+	loginCmd := &cobra.Command{
+		Use:   "login",
+		Short: "Authorizes a user for a given Porter server",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := login(cmd.Context(), cliConf)
+			if err != nil {
+				color.Red("Error logging in: %s\n", err.Error())
+				os.Exit(1)
+			}
+		},
+	}
+
+	registerCmd := &cobra.Command{
+		Use:   "register",
+		Short: "Creates a user for a given Porter server",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := register(cmd.Context(), cliConf)
+			if err != nil {
+				color.Red("Error registering: %s\n", err.Error())
+				os.Exit(1)
+			}
+		},
+	}
+
+	logoutCmd := &cobra.Command{
+		Use:   "logout",
+		Short: "Logs a user out of a given Porter server",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, logout)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
 	authCmd.AddCommand(loginCmd)
 	authCmd.AddCommand(registerCmd)
@@ -70,101 +70,104 @@ func init() {
 		false,
 		"whether to prompt for manual authentication (username/pw)",
 	)
+
+	return authCmd
 }
 
-func login(ctx context.Context) error {
-	cliConf, err := config.InitAndLoadConfig()
-	if err != nil {
-		return fmt.Errorf("error loading porter config: %w", err)
-	}
-
+func login(ctx context.Context, cliConf config.CLIConfig) error {
 	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
 		BaseURL:     fmt.Sprintf("%s/api", cliConf.Host),
 		BearerToken: cliConf.Token,
 	})
 	if err != nil {
-		return fmt.Errorf("error creating porter API client: %w", err)
+		if !errors.Is(err, api.ErrNoAuthCredential) {
+			return fmt.Errorf("error creating porter API client: %w", err)
+		}
 	}
 
 	user, err := client.AuthCheck(ctx)
+	if err != nil {
+		if !strings.Contains(err.Error(), "Forbidden") {
+			return fmt.Errorf("unexpected error performing authorization check")
+		}
+		fmt.Println(err)
+	}
 
-	if err == nil {
-		// set the token if the user calls login with the --token flag or the PORTER_TOKEN env
-		if cliConf.Token != "" {
-			cliConf.SetToken(cliConf.Token)
-			color.New(color.FgGreen).Println("Successfully logged in!")
-
-			projID, exists, err := api.GetProjectIDFromToken(cliConf.Token)
-			if err != nil {
-				return err
-			}
-
-			// if project ID does not exist for the token, this is a user-issued CLI token, so the project
-			// ID should be queried
-			if !exists {
-				err = setProjectForUser(ctx, client, cliConf, user.ID)
-
-				if err != nil {
-					return err
-				}
-			} else {
-				// if the project ID does exist for the token, this is a project-issued token, and
-				// the project should be set automatically
-				err = cliConf.SetProject(ctx, client, projID)
-
-				if err != nil {
-					return err
-				}
-
-				err = setProjectCluster(ctx, client, cliConf, projID)
-
-				if err != nil {
-					return err
-				}
-			}
-		} else {
-			color.Yellow("You are already logged in. If you'd like to log out, run \"porter auth logout\".")
+	if cliConf.Token == "" {
+		// check for the --manual flag
+		if manual {
+			return loginManual(ctx, cliConf, client)
 		}
 
-		return nil
+		// log the user in
+		token, err := loginBrowser.Login(cliConf.Host)
+		if err != nil {
+			return err
+		}
+
+		// set the token in config
+		err = cliConf.SetToken(token)
+
+		if err != nil {
+			return err
+		}
+
+		client, err = api.NewClientWithConfig(ctx, api.NewClientInput{
+			BaseURL:     fmt.Sprintf("%s/api", cliConf.Host),
+			BearerToken: token,
+		})
+		if err != nil {
+			return fmt.Errorf("error creating porter API client: %w", err)
+		}
+
+		user, err = client.AuthCheck(ctx)
+
+		if err != nil {
+			color.Red("Invalid token.")
+			return err
+		}
+
+		_, _ = color.New(color.FgGreen).Println("Successfully logged in!")
+
+		return setProjectForUser(ctx, client, cliConf, user.ID)
+
 	}
 
-	// check for the --manual flag
-	if manual {
-		return loginManual(ctx, cliConf, client)
+	err = cliConf.SetToken(cliConf.Token)
+	if err != nil {
+		return err
 	}
+	_, _ = color.New(color.FgGreen).Println("Successfully logged in!")
 
-	// log the user in
-	token, err := loginBrowser.Login(cliConf.Host)
+	projID, exists, err := api.GetProjectIDFromToken(cliConf.Token)
 	if err != nil {
 		return err
 	}
 
-	// set the token in config
-	err = cliConf.SetToken(token)
+	// if project ID does not exist for the token, this is a user-issued CLI token, so the project
+	// ID should be queried
+	if !exists {
+		err = setProjectForUser(ctx, client, cliConf, user.ID)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
+	} else {
+		// if the project ID does exist for the token, this is a project-issued token, and
+		// the project should be set automatically
+		err = cliConf.SetProject(ctx, client, projID)
+
+		if err != nil {
+			return err
+		}
+
+		err = setProjectCluster(ctx, client, cliConf, projID)
+
+		if err != nil {
+			return err
+		}
 	}
-
-	client, err = api.NewClientWithConfig(ctx, api.NewClientInput{
-		BaseURL:     fmt.Sprintf("%s/api", cliConf.Host),
-		BearerToken: token,
-	})
-	if err != nil {
-		return fmt.Errorf("error creating porter API client: %w", err)
-	}
-
-	user, err = client.AuthCheck(ctx)
-
-	if err != nil {
-		color.Red("Invalid token.")
-		return err
-	}
-
-	color.New(color.FgGreen).Println("Successfully logged in!")
-
-	return setProjectForUser(ctx, client, cliConf, user.ID)
+	return nil
 }
 
 func setProjectForUser(ctx context.Context, client api.Client, config config.CLIConfig, _ uint) error {
@@ -240,18 +243,15 @@ func loginManual(ctx context.Context, cliConf config.CLIConfig, client api.Clien
 	return nil
 }
 
-func register(ctx context.Context) error {
-	config, err := config.InitAndLoadConfig()
-	if err != nil {
-		return fmt.Errorf("error loading porter config: %w", err)
-	}
-
+func register(ctx context.Context, cliConf config.CLIConfig) error {
 	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
-		BaseURL:     fmt.Sprintf("%s/api", config.Host),
-		BearerToken: config.Token,
+		BaseURL:     fmt.Sprintf("%s/api", cliConf.Host),
+		BearerToken: cliConf.Token,
 	})
 	if err != nil {
-		return fmt.Errorf("error creating porter API client: %w", err)
+		if !errors.Is(err, api.ErrNoAuthCredential) {
+			return fmt.Errorf("error creating porter API client: %w", err)
+		}
 	}
 
 	fmt.Println("Please register your admin account with an email and password:")

@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -16,62 +16,58 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// clusterCmd represents the "porter cluster" base command when called
-// without any subcommands
-var clusterCmd = &cobra.Command{
-	Use:     "cluster",
-	Aliases: []string{"clusters"},
-	Short:   "Commands that read from a connected cluster",
-}
+func registerCommand_Cluster(cliConf config.CLIConfig) *cobra.Command {
+	clusterCmd := &cobra.Command{
+		Use:     "cluster",
+		Aliases: []string{"clusters"},
+		Short:   "Commands that read from a connected cluster",
+	}
 
-var clusterListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Lists the linked clusters in the current project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, listClusters)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-var clusterDeleteCmd = &cobra.Command{
-	Use:   "delete [id]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Deletes the cluster with the given id",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, deleteCluster)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-var clusterNamespaceCmd = &cobra.Command{
-	Use:     "namespace",
-	Aliases: []string{"namespaces"},
-	Short:   "Commands that perform operations on cluster namespaces",
-}
-
-var clusterNamespaceListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Lists the namespaces in a cluster",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, listNamespaces)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(clusterCmd)
-
-	clusterCmd.AddCommand(clusterNamespaceCmd)
+	clusterListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "Lists the linked clusters in the current project",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listClusters)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 	clusterCmd.AddCommand(clusterListCmd)
+
+	clusterDeleteCmd := &cobra.Command{
+		Use:   "delete [id]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Deletes the cluster with the given id",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteCluster)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 	clusterCmd.AddCommand(clusterDeleteCmd)
 
+	clusterNamespaceCmd := &cobra.Command{
+		Use:     "namespace",
+		Aliases: []string{"namespaces"},
+		Short:   "Commands that perform operations on cluster namespaces",
+	}
+	clusterCmd.AddCommand(clusterNamespaceCmd)
+
+	clusterNamespaceListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "Lists the namespaces in a cluster",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listNamespaces)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 	clusterNamespaceCmd.AddCommand(clusterNamespaceListCmd)
+
+	return clusterCmd
 }
 
 func listClusters(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {

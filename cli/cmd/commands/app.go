@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -43,55 +43,67 @@ var (
 	appMemoryMi      int
 )
 
-// appCmd represents the "porter app" base command when called
-// without any subcommands
-var appCmd = &cobra.Command{
-	Use:   "app",
-	Short: "Runs a command for your application.",
+func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
+	appCmd := &cobra.Command{
+		Use:   "app",
+		Short: "Runs a command for your application.",
+	}
+
+	// appRunCmd represents the "porter app run" subcommand
+	appRunCmd := &cobra.Command{
+		Use:   "run [application] -- COMMAND [args...]",
+		Args:  cobra.MinimumNArgs(2),
+		Short: "Runs a command inside a connected cluster container.",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, appRun)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+	appRunFlags(appRunCmd)
+	appCmd.AddCommand(appRunCmd)
+
+	// appRunCleanupCmd represents the "porter app run cleanup" subcommand
+	appRunCleanupCmd := &cobra.Command{
+		Use:   "cleanup",
+		Args:  cobra.NoArgs,
+		Short: "Delete any lingering ephemeral pods that were created with \"porter app run\".",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, appCleanup)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+	appRunCmd.AddCommand(appRunCleanupCmd)
+
+	// appUpdateTagCmd represents the "porter app update-tag" subcommand
+	appUpdateTagCmd := &cobra.Command{
+		Use:   "update-tag [application]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Updates the image tag for an application.",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, appUpdateTag)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+
+	appUpdateTagCmd.PersistentFlags().StringVarP(
+		&appTag,
+		"tag",
+		"t",
+		"",
+		"the specified tag to use, default is \"latest\"",
+	)
+	appCmd.AddCommand(appUpdateTagCmd)
+
+	return appCmd
 }
 
-// appRunCmd represents the "porter app run" subcommand
-var appRunCmd = &cobra.Command{
-	Use:   "run [application] -- COMMAND [args...]",
-	Args:  cobra.MinimumNArgs(2),
-	Short: "Runs a command inside a connected cluster container.",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, appRun)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-// appRunCleanupCmd represents the "porter app run cleanup" subcommand
-var appRunCleanupCmd = &cobra.Command{
-	Use:   "cleanup",
-	Args:  cobra.NoArgs,
-	Short: "Delete any lingering ephemeral pods that were created with \"porter app run\".",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, appCleanup)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-// appUpdateTagCmd represents the "porter app update-tag" subcommand
-var appUpdateTagCmd = &cobra.Command{
-	Use:   "update-tag [application]",
-	Args:  cobra.MinimumNArgs(1),
-	Short: "Updates the image tag for an application.",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, appUpdateTag)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(appCmd)
-
+func appRunFlags(appRunCmd *cobra.Command) {
 	appRunCmd.PersistentFlags().BoolVarP(
 		&appExistingPod,
 		"existing_pod",
@@ -138,17 +150,6 @@ func init() {
 		"",
 		"name of the container inside pod to run the command in",
 	)
-	appRunCmd.AddCommand(appRunCleanupCmd)
-
-	appUpdateTagCmd.PersistentFlags().StringVarP(
-		&appTag,
-		"tag",
-		"t",
-		"",
-		"the specified tag to use, default is \"latest\"",
-	)
-	appCmd.AddCommand(appRunCmd)
-	appCmd.AddCommand(appUpdateTagCmd)
 }
 
 func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {

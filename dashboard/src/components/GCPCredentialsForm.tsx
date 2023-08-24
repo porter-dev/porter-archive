@@ -14,6 +14,7 @@ import Spacer from "./porter/Spacer";
 import Container from "./porter/Container";
 
 
+
 type Props = {
   goBack: () => void;
   proceed: (id: string) => void;
@@ -27,11 +28,17 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
+  const [gcpCloudProviderCredentialID, setGCPCloudProviderCredentialId] = useState<string>("")
 
   useEffect(() => {
     setDetected(undefined);
   }, []);
 
+  useEffect(() => {
+
+    gcpIntegration()
+
+  }, [detected])
   interface FailureState {
     condition: boolean;
     errorMessage: string;
@@ -48,7 +55,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
     message: string;
   };
 
-  const saveCredentials = async () => {
+  const gcpIntegration = async () => {
     failureStates.forEach((failureState) => {
       if (failureState.condition) {
         setErrorMessage(failureState.errorMessage);
@@ -70,16 +77,48 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
         setErrorMessage("Unable to store cluster credentials. Please try again later. If the problem persists, contact support@porter.run")
         return;
       }
-      const gcpCloudProviderCredentialID = gcpIntegrationResponse.data.cloud_provider_credentials_id;
-      proceed(gcpCloudProviderCredentialID)
+      setGCPCloudProviderCredentialId(gcpIntegrationResponse.data.cloud_provider_credentials_id)
+      setIsLoading(false)
+      // console.log(gcpIntegrationResponse.data.cloud_provider_credentials_id)
 
-    } catch (err) {
+      // if (gcpIntegrationResponse.data.cloud_provider_credentials_id) {
+      //   console.log("Will Call Preflight Checks Here")
+      //   const data = {
+      //     "preflight_checks": [
+      //       {
+      //         "key": "apisEnabled",
+      //         "value": {
+      //           "metadata": [],
+      //           "code": "",
+      //           "message": ""
+      //         }
+      //       }
+      //     ]
+      //   };
+
+      //   setPreflightData(data);
+
+      //}
+    }
+    catch (err) {
+      setIsLoading(false)
+
       if (err.response?.data?.error) {
         setErrorMessage(err.response?.data?.error.replace("unknown: ", ""));
       } else {
         setErrorMessage("Something went wrong, please try again later.");
       }
-    };
+    }
+
+  }
+
+
+  const saveCredentials = async () => {
+
+    if (gcpCloudProviderCredentialID) {
+      proceed(gcpCloudProviderCredentialID)
+    }
+
   }
 
   const handleLoadJSON = (serviceAccountJSONFile: string) => {
@@ -133,17 +172,21 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
         isRequired={true}
       />
 
-      {detected && serviceAccountKey && (
+      {detected && serviceAccountKey && (<>
         <AppearingDiv color={projectId ? "#8590ff" : "#fcba03"}>
           {detected.detected ? (
-            <I className="material-icons">check</I>
+            <>
+              <I className="material-icons">check</I>
+            </>
           ) : (
             <I className="material-icons">error</I>
           )}
+
           <Text color={detected.detected ? "#8590ff" : "#fcba03"}>
             {detected.message}
           </Text>
         </AppearingDiv>
+      </>
       )}
 
       <Spacer y={0.5} />
@@ -229,4 +272,10 @@ const AppearingDiv = styled.div<{ color?: string }>`
 const I = styled.i`
   font-size: 18px;
   margin-right: 5px;
+`;
+
+const StatusIcon = styled.img`
+  top: 20px;
+  right: 20px;
+  height: 18px;
 `;

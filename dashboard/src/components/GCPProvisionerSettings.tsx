@@ -28,6 +28,12 @@ import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
 import Link from "./porter/Link";
 import Text from "./porter/Text";
+import healthy from "assets/status-healthy.png";
+import failure from "assets/failure.svg";
+import Loading from "components/Loading";
+import Placeholder from "./Placeholder";
+import Fieldset from "./porter/Fieldset";
+import ExpandableSection from "./porter/ExpandableSection";
 
 const locationOptions = [
   { value: "us-east1", label: "us-east1" },
@@ -71,6 +77,12 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
+  const [detected, setDetected] = useState<Detected | undefined>(undefined);
+  const [preflightData, setPreflightData] = useState({})
+  const [isLoading, setIsLoading] = useState(false);
+
+
+
 
   const markStepStarted = async (step: string) => {
     try {
@@ -128,6 +140,20 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
     return "";
   }
+
+  const statusPreflight = (): string => {
+
+
+    if (!clusterNetworking.cidrRange) {
+      return "VPC CIDR range is required";
+    }
+    if (!VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.cidrRange)) {
+      return "VPC CIDR range must be in the format of [0-255].[0-255].0.0/16";
+    }
+
+    return "";
+  }
+
   const createCluster = async () => {
     const err = validateInputs();
     if (err !== "") {
@@ -182,56 +208,63 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       }),
     });
 
-    if (props.clusterId) {
-      data["cluster"]["clusterId"] = props.clusterId;
-    }
-
-    try {
-      setIsReadOnly(true);
-      setErrorMessage("");
-      setErrorDetails("")
-
-      if (!props.clusterId) {
-        markStepStarted("provisioning-started");
+    if (preflightData) {
+      if (props.clusterId) {
+        data["cluster"]["clusterId"] = props.clusterId;
       }
 
-      const res = await api.createContract("<token>", data, {
-        project_id: currentProject.id,
-      });
+      try {
+        setIsReadOnly(true);
+        setErrorMessage("");
+        setErrorDetails("")
 
-      setErrorMessage("");
-      setErrorDetails("");
+        if (!props.clusterId) {
+          markStepStarted("provisioning-started");
+        }
 
-      // Only refresh and set clusters on initial create
-      setShouldRefreshClusters(true);
-      api
-        .getClusters("<token>", {}, { id: currentProject.id })
-        .then(({ data }) => {
-          data.forEach((cluster: ClusterType) => {
-            if (cluster.id === res.data.contract_revision?.cluster_id) {
-              // setHasFinishedOnboarding(true);
-              setCurrentCluster(cluster);
-              OFState.actions.goTo("clean_up");
-              pushFiltered(props, "/cluster-dashboard", ["project_id"], {
-                cluster: cluster.name,
-              });
-            }
-          });
-        })
-        .catch((err) => {
-          setErrorMessage("Error fetching clusters");
-          setErrorDetails(err)
+        const res = await api.createContract("<token>", data, {
+          project_id: currentProject.id,
         });
 
-    } catch (err) {
-      const errMessage = err.response.data.error.replace("unknown: ", "");
+        setErrorMessage("");
+        setErrorDetails("");
+
+        // Only refresh and set clusters on initial create
+        setShouldRefreshClusters(true);
+        api
+          .getClusters("<token>", {}, { id: currentProject.id })
+          .then(({ data }) => {
+            data.forEach((cluster: ClusterType) => {
+              if (cluster.id === res.data.contract_revision?.cluster_id) {
+                // setHasFinishedOnboarding(true);
+                setCurrentCluster(cluster);
+                OFState.actions.goTo("clean_up");
+                pushFiltered(props, "/cluster-dashboard", ["project_id"], {
+                  cluster: cluster.name,
+                });
+              }
+            });
+          })
+          .catch((err) => {
+            setErrorMessage("Error fetching clusters");
+            setErrorDetails(err)
+          });
+
+      } catch (err) {
+        const errMessage = err.response.data.error.replace("unknown: ", "");
+        setIsClicked(false);
+        // TODO: handle different error conditions here from preflights
+        setErrorMessage(DEFAULT_ERROR_MESSAGE);
+        setErrorDetails(errMessage)
+      } finally {
+        setIsReadOnly(false);
+        setIsClicked(false);
+      }
+    } else {
       setIsClicked(false);
       // TODO: handle different error conditions here from preflights
       setErrorMessage(DEFAULT_ERROR_MESSAGE);
-      setErrorDetails(errMessage)
-    } finally {
-      setIsReadOnly(false);
-      setIsClicked(false);
+      setErrorDetails("Could not perform Preflight Checks ")
     }
   };
 
@@ -272,6 +305,88 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       setClusterNetworking(cn);
     }
   }, [props.selectedClusterVersion]);
+
+  useEffect(() => {
+    if (statusPreflight() == "") {
+      preflightChecks()
+    }
+
+  }, [props.selectedClusterVersion, clusterNetworking]);
+
+  const preflightChecks = async () => {
+    setIsLoading(true);
+
+    console.log("Will Call Preflight Checks Here")
+    const data = {
+      "preflight_checks": [
+        {
+          "key": "apisEnabled",
+          "value": {
+            "metadata": [],
+            "code": "",
+            "message": "Missing these APIs: cloudresourcemanager.googleapis.com"
+          }
+        },
+        {
+          "key": "apisEnabled",
+          "value": {
+            "metadata": [],
+            "code": "",
+            "message": "Missing these APIs: cloudresourcemanager.googleapis.com"
+          }
+        },
+        {
+          "key": "apisEnabled",
+          "value": {
+            "metadata": [],
+            "code": "",
+            "message": ""
+          }
+        }
+      ]
+    };
+    setIsLoading(false);
+
+    setPreflightData(data);
+
+  }
+
+  const PreflightCheckItem = ({ check }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const hasMessage = !!check.value.message;
+
+    const handleToggle = () => {
+      if (hasMessage) {
+        setIsExpanded(!isExpanded);
+      }
+    }
+
+    if (isLoading) {
+      return <Loading />;
+    }
+
+    return (
+      <CheckItemContainer hasMessage={hasMessage} onClick={handleToggle}>
+        <CheckItemTop>
+          {hasMessage ? <StatusIcon src={failure} /> : <StatusIcon src={healthy} />}
+          <Spacer inline x={1} />
+          <Text style={{ marginLeft: '10px', flex: 1 }}>{check.key}</Text>
+          {hasMessage && <ExpandIcon className="material-icons" isExpanded={isExpanded}>
+            arrow_drop_down
+          </ExpandIcon>}
+        </CheckItemTop>
+        {isExpanded && hasMessage && (
+          <>
+
+            <Text>
+              {check.value.message}
+            </Text>
+
+          </>
+        )}
+      </CheckItemContainer>
+    );
+  };
 
   const renderForm = () => {
     // Render simplified form if initial create
@@ -331,8 +446,31 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   return (
     <>
       <StyledForm>{renderForm()}</StyledForm>
+
+      {props.credentialId && (<>
+        <AppearingDiv>
+
+          <>
+            {preflightData?.preflight_checks?.map((check: { key: React.Key | null | undefined; }) => (
+              <PreflightCheckItem key={check.key} check={check} />
+            ))}
+            {/* 
+            {preflightFailed && (
+              <Button onClick={gcpIntegration}>
+                Retry Preflight Check
+              </Button>
+            )
+            } */}
+          </>
+
+        </AppearingDiv>
+        <Spacer y={1} />
+
+      </>
+      )}
+
       <Button
-        disabled={isDisabled()}
+        disabled={isDisabled() || isLoading}
         onClick={createCluster}
         status={getStatus()}
       >
@@ -364,3 +502,55 @@ const errorMessageToModal = (errorMessage: string) => {
       return null;
   }
 };
+
+const AppearingDiv = styled.div<{ color?: string }>`
+  animation: floatIn 0.5s;
+  animation-fill-mode: forwards;
+  display: flex;
+  flex-direction: column; 
+  color: ${(props) => props.color || "#ffffff44"};
+  margin-left: 10px;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;
+const StatusIcon = styled.img`
+height: 14px;
+`;
+
+const CheckItemContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  border: 1px solid ${props => props.theme.border};
+  border-radius: 5px;
+  font-size: 13px;
+  width: 100%;
+  margin-bottom: 10px;
+  padding-left: 10px;
+  cursor: ${props => (props.hasMessage ? 'pointer' : 'default')};
+  background: ${props => props.theme.clickable.bg};
+
+`;
+
+const CheckItemTop = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: ${props => props.theme.clickable.bg};
+`;
+
+const ExpandIcon = styled.i<{ isExpanded: boolean }>`
+  margin-left: 8px;
+  color: #ffffff66;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 20px;
+  transform: ${props => props.isExpanded ? "" : "rotate(-90deg)"};
+`;

@@ -108,6 +108,9 @@ const AppView: React.FC<Props> = ({ match }) => {
 
       const porterApp = await porterAppValidator.parseAsync(res.data);
       return porterApp;
+    },
+    {
+      enabled: appParamsExist,
     }
   );
 

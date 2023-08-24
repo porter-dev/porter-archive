@@ -149,7 +149,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               "<token>",
               {
                 metric: hpaMetricType,
-                shouldsum: true,
+                shouldsum: false,
                 kind: kind,
                 name: selectedController?.metadata.name,
                 namespace: currentChart.namespace,

@@ -865,8 +865,8 @@ const getLatestRevision = baseApi<
     cluster_id: number;
     porter_app_name: string;
   }
->("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.porter_app_name}/latest`;
+>("GET", ({ project_id, cluster_id, porter_app_name }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/latest`;
 });
 
 const getGitlabProcfileContents = baseApi<

@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -22,13 +22,21 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// createCmd represents the "porter create" base command when called
-// without any subcommands
-var createCmd = &cobra.Command{
-	Use:   "create [kind]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Creates a new application with name given by the --app flag.",
-	Long: fmt.Sprintf(`
+var (
+	name        string
+	values      string
+	source      string
+	image       string
+	registryURL string
+	forceBuild  bool
+)
+
+func registerCommand_Create(cliConf config.CLIConfig) *cobra.Command {
+	createCmd := &cobra.Command{
+		Use:   "create [kind]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Creates a new application with name given by the --app flag.",
+		Long: fmt.Sprintf(`
 %s
 
 Creates a new application with name given by the --app flag and a "kind", which can be one of
@@ -62,32 +70,20 @@ To deploy an application from a Docker registry, use "--source registry" and pas
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter create\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --values values.yaml"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --path ./path/to/app"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source github"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source registry --image gcr.io/snowflake-12345/example-app:latest"),
-	),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, createFull)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-var (
-	name        string
-	values      string
-	source      string
-	image       string
-	registryURL string
-	forceBuild  bool
-)
-
-func init() {
-	rootCmd.AddCommand(createCmd)
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter create\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --values values.yaml"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --path ./path/to/app"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source github"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source registry --image gcr.io/snowflake-12345/example-app:latest"),
+		),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, createFull)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
 	createCmd.PersistentFlags().StringVar(
 		&name,
@@ -179,6 +175,7 @@ func init() {
 	)
 
 	createCmd.PersistentFlags().MarkDeprecated("force-build", "--force-build is deprecated")
+	return createCmd
 }
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}

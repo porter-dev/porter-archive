@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -19,23 +19,21 @@ import (
 	intstrutil "k8s.io/apimachinery/pkg/util/intstr"
 )
 
-var deployCmd = &cobra.Command{
-	Use: "deploy",
-}
+func registerCommand_Deploy(cliConf config.CLIConfig) *cobra.Command {
+	deployCmd := &cobra.Command{
+		Use: "deploy",
+	}
 
-var bluegreenCmd = &cobra.Command{
-	Use:   "blue-green-switch",
-	Short: "Automatically switches the traffic of a blue-green deployment once the new application is ready.",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, bluegreenSwitch)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(deployCmd)
+	bluegreenCmd := &cobra.Command{
+		Use:   "blue-green-switch",
+		Short: "Automatically switches the traffic of a blue-green deployment once the new application is ready.",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, bluegreenSwitch)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 	deployCmd.AddCommand(bluegreenCmd)
 
 	bluegreenCmd.PersistentFlags().StringVar(
@@ -60,6 +58,7 @@ func init() {
 		"",
 		"The namespace of the jobs.",
 	)
+	return deployCmd
 }
 
 func bluegreenSwitch(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {

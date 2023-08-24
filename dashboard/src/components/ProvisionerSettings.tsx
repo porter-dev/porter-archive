@@ -368,7 +368,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       // }
       setErrorMessage(undefined);
     } catch (err) {
-      const errMessage = err.response?.data?.error?.replace("unknown: ", "") ?? "";
+      const errMessage = err.response.data.error.replace("unknown: ", "");
       // hacky, need to standardize error contract with backend
       setIsClicked(false);
       if (errMessage.includes("elastic IP")) {

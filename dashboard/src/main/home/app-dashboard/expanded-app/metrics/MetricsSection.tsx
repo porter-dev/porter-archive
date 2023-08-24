@@ -65,6 +65,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       });
 
       return controllerOptions;
+    },
+    {
+      refetchOnWindowFocus: false,
     }
   );
 
@@ -212,6 +215,8 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     },
     {
       enabled: selectedController != null,
+      refetchOnWindowFocus: false,
+      refetchInterval: 10000, // refresh metrics every 10 seconds
     }
   );
 

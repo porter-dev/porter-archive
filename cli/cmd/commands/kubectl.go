@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -12,19 +12,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var kubectlCmd = &cobra.Command{
-	Use:   "kubectl",
-	Short: "Use kubectl to interact with a Porter cluster",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, runKubectl)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(kubectlCmd)
+func registerCommand_Kubectl(cliConf config.CLIConfig) *cobra.Command {
+	kubectlCmd := &cobra.Command{
+		Use:   "kubectl",
+		Short: "Use kubectl to interact with a Porter cluster",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runKubectl)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+	return kubectlCmd
 }
 
 func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {

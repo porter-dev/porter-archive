@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -39,12 +39,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// applyCmd represents the "porter apply" base command when called
-// with a porter.yaml file as an argument
-var applyCmd = &cobra.Command{
-	Use:   "apply",
-	Short: "Applies a configuration to an application",
-	Long: fmt.Sprintf(`
+var porterYAML string
+
+func registerCommand_Apply(cliConf config.CLIConfig) *cobra.Command {
+	applyCmd := &cobra.Command{
+		Use:   "apply",
+		Short: "Applies a configuration to an application",
+		Long: fmt.Sprintf(`
 %s
 
 Applies a configuration to an application by either creating a new one or updating an existing
@@ -68,47 +69,43 @@ applying a configuration:
   PORTER_SOURCE_VERSION       The version of the Helm chart to use
   PORTER_TAG                  The Docker image tag to use (like the git commit hash)
 	`,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter apply\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter apply -f porter.yaml"),
-	),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, apply)
-		if err != nil {
-			if strings.Contains(err.Error(), "Forbidden") {
-				color.New(color.FgRed).Fprintf(os.Stderr, "You may have to update your GitHub secret token")
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter apply\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter apply -f porter.yaml"),
+		),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, apply)
+			if err != nil {
+				if strings.Contains(err.Error(), "Forbidden") {
+					_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "You may have to update your GitHub secret token")
+				}
+
+				os.Exit(1)
 			}
+		},
+	}
+	// applyValidateCmd represents the "porter apply validate" command when called
+	// with a porter.yaml file as an argument
+	applyValidateCmd := &cobra.Command{
+		Use:   "validate",
+		Short: "Validates a porter.yaml",
+		Run: func(*cobra.Command, []string) {
+			err := applyValidate()
 
-			os.Exit(1)
-		}
-	},
-}
-
-// applyValidateCmd represents the "porter apply validate" command when called
-// with a porter.yaml file as an argument
-var applyValidateCmd = &cobra.Command{
-	Use:   "validate",
-	Short: "Validates a porter.yaml",
-	Run: func(*cobra.Command, []string) {
-		err := applyValidate()
-
-		if err != nil {
-			color.New(color.FgRed).Fprintf(os.Stderr, "Error: %s\n", err.Error())
-			os.Exit(1)
-		} else {
-			color.New(color.FgGreen).Printf("The porter.yaml file is valid!\n")
-		}
-	},
-}
-
-var porterYAML string
-
-func init() {
-	rootCmd.AddCommand(applyCmd)
+			if err != nil {
+				_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "Error: %s\n", err.Error())
+				os.Exit(1)
+			} else {
+				_, _ = color.New(color.FgGreen).Printf("The porter.yaml file is valid!\n")
+			}
+		},
+	}
 
 	applyCmd.AddCommand(applyValidateCmd)
 
 	applyCmd.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
 	applyCmd.MarkFlagRequired("file")
+
+	return applyCmd
 }
 
 func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) (err error) {

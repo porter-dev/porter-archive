@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -12,24 +12,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// logsCmd represents the "porter logs" base command when called
-// without any subcommands
-var logsCmd = &cobra.Command{
-	Use:   "logs [release]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Logs the output from a given application.",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, logs)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
 var follow bool
 
-func init() {
-	rootCmd.AddCommand(logsCmd)
+func registerCommand_Logs(cliConf config.CLIConfig) *cobra.Command {
+	logsCmd := &cobra.Command{
+		Use:   "logs [release]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Logs the output from a given application.",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, logs)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
 	logsCmd.PersistentFlags().StringVar(
 		&namespace,
@@ -45,6 +41,7 @@ func init() {
 		false,
 		"specify if the logs should be streamed",
 	)
+	return logsCmd
 }
 
 func logs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {

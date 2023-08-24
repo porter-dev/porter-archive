@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -18,59 +18,58 @@ import (
 
 var allNamespaces bool
 
-// listCmd represents the "porter list" base command and "porter list all" subcommand
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List applications, addons or jobs.",
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 || (args[0] == "all") {
-			err := checkLoginAndRun(cmd.Context(), args, listAll)
+func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
+	listCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List applications, addons or jobs.",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) == 0 || (args[0] == "all") {
+				err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listAll)
+				if err != nil {
+					os.Exit(1)
+				}
+			} else {
+				_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "invalid command: %s\n", args[0])
+			}
+		},
+	}
+
+	listAppsCmd := &cobra.Command{
+		Use:     "apps",
+		Aliases: []string{"applications", "app", "application"},
+		Short:   "Lists applications in a specific namespace, or across all namespaces",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listApps)
 			if err != nil {
 				os.Exit(1)
 			}
-		} else {
-			color.New(color.FgRed).Fprintf(os.Stderr, "invalid command: %s\n", args[0])
-		}
-	},
-}
+		},
+	}
 
-var listAppsCmd = &cobra.Command{
-	Use:     "apps",
-	Aliases: []string{"applications", "app", "application"},
-	Short:   "Lists applications in a specific namespace, or across all namespaces",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, listApps)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	listJobsCmd := &cobra.Command{
+		Use:     "jobs",
+		Aliases: []string{"job"},
+		Short:   "Lists jobs in a specific namespace, or across all namespaces",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listJobs)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var listJobsCmd = &cobra.Command{
-	Use:     "jobs",
-	Aliases: []string{"job"},
-	Short:   "Lists jobs in a specific namespace, or across all namespaces",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, listJobs)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	listAddonsCmd := &cobra.Command{
+		Use:     "addons",
+		Aliases: []string{"addon"},
+		Short:   "Lists addons in a specific namespace, or across all namespaces",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listAddons)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var listAddonsCmd = &cobra.Command{
-	Use:     "addons",
-	Aliases: []string{"addon"},
-	Short:   "Lists addons in a specific namespace, or across all namespaces",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, listAddons)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
 	listCmd.PersistentFlags().StringVar(
 		&namespace,
 		"namespace",
@@ -89,7 +88,7 @@ func init() {
 	listCmd.AddCommand(listJobsCmd)
 	listCmd.AddCommand(listAddonsCmd)
 
-	rootCmd.AddCommand(listCmd)
+	return listCmd
 }
 
 func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {

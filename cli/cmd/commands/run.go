@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -42,35 +42,31 @@ var (
 	memoryMi       int
 )
 
-// runCmd represents the "porter run" base command when called
-// without any subcommands
-var runCmd = &cobra.Command{
-	Use:   "run [release] -- COMMAND [args...]",
-	Args:  cobra.MinimumNArgs(2),
-	Short: "Runs a command inside a connected cluster container.",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, run)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+func registerCommand_Run(cliConf config.CLIConfig) *cobra.Command {
+	runCmd := &cobra.Command{
+		Use:   "run [release] -- COMMAND [args...]",
+		Args:  cobra.MinimumNArgs(2),
+		Short: "Runs a command inside a connected cluster container.",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, run)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-// cleanupCmd represents the "porter run cleanup" subcommand
-var cleanupCmd = &cobra.Command{
-	Use:   "cleanup",
-	Args:  cobra.NoArgs,
-	Short: "Delete any lingering ephemeral pods that were created with \"porter run\".",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, cleanup)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(runCmd)
+	// cleanupCmd represents the "porter run cleanup" subcommand
+	cleanupCmd := &cobra.Command{
+		Use:   "cleanup",
+		Args:  cobra.NoArgs,
+		Short: "Delete any lingering ephemeral pods that were created with \"porter run\".",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, cleanup)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
 	runCmd.PersistentFlags().StringVar(
 		&namespace,
@@ -127,6 +123,7 @@ func init() {
 	)
 
 	runCmd.AddCommand(cleanupCmd)
+	return runCmd
 }
 
 func run(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {

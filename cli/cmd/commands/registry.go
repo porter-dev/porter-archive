@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -16,74 +16,70 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// registryCmd represents the "porter registry" base command when called
-// without any subcommands
-var registryCmd = &cobra.Command{
-	Use:     "registry",
-	Aliases: []string{"registries"},
-	Short:   "Commands that read from a connected registry",
-}
+func registerCommand_Registry(cliConf config.CLIConfig) *cobra.Command {
+	registryCmd := &cobra.Command{
+		Use:     "registry",
+		Aliases: []string{"registries"},
+		Short:   "Commands that read from a connected registry",
+	}
 
-var registryListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Lists the registries linked to a project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, listRegistries)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	registryListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "Lists the registries linked to a project",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listRegistries)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var registryDeleteCmd = &cobra.Command{
-	Use:   "delete [id]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Deletes the registry with the given id",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, deleteRegistry)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	registryDeleteCmd := &cobra.Command{
+		Use:   "delete [id]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Deletes the registry with the given id",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteRegistry)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var registryReposCmd = &cobra.Command{
-	Use:     "repo",
-	Aliases: []string{"repos", "repository", "repositories"},
-	Short:   "Commands that perform operations on image registry repositories",
-}
+	registryReposCmd := &cobra.Command{
+		Use:     "repo",
+		Aliases: []string{"repos", "repository", "repositories"},
+		Short:   "Commands that perform operations on image registry repositories",
+	}
 
-var registryReposListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Lists the repositories in an image registry",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, listRepos)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	registryReposListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "Lists the repositories in an image registry",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listRepos)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var registryImageCmd = &cobra.Command{
-	Use:     "image",
-	Aliases: []string{"images"},
-	Short:   "Commands that perform operations on image in a repository",
-}
+	registryImageCmd := &cobra.Command{
+		Use:     "image",
+		Aliases: []string{"images"},
+		Short:   "Commands that perform operations on image in a repository",
+	}
 
-var registryImageListCmd = &cobra.Command{
-	Use:   "list [repo_name]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Lists the images the specified image repository",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, listImages)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(registryCmd)
+	registryImageListCmd := &cobra.Command{
+		Use:   "list [repo_name]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Lists the images the specified image repository",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listImages)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
 	registryCmd.PersistentFlags().AddFlagSet(utils.RegistryFlagSet)
 
@@ -95,6 +91,8 @@ func init() {
 
 	registryCmd.AddCommand(registryImageCmd)
 	registryImageCmd.AddCommand(registryImageListCmd)
+
+	return registryCmd
 }
 
 func listRegistries(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {

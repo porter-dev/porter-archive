@@ -40,7 +40,7 @@ const machineTypeOptions = [
   { value: "Standard_A4_v2", label: "Standard_A4_v2" },
 ];
 
-const clusterVersionOptions = [{ value: "v1.24.9", label: "v1.24.9" }];
+const clusterVersionOptions = [{ value: "v1.26.6", label: "v1.26.6" },{ value: "v1.24.9", label: "v1.24.9" }];
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
@@ -68,7 +68,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
   const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
-  const [clusterVersion, setClusterVersion] = useState("v1.24.9");
+  const [clusterVersion, setClusterVersion] = useState("v1.26.6");
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
@@ -130,6 +130,9 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
     if (!VALID_CIDR_RANGE_PATTERN.test(cidrRange)) {
       return "VPC CIDR range must be in the format of [0-255].[0-255].0.0/16";
     }
+    if (clusterVersion == "v1.24.9") {
+        return "Cluster version v1.24.9 is no longer supported";
+    }
 
     return "";
   }
@@ -152,19 +155,19 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
           case: "aksKind",
           value: new AKS({
             clusterName: clusterName,
-            clusterVersion: clusterVersion || "v1.24.9",
+            clusterVersion: clusterVersion || "v1.26.6",
             cidrRange: cidrRange || "10.78.0.0/16",
             location: azureLocation,
             nodePools: [
               new AKSNodePool({
-                instanceType: "Standard_A2_v2",
+                instanceType: "Standard_D2ps_v5",
                 minInstances: 1,
                 maxInstances: 3,
                 nodePoolType: NodePoolType.SYSTEM,
                 mode: "User",
               }),
               new AKSNodePool({
-                instanceType: "Standard_A4_v2",
+                instanceType: "Standard_A2_v2",
                 minInstances: 1,
                 maxInstances: 3,
                 nodePoolType: NodePoolType.MONITORING,
@@ -269,7 +272,10 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       setCreateStatus("");
       setClusterName(contract.cluster.aksKind.clusterName);
       setAzureLocation(contract.cluster.aksKind.location);
-      setClusterVersion(contract.cluster.aksKind.clusterVersion);
+      // v1.24.9 is no longer supported, will remove this once seamless is upgraded
+      if (contract.cluster.aksKind.clusterVersion != "v1.24.9") {
+          setClusterVersion(contract.cluster.aksKind.clusterVersion);
+      }
       setCidrRange(contract.cluster.aksKind.cidrRange);
     }
   }, [props.selectedClusterVersion]);
@@ -372,7 +378,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
               disabled={isReadOnly}
               value={maxInstances}
               setValue={(x: number) => setMaxInstances(x)}
-              label="Maximum number of application EC2 instances"
+              label="Maximum number of application nodes"
               placeholder="ex: 1"
             />
             <InputRow

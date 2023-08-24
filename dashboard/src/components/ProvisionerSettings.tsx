@@ -509,8 +509,14 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 width="350px"
                 type="number"
                 disabled={isReadOnly}
-                value={maxInstances}
-                setValue={(x: number) => setMaxInstances(x)}
+                value={maxInstances.toString()}
+                setValue={(x: string) => {
+                  const num = parseInt(x, 10)
+                  if (num == undefined) {
+                    return
+                  }
+                  setMaxInstances(num)
+                }}
                 label="Maximum number of application nodes"
                 placeholder="ex: 1"
               />
@@ -519,8 +525,14 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 width="350px"
                 type="number"
                 disabled={isReadOnly}
-                value={minInstances}
-                setValue={(x: number) => setMinInstances(x)}
+                value={minInstances.toString()}
+                setValue={(x: string) => {
+                  const num = parseInt(x, 10)
+                  if (num == undefined) {
+                    return
+                  }
+                  setMinInstances(num)
+                }}
                 label="Minimum number of application nodes. If set to 0, no applications will be deployed."
                 placeholder="ex: 1"
               />

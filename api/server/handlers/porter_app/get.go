@@ -36,6 +36,8 @@ func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	defer span.End()
 
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
 		err := telemetry.Error(ctx, span, nil, "error parsing porter app name")
@@ -53,6 +55,13 @@ func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	if app == nil || app.ID == 0 {
 		err = telemetry.Error(ctx, span, nil, "app with name does not exist in project")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	// this is a temporary fix until we figure out how to reconcile the new revisions table
+	// with dependencies on helm releases throuhg the api
+	if project.ValidateApplyV2 {
+		c.WriteResult(w, r, app.ToPorterAppType())
 		return
 	}
 

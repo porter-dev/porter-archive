@@ -502,6 +502,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   services={formState.serviceList.filter(Service.isNonRelease)}
                   defaultExpanded={true}
                   addNewText={"Add a new service"}
+                  appName={porterApp.name}
                 />
               </>,
               <>

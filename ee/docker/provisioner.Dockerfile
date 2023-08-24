@@ -2,7 +2,8 @@
 
 # Base Go environment
 # -------------------
-FROM golang:1.20-alpine as base
+# pinned because of https://github.com/moby/moby/issues/45935
+FROM golang:1.20.5-alpine as base
 WORKDIR /porter
 
 RUN apk update && apk add --no-cache gcc musl-dev git protoc
@@ -29,12 +30,6 @@ FROM base AS build-go
 RUN sh ./scripts/build/proto.sh
 
 RUN go build -ldflags '-w -s' -a -tags ee -o ./bin/provisioner ./cmd/provisioner
-
-# Go test environment
-# -------------------
-FROM base AS porter-test
-
-RUN go test ./...
 
 # Deployment environment
 # ----------------------

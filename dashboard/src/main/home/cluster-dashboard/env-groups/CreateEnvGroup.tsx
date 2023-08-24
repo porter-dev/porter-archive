@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useContext } from "react";
 import styled from "styled-components";
 import api from "shared/api";
 
@@ -37,14 +37,16 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
     envVariables: [] as KeyValueType[],
     submitStatus: "",
   };
-
   componentDidMount() {
     this.updateNamespaces();
   }
 
   isDisabled = () => {
+    const { envGroupName } = this.state;
     return (
-      !isAlphanumeric(this.state.envGroupName) || this.state.envGroupName === ""
+      !isAlphanumeric(envGroupName) ||
+      envGroupName === "" ||
+      envGroupName.length > 15
     );
   };
 
@@ -56,6 +58,26 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
 
     let envVariables = this.state.envVariables;
 
+    if (this.context.currentProject.simplified_view_enabled) {
+      api
+        .createNamespace(
+          "<token>",
+          {
+            name: "porter-env-group",
+          },
+          {
+            id: this.context.currentProject.id,
+            cluster_id: this.props.currentCluster.id,
+          }
+        )
+        .catch((error) => {
+          if (error.response && error.response.status === 412) {
+            console.log("Ignoring known 412 error");
+          } else {
+            console.error(error);
+          }
+        });
+    }
     envVariables
       .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
         // remove any collisions that are marked as deleted and are duplicates
@@ -96,7 +118,66 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
         {
           id: this.context.currentProject.id,
           cluster_id: this.props.currentCluster.id,
-          namespace: this.state.selectedNamespace,
+          namespace: this.context.currentProject.simplified_view_enabled ? "porter-env-group" : this.state.selectedNamespace,
+        }
+      )
+      .then((res) => {
+        this.setState({ submitStatus: "successful" });
+        // console.log(res);
+        this.props.goBack();
+      })
+      .catch((err) => {
+        this.setState({ submitStatus: "Could not create" });
+      });
+  };
+
+  createEnv = () => {
+    this.setState({ submitStatus: "loading" });
+
+    let apiEnvVariables: Record<string, string> = {};
+    let secretEnvVariables: Record<string, string> = {};
+
+    let envVariables = this.state.envVariables;
+    envVariables
+      .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
+        // remove any collisions that are marked as deleted and are duplicates
+        let numCollisions = self.reduce((n, _envVar: KeyValueType) => {
+          return n + (_envVar.key === envVar.key ? 1 : 0);
+        }, 0);
+
+        if (numCollisions == 1) {
+          return true;
+        } else {
+          return (
+            index ===
+            self.findIndex(
+              (_envVar: KeyValueType) =>
+                _envVar.key === envVar.key && !_envVar.deleted
+            )
+          );
+        }
+      })
+      .forEach((envVar: KeyValueType) => {
+        if (!envVar.deleted) {
+          if (envVar.hidden) {
+            secretEnvVariables[envVar.key] = envVar.value;
+          } else {
+            apiEnvVariables[envVar.key] = envVar.value;
+          }
+        }
+      });
+
+    api
+      .createEnvironmentGroups(
+        "<token>",
+        {
+          name: this.state.envGroupName,
+          variables: apiEnvVariables,
+          secret_variables: secretEnvVariables,
+        },
+        {
+          id: this.context.currentProject.id,
+          cluster_id: this.props.currentCluster.id,
         }
       )
       .then((res) => {
@@ -156,11 +237,12 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
               <Warning
                 makeFlush={true}
                 highlight={
-                  !isAlphanumeric(this.state.envGroupName) &&
+                  (!isAlphanumeric(this.state.envGroupName) ||
+                    this.state.envGroupName.length > 15) &&
                   this.state.envGroupName !== ""
                 }
               >
-                Lowercase letters, numbers, and "-" only.
+                Lowercase letters, numbers, and "-" only. Maximum 15 characters.
               </Warning>
             </Subtitle>
             <DarkMatter antiHeight="-29px" />
@@ -168,32 +250,34 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
               type="text"
               value={this.state.envGroupName}
               setValue={(x: string) => this.setState({ envGroupName: x })}
-              placeholder="ex: doctor-scientist"
+              placeholder="ex: my-env-group"
               width="100%"
             />
-
-            <Heading>Destination</Heading>
-            <Subtitle>
-              Specify the namespace you would like to create this environment
-              group in.
-            </Subtitle>
-            <DestinationSection>
-              <NamespaceLabel>
-                <i className="material-icons">view_list</i>Namespace
-              </NamespaceLabel>
-              <Selector
-                key={"namespace"}
-                activeValue={this.state.selectedNamespace}
-                setActiveValue={(namespace: string) =>
-                  this.setState({ selectedNamespace: namespace })
-                }
-                options={this.state.namespaceOptions}
-                width="250px"
-                dropdownWidth="335px"
-                closeOverlay={true}
-              />
-            </DestinationSection>
-
+            {!this?.context?.currentProject?.simplified_view_enabled && (<>
+              <Heading>Destination</Heading>
+              <Subtitle>
+                Specify the namespace you would like to create this environment
+                group in.
+              </Subtitle>
+              <DestinationSection>
+                <NamespaceLabel>
+                  <i className="material-icons">view_list</i>Namespace
+                </NamespaceLabel>
+                <Selector
+                  key={"namespace"}
+                  activeValue={this.state.selectedNamespace}
+                  setActiveValue={(namespace: string) =>
+                    this.setState({ selectedNamespace: namespace })
+                  }
+                  options={this.state.namespaceOptions}
+                  width="250px"
+                  dropdownWidth="335px"
+                  closeOverlay={true}
+                />
+              </DestinationSection>
+            </>
+            )
+            }
             <Heading>Environment variables</Heading>
             <Helper>
               Set environment variables for your secrets and environment-specific
@@ -206,13 +290,13 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
               fileUpload={true}
               secretOption={true}
             />
-           </Wrapper> 
-           <SaveButton
+          </Wrapper>
+          <SaveButton
             disabled={this.isDisabled()}
             text="Create env group"
             clearPosition={true}
             statusPosition="right"
-            onClick={this.onSubmit}
+            onClick={this?.context?.currentProject.simplified_view_enabled ? this.createEnv : this.onSubmit}
             status={
               this.isDisabled()
                 ? "Missing required fields"

@@ -6,6 +6,9 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/porter-dev/porter/cli/cmd/config"
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
@@ -32,7 +35,7 @@ deleting a configuration:
 		color.New(color.FgGreen, color.Bold).Sprintf("porter delete"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteDeployment)
+		err := checkLoginAndRun(cmd.Context(), args, deleteDeployment)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -46,7 +49,7 @@ var deleteAppsCmd = &cobra.Command{
 	Short:   "Deletes an existing app",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteApp)
+		err := checkLoginAndRun(cmd.Context(), args, deleteApp)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -60,7 +63,7 @@ var deleteJobsCmd = &cobra.Command{
 	Short:   "Deletes an existing job",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteJob)
+		err := checkLoginAndRun(cmd.Context(), args, deleteJob)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -74,7 +77,7 @@ var deleteAddonsCmd = &cobra.Command{
 	Short:   "Deletes an existing addon",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteAddon)
+		err := checkLoginAndRun(cmd.Context(), args, deleteAddon)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -88,7 +91,7 @@ var deleteHelmCmd = &cobra.Command{
 	Short:   "Deletes an existing helm repo",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deleteHelm)
+		err := checkLoginAndRun(cmd.Context(), args, deleteHelm)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -111,7 +114,20 @@ func init() {
 	rootCmd.AddCommand(deleteCmd)
 }
 
-func deleteDeployment(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteDeployment(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.DeleteDeployment(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	projectID := cliConf.Project
 
 	if projectID == 0 {
@@ -138,15 +154,28 @@ func deleteDeployment(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 	}
 
 	return client.DeleteDeployment(
-		context.Background(), projectID, clusterID, deploymentID,
+		ctx, projectID, clusterID, deploymentID,
 	)
 }
 
-func deleteApp(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteApp(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.DeleteApp(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	name := args[0]
 
 	resp, err := client.GetRelease(
-		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
+		ctx, cliConf.Project, cliConf.Cluster, namespace, name,
 	)
 	if err != nil {
 		return err
@@ -161,7 +190,7 @@ func deleteApp(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 	color.New(color.FgBlue).Printf("Deleting app: %s\n", name)
 
 	err = client.DeleteRelease(
-		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
+		ctx, cliConf.Project, cliConf.Cluster, namespace, name,
 	)
 
 	if err != nil {
@@ -171,11 +200,24 @@ func deleteApp(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 	return nil
 }
 
-func deleteJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.DeleteJob(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	name := args[0]
 
 	resp, err := client.GetRelease(
-		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
+		ctx, cliConf.Project, cliConf.Cluster, namespace, name,
 	)
 	if err != nil {
 		return err
@@ -190,7 +232,7 @@ func deleteJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 	color.New(color.FgBlue).Printf("Deleting job: %s\n", name)
 
 	err = client.DeleteRelease(
-		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
+		ctx, cliConf.Project, cliConf.Cluster, namespace, name,
 	)
 
 	if err != nil {
@@ -200,11 +242,11 @@ func deleteJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args [
 	return nil
 }
 
-func deleteAddon(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteAddon(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	name := args[0]
 
 	resp, err := client.GetRelease(
-		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
+		ctx, cliConf.Project, cliConf.Cluster, namespace, name,
 	)
 	if err != nil {
 		return err
@@ -219,7 +261,7 @@ func deleteAddon(_ *types.GetAuthenticatedUserResponse, client *api.Client, args
 	color.New(color.FgBlue).Printf("Deleting addon: %s\n", name)
 
 	err = client.DeleteRelease(
-		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
+		ctx, cliConf.Project, cliConf.Cluster, namespace, name,
 	)
 
 	if err != nil {
@@ -229,10 +271,10 @@ func deleteAddon(_ *types.GetAuthenticatedUserResponse, client *api.Client, args
 	return nil
 }
 
-func deleteHelm(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	name := args[0]
 
-	resp, err := client.ListHelmRepos(context.Background(), cliConf.Project)
+	resp, err := client.ListHelmRepos(ctx, cliConf.Project)
 	if err != nil {
 		return err
 	}
@@ -252,7 +294,7 @@ func deleteHelm(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 	color.New(color.FgBlue).Printf("Deleting helm repo: %s\n", name)
 
-	err = client.DeleteHelmRepo(context.Background(), cliConf.Project, repo.ID)
+	err = client.DeleteHelmRepo(ctx, cliConf.Project, repo.ID)
 
 	if err != nil {
 		return err

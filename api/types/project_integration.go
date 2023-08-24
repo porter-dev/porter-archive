@@ -138,6 +138,10 @@ type CreateGCPRequest struct {
 
 type CreateGCPResponse struct {
 	*GCPIntegration
+	// IsCCPCluster is true if the cluster is managed through CCP, instead of the legacy provisioner
+	IsCCPCluster bool `json:"is_ccp_cluster"`
+	// CloudProviderCredentialIdentifier is the identifier for the cloud provider credential for CCP clusters
+	CloudProviderCredentialIdentifier string `json:"cloud_provider_credentials_id"`
 }
 
 type AzureIntegration struct {
@@ -170,6 +174,7 @@ type CreateAzureRequest struct {
 
 type CreateAzureResponse struct {
 	*AzureIntegration
+	CloudProviderCredentialIdentifier string `json:"cloud_provider_credentials_id"`
 }
 
 type ListAzureResponse []*AzureIntegration

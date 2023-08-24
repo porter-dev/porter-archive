@@ -2,6 +2,7 @@ import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArr
 import * as z from "zod";
 import { JobService, ReleaseService, Service, WebService, WorkerService } from "./serviceTypes";
 import { overrideObjectValues } from "./utils";
+import _ from "lodash";
 
 const appConfigSchema = z.object({
     run: z.string().min(1),
@@ -45,7 +46,6 @@ export const PorterYamlSchema = z.object({
 
 export const createFinalPorterYaml = (
     services: Service[],
-    releaseJob: Service[],
     dashboardSetEnvVariables: KeyValueType[],
     porterJson: PorterJson | undefined,
     injectPortEnvVariable: boolean = false,
@@ -58,11 +58,17 @@ export const createFinalPorterYaml = (
         env.PORT = port;
     }
 
-    return {
+    const release = services.find(Service.isRelease);
+
+    return release != null && !_.isEmpty(release.startCommand.value) ? {
         version: "v1stack",
         env,
         apps,
-        release: createRelease(releaseJob.find(Service.isRelease)),
+        release: createRelease(release, porterJson),
+    } : {
+        version: "v1stack",
+        env,
+        apps,
     };
 };
 
@@ -118,16 +124,20 @@ const createApps = (
     return [apps, port];
 };
 
-const createRelease = (
-    release: ReleaseService | undefined,
-): z.infer<typeof appConfigSchema> => {
-    if (release == null) {
-        return {};
+const createRelease = (release: ReleaseService, porterJson: PorterJson | undefined): z.infer<typeof appConfigSchema> => {
+    let config = Service.serialize(release);
+
+    if (porterJson?.release?.config != null) {
+        config = overrideObjectValues(
+            config,
+            porterJson.release.config
+        );
     }
+
     return {
         type: 'job',
         run: release.startCommand.value,
-        config: Service.serialize(release),
+        config,
     }
 }
 

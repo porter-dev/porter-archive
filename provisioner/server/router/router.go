@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/porter-dev/porter/api/server/router/middleware"
 	"github.com/porter-dev/porter/provisioner/server/authn"
 	"github.com/porter-dev/porter/provisioner/server/authz"

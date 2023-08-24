@@ -7,11 +7,19 @@ const (
 	UserCreate      SegmentEvent = "New User"
 	UserVerifyEmail SegmentEvent = "User Verified Email"
 	ProjectCreate   SegmentEvent = "New Project Event"
+	ProjectDelete   SegmentEvent = "Project Deleted"
 
-	CostConsentComplete    SegmentEvent = "Cost Consent Complete"
-	CredentialStepComplete SegmentEvent = "Credential Step Complete"
-	PreProvisionCheck      SegmentEvent = "Pre Provision Check Started"
-	ProvisioningAttempted  SegmentEvent = "Provisioning Attempted"
+	CostConsentOpened           SegmentEvent = "Cost Consent Opened"
+	CostConsentComplete         SegmentEvent = "Cost Consent Complete"
+	CredentialStepComplete      SegmentEvent = "Credential Step Complete"
+	PreProvisionCheck           SegmentEvent = "Pre Provision Check Started"
+	AWSInputted                 SegmentEvent = "AWS Account ID Inputted"
+	AWSCloudformationRedirect   SegmentEvent = "AWS Cloudformation Redirect"
+	AWSLoginRedirect            SegmentEvent = "AWS Login Redirect"
+	AWSCreateIntegrationSuccess SegmentEvent = "AWS Create Integration Success"
+	AWSCreateIntegrationFailure SegmentEvent = "AWS Create Integration Failure"
+	ProvisioningAttempted       SegmentEvent = "Provisioning Attempted"
+	ProvisioningFailure         SegmentEvent = "Provisioning Failure"
 
 	ClusterProvisioningStart   SegmentEvent = "Cluster Provisioning Started"
 	ClusterProvisioningError   SegmentEvent = "Cluster Provisioning Error"
@@ -40,8 +48,13 @@ const (
 	ClusterDestroyingStart   SegmentEvent = "Cluster Destroying Start"
 	ClusterDestroyingSuccess SegmentEvent = "Cluster Destroying Success"
 
-	// stacks
-	StackLaunchStart    SegmentEvent = "Stack Launch Started"
-	StackLaunchComplete SegmentEvent = "Stack Launch Complete"
-	StackLaunchSuccess  SegmentEvent = "Stack Launch Success"
+	// porter apps
+	StackLaunchStart      SegmentEvent = "Stack Launch Started"
+	StackLaunchComplete   SegmentEvent = "Stack Launch Complete"
+	StackLaunchSuccess    SegmentEvent = "Stack Launch Success"
+	StackLaunchFailure    SegmentEvent = "Stack Launch Failure"
+	StackDeletion         SegmentEvent = "Stack Deletion"
+	StackBuildProgressing SegmentEvent = "Stack Build Progressing"
+	StackBuildFailure     SegmentEvent = "Stack Build Failure"
+	StackBuildSuccess     SegmentEvent = "Stack Build Success"
 )

@@ -14,6 +14,10 @@ import { RouteComponentProps, withRouter, WithRouterProps } from "react-router";
 import { getQueryParam } from "shared/routing";
 import APITokensSection from "./APITokensSection";
 import _ from "lodash";
+import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
+import ProjectDeleteConsent from "./ProjectDeleteConsent";
+import Metadata from "./Metadata";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 
@@ -21,6 +25,7 @@ type StateType = {
   projectName: string;
   currentTab: string;
   tabOptions: { value: string; label: string }[];
+  showCostConfirmModal: boolean;
 };
 
 class ProjectSettings extends Component<PropsType, StateType> {
@@ -28,6 +33,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
     projectName: "",
     currentTab: "manage-access",
     tabOptions: [] as { value: string; label: string }[],
+    showCostConfirmModal: false,
   };
 
   componentDidUpdate(prevProps: PropsType) {
@@ -69,7 +75,6 @@ class ProjectSettings extends Component<PropsType, StateType> {
     if (this.state.projectName !== currentProject.name) {
       this.setState({ projectName: currentProject.name });
     }
-
     const tabOptions = [];
     tabOptions.push({ value: "manage-access", label: "Manage access" });
     // ? Disabled for now https://discord.com/channels/542888846271184896/1059277393031856208/1059277395913351258
@@ -77,7 +82,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
     //   value: "billing",
     //   label: "Billing",
     // });
-
+    tabOptions.push({ value: "metadata", label: "Metadata" });
     if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
       // if (this.context?.hasBillingEnabled) {
       //   tabOptions.push({
@@ -123,6 +128,9 @@ class ProjectSettings extends Component<PropsType, StateType> {
 
     if (this.state.currentTab === "manage-access") {
       return <InvitePage />;
+    }
+    else if (this.state.currentTab == "metadata") {
+      return <Metadata />
     } else if (this.state.currentTab === "api-tokens") {
       return <APITokensSection />;
     } else if (this.state.currentTab === "billing") {
@@ -144,38 +152,25 @@ class ProjectSettings extends Component<PropsType, StateType> {
         <>
           <Heading isAtTop={true}>Delete project</Heading>
           <Helper>
+          </Helper>
+          <Helper>
             Permanently delete this project. This will destroy all clusters tied
             to this project that have been provisioned by Porter. Note that this
             will not delete the image registries provisioned by Porter. To
             delete the registries, please do so manually in your cloud console.
           </Helper>
 
-          <Helper>
-            Destruction of resources sometimes results in dangling resources. To
-            ensure that everything has been properly destroyed, please visit
-            your cloud provider's console. Instructions to properly delete all
-            resources can be found
-            <a
-              target="none"
-              href="https://docs.getporter.dev/docs/deleting-dangling-resources"
-            >
-              {" "}
-              here
-            </a>
-            .
-          </Helper>
-
-          <Warning highlight={true}>This action cannot be undone.</Warning>
-
           <DeleteButton
             onClick={() => {
-              this.context.setCurrentModal("UpdateProjectModal", {
-                currentProject: this.context.currentProject,
-              });
+              this.setState({ showCostConfirmModal: true });
             }}
           >
             Delete project
           </DeleteButton>
+          <ProjectDeleteConsent
+            setShowCostConfirmModal={(show: boolean) => this.setState({ showCostConfirmModal: show })}
+            show={this.state.showCostConfirmModal}  // <-- Pass these props
+          />
         </>
       );
     }

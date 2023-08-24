@@ -3,7 +3,9 @@ package prometheus
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
@@ -12,23 +14,33 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// returns the prometheus service name
+// GetPrometheusService returns the prometheus service name. The prometheus-community/prometheus chart @ v15.5.3 uses non-FQDN labels, unlike v22.6.2. This function checks for both labels.
 func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, error) {
-	services, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
+	redundantServices, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app=prometheus,component=server,heritage=Helm",
 	})
 	if err != nil {
 		return nil, false, err
 	}
 
-	if len(services.Items) == 0 {
-		return nil, false, nil
+	upgradedServices, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
+		LabelSelector: "app.kubernetes.io/component=server,app.kubernetes.io/instance=prometheus,app.kubernetes.io/managed-by=Helm",
+	})
+	if err != nil {
+		return nil, false, err
 	}
 
-	return &services.Items[0], true, nil
+	if len(redundantServices.Items) > 0 {
+		return &redundantServices.Items[0], true, nil
+	}
+	if len(upgradedServices.Items) > 0 {
+		return &upgradedServices.Items[0], true, nil
+	}
+
+	return nil, false, err
 }
 
-// returns the prometheus service name
+// getKubeStateMetricsService returns the prometheus service name
 func getKubeStateMetricsService(clientset kubernetes.Interface) (*v1.Service, bool, error) {
 	services, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/name=kube-state-metrics",
@@ -98,16 +110,19 @@ func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIn
 }
 
 type QueryOpts struct {
-	Metric     string   `schema:"metric"`
-	ShouldSum  bool     `schema:"shouldsum"`
-	Kind       string   `schema:"kind"`
-	PodList    []string `schema:"pods"`
-	Name       string   `schema:"name"`
-	Namespace  string   `schema:"namespace"`
-	StartRange uint     `schema:"startrange"`
-	EndRange   uint     `schema:"endrange"`
-	Resolution string   `schema:"resolution"`
-	Percentile float64  `schema:"percentile"`
+	// the name of the metric being queried for
+	Metric    string   `schema:"metric"`
+	ShouldSum bool     `schema:"shouldsum"`
+	Kind      string   `schema:"kind"`
+	PodList   []string `schema:"pods"`
+	Name      string   `schema:"name"`
+	Namespace string   `schema:"namespace"`
+	// start time (in unix timestamp) for prometheus results
+	StartRange uint `schema:"startrange"`
+	// end time time (in unix timestamp) for prometheus results
+	EndRange   uint    `schema:"endrange"`
+	Resolution string  `schema:"resolution"`
+	Percentile float64 `schema:"percentile"`
 }
 
 func QueryPrometheus(
@@ -139,18 +154,23 @@ func QueryPrometheus(
 	} else if opts.Metric == "memory" {
 		query = fmt.Sprintf("container_memory_usage_bytes{%s}", podSelector)
 	} else if opts.Metric == "network" {
-		netPodSelector := fmt.Sprintf(`namespace="%s",pod=~"%s",container="POD"`, opts.Namespace, selectionRegex)
+		netPodSelector := fmt.Sprintf(`namespace="%s",pod=~"%s"`, opts.Namespace, selectionRegex)
 		query = fmt.Sprintf("rate(container_network_receive_bytes_total{%s}[5m])", netPodSelector)
 	} else if opts.Metric == "nginx:errors" {
-		num := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{status=~"5.*",exported_namespace="%s",ingress=~"%s"}[5m]) OR on() vector(0))`, opts.Namespace, selectionRegex)
-		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_requests{exported_namespace="%s",ingress=~"%s"}[5m]) > 0)`, opts.Namespace, selectionRegex)
+		num := fmt.Sprintf(`(sum(rate(nginx_ingress_controller_requests{status=~"5.*",exported_namespace="%s",ingress=~"%s"}[5m]) OR sum(rate(nginx_ingress_controller_requests{status=~"5.*",namespace="%s",ingress=~"%s"}[5m])) OR on() vector(0))`, opts.Namespace, selectionRegex, opts.Namespace, selectionRegex)
+		denom := fmt.Sprintf(`(sum(rate(nginx_ingress_controller_requests{exported_namespace="%s",ingress=~"%s"}[5m]) OR sum(rate(nginx_ingress_controller_requests{namespace="%s",ingress=~"%s"}[5m])) > 0)`, opts.Namespace, selectionRegex, opts.Namespace, selectionRegex)
 		query = fmt.Sprintf(`%s / %s * 100 OR on() vector(0)`, num, denom)
 	} else if opts.Metric == "nginx:latency" {
-		num := fmt.Sprintf(`sum(rate(nginx_ingress_controller_request_duration_seconds_sum{exported_namespace=~"%s",ingress=~"%s"}[5m]) OR on() vector(0))`, opts.Namespace, selectionRegex)
-		denom := fmt.Sprintf(`sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=~"%s",ingress=~"%s"}[5m]))`, opts.Namespace, selectionRegex)
+		num := fmt.Sprintf(`(sum(rate(nginx_ingress_controller_request_duration_seconds_sum{exported_namespace=~"%s",ingress=~"%s"}[5m]) OR sum(rate(nginx_ingress_controller_request_duration_seconds_sum{namespace=~"%s",ingress=~"%s"}[5m])) OR on() vector(0))`, opts.Namespace, selectionRegex, opts.Namespace, selectionRegex)
+		denom := fmt.Sprintf(`(sum(rate(nginx_ingress_controller_request_duration_seconds_count{exported_namespace=~"%s",ingress=~"%s"}[5m])) OR sum(rate(nginx_ingress_controller_request_duration_seconds_count{namespace=~"%s",ingress=~"%s"}[5m])))`, opts.Namespace, selectionRegex, opts.Namespace, selectionRegex)
 		query = fmt.Sprintf(`%s / %s OR on() vector(0)`, num, denom)
 	} else if opts.Metric == "nginx:latency-histogram" {
-		query = fmt.Sprintf(`histogram_quantile(%f, sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{status!="404",status!="500",exported_namespace=~"%s",ingress=~"%s"}[5m])) by (le, ingress))`, opts.Percentile, opts.Namespace, selectionRegex)
+		query = fmt.Sprintf(`histogram_quantile(%f, (sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{status!="404",status!="500",exported_namespace=~"%s",ingress=~"%s"}[5m])) OR sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{status!="404",status!="500",namespace=~"%s",ingress=~"%s"}[5m]))) by (le, ingress))`, opts.Percentile, opts.Namespace, selectionRegex, opts.Namespace, selectionRegex)
+	} else if opts.Metric == "nginx:status" {
+		query, err = getNginxStatusQuery(opts, selectionRegex)
+		if err != nil {
+			return nil, err
+		}
 	} else if opts.Metric == "cpu_hpa_threshold" {
 		// get the name of the kube hpa metric
 		metricName, hpaMetricName := getKubeHPAMetricName(clientset, service, opts, "spec_target_metric")
@@ -218,11 +238,17 @@ func QueryPrometheus(
 	return parseQuery(rawQuery, opts.Metric)
 }
 
+func getNginxStatusQuery(opts *QueryOpts, selectionRegex string) (string, error) {
+	query := fmt.Sprintf(`round(sum by (status_code, ingress)(label_replace(increase(nginx_ingress_controller_requests{exported_namespace=~"%s",ingress="%s",service="%s"}[2m]), "status_code", "${1}xx", "status", "(.)..")), 0.001)`, opts.Namespace, selectionRegex, opts.Name)
+	return query, nil
+}
+
 type promRawQuery struct {
 	Data struct {
 		Result []struct {
 			Metric struct {
-				Pod string `json:"pod,omitempty"`
+				Pod        string `json:"pod,omitempty"`
+				StatusCode string `json:"status_code,omitempty"`
 			} `json:"metric,omitempty"`
 
 			Values [][]interface{} `json:"values"`
@@ -231,13 +257,18 @@ type promRawQuery struct {
 }
 
 type promParsedSingletonQueryResult struct {
-	Date     interface{} `json:"date,omitempty"`
-	CPU      interface{} `json:"cpu,omitempty"`
-	Replicas interface{} `json:"replicas,omitempty"`
-	Memory   interface{} `json:"memory,omitempty"`
-	Bytes    interface{} `json:"bytes,omitempty"`
-	ErrorPct interface{} `json:"error_pct,omitempty"`
-	Latency  interface{} `json:"latency,omitempty"`
+	Date          interface{} `json:"date,omitempty"`
+	CPU           interface{} `json:"cpu,omitempty"`
+	Replicas      interface{} `json:"replicas,omitempty"`
+	Memory        interface{} `json:"memory,omitempty"`
+	Bytes         interface{} `json:"bytes,omitempty"`
+	ErrorPct      interface{} `json:"error_pct,omitempty"`
+	Latency       interface{} `json:"latency,omitempty"`
+	StatusCode1xx interface{} `json:"1xx,omitempty"`
+	StatusCode2xx interface{} `json:"2xx,omitempty"`
+	StatusCode3xx interface{} `json:"3xx,omitempty"`
+	StatusCode4xx interface{} `json:"4xx,omitempty"`
+	StatusCode5xx interface{} `json:"5xx,omitempty"`
 }
 
 type promParsedSingletonQuery struct {
@@ -246,6 +277,10 @@ type promParsedSingletonQuery struct {
 }
 
 func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, error) {
+	if metric == "nginx:status" {
+		return parseNginxStatusQuery(rawQuery)
+	}
+
 	rawQueryObj := &promRawQuery{}
 
 	err := json.Unmarshal(rawQuery, rawQueryObj)
@@ -292,6 +327,62 @@ func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, er
 
 		res = append(res, singleton)
 	}
+
+	return res, nil
+}
+
+func parseNginxStatusQuery(rawQuery []byte) ([]*promParsedSingletonQuery, error) {
+	rawQueryObj := &promRawQuery{}
+
+	err := json.Unmarshal(rawQuery, rawQueryObj)
+	if err != nil {
+		return nil, err
+	}
+
+	singletonResultsByDate := make(map[string]*promParsedSingletonQueryResult, 0)
+	keys := make([]string, 0)
+	for _, result := range rawQueryObj.Data.Result {
+		for _, values := range result.Values {
+			date := values[0]
+			dateKey := fmt.Sprintf("%v", date)
+
+			if _, ok := singletonResultsByDate[dateKey]; !ok {
+				keys = append(keys, dateKey)
+				singletonResultsByDate[dateKey] = &promParsedSingletonQueryResult{
+					Date: date,
+				}
+			}
+
+			switch result.Metric.StatusCode {
+			case "1xx":
+				singletonResultsByDate[dateKey].StatusCode1xx = values[1]
+			case "2xx":
+				singletonResultsByDate[dateKey].StatusCode2xx = values[1]
+			case "3xx":
+				singletonResultsByDate[dateKey].StatusCode3xx = values[1]
+			case "4xx":
+				singletonResultsByDate[dateKey].StatusCode4xx = values[1]
+			case "5xx":
+				singletonResultsByDate[dateKey].StatusCode5xx = values[1]
+			default:
+				return nil, errors.New("invalid nginx status code")
+			}
+		}
+	}
+
+	sort.Strings(keys)
+
+	singletonResults := make([]promParsedSingletonQueryResult, 0)
+	for _, k := range keys {
+		singletonResults = append(singletonResults, *singletonResultsByDate[k])
+	}
+
+	singleton := &promParsedSingletonQuery{
+		Results: singletonResults,
+	}
+
+	res := make([]*promParsedSingletonQuery, 0)
+	res = append(res, singleton)
 
 	return res, nil
 }

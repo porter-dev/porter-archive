@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/notifier"
 )
 
 type ProjectDeleteHandler struct {
@@ -68,6 +69,16 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 				}
 			}
 		}
+	}
+	err := p.Config().UserNotifier.SendProjectDeleteEmail(
+		&notifier.SendProjectDeleteEmailOpts{
+			Email:   user.Email,
+			Project: proj.Name,
+		},
+	)
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 
 	deletedProject, err := p.Repo().Project().DeleteProject(proj)

@@ -95,7 +95,7 @@ const RadioFilter: React.FC<Props> = (props) => {
         <TextAlt>{props.name}</TextAlt>
         <Bar />
         <Selected>
-          {props.selected
+          {props.selected != null
             ? props.selected === ""
               ? "All"
               : getLabel(props.selected)
@@ -124,6 +124,15 @@ const Selected = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
   max-width: 120px;
+`;
+
+const DimmedText = styled.div`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  word-break: anywhere;
+  margin-right: 10px;
+  color: #999;
 `;
 
 const Text = styled.div`

@@ -114,7 +114,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.19
+          go-version: 1.20.5
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
@@ -184,7 +184,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.19
+          go-version: 1.20.5
       - name: Write Dashboard Environment Variables
         run: |
           cat >./dashboard/.env <<EOL
@@ -567,14 +567,14 @@ jobs:
           git config user.name "Update Bot"
           git config user.email "support@porter.run"
 
-          git diff --quiet --exit-code || git add . && git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}" && git push -f
+          git diff --quiet --exit-code || (git add . && git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}" && git push -f)
 
           git checkout test-preview-env
           git merge main -m "Merge with main"
 
           sed -i 's/TEST:v.*/TEST:${{ steps.tag_name.outputs.tag }}/g' porter.yaml
 
-          git diff --quiet --exit-code || git add . && git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}" && git push -f
+          git diff --quiet --exit-code || (git add . && git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}" && git push -f)
   run-new-release-tests-workflows:
     name: Run new-release-tests Porter workflows
     runs-on: ubuntu-latest

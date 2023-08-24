@@ -268,6 +268,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
         />
         {Object.entries(AggregatedDataColors).map(([dataKey, color]) => (
           <LinearGradient
+            key={dataKey}
             id={`area-gradient-${dataKey}`}
             from={color}
             to={color}
@@ -305,6 +306,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
         />
         {Object.entries(aggregatedData).map(([key, data]) => (
           <LinePath<NormalizedMetricsData>
+            key={key}
             data={data}
             x={(d) => dateScale(getDate(d)) ?? 0}
             y={(d) => valueScale(getValue(d)) ?? 0}
@@ -387,8 +389,9 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
               strokeWidth={2}
               pointerEvents="none"
             />
-            {Object.values(tooltipData.aggregatedData)?.map((d) => (
+            {Object.entries(tooltipData.aggregatedData).map(([key, d]) => (
               <circle
+                key={key}
                 cx={tooltipLeft}
                 cy={valueScale(getValue(d)) + 1}
                 r={4}
@@ -409,8 +412,9 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
               strokeWidth={2}
               pointerEvents="none"
             />
-            {Object.values(tooltipData.aggregatedData)?.map((d) => (
+            {Object.entries(tooltipData.aggregatedData).map(([key, d]) => (
               <circle
+                key={key}
                 cx={tooltipLeft}
                 cy={valueScale(getValue(d))}
                 r={4}
@@ -464,7 +468,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
               {dataKey}: {getValue(tooltipData.data)}
             </TooltipDataRow>
             {Object.entries(tooltipData.aggregatedData).map(([key, value]) => (
-              <TooltipDataRow color={AggregatedDataColors[key]}>
+              <TooltipDataRow color={AggregatedDataColors[key]} key={key}>
                 {`${key.toUpperCase()}. ${dataKey}`}: {getValue(value)}
               </TooltipDataRow>
             ))}

@@ -3,7 +3,7 @@ package router
 import (
 	"fmt"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/handlers/template"
@@ -143,31 +143,6 @@ func getUserRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: updateUserInfoEndpoint,
 		Handler:  updateUserInfoHandler,
-		Router:   r,
-	})
-
-	// POST /api/onboarding_step -> user.UpdateOnboardingStepHandler
-	updateOnboardingStepEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbUpdate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: "/onboarding_step",
-			},
-			Scopes: []types.PermissionScope{types.UserScope},
-		},
-	)
-
-	updateOnboardingStepHandler := user.NewUpdateOnboardingStepHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: updateOnboardingStepEndpoint,
-		Handler:  updateOnboardingStepHandler,
 		Router:   r,
 	})
 

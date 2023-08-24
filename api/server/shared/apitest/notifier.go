@@ -7,10 +7,11 @@ import (
 // FakeUserNotifier just stores data about a single notification,
 // without sending the data anywhere
 type FakeUserNotifier struct {
-	lastPWResetOpts  *notifier.SendPasswordResetEmailOpts
-	lastGHResetOpts  *notifier.SendGithubRelinkEmailOpts
-	lastEmailVerOpts *notifier.SendEmailVerificationOpts
-	lastProjInvOpts  *notifier.SendProjectInviteEmailOpts
+	lastPWResetOpts       *notifier.SendPasswordResetEmailOpts
+	lastGHResetOpts       *notifier.SendGithubRelinkEmailOpts
+	lastEmailVerOpts      *notifier.SendEmailVerificationOpts
+	lastProjInvOpts       *notifier.SendProjectInviteEmailOpts
+	lastDeleteProjectOpts *notifier.SendProjectDeleteEmailOpts
 }
 
 func NewFakeUserNotifier() notifier.UserNotifier {
@@ -51,4 +52,9 @@ func (f *FakeUserNotifier) SendProjectInviteEmail(opts *notifier.SendProjectInvi
 
 func (f *FakeUserNotifier) GetSendProjectInviteEmailLastOpts() *notifier.SendProjectInviteEmailOpts {
 	return f.lastProjInvOpts
+}
+
+func (f *FakeUserNotifier) SendProjectDeleteEmail(opts *notifier.SendProjectDeleteEmailOpts) error {
+	f.lastDeleteProjectOpts = opts
+	return nil
 }

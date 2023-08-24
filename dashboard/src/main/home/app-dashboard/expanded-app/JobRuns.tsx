@@ -2,6 +2,9 @@ import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
 import Table from "components/OldTable";
 import Placeholder from "components/Placeholder";
+import Fieldset from "components/porter/Fieldset";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CellProps, Column, Row } from "react-table";
 import api from "shared/api";
@@ -269,7 +272,15 @@ const JobRuns: React.FC<Props> = ({
   }
 
   if (!jobRuns?.length) {
-    return <Placeholder>No job runs were found.</Placeholder>;
+    return (
+      <Fieldset>
+        <Text size={16}>No job runs found</Text>
+        <Spacer height="15px" />
+        <Text color="helper">
+          There are no jobs runs with the provided filters.
+        </Text>
+      </Fieldset>
+    );
   }
 
   return (

@@ -5,18 +5,13 @@ export const handleSubmitFeedback = (
   callback?: (err: any, res: any) => void
 ) => {
   axios
-    .post(
+    .get(
       process.env.FEEDBACK_ENDPOINT,
       {
-        key: process.env.DISCORD_KEY,
-        cid: process.env.DISCORD_CID,
-        message: msg,
+        params: {
+          message: msg,
+        }
       },
-      {
-        headers: {
-          Authorization: `Bearer <>`,
-        },
-      }
     )
     .then((res) => {
       callback && callback(null, res);

@@ -250,8 +250,8 @@ const ExpandedJobRun = ({
         </DeprecatedWarning>
         <LogsSection
           isFullscreen={false}
-          setIsFullscreen={() => {}}
-          overridingPodName={pods[0]?.metadata?.name || jobRun.metadata?.name}
+          setIsFullscreen={() => { }}
+          overridingPodSelector={jobRun.metadata?.name}
           currentChart={currentChart}
           initData={initData}
         />
@@ -310,7 +310,7 @@ const ExpandedJobRun = ({
                 : ""
             )}
             <TagWrapper>
-              Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
+              Namespace <NamespaceTag>{currentProject?.capi_provisioner_enabled && chart.namespace.startsWith("porter-stack-") ? chart.namespace.replace("porter-stack-", "") : chart.namespace}</NamespaceTag>
             </TagWrapper>
             <DeploymentType currentChart={currentChart} />
           </LastDeployed>

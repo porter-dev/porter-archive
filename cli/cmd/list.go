@@ -6,6 +6,9 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/porter-dev/porter/cli/cmd/config"
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
@@ -21,7 +24,7 @@ var listCmd = &cobra.Command{
 	Short: "List applications, addons or jobs.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 || (args[0] == "all") {
-			err := checkLoginAndRun(args, listAll)
+			err := checkLoginAndRun(cmd.Context(), args, listAll)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -36,7 +39,7 @@ var listAppsCmd = &cobra.Command{
 	Aliases: []string{"applications", "app", "application"},
 	Short:   "Lists applications in a specific namespace, or across all namespaces",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listApps)
+		err := checkLoginAndRun(cmd.Context(), args, listApps)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -48,7 +51,7 @@ var listJobsCmd = &cobra.Command{
 	Aliases: []string{"job"},
 	Short:   "Lists jobs in a specific namespace, or across all namespaces",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listJobs)
+		err := checkLoginAndRun(cmd.Context(), args, listJobs)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -60,7 +63,7 @@ var listAddonsCmd = &cobra.Command{
 	Aliases: []string{"addon"},
 	Short:   "Lists addons in a specific namespace, or across all namespaces",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, listAddons)
+		err := checkLoginAndRun(cmd.Context(), args, listAddons)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -89,8 +92,21 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 }
 
-func listAll(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	err := writeReleases(client, "all")
+func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.ListAll(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	err = writeReleases(ctx, client, cliConf, "all")
 	if err != nil {
 		return err
 	}
@@ -98,8 +114,21 @@ func listAll(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []s
 	return nil
 }
 
-func listApps(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	err := writeReleases(client, "application")
+func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.ListApps(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	err = writeReleases(ctx, client, cliConf, "application")
 	if err != nil {
 		return err
 	}
@@ -107,8 +136,21 @@ func listApps(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []
 	return nil
 }
 
-func listJobs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	err := writeReleases(client, "job")
+func listJobs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.ListJobs(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	err = writeReleases(ctx, client, cliConf, "job")
 	if err != nil {
 		return err
 	}
@@ -116,8 +158,8 @@ func listJobs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []
 	return nil
 }
 
-func listAddons(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	err := writeReleases(client, "addon")
+func listAddons(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	err := writeReleases(ctx, client, cliConf, "addon")
 	if err != nil {
 		return err
 	}
@@ -125,12 +167,12 @@ func listAddons(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	return nil
 }
 
-func writeReleases(client *api.Client, kind string) error {
+func writeReleases(ctx context.Context, client api.Client, cliConf config.CLIConfig, kind string) error {
 	var namespaces []string
 	var releases []*release.Release
 
 	if allNamespaces {
-		resp, err := client.GetK8sNamespaces(context.Background(), cliConf.Project, cliConf.Cluster)
+		resp, err := client.GetK8sNamespaces(ctx, cliConf.Project, cliConf.Cluster)
 		if err != nil {
 			return err
 		}
@@ -145,7 +187,7 @@ func writeReleases(client *api.Client, kind string) error {
 	}
 
 	for _, ns := range namespaces {
-		resp, err := client.ListReleases(context.Background(), cliConf.Project, cliConf.Cluster, ns,
+		resp, err := client.ListReleases(ctx, cliConf.Project, cliConf.Cluster, ns,
 			&types.ListReleasesRequest{
 				ReleaseListFilter: &types.ReleaseListFilter{
 					Limit: 50,

@@ -40,6 +40,7 @@ import Button from "components/porter/Button";
 import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
 import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
 import ExpandedJob from "./app-dashboard/expanded-app/expanded-job/ExpandedJob";
+import CreateApp from "./app-dashboard/create-app/CreateApp";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -328,9 +329,14 @@ const Home: React.FC<Props> = (props) => {
   };
 
   const handleDelete = async () => {
+    if (currentProject?.id == null) {
+      return;
+    }
+
     localStorage.removeItem(currentProject.id + "-cluster");
     try {
-      await api.deleteProject("<token>", {}, { id: currentProject?.id });
+      await api.updateOnboardingStep("<token>", { step: "project-delete" }, { project_id: currentProject.id });
+      await api.deleteProject("<token>", {}, { id: currentProject.id });
       projectOverlayCall();
     } catch (error) {
       console.log(error);
@@ -405,7 +411,10 @@ const Home: React.FC<Props> = (props) => {
 
           <Switch>
             <Route path="/apps/new/app">
-              <NewAppFlow />
+              {currentProject?.validate_apply_v2 ? <CreateApp /> : <NewAppFlow />}
+            </Route>
+            <Route path="/apps/:appName/:tab">
+              <ExpandedApp />
             </Route>
             <Route path="/apps/:appName">
               <ExpandedApp />
@@ -435,17 +444,17 @@ const Home: React.FC<Props> = (props) => {
               overrideInfraTabEnabled({
                 projectID: currentProject?.id,
               })) && (
-              <Route
-                path="/infrastructure"
-                render={() => {
-                  return (
-                    <DashboardWrapper>
-                      <InfrastructureRouter />
-                    </DashboardWrapper>
-                  );
-                }}
-              />
-            )}
+                <Route
+                  path="/infrastructure"
+                  render={() => {
+                    return (
+                      <DashboardWrapper>
+                        <InfrastructureRouter />
+                      </DashboardWrapper>
+                    );
+                  }}
+                />
+              )}
             <Route
               path="/dashboard"
               render={() => {

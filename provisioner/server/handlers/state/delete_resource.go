@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/porter-dev/porter/provisioner/integrations/redis_stream"
 	"github.com/porter-dev/porter/provisioner/server/config"
 )
@@ -27,9 +29,12 @@ func NewDeleteResourceHandler(
 }
 
 func (c *DeleteResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-delete-resource")
+	defer span.End()
+
 	// read the infra from the attached scope
-	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
-	operation, _ := r.Context().Value(types.OperationScope).(*models.Operation)
+	infra, _ := ctx.Value(types.InfraScope).(*models.Infra)
+	operation, _ := ctx.Value(types.OperationScope).(*models.Operation)
 
 	// update the operation to indicate completion
 	operation.Status = "completed"
@@ -75,7 +80,7 @@ func (c *DeleteResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	case types.InfraRDS:
 		_, err = deleteDatabase(c.Config, infra, operation)
 	case types.InfraS3:
-		err = deleteS3Bucket(c.Config, infra, operation)
+		err = deleteS3Bucket(ctx, c.Config, infra, operation)
 	}
 
 	if err != nil {
@@ -131,7 +136,7 @@ func deleteDatabase(config *config.Config, infra *models.Infra, operation *model
 	return database, nil
 }
 
-func deleteS3Bucket(config *config.Config, infra *models.Infra, operation *models.Operation) error {
+func deleteS3Bucket(ctx context.Context, config *config.Config, infra *models.Infra, operation *models.Operation) error {
 	lastApplied := make(map[string]interface{})
 
 	err := json.Unmarshal(operation.LastApplied, &lastApplied)
@@ -139,5 +144,5 @@ func deleteS3Bucket(config *config.Config, infra *models.Infra, operation *model
 		return err
 	}
 
-	return deleteS3EnvGroup(config, infra, lastApplied)
+	return deleteS3EnvGroup(ctx, config, infra, lastApplied)
 }

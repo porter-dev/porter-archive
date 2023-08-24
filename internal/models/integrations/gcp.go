@@ -3,6 +3,7 @@ package integrations
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/porter-dev/porter/api/types"
 
@@ -55,11 +56,13 @@ func (g *GCPIntegration) ToGCPIntegrationType() *types.GCPIntegration {
 
 // GetBearerToken retrieves a bearer token for a GCP account
 func (g *GCPIntegration) GetBearerToken(
+	ctx context.Context,
+
 	getTokenCache GetTokenCacheFunc,
 	setTokenCache SetTokenCacheFunc,
 	scopes ...string,
 ) (*oauth2.Token, error) {
-	cache, err := getTokenCache()
+	cache, err := getTokenCache(ctx)
 
 	// check the token cache for a non-expired token
 	if cache != nil {
@@ -72,23 +75,26 @@ func (g *GCPIntegration) GetBearerToken(
 	}
 
 	creds, err := google.CredentialsFromJSON(
-		context.Background(),
+		ctx,
 		g.GCPKeyData,
 		scopes...,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get credentials from json: %w", err)
 	}
 
 	tok, err := creds.TokenSource.Token()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get token from credentials: %w", err)
 	}
 
 	// update the token cache
-	err = setTokenCache(tok.AccessToken, tok.Expiry)
+	err = setTokenCache(ctx, tok.AccessToken, tok.Expiry)
+	if err != nil {
+		return nil, fmt.Errorf("non-fatal error setting token cache: %w", err)
+	}
 
-	return tok, err
+	return tok, nil
 }
 
 // credentialsFile is the unmarshalled representation of a GCP credentials file.

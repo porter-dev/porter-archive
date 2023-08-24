@@ -21,22 +21,30 @@ import Back from "components/porter/Back";
 import Fieldset from "components/porter/Fieldset";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
+import Select from "components/porter/Select";
 
 type Props = {
 };
 
-const HIDDEN_CHARTS = ["porter-agent", "loki"];
+const HIDDEN_CHARTS = ["porter-agent", "loki", "agent"];
+
+//For Charts that don't exist locally we need to add them in manually
+const TAG_MAPPING = {
+  "DATA_STORE": ["mysql"],
+  "DATA_BASE": ["mysql"]
+}
 
 const NewAddOnFlow: React.FC<Props> = ({
 }) => {
-  const { capabilities, currentProject, currentCluster } = useContext(Context);
+  const { capabilities, currentProject, currentCluster, user } = useContext(Context);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchValue, setSearchValue] = useState("");
   const [addOnTemplates, setAddOnTemplates] = useState<any[]>([]);
   const [currentTemplate, setCurrentTemplate] = useState<any>(null);
   const [currentForm, setCurrentForm] = useState<any>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  const filteredTemplates = useMemo(() => {
+  const allFilteredTemplates = useMemo(() => {
     const filteredBySearch = search(
       addOnTemplates ?? [],
       searchValue,
@@ -48,7 +56,23 @@ const NewAddOnFlow: React.FC<Props> = ({
 
     return _.sortBy(filteredBySearch);
   }, [addOnTemplates, searchValue]);
-  
+
+  const appTemplates = useMemo(() => {
+    return allFilteredTemplates.filter(template =>
+      template.tags?.includes("APP"));
+  }, [allFilteredTemplates]);
+
+  const dataStoreTemplates = useMemo(() => {
+    return allFilteredTemplates.filter(template => template.tags?.includes("DATA_STORE"));
+  }, [allFilteredTemplates]);
+
+  const filteredTemplates = useMemo(() => {
+    return _.differenceBy(
+      allFilteredTemplates,
+      [...appTemplates, ...dataStoreTemplates]
+    );
+  }, [allFilteredTemplates, appTemplates, dataStoreTemplates]);
+
   const getTemplates = async () => {
     setIsLoading(true);
     const default_addon_helm_repo_url = capabilities?.default_addon_helm_repo_url;
@@ -76,11 +100,25 @@ const NewAddOnFlow: React.FC<Props> = ({
       sortedVersionData = sortedVersionData.filter(
         (template: any) => !HIDDEN_CHARTS.includes(template?.name)
       );
+
+      sortedVersionData = sortedVersionData.map((template: any) => {
+        let testTemplate: string[] = template?.tags || []
+        console.log(testTemplate)
+        // Assign tags based on TAG_MAPPING
+        for (let tag in TAG_MAPPING) {
+          if (TAG_MAPPING[tag].includes(template.name)) {
+            testTemplate?.push(tag);
+          }
+        }
+
+        return { ...template, tags: testTemplate };
+      });
       setAddOnTemplates(sortedVersionData);
     } catch (error) {
       setIsLoading(false);
     }
   };
+
 
   useEffect(() => {
     getTemplates();
@@ -104,25 +142,36 @@ const NewAddOnFlow: React.FC<Props> = ({
               capitalize={false}
               description="Select an add-on to deploy to this project."
               disableLineBreak
+
             />
             {
               currentTemplate ? (
-                <ExpandedTemplate 
+                <ExpandedTemplate
                   currentTemplate={currentTemplate}
                   proceed={(form?: any) => setCurrentForm(form)}
                   goBack={() => setCurrentTemplate(null)}
                 />
               ) : (
                 <>
-                  <SearchBar 
-                    value={searchValue}
-                    setValue={setSearchValue}
-                    placeholder="Search available add-ons . . ."
-                    width="100%"
-                  />
+                  <Container row>
+                    <SearchBar
+                      value={searchValue}
+                      setValue={setSearchValue}
+                      placeholder="Search available add-ons . . ."
+                      width="100%"
+                    />
+                    <Spacer inline x={1} />
+                    {/* <Select
+                      width={"150px"}
+                      options={[
+                        { label: "Filter...", value: "" },
+                        { label: "Worker", value: "worker" },
+                        { label: "Cron Job", value: "job" },]}
+                      height={"25px"} /> */}
+                  </Container>
                   <Spacer y={1} />
 
-                  {filteredTemplates.length === 0 && (
+                  {allFilteredTemplates.length === 0 && (
                     <Fieldset>
                       <Container row>
                         <PlaceholderIcon src={notFound} />
@@ -133,10 +182,50 @@ const NewAddOnFlow: React.FC<Props> = ({
                   {isLoading ? <Loading offset="-150px" /> : (
                     <>
                       <DarkMatter />
+
+                      {appTemplates?.length > 0 &&
+                        <>
+                          <Spacer y={1.5} />
+                          <div>
+                            <Text color="#fff" size={15}>Apps and Services</Text>
+                          </div>
+                          <div>
+                            <Text color="helper">For developer productivity.</Text>
+                          </div>
+                        </>}
                       <TemplateList
-                        templates={filteredTemplates}
+                        templates={appTemplates} // This is where you provide only APP templates
                         setCurrentTemplate={(x) => setCurrentTemplate(x)}
                       />
+                      {dataStoreTemplates?.length > 0 &&
+                        <>
+                          <div>
+                            <Text color="#fff" size={15}>Pre-Production Datastores</Text>
+                          </div>
+                          <div>
+                            <Text color="helper">Pre-production datastores are not highly available and use ephemeral storage.</Text>
+                          </div>
+                        </>}
+                      <TemplateList
+                        templates={dataStoreTemplates} // This is where you provide only DATA_STORE templates
+                        setCurrentTemplate={(x) => setCurrentTemplate(x)}
+                      />
+
+                      {filteredTemplates?.length > 0 && (currentProject?.full_add_ons || user.isPorterUser) &&
+                        <>
+                          <div>
+                            <Text color="#fff" size={15}>All Add-Ons</Text>
+                          </div>
+                          <div>
+                            <Text color="helper">Full list of add-ons</Text>
+                          </div>
+
+                          <TemplateList
+                            templates={filteredTemplates} // This is where you provide only DATA_STORE templates
+                            setCurrentTemplate={(x) => setCurrentTemplate(x)}
+                          />
+                        </>
+                      }
                     </>
                   )}
                 </>
@@ -145,38 +234,38 @@ const NewAddOnFlow: React.FC<Props> = ({
           </>
         )
       }
-    </StyledTemplateComponent>
+    </StyledTemplateComponent >
   );
 };
 
 export default NewAddOnFlow;
 
 const PlaceholderIcon = styled.img`
-  height: 13px;
-  margin-right: 12px;
-  opacity: 0.65;
-`;
+      height: 13px;
+      margin-right: 12px;
+      opacity: 0.65;
+      `;
 
 const DarkMatter = styled.div`
-  width: 100%;
-  margin-top: -35px;
-`;
+      width: 100%;
+      margin-top: -35px;
+      `;
 
 const I = styled.i`
-  font-size: 16px;
-  padding: 4px;
-  cursor: pointer;
-  border-radius: 50%;
-  margin-right: 15px;
-  background: ${props => props.theme.fg};
-  color: ${props => props.theme.text.primary};
-  border: 1px solid ${props => props.theme.border};
-  :hover {
-    filter: brightness(150%);
+      font-size: 16px;
+      padding: 4px;
+      cursor: pointer;
+      border-radius: 50%;
+      margin-right: 15px;
+      background: ${props => props.theme.fg};
+      color: ${props => props.theme.text.primary};
+      border: 1px solid ${props => props.theme.border};
+      :hover {
+        filter: brightness(150%);
   }
-`;
+      `;
 
 const StyledTemplateComponent = styled.div`
-  width: 100%;
-  height: 100%;
-`;
+      width: 100%;
+      height: 100%;
+      `;

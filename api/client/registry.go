@@ -201,6 +201,7 @@ func (c *Client) GetGARAuthorizationToken(
 func (c *Client) GetACRAuthorizationToken(
 	ctx context.Context,
 	projectID uint,
+	req *types.GetRegistryACRTokenRequest,
 ) (*types.GetRegistryTokenResponse, error) {
 	resp := &types.GetRegistryTokenResponse{}
 
@@ -209,7 +210,7 @@ func (c *Client) GetACRAuthorizationToken(
 			"/projects/%d/registries/acr/token",
 			projectID,
 		),
-		nil,
+		req,
 		resp,
 	)
 

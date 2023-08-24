@@ -1,0 +1,87 @@
+name: PR Checks
+
+on:
+  - pull_request
+
+jobs:
+  testing_matrix:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        folder: [cli, api, cmd, internal, provisioner]
+    name: Running Go Tests
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Go Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: porter-go-${{ hashFiles('**/go.sum') }}
+      - name: Download Go Modules
+        run: go mod download
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Run Go tests
+        run: go test ./${{ matrix.folder }}/...
+  linting:
+    name: Go Linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v4
+        with:
+          cache: false
+      - uses: actions/checkout@v3
+      - name: Setup Go Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: porter-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: porter-go-`
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: -c .github/golangci-lint.yaml --verbose
+          skip-pkg-cache: true
+          only-new-issues: true # this is needed until the following is merged: https://github.com/golangci/golangci-lint-action/issues/820
+  build-npm:
+    name: Running smoke test npm build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Setup NPM
+        working-directory: dashboard
+        run: |
+          # installing updated npm
+
+          # Verify npm works before capturing and ensure its stderr is inspectable later
+          version="$(jq -r '.engines.npm' package.json)"
+          npm --version 2>&1 1>/dev/null
+
+          npm_version="$(npm --version)"
+          echo "Bootstrapping npm $version (replacing $npm_version)..."
+          npm install --unsafe-perm -g --quiet "npm@$version"
+
+          # Verify npm works before capturing and ensure its stderr is inspectable later
+          npm --version 2>&1 1>/dev/null
+          echo "npm $(npm --version) installed"
+      - name: Install NPM Dependencies
+        working-directory: dashboard
+        run: |
+          npm i --legacy-peer-deps
+      - name: Run NPM Build
+        working-directory: dashboard
+        run: |
+          npm run build

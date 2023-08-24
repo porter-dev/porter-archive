@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
 	if errors.SentryDSN != "" {
 		err := sentry.Init(sentry.ClientOptions{
 			Dsn:         errors.SentryDSN,
@@ -33,5 +35,9 @@ func main() {
 		defer sentry.Flush(2 * time.Second)
 	}
 
-	cmd.Execute()
+	err := cmd.Execute(ctx)
+	if err != nil {
+		color.New(color.FgRed).Fprintf(os.Stderr, "error executing command: %s\n", err)
+		os.Exit(1)
+	}
 }

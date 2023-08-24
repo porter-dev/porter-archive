@@ -40,6 +40,7 @@ func RepoIndexToPorterChartList(index *repo.IndexFile, repoURL string) types.Lis
 			Icon:        indexChart.Icon,
 			Versions:    versions,
 			RepoURL:     repoURL,
+			Tags:        indexChart.Keywords,
 		}
 
 		porterCharts = append(porterCharts, porterChart)

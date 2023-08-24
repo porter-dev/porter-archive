@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
+
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -24,16 +25,24 @@ var UsageErrFmt = "usage limit reached for metric %s: limit %d, requested %d"
 
 func (b *UsageMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+		ctx, span := telemetry.NewSpan(r.Context(), "middleware-usage")
+		defer span.End()
+
+		proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "project-id", Value: proj.ID})
 
 		// get the project usage limits
 		currentUsage, limit, _, err := usage.GetUsage(&usage.GetUsageOpts{
-			Project:          proj,
-			DOConf:           b.config.DOConf,
-			Repo:             b.config.Repo,
-			WhitelistedUsers: b.config.WhitelistedUsers,
+			Project:                          proj,
+			DOConf:                           b.config.DOConf,
+			Repo:                             b.config.Repo,
+			WhitelistedUsers:                 b.config.WhitelistedUsers,
+			ClusterControlPlaneServiceClient: b.config.ClusterControlPlaneClient,
 		})
 		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting usage")
+
 			apierrors.HandleAPIError(
 				b.config.Logger,
 				b.config.Alerter,
@@ -45,25 +54,25 @@ func (b *UsageMiddleware) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "users-current-usage", Value: currentUsage.Users},
+			telemetry.AttributeKV{Key: "users-limit", Value: limit.Users},
+			telemetry.AttributeKV{Key: "cpu-current-usage", Value: currentUsage.ResourceCPU},
+			telemetry.AttributeKV{Key: "cpu-limit", Value: limit.ResourceCPU},
+			telemetry.AttributeKV{Key: "memory-current-usage", Value: currentUsage.ResourceMemory},
+			telemetry.AttributeKV{Key: "memory-limit", Value: limit.ResourceMemory},
+			telemetry.AttributeKV{Key: "clusters-current-usage", Value: currentUsage.Clusters},
+			telemetry.AttributeKV{Key: "clusters-limit", Value: limit.Clusters},
+		)
+
 		// check the usage limits
 		allowed := allowUsage(limit, currentUsage, b.metric)
 
-		if allowed {
-			next.ServeHTTP(w, r)
-		} else {
-			limit, curr := getMetricUsage(limit, currentUsage, b.metric)
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "allowed", Value: allowed})
 
-			apierrors.HandleAPIError(
-				b.config.Logger,
-				b.config.Alerter,
-				w, r,
-				apierrors.NewErrPassThroughToClient(
-					fmt.Errorf(UsageErrFmt, b.metric, limit, curr),
-					http.StatusBadRequest,
-				),
-				true,
-			)
-		}
+		r = r.Clone(ctx)
+
+		next.ServeHTTP(w, r)
 	})
 }
 

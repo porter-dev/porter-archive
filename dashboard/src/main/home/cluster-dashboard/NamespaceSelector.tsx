@@ -79,7 +79,12 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
             setDefaultNamespace("default");
           }
           availableNamespaces.forEach((x: { name: string }, i: number) => {
-            if (!x.name.startsWith("pr-")) {
+            if (currentProject?.capi_provisioner_enabled && x.name.startsWith("porter-stack-")) {
+              namespaceOptions.push({
+                label: x.name.replace("porter-stack-", ""),
+                value: x.name,
+              });
+            } else if (!x.name.startsWith("pr-")) {
               namespaceOptions.push({
                 label: x.name,
                 value: x.name,

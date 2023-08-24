@@ -1,3 +1,5 @@
+import lightning from "../assets/lightning.png";
+
 const hardcodedNames: { [key: string]: string } = {
   agones: "Agones System",
   docker: "Docker",
@@ -64,6 +66,18 @@ const hardcodedIcons: { [key: string]: string } = {
   "tailscale-relay": "https://play-lh.googleusercontent.com/wczDL05-AOb39FcL58L32h6j_TrzzGTXDLlOrOmJ-aNsnoGsT1Gkk2vU4qyTb7tGxRw=w240-h480-rw",
   "postgres-toolbox": "https://cdn-icons-png.flaticon.com/512/5133/5133626.png",
   "ecr-secrets-updater": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original.svg",
+  "porter-agent": lightning,
 };
 
-export { hardcodedNames, hardcodedIcons };
+const DISPLAY_TAGS_MAP = {
+  "ANALYITCS": { label: "Analytics", color: "#1CCAD8" },
+  "NETWORKING": { label: "Networking", color: "#FF680A" },
+  "DATA_BASE": { label: "Database", color: "#5FAD56" },
+  "LOGGING": { label: "Logging", color: "#F72585" },
+  "MONITORING": { label: "Monitoring", color: "#774B9E" },
+  "CACHE": { label: "Cache", color: "#F72C25" },
+  "SEARCH": { label: "Search", color: "#F7B32B" },
+  "MISC": { label: "Misc.", color: "#616163" },
+};
+
+export { hardcodedNames, hardcodedIcons, DISPLAY_TAGS_MAP };

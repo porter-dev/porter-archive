@@ -66,7 +66,6 @@ const KeyValueArray: React.FC<Props> = (props) => {
   useEffect(() => {
     if (hasSetValue(props) && !Array.isArray(state?.synced_env_groups)) {
       const values = props.value[0];
-      // console.log(values);
       const envGroups: PartialEnvGroup[] = values?.synced || [];
 
       if (Array.isArray(props.injectedProps?.availableSyncEnvGroups)) {
@@ -81,9 +80,13 @@ const KeyValueArray: React.FC<Props> = (props) => {
           .filter(Boolean);
 
         setState(() => ({
-          synced_env_groups: Array.isArray(populatedEnvGroups)
-            ? populatedEnvGroups
-            : [],
+          synced_env_groups: currentProject?.stacks_enabled ?
+            (Array.isArray(values?.synced)
+              ? values?.synced
+              : []) :
+            (Array.isArray(populatedEnvGroups)
+              ? populatedEnvGroups
+              : [])
         }));
         return;
       }

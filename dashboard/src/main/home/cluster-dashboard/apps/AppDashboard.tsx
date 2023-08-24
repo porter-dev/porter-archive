@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import styled from "styled-components";
 import { RouteComponentProps, withRouter } from "react-router";
 
@@ -7,7 +7,7 @@ import web from "assets/web.png";
 import { Context } from "shared/Context";
 import { JobStatusType } from "shared/types";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { 
+import {
   pushQueryParams,
   pushFiltered,
   PorterUrl,
@@ -41,6 +41,12 @@ const AppDashboard: React.FC<Props> = ({
   const { currentProject, currentCluster } = useContext(Context);
   const [selectedTag, setSelectedTag] = useState("none");
 
+  useEffect(() => {
+    if (currentProject?.simplified_view_enabled) {
+      window.location.replace("/apps");
+    }
+  }, [currentProject]);
+
   return (
     <StyledAppDashboard>
       <DashboardHeader
@@ -61,41 +67,39 @@ const AppDashboard: React.FC<Props> = ({
                 currentView={currentView}
               />
               <Spacer inline width="10px" />
-              {!currentProject?.capi_provisioner_enabled && (
-                <NamespaceSelector
-                  setNamespace={(x) => {
-                    setNamespace(x);
-                    pushQueryParams(props, {
-                      namespace: x || "ALL",
-                    });
-                  }}
-                  namespace={namespace}
-                />
-              )}
+              <NamespaceSelector
+                setNamespace={(x) => {
+                  setNamespace(x);
+                  pushQueryParams(props, {
+                    namespace: x || "ALL",
+                  });
+                }}
+                namespace={namespace}
+              />
               <TagFilter
                 onSelect={setSelectedTag}
               />
             </FilterWrapper>
             <Flex>
               {props.isAuthorized(
-                "namespace", 
-                [], 
+                "namespace",
+                [],
                 ["get", "create"]
               ) && (
-                <Button
-                  onClick={() => {
-                    pushFiltered(props, "/launch", ["project_id"])
-                  }}
-                >
-                  <i className="material-icons">add</i> Launch template
-                </Button>
-              )}
+                  <Button
+                    onClick={() => {
+                      pushFiltered(props, "/launch", ["project_id"])
+                    }}
+                  >
+                    <i className="material-icons">add</i> Launch template
+                  </Button>
+                )}
             </Flex>
           </ControlRow>
           <ChartList
             currentView={currentView}
             currentCluster={currentCluster}
-            namespace={currentProject.capi_provisioner_enabled ? "default" : namespace}
+            namespace={namespace}
             sortType={sortType}
             selectedTag={selectedTag}
           />
@@ -183,7 +187,7 @@ const Button = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
+    props.disabled ? "" : "#505edddd"};
   }
 
   > i {

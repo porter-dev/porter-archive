@@ -12,11 +12,13 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
@@ -36,6 +38,8 @@ var (
 	existingPod    bool
 	nonInteractive bool
 	containerName  string
+	cpuMilli       int
+	memoryMi       int
 )
 
 // runCmd represents the "porter run" base command when called
@@ -45,7 +49,7 @@ var runCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(2),
 	Short: "Runs a command inside a connected cluster container.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, run)
+		err := checkLoginAndRun(cmd.Context(), args, run)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -58,7 +62,7 @@ var cleanupCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Short: "Delete any lingering ephemeral pods that were created with \"porter run\".",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, cleanup)
+		err := checkLoginAndRun(cmd.Context(), args, cleanup)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -106,10 +110,26 @@ func init() {
 		"name of the container inside pod to run the command in",
 	)
 
+	runCmd.PersistentFlags().IntVarP(
+		&cpuMilli,
+		"cpu",
+		"",
+		0,
+		"cpu allocation in millicores (1000 millicores = 1 vCPU)",
+	)
+
+	runCmd.PersistentFlags().IntVarP(
+		&memoryMi,
+		"ram",
+		"",
+		0,
+		"ram allocation in Mi (1024 Mi = 1 GB)",
+	)
+
 	runCmd.AddCommand(cleanupCmd)
 }
 
-func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func run(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	execArgs := args[1:]
 
 	color.New(color.FgGreen).Println("Running", strings.Join(execArgs, " "), "for release", args[0])
@@ -120,7 +140,7 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 
 	if len(execArgs) > 0 {
 		release, err := client.GetRelease(
-			context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0],
+			ctx, cliConf.Project, cliConf.Cluster, namespace, args[0],
 		)
 		if err != nil {
 			return fmt.Errorf("error fetching release %s: %w", args[0], err)
@@ -136,7 +156,7 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 		}
 	}
 
-	podsSimple, err := getPods(client, namespace, args[0])
+	podsSimple, err := getPods(ctx, client, cliConf, namespace, args[0])
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())
 	}
@@ -208,10 +228,11 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 	}
 
 	config := &PorterRunSharedConfig{
-		Client: client,
+		Client:    client,
+		CLIConfig: cliConf,
 	}
 
-	err = config.setSharedConfig()
+	err = config.setSharedConfig(ctx)
 
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
@@ -221,15 +242,16 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 		return executeRun(config, namespace, selectedPod.Name, selectedContainerName, execArgs)
 	}
 
-	return executeRunEphemeral(config, namespace, selectedPod.Name, selectedContainerName, execArgs)
+	return executeRunEphemeral(ctx, config, namespace, selectedPod.Name, selectedContainerName, execArgs)
 }
 
-func cleanup(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+func cleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
 	config := &PorterRunSharedConfig{
-		Client: client,
+		Client:    client,
+		CLIConfig: cliConfig,
 	}
 
-	err := config.setSharedConfig()
+	err := config.setSharedConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
@@ -251,20 +273,20 @@ func cleanup(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []stri
 	color.New(color.FgGreen).Println("Fetching ephemeral pods for cleanup")
 
 	if proceed == "All namespaces" {
-		namespaces, err := config.Clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+		namespaces, err := config.Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return err
 		}
 
 		for _, namespace := range namespaces.Items {
-			if pods, err := getEphemeralPods(namespace.Name, config.Clientset); err == nil {
+			if pods, err := getEphemeralPods(ctx, namespace.Name, config.Clientset); err == nil {
 				podNames = append(podNames, pods...)
 			} else {
 				return err
 			}
 		}
 	} else {
-		if pods, err := getEphemeralPods(namespace, config.Clientset); err == nil {
+		if pods, err := getEphemeralPods(ctx, namespace, config.Clientset); err == nil {
 			podNames = append(podNames, pods...)
 		} else {
 			return err
@@ -285,7 +307,7 @@ func cleanup(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []stri
 		color.New(color.FgBlue).Printf("Deleting ephemeral pod: %s\n", podName)
 
 		err = config.Clientset.CoreV1().Pods(namespace).Delete(
-			context.Background(), podName, metav1.DeleteOptions{},
+			ctx, podName, metav1.DeleteOptions{},
 		)
 		if err != nil {
 			return err
@@ -295,11 +317,11 @@ func cleanup(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []stri
 	return nil
 }
 
-func getEphemeralPods(namespace string, clientset *kubernetes.Clientset) ([]string, error) {
+func getEphemeralPods(ctx context.Context, namespace string, clientset *kubernetes.Clientset) ([]string, error) {
 	var podNames []string
 
 	pods, err := clientset.CoreV1().Pods(namespace).List(
-		context.Background(), metav1.ListOptions{LabelSelector: "porter/ephemeral-pod"},
+		ctx, metav1.ListOptions{LabelSelector: "porter/ephemeral-pod"},
 	)
 	if err != nil {
 		return nil, err
@@ -313,17 +335,18 @@ func getEphemeralPods(namespace string, clientset *kubernetes.Clientset) ([]stri
 }
 
 type PorterRunSharedConfig struct {
-	Client     *api.Client
+	Client     api.Client
 	RestConf   *rest.Config
 	Clientset  *kubernetes.Clientset
 	RestClient *rest.RESTClient
+	CLIConfig  config.CLIConfig
 }
 
-func (p *PorterRunSharedConfig) setSharedConfig() error {
-	pID := cliConf.Project
-	cID := cliConf.Cluster
+func (p *PorterRunSharedConfig) setSharedConfig(ctx context.Context) error {
+	pID := p.CLIConfig.Project
+	cID := p.CLIConfig.Cluster
 
-	kubeResp, err := p.Client.GetKubeconfig(context.Background(), pID, cID, cliConf.Kubeconfig)
+	kubeResp, err := p.Client.GetKubeconfig(ctx, pID, cID, p.CLIConfig.Kubeconfig)
 	if err != nil {
 		return err
 	}
@@ -371,11 +394,11 @@ type podSimple struct {
 	ContainerNames []string
 }
 
-func getPods(client *api.Client, namespace, releaseName string) ([]podSimple, error) {
+func getPods(ctx context.Context, client api.Client, cliConf config.CLIConfig, namespace, releaseName string) ([]podSimple, error) {
 	pID := cliConf.Project
 	cID := cliConf.Cluster
 
-	resp, err := client.GetK8sAllPods(context.TODO(), pID, cID, namespace, releaseName)
+	resp, err := client.GetK8sAllPods(ctx, pID, cID, namespace, releaseName)
 	if err != nil {
 		return nil, err
 	}
@@ -442,28 +465,28 @@ func executeRun(config *PorterRunSharedConfig, namespace, name, container string
 	})
 }
 
-func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, container string, args []string) error {
-	existing, err := getExistingPod(config, name, namespace)
+func executeRunEphemeral(ctx context.Context, config *PorterRunSharedConfig, namespace, name, container string, args []string) error {
+	existing, err := getExistingPod(ctx, config, name, namespace)
 	if err != nil {
 		return err
 	}
 
-	newPod, err := createEphemeralPodFromExisting(config, existing, container, args)
+	newPod, err := createEphemeralPodFromExisting(ctx, config, existing, container, args)
 	if err != nil {
 		return err
 	}
 	podName := newPod.ObjectMeta.Name
 
 	// delete the ephemeral pod no matter what
-	defer deletePod(config, podName, namespace)
+	defer deletePod(ctx, config, podName, namespace) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
 	color.New(color.FgYellow).Printf("Waiting for pod %s to be ready...", podName)
-	if err = waitForPod(config, newPod); err != nil {
+	if err = waitForPod(ctx, config, newPod); err != nil {
 		color.New(color.FgRed).Println("failed")
-		return handlePodAttachError(err, config, namespace, podName, container)
+		return handlePodAttachError(ctx, err, config, namespace, podName, container)
 	}
 
-	err = checkForPodDeletionCronJob(config)
+	err = checkForPodDeletionCronJob(ctx, config)
 	if err != nil {
 		return err
 	}
@@ -471,7 +494,7 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 	// refresh pod info for latest status
 	newPod, err = config.Clientset.CoreV1().
 		Pods(newPod.Namespace).
-		Get(context.Background(), newPod.Name, metav1.GetOptions{})
+		Get(ctx, newPod.Name, metav1.GetOptions{})
 
 	// pod exited while we were waiting.  maybe an error maybe not.
 	// we dont know if the user wanted an interactive shell or not.
@@ -479,11 +502,11 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 	if isPodExited(newPod) {
 		color.New(color.FgGreen).Println("complete!")
 		var writtenBytes int64
-		writtenBytes, _ = pipePodLogsToStdout(config, namespace, podName, container, false)
+		writtenBytes, _ = pipePodLogsToStdout(ctx, config, namespace, podName, container, false)
 
 		if verbose || writtenBytes == 0 {
 			color.New(color.FgYellow).Println("Could not get logs. Pod events:")
-			pipeEventsToStdout(config, namespace, podName, container, false)
+			pipeEventsToStdout(ctx, config, namespace, podName, container, false) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 		}
 		return nil
 	}
@@ -524,44 +547,44 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 		})
 	}); err != nil {
 		// ugly way to catch no TTY errors, such as when running command "echo \"hello\""
-		return handlePodAttachError(err, config, namespace, podName, container)
+		return handlePodAttachError(ctx, err, config, namespace, podName, container)
 	}
 
 	if verbose {
 		color.New(color.FgYellow).Println("Pod events:")
-		pipeEventsToStdout(config, namespace, podName, container, false)
+		pipeEventsToStdout(ctx, config, namespace, podName, container, false) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 	}
 
 	return err
 }
 
-func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
+func checkForPodDeletionCronJob(ctx context.Context, config *PorterRunSharedConfig) error {
 	// try and create the cron job and all of the other required resources as necessary,
 	// starting with the service account, then role and then a role binding
 
-	err := checkForServiceAccount(config)
+	err := checkForServiceAccount(ctx, config)
 	if err != nil {
 		return err
 	}
 
-	err = checkForClusterRole(config)
+	err = checkForClusterRole(ctx, config)
 	if err != nil {
 		return err
 	}
 
-	err = checkForRoleBinding(config)
+	err = checkForRoleBinding(ctx, config)
 	if err != nil {
 		return err
 	}
 
-	namespaces, err := config.Clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+	namespaces, err := config.Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 
 	for _, namespace := range namespaces.Items {
 		cronJobs, err := config.Clientset.BatchV1().CronJobs(namespace.Name).List(
-			context.Background(), metav1.ListOptions{},
+			ctx, metav1.ListOptions{},
 		)
 		if err != nil {
 			return err
@@ -577,7 +600,7 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 			for _, cronJob := range cronJobs.Items {
 				if cronJob.Name == "porter-ephemeral-pod-deletion-cronjob" {
 					err = config.Clientset.BatchV1().CronJobs(namespace.Name).Delete(
-						context.Background(), cronJob.Name, metav1.DeleteOptions{},
+						ctx, cronJob.Name, metav1.DeleteOptions{},
 					)
 					if err != nil {
 						return err
@@ -616,7 +639,7 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 		},
 	}
 	_, err = config.Clientset.BatchV1().CronJobs("default").Create(
-		context.Background(), cronJob, metav1.CreateOptions{},
+		ctx, cronJob, metav1.CreateOptions{},
 	)
 	if err != nil {
 		return err
@@ -625,15 +648,15 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 	return nil
 }
 
-func checkForServiceAccount(config *PorterRunSharedConfig) error {
-	namespaces, err := config.Clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+func checkForServiceAccount(ctx context.Context, config *PorterRunSharedConfig) error {
+	namespaces, err := config.Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 
 	for _, namespace := range namespaces.Items {
 		serviceAccounts, err := config.Clientset.CoreV1().ServiceAccounts(namespace.Name).List(
-			context.Background(), metav1.ListOptions{},
+			ctx, metav1.ListOptions{},
 		)
 		if err != nil {
 			return err
@@ -649,7 +672,7 @@ func checkForServiceAccount(config *PorterRunSharedConfig) error {
 			for _, svcAccount := range serviceAccounts.Items {
 				if svcAccount.Name == "porter-ephemeral-pod-deletion-service-account" {
 					err = config.Clientset.CoreV1().ServiceAccounts(namespace.Name).Delete(
-						context.Background(), svcAccount.Name, metav1.DeleteOptions{},
+						ctx, svcAccount.Name, metav1.DeleteOptions{},
 					)
 					if err != nil {
 						return err
@@ -665,7 +688,7 @@ func checkForServiceAccount(config *PorterRunSharedConfig) error {
 		},
 	}
 	_, err = config.Clientset.CoreV1().ServiceAccounts("default").Create(
-		context.Background(), serviceAccount, metav1.CreateOptions{},
+		ctx, serviceAccount, metav1.CreateOptions{},
 	)
 	if err != nil {
 		return err
@@ -674,9 +697,9 @@ func checkForServiceAccount(config *PorterRunSharedConfig) error {
 	return nil
 }
 
-func checkForClusterRole(config *PorterRunSharedConfig) error {
+func checkForClusterRole(ctx context.Context, config *PorterRunSharedConfig) error {
 	roles, err := config.Clientset.RbacV1().ClusterRoles().List(
-		context.Background(), metav1.ListOptions{},
+		ctx, metav1.ListOptions{},
 	)
 	if err != nil {
 		return err
@@ -706,7 +729,7 @@ func checkForClusterRole(config *PorterRunSharedConfig) error {
 		},
 	}
 	_, err = config.Clientset.RbacV1().ClusterRoles().Create(
-		context.Background(), role, metav1.CreateOptions{},
+		ctx, role, metav1.CreateOptions{},
 	)
 	if err != nil {
 		return err
@@ -715,9 +738,9 @@ func checkForClusterRole(config *PorterRunSharedConfig) error {
 	return nil
 }
 
-func checkForRoleBinding(config *PorterRunSharedConfig) error {
+func checkForRoleBinding(ctx context.Context, config *PorterRunSharedConfig) error {
 	bindings, err := config.Clientset.RbacV1().ClusterRoleBindings().List(
-		context.Background(), metav1.ListOptions{},
+		ctx, metav1.ListOptions{},
 	)
 	if err != nil {
 		return err
@@ -748,7 +771,7 @@ func checkForRoleBinding(config *PorterRunSharedConfig) error {
 		},
 	}
 	_, err = config.Clientset.RbacV1().ClusterRoleBindings().Create(
-		context.Background(), binding, metav1.CreateOptions{},
+		ctx, binding, metav1.CreateOptions{},
 	)
 	if err != nil {
 		return err
@@ -757,7 +780,7 @@ func checkForRoleBinding(config *PorterRunSharedConfig) error {
 	return nil
 }
 
-func waitForPod(config *PorterRunSharedConfig, pod *v1.Pod) error {
+func waitForPod(ctx context.Context, config *PorterRunSharedConfig, pod *v1.Pod) error {
 	var (
 		w   watch.Interface
 		err error
@@ -770,7 +793,7 @@ func waitForPod(config *PorterRunSharedConfig, pod *v1.Pod) error {
 		selector := fields.OneTermEqualSelector("metadata.name", pod.Name).String()
 		w, err = config.Clientset.CoreV1().
 			Pods(pod.Namespace).
-			Watch(context.Background(), metav1.ListOptions{FieldSelector: selector})
+			Watch(ctx, metav1.ListOptions{FieldSelector: selector})
 
 		if err == nil {
 			break
@@ -788,7 +811,7 @@ func waitForPod(config *PorterRunSharedConfig, pod *v1.Pod) error {
 			// creating the listener.
 			pod, err = config.Clientset.CoreV1().
 				Pods(pod.Namespace).
-				Get(context.Background(), pod.Name, metav1.GetOptions{})
+				Get(ctx, pod.Name, metav1.GetOptions{})
 			if isPodReady(pod) || isPodExited(pod) {
 				return nil
 			}
@@ -821,23 +844,23 @@ func isPodExited(pod *v1.Pod) bool {
 	return pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed
 }
 
-func handlePodAttachError(err error, config *PorterRunSharedConfig, namespace, podName, container string) error {
+func handlePodAttachError(ctx context.Context, err error, config *PorterRunSharedConfig, namespace, podName, container string) error {
 	if verbose {
 		color.New(color.FgYellow).Fprintf(os.Stderr, "Error: %s\n", err)
 	}
 	color.New(color.FgYellow).Fprintln(os.Stderr, "Could not open a shell to this container. Container logs:")
 
 	var writtenBytes int64
-	writtenBytes, _ = pipePodLogsToStdout(config, namespace, podName, container, false)
+	writtenBytes, _ = pipePodLogsToStdout(ctx, config, namespace, podName, container, false)
 
 	if verbose || writtenBytes == 0 {
 		color.New(color.FgYellow).Fprintln(os.Stderr, "Could not get logs. Pod events:")
-		pipeEventsToStdout(config, namespace, podName, container, false)
+		pipeEventsToStdout(ctx, config, namespace, podName, container, false) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 	}
 	return err
 }
 
-func pipePodLogsToStdout(config *PorterRunSharedConfig, namespace, name, container string, follow bool) (int64, error) {
+func pipePodLogsToStdout(ctx context.Context, config *PorterRunSharedConfig, namespace, name, container string, follow bool) (int64, error) {
 	podLogOpts := v1.PodLogOptions{
 		Container: container,
 		Follow:    follow,
@@ -846,7 +869,7 @@ func pipePodLogsToStdout(config *PorterRunSharedConfig, namespace, name, contain
 	req := config.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
 
 	podLogs, err := req.Stream(
-		context.Background(),
+		ctx,
 	)
 	if err != nil {
 		return 0, err
@@ -857,13 +880,13 @@ func pipePodLogsToStdout(config *PorterRunSharedConfig, namespace, name, contain
 	return io.Copy(os.Stdout, podLogs)
 }
 
-func pipeEventsToStdout(config *PorterRunSharedConfig, namespace, name, container string, follow bool) error {
+func pipeEventsToStdout(ctx context.Context, config *PorterRunSharedConfig, namespace, name, _ string, _ bool) error {
 	// update the config in case the operation has taken longer than token expiry time
-	config.setSharedConfig()
+	config.setSharedConfig(ctx) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
 	// creates the clientset
 	resp, err := config.Clientset.CoreV1().Events(namespace).List(
-		context.TODO(),
+		ctx,
 		metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=%s", name, namespace),
 		},
@@ -879,20 +902,20 @@ func pipeEventsToStdout(config *PorterRunSharedConfig, namespace, name, containe
 	return nil
 }
 
-func getExistingPod(config *PorterRunSharedConfig, name, namespace string) (*v1.Pod, error) {
+func getExistingPod(ctx context.Context, config *PorterRunSharedConfig, name, namespace string) (*v1.Pod, error) {
 	return config.Clientset.CoreV1().Pods(namespace).Get(
-		context.Background(),
+		ctx,
 		name,
 		metav1.GetOptions{},
 	)
 }
 
-func deletePod(config *PorterRunSharedConfig, name, namespace string) error {
+func deletePod(ctx context.Context, config *PorterRunSharedConfig, name, namespace string) error {
 	// update the config in case the operation has taken longer than token expiry time
-	config.setSharedConfig()
+	config.setSharedConfig(ctx) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
 	err := config.Clientset.CoreV1().Pods(namespace).Delete(
-		context.Background(),
+		ctx,
 		name,
 		metav1.DeleteOptions{},
 	)
@@ -907,6 +930,7 @@ func deletePod(config *PorterRunSharedConfig, name, namespace string) error {
 }
 
 func createEphemeralPodFromExisting(
+	ctx context.Context,
 	config *PorterRunSharedConfig,
 	existing *v1.Pod,
 	container string,
@@ -944,6 +968,42 @@ func createEphemeralPodFromExisting(
 			newPod.Spec.Containers[i].TTY = true
 			newPod.Spec.Containers[i].Stdin = true
 			newPod.Spec.Containers[i].StdinOnce = true
+
+			var newCpu int
+			if cpuMilli != 0 {
+				newCpu = cpuMilli
+			} else if newPod.Spec.Containers[i].Resources.Requests.Cpu() != nil && newPod.Spec.Containers[i].Resources.Requests.Cpu().MilliValue() > 500 {
+				newCpu = 500
+			}
+			if newCpu != 0 {
+				newPod.Spec.Containers[i].Resources.Limits[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", newCpu))
+				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", newCpu))
+
+				for j := 0; j < len(newPod.Spec.Containers[i].Env); j++ {
+					if newPod.Spec.Containers[i].Env[j].Name == "PORTER_RESOURCES_CPU" {
+						newPod.Spec.Containers[i].Env[j].Value = fmt.Sprintf("%dm", newCpu)
+						break
+					}
+				}
+			}
+
+			var newMemory int
+			if memoryMi != 0 {
+				newMemory = memoryMi
+			} else if newPod.Spec.Containers[i].Resources.Requests.Memory() != nil && newPod.Spec.Containers[i].Resources.Requests.Memory().Value() > 1000*1024*1024 {
+				newMemory = 1000
+			}
+			if newMemory != 0 {
+				newPod.Spec.Containers[i].Resources.Limits[v1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dMi", newMemory))
+				newPod.Spec.Containers[i].Resources.Requests[v1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dMi", newMemory))
+
+				for j := 0; j < len(newPod.Spec.Containers[i].Env); j++ {
+					if newPod.Spec.Containers[i].Env[j].Name == "PORTER_RESOURCES_RAM" {
+						newPod.Spec.Containers[i].Env[j].Value = fmt.Sprintf("%dMi", newMemory)
+						break
+					}
+				}
+			}
 		}
 
 		// remove health checks and probes
@@ -956,7 +1016,7 @@ func createEphemeralPodFromExisting(
 
 	// create the pod and return it
 	return config.Clientset.CoreV1().Pods(existing.ObjectMeta.Namespace).Create(
-		context.Background(),
+		ctx,
 		newPod,
 		metav1.CreateOptions{},
 	)

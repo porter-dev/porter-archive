@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import AnimateHeight, { Height } from "react-animate-height";
 import styled from "styled-components";
 import _ from "lodash";
@@ -8,20 +8,21 @@ import worker from "assets/worker.png";
 import job from "assets/job.png";
 
 import Spacer from "components/porter/Spacer";
-import WebTabs from "./WebTabs";
-import WorkerTabs from "./WorkerTabs";
-import JobTabs from "./JobTabs";
+import WebTabs from "./tabs/WebTabs";
+import WorkerTabs from "./tabs/WorkerTabs";
+import JobTabs from "./tabs/JobTabs";
 import { Service } from "./serviceTypes";
-import { StyledStatusFooter } from "../expanded-app/StatusFooter";
 import StatusFooter from "../expanded-app/StatusFooter";
-import ReleaseTabs from "./ReleaseTabs";
+import ReleaseTabs from "./tabs/ReleaseTabs";
+import { Context } from "shared/Context";
+import { AWS_INSTANCE_LIMITS } from "./tabs/utils";
+import api from "shared/api";
 
 interface ServiceProps {
   service: Service;
   chart?: any;
   editService: (service: Service) => void;
   deleteService: () => void;
-  defaultExpanded: boolean;
   setExpandedJob: (x: string) => void;
 }
 
@@ -30,14 +31,78 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   chart,
   deleteService,
   editService,
-  defaultExpanded,
   setExpandedJob,
 }) => {
-  const [showExpanded, setShowExpanded] = React.useState<boolean>(
-    defaultExpanded
-  );
   const [height, setHeight] = React.useState<Height>("auto");
 
+  const UPPER_BOUND = .75;
+
+  const [maxCPU, setMaxCPU] = useState(2 * UPPER_BOUND); //default is set to a t3 medium 
+  const [maxRAM, setMaxRAM] = useState(4 * UPPER_BOUND); //default is set to a t3 medium
+  const context = useContext(Context);
+
+  useEffect(() => {
+    const { currentCluster, currentProject } = context;
+    if (!currentCluster || !currentProject) {
+      return;
+    }
+    var instanceType = "";
+
+
+    if (service) {
+      const serviceName = service.name;
+
+      //first check if there is a nodeSelector for the given application (Can be null)
+      if (chart?.config?.[`${serviceName}-${service.type}`]?.nodeSelector?.["beta.kubernetes.io/instance-type"]) {
+        instanceType = chart?.config?.[`${serviceName}-${service.type}`]?.nodeSelector?.["beta.kubernetes.io/instance-type"]
+        const [instanceClass, instanceSize] = instanceType.split('.');
+        const currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
+        setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
+        setMaxRAM(currentInstance.RAM * UPPER_BOUND);
+      }
+    }
+    //Query the given nodes if no instance type is specified
+    if (instanceType == "") {
+      api
+        .getClusterNodes(
+          "<token>",
+          {},
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+          }
+        )
+        .then(({ data }) => {
+          if (data) {
+
+            let largestInstanceType = {
+              vCPUs: 2,
+              RAM: 4,
+            };
+
+            data.forEach(node => {
+              if (node.labels['porter.run/workload-kind'] == "application") {
+                var instanceType: string = node.labels['beta.kubernetes.io/instance-type'];
+                const [instanceClass, instanceSize] = instanceType.split('.');
+                if (instanceClass && instanceSize) {
+                  if (AWS_INSTANCE_LIMITS[instanceClass] && AWS_INSTANCE_LIMITS[instanceClass][instanceSize]) {
+                    let currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
+                    largestInstanceType.vCPUs = currentInstance.vCPU;
+                    largestInstanceType.RAM = currentInstance.RAM;
+
+                  }
+                }
+              }
+            });
+
+            setMaxCPU(largestInstanceType.vCPUs * UPPER_BOUND);
+            setMaxRAM(largestInstanceType.RAM * UPPER_BOUND);
+          }
+        }).catch((error) => {
+
+        });
+    }
+  }, []);
   // TODO: calculate heights instead of hardcoding them
   const renderTabs = (service: Service) => {
     switch (service.type) {
@@ -47,6 +112,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             service={service}
             editService={editService}
             setHeight={setHeight}
+            maxCPU={maxCPU}
+            maxRAM={maxRAM}
           />
         );
       case "worker":
@@ -55,6 +122,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             service={service}
             editService={editService}
             setHeight={setHeight}
+            maxCPU={maxCPU}
+            maxRAM={maxRAM}
           />
         );
       case "job":
@@ -63,6 +132,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             service={service}
             editService={editService}
             setHeight={setHeight}
+            maxCPU={maxCPU}
+            maxRAM={maxRAM}
           />
         );
       case "release":
@@ -71,6 +142,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             service={service}
             editService={editService}
             setHeight={setHeight}
+            maxCPU={maxCPU}
+            maxRAM={maxRAM}
           />
         );
     }
@@ -99,10 +172,10 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   return (
     <>
       <ServiceHeader
-        showExpanded={showExpanded}
-        onClick={() => setShowExpanded(!showExpanded)}
+        showExpanded={service.expanded}
+        onClick={() => editService({ ...service, expanded: !service.expanded })}
         chart={chart}
-        bordersRounded={!getHasBuiltImage() && !showExpanded}
+        bordersRounded={!getHasBuiltImage() && !service.expanded}
       >
         <ServiceTitle>
           <ActionButton>
@@ -112,14 +185,17 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {service.name.trim().length > 0 ? service.name : "New Service"}
         </ServiceTitle>
         {service.canDelete && (
-          <ActionButton onClick={deleteService}>
+          <ActionButton onClick={(e) => {
+            e.stopPropagation();
+            deleteService();
+          }}>
             <span className="material-icons">delete</span>
           </ActionButton>
         )}
       </ServiceHeader>
-      <AnimateHeight height={showExpanded ? height : 0}>
+      <AnimateHeight height={service.expanded ? height : 0}>
         <StyledSourceBox
-          showExpanded={showExpanded}
+          showExpanded={service.expanded}
           chart={chart}
           hasFooter={chart && service && getHasBuiltImage()}
         >
@@ -216,7 +292,7 @@ const ServiceHeader = styled.div<{
     border-radius: 20px;
     margin-left: -10px;
     transform: ${(props: { showExpanded: boolean; chart: any }) =>
-      props.showExpanded ? "" : "rotate(-90deg)"};
+    props.showExpanded ? "" : "rotate(-90deg)"};
   }
 
   animation: fadeIn 0.3s 0s;

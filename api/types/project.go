@@ -11,6 +11,12 @@ type Project struct {
 	StacksEnabled          bool    `json:"stacks_enabled"`
 	CapiProvisionerEnabled bool    `json:"capi_provisioner_enabled"`
 	SimplifiedViewEnabled  bool    `json:"simplified_view_enabled"`
+	AzureEnabled           bool    `json:"azure_enabled"`
+	HelmValuesEnabled      bool    `json:"helm_values_enabled"`
+	MultiCluster           bool    `json:"multi_cluster"`
+	FullAddOns             bool    `json:"full_add_ons"`
+	EnableReprovision      bool    `json:"enable_reprovision"`
+	ValidateApplyV2        bool    `json:"validate_apply_v2"`
 }
 
 type FeatureFlags struct {
@@ -20,6 +26,12 @@ type FeatureFlags struct {
 	ManagedDatabasesEnabled    string `json:"managed_databases_enabled,omitempty"`
 	CapiProvisionerEnabled     string `json:"capi_provisioner_enabled,omitempty"`
 	SimplifiedViewEnabled      string `json:"simplified_view_enabled,omitempty"`
+	AzureEnabled               bool   `json:"azure_enabled,omitempty"`
+	HelmValuesEnabled          bool   `json:"helm_values_enabled,omitempty"`
+	MultiCluster               bool   `json:"multi_cluster,omitempty"`
+	FullAddOns                 bool   `json:"full_add_ons,omitempty"`
+	EnableReprovision          bool   `json:"enable_reprovision,omitempty"`
+	ValidateApplyV2            bool   `json:"validate_apply_v2"`
 }
 
 type CreateProjectRequest struct {
@@ -120,3 +132,15 @@ type OnboardingData struct {
 }
 
 type UpdateOnboardingRequest OnboardingData
+
+type UpdateOnboardingStepRequest struct {
+	Step              string `json:"step" form:"required,max=255"`
+	Provider          string `json:"provider"`
+	AccountId         string `json:"account_id"`
+	CloudformationURL string `json:"cloudformation_url"`
+	ErrorMessage      string `json:"error_message"`
+	LoginURL          string `json:"login_url"`
+	Region            string `json:"region"`
+	// ExternalId used as a 'password' for the aws assume role chain to porter-manager role
+	ExternalId string `json:"external_id"`
+}

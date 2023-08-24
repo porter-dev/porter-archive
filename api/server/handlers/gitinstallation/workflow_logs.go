@@ -29,7 +29,6 @@ func NewGetWorkflowLogsHandler(
 func (c *GetWorkflowLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
 
-	fmt.Printf("HSIEOFDSJPGfSDLKGaslkf")
 	if !ok {
 		return
 	}
@@ -76,5 +75,5 @@ func (c *GetWorkflowLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	fmt.Printf("Fetched workflow logs URL: %v\n", logsURL.String())
 
 	c.WriteResult(w, r, logsURL.String())
-	
+
 }

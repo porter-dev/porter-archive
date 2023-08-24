@@ -43,6 +43,9 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		Name:                   request.Name,
 		CapiProvisionerEnabled: true,
 		SimplifiedViewEnabled:  true,
+		HelmValuesEnabled:      false,
+		MultiCluster:           false,
+		EnableReprovision:      false,
 	}
 
 	var err error
@@ -89,7 +92,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		p.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
 	}
 
-	p.Config().AnalyticsClient.Track(analytics.ProjectCreateTrack(&analytics.ProjectCreateTrackOpts{
+	p.Config().AnalyticsClient.Track(analytics.ProjectCreateTrack(&analytics.ProjectCreateDeleteTrackOpts{
 		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),
 	}))
 }

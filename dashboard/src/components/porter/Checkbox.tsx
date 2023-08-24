@@ -20,24 +20,22 @@ const Checkbox: React.FC<Props> = ({
   return (
     disabled && disabledTooltip ?
       <Tooltip content={disabledTooltip} position="right">
-        <StyledCheckbox>
-          <Box
-            checked={checked}
-            onClick={disabled ? () => { } : toggleChecked}
-            disabled={disabled}
-          >
+        <StyledCheckbox 
+          onClick={disabled ? () => { } : toggleChecked}
+          disabled={disabled}
+        >
+          <Box checked={checked}>
             <i className="material-icons">done</i>
           </Box>
           {children}
         </StyledCheckbox>
       </Tooltip>
       :
-      <StyledCheckbox>
-        <Box
-          checked={checked}
-          onClick={disabled ? () => { } : toggleChecked}
-          disabled={disabled}
-        >
+      <StyledCheckbox 
+        onClick={disabled ? () => { } : toggleChecked}
+        disabled={disabled}
+      >
+        <Box checked={checked}>
           <i className="material-icons">done</i>
         </Box>
         {children}
@@ -47,14 +45,16 @@ const Checkbox: React.FC<Props> = ({
 
 export default Checkbox;
 
-const StyledCheckbox = styled.div`
+const StyledCheckbox = styled.div<{
+  disabled?: boolean;
+}>`
   display: flex;
   align-items: center;
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 `;
 
 const Box = styled.div<{
   checked: boolean;
-  disabled?: boolean;
 }>`
   width: 12px;
   height: 12px;
@@ -65,7 +65,6 @@ const Box = styled.div<{
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 
   > i {
     font-size: 12px;

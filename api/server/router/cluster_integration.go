@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	awsClusterInt "github.com/porter-dev/porter/api/server/handlers/cluster_integration/aws"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"

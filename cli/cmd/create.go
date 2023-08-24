@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
@@ -68,7 +70,7 @@ To deploy an application from a Docker registry, use "--source registry" and pas
 		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source registry --image gcr.io/snowflake-12345/example-app:latest"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, createFull)
+		err := checkLoginAndRun(cmd.Context(), args, createFull)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -181,13 +183,24 @@ func init() {
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
 
-func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if project.ValidateApplyV2 {
+		err = v2.CreateFull(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	// check the kind
 	if _, exists := supportedKinds[args[0]]; !exists {
 		return fmt.Errorf("%s is not a supported type: specify web, job, or worker", args[0])
 	}
-
-	var err error
 
 	fullPath, err := filepath.Abs(localPath)
 	if err != nil {
@@ -251,13 +264,13 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 	if source == "local" {
 		if useCache {
-			regID, imageURL, err := createAgent.GetImageRepoURL(name, namespace)
+			regID, imageURL, err := createAgent.GetImageRepoURL(ctx, name, namespace)
 			if err != nil {
 				return err
 			}
 
 			err = client.CreateRepository(
-				context.Background(),
+				ctx,
 				cliConf.Project,
 				regID,
 				&types.CreateRegistryRepositoryRequest{
@@ -269,21 +282,21 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 				return err
 			}
 
-			err = config.SetDockerConfig(createAgent.Client)
+			err = config.SetDockerConfig(ctx, createAgent.Client, project.ID)
 
 			if err != nil {
 				return err
 			}
 		}
 
-		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default", nil)
+		subdomain, err := createAgent.CreateFromDocker(ctx, valuesObj, "default", nil)
 
 		return handleSubdomainCreate(subdomain, err)
 	} else if source == "github" {
-		return createFromGithub(createAgent, valuesObj)
+		return createFromGithub(ctx, createAgent, valuesObj)
 	}
 
-	subdomain, err := createAgent.CreateFromRegistry(image, valuesObj)
+	subdomain, err := createAgent.CreateFromRegistry(ctx, image, valuesObj)
 
 	return handleSubdomainCreate(subdomain, err)
 }
@@ -302,7 +315,7 @@ func handleSubdomainCreate(subdomain string, err error) error {
 	return nil
 }
 
-func createFromGithub(createAgent *deploy.CreateAgent, overrideValues map[string]interface{}) error {
+func createFromGithub(ctx context.Context, createAgent *deploy.CreateAgent, overrideValues map[string]interface{}) error {
 	fullPath, err := filepath.Abs(localPath)
 	if err != nil {
 		return err
@@ -328,10 +341,12 @@ func createFromGithub(createAgent *deploy.CreateAgent, overrideValues map[string
 		return fmt.Errorf("remote is not a Github repository")
 	}
 
-	subdomain, err := createAgent.CreateFromGithub(&deploy.GithubOpts{
-		Branch: gitBranch,
-		Repo:   remoteRepo,
-	}, overrideValues)
+	subdomain, err := createAgent.CreateFromGithub(
+		ctx,
+		&deploy.GithubOpts{
+			Branch: gitBranch,
+			Repo:   remoteRepo,
+		}, overrideValues)
 
 	return handleSubdomainCreate(subdomain, err)
 }

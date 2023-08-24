@@ -23,15 +23,15 @@ type Props = {
 
 type Provider =
   | {
-      provider: "github";
-      name: string;
-      installation_id: number;
-    }
+    provider: "github";
+    name: string;
+    installation_id: number;
+  }
   | {
-      provider: "gitlab";
-      instance_url: string;
-      integration_id: number;
-    };
+    provider: "gitlab";
+    instance_url: string;
+    integration_id: number;
+  };
 
 // Sort provider by name if it's github or instance url if it's gitlab
 const sortProviders = (providers: Provider[]) => {
@@ -111,7 +111,7 @@ const RepoList: React.FC<Props> = ({
 
       const repos = res.data.map((repo) => ({ ...repo, GHRepoID: repoId }));
       return repos;
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const loadGitlabRepos = async (integrationId: number) => {
@@ -129,7 +129,7 @@ const RepoList: React.FC<Props> = ({
         GitIntegrationId: integrationId,
       }));
       return repos;
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const loadRepos = (provider: any) => {
@@ -168,9 +168,9 @@ const RepoList: React.FC<Props> = ({
   // clear out actionConfig and SelectedRepository if new search is performed
   useEffect(() => {
     setActionConfig({
-      git_repo: null,
-      image_repo_uri: null,
-      git_branch: null,
+      git_repo: "",
+      image_repo_uri: "",
+      git_branch: "",
       git_repo_id: 0,
       kind: "github",
     });
@@ -243,20 +243,20 @@ const RepoList: React.FC<Props> = ({
     let results =
       searchFilter != null
         ? repos
-            .filter((repo: RepoType) => {
-              return repo.FullName.toLowerCase().includes(
-                searchFilter.toLowerCase()
-              );
-            })
-            .sort((a: RepoType, b: RepoType) => {
-              const aIndex = a.FullName.toLowerCase().indexOf(
-                searchFilter.toLowerCase()
-              );
-              const bIndex = b.FullName.toLowerCase().indexOf(
-                searchFilter.toLowerCase()
-              );
-              return aIndex - bIndex;
-            })
+          .filter((repo: RepoType) => {
+            return repo.FullName.toLowerCase().includes(
+              searchFilter.toLowerCase()
+            );
+          })
+          .sort((a: RepoType, b: RepoType) => {
+            const aIndex = a.FullName.toLowerCase().indexOf(
+              searchFilter.toLowerCase()
+            );
+            const bIndex = b.FullName.toLowerCase().indexOf(
+              searchFilter.toLowerCase()
+            );
+            return aIndex - bIndex;
+          })
         : repos.slice(0, 10);
 
     if (results.length == 0) {
@@ -366,7 +366,7 @@ const ConnectToGithubButton = styled.a`
     props.disabled ? "#aaaabbee" : "#2E3338"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#353a3e"};
+    props.disabled ? "" : "#353a3e"};
   }
 
   > i {

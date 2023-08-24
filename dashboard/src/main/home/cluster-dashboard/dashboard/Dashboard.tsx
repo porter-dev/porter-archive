@@ -21,6 +21,8 @@ import ClusterSettingsModal from "./ClusterSettingsModal";
 
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
+import AzureProvisionerSettings from "components/AzureProvisionerSettings";
+import GCPProvisionerSettings from "components/GCPProvisionerSettings";
 
 type TabEnum =
   | "nodes"
@@ -43,8 +45,9 @@ export const Dashboard: React.FunctionComponent = () => {
   const [selectedClusterVersion, setSelectedClusterVersion] = useState(null);
   const [showProvisionerStatus, setShowProvisionerStatus] = useState(false);
   const [provisionFailureReason, setProvisionFailureReason] = useState("");
-  const [ingressIp, setIngressIp] = useState(null);
-  const [ingressError, setIngressError] = useState(null);
+  const [ingressIp, setIngressIp] = useState("");
+  const [ingressError, setIngressError] = useState("");
+  const [cloudProvider, setCloudProvider] = useState("azure");
 
   const context = useContext(Context);
   const renderTab = () => {
@@ -67,14 +70,36 @@ export const Dashboard: React.FunctionComponent = () => {
         return (
           <>
             <Br />
-            <ProvisionerSettings
-              selectedClusterVersion={selectedClusterVersion}
-              provisionerError={provisionFailureReason}
-              clusterId={context.currentCluster.id}
-              credentialId={
-                context.currentCluster.cloud_provider_credential_identifier
-              }
-            />
+            {context.currentCluster.cloud_provider == "AWS" && (
+              <ProvisionerSettings
+                selectedClusterVersion={selectedClusterVersion}
+                provisionerError={provisionFailureReason}
+                clusterId={context.currentCluster.id}
+                credentialId={
+                  context.currentCluster.cloud_provider_credential_identifier
+                }
+              />
+            )}
+            {context.currentCluster.cloud_provider == "Azure" && (
+              <AzureProvisionerSettings
+                selectedClusterVersion={selectedClusterVersion}
+                provisionerError={provisionFailureReason}
+                clusterId={context.currentCluster.id}
+                credentialId={
+                  context.currentCluster.cloud_provider_credential_identifier
+                }
+              />
+            )}
+            {context.currentCluster.cloud_provider == "GCP" && (
+              <GCPProvisionerSettings
+                selectedClusterVersion={selectedClusterVersion}
+                provisionerError={provisionFailureReason}
+                clusterId={context.currentCluster.id}
+                credentialId={
+                  context.currentCluster.cloud_provider_credential_identifier
+                }
+              />
+            )}
           </>
         );
       default:
@@ -83,10 +108,11 @@ export const Dashboard: React.FunctionComponent = () => {
   };
 
   useEffect(() => {
+    ``;
     if (
       context.currentCluster.status !== "UPDATING_UNAVAILABLE" &&
       !tabOptions.find((tab) => tab.value === "nodes")
-    ) {  
+    ) {
       if (!context.currentProject?.capi_provisioner_enabled) {
         tabOptions.unshift({ label: "Namespaces", value: "namespaces" });
         tabOptions.unshift({ label: "Metrics", value: "metrics" });
@@ -147,12 +173,16 @@ export const Dashboard: React.FunctionComponent = () => {
         setIngressIp(ingress_ip);
         setIngressError(ingress_error);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
     updateClusterWithDetailedData();
   }, []);
+
+  useEffect(() => {
+    updateClusterWithDetailedData();
+  }, [context.currentCluster]);
 
   const renderContents = () => {
     if (context.currentProject?.capi_provisioner_enabled) {
@@ -221,7 +251,7 @@ export const Dashboard: React.FunctionComponent = () => {
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="round"
-                  stroke-linejoin="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   fillRule="evenodd"
@@ -270,9 +300,8 @@ export const Dashboard: React.FunctionComponent = () => {
             </EditIconStyle>
           </Flex>
         }
-        description={`Cluster settings and status for ${
-          context.currentCluster.vanity_name || context.currentCluster.name
-        }.`}
+        description={`Cluster settings and status for ${context.currentCluster.vanity_name || context.currentCluster.name
+          }.`}
         disableLineBreak
         capitalize={false}
       />

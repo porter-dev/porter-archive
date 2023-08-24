@@ -3,7 +3,7 @@ package router
 import (
 	"fmt"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/porter-dev/porter/api/server/handlers/job"
 	"github.com/porter-dev/porter/api/server/handlers/namespace"
@@ -206,6 +206,35 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/envgroup/create -> namespace.NewCreateEnvGroupHandler
+	createStacksEnvGroupEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/stacks/envgroup/create",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	createStacksEnvGroupHandler := namespace.NewCreateStacksEnvGroupHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createStacksEnvGroupEndpoint,
+		Handler:  createStacksEnvGroupHandler,
+		Router:   r,
+	})
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/envgroup/add_application -> namespace.NewAddEnvGroupAppHandler
 	updateEnvGroupAppsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

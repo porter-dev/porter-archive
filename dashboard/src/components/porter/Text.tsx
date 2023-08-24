@@ -6,13 +6,15 @@ type Props = {
   color?: string;
   weight?: number;
   children: any;
+  additionalStyles?: string;
 };
 
 const Text: React.FC<Props> = ({
   size,
   weight,
   color,
-  children
+  children,
+  additionalStyles
 }) => {
   const getColor = () => {
     switch (color) {
@@ -22,12 +24,13 @@ const Text: React.FC<Props> = ({
         return color;
     }
   };
-  
+
   return (
     <StyledText
       size={size}
       color={getColor()}
       weight={weight}
+      additionalStyles={additionalStyles}
     >
       {children}
     </StyledText>
@@ -36,10 +39,11 @@ const Text: React.FC<Props> = ({
 
 export default Text;
 
-const StyledText = styled.div<{ 
-  size?: number; 
+const StyledText = styled.div<{
+  size?: number;
   color?: string;
   weight?: number;
+  additionalStyles?: string;
 }>`
   line-height: 1.5;
   font-weight: ${props => props.weight || 400};
@@ -47,4 +51,5 @@ const StyledText = styled.div<{
   font-size: ${props => props.size || 13}px;
   display: inline;
   align-items: center;
+  ${props => props.additionalStyles ? props.additionalStyles : ""}
 `;

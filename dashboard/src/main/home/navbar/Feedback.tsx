@@ -37,10 +37,10 @@ export default class Feedback extends Component<PropsType, StateType> {
   onSubmitFeedback = () => {
     let { user } = this.context;
     let msg =
-      "👤 " +
+      "Feedback from " +
       user.email +
-      " 📍 " +
-      this.props.currentView +
+      " on route " +
+      window.location.pathname +
       ": " +
       this.state.feedbackText;
     handleSubmitFeedback(msg, () => {
@@ -214,11 +214,9 @@ const Dropdown = styled.div`
   @keyframes flyOff {
     from {
       opacity: 1;
-      transform: translateX(0px);
     }
     to {
       opacity: 0;
-      transform: translateX(100px);
     }
   }
 `;

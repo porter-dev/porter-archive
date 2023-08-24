@@ -10,10 +10,10 @@ import (
 	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
 	api "github.com/porter-dev/porter/api/client"
-	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
+	cliUtils "github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -26,29 +26,36 @@ type UpdateConfigDriver struct {
 	config      *preview.UpdateConfigDriverConfig
 	lookupTable *map[string]drivers.Driver
 	output      map[string]interface{}
+	apiClient   api.Client
+	cliConfig   config.CLIConfig
 }
 
-func NewUpdateConfigDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
-	driver := &UpdateConfigDriver{
-		lookupTable: opts.DriverLookupTable,
-		output:      make(map[string]interface{}),
+// NewUpdateConfigDriver extends switchboard with config updating for an app
+func NewUpdateConfigDriver(ctx context.Context, apiClient api.Client, cliConfig config.CLIConfig) func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+	return func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+		driver := &UpdateConfigDriver{
+			lookupTable: opts.DriverLookupTable,
+			output:      make(map[string]interface{}),
+			apiClient:   apiClient,
+			cliConfig:   cliConfig,
+		}
+
+		target, err := GetTarget(ctx, resource.Name, resource.Target, apiClient, cliConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		driver.target = target
+
+		source, err := GetSource(ctx, driver.target.Project, resource.Name, resource.Source, apiClient)
+		if err != nil {
+			return nil, err
+		}
+
+		driver.source = source
+
+		return driver, nil
 	}
-
-	target, err := GetTarget(resource.Name, resource.Target)
-	if err != nil {
-		return nil, err
-	}
-
-	driver.target = target
-
-	source, err := GetSource(driver.target.Project, resource.Name, resource.Source)
-	if err != nil {
-		return nil, err
-	}
-
-	driver.source = source
-
-	return driver, nil
 }
 
 func (d *UpdateConfigDriver) ShouldApply(resource *models.Resource) bool {
@@ -56,6 +63,8 @@ func (d *UpdateConfigDriver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource, error) {
+	ctx := context.TODO() // switchboard blocks changing this for now
+
 	updateConfigDriverConfig, err := d.getConfig(resource)
 	if err != nil {
 		return nil, err
@@ -63,10 +72,8 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 
 	d.config = updateConfigDriverConfig
 
-	client := config.GetAPIClient()
-
-	_, err = client.GetRelease(
-		context.Background(),
+	_, err = d.apiClient.GetRelease(
+		ctx,
 		d.target.Project,
 		d.target.Cluster,
 		d.target.Namespace,
@@ -96,7 +103,7 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 		tag = commit.Sha[:7]
 	}
 
-	regList, err := client.ListRegistries(context.Background(), d.target.Project)
+	regList, err := d.apiClient.ListRegistries(ctx, d.target.Project)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +120,7 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 
 	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
 		if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-			repoSuffix = strings.ToLower(strings.ReplaceAll(fmt.Sprintf("%s-%s", repoOwner, repoName), "_", "-"))
+			repoSuffix = cliUtils.SlugifyRepoSuffix(repoOwner, repoName)
 		}
 	}
 
@@ -130,7 +137,7 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 		color.New(color.FgYellow).Printf("Could not read release %s/%s: attempting creation\n", d.target.Namespace, d.target.AppName)
 
 		createAgent := &deploy.CreateAgent{
-			Client: client,
+			Client: d.apiClient,
 			CreateOpts: &deploy.CreateOpts{
 				SharedOpts:  sharedOpts,
 				Kind:        d.source.Name,
@@ -140,33 +147,15 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 			},
 		}
 
-		regID, imageURL, err := createAgent.GetImageRepoURL(d.target.AppName, sharedOpts.Namespace)
-		if err != nil {
-			return nil, err
-		}
-
-		err = client.CreateRepository(
-			context.Background(),
-			sharedOpts.ProjectID,
-			regID,
-			&types.CreateRegistryRepositoryRequest{
-				ImageRepoURI: imageURL,
-			},
-		)
-
-		if err != nil {
-			return nil, err
-		}
-
 		image := fmt.Sprintf("%s:%s", strings.Split(d.config.UpdateConfig.Image, ":")[0], tag)
 
-		_, err = createAgent.CreateFromRegistry(image, d.config.Values)
+		_, err = createAgent.CreateFromRegistry(ctx, image, d.config.Values)
 
 		if err != nil {
 			return nil, err
 		}
 	} else if !updateConfigDriverConfig.OnlyCreate {
-		updateAgent, err := deploy.NewDeployAgent(client, d.target.AppName, &deploy.DeployOpts{
+		updateAgent, err := deploy.NewDeployAgent(ctx, d.apiClient, d.target.AppName, &deploy.DeployOpts{
 			SharedOpts: sharedOpts,
 			Local:      false,
 		})
@@ -174,7 +163,7 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 			return nil, err
 		}
 
-		err = updateAgent.UpdateImageAndValues(d.config.Values)
+		err = updateAgent.UpdateImageAndValues(ctx, d.config.Values)
 
 		if err != nil {
 			return nil, err
@@ -184,20 +173,18 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 	if d.source.Name == "job" && updateConfigDriverConfig.WaitForJob && (shouldCreate || !updateConfigDriverConfig.OnlyCreate) {
 		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resource.Name)
 
-		err = wait.WaitForJob(client, &wait.WaitOpts{
+		err = wait.WaitForJob(ctx, d.apiClient, &wait.WaitOpts{
 			ProjectID: d.target.Project,
 			ClusterID: d.target.Cluster,
 			Namespace: d.target.Namespace,
 			Name:      d.target.AppName,
 		})
-
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = d.assignOutput(resource, client)
-
+	err = d.assignOutput(ctx, resource, d.apiClient)
 	if err != nil {
 		return nil, err
 	}
@@ -230,9 +217,9 @@ func (d *UpdateConfigDriver) getConfig(resource *models.Resource) (*preview.Upda
 	return config, nil
 }
 
-func (d *UpdateConfigDriver) assignOutput(resource *models.Resource, client *api.Client) error {
+func (d *UpdateConfigDriver) assignOutput(ctx context.Context, _ *models.Resource, client api.Client) error {
 	release, err := client.GetRelease(
-		context.Background(),
+		ctx,
 		d.target.Project,
 		d.target.Cluster,
 		d.target.Namespace,

@@ -1,6 +1,3 @@
-//go:build ee
-// +build ee
-
 package vault
 
 import (

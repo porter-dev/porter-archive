@@ -50,7 +50,7 @@ const EnvGroupDashboard = (props: PropsType) => {
   const setNamespace = (namespace: string) => {
     setState((state) => ({ ...state, namespace }));
     pushQueryParams(props, {
-      namespace: namespace ?? "ALL",
+      namespace: currentProject.simplified_view_enabled ? ("porter-env-group") : (namespace ?? "ALL"),
     });
   };
 
@@ -107,12 +107,10 @@ const EnvGroupDashboard = (props: PropsType) => {
                 sortType={state.sortType}
               />
               <Spacer inline width="10px" />
-              {!currentProject?.capi_provisioner_enabled && (
-                <NamespaceSelector
-                  setNamespace={setNamespace}
-                  namespace={state.namespace}
-                />
-              )}
+              {!currentProject.simplified_view_enabled && <NamespaceSelector
+                setNamespace={setNamespace}
+                namespace={currentProject.simplified_view_enabled ? "porter-env-group" : state.namespace}
+              />}
             </SortFilterWrapper>
             <Flex>
               {isAuthorizedToAdd && (
@@ -125,7 +123,7 @@ const EnvGroupDashboard = (props: PropsType) => {
 
           <EnvGroupList
             currentCluster={props.currentCluster}
-            namespace={currentProject?.capi_provisioner_enabled ? "default" : state.namespace}
+            namespace={currentProject?.simplified_view_enabled ? "porter-env-group" : state.namespace}
             sortType={state.sortType}
             setExpandedEnvGroup={setExpandedEnvGroup}
           />
@@ -139,7 +137,7 @@ const EnvGroupDashboard = (props: PropsType) => {
       return (
         <ExpandedEnvGroup
           isAuthorized={props.isAuthorized}
-          namespace={state.expandedEnvGroup?.namespace || state.namespace}
+          namespace={currentProject?.simplified_view_enabled ? "porter-env-group" : (state.expandedEnvGroup?.namespace || state.namespace)}
           currentCluster={props.currentCluster}
           envGroup={state.expandedEnvGroup}
           closeExpanded={() => closeExpanded()}
@@ -217,7 +215,7 @@ const Button = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
+    props.disabled ? "" : "#505edddd"};
   }
 
   > i {

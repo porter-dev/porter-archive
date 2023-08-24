@@ -102,12 +102,12 @@ export const integrationList: any = {
   gcp: {
     icon: gcp,
     label: "GCP",
-    tagline: "Coming soon"
+    tagline: "Contact support@porter.run"
   },
   azure: {
     icon: azure,
     label: "Azure",
-    tagline: "Coming soon"
+    tagline: "Contact support@porter.run"
   },
   do: {
     icon: digitalOcean,

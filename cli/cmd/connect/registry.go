@@ -13,7 +13,8 @@ import (
 
 // Helm connects a Helm repository using HTTP basic authentication
 func Registry(
-	client *api.Client,
+	ctx context.Context,
+	client api.Client,
 	projectID uint,
 ) (uint, error) {
 	// if project ID is 0, ask the user to set the project ID or create a project
@@ -41,7 +42,7 @@ Username: `))
 
 	// create the basic auth integration
 	integration, err := client.CreateBasicAuthIntegration(
-		context.Background(),
+		ctx,
 		projectID,
 		&types.CreateBasicRequest{
 			Username: username,
@@ -55,7 +56,7 @@ Username: `))
 	color.New(color.FgGreen).Printf("created basic auth integration with id %d\n", integration.ID)
 
 	reg, err := client.CreateRegistry(
-		context.Background(),
+		ctx,
 		projectID,
 		&types.CreateRegistryRequest{
 			URL:                repoURL,

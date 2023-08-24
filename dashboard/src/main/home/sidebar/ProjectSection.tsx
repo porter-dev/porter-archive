@@ -174,7 +174,7 @@ const Option = styled.div`
   border-top: 1px solid #00000000;
   border-bottom: 1px solid
     ${(props: { selected: boolean; lastItem?: boolean }) =>
-      props.lastItem ? "#ffffff00" : "#ffffff15"};
+    props.lastItem ? "#ffffff00" : "#ffffff15"};
   height: 45px;
   display: flex;
   align-items: center;
@@ -187,7 +187,7 @@ const Option = styled.div`
     props.selected ? "#ffffff11" : ""};
   :hover {
     background: ${(props: { selected: boolean; lastItem?: boolean }) =>
-      props.selected ? "" : "#ffffff22"};
+    props.selected ? "" : "#ffffff22"};
   }
 
   > i {
@@ -283,6 +283,6 @@ const MainSelector = styled.div`
     justify-content: center;
     border-radius: 20px;
     background: ${(props: { expanded: boolean }) =>
-      props.expanded ? "#ffffff22" : ""};
+    props.expanded ? "#ffffff22" : ""};
   }
 `;

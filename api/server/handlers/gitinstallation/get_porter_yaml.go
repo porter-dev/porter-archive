@@ -5,6 +5,8 @@ import (
 	b64 "encoding/base64"
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/handlers/porter_app"
+
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -13,6 +15,9 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
+	"gopkg.in/yaml.v2"
 )
 
 type GithubGetPorterYamlHandler struct {
@@ -31,29 +36,39 @@ func NewGithubGetPorterYamlHandler(
 }
 
 func (c *GithubGetPorterYamlHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-porter-yaml")
+	defer span.End()
+
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+
 	request := &types.GetPorterYamlRequest{}
-
 	ok := c.DecodeAndValidate(w, r, request)
-
 	if !ok {
+		err := telemetry.Error(ctx, span, nil, "invalid request body")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
-	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "path", Value: request.Path})
 
+	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
 	if !ok {
+		err := telemetry.Error(ctx, span, nil, "unable to get owner and name")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
 	branch, ok := commonutils.GetBranchParam(c, w, r)
-
 	if !ok {
+		err := telemetry.Error(ctx, span, nil, "unable to get branch")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
 	client, err := GetGithubAppClientFromRequest(c.Config(), r)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "unable to get github app client")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -67,16 +82,50 @@ func (c *GithubGetPorterYamlHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		},
 	)
 	if err != nil {
-		http.NotFound(w, r)
+		err = telemetry.Error(ctx, span, err, "unable to get contents")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	fileData, err := resp.GetContent()
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "unable to get file data")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-	data := b64.StdEncoding.EncodeToString([]byte(fileData))
 
+	parsed := &porter_app.PorterStackYAML{}
+	err = yaml.Unmarshal([]byte(fileData), parsed)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "invalid porter yaml format")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	if project.ValidateApplyV2 {
+		if parsed.Version == nil {
+			err = telemetry.Error(ctx, span, nil, "v2 porter yaml is required")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		if *parsed.Version != "v2" {
+			err = telemetry.Error(ctx, span, nil, "porter YAML version is not supported")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+	}
+
+	// backwards compatibility so that old porter yamls are no longer valid
+	if !project.ValidateApplyV2 && parsed.Version != nil {
+		version := *parsed.Version
+		if version != "v1stack" {
+			err = telemetry.Error(ctx, span, nil, "porter YAML version is not supported")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+	}
+
+	data := b64.StdEncoding.EncodeToString([]byte(fileData))
 	c.WriteResult(w, r, data)
 }

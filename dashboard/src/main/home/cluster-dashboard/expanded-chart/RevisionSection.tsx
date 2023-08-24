@@ -47,6 +47,8 @@ class RevisionSection extends Component<PropsType, StateType> {
     expandRevisions: false,
   };
 
+  ws: WebSocket | null = null;
+
   refreshHistory = () => {
     let { chart } = this.props;
     let { currentCluster, currentProject } = this.context;
@@ -79,6 +81,12 @@ class RevisionSection extends Component<PropsType, StateType> {
     this.connectToLiveUpdates();
   }
 
+  componentWillUnmount() {
+    if (this.ws) {
+      this.ws.close(); // Close the WebSocket connection
+    }
+  }
+
   connectToLiveUpdates() {
     let { chart } = this.props;
     let { currentCluster, currentProject } = this.context;
@@ -87,13 +95,13 @@ class RevisionSection extends Component<PropsType, StateType> {
     const protocol = window.location.protocol == "https:" ? "wss" : "ws";
     const url = `${protocol}://${window.location.host}`;
 
-    const ws = new WebSocket(`${url}${apiPath}`);
+    this.ws = new WebSocket(`${url}${apiPath}`);
 
-    ws.onopen = () => {
-      // console.log("connected to chart live updates websocket");
+    this.ws.onopen = () => {
+      console.log("connected to chart live updates websocket");
     };
 
-    ws.onmessage = (evt: MessageEvent) => {
+    this.ws.onmessage = (evt: MessageEvent) => {
       let event = JSON.parse(evt.data);
 
       if (event.event_type == "UPDATE") {
@@ -119,7 +127,7 @@ class RevisionSection extends Component<PropsType, StateType> {
               return { ...prevState, revisions: [object, ...prevRevisions] };
             }
 
-            return { ...prevState, revisions: prevRevisions };
+            return { ...prevState, revisions: prevRevisions, maxVersion: Math.max(...prevRevisions.map(rev => rev.version)) };
           },
           () => {
             this.props.setRevision(this.state.revisions[0], true);
@@ -128,13 +136,13 @@ class RevisionSection extends Component<PropsType, StateType> {
       }
     };
 
-    ws.onclose = () => {
+    this.ws.onclose = () => {
       console.log("closing chart live updates websocket");
     };
 
-    ws.onerror = (err: ErrorEvent) => {
+    this.ws.onerror = (err: ErrorEvent) => {
       console.log(err);
-      ws.close();
+      this.ws.close();
     };
   }
 

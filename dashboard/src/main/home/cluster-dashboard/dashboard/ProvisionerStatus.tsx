@@ -2,6 +2,8 @@ import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
 
 import aws from "assets/aws.png";
+import azure from "assets/azure.png";
+
 import api from "shared/api";
 
 import { Context } from "shared/Context";
@@ -81,8 +83,19 @@ const ProvisionerStatus: React.FC<Props> = ({ provisionFailureReason }) => {
     <StyledProvisionerStatus>
       <HeaderSection>
         <Flex>
-          <Icon src={aws} />
-          AWS provisioning status
+          {currentCluster?.cloud_provider == "AWS" && (
+            <>
+              <Icon src={aws} />
+              AWS provisioning status
+            </>
+          )}
+
+          {currentCluster?.cloud_provider == "Azure" && (
+            <>
+              <Icon src={azure} />
+              Azure provisioning status
+            </>
+          )}
         </Flex>
         <Spacer height="18px" />
         <LoadingBar

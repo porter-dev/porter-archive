@@ -12,6 +12,27 @@ type Props = {
 };
 
 const DateTimePicker: React.FC<Props> = ({ startDate, setStartDate }) => {
+  const maxDate = new Date();
+  const minDate = new Date(maxDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const minTimeMaxDay = new Date(maxDate);
+  minTimeMaxDay.setHours(0, 0, 0, 0);
+  const maxTimeMinDay = new Date(minDate);
+  maxTimeMinDay.setHours(23, 59, 0, 0);
+
+  const availableDates = [];
+  let currentDate = new Date(minDate);
+  while (currentDate <= maxDate) {
+    availableDates.push(new Date(currentDate));
+    currentDate.setTime(currentDate.getTime() + 24 * 60 * 60 * 1000);
+  }
+
+  const isMinDay = startDate.toDateString() === minDate.toDateString();
+  const isMaxDay = startDate.toDateString() === maxDate.toDateString();
+
+  const minTime = isMinDay ? minDate : isMaxDay ? minTimeMaxDay : null;
+  const maxTime = isMaxDay ? maxDate : isMinDay ? maxTimeMinDay : null;
+
   return (
     <DateTimePickerWrapper
       onClick={(e) => {
@@ -25,6 +46,9 @@ const DateTimePicker: React.FC<Props> = ({ startDate, setStartDate }) => {
         onChange={(date: any) => setStartDate(date)}
         showTimeSelect
         dateFormat="MMMM d, yyyy h:mm aa"
+        includeDates={availableDates}
+        maxTime={maxTime}
+        minTime={minTime}
       />
     </DateTimePickerWrapper>
   );

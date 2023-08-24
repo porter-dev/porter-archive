@@ -15,7 +15,8 @@ import (
 
 // GAR creates a GAR integration
 func GAR(
-	client *api.Client,
+	ctx context.Context,
+	client api.Client,
 	projectID uint,
 ) (uint, error) {
 	// if project ID is 0, ask the user to set the project ID or create a project
@@ -39,7 +40,7 @@ Key file location: `)
 
 		// create the gcp integration
 		integration, err := client.CreateGCPIntegration(
-			context.Background(),
+			ctx,
 			projectID,
 			&types.CreateGCPRequest{
 				GCPKeyData: string(bytes),
@@ -81,7 +82,7 @@ Artifact registry region: `)
 		}
 
 		reg, err := client.CreateRegistry(
-			context.Background(),
+			ctx,
 			projectID,
 			&types.CreateRegistryRequest{
 				Name:             regName,

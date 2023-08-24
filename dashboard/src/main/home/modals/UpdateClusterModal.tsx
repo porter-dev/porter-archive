@@ -120,7 +120,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
         {this.renderWarning()}
 
         <Help
-          href="https://docs.getporter.dev/docs/deleting-dangling-resources"
+          href="https://docs.porter.run/other/deleting-dangling-resources"
           target="_blank"
         >
           <i className="material-icons">help_outline</i> How to delete resources

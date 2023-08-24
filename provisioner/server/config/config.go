@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -140,6 +141,8 @@ func FromEnv() (*EnvConf, error) {
 }
 
 func GetConfig(envConf *EnvConf) (*Config, error) {
+	ctx := context.Background()
+
 	res := &Config{
 		ProvisionerConf: envConf.ProvisionerConf,
 		DBConf:          envConf.DBConf,
@@ -206,7 +209,7 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 			LocalTerraformDirectory: envConf.LocalTerraformDirectory,
 		})
 	} else if envConf.ProvisionerMethod == "kubernetes" {
-		provAgent, err := getProvisionerAgent(envConf.ProvisionerConf)
+		provAgent, err := getProvisionerAgent(ctx, envConf.ProvisionerConf)
 		if err != nil {
 			return nil, err
 		}
@@ -234,7 +237,7 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 	return res, nil
 }
 
-func getProvisionerAgent(conf *ProvisionerConf) (*kubernetes.Agent, error) {
+func getProvisionerAgent(ctx context.Context, conf *ProvisionerConf) (*kubernetes.Agent, error) {
 	if conf.ProvisionerCluster == "kubeconfig" && conf.SelfKubeconfig != "" {
 		agent, err := klocal.GetSelfAgentFromFileConfig(conf.SelfKubeconfig)
 		if err != nil {
@@ -246,7 +249,7 @@ func getProvisionerAgent(conf *ProvisionerConf) (*kubernetes.Agent, error) {
 		return nil, fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
 	}
 
-	agent, _ := kubernetes.GetAgentInClusterConfig(conf.ProvisionerJobNamespace)
+	agent, _ := kubernetes.GetAgentInClusterConfig(ctx, conf.ProvisionerJobNamespace)
 
 	return agent, nil
 }

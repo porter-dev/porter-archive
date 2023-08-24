@@ -91,7 +91,7 @@ export const useLogs = (
         ...pl,
         [containerName]: processedLogs,
       }));
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const setupWebsocket = (containerName: string, websocketKey: string) => {
@@ -156,7 +156,7 @@ export const useLogs = (
   useEffect(() => {
     // console.log("Selected pod updated");
     if (currentPod?.metadata?.name === currentPodName.current) {
-      return () => {};
+      return () => { };
     }
     currentPodName.current = currentPod?.metadata?.name;
     const currentContainers =

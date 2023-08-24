@@ -3,6 +3,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -23,6 +24,7 @@ type RetryHelmAgent struct {
 }
 
 func NewRetryHelmAgent(
+	ctx context.Context,
 	form *helm.Form,
 	l *logger.Logger,
 	retryCount uint,
@@ -32,7 +34,7 @@ func NewRetryHelmAgent(
 		l = logger.New(true, os.Stdout)
 	}
 
-	helmAgent, err := helm.GetAgentOutOfClusterConfig(form, l)
+	helmAgent, err := helm.GetAgentOutOfClusterConfig(ctx, form, l)
 	if err != nil {
 		return nil, err
 	}
@@ -43,18 +45,19 @@ func NewRetryHelmAgent(
 }
 
 func (a *RetryHelmAgent) ListReleases(
+	ctx context.Context,
 	namespace string,
 	filter *types.ReleaseListFilter,
 ) ([]*release.Release, error) {
 	for i := uint(0); i < a.retryCount; i++ {
-		releases, err := a.agent.ListReleases(namespace, filter)
+		releases, err := a.agent.ListReleases(ctx, namespace, filter)
 
 		if err == nil {
 			return releases, nil
 		} else {
 			log.Printf("recreating helm agent for retrying ListReleases. Error: %v", err)
 
-			a.agent, err = helm.GetAgentOutOfClusterConfig(a.form, a.l)
+			a.agent, err = helm.GetAgentOutOfClusterConfig(ctx, a.form, a.l)
 
 			if err != nil {
 				return nil, fmt.Errorf("error recreating helm agent for retrying ListReleases: %w", err)
@@ -68,17 +71,18 @@ func (a *RetryHelmAgent) ListReleases(
 }
 
 func (a *RetryHelmAgent) GetReleaseHistory(
+	ctx context.Context,
 	name string,
 ) ([]*release.Release, error) {
 	for i := uint(0); i < a.retryCount; i++ {
-		releases, err := a.agent.GetReleaseHistory(name)
+		releases, err := a.agent.GetReleaseHistory(ctx, name)
 
 		if err == nil {
 			return releases, nil
 		} else {
 			log.Printf("recreating helm agent for retrying GetReleaseHistory. Error: %v", err)
 
-			a.agent, err = helm.GetAgentOutOfClusterConfig(a.form, a.l)
+			a.agent, err = helm.GetAgentOutOfClusterConfig(ctx, a.form, a.l)
 
 			if err != nil {
 				return nil, fmt.Errorf("error recreating helm agent for retrying GetReleaseHistory: %w", err)
@@ -92,18 +96,19 @@ func (a *RetryHelmAgent) GetReleaseHistory(
 }
 
 func (a *RetryHelmAgent) DeleteReleaseRevision(
+	ctx context.Context,
 	name string,
 	version int,
 ) error {
 	for i := uint(0); i < a.retryCount; i++ {
-		err := a.agent.DeleteReleaseRevision(name, version)
+		err := a.agent.DeleteReleaseRevision(ctx, name, version)
 
 		if err == nil {
 			return nil
 		} else {
 			log.Printf("recreating helm agent for retrying DeleteReleaseRevision. Error: %v", err)
 
-			a.agent, err = helm.GetAgentOutOfClusterConfig(a.form, a.l)
+			a.agent, err = helm.GetAgentOutOfClusterConfig(ctx, a.form, a.l)
 
 			if err != nil {
 				return fmt.Errorf("error recreating helm agent for retrying DeleteReleaseRevision: %w", err)

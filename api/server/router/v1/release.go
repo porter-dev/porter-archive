@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/porter-dev/porter/api/server/handlers/namespace"
 	"github.com/porter-dev/porter/api/server/handlers/release"
 	v1Release "github.com/porter-dev/porter/api/server/handlers/v1/release"

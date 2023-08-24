@@ -16,10 +16,12 @@ import CheckboxRow from "components/form-components/CheckboxRow";
 import BranchFilterSelector from "./components/BranchFilterSelector";
 import Helper from "components/form-components/Helper";
 import NamespaceLabels, { KeyValueType } from "./components/NamespaceLabels";
-import ActionConfEditorStack from "components/repo-selector/ActionConfEditorStack";
 import AnimateHeight from "react-animate-height";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
+import ConnectNewRepoActionConfEditor from "./ConnectNewRepoActionConfEditor";
+import VerticalSteps from "components/porter/VerticalSteps";
+import Back from "components/porter/Back";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -34,6 +36,7 @@ const ConnectNewRepo: React.FC = () => {
   const [status, setStatus] = useState(null);
   const { pushFiltered } = useRouting();
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [currentStep, setCurrentStep] = useState<number>(0);
 
   // NOTE: git_repo_id is a misnomer as this actually refers to the github app's installation id.
   const [actionConfig, setActionConfig] = useState<ActionConfigType>({
@@ -175,6 +178,94 @@ const ConnectNewRepo: React.FC = () => {
       });
   };
 
+  if (currentProject?.simplified_view_enabled) {
+    return (
+      <CenterWrapper>
+        <Div>
+          <Back to="/preview-environments" />
+          <DashboardHeader
+            image={PullRequestIcon}
+            title="Preview environments"
+            capitalize={false}
+            description="Create full-stack preview environments for your pull requests."
+          />
+          <VerticalSteps
+            currentStep={currentStep}
+            steps={[
+              <>
+                <Text size={16}>Choose a repository</Text>
+                <ConnectNewRepoActionConfEditor
+                  actionConfig={actionConfig}
+                  setActionConfig={(actionConfig: ActionConfigType) => {
+                    setActionConfig(
+                      (currentActionConfig: ActionConfigType) => ({
+                        ...currentActionConfig,
+                        ...actionConfig,
+                      })
+                    );
+
+                    if (!!actionConfig.git_repo) {
+                      setCurrentStep((prev) => {
+                        if (prev > 0) {
+                          return prev;
+                        }
+
+                        return prev + 1;
+                      });
+                    }
+                  }}
+                />
+                <HelperContainer>
+                  Note: you will need to add a{" "}
+                  <CodeBlock>porter.yaml</CodeBlock> file to create a preview
+                  environment.
+                  <DocsHelper
+                    disableMargin
+                    tooltipText="A Porter YAML file is a declarative set of resources that Porter uses to build and update your preview environment deployments."
+                    link="https://docs.porter.run/preview-environments/porter-yaml-reference"
+                  />
+                </HelperContainer>
+              </>,
+
+              <>
+                <Text size={16}>Automatic pull request deployments</Text>
+                <Helper style={{ marginTop: "10px", marginBottom: "10px" }}>
+                  If you enable this option, the new pull requests will be
+                  automatically deployed.
+                </Helper>
+                <CheckboxWrapper>
+                  <CheckboxRow
+                    label="Enable automatic deploys"
+                    checked={enableAutomaticDeployments}
+                    toggle={() => {
+                      setEnableAutomaticDeployments(
+                        !enableAutomaticDeployments
+                      );
+                    }}
+                    wrapperStyles={{
+                      disableMargin: true,
+                    }}
+                  />
+                </CheckboxWrapper>
+              </>,
+            ]}
+          />
+          <ActionContainer>
+            <SaveButton
+              text="Add repository"
+              disabled={actionConfig.git_repo_id ? false : true}
+              onClick={addRepo}
+              makeFlush={true}
+              clearPosition={true}
+              status={status}
+              statusPosition={"left"}
+            />
+          </ActionContainer>
+        </Div>
+      </CenterWrapper>
+    );
+  }
+
   return (
     <>
       <DashboardHeader
@@ -217,7 +308,7 @@ const ConnectNewRepo: React.FC = () => {
         readOnly={false}
         filteredRepos={filteredRepos}
       /> */}
-      <ActionConfEditorStack
+      <ConnectNewRepoActionConfEditor
         actionConfig={actionConfig}
         setActionConfig={(actionConfig: ActionConfigType) => {
           setActionConfig((currentActionConfig: ActionConfigType) => ({
@@ -353,8 +444,16 @@ const ConnectNewRepo: React.FC = () => {
 
 export default ConnectNewRepo;
 
+const CenterWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
 const Div = styled.div`
-  margin-bottom: -7px;
+  width: 100%;
+  max-width: 900px;
 `;
 
 const FlexWrap = styled.div`

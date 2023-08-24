@@ -2,25 +2,25 @@ import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Modal from "components/porter/Modal";
 import TitleSection from "components/TitleSection";
-import { Log } from "../useAgentLogs";
 import Loading from "components/Loading";
 import Text from "components/porter/Text";
 import danger from "assets/danger.svg";
-import Anser, { AnserJsonEntry } from "anser";
+import Anser from "anser";
 
 import dayjs from "dayjs";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
-import Checkbox from "components/porter/Checkbox";
+import { PorterLog } from "../logs/types";
 type Props = {
   appData: any;
-  logs: Log[];
+  logs: PorterLog[];
   modalVisible: boolean;
   setModalVisible: (x: boolean) => void;
+  actionRunId?: string;
 };
 
 interface ExpandedIncidentLogsProps {
-  logs: Log[];
+  logs: PorterLog[];
 }
 
 const GHALogsModal: React.FC<Props> = ({
@@ -28,9 +28,10 @@ const GHALogsModal: React.FC<Props> = ({
   logs,
   modalVisible,
   setModalVisible,
+  actionRunId,
 }) => {
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
-  const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
+  const scrollToBottomRef = useRef<HTMLDivElement>(null);
   const ExpandedIncidentLogs = ({ logs }: ExpandedIncidentLogsProps) => {
     if (!logs.length) {
       return (
@@ -104,9 +105,13 @@ const GHALogsModal: React.FC<Props> = ({
       <Link
         hasunderline
         target="_blank"
-        to={`https://github.com/${appData.app.repo_name}/actions`}
+        to={
+          actionRunId
+            ? `https://github.com/${appData.app.repo_name}/actions/runs/${actionRunId}`
+            : `https://github.com/${appData.app.repo_name}/actions`
+        }
       >
-        Check Full Build Logs
+        View full build logs
       </Link>
     </Modal>
   );
@@ -152,7 +157,7 @@ const LogSpan = styled.div`
   font-family: monospace;
   user-select: text;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 8px;
   width: 100%;
   & > * {

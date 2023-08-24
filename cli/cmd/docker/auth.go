@@ -44,28 +44,30 @@ type CredentialsCache interface {
 
 // AuthGetter retrieves
 type AuthGetter struct {
-	Client    *api.Client
+	Client    api.Client
 	Cache     CredentialsCache
 	ProjectID uint
 }
 
-func (a *AuthGetter) GetCredentials(serverURL string) (user string, secret string, err error) {
+// GetCredentials returns registry credentials
+func (a *AuthGetter) GetCredentials(ctx context.Context, serverURL string) (user string, secret string, err error) {
 	if strings.Contains(serverURL, "gcr.io") {
-		return a.GetGCRCredentials(serverURL, a.ProjectID)
+		return a.GetGCRCredentials(ctx, serverURL, a.ProjectID)
 	} else if strings.Contains(serverURL, "pkg.dev") {
-		return a.GetGARCredentials(serverURL, a.ProjectID)
+		return a.GetGARCredentials(ctx, serverURL, a.ProjectID)
 	} else if strings.Contains(serverURL, "registry.digitalocean.com") {
-		return a.GetDOCRCredentials(serverURL, a.ProjectID)
+		return a.GetDOCRCredentials(ctx, serverURL, a.ProjectID)
 	} else if strings.Contains(serverURL, "index.docker.io") {
-		return a.GetDockerHubCredentials(serverURL, a.ProjectID)
+		return a.GetDockerHubCredentials(ctx, serverURL, a.ProjectID)
 	} else if strings.Contains(serverURL, "azurecr.io") {
-		return a.GetACRCredentials(serverURL, a.ProjectID)
+		return a.GetACRCredentials(ctx, serverURL, a.ProjectID)
 	}
 
-	return a.GetECRCredentials(serverURL, a.ProjectID)
+	return a.GetECRCredentials(ctx, serverURL, a.ProjectID)
 }
 
-func (a *AuthGetter) GetGCRCredentials(serverURL string, projID uint) (user string, secret string, err error) {
+// GetGCRCredentials returns GCR credentials
+func (a *AuthGetter) GetGCRCredentials(ctx context.Context, serverURL string, projID uint) (user string, secret string, err error) {
 	if err != nil {
 		return "", "", err
 	}
@@ -78,7 +80,7 @@ func (a *AuthGetter) GetGCRCredentials(serverURL string, projID uint) (user stri
 		token = cachedEntry.AuthorizationToken
 	} else {
 		// get a token from the server
-		tokenResp, err := a.Client.GetGCRAuthorizationToken(context.Background(), projID, &types.GetRegistryGCRTokenRequest{
+		tokenResp, err := a.Client.GetGCRAuthorizationToken(ctx, projID, &types.GetRegistryGCRTokenRequest{
 			ServerURL: serverURL,
 		})
 		if err != nil {
@@ -91,7 +93,7 @@ func (a *AuthGetter) GetGCRCredentials(serverURL string, projID uint) (user stri
 		a.Cache.Set(serverURL, &AuthEntry{
 			AuthorizationToken: token,
 			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
+			ExpiresAt:          tokenResp.ExpiresAt,
 			ProxyEndpoint:      serverURL,
 		})
 	}
@@ -99,7 +101,8 @@ func (a *AuthGetter) GetGCRCredentials(serverURL string, projID uint) (user stri
 	return "oauth2accesstoken", token, nil
 }
 
-func (a *AuthGetter) GetGARCredentials(serverURL string, projID uint) (user string, secret string, err error) {
+// GetGARCredentials returns GAR credentials
+func (a *AuthGetter) GetGARCredentials(ctx context.Context, serverURL string, projID uint) (user string, secret string, err error) {
 	if err != nil {
 		return "", "", err
 	}
@@ -123,7 +126,7 @@ func (a *AuthGetter) GetGARCredentials(serverURL string, projID uint) (user stri
 		token = cachedEntry.AuthorizationToken
 	} else {
 		// get a token from the server
-		tokenResp, err := a.Client.GetGARAuthorizationToken(context.Background(), projID, &types.GetRegistryGARTokenRequest{
+		tokenResp, err := a.Client.GetGARAuthorizationToken(ctx, projID, &types.GetRegistryGARTokenRequest{
 			ServerURL: serverURL,
 		})
 		if err != nil {
@@ -136,7 +139,7 @@ func (a *AuthGetter) GetGARCredentials(serverURL string, projID uint) (user stri
 		a.Cache.Set(serverURL, &AuthEntry{
 			AuthorizationToken: token,
 			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
+			ExpiresAt:          tokenResp.ExpiresAt,
 			ProxyEndpoint:      serverURL,
 		})
 	}
@@ -144,7 +147,8 @@ func (a *AuthGetter) GetGARCredentials(serverURL string, projID uint) (user stri
 	return "oauth2accesstoken", token, nil
 }
 
-func (a *AuthGetter) GetDOCRCredentials(serverURL string, projID uint) (user string, secret string, err error) {
+// GetDOCRCredentials returns DOCR credentials
+func (a *AuthGetter) GetDOCRCredentials(ctx context.Context, serverURL string, projID uint) (user string, secret string, err error) {
 	cachedEntry := a.Cache.Get(serverURL)
 
 	var token string
@@ -154,7 +158,7 @@ func (a *AuthGetter) GetDOCRCredentials(serverURL string, projID uint) (user str
 	} else {
 
 		// get a token from the server
-		tokenResp, err := a.Client.GetDOCRAuthorizationToken(context.Background(), projID, &types.GetRegistryGCRTokenRequest{
+		tokenResp, err := a.Client.GetDOCRAuthorizationToken(ctx, projID, &types.GetRegistryGCRTokenRequest{
 			ServerURL: serverURL,
 		})
 		if err != nil {
@@ -163,7 +167,7 @@ func (a *AuthGetter) GetDOCRCredentials(serverURL string, projID uint) (user str
 
 		token = tokenResp.Token
 
-		if t := *tokenResp.ExpiresAt; len(token) > 0 && !t.IsZero() {
+		if t := tokenResp.ExpiresAt; len(token) > 0 && !t.IsZero() {
 			// set the token in cache
 			a.Cache.Set(serverURL, &AuthEntry{
 				AuthorizationToken: token,
@@ -180,7 +184,8 @@ func (a *AuthGetter) GetDOCRCredentials(serverURL string, projID uint) (user str
 
 var ecrPattern = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fips)?\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?`)
 
-func (a *AuthGetter) GetECRCredentials(serverURL string, projID uint) (user string, secret string, err error) {
+// GetECRCredentials returns ECR credentials
+func (a *AuthGetter) GetECRCredentials(ctx context.Context, serverURL string, projID uint) (user string, secret string, err error) {
 	// parse the server url for region
 	matches := ecrPattern.FindStringSubmatch(serverURL)
 
@@ -201,7 +206,7 @@ func (a *AuthGetter) GetECRCredentials(serverURL string, projID uint) (user stri
 		token = cachedEntry.AuthorizationToken
 	} else {
 		// get a token from the server
-		tokenResp, err := a.Client.GetECRAuthorizationToken(context.Background(), projID, &types.GetRegistryECRTokenRequest{
+		tokenResp, err := a.Client.GetECRAuthorizationToken(ctx, projID, &types.GetRegistryECRTokenRequest{
 			Region:    matches[3],
 			AccountID: matches[1],
 		})
@@ -215,7 +220,7 @@ func (a *AuthGetter) GetECRCredentials(serverURL string, projID uint) (user stri
 		a.Cache.Set(serverURL, &AuthEntry{
 			AuthorizationToken: token,
 			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
+			ExpiresAt:          tokenResp.ExpiresAt,
 			ProxyEndpoint:      serverURL,
 		})
 	}
@@ -223,7 +228,8 @@ func (a *AuthGetter) GetECRCredentials(serverURL string, projID uint) (user stri
 	return decodeDockerToken(token)
 }
 
-func (a *AuthGetter) GetDockerHubCredentials(serverURL string, projID uint) (user string, secret string, err error) {
+// GetDockerHubCredentials returns dockerhub credentials
+func (a *AuthGetter) GetDockerHubCredentials(ctx context.Context, serverURL string, projID uint) (user string, secret string, err error) {
 	cachedEntry := a.Cache.Get(serverURL)
 	var token string
 
@@ -231,7 +237,7 @@ func (a *AuthGetter) GetDockerHubCredentials(serverURL string, projID uint) (use
 		token = cachedEntry.AuthorizationToken
 	} else {
 		// get a token from the server
-		tokenResp, err := a.Client.GetDockerhubAuthorizationToken(context.Background(), projID)
+		tokenResp, err := a.Client.GetDockerhubAuthorizationToken(ctx, projID)
 		if err != nil {
 			return "", "", err
 		}
@@ -242,7 +248,7 @@ func (a *AuthGetter) GetDockerHubCredentials(serverURL string, projID uint) (use
 		a.Cache.Set(serverURL, &AuthEntry{
 			AuthorizationToken: token,
 			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
+			ExpiresAt:          tokenResp.ExpiresAt,
 			ProxyEndpoint:      serverURL,
 		})
 	}
@@ -250,15 +256,16 @@ func (a *AuthGetter) GetDockerHubCredentials(serverURL string, projID uint) (use
 	return decodeDockerToken(token)
 }
 
-func (a *AuthGetter) GetACRCredentials(serverURL string, projID uint) (user string, secret string, err error) {
+// GetACRCredentials returns ACR credentials
+func (a *AuthGetter) GetACRCredentials(ctx context.Context, serverURL string, projID uint) (user string, secret string, err error) {
 	cachedEntry := a.Cache.Get(serverURL)
 	var token string
 
 	if cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
 		token = cachedEntry.AuthorizationToken
 	} else {
-		// get a token from the server
-		tokenResp, err := a.Client.GetACRAuthorizationToken(context.Background(), projID)
+		req := &types.GetRegistryACRTokenRequest{ServerURL: serverURL}
+		tokenResp, err := a.Client.GetACRAuthorizationToken(ctx, projID, req)
 		if err != nil {
 			return "", "", err
 		}
@@ -269,7 +276,7 @@ func (a *AuthGetter) GetACRCredentials(serverURL string, projID uint) (user stri
 		a.Cache.Set(serverURL, &AuthEntry{
 			AuthorizationToken: token,
 			RequestedAt:        time.Now(),
-			ExpiresAt:          *tokenResp.ExpiresAt,
+			ExpiresAt:          tokenResp.ExpiresAt,
 			ProxyEndpoint:      serverURL,
 		})
 	}

@@ -14,6 +14,7 @@ export interface ClusterType {
   preview_envs_enabled?: boolean;
   cloud_provider_credential_identifier?: string;
   status?: string;
+  cloud_provider: string;
 }
 
 export interface DetailedClusterType extends ClusterType {
@@ -172,6 +173,7 @@ export interface PorterTemplate {
   description: string;
   icon: string;
   repo_url?: string;
+  tags?: string[]
 }
 
 export interface ExpandedPorterTemplate {
@@ -243,15 +245,15 @@ export interface FormElement {
 export type RepoType = {
   FullName: string;
 } & (
-  | {
+    | {
       Kind: "github";
       GHRepoID: number;
     }
-  | {
+    | {
       Kind: "gitlab";
       GitIntegrationId: number;
     }
-);
+  );
 
 export interface FileType {
   path: string;
@@ -268,6 +270,12 @@ export interface ProjectType {
   api_tokens_enabled: boolean;
   stacks_enabled: boolean;
   simplified_view_enabled: boolean;
+  azure_enabled: boolean;
+  helm_values_enabled: boolean;
+  multi_cluster: boolean;
+  full_add_ons: boolean;
+  enable_reprovision: boolean;
+  validate_apply_v2: boolean;
   roles: {
     id: number;
     kind: string;
@@ -309,15 +317,15 @@ export type ActionConfigType = {
   image_repo_uri: string;
   dockerfile_path?: string;
 } & (
-  | {
+    | {
       kind: "gitlab";
       gitlab_integration_id: number;
     }
-  | {
+    | {
       kind: "github";
       git_repo_id: number;
     }
-);
+  );
 
 export type GithubActionConfigType = ActionConfigType & {
   kind: "github";
@@ -643,7 +651,7 @@ export type BuildConfig = {
   };
 };
 
-export interface PorterAppOptions {
+export interface CreateUpdatePorterAppOptions {
   porter_yaml: string;
   porter_yaml_path?: string;
   repo_name?: string;
@@ -659,4 +667,5 @@ export interface PorterAppOptions {
     tag: string;
   };
   override_release?: boolean;
+  full_helm_values?: string;
 }

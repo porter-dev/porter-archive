@@ -33,7 +33,7 @@ export default class EnvGroup extends Component<PropsType, StateType> {
     let name = envGroup?.name;
     let timestamp = envGroup?.created_at;
     let namespace = envGroup?.namespace;
-    let version = envGroup?.version;
+    let version = this.context?.currentProject.simplified_view_enabled ? envGroup?.latest_version : envGroup?.version ;
 
     return (
       <Link to={`/env-groups/${name}${window.location.search}`} target="_self">
@@ -52,10 +52,10 @@ export default class EnvGroup extends Component<PropsType, StateType> {
               </LastDeployed>
             </InfoWrapper>
 
-            <TagWrapper>
+            {!this.context?.currentProject.simplified_view_enabled && <TagWrapper>
               Namespace
-              <NamespaceTag>{namespace}</NamespaceTag>
-            </TagWrapper>
+              <NamespaceTag>{namespace.startsWith("porter-stack-") ? namespace.replace("porter-stack-", "") : namespace}</NamespaceTag>
+            </TagWrapper>}
           </BottomWrapper>
 
           <Version>v{version}</Version>

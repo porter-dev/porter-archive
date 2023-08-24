@@ -2,7 +2,11 @@ import { PolicyDocType } from "./auth/types";
 import { PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
 import { baseApi } from "./baseApi";
 
-import { BuildConfig, FullActionConfigType, PorterAppOptions } from "./types";
+import {
+  BuildConfig,
+  FullActionConfigType,
+  CreateUpdatePorterAppOptions,
+} from "./types";
 import {
   CreateStackBody,
   SourceConfig,
@@ -172,7 +176,7 @@ const getPorterApps = baseApi<
   }
 >("GET", (pathParams) => {
   let { project_id, cluster_id } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications`;
 });
 
 const getPorterApp = baseApi<
@@ -184,11 +188,23 @@ const getPorterApp = baseApi<
   }
 >("GET", (pathParams) => {
   let { project_id, cluster_id, name } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${name}`;
+});
+
+const getPorterAppEvent = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    event_id: string;
+  }
+>("GET", (pathParams) => {
+  let { project_id, cluster_id, event_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/events/${event_id}`;
 });
 
 const createPorterApp = baseApi<
-  PorterAppOptions,
+  CreateUpdatePorterAppOptions,
   {
     project_id: number;
     cluster_id: number;
@@ -196,7 +212,7 @@ const createPorterApp = baseApi<
   }
 >("POST", (pathParams) => {
   let { project_id, cluster_id, stack_name } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}`;
 });
 
 const deletePorterApp = baseApi<
@@ -208,8 +224,43 @@ const deletePorterApp = baseApi<
   }
 >("DELETE", (pathParams) => {
   let { project_id, cluster_id, name } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${name}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${name}`;
 });
+
+const rollbackPorterApp = baseApi<
+  {
+    revision: number;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    stack_name: string;
+  }
+>("POST", (pathParams) => {
+  let { project_id, cluster_id, stack_name } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/rollback`;
+});
+
+const getLogsWithinTimeRange = baseApi<
+  {
+    chart_name?: string;
+    limit: number;
+    start_range?: string;
+    end_range?: string;
+    search_param?: string;
+    namespace?: string;
+    pod_selector?: string;
+    direction?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/applications/logs`
+);
 
 const getFeedEvents = baseApi<
   {},
@@ -221,7 +272,9 @@ const getFeedEvents = baseApi<
   }
 >("GET", (pathParams) => {
   let { project_id, cluster_id, stack_name, page } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/events?page=${page || 1}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/events?page=${
+    page || 1
+  }`;
 });
 
 const createEnvironment = baseApi<
@@ -726,6 +779,81 @@ const getPorterYamlContents = baseApi<
   }/repos/${pathParams.kind}/${pathParams.owner}/${
     pathParams.name
   }/${encodeURIComponent(pathParams.branch)}/porteryaml`;
+});
+
+const parsePorterYaml = baseApi<
+  {
+    b64_yaml: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/parse`;
+});
+
+const getDefaultDeploymentTarget = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/default-deployment-target`;
+});
+
+const validatePorterApp = baseApi<
+  {
+    b64_app_proto: string;
+    deployment_target_id: string;
+    commit_sha: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/validate`;
+});
+
+const createApp = baseApi<
+  | {
+      name: string;
+      type: "github";
+      git_repo_id: number;
+      git_branch: string;
+      git_repo_name: string;
+      porter_yaml_path: string;
+    }
+  | {
+      name: string;
+      type: "docker-registry";
+      image: {
+        repository: string;
+        tag: string;
+      };
+    },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/create`;
+});
+
+const applyApp = baseApi<
+  {
+    deployment_target_id: string;
+    b64_app_proto?: string;
+    app_revision_id?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/apply`;
 });
 
 const getGitlabProcfileContents = baseApi<
@@ -1479,6 +1607,7 @@ const registerUser = baseApi<{
   first_name: string;
   last_name: string;
   company_name: string;
+  referral_method?: string;
 }>("POST", "/api/users");
 
 const rollbackChart = baseApi<
@@ -1545,6 +1674,16 @@ const upgradeChartValues = baseApi<
 >("POST", (pathParams) => {
   let { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/upgrade`;
+});
+
+const getAllEnvGroups = baseApi<
+  {},
+  {
+    id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
 });
 
 const listEnvGroups = baseApi<
@@ -1614,6 +1753,20 @@ const createEnvGroup = baseApi<
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup/create`;
 });
 
+const createEnvironmentGroups = baseApi<
+  {
+    name: string;
+    variables: Record<string, string>;
+    secret_variables?: Record<string, string>;
+  },
+  {
+    id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
+});
+
 const cloneEnvGroup = baseApi<
   {
     name: string;
@@ -1645,6 +1798,24 @@ const updateEnvGroup = baseApi<
   "POST",
   ({ cluster_id, project_id, namespace }) =>
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/create`
+);
+
+const updateStacksEnvGroup = baseApi<
+  {
+    name: string;
+    variables: { [key: string]: string };
+    secret_variables?: { [key: string]: string };
+    apps?: string[];
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+  }
+>(
+  "POST",
+  ({ cluster_id, project_id, namespace }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/envgroup/create`
 );
 
 const createConfigMap = baseApi<
@@ -1703,6 +1874,18 @@ const deleteEnvGroup = baseApi<
   }
 >("DELETE", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup`;
+});
+
+const deleteNewEnvGroup = baseApi<
+  {
+    name: string;
+  },
+  {
+    id: number;
+    cluster_id: number;
+  }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
 });
 
 const deleteConfigMap = baseApi<
@@ -2135,6 +2318,46 @@ const getGHWorkflowLogs = baseApi<
   }
 );
 
+const getGHWorkflowLogById = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    git_installation_id: number;
+    owner: string;
+    name: string;
+    filename?: string;
+    run_id: string;
+    release_name?: string;
+  }
+>(
+  "GET",
+  ({
+    project_id,
+    git_installation_id,
+    owner,
+    name,
+    cluster_id,
+    filename,
+    run_id,
+    release_name,
+  }) => {
+    const queryParams = new URLSearchParams();
+
+    if (release_name) {
+      queryParams.set("release_name", release_name);
+    }
+    if (filename) {
+      queryParams.set("filename", filename);
+    }
+    if (run_id) {
+      queryParams.set("run_id", run_id);
+    }
+
+    return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/workflow_run_id?${queryParams.toString()}`;
+  }
+);
+
 const triggerPreviewEnvWorkflow = baseApi<
   {},
   { project_id: number; cluster_id: number; deployment_id: number }
@@ -2352,16 +2575,27 @@ const getIncidentEvents = baseApi<
 const updateOnboardingStep = baseApi<
   {
     step: string;
+    provider?: string;
+    account_id?: string;
+    cloudformation_url?: string;
+    error_message?: string;
+    login_url?: string;
+    external_id?: string;
+    region?: string;
   },
-  {}
->("POST", (pathParams) => {
-  return `/api/onboarding_step`;
+  {
+    project_id: number;
+  }
+>("POST", ({ project_id }) => {
+  return `/api/projects/${project_id}/onboarding_step`;
 });
 
 const updateStackStep = baseApi<
   {
     step: string;
     stack_name?: string;
+    error_message?: string;
+    delete_workflow_file?: boolean;
   },
   {
     project_id: number;
@@ -2369,7 +2603,7 @@ const updateStackStep = baseApi<
   }
 >("POST", (pathParams) => {
   let { project_id, cluster_id } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/stacks/analytics`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/analytics`;
 });
 
 // STACKS
@@ -2552,9 +2786,10 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
     github_app_installation_id: number;
     github_repo_owner: string;
     github_repo_name: string;
-    open_pr: boolean;
     branch: string;
-    porter_yaml_path: string;
+    open_pr?: boolean;
+    porter_yaml_path?: string;
+    delete_workflow_filename?: string;
   },
   {
     project_id: number;
@@ -2564,7 +2799,7 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
 >(
   "POST",
   ({ project_id, cluster_id, stack_name }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/stacks/${stack_name}/pr`
+    `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/pr`
 );
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -2585,6 +2820,7 @@ export default {
   createGitlabIntegration,
   createEmailVerification,
   createEnvironment,
+  createEnvironmentGroups,
   updateEnvironment,
   deleteEnvironment,
   createPreviewEnvironmentDeployment,
@@ -2600,10 +2836,18 @@ export default {
   createPasswordResetVerify,
   createPasswordResetFinalize,
   createProject,
+  // ------------ PORTER APP -----------
   getPorterApps,
   getPorterApp,
+  getPorterAppEvent,
   createPorterApp,
   deletePorterApp,
+  rollbackPorterApp,
+  createSecretAndOpenGitHubPullRequest,
+  getLogsWithinTimeRange,
+  getFeedEvents,
+  updateStackStep,
+  // -----------------------------------
   createConfigMap,
   deleteCluster,
   deleteConfigMap,
@@ -2678,6 +2922,11 @@ export default {
   getPodEvents,
   getProcfileContents,
   getPorterYamlContents,
+  parsePorterYaml,
+  getDefaultDeploymentTarget,
+  validatePorterApp,
+  createApp,
+  applyApp,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,
@@ -2742,9 +2991,12 @@ export default {
   createEnvGroup,
   cloneEnvGroup,
   updateEnvGroup,
+  updateStacksEnvGroup,
   listEnvGroups,
+  getAllEnvGroups,
   getEnvGroup,
   deleteEnvGroup,
+  deleteNewEnvGroup,
   addApplicationToEnvGroup,
   removeApplicationFromEnvGroup,
   provisionDatabase,
@@ -2757,6 +3009,7 @@ export default {
   updateGitActionConfig,
   reRunGHWorkflow,
   getGHWorkflowLogs,
+  getGHWorkflowLogById,
   triggerPreviewEnvWorkflow,
   getTagsByProjectId,
   createTag,
@@ -2776,10 +3029,8 @@ export default {
   createContract,
   getContracts,
   deleteContract,
-  createSecretAndOpenGitHubPullRequest,
   // TRACKING
   updateOnboardingStep,
-  updateStackStep,
   // STACKS
   listStacks,
   getStack,
@@ -2793,7 +3044,6 @@ export default {
   removeStackAppResource,
   addStackEnvGroup,
   removeStackEnvGroup,
-  getFeedEvents,
 
   // STATUS
   getGithubStatus,

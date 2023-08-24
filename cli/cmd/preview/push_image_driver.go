@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/mitchellh/mapstructure"
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/docker"
+	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
@@ -21,22 +22,29 @@ type PushDriver struct {
 	config      *preview.PushDriverConfig
 	lookupTable *map[string]drivers.Driver
 	output      map[string]interface{}
+	apiClient   api.Client
+	cliConfig   config.CLIConfig
 }
 
-func NewPushDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
-	driver := &PushDriver{
-		lookupTable: opts.DriverLookupTable,
-		output:      make(map[string]interface{}),
+// NewPushDriver extends switchboard with image pushing to registries
+func NewPushDriver(ctx context.Context, apiClient api.Client, cliConfig config.CLIConfig) func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+	return func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+		driver := &PushDriver{
+			lookupTable: opts.DriverLookupTable,
+			output:      make(map[string]interface{}),
+			apiClient:   apiClient,
+			cliConfig:   cliConfig,
+		}
+
+		target, err := GetTarget(ctx, resource.Name, resource.Target, apiClient, cliConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		driver.target = target
+
+		return driver, nil
 	}
-
-	target, err := GetTarget(resource.Name, resource.Target)
-	if err != nil {
-		return nil, err
-	}
-
-	driver.target = target
-
-	return driver, nil
 }
 
 func (d *PushDriver) ShouldApply(resource *models.Resource) bool {
@@ -44,6 +52,8 @@ func (d *PushDriver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) {
+	ctx := context.TODO() // switchboard blocks changing this for now
+
 	pushDriverConfig, err := d.getConfig(resource)
 	if err != nil {
 		return nil, err
@@ -57,15 +67,13 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 		return resource, nil
 	}
 
-	client := config.GetAPIClient()
-
-	agent, err := docker.NewAgentWithAuthGetter(client, d.target.Project)
+	agent, err := docker.NewAgentWithAuthGetter(ctx, d.apiClient, d.target.Project)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = client.GetRelease(
-		context.Background(),
+	_, err = d.apiClient.GetRelease(
+		ctx,
 		d.target.Project,
 		d.target.Cluster,
 		d.target.Namespace,
@@ -75,7 +83,7 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 	shouldCreate := err != nil
 
 	if shouldCreate {
-		regList, err := client.ListRegistries(context.Background(), d.target.Project)
+		regList, err := d.apiClient.ListRegistries(ctx, d.target.Project)
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +100,7 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 
 		if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
 			if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-				repoSuffix = strings.ToLower(strings.ReplaceAll(fmt.Sprintf("%s-%s", repoOwner, repoName), "_", "-"))
+				repoSuffix = utils.SlugifyRepoSuffix(repoOwner, repoName)
 			}
 		}
 
@@ -103,7 +111,7 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 		}
 
 		createAgent := &deploy.CreateAgent{
-			Client: client,
+			Client: d.apiClient,
 			CreateOpts: &deploy.CreateOpts{
 				SharedOpts:  sharedOpts,
 				ReleaseName: d.target.AppName,
@@ -112,13 +120,13 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 			},
 		}
 
-		regID, imageURL, err := createAgent.GetImageRepoURL(d.target.AppName, sharedOpts.Namespace)
+		regID, imageURL, err := createAgent.GetImageRepoURL(ctx, d.target.AppName, sharedOpts.Namespace)
 		if err != nil {
 			return nil, err
 		}
 
-		err = client.CreateRepository(
-			context.Background(),
+		err = d.apiClient.CreateRepository(
+			ctx,
 			sharedOpts.ProjectID,
 			regID,
 			&types.CreateRegistryRepositoryRequest{
@@ -131,7 +139,7 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 		}
 	}
 
-	err = agent.PushImage(d.config.Push.Image)
+	err = agent.PushImage(ctx, d.config.Push.Image)
 	if err != nil {
 		return nil, err
 	}

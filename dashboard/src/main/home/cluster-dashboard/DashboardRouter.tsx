@@ -8,7 +8,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { WithAuthProps, withAuth } from "shared/auth/AuthorizationHoc";
 import { ClusterType } from "shared/types";
-import { 
+import {
   getQueryParam,
   PorterUrl,
   pushQueryParams,
@@ -107,9 +107,9 @@ const DashboardRouter: React.FC<Props> = ({
   }, [currentCluster]);
 
   useEffect(() => {
-    let { currentNamespace } = props.match?.params as any;
+    let { currentNamespace } = (currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "porter-env-group" : props.match?.params as any;
     if (!currentNamespace) {
-      currentNamespace = getQueryParam(props, "namespace");
+      currentNamespace = (currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "porter-env-group" : getQueryParam(props, "namespace");
     }
     setSortType("Newest");
     setCurrentChart(null);

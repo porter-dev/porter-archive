@@ -1,6 +1,9 @@
 package integrations
 
 import (
+	"context"
+	"fmt"
+
 	"gorm.io/gorm"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -103,12 +106,13 @@ func (a *AWSIntegration) PopulateAWSArn() error {
 
 // GetBearerToken retrieves a bearer token for an AWS account
 func (a *AWSIntegration) GetBearerToken(
+	ctx context.Context,
 	getTokenCache GetTokenCacheFunc,
 	setTokenCache SetTokenCacheFunc,
 	clusterID string,
 	shouldClusterIdOverride bool,
 ) (string, error) {
-	cache, err := getTokenCache()
+	cache, err := getTokenCache(ctx)
 
 	// check the token cache for a non-expired token
 	if cache != nil {
@@ -119,12 +123,12 @@ func (a *AWSIntegration) GetBearerToken(
 
 	generator, err := token.NewGenerator(false, false)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error creating token generator: %w", err)
 	}
 
 	sess, err := a.GetSession()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error getting session: %w", err)
 	}
 
 	var validClusterId string
@@ -145,10 +149,13 @@ func (a *AWSIntegration) GetBearerToken(
 		ClusterID:     validClusterId,
 	})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error generating token: %w", err)
 	}
 
-	setTokenCache(tok.Token, tok.Expiration)
+	err = setTokenCache(ctx, tok.Token, tok.Expiration)
+	if err != nil {
+		return "", fmt.Errorf("non-fatal error setting token cache: %w", err)
+	}
 
 	return tok.Token, nil
 }

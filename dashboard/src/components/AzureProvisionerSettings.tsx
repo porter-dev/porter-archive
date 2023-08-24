@@ -30,9 +30,6 @@ import Text from "./porter/Text";
 
 const locationOptions = [
   { value: "eastus", label: "East US" },
-  { value: "westus2", label: "West US 2" },
-  { value: "westus3", label: "West US 3" },
-  { value: "canadacentral", label: "Central Canada" },
 ];
 
 const machineTypeOptions = [
@@ -298,25 +295,6 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
             dropdownMaxHeight="240px"
             setActiveValue={setAzureLocation}
             label="📍 Azure location"
-          />
-          <SelectRow
-            options={machineTypeOptions}
-            width="350px"
-            disabled={isReadOnly}
-            value={machineType}
-            scrollBuffer={true}
-            dropdownMaxHeight="240px"
-            setActiveValue={setMachineType}
-            label="Machine type"
-          />
-          <InputRow
-            width="350px"
-            type="string"
-            disabled={isReadOnly}
-            value={cidrRange}
-            setValue={(x: string) => setCidrRange(x)}
-            label="VPC CIDR range"
-            placeholder="ex: 10.78.0.0/16"
           />
         </>
       );

@@ -34,6 +34,7 @@ import Loading from "components/Loading";
 import Placeholder from "./Placeholder";
 import Fieldset from "./porter/Fieldset";
 import ExpandableSection from "./porter/ExpandableSection";
+import PreflightChecks from "./PreflightChecks";
 
 const locationOptions = [
   { value: "us-east1", label: "us-east1" },
@@ -79,10 +80,8 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [isClicked, setIsClicked] = useState(false);
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
   const [preflightData, setPreflightData] = useState({})
+  const [preflightFailed, setPreflightFailed] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false);
-
-
-
 
   const markStepStarted = async (step: string) => {
     try {
@@ -316,77 +315,21 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const preflightChecks = async () => {
     setIsLoading(true);
 
-    console.log("Will Call Preflight Checks Here")
-    const data = {
-      "preflight_checks": [
-        {
-          "key": "apisEnabled",
-          "value": {
-            "metadata": [],
-            "code": "",
-            "message": "Missing these APIs: cloudresourcemanager.googleapis.com"
-          }
-        },
-        {
-          "key": "apisEnabled",
-          "value": {
-            "metadata": [],
-            "code": "",
-            "message": "Missing these APIs: cloudresourcemanager.googleapis.com"
-          }
-        },
-        {
-          "key": "apisEnabled",
-          "value": {
-            "metadata": [],
-            "code": "",
-            "message": ""
-          }
-        }
-      ]
-    };
-    setIsLoading(false);
 
-    setPreflightData(data);
+    const preflightDataResp = await api.preflightCheck(
+      "<token>",
+      {
+        cloud_provider_credentials_id: props.credentialId,
+        cloud_provider: "gcp",
+      },
+      {
+        id: currentProject.id,
+      }
+    )
+    setPreflightData(preflightDataResp?.data?.Msg);
+    setIsLoading(false)
 
   }
-
-  const PreflightCheckItem = ({ check }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const hasMessage = !!check.value.message;
-
-    const handleToggle = () => {
-      if (hasMessage) {
-        setIsExpanded(!isExpanded);
-      }
-    }
-
-    if (isLoading) {
-      return <Loading />;
-    }
-
-    return (
-      <CheckItemContainer hasMessage={hasMessage} onClick={handleToggle}>
-        <CheckItemTop>
-          {hasMessage ? <StatusIcon src={failure} /> : <StatusIcon src={healthy} />}
-          <Spacer inline x={1} />
-          <Text style={{ marginLeft: '10px', flex: 1 }}>{check.key}</Text>
-          {hasMessage && <ExpandIcon className="material-icons" isExpanded={isExpanded}>
-            arrow_drop_down
-          </ExpandIcon>}
-        </CheckItemTop>
-        {isExpanded && hasMessage && (
-          <>
-
-            <Text>
-              {check.value.message}
-            </Text>
-
-          </>
-        )}
-      </CheckItemContainer>
-    );
-  };
 
   const renderForm = () => {
     // Render simplified form if initial create
@@ -448,29 +391,23 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       <StyledForm>{renderForm()}</StyledForm>
 
       {props.credentialId && (<>
-        <AppearingDiv>
 
+        {isLoading ?
           <>
-            {preflightData?.preflight_checks?.map((check: { key: React.Key | null | undefined; }) => (
-              <PreflightCheckItem key={check.key} check={check} />
-            ))}
-            {/* 
-            {preflightFailed && (
-              <Button onClick={gcpIntegration}>
-                Retry Preflight Check
-              </Button>
-            )
-            } */}
+            <Placeholder>
+              <Loading />
+            </Placeholder>
+            <Spacer y={1} />
           </>
-
-        </AppearingDiv>
-        <Spacer y={1} />
+          :
+          <PreflightChecks preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
+        }
 
       </>
       )}
 
       <Button
-        disabled={isDisabled() || isLoading}
+        disabled={isDisabled() || isLoading || preflightFailed}
         onClick={createCluster}
         status={getStatus()}
       >

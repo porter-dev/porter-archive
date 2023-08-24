@@ -1,151 +1,70 @@
 import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
 import { RouteComponentProps, withRouter } from "react-router";
-
-import { OFState } from "main/home/onboarding/state";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
-
-import SelectRow from "components/form-components/SelectRow";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import InputRow from "./form-components/InputRow";
-import {
-  Contract,
-  EnumKubernetesKind,
-  EnumCloudProvider,
-  Cluster,
-  GKE,
-  GKENetwork,
-  GKENodePool,
-  GKENodePoolType
-} from "@porter-dev/api-contracts";
-import { ClusterType } from "shared/types";
-import Button from "./porter/Button";
-import Error from "./porter/Error";
 import Spacer from "./porter/Spacer";
-import Step from "./porter/Step";
-import Link from "./porter/Link";
+
 import Text from "./porter/Text";
 import healthy from "assets/status-healthy.png";
 import failure from "assets/failure.svg";
-import Loading from "components/Loading";
-import Placeholder from "./Placeholder";
-import Fieldset from "./porter/Fieldset";
-import ExpandableSection from "./porter/ExpandableSection";
-
-const locationOptions = [
-  { value: "us-east1", label: "us-east1" },
-];
-
-const defaultClusterNetworking = new GKENetwork({
-  cidrRange: "10.78.0.0/16",
-  controlPlaneCidr: "10.77.0.0/28",
-  podCidr: "10.76.0.0/16",
-  serviceCidr: "10.75.0.0/16",
-});
-
-const defaultClusterVersion = "1.25";
-
+import { PREFLIGHT_MESSAGE_CONST } from "shared/util";
 
 type Props = RouteComponentProps & {
   preflightData: any
+  setPreflightFailed: (x: boolean) => void;
 };
 
-const VALID_CIDR_RANGE_PATTERN = /^(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.0\.0\/16$/;
 
 const PreflightChecks: React.FC<Props> = (props) => {
-  const {
-    user,
-    currentProject,
-    currentCluster,
-    setCurrentCluster,
-    setShouldRefreshClusters,
-  } = useContext(Context);
-  const [createStatus, setCreateStatus] = useState("");
-  const [clusterName, setClusterName] = useState("");
-  const [region, setRegion] = useState(locationOptions[0].value);
-  const [minInstances, setMinInstances] = useState(1);
-  const [maxInstances, setMaxInstances] = useState(10);
-  const [clusterNetworking, setClusterNetworking] = useState(defaultClusterNetworking);
-  const [clusterVersion, setClusterVersion] = useState(defaultClusterVersion);
-  const [isReadOnly, setIsReadOnly] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const [errorDetails, setErrorDetails] = useState<string>("");
-  const [isClicked, setIsClicked] = useState(false);
-  const [detected, setDetected] = useState<Detected | undefined>(undefined);
-  const [preflightData, setPreflightData] = useState({})
-  const [isLoading, setIsLoading] = useState(false);
-
-
+  const [trackFailures, setFailures] = useState<boolean>(false)
   const PreflightCheckItem = ({ check }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const hasMessage = !!check.value.message;
-
+    const hasMessage = !!check.value?.message;
+    if (hasMessage) {
+      setFailures(hasMessage)
+    }
     const handleToggle = () => {
       if (hasMessage) {
         setIsExpanded(!isExpanded);
       }
     }
-
-    if (isLoading) {
-      return <Loading />;
-    }
-
+    props.setPreflightFailed(trackFailures)
     return (
       <CheckItemContainer hasMessage={hasMessage} onClick={handleToggle}>
         <CheckItemTop>
           {hasMessage ? <StatusIcon src={failure} /> : <StatusIcon src={healthy} />}
           <Spacer inline x={1} />
-          <Text style={{ marginLeft: '10px', flex: 1 }}>{check.key}</Text>
+          <Text style={{ marginLeft: '10px', flex: 1 }}>{PREFLIGHT_MESSAGE_CONST[check.key]}</Text>
           {hasMessage && <ExpandIcon className="material-icons" isExpanded={isExpanded}>
             arrow_drop_down
           </ExpandIcon>}
         </CheckItemTop>
         {isExpanded && hasMessage && (
-          <>
-
-            <Text>
-              {check.value.message}
-            </Text>
-
-          </>
+          <div>
+            <ErrorMessageLabel>Error Message:</ErrorMessageLabel>
+            <ErrorMessageContent>{check.value.message}</ErrorMessageContent>
+            <ErrorMessageLabel>Enable:</ErrorMessageLabel>
+            <ErrorMessageContent>{check.value.metadata ? check.value.metadata.Enable : "Please Contact Porter Support at support@porter.run"}</ErrorMessageContent>
+          </div>
         )}
       </CheckItemContainer>
     );
   };
 
-
-
   return (
-    <>
-
-
-      {props.preflightData && (<>
+    <div>
+      {props.preflightData && (
         <AppearingDiv>
-
-          <>
-            {preflightData?.preflight_checks?.map((check: { key: React.Key | null | undefined; }) => (
-              <PreflightCheckItem key={check.key} check={check} />
-            ))}
-            {/* 
-            {preflightFailed && (
-              <Button onClick={gcpIntegration}>
-                Retry Preflight Check
-              </Button>
-            )
-            } */}
-          </>
-
+          <Text> Preflight Checks </Text>
+          <Spacer y={.5} />
+          {Object.entries(props.preflightData.preflight_checks || {}).map(([key, value]) => (
+            <PreflightCheckItem key={key} check={{ key, value }} />
+          ))}
         </AppearingDiv>
-        <Spacer y={1} />
-
-      </>
       )}
-    </>
+    </div>
   );
 };
+
 
 export default withRouter(PreflightChecks);
 
@@ -200,4 +119,16 @@ const ExpandIcon = styled.i<{ isExpanded: boolean }>`
   cursor: pointer;
   border-radius: 20px;
   transform: ${props => props.isExpanded ? "" : "rotate(-90deg)"};
+`;
+const ErrorMessageLabel = styled.span`
+  font-weight: bold;
+  margin-left: 10px;
+`;
+const ErrorMessageContent = styled.div`
+  font-family: 'Courier New', Courier, monospace;
+  padding: 5px 10px;
+  border-radius: 4px;
+  margin-left: 10px;
+  user-select: text;
+  cursor: text
 `;

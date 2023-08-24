@@ -1,6 +1,8 @@
 package types
 
-import "time"
+import (
+	"time"
+)
 
 // The supported oauth mechanism clients
 const (
@@ -83,6 +85,14 @@ type QuotaPreflightCheckRequest struct {
 }
 
 type QuotaPreflightCheckResponse struct{}
+
+type PreflightCheckRequest struct {
+	ProjectID                  uint   `json:"project_id"`
+	CloudProvider              string `json:"cloud_provider"`
+	CloudProviderCredentialsID string `json:"cloud_provider_credentials_id"`
+}
+
+type PreflightCheckResponse struct{}
 
 type CreateAWSRequest struct {
 	AWSRegion          string `json:"aws_region"`

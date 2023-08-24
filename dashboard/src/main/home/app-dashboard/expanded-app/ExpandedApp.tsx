@@ -655,6 +655,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               chart={appData.chart}
               addNewText={"Add a new service"}
               setExpandedJob={(x: string) => setExpandedJob(x)}
+              appName={appData.app.name}
             />
             <Spacer y={0.75} />
             <Button

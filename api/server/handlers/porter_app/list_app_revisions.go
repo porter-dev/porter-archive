@@ -31,7 +31,7 @@ func NewListAppRevisionsHandler(
 	}
 }
 
-// ListAppRevisionsResponse represents the response from the /apps/{porter_app_name}/revisions endpoint
+// ListAppRevisionsRequest represents the response from the /apps/{porter_app_name}/revisions endpoint
 type ListAppRevisionsRequest struct {
 	// The deployment target ID for the revisions
 	DeploymentTargetID string `schema:"deployment_target_id"`

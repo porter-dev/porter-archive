@@ -443,7 +443,7 @@ func createHPAAbsoluteCPUThresholdQuery(cpuMetricName, metricName, podSelectionR
 	}
 
 	requestCPUOne := fmt.Sprintf(
-		`sum by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
+		`avg by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
 		hpaMetricName,
 		cpuMetricName,
 		kubeMetricsPodSelectorOne,
@@ -452,13 +452,13 @@ func createHPAAbsoluteCPUThresholdQuery(cpuMetricName, metricName, podSelectionR
 	)
 
 	targetCPUUtilThresholdOne := fmt.Sprintf(
-		`%s{%s} / 100`,
+		`%s{%s} / 50`,
 		metricName,
 		kubeMetricsHPASelectorOne,
 	)
 
 	requestCPUTwo := fmt.Sprintf(
-		`sum by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
+		`avg by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
 		hpaMetricName,
 		cpuMetricName,
 		kubeMetricsPodSelectorTwo,
@@ -467,7 +467,7 @@ func createHPAAbsoluteCPUThresholdQuery(cpuMetricName, metricName, podSelectionR
 	)
 
 	targetCPUUtilThresholdTwo := fmt.Sprintf(
-		`%s{%s} / 100`,
+		`%s{%s} / 50`,
 		metricName,
 		kubeMetricsHPASelectorTwo,
 	)
@@ -512,7 +512,7 @@ func createHPAAbsoluteMemoryThresholdQuery(memMetricName, metricName, podSelecti
 	}
 
 	requestMemOne := fmt.Sprintf(
-		`sum by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
+		`avg by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
 		hpaMetricName,
 		memMetricName,
 		kubeMetricsPodSelectorOne,
@@ -521,13 +521,13 @@ func createHPAAbsoluteMemoryThresholdQuery(memMetricName, metricName, podSelecti
 	)
 
 	targetMemUtilThresholdOne := fmt.Sprintf(
-		`%s{%s} / 100`,
+		`%s{%s} / 50`,
 		metricName,
 		kubeMetricsHPASelectorOne,
 	)
 
 	requestMemTwo := fmt.Sprintf(
-		`sum by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
+		`avg by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
 		hpaMetricName,
 		memMetricName,
 		kubeMetricsPodSelectorTwo,
@@ -536,7 +536,7 @@ func createHPAAbsoluteMemoryThresholdQuery(memMetricName, metricName, podSelecti
 	)
 
 	targetMemUtilThresholdTwo := fmt.Sprintf(
-		`%s{%s} / 100`,
+		`%s{%s} / 50`,
 		metricName,
 		kubeMetricsHPASelectorTwo,
 	)

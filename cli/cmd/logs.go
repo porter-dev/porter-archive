@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )
@@ -17,7 +19,7 @@ var logsCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Logs the output from a given application.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, logs)
+		err := checkLoginAndRun(cmd.Context(), args, logs)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -45,8 +47,8 @@ func init() {
 	)
 }
 
-func logs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	podsSimple, err := getPods(client, namespace, args[0])
+func logs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+	podsSimple, err := getPods(ctx, client, cliConfig, namespace, args[0])
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())
 	}
@@ -95,16 +97,17 @@ func logs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []stri
 	}
 
 	config := &PorterRunSharedConfig{
-		Client: client,
+		Client:    client,
+		CLIConfig: cliConfig,
 	}
 
-	err = config.setSharedConfig()
+	err = config.setSharedConfig(ctx)
 
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
 
-	_, err = pipePodLogsToStdout(config, namespace, selectedPod.Name, selectedContainerName, follow)
+	_, err = pipePodLogsToStdout(ctx, config, namespace, selectedPod.Name, selectedContainerName, follow)
 
 	return err
 }

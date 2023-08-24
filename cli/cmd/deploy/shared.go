@@ -23,7 +23,8 @@ type SharedOpts struct {
 }
 
 func coalesceEnvGroups(
-	client *api.Client,
+	ctx context.Context,
+	client api.Client,
 	projectID, clusterID uint,
 	namespace string,
 	envGroups []types.EnvGroupMeta,
@@ -35,7 +36,7 @@ func coalesceEnvGroups(
 		}
 
 		envGroup, err := client.GetEnvGroup(
-			context.Background(),
+			ctx,
 			projectID,
 			clusterID,
 			namespace,

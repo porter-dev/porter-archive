@@ -31,9 +31,11 @@ func init() {
 	}
 }
 
+// Agent is a buildpack agent
 type Agent struct{}
 
-func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, cacheImage string) error {
+// Build manages buildpack builds
+func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *types.BuildConfig, cacheImage string) error {
 	absPath, err := filepath.Abs(opts.BuildContext)
 	if err != nil {
 		return err
@@ -88,7 +90,7 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, ca
 					// try to download the repo ZIP from github
 					githubClient := githubApi.NewClient(nil)
 					rel, _, err := githubClient.Repositories.GetLatestRelease(
-						context.Background(),
+						ctx,
 						urlPaths[0],
 						urlPaths[1],
 					)
@@ -97,7 +99,7 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, ca
 					} else {
 						// default to the current default branch
 						repo, _, err := githubClient.Repositories.Get(
-							context.Background(),
+							ctx,
 							urlPaths[0],
 							urlPaths[1],
 						)
@@ -142,5 +144,5 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, ca
 		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile@1.0.1")
 	}
 
-	return sharedPackClient.Build(context.Background(), buildOpts)
+	return sharedPackClient.Build(ctx, buildOpts)
 }

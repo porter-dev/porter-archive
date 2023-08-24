@@ -6,6 +6,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/internal/integrations/preview"
@@ -18,22 +19,29 @@ type EnvGroupDriver struct {
 	lookupTable *map[string]drivers.Driver
 	target      *preview.Target
 	config      *preview.EnvGroupDriverConfig
+	apiClient   api.Client
+	cliConfig   config.CLIConfig
 }
 
-func NewEnvGroupDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
-	driver := &EnvGroupDriver{
-		lookupTable: opts.DriverLookupTable,
-		output:      make(map[string]interface{}),
+// NewEnvGroupDriver extends switchboard with environment groups
+func NewEnvGroupDriver(ctx context.Context, apiClient api.Client, cliConfig config.CLIConfig) func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+	return func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+		driver := &EnvGroupDriver{
+			lookupTable: opts.DriverLookupTable,
+			output:      make(map[string]interface{}),
+			apiClient:   apiClient,
+			cliConfig:   cliConfig,
+		}
+
+		target, err := GetTarget(ctx, resource.Name, resource.Target, apiClient, cliConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		driver.target = target
+
+		return driver, nil
 	}
-
-	target, err := GetTarget(resource.Name, resource.Target)
-	if err != nil {
-		return nil, err
-	}
-
-	driver.target = target
-
-	return driver, nil
 }
 
 func (d *EnvGroupDriver) ShouldApply(resource *models.Resource) bool {
@@ -41,14 +49,14 @@ func (d *EnvGroupDriver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, error) {
+	ctx := context.TODO() // switchboard blocks changing this for now
+
 	driverConfig, err := d.getConfig(resource)
 	if err != nil {
 		return nil, err
 	}
 
 	d.config = driverConfig
-
-	client := config.GetAPIClient()
 
 	for _, group := range d.config.EnvGroups {
 		if group.Name == "" {
@@ -62,8 +70,8 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 			group.Namespace = d.target.Namespace
 		}
 
-		envGroupResp, err := client.GetEnvGroup(
-			context.Background(),
+		envGroupResp, err := d.apiClient.GetEnvGroup(
+			ctx,
 			d.target.Project,
 			d.target.Cluster,
 			group.Namespace,
@@ -73,8 +81,8 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 		)
 
 		if err != nil && err.Error() == "env group not found" {
-			newEnvGroup, err := client.CreateEnvGroup(
-				context.Background(), d.target.Project, d.target.Cluster, group.Namespace,
+			newEnvGroup, err := d.apiClient.CreateEnvGroup(
+				ctx, d.target.Project, d.target.Cluster, group.Namespace,
 				&types.CreateEnvGroupRequest{
 					Name:      group.Name,
 					Variables: group.Variables,

@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -16,55 +16,52 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// projectCmd represents the "porter project" base command when called
-// without any subcommands
-var projectCmd = &cobra.Command{
-	Use:     "project",
-	Aliases: []string{"projects"},
-	Short:   "Commands that control Porter project settings",
-}
+func registerCommand_Project(cliConf config.CLIConfig) *cobra.Command {
+	projectCmd := &cobra.Command{
+		Use:     "project",
+		Aliases: []string{"projects"},
+		Short:   "Commands that control Porter project settings",
+	}
 
-var createProjectCmd = &cobra.Command{
-	Use:   "create [name]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Creates a project with the authorized user as admin",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, createProject)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-var deleteProjectCmd = &cobra.Command{
-	Use:   "delete [id]",
-	Args:  cobra.ExactArgs(1),
-	Short: "Deletes the project with the given id",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, deleteProject)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-var listProjectCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Lists the projects for the logged in user",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, listProjects)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(projectCmd)
-
+	createProjectCmd := &cobra.Command{
+		Use:   "create [name]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Creates a project with the authorized user as admin",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, createProject)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 	projectCmd.AddCommand(createProjectCmd)
+
+	deleteProjectCmd := &cobra.Command{
+		Use:   "delete [id]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Deletes the project with the given id",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteProject)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 	projectCmd.AddCommand(deleteProjectCmd)
+
+	listProjectCmd := &cobra.Command{
+		Use:   "list",
+		Short: "Lists the projects for the logged in user",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listProjects)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 	projectCmd.AddCommand(listProjectCmd)
+
+	return projectCmd
 }
 
 func createProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {

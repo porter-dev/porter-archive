@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -19,12 +19,7 @@ var (
 	ErrCannotConnect error = errors.New("Unable to connect to the Porter server.")
 )
 
-func checkLoginAndRun(ctx context.Context, args []string, runner func(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error) error {
-	cliConf, err := config.InitAndLoadConfig()
-	if err != nil {
-		return fmt.Errorf("error loading porter config: %w", err)
-	}
-
+func checkLoginAndRunWithConfig(ctx context.Context, cliConf config.CLIConfig, args []string, runner func(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error) error {
 	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
 		BaseURL:        fmt.Sprintf("%s/api", cliConf.Host),
 		BearerToken:    cliConf.Token,

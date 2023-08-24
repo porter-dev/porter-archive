@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -25,12 +25,33 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-// updateCmd represents the "porter update" base command when called
-// without any subcommands
-var updateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Builds and updates a specified application given by the --app flag.",
-	Long: fmt.Sprintf(`
+var (
+	app                     string
+	getEnvFileDest          string
+	localPath               string
+	tag                     string
+	dockerfile              string
+	method                  string
+	stream                  bool
+	buildFlagsEnv           []string
+	forcePush               bool
+	useCache                bool
+	version                 uint
+	varType                 string
+	normalEnvGroupVars      []string
+	secretEnvGroupVars      []string
+	waitForSuccessfulDeploy bool
+)
+
+func registerCommand_Update(cliConf config.CLIConfig) *cobra.Command {
+	buildFlagsEnv = []string{}
+
+	// updateCmd represents the "porter update" base command when called
+	// without any subcommands
+	updateCmd := &cobra.Command{
+		Use:   "update",
+		Short: "Builds and updates a specified application given by the --app flag.",
+		Long: fmt.Sprintf(`
 %s
 
 Builds and updates a specified application given by the --app flag. For example:
@@ -63,25 +84,25 @@ specify it as follows:
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --path ~/path-to-dir --tag testing"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app remote-git-app --source github"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --values my-values.yaml"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --method docker --dockerfile ./docker/prod.Dockerfile"),
-	),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, updateFull)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --path ~/path-to-dir --tag testing"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update --app remote-git-app --source github"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --values my-values.yaml"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --method docker --dockerfile ./docker/prod.Dockerfile"),
+		),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, updateFull)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var updateGetEnvCmd = &cobra.Command{
-	Use:   "get-env",
-	Short: "Gets environment variables for a deployment for a specified application given by the --app flag.",
-	Long: fmt.Sprintf(`
+	updateGetEnvCmd := &cobra.Command{
+		Use:   "get-env",
+		Short: "Gets environment variables for a deployment for a specified application given by the --app flag.",
+		Long: fmt.Sprintf(`
 %s
 
 Gets environment variables for a deployment for a specified application given by the --app
@@ -94,22 +115,22 @@ destination path for a .env file. For example:
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update get-env\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update get-env --app example-app | xargs"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update get-env --app example-app --file .env"),
-	),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, updateGetEnv)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update get-env\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update get-env --app example-app | xargs"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update get-env --app example-app --file .env"),
+		),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, updateGetEnv)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var updateBuildCmd = &cobra.Command{
-	Use:   "build",
-	Short: "Builds a new version of the application specified by the --app flag.",
-	Long: fmt.Sprintf(`
+	updateBuildCmd := &cobra.Command{
+		Use:   "build",
+		Short: "Builds a new version of the application specified by the --app flag.",
+		Long: fmt.Sprintf(`
 %s
 
 Builds a new version of the application specified by the --app flag. Depending on the
@@ -135,24 +156,24 @@ for the application:
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update build\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update build --app example-app"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update build --app example-app --method docker"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update build --app example-app --method docker --dockerfile ./prod.Dockerfile"),
-	),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, updateBuild)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update build\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update build --app example-app"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update build --app example-app --method docker"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update build --app example-app --method docker --dockerfile ./prod.Dockerfile"),
+		),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, updateBuild)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var updatePushCmd = &cobra.Command{
-	Use:   "push",
-	Short: "Pushes an image to a Docker registry linked to your Porter project.",
-	Args:  cobra.MaximumNArgs(1),
-	Long: fmt.Sprintf(`
+	updatePushCmd := &cobra.Command{
+		Use:   "push",
+		Short: "Pushes an image to a Docker registry linked to your Porter project.",
+		Args:  cobra.MaximumNArgs(1),
+		Long: fmt.Sprintf(`
 %s
 
 Pushes a local Docker image to a registry linked to your Porter project. This command
@@ -174,24 +195,24 @@ This command will not use your pre-saved authentication set up via "docker login
 are using an image registry that was created outside of Porter, make sure that you have
 linked it via "porter connect".
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update push\":"),
-		color.New(color.FgBlue).Sprintf("porter config set-project"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update push gcr.io/snowflake-123456/nginx:1234567"),
-		color.New(color.Bold).Sprintf("LEGACY USAGE:"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update push --app nginx --tag new-tag"),
-	),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, updatePush)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update push\":"),
+			color.New(color.FgBlue).Sprintf("porter config set-project"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update push gcr.io/snowflake-123456/nginx:1234567"),
+			color.New(color.Bold).Sprintf("LEGACY USAGE:"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update push --app nginx --tag new-tag"),
+		),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, updatePush)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var updateConfigCmd = &cobra.Command{
-	Use:   "config",
-	Short: "Updates the configuration for an application specified by the --app flag.",
-	Long: fmt.Sprintf(`
+	updateConfigCmd := &cobra.Command{
+		Use:   "config",
+		Short: "Updates the configuration for an application specified by the --app flag.",
+		Long: fmt.Sprintf(`
 %s
 
 Updates the configuration for an application specified by the --app flag, using the configuration
@@ -206,72 +227,50 @@ the image that the application uses if no --values file is specified:
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update config\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update config --app example-app --values my-values.yaml"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter update config --app example-app --tag custom-tag"),
-	),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, updateUpgrade)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update config\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update config --app example-app --values my-values.yaml"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter update config --app example-app --tag custom-tag"),
+		),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, updateUpgrade)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var updateEnvGroupCmd = &cobra.Command{
-	Use:     "env-group",
-	Aliases: []string{"eg", "envgroup", "env-groups", "envgroups"},
-	Short:   "Updates an environment group's variables, specified by the --name flag.",
-	Run: func(cmd *cobra.Command, args []string) {
-		color.New(color.FgRed).Fprintln(os.Stderr, "need to specify an operation to continue")
-	},
-}
+	updateEnvGroupCmd := &cobra.Command{
+		Use:     "env-group",
+		Aliases: []string{"eg", "envgroup", "env-groups", "envgroups"},
+		Short:   "Updates an environment group's variables, specified by the --name flag.",
+		Run: func(cmd *cobra.Command, args []string) {
+			_, _ = color.New(color.FgRed).Fprintln(os.Stderr, "need to specify an operation to continue")
+		},
+	}
 
-var updateSetEnvGroupCmd = &cobra.Command{
-	Use:   "set",
-	Short: "Sets the desired value of an environment variable in an env group in the form VAR=VALUE.",
-	Args:  cobra.MaximumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, updateSetEnvGroup)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	updateSetEnvGroupCmd := &cobra.Command{
+		Use:   "set",
+		Short: "Sets the desired value of an environment variable in an env group in the form VAR=VALUE.",
+		Args:  cobra.MaximumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, updateSetEnvGroup)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var updateUnsetEnvGroupCmd = &cobra.Command{
-	Use:   "unset",
-	Short: "Removes an environment variable from an env group.",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, updateUnsetEnvGroup)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-var (
-	app                     string
-	getEnvFileDest          string
-	localPath               string
-	tag                     string
-	dockerfile              string
-	method                  string
-	stream                  bool
-	buildFlagsEnv           []string
-	forcePush               bool
-	useCache                bool
-	version                 uint
-	varType                 string
-	normalEnvGroupVars      []string
-	secretEnvGroupVars      []string
-	waitForSuccessfulDeploy bool
-)
-
-func init() {
-	buildFlagsEnv = []string{}
-	rootCmd.AddCommand(updateCmd)
+	updateUnsetEnvGroupCmd := &cobra.Command{
+		Use:   "unset",
+		Short: "Removes an environment variable from an env group.",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, updateUnsetEnvGroup)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
 	updateCmd.PersistentFlags().StringVar(
 		&app,
@@ -440,6 +439,8 @@ func init() {
 	updateCmd.AddCommand(updatePushCmd)
 	updateCmd.AddCommand(updateConfigCmd)
 	updateCmd.AddCommand(updateEnvGroupCmd)
+
+	return updateCmd
 }
 
 func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {

@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -17,102 +17,100 @@ var (
 	contexts       *[]string
 )
 
-var connectCmd = &cobra.Command{
-	Use:   "connect",
-	Short: "Commands that connect to external clusters and providers",
-}
+func registerCommand_Connect(cliConf config.CLIConfig) *cobra.Command {
+	connectCmd := &cobra.Command{
+		Use:   "connect",
+		Short: "Commands that connect to external clusters and providers",
+	}
 
-var connectKubeconfigCmd = &cobra.Command{
-	Use:   "kubeconfig",
-	Short: "Uses the local kubeconfig to add a cluster",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, runConnectKubeconfig)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	connectKubeconfigCmd := &cobra.Command{
+		Use:   "kubeconfig",
+		Short: "Uses the local kubeconfig to add a cluster",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectKubeconfig)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var connectECRCmd = &cobra.Command{
-	Use:   "ecr",
-	Short: "Adds an ECR instance to a project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, runConnectECR)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	connectECRCmd := &cobra.Command{
+		Use:   "ecr",
+		Short: "Adds an ECR instance to a project",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectECR)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var connectDockerhubCmd = &cobra.Command{
-	Use:   "dockerhub",
-	Short: "Adds a Docker Hub registry integration to a project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, runConnectDockerhub)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	connectDockerhubCmd := &cobra.Command{
+		Use:   "dockerhub",
+		Short: "Adds a Docker Hub registry integration to a project",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectDockerhub)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var connectRegistryCmd = &cobra.Command{
-	Use:   "registry",
-	Short: "Adds a custom image registry to a project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, runConnectRegistry)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	connectRegistryCmd := &cobra.Command{
+		Use:   "registry",
+		Short: "Adds a custom image registry to a project",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectRegistry)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var connectHelmRepoCmd = &cobra.Command{
-	Use:   "helm",
-	Short: "Adds a custom Helm registry to a project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, runConnectHelmRepo)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	connectHelmRepoCmd := &cobra.Command{
+		Use:   "helm",
+		Short: "Adds a custom Helm registry to a project",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectHelmRepo)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var connectGCRCmd = &cobra.Command{
-	Use:   "gcr",
-	Short: "Adds a GCR instance to a project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, runConnectGCR)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+	connectGCRCmd := &cobra.Command{
+		Use:   "gcr",
+		Short: "Adds a GCR instance to a project",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectGCR)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var connectGARCmd = &cobra.Command{
-	Use:   "gar",
-	Short: "Adds a GAR instance to a project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, runConnectGAR)
-		if err != nil {
-			os.Exit(1)
-		}
-		cmd.Context()
-	},
-}
+	connectGARCmd := &cobra.Command{
+		Use:   "gar",
+		Short: "Adds a GAR instance to a project",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectGAR)
+			if err != nil {
+				os.Exit(1)
+			}
+			cmd.Context()
+		},
+	}
 
-var connectDOCRCmd = &cobra.Command{
-	Use:   "docr",
-	Short: "Adds a DOCR instance to a project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(cmd.Context(), args, runConnectDOCR)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(connectCmd)
+	connectDOCRCmd := &cobra.Command{
+		Use:   "docr",
+		Short: "Adds a DOCR instance to a project",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectDOCR)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
 	connectCmd.AddCommand(connectKubeconfigCmd)
 
@@ -137,6 +135,7 @@ func init() {
 	connectCmd.AddCommand(connectGARCmd)
 	connectCmd.AddCommand(connectDOCRCmd)
 	connectCmd.AddCommand(connectHelmRepoCmd)
+	return connectCmd
 }
 
 func runConnectKubeconfig(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, _ []string) error {

@@ -1,8 +1,9 @@
-import React, { useCallback, useContext, useEffect } from "react";
+import React, { useCallback, useContext, useEffect, useMemo } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import web from "assets/web.png";
 import AnimateHeight from "react-animate-height";
 import axios from "axios";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import styled from "styled-components";
 import { useForm, Controller, FormProvider } from "react-hook-form";
@@ -18,6 +19,7 @@ import {
   PorterAppFormData,
   SourceOptions,
   clientAppToProto,
+  porterAppFormValidator,
 } from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
@@ -40,6 +42,7 @@ import GithubActionModal from "../new-app-flow/GithubActionModal";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import Error from "components/porter/Error";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { useQuery } from "@tanstack/react-query";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -59,7 +62,37 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const [isDeploying, setIsDeploying] = React.useState(false);
   const [deployError, setDeployError] = React.useState("");
 
+  const { data: porterApps = [] } = useQuery<string[]>(
+    ["getPorterApps", currentProject?.id, currentCluster?.id],
+    async () => {
+      if (!currentProject?.id || !currentCluster?.id) {
+        return Promise.resolve([]);
+      }
+
+      const res = await api.getPorterApps(
+        "<token>",
+        {},
+        {
+          project_id: currentProject?.id,
+          cluster_id: currentCluster?.id,
+        }
+      );
+
+      const apps = await z
+        .object({
+          name: z.string(),
+        })
+        .array()
+        .parseAsync(res.data);
+      return apps.map((app) => app.name);
+    },
+    {
+      enabled: !!currentProject?.id && !!currentCluster?.id,
+    }
+  );
+
   const porterAppFormMethods = useForm<PorterAppFormData>({
+    resolver: zodResolver(porterAppFormValidator),
     reValidateMode: "onSubmit",
     defaultValues: {
       app: {
@@ -73,7 +106,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       },
       source: {
         git_repo_name: "",
-        git_repo_id: 0,
         git_branch: "",
         porter_yaml_path: "./porter.yaml",
       },
@@ -85,13 +117,15 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     watch,
     setValue,
     handleSubmit,
-    formState: { isSubmitting },
+    setError,
+    formState: { isSubmitting: isValidating, errors },
   } = porterAppFormMethods;
 
   const name = watch("app.name");
   const source = watch("source");
   const build = watch("app.build");
   const image = watch("source.image");
+  const services = watch("app.services");
   const servicesFromYaml = usePorterYaml(source);
   const deploymentTarget = useDefaultDeploymentTarget();
   const { updateAppStep } = useAppAnalytics(name);
@@ -217,7 +251,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         setIsDeploying(false);
       }
     },
-    [currentProject?.id, currentCluster?.id]
+    [currentProject?.id, currentCluster?.id, deploymentTarget]
   );
 
   useEffect(() => {
@@ -247,6 +281,43 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     image?.tag,
   ]);
 
+  // todo(ianedwards): it's a bit odd that the button error can be set to either a string or JSX,
+  // need to look into refactoring that where possible and then improve this error handling
+  const submitBtnStatus = useMemo(() => {
+    if (isValidating || isDeploying) {
+      return "loading";
+    }
+
+    if (deployError) {
+      return <Error message={deployError} />;
+    }
+
+    const errorKeys = Object.keys(errors);
+    if (errorKeys.length > 0) {
+      if (errorKeys.includes("app")) {
+        const appErrors = Object.keys(errors?.app ?? {});
+        if (appErrors.includes("build")) {
+          return (
+            <Error message={"Build settings are not properly configured."} />
+          );
+        }
+
+        if (appErrors.includes("services")) {
+          return (
+            <Error message={"Service settings are not properly configured."} />
+          );
+        }
+      }
+      return <Error message={"App could not be deployed as defined."} />;
+    }
+
+    return;
+  }, [isValidating, isDeploying, deployError, errors]);
+
+  const submitDisabled = useMemo(() => {
+    return !name || !source || services.length === 0;
+  }, [name, source, services?.length]);
+
   // reset services when source changes
   useEffect(() => {
     setValue("app.services", []);
@@ -254,6 +325,20 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       detected: false,
       count: 0,
     });
+
+    if (source?.type === "docker-registry") {
+      setValue("app.build", {
+        context: "./",
+        method: "pack",
+        builder: "",
+        buildpacks: [],
+      });
+      setValue("source", {
+        ...source,
+        git_repo_name: undefined,
+        git_branch: undefined,
+      });
+    }
   }, [source?.type, source?.git_repo_name, source?.git_branch, image?.tag]);
 
   useEffect(() => {
@@ -265,7 +350,23 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         count: services.length,
       });
     }
+
+    if (!servicesFromYaml && detectedServices.detected) {
+      setValue("app.services", []);
+      setDetectedServices({
+        detected: false,
+        count: 0,
+      });
+    }
   }, [servicesFromYaml, detectedServices.detected]);
+
+  useEffect(() => {
+    if (porterApps.includes(name)) {
+      setError("app.name", {
+        message: "An app with this name already exists",
+      });
+    }
+  }, [porterApps]);
 
   if (!currentProject || !currentCluster) {
     return null;
@@ -298,6 +399,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ControlledInput
                       placeholder="ex: academic-sophon"
                       type="text"
+                      error={errors.app?.name?.message}
                       {...register("app.name")}
                     />
                   </>,
@@ -410,16 +512,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                   ),
                   <Button
                     type="submit"
-                    status={
-                      isSubmitting || isDeploying ? (
-                        "loading"
-                      ) : deployError ? (
-                        <Error message={deployError} />
-                      ) : undefined
-                    }
+                    status={submitBtnStatus}
                     loadingText={"Deploying..."}
                     width={"120px"}
-                    disabled={!name || !source || isSubmitting || isDeploying}
+                    disabled={submitDisabled}
                   >
                     Deploy app
                   </Button>,

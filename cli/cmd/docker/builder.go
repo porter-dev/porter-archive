@@ -33,7 +33,7 @@ type BuildOpts struct {
 }
 
 // BuildLocal
-func (a *Agent) BuildLocal(opts *BuildOpts) (err error) {
+func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 	dockerfilePath := opts.DockerfilePath
 
 	// attempt to read dockerignore file and paths
@@ -84,7 +84,7 @@ func (a *Agent) BuildLocal(opts *BuildOpts) (err error) {
 	inlineCacheVal := "1"
 	buildArgs["BUILDKIT_INLINE_CACHE"] = &inlineCacheVal
 
-	out, err := a.ImageBuild(context.Background(), tar, types.ImageBuildOptions{
+	out, err := a.ImageBuild(ctx, tar, types.ImageBuildOptions{
 		Dockerfile: dockerfilePath,
 		BuildArgs:  buildArgs,
 		Tags: []string{

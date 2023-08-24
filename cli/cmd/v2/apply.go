@@ -16,7 +16,7 @@ import (
 )
 
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
-func Apply(ctx context.Context, cliConf *config.CLIConfig, client *api.Client, porterYamlPath string) error {
+func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, porterYamlPath string) error {
 	if len(porterYamlPath) == 0 {
 		return fmt.Errorf("porter yaml is empty")
 	}

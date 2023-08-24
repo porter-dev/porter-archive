@@ -15,7 +15,7 @@ import (
 
 // CreateAgent handles the creation of a new application on Porter
 type CreateAgent struct {
-	Client     *api.Client
+	Client     api.Client
 	CreateOpts *CreateOpts
 }
 
@@ -43,6 +43,7 @@ type GithubOpts struct {
 // This function attempts to find a matching repository in the list of linked repositories
 // on Porter. If one is found, it will use that repository as the app source.
 func (c *CreateAgent) CreateFromGithub(
+	ctx context.Context,
 	ghOpts *GithubOpts,
 	overrideValues map[string]interface{},
 ) (string, error) {
@@ -50,7 +51,7 @@ func (c *CreateAgent) CreateFromGithub(
 
 	// get all linked github repos and find matching repo
 	resp, err := c.Client.ListGitInstallationIDs(
-		context.Background(),
+		ctx,
 		c.CreateOpts.ProjectID,
 	)
 	if err != nil {
@@ -64,7 +65,7 @@ func (c *CreateAgent) CreateFromGithub(
 	for _, gitInstallationID := range gitInstallations {
 		// for each git repo, search for a matching username/owner
 		resp, err := c.Client.ListGitRepos(
-			context.Background(),
+			ctx,
 			c.CreateOpts.ProjectID,
 			gitInstallationID,
 		)
@@ -90,7 +91,7 @@ func (c *CreateAgent) CreateFromGithub(
 		return "", fmt.Errorf("could not find a linked github repo for %s. Make sure you have linked your Github account on the Porter dashboard.", ghOpts.Repo)
 	}
 
-	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
+	latestVersion, mergedValues, err := c.GetMergedValues(ctx, overrideValues)
 	if err != nil {
 		return "", err
 	}
@@ -107,18 +108,18 @@ func (c *CreateAgent) CreateFromGithub(
 		}
 	}
 
-	regID, imageURL, err := c.GetImageRepoURL(opts.ReleaseName, opts.Namespace)
+	regID, imageURL, err := c.GetImageRepoURL(ctx, opts.ReleaseName, opts.Namespace)
 	if err != nil {
 		return "", err
 	}
 
-	subdomain, err := c.CreateSubdomainIfRequired(mergedValues)
+	subdomain, err := c.CreateSubdomainIfRequired(ctx, mergedValues)
 	if err != nil {
 		return "", err
 	}
 
 	err = c.Client.DeployTemplate(
-		context.Background(),
+		ctx,
 		opts.ProjectID,
 		opts.ClusterID,
 		opts.Namespace,
@@ -152,6 +153,7 @@ func (c *CreateAgent) CreateFromGithub(
 
 // CreateFromRegistry deploys a new application from an existing Docker repository + tag.
 func (c *CreateAgent) CreateFromRegistry(
+	ctx context.Context,
 	image string,
 	overrideValues map[string]interface{},
 ) (string, error) {
@@ -168,7 +170,7 @@ func (c *CreateAgent) CreateFromRegistry(
 
 	opts := c.CreateOpts
 
-	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
+	latestVersion, mergedValues, err := c.GetMergedValues(ctx, overrideValues)
 	if err != nil {
 		return "", err
 	}
@@ -178,13 +180,13 @@ func (c *CreateAgent) CreateFromRegistry(
 		"tag":        imageSpl[1],
 	}
 
-	subdomain, err := c.CreateSubdomainIfRequired(mergedValues)
+	subdomain, err := c.CreateSubdomainIfRequired(ctx, mergedValues)
 	if err != nil {
 		return "", err
 	}
 
 	err = c.Client.DeployTemplate(
-		context.Background(),
+		ctx,
 		opts.ProjectID,
 		opts.ClusterID,
 		opts.Namespace,
@@ -209,6 +211,7 @@ func (c *CreateAgent) CreateFromRegistry(
 // CreateFromDocker uses a local build context and a local Docker daemon to build a new
 // container image, and then deploys it onto Porter.
 func (c *CreateAgent) CreateFromDocker(
+	ctx context.Context,
 	overrideValues map[string]interface{},
 	imageTag string,
 	extraBuildConfig *types.BuildConfig,
@@ -241,12 +244,12 @@ func (c *CreateAgent) CreateFromDocker(
 	}
 
 	// overwrite with docker image repository and tag
-	regID, imageURL, err := c.GetImageRepoURL(opts.ReleaseName, opts.Namespace)
+	regID, imageURL, err := c.GetImageRepoURL(ctx, opts.ReleaseName, opts.Namespace)
 	if err != nil {
 		return "", err
 	}
 
-	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
+	latestVersion, mergedValues, err := c.GetMergedValues(ctx, overrideValues)
 	if err != nil {
 		return "", err
 	}
@@ -257,12 +260,12 @@ func (c *CreateAgent) CreateFromDocker(
 	}
 
 	// create docker agent
-	agent, err := docker.NewAgentWithAuthGetter(c.Client, opts.ProjectID)
+	agent, err := docker.NewAgentWithAuthGetter(ctx, c.Client, opts.ProjectID)
 	if err != nil {
 		return "", err
 	}
 
-	env, err := GetEnvForRelease(c.Client, mergedValues, opts.ProjectID, opts.ClusterID, opts.Namespace)
+	env, err := GetEnvForRelease(ctx, c.Client, mergedValues, opts.ProjectID, opts.ClusterID, opts.Namespace)
 	if err != nil {
 		env = make(map[string]string)
 	}
@@ -307,9 +310,9 @@ func (c *CreateAgent) CreateFromDocker(
 			return "", err
 		}
 
-		err = buildAgent.BuildDocker(agent, basePath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
+		err = buildAgent.BuildDocker(ctx, agent, basePath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
 	} else {
-		err = buildAgent.BuildPack(agent, opts.LocalPath, imageTag, "", extraBuildConfig)
+		err = buildAgent.BuildPack(ctx, agent, opts.LocalPath, imageTag, "", extraBuildConfig)
 	}
 
 	if err != nil {
@@ -319,7 +322,7 @@ func (c *CreateAgent) CreateFromDocker(
 	if !opts.SharedOpts.UseCache {
 		// create repository
 		err = c.Client.CreateRepository(
-			context.Background(),
+			ctx,
 			opts.ProjectID,
 			regID,
 			&types.CreateRegistryRepositoryRequest{
@@ -331,20 +334,20 @@ func (c *CreateAgent) CreateFromDocker(
 			return "", err
 		}
 
-		err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
+		err = agent.PushImage(ctx, fmt.Sprintf("%s:%s", imageURL, imageTag))
 
 		if err != nil {
 			return "", err
 		}
 	}
 
-	subdomain, err := c.CreateSubdomainIfRequired(mergedValues)
+	subdomain, err := c.CreateSubdomainIfRequired(ctx, mergedValues)
 	if err != nil {
 		return "", err
 	}
 
 	err = c.Client.DeployTemplate(
-		context.Background(),
+		ctx,
 		opts.ProjectID,
 		opts.ClusterID,
 		opts.Namespace,
@@ -378,11 +381,11 @@ func (c *CreateAgent) HasDefaultDockerfile(buildPath string) bool {
 // GetImageRepoURL creates the image repository url by finding the first valid image
 // registry linked to Porter, and then generates a new name of the form:
 // `{registry}/{name}-{namespace}`
-func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, error) {
+func (c *CreateAgent) GetImageRepoURL(ctx context.Context, name, namespace string) (uint, string, error) {
 	// get all image registries linked to the project
 	// get the list of namespaces
 	resp, err := c.Client.ListRegistries(
-		context.Background(),
+		ctx,
 		c.CreateOpts.ProjectID,
 	)
 
@@ -436,9 +439,9 @@ func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, err
 
 // GetLatestTemplateVersion retrieves the latest template version for a specific
 // Porter template from the chart repository.
-func (c *CreateAgent) GetLatestTemplateVersion(templateName string) (string, error) {
+func (c *CreateAgent) GetLatestTemplateVersion(ctx context.Context, templateName string) (string, error) {
 	resp, err := c.Client.ListTemplates(
-		context.Background(),
+		ctx,
 		c.CreateOpts.ProjectID,
 		&types.ListTemplatesRequest{},
 	)
@@ -466,9 +469,9 @@ func (c *CreateAgent) GetLatestTemplateVersion(templateName string) (string, err
 
 // GetLatestTemplateDefaultValues gets the default config (`values.yaml`) set for a specific
 // template.
-func (c *CreateAgent) GetLatestTemplateDefaultValues(projectID uint, templateName, templateVersion string) (map[string]interface{}, error) {
+func (c *CreateAgent) GetLatestTemplateDefaultValues(ctx context.Context, projectID uint, templateName, templateVersion string) (map[string]interface{}, error) {
 	chart, err := c.Client.GetTemplate(
-		context.Background(),
+		ctx,
 		projectID,
 		templateName,
 		templateVersion,
@@ -481,20 +484,21 @@ func (c *CreateAgent) GetLatestTemplateDefaultValues(projectID uint, templateNam
 	return chart.Values, nil
 }
 
-func (c *CreateAgent) GetMergedValues(overrideValues map[string]interface{}) (string, map[string]interface{}, error) {
+// GetMergedValues merges exsting values with their overrides
+func (c *CreateAgent) GetMergedValues(ctx context.Context, overrideValues map[string]interface{}) (string, map[string]interface{}, error) {
 	// deploy the template
-	latestVersion, err := c.GetLatestTemplateVersion(c.CreateOpts.Kind)
+	latestVersion, err := c.GetLatestTemplateVersion(ctx, c.CreateOpts.Kind)
 	if err != nil {
 		return "", nil, err
 	}
 
 	// get the values of the template
-	values, err := c.GetLatestTemplateDefaultValues(c.CreateOpts.ProjectID, c.CreateOpts.Kind, latestVersion)
+	values, err := c.GetLatestTemplateDefaultValues(ctx, c.CreateOpts.ProjectID, c.CreateOpts.Kind, latestVersion)
 	if err != nil {
 		return "", nil, err
 	}
 
-	err = coalesceEnvGroups(c.Client, c.CreateOpts.ProjectID, c.CreateOpts.ClusterID,
+	err = coalesceEnvGroups(ctx, c.Client, c.CreateOpts.ProjectID, c.CreateOpts.ClusterID,
 		c.CreateOpts.Namespace, c.CreateOpts.EnvGroups, values)
 
 	if err != nil {
@@ -507,7 +511,8 @@ func (c *CreateAgent) GetMergedValues(overrideValues map[string]interface{}) (st
 	return latestVersion, mergedValues, err
 }
 
-func (c *CreateAgent) CreateSubdomainIfRequired(mergedValues map[string]interface{}) (string, error) {
+// CreateSubdomainIfRequired checks if a subdomain needs created, then creates one
+func (c *CreateAgent) CreateSubdomainIfRequired(ctx context.Context, mergedValues map[string]interface{}) (string, error) {
 	subdomain := ""
 
 	// check for automatic subdomain creation if web kind
@@ -543,7 +548,7 @@ func (c *CreateAgent) CreateSubdomainIfRequired(mergedValues map[string]interfac
 					} else {
 						// in the case of ingress enabled but no custom domain, create subdomain
 						dnsRecord, err := c.Client.CreateDNSRecord(
-							context.Background(),
+							ctx,
 							c.CreateOpts.ProjectID,
 							c.CreateOpts.ClusterID,
 							c.CreateOpts.Namespace,

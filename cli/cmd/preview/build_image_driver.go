@@ -27,29 +27,36 @@ type BuildDriver struct {
 	config      *preview.BuildDriverConfig
 	lookupTable *map[string]drivers.Driver
 	output      map[string]interface{}
+	apiClient   client.Client
+	cliConfig   config.CLIConfig
 }
 
-func NewBuildDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
-	driver := &BuildDriver{
-		lookupTable: opts.DriverLookupTable,
-		output:      make(map[string]interface{}),
+// NewBuildDriver extends switchboard with the ability to build images and buildpacks
+func NewBuildDriver(ctx context.Context, apiClient client.Client, cliConfig config.CLIConfig) func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+	return func(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+		driver := &BuildDriver{
+			lookupTable: opts.DriverLookupTable,
+			output:      make(map[string]interface{}),
+			cliConfig:   cliConfig,
+			apiClient:   apiClient,
+		}
+
+		target, err := GetTarget(ctx, resource.Name, resource.Target, apiClient, cliConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		driver.target = target
+
+		source, err := GetSource(ctx, target.Project, resource.Name, resource.Source, apiClient)
+		if err != nil {
+			return nil, err
+		}
+
+		driver.source = source
+
+		return driver, nil
 	}
-
-	target, err := GetTarget(resource.Name, resource.Target)
-	if err != nil {
-		return nil, err
-	}
-
-	driver.target = target
-
-	source, err := GetSource(target.Project, resource.Name, resource.Source)
-	if err != nil {
-		return nil, err
-	}
-
-	driver.source = source
-
-	return driver, nil
 }
 
 func (d *BuildDriver) ShouldApply(resource *models.Resource) bool {
@@ -57,14 +64,14 @@ func (d *BuildDriver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error) {
+	ctx := context.TODO() // switchboard blocks changing this for now
+
 	buildDriverConfig, err := d.getConfig(resource)
 	if err != nil {
 		return nil, err
 	}
 
 	d.config = buildDriverConfig
-
-	client := config.GetAPIClient()
 
 	// FIXME: give tag option in config build, but override if PORTER_TAG is present
 	tag := os.Getenv("PORTER_TAG")
@@ -89,7 +96,7 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 		}
 	}
 
-	regList, err := client.ListRegistries(context.Background(), d.target.Project)
+	regList, err := d.apiClient.ListRegistries(ctx, d.target.Project)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +118,7 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	}
 
 	createAgent := &deploy.CreateAgent{
-		Client: client,
+		Client: d.apiClient,
 		CreateOpts: &deploy.CreateOpts{
 			SharedOpts: &deploy.SharedOpts{
 				ProjectID:       d.target.Project,
@@ -131,13 +138,13 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 		},
 	}
 
-	regID, imageURL, err := createAgent.GetImageRepoURL(d.target.AppName, d.target.Namespace)
+	regID, imageURL, err := createAgent.GetImageRepoURL(ctx, d.target.AppName, d.target.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	// create repository if it does not exist
-	repoResp, err := client.ListRegistryRepositories(context.Background(), d.target.Project, regID)
+	repoResp, err := d.apiClient.ListRegistryRepositories(ctx, d.target.Project, regID)
 	if err != nil {
 		return nil, err
 	}
@@ -154,8 +161,8 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	}
 
 	if !found {
-		err = client.CreateRepository(
-			context.Background(),
+		err = d.apiClient.CreateRepository(
+			ctx,
 			d.target.Project,
 			regID,
 			&types.CreateRegistryRepositoryRequest{
@@ -169,7 +176,7 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	}
 
 	if d.config.Build.UsePackCache {
-		err := config.SetDockerConfig(client)
+		err := config.SetDockerConfig(ctx, d.apiClient, d.target.Project)
 		if err != nil {
 			return nil, err
 		}
@@ -200,18 +207,19 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	}
 
 	// create docker agent
-	agent, err := docker.NewAgentWithAuthGetter(client, d.target.Project)
+	agent, err := docker.NewAgentWithAuthGetter(ctx, d.apiClient, d.target.Project)
 	if err != nil {
 		return nil, err
 	}
 
-	_, mergedValues, err := createAgent.GetMergedValues(d.config.Values)
+	_, mergedValues, err := createAgent.GetMergedValues(ctx, d.config.Values)
 	if err != nil {
 		return nil, err
 	}
 
 	env, err := deploy.GetEnvForRelease(
-		client,
+		ctx,
+		d.apiClient,
 		mergedValues,
 		d.target.Project,
 		d.target.Cluster,
@@ -245,7 +253,7 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 
 	buildAgent := &deploy.BuildAgent{
 		SharedOpts:  createAgent.CreateOpts.SharedOpts,
-		APIClient:   client,
+		APIClient:   d.apiClient,
 		ImageRepo:   imageURL,
 		Env:         env,
 		ImageExists: false,
@@ -263,10 +271,11 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 		var currentTag string
 		// implement caching for porter stack builds
 		if os.Getenv("PORTER_STACK_NAME") != "" {
-			currentTag = getCurrentImageTagIfExists(client, d.target.Project, d.target.Cluster, os.Getenv("PORTER_STACK_NAME"))
+			currentTag = getCurrentImageTagIfExists(ctx, d.apiClient, d.target.Project, d.target.Cluster, os.Getenv("PORTER_STACK_NAME"))
 		}
 
 		err = buildAgent.BuildDocker(
+			ctx,
 			agent,
 			basePath,
 			d.config.Build.Context,
@@ -285,6 +294,7 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 		}
 
 		err = buildAgent.BuildPack(
+			ctx,
 			agent,
 			d.config.Build.Context,
 			tag,
@@ -309,10 +319,10 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	return resource, nil
 }
 
-func getCurrentImageTagIfExists(client *client.Client, projectID, clusterID uint, stackName string) string {
+func getCurrentImageTagIfExists(ctx context.Context, client client.Client, projectID, clusterID uint, stackName string) string {
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 	release, err := client.GetRelease(
-		context.Background(),
+		ctx,
 		projectID,
 		clusterID,
 		namespace,

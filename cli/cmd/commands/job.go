@@ -1,10 +1,11 @@
-package cmd
+package commands
 
 import (
 	"context"
 	"fmt"
 	"os"
 
+	"github.com/porter-dev/porter/cli/cmd/config"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
 
 	"github.com/fatih/color"
@@ -15,14 +16,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var jobCmd = &cobra.Command{
-	Use: "job",
-}
+var imageRepoURI string
 
-var batchImageUpdateCmd = &cobra.Command{
-	Use:   "update-images",
-	Short: "Updates the image tag of all jobs in a namespace which use a specific image.",
-	Long: fmt.Sprintf(`
+func registerCommand_Job(cliConf config.CLIConfig) *cobra.Command {
+	jobCmd := &cobra.Command{
+		Use: "job",
+	}
+
+	batchImageUpdateCmd := &cobra.Command{
+		Use:   "update-images",
+		Short: "Updates the image tag of all jobs in a namespace which use a specific image.",
+		Long: fmt.Sprintf(`
 %s
 
 Updates the image tag of all jobs in a namespace which use a specific image. Note that for all
@@ -38,22 +42,22 @@ use the --namespace flag:
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter job update-images\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter job update-images --image-repo-uri my-image.registry.io --tag newtag"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter job update-images --namespace custom-namespace --image-repo-uri my-image.registry.io --tag newtag"),
-	),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, batchImageUpdate)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter job update-images\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter job update-images --image-repo-uri my-image.registry.io --tag newtag"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter job update-images --namespace custom-namespace --image-repo-uri my-image.registry.io --tag newtag"),
+		),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, batchImageUpdate)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var waitCmd = &cobra.Command{
-	Use:   "wait",
-	Short: "Waits for a job to complete.",
-	Long: fmt.Sprintf(`
+	waitCmd := &cobra.Command{
+		Use:   "wait",
+		Short: "Waits for a job to complete.",
+		Long: fmt.Sprintf(`
 %s
 
 Waits for a job with a given name and namespace to complete a run. If the job completes successfully,
@@ -68,22 +72,22 @@ use the --namespace flag:
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter job wait\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter job wait --name job-example"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter job wait --name job-example --namespace custom-namespace"),
-	),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, waitForJob)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter job wait\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter job wait --name job-example"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter job wait --name job-example --namespace custom-namespace"),
+		),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, waitForJob)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var runJobCmd = &cobra.Command{
-	Use:   "run",
-	Short: "Manually runs a job and waits for it to complete.",
-	Long: fmt.Sprintf(`
+	runJobCmd := &cobra.Command{
+		Use:   "run",
+		Short: "Manually runs a job and waits for it to complete.",
+		Long: fmt.Sprintf(`
 %s
 
 Manually runs a job and waits for it to complete a run. If the job completes successfully,
@@ -98,22 +102,18 @@ use the --namespace flag:
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter job run\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter job run --name job-example"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter job run --name job-example --namespace custom-namespace"),
-	),
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, runJob)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter job run\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter job run --name job-example"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter job run --name job-example --namespace custom-namespace"),
+		),
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runJob)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
 
-var imageRepoURI string
-
-func init() {
-	rootCmd.AddCommand(jobCmd)
 	jobCmd.AddCommand(batchImageUpdateCmd)
 	jobCmd.AddCommand(waitCmd)
 	jobCmd.AddCommand(runJobCmd)
@@ -174,11 +174,10 @@ func init() {
 	)
 
 	runJobCmd.MarkPersistentFlagRequired("name")
+	return jobCmd
 }
 
-func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	ctx := context.Background()
-
+func batchImageUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -195,7 +194,7 @@ func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 	color.New(color.FgGreen).Println("Updating all jobs which use the image:", imageRepoURI)
 
 	return client.UpdateBatchImage(
-		context.TODO(),
+		ctx,
 		cliConf.Project,
 		cliConf.Cluster,
 		namespace,
@@ -207,9 +206,7 @@ func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 }
 
 // waits for a job with a given name/namespace
-func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	ctx := context.Background()
-
+func waitForJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -223,7 +220,7 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		return nil
 	}
 
-	return wait.WaitForJob(client, &wait.WaitOpts{
+	return wait.WaitForJob(ctx, client, &wait.WaitOpts{
 		ProjectID: cliConf.Project,
 		ClusterID: cliConf.Cluster,
 		Namespace: namespace,
@@ -231,9 +228,7 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	})
 }
 
-func runJob(authRes *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	ctx := context.Background()
-
+func runJob(ctx context.Context, authRes *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -263,14 +258,16 @@ func runJob(authRes *types.GetAuthenticatedUserResponse, client *api.Client, arg
 		},
 	}
 
-	err = updateAgent.UpdateImageAndValues(map[string]interface{}{
-		"paused": false,
-	})
+	err = updateAgent.UpdateImageAndValues(
+		ctx,
+		map[string]interface{}{
+			"paused": false,
+		})
 	if err != nil {
 		return fmt.Errorf("error running job: %w", err)
 	}
 
-	err = waitForJob(authRes, client, args)
+	err = waitForJob(ctx, authRes, client, cliConf, args)
 
 	if err != nil {
 		return fmt.Errorf("error waiting for job to complete: %w", err)

@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 	batchv1 "k8s.io/api/batch/v1"
@@ -42,55 +43,67 @@ var (
 	appMemoryMi      int
 )
 
-// appCmd represents the "porter app" base command when called
-// without any subcommands
-var appCmd = &cobra.Command{
-	Use:   "app",
-	Short: "Runs a command for your application.",
+func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
+	appCmd := &cobra.Command{
+		Use:   "app",
+		Short: "Runs a command for your application.",
+	}
+
+	// appRunCmd represents the "porter app run" subcommand
+	appRunCmd := &cobra.Command{
+		Use:   "run [application] -- COMMAND [args...]",
+		Args:  cobra.MinimumNArgs(2),
+		Short: "Runs a command inside a connected cluster container.",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, appRun)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+	appRunFlags(appRunCmd)
+	appCmd.AddCommand(appRunCmd)
+
+	// appRunCleanupCmd represents the "porter app run cleanup" subcommand
+	appRunCleanupCmd := &cobra.Command{
+		Use:   "cleanup",
+		Args:  cobra.NoArgs,
+		Short: "Delete any lingering ephemeral pods that were created with \"porter app run\".",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, appCleanup)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+	appRunCmd.AddCommand(appRunCleanupCmd)
+
+	// appUpdateTagCmd represents the "porter app update-tag" subcommand
+	appUpdateTagCmd := &cobra.Command{
+		Use:   "update-tag [application]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Updates the image tag for an application.",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, appUpdateTag)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+
+	appUpdateTagCmd.PersistentFlags().StringVarP(
+		&appTag,
+		"tag",
+		"t",
+		"",
+		"the specified tag to use, default is \"latest\"",
+	)
+	appCmd.AddCommand(appUpdateTagCmd)
+
+	return appCmd
 }
 
-// appRunCmd represents the "porter app run" subcommand
-var appRunCmd = &cobra.Command{
-	Use:   "run [application] -- COMMAND [args...]",
-	Args:  cobra.MinimumNArgs(2),
-	Short: "Runs a command inside a connected cluster container.",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, appRun)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-// appRunCleanupCmd represents the "porter app run cleanup" subcommand
-var appRunCleanupCmd = &cobra.Command{
-	Use:   "cleanup",
-	Args:  cobra.NoArgs,
-	Short: "Delete any lingering ephemeral pods that were created with \"porter app run\".",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, appCleanup)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-// appUpdateTagCmd represents the "porter app update-tag" subcommand
-var appUpdateTagCmd = &cobra.Command{
-	Use:   "update-tag [application]",
-	Args:  cobra.MinimumNArgs(1),
-	Short: "Updates the image tag for an application.",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, appUpdateTag)
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(appCmd)
-
+func appRunFlags(appRunCmd *cobra.Command) {
 	appRunCmd.PersistentFlags().BoolVarP(
 		&appExistingPod,
 		"existing_pod",
@@ -137,20 +150,9 @@ func init() {
 		"",
 		"name of the container inside pod to run the command in",
 	)
-	appRunCmd.AddCommand(appRunCleanupCmd)
-
-	appUpdateTagCmd.PersistentFlags().StringVarP(
-		&appTag,
-		"tag",
-		"t",
-		"",
-		"the specified tag to use, default is \"latest\"",
-	)
-	appCmd.AddCommand(appRunCmd)
-	appCmd.AddCommand(appUpdateTagCmd)
 }
 
-func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	execArgs := args[1:]
 
 	color.New(color.FgGreen).Println("Attempting to run", strings.Join(execArgs, " "), "for application", args[0])
@@ -158,12 +160,12 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 	appNamespace = fmt.Sprintf("porter-stack-%s", args[0])
 
 	if len(execArgs) > 0 {
-		res, err := client.GetPorterApp(context.Background(), cliConf.Project, cliConf.Cluster, args[0])
+		res, err := client.GetPorterApp(ctx, cliConfig.Project, cliConfig.Cluster, args[0])
 		if err != nil {
 			return fmt.Errorf("Unable to run command: %w", err)
 		}
 		if res.Name == "" {
-			return fmt.Errorf("An application named \"%s\" was not found in your project (ID: %d). Please check your spelling and try again.", args[0], cliConf.Project)
+			return fmt.Errorf("An application named \"%s\" was not found in your project (ID: %d). Please check your spelling and try again.", args[0], cliConfig.Project)
 		}
 
 		if res.Builder != "" &&
@@ -176,7 +178,7 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 		}
 	}
 
-	podsSimple, err := appGetPods(client, appNamespace, args[0])
+	podsSimple, err := appGetPods(ctx, cliConfig, client, appNamespace, args[0])
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())
 	}
@@ -248,10 +250,11 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 	}
 
 	config := &AppPorterRunSharedConfig{
-		Client: client,
+		Client:    client,
+		CLIConfig: cliConfig,
 	}
 
-	err = config.setSharedConfig()
+	err = config.setSharedConfig(ctx)
 
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
@@ -261,15 +264,16 @@ func appRun(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 		return appExecuteRun(config, appNamespace, selectedPod.Name, selectedContainerName, execArgs)
 	}
 
-	return appExecuteRunEphemeral(config, appNamespace, selectedPod.Name, selectedContainerName, execArgs)
+	return appExecuteRunEphemeral(ctx, config, appNamespace, selectedPod.Name, selectedContainerName, execArgs)
 }
 
-func appCleanup(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
 	config := &AppPorterRunSharedConfig{
-		Client: client,
+		Client:    client,
+		CLIConfig: cliConfig,
 	}
 
-	err := config.setSharedConfig()
+	err := config.setSharedConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
@@ -291,20 +295,20 @@ func appCleanup(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []s
 	color.New(color.FgGreen).Println("Fetching ephemeral pods for cleanup")
 
 	if proceed == "All namespaces" {
-		namespaces, err := config.Clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+		namespaces, err := config.Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return err
 		}
 
 		for _, namespace := range namespaces.Items {
-			if pods, err := appGetEphemeralPods(namespace.Name, config.Clientset); err == nil {
+			if pods, err := appGetEphemeralPods(ctx, namespace.Name, config.Clientset); err == nil {
 				podNames = append(podNames, pods...)
 			} else {
 				return err
 			}
 		}
 	} else {
-		if pods, err := appGetEphemeralPods(appNamespace, config.Clientset); err == nil {
+		if pods, err := appGetEphemeralPods(ctx, appNamespace, config.Clientset); err == nil {
 			podNames = append(podNames, pods...)
 		} else {
 			return err
@@ -325,7 +329,7 @@ func appCleanup(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []s
 		color.New(color.FgBlue).Printf("Deleting ephemeral pod: %s\n", podName)
 
 		err = config.Clientset.CoreV1().Pods(appNamespace).Delete(
-			context.Background(), podName, metav1.DeleteOptions{},
+			ctx, podName, metav1.DeleteOptions{},
 		)
 		if err != nil {
 			return err
@@ -335,11 +339,11 @@ func appCleanup(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []s
 	return nil
 }
 
-func appGetEphemeralPods(namespace string, clientset *kubernetes.Clientset) ([]string, error) {
+func appGetEphemeralPods(ctx context.Context, namespace string, clientset *kubernetes.Clientset) ([]string, error) {
 	var podNames []string
 
 	pods, err := clientset.CoreV1().Pods(namespace).List(
-		context.Background(), metav1.ListOptions{LabelSelector: "porter/ephemeral-pod"},
+		ctx, metav1.ListOptions{LabelSelector: "porter/ephemeral-pod"},
 	)
 	if err != nil {
 		return nil, err
@@ -353,17 +357,18 @@ func appGetEphemeralPods(namespace string, clientset *kubernetes.Clientset) ([]s
 }
 
 type AppPorterRunSharedConfig struct {
-	Client     *api.Client
+	Client     api.Client
 	RestConf   *rest.Config
 	Clientset  *kubernetes.Clientset
 	RestClient *rest.RESTClient
+	CLIConfig  config.CLIConfig
 }
 
-func (p *AppPorterRunSharedConfig) setSharedConfig() error {
-	pID := cliConf.Project
-	cID := cliConf.Cluster
+func (p *AppPorterRunSharedConfig) setSharedConfig(ctx context.Context) error {
+	pID := p.CLIConfig.Project
+	cID := p.CLIConfig.Cluster
 
-	kubeResp, err := p.Client.GetKubeconfig(context.Background(), pID, cID, cliConf.Kubeconfig)
+	kubeResp, err := p.Client.GetKubeconfig(ctx, pID, cID, p.CLIConfig.Kubeconfig)
 	if err != nil {
 		return err
 	}
@@ -411,11 +416,11 @@ type appPodSimple struct {
 	ContainerNames []string
 }
 
-func appGetPods(client *api.Client, namespace, releaseName string) ([]appPodSimple, error) {
-	pID := cliConf.Project
-	cID := cliConf.Cluster
+func appGetPods(ctx context.Context, cliConfig config.CLIConfig, client api.Client, namespace, releaseName string) ([]appPodSimple, error) {
+	pID := cliConfig.Project
+	cID := cliConfig.Cluster
 
-	resp, err := client.GetK8sAllPods(context.TODO(), pID, cID, namespace, releaseName)
+	resp, err := client.GetK8sAllPods(ctx, pID, cID, namespace, releaseName)
 	if err != nil {
 		return nil, err
 	}
@@ -482,28 +487,28 @@ func appExecuteRun(config *AppPorterRunSharedConfig, namespace, name, container 
 	})
 }
 
-func appExecuteRunEphemeral(config *AppPorterRunSharedConfig, namespace, name, container string, args []string) error {
-	existing, err := appGetExistingPod(config, name, namespace)
+func appExecuteRunEphemeral(ctx context.Context, config *AppPorterRunSharedConfig, namespace, name, container string, args []string) error {
+	existing, err := appGetExistingPod(ctx, config, name, namespace)
 	if err != nil {
 		return err
 	}
 
-	newPod, err := appCreateEphemeralPodFromExisting(config, existing, container, args)
+	newPod, err := appCreateEphemeralPodFromExisting(ctx, config, existing, container, args)
 	if err != nil {
 		return err
 	}
 	podName := newPod.ObjectMeta.Name
 
 	// delete the ephemeral pod no matter what
-	defer appDeletePod(config, podName, namespace)
+	defer appDeletePod(ctx, config, podName, namespace) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
 	color.New(color.FgYellow).Printf("Waiting for pod %s to be ready...", podName)
-	if err = appWaitForPod(config, newPod); err != nil {
+	if err = appWaitForPod(ctx, config, newPod); err != nil {
 		color.New(color.FgRed).Println("failed")
-		return appHandlePodAttachError(err, config, namespace, podName, container)
+		return appHandlePodAttachError(ctx, err, config, namespace, podName, container)
 	}
 
-	err = appCheckForPodDeletionCronJob(config)
+	err = appCheckForPodDeletionCronJob(ctx, config)
 	if err != nil {
 		return err
 	}
@@ -511,7 +516,7 @@ func appExecuteRunEphemeral(config *AppPorterRunSharedConfig, namespace, name, c
 	// refresh pod info for latest status
 	newPod, err = config.Clientset.CoreV1().
 		Pods(newPod.Namespace).
-		Get(context.Background(), newPod.Name, metav1.GetOptions{})
+		Get(ctx, newPod.Name, metav1.GetOptions{})
 
 	// pod exited while we were waiting.  maybe an error maybe not.
 	// we dont know if the user wanted an interactive shell or not.
@@ -519,11 +524,11 @@ func appExecuteRunEphemeral(config *AppPorterRunSharedConfig, namespace, name, c
 	if appIsPodExited(newPod) {
 		color.New(color.FgGreen).Println("complete!")
 		var writtenBytes int64
-		writtenBytes, _ = appPipePodLogsToStdout(config, namespace, podName, container, false)
+		writtenBytes, _ = appPipePodLogsToStdout(ctx, config, namespace, podName, container, false)
 
 		if appVerbose || writtenBytes == 0 {
 			color.New(color.FgYellow).Println("Could not get logs. Pod events:")
-			appPipeEventsToStdout(config, namespace, podName, container, false)
+			_ = appPipeEventsToStdout(ctx, config, namespace, podName, container, false) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 		}
 		return nil
 	}
@@ -564,44 +569,44 @@ func appExecuteRunEphemeral(config *AppPorterRunSharedConfig, namespace, name, c
 		})
 	}); err != nil {
 		// ugly way to catch no TTY errors, such as when running command "echo \"hello\""
-		return appHandlePodAttachError(err, config, namespace, podName, container)
+		return appHandlePodAttachError(ctx, err, config, namespace, podName, container)
 	}
 
 	if appVerbose {
 		color.New(color.FgYellow).Println("Pod events:")
-		appPipeEventsToStdout(config, namespace, podName, container, false)
+		_ = appPipeEventsToStdout(ctx, config, namespace, podName, container, false) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 	}
 
 	return err
 }
 
-func appCheckForPodDeletionCronJob(config *AppPorterRunSharedConfig) error {
+func appCheckForPodDeletionCronJob(ctx context.Context, config *AppPorterRunSharedConfig) error {
 	// try and create the cron job and all of the other required resources as necessary,
 	// starting with the service account, then role and then a role binding
 
-	err := appCheckForServiceAccount(config)
+	err := appCheckForServiceAccount(ctx, config)
 	if err != nil {
 		return err
 	}
 
-	err = appCheckForClusterRole(config)
+	err = appCheckForClusterRole(ctx, config)
 	if err != nil {
 		return err
 	}
 
-	err = appCheckForRoleBinding(config)
+	err = appCheckForRoleBinding(ctx, config)
 	if err != nil {
 		return err
 	}
 
-	namespaces, err := config.Clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+	namespaces, err := config.Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 
 	for _, namespace := range namespaces.Items {
 		cronJobs, err := config.Clientset.BatchV1().CronJobs(namespace.Name).List(
-			context.Background(), metav1.ListOptions{},
+			ctx, metav1.ListOptions{},
 		)
 		if err != nil {
 			return err
@@ -617,7 +622,7 @@ func appCheckForPodDeletionCronJob(config *AppPorterRunSharedConfig) error {
 			for _, cronJob := range cronJobs.Items {
 				if cronJob.Name == "porter-ephemeral-pod-deletion-cronjob" {
 					err = config.Clientset.BatchV1().CronJobs(namespace.Name).Delete(
-						context.Background(), cronJob.Name, metav1.DeleteOptions{},
+						ctx, cronJob.Name, metav1.DeleteOptions{},
 					)
 					if err != nil {
 						return err
@@ -656,7 +661,7 @@ func appCheckForPodDeletionCronJob(config *AppPorterRunSharedConfig) error {
 		},
 	}
 	_, err = config.Clientset.BatchV1().CronJobs("default").Create(
-		context.Background(), cronJob, metav1.CreateOptions{},
+		ctx, cronJob, metav1.CreateOptions{},
 	)
 	if err != nil {
 		return err
@@ -665,15 +670,15 @@ func appCheckForPodDeletionCronJob(config *AppPorterRunSharedConfig) error {
 	return nil
 }
 
-func appCheckForServiceAccount(config *AppPorterRunSharedConfig) error {
-	namespaces, err := config.Clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+func appCheckForServiceAccount(ctx context.Context, config *AppPorterRunSharedConfig) error {
+	namespaces, err := config.Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 
 	for _, namespace := range namespaces.Items {
 		serviceAccounts, err := config.Clientset.CoreV1().ServiceAccounts(namespace.Name).List(
-			context.Background(), metav1.ListOptions{},
+			ctx, metav1.ListOptions{},
 		)
 		if err != nil {
 			return err
@@ -689,7 +694,7 @@ func appCheckForServiceAccount(config *AppPorterRunSharedConfig) error {
 			for _, svcAccount := range serviceAccounts.Items {
 				if svcAccount.Name == "porter-ephemeral-pod-deletion-service-account" {
 					err = config.Clientset.CoreV1().ServiceAccounts(namespace.Name).Delete(
-						context.Background(), svcAccount.Name, metav1.DeleteOptions{},
+						ctx, svcAccount.Name, metav1.DeleteOptions{},
 					)
 					if err != nil {
 						return err
@@ -705,7 +710,7 @@ func appCheckForServiceAccount(config *AppPorterRunSharedConfig) error {
 		},
 	}
 	_, err = config.Clientset.CoreV1().ServiceAccounts("default").Create(
-		context.Background(), serviceAccount, metav1.CreateOptions{},
+		ctx, serviceAccount, metav1.CreateOptions{},
 	)
 	if err != nil {
 		return err
@@ -714,9 +719,9 @@ func appCheckForServiceAccount(config *AppPorterRunSharedConfig) error {
 	return nil
 }
 
-func appCheckForClusterRole(config *AppPorterRunSharedConfig) error {
+func appCheckForClusterRole(ctx context.Context, config *AppPorterRunSharedConfig) error {
 	roles, err := config.Clientset.RbacV1().ClusterRoles().List(
-		context.Background(), metav1.ListOptions{},
+		ctx, metav1.ListOptions{},
 	)
 	if err != nil {
 		return err
@@ -746,7 +751,7 @@ func appCheckForClusterRole(config *AppPorterRunSharedConfig) error {
 		},
 	}
 	_, err = config.Clientset.RbacV1().ClusterRoles().Create(
-		context.Background(), role, metav1.CreateOptions{},
+		ctx, role, metav1.CreateOptions{},
 	)
 	if err != nil {
 		return err
@@ -755,9 +760,9 @@ func appCheckForClusterRole(config *AppPorterRunSharedConfig) error {
 	return nil
 }
 
-func appCheckForRoleBinding(config *AppPorterRunSharedConfig) error {
+func appCheckForRoleBinding(ctx context.Context, config *AppPorterRunSharedConfig) error {
 	bindings, err := config.Clientset.RbacV1().ClusterRoleBindings().List(
-		context.Background(), metav1.ListOptions{},
+		ctx, metav1.ListOptions{},
 	)
 	if err != nil {
 		return err
@@ -788,7 +793,7 @@ func appCheckForRoleBinding(config *AppPorterRunSharedConfig) error {
 		},
 	}
 	_, err = config.Clientset.RbacV1().ClusterRoleBindings().Create(
-		context.Background(), binding, metav1.CreateOptions{},
+		ctx, binding, metav1.CreateOptions{},
 	)
 	if err != nil {
 		return err
@@ -797,7 +802,7 @@ func appCheckForRoleBinding(config *AppPorterRunSharedConfig) error {
 	return nil
 }
 
-func appWaitForPod(config *AppPorterRunSharedConfig, pod *v1.Pod) error {
+func appWaitForPod(ctx context.Context, config *AppPorterRunSharedConfig, pod *v1.Pod) error {
 	var (
 		w   watch.Interface
 		err error
@@ -810,7 +815,7 @@ func appWaitForPod(config *AppPorterRunSharedConfig, pod *v1.Pod) error {
 		selector := fields.OneTermEqualSelector("metadata.name", pod.Name).String()
 		w, err = config.Clientset.CoreV1().
 			Pods(pod.Namespace).
-			Watch(context.Background(), metav1.ListOptions{FieldSelector: selector})
+			Watch(ctx, metav1.ListOptions{FieldSelector: selector})
 
 		if err == nil {
 			break
@@ -828,7 +833,7 @@ func appWaitForPod(config *AppPorterRunSharedConfig, pod *v1.Pod) error {
 			// creating the listener.
 			pod, err = config.Clientset.CoreV1().
 				Pods(pod.Namespace).
-				Get(context.Background(), pod.Name, metav1.GetOptions{})
+				Get(ctx, pod.Name, metav1.GetOptions{})
 			if appIsPodReady(pod) || appIsPodExited(pod) {
 				return nil
 			}
@@ -861,23 +866,23 @@ func appIsPodExited(pod *v1.Pod) bool {
 	return pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed
 }
 
-func appHandlePodAttachError(err error, config *AppPorterRunSharedConfig, namespace, podName, container string) error {
+func appHandlePodAttachError(ctx context.Context, err error, config *AppPorterRunSharedConfig, namespace, podName, container string) error {
 	if appVerbose {
 		color.New(color.FgYellow).Fprintf(os.Stderr, "Error: %s\n", err)
 	}
 	color.New(color.FgYellow).Fprintln(os.Stderr, "Could not open a shell to this container. Container logs:")
 
 	var writtenBytes int64
-	writtenBytes, _ = appPipePodLogsToStdout(config, namespace, podName, container, false)
+	writtenBytes, _ = appPipePodLogsToStdout(ctx, config, namespace, podName, container, false)
 
 	if appVerbose || writtenBytes == 0 {
 		color.New(color.FgYellow).Fprintln(os.Stderr, "Could not get logs. Pod events:")
-		appPipeEventsToStdout(config, namespace, podName, container, false)
+		_ = appPipeEventsToStdout(ctx, config, namespace, podName, container, false) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 	}
 	return err
 }
 
-func appPipePodLogsToStdout(config *AppPorterRunSharedConfig, namespace, name, container string, follow bool) (int64, error) {
+func appPipePodLogsToStdout(ctx context.Context, config *AppPorterRunSharedConfig, namespace, name, container string, follow bool) (int64, error) {
 	podLogOpts := v1.PodLogOptions{
 		Container: container,
 		Follow:    follow,
@@ -886,7 +891,7 @@ func appPipePodLogsToStdout(config *AppPorterRunSharedConfig, namespace, name, c
 	req := config.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
 
 	podLogs, err := req.Stream(
-		context.Background(),
+		ctx,
 	)
 	if err != nil {
 		return 0, err
@@ -897,13 +902,13 @@ func appPipePodLogsToStdout(config *AppPorterRunSharedConfig, namespace, name, c
 	return io.Copy(os.Stdout, podLogs)
 }
 
-func appPipeEventsToStdout(config *AppPorterRunSharedConfig, namespace, name, container string, follow bool) error {
+func appPipeEventsToStdout(ctx context.Context, config *AppPorterRunSharedConfig, namespace, name, _ string, _ bool) error {
 	// update the config in case the operation has taken longer than token expiry time
-	config.setSharedConfig()
+	config.setSharedConfig(ctx) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
 	// creates the clientset
 	resp, err := config.Clientset.CoreV1().Events(namespace).List(
-		context.TODO(),
+		ctx,
 		metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=%s", name, namespace),
 		},
@@ -919,20 +924,20 @@ func appPipeEventsToStdout(config *AppPorterRunSharedConfig, namespace, name, co
 	return nil
 }
 
-func appGetExistingPod(config *AppPorterRunSharedConfig, name, namespace string) (*v1.Pod, error) {
+func appGetExistingPod(ctx context.Context, config *AppPorterRunSharedConfig, name, namespace string) (*v1.Pod, error) {
 	return config.Clientset.CoreV1().Pods(namespace).Get(
-		context.Background(),
+		ctx,
 		name,
 		metav1.GetOptions{},
 	)
 }
 
-func appDeletePod(config *AppPorterRunSharedConfig, name, namespace string) error {
+func appDeletePod(ctx context.Context, config *AppPorterRunSharedConfig, name, namespace string) error {
 	// update the config in case the operation has taken longer than token expiry time
-	config.setSharedConfig()
+	config.setSharedConfig(ctx) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
 	err := config.Clientset.CoreV1().Pods(namespace).Delete(
-		context.Background(),
+		ctx,
 		name,
 		metav1.DeleteOptions{},
 	)
@@ -947,6 +952,7 @@ func appDeletePod(config *AppPorterRunSharedConfig, name, namespace string) erro
 }
 
 func appCreateEphemeralPodFromExisting(
+	ctx context.Context,
 	config *AppPorterRunSharedConfig,
 	existing *v1.Pod,
 	container string,
@@ -1032,18 +1038,18 @@ func appCreateEphemeralPodFromExisting(
 
 	// create the pod and return it
 	return config.Clientset.CoreV1().Pods(existing.ObjectMeta.Namespace).Create(
-		context.Background(),
+		ctx,
 		newPod,
 		metav1.CreateOptions{},
 	)
 }
 
-func appUpdateTag(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func appUpdateTag(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
 	namespace := fmt.Sprintf("porter-stack-%s", args[0])
 	if appTag == "" {
 		appTag = "latest"
 	}
-	release, err := client.GetRelease(context.TODO(), cliConf.Project, cliConf.Cluster, namespace, args[0])
+	release, err := client.GetRelease(ctx, cliConfig.Project, cliConfig.Cluster, namespace, args[0])
 	if err != nil {
 		return fmt.Errorf("Unable to find application %s", args[0])
 	}
@@ -1056,8 +1062,8 @@ func appUpdateTag(_ *types.GetAuthenticatedUserResponse, client *api.Client, arg
 		Tag:        appTag,
 	}
 	createUpdatePorterAppRequest := &types.CreatePorterAppRequest{
-		ClusterID:       cliConf.Cluster,
-		ProjectID:       cliConf.Project,
+		ClusterID:       cliConfig.Cluster,
+		ProjectID:       cliConfig.Project,
 		ImageInfo:       imageInfo,
 		OverrideRelease: false,
 	}
@@ -1065,9 +1071,9 @@ func appUpdateTag(_ *types.GetAuthenticatedUserResponse, client *api.Client, arg
 	color.New(color.FgGreen).Printf("Updating application %s to build using tag \"%s\"\n", args[0], appTag)
 
 	_, err = client.CreatePorterApp(
-		context.Background(),
-		cliConf.Project,
-		cliConf.Cluster,
+		ctx,
+		cliConfig.Project,
+		cliConfig.Cluster,
 		args[0],
 		createUpdatePorterAppRequest,
 	)

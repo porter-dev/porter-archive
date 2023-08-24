@@ -24,7 +24,7 @@ var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Authorizes a user for a given Porter server",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := login()
+		err := login(cmd.Context())
 		if err != nil {
 			color.Red("Error logging in: %s\n", err.Error())
 			os.Exit(1)
@@ -36,7 +36,7 @@ var registerCmd = &cobra.Command{
 	Use:   "register",
 	Short: "Creates a user for a given Porter server",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := register()
+		err := register(cmd.Context())
 		if err != nil {
 			color.Red("Error registering: %s\n", err.Error())
 			os.Exit(1)
@@ -48,7 +48,7 @@ var logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "Logs a user out of a given Porter server",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, logout)
+		err := checkLoginAndRun(cmd.Context(), args, logout)
 		if err != nil {
 			os.Exit(1)
 		}
@@ -72,10 +72,21 @@ func init() {
 	)
 }
 
-func login() error {
-	client := api.NewClientWithToken(cliConf.Host+"/api", cliConf.Token)
+func login(ctx context.Context) error {
+	cliConf, err := config.InitAndLoadConfig()
+	if err != nil {
+		return fmt.Errorf("error loading porter config: %w", err)
+	}
 
-	user, err := client.AuthCheck(context.Background())
+	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
+		BaseURL:     fmt.Sprintf("%s/api", cliConf.Host),
+		BearerToken: cliConf.Token,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating porter API client: %w", err)
+	}
+
+	user, err := client.AuthCheck(ctx)
 
 	if err == nil {
 		// set the token if the user calls login with the --token flag or the PORTER_TOKEN env
@@ -91,7 +102,7 @@ func login() error {
 			// if project ID does not exist for the token, this is a user-issued CLI token, so the project
 			// ID should be queried
 			if !exists {
-				err = setProjectForUser(client, user.ID)
+				err = setProjectForUser(ctx, client, cliConf, user.ID)
 
 				if err != nil {
 					return err
@@ -99,13 +110,13 @@ func login() error {
 			} else {
 				// if the project ID does exist for the token, this is a project-issued token, and
 				// the project should be set automatically
-				err = cliConf.SetProject(projID)
+				err = cliConf.SetProject(ctx, client, projID)
 
 				if err != nil {
 					return err
 				}
 
-				err = setProjectCluster(client, projID)
+				err = setProjectCluster(ctx, client, cliConf, projID)
 
 				if err != nil {
 					return err
@@ -120,7 +131,7 @@ func login() error {
 
 	// check for the --manual flag
 	if manual {
-		return loginManual()
+		return loginManual(ctx, cliConf, client)
 	}
 
 	// log the user in
@@ -136,9 +147,15 @@ func login() error {
 		return err
 	}
 
-	client = api.NewClientWithToken(cliConf.Host+"/api", token)
+	client, err = api.NewClientWithConfig(ctx, api.NewClientInput{
+		BaseURL:     fmt.Sprintf("%s/api", cliConf.Host),
+		BearerToken: token,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating porter API client: %w", err)
+	}
 
-	user, err = client.AuthCheck(context.Background())
+	user, err = client.AuthCheck(ctx)
 
 	if err != nil {
 		color.Red("Invalid token.")
@@ -147,12 +164,12 @@ func login() error {
 
 	color.New(color.FgGreen).Println("Successfully logged in!")
 
-	return setProjectForUser(client, user.ID)
+	return setProjectForUser(ctx, client, cliConf, user.ID)
 }
 
-func setProjectForUser(client *api.Client, userID uint) error {
+func setProjectForUser(ctx context.Context, client api.Client, config config.CLIConfig, _ uint) error {
 	// get a list of projects, and set the current project
-	resp, err := client.ListUserProjects(context.Background())
+	resp, err := client.ListUserProjects(ctx)
 	if err != nil {
 		return err
 	}
@@ -160,9 +177,9 @@ func setProjectForUser(client *api.Client, userID uint) error {
 	projects := *resp
 
 	if len(projects) > 0 {
-		cliConf.SetProject(projects[0].ID)
+		config.SetProject(ctx, client, projects[0].ID) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
-		err = setProjectCluster(client, projects[0].ID)
+		err = setProjectCluster(ctx, client, config, projects[0].ID)
 
 		if err != nil {
 			return err
@@ -172,9 +189,7 @@ func setProjectForUser(client *api.Client, userID uint) error {
 	return nil
 }
 
-func loginManual() error {
-	client := api.NewClient(cliConf.Host+"/api", "cookie.json")
-
+func loginManual(ctx context.Context, cliConf config.CLIConfig, client api.Client) error {
 	var username, pw string
 
 	fmt.Println("Please log in with an email and password:")
@@ -190,7 +205,7 @@ func loginManual() error {
 		return err
 	}
 
-	_, err = client.Login(context.Background(), &types.LoginUserRequest{
+	_, err = client.Login(ctx, &types.LoginUserRequest{
 		Email:    username,
 		Password: pw,
 	})
@@ -205,7 +220,7 @@ func loginManual() error {
 	color.New(color.FgGreen).Println("Successfully logged in!")
 
 	// get a list of projects, and set the current project
-	resp, err := client.ListUserProjects(context.Background())
+	resp, err := client.ListUserProjects(ctx)
 	if err != nil {
 		return err
 	}
@@ -213,9 +228,9 @@ func loginManual() error {
 	projects := *resp
 
 	if len(projects) > 0 {
-		cliConf.SetProject(projects[0].ID)
+		cliConf.SetProject(ctx, client, projects[0].ID) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
-		err = setProjectCluster(client, projects[0].ID)
+		err = setProjectCluster(ctx, client, cliConf, projects[0].ID)
 
 		if err != nil {
 			return err
@@ -225,7 +240,20 @@ func loginManual() error {
 	return nil
 }
 
-func register() error {
+func register(ctx context.Context) error {
+	config, err := config.InitAndLoadConfig()
+	if err != nil {
+		return fmt.Errorf("error loading porter config: %w", err)
+	}
+
+	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
+		BaseURL:     fmt.Sprintf("%s/api", config.Host),
+		BearerToken: config.Token,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating porter API client: %w", err)
+	}
+
 	fmt.Println("Please register your admin account with an email and password:")
 
 	username, err := utils.PromptPlaintext("Email: ")
@@ -238,9 +266,7 @@ func register() error {
 		return err
 	}
 
-	client := config.GetAPIClient()
-
-	resp, err := client.CreateUser(context.Background(), &types.CreateUserRequest{
+	resp, err := client.CreateUser(ctx, &types.CreateUserRequest{
 		Email:    username,
 		Password: pw,
 	})
@@ -253,8 +279,8 @@ func register() error {
 	return nil
 }
 
-func logout(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	err := client.Logout(context.Background())
+func logout(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+	err := client.Logout(ctx)
 	if err != nil {
 		return err
 	}

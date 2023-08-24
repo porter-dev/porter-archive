@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -35,10 +36,18 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts a Porter server instance on the host",
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
+		cliConf, err := config.InitAndLoadConfig()
+		if err != nil {
+			os.Exit(1)
+		}
+
 		if cliConf.Driver == "docker" {
 			cliConf.SetDriver("docker")
 
 			err := startDocker(
+				ctx,
+				cliConf,
 				opts.imageTag,
 				opts.db,
 				*opts.port,
@@ -48,7 +57,7 @@ var startCmd = &cobra.Command{
 				red.Println("Error running start:", err.Error())
 				red.Println("Shutting down...")
 
-				err = stopDocker()
+				err = stopDocker(ctx)
 
 				if err != nil {
 					red.Println("Shutdown unsuccessful:", err.Error())
@@ -59,6 +68,8 @@ var startCmd = &cobra.Command{
 		} else {
 			cliConf.SetDriver("local")
 			err := startLocal(
+				ctx,
+				cliConf,
 				opts.db,
 				*opts.port,
 			)
@@ -75,8 +86,13 @@ var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stops a Porter instance running on the Docker engine",
 	Run: func(cmd *cobra.Command, args []string) {
+		cliConf, err := config.InitAndLoadConfig()
+		if err != nil {
+			os.Exit(1)
+		}
+
 		if cliConf.Driver == "docker" {
-			if err := stopDocker(); err != nil {
+			if err := stopDocker(cmd.Context()); err != nil {
 				color.New(color.FgRed).Println("Shutdown unsuccessful:", err.Error())
 				os.Exit(1)
 			}
@@ -115,6 +131,8 @@ func init() {
 }
 
 func startDocker(
+	ctx context.Context,
+	cliConf config.CLIConfig,
 	imageTag string,
 	db string,
 	port int,
@@ -141,7 +159,7 @@ func startDocker(
 		Env:            env,
 	}
 
-	_, _, err := docker.StartPorter(startOpts)
+	_, _, err := docker.StartPorter(ctx, startOpts)
 	if err != nil {
 		return err
 	}
@@ -154,6 +172,8 @@ func startDocker(
 }
 
 func startLocal(
+	ctx context.Context,
+	cliConf config.CLIConfig,
 	db string,
 	port int,
 ) error {
@@ -169,7 +189,7 @@ func startLocal(
 	staticFilePath := filepath.Join(home, ".porter", "static")
 
 	if _, err := os.Stat(cmdPath); os.IsNotExist(err) {
-		err := downloadMatchingRelease(porterDir)
+		err := downloadMatchingRelease(ctx, porterDir)
 		if err != nil {
 			color.New(color.FgRed).Println("Failed to download server binary:", err.Error())
 			os.Exit(1)
@@ -184,7 +204,7 @@ func startLocal(
 	err := cmdVersionPorter.Run()
 
 	if err != nil || writer.Version != config.Version {
-		err := downloadMatchingRelease(porterDir)
+		err := downloadMatchingRelease(ctx, porterDir)
 		if err != nil {
 			color.New(color.FgRed).Println("Failed to download server binary:", err.Error())
 			os.Exit(1)
@@ -223,13 +243,13 @@ func startLocal(
 	return nil
 }
 
-func stopDocker() error {
-	agent, err := docker.NewAgentFromEnv()
+func stopDocker(ctx context.Context) error {
+	agent, err := docker.NewAgentFromEnv(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = agent.StopPorterContainersWithProcessID("main", false)
+	err = agent.StopPorterContainersWithProcessID(ctx, "main", false)
 
 	if err != nil {
 		return err
@@ -242,7 +262,7 @@ func stopDocker() error {
 	return nil
 }
 
-func downloadMatchingRelease(porterDir string) error {
+func downloadMatchingRelease(ctx context.Context, porterDir string) error {
 	z := &github.ZIPReleaseGetter{
 		AssetName:           "portersvr",
 		AssetFolderDest:     porterDir,
@@ -258,7 +278,7 @@ func downloadMatchingRelease(porterDir string) error {
 		},
 	}
 
-	err := z.GetRelease(config.Version)
+	err := z.GetRelease(ctx, config.Version)
 	if err != nil {
 		return err
 	}
@@ -278,5 +298,5 @@ func downloadMatchingRelease(porterDir string) error {
 		},
 	}
 
-	return zStatic.GetRelease(config.Version)
+	return zStatic.GetRelease(ctx, config.Version)
 }

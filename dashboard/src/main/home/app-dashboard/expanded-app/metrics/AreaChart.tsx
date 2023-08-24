@@ -1,7 +1,5 @@
 import _ from "lodash";
 import React, { useCallback, useMemo, useRef } from "react";
-import chroma from "chroma-js";
-import * as stats from "simple-statistics";
 import styled from "styled-components";
 import { AreaClosed, Bar, Line, LinePath } from "@visx/shape";
 import { curveMonotoneX } from "@visx/curve";
@@ -18,14 +16,9 @@ import { bisector, extent, max } from "d3-array";
 import { timeFormat } from "d3-time-format";
 import { NormalizedMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
 import { AggregatedDataColors } from "../../../cluster-dashboard/expanded-chart/metrics/utils";
-import { pickColor } from "./utils";
+import { ColorTheme } from "./utils";
 
 var globalData: NormalizedMetricsData[];
-
-export const background = "#3b697800";
-export const background2 = "#20405100";
-export const accentColor = "#949eff";
-export const accentColorDark = "#949eff";
 
 // util
 const formatDate = timeFormat("%H:%M:%S %b %d, '%y");
@@ -237,6 +230,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
     if (width == 0 || height == 0 || width < 10) {
         return null;
     }
+
     const hpaGraphTooltipGlyphPosition =
         (hpaEnabled &&
             tooltipData?.tooltipHpaData &&
@@ -260,13 +254,13 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
 
                 <LinearGradient
                     id="area-background-gradient"
-                    from={background}
-                    to={background2}
+                    from={ColorTheme.background}
+                    to={ColorTheme.background2}
                 />
                 <LinearGradient
                     id="area-gradient"
-                    from={accentColor}
-                    to={accentColor}
+                    from={ColorTheme.accentColor}
+                    to={ColorTheme.accentColor}
                     toOpacity={0}
                 />
                 {Object.entries(AggregatedDataColors).map(([dataKey, color]) => (
@@ -376,7 +370,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
                         <Line
                             from={{ x: tooltipLeft, y: margin.top }}
                             to={{ x: tooltipLeft, y: innerHeight + margin.top }}
-                            stroke={accentColorDark}
+                            stroke={ColorTheme.accentColorDark}
                             strokeWidth={2}
                             pointerEvents="none"
                             strokeDasharray="5,2"
@@ -410,7 +404,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
                             cx={tooltipLeft}
                             cy={dataGraphTooltipGlyphPosition}
                             r={4}
-                            fill={accentColorDark}
+                            fill={ColorTheme.accentColorDark}
                             stroke="white"
                             strokeWidth={2}
                             pointerEvents="none"
@@ -421,7 +415,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
                                 cx={tooltipLeft}
                                 cy={valueScale(getValue(d))}
                                 r={4}
-                                fill={accentColorDark}
+                                fill={ColorTheme.accentColorDark}
                                 stroke="white"
                                 strokeWidth={2}
                                 pointerEvents="none"
@@ -444,7 +438,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
                                     cx={tooltipLeft}
                                     cy={hpaGraphTooltipGlyphPosition}
                                     r={4}
-                                    fill={accentColorDark}
+                                    fill={ColorTheme.accentColorDark}
                                     stroke="white"
                                     strokeWidth={2}
                                     pointerEvents="none"
@@ -501,6 +495,6 @@ const TooltipDate = styled.div`
 `;
 
 const TooltipDataRow = styled.div<{ color?: string }>`
-  color: ${(props) => props.color ?? accentColor};
+  color: ${(props) => props.color ?? ColorTheme.accentColor};
   margin-bottom: 4px;
 `;

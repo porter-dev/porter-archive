@@ -50,7 +50,7 @@ type Image struct {
 // CreateAppRequest is the request object for the /apps/create endpoint
 type CreateAppRequest struct {
 	Name           string     `json:"name"`
-	SourceType     SourceType `json:"source_type"`
+	SourceType     SourceType `json:"type"`
 	GitBranch      string     `json:"git_branch"`
 	GitRepoName    string     `json:"git_repo_name"`
 	GitRepoID      uint       `json:"git_repo_id"`

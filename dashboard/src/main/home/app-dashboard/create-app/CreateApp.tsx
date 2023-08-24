@@ -1,7 +1,8 @@
-import React, { useContext, useEffect } from "react";
+import React, { useCallback, useContext, useEffect } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import web from "assets/web.png";
 import AnimateHeight from "react-animate-height";
+import axios from "axios";
 
 import styled from "styled-components";
 import { useForm, Controller, FormProvider } from "react-hook-form";
@@ -13,7 +14,11 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Link from "components/porter/Link";
 
 import { Context } from "shared/Context";
-import { PorterAppFormData } from "lib/porter-apps";
+import {
+  PorterAppFormData,
+  SourceOptions,
+  clientAppToProto,
+} from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
 import Button from "components/porter/Button";
@@ -22,23 +27,37 @@ import ImageSettings from "./ImageSettings";
 import Container from "components/porter/Container";
 import ServiceList from "../validate-apply/services-settings/ServiceList";
 import {
-  ClientService,
   defaultSerialized,
   deserializeService,
 } from "lib/porter-apps/services";
 import EnvVariables from "../validate-apply/app-settings/EnvVariables";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import { valueExists } from "shared/util";
+import api from "shared/api";
+import { z } from "zod";
+import { PorterApp } from "@porter-dev/api-contracts";
+import GithubActionModal from "../new-app-flow/GithubActionModal";
+import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
+import Error from "components/porter/Error";
+import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 
 type CreateAppProps = {} & RouteComponentProps;
 
-const CreateApp: React.FC<CreateAppProps> = ({}) => {
-  const { currentProject } = useContext(Context);
+const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
+  const { currentProject, currentCluster } = useContext(Context);
   const [step, setStep] = React.useState(0);
   const [detectedServices, setDetectedServices] = React.useState<{
     detected: boolean;
     count: number;
   }>({ detected: false, count: 0 });
+  const [showGHAModal, setShowGHAModal] = React.useState(false);
+
+  const [
+    validatedAppProto,
+    setValidatedAppProto,
+  ] = React.useState<PorterApp | null>(null);
+  const [isDeploying, setIsDeploying] = React.useState(false);
+  const [deployError, setDeployError] = React.useState("");
 
   const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",
@@ -65,14 +84,141 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
     control,
     watch,
     setValue,
+    handleSubmit,
     formState: { isSubmitting },
   } = porterAppFormMethods;
 
   const name = watch("app.name");
   const source = watch("source");
   const build = watch("app.build");
-  const image = watch("app.image");
+  const image = watch("source.image");
   const servicesFromYaml = usePorterYaml(source);
+  const deploymentTarget = useDefaultDeploymentTarget();
+  const { updateAppStep } = useAppAnalytics(name);
+
+  const onSubmit = handleSubmit(async (data) => {
+    try {
+      if (!currentProject || !currentCluster) {
+        return;
+      }
+
+      if (!deploymentTarget) {
+        return;
+      }
+
+      const proto = clientAppToProto(data);
+      const res = await api.validatePorterApp(
+        "<token>",
+        {
+          b64_app_proto: btoa(proto.toJsonString()),
+          deployment_target_id: deploymentTarget.deployment_target_id,
+          commit_sha: "",
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      );
+
+      const validAppData = await z
+        .object({
+          validate_b64_app_proto: z.string(),
+        })
+        .parseAsync(res.data);
+
+      const validatedAppProto = PorterApp.fromJsonString(
+        atob(validAppData.validate_b64_app_proto)
+      );
+
+      setValidatedAppProto(validatedAppProto);
+      if (source?.type === "github") {
+        setShowGHAModal(true);
+        return;
+      }
+
+      await createAndApply({ app: validatedAppProto, source });
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        setDeployError(err.response?.data?.error);
+        return;
+      }
+      setDeployError(
+        "An error occurred while validating your application. Please try again."
+      );
+    }
+  });
+
+  const createAndApply = useCallback(
+    async ({
+      app,
+      source,
+    }: {
+      app: PorterApp | null;
+      source: SourceOptions;
+    }) => {
+      setIsDeploying(true);
+      // log analytics event that we started form submission
+      updateAppStep("stack-launch-complete");
+
+      try {
+        if (!currentProject?.id || !currentCluster?.id) {
+          return false;
+        }
+
+        if (!app || !deploymentTarget) {
+          return false;
+        }
+
+        await api.createApp(
+          "<token>",
+          {
+            ...source,
+            name: app.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        );
+
+        await api.applyApp(
+          "<token>",
+          {
+            b64_app_proto: btoa(app.toJsonString()),
+            deployment_target_id: deploymentTarget.deployment_target_id,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        );
+
+        // log analytics event that we successfully deployed
+        updateAppStep("stack-launch-success");
+
+        if (source.type === "docker-registry") {
+          history.push(`/apps/${app.name}`);
+        }
+
+        return true;
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.data?.error) {
+          updateAppStep("stack-launch-failure", err.response?.data?.error);
+          setDeployError(err.response?.data?.error);
+          return false;
+        }
+
+        const msg =
+          "An error occurred while deploying your application. Please try again.";
+        updateAppStep("stack-launch-failure", msg);
+        setDeployError(msg);
+        return false;
+      } finally {
+        setIsDeploying(false);
+      }
+    },
+    [currentProject?.id, currentCluster?.id]
+  );
 
   useEffect(() => {
     // set step to 1 if name is filled out
@@ -121,7 +267,7 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
     }
   }, [servicesFromYaml, detectedServices.detected]);
 
-  if (!currentProject) {
+  if (!currentProject || !currentCluster) {
     return null;
   }
 
@@ -138,155 +284,174 @@ const CreateApp: React.FC<CreateAppProps> = ({}) => {
           />
           <DarkMatter />
           <FormProvider {...porterAppFormMethods}>
-            <VerticalSteps
-              currentStep={step}
-              steps={[
-                <>
-                  <Text size={16}>Application name</Text>
-                  <Spacer y={0.5} />
-                  <Text color="helper">
-                    Lowercase letters, numbers, and "-" only.
-                  </Text>
-                  <Spacer y={0.5} />
-                  <ControlledInput
-                    placeholder="ex: academic-sophon"
-                    type="text"
-                    {...register("app.name")}
-                  />
-                </>,
-                <>
-                  <Text size={16}>Deployment method</Text>
-                  <Spacer y={0.5} />
-                  <Text color="helper">
-                    Deploy from a Git repository or a Docker registry.
-                    <Spacer inline width="5px" />
-                    <Link
-                      hasunderline
-                      to="https://docs.porter.run/standard/deploying-applications/overview"
-                      target="_blank"
-                    >
-                      Learn more
-                    </Link>
-                  </Text>
-                  <Spacer y={0.5} />
-                  <Controller
-                    name="source.type"
-                    control={control}
-                    render={({ field: { value, onChange } }) => (
-                      <SourceSelector
-                        selectedSourceType={value}
-                        setSourceType={(sourceType) => {
-                          onChange(sourceType);
-                        }}
-                      />
-                    )}
-                  />
-                  <AnimateHeight height={source ? "auto" : 0}>
-                    <Spacer y={1} />
-                    {source?.type ? (
-                      source.type === "github" ? (
-                        <RepoSettings
-                          build={build}
-                          source={source}
-                          projectId={currentProject.id}
-                        />
-                      ) : (
-                        <ImageSettings />
-                      )
-                    ) : null}
-                  </AnimateHeight>
-                </>,
-                <>
-                  <Container row>
-                    <Text size={16}>Application services</Text>
-                    {detectedServices.detected && (
-                      <AppearingDiv
-                        color={
-                          detectedServices.detected ? "#8590ff" : "#fcba03"
-                        }
+            <form onSubmit={onSubmit}>
+              <VerticalSteps
+                currentStep={step}
+                steps={[
+                  <>
+                    <Text size={16}>Application name</Text>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      Lowercase letters, numbers, and "-" only.
+                    </Text>
+                    <Spacer y={0.5} />
+                    <ControlledInput
+                      placeholder="ex: academic-sophon"
+                      type="text"
+                      {...register("app.name")}
+                    />
+                  </>,
+                  <>
+                    <Text size={16}>Deployment method</Text>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      Deploy from a Git repository or a Docker registry.
+                      <Spacer inline width="5px" />
+                      <Link
+                        hasunderline
+                        to="https://docs.porter.run/standard/deploying-applications/overview"
+                        target="_blank"
                       >
-                        {detectedServices.count > 0 ? (
-                          <I className="material-icons">check</I>
+                        Learn more
+                      </Link>
+                    </Text>
+                    <Spacer y={0.5} />
+                    <Controller
+                      name="source.type"
+                      control={control}
+                      render={({ field: { value, onChange } }) => (
+                        <SourceSelector
+                          selectedSourceType={value}
+                          setSourceType={(sourceType) => {
+                            onChange(sourceType);
+                          }}
+                        />
+                      )}
+                    />
+                    <AnimateHeight height={source ? "auto" : 0}>
+                      <Spacer y={1} />
+                      {source?.type ? (
+                        source.type === "github" ? (
+                          <RepoSettings
+                            build={build}
+                            source={source}
+                            projectId={currentProject.id}
+                          />
                         ) : (
-                          <I className="material-icons">error</I>
-                        )}
-                        <Text
+                          <ImageSettings />
+                        )
+                      ) : null}
+                    </AnimateHeight>
+                  </>,
+                  <>
+                    <Container row>
+                      <Text size={16}>Application services</Text>
+                      {detectedServices.detected && (
+                        <AppearingDiv
                           color={
                             detectedServices.detected ? "#8590ff" : "#fcba03"
                           }
                         >
-                          {detectedServices.count > 0
-                            ? `Detected ${detectedServices.count} service${
-                                detectedServices.count > 1 ? "s" : ""
-                              } from porter.yaml.`
-                            : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
-                        </Text>
-                      </AppearingDiv>
-                    )}
-                  </Container>
-                  <Spacer y={0.5} />
-                  <ServiceList
-                    defaultExpanded={true}
-                    addNewText={"Add a new service"}
-                  />
-                </>,
-                <>
-                  <Text size={16}>Environment variables (optional)</Text>
-                  <Spacer y={0.5} />
-                  <Text color="helper">
-                    Specify environment variables shared among all services.
-                  </Text>
-                  <EnvVariables />
-                </>,
-                source.type === "github" && (
-                  <>
-                    <Text size={16}>Pre-deploy job (optional)</Text>
-                    <Spacer y={0.5} />
-                    <Text color="helper">
-                      You may add a pre-deploy job to perform an operation
-                      before your application services deploy each time, like a
-                      database migration.
-                    </Text>
+                          {detectedServices.count > 0 ? (
+                            <I className="material-icons">check</I>
+                          ) : (
+                            <I className="material-icons">error</I>
+                          )}
+                          <Text
+                            color={
+                              detectedServices.detected ? "#8590ff" : "#fcba03"
+                            }
+                          >
+                            {detectedServices.count > 0
+                              ? `Detected ${detectedServices.count} service${
+                                  detectedServices.count > 1 ? "s" : ""
+                                } from porter.yaml.`
+                              : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
+                          </Text>
+                        </AppearingDiv>
+                      )}
+                    </Container>
                     <Spacer y={0.5} />
                     <ServiceList
-                      limitOne={true}
-                      addNewText={"Add a new pre-deploy job"}
-                      prePopulateService={deserializeService(
-                        defaultSerialized({
-                          name: "pre-deploy",
-                          type: "predeploy",
-                        })
-                      )}
-                      isPredeploy
+                      defaultExpanded={true}
+                      addNewText={"Add a new service"}
                     />
-                  </>
-                ),
-                <Button
-                  status={isSubmitting && "loading"}
-                  loadingText={"Deploying..."}
-                  width={"120px"}
-                  disabled={true}
-                >
-                  Deploy app
-                </Button>,
-              ].filter((x) => x)}
-            />
+                  </>,
+                  <>
+                    <Text size={16}>Environment variables (optional)</Text>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      Specify environment variables shared among all services.
+                    </Text>
+                    <EnvVariables />
+                  </>,
+                  source.type === "github" && (
+                    <>
+                      <Text size={16}>Pre-deploy job (optional)</Text>
+                      <Spacer y={0.5} />
+                      <Text color="helper">
+                        You may add a pre-deploy job to perform an operation
+                        before your application services deploy each time, like
+                        a database migration.
+                      </Text>
+                      <Spacer y={0.5} />
+                      <ServiceList
+                        limitOne={true}
+                        addNewText={"Add a new pre-deploy job"}
+                        prePopulateService={deserializeService(
+                          defaultSerialized({
+                            name: "pre-deploy",
+                            type: "predeploy",
+                          })
+                        )}
+                        isPredeploy
+                      />
+                    </>
+                  ),
+                  <Button
+                    type="submit"
+                    status={
+                      isSubmitting || isDeploying ? (
+                        "loading"
+                      ) : deployError ? (
+                        <Error message={deployError} />
+                      ) : undefined
+                    }
+                    loadingText={"Deploying..."}
+                    width={"120px"}
+                    disabled={!name || !source || isSubmitting || isDeploying}
+                  >
+                    Deploy app
+                  </Button>,
+                ].filter((x) => x)}
+              />
+            </form>
           </FormProvider>
           <Spacer y={3} />
         </StyledConfigureTemplate>
       </Div>
+      {showGHAModal && source?.type === "github" && (
+        <GithubActionModal
+          closeModal={() => setShowGHAModal(false)}
+          githubAppInstallationID={source.git_repo_id}
+          githubRepoOwner={source.git_repo_name.split("/")[0]}
+          githubRepoName={source.git_repo_name.split("/")[1]}
+          branch={source.git_branch}
+          stackName={name}
+          projectId={currentProject.id}
+          clusterId={currentCluster.id}
+          deployPorterApp={() =>
+            createAndApply({ app: validatedAppProto, source })
+          }
+          deploymentError={deployError}
+          porterYamlPath={source.porter_yaml_path}
+        />
+      )}
     </CenterWrapper>
   );
 };
 
 export default withRouter(CreateApp);
-
-const ErrorText = styled.span`
-  color: red;
-  margin-left: 10px;
-  display: ${(props: { hasError: boolean }) =>
-    props.hasError ? "inline-block" : "none"};
-`;
 
 const Div = styled.div`
   width: 100%;

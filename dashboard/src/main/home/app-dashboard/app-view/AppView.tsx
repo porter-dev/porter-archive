@@ -15,10 +15,12 @@ import web from "assets/web.png";
 import box from "assets/box.png";
 import github from "assets/github-white.png";
 import pr_icon from "assets/pull_request_icon.svg";
+import notFound from "assets/not-found.png";
 
 import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import Link from "components/porter/Link";
 
 export const porterAppValidator = z.object({
   name: z.string(),
@@ -191,7 +193,18 @@ const AppView: React.FC<Props> = ({ match }) => {
   }
 
   if (status === "error" || porterAppStatus === "error" || !revision) {
-    return <div>error</div>;
+    return (
+      <Placeholder>
+        <Container row>
+          <PlaceholderIcon src={notFound} />
+          <Text color="helper">
+            No application matching "{params.appName}" was found.
+          </Text>
+        </Container>
+        <Spacer y={1} />
+        <Link to="/apps">Return to dashboard</Link>
+      </Placeholder>
+    );
   }
 
   return (
@@ -221,6 +234,8 @@ const AppView: React.FC<Props> = ({ match }) => {
           </>
         )}
       </Container>
+      <Spacer y={0.5} />
+      
     </StyledExpandedApp>
   );
 };
@@ -240,6 +255,20 @@ const StyledExpandedApp = styled.div`
       opacity: 1;
     }
   }
+`;
+const PlaceholderIcon = styled.img`
+  height: 13px;
+  margin-right: 12px;
+  opacity: 0.65;
+`;
+const Placeholder = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 13px;
 `;
 const A = styled.a`
   display: flex;

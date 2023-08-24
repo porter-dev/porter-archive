@@ -93,11 +93,8 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
 
       const shortServiceName: string = getServiceNameFromControllerName(selectedController?.metadata?.name, appName)
-      for (let i = 0; i < services.length; i++) {
-        const service = services[i];
-        if (service.name === shortServiceName && service.type === "web") {
-          metricTypes.push("network");
-        }
+      if (services.some(svc => svc.name === shortServiceName && svc.type === "web")) {
+         metricTypes.push("network");
       }
 
       if (isHpaEnabled) {

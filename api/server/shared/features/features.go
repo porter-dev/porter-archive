@@ -41,14 +41,15 @@ func isPorterAgentUpdated(agent *kubernetes.Agent, major, minor, patch int) bool
 	parsedPatch, _ := strconv.Atoi(parsedTag[2])
 	if parsedMajor < major {
 		return false
+	} else if parsedMajor > major {
+		return true
 	}
 	if parsedMinor < minor {
 		return false
+	} else if parsedMinor > minor {
+		return true
 	}
-	if parsedPatch < patch {
-		return false
-	}
-	return true
+	return parsedPatch >= patch
 }
 
 // Only create the PROGRESSING event if the cluster's agent is updated, because only the updated agent can update the status

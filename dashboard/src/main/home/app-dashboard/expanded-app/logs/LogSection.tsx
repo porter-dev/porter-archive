@@ -107,14 +107,15 @@ const LogSection: React.FC<Props> = ({
     const patch = parseInt(versionParts[2]);
     if (major < 3) {
       return false;
+    } else if (major > 3) {
+      return true;
     }
     if (minor < 1) {
       return false;
+    } else if (minor > 1) {
+      return true;
     }
-    if (patch <= 3) {
-      return false;
-    }
-    return true;
+    return patch >= 4;
   }
 
   const [filters, setFilters] = useState<GenericLogFilter[]>(showFilter ? [

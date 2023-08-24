@@ -52,18 +52,18 @@ export const sourceValidator = z.discriminatedUnion("type", [
 ]);
 export type SourceOptions = z.infer<typeof sourceValidator>;
 
-// porterAppValidator is the representation of a Porter app on the client, and is used to validate inputs for app setting fields
-export const porterAppValidator = z.object({
+// clientAppValidator is the representation of a Porter app on the client, and is used to validate inputs for app setting fields
+export const clientAppValidator = z.object({
   name: z.string().min(1),
   services: serviceValidator.array(),
   env: z.record(z.string(), z.string()).default({}),
   build: buildValidator,
 });
-export type ClientPorterApp = z.infer<typeof porterAppValidator>;
+export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 
 // porterAppFormValidator is used to validate inputs when creating + updating an app
 export const porterAppFormValidator = z.object({
-  app: porterAppValidator,
+  app: clientAppValidator,
   source: sourceValidator,
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;

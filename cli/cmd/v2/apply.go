@@ -76,11 +76,16 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 			return fmt.Errorf("error getting current app revision: %w", err)
 		}
 
-		if currentAppRevisionResp.B64AppProto == "" {
+		if currentAppRevisionResp == nil {
+			return errors.New("current app revision is nil")
+		}
+
+		appRevision := currentAppRevisionResp.AppRevision
+		if appRevision.B64AppProto == "" {
 			return errors.New("current app revision b64 app proto is empty")
 		}
 
-		currentImageTag, err := imageTagFromBase64AppProto(currentAppRevisionResp.B64AppProto)
+		currentImageTag, err := imageTagFromBase64AppProto(appRevision.B64AppProto)
 		if err != nil {
 			return fmt.Errorf("error getting image tag from current app revision: %w", err)
 		}

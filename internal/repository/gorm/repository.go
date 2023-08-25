@@ -54,7 +54,6 @@ type GormRepository struct {
 	porterApp                 repository.PorterAppRepository
 	porterAppEvent            repository.PorterAppEventRepository
 	deploymentTarget          repository.DeploymentTargetRepository
-	appRevision               repository.AppRevisionRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -246,11 +245,6 @@ func (t *GormRepository) DeploymentTarget() repository.DeploymentTargetRepositor
 	return t.deploymentTarget
 }
 
-// AppRevision returns the AppRevisionRepository interface implemented by gorm
-func (t *GormRepository) AppRevision() repository.AppRevisionRepository {
-	return t.appRevision
-}
-
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -302,6 +296,5 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		porterApp:                 NewPorterAppRepository(db),
 		porterAppEvent:            NewPorterAppEventRepository(db),
 		deploymentTarget:          NewDeploymentTargetRepository(db),
-		appRevision:               NewAppRevisionRepository(db),
 	}
 }

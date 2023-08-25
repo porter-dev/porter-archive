@@ -272,3 +272,27 @@ func (c *Client) CurrentAppRevision(
 
 	return resp, err
 }
+
+// CreateSubdomain returns a subdomain for a given service that point to the ingress-nginx service in the cluster
+func (c *Client) CreateSubdomain(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string, serviceName string,
+) (*porter_app.CreateSubdomainResponse, error) {
+	resp := &porter_app.CreateSubdomainResponse{}
+
+	req := &porter_app.CreateSubdomainRequest{
+		ServiceName: serviceName,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/subdomain",
+			projectID, clusterID, appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}

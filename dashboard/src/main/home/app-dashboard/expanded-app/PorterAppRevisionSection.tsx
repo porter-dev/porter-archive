@@ -107,7 +107,7 @@ class PorterAppRevisionSection extends Component<PropsType, StateType> {
         this.ws.onmessage = (evt: MessageEvent) => {
             let event = JSON.parse(evt.data);
 
-            if (event.event_type == "UPDATE") {
+            if (event.event_type == "UPDATE" || event.event_type == "ADD") {
                 let object = event.Object;
 
                 this.setState(

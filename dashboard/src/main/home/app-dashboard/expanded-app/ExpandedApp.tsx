@@ -49,6 +49,7 @@ import EventFocusView from "./activity-feed/events/focus-views/EventFocusView";
 import HelmValuesTab from "./HelmValuesTab";
 import SettingsTab from "./SettingsTab";
 import PorterAppRevisionSection from "./PorterAppRevisionSection";
+import { useQuery } from "@tanstack/react-query";
 
 type Props = RouteComponentProps & {};
 
@@ -223,51 +224,79 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     return () => clearInterval(workflowInterval);
   }, []);
 
-  useEffect(() => {
-    const checkForBuiltImage = async () => {
-      console.log('checking for built image')
-      console.log('here is hasBuiltImage', hasBuiltImage)
-      if (hasBuiltImage) {
-        clearInterval(builtImageInterval);
+  const { data: workflowCheckPassedQuery } = useQuery(
+    ["checkForWorkflow", currentProject?.id, currentCluster?.id],
+    async () => {
+      if (workflowCheckPassed) {
+        return true;
+      }
+
+      const { appName } = props.match.params as any;
+
+      if (currentProject == null || currentCluster == null) {
         return;
+      }
+
+
+
+    },
+    {
+      enabled: !!currentProject && !!currentCluster && !workflowCheckPassed,
+      refetchInterval: 5000,
+      refetchOnWindowFocus: false,
+    }
+  );
+  useEffect(() => {
+    if (workflowCheckPassedQuery != null) {
+      setHasBuiltImage(hasBuiltImageQuery);
+    }
+  }, [workflowCheckPassedQuery]);
+
+  const { data: hasBuiltImageQuery } = useQuery(
+    ["checkForBuiltImage", currentProject?.id, currentCluster?.id],
+    async () => {
+      console.log("checking for built image")
+      if (hasBuiltImage) {
+        return true;
       }
 
       const { appName } = props.match.params as any;
 
       if (currentProject == null || currentCluster == null || appName == null) {
-        return;
+        return false;
       }
 
-      try {
-        const resChartData = await api.getChart(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            namespace: `porter-stack-${appName}`,
-            cluster_id: currentCluster.id,
-            name: appName,
-            revision: 0,
-          }
-        );
-        const globalImage = resChartData.data.config?.global?.image
-        const updateHasBuiltImage = globalImage != null &&
-          globalImage.repository != null &&
-          globalImage.tag != null &&
-          globalImage.repository !== ImageInfo.BASE_IMAGE.repository &&
-          globalImage.tag !== ImageInfo.BASE_IMAGE.tag
-
-        if (updateHasBuiltImage) {
-          setWorkflowCheckPassed(true);
-          setHasBuiltImage(true);
+      const resChartData = await api.getChart(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          namespace: `porter-stack-${appName}`,
+          cluster_id: currentCluster.id,
+          name: appName,
+          revision: 0,
         }
-      } catch (err) {
-        // do nothing
-      }
+      );
+      const globalImage = resChartData.data.config?.global?.image
+      return globalImage != null &&
+        globalImage.repository != null &&
+        globalImage.tag != null &&
+        globalImage.repository !== ImageInfo.BASE_IMAGE.repository &&
+        globalImage.tag !== ImageInfo.BASE_IMAGE.tag
+
+    },
+    {
+      enabled: !!currentProject && !!currentCluster && !hasBuiltImage,
+      refetchOnWindowFocus: false,
+      refetchInterval: 5000,
     }
-    const builtImageInterval = setInterval(checkForBuiltImage, 5000);
-    return () => clearInterval(builtImageInterval);
-  }, []);
+  );
+
+  useEffect(() => {
+    if (hasBuiltImageQuery != null) {
+      setHasBuiltImage(hasBuiltImageQuery);
+    }
+  }, [hasBuiltImageQuery]);
 
   // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
   const getPorterApp = async ({ revision }: { revision: number }) => {
